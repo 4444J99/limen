@@ -3,7 +3,8 @@ organ: "financial"
 repo: "organvm/limen"
 org: "organvm"
 metadata:
-  implementation_status: "BUILDING"
+  implementation_status: "BETA"
+  promotion_status: "BETA"
   maturity: 70
   last_consolidated: "2026-07-03T00:00:00Z"
 description: >

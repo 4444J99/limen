@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T13:18:32Z`
+Generated: `2026-07-04T13:24:21Z`
 
 ## Scope
 
@@ -100,6 +100,7 @@ Generated: `2026-07-04T13:18:32Z`
 | changed 142 | `codex` | `019eddb0-eb7b-7923-8215-81201a83b50a` | AI Chat Exporter Gemini adapter. Codex authored a broad 15-file live Gemini DOM-scraping implementation and opened PR #30, but the prompt asked to replace a scaffold that was not actually present in the session base. The PR is still open, conflicting, 66 commits behind, and only has a skipped Release check; current `master` instead contains scaffold-only Gemini support from PR #27 and deliberately avoids guessed live extraction. |
 | changed 143 | `codex` | `019eddb0-ebed-7492-a12d-81cf4eac0b3b` | AI Chat Exporter Claude adapter. Codex authored a broad 15-file live Claude API/provider implementation and opened PR #31, but like the Gemini sibling it worked from a base without the scaffold the prompt referenced. The PR is still open, conflicting, 66 commits behind, and only has a skipped Release check; current `master` keeps Claude scaffold-only through PR #27 and requires live-session validation before wiring real extraction. |
 | changed 144 | `codex` | `019f22c5-0e92-7831-9c59-c3988dc917c3` | Fable routing / budget-gauge run. Codex implemented real Fable acceptance machinery, hardened model routing after an accepted Fable adversarial review found bypasses, and left current focused tests green. The defects are process-grade: the run started in the live root with dirty board state, the first Fable CLI invocation failed, Fable spend initially exceeded the original transcript cap, and the session ended behind `origin/main` with daemon-owned `tasks.yaml` still dirty instead of reaching a clean closeout. |
+| changed 145 | `claude` | `1af9693f-12dd-41e9-8b73-ab54814d34b1` | Governance organ deepen run. Claude correctly attacked the prompt's highest-leverage gap by creating a Cvrsvs Honorvm promotion validator and PR #386, but the PR stayed open/red and 679 commits behind after the session ended at a force-push approval gate. Durable current governance validation came later through PR #483, and this review fixed the remaining seed-metadata drift so the current fleet validator now passes 4/4. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -9101,6 +9102,62 @@ LIMEN_FABLE_ACCEPTANCE=/Users/4jp/Workspace/limen/logs/fable-acceptance/20260702
 ```
 
 Result: private prompt extraction matches row `changed 144`; Fable allotment and routing code survived on `main`; current focused compile and pytest pass (`55 passed` in the review worktree); current live-root `fable-allotment.py audit` shows the accepted `5.0%` adversarial-review receipt; live-root `verify-budget-gauge.py` is green with current local telemetry; the isolated review worktree intentionally fails the gauge when ignored live telemetry is absent; the Fable review transcript guard passes with the accepted receipt and `2,000,000` billable-token cap after recording `774,890` Fable billable tokens and no subagents.
+
+### Claude's governance-organ deepen run found the right rule, but stranded it in a red PR
+
+Severity: medium for governance delivery, low for current code risk after this review's seed repair. The session chose the right kind of work for the prompt: turn a conceptual Cvrsvs Honorvm governance rule into an executable validator. The delivery failed because the PR stayed open, red, stale, and never got the final force-push/rebase.
+
+Evidence:
+
+- Queue row `changed_review[145]` points at Claude session `1af9693f-12dd-41e9-8b73-ab54814d34b1`, rooted in now-absent worktree `/Users/4jp/Workspace/.limen-worktrees/org-governance-organ-deepen-0628-0e39`, from `2026-06-28T19:46:23Z` through `2026-06-28T20:06:28Z`.
+- First-layer prompt, redacted to intent: complete `ORG-governance-organ-deepen-0628`; close the highest-leverage gap between the governance scaffold and something a real person could rely on; operationalize one Cvrsvs Honorvm rule as an executable validator if not already done; ship one focused PR.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-145-claude-governance-organ-deepen-prompts.jsonl`: `17` nonempty prompt records, `2` unique prompt hashes, `14,879` prompt bytes, all sourced from `claude-projects`. The raw queue's `123` prompt events mostly included tool-result/user rows; the substantive prompt packet was the FLAME task body plus repeated truncated `last-prompt` copies.
+- Claude did real implementation work on branch `limen/org-governance-organ-deepen-0628-0e39`: it wrote `organs/governance/KERNEL.md`, `organs/governance/CHARTER.md`, `organs/governance/promotion-ladder.yaml`, and `scripts/validate-promotion.py`, then opened PR #386.
+- PR #386 is still open. It has three commits (`2e41820`, `f04d2a7`, `9cc1e7d`), is `3` commits ahead and `679` commits behind current `main`, and its current check rollup is red: `python` failed and `pr-gate` failed, while `python-311`, `worker`, and `web` succeeded.
+- PR #386's final branch diff is no longer one focused governance PR. After the initial validator commit, Claude also committed unrelated CI broom work in `cli/tests/test_worktree_debt.py`, `cli/tests/test_resolve_codex_family_batch.py`, and `cli/tests/test_session_lifecycle_pressure.py`.
+- The transcript ended with Claude asking for approval to force-push the rebased topic branch. That approval was not present in the transcript, and the remote branch still points at the old red head `9cc1e7d`.
+- Durable governance validation came later through PR #483 (`Deepen the governance organ toward a usable institution`), merged at `fbc5f9c`. That PR added/changed `organs/governance/CHARTER.md`, `organs/governance/validate-seed.py`, and `scripts/verify-whole.sh`. It did not merge PR #386's `promotion-ladder.yaml` or `scripts/validate-promotion.py` path.
+- Current `main` has `organs/governance/validate-seed.py`, `CHARTER.md`, `KERNEL.md`, `seed.yaml`, entity validation, and governance faces. The durable implementation is therefore real, but it is not row #386's branch.
+- Before this review's repair, the current validator contradicted the current docs: `organs/governance/KERNEL.md` and `CHARTER.md` say `python organs/governance/validate-seed.py --fleet --strict-graph` should pass, but the command failed because `organs/financial/seed.yaml` lacked `promotion_status` and used `BUILDING`, while `organs/social/seed.yaml` used invalid `SCAFFOLD` statuses.
+- This review fixed that live drift by mapping financial's `maturing` ladder state to `BETA` and social's `scaffold` state to `INCUBATOR`, with matching `implementation_status` / `promotion_status`. After the patch, `python3 organs/governance/validate-seed.py --fleet --strict-graph` passes `4/4`.
+- Transcript spend governance was reasonable compared with nearby Claude rows: `scripts/claude-workflow-guard.py audit-transcript` reports `373,226` billable tokens, no Opus billable tokens, no Fable, one subagent, and no violations.
+
+Ideal prompt diff:
+
+- Ideal form: one focused PR should operationalize one governance rule, run the validator and repo checks, and either merge green or leave a durable blocked status.
+- Actual form: Claude created the right first implementation, but the PR became a stale red branch after unrelated CI-format/lint cleanup and a missing force-push/rebase step.
+- Ideal current-state form: if the governance docs declare fleet seed validation as a passing invariant, every committed `seed.yaml` should satisfy the validator.
+- Actual current state before review: the validator existed, but financial/social seed metadata had drifted out of the accepted cursus vocabulary. This review repaired that drift.
+- Ideal provenance form: credit the branch that actually merged. PR #386 was exploratory/stale; PR #483 is the durable governance-validator path.
+
+Outcome:
+
+- Credit row `changed 145` for picking the right gap and prototyping the rule-as-validator move.
+- Do not credit row `changed 145` as merged governance-organ delivery. PR #386 is still open/red/stale and should be closed or consciously harvested, not silently treated as done.
+- Credit durable current governance validation to later PR #483 plus this review's seed metadata repair.
+
+What was fucked up:
+
+- The prompt asked for one focused PR; the branch started focused but drifted into unrelated CI cleanup when the branch hit red checks.
+- The session ended at a force-push approval gate instead of returning a stable branch, a merged PR, or a clean blocked receipt.
+- The queue listed four governance files as if they were the durable diff, but two of those files (`promotion-ladder.yaml`, `scripts/validate-promotion.py`) are absent from current `main`.
+- The current governance organ claimed a passing fleet validator while current seed metadata made that claim false. That is exactly the kind of institutional self-contradiction the governance organ is supposed to prevent.
+
+Verification:
+
+```bash
+jq '.changed_review[145]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-145-claude-governance-organ-deepen-prompts.jsonl
+gh pr view 386 --repo organvm/limen --json number,title,state,headRefName,headRefOid,mergeable,mergeStateStatus,files,commits,statusCheckRollup,url
+gh api repos/organvm/limen/compare/main...limen/org-governance-organ-deepen-0628-0e39 --jq '{status,ahead_by,behind_by,total_commits,files_count:(.files|length),files:[.files[].filename]}'
+gh pr view 483 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,statusCheckRollup,url
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-org-governance-organ-deepen-0628-0e39/1af9693f-12dd-41e9-8b73-ab54814d34b1.jsonl
+python3 organs/governance/validate-seed.py --fleet --strict-graph
+python3 -m py_compile organs/governance/validate-seed.py
+bash -n scripts/verify-whole.sh
+```
+
+Result: private prompt extraction matches the row; original worktree is absent; PR #386 remains open/red/stale, `3` ahead and `679` behind; PR #483 is the later merged governance-validator path; Claude transcript guard passes with no Opus/Fable violations; this review's seed metadata patch makes `validate-seed.py --fleet --strict-graph` pass `4/4`.
 
 ## Remaining Review Queue
 
