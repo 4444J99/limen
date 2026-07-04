@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T11:55:21Z`
+Generated: `2026-07-04T12:01:02Z`
 
 ## Scope
 
@@ -86,6 +86,7 @@ Generated: `2026-07-04T11:55:21Z`
 | changed 128 | `codex` | `019f1c06-192e-7d40-8301-dedc5cf370f8` | Mirror Mirror security hardening branch. Codex authored a plausible 19-file hardening commit (`90398cc`) for auth, checkout, webhooks, ShareFile, Ready Player Me, and regression tests, but the prompt's delivery contract was not met: dependency audit/install/test/build were blocked, no PR exists, no CI ran for the branch, and the branch remains published but unmerged, one commit ahead and four commits behind current `main`. |
 | changed 129 | `claude` | `08b4f87e-10c4-485d-84c4-5094ef74e2fa` | Peer-audited behavioral-blockchain CI fix attempt. Claude spent a narrow CI/type-fix task mostly fighting sandboxed `npm`/`npx`/`gh`/settings permissions, then fanned out Opus subagents for static diagnosis and hit the monthly spend wall. The session left no durable code diff beyond a protected `.claude/settings.local.json` attempt; a later green PR #726 with the same title is separate, broad, unmerged, and stale, while current default-branch health comes from later PR #766. |
 | changed 130 | `claude` | `a585c8ed-3af9-46c2-92cd-20d87153d16f` | Materialize fold / board-as-event-log projection. The prompt challenged recurring 30k-line dirty `tasks.yaml` churn and rejected mechanical splits; Claude landed the evolved Step 1 through PR #543: a pure `board = fold(events)` reducer, seed/diff functions, CLI proof, and tests. Current `main` still verifies byte-identical materialization, and follow-up PR #549 fixed a TOCTOU false-negative; the session still overran Opus budget and left `verify-whole.sh` weaker than the full CI gate matrix. |
+| changed 131 | `claude` | `3625ab3d-c647-412e-8336-28d75a73f874` | Session-meta typing/restoration branch. Claude correctly diagnosed that the generated typing packet was really restoring deleted ingest modules and opened PR #133 with a local `111`-test claim, but that PR never merged, never got checks, and is now stale behind current `main`. Durable completion came from merged green PR #131 restoring the ingest surface plus later typing PRs such as #163; the open generated typing PR family needs harvest/closure rather than merge. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3840,6 +3841,65 @@ rg -n 'ruff|mypy|verify-whole|Type-check Python' .github/workflows scripts/verif
 ```
 
 Result: private prompt extraction matches row `130`; transcript guard fails on Opus spend; PR #543, #549, and #552 are merged; PR #543 and #549 merge commits are on `origin/main`; focused materialize/io tests pass; live `materialize --verify` proves byte identity for the current 1,650-task board; the temp proof script is absent but the memory note survives; `verify-whole.sh` still does not include the full Ruff/mypy CI matrix.
+
+### Claude's session-meta typing branch was useful restoration work, but the open PR is superseded
+
+Severity: medium for delivery lifecycle, low for current code risk. The session did useful triage: the generated "typing" packet was really a missing-ingest-surface emergency after prior generated work deleted core modules. But the session's own PR is not the durable artifact. It is still open, has no checks, and is behind the current branch that already restored and advanced the ingest stack.
+
+Evidence:
+
+- Queue row `changed_review[131]` points at Claude session `3625ab3d-c647-412e-8336-28d75a73f874`, rooted in absent worktree `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-session-meta-typing-0628-f7a5`, running from 2026-06-28T07:49:24Z through 2026-06-28T07:57:08Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-131-claude-session-meta-typing-0628-prompts.jsonl`: `17` prompt-surface records, `2` unique prompt hashes, `8,855` prompt bytes, and `3,672` task-body bytes. Surfaces are `message.user` `1` and `last-prompt` `16`; the first prompt was a FLAME-wrapped generated task.
+- In redacted intent form, the prompt asked Claude to complete `GEN-organvm-session-meta-typing-0628`: tighten types in `organvm/session-meta`, keep changes scoped, and produce a green PR.
+- The transcript shows Claude correctly discovered that commit `dca7188` had deleted the modules while tests still referenced them. The work restored `ingest/adapters/chatgpt.py`, `ingest/adapters/intake.py`, `ingest/adapters/opencode.py`, `ingest/manifest.py`, `ingest/registry.py`, `ingest/schema.py`, and package markers.
+- The transcript final says "All 111 tests pass" and opened PR `organvm/session-meta#133` from `limen/gen-organvm-session-meta-typing-0628-f7a5`.
+- PR #133 remains `OPEN`, with one commit `e3ba921` and no `statusCheckRollup` entries. Its files are the restored ingest/package files only.
+- GitHub compare reports PR #133's branch as diverged from current `main`: `ahead_by: 1`, `behind_by: 25`, `total_commits: 1`.
+- Durable restoration had already moved through a different lane: PR #131, `Make organvm/session-meta CI green`, merged on 2026-06-28 at `cd0ec6d` / merge commit `929c02e`, restoring the broader ingest surface and adding CI. Its `test (3.10)`, `test (3.11)`, and `test (3.12)` checks all succeeded.
+- Current `main` still contains the relevant ingest modules: `ingest/adapters/chatgpt.py`, `intake.py`, `opencode.py`, `claude.py`, `codex.py`, `gemini.py`, `antigravity.py`, `browser.py`, plus `ingest/manifest.py`, `registry.py`, `schema.py`, `redact.py`, and `atomize.py`.
+- Later typing work also landed cleanly. PR #163 merged on 2026-07-03 with green `test (3.10)`, `test (3.11)`, and `test (3.12)` checks, and main-branch CI run `28678320317` succeeded at head `5b586e3`.
+- Open stale generated PRs remain for the same repo/task family, including #128, #133, #135, #142, and #148 for `session-meta` typing, plus other generated security/docs/test-coverage branches. That is review debt and harvest debt.
+- Local `/Users/4jp/Workspace/session-meta` is dirty on branch `fix/security-hardening-0629` with `ingest/manifest.jsonl` modified, so this review did not run local tests there or disturb that checkout.
+
+Ideal prompt diff:
+
+- Ideal generated typing packet: inspect current main and open PRs first, detect whether "typing" is actually a missing-module restoration, revive or close existing duplicate branches, then land one green PR.
+- Actual form: Claude made the right technical diagnosis and produced a plausible restore branch quickly, with a local test claim, but it did not get a check run or merge.
+- Ideal harvest form: when another PR restores the same surface and goes green first, mark the duplicate branch superseded and close the PR with a pointer to the durable merge.
+- Actual form: PR #133 stayed open and stale while current main advanced by 25 commits.
+
+Outcome:
+
+- Credit the session for useful local diagnosis and for recognizing that deleted ingest modules, not only annotations, were the root problem.
+- Do not credit PR #133 as completed delivery. It has no CI receipt, did not merge, and should not be merged as-is over current main.
+- Credit durable completion of the broken-ingest restoration to PR #131 and current green health to later merged work, especially PR #163 and main run `28678320317`.
+- The correct next action is harvest: close or supersede stale generated typing PRs after confirming whether any small hunks remain uniquely valuable.
+
+What was fucked up:
+
+- The generated task label hid the actual failure mode. "Tighten types" was a bad packet name for "core ingest modules were deleted and imports are broken."
+- Duplicate generated branches kept accumulating instead of collapsing around the first green restoration PR.
+- The queue's ideal-gap heuristic said the session lacked verification, but the transcript did contain a local `111`-test claim. The real gap is stronger: no GitHub check rollup, no merge, and no later harvest.
+- The worktree was removed while the PR stayed open, which makes the branch harder to revive safely and easier for future agents to misread as live work.
+
+Verification:
+
+```bash
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length})), body_kind:(group_by(.body_kind) | map({body_kind:.[0].body_kind, count:length}))}' .limen-private/session-corpus/full-stack-review/session-131-claude-session-meta-typing-0628-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-gen-organvm-session-meta-typing-0628-f7a5/3625ab3d-c647-412e-8336-28d75a73f874.jsonl
+test -d /Users/4jp/Workspace/.limen-worktrees/gen-organvm-session-meta-typing-0628-f7a5
+gh pr view 133 --repo organvm/session-meta --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,headRefOid,files,commits,statusCheckRollup,url
+gh api repos/organvm/session-meta/compare/main...limen/gen-organvm-session-meta-typing-0628-f7a5 --jq '{status,ahead_by,behind_by,total_commits,commits:[.commits[]|{sha:.sha[0:7],message:.commit.message}],files:[.files[]|{filename,status,changes}]}'
+gh pr view 131 --repo organvm/session-meta --json number,title,state,createdAt,mergedAt,headRefName,headRefOid,files,commits,statusCheckRollup,url
+gh pr view 163 --repo organvm/session-meta --json number,title,state,createdAt,mergedAt,headRefName,headRefOid,files,statusCheckRollup,url
+gh run view 28678320317 --repo organvm/session-meta --json databaseId,status,conclusion,headSha,displayTitle,workflowName,jobs
+gh api 'repos/organvm/session-meta/contents/ingest/adapters?ref=main' --jq '.[].name'
+gh api 'repos/organvm/session-meta/contents/ingest?ref=main' --jq '.[].name'
+gh pr list --repo organvm/session-meta --state open --search 'typing OR session-meta OR ingest' --json number,title,createdAt,updatedAt,headRefName,headRefOid,url,isDraft
+git -C /Users/4jp/Workspace/session-meta status --short --branch
+```
+
+Result: private prompt extraction matches row `131`; transcript guard passes with 380,835 billable tokens and no Opus/subagent violations; the original worktree is absent; PR #133 is open with no checks and is diverged 1 ahead / 25 behind current `main`; PR #131 merged the ingest restoration with green Python matrix checks; PR #163 and main CI run `28678320317` are green; current main contains the ingest modules; the local `session-meta` checkout is dirty and was left untouched.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
