@@ -402,5 +402,16 @@ def materialize(verify, emit_events):
             sys.exit(1)
 
 
+@main.command()
+@click.option("--once", is_flag=True, help="One frame then exit")
+@click.option("--compact", is_flag=True, help="One-line compact mode")
+@click.option("-n", "--interval", default=2.0, type=float, help="Refresh interval in seconds")
+def watch(once, compact, interval):
+    """Show the real-time fleet dashboard."""
+    from limen.watch import run
+
+    run(once=once, compact=compact, interval=interval)
+
+
 if __name__ == "__main__":
     main()

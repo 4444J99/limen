@@ -4714,6 +4714,59 @@ python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_self_improve.py -q
 
 Result: private prompt extraction has `1` record; PR #38 is the green merged delivery for the prompt; `80d4e21` is only adjacent route-weight work; duplicate FORCE-route PRs remain open/red; current route and self-improve tests pass (`42` tests).
 
+### OpenCode recovered the CLI watch subcommand but left it red and unmerged
+
+Severity: high for live feature delivery; medium for process.
+
+Evidence:
+
+- Queue row `90` points at OpenCode session `ses_0e6f64fafffeuXxaRn3lQ8kmTW`, titled `Recover CLI watch subcommand`, run from `/Users/4jp/Workspace/limen` on 2026-06-30T14:58:13Z through 2026-06-30T15:02:32Z with model `deepseek-v4-flash-free`, cost `0`, and 90,792 input / 6,847 output / 4,467 reasoning tokens plus 4,935,808 cache-read tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-90-opencode-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to recover `RECOVER-CLI-watch-subcommand` after the original done lifecycle had been reopened incorrectly.
+- The transcript final claimed PR #486, `pytest cli/tests/test_watch.py -v` passing, and working `python3 -m limen watch --once` / `--once --compact` smoke checks.
+- PR #486 was left open and red. Both `python` and `pr-gate` failed because `python -m ruff format --check` wanted to reformat `cli/src/limen/cli.py` and `cli/tests/test_watch.py`.
+- Current `main` did not contain `cli/src/limen/watch.py` or `cli/tests/test_watch.py` before this review pass. The queue's 63 changed files included broad fanout docs, organ docs, scripts, logs, and `tasks.yaml`; those are not the focused watch-subcommand diff.
+- The branch diff for PR #486 was otherwise narrowly correct: add `cli/src/limen/watch.py`, add `cli/tests/test_watch.py`, and wire `watch` into `cli/src/limen/cli.py`.
+
+Ideal prompt diff:
+
+- Ideal form: recover the closed task by opening a formatted, green PR or merging a verified forward-port; keep the diff to the watch CLI and tests.
+- Actual OpenCode form: the right feature was reconstructed, but formatting was not checked before final report, so the PR stayed open/red and the feature never reached `main`.
+- Ideal lifecycle form: do not reopen a completed task in place; create a recovery task with a fresh receipt, then close the stale original.
+- Ideal attribution form: score row `90` against PR #486 and the three watch files, not against the queue's broad 63-file window.
+
+Outcome:
+
+- This review pass ported the watch CLI feature forward into `main` with a formatted implementation and focused tests.
+- The port keeps the requested `--once`, `--compact`, and `-n/--interval` options; it also uses the current capacity agent order, so the dashboard includes newer lanes beyond the original six.
+- The implementation fixes a latent issue in the PR branch: live mode now loops until interrupted instead of rendering once, sleeping once, and returning.
+
+What was fucked up:
+
+- OpenCode reported "Done" with a PR URL before the PR was green.
+- The failure was cheap and mechanical: `ruff format --check` would have caught it locally.
+- The recovery did not actually recover the feature into `main`; it parked it in a red PR.
+- Queue attribution again buried the real prompt diff under unrelated fanout/control-plane file churn.
+
+Verification:
+
+```bash
+jq '.changed_review[90]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-90-opencode-prompts.jsonl
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_0e6f64fafffeuXxaRn3lQ8kmTW';"
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select p.id,p.message_id,json_extract(m.data,'$.role') as role,json_extract(p.data,'$.type') as part_type,length(json_extract(p.data,'$.text')) as text_len,substr(json_extract(p.data,'$.text'),1,1000) as text from part p left join message m on m.id=p.message_id where p.session_id='ses_0e6f64fafffeuXxaRn3lQ8kmTW' and json_extract(p.data,'$.type')='text' order by p.time_created;"
+gh pr view 486 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+gh run view 28454213416 --repo organvm/limen --log-failed
+python3 -m ruff format --check cli/src/limen/cli.py cli/src/limen/watch.py cli/tests/test_watch.py
+python3 -m ruff check cli/src/limen/cli.py cli/src/limen/watch.py cli/tests/test_watch.py
+python3 -m py_compile cli/src/limen/watch.py cli/src/limen/cli.py
+python3 -m pytest cli/tests/test_watch.py cli/tests/test_dispatch.py -q
+PYTHONPATH=cli/src python3 -m limen watch --once
+PYTHONPATH=cli/src python3 -m limen watch --once --compact
+```
+
+Result: private prompt extraction has `1` record; PR #486 is open/red on formatting; this review pass adds the missing watch feature to `main`; Ruff format/check, py_compile, targeted tests (`39` tests), and both CLI smoke modes pass locally.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
