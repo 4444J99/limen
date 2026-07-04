@@ -861,10 +861,11 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
     blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
     blockers.DEFAULT_CAPABILITY_ROOTS = ()
     blockers.worktree_debt_report = lambda root: {
-        "total": 2,
+        "total": 3,
         "debt": 1,
         "items": [
             {"name": "owner-blocked-root", "reason": "owner-blocker", "debt": False},
+            {"name": "active-root", "reason": "active(<24h)", "debt": False},
             {"name": "dirty-root", "reason": "dirty", "debt": True},
         ],
     }
@@ -878,9 +879,10 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
                 "remote": {
                     "enabled": True,
                     "worktrees": {
-                        "remote_branches_missing": 2,
+                        "remote_branches_missing": 3,
                         "receipts": [
                             {"name": "owner-blocked-root", "remote_branch": "missing"},
+                            {"name": "active-root", "remote_branch": "missing"},
                             {"name": "dirty-root", "remote_branch": "missing"},
                         ],
                     },
@@ -906,8 +908,8 @@ def test_session_blockers_filter_remote_missing_branches_with_live_scanner_recei
     blocker = paths["worktree-remote-branches-missing"]
 
     assert blocker["details"]["remote_branches_missing"] == 1
-    assert blocker["details"]["raw_remote_branches_missing"] == 2
-    assert blocker["details"]["closed_by_live_scanner"] == ["owner-blocked-root"]
+    assert blocker["details"]["raw_remote_branches_missing"] == 3
+    assert blocker["details"]["closed_by_live_scanner"] == ["owner-blocked-root", "active-root"]
     assert blocker["details"]["unresolved_roots"] == ["dirty-root"]
 
 

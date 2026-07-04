@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-03T05:40:00Z",
+  "generated_utc": "2026-07-04T19:00:29Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -548,6 +548,1032 @@
       "score_discount": 35,
       "status": "merged_pr_preserved",
       "worktree": "/Users/4jp/Workspace/limen/.worktrees/mirror-mirror"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1198,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "d74f970427ad1360cdea0a1170076d40e6308b3b596d0d1d235a4acb133fcc26"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "8f02faa5710f690d057d1d4ca9b28a52534aaef5f758197d368e3db266c4f1b8"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "gen-organvm-limen-test-coverage-0703-3a17",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1391,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/gen-organvm-limen-test-coverage-0703-3a17"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "3887db2f8ef73250e8421dbbd1aa065f0c57122b9f5635c60aa415dbe77830f2"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "1e3754fb1c52120c77f236fcc9e4518ef8169107773462113a7dd30f9a41392d"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "heal-cifix-organvm-limen-449-25ce",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-limen-449-25ce"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "99a2b60032a256b5ad4e3d118a6c1ecb6d97d8590037e33bde29ef0d67748a27"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "1eb15b05d8cab740fdff391bd6e1c148097b7c63980477237ddfe9f1181603df"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "heal-cifix-organvm-limen-450-ed38",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-limen-450-ed38"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1243,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "9845db3d14d485eff3b7882a1c575f832d113139dd35d15e58e0751dfc05c95f"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "6c8bca97759a3127f3a0e341d4cc495332cbfc49759ad61c05355cec8dd2abd5"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "heal-cifix-organvm-limen-450-fc3a",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1442,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-limen-450-fc3a"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1238,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "1a02e0ceeb7a89bd38efd4916ab40243bbc9edae224af5445fd0124588c64ef5"
+        },
+        {
+          "bytes": 194,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "dc82aa76171741badb9f7c98306dc12a4cf4f80bd30ba58209db3192570c29ac"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "heal-cifix-organvm-limen-451-0b29",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1432,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-limen-451-0b29"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "18550210c4e81d9d314e1455596828eef3430593c334d5954ff8cca37233e3d5"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "eb2465183a899e3fee58152f7189efda097239045b88b25497f255c9956528eb"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "heal-cifix-organvm-limen-451-1cc7",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-limen-451-1cc7"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "47441a7ece83b508b8f17b88fac9ba98ed00213d72cbbbc0fc7a41bad5510610"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "96458e067691c8a7bde6c99038bdca51c4e3fed258d8e7b579cbf6234a43f196"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "heal-cifix-organvm-limen-453-7f81",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-limen-453-7f81"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "09db9f6ba2a6590e4c1fd6ac545d11749fd3cd3761b8916cfbb010f52b24705f"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "e51b8e33cf1927980f0cd58e0fb6616c38288e0656fd3ee759e570a57171879d"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "heal-cifix-organvm-limen-456-07d7",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-limen-456-07d7"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1283,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "ddccd1b62efddd87f685350339d36a13976311cde938f8be3d4f29378b82fa66"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "1a0bf2f8f837e3940e6e5d85686d933d7198ce9ee27378d470f1f723c359a496"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-governance-organ-selffeed-0703-028a",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1482,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-governance-organ-selffeed-0703-028a"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1283,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "fb87a32da1800e2fff87bd50c6cefa3b6e0469749e17ee8800b9297702dbb07c"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "95de22b0ae5d0680eb243a69ff3b69181e78a93cea0a679ac64e90ad1ce5f8dd"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-governance-organ-selffeed-0703-ae8d",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1482,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-governance-organ-selffeed-0703-ae8d"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1142,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "01deb079dc420d75b1bda5642c312712a7dbc49ced7dd5a786292ef7cf2e595d"
+        },
+        {
+          "bytes": 173,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "f4a909675524e777bf51d53e96c38c9cc9a4a7cd6d31302d0f783df7ededaa9d"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-health-organ-firstslice-0703-9ab8",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1315,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-health-organ-firstslice-0703-9ab8"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "6cb7b6a87ca671ae1a8ed43b0d97b91247f58b5a49606f0c2db3a72649b763b3"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "5d727c74d0161d79b4288619934b1b8d73342f7528c421f801b70253f7e67bba"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-health-organ-kernel-0704-1496",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-health-organ-kernel-0704-1496"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "cc17f675b6f02331f56e1982375f95bb94a9d70288924458f66fcdbd4f8e9467"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "36e65a2649aa8ffe70e3733deb7ba089fd35fddb5c8ef227a2bb8fa3e939d30a"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-health-organ-kernel-0704-457e",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-health-organ-kernel-0704-457e"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1238,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "4f2c28edfefeab1f0a6de088a7d3377bb343aceb37c2c5969a47490ae792b35f"
+        },
+        {
+          "bytes": 194,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "60199c176fd76fba5d519fdf3398fbfe9ec6116f33169239a03f51ffafba9268"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-health-organ-kernel-0704-efd2",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1432,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-health-organ-kernel-0704-efd2"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "ca458edee41c32d37512fcfffc737f3199a06e5087777267783e877c21ddcc77"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "e3be849a7f257a104fa59afba751fe79868d9742bbd8c87740ebe7f33fe76821"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0703-0149",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0703-0149"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "8df578d54fc2fa8c7091ade8edbd214d8ac8da6e999ebd0f96a1fa1f3fe82966"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "a4ed784e62e7a84984df3b826283a770e78390ef81f52df19013f4f488de564e"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0703-3131",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0703-3131"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "b90542d67b0fe938dd085ce76768cb4a089330b40cac77794506dce8f101dcb9"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "523c5f05cd65f13d82609e02fe6608d1872c66d8bc12482c3bfa0cd982ded30d"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0703-37ce",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0703-37ce"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "de82d78e64b355bedf817fcfe58785e313c7229811626d4e7e13c9017de7d725"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "bda7f77a6599d75439996f262a9f5d0ea5fdc940f8106515e3606b203310714e"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0703-4f38",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0703-4f38"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "fa0069087af08e0ed629819e0e4e3429ed1443c54a1dc5e17c45ed28eb2018e9"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "45dc782f9dd1edd49f6b928378273276867599214fc9cd06dbf20db2305e608f"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0703-8eef",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0703-8eef"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "c58103eb8d20fe95b7604cda76abd49030b9ccf6b6aa1cd6a5fa135c9d3ba0aa"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "47fc2d3124e3f4e8bae3690da9cea529f86a2a7387ccecd919813d4aa3758b6b"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0703-d5af",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0703-d5af"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1219,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "000be9921ca49e66ddb50e605f02f8d699142b2e19e619b53c3dcc766279824d"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "518d3621dbe33bd7624ff7b48d65ec22856242d6d3c783c815018367b77c8c77"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0703-dcc8",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1412,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0703-dcc8"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "7dfc1190e33026bf41382e0879567abd4cf1ef5f983aa70b16c5381387c8cfe7"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "e94a97ffe37ca2a574e94885b11bf923b82135b6c3e9209870e6efc791bf2052"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0703-fb48",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0703-fb48"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1277,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "0aaee8c6cebd37cf033e8a7f29d30905ce6038380df2b46d7c81eb7436b54b2c"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "ee0d971e6e6534f3cb463bd77eb2cff9b9948b7a3943168fb429bd6b6bd4cf92"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-charter-0704-55ad",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1476,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-charter-0704-55ad"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1193,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "259fb840e134f6978553f7db32c8605da63de128f717c0b49d38586963c51fed"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "8d25e42d378474a5d482baa85f0c7f0a9c96e7959d99f8f3a7fb361afb13f3c8"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-firstslice-0703-8242",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1386,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-firstslice-0703-8242"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1222,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "b3d3dd19d7e970803e8381f979ee4d907fdddba6ecf5a590da02a838cc9f7624"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "9f5cdcfa29b0f888447ffacc2f3e2102f57c1bf6eb2c0f0dcd0013e54ee7666f"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-legal-organ-firstslice-0703-bdce",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1415,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-legal-organ-firstslice-0703-bdce"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1278,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "57c4610cb64f35be6cd1720c764d8033a96d1488ed49d8ad42c116536862f075"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "bca465d212be4df9e3a0d237ca2c7d14f50ffd2bff5e9ad9f1375f8b780f6cb4"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-charter-0704-39f1",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1477,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-charter-0704-39f1"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1281,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "c1d518639b89f8d354dccf9ed8ad6223f0335156fc5f40e3d57eda8b93cf9107"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "0a8b1fb5d6aafa45d57681048759ebc612cc7c55415a8d1135d79e863dec8a1c"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-156a",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1480,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-156a"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1194,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "38c055a23b0dfbb0a44a99dc641b3d3dea4fabe00bde346cd167de68264f26bc"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "01b4a9809a32a7b5bffd5feaccabfde9b8ba30abed93f6ce51dedda1dedecf94"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-3636",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1387,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-3636"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1223,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "66af17a2a7d38e99c4ac1df5848836d4f10e8faae801f43d3b7cd3bb104c79c2"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "1508cb2f9064bd4df92e45f0ae36787483c6904ab80d8b88758b970671b02a98"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-3dcb",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1416,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-3dcb"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1281,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "6517e3d152d90bdb49482802dd255d42480e3c622bd26ac098f9badb0c47ea03"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "0b30a89c025cf150c7d8971491a6adeb60327f35cd4fd199fffb249b3ecb8b5d"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-562f",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1480,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-562f"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1281,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "6d3aa100e8e60f1d62fbfab401e2c15594d17d3263a378916ba3039ee542c47f"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "3db1dc98df38a2d3d7d6645cf223ea8cb6a5932918955187a6f6fe12dbb5186a"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-5b59",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1480,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-5b59"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1281,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "10ff95b1b3ac96ed8b5bf25550346eea7c2174d0e01763dd12ba0f6b326eb749"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "3114e54fffb1b3a82170fe427e18afeb23c8fb212246b6680236e4945c30d9ec"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-7556",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1480,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-7556"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1281,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "765130e1a6b07a6bd44875c338a3fd5f85da602b6c612973c808f95d0587c559"
+        },
+        {
+          "bytes": 199,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "dc39cdb4edd862ff3ccc49d5aeeb4deea5b4a48574ba41236c51d69a23345555"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-c117",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1480,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-c117"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1223,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "4362b8d3d028a47e3d9f9207d1f10b3a14f3ef41f49bfd13a79626f3098c6fce"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "2f90e313720f479bd5870347765d450b6afc7d5017b5e57068f448bca9204ed9"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-c80d",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1416,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-c80d"
+    },
+    {
+      "branch": "heal/revive-self-heal-beat",
+      "classification": "open PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "head": "dc0498d192c2aa76bf98d1b7fa0dda496baf3c8b",
+      "lane": "remote-pr-open",
+      "merge_state": "DIRTY",
+      "next_action": "No local-only source preservation remains. GitHub PR #634 is OPEN/DRAFT and its head OID equals the local worktree HEAD; rebase or supersede before merge. Reclaim the local checkout only after normal operator acceptance.",
+      "pr_draft": true,
+      "pr_number": 634,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/634",
+      "repo": "organvm/limen",
+      "root": "feat+workstream-channels",
+      "score_discount": 35,
+      "status": "open_pr_preserved",
+      "worktree": "/Users/4jp/limen/.claude/worktrees/feat+workstream-channels"
+    },
+    {
+      "branch": "corpus-verify",
+      "classification": "closed PR remote branch preserved; owner decision required",
+      "evidence_updated_utc": "2026-07-04T18:42:24Z",
+      "head": "d45b030d1427826c1c0c54b3cb54d552b94104a0",
+      "lane": "owner-blocker",
+      "next_action": "Do not reclaim, merge, force-push, or edit this root from lifecycle cleanup. Local HEAD equals origin/work/photos-universe-20260629-182431, but PR #497 is CLOSED unmerged; an owner packet must decide whether to reopen, supersede, or retire it.",
+      "pr_closed_at": "2026-07-01T16:20:15Z",
+      "pr_number": 497,
+      "pr_state": "CLOSED",
+      "pr_url": "https://github.com/organvm/limen/pull/497",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-04T184224Z-agent-aefc63d95daa3131b/receipt.json",
+      "remote_branch": "origin/work/photos-universe-20260629-182431",
+      "remote_head": "d45b030d1427826c1c0c54b3cb54d552b94104a0",
+      "repo": "organvm/limen",
+      "root": "agent-aefc63d95daa3131b",
+      "score_discount": 35,
+      "status": "closed_pr_remote_branch_preserved",
+      "worktree": "/Users/4jp/limen/.claude/worktrees/agent-aefc63d95daa3131b"
+    },
+    {
+      "branch": "limen/gh-organvm-domus-genoma-170-bbbc",
+      "classification": "default branch preserves tracked source; untracked agent log documented",
+      "default_branch": "origin/master",
+      "default_head": "97b3f2c6169b83a20e0d1a61ef95b6621d0e1533",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "files": [
+        {
+          "bytes": 293,
+          "path": "logs/agents/opencode.json",
+          "sha256": "d476defb235606087f3a33c53eba2fb039086e0c3f91318b335cc7e658a460ff"
+        }
+      ],
+      "head": "24a251c550c438f90d8e495fdb2b5e62b34a0d22",
+      "lane": "remote-merged",
+      "next_action": "No local-only tracked source remains. Local HEAD is an ancestor of origin/master and the only dirty item is a small untracked agent log; reclaim only after normal operator acceptance.",
+      "repo": "organvm/domus-genoma",
+      "root": "gh-organvm-domus-genoma-170-bbbc",
+      "score_discount": 35,
+      "status": "default_branch_preserved",
+      "tracked_source": "preserved_on_default",
+      "untracked_file_count": 1,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/gh-organvm-domus-genoma-170-bbbc"
+    },
+    {
+      "branch": "pr-744",
+      "classification": "local-only grafted commit privately preserved; owner decision required",
+      "evidence_updated_utc": "2026-07-04T18:47:47Z",
+      "head": "66fa968b48639f4dcd50ca5c13278f44a92511d7",
+      "lane": "owner-blocker",
+      "next_action": "No PR or remote branch preserves this exact local commit. Do not reclaim from lifecycle cleanup; create a narrow owner packet to review, push, supersede, or retire the patch.",
+      "patch_command": "git format-patch -1 --stdout HEAD",
+      "private_patch_bytes": 42109705,
+      "private_patch_sha256": "ba4b7ecc412b55085c766833546b686f7331d30070e9da4b26926f0b1c895899",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/20260704T184747Z-peer-audited--behavioral-blockchain/receipt.json",
+      "repo": "organvm/peer-audited--behavioral-blockchain",
+      "root": "peer-audited--behavioral-blockchain",
+      "score_discount": 35,
+      "status": "private_patch_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/peer-audited--behavioral-blockchain"
+    },
+    {
+      "branch": "review/pr43-billing-fix",
+      "classification": "local-only billing follow-up patch privately preserved; owner decision required",
+      "evidence_updated_utc": "2026-07-04T18:47:47Z",
+      "head": "7ee85315c78a634d405e974594e4d052c440c31e",
+      "lane": "owner-blocker",
+      "next_action": "No PR or remote branch preserves this exact local patch. Do not reclaim from lifecycle cleanup; create a narrow owner packet to review, push, supersede, or retire the billing follow-up.",
+      "patch_command": "git diff --binary origin/main...HEAD",
+      "private_patch_bytes": 59979,
+      "private_patch_sha256": "0877ad994167e38958c3a0208e5e21bb716c13bcae4bbf2a83850d5fa259f884",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/20260704T184747Z-review-avditor-billing-pr43/receipt.json",
+      "repo": "organvm/specvla-ergon--avditor-mvndi",
+      "root": "review-avditor-billing-pr43",
+      "score_discount": 35,
+      "status": "private_patch_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/review-avditor-billing-pr43"
+    },
+    {
+      "branch": "worktree-wf_29a15be5-9f8-2",
+      "classification": "local-only workspace-preserve follow-up privately preserved; owner decision required",
+      "evidence_updated_utc": "2026-07-04T18:47:47Z",
+      "head": "b1332cd2843353f91e624fe7748945a046ecebda",
+      "lane": "owner-blocker",
+      "next_action": "PR #608 is merged but does not preserve this local HEAD. Do not reclaim from lifecycle cleanup; create a narrow owner packet to review, push, supersede, or retire the workspace-preserve patch.",
+      "patch_command": "git diff --binary origin/main...HEAD",
+      "private_patch_bytes": 8268,
+      "private_patch_sha256": "53dcaa2f5e9ee3c200174fd8567c1cfc77dd3dd26d3024b83a826586dd83c314",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/20260704T184747Z-wf_29a15be5-9f8-2/receipt.json",
+      "repo": "organvm/limen",
+      "root": "wf_29a15be5-9f8-2",
+      "score_discount": 35,
+      "status": "private_patch_preserved",
+      "worktree": "/Users/4jp/limen/.claude/worktrees/wf_29a15be5-9f8-2"
+    },
+    {
+      "branch": "GEN-organvm-limen-ci-green-0702",
+      "classification": "merged PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "head": "ced1164444df42fe8fd4b48924bd4f3f420291e7",
+      "lane": "remote-merged",
+      "merge_commit": "0322195308c4323fca56a44517c824d248278ca5",
+      "merged_at": "2026-07-02T20:58:45Z",
+      "next_action": "No local-only source preservation remains. GitHub PR #574 is MERGED and its head OID equals the local worktree HEAD; reclaim only after normal operator acceptance.",
+      "pr_number": 574,
+      "pr_state": "MERGED",
+      "pr_url": "https://github.com/organvm/limen/pull/574",
+      "repo": "organvm/limen",
+      "root": "GEN-organvm-limen-ci-green-0702",
+      "score_discount": 35,
+      "status": "merged_pr_preserved",
+      "worktree": "/Users/4jp/Workspace/GEN-organvm-limen-ci-green-0702"
+    },
+    {
+      "branch": "worktree-docs-file-fleet-dispatch-lever",
+      "classification": "absent stale prompt-index worktree reference preserved by default branch",
+      "default_branch": "origin/main",
+      "default_head": "09b379c3912af55ad2a24ba01284096353014c23",
+      "evidence_updated_utc": "2026-07-04T18:57:43Z",
+      "head": "1f71ebeffefda1a9f35e3869d9804564f125cf23",
+      "lane": "remote-merged",
+      "next_action": "No local path remains and the recorded head is an ancestor of current origin/main. Keep this receipt so stale prompt-lifecycle remote scans close; no local reclaim action remains.",
+      "repo": "organvm/limen",
+      "root": "docs-file-fleet-dispatch-lever",
+      "score_discount": 35,
+      "status": "default_branch_preserved",
+      "worktree": "/Users/4jp/limen/.claude/worktrees/docs-file-fleet-dispatch-lever"
+    },
+    {
+      "branch": "limen/org-social-organ-firstslice-0703-e618",
+      "classification": "absent stale prompt-index worktree reference preserved by default branch",
+      "default_branch": "origin/main",
+      "default_head": "09b379c3912af55ad2a24ba01284096353014c23",
+      "evidence_updated_utc": "2026-07-04T19:00:29Z",
+      "head": "954f36294540",
+      "lane": "remote-merged",
+      "next_action": "No local path remains and the recorded head is an ancestor of current origin/main. Keep this receipt so stale prompt-lifecycle remote scans close; no local reclaim action remains.",
+      "repo": "organvm/limen",
+      "root": "org-social-organ-firstslice-0703-e618",
+      "score_discount": 35,
+      "status": "default_branch_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-social-organ-firstslice-0703-e618"
+    },
+    {
+      "branch": "limen/org-hr-organ-charter-0704-2089",
+      "classification": "absent stale prompt-index worktree reference preserved by default branch",
+      "default_branch": "origin/main",
+      "default_head": "09b379c3912af55ad2a24ba01284096353014c23",
+      "evidence_updated_utc": "2026-07-04T19:16:21Z",
+      "head": "1f71ebeffefda1a9f35e3869d9804564f125cf23",
+      "lane": "remote-merged",
+      "next_action": "No local path remains and the recorded head is an ancestor of current origin/main. Keep this receipt so stale prompt-lifecycle remote scans close; no local reclaim action remains.",
+      "repo": "organvm/limen",
+      "root": "org-hr-organ-charter-0704-2089",
+      "score_discount": 35,
+      "status": "default_branch_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-hr-organ-charter-0704-2089"
     }
   ],
   "schema": 1

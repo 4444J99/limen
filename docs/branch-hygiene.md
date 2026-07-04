@@ -23,12 +23,13 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c07 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2 chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (104) — decide each
+## Live-work branches (114) — decide each
 
 - `_pr198` — 4cd0dba fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b4885 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-02T18-41-47Z` — eaca451 capture: off-disk sync 2026-07-02T18:41:47Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-03T18-23-54Z` — b53f0ab capture: off-disk sync 2026-07-03T18:23:54Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-04T18-44-48Z` — bdc71ec capture: off-disk sync 2026-07-04T18:44:48Z (main behind origin → side ref, HEAD untouched)
 - `deepen/tao-te-ching-ch6-10` — 6bbd51f limen: promote organvm/domus-genoma to ranked value tier
 - `discover-carrier-wave-zeitgeist-thesis-value` — fe4f763 limen: discover corpus-mythicum, promote to ranked tier
 - `discover-limen-value-2026-06-22` — 7ad100f capture: autonomic off-disk sync 2026-06-23T13:19:40Z
@@ -47,6 +48,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `feat/walls-auto-regen` — 990a39d feat(heartbeat): auto-regenerate the credential + his-hand Walls every 12 beats
 - `feature/ORG-education-organ-face-0630` — 9d17479 feat(education): author polished macro and micro face for education organ
 - `feature/tale-of-genji-chapters-2-5` — 50a31de studium: author Tale of Genji chapters 2-5
+- `fix/616-format` — e020757 style: ruff format test_corpus_command_center.py (CI format-check gate)
 - `fix/heartbeat-refresh-web-wedge` — 0a51202 fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
 - `heal/608-declare-param` — a63e6db chore(governance): declare LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC for preserve_workspace()
 - `heal/ci-ruff-semicolons` — 04b0509 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
@@ -76,11 +78,19 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/org-governance-organ-deepen-0703-9f8e` — 6d48601 governance: enforce publication-policy convergence
 - `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf0 limen: close governance organ self-feed task
 - `limen/org-health-organ-kernel-0630-e4e0` — 2564cd7 Add health organ kernel
+- `limen/org-health-organ-kernel-0704-59fd` — c3d9167 health: sync KERNEL.md to completed scaffold (authority contract + posture sequence + build plan)
+- `limen/org-health-organ-kernel-0704-decb` — 74a158a docs: advance health organ kernel
+- `limen/org-health-organ-kernel-0704-e61b` — b08caed health: complete organ kernel scaffold sync
 - `limen/org-legal-organ-charter-0703-0899` — b8eb571 limen: complete legal organ charter
+- `limen/org-legal-organ-charter-0704-0b2a` — 5dbc0e8 docs: harden legal organ charter
+- `limen/org-legal-organ-firstslice-0703-c244` — 05cad7d legal: add first counsel-review matter slice
 - `limen/org-legal-organ-kernel-0630-a5e5` — 6c301f3 limen: map legal organ kernel
 - `limen/org-legal-organ-kernel-0701-e535` — 3dcb37c organs: refine legal kernel flagship
+- `limen/org-legal-organ-kernel-0704-a80b` — 1800caa chore(legal): bump legal organ maturity to 25% (KERNEL.md authored)
+- `limen/org-legal-organ-kernel-0704-c763` — ac60fff legal: author KERNEL.md mapping domain-neutral kernel to legal domain
 - `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ad organs/social: ship first slice
 - `limen/org-social-organ-firstslice-0703-6fb5` — 4e69933 feat(social): add first koinonia slice
+- `limen/org-social-organ-firstslice-0703-edcd` — 0fbca3f social: ship koinonia first slice
 - `limen/studium-deepen-aeneid-e6cf` — fcee5d4 feat(studium): Aeneid Books 4-8 arcs and essays (desire/sacrifice/revelation/war)
 - `limen/studium-deepen-analects-78fa` — d5d8c19 feat(studium): Analects books 9-11 music arcs + essays (ascent/memory/salvation)
 - `limen/studium-deepen-beowulf-4918` — 99fb771 feat(studium): Beowulf fitts 2–6 — force-matched arcs + essays

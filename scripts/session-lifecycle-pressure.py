@@ -149,6 +149,10 @@ def receipt_closes_remote_missing(receipt: dict[str, Any] | None) -> bool:
     return lane in REMOTE_MISSING_CLOSED_REASONS or status in REMOTE_MISSING_CLOSED_STATUSES
 
 
+def live_scanner_defers_remote_missing(reason: str) -> bool:
+    return reason in REMOTE_MISSING_CLOSED_REASONS or reason.startswith("active(<")
+
+
 def remote_missing_counts(worktree_remote: dict[str, Any], wt_report: dict[str, Any]) -> dict[str, Any]:
     raw_missing = int(worktree_remote.get("remote_branches_missing") or 0)
     missing_roots = [
@@ -179,7 +183,7 @@ def remote_missing_counts(worktree_remote: dict[str, Any], wt_report: dict[str, 
         item = by_name.get(root)
         reason = str((item or {}).get("reason") or "")
         if (
-            (item and not item.get("debt") and reason in REMOTE_MISSING_CLOSED_REASONS)
+            (item and not item.get("debt") and live_scanner_defers_remote_missing(reason))
             or receipt_closes_remote_missing(receipts_by_root.get(root))
         ):
             closed_roots.append(root)
