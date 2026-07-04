@@ -5919,6 +5919,71 @@ git diff --check -- docs/consolidation/EXECUTION-MANIFEST.md scripts/consolidati
 
 Result: private prompt extraction has `48` records; PR #547 is merged and green; tracked/live hooks match; focused hook probes preserve the intended allow/block behavior; `21ba3f3` is on `origin/main`; `b35e5ac` is branch-only; no PR exists for `session/post-moneta-durability`; consolidation wrappers pass `bash -n` and now refuse without `LIMEN_CONSOLIDATION_GATE=consolidation-gate-open`.
 
+### OpenCode fixed the Auto-Scaler dependency failure, then the board spawned a stale red duplicate PR
+
+Severity: medium for dispatch hygiene; low for the code fix. The actual CI failure was fixed cleanly, but the task lifecycle kept moving after success and produced redundant red work.
+
+Evidence:
+
+- Queue row `109` points at OpenCode session `ses_0ee4207acffe2JZEkK82a9LBXO`, titled `Fix organvm/limen CI`, rooted at `/Users/4jp/Workspace/limen`, running on 2026-06-29T04:58:10Z through 2026-06-29T05:03:42Z.
+- OpenCode database metadata: model `deepseek-v4-flash-free`, cost `0`, 73,683 input / 6,889 output / 5,184 reasoning / 3,022,592 cache-read tokens.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-109-opencode-ci-green-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to complete `GEN-organvm-limen-ci-green-0629`: inspect latest failing checks on `organvm/limen` default branch, fix the root cause, and confirm checks pass; if CI was already green, add the most valuable missing check.
+- The failing workflow was `Autonomous Auto-Scaler`, run `28345164223`, on `main` at `a6fcb51`, failing with `ModuleNotFoundError: No module named 'pydantic'` from `scripts/auto-scale.py -> limen.io -> limen.models`.
+- PR #398 merged at 2026-06-29T05:56:12Z with merge commit `aee9aa6aadb9c9204ae517dcf3cc203854783526`. Its authored commit `9468e18` changed only `.github/workflows/auto-scale.yml`, renaming the install step and adding `pydantic` to `python -m pip install pyyaml requests`.
+- PR #398 checks were green: `python`, `pr-gate`, `python-311`, `worker`, and `web` all succeeded.
+- Scheduled Auto-Scaler runs after the merge succeeded, including `28360058542` on 2026-06-29T08:50:35Z and the latest checked run `28698004328` on 2026-07-04T06:40:04Z. There were later July 3 failures under different heads, so the fair claim is "this pydantic failure was fixed," not "Auto-Scaler is permanently solved."
+- Current local import probe passes: `PYTHONPATH=cli/src python3 -c "from limen.io import atomic_write_text; from limen.models import LimenFile; print('ok')"` -> `ok`.
+- The session cleanup was risky. It popped conflicts, checked out `tasks.yaml` from `origin/main`, restored several unrelated files, and dropped stash object `2281fd62b6f5012cb625ab182ed6cdaa576131f9`. That dropped stash remains inspectable for now and contains broad unrelated changes in `ianva/scripts/ianva-serve.sh`, `institutio/governance/parameters.yaml`, `scripts/route.py`, `tasks.yaml`, and `value-repos.json`.
+- Current `tasks.yaml` still contains `GEN-organvm-limen-ci-green-0629` as `done`, with PR #398 as the URL, but its `dispatch_log` is incoherent: after the merged-PR done entry it records `failed`, `open`, `dispatched`, another PR, and another done. That violates the ideal "done -> archived or leave done" lifecycle discipline.
+- The board spawned PR #400 after #398 had already merged. PR #400 was a stale duplicate for the same task, changed unrelated files (`cli/tests/test_dispatch_engine.py`, `ianva/src/ianva/config.py`), and was red on `python`, `python-311`, and `pr-gate`.
+- Review closed PR #400 on 2026-07-04T08:25:25Z with a factual stale-duplicate note. Current main's dispatch timeout test passes without PR #400's changes.
+
+Ideal prompt diff:
+
+- Ideal CI-green form: identify the failing default-branch check, make the minimum workflow fix, prove the import path, open/merge one green PR, and leave the task done exactly once.
+- Actual useful form: OpenCode correctly found the missing `pydantic` dependency and produced PR #398, a narrow one-file fix that merged green and fixed the scheduled workflow.
+- Ideal cleanup form: preserve unrelated stashes/worktree drift and avoid destructive stash operations unless the stash is proven owned by the session.
+- Actual cleanup form: the session dropped a broad unrelated stash after conflict handling. The object is still reachable by hash now, but relying on unreachable stash objects is not durable recovery.
+- Ideal task-state form: once PR #398 merged, the task should have stayed done or archived.
+- Actual task-state form: the task was reopened/failed/dispatched again, generating PR #400, a stale red duplicate that this review closed.
+- Ideal attribution form: ignore the queue's 48-file changed surface and credit only `.github/workflows/auto-scale.yml` for the useful fix.
+
+Outcome:
+
+- Row `109` is classified as useful and landed for the CI dependency fix.
+- Review action: closed stale duplicate PR #400.
+- No local code patch was made by this review pass. The remaining issue is process-level: task lifecycle and recovery need to stop reopening already-merged CI-green work.
+
+What was fucked up:
+
+- OpenCode used `grep` instead of `rg` and spent time reading huge task/log surfaces, but still found the real failure quickly.
+- It claimed the task was removed from `origin/main`; current state shows it exists and is `done`, so that was transient scheduler confusion.
+- It performed risky stash/conflict cleanup and dropped stash `2281fd62...` containing broad unrelated state.
+- The dispatcher/healer lifecycle treated the already-successful task as failed/reopenable and created PR #400 after #398 had merged.
+- PR #400 was titled as the same CI-green task but changed unrelated files and failed checks.
+- The task's `dispatch_log` now contains done -> failed -> open -> dispatched -> done entries, which makes "what actually satisfied this task?" harder to answer than it should be.
+
+Verification:
+
+```bash
+jq '.changed_review[109]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-109-opencode-ci-green-prompts.jsonl
+sqlite3 -readonly -json "$HOME/.local/share/opencode/opencode.db" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_0ee4207acffe2JZEkK82a9LBXO' or parent_id='ses_0ee4207acffe2JZEkK82a9LBXO' order by time_created;"
+gh run view 28345164223 --repo organvm/limen --json databaseId,displayTitle,conclusion,status,headBranch,headSha,event,url,createdAt,updatedAt,jobs
+gh run view 28345164223 --repo organvm/limen --log-failed
+gh pr view 398 --repo organvm/limen --json number,title,state,createdAt,updatedAt,mergedAt,headRefName,headRefOid,mergeCommit,statusCheckRollup,url,files,commits,body
+git show --unified=30 9468e18 -- .github/workflows/auto-scale.yml
+gh run list --repo organvm/limen --workflow "Autonomous Auto-Scaler" --limit 12 --json databaseId,displayTitle,conclusion,status,headBranch,headSha,event,createdAt,updatedAt,url
+PYTHONPATH=cli/src python3 -c "from limen.io import atomic_write_text; from limen.models import LimenFile; print('ok')"
+git show --stat --oneline --decorate 2281fd62b6f5012cb625ab182ed6cdaa576131f9
+sed -n '69510,69620p' tasks.yaml
+gh pr view 400 --repo organvm/limen --json number,state,closedAt,title,url,statusCheckRollup
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_dispatch_engine.py::test_run_capture_kills_grandchild_holding_pipe_on_timeout -q
+```
+
+Result: private prompt extraction has `1` record; PR #398 merged and the pydantic install fix is on `origin/main`; the original failing Auto-Scaler run failed exactly on missing `pydantic`; current import probe and focused dispatch test pass; latest scheduled Auto-Scaler run is green; stale duplicate PR #400 is now closed; dropped stash `2281fd62...` is still inspectable at review time.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
