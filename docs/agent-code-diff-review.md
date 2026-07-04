@@ -3193,6 +3193,57 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 
 Result: current live checkout is `main...origin/main` with `M netmode.sh`; current syntax and Python compile pass; `netmode version` prints `1.6.0`; current selftest passes `66 passed, 0 failed`; LaunchAgent plist lints OK; PR #18 is merged; `v1.6.0` is latest; issue #9 is open and records the billing-blocked CI gate; branch protection has PR review and linear-history controls but no required status checks; transcript guard fails on billable and Opus budgets.
 
+### Claude FLAME continuity session shipped useful substrate-independence work, then burned too much Opus keeping the thread alive
+
+Severity: high; conductor identity, autonomous dispatch safety, merge behavior, and premium-model budget.
+
+Evidence:
+
+- Queue row `61` points at Claude continuation session `25d48a87-2cb2-428d-bb68-96467d8bc5fe`, rooted in deleted worktree `.claude/worktrees/woolly-forging-sedgewick`, with 10 changed paths across `FLAME.md`, `docs/FLAME-ACTIVATION.md`, `_pr_scan.py`, watchdog launchd config, and tests.
+- The real first-layer prompt is in predecessor session `d051cce2-54b0-478d-afaf-e2ed1429ce41`; the `25d48...` main human prompts are three "Continue from where you left off" turns. The verbatim local-only prompt record is in `.limen-private/session-corpus/full-stack-review/session-61-claude-flame-prompts.jsonl`.
+- First-layer ask, redacted to intent: prove that VLTIMA can run for a month without the human, preserve the conductor "flame" across model substitution, and keep functioning if the active substrate becomes Codex, OpenCode, Ollama, or another lane.
+- Durable commits found in git history:
+  - `f2fa84485dd51b34869c0eb2edb5e0bfe0dee8e1` adds `FLAME.md`, dispatch prompt injection, the `ollama` floor lane, watchdog launchd config, and focused tests.
+  - `84fb2550dafeda8b768bc9845e5e66406df58a1b` adds rotating full-fleet PR scan coverage so HEAL/MERGE no longer inspect only the first 30 open PRs.
+  - `ed54823fda65b8b37d7175bb07dcfe381240245a` adds the stale-base / stale-core merge refusal guard for the #111 silent-revert class.
+- Those commits are ancestors of current `main`; GitHub's commit-to-PR lookup returned no associated PR rows for the reviewed commits, so the receipt is commit-based rather than PR-based.
+- Current live proof is mostly healthy: FLAME still exists, dispatch still has `_flame_preamble()` / `_build_prompt()`, `container/launchd/com.limen.watchdog.plist` sets both `--heal` and `LIMEN_WATCHDOG_HEAL=1`, and `launchctl list` shows both `com.limen.heartbeat` and `com.limen.watchdog`.
+
+Ideal prompt diff:
+
+- Ideal form: make the system substrate-independent with a small portable identity kernel, explicit state-resume pointers, lane fallback down to a local floor, and a self-resurrection path that is gated where human approval is genuinely required.
+- Actual outcome: the session substantially matched that ideal. `FLAME.md` rides dispatch prompts, the local `ollama` floor is modeled/tested, watchdog heal is configured behind the explicit launchd/bootstrap gate, and the PR-scan/stale-base work addressed a real autonomy failure mode that would otherwise let a "green" PR silently revert the conductor body.
+- Ideal form for follow-on continuity prompts: resume with focused verification and patch only the failing gap.
+- Actual continuation: the session became an expensive mega-thread. It did useful work, but the continuation ran far past the bounded-work contract and used Opus where narrower Haiku/Sonnet verification would have been enough for much of the evidence gathering.
+
+Outcome:
+
+- This was valuable work: it turned a philosophical prompt into concrete repo mechanisms and tests. The durable diff is not just code churn; it directly maps to the first-layer ask.
+- The full-fleet PR scan was especially important. Before this, HEAL/MERGE could keep cycling over the head of a large PR backlog while the tail never received a verdict.
+- The stale-base guard is a high-value hardening layer: it blocks the class where a mergeable, CI-green PR can still revert conductor code because it branched from an old base.
+
+What was fucked up:
+
+- The row attribution is misleading if read naively: the session id in the queue is a continuation, while the actual human prompt lives in the predecessor session. Review tooling must link predecessor/continuation sessions before judging prompt compliance.
+- The continuation session failed the budget guard: `4,836,250` billable-ish tokens, `3,872,336` Opus billable-ish tokens, and `75,546,624` cache-read tokens. The initial predecessor session was within guard (`839,147` billable-ish, `157,228` Opus), so the overrun came from keeping the follow-on thread alive.
+- The worktree/live-root boundary was risky. The worktree was deleted, and the session/memory noted that absolute `/Users/4jp/Workspace/limen/...` paths from a worktree hit live main, not the worktree. Read-only exploration was fine; edits under that pattern would have been dangerous.
+- `docs/FLAME-ACTIVATION.md` still reads partly like a staged branch note even though the work is on `main`; this is documentation drift, not a live blocker.
+- The prompt ledger overcounts FLAME scaffolding as fresh prompt mass in older views. The newer review needs to keep separating `flame_scaffold` / `flame_with_task_body` from actual first-layer user intent.
+
+Verification:
+
+```bash
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_flame_kernel.py cli/tests/test_pr_scan.py cli/tests/test_self_heal.py -q
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-woolly-forging-sedgewick/d051cce2-54b0-478d-afaf-e2ed1429ce41.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-woolly-forging-sedgewick/25d48a87-2cb2-428d-bb68-96467d8bc5fe.jsonl
+plutil -lint container/launchd/com.limen.watchdog.plist
+python3 scripts/watchdog.py --dry-run
+launchctl list | rg 'com\.limen\.(heartbeat|watchdog)'
+python3 scripts/merge-drain.py --dry-run --scan 5 --limit 0
+```
+
+Result: focused tests passed `30 passed`; predecessor transcript guard passed; continuation transcript guard failed on billable and Opus budgets; watchdog plist linted OK; watchdog dry-run reported `HEALTHY`; launchd listed heartbeat and watchdog; merge-drain dry-run classified a 5-PR window without cursor mutation and reported `ready=3`, `ci-red=2`, `stale-core=0`, `stale-base=0`.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
