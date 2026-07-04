@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T05:14:07Z`
+Generated: `2026-07-04T05:18:49Z`
 
 ## Scope
 
@@ -27,6 +27,7 @@ Generated: `2026-07-04T05:14:07Z`
 | 65 | `opencode` | `ses_108ebe914ffewL4axO5hTLs4gr` | Tanakh film companion closeout. The requested content had already merged via PR #116 before the session; OpenCode correctly discovered that, then re-added a stale `tasks.yaml` entry and accidentally committed ten film files onto an unrelated Beowulf PR branch. |
 | 66 | `opencode` | `ses_108ebf37effe8LmzZRJAZdya7b` | Qur'an film companion closeout. The requested content had already merged via PR #97 and current `main` validates; OpenCode stopped without a new commit, but its final receipt repeated a bogus PR #81 citation and exposed concurrent task-board volatility. |
 | 67 | `codex` | `019f24d2-6dae-7d30-8ea4-f14f3045fc67` | Overnight Codex conductor run. It produced useful live-root, worktree-debt, async dispatch, route, capacity, and organ work, but the session became a direct-main commit storm and an interrupted route fix was later captured together with a financial worker PR delta, leaving PR #590 open/red and proof surfaces stale. |
+| 68 | `claude` | `6b32c7a7-c558-45f0-b872-3cd16c338448` | Insights-lineage / insight-route run. It shipped the missing insight lineage and route loop through green PRs #592, #596, #598, and #599, and current heartbeat evidence shows the route organ running; the session still violated Fable/token governance and overstated "everything fixed" because closeout predicates are point-in-time and one now fails on later branch drift. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3580,6 +3581,66 @@ python3 scripts/dispatch-health.py --probe-async
 ```
 
 Result: focused code tests pass `85 passed`; PR #590 is open with failed `pr-gate`; `a52c1c` combines route/test code with financial worker artifacts; current live-root and dispatch-health gates are blocked by current dirty files; current worktree debt is `11`, so the session's zero-debt receipt was not durable across later activity.
+
+### Claude insights-lineage session shipped the missing loop, but violated Fable and closeout discipline
+
+Severity: high for governance, medium for code risk. The actual feature work is useful and currently evidenced, but the session's model-spend and final-proof behavior did not match the repo's Fable acceptance contract.
+
+Evidence:
+
+- Queue row `68` points at Claude session `6b32c7a7-c558-45f0-b872-3cd16c338448`, with changed paths `.claude/worktrees/feat-insight-route-live/scripts/insight-route.py` and `~/.claude/projects/-Users-4jp-Workspace-limen/memory/insights-lineage-organ.md`.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-68-claude-insights-prompts.jsonl` (`14` user-message records). In redacted intent form, the user asked for the insights system to compare against previous insights and every prior insight, maintain hourly/daily/weekly/monthly lineage, feed a durable insights repository, self-correct, self-heal, and avoid building new parts before excavating what already existed.
+- The session did excavate existing surfaces rather than only adding new code. The merged output is a chain of green PRs:
+  - PR `organvm/limen#592` merged at `d86cea05495f5d6f12d12003dc3657831286f140`, modifying `scripts/done-insight-cadence.sh`, `scripts/hooks/insights-capture.sh`, and `scripts/insight-cadence.py`.
+  - PR `organvm/limen#596` merged at `82dde31d845c9ac5085b33e4816f9396b496e82b`, modifying `scripts/insight-route.py`, its tests, heartbeat/metabolize wiring, `CLAUDE.md`, and governance parameters.
+  - PR `organvm/limen#598` merged at `07757154b4c3f939cd7e39e793f5e0840039ba75`, adding `scripts/enactment-audit.py`, its regression test, and `verify-whole.sh` wiring so declared-on flags must be enacted.
+  - PR `organvm/limen#599` merged at `8571345c01ac970368ef843d0342af459748c7f9`, adding the enactment contract for `LIMEN_INSIGHT_ROUTE_APPLY`.
+- Current heartbeat output proves the formerly pending live observation has happened: recent `logs/heartbeat.out.log` lines show `insight-route: 0 board tasks created, 45...53 board-echoes skipped, 0 deferred (cap 5/pass)`.
+- Current focused predicates are green: `python3 scripts/enactment-audit.py --check`; `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_insight_route.py -q` (`8 passed`); `bash scripts/done-insight-cadence.sh`; `python3 scripts/censor.py --tier weekly` (`1 decisions`, dry-run).
+- The Claude workflow guard is red for the session: `billableTokens=3570254`, `fableBillableTokens=3570254`, `fableAcceptanceSeen=false`, with violations for total billable budget, Fable billable budget, and missing Fable acceptance command.
+
+Ideal prompt diff:
+
+- Ideal form: first inventory the existing insight cadence, capture, censor, heartbeat, metabolize, and board-routing surfaces; then connect the minimal missing conduits; then prove lineage, routing, and enactment with a current live heartbeat observation.
+- Actual form: the session substantially followed that engineering path. It found existing insight-cadence machinery, wired the lineage producer, added route ownership behavior, and added an enactment audit so a declared-on but live-dark switch is no longer invisible.
+- Ideal form for model governance: because Fable is opt-in and acceptance-gated, record the Fable acceptance command and stay inside the configured Fable and total billable budgets before starting or continuing the long run.
+- Actual form: the session ran on `claude-fable-5` without the acceptance receipt and consumed `3,570,254` billable tokens, exceeding both the total and Fable budgets.
+- Ideal closeout form: say exactly which predicates are green now, which are point-in-time, and which remain pending; if a background heartbeat observation is needed, either wait for it or name it as unverified.
+- Actual form: the shipped code was green, but the final "everything fixed" framing was stronger than the proof. The route observation is green now, but this audit supplied the missing later heartbeat evidence.
+
+Outcome:
+
+- This row is real progress. It converted the user's broad "insights should learn from all prior insights" pressure into durable code paths, tests, heartbeat wiring, and enactment gates.
+- The work is not a complete proof that every future insight will be implemented. It proves the latest-report-per-tier route loop is armed, capped, echo-aware, and running, with current tests covering the important route behavior.
+- Current `bash scripts/no-tasks-on-me.sh` fails because later landed branches `limen/org-health-organ-kernel-0704-065a` and `limen/org-legal-organ-kernel-0704-3656` still linger. That is later fleet drift, not direct evidence that PRs #592/#596/#598/#599 are bad, but it means the session's closeout predicate is not durable today.
+
+What was fucked up:
+
+- The session broke the repo's Fable contract: no acceptance receipt, too many billable tokens, and a broad expensive thread for a change that ultimately landed through four bounded PRs.
+- It let a correct implementation story blur into an over-broad closeout story. "Everything fixed" should have been bounded to the merged insight-lineage/route/enactment surfaces and their predicates.
+- The final proof leaned on planned or just-landed heartbeat behavior before the observed live loop was independently shown. The current audit closes that evidence gap, but the original receipt was premature.
+- The session's prompt pressure explicitly included "don't build new until you know what we already built"; Claude did better here than many rows by excavating first, but still added multiple new gates/scripts without a compact map of what was superseded, reused, or made obsolete.
+- The session demonstrates a recurring fleet pattern: the engineering work can be good while the orchestration layer remains undisciplined on spend, acceptance, and proof scope.
+
+Verification:
+
+```bash
+jq '.changed_review[68]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -c 'select(.type=="user") | select(.message.content|type=="string") | select((.message.content|startswith("<local-command"))|not) | {session_id:"6b32c7a7-c558-45f0-b872-3cd16c338448",agent:"claude",timestamp,origin:(.origin.kind // ""),promptSource:(.promptSource // ""),uuid,prompt:.message.content}' /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/6b32c7a7-c558-45f0-b872-3cd16c338448.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/6b32c7a7-c558-45f0-b872-3cd16c338448.jsonl
+gh pr view 592 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 596 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 598 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,files,statusCheckRollup,url
+gh pr view 599 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,files,statusCheckRollup,url
+rg -n 'insight-route:' logs/heartbeat.out.log
+python3 scripts/enactment-audit.py --check
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_insight_route.py -q
+bash scripts/done-insight-cadence.sh
+python3 scripts/censor.py --tier weekly
+bash scripts/no-tasks-on-me.sh
+```
+
+Result: PRs #592, #596, #598, and #599 are merged with green checks; live heartbeat now shows `insight-route` running; focused insight/enactment/cadence/censor predicates pass; the Claude guard fails for budget/Fable acceptance; current `no-tasks-on-me.sh` fails on later branch drift.
 
 ## Remaining Review Queue
 
