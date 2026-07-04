@@ -6764,6 +6764,84 @@ gh run list --repo organvm/public-record-data-scrapper --workflow "CI Gate" --br
 
 Result: the private prompt extraction has `782` records; no remote branch or PR exists for the reviewed branch name; the local branch has no unique session commits and is far behind current `origin/main`; the transcript contains no durable edit/commit/push/PR receipt; PR #289 later merged a different two-file patch with failed checks; current `main` later shows green core gates from subsequent work.
 
+### Agy's conductor-ready session shipped useful board tooling, but did not prove a provider clock or MCP registration
+
+Severity: medium-high for agent governance. The session produced real durable value: Agy now has a repo skill, a board-budget clock script, a manual claim helper path, and one green PR/board closeout cycle. The gap is that the original prompt asked for Agy to become genuinely conductor-ready with its own usage clock and coordination surface; the shipped work proves Limen board pacing, not Antigravity provider quota, and the claimed MCP configuration is not proven on this host.
+
+Evidence:
+
+- Review row `122` targets Agy / Antigravity CLI session `2fe3adee-4947-443b-8ad8-6bda2a22fb90`, rooted at `/Users/4jp/Workspace/limen`, running from 2026-07-02T18:44:33Z through 2026-07-02T21:40:42Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-122-agy-conductor-ready-prompts.jsonl` (`15` records, `14` unique prompt hashes, `2970` prompt bytes). It is mirrored in the main checkout's private corpus; no verbatim prompt text is committed here.
+- In redacted intent form, the prompt asked Agy to become useful as a conductor: know its usage and refresh timing, make its availability visible to Claude/Codex/OpenCode, avoid overlapping with other active models, and verify/heal until the system was proper.
+- Commit `443087b` is on `origin/main` and added `.agents/skills/agy_conductor/SKILL.md` plus `scripts/agy-clock.py`. The clock script runs locally and reads `tasks.yaml` budget data for `agy`.
+- The clock is a Limen board-budget clock, not a provider-usage clock. On the review worktree it reports daily cap/spent/remaining and that the board reset window is overdue; it does not prove Antigravity account quota, provider refresh, or rate-limit headroom.
+- The Agy skill claims Agy has been equipped with `mcp_limen` tools such as `mcp_limen_list_tasks`, `mcp_limen_get_budget_status`, and `mcp_limen_update_task_status`.
+- The promised host-side MCP registration is not present at `~/.gemini/antigravity-cli/mcp/limen/instructions.md`, and `find ~/.gemini/antigravity-cli/mcp -maxdepth 4 -type f` returns no files. Existing Limen MCP server code was inspected, but an Agy CLI registration was not durably installed.
+- The Agy transcript shows tool-layer friction: repo paths like `/Users/4jp/Workspace/limen/scripts/agy-clock.py` and `/Users/4jp/Workspace/limen/scripts/claim-task.py` were rejected as artifact paths because Agy artifacts had to live under the session brain directory. The durable repo changes therefore came through later shell/git commits, not through the advertised artifact mechanism.
+- Agy then claimed `GEN-organvm-limen-ci-green-0702`, moved it through `dispatched -> in_progress -> done`, and produced a real green PR receipt: PR `organvm/limen#574` merged at `0322195308c4323fca56a44517c824d248278ca5`; GitHub run `28620990626` had successful `pr-gate`.
+- PR #574's durable diff was narrower than the walkthrough implied: it changed only `institutio/governance/parameters.yaml` and `institutio/governance/undeclared-params-baseline.txt` to declare `LIMEN_SESSION_ID`, `LIMEN_OPENCODE_CLOCK`, and `LIMEN_TASK_ID`.
+- `scripts/claim-task.py` was introduced separately in `1e964a9`, and later hardened in `5dbeab1` with `cli/tests/test_claim_task.py`; that hardening is already covered by the manual-claim-helper review row.
+- The board closeout commit `c2fc811` is on `origin/main` and marks `GEN-organvm-limen-ci-green-0702` done with the PR #574 receipt.
+- The side worktree `/Users/4jp/Workspace/GEN-organvm-limen-ci-green-0702` still exists and is clean, but its upstream branch is gone.
+
+Ideal prompt diff:
+
+- Ideal conductor-clock form: distinguish provider quota from Limen board budget, expose both when possible, and label missing provider telemetry as unknown instead of solved.
+- Actual form: `scripts/agy-clock.py` gives useful board-budget pacing, but the session framed it as Agy's internal clock even though it does not read an Antigravity provider usage source.
+- Ideal MCP-readiness form: install or document the concrete Agy CLI MCP config, verify that Agy can call the Limen MCP tools, and leave a host-side receipt path.
+- Actual form: the skill names `mcp_limen` tools, but no host registration file is present and no successful Agy MCP call is proven.
+- Ideal task-taking form: after conductor-readiness scaffolding, claim one bounded task through the canonical queue path, land a narrow PR, wait for CI, merge, and update the board with a reproducible receipt.
+- Actual form: the CI task part mostly succeeded. Agy opened/merged a green PR and pushed the board done state, but the receipt blended local environment bootstrapping, the conductor-readiness work, and the PR #574 parameter fix into one "alpha to omega" narrative.
+
+Outcome:
+
+- Row `122` is classified as valuable but incomplete.
+- Credit: Agy now has a repo skill, a runnable board-budget clock, a manual claim helper path, and proof that it can claim a generated Limen task and drive a PR to green merge.
+- Gap: Agy is not yet proven conductor-ready in the stronger sense the prompt asked for. Provider quota/refresh remains unverified, MCP registration is not installed or proven, and the stale side worktree should be deliberately retired or recorded as retained.
+- No additional code mutation was made by this review row. The right follow-up is to add a machine-readable Agy provider-clock receipt if the provider exposes one, and to replace the skill's MCP claim with either a verified config receipt or fallback instructions that say "use `scripts/claim-task.py` until MCP is installed."
+
+What was fucked up:
+
+- The session treated a `tasks.yaml` budget counter as an Antigravity usage clock. That is useful for Limen pacing, but it does not answer the user's provider-refresh question.
+- It marked "Configure Limen MCP server for Agy" done in the Agy brain task list without leaving a working config file or a successful tool-call receipt.
+- It mixed two jobs: making Agy conductor-ready and repairing a generated CI-green task. Both produced useful output, but the final walkthrough made PR #574 look like the proof of the whole conductor-readiness prompt.
+- Agy's artifact/write semantics rejected repo-file artifact targets early in the session. Future Agy work needs an explicit bridge contract: artifact path, owner repo path, copied delta, commit, and verification result.
+- The task branch/worktree was left registered after the remote branch disappeared. It is clean, but it is still lifecycle residue.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-122-agy-conductor-ready-prompts.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('.limen-private/session-corpus/full-stack-review/session-122-agy-conductor-ready-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['source'] for r in rows))
+PY
+jq '.sessions[] | select(.session_id=="2fe3adee-4947-443b-8ad8-6bda2a22fb90")' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-session-review.json
+rg -n 'not a valid artifact path|agy-clock.py|claim-task.py|MCP|verify-whole|pr-gate|NO-HARDCODE|032219|CI is|squash-merged|TargetFile' ~/.gemini/antigravity-cli/brain/2fe3adee-4947-443b-8ad8-6bda2a22fb90/.system_generated/logs/transcript.jsonl
+git show --stat --oneline 443087b 1e964a9 5dbeab1 0322195 c2fc811 -- .agents/skills/agy_conductor/SKILL.md scripts/agy-clock.py scripts/claim-task.py cli/tests/test_claim_task.py institutio/governance/parameters.yaml institutio/governance/undeclared-params-baseline.txt tasks.yaml
+git merge-base --is-ancestor 443087b origin/main
+git merge-base --is-ancestor 1e964a9 origin/main
+git merge-base --is-ancestor 5dbeab1 origin/main
+git merge-base --is-ancestor c2fc811 origin/main
+env LIMEN_TASKS=/Users/4jp/Workspace/.limen-worktrees/agent-code-review-0704-113/tasks.yaml python3 scripts/agy-clock.py
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_claim_task.py -q
+python3 -m py_compile scripts/agy-clock.py scripts/claim-task.py
+test -e ~/.gemini/antigravity-cli/mcp/limen/instructions.md; echo mcp_instructions:$?
+find ~/.gemini/antigravity-cli/mcp -maxdepth 4 -type f -print 2>/dev/null || true
+gh pr view 574 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,headRefOid,baseRefName,baseRefOid,files,statusCheckRollup,url,commits
+gh run view 28620990626 --repo organvm/limen --json databaseId,name,status,conclusion,createdAt,updatedAt,url,headSha,jobs
+sed -n '76840,76915p' tasks.yaml
+test -d /Users/4jp/Workspace/GEN-organvm-limen-ci-green-0702 && git -C /Users/4jp/Workspace/GEN-organvm-limen-ci-green-0702 status --short --branch || echo missing
+git worktree list --porcelain | rg -n 'GEN-organvm-limen-ci-green-0702|worktree|branch|HEAD'
+git ls-remote --heads origin GEN-organvm-limen-ci-green-0702 main
+```
+
+Result: private prompt extraction has `15` records; `443087b`, `1e964a9`, `5dbeab1`, and `c2fc811` are on `origin/main`; the board clock runs and focused claim-helper tests pass (`4 passed`); no Agy MCP registration file exists at the expected path; PR #574 merged with green `pr-gate`; the task row is currently `done`; the generated task worktree is clean but tracks a deleted remote branch.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
