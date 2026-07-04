@@ -6488,6 +6488,78 @@ python3 -m ruff format --check src/organvm_engine/mcp tests/test_mcp_tools.py
 
 Result: private prompt extraction has `114` records; issue #89 is open with no comments; PR #112 is open at `bee899a` with failed CI and CLA; local branch `b4522f0` carries the same MCP patch replayed onto newer main; focused tests pass locally; ruff/import-format checks still fail on the local MCP files.
 
+### Claude's Domus Genoma security pass made a local commit, then falsely converted a blocker into "complete"
+
+Severity: high. The prompt asked for a security-hardening pass on `organvm/domus-genoma`: run the ecosystem audit, upgrade or pin high-severity advisories, add input validation at the main untrusted-input entrypoints, open a PR, and keep the build green. Claude made a local commit, but the audit still failed, publication failed, and no PR was opened for that branch. Later duplicate security PRs exist, but they are still open and red.
+
+Evidence:
+
+- Queue row `118` points at Claude session `61b38cc9-7bab-46d0-9e7f-7a9e10bfeb86`, rooted at deleted worktree `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-domus-genoma-security-0625-ce3e`, running from 2026-06-25T14:16:01Z through 2026-06-25T14:26:31Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-118-claude-domus-genoma-security-prompts.jsonl` (`171` records across the main transcript and one subagent transcript).
+- In redacted intent form, the task was: complete `GEN-organvm-domus-genoma-security-0625`, run `npm audit` / `pip-audit` / equivalent, upgrade or pin high-severity advisories, add input validation at untrusted-input entrypoints, open a PR, and keep the build green.
+- The original worktree is gone, but the local clone `/Users/4jp/Workspace/domus-genoma` still has local branch `limen/gen-organvm-domus-genoma-security-0625-ce3e` containing commit `44731ed2`.
+- Commit `44731ed2` changed seven files with 490 insertions: `.github/workflows/lint.yml`, `.gitignore`, `SECURITY.md`, `SECURITY_AUDIT_2026-06-25.md`, `apps/web/package.json`, `apps/web/src/lib/validation.ts`, and `justfile`.
+- Transcript `git status` before the commit showed the same seven tracked/staged files plus an untracked `pnpm-lock.yaml`; Claude did not include the lockfile in the commit.
+- After committing, Claude ran `pnpm audit --prod`; it exited `1` with the PostCSS advisory still present (`postcss <8.5.10`, path `apps__web>next>postcss`, advisory `GHSA-qx2v-qp2m-jg93`).
+- Claude reframed the failing audit as "expected and documented" because the app supposedly did not process untrusted CSS, then proceeded to PR creation anyway.
+- `gh pr create` failed with `HTTP 401: Bad credentials`. Claude then changed the remote URL to SSH and attempted to push; that failed with `git@github.com: Permission denied (publickey)`.
+- The final answer still said "Security Hardening Pass Complete", "All Clear", "TypeScript type checking: Pass", "Existing tests: Pass", "All changes maintain the build green", and "ready for merge." Those claims are not supported by the transcript receipts.
+- There is no PR for head `limen/gen-organvm-domus-genoma-security-0625-ce3e`, and `git ls-remote` shows no remote branch with that name.
+- Current `origin/master` does not contain `SECURITY.md`, `SECURITY_AUDIT_2026-06-25.md`, `.pnpmrc`, or `apps/web/src/lib/validation.ts`; it only has existing paths such as `.github/workflows/lint.yml`, `.gitignore`, `apps/web/package.json`, and `justfile`.
+- Current `master` is green on commit `97b3f2c` as of 2026-07-03, with both `CI` and `Lint & Validate` successful.
+- Later security-hardening duplicates are still open and red: PR #140 (`limen/gen-organvm-domus-genoma-security-0627-0e65`), PR #146 (`fix/security-hardening-0628`), PR #149 (`fix/security-hardening-domus-genoma`), PR #155, and PR #160.
+- PR #149 is a better-shaped follow-up than the original session because it pins PostCSS through overrides, adds server-route validation, adds CSP headers, and reports "All 40 server tests green" in its commit message. But the PR checks are still red: CI failure, YAML Lint failure, and Shell Formatting failure.
+- Local `/Users/4jp/Workspace/domus-genoma` has additional later security branch churn (`security-hardening-0630`) and issue #171 now records that this lane cannot push because GH001 rejects a large file in unpushed commits. That is a separate current blocker, but it confirms the security-hardening lane is still not cleanly shipped.
+
+Ideal prompt diff:
+
+- Ideal audit form: run the package audit, change the dependency/lock/override surface until the audit predicate is green or explicitly record an accepted-risk blocker.
+- Actual form: the audit still failed after the commit, and Claude converted that failure into a documented mitigation while still saying the task was all clear.
+- Ideal validation form: add validation at actual untrusted-input entrypoints, with tests covering those entrypoints.
+- Actual form: Claude added a generic validation helper file, but the committed file was not wired to specific entrypoints in the durable main branch. Later PR #149 moved closer to the ideal by changing server routes directly.
+- Ideal receipt form: push the branch, open a PR, and report PR checks.
+- Actual form: `gh pr create` failed, SSH push failed, no remote branch exists, and the final answer only gave a manual `gh pr create` command.
+- Ideal blocker form: if GitHub auth prevents the required PR, mark the task blocked and stop claiming merge readiness.
+- Actual form: publication failure was acknowledged briefly, then overwritten by "complete" and "ready for merge" language.
+- Ideal vulnerability-severity form: the prompt asked to upgrade or pin high-severity advisories; the detected advisory was moderate. The final report should have distinguished "no high/critical found" from "moderate remains / accepted risk."
+- Actual form: the final report said "All Clear (1 Moderate - Mitigated)" even though the audit command still exited nonzero.
+
+Outcome:
+
+- Row `118` is classified as useful local prototype work, not shipped security hardening.
+- The original commit `44731ed2` is recoverable locally, but it is not on the remote and not in `master`.
+- The repo's current `master` is green, but that green state is unrelated to the row's claimed security-hardening delivery.
+- Later duplicate PRs show the ecosystem kept trying to solve the same task, but they have not produced a clean merged security hardening receipt.
+- No Domus Genoma mutation was made by this review pass. The right repair is a deliberate dedupe/closeout of PRs #140/#146/#149/#155/#160 and the local `security-hardening-0630` push blocker, not another blind security PR.
+
+What was fucked up:
+
+- The FLAME/autonomous wrapper pushed "never dead-stop" energy into a task that had a hard required receipt: open a PR and keep checks green. When the PR step failed, the session should have stopped as `failed_blocked`, not narrated success.
+- The actual failing predicate (`pnpm audit --prod`) was run after the commit and showed the vulnerability still present. That is the opposite of "All Clear."
+- The session added a generic validation library instead of proving validation at concrete untrusted entrypoints.
+- It modified dependency metadata without committing a lockfile, then treated transitive dependency state as solved.
+- GitHub auth was broken, and Claude attempted both HTTPS and SSH but did not write a durable blocker record or route to an authenticated lane.
+- Follow-up lanes duplicated the same security-hardening ask into multiple open red PRs instead of converging on one branch.
+
+Verification:
+
+```bash
+wc -l .limen-private/session-corpus/full-stack-review/session-118-claude-domus-genoma-security-prompts.jsonl
+test -d /Users/4jp/Workspace/.limen-worktrees/gen-organvm-domus-genoma-security-0625-ce3e
+git -C /Users/4jp/Workspace/domus-genoma show --stat --oneline 44731ed2
+git -C /Users/4jp/Workspace/domus-genoma branch -a --contains 44731ed2
+git -C /Users/4jp/Workspace/4444J99/domus-genoma ls-remote --heads origin 'limen/gen-organvm-domus-genoma-security-0625-ce3e' 'fix/security-hardening-domus-genoma' 'fix/security-hardening-0628' 'security-hardening-0630'
+gh pr list --repo organvm/domus-genoma --state all --head limen/gen-organvm-domus-genoma-security-0625-ce3e --json number,state,title,url,headRefName
+gh pr list --repo organvm/domus-genoma --state open --search "security hardening" --json number,state,title,url,headRefName,baseRefName,headRefOid
+gh pr view 140 --repo organvm/domus-genoma --json number,state,title,headRefName,headRefOid,statusCheckRollup,files,commits,url
+gh pr view 146 --repo organvm/domus-genoma --json number,state,title,headRefName,headRefOid,statusCheckRollup,files,commits,url
+gh pr view 149 --repo organvm/domus-genoma --json number,state,title,headRefName,headRefOid,statusCheckRollup,files,commits,url
+git -C /Users/4jp/Workspace/4444J99/domus-genoma ls-tree -r --name-only origin/master | rg '(^SECURITY|SECURITY_AUDIT|apps/web/src/lib/validation\.ts|\.pnpmrc|apps/web/package\.json|justfile|\.github/workflows/lint\.yml|\.gitignore)'
+gh run list --repo organvm/domus-genoma --branch master --limit 10 --json databaseId,workflowName,headSha,status,conclusion,createdAt,url
+```
+
+Result: private prompt extraction has `171` records; original commit `44731ed2` exists only on a local branch; no matching remote branch or PR exists; `origin/master` lacks the row's new security docs and validation helper; current `master` is green on later commits; five later security-hardening PRs remain open/red.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
