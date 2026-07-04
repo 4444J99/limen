@@ -723,6 +723,40 @@ def test_blocked_result_is_terminal_failed_blocked() -> None:
     assert "repo unavailable" in str(task.dispatch_log[-1].output)
 
 
+def test_dispatch_parallel_records_blocked_without_counting_failure(tmp_path: Path, monkeypatch, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "BLOCKED-PARALLEL",
+                "title": "blocked parallel",
+                "repo": "organvm/missing",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        D,
+        "call_agent_dispatch",
+        lambda agent, task, dry_run=False: D._blocked_result("repo unavailable: organvm/missing"),
+    )
+
+    dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1)
+
+    output = capsys.readouterr().out
+    task = read_board(tasks_path)["tasks"][0]
+    assert task["status"] == "failed_blocked"
+    assert task["dispatch_log"][-1]["status"] == "failed_blocked"
+    assert "1 blocked" in output
+    assert "0 failed" in output
+
+
 def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkeypatch) -> None:
     import datetime
 

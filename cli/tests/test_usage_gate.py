@@ -50,7 +50,7 @@ def test_zero_headroom_throttle_lane_is_down(tmp_path, monkeypatch):
     _write_usage(
         tmp_path,
         {
-            "codex": {"health": "throttle", "remaining": 0, "headroom_pct": 0},
+            "codex": {"health": "throttle", "remaining": "0", "headroom_pct": "0"},
             "claude": {"health": "throttle", "remaining": 10, "headroom_pct": 10},
         },
     )

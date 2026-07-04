@@ -15,6 +15,7 @@ Generated: `2026-07-04T00:40:41Z`
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
+| 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
 | 10 | `claude` | `3d972c29-36c6-4803-b94b-255df104f644` | Integration-organ window landed value ledger, score-dispatch, omni, ingest coverage, media atomization, and accelerator surfaces. Reviewed current `main` and found remaining malformed numeric crash paths in fail-open organs. |
@@ -702,6 +703,38 @@ python3 -m py_compile cli/src/limen/census.py cli/src/limen/dispatch.py scripts/
 
 Result: `29 passed, 1 skipped`; compile passed.
 
+### Dispatch blocked-lane signals still had type and reporting gaps
+
+Severity: medium for dispatch steering clarity.
+
+Evidence:
+
+- While reconstructing the unresolved rank-7 control-plane row, the listed temp artifacts were already gone; the durable review surface available in the same pass was landed dispatch usage-gate code, including `9dd0b53` (`limen: stop dispatch on blocked lane signals`).
+- The implementation intent was honest dispatch steering: do not assign work to lanes the live meter says cannot produce, and mark unavailable repos as terminal `failed_blocked` instead of cascading forever.
+- `_usage_dead_lanes()` only treated numeric `0` as zero headroom/remaining. A JSON telemetry writer or hand-edited usage file with `"0"` would leave a throttle lane dispatchable even though it had no runway.
+- `dispatch_parallel()` applied blocked results correctly to the task, but its summary bucket counted them as generic failures, obscuring the difference between retryable cascade failures and terminal routing blockers.
+
+Repair:
+
+- Added typed zero parsing for usage telemetry gate values.
+- Counted blocked parallel results in a separate summary bucket.
+- Added regressions for stringified zero headroom and parallel blocked-result persistence/reporting.
+
+Touched paths:
+
+- `cli/src/limen/dispatch.py`
+- `cli/tests/test_usage_gate.py`
+- `cli/tests/test_dispatch.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_usage_gate.py cli/tests/test_dispatch.py -q
+python3 -m py_compile cli/src/limen/dispatch.py
+```
+
+Result: `43 passed`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -878,9 +911,15 @@ Result: `29 passed, 1 skipped`; compile passed.
 - `scripts/usage-telemetry.py:222` applies bounded parsing to reserve env values.
 - `scripts/usage-telemetry.py:228` applies bounded parsing to reserve config values.
 - `cli/tests/test_usage_telemetry_health.py:135` covers malformed and out-of-range reserve env values.
+- `cli/src/limen/dispatch.py:114` stops throttle lanes with zero remaining/headroom.
+- `cli/src/limen/dispatch.py:119` parses usage zero values from JSON-safe numeric strings.
+- `cli/src/limen/dispatch.py:2032` tracks blocked results separately in parallel dispatch summaries.
+- `cli/src/limen/dispatch.py:2056` increments the blocked result bucket.
+- `cli/tests/test_usage_gate.py:48` covers stringified zero headroom/remaining telemetry.
+- `cli/tests/test_dispatch.py:726` covers parallel blocked-result persistence and reporting.
 
 ## Remaining Review Queue
 
-1. Continue unresolved rank 7 and 12 control-plane windows before spending time on large Studium content churn; those windows touch dispatch, capacity, CI, and lifecycle code with higher operational blast radius.
+1. Continue rank 12 and other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
 2. Add stronger provider-clock and receipt extraction for Agy. Changed-file `TargetFile` evidence is now covered when present, but quota, verification, and no-op classification still depend on weaker outcome text.
 3. Continue branch-artifact review for other unmerged OpenCode security/test-coverage branches before any stale branch is rebased or merged.

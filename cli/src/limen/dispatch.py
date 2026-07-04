@@ -111,9 +111,18 @@ def _usage_dead_lanes() -> set[str]:
         if health in ("exhausted", "rate-limited", "low"):
             dead.add(name)
             continue
-        if health == "throttle" and (info.get("remaining") == 0 or info.get("headroom_pct") == 0):
+        if health == "throttle" and (_usage_zero(info.get("remaining")) or _usage_zero(info.get("headroom_pct"))):
             dead.add(name)
     return dead
+
+
+def _usage_zero(value: object) -> bool:
+    if isinstance(value, bool):
+        return False
+    try:
+        return float(value) == 0.0
+    except (TypeError, ValueError):
+        return False
 
 
 # Lanes whose CLI authenticates ONLY via an interactive browser OAuth flow — no headless / device-code
@@ -2020,7 +2029,7 @@ def dispatch_parallel(
     # ── COMMIT: reload FRESH under the lock so writes a supervisor (seed/heal/verify) made
     # during the unlocked run aren't clobbered; re-apply each result to the fresh task by id.
     # This is the #11 keystone — without the reload, this save would silently overwrite seeds.
-    n_pr = n_noop = n_fail = n_rl = n_to = 0
+    n_pr = n_noop = n_fail = n_rl = n_to = n_blocked = 0
     with _queue_lock(tasks_path) as got:
         if not got:
             # Lock timed out — do NOT write unprotected (that is the #111 clobber this reload guards
@@ -2044,6 +2053,8 @@ def dispatch_parallel(
                 n_noop += 1
             elif res == _TIMEOUT:
                 n_to += 1
+            elif _is_blocked_result(res):
+                n_blocked += 1
             elif res and not _is_blocked_result(res):
                 n_pr += 1
             else:
@@ -2051,7 +2062,7 @@ def dispatch_parallel(
         save_limen_file(tasks_path, fresh)
     print(
         f"── PARALLEL done: {len(results)} ran · {n_pr} dispatched/PR · {n_noop} no-op · "
-        f"{n_fail} failed→cascade · {n_rl} rate-limited · {n_to} timeout→jules"
+        f"{n_fail} failed→cascade · {n_blocked} blocked · {n_rl} rate-limited · {n_to} timeout→jules"
         f"{' (lanes cooled: ' + ','.join(sorted(cooled)) + ')' if cooled else ''}"
     )
 
