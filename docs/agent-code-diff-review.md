@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T01:27:08Z`
+Generated: `2026-07-04T01:29:02Z`
 
 ## Scope
 
@@ -30,6 +30,7 @@ Generated: `2026-07-04T01:27:08Z`
 | refreshed 13 | `claude` | `4693c425-3c29-4a48-9a0b-54fd9fd37753` | Revenue backlog / model-tier run. Original `piped-booping-kettle` worktree was gone, but revenue-backlog commits landed on `main`; fixed malformed ladder, usage, and env inputs that could abort the revenue feed beat. |
 | refreshed 14 | `claude` | `4a4c2aa8-d455-431e-b18c-3ac1d5824741` | Moneta checkout / order-persistence run. Worktree and live `moneta` root exist; fixed a valid-JSON order-book shape crash that could break the restart-survival promise for pooled demand. |
 | refreshed 15 | `claude` | `95f5e850-1274-40de-8a32-8ade3192b22a` | Course-recapitulation / education-organism run. Surviving evidence is transcript, plan, and Claude memory files; the `peaceful-plotting-fern` worktree, temp converter, and external `~/Workspace/edu-organism` root are absent, so code attribution is report-only. |
+| refreshed 16 | `claude` | `06d2559b-05e9-4ff3-b1bf-4473bd935228` | Credential/his-hand wall and dialog-silencing run. Reviewed landed credential-wall generator and fixed an import-time malformed env crash in the wall predicate. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1055,6 +1056,39 @@ git log --all --since=2026-06-23T16:58:37Z --until=2026-06-24T15:45:34Z --onelin
 
 Result: transcript audit completed and reported an Opus budget violation; both artifact roots and the temp converter were absent; git-window search returned no matching commits.
 
+### Credential wall predicate could crash before checking homes
+
+Severity: medium for secret-handling governance reliability.
+
+Evidence:
+
+- Refreshed rank 16 (`06d2559b-05e9-4ff3-b1bf-4473bd935228`) maps to landed wall/dialog commits including `cbeed10` (`feat(walls): machine-generate the secret Wall + add the his-hand aggregate Wall`), plus adjacent dialog-silencing and obligations-deadline commits.
+- Patched transcript audit reports 25 transcript files, 1,603 usage-bearing messages, 12,143,079 billable-ish tokens, 149,801,452 cache-read tokens, 9,591,570 Opus-class billable-ish tokens, eight expensive subagents, and seven agent/workflow calls.
+- The session/prompt intent was to move token/secret/API/login/env handling out of chat and into a durable Wall with an executable `--check` predicate. That predicate should be robust to local operator env drift.
+- `scripts/credential-wall.py` parsed `LIMEN_CRED_WALL_ISSUE` with bare `int(...)` at import time. A malformed shell/launchd value crashed the script before `--check` could verify that every secret atom has a registered home.
+
+Repair:
+
+- Added a positive integer env parser for the wall issue number.
+- Made malformed, zero, or negative values fall back to issue `320`.
+- Added an import-time regression and verified the live predicate under a poisoned env value.
+
+Touched paths:
+
+- `scripts/credential-wall.py`
+- `cli/tests/test_credential_wall.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_credential_wall.py -q
+python3 -m py_compile scripts/credential-wall.py
+LIMEN_CRED_WALL_ISSUE=bad python3 scripts/credential-wall.py --check
+git diff --check -- scripts/credential-wall.py cli/tests/test_credential_wall.py docs/agent-code-diff-review.md
+```
+
+Result: `6 passed`; compile passed; malformed-env `--check` exited `0` and reported all 16 secret atoms registered.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -1270,6 +1304,9 @@ Result: transcript audit completed and reported an Opus budget violation; both a
 - `moneta/src/orders-file.ts:31` validates persisted order rows before replaying them.
 - `moneta/src/orders-file.ts:52` filters malformed saved rows during load.
 - `moneta/src/__tests__/orders-file.test.ts:67` covers dropping malformed saved rows while preserving valid pooled demand.
+- `scripts/credential-wall.py:42` defines positive integer parsing for the wall issue env.
+- `scripts/credential-wall.py:50` applies the wall issue fallback.
+- `cli/tests/test_credential_wall.py:64` covers malformed wall issue env values.
 
 ## Remaining Review Queue
 

@@ -37,7 +37,17 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-WALL_ISSUE = int(os.environ.get("LIMEN_CRED_WALL_ISSUE", "320"))
+
+
+def _positive_int_env(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, ""))
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+WALL_ISSUE = _positive_int_env("LIMEN_CRED_WALL_ISSUE", 320)
 WALL_MARKER = "<!-- wall:credentials -->"
 
 

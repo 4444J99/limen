@@ -59,3 +59,11 @@ def test_check_flags_a_homeless_ci_secret(monkeypatch):
         m, "CI_SECRETS", m.CI_SECRETS + [{"name": "ORPHAN", "home": "", "used": "", "hand": "", "issue": "—"}]
     )
     assert m.check() == 1
+
+
+def test_malformed_wall_issue_env_falls_back(monkeypatch):
+    monkeypatch.setenv("LIMEN_CRED_WALL_ISSUE", "not-an-int")
+    assert _wall().WALL_ISSUE == 320
+
+    monkeypatch.setenv("LIMEN_CRED_WALL_ISSUE", "0")
+    assert _wall().WALL_ISSUE == 320
