@@ -32,6 +32,7 @@ Generated: `2026-07-04T05:30:35Z`
 | 70 | `codex` | `019f1809-13b4-7780-9b1f-d4584f872333` | Full-fleet substrate / current-session fanout run. The session built useful ledger/fanout machinery, but first produced theme-based receipts instead of consolidating every drafted plan; it then correctly diagnosed that proof gap. Current fanout code now proves `11` plan events / `10` unique plan sources in dry-run against the original transcript, but the persisted receipt points at a later continuation session. |
 | 71 | `claude` | `3f10c46f-8329-437b-8419-a1a3e3e20941` | Micro Tato combat/mobile/shareability continuation. The original Claude worktree is gone, but the standalone `~/Workspace/micro-tato` target now validates and live artifacts exist for Pages and Android; the row should be credited as migrated game work, not a Limen patch. It still mixed feature work, distribution, reporting, and closeout in one oversized Claude run that spent 8.5M billable tokens / 7.6M Opus and used two Opus subagents. |
 | 72-74 | `opencode` | `ses_0e6fc0277ffeuuI2k5jQntzOUg`, `ses_0e6fcb282ffebyHJmZuwBru59C`, `ses_0e6fd2ff2ffeIJ75fQQC1gLn66` | OpenCode probe sessions. Each prompt was only `"echo test"` and each session only ran `echo test`; the 65-67 changed-file queue surfaces are attribution noise from adjacent fleet work, not OpenCode authored diffs. |
+| 75 | `claude` | `ac1ebb8c-d0f5-4591-bbd5-9ac4fff616af` | Worktree/sync reclaim and his-hand closeout run. It landed useful `sync-release`/`reclaim-worktrees` code and permanent his-hand levers, but it also discarded multiple Claude worktree commit stacks and included absent off-repo education artifacts. Review fixed a live fail-open violation: malformed reclaim numeric env values could crash the organ before classification. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
 | 8 | `claude` | `0305e50a-e5ba-48e6-8fb1-6fb61264470d` | Usage-gauge / publication-policy / branch-reap window. Reviewed landed `main` code and fixed remaining malformed local telemetry/env crash paths in Claude gauge, branch reap, and budget-gauge display. |
 | 9 | `claude` | `a39889c7-0aae-4348-84ed-19612cb0daa2` | Census/vendor-registry and stale-budget-reset window. Census/register and reset tests passed; fixed adjacent census-derived usage telemetry reserve parsing so malformed local percentages cannot poison pacing math. |
@@ -3859,6 +3860,64 @@ jq '.changed_review[72:75] | map({agent,session_id,changed_file_count,first_ts,l
 ```
 
 Result: all three sessions are one-command `echo test` probes; the changed-file counts are false attribution.
+
+### Claude reclaim/proprioception closeout landed useful root healing, but discarded worktree stacks
+
+Severity: medium-high for lifecycle/provenance; medium for daemon reliability before the fix below.
+
+Evidence:
+
+- Queue row `75` points at Claude session `ac1ebb8c-d0f5-4591-bbd5-9ac4fff616af`, rooted at `/Users/4jp/Workspace/limen`, with changed paths across `.claude/worktrees/finish-proprioception`, `.claude/worktrees/heal-sync-reclaim`, temp reclaim code, Claude memory/plan files, and external `~/Workspace/edu-organism` prep files.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-75-claude-reclaim-proprioception-prompts.jsonl` (`21` prompt-bearing records: `11` direct human text prompts, `2` multimodal prompt records, `4` compaction summaries, and `4` task notifications).
+- In redacted intent form, the prompt layer asked what to do with active worktrees/sessions, approved "all of the above" cleanup/watch/critique/understand work, repeatedly said continue, asked to merge the heal branch and push it, asked "what's next?", required hanging tasks to live somewhere permanent rather than on the user, and then asked to complete the session/worktree lifecycle so Claude agents could be closed.
+- The two Claude worktrees listed by the queue, `.claude/worktrees/heal-sync-reclaim` and `.claude/worktrees/finish-proprioception`, are absent now. The external `~/Workspace/edu-organism/classes/enc1101-summer-2026/prep` path listed by the queue is also absent on this host.
+- Durable Limen code from the session did land on `main`: `f9325a8` added `scripts/reclaim-worktrees.py`, `cli/tests/test_sync_reclaim.py`, and updated `scripts/sync-release.sh` / `scripts/drain.sh`; `c133da1` fixed the ruff semicolon poison in `test_sync_reclaim.py`; `aaef1fa` updated `his-hand-levers.json` so homeless human-owned atoms had a permanent registry home.
+- A related commit `fe3e5eb` exists only on `feat/vltima-organ-engine`, not on `main`, so it should not be credited as part of the live row closeout.
+- The transcript records the session removing `.claude/worktrees/finish-proprioception` after the tool warned it had `7` commits on `worktree-finish-proprioception`; it also removed `hang-his-hand-levers` after a warning about `3` commits and removed `converge-his-hand-levers` after `1` commit. Some of that work appears to have been pushed or superseded, but the transcript does not leave a commit-bound proof matrix for each discarded stack.
+- Claude guard fails: `billableTokens=3873380`, `opusBillableTokens=3308336`, `agentCalls=4`; violations are total billable budget and Opus billable budget.
+- Current focused verification passes after this review: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_sync_reclaim.py -q` reports `11 passed`, and `python3 -m py_compile scripts/reclaim-worktrees.py cli/src/limen/worktree_roots.py` succeeds.
+
+Ideal prompt diff:
+
+- Ideal form: inventory each worktree, classify keep/merge/reap, preserve or name every commit stack before removal, then merge/push only the narrow heal branch with a predicate proving the root was healed.
+- Actual form: the session landed the core root heal, but the transcript shows worktree exits/removals that discard commit stacks without a durable per-stack matrix in the tracked artifact.
+- Ideal form for "hang tasks somewhere permanent": write every human-owned atom to a canonical registry with stable IDs, then make closeout point to that registry instead of chat memory or ephemeral worktree notes.
+- Actual form: `his-hand-levers.json` did get permanent levers via `aaef1fa`, which is the right direction, but the same session also involved absent Claude memory and external edu-organism artifacts that are not currently diffable.
+- Ideal form for daemon organs: fail open before doing any filesystem classification. Local launchd/env values are untrusted inputs and must not crash a heartbeat organ at import time.
+- Actual pre-review form: `scripts/reclaim-worktrees.py` parsed `LIMEN_RECLAIM_MAX` and `LIMEN_RECLAIM_EVERY_MIN` with bare `int()` / `float()` at module import, so a malformed local env value could crash the reclaim beat before the script reached its per-directory fail-open logic.
+
+Outcome:
+
+- This row shipped real value: the divergence/sync release repair and reclaim organ remain on `main`, focused tests pass, and human-owned residues have a permanent his-hand registry surface.
+- This row is not a clean closeout artifact. It spans live code, missing worktrees, discarded commit stacks, private Claude memory, and absent external course prep files.
+- This review fixed the live reclaim crash path by adding safe numeric env parsing in `scripts/reclaim-worktrees.py` and a regression test in `cli/tests/test_sync_reclaim.py`.
+
+What was fucked up:
+
+- Removing worktrees with unmerged local commits may be correct only after proving each commit's content is merged, duplicate, or intentionally abandoned. The transcript records warnings and discard counts, but not a durable commit-by-commit proof table.
+- The session blurred "finish proprioception", "heal sync reclaim", "his-hand lever convergence", and education go-live prep. The queue row therefore cannot be read as one authored diff.
+- The Opus spend was disproportionate to a reclaim script, a registry edit, and closeout bookkeeping.
+- The reclaim organ's fail-open claim was not fully true until this review; malformed local numeric env values could kill the script before it began safe classification.
+- External education artifacts in the queue are not present, so any claim that the course prep side is complete from this row is not reviewable on this host.
+
+Verification:
+
+```bash
+jq '.changed_review[75]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-75-claude-reclaim-proprioception-prompts.jsonl
+jq -r '.kind' .limen-private/session-corpus/full-stack-review/session-75-claude-reclaim-proprioception-prompts.jsonl | sort | uniq -c
+ls -ld /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/ac1ebb8c-d0f5-4591-bbd5-9ac4fff616af.jsonl /Users/4jp/Workspace/limen/.claude/worktrees/finish-proprioception /Users/4jp/Workspace/limen/.claude/worktrees/heal-sync-reclaim /Users/4jp/Workspace/edu-organism/classes/enc1101-summer-2026/prep
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/ac1ebb8c-d0f5-4591-bbd5-9ac4fff616af.jsonl
+git show --stat --oneline --decorate --name-status f9325a8 aaef1fa c133da19
+git merge-base --is-ancestor f9325a8 main
+git merge-base --is-ancestor fe3e5eb main
+git merge-base --is-ancestor c133da19 main
+git merge-base --is-ancestor aaef1fa main
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_sync_reclaim.py -q
+python3 -m py_compile scripts/reclaim-worktrees.py cli/src/limen/worktree_roots.py
+```
+
+Result: the session transcript exists; the listed Claude worktrees and external course-prep path are absent; `f9325a8`, `c133da1`, and `aaef1fa` are ancestors of `main`, while `fe3e5eb` is not; Claude guard fails on 3.87M billable / 3.31M Opus; current focused tests now pass `11` cases with the malformed-env regression.
 
 ## Remaining Review Queue
 

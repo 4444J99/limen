@@ -167,7 +167,7 @@ def _add_wt(main: Path, wtroot: Path, name: str, branch_from="origin/main"):
     return path
 
 
-def _run_reclaim(wtroot: Path, limen_root: Path, apply=True):
+def _run_reclaim(wtroot: Path, limen_root: Path, apply=True, extra_env=None):
     env = {
         **os.environ,
         "LIMEN_WORKTREE_ROOT": str(wtroot),
@@ -177,6 +177,8 @@ def _run_reclaim(wtroot: Path, limen_root: Path, apply=True):
         "LIMEN_RECLAIM_REGISTERED_WT": "0",
         "LIMEN_RECLAIM_EVERY_MIN": "0",
     }
+    if extra_env:
+        env.update(extra_env)
     args = ["python3", str(RECLAIM)]
     if apply:
         args += ["--apply", "--force"]
@@ -272,4 +274,22 @@ def test_reclaim_dry_run_removes_nothing(tmp_path):
     r = _run_reclaim(wtroot, main, apply=False)
     assert r.returncode == 0
     assert dead.exists()  # dry-run never deletes
+    assert "dry-run" in r.stdout
+
+
+def test_reclaim_malformed_numeric_env_fails_open(tmp_path):
+    main, bare, wtroot = _wt_root_with(tmp_path)
+    dead = _add_wt(main, wtroot, "dead")
+    _age(dead, 5)
+    (main / "logs").mkdir(exist_ok=True)
+
+    r = _run_reclaim(
+        wtroot,
+        main,
+        apply=False,
+        extra_env={"LIMEN_RECLAIM_MAX": "not-int", "LIMEN_RECLAIM_EVERY_MIN": "not-float"},
+    )
+
+    assert r.returncode == 0, r.stderr
+    assert dead.exists()
     assert "dry-run" in r.stdout
