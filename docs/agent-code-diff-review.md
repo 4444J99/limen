@@ -4656,6 +4656,64 @@ python3 scripts/studium-validate.py
 
 Result: private prompt extraction has `1` record; OpenCode created and validated the file locally but left no green PR receipt; Jules PR #177 later merged the durable artifact at `1091d58`; current Studium validation passes.
 
+### OpenCode FORCE route-all-services row was duplicate churn against an already-merged capacity census
+
+Severity: high for attribution and queue control; low for current feature availability.
+
+Evidence:
+
+- Queue row `89` points at OpenCode session `ses_114c8f677ffeqtQr86CQO5uct9`, titled `Router fans across all paid services`, run from `/Users/4jp/Workspace/limen` on 2026-06-21T17:25:13Z through 2026-06-21T17:33:13Z with model `deepseek-v4-flash-free`, cost `0`, and 87,817 input / 9,936 output / 11,951 reasoning tokens plus 3,256,192 cache-read tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-89-opencode-force-route-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to complete `FORCE-route-all-services`: fan routing/dispatch across codex, claude, opencode, agy, gemini, jules, copilot, warp/oz, and GitHub Actions, and add a per-cycle reachable-agent capacity census.
+- The durable implementation for that exact task family had already merged the previous day in PR #38 at `7d4ee4f`: it added `cli/src/limen/capacity.py`, extended `cli/src/limen/dispatch.py`, updated `scripts/route.py`, and landed green `python`, `worker`, and `web` checks.
+- The OpenCode row did not create a matching clean PR for the requested feature. Its transcript text shows it tried to implement edits, then update `tasks.yaml` and usage limits, then said the file had been reverted and re-read state.
+- The session window's durable local commit is `80d4e21` (`feat(route): consume self-improve lane weights -- close the improve->route loop`), which changed only `scripts/route.py` and `cli/tests/test_dispatch.py`. That is adjacent routing work, not the full capacity-census prompt.
+- During the session evidence window, the repo was on stale branch/worktree state and saw an old `tasks.yaml`; the queue's 33 changed files include broad prior routing, CI, heartbeat, and board surfaces that are not a coherent OpenCode-authored diff for this prompt.
+- The task family kept being reissued after PR #38 merged: PR #40, #41, #48, #126, and #195 were later closed without merge; PR #484 and recovery PR #485 remain open and red as of this review pass.
+- Current `main` does satisfy the core feature shape: `PAID_AGENT_ORDER` includes `codex`, `claude`, `opencode`, `agy`, `gemini`, `jules`, `copilot`, `warp`, `oz`, and `github_actions`; `format_capacity_census(capacity_census())` renders a capacity-census header.
+
+Ideal prompt diff:
+
+- Ideal form: detect PR #38/main already satisfied the target, verify the live capacity census and dispatch support, then close or mark the duplicate task rather than re-editing stale board state.
+- Actual OpenCode form: the session attempted changes in a confusing branch/task-board context, produced adjacent route-weight work, and did not leave a clean PR receipt for the prompt.
+- Durable actual form: the feature exists because of PR #38, not because of this OpenCode row.
+- Ideal attribution form: score row `89` as duplicate/superseded churn and separate `80d4e21` as route-weight follow-up work, not as completion of `FORCE-route-all-services`.
+
+Outcome:
+
+- No code patch was made in this review pass. Current focused route/dispatch tests pass.
+- The remaining actionable issue is queue hygiene: stale duplicate FORCE-route PRs should be closed or reconciled against PR #38 before more paid-lane capacity is spent on the same target.
+
+What was fucked up:
+
+- The task router kept reissuing a completed force-route ask after a green merged PR already existed.
+- OpenCode did not identify that the requested artifact had already merged, so the session burned effort in stale branch state.
+- The queue over-attributed a 33-file broad routing/control-plane surface to a session whose durable commit was a 2-file route-weight change.
+- Duplicate PRs continued through #484/#485, both open and red, which is exactly the "paid service sits idle or loops pointlessly" failure the prompt was trying to prevent.
+- The prompt lacked an executable predicate and explicit receipt, so a duplicate agent could claim progress without first proving "already satisfied on main."
+
+Verification:
+
+```bash
+jq '.changed_review[89]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-89-opencode-force-route-prompts.jsonl
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_114c8f677ffeqtQr86CQO5uct9';"
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select p.id,p.message_id,json_extract(m.data,'$.role') as role,json_extract(p.data,'$.type') as part_type,length(json_extract(p.data,'$.text')) as text_len,substr(json_extract(p.data,'$.text'),1,700) as text from part p left join message m on m.id=p.message_id where p.session_id='ses_114c8f677ffeqtQr86CQO5uct9' and json_extract(p.data,'$.type')='text' order by p.time_created;"
+gh pr view 38 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+gh pr list --repo organvm/limen --state all --search 'FORCE-route-all-services in:title' --json number,title,state,createdAt,mergedAt,url,statusCheckRollup,headRefName --limit 20
+git show --stat --oneline --decorate 80d4e21
+PYTHONPATH=cli/src python3 - <<'PY'
+from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_census
+required = {"codex", "claude", "opencode", "agy", "gemini", "jules", "copilot", "warp", "oz", "github_actions"}
+print("order=" + ",".join(PAID_AGENT_ORDER))
+print("missing=" + ",".join(sorted(required - set(PAID_AGENT_ORDER))))
+print(format_capacity_census(capacity_census()).splitlines()[0])
+PY
+python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_self_improve.py -q
+```
+
+Result: private prompt extraction has `1` record; PR #38 is the green merged delivery for the prompt; `80d4e21` is only adjacent route-weight work; duplicate FORCE-route PRs remain open/red; current route and self-improve tests pass (`42` tests).
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
