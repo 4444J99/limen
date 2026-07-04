@@ -7228,6 +7228,60 @@ PYTHONPATH=. python3 -m pytest tests/test_platform_api.py tests/test_platform_mc
 
 Result: transcript guard passed at 451,256 Opus billable tokens; prompt extraction matches row `129`; PR #38 is merged; the PR check rollup contains red CLI-smoke checks; focused archived replay passes `12 passed`.
 
+### Claude's Invisible Ledger usage-docs row produced a useful local commit that never reached GitHub
+
+Severity: medium. The work appears aligned with the prompt and the local diff is still recoverable, but the session stopped at a local branch commit, so the durable project did not receive the docs.
+
+Evidence:
+
+- Reconstruction row `130` targets Claude session `00f48ca2-2c79-4a34-87fe-4e9521392695`, rooted in deleted worktree `/Users/4jp/Workspace/.limen-worktrees/gen-organvm-the-invisible-ledger-docs-0625-4473`, from 2026-06-25T16:02:27Z through 2026-06-25T16:04:49Z.
+- The first-layer task was `GEN-organvm-the-invisible-ledger-docs-0625`: derive accurate Usage docs for `organvm/the-invisible-ledger` from actual entrypoints, install/run commands, key commands, and flags; no invented features or TODOs.
+- The session inspected `package.json`, `README.md`, `scripts/api-key-auth.mjs`, `scripts/deploy.sh`, `vite.config.ts`, `src/main.tsx`, `runtime.config.json`, `docs/DEPLOY.md`, and `docs/API.md`.
+- It added a `## Usage` section with development, Docker deployment, and API-key auth CLI subsections; updated the table of contents; and fixed auth examples to include `--expires-at`, `--environment`, `auth:revoke`, `auth:list`, and the `THE_INVISIBLE_LEDGER_API_KEY` env-var alternative to `--key`.
+- The local commit is `98a6dcd65f4c553750061536454ee06f518d5560`, message `docs: add Usage section derived from actual entrypoints and CLI flags`, changing `README.md` by 65 insertions and 1 deletion.
+- That commit exists only on local branch `limen/gen-organvm-the-invisible-ledger-docs-0625-4473` in `/Users/4jp/Workspace/organvm/the-invisible-ledger`. `gh api repos/organvm/the-invisible-ledger/commits/98a6dcd` returns "No commit found", commit search returns no result, and PR search returns no matching PR.
+- Current canonical checkout `/Users/4jp/Workspace/organvm/the-invisible-ledger` is dirty and behind `origin/main`; current `README.md` on that checkout does not contain `## Usage`, `THE_INVISIBLE_LEDGER_API_KEY`, `--expires-at`, or `--environment`.
+- Full private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-130-claude-invisible-ledger-docs-prompts.jsonl`: 28 prompt-surface records, 20 unique prompt hashes, 107,185 prompt bytes. Surfaces are `queue.enqueue` 1, `message.user` 21, and `last-prompt` 6.
+
+Ideal prompt diff:
+
+- Ideal docs task form: inspect actual entrypoints, patch README, run a lightweight syntax/link/command surface check where available, push a branch, open a PR, and record the PR or commit receipt.
+- Actual form: inspection and local README patch were sound, but the session committed locally and stopped. No push, no PR, no CI, no durable handoff.
+- Ideal fleet form: if a local-only branch survives after the worktree is deleted, harvest should either promote it into a PR or explicitly mark the row as stranded.
+- Actual fleet form: the branch remained local-only and the review queue had to reconstruct it from the transcript plus a surviving local branch.
+
+Outcome:
+
+- Credit the row for useful, recoverable documentation work.
+- Do not credit it with landed work. The public repository does not have `98a6dcd`, and current `main` does not contain the Usage section.
+- The local branch is a salvage candidate, but this audit pass did not mutate the dirty canonical checkout.
+
+What was fucked up:
+
+- The session's final "Done" meant "committed locally", not "delivered". For Limen fleet work, that is an incomplete receipt.
+- The deleted worktree plus unpushed branch means the only durable traces were private transcript data and a local branch in another checkout. A normal GitHub reviewer would see no work.
+- No verification beyond README re-read and `git diff --stat` was recorded. For docs this is lower risk than code, but the task still needed a durable PR receipt.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace--limen-worktrees-gen-organvm-the-invisible-ledger-docs-0625-4473/00f48ca2-2c79-4a34-87fe-4e9521392695.jsonl
+python3 - <<'PY'
+import json
+from collections import Counter
+from pathlib import Path
+p = Path('/Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-130-claude-invisible-ledger-docs-prompts.jsonl')
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
+print(len(rows), len({r['prompt_hash'] for r in rows}), sum(r['prompt_bytes'] for r in rows), Counter(r['surface'] for r in rows), Counter(r['session_id'] for r in rows))
+PY
+git -C /Users/4jp/Workspace/organvm/the-invisible-ledger branch -a --contains 98a6dcd
+git -C /Users/4jp/Workspace/organvm/the-invisible-ledger show --stat --oneline 98a6dcd
+gh api repos/organvm/the-invisible-ledger/commits/98a6dcd --jq '{sha:.sha, message:.commit.message, html_url:.html_url}' || true
+gh search prs --repo organvm/the-invisible-ledger 'docs add Usage section derived actual entrypoints CLI flags' --json number,title,state,closedAt,createdAt,updatedAt,url --limit 20
+```
+
+Result: transcript guard passed at 191,889 Sonnet billable tokens; prompt extraction matches row `130`; `98a6dcd` exists only on local branch `limen/gen-organvm-the-invisible-ledger-docs-0625-4473`; GitHub has no commit or PR for it.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
