@@ -2313,6 +2313,60 @@ git -C /Users/4jp/Workspace/4444J99/portvs/.worktrees/triptych-story status --sh
 
 Result: focused tests passed `48 passed`; Python compile passed; shell syntax passed; hook JSON is valid and only has `hooks`; value gate exits 0 with `continue_current_work`; Portvs triptych worktree is clean.
 
+### Claude credential and dialog storm session shipped real fixes, but became an expensive mega-session
+
+Severity: high; credential and revenue surfaces, with a major spend/process concern.
+
+Evidence:
+
+- Claude session `9c65ff3b-6bd4-432d-a9e6-308292cb45e8` started from the deleted `.claude/worktrees/stateful-dazzling-rainbow` worktree.
+- First prompt: the user was still getting many macOS, 1Password, Python, and approval dialogs.
+- Local transcript survives at `~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-stateful-dazzling-rainbow/9c65ff3b-6bd4-432d-a9e6-308292cb45e8.jsonl`.
+- Queue-level changed-file extraction only saw two residue paths: `.claude/worktrees/stateful-dazzling-rainbow/scripts/no-1password-prompts.sh` and `~/.claude/jobs/9c65ff3b/tmp/dg-ssh-guard/dot_config/zsh/02-1password.zsh`. That undercounts the durable outcome because the session later shipped multiple PRs.
+- Durable Limen PRs from this session:
+  - `organvm/limen#276` merged 2026-06-25: `fix(creds): guard op read behind non-interactive auth - kills the 1Password prompt storm`.
+  - `organvm/limen#306` merged 2026-06-25: `docs(levers): first dollar shipped - Ko-fi rail live (#79)`.
+  - `organvm/limen#324` merged 2026-06-26: `feat(creds): gh_secret CI-secret sink - credentials self-land (complements the Wall #320)`.
+- Durable exporter PR from this session: `organvm/a-i-chat--exporter#79` merged 2026-06-25 and changed `.github/FUNDING.yml` to `github: organvm` and `ko_fi: 4444j99`.
+- Current credential Wall state is coherent: issue `organvm/limen#320` is open and pinned as the credential/login/API/env atom home; Gmail credential issue `#261` is closed; Cloudflare credential issue `#254` remains open as a genuine external/vendor action.
+
+Ideal prompt diff:
+
+- Ideal form for the first prompt: diagnose the recurring dialog classes, identify which are agent-actionable, land a narrow no-prompt fix, and leave a repeatable check.
+- Actual form: it did that, but the same session also shipped the Ko-fi first-dollar rail, rewrote his-hand credential treatment, closed and reopened GitHub issues, updated memory, and reconciled a sibling credential-Wall implementation.
+- Corrected ideal form after conflict: defer to the sibling Wall model for credential actions, keep only the additive `gh_secret` sink, and do not strip the `his-hand-levers.json` credential objects in a competing model.
+- Remaining process gap: revenue rail, dialog suppression, and credential organ architecture should have been three separate work packets with separate receipts.
+
+Outcome:
+
+- The 1Password prompt class is now materially improved: `scripts/creds-hydrate.py` defaults to not touching `op`, `gh_secret` sinks presence-guard already-landed CI secrets, and `scripts/dialogs-silenced.sh` confirms 1Password reads are opt-in.
+- The credential organ now supports GitHub Actions secrets as a sink, so `op://` values can self-land as CI secrets without pasting values into chat or files.
+- The Ko-fi tip rail is live at the repository funding level for `organvm/a-i-chat--exporter`; the remaining payout-provider setup is correctly a real account-side action, not a code task.
+- The session ultimately reconciled with the sibling Wall instead of clobbering it: it abandoned the "strip credential levers" approach, kept `gh_secret`, and restored the issues it had wrongly closed except the completed Gmail one.
+- Ephemeral `no-1password-prompts.sh` and `dg-ssh-guard` scratch files did not survive as active files, but the ideal behavior landed through `creds-hydrate.py`, `institutio/governance/parameters.yaml`, `scripts/dialogs-silenced.sh`, and the credential Wall model.
+
+What was fucked up:
+
+- The run initially closed credential issues under a model that had already been superseded by a sibling session's merged credential Wall. It caught and corrected that, but the mistake created avoidable GitHub churn.
+- The queue changed-file extraction missed most of the durable work because the session's real outputs were PRs and issue state, not just local file snapshots. This is a pipeline gap: changed-file review must join transcript PR links and GitHub state.
+- It mixed user-frustration triage, first-dollar revenue wiring, credential architecture, and memory updates into one Claude Opus run.
+- Transcript guard failed: 1,084 usage-bearing messages, 5,089,822 billable-ish tokens, 99,094,154 cache-read tokens, and 3,756,378 Opus billable-ish tokens. Violation: Opus billable budget exceeded.
+
+Verification:
+
+```bash
+gh pr view 276 --repo organvm/limen --json number,title,state,mergedAt,url,statusCheckRollup
+gh pr view 306 --repo organvm/limen --json number,title,state,mergedAt,url,statusCheckRollup
+gh pr view 324 --repo organvm/limen --json number,title,state,mergedAt,url,statusCheckRollup
+gh pr view 79 --repo organvm/a-i-chat--exporter --json number,title,state,mergedAt,url,statusCheckRollup
+gh api 'repos/organvm/a-i-chat--exporter/contents/.github/FUNDING.yml?ref=master' --jq '.content' | base64 -d
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_creds_hydrate.py -q
+bash scripts/dialogs-silenced.sh
+python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-stateful-dazzling-rainbow/9c65ff3b-6bd4-432d-a9e6-308292cb45e8.jsonl
+```
+
+Result: all listed PRs are merged; funding file contains `ko_fi: 4444j99`; credential tests passed `23 passed`; dialog check reports `ALL CLEAR`; transcript guard fails on Opus budget.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
