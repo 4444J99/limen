@@ -2066,6 +2066,41 @@ git -C /Users/4jp/Workspace/4444J99/portvs/.worktrees/triptych-story status --sh
 
 Result: public site passed; package rebuild passed; package verifier returned `package ok: packages/triptych-video-canon-site (113 files, 55.6 MB)`; Python compile passed; local lifecycle remained clean with zero git-visible pending entries.
 
+### Browser-state unifier session was partially landed and recovered locally
+
+Severity: high for personal data portability; medium residual operational risk around credential-store helper scripts.
+
+Evidence:
+
+- Claude session `b06edf0c-e775-4db8-ac40-b9c04a6766f7` was rooted in the deleted Limen Claude worktree `.claude/worktrees/fizzy-dazzling-naur`.
+- Local transcript survives at `~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-fizzy-dazzling-naur/b06edf0c-e775-4db8-ac40-b9c04a6766f7.jsonl`.
+- Structural session count: 538 prompt events, 319 unique prompt/task bodies, 19 changed files, 48 file-history snapshots, and three subagent transcript files.
+- The durable upstream adapter landed in `/Users/4jp/Workspace/session-meta` as commit `f7394ad` (`ingest: add browser adapter - curated web -> reference atoms`) and is present on `origin/main`.
+- The broader `~/Workspace/browser-state` owner workspace was absent at review time, even though the session changed `README.md`, extraction/convergence/injection scripts, password-export dedupe helpers, restore verification, and corpus bridge code there.
+- Claude file-history retained the last script and README snapshots for that missing workspace.
+
+Outcome:
+
+- Restored `/Users/4jp/Workspace/browser-state` from the session's Claude file-history snapshots.
+- Rebuilt the current local browser-state outputs from live browser data with `./run.sh`.
+- Wrote `/Users/4jp/Workspace/browser-state/RECOVERY.md` with the recovery source, verification commands, and the explicit decision not to reactivate one-off 1Password migration scripts from the deleted Claude job tmp path.
+- Verified the `session-meta` browser adapter with a throwaway JSONL smoke test and `py_compile`; did not modify the existing `session-meta` dirty `ingest/manifest.jsonl` live-ingest churn.
+- Prompt/session diff is closed as partial landed work plus local recovery: the adapter was already upstream, and the missing owner toolchain now exists again with a passing restore gate.
+
+Verification:
+
+```bash
+git -C /Users/4jp/Workspace/session-meta branch -r --contains f7394ad
+PYTHONPATH=ingest:ingest/adapters python3 <browser-adapter-smoke>
+python3 -m py_compile ingest/adapters/browser.py
+python3 -m py_compile converge.py extract.py history.py inject.py passwords.py to_corpus.py verify_restore.py
+./run.sh
+python3 verify_restore.py
+wc -l raw/*.jsonl canonical/*.jsonl out/corpus-feed.jsonl /Users/4jp/Workspace/session-meta/data/session-transcripts/browser/browser.jsonl
+```
+
+Result: browser adapter smoke produced two reference atoms from a temporary fixture; restored browser-state pipeline extracted 7,764 browser records; canonical import contains 2,797 links; corpus feed contains 8,994 records; `verify_restore.py` passed with 2,595/2,595 canonical unique URLs present in `out/bookmarks.html`.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
