@@ -3292,6 +3292,62 @@ gh run view 28686905469 --repo organvm/domus-genoma --json databaseId,headSha,he
 
 Result: the reviewed worktree is gone; the transcript contains the CIFIX prompt and no durable fix receipt; the guard fails on billable budget, Opus budget, total fanout, and Opus subagent fanout; PR #114 is merged but its check rollup shows the five requested checks failing; PR #147 is the later green fix; current `master` run `28686905469` is successful.
 
+### Claude Micro Tato continuation shipped real game work, but the outward fleet lifecycle was mostly simulated
+
+Severity: medium-high; game delivery, dispatch credibility, and premium-model budget.
+
+Evidence:
+
+- Queue row `63` points at Claude session `0f7de82d-e314-4202-8db9-381d6a0a5332`, rooted at `/Users/4jp/Workspace/micro-tato`, with changed-file evidence in a now-reaped Claude worktree plus temporary `batch-gate.sh` / `launch-gate.yml` job artifacts.
+- The first-layer prompts are preserved locally in `.limen-private/session-corpus/full-stack-review/session-63-claude-micro-tato-prompts.jsonl`. In redacted intent form, the prompts asked Claude to resume Micro Tato at B54, keep building B48/B49 and materia-slot-swap depth, redesign mobile-first around multiple KaossPads and matter/drag, make contact harmless unless enemies attack, add nano-particle weapons, shields, scenery, and elemental naming, get Rob onto the most updated version, then assign hanging work outward to non-Claude agents and bring every task through full GitHub lifecycle.
+- The early game commits are real and useful: `e27b161` fixed a false-green launch gate, `f62c9ab` added B48 learning/adaptive enemy AI, `d16ea18` fixed mobile menus, `1d4344e` shipped the larger arena/follow-camera, and `42d1143` added B57 materiality plus the MOVE KaossPad.
+- The B58 and B59 implementations are also real: PR #15 merged `865fb42` / branch commit `cab4c1b` for the right-thumb ATTACK KaossPad; PR #16 merged `a06641d` / branch commit `5dbec06` for contact-harmless enemies, telegraphed strikes, and enemy matter.
+- The process toolchain also became real later: PR #23 added `.github/workflows/launch-gate.yml`, and PR #24 merged `batch-gate.sh` / `tend.sh` onto main. The current main branch validates cleanly with `./lane.sh validate`.
+- But B60-B63 were not implemented in this session. PRs #17-#20 merged only `batches/*.md` build-contract seed files on `2026-06-27`; their GitHub check rollups show the hosted `launch-gate` check as `SKIPPED` plus a successful `launch-gate (local)` status. Later B60 feature code landed separately on `2026-06-28` in commit `d8d658c` and should not be credited to this reviewed session.
+- The transcript itself admits the non-Claude lane failed: the dispatched build agent for B58 was a no-op, leaving the seed commit and a clean working tree. Claude then implemented B58 and B59 itself.
+
+Ideal prompt diff:
+
+- Ideal form: preserve the user's "not Claude" assignment intent by creating real dispatchable packets, verifying that a non-Claude lane can pick them up, and reporting unsupported lanes as unsupported instead of treating labels/issues/PRs as lifecycle completion.
+- Actual session outcome: Claude created outward GitHub structure, discovered no Limen `tasks.yaml` dispatch wiring for `micro-tato`, saw the attempted build-lane do nothing, then self-performed the two real implementations.
+- Ideal form: distinguish "feature implemented", "contract seeded", "preview published", "local gate green", "hosted CI green", and "human feel-test accepted" as separate lifecycle states.
+- Actual session outcome: B58/B59 were accurately reported as awaiting feel-test, but B60-B63 later looked green/merged despite being contract-only seed PRs. This is the exact false-progress class the audit should guard against.
+- Ideal form: use premium Opus for high-leverage design and code passes, then stop or downshift after the motor is proven.
+- Actual session outcome: the guard reports `6,322,750` billable-ish tokens, `6,162,032` Opus billable-ish tokens, and `174,753,136` cache-read tokens for a game-continuation session.
+
+What was valuable:
+
+- The session turned broad design prompts into concrete, playable game diffs for B48/B49/B56/B57/B58/B59, not just documentation.
+- The local gate/publish/verdict loop was a meaningful systems improvement for a Godot repo whose hosted CI path was billing-blocked or intentionally skipped.
+- Claude correctly preserved the human feel-test boundary for B58/B59; it did not claim that headless validation could judge mobile feel, combat feel, or web performance.
+- The session surfaced a real governance gap: GitHub labels and draft PRs are not dispatch. If Limen's board does not include the repo or if non-Claude agents cannot run the local Godot gate, the "fleet" is only a plan.
+
+What was fucked up:
+
+- The session violated the spirit of "assign outwards to all others (not Claude)" once the non-Claude path failed. Self-implementation was productive, but it should have been labeled as a fallback, not a successful outward fleet lifecycle.
+- Contract-only PRs #17-#20 merged with local success statuses and no feature code. That makes board/PR dashboards look healthier than the product reality.
+- The hosted Actions `launch-gate` check was `SKIPPED` on the batch PR rollups. Local status contexts are acceptable for this repo if explicitly governed, but they must not be described as hosted CI success.
+- The Claude build-lane/subagent path added overhead but did not add work. The transcript shows a no-op agent before Claude implemented B58 itself.
+- Budget discipline failed badly for a game-iteration session. This should have split after B57/B58 into smaller, receipt-backed passes.
+- The initial prompt also asked for materia slot-swap UI. In this reviewed session it was not completed; a later `game: add style slot remapping` commit on `2026-06-28` appears to address that area and should be audited under its own session/row.
+
+Verification:
+
+```bash
+jq '.changed_review[63]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -r 'select(.type=="user") | select(.origin.kind? == "human") | select(.message.content|type=="string") | [.timestamp, .uuid, .message.content] | @tsv' /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-hazy-spinning-spark/0f7de82d-e314-4202-8db9-381d6a0a5332.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-hazy-spinning-spark/0f7de82d-e314-4202-8db9-381d6a0a5332.jsonl
+git -C /Users/4jp/Workspace/micro-tato log --all --since=2026-06-24T13:30:00Z --until=2026-06-26T00:30:00Z --date=iso-strict --pretty=format:'%H%x09%ad%x09%D%x09%s' --name-status
+gh pr list --repo 4444J99/micro-tato --state all --json number,title,state,createdAt,mergedAt,headRefName,baseRefName,url,statusCheckRollup --limit 80
+gh pr view 15 --repo 4444J99/micro-tato --json number,title,state,createdAt,mergedAt,headRefName,mergeCommit,commits,files,statusCheckRollup,url
+gh pr view 16 --repo 4444J99/micro-tato --json number,title,state,createdAt,mergedAt,headRefName,mergeCommit,commits,files,statusCheckRollup,url
+for n in 17 18 19 20; do gh pr view "$n" --repo 4444J99/micro-tato --json number,title,state,createdAt,mergedAt,headRefName,mergeCommit,commits,files,statusCheckRollup,url; done
+git -C /Users/4jp/Workspace/micro-tato log main --grep='B60\|weapon-shaped\|B61\|B62\|B63' --date=iso-strict --pretty=format:'%H%x09%ad%x09%s' --max-count=30
+cd /Users/4jp/Workspace/micro-tato && ./lane.sh validate
+```
+
+Result: the transcript prompt extraction found the B54 resume prompt, the mobile/KaossPad/matter redesign prompt, the outward-assignment prompt, the conductor-progress prompt, and the repeated status asks; the guard failed on billable and Opus budgets; Micro Tato main currently passes `./lane.sh validate`; B58/B59 are real merged implementation PRs; B60-B63 were contract-only merges in this session window; B60 feature implementation landed later and separately.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
