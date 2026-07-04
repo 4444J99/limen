@@ -13,6 +13,7 @@ Generated: `2026-07-04T00:40:41Z`
 | Queue rank | Agent | Session | Result |
 |---:|---|---|---|
 | refreshed 1 | `claude` | `9750bef7-8829-4373-916a-f86338b2e20a` | Archive4T conductor/session-foundation run. Temp job files were gone, durable transcripts and workflow JSON remained. Patched the audit redaction boundary after the session exposed raw prompt text in `unboundedGoalEvidence`. |
+| refreshed 2 | `claude` | `eb3b624c-206f-4c9e-91aa-f069967a3796` | Studium transmission-curriculum run. Original worktree was gone, but the scripts and corpus are live on `main`; fixed a state-loader crash that violated the prompt's fail-open daily-face contract. |
 | 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
@@ -799,6 +800,39 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 
 Result: `15 passed`; compile passed; patched rank-1 audit reports only line/hash/character metadata for the two unbounded prompt hits.
 
+### Studium state loading was not actually fail-open
+
+Severity: medium for daemon reliability.
+
+Evidence:
+
+- Refreshed rank 2 (`eb3b624c-206f-4c9e-91aa-f069967a3796`) was the broad Studium transmission-curriculum run: 3,593 prompt events, 229 changed-file entries, and substantial generated content plus the live `scripts/studium*.py` surfaces.
+- The original worktree path was gone, but the Studium scripts and content are live on `main`.
+- Patched transcript audit for the session reports 275 transcript files, 4,960 usage-bearing messages, 27,068,236 billable-ish tokens, 326,821,696 cache-read tokens, and 20 agent/workflow calls.
+- The prompt/session intent repeatedly promised a fail-open daily face that would not crash the beat on missing or degraded data. `scripts/studium.py` handled malformed JSON, but not valid JSON with the wrong top-level shape. A `logs/studium-state.json` containing a list made `load_state()` call `.items()` on a list and crash before rendering the degraded face.
+- Cursor fields from state were also trusted enough that non-string `work_id`, non-numeric `division`, or non-positive `day_in_division` could poison later rendering/advance logic.
+
+Repair:
+
+- Rejected wrong-shaped persisted state back to defaults.
+- Normalized the cursor and streak fields on load.
+- Added regressions for wrong top-level JSON shape and poisoned cursor fields.
+
+Touched paths:
+
+- `scripts/studium.py`
+- `cli/tests/test_studium.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_studium.py -q
+python3 -m py_compile scripts/studium.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-rippling-launching-trinket/eb3b624c-206f-4c9e-91aa-f069967a3796.jsonl --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-eb3-audit.json
+```
+
+Result: `8 passed`; compile passed.
+
 ## Current File References
 
 - `scripts/route.py:115` defines the tolerant numeric parser.
@@ -985,6 +1019,10 @@ Result: `15 passed`; compile passed; patched rank-1 audit reports only line/hash
 - `scripts/claude-workflow-guard.py:371` stores unbounded prompt evidence as hash/length metadata instead of raw text.
 - `cli/tests/test_claude_workflow_guard.py:189` covers redacted unbounded prompt evidence.
 - `cli/tests/test_claude_workflow_guard.py:264` covers nested Claude workflow subagent layout.
+- `scripts/studium.py:109` defines positive integer normalization for persisted Studium state.
+- `scripts/studium.py:119` rejects wrong-shaped state before merging persisted values.
+- `cli/tests/test_studium.py:132` covers wrong-shaped state JSON.
+- `cli/tests/test_studium.py:143` covers poisoned cursor fields.
 
 ## Remaining Review Queue
 
