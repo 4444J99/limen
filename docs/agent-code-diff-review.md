@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T02:04:32Z`
+Generated: `2026-07-04T02:07:10Z`
 
 ## Scope
 
@@ -42,6 +42,7 @@ Generated: `2026-07-04T02:04:32Z`
 | refreshed 25 | `claude` | `71d46003-4cfa-402e-b09e-fe0b99f0c702` | Health office / session-orientation run. Original worktree and temp compacted memory are gone, but health/session-orient code landed on `main` and private chart artifacts remain off-repo; fixed import-time malformed-env crashes in the health organ without exposing private chart content. |
 | refreshed 26 | `claude` | `04d49f5a-c88d-4588-a5d9-90f64d06eacc` | CVSTOS/VVLTVS organ run. Original worktree and temp extractors are gone, but CVSTOS/VVLTVS code landed on `main`; fixed malformed env, manifest-number, and manifest-shape crash paths that violated the organs' fail-open heartbeat contract. |
 | refreshed 27 | `claude` | `e31aaccb-1389-4079-aa0e-dc82dd6027a6` | Link-health / launch / media scheduler demand-surface run. Original worktree is gone, but link-health, launch, and scheduler code landed on `main`; fixed the scheduler dry-run mutation and unstable queue IDs that violated the draft-only, repeatable receipt contract. |
+| refreshed 28 | `claude` | `6cdc53d9-1d39-4936-976a-ab0f77a8d561` | IANVA doorway run. Original worktree is gone, but the IANVA gateway lives under `ianva/` on `main`; fixed unversioned upstream registry coercion so malformed args/env/header/boolean shapes cannot corrupt or crash the gateway inventory. |
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
@@ -1688,6 +1689,42 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 ```
 
 Result: `9 passed`; scheduler/launch/link-health scripts compiled; transcript audit completed with an Opus budget violation under the default guard.
+
+### IANVA upstream registry coercion was not actually defensive
+
+Severity: medium for gateway reliability, medium for agent configuration correctness.
+
+Evidence:
+
+- Claude session `6cdc53d9-1d39-4936-976a-ab0f77a8d561` built the IANVA MCP doorway. The original `.claude/worktrees/ianva-doorway/ianva` worktree is gone, but the durable implementation landed under `ianva/` on `main`.
+- Matching landed commit `fee75ee` introduced the gateway, agent config renderers, upstream loader, deploy files, and docs. Later commits `3d2257c`, `8d01045`, `609d581`, `bae870e`, and `0ffb1b0` hardened generated config safety, bearer auth, docs, credential wall registration, and MCPHub pinning.
+- Transcript audit reports 183 usage-bearing messages, 1,261,420 billable-ish tokens, 5,674,859 cache-read tokens, 1,261,420 Opus-class billable-ish tokens, eight expensive subagents, and zero agent/workflow calls. The audit violated the normal Opus budget guard.
+- The prompt/session contract was a single defensive MCP doorway that consumes a fleet registry whose shape is explicitly not versioned.
+- `ianva/src/ianva/upstreams.py` documented defensive parsing for list/envelope/map registry shapes, but still used `list(args)`, `dict(env)`, `dict(headers)`, and `bool("false")`-style coercion on individual rows.
+- A registry row with string args could split into characters, non-dict env/header fields could raise or corrupt normalized entries, and string booleans like `"false"` could keep a disabled upstream enabled.
+
+Repair:
+
+- Added `_as_list()`, `_as_dict()`, and `_as_bool()` helpers to normalize unversioned registry field shapes.
+- Parsed string args with `shlex.split()` and preserved malformed shell strings as one arg instead of crashing.
+- Rejected non-dict env/header fields to `{}` instead of throwing or producing nonsense mappings.
+- Parsed string booleans for `enabled`, `disabled`, `oauth`, and `requiresOAuth`.
+- Added a regression covering malformed registry rows, disabled filtering, command-array args, scalar args, header stringification, and bad env/header shapes.
+
+Touched paths:
+
+- `ianva/src/ianva/upstreams.py`
+- `cli/tests/test_ianva_upstreams.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_ianva_upstreams.py -q
+python3 -m py_compile ianva/src/ianva/*.py ianva/scripts/install_agent_configs.py
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-ianva-doorway/6cdc53d9-1d39-4936-976a-ab0f77a8d561 --max-billable-tokens 100000000 --max-agent-calls 100000 --max-opus-agents 100000 --max-fable-agents 100000 --out /tmp/rank-6cdc-audit.json
+```
+
+Result: `1 passed`; IANVA package/scripts compiled; transcript audit completed with an Opus budget violation under the default guard.
 
 ## Remaining Review Queue
 

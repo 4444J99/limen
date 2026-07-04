@@ -12,6 +12,7 @@ a {"servers": [...]} envelope, or a {name: def} map, and individual keys vary by
 from __future__ import annotations
 
 import json
+import shlex
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -35,6 +36,43 @@ class Upstream:
         return self.transport in ("http", "sse") or bool(self.url)
 
 
+def _as_list(value) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(v) for v in value]
+    if isinstance(value, tuple):
+        return [str(v) for v in value]
+    if isinstance(value, str):
+        try:
+            return shlex.split(value)
+        except ValueError:
+            return [value]
+    return [str(value)]
+
+
+def _as_dict(value) -> dict[str, str]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(k): str(v) for k, v in value.items()}
+
+
+def _as_bool(value, default: bool = False) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in {"1", "true", "yes", "on", "enabled"}:
+            return True
+        if v in {"0", "false", "no", "off", "disabled"}:
+            return False
+    return default
+
+
 def _coerce(name: str, raw: dict) -> Upstream:
     url = raw.get("url") or raw.get("serverUrl") or raw.get("httpUrl") or raw.get("baseUrl")
     transport = (raw.get("transport") or raw.get("type") or "").lower()
@@ -51,22 +89,27 @@ def _coerce(name: str, raw: dict) -> Upstream:
     args = raw.get("args") or []
     # opencode-style combined command array: ["bin", "arg1", ...]
     if isinstance(command, list):
-        args = list(command[1:]) + list(args)
+        args = _as_list(command[1:]) + _as_list(args)
         command = command[0] if command else None
+    else:
+        args = _as_list(args)
 
-    enabled = raw.get("enabled", not raw.get("disabled", False))
-    oauth = bool(raw.get("oauth") or raw.get("requiresOAuth") or raw.get("authProviderType"))
+    disabled = _as_bool(raw.get("disabled"), default=False)
+    enabled = _as_bool(raw.get("enabled"), default=not disabled)
+    oauth = _as_bool(raw.get("oauth"), default=False) or _as_bool(raw.get("requiresOAuth"), default=False) or bool(
+        raw.get("authProviderType")
+    )
 
     return Upstream(
         name=name,
         transport=transport,
-        command=command,
-        args=list(args),
-        env=dict(raw.get("env") or raw.get("environment") or {}),
+        command=str(command) if command is not None else None,
+        args=args,
+        env=_as_dict(raw.get("env") or raw.get("environment") or {}),
         url=url,
-        headers=dict(raw.get("headers") or {}),
+        headers=_as_dict(raw.get("headers") or {}),
         oauth=oauth,
-        enabled=bool(enabled),
+        enabled=enabled,
         group=str(raw.get("group") or "default"),
     )
 
