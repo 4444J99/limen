@@ -19,6 +19,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import math
 import os
 import re
 import time
@@ -37,7 +38,19 @@ PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
 JOURNAL = ROOT / "logs" / "codex-session-lifecycle.jsonl"
 DIGEST_OUT = ROOT / "docs" / "CODEX-SESSION-LIFECYCLE.md"
 
-STALE_MIN = int(os.environ.get("LIMEN_CODEX_QUICKEN_STALE_MIN", "20"))
+
+def positive_int_env(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw in (None, ""):
+        return default
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+STALE_MIN = positive_int_env("LIMEN_CODEX_QUICKEN_STALE_MIN", 20)
 
 FAMILIES: list[tuple[str, re.Pattern[str], str, str]] = [
     (
@@ -117,11 +130,13 @@ def parse_ts(value: Any) -> float | None:
     if value is None:
         return None
     if isinstance(value, (int, float)):
-        return float(value)
+        ts = float(value)
+        return ts if math.isfinite(ts) else None
     try:
-        return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp()
-    except ValueError:
+        ts = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp()
+    except (OverflowError, ValueError):
         return None
+    return ts if math.isfinite(ts) else None
 
 
 def relpath(path: Path) -> str:
@@ -173,11 +188,18 @@ def iter_session_files(days: int | None) -> list[Path]:
     if SESSIONS.is_dir():
         for path in SESSIONS.rglob("*.jsonl"):
             try:
-                if cutoff is None or path.stat().st_mtime >= cutoff:
+                mtime = path.stat().st_mtime
+                if cutoff is None or mtime >= cutoff:
                     files.append(path)
             except OSError:
                 continue
-    files.sort(key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+    def mtime_or_zero(path: Path) -> float:
+        try:
+            return path.stat().st_mtime
+        except OSError:
+            return 0.0
+
+    files.sort(key=mtime_or_zero, reverse=True)
     return files
 
 

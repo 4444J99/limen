@@ -1827,6 +1827,39 @@ python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/pro
 
 Result: target repo fast-forwarded to `7bc03f2`; web typecheck passed; web build exported seven static pages; Biome checked 81 files with no fixes; standalone builder wrote `dist/speech-score.html` at 1391 KB with ten files inlined; transcript audit passed without violations.
 
+### Codex session lifecycle scanner could crash on malformed local state
+
+Severity: medium for lifecycle audit reliability, low for product behavior.
+
+Evidence:
+
+- Codex session `019f0678-bb8c-7110-a61e-d9b6fc5c253a` covered a broad control-plane tranche that touched dispatch, conductor, lifecycle, worktree, and verification surfaces.
+- The landed `scripts/codex-quicken.py` classifier intentionally keeps raw prompts private while writing tracked lifecycle counts, hashes, and family routes.
+- Reproducing with `LIMEN_CODEX_QUICKEN_STALE_MIN=bad python3 scripts/codex-quicken.py --days 1` crashed at import time before any audit output.
+- The scanner also trusted numeric timestamps from JSONL rows; Python's permissive JSON parser can produce nonfinite numbers, which should be treated as absent timestamps rather than allowed to poison lifecycle sorting/rendering.
+
+Repair:
+
+- Added a `positive_int_env()` helper so malformed, empty, zero, or negative stale-minute overrides fall back to the default.
+- Hardened `parse_ts()` to ignore nonfinite numeric timestamps and overflowed/malformed ISO strings.
+- Made session-file sorting tolerant of files that disappear during a live scan.
+- Added regressions for malformed env fallback and nonfinite timestamp handling.
+
+Touched paths:
+
+- `scripts/codex-quicken.py`
+- `cli/tests/test_codex_quicken.py`
+
+Verification:
+
+```bash
+python3 -m pytest cli/tests/test_codex_quicken.py -q
+python3 -m py_compile scripts/codex-quicken.py cli/tests/test_codex_quicken.py
+LIMEN_CODEX_QUICKEN_STALE_MIN=bad python3 scripts/codex-quicken.py --days 1
+```
+
+Result: `3 passed`; command-line malformed-env reproduction returned exit `0` and classified the bounded session set.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
