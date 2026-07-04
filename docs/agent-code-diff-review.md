@@ -2163,6 +2163,55 @@ python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Us
 
 Result: Moneta `npm test` passed `43` tests; exporter histories show `feat(mint)` then `refactor(mint): the licence mint moved to limen as the MONETA organ`; transcript audit passed with no guard violations but did record two expensive subagents.
 
+### Algora plus Provost session preserved work, but mixed ownership and overran model budget
+
+Severity: high; private application artifacts plus off-repo feature branch with an ownership blocker.
+
+Evidence:
+
+- Claude session `690c3d51-94b9-43a9-b6a0-1ad3639e8aa6` mixed two different workstreams: an Air Space Intelligence Algora application packet and a Provost grading-engine implementation.
+- Local transcript survives at `~/.claude/projects/-Users-4jp-Workspace-limen/690c3d51-94b9-43a9-b6a0-1ad3639e8aa6`.
+- Structural session count: 782 prompt events, 27 changed-file targets in the private queue index, and repeated broad/invariant prompt pressure.
+- Private application artifacts exist under `~/.claude/jobs/690c3d51/tmp/application-pipeline/applications/2026-07-03/air-space-intelligence--full-stack/`, `~/.claude/jobs/690c3d51/tmp/application-pipeline/scripts/.algora-answers/`, `~/Downloads/ASI-form-answers.md`, and Algora confirmation screenshots in `~/.claude/jobs/690c3d51/tmp/`. The audit intentionally records paths and receipt status, not private application answers or resume content.
+- The Algora pipeline temp checkout has commit `0c3315a6` on `fix/algora-submit-verification`, adding submit verification based on the server reply rather than client toast state.
+- The Provost grading-engine worktree exists at `/Users/4jp/Workspace/organvm-i-theoria/studium-generale/.claude/worktrees/provost-grading-engine`.
+- The Provost branch was rebased and preserved as PR `organvm-i-theoria/studium-generale#17`: `https://github.com/organvm-i-theoria/studium-generale/pull/17`.
+- Local Provost commits after recovery: `9415fb6` for the grading-engine spine, `3239c78` for the activation-audit frozen-state repair, and `823f6e2` removing an active workflow from the archived repo branch.
+
+Ideal prompt diff:
+
+- Ideal form: private application automation should stay in its application-pipeline owner with redacted receipts; Provost product code should only land in the living academic/governance owner after an archive check.
+- Actual form: the session mixed a private application packet, browser submission tooling, and a new feature branch in `studium-generale`, whose own charter says the repository is `ARCHIVED / KILLED`, `duplicate-superseded`, and live work belongs in `meta-organvm/praxis-perpetua`.
+- Resulting gap: the work is preserved and locally green, but it is not cleanly landable as-is because the target repo is the wrong owner for new active features unless a human explicitly chooses to merge into the archived snapshot.
+
+Outcome:
+
+- Algora side: preserved as private local artifacts and a temp application-pipeline branch; no raw application content was moved into Limen.
+- Provost side: recovered, rebased, patched, pushed to PR `#17`, and commented with the current blocker and owner warning.
+- Local verification is green for the Provost branch: `bash scripts/doctor.sh` reports `42 passed, 7 warnings, 0 failures`; `bash done.sh` reports `Provost grading engine: PASS`; `python3 -m pytest -q` reports `47 passed`.
+- Remote PR status is mergeable but blocked by GitHub CodeQL default setup for `actions`: after repo policy removed active workflows, `Analyze (actions)` fails with `no-source-code-seen-during-build`. Python CodeQL and security checks pass. This is a repository code-scanning settings mismatch, not a source/test failure.
+- PR comment receipt: `https://github.com/organvm-i-theoria/studium-generale/pull/17#issuecomment-4880482681`.
+
+What was fucked up:
+
+- The prompt/session scope was too broad for one agent turn: private job-application execution, external browser/application tooling, and academic grading-engine product work were coupled in one transcript.
+- The session crossed an archive boundary without treating the archive charter as a first-class gate before implementation.
+- The model spend violated the workflow guard's Opus budget. Transcript audit found 497 usage-bearing messages, 2,406,748 billable-ish tokens, 14,288,136 cache-read tokens, three expensive subagents, and `Opus billable budget exceeded (856092 > 750000)`.
+- Future sessions with this shape need an early owner predicate: application artifacts in the application-pipeline owner, new Provost features in the living successor repo, and only redacted receipts back to Limen.
+
+Verification:
+
+```bash
+bash done.sh
+python3 -m pytest -q
+bash scripts/doctor.sh
+gh pr view 17 --repo organvm-i-theoria/studium-generale --json number,state,url,mergeable,statusCheckRollup,title
+gh run view 28693347432 --repo organvm-i-theoria/studium-generale --log-failed
+python3 scripts/claude-workflow-guard.py audit-transcript ~/.claude/projects/-Users-4jp-Workspace-limen/690c3d51-94b9-43a9-b6a0-1ad3639e8aa6
+```
+
+Result: local branch checks passed; PR `#17` is open and mergeable but has the CodeQL `actions` settings failure described above; the transcript guard failed on the Opus budget cap.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
