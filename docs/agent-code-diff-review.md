@@ -74,6 +74,7 @@ Generated: `2026-07-04T08:12:45Z`
 | refreshed 32 | `claude` | `3c7f2396-ca81-4494-a9e2-3b4a5d2a87ea` | Agent-instruction / "agent-all" convergence run. PR #358 merged the two-layer standard and drift predicate; current review fixed an inaccurate Layer-1 drift-check provenance pointer. Transcript guard still fails on heavy Opus fanout. |
 | refreshed 33 | `claude` | `e4cd8413-965c-4cde-a656-e1d09ba31da1` | Fleet-sprawl reduction / cells / board-collapse run. PRs #356, #359, #360, and #361 landed useful surfaces; current review fixed `cell` commands so they no longer list or operate on arbitrary non-cell Claude worktrees. |
 | refreshed 34 | `claude` | `6b107f0b-4796-4cc2-95ef-861947c991b9` | Vigilia autonomic-institution run. PRs #277, #281, #285, and #315 landed VITALS/CONTINUITY/INTEGRITY, the face, no-hardcode gate, and heartbeat stamp; current review verified the code and recorded raw-transcript log privacy and Opus spend as residual risks. |
+| 123 | `claude` | `38f777fe-fe4a-44aa-abf9-fa8edfb2a3c3` | Vigilia closeout/resume layer. The session should be credited as PR #315 closeout and residual tracking, not as a separate broad code stream: PR #315 merged green and is on `main`, but the closeout transcript itself exceeded Claude token/Opus budget gates and left a real `_diagnostics` README pointer atom open. |
 | refreshed 35 | `claude` | `d7044841-5c47-45c2-be86-b5d96a1ea15d` | Cloudflare deploy derivation / Studio / Media Ark run. Useful PRs landed, but review found live Studio source-file exposure plus a sibling Pages-project collision; redeployed public-only Studio, added a Studio predicate, and restored `object-lessons.pages.dev` to a cinema placeholder. |
 | refreshed 36 | `claude` | `4582fe4c-165d-440b-a36a-562e67cd5cf4` | Fleet session-reconcile run. Temp scripts are gone, but durable ledger/scorecard and `organvm/session-meta#37` survive; review confirmed the lane closed, the 102-branch prune was explicitly gated, and the run remains a spend/fanout cautionary example. |
 | refreshed 37 | `claude` | `57c0201a-82bd-4be7-96dd-4c7039038edd` | Codex skill-slim run. PRs #573, #597, and #615 landed a repair organ that keeps all skills while stopping Codex description truncation; current tests and live `--check` pass, but the session needed two follow-up corrections after false-green proofs and blew Claude spend limits. |
@@ -744,6 +745,51 @@ git check-ignore -v logs/vigilia/status.json logs/vigilia/continuity-test.md cli
 ```
 
 Result: focused Vigilia/no-hardcode tests passed `29 passed`; `check-params` reported `195 declared, 256 undeclared (baseline 256), no new hardcodes`; the face command rendered the read-only C-suite pane; ignored-output checks confirm `logs/vigilia/*` and Vigilia `__pycache__` are not tracked. Transcript audit fails on total and Opus billable tokens, which is recorded as a session-quality defect rather than a current-code defect.
+
+### Claude's Vigilia resume closed PR #315, but it is closeout rather than a new workstream
+
+Severity: medium for attribution/process quality; low for current code risk.
+
+Evidence:
+
+- Claude session `38f777fe-fe4a-44aa-abf9-fa8edfb2a3c3` ran from the same now-removed `.claude/worktrees/tender-sniffing-marshmallow` lineage as the earlier Vigilia institution row. The transcript exists at `/Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-tender-sniffing-marshmallow/38f777fe-fe4a-44aa-abf9-fa8edfb2a3c3.jsonl`; the worktree itself is absent.
+- The private prompt corpus for this row is preserved at `.limen-private/session-corpus/full-stack-review/session-123-claude-tender-sniffing-prompts.jsonl` with 381 prompt records, 311 unique prompt hashes, and about 1.09 MB of prompt body text. Raw prompt bodies remain private/ignored.
+- Prompt first layer was a resume/closeout pressure sequence around the already reviewed Vigilia work: diagnose the crash/freeze context, excavate what was already built, finish the missing VIGILIA heartbeat/organ-health stamp, verify PR #315, and record any irreducible residual atom.
+- Eight structured `pr-link` records in the transcript point at `organvm/limen#315`; PR #315 merged 2026-06-26T03:28:27Z at merge commit `523a57c379c6df65d387d2830ae2926e478c804f`.
+- PR #315 is deliberately small: `scripts/heartbeat-loop.sh` and `scripts/organ-health.py`, five insertions and one deletion. GitHub checks `python`, `pr-gate`, `worker`, and `web` succeeded, and the merge commit is contained in current `main`.
+- The session's final closeout named one cross-repo residual atom: add a pointer from `_diagnostics` to `limen/institutio/CHARTER.md`. Current `organvm/_diagnostics` README still does not mention `limen/institutio/CHARTER`, `institutio/CHARTER`, `VIGILIA`, `legislature`, `judiciary`, or `sensor`.
+
+Ideal prompt diff:
+
+- Ideal form: treat the resume as a narrow closeout packet, re-anchor to the earlier Vigilia session/PR set, verify PR #315 and current `main`, state the `_diagnostics` pointer as an explicit out-of-scope residual, and stop without re-counting the whole Vigilia institution as fresh work.
+- Actual form: PR #315 did land and verify, and the final answer did surface the `_diagnostics` residual, but the session still generated 381 prompt records, six subagent transcripts, and a budget-gate failure for a two-file closeout diff.
+- Corrected ideal form: closeout sessions need a receipt ledger that separates "already shipped", "this resume shipped", and "still open elsewhere" before final prose. That would have prevented the same broad Vigilia story from being counted twice.
+
+Outcome:
+
+- Credit this row as the PR #315 closeout/resume layer, not as an independent broad code workstream.
+- The code outcome is already represented by current `main`: heartbeat now stamps the Vigilia run and organ health includes the VIGILIA rung.
+- The residual `_diagnostics` README pointer remains real and should be handled as a separate cross-repo atom if that repository is in scope.
+- No code patch was made in this review pass.
+
+What was fucked up:
+
+- `scripts/claude-workflow-guard.py audit-transcript` reports 3,687,814 billable tokens and 1,677,459 Opus billable tokens, exceeding the configured 2,000,000 total and 750,000 Opus limits. That is too much spend for a final two-file closeout PR.
+- The closeout text cited the four Vigilia PRs inconsistently with the earlier verified row: this resume named `#232/#281/#285/#315`, while the durable review row maps the work to `#277/#281/#285/#315`. Receipt prose must be verified against GitHub, not reconstructed from memory.
+- The session boundary collapsed: this transcript is useful for closeout evidence, but the durable code diff belongs to the earlier Vigilia PR train plus the narrow PR #315 tail.
+- "Original purpose complete" was defensible only because the `_diagnostics` pointer was explicitly outside the Limen PR scope. Without that boundary, it reads like overclaiming while a named atom remains open.
+
+Verification:
+
+```bash
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-tender-sniffing-marshmallow/38f777fe-fe4a-44aa-abf9-fa8edfb2a3c3.jsonl
+gh pr view 315 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup
+git branch -a --contains 523a57c379c6df65d387d2830ae2926e478c804f
+git show --stat --oneline 523a57c379c6df65d387d2830ae2926e478c804f -- scripts/heartbeat-loop.sh scripts/organ-health.py
+gh api repos/organvm/_diagnostics/contents/README.md --jq .content | base64 --decode | rg -n "limen/institutio/CHARTER|institutio/CHARTER|VIGILIA|legislature|judiciary|sensor"
+```
+
+Result: PR #315 is merged green and contained in current `main`; transcript audit fails on total and Opus token budgets; `_diagnostics` README still lacks the residual pointer.
 
 ### Cloudflare derivation fixed real deploy ownership, but shipped source files before the audit cleaned it up
 
