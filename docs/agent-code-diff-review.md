@@ -1,6 +1,6 @@
 # Agent Code Diff Review
 
-Generated: `2026-07-04T12:24:23Z`
+Generated: `2026-07-04T13:18:32Z`
 
 ## Scope
 
@@ -99,6 +99,7 @@ Generated: `2026-07-04T12:24:23Z`
 | changed 141 | `claude` | `5b3f1a8a-a89e-47d0-9b7e-9482c8e47080` | Merge-authority / permission-ping run. Claude turned recurring permission and branch-ownership pain into a real merge-policy fix: PR #214 stopped `BLOCKED` and `UNKNOWN` GitHub merge states from being treated as clear, and current `main` has the semantics. The defects are process-grade: the session burned 2.84M Opus billable tokens, the first merged predicate had a macOS Bash 3.2 empty-array false-pass bug later fixed by PR #223, and the final closeout was accurate for the session PR but too broad as a global backlog-owner claim. |
 | changed 142 | `codex` | `019eddb0-eb7b-7923-8215-81201a83b50a` | AI Chat Exporter Gemini adapter. Codex authored a broad 15-file live Gemini DOM-scraping implementation and opened PR #30, but the prompt asked to replace a scaffold that was not actually present in the session base. The PR is still open, conflicting, 66 commits behind, and only has a skipped Release check; current `master` instead contains scaffold-only Gemini support from PR #27 and deliberately avoids guessed live extraction. |
 | changed 143 | `codex` | `019eddb0-ebed-7492-a12d-81cf4eac0b3b` | AI Chat Exporter Claude adapter. Codex authored a broad 15-file live Claude API/provider implementation and opened PR #31, but like the Gemini sibling it worked from a base without the scaffold the prompt referenced. The PR is still open, conflicting, 66 commits behind, and only has a skipped Release check; current `master` keeps Claude scaffold-only through PR #27 and requires live-session validation before wiring real extraction. |
+| changed 144 | `codex` | `019f22c5-0e92-7831-9c59-c3988dc917c3` | Fable routing / budget-gauge run. Codex implemented real Fable acceptance machinery, hardened model routing after an accepted Fable adversarial review found bypasses, and left current focused tests green. The defects are process-grade: the run started in the live root with dirty board state, the first Fable CLI invocation failed, Fable spend initially exceeded the original transcript cap, and the session ended behind `origin/main` with daemon-owned `tasks.yaml` still dirty instead of reaching a clean closeout. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -9036,6 +9037,70 @@ gh run list --repo organvm/a-i-chat--exporter --branch limen/rev-exporter-claude
 ```
 
 Result: private prompt extraction matches row `changed 143`; original worktree is absent; transcript command stream confirms failed test/install/tooling and only `git diff --check` passing; PR #31 is open, conflicting, stale, and only has a skipped Release check; PR #27 is merged and current `master` keeps Claude as a documented `NotImplemented` scaffold; current default branch checks are green on later commits.
+
+### Codex's Fable routing and budget gauge run produced real control-plane value, but closeout was not clean
+
+Severity: high for spend governance, medium for process reliability, low for current code correctness. This row did useful Fable substrate work and then used an accepted Fable review to find and patch real bypasses. It should be credited as progress. It should not be treated as a clean closeout pattern.
+
+Evidence:
+
+- Queue row `changed_review[144]` points at Codex session `019f22c5-0e92-7831-9c59-c3988dc917c3`, rooted at `/Users/4jp/Workspace/limen`, from `2026-07-02T12:19:30Z` through `2026-07-02T13:14:27Z`.
+- First-layer prompt, redacted to intent: implement the Fable 5 allotment plan in a fresh Limen context; treat Fable as a reserved tier above Opus; require written acceptance before any Fable run; keep deliberate weekly Fable spend at 40% plus a 10% reserve; add Fable routing, guard, docs, and budget-gauge enforcement.
+- Follow-up prompt, redacted to intent: after the user asked whether Fable could be used immediately, Codex identified one bounded adversarial-review use and the user ran a 5% `fable-allotment.py accept` command for the Fable routing/budget-gauge review.
+- The verbatim local-only prompt extract is `.limen-private/session-corpus/full-stack-review/session-changed-144-codex-fable-routing-budget-gauge-prompts.jsonl`: `19` prompt records, `7` unique prompt hashes, `56,792` prompt bytes, all sourced from `codex-sessions`. Surfaces are `response_item.user` `9`, `event_msg.user_message` `5`, and compaction replacement-history surfaces `5`.
+- Durable landed code includes `869a789` (`feat(tiering): Fable acceptance gate + dispatch retry bump to Fable`), `fee076d` (`limen: declare fable knobs and true budget gauge`), and capture commits `9e028ec`, `be63783`, and `919b32b` for `scripts/fable-allotment.py`, `docs/fable-allotment.md`, tests, guard hardening, and usage telemetry.
+- Current `cli/src/limen/model_selection.py` validates `LIMEN_FABLE_ACCEPTANCE` as a current-week `limen.fable_acceptance.v1` receipt instead of accepting arbitrary existing paths or a permanent shell export. Test-only `LIMEN_FABLE_ACCEPTANCE=1` is constrained to pytest.
+- Current dispatch routing guards Fable model-name pins: `_guard_fable_model_pin()` prevents `LIMEN_CLAUDE_MODEL=claude-fable-5` from bypassing acceptance, and retry bumping caps at Opus unless `LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE=1` and acceptance is present.
+- Current `scripts/fable-allotment.py` records only metadata receipts, enforces category caps (`adversarial-review` `5%`, deliberate cap `40%`, hard cap `50%`), rejects sensitive receipt text, and prints the `LIMEN_FABLE_ACCEPTANCE` export needed by the same-process Fable run.
+- The accepted Fable adversarial review was real and useful. Its transcript is `~/.claude/projects/-Users-4jp-Workspace-limen/dbdde73e-f41c-441e-8a10-5386f53bd995.jsonl`; it found high-severity bypasses around model-name env pins, receipt validation, and mention-based transcript acceptance detection.
+- The first Fable CLI attempt failed with `Error: Input must be provided either through stdin or as a prompt argument when using --print`. The second attempt ran asynchronously and had to be monitored through process/log/session inspection.
+- The first guard audit of the Fable review failed: `billableTokens=774890`, `fableBillableTokens=774890`, `fableAcceptanceSeen=true`, but `ok=false` because the Fable billable budget exceeded the then-current `500000` token cap. After the session added the accepted-run threshold controls, the same audit passed under `--max-billable-tokens 2000000`.
+- Transcript verification eventually reached a whole-system pass after a session-orientation regeneration: `bash scripts/verify-whole.sh` reported `748 passed`, runtime adapter probes passed, Next build/export checks passed, and `Whole-system verification passed`.
+- The session did not end at a clean closeout. Final transcript status was `## main...origin/main [behind 1]` plus dirty `tasks.yaml`; earlier status also showed nine modified Fable/guard/test files before capture commits. The final answer correctly said to preserve daemon-owned board drift and pull `origin/main`, but that means the session stopped at a local plan, not a zero-drift release boundary.
+- Current live-root verification with the local ignored acceptance and usage telemetry present is green: `python3 scripts/fable-allotment.py audit` reports one `adversarial-review` receipt totaling `5.0%`, and `python3 scripts/verify-budget-gauge.py` reports `STATUS: true`.
+- Current isolated review-worktree verification is also informative: focused compile and tests pass (`55 passed`), while `verify-budget-gauge.py` exits `2` with `silent-debt` when the ignored local usage telemetry is absent and the Claude lane falls back to a `100,000,000` estimated-token cap. That is a useful fail-safe behavior, but it proves the gauge depends on live local telemetry and should not be treated as a static repo-only predicate.
+
+Ideal prompt diff:
+
+- Ideal form: implement Fable as a reserved tier with written, current-week acceptance receipts; cap category spend; route ungated Fable selections down to Opus; and make the guard inspect structured acceptance, not casual mentions.
+- Actual form: after the Fable adversarial review, the current code matches that ideal much better than the initial patch. Model-name env pins, stale receipts, and mention-based transcript acceptance were all exposed and patched.
+- Ideal form: separate substrate implementation from premium-model spend. First land and verify the acceptance gate, then use Fable only from a clean, bounded, accepted review context.
+- Actual form: Codex did run the acceptance command before the Fable review, but it launched from a dirty live root and the first Fable CLI invocation failed. The run was bounded, but operationally rough.
+- Ideal form: finish with a clean release boundary: committed code/docs/tests, daemon-owned board drift classified separately, `main` current with `origin/main`, and no dirty tracked files.
+- Actual form: the useful code was captured and later survived on `main`, but the transcript ended behind remote with dirty `tasks.yaml` and a "what's next" answer rather than a completed closeout.
+
+Outcome:
+
+- Credit row `changed 144` with real durable value. It created a receipt-backed Fable allotment surface, taught model routing that Fable is above Opus but not inherited by default, hardened dispatch and shim paths against Fable model-pin bypass, and added tests for the exact failure class the Fable review identified.
+- Credit the embedded Fable review as a good use of the accepted 5% adversarial-review allotment. It found concrete defects that Codex then patched.
+- Do not credit the row as fully clean release work. It mixed live-root board churn, direct-main capture commits, a live premium-model run, and final branch drift in one session.
+
+What was fucked up:
+
+- The session had to spend Fable to debug the Fable spend controls. That can be justified once, but it is not a pattern to normalize.
+- The first `claude --print --model fable` invocation was malformed. The retry worked, but only after async process monitoring, which is fragile for a supposedly bounded acceptance review.
+- The initial guard budget (`500000` Fable billable tokens) was lower than the accepted review actually consumed (`774890`), so the run first failed the very guard it was hardening. Raising the threshold may be reasonable, but the evidence should be treated as a policy decision, not a mere test fix.
+- Capture commits preserved work, but they make intentional commit boundaries blurrier than normal feature commits. This is survivable for recovery, not ideal for governance code.
+- The closeout stopped with dirty daemon-owned `tasks.yaml` and remote-behind state. For Fable/governance work, the final proof standard should be stricter than "tests passed earlier; here is the next move."
+
+Verification:
+
+```bash
+jq '.changed_review[144]' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+jq -s '{records:length, unique_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), surfaces:([group_by(.surface)[] | {surface:.[0].surface,count:length}]), sources:([group_by(.source)[] | {source:.[0].source,count:length}])}' /Users/4jp/Workspace/limen/.limen-private/session-corpus/full-stack-review/session-changed-144-codex-fable-routing-budget-gauge-prompts.jsonl
+git show --stat --oneline 869a789
+git show --stat --oneline fee076d
+git show --stat --oneline 9e028ec
+git show --stat --oneline 919b32b
+python3 -m py_compile cli/src/limen/model_selection.py cli/src/limen/dispatch.py cli/src/limen/models.py scripts/claude-workflow-guard.py scripts/fable-allotment.py scripts/usage-telemetry.py
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_model_chokepoint.py cli/tests/test_claude_tier.py cli/tests/test_claude_workflow_guard.py cli/tests/test_fable_allotment.py cli/tests/test_usage_telemetry.py -q
+python3 scripts/fable-allotment.py audit
+python3 scripts/verify-budget-gauge.py
+python3 scripts/check-params.py
+LIMEN_FABLE_ACCEPTANCE=/Users/4jp/Workspace/limen/logs/fable-acceptance/20260702T124003Z-fable-routing-budget-gauge-adversarial-review.json python3 scripts/claude-workflow-guard.py audit-transcript dbdde73e-f41c-441e-8a10-5386f53bd995 --max-billable-tokens 2000000
+```
+
+Result: private prompt extraction matches row `changed 144`; Fable allotment and routing code survived on `main`; current focused compile and pytest pass (`55 passed` in the review worktree); current live-root `fable-allotment.py audit` shows the accepted `5.0%` adversarial-review receipt; live-root `verify-budget-gauge.py` is green with current local telemetry; the isolated review worktree intentionally fails the gauge when ignored live telemetry is absent; the Fable review transcript guard passes with the accepted receipt and `2,000,000` billable-token cap after recording `774,890` Fable billable tokens and no subagents.
 
 ## Remaining Review Queue
 
