@@ -82,6 +82,7 @@ Generated: `2026-07-04T11:29:12Z`
 | changed 124 | `codex` | `019f13f0-960f-7490-bc0a-a5f4bc70a6fb` | Private relationship-boundary/persona workstream. Codex created substantial PII-free reusable tooling, private ignored outputs, a Desktop voice-note file, and draft PR #11 with green tests. The prompt was only partially fulfilled at the action layer: the bounded response/voice note was prepared, not sent, and the PR remains draft for owner review. |
 | changed 125 | `codex` | `019f13f1-3d53-7783-8b17-483fa603a53a` | Workstream launcher / Corpus Command Center continuation. Codex built useful launcher and corpus-review machinery in commits `3cd1507`, `5252041`, `65b6d23`, and `61c8071`, and preserved cross-repo worktree receipts, but the Limen work was stranded on `work/workstream-agent-launcher-20260629`. There is no PR for that branch, the key command-center files are absent from current `origin/main`, and the branch is now 633 commits behind with a destructive direct merge diff. |
 | changed 126 | `codex` | `019f1abf-0fa8-76a2-b8ec-149765d2c7d2` | Fleet-autonomy dispatch selector repair. The prompt asked Codex to fix the heartbeat/router/async/backlog lane mismatch so open work no longer stranded on unreachable or exhausted lanes. The reviewed transcript ended honestly as mid-implementation, with only board drift committed and no tests yet run; durable code completion came shortly after in direct-main commits `1b24887` and `6115a6c`. Current focused tests pass and read-only health probes show async `auto` can launch work, but today's live root is again blocked by branch/dirty-state drift. |
+| changed 127 | `claude` | `5cd65ab3-deca-4c49-a560-fb470571f0eb` | Token-budget / usage-pacing conductor. Claude shipped the core predictive usage gate in `e36e9cc`, then caught a real false-done in the live heartbeat and reconciled divergent heal histories through `ed05e5a` / `b6e3782`. Current `main` still has the pacing fields, reserve gate, and route runway logic with focused tests green, but the session mixed live policy mutation, stale PR metadata, home-state memory, and missing untracked relay artifacts; transcript guard also flags Opus over-budget. |
 | 134 | `claude` | `7c72c72d-75c2-4927-acf0-038e6571aa87` + `fe8a679b-882d-48f7-a351-867ca7511650` | Archive4T leftover fragments. These were slash-command/config-orientation prompts, not implementation work: no code, docs, queue, release, or verification receipt should be attributed to them. |
 | 135 | `claude` | `8776c2a9-7669-4570-9f7b-d6158a4eeba3` | Codex-token takeover. The session rescued and landed the active-vs-historical Codex token gate through PR #498 and started the budget-gauge truth predicate that later merged as PR #499, but it spent 3.1M Opus billable tokens, used four Opus subagents, and briefly committed to the live `main` checkout before containing the mistake. |
 | 136 | `claude` | `a98a0dee-8f1e-4f4b-8e2b-36ba02f923fa` | Glimmering ladder lifecycle. The session closed real work through PRs #63, #78, #76, and #188, but became an overbroad closeout magnet spanning self-improve, CI unpoisoning, watchdog reload, lever enrichment, and worktree retirement. |
@@ -3579,6 +3580,77 @@ python3 scripts/capacity-fill-ledger.py
 ```
 
 Result: prompt extraction matches metadata; `1b24887` is on current `origin/main`; focused tests pass `77 passed`; heartbeat shell syntax passes; read-only dispatch-health shows loaded `LIMEN_DISPATCH_LANES=auto` and async dry-run can launch work, but live acceptance is blocked by the current live root being off-main and dirty.
+
+### Claude's usage-pacing session fixed the token cliff, but the receipt trail mixed live policy, stale PR metadata, and missing artifacts
+
+Severity: high for governance and receipt quality; medium for current code risk. The main engineering answer was valuable and is now on `main`: usage telemetry computes refresh-window pacing, dispatch gates stop lanes before zero, and route selection consumes runway. The process was still too broad for a single Opus thread, and several artifacts the session cited as proof are either untracked/local, stale, or absent today.
+
+Evidence:
+
+- Queue row `changed_review[127]` points at Claude session `5cd65ab3-deca-4c49-a560-fb470571f0eb`, rooted at `/Users/4jp/Workspace/limen`, running from 2026-06-20T18:55:01Z through 2026-06-21T16:47:48Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-127-claude-usage-pacing-prompts.jsonl`: `220` prompt-surface records, `156` unique prompt hashes, `200,617` prompt bytes, all from `claude-projects`. Surfaces are `message.user` `166`, `last-prompt` `52`, and `queue.enqueue` `2`.
+- In redacted intent form, the first-layer ask was: ensure all Limen tasks are conducted appropriately, use tokens/usage efficiently, calculate refresh windows against remaining usage across every model/vendor, and make routing decisions so the fleet should not run a lane to zero if paced correctly.
+- The initial policy surface was explicitly observe-only: dispatch disabled unless a later explicit policy change opened the gate.
+- Claude correctly identified the original defect: the live usage gate was reactive. It downed lanes only after `exhausted` or `rate-limited`, not when a lane was burning faster than its safe refill rate or approaching a reserve floor.
+- Commit `e36e9cca6b468ec6d8194ad0e10cc93b4f9522ed` (`feat(usage): predictive refresh-window pacing - throttle/reserve before exhaustion`) changed four files: `scripts/usage-telemetry.py`, `cli/src/limen/dispatch.py`, `cli/tests/test_usage_gate.py`, and `cli/tests/test_usage_telemetry.py`.
+- The session then received a separate live-gate prompt to make it live. It fast-forwarded the live `heal/conductor-restart-2026-06-16` branch to `e36e9cc`, wrote local `logs/autonomy-policy.json` into dispatch mode, and pushed `heal`. That policy file is not tracked in `origin/main`.
+- On the later "fully done?" prompt, Claude found a real false-done: the live checkout had diverged, `scripts/autonomy-governor.py` was absent, the heartbeat interpreted that as paused, and the loop had gone dark. It then reconciled the local PR-train line with the origin conductor line.
+- Commit `ed05e5a62f7aaa9b8caae9c0d3f82e4a845cc6d2` (`merge: alchemical union of the two heal lines -> ideal-form conductor`) merged the divergent histories. Commit `b6e3782b4640770d4a3a6aac2ec6df721eed87c3` (`fix(route): distribute extended-fleet fallback across reachable lanes`) fixed a follow-on bug where extended-fleet work dumped onto one reachable lane instead of being distributed.
+- `e36e9cc`, `ed05e5a`, and `b6e3782` are ancestors of current `origin/main`.
+- Current `origin/main` still contains the requested code mechanics: `scripts/usage-telemetry.py` emits `burn_rate_per_h`, `safe_rate_per_h`, `runway_h`, `reserve_pct`, and throttle/low health; `cli/src/limen/dispatch.py` treats `low` as down and keeps normal `throttle` as a steering signal; `scripts/route.py` reads live `runway_h` and uses it in local/clone-on-demand lane selection.
+- The transcript's PR receipt is unreliable. It records `organvm/limen#18`, but GitHub shows PR #18 was merged on 2026-06-17, before this session's June 20-21 commits, and its commit list does not contain `e36e9cc`, `ed05e5a`, or `b6e3782`.
+- `gh pr list --search e36e9cc` and `gh pr list --search b6e3782` both returned no PR rows. `gh run list --commit e36e9cc` and `gh run list --commit b6e3782` also returned no historical run rows, so commit-specific CI proof is absent.
+- The final relay handoff claimed `logs/RELAY-5cd65ab3.md` was persisted with 52 lines. On current host state, `/Users/4jp/Workspace/limen/logs/RELAY-5cd65ab3.md` is absent, and `logs/RELAY-5cd65ab3.md` is not tracked in `origin/main`.
+- The durable home memory file survives at `/Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/memory/usage-pacing-staged.md`; it records both the initial staged commit and the later reconciliation. That is useful private memory, not a public repo receipt.
+- Transcript guard reports `1,995,512` billable tokens, all on `claude-opus-4-8`, with `407` usage-bearing messages and no subagents. It fails the Opus budget guard: `1,995,512 > 750,000`.
+- Current focused verification in the review worktree passes: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_usage_telemetry.py cli/tests/test_usage_gate.py cli/tests/test_dispatch.py -q` reports `50 passed`, and `bash -n scripts/heartbeat-loop.sh scripts/heartbeat.sh scripts/metabolize.sh scripts/route.py` passes.
+
+Ideal prompt diff:
+
+- Ideal token-pacing form: compute safe rate, burn rate, runway, and reserve per vendor; down lanes before zero; keep throttle as a routing signal; add focused tests; leave an executable receipt.
+- Actual initial form: good. `e36e9cc` implemented the missing pacing math and tests.
+- Ideal live-gate form: separate code merge, local policy flip, daemon restart, and live dispatch proof into distinct durable receipts; never treat a local policy JSON or heartbeat log as a public repo artifact.
+- Actual live form: it flipped local policy and restarted/probed the loop, but the policy and relay artifacts are local/untracked, and one claimed relay file is absent now.
+- Ideal false-done recovery form: when challenged, verify the daemon from the live root, check launchd, process state, branch ancestry, dirty state, and logs before answering "done."
+- Actual recovery form: good. Claude found the dark-loop/different-branch problem and fixed it, but only after the user challenged the earlier done claim.
+- Ideal PR/CI receipt form: either open a new PR for the work or name the exact direct-main/branch commit plus the check run that proved it.
+- Actual receipt form: weak. The transcript retained a stale PR #18 link, and no commit-specific GitHub runs were found for the core commits. Current `main` tests are the proof, not the transcript PR marker.
+
+Outcome:
+
+- Credit the session for real substrate value: it closed the token-cliff class where a lane could burn through a refresh window before the conductor stopped assigning it.
+- Credit the later reconciliation for catching an actual false-done and making the heartbeat/route/feed line live again at that point in time.
+- Do not credit the session's PR link as a valid receipt for this work. Treat `e36e9cc`, `ed05e5a`, `b6e3782`, current-main ancestry, and current focused tests as the durable proof instead.
+- Keep live acceptance separate from code acceptance. The code is currently present and test-backed; the local policy/relay/daemon state is host-local and must be re-probed whenever it matters.
+
+What was fucked up:
+
+- The session was too broad for one Opus run: usage telemetry, dispatch policy, branch promotion, daemon restart, divergent-history merge, route distribution, memory writing, goal definition, and relay handoff all happened in one thread.
+- The earlier "live and running" claim was false until challenged. This is exactly why the review needs prompt-vs-done diffs instead of final-answer trust.
+- The session mutated host-local policy state (`logs/autonomy-policy.json`) while isolated in a Claude worktree. The policy flip may have been authorized by the live prompt, but it is not a repo receipt and must not be confused with tracked source.
+- The PR metadata is stale or misleading. A session-level `pr-link` to a previously merged PR should not count as delivery for later direct branch commits.
+- The final handoff file was claimed as durable but is absent today. Home memory survived; the named repo log file did not.
+- The session violated the Opus budget guard even though it used no subagents. The corrected pattern is a short Opus synthesis for the pacing design, then Sonnet/cheaper verification and narrow follow-up sessions for live-root reconciliation and relay writing.
+
+Verification:
+
+```bash
+jq -s '{records:length, unique_prompt_hashes:([.[].prompt_hash] | unique | length), prompt_bytes:([.[].prompt_bytes] | add), task_body_bytes:([.[].task_body_bytes] | add), by_source:(group_by(.source) | map({source:.[0].source, count:length})), by_surface:(group_by(.surface) | map({surface:.[0].surface, count:length}))}' .limen-private/session-corpus/full-stack-review/session-127-claude-usage-pacing-prompts.jsonl
+python3 scripts/claude-workflow-guard.py audit-transcript /Users/4jp/.claude/projects/-Users-4jp-Workspace-limen/5cd65ab3-deca-4c49-a560-fb470571f0eb.jsonl
+git show --stat --oneline --summary e36e9cc b6e3782 ed05e5a
+git merge-base --is-ancestor e36e9cc origin/main
+git merge-base --is-ancestor b6e3782 origin/main
+gh pr view 18 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,headRefName,commits,statusCheckRollup,url
+gh pr list --repo organvm/limen --search e36e9cc --state all --json number,title,state,mergedAt,headRefName,url
+gh run list --repo organvm/limen --commit e36e9cc --json databaseId,displayTitle,status,conclusion,workflowName,createdAt,url --limit 20
+git ls-tree -r --name-only origin/main | rg 'usage-telemetry.py|test_usage_telemetry.py|test_usage_gate.py|scripts/route.py|cli/src/limen/dispatch.py|logs/RELAY-5cd65ab3.md|logs/autonomy-policy.json'
+git ls-files logs/autonomy-policy.json logs/RELAY-5cd65ab3.md
+test ! -f /Users/4jp/Workspace/limen/logs/RELAY-5cd65ab3.md
+PYTHONPATH=cli/src python3 -m pytest cli/tests/test_usage_telemetry.py cli/tests/test_usage_gate.py cli/tests/test_dispatch.py -q
+bash -n scripts/heartbeat-loop.sh scripts/heartbeat.sh scripts/metabolize.sh scripts/route.py
+```
+
+Result: prompt extraction matches session metadata; transcript guard fails only on Opus budget; `e36e9cc` and `b6e3782` are ancestors of `origin/main`; PR #18 is stale for this work; no PR or run rows were found for the core commit hashes; current `origin/main` contains the pacing/route/dispatch files but not the local policy/relay log files; the named relay file is absent on this host; current focused tests pass `50 passed`; heartbeat/metabolize/route syntax checks pass.
 
 ### Claude domus-genoma CIFIX session failed to fix CI and should have stopped at the permission/spend wall
 
