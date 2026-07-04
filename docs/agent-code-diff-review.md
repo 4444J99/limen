@@ -4964,6 +4964,57 @@ git diff --check
 
 Result: private prompt extraction has `26` records; the Domus branch is clean after pushed fix `e0861f52`; local verification passes; PR #158 remains open/draft/conflict-blocked and still needs a deliberate rebase/merge-resolution tranche before it can land.
 
+### OpenCode Bhagavad Gita row authored locally, then stopped before the required PR
+
+Severity: medium for delivery closure; low for current content validity after later Jules delivery.
+
+Evidence:
+
+- Queue row `94` points at OpenCode session `ses_10a35b18effestCX7ylGp1ftpd`, titled `Bhagavad Gita chapters 2..18 arcs`, run from `/Users/4jp/Workspace/limen` on 2026-06-23T18:42:19Z through 2026-06-23T18:50:05Z with model `deepseek-v4-flash-free`, cost `0`, and 54,703 input / 18,456 output / 12,211 reasoning tokens plus 1,313,664 cache-read tokens.
+- Verbatim prompt extraction is private in `.limen-private/session-corpus/full-stack-review/session-94-opencode-prompts.jsonl` (`1` record).
+- In redacted intent form, the prompt asked OpenCode to complete `studium-deepen-bhagavad-gita` by authoring the next bounded batch of undone Bhagavad Gita divisions, force-matched arcs plus mirrored essays, passing `scripts/studium-validate.py`, and returning one green PR.
+- The transcript shows OpenCode authored chapters 2-4 locally, updated the Bhagavad Gita plan from `1/18` to `4/18`, ran validation with a caveat about pre-existing Analects errors, and then stopped by asking whether to commit and open the PR.
+- PR #135 (`studium: deepen bhagavad-gita -- chapters 2-4 (3 arcs)`) later carried the matching chapter 2-4 content, but it was closed unmerged and had a red `python` check.
+- PR #111 is a misleading receipt: it was titled `[limen studium-deepen-bhagavad-gita] Bhagavad Gita -- chapters 2..18 (17 arcs)` and merged, but its file list contains broad Limen code/task churn and no Bhagavad Gita content files; its `python` check failed.
+- The durable current delivery is Jules PR #345, merged at `40189bf`, with green `pr-gate`, adding `studium/music/bhagavad-gita/book-02.yaml` through `book-04.yaml`, the matching essays, and the Bhagavad Gita plan update.
+- Current `main` contains Bhagavad Gita books 1-4 in music and essay form. `studium/music/bhagavad-gita/PLAN.md` and the top-level `studium/music/PLAN.md` both report `4/18`.
+
+Ideal prompt diff:
+
+- Ideal form: OpenCode should have committed the local chapters 2-4 batch and opened a narrow green PR in the same session, because the prompt explicitly requested one green PR.
+- Actual OpenCode form: the content work happened locally, but the session stopped at an unnecessary confirmation question before creating the requested receipt.
+- Ideal receipt form: cite PR #345 as the current durable delivery, and cite PR #135 only as the closed/red content-attempt; do not cite PR #111 as Bhagavad Gita completion despite its title.
+- Ideal validation form: when whole-corpus validation has unrelated failures, record both scoped validation for the new batch and the whole-corpus blocker. The transcript blurred that distinction.
+
+Outcome:
+
+- No Bhagavad Gita content was changed in this review pass.
+- This review pass classifies the row as locally useful but not autonomously closed by OpenCode; durable delivery is attributed to later Jules PR #345, not to the misleading merged PR #111.
+
+What was fucked up:
+
+- OpenCode asked whether to commit/open a PR even though the dispatch prompt already required one green PR.
+- The queue's 70 changed files include unrelated Limen code, watchdog, exporter, and adjacent Studium streams. The actual prompt diff is only the Bhagavad Gita chapters 2-4 slice.
+- PR #111 created a false public receipt: title and body claimed Bhagavad Gita work, but the merged diff was broad task/code churn and had a failing Python check.
+- PR #135 carried the matching content but mixed in unrelated film companion commits and never merged.
+- The final durable completion came from a different agent lane, so prompt-to-agent attribution must stay explicit.
+
+Verification:
+
+```bash
+jq '.changed_review[94]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-94-opencode-prompts.jsonl
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_10a35b18effestCX7ylGp1ftpd';"
+sqlite3 -json -readonly "file:$HOME/.local/share/opencode/opencode.db?mode=ro&immutable=1" "select p.id,p.message_id,json_extract(m.data,'$.role') as role,json_extract(p.data,'$.type') as part_type,length(json_extract(p.data,'$.text')) as text_len,substr(json_extract(p.data,'$.text'),1,1000) as text from part p left join message m on m.id=p.message_id where p.session_id='ses_10a35b18effestCX7ylGp1ftpd' and json_extract(p.data,'$.type')='text' order by p.time_created;"
+gh pr view 111 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+gh pr view 135 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+gh pr view 345 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,files,commits,statusCheckRollup,url,body
+python3 scripts/studium-validate.py
+rg -n "Bhagavad Gita .*4/18|Progress:.*4/18" studium/music/PLAN.md studium/music/bhagavad-gita/PLAN.md
+```
+
+Result: private prompt extraction has `1` record; OpenCode produced useful local chapter 2-4 content but did not create the requested green PR; PR #135 was closed/red, PR #111 is a false receipt for this prompt, and Jules PR #345 is the actual durable green delivery. Current Studium validation passes.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
