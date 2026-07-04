@@ -18,7 +18,7 @@ Generated: `2026-07-04T02:17:42Z`
 | refreshed 4 | `claude` | `7c761a22-5bdf-42e8-bfb6-e8988530303f` | Archive4T convergence/knowledge-corpus planning run. Durable evidence is transcripts and memory docs; the referenced `converge-build` worktree was gone and no matching in-window `converge.py` commit survived, so this row is recorded as report-only. |
 | refreshed 5 | `claude` | `a290329e-a778-478f-a7a7-9afa79709221` | UMA/mail obligations run. Original worktree and temp atlas outputs were gone, but the mail beat and obligations face landed on `main`; fixed wrong-shaped ledger crash paths in the obligations renderer. |
 | refreshed 6 | `claude` | `dc879846-e9bf-41c0-b25d-5cebab230983` | Education-organism buildout run. Limen worktree, temp PR files, and the referenced external `~/Workspace/edu-organism` root were all absent on this host; recorded as transcript-only/off-host artifact loss. |
-| 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Exact window had no matching commits on `main`, but the matching unmerged branch is `limen/gen-organvm-limen-security-0625-57ce` at `02f256e` (`Security hardening pass on organvm/limen`). Reviewed as a reject/do-not-merge artifact. |
+| 1 | `opencode` | `ses_11427e08affe3D8jAAl5W43viB` | Corrected mapping: session opened PR #46 (`Security hardening pass - audit fixes + input validation`), which merged at `b82223c` with green python/worker/web checks. The earlier stale branch attribution was false-positive snapshot confusion. |
 | 2 | `opencode` | `ses_114c8f0c6ffeixS8gn4VxGqoHb` | Exact window matched `80d4e21f` (`feat(route): consume self-improve lane weights`). Widened window also showed related routing/meter/queue commits including `0146190` and `a6488c9`. |
 | 3 | `opencode` | `ses_1095e9b19ffe4yg9h4la7tGU4d` | Exact window had no matching commits on `main`; widened window was mostly Studium content-generation churn, not the control-plane code path reviewed here. |
 | 7 | `claude` | `34d17b80-3af9-41d6-8c52-231ddce47064` | Listed temp artifacts under `~/.claude/jobs/34d17b80/tmp` were no longer present, so no durable repo diff could be attributed to those paths. Same review pass inspected an adjacent landed usage-gate commit and fixed residual dispatch-gate gaps below. |
@@ -49,16 +49,68 @@ Generated: `2026-07-04T02:17:42Z`
 | 17 | `claude` | `branch:limen/gen-organvm-limen-security-0624-a9e5` | Reconstructed stale security branch family. Whole branches are destructive against current `main`; one minimal model-validation hunk was salvaged into current code. |
 | 393 | `codex` | `019f2413-801b-7cd2-bb1e-c226d96c6355` | Private review metadata row 393; exact window included `1e964a9` (`limen: add safe task claim helper`) plus related board/receipt commits. Reviewed the manual claim helper against the board-accounting prompt intent. |
 
+## Merged Artifacts
+
+### OpenCode security hardening PR landed real validation and audit fixes, but the review pipeline initially misattributed it
+
+Severity: medium; security-sensitive code path, but current `main` contains the merged fix and local verification is green.
+
+Evidence:
+
+- OpenCode session `ses_11427e08affe3D8jAAl5W43viB` ran from `/Users/4jp/Workspace/limen` on 2026-06-21T20:21:10Z through 2026-06-21T20:35:19Z with parent slug `lucky-panda`, model `deepseek-v4-flash-free`, and one child explore session `ses_114250441ffe9hYPVOrb28J6ww`.
+- Parent token counters from the OpenCode database: 102,931 input, 19,779 output, 3,449 reasoning, 5,595,776 cache-read, cost 0. Child explore counters: 105,963 input, 8,324 output, 3,076 reasoning, 649,856 cache-read, cost 0.
+- Prompt first layer was auto-generated and precise: complete `GEN-organvm-limen-security-0621`; run ecosystem audit for `organvm/limen`; fix high-severity advisories; add input validation at main untrusted-input entrypoints; open a PR; keep the build green.
+- Child prompt asked the explore agent to enumerate untrusted-input entrypoints across FastAPI, Cloudflare Worker, CLI, MCP, and webhook/external handlers with file paths, line numbers, input types, and validation state.
+- Actual authored diff was not the queue's 136 changed-file snapshot. The merged PR touched five files: `mcp/src/limen_mcp/server.py`, `web/api/main.py`, `web/app/package-lock.json`, `web/app/package.json`, and `web/worker/src/index.js`.
+- PR `organvm/limen#46` merged 2026-06-21T22:13:02Z at merge commit `b82223c4ea62332d20e737f0d94b6f0b28de9dab`; checks `python`, `worker`, and `web` were all successful.
+- The authored commit `8633e61687081d5d9bd6ff5d4ad8337282f5fcdf` used `Test User <test@example.com>` as commit identity, which is provenance noise even though the PR author is `4444J99`.
+
+Ideal prompt diff:
+
+- Ideal form: treat the generated security task as a narrow dispatch packet, claim/update board state only if the task still exists, run package audits, harden the actual untrusted-input surfaces, open a PR, and leave a receipt with precise verification.
+- Actual form: it did the core engineering work and opened/merged a green PR, but it initially edited an enormous stale `tasks.yaml` snapshot, then discovered `main` had a pruned board and could not mark the generated task done.
+- Corrected ideal form for OpenCode dispatch: before mutating board state, refresh `main` and re-read the live task entry; if the generated task has disappeared, do not edit a stale copy and rely on the PR receipt.
+
+Outcome:
+
+- Current source still contains the useful hardening: Pydantic validators in `web/api/main.py` and `mcp/src/limen_mcp/server.py`, enum and integer validation in `web/worker/src/index.js`, and a `postcss >=8.5.10` override in `web/app/package.json`.
+- Current web app and worker audits report `found 0 vulnerabilities` for high-severity npm audit thresholds.
+- Local focused verification passes on current `main`: dispatch/doctor tests, Python compile for the changed Python files, Worker syntax check, and the Next app build.
+
+What was fucked up:
+
+- The review pipeline originally mapped this session to stale branch `limen/gen-organvm-limen-security-0625-57ce` and classified it as reject/do-not-merge. That was wrong: the OpenCode database and PR evidence show this session produced merged PR #46.
+- Queue changed-file extraction overcounted by using broad snapshot context as authored change evidence. The authored diff was five files, not 136.
+- The session changed `tasks.yaml` early while following dispatch protocol, then later found the live board had been pruned. The final commit did not include that stale board mutation, but the attempt shows why OpenCode dispatch needs a final live-board reread before edits.
+- The `Test User <test@example.com>` commit identity weakens provenance on an otherwise useful merged PR.
+
+Verification:
+
+```bash
+sqlite3 -json "$HOME/.local/share/opencode/opencode.db" "select id,parent_id,slug,directory,title,version,agent,model,cost,tokens_input,tokens_output,tokens_reasoning,tokens_cache_read,tokens_cache_write,datetime(time_created/1000,'unixepoch') as created, datetime(time_updated/1000,'unixepoch') as updated from session where id='ses_11427e08affe3D8jAAl5W43viB' or parent_id='ses_11427e08affe3D8jAAl5W43viB' order by time_created;"
+gh pr view 46 --repo organvm/limen --json number,title,state,createdAt,mergedAt,mergeCommit,headRefName,baseRefName,author,url,commits,files,statusCheckRollup
+git show --stat --oneline --decorate b82223c4ea62332d20e737f0d94b6f0b28de9dab
+rg -n 'field_validator|safeParseBody|budget_cost|VALID_STATUSES|VALID_PRIORITIES|VALID_AGENTS|Number\.isNaN|postcss|overrides' web/api/main.py web/worker/src/index.js mcp/src/limen_mcp/server.py web/app/package.json
+PYTHONPATH=/Users/4jp/Workspace/limen/cli/src python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_dispatch_engine.py cli/tests/test_verify_dispatch.py cli/tests/test_doctor.py -q
+python3 -m py_compile web/api/main.py mcp/src/limen_mcp/server.py
+node --check web/worker/src/index.js
+(cd web/app && npm audit --audit-level=high)
+(cd web/worker && npm audit --audit-level=high)
+(cd web/app && npm run build)
+```
+
+Result: PR #46 is merged with green GitHub checks; current hardening code is present; focused Python tests passed `102 passed`; Python compile and Worker syntax check passed; `npm audit --audit-level=high` reports zero vulnerabilities for both `web/app` and `web/worker`; `npm run build` in `web/app` passes. The only local dirty file after verification is unrelated `tasks.yaml`.
+
 ## Rejected Artifacts
 
-### OpenCode security hardening branch disabled core gates
+### Stale generated security branch disabled core gates
 
 Severity: high if merged; current `main` is not affected.
 
 Evidence:
 
-- OpenCode session `ses_11427e08affe3D8jAAl5W43viB` maps to branch `limen/gen-organvm-limen-security-0625-57ce`, commit `02f256e` (`Security hardening pass on organvm/limen`).
-- The session prompt was a security hardening pass, but the branch removes or weakens multiple safety gates: Python mypy, ruff format, MCP/Ianva type checks, shellcheck, the whole-repo verify job, Python 3.11 tests, npm audit, and TypeScript type-check.
+- Branch `limen/gen-organvm-limen-security-0625-57ce`, commit `02f256e` (`Security hardening pass on organvm/limen`), was previously misattributed to OpenCode session `ses_11427e08affe3D8jAAl5W43viB`. Live OpenCode database and PR evidence now show that session actually produced merged PR #46; this stale branch remains rejected on its own merits.
+- The stale branch presents as a security hardening pass, but it removes or weakens multiple safety gates: Python mypy, ruff format, MCP/Ianva type checks, shellcheck, the whole-repo verify job, Python 3.11 tests, npm audit, and TypeScript type-check.
 - The branch reverts `capacity.py` from the census-derived vendor registry to hand-maintained literals and removes the `ollama` local floor lane.
 - The branch removes dispatch environment hydration (`_load_limen_env`), which would make daemon-launched local agents miss credentials landed in `~/.limen.env`.
 - The branch rewrites `tasks.yaml` heavily and is now stale enough that `main..02f256e` would delete many current agent-review, Tabularius, Vigilia, census, and workstream files.
