@@ -6109,6 +6109,69 @@ for c in da245ba 0a68308 57698e8; do if git -C /Users/4jp/Workspace/limen cat-fi
 
 Result: private prompt extraction has `304` records; `/goal` currently reports `NOT DONE`; PR #96 is closed and was red on the preserved exporter test branch; PR #107 is merged green and changes the current payment rail to MONETA; owner-visibility files are absent from current Limen; cited owner-board commits are missing from the local object database.
 
+### Claude governance charter landed well, but its registry record had stale commit/tmp-path truth
+
+Severity: medium for durable governance accounting; low for code behavior. This session is mostly a good example of turning broad prompt pressure into a focused PR, but the surviving registry issue/doc needed provenance correction.
+
+Evidence:
+
+- Queue row `112` points at Claude session `45ef3e9f-237a-4aa2-8984-c4145ae655a5`, rooted at `.claude/worktrees/mighty-enchanting-pinwheel`, running from 2026-06-23T19:09:31Z through 2026-06-24T13:36:30Z.
+- The private prompt extraction is `.limen-private/session-corpus/full-stack-review/session-112-claude-governance-prompts.jsonl` (`254` records: `202` user-message prompts, `47` last-prompt records, and `5` queue enqueue prompts). The review queue reported `236`; the broader extraction includes path-scoped last-prompt/queue surfaces.
+- In redacted intent form, the initial prompt asked Claude to implement a bundle of operating-insight suggestions by ideal-form evolution: closeout definition, executable done predicate, no overclaiming, edit policy, closeout skill, PostToolUse lint hook, concise output, parallel recon, CI gate matrix, and PR handoff discipline.
+- The session correctly did read-only recon first and then opened PR #180 (`Codify Claude operating charter + closeout skill + advisory lint hook`).
+- PR #180 merged green on 2026-06-24T13:02:52Z as merge commit `741cf17`. It landed `CLAUDE.md`, `.claude/skills/closeout/SKILL.md`, `scripts/hooks/lint-edited-file.sh`, and `docs/his-hand-registry-claude-governance-45ef3e9f.md`.
+- PR #180's branch commits were `0d06ff8`, `5926a07`, and `bd133a8`; its checks `python`, `worker`, and `web` all succeeded.
+- The hook survives and is safe as an advisory hook: `bash -n scripts/hooks/lint-edited-file.sh` passes, and the hook exits `0` for both non-Python and Python payloads.
+- The agent-instruction predicate still passes: `PYTHONPATH=cli/src python3 scripts/check-agent-docs.py` reports the documented task states match the canonical states.
+- The session also produced a useful memory note, `~/.claude/projects/-Users-4jp-Workspace-limen/memory/verify-current-main-before-reconciliation.md`, after it almost performed a large moot repair against a stale live checkout. The note captures the important rule: inspect current `origin/main` blobs before doing heavy reconciliation, because editable installs and moving main can create phantom failures.
+- The temp worktree `.claude/worktrees/mighty-enchanting-pinwheel` and job tmp files under `~/.claude/jobs/45ef3e9f/tmp/` are gone. Their only role now is transcript/file-history evidence.
+- The surviving governance registry doc still claimed the work was "committed + lint-green at `463e28d`," but `463e28d` is not present in the current git object database. The real branch commit is `0d06ff8`; the merge commit is `741cf17`.
+- The registry doc also still described PR #180 as open and told the user to copy a vanished temp settings file. Review fixed that tracked doc to mark PR #180 done, cite durable commits/PR, and point the remaining hook activation to issue #190 instead of the tmp path.
+- Issue #190 remains open as the permanent holder for the optional lint-hook settings activation. Review added comment `https://github.com/organvm/limen/issues/190#issuecomment-4881341896` correcting the stale `463e28d` provenance without changing the issue status.
+
+Ideal prompt diff:
+
+- Ideal broad-governance form: fan out read-only, consolidate by reference to existing AGENTS/GEMINI protocol, land one focused PR, verify with repo predicates, and leave human-gated settings activation in a durable issue.
+- Actual useful form: Claude largely did that. PR #180 is a real, green, merged governance improvement.
+- Ideal settings-hook form: distinguish shipped hook script from live hook activation; never imply that a template or temp file is a durable settings source.
+- Actual form: the session kept activation as a needs-human item, which was good, but the registry doc later rotted because it referenced a tmp file and missing commit.
+- Ideal reconciliation form: before repairing a perceived regression, fetch and inspect current `origin/main` blobs.
+- Actual form: Claude almost did unnecessary multi-file surgery, then captured the lesson in memory. That is a good recovery, but it proves the prompt should have required current-main verification before any restore work.
+- Ideal closeout form: "safe to close" is acceptable when the remaining item is permanently filed and the landed work is merged.
+- Actual form: the final answer met that standard for the charter work; the lingering stale registry text was a documentation defect, not a code defect.
+
+Outcome:
+
+- Row `112` is classified as valuable and mostly durable.
+- Review produced a concrete correction: `docs/his-hand-registry-claude-governance-45ef3e9f.md` no longer points at missing commit `463e28d` or vanished `~/.claude/jobs/.../tmp` settings state.
+- Review also corrected issue #190 with the reachable commit IDs.
+- No behavioral code patch was needed; the lint hook and agent-doc predicate still pass.
+
+What was fucked up:
+
+- The prompt was too broad: it mixed charter writing, settings mutation, closeout doctrine, CI gates, fan-out protocol, and permission-prompt reduction into one run.
+- The first subagent overread the live root after discovering the worktree had no `.claude/settings.json`, which is exactly the worktree/live-root confusion this ecosystem keeps tripping over.
+- The session created a durable doc that immediately contained time-sensitive release state ("PR open") and temp-path instructions.
+- The missing `463e28d` hash made the registry's proof pointer non-reproducible until this review corrected it.
+- The issue remains open, so future closeout language must keep calling it a filed human-gated item, not a completed activation.
+
+Verification:
+
+```bash
+jq '.changed_review[112]' .limen-private/session-corpus/full-stack-review/agent-code-review-queue.json
+wc -l .limen-private/session-corpus/full-stack-review/session-112-claude-governance-prompts.jsonl
+gh pr view 180 --repo organvm/limen --json number,title,state,mergedAt,mergeCommit,statusCheckRollup,files,commits,url
+git show --stat --oneline --decorate 741cf178c2f56ba74ae220acd3a57e874e9b222d -- CLAUDE.md .claude/skills/closeout/SKILL.md docs/his-hand-registry-claude-governance-45ef3e9f.md scripts/hooks/lint-edited-file.sh
+for c in 463e28d 0d06ff80f09564edbb14b104d97c3c7c04edc463 741cf178c2f56ba74ae220acd3a57e874e9b222d; do if git cat-file -e "$c^{commit}"; then printf '%s ok\n' "$c"; else printf '%s missing\n' "$c"; fi; done
+bash -n scripts/hooks/lint-edited-file.sh
+printf '{"tool_input":{"file_path":"README.md"}}' | bash scripts/hooks/lint-edited-file.sh
+printf '{"tool_input":{"file_path":"scripts/self-heal.py"}}' | bash scripts/hooks/lint-edited-file.sh
+PYTHONPATH=cli/src python3 scripts/check-agent-docs.py
+gh issue view 190 --repo organvm/limen --json number,title,state,updatedAt,url
+```
+
+Result: private prompt extraction has `254` records; PR #180 is merged green; `463e28d` is missing while `0d06ff8` and `741cf17` are present; the advisory lint hook exits `0`; agent instruction docs match canonical task states; issue #190 is still open and now has a provenance-correction comment.
+
 ## Remaining Review Queue
 
 1. Continue other off-repo/no-git reconstructions before spending time on large Studium content churn; those windows need private artifact review rather than a straightforward Limen git diff.
