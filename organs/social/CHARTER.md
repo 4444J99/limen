@@ -361,7 +361,38 @@ The rollout order, matching the workflows above:
 The SCRUM: run workflow 1 (intake → posture) for each new engagement and workflow 2 (triage)
 daily from the start. Build workflows 3-7 as the required inputs become available.
 
-Current validation:
+## The six social organ rules (validated by `validate-social.py`)
+
+Rules enforced automatically against every engagement record:
+
+| # | Rule | What it checks | Enforced by |
+|---|---|---|---|
+| 1 | **Valid Posture** | standing must be a recognized tie-strength in the canonical sequence (ACTIVE → WARM → DORMANT → STRAINED → BROKEN → PROTECTED). Standing advances in sequence; `next_standing` must advance forward. PROTECTED is a boundary state, not a regression. | `validate-social.py` |
+| 2 | **Manual Mode** | no engagement may claim autonomic operation. `manual_mode` must be `true`. At least one `human_gates` entry must be named. The `never_autonomous` list must enumerate what the organ must never do autonomously for this tie. | `validate-social.py` |
+| 3 | **5-Primitive Completeness** | every engagement record must capture all five kernel primitives: Member, Mandate, Standing, Standard, and Governance. No floating contacts. | `validate-social.py` |
+| 4 | **Evidence Integrity** | every `artifacts.evidence` entry must reference real artifacts or clear statuses. No TODO, TBD, FIXME, PLACEHOLDER, or "to be determined" patterns. | `validate-social.py` |
+| 5 | **No Overreach** | the engagement record must not claim or imply autonomous sending, surveillance, manipulation, or scoring of human beings. Overreach patterns are explicitly checked across all text fields. | `validate-social.py` |
+| 6 | **Reviewable Output** | every engagement must name a `next_reviewable_output` — the concrete artifact the human should review next. | `validate-social.py` |
+
+These six rules are the executable floor of the social organ. No engagement enters the fleet
+without passing all six.
+
+## Maturity and next steps
+
+The social organ is **15% mature** (scaffold stage, rank 8 on the organ ladder). The kernel
+architecture is specified, the five-primitive map is complete, the triage dashboard is wired as
+a generated report, the six validation rules are executable, and the first relationship-posture
+brief proves the concept for one real tie (Derek). The remaining lift to 30% (entering building
+stage):
+
+1. **Complete the engagements fleet** with 3–5 diverse relationship types — family tie,
+   collaborative network member, community context — each validated by Rules #1–6.
+2. **Wire the cadence engine** as a recurring beat — Workflow 3 (Care Cadence → Calendar)
+   running on a daily cadence, producing a structured calendar artifact from engagement posture records.
+3. **Operationalize boundary enforcement** as a structural check — Workflow 5 (Boundary → Enforcement)
+   running as an automated preflight on every deliverable before it reaches the human.
+
+### Validation
 
 ```bash
 # Validate the fleet against all six social organ rules
@@ -373,6 +404,27 @@ python organs/social/scripts/relationship-brief.py organs/social/engagements/der
 # Generate the fleet-wide triage dashboard
 python organs/social/scripts/triage-dashboard.py
 ```
+
+### Target build surface (scaffold-complete set)
+
+```
+organs/social/
+  KERNEL.md               -- 5-primitive kernel, boundary, architecture
+  CHARTER.md              -- this file: org-chart, workflows, I/O, leverage
+  seed.yaml               -- organ declaration for the cursus honorum
+  validate-social.py      -- Rules #1–6: every engagement must pass all six
+  MACRO-FACE.md           -- the community + relationship infrastructure platform
+  MICRO-FACE.md           -- Anthony's live instance
+  engagements/            -- per-tie relationship-posture records
+    <identifier>.yaml     -- five-primitive posture record (Member, Mandate, Standing, Standard, Governance)
+    <identifier>-brief.md -- generated human-readable relationship-posture brief
+  scripts/
+    triage-dashboard.py    -- W2: generates fleet-wide triage view sorted by standing priority
+    relationship-brief.py  -- W1: generates human-readable posture brief from engagement YAML
+```
+
+The micro instance (Anthony's network) proves the platform. The macro platform (this directory
+tree minus the engagement contents) is the portable standard any operator can adopt.
 
 ## Future scaling (non-blocking, noted for later maturity bands)
 

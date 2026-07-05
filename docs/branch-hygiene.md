@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (116) — decide each
+## Live-work branches (119) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -81,7 +81,10 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/org-health-organ-kernel-0704-59fd` — c3d9167b health: sync KERNEL.md to completed scaffold (authority contract + posture sequence + build plan)
 - `limen/org-health-organ-kernel-0704-decb` — 74a158a6 docs: advance health organ kernel
 - `limen/org-health-organ-kernel-0704-e61b` — b08caed6 health: complete organ kernel scaffold sync
+- `limen/org-hr-organ-kernel-0704-3658` — 939962e9 ORG-hr-organ-kernel-0704: Author KERNEL.md for the HR organ
 - `limen/org-hr-organ-kernel-0704-ab6c` — 40c48407 feat(hr): map 5-primitive kernel to HR domain and establish institutional prosthesis charter
+- `limen/org-hr-organ-kernel-0705-08aa` — 1fb4e244 chore(hr): mark ORG-hr-organ-kernel-0705 as redundant (already completed in 0704)
+- `limen/org-hr-organ-kernel-0705-7fba` — 46850173 docs(hr): clarify organ as institutional prosthesis + generic platform
 - `limen/org-legal-organ-charter-0703-0899` — b8eb571e limen: complete legal organ charter
 - `limen/org-legal-organ-charter-0704-0b2a` — 5dbc0e8d docs: harden legal organ charter
 - `limen/org-legal-organ-firstslice-0703-c244` — 05cad7d7 legal: add first counsel-review matter slice
