@@ -12,14 +12,18 @@
 
 ## Why this organ exists
 
-Large companies win the talent game not because their people are better but
-because a **people office** stands behind every manager: structured hiring
-loops, onboarding sequences, policy handbooks, compliance calendars,
-performance frameworks, and offboarding checklists. A small business or a solo
-HR consultant has the same judgment but none of that institutional backbone —
-every process is reinvented per client, per hire, per incident.
+This organ is an **institutional prosthesis** for people operations. It gives
+one HR practitioner, one small business, or one solo operator the operational
+weight usually supplied by a Fortune-500 people office: intake discipline,
+policy memory, compliance tracking, compensation benchmarking, performance
+frameworks, and structured onboarding/offboarding.
 
-This organ supplies the backbone as reusable, versioned artifacts: the same
+Large companies win the talent game not because their people are better but
+because a **people office** stands behind every manager — structured hiring
+loops, policy handbooks, compliance calendars, performance frameworks — that
+the practitioner would otherwise reinvent per client, per hire, per incident.
+
+This organ supplies that backbone as reusable, versioned artifacts: the same
 fractal move as the education organ (elite-academy weight for one learner) and
 the legal organ (top-firm weight for one matter). Eventually most of this
 apparatus is automated everywhere; the point is to hold the automated form
@@ -28,6 +32,11 @@ first, as an institution anyone can pick up.
 Named by the principal 2026-07-04: *"we need a human resources institution —
 the same way that we're building an EDU institution and a law firm
 institution."*
+
+**Generic + nameless underneath, his instance on top.** The kernel and template
+library carry no personal identity, no client names, no organ-specific idiom.
+The named instance — the HR practice run by a specific practitioner for specific
+clients — sits above this generic layer. The same kernel serves every instance.
 
 ## The 5-primitive kernel, mapped to HR
 
@@ -81,4 +90,6 @@ Honorvm). Reference `organ-ladder.json` rank 11 note.
 
 *Companion documents: [`CHARTER.md`](CHARTER.md) (virtual firm org-chart +
 8-workflow orchestration + inputs/outputs + leverage math + constraint
-registry).*
+registry), [`MACRO-FACE.md`](MACRO-FACE.md) (the HR platform any operator
+can hold), [`MICRO-FACE.md`](MICRO-FACE.md) (Jessica's HR practice as the
+micro proof).*

@@ -1,0 +1,58 @@
+# Compensation Benchmark — Technology Industry
+*Draft benchmark skeleton — for practitioner review. Validated against practitioner experience.*
+
+> **Industry:** Technology (Software / IT / SaaS)
+> **Location:** [city / state / remote]
+> **As of:** [date]
+> **Source confidence:** [low / medium / high]
+
+## Role Benchmarks
+
+| Role | Seniority | P10 | P25 | P50 | P75 | P90 | Source |
+|---|---|---|---|---|---|---|---|
+| Software Engineer | Entry (0-2 yr) | $ | $ | $ | $ | $ | [Radford / Levels.fyi / BLS] |
+| Software Engineer | Mid (3-5 yr) | $ | $ | $ | $ | $ | [Radford / Levels.fyi / BLS] |
+| Software Engineer | Senior (5-8 yr) | $ | $ | $ | $ | $ | [Radford / Levels.fyi / BLS] |
+| Software Engineer | Lead (8+ yr) | $ | $ | $ | $ | $ | [Radford / Levels.fyi / BLS] |
+| Product Manager | Entry | $ | $ | $ | $ | $ | [source] |
+| Product Manager | Mid | $ | $ | $ | $ | $ | [source] |
+| Product Manager | Senior | $ | $ | $ | $ | $ | [source] |
+| Engineering Manager | Team | $ | $ | $ | $ | $ | [source] |
+| Engineering Manager | Director | $ | $ | $ | $ | $ | [source] |
+| Designer (Product) | Entry | $ | $ | $ | $ | $ | [source] |
+| Designer (Product) | Mid | $ | $ | $ | $ | $ | [source] |
+| Designer (Product) | Senior | $ | $ | $ | $ | $ | [source] |
+| Data Scientist | Entry | $ | $ | $ | $ | $ | [source] |
+| Data Scientist | Mid | $ | $ | $ | $ | $ | [source] |
+| Data Scientist | Senior | $ | $ | $ | $ | $ | [source] |
+| DevOps / SRE | Entry | $ | $ | $ | $ | $ | [source] |
+| DevOps / SRE | Mid | $ | $ | $ | $ | $ | [source] |
+| DevOps / SRE | Senior | $ | $ | $ | $ | $ | [source] |
+
+## Cost-of-Living Adjustments
+
+| Metro Area | Adjustment Factor | Notes |
+|---|---|---|
+| San Francisco / Bay Area | +35-45% | Highest COL in tech |
+| New York City | +25-35% | Premium for NYC metro |
+| Seattle | +15-25% | Strong tech market |
+| Los Angeles | +10-20% | Varied by sub-region |
+| Austin | +5-10% | Growing tech hub |
+| Chicago | +5-10% | Moderate adjustment |
+| Denver | +5-10% | Growth market |
+| Remote (national) | -10-20% | National bands typically lower |
+
+## Recommended Sources
+
+- Levels.fyi: crowdsourced, self-reported, good for tech companies
+- Radford (Aon): survey-based, high quality, cost-prohibitive for solo practitioners
+- BLS Occupational Employment Statistics: free, national, less granular
+- LinkedIn Salary: user-contributed, broad coverage
+- Built In / Indeed / Glassdoor: market-rate signals, noisy
+
+## Practitioner Notes
+
+- P50-P75 is the typical "hire-ready" band for most roles.
+- Equity compensation is excluded from base salary benchmarks.
+- Remote-first companies may use national bands or location-agnostic pay.
+- *Practitioner validates these benchmarks against experience before any offer.*

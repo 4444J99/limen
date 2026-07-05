@@ -394,3 +394,9 @@ Working name: **HR / People Office**. A proper name — consistent with the
 flagship convention used by the legal organ (Cochran), the artist organ
 (A-MAVS-OLEVM), and the governance organ (Aerarium / Cvrsvs Honorvm) — is
 pending an INDEX-NOMINVM pass. See `organ-ladder.json` rank 11 note.
+
+---
+
+*Companion documents: [`KERNEL.md`](KERNEL.md) (architecture + 5-primitive map),
+[`MACRO-FACE.md`](MACRO-FACE.md) (the HR platform any operator can hold),
+[`MICRO-FACE.md`](MICRO-FACE.md) (Jessica's HR practice as the micro proof).*
