@@ -81058,7 +81058,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -81073,7 +81073,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-05T22:47:20.565095Z'
+  updated: '2026-07-05T23:20:05.590087Z'
   dispatch_log:
   - timestamp: '2026-07-04T18:33:23.023649Z'
     agent: claude
@@ -81152,6 +81152,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-07-05T23:20:05.590087Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-dot-github--theoria-472
   title: fix failing CI on organvm/dot-github--theoria#472
   repo: organvm/dot-github--theoria
@@ -81234,14 +81239,12 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
   - noop
-  - tried:claude
-  - tried:agy
   urls:
   - https://github.com/organvm/dot-github--theoria/pull/473
   context: "PR organvm/dot-github--theoria#473 has FAILING CI checks and merge-drain\
@@ -81252,7 +81255,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-05T22:15:17.281403Z'
+  updated: '2026-07-05T23:37:47.083808Z'
   dispatch_log:
   - timestamp: '2026-07-04T21:33:35.631971Z'
     agent: claude
@@ -81305,6 +81308,11 @@ tasks:
     agent: opencode
     session_id: limen/heal-cifix-organvm-dot-github--theoria-473-de55
     status: dispatched
+  - timestamp: '2026-07-05T23:37:47.083808Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-dot-github--theoria-476
   title: fix failing CI on organvm/dot-github--theoria#476
   repo: organvm/dot-github--theoria
@@ -81319,6 +81327,7 @@ tasks:
   - ci-red
   - tried:agy
   - tried:claude
+  - slow
   urls:
   - https://github.com/organvm/dot-github--theoria/pull/476
   context: "PR organvm/dot-github--theoria#476 has FAILING CI checks and merge-drain\
@@ -81329,7 +81338,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-05T22:30:04.679143Z'
+  updated: '2026-07-05T23:27:48.860690Z'
   dispatch_log:
   - timestamp: '2026-07-05T15:56:02.788560Z'
     agent: agy
@@ -81372,6 +81381,15 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-05T23:19:50.878024Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-07-05T23:27:48.860690Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-dot-github--theoria-477
   title: fix failing CI on organvm/dot-github--theoria#477
   repo: organvm/dot-github--theoria
@@ -81379,12 +81397,11 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
-  - tried:agy
   urls:
   - https://github.com/organvm/dot-github--theoria/pull/477
   context: "PR organvm/dot-github--theoria#477 has FAILING CI checks and merge-drain\
@@ -81395,7 +81412,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-05T22:29:47.886759Z'
+  updated: '2026-07-05T23:37:47.083808Z'
   dispatch_log:
   - timestamp: '2026-07-05T20:46:07.578331Z'
     agent: agy
@@ -81424,11 +81441,16 @@ tasks:
     agent: opencode
     session_id: limen/heal-cifix-organvm-dot-github--theoria-477-5ff5
     status: dispatched
+  - timestamp: '2026-07-05T23:37:47.083808Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-dot-github--theoria-478
   title: fix failing CI on organvm/dot-github--theoria#478
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -81448,7 +81470,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-05T22:29:47.886759Z'
+  updated: '2026-07-05T23:27:28.154082Z'
   dispatch_log:
   - timestamp: '2026-07-05T18:34:34.065403Z'
     agent: claude
@@ -81486,14 +81508,23 @@ tasks:
     agent: agy
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-05T23:20:05.590087Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-05T23:27:28.154082Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-cifix-organvm-dot-github--theoria-479
   title: fix failing CI on organvm/dot-github--theoria#479
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -81510,7 +81541,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-05T22:57:40.110048Z'
+  updated: '2026-07-05T23:19:50.878024Z'
   dispatch_log:
   - timestamp: '2026-07-05T19:38:31.164552Z'
     agent: claude
@@ -81544,11 +81575,15 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-05T23:19:50.878024Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: HEAL-cifix-organvm-dot-github--theoria-483
   title: fix failing CI on organvm/dot-github--theoria#483
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: dispatched
@@ -81557,6 +81592,7 @@ tasks:
   - self-heal
   - ci-red
   - tried:claude
+  - slow
   urls:
   - https://github.com/organvm/dot-github--theoria/pull/483
   context: "PR organvm/dot-github--theoria#483 has FAILING CI checks and merge-drain\
@@ -81567,7 +81603,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-05T22:37:06.677122Z'
+  updated: '2026-07-05T23:37:08.405882Z'
   dispatch_log:
   - timestamp: '2026-07-05T19:47:03.152249Z'
     agent: claude
@@ -81589,6 +81625,24 @@ tasks:
     status: failed->opencode
   - timestamp: '2026-07-05T22:37:06.677122Z'
     agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-05T23:19:50.878024Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-07-05T23:24:08.733720Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-05T23:27:28.154082Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-05T23:37:08.405882Z'
+    agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
@@ -81915,6 +81969,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - tried:claude
   urls: []
   context: "In organvm/limen organs/governance/, author the polished MACRO face (a\
     \ portable governance-as-code open standard anyone can adopt \u2014 the platform\
@@ -81927,13 +81982,22 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-04T08:45:49.296915Z'
-  dispatch_log: []
+  updated: '2026-07-05T23:24:00.811702Z'
+  dispatch_log:
+  - timestamp: '2026-07-05T23:20:05.590087Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-05T23:24:00.811702Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: ORG-governance-organ-deepen-0704
   title: Deepen the governance organ toward a usable institution
   repo: organvm/limen
   type: content
-  target_agent: gemini
+  target_agent: opencode
   workstream: governance
   priority: high
   budget_cost: 2
@@ -81958,7 +82022,7 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-05T22:46:23.866745Z'
+  updated: '2026-07-05T23:36:51.871384Z'
   dispatch_log:
   - timestamp: '2026-07-05T22:37:06.677122Z'
     agent: claude
@@ -81966,6 +82030,15 @@ tasks:
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-05T22:46:23.866745Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-05T23:27:48.860690Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-05T23:36:51.871384Z'
     agent: claude
     session_id: cli
     status: failed->opencode
@@ -82050,7 +82123,7 @@ tasks:
   title: Build the first working vertical slice of the health organ
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: gemini
   workstream: health
   priority: high
   budget_cost: 2
