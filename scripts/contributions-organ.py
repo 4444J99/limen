@@ -9,13 +9,27 @@ public proof mirror PLAN-06 owner packet 04 left unowned — limen is the named 
 (merged / open / no-PR / closed / protocol-due / post-close), and redacts local paths and private
 notes before anything touches the surface.
 
+Four limbs, one render:
+  MIRROR    — the proof surface from hub-ledger outputs (the original face).
+  LIFECYCLE — the executable audit of organs/contributions/LIFECYCLE.md: derives protocol-due
+              (open PRs stale past LIMEN_CONTRIB_STALE_DAYS, measured against the SOURCE stamp so
+              renders stay deterministic) and lifecycle DEBT (terminal PRs whose contrib--*
+              workspace is reap-owed: archive + fork settle + ledger closeout).
+  ESTATE    — verifies organs/contributions/ESTATE.yaml, the certified register of every script/
+              protocol/rule/memory/log/session/plan of the practice; a registered local artifact
+              gone absent surfaces as DRIFT.
+  SCOUT     — the AUTOPOIETIC limb: looks INWARD (walks our own workspace dependency manifests)
+              and derives the OUTWARD pool — the upstreams we already depend on most that we have
+              never engaged (organs/contributions/opportunities.json + the pool section of the
+              mirror). The organ makes its own next work; the human hand enters only at the send.
+
 Offline on the beat: reads the local hub checkout (LIMEN_CONTRIB_LEDGER) or the committed cache;
 a `gh api` cache refresh runs ONLY with --refresh or LIMEN_CONTRIB_REFRESH=1. When every source is
 absent it renders its own staleness receipt instead of pretending — an honest mirror shows its
 dust — and still exits 0 (fail-open, never gates the beat). The organ NEVER sends: no comments,
 bumps, PRs, or posts; outbound stays the human's hand.
 
-  python3 scripts/contributions-organ.py            # render MIRROR.md + logs/contributions.json
+  python3 scripts/contributions-organ.py            # render MIRROR.md + opportunities.json + logs/contributions.json
   python3 scripts/contributions-organ.py --refresh  # also refresh the ledger cache from GitHub (read-only API)
   python3 scripts/contributions-organ.py --check    # predicate: committed mirror matches a fresh render (exit 0 <=> current)
 
@@ -30,6 +44,7 @@ import base64
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -38,20 +53,29 @@ import yaml
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
-HUB_LEDGER = Path(os.environ.get("LIMEN_CONTRIB_LEDGER", HOME / "Workspace" / "organvm" / "contrib" / "LEDGER.yaml"))
+HUB_LEDGER = Path(os.path.expanduser(os.environ.get("LIMEN_CONTRIB_LEDGER", "~/Workspace/organvm/contrib/LEDGER.yaml")))
 HUB_REPO = os.environ.get("LIMEN_CONTRIB_HUB_REPO", "organvm/contrib")
 BACKFLOW = Path(
-    os.environ.get(
-        "LIMEN_BACKFLOW_MANIFEST", HOME / "Workspace" / "organvm-corpvs-testamentvm" / "backflow-manifest.yaml"
+    os.path.expanduser(
+        os.environ.get(
+            "LIMEN_BACKFLOW_MANIFEST", "~/Workspace/organvm-corpvs-testamentvm/data/atoms/backflow-manifest.yaml"
+        )
     )
 )
+STALE_DAYS = int(os.environ.get("LIMEN_CONTRIB_STALE_DAYS", "14"))
+SCOUT_ON = os.environ.get("LIMEN_CONTRIB_SCOUT", "1") == "1"
+SCOUT_CAP = int(os.environ.get("LIMEN_CONTRIB_SCOUT_CAP", "12"))
 ORGAN_HOME = ROOT / "organs" / "contributions"
 CACHE = ORGAN_HOME / "ledger-cache.json"
 MIRROR = ORGAN_HOME / "MIRROR.md"
+ESTATE = ORGAN_HOME / "ESTATE.yaml"
+OPPORTUNITIES = ORGAN_HOME / "opportunities.json"
 SIGNAL = ROOT / "logs" / "contributions.json"
 
 # PLAN-06 proof categories, in render order.
 CATEGORIES = ("merged", "open", "no-PR", "closed", "protocol-due", "post-close")
+_SCOUT_DIR_CAP = 2500  # bound the workspace walk so a pathological tree can't hang the beat
+_DEP_LINE_RX = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)")
 
 
 def _category(status: str) -> str:
@@ -86,10 +110,12 @@ def _ledger_items(obj: Any) -> list[dict[str, Any]]:
     return [i for i in items if isinstance(i, dict)]
 
 
-def _normalize(item: dict[str, Any]) -> tuple[str, str, str, str]:
+def _normalize(item: dict[str, Any], stale_before: str = "") -> tuple[str, str, str, str]:
     """One hub-ledger item -> (repo, title, url, proof category). Speaks both the refresh-ledger
     contract (upstream_repo/pr_state/pr_title/upstream_pr) and the generic repo/status/title one;
-    `workspace` and `notes` never pass this gate."""
+    `workspace` and `notes` never pass this gate. An open PR whose last update predates
+    `stale_before` (derived from the SOURCE stamp, not the clock) is derived protocol-due —
+    the LIFECYCLE.md staleness rule, executable."""
     repo = _public(item.get("upstream_repo") or item.get("repo") or item.get("name") or item.get("id") or "")
     title = _public(item.get("pr_title") or item.get("title"))
     pr = item.get("upstream_pr")
@@ -99,7 +125,19 @@ def _normalize(item: dict[str, Any]) -> tuple[str, str, str, str]:
         status = "merged"
     elif not status and not pr:
         status = "no-PR"
-    return repo, title, url, _category(status or "open")
+    cat = _category(status or "open")
+    updated = str(item.get("pr_updated") or "")[:10]
+    if cat == "open" and stale_before and updated and updated < stale_before:
+        cat = "protocol-due"
+    return repo, title, url, cat
+
+
+def _stale_before(as_of: str) -> str:
+    """The staleness cutoff date, derived from the source stamp so renders stay deterministic."""
+    try:
+        return (dt.date.fromisoformat(as_of) - dt.timedelta(days=STALE_DAYS)).isoformat()
+    except ValueError:
+        return ""
 
 
 def load_sources() -> tuple[list[dict[str, Any]], str, str]:
@@ -158,6 +196,9 @@ def backflow_tally() -> dict[str, int]:
         obj = yaml.safe_load(BACKFLOW.read_text()) or {}
     except Exception:
         return {}
+    organs = obj.get("organs")
+    if isinstance(organs, dict):  # the manifest's real contract: organs -> [signal, ...]
+        return {_public(name) or "unrouted": len(sigs) for name, sigs in organs.items() if isinstance(sigs, list)}
     signals = obj.get("signals") or obj.get("entries") or obj.get("backflow") or []
     if isinstance(signals, dict):
         signals = list(signals.values())
@@ -169,14 +210,147 @@ def backflow_tally() -> dict[str, int]:
     return tally
 
 
-def render(items: list[dict[str, Any]], source: str, as_of: str, flow: dict[str, int]) -> str:
+def verify_estate() -> tuple[int, int, int, list[str], list[str]]:
+    """Verify the certified register: (total, present, cited, absent-ids, optional-absent-ids).
+    A non-optional local artifact gone absent is DRIFT — surfaced, never silently rotted."""
+    try:
+        entries = (yaml.safe_load(ESTATE.read_text()) or {}).get("artifacts") or []
+    except Exception:
+        return 0, 0, 0, ["estate-register-unreadable"], []
+    present = cited = 0
+    absent: list[str] = []
+    optional_absent: list[str] = []
+    for e in entries:
+        if not isinstance(e, dict):
+            continue
+        if str(e.get("presence", "local")) != "local":
+            cited += 1
+            continue
+        loc = str(e.get("location", ""))
+        path = Path(os.path.expanduser(loc)) if loc.startswith(("~", "/")) else ROOT / loc
+        if path.exists():
+            present += 1
+        elif e.get("optional"):
+            optional_absent.append(str(e.get("id", loc)))
+        else:
+            absent.append(str(e.get("id", loc)))
+    return len([e for e in entries if isinstance(e, dict)]), present, cited, sorted(absent), sorted(optional_absent)
+
+
+def _engaged_names(items: list[dict[str, Any]]) -> set[str]:
+    names: set[str] = set()
+    for item in items:
+        for field in ("upstream_repo", "repo", "name"):
+            tail = str(item.get(field) or "").split("/")[-1].lower().replace("_", "-")
+            tail = tail.removeprefix("contrib--")
+            if tail:
+                names.add(tail)
+    return names
+
+
+def _deps_from_manifest(path: Path) -> set[str]:
+    deps: set[str] = set()
+    try:
+        if path.name == "package.json":
+            obj = json.loads(path.read_text())
+            for key in ("dependencies", "devDependencies"):
+                deps |= {d.split("/")[-1].lower() for d in (obj.get(key) or {})}
+        elif path.name == "pyproject.toml":
+            import tomllib
+
+            obj = tomllib.loads(path.read_text())
+            reqs = list(obj.get("project", {}).get("dependencies") or [])
+            for extra in (obj.get("project", {}).get("optional-dependencies") or {}).values():
+                reqs += list(extra)
+            for req in reqs:
+                m = _DEP_LINE_RX.match(str(req).strip())
+                if m:
+                    deps.add(m.group(1).lower())
+        else:  # requirements*.txt
+            for line in path.read_text().splitlines():
+                line = line.strip()
+                if not line or line.startswith(("#", "-", ".", "/")):
+                    continue
+                m = _DEP_LINE_RX.match(line)
+                if m:
+                    deps.add(m.group(1).lower())
+    except Exception:
+        pass
+    return {d.replace("_", "-") for d in deps if d}
+
+
+def scout(items: list[dict[str, Any]]) -> list[tuple[str, int]]:
+    """The autopoietic limb: look INWARD (our own dependency manifests, bounded walk) and derive
+    the OUTWARD pool — upstreams we already lean on hardest that we have never engaged. Returns
+    [(dependency, distinct-repos-using-it)], heaviest first, engaged upstreams excluded."""
+    if not SCOUT_ON:
+        return []
+    engaged = _engaged_names(items)
+    own = {"limen", "ianva", "moneta", "organvm-engine", "limen-mcp"}
+    usage: dict[str, set[str]] = {}
+    scanned = 0
+    workspace = HOME / "Workspace"
+    if not workspace.is_dir():
+        return []
+    roots: list[Path] = []
+    for org in sorted(workspace.iterdir()):
+        if org.name.startswith((".", "_")) or not org.is_dir():
+            continue
+        roots.append(org)
+        for sub in sorted(org.iterdir()):
+            scanned += 1
+            if scanned > _SCOUT_DIR_CAP:
+                break
+            if sub.is_dir() and not sub.name.startswith((".", "_")) and sub.name != "node_modules":
+                roots.append(sub)
+        if scanned > _SCOUT_DIR_CAP:
+            break
+    for repo_root in roots:
+        deps: set[str] = set()
+        for manifest in ("requirements.txt", "pyproject.toml", "package.json"):
+            p = repo_root / manifest
+            if p.is_file():
+                deps |= _deps_from_manifest(p)
+        for dep in deps:
+            if dep in own or any(dep in e or e in dep for e in engaged):
+                continue
+            usage.setdefault(dep, set()).add(repo_root.name)
+    pool = [(dep, len(repos)) for dep, repos in usage.items() if len(repos) >= 2]
+    pool.sort(key=lambda t: (-t[1], t[0]))
+    return pool[:SCOUT_CAP]
+
+
+def lifecycle_debt(items: list[dict[str, Any]], stale_before: str) -> list[tuple[str, str]]:
+    """The terminal-hygiene audit (LIFECYCLE.md): merged/closed contributions whose workspace has
+    no recorded closeout are reap-owed — (tracking repo or upstream, category) queued receipts."""
+    debt: list[tuple[str, str]] = []
+    for item in items:
+        repo, _, _, cat = _normalize(item, stale_before)
+        if cat in {"merged", "closed", "post-close"} and not (item.get("reaped") or item.get("closed_out")):
+            where = _public(item.get("tracking_remote")) or repo or "unknown"
+            debt.append((where, cat))
+    debt.sort()
+    return debt
+
+
+def render(
+    items: list[dict[str, Any]],
+    source: str,
+    as_of: str,
+    flow: dict[str, int],
+    pool: list[tuple[str, int]],
+    estate: tuple[int, int, int, list[str], list[str]],
+) -> str:
+    stale_before = _stale_before(as_of)
     counts = dict.fromkeys(CATEGORIES, 0)
     rows: list[tuple[str, str, str, str]] = []
     for item in items:
-        row = _normalize(item)
+        row = _normalize(item, stale_before)
         counts[row[3]] += 1
         rows.append(row)
     rows.sort(key=lambda r: (CATEGORIES.index(r[3]), r[0]))
+    debt = lifecycle_debt(items, stale_before)
+    total, present, cited, absent, optional_absent = estate
 
     lines = [
         "# SPECVLVM — the contributions mirror",
@@ -205,11 +379,55 @@ def render(items: list[dict[str, Any]], source: str, as_of: str, flow: dict[str,
         lines += ["| upstream | contribution | ref | proof |", "|---|---|---|---|"]
         lines += [f"| {r or '—'} | {t or '—'} | {u or '—'} | {c} |" for r, t, u, c in rows]
         lines += [""]
-    lines += ["## Backflow (the inward product)", ""]
+    lines += [
+        "## Lifecycle (the audit of `LIFECYCLE.md`)",
+        "",
+        f"Staleness rule: an open PR untouched since before {stale_before or 'n/a'} "
+        f"({STALE_DAYS}d before the source stamp) renders protocol-due — a bump is owed, staged,",
+        "and fired one-at-a-time by the human hand (never batch-bumped).",
+        "",
+    ]
+    if debt:
+        lines += [
+            f"**Lifecycle debt — {len(debt)} workspace(s) reap-owed** (terminal PR, no recorded closeout:",
+            "archive the tracking repo, settle the fork, mark the ledger entry closed-out):",
+            "",
+        ]
+        lines += [f"- `{where}` — {cat}" for where, cat in debt]
+    else:
+        lines += ["No lifecycle debt: every terminal contribution has a recorded closeout."]
+    lines += ["", "## The autopoietic pool — inward-derived outward opportunities", ""]
+    if pool:
+        lines += [
+            "The scout limb walked our own dependency manifests: these are the upstreams we lean on",
+            "hardest and have never engaged — the next places to study wiring. Pooled for",
+            "scout/fieldwork vetting; adoption and every send stay human-gated.",
+            "",
+            "| dependency | used across our repos |",
+            "|---|---|",
+        ]
+        lines += [f"| {dep} | {n} |" for dep, n in pool]
+    elif SCOUT_ON:
+        lines += ["The scout walk found no unengaged dependency used across 2+ of our repos."]
+    else:
+        lines += ["Scout limb gated off (`LIMEN_CONTRIB_SCOUT=0`)."]
+    lines += ["", "## Backflow (the inward product)", ""]
     if flow:
         lines += [f"- **{organ}** — {n} signal(s) routed inward" for organ, n in sorted(flow.items())]
     else:
         lines += ["- backflow manifest not readable from this host — the tally renders where it is."]
+    lines += [
+        "",
+        "## Estate register (`ESTATE.yaml`)",
+        "",
+        f"{total} artifacts registered — {present} verified present locally, {cited} cited "
+        f"(remote/receipt), {len(absent)} DRIFT, {len(optional_absent)} optional-absent.",
+    ]
+    if absent:
+        lines += ["", "**DRIFT — registered artifacts gone absent (repair or re-home, never delete the entry):**", ""]
+        lines += [f"- `{a}`" for a in absent]
+    if optional_absent:
+        lines += ["", f"_Optional-absent (expected): {', '.join(f'`{a}`' for a in optional_absent)}_"]
     lines += [
         "",
         "## The estate this mirror reflects",
@@ -217,6 +435,7 @@ def render(items: list[dict[str, Any]], source: str, as_of: str, flow: dict[str,
         f"- Hub: `{HUB_REPO}` (generated LEDGER; state surface)",
         "- Engines: `organvm_engine.contrib` (A) + `contrib_engine/` in orchestration-start-here (B)",
         "- Workspaces: the `contrib--*` tracking repos, one per upstream",
+        "- Rules: `organs/contributions/LIFECYCLE.md` · Register: `organs/contributions/ESTATE.yaml`",
         "- Charter: `organs/contributions/CHARTER.md` · Kernel: `organs/contributions/KERNEL.md`",
         "",
     ]
@@ -233,7 +452,10 @@ def main() -> int:
         refresh_cache()
 
     items, source, as_of = load_sources()
-    body = render(items, source, as_of, backflow_tally())
+    stale_before = _stale_before(as_of)
+    pool = scout(items)
+    estate = verify_estate()
+    body = render(items, source, as_of, backflow_tally(), pool, estate)
 
     if args.check:
         current = MIRROR.read_text() if MIRROR.exists() else ""
@@ -247,10 +469,25 @@ def main() -> int:
     changed = not MIRROR.exists() or MIRROR.read_text() != body
     if changed:
         MIRROR.write_text(body)
-    SIGNAL.parent.mkdir(parents=True, exist_ok=True)
+    pool_payload = (
+        json.dumps(
+            {
+                "derived_from": "workspace dependency manifests (the inward gaze)",
+                "as_of_source": as_of,
+                "pool": [{"dependency": d, "used_in_repos": n} for d, n in pool],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    if not OPPORTUNITIES.exists() or OPPORTUNITIES.read_text() != pool_payload:
+        OPPORTUNITIES.write_text(pool_payload)
     counts: dict[str, int] = dict.fromkeys(CATEGORIES, 0)
     for item in items:
-        counts[_normalize(item)[3]] += 1
+        counts[_normalize(item, stale_before)[3]] += 1
+    total, present, cited, absent, optional_absent = estate
+    SIGNAL.parent.mkdir(parents=True, exist_ok=True)
     SIGNAL.write_text(
         json.dumps(
             {
@@ -261,6 +498,15 @@ def main() -> int:
                 "stale": source == "absent",
                 "total": len(items),
                 "counts": counts,
+                "lifecycle_debt": len(lifecycle_debt(items, stale_before)),
+                "opportunities": len(pool),
+                "estate": {
+                    "registered": total,
+                    "present": present,
+                    "cited": cited,
+                    "drift": absent,
+                    "optional_absent": optional_absent,
+                },
                 "mirror": "organs/contributions/MIRROR.md",
             },
             indent=2,
@@ -268,7 +514,10 @@ def main() -> int:
         )
         + "\n"
     )
-    print(f"mirror {'re-rendered' if changed else 'unchanged'} ({source}; {len(items)} item(s))")
+    print(
+        f"mirror {'re-rendered' if changed else 'unchanged'} ({source}; {len(items)} item(s); "
+        f"pool {len(pool)}; estate {present}+{cited}/{total}, drift {len(absent)})"
+    )
     return 0
 
 

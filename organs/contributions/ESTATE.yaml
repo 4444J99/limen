@@ -1,0 +1,65 @@
+# ESTATE.yaml — the certified register of EVERY artifact of the contributions practice.
+#
+# The completeness rule ([[completeness-claims-need-a-sweep]]): scripts, protocols, rules,
+# memories, logs, sessions, plans, repos — each has exactly one entry here, and the beat
+# VERIFIES it (scripts/contributions-organ.py renders the Estate section of MIRROR.md;
+# a non-optional local artifact that goes absent surfaces as DRIFT, never rots silently).
+# Certified by a 3-scout sweep 2026-07-05 (memories/sessions/logs; engine scripts/protocols/
+# rules; limen-internal). Add new artifacts HERE first — an artifact not in the register
+# does not exist to the organ.
+#
+# entry: {id, class, location, presence: local|remote|receipt (default local),
+#         optional: bool (default false), role}
+#   local   -> existence-checked on the beat (repo-relative, ~/, or absolute)
+#   remote  -> cited (a GitHub repo or repo-set; the ledger cache is its liveness proxy)
+#   receipt -> a durable citation whose source has rotated (hash/receipt is the artifact)
+
+version: 1
+artifacts:
+  # ---- the organ itself (limen, repo-relative) ----
+  - {id: kernel, class: organ, location: organs/contributions/KERNEL.md, role: the 5-primitive institution architecture}
+  - {id: charter, class: organ, location: organs/contributions/CHARTER.md, role: org-chart, workflows, standing-estate table}
+  - {id: lifecycle-rules, class: rule, location: organs/contributions/LIFECYCLE.md, role: the full lifecycle state machine + git/repo processes + reap policy}
+  - {id: estate-register, class: rule, location: organs/contributions/ESTATE.yaml, role: this register (self-entry — the register registers itself)}
+  - {id: mirror, class: organ, location: organs/contributions/MIRROR.md, role: the generated public proof surface}
+  - {id: ledger-cache, class: data, location: organs/contributions/ledger-cache.json, role: committed hub-ledger snapshot (offline beat source)}
+  - {id: opportunities, class: data, location: organs/contributions/opportunities.json, role: the autopoietic pool — inward-derived outward opportunities (generated)}
+  - {id: organ-script, class: script, location: scripts/contributions-organ.py, role: the mirror/scout/estate/lifecycle generator (SPECVLVM)}
+  - {id: heartbeat-rung, class: script, location: scripts/heartbeat-loop.sh, role: C_CONTRIB beat wiring (offline render every 12 beats)}
+  - {id: params, class: param, location: institutio/governance/parameters.yaml, role: all LIMEN_CONTRIB* + LIMEN_BACKFLOW_MANIFEST knobs, declared}
+  - {id: plan-06, class: plan, location: docs/current-session-fanout/PLAN-06-contrib-mirror.md, role: the 4 owner packets (hub, engine A, engine B, mirror) — the convergence lineage}
+  - {id: plan-08, class: plan, location: docs/current-session-fanout/PLAN-08-current-session-intake.md, role: session-intake routing of the contrib-mirror owner packet}
+  - {id: fanout-theme, class: script, location: scripts/current-session-fanout.py, role: contrib-mirror work-theme detection (keywords contrib/external/community/mirror)}
+  - {id: product-ledger, class: script, location: scripts/product-ledger.py, role: records_from_contrib — contributions as products (outward_path=contrib-mirror)}
+  - {id: product-ledger-face, class: doc, location: docs/product-ledger.md, role: generated ledger face carrying the contrib-mirror counts}
+  - {id: vvltvs-radar, class: script, location: scripts/vvltvs-organ.py, role: the public-face contribution-mix radar (sibling lens on the same practice)}
+  - {id: workstream-lane, class: script, location: cli/src/limen/workstream.py, role: the `contributions` workstream lane routing in the task board}
+  - {id: board-tasks, class: task, location: tasks.yaml, role: workstream:contributions tasks + the outreach/CONTRIBUTING tasks (GH-organvm-v-logos-github-5/6/8)}
+
+  # ---- the hub + engines (the machinery) ----
+  - {id: hub, class: repo, location: organvm/contrib, presence: remote, role: the state surface — generated LEDGER.yaml/LEDGER.md via refresh-ledger.py (PLAN-06-OWNER-01)}
+  - {id: hub-seed-root, class: data, location: ~/Code/upstream/community, optional: true, role: the hub's missing seed root — OWNER-01's repair target; expected absent until restored}
+  - {id: engine-b, class: script, location: ~/Workspace/a-organvm/orchestration-start-here/contrib_engine, role: engine B — scanner/orchestrator/monitor/campaign/outreach/fieldwork/backflow/absorption/cli (PLAN-06-OWNER-03)}
+  - {id: outreach-protocol, class: protocol, location: ~/Workspace/a-organvm/orchestration-start-here/contrib_engine/outreach_protocol.md, role: the engagement rules — staggered bumps, no spam, genuine value}
+  - {id: engine-a, class: script, location: ~/Workspace/a-organvm/organvm-engine/src/organvm_engine/contrib, role: engine A — contrib--* workspace discovery + PR status (PLAN-06-OWNER-02)}
+  - {id: engine-a-tests, class: test, location: ~/Workspace/a-organvm/organvm-engine/tests/test_contrib.py, role: engine A's hermetic contract tests}
+  - {id: workspaces, class: repo, location: "a-organvm/contrib--* + organvm/contrib--*", presence: remote, role: the per-upstream tracking workspaces (~22; authoritative list = the hub ledger / this cache)}
+
+  # ---- backflow: the inward product (what looking outward taught) ----
+  - {id: backflow-manifest, class: data, location: ~/Workspace/organvm-corpvs-testamentvm/data/atoms/backflow-manifest.yaml, role: signals routed inward per receiving organ (~50 at first count)}
+  - {id: pr-status-checker, class: script, location: ~/Workspace/organvm-corpvs-testamentvm/scripts/pr-status-checker.py, role: gh-backed PR lifecycle categorizer feeding the manifest}
+  - {id: backflow-knowledge, class: knowledge, location: ~/Workspace/organvm/my-knowledge-base/docs/contributions, role: the distilled patterns contributions taught (forward-only FSM governance, idempotent checkpoint writes, reader-side resolution)}
+  - {id: inbound-contributing, class: doc, location: ~/Workspace/organvm-corpvs-testamentvm/CONTRIBUTING.md, role: the inbound face — how outsiders contribute to us (Omega H4 - attract 3+)}
+  - {id: bodi-charter, class: rule, location: ~/Workspace/4444J99/hokage-chess/docs/substrate/bodi/08-external-contribution/bodi-contribution-charter.md, role: BODI's external-contribution intake rules (the inbound pattern applied to a product)}
+
+  # ---- memory + chronicle + sessions (the practice's own history) ----
+  - {id: chronicle-epoch-012, class: log, location: ~/Workspace/organvm-corpvs-testamentvm/data/fossil/chronicle/EPOCH-012-the-contribution-engine.md, role: the engine's genesis chronicle (2026-03-21/22 — 363 commits, 38 repos)}
+  - {id: captains-log, class: log, location: ~/Workspace/organvm-corpvs-testamentvm/CAPTAINS-LOG.md, role: operational narrative incl. the 21-PR sweep + first backflow manifest entries}
+  - {id: essay-recursive-proof, class: doc, location: ~/Workspace/organvm-corpvs-testamentvm/essay-8-recursive-proof.md, role: the design essay — backflow thesis proved recursively}
+  - {id: memory-engine-design, class: memory, location: ~/Workspace/organvm/claude-runtime-state/projects/-Users-4jp-Workspace-organvm-iv-taxis/memory/outbound-contribution-engine.md, role: full engine architecture memory (capabilities, campaign phases UNBLOCK->INJECT)}
+  - {id: memory-constellation, class: memory, location: ~/Workspace/organvm/claude-runtime-state/projects, role: ~20 contribution memories across project dirs (upstream-PR tracking, adenhq-hive, portfolio, contrib-hub, protocols feedback, phase transition, force-push axes, session handoffs)}
+  - {id: memory-sweep, class: memory, location: ~/Workspace/organvm/my-knowledge-base/intake/memory/project_oss_contribution_sweep.md, role: the 2026-04-21 21-PR sweep record (incl. the batch-bump protocol violation, now a LIFECYCLE rule)}
+  - {id: plan-vacuums, class: plan, location: ~/Workspace/organvm/claude-runtime-state/plans/2026-04-21-resolve-contribution-vacuums.md, role: the contribution-vacuums resolution plan}
+  - {id: memory-specvlvm, class: memory, location: ~/.claude/projects/-Users-4jp-Workspace-limen/memory/contributions-pillar-specvlvm.md, role: the pillar's own project memory (PR#655 lineage + gotchas)}
+  - {id: session-plan-06, class: session, location: "codex rollout 2026-06-30, session hash caeb31d884ab514a4cb1d2a2", presence: receipt, role: the PLAN-06 source session — rotated from disk; the hash in PLAN-06 is the durable receipt}
+  - {id: session-discovery-worktrees, class: session, location: ~/.claude/projects/-Users-4jp-Workspace--limen-worktrees-discover-organvm-contrib-5ee7, optional: true, role: contribution-discovery session project dirs (ephemeral by nature; optional presence)}

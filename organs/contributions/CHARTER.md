@@ -28,7 +28,13 @@ tracking, rendering, routing, reconciling.
 
 ## The workflows it runs
 
-1. **Scout** — a candidate upstream becomes a vetted target with its mandate
+0. **Autopoiesis** — the organ makes its own next work: the scout limb of
+   `scripts/contributions-organ.py` walks our own dependency manifests
+   (inward gaze) and derives the outward pool (`opportunities.json` + the
+   pool section of the mirror) — the upstreams we lean on hardest and have
+   never engaged. The lifecycle audit and estate verification run on the same
+   beat; the full state machine + git/repo processes are `LIFECYCLE.md`.
+1. **Scout** — a pooled candidate becomes a vetted target with its mandate
    named: *what wiring do we want to study here?*
 2. **Workspace** — the orchestrator opens a `contrib--*` tracking workspace;
    the contribution is authored there under the upstream's own Standard.
@@ -62,6 +68,9 @@ tracking, rendering, routing, reconciling.
 | Workspaces | 22+ `organvm/contrib--*` repos | live; ~19 open upstream PRs, first merges landed |
 | Backflow | `organvm-corpvs-testamentvm` — manifest + `pr-status-checker.py` | live; 50 signals routed across 5 organs at first count |
 | Mirror | `organs/contributions/MIRROR.md` + `logs/contributions.json` (this organ) | **this charter's first proof** — resolves PLAN-06-OWNER-04 |
+| Lifecycle | `organs/contributions/LIFECYCLE.md` + the mirror's audit sections | live — staleness rule + reap policy executable on the beat |
+| Estate | `organs/contributions/ESTATE.yaml` — 40 artifacts (scripts, protocols, rules, memories, logs, sessions, plans) | live — beat-verified; drift surfaces in the mirror |
+| Autopoiesis | the scout limb → `organs/contributions/opportunities.json` | live — the inward gaze derives the outward pool every beat |
 | Inbound | Omega H4 — attract 3+ external contributions; first absorption: adenhq/hive | in progress (tracked upstream in `orchestration-start-here` #142/#143) |
 
 ## First proof

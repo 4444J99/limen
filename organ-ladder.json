@@ -190,15 +190,15 @@
       "organ": "SPECVLVM / Contributions Mirror",
       "repo": "organvm/limen",
       "home": "organs/contributions/",
-      "maturity": 50,
-      "stage": "building",
+      "maturity": 60,
+      "stage": "maturing",
       "whose_hand": "mine (every outbound send — PR, comment, bump, post — and any visibility flip is his, permanently)",
       "rival": "a big-tech Open Source Program Office (the Google/Microsoft OSPO) + a guild's journeyman practice",
       "domain_map": "Member=upstream relationship (project+maintainers); Mandate=contribution campaign (what wiring to study there); Standing=lifecycle scouted->workspace->PR open->merged/closed->backflow absorbed; Standard=the upstream's own CONTRIBUTING/CI bar + our outreach protocol (staggered bumps, no spam, genuine value only); Governance=human-gated outbound + the PLAN-06 dispatch gate",
       "macro": "an OSPO-in-a-box: the scout->workspace->campaign->monitor->backflow machinery plus the mirror, holdable by any solo operator or small org",
       "micro": "the live ORGANVM practice: hub organvm/contrib (generated LEDGER) + engine A (organvm_engine.contrib) + engine B (contrib_engine/) + 22+ contrib--* workspaces + ~19 upstream PRs (3 merged: fastmcp, dbt-mcp, github-stars) + the backflow manifest in organvm-corpvs-testamentvm",
       "first_artifact": "the mirror rendered from real hub-ledger data — organs/contributions/MIRROR.md + logs/contributions.json on the C_CONTRIB beat — resolving PLAN-06 owner packet 04 (limen is the named public-proof owner surface)",
-      "note": "a CONVERGENCE, not a build (docs/current-session-fanout/PLAN-06-contrib-mirror.md, #459): the estate already existed in pieces. Doctrine: outward to learn inward — the upstream project is the lens, not the subject; community + name recognition are byproducts of genuine value. Path to maturing = PLAN-06 packets 01-03 (hub seed-root repair, engine-A ledger backend, engine-B parity map). Working name SPECVLVM pending an INDEX-NOMINVM pass"
+      "note": "a CONVERGENCE, not a build (docs/current-session-fanout/PLAN-06-contrib-mirror.md, #459): the estate already existed in pieces. Doctrine: outward to learn inward — the upstream project is the lens, not the subject; community + name recognition are byproducts of genuine value. Path to maturing = PLAN-06 packets 01-03 (hub seed-root repair, engine-A ledger backend, engine-B parity map). Working name SPECVLVM pending an INDEX-NOMINVM pass. AUTOPOIETIC CLOSE 2026-07-05: LIFECYCLE.md (full state machine + git/repo processes + reap policy, executable via the mirror audit — 7 workspaces reap-owed at first audit), ESTATE.yaml (certified 40-artifact register: scripts/protocols/rules/memories/logs/sessions/plans, beat-verified, drift 0), and the scout limb (inward dependency gaze -> outward opportunity pool, opportunities.json). Maturity 50%->60% (maturing): the organ now makes its own next work"
     }
   ],
   "power_snapshot": {

@@ -70,7 +70,13 @@ named owner surface for the public proof mirror.**
 1. This kernel + the charter (shipped together).
 2. The mirror generator + its first rendered face and health signal (shipped
    together, on the beat).
-3. Next: PLAN-06 owner packets 01–03 — restore/refresh the hub ledger
+3. The autopoietic close (shipped 2026-07-05): `LIFECYCLE.md` (the full state
+   machine + git/repo processes + reap policy), `ESTATE.yaml` (the certified
+   register of every script/protocol/rule/memory/log/session — beat-verified,
+   drift surfaces in the mirror), and the **scout limb** — the organ looks
+   inward at our own dependency manifests and derives the outward opportunity
+   pool (`opportunities.json`), so it makes its own next work.
+4. Next: PLAN-06 owner packets 01–03 — restore/refresh the hub ledger
    (`refresh-ledger.py` seed root), then reconcile engine A and engine B
    behind the one hub-ledger contract.
 

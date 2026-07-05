@@ -25,4 +25,4 @@ AI roles + workflows + what real institution it rivals), then the organ's workin
 | [artist/](artist/) | A-MAVS-OLEVM — a living museum/studio (Pantheon standard) | maturing — KERNEL + CHARTER + micro deck live |
 | social/ | Koinonia — civic + relationship support | seeded |
 | health/ | Health / Body — concierge recovery + ADA access | seeded |
-| [contributions/](contributions/) | SPECVLVM — the contributions mirror (an OSPO: outward to learn inward) | building — KERNEL + CHARTER + live MIRROR on the beat |
+| [contributions/](contributions/) | SPECVLVM — the contributions mirror (an OSPO: outward to learn inward) | maturing — autopoietic: MIRROR + LIFECYCLE + ESTATE + the scout pool, all on the beat |

@@ -239,11 +239,11 @@ parameters:
     owner: continuity
     note: "Optional substrate-ledger configuration path. Missing config is non-fatal and recorded."
   LIMEN_CONTRIB_LEDGER:
-    default: "$LIMEN_ROOT/docs/contrib-ledger.md"
+    default: "~/Workspace/organvm/contrib/LEDGER.yaml"
     env: LIMEN_CONTRIB_LEDGER
     self_update: none
-    owner: continuity
-    note: "Tracked contrib/product mirror ledger path used for read-only product accounting."
+    owner: contributions
+    note: "The hub ledger path (organvm/contrib LEDGER.yaml) read by product-ledger.py and contributions-organ.py. Was mis-declared as $LIMEN_ROOT/docs/contrib-ledger.md (a file that never existed) — fixed 2026-07-05 to match the executable default (the predicate wins over prose)."
   LIMEN_CORPUS_MAX_SESSIONS:
     default: ""
     env: LIMEN_CORPUS_MAX_SESSIONS
@@ -623,11 +623,29 @@ parameters:
     owner: contributions
     note: "The contribution hub repo (PLAN-06-OWNER-01). The mirror consumes its LEDGER outputs only — never raw sessions or private archaeology."
   LIMEN_BACKFLOW_MANIFEST:
-    default: "~/Workspace/organvm-corpvs-testamentvm/backflow-manifest.yaml"
+    default: "~/Workspace/organvm-corpvs-testamentvm/data/atoms/backflow-manifest.yaml"
     env: LIMEN_BACKFLOW_MANIFEST
     self_update: none
     owner: contributions
     note: "Where the inward-lens tally reads what each contribution taught (signals routed per receiving organ). Optional: an absent manifest renders as such, never fails the mirror."
+  LIMEN_CONTRIB_STALE_DAYS:
+    default: 14                 # an open PR untouched this long (vs the SOURCE stamp) renders protocol-due
+    env: LIMEN_CONTRIB_STALE_DAYS
+    self_update: none
+    owner: contributions
+    note: "The LIFECYCLE.md staleness rule, executable: open upstream PRs whose last update predates source-stamp minus this many days derive protocol-due (a bump is owed, staged, fired one-at-a-time by his hand — never batch-bumped). Measured against the source stamp, not the clock, so renders stay deterministic."
+  LIMEN_CONTRIB_SCOUT:
+    default: 1                  # default-ON: the autopoietic limb rides the beat (bounded local walk, no network)
+    env: LIMEN_CONTRIB_SCOUT
+    self_update: none
+    owner: contributions
+    note: "Gate for the autopoietic scout: walk our own workspace dependency manifests (bounded, offline) and derive the outward opportunity pool — upstreams we lean on hardest and have never engaged. Set 0 to render the mirror without the pool."
+  LIMEN_CONTRIB_SCOUT_CAP:
+    default: 12                 # the pool renders at most this many opportunities (heaviest-used first)
+    env: LIMEN_CONTRIB_SCOUT_CAP
+    self_update: none
+    owner: contributions
+    note: "Max opportunities in the autopoietic pool. A derived bound on surface size, not a judgment — the full usage map is recomputed every beat."
   # --- ORGANS (VLTIMA): convert idle capacity into institutional weight (legal/financial/education/...) ---
   LIMEN_ORGAN_BACKLOG:
     default: 1                  # default-ON: organ-ladder -> bounded build tasks each FEED beat

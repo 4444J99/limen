@@ -1,0 +1,54 @@
+{
+  "as_of_source": "2026-07-04",
+  "derived_from": "workspace dependency manifests (the inward gaze)",
+  "pool": [
+    {
+      "dependency": "typescript",
+      "used_in_repos": 26
+    },
+    {
+      "dependency": "pytest",
+      "used_in_repos": 23
+    },
+    {
+      "dependency": "vitest",
+      "used_in_repos": 20
+    },
+    {
+      "dependency": "eslint",
+      "used_in_repos": 18
+    },
+    {
+      "dependency": "pyyaml",
+      "used_in_repos": 15
+    },
+    {
+      "dependency": "react",
+      "used_in_repos": 14
+    },
+    {
+      "dependency": "ruff",
+      "used_in_repos": 14
+    },
+    {
+      "dependency": "node",
+      "used_in_repos": 13
+    },
+    {
+      "dependency": "react-dom",
+      "used_in_repos": 13
+    },
+    {
+      "dependency": "pytest-cov",
+      "used_in_repos": 11
+    },
+    {
+      "dependency": "jsdom",
+      "used_in_repos": 9
+    },
+    {
+      "dependency": "tailwindcss",
+      "used_in_repos": 9
+    }
+  ]
+}
