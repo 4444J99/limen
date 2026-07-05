@@ -1,6 +1,6 @@
 # Financial Office — STATUS Dashboard
 
-**Generated:** 2026-07-04T00:26:26Z  **Maturity:** maturing (70%)
+**Generated:** 2026-07-05T08:24:22Z  **Maturity:** maturing (70%)
 
 ---
 

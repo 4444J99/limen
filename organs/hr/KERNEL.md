@@ -50,6 +50,10 @@ institution."*
   **Styx** (`organvm/peer-audited--behavioral-blockchain` — peer-audited
   behavioral accountability, habit competition, loss-aversion staking) as the
   flagship product for the performance/habits limb of the practice.
+  > **Styx naming reconciliation:** the limen tasks.yaml uses `organvm/styx`
+  > but the canonical public repo is `organvm/peer-audited--behavioral-blockchain`.
+  > This KERNEL uses the canonical key. A future INDEX-NOMINVM pass should
+  > reconcile all references across the estate.
 
 ## First slice
 
@@ -66,3 +70,15 @@ institution."*
   covert monitoring or evaluation of a person.
 - Every artifact that names a real person requires that person's confirmation
   before external use.
+
+## Working name
+
+Proper name pending an **INDEX-NOMINVM** pass — consistent with the flagship
+convention (legal: Cochran, artist: A-MAVS-OLEVM, governance: Aerarium / Cvrsvs
+Honorvm). Reference `organ-ladder.json` rank 11 note.
+
+---
+
+*Companion documents: [`CHARTER.md`](CHARTER.md) (virtual firm org-chart +
+8-workflow orchestration + inputs/outputs + leverage math + constraint
+registry).*
