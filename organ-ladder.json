@@ -158,7 +158,7 @@
       "organ": "Health / Body",
       "repo": "organvm/limen",
       "home": "organs/health/",
-      "maturity": 15,
+      "maturity": 18,
       "stage": "scaffold",
       "whose_hand": "mine (medical acts + appointments are his)",
       "rival": "a concierge medical / recovery team",
@@ -166,7 +166,7 @@
       "macro": "a health/recovery + disability-access institution anyone can hold",
       "micro": "the principal's unnamed post-injury recovery + disability access (ties directly to the legal ADA matter)",
       "first_artifact": "charter the health organ + a personal recovery/access protocol (informational, not medical advice)",
-      "note": "unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md authored: full 5-primitive map, institutional prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart, leverage math. Maturity 10%→15%."
+      "note": "unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart, leverage math, platform + instance faces. Maturity 15%→18% by opencode beat 2026-07-05."
     },
     {
       "rank": 11,
@@ -174,7 +174,7 @@
       "organ": "HR / People Office",
       "repo": "organvm/limen",
       "home": "organs/hr/",
-      "maturity": 10,
+      "maturity": 18,
       "stage": "scaffold",
       "whose_hand": "mine (hiring/firing/comp/discipline decisions and all client commitments are human, permanently)",
       "rival": "a Fortune-500 people office + a boutique HR consultancy",
@@ -182,7 +182,7 @@
       "macro": "an HR-institution-in-a-box (hiring loop, onboarding, handbook, compliance calendar, performance framework, offboarding) any operator or small business can hold",
       "micro": "Jessica's HR practice run with institutional weight (organs/consulting/engagements/jessica.yaml), with Styx (organvm/peer-audited--behavioral-blockchain) as the flagship performance/habits product",
       "first_artifact": "the HR-practice operating floor (intake -> policy -> compliance calendar -> offboarding) as runnable templates for Jessica's first client",
-      "note": "named by him 2026-07-04 ('we need a human resources institution' alongside the EDU and law-firm institutions); working name pending an INDEX-NOMINVM pass; KERNEL.md + CHARTER.md authored at creation; Styx repo naming drift (tasks say organvm/styx, GitHub says peer-audited--behavioral-blockchain) flagged to reconcile"
+      "note": "named by him 2026-07-04 ('we need a human resources institution' alongside the EDU and law-firm institutions); working name pending an INDEX-NOMINVM pass; KERNEL.md + CHARTER.md authored at creation; MACRO-FACE.md, MICRO-FACE.md, validate-hr.py (8 rules), and full jurisdiction-aware template library added 2026-07-05 by opencode beat; Styx repo naming drift (tasks say organvm/styx, GitHub says peer-audited--behavioral-blockchain) flagged to reconcile; first vertical slice (real client end-to-end) remains as the next milestone to reach 30% building stage"
     },
     {
       "rank": 12,

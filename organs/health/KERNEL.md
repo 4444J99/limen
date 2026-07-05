@@ -161,6 +161,6 @@ From the scaffold stage (10% → building 30%):
 
 ---
 
-*Companion documents: [`CHARTER.md`](CHARTER.md) (org-chart + 6-workflow orchestration + role
-assignments + leverage math), `MACRO-FACE.md` (the health institution platform pitch),
-`MICRO-FACE.md` (the unnamed post-injury recovery instance).*
+*Faces: [`MACRO-FACE.md`](MACRO-FACE.md) (the health institution platform pitch) ·
+[`MICRO-FACE.md`](MICRO-FACE.md) (the unnamed post-injury recovery instance) ·
+[`CHARTER.md`](CHARTER.md) (org-chart + 6-workflow orchestration + role assignments + leverage math).*

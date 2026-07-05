@@ -320,3 +320,9 @@ licensed professionals, and the patient remains the decision-maker for their own
 | Accommodation records feed legal, not replace it | The ADA matter is a legal proceeding directed by counsel | Accommodation outputs are structured records — the legal organ consumes them; the health organ does not give legal advice |
 
 All constraints are non-negotiable. They are the load-bearing walls of this organ.
+
+---
+
+*Companion documents: [`KERNEL.md`](KERNEL.md) (architecture + 5-primitive map + hard guardrails),
+[`MACRO-FACE.md`](MACRO-FACE.md) (the health institution platform pitch),
+[`MICRO-FACE.md`](MICRO-FACE.md) (the unnamed post-injury recovery instance).*
