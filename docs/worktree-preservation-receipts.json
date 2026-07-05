@@ -1574,6 +1574,38 @@
       "score_discount": 35,
       "status": "default_branch_preserved",
       "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-hr-organ-charter-0704-2089"
+    },
+    {
+      "branch": "codex/financial-codex-finish-0704",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-05T02:07:39Z",
+      "head": "65f20fcb29a12d52fd2dc3767f0dcfbb55e9000f",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #639, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": true,
+      "pr_number": 639,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/639",
+      "repo": "organvm/limen",
+      "root": "financial-codex-finish-0704",
+      "score_discount": 35,
+      "status": "open_pr_preserved"
+    },
+    {
+      "branch": "feat/phase-2-doctrine-surfaces",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-05T02:07:39Z",
+      "head": "309ca59aafc9765e4defe22c837918398c13f961",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #661, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": true,
+      "pr_number": 661,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/661",
+      "repo": "organvm/limen",
+      "root": "ticklish-bubbling-robin",
+      "score_discount": 35,
+      "status": "open_pr_preserved"
     }
   ],
   "schema": 1
