@@ -184,6 +184,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "When 1, session-orient.py prints the digest without refreshing logs/session-orientation.md. Used by idempotence predicates; normal hooks leave it unset."
+  LIMEN_INSIGHT_CADENCE_VERIFY_ROOT:
+    default: ""
+    env: LIMEN_INSIGHT_CADENCE_VERIFY_ROOT
+    self_update: none
+    owner: continuity
+    note: "Optional retained sandbox root for done-insight-cadence.sh verification. Blank means create a private temporary proof root and retain it for inspection instead of deleting it."
   LIMEN_MIN_CODEX_PLANNERS:
     default: 10
     env: LIMEN_MIN_CODEX_PLANNERS
