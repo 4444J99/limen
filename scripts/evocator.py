@@ -25,10 +25,10 @@ override. Idempotent: each surface is written ONLY when its content actually cha
 run produces NO git churn until a truth is added or edited. No network, no tokens, can't time out.
 Fail-open: a missing dep / unreadable file yields a logged skip, never a crash, never a blocked beat.
 """
+import argparse
 import json
 import os
 import re
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -304,6 +304,33 @@ def build_view(truths, mem, flame_status, corpus_status, problems):
     }
 
 
+def census(truths=None, mem=None, problems=None):
+    """Counts-only public census for avtopoiesis and dashboards; no truth bodies or memory slugs."""
+    if truths is None or problems is None:
+        truths, problems = load_canon()
+    if mem is None:
+        mem = verify_memory(truths)
+    channel_counts = {"flame": 0, "corpus": 0, "memory": 0}
+    for truth in truths:
+        channels = truth.get("channels") or {}
+        channel_counts["flame"] += int(bool(channels.get("flame")))
+        channel_counts["corpus"] += int(bool(channels.get("corpus")))
+        channel_counts["memory"] += int(bool(channels.get("memory")))
+    memory_drift = [row for row in mem if not (row.get("file_present") and row.get("index_present"))]
+    return {
+        "truths": len(truths),
+        "channels": channel_counts,
+        "memory_checks": len(mem),
+        "memory_drift": len(memory_drift),
+        "canon_problems": len(problems or []),
+        "surfaces": {
+            "flame": FLAME.exists(),
+            "canon_markdown": CANON_MD.exists(),
+            "corpus": CORPUS_SHOT.exists(),
+        },
+    }
+
+
 def main(apply):
     truths, problems = load_canon()
     block = render_flame_block(truths)
@@ -336,5 +363,16 @@ def main(apply):
     return 0
 
 
+def cli(argv=None):
+    parser = argparse.ArgumentParser(description="Summon EVOCATOR canon truths into declared channels.")
+    parser.add_argument("--apply", action="store_true", help="write managed channel surfaces")
+    parser.add_argument("--census", action="store_true", help="print counts-only public census JSON")
+    args = parser.parse_args(argv)
+    if args.census:
+        print(json.dumps(census(), indent=2, sort_keys=True))
+        return 0
+    return main(apply=args.apply)
+
+
 if __name__ == "__main__":
-    raise SystemExit(main(apply="--apply" in sys.argv))
+    raise SystemExit(cli())

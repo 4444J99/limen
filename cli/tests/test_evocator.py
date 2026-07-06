@@ -55,3 +55,39 @@ truths:
     assert "channels is not a mapping" in problems[0]
     assert "Test truth" in html
     assert json.loads(json.dumps(view))["summary"]["problems"] == 1
+
+
+def test_census_is_counts_only(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    canon = tmp_path / "spec" / "evocator" / "canon.yaml"
+    canon.parent.mkdir(parents=True)
+    canon.write_text(
+        """
+truths:
+  - id: EVO-SECRET
+    claim: Secret private body
+    line: Keep ssn 123-45-6789 out of public census
+    summons: Full private canon text
+    source_of_record: private/repo
+    reversible_via: edit private/repo
+    channels:
+      flame: true
+      corpus: true
+      memory: secret-memory-slug
+"""
+    )
+
+    census = module.census()
+    encoded = json.dumps(census, sort_keys=True)
+
+    assert census == {
+        "truths": 1,
+        "channels": {"flame": 1, "corpus": 1, "memory": 1},
+        "memory_checks": 1,
+        "memory_drift": 1,
+        "canon_problems": 0,
+        "surfaces": {"flame": False, "canon_markdown": False, "corpus": False},
+    }
+    assert "Secret private body" not in encoded
+    assert "123-45-6789" not in encoded
+    assert "secret-memory-slug" not in encoded
