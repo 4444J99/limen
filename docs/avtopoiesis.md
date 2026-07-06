@@ -1,21 +1,21 @@
 # AVTOPOIESIS
 
-Generated: `2026-07-06T07:45:01+00:00`
+Generated: `2026-07-06T07:48:54+00:00`
 
 ## How Far
 
-- Alive doors: `25/29` (`86.2%`).
-- Mean score: `0.851`.
-- Distance from ideal: `14.9%`.
+- Alive doors: `26/29` (`89.7%`).
+- Mean score: `0.862`.
+- Distance from ideal: `13.8%`.
 - Weakest tense: `future`.
 - Present tense source: `logs/organ-health.json` when available; heartbeat wiring fallback otherwise.
-- Below-threshold doors by primary gap: `past` 3, `present` 0, `future` 1.
+- Below-threshold doors by primary gap: `past` 2, `present` 0, `future` 1.
 
 ## Tense Averages
 
 | Tense | Average |
 |---|---:|
-| `past` | `0.862` |
+| `past` | `0.897` |
 | `present` | `0.948` |
 | `future` | `0.741` |
 
@@ -26,7 +26,6 @@ Generated: `2026-07-06T07:45:01+00:00`
 | `mail` | `0.00` | `1.00` | `0.00` | `0.330` | `nota` | `future` `1.000` |
 | `positioning` | `0.00` | `0.50` | `0.50` | `0.330` | `nota` | `past` `1.000` |
 | `feed` | `0.00` | `1.00` | `0.50` | `0.495` | `nota` | `past` `1.000` |
-| `sync` | `0.00` | `1.00` | `1.00` | `0.660` | `nota` | `past` `1.000` |
 | `backup` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `health` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `life` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
@@ -49,6 +48,7 @@ Generated: `2026-07-06T07:45:01+00:00`
 | `insight_cadence` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 | `quicken` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 | `report` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
+| `sync` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 | `vvltvs` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 | `walls` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 | `web` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
@@ -58,7 +58,6 @@ Generated: `2026-07-06T07:45:01+00:00`
 - `feed`: score `0.495`, primary gap `past` (`1.000`).
 - `mail`: score `0.330`, primary gap `future` (`1.000`).
 - `positioning`: score `0.330`, primary gap `past` (`1.000`).
-- `sync`: score `0.660`, primary gap `past` (`1.000`).
 
 ## Evidence
 
@@ -69,7 +68,6 @@ Evidence is redacted metadata only: paths, configured signatures, liveness statu
 | `mail` | missing metabolize signature in mail-beat.sh | logs/organ-health.json:green | 2 open his-hand levers from his-hand-levers.json |
 | `positioning` | missing metabolize signature in generate-positioning.py | logs/organ-health.json:gated | 1 open his-hand levers from his-hand-levers.json |
 | `feed` | missing metabolize signature in mine-backlog.py, generate-revenue-backlog.py, generate-organ-backlog.py | logs/organ-health.json:green | 1 open his-hand levers from his-hand-levers.json |
-| `sync` | missing metabolize signature in sync-release.sh, sync-censor-issues.py, sync-hishand-issues.py | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `backup` | matched library-preserve.py:os.walk( | heartbeat-wiring:wired | 3 open his-hand levers from his-hand-levers.json |
 | `health` | matched health-organ.py:.glob( | logs/organ-health.json:green | 4 open his-hand levers from his-hand-levers.json |
 | `life` | matched life-organ.py:def census | logs/organ-health.json:green | 3 open his-hand levers from his-hand-levers.json |
@@ -92,6 +90,7 @@ Evidence is redacted metadata only: paths, configured signatures, liveness statu
 | `insight_cadence` | matched insight-route.py:.glob( | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `quicken` | matched quicken.py:.glob( | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `report` | matched conducting-report.py:--census,def census | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
+| `sync` | matched sync-release.sh:--census | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `vvltvs` | matched vvltvs-organ.py:rglob( | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `walls` | matched credential-wall.py:--census,def census | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `web` | matched usage-telemetry.py:rglob(; codex-token-accounting.py:rglob(; claude-usage.py:.glob(,glob.glob | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |

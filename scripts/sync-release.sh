@@ -46,6 +46,60 @@ _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a re
   [ "$any" = 1 ]
 }
 
+if [ "${1:-}" = "--census" ]; then
+  python3 - "$ROOT" "$BRANCH" "$RECEIPT_GLOBS" <<'PY'
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+branch = sys.argv[2]
+receipt_globs = [item for item in sys.argv[3].split() if item]
+
+
+def git(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+
+
+def count_lines(proc: subprocess.CompletedProcess[str]) -> int:
+    if proc.returncode != 0:
+        return 0
+    return len([line for line in proc.stdout.splitlines() if line.strip()])
+
+
+inside = git("rev-parse", "--is-inside-work-tree")
+is_repo = inside.returncode == 0 and inside.stdout.strip() == "true"
+tracked_dirty = git("diff", "--name-only", "HEAD") if is_repo else subprocess.CompletedProcess([], 1, "", "")
+cached_dirty = git("diff", "--cached", "--name-only") if is_repo else subprocess.CompletedProcess([], 1, "", "")
+untracked = git("ls-files", "--others", "--exclude-standard") if is_repo else subprocess.CompletedProcess([], 1, "", "")
+current = git("symbolic-ref", "--quiet", "--short", "HEAD") if is_repo else subprocess.CompletedProcess([], 1, "", "")
+remote = git("rev-parse", f"origin/{branch}") if is_repo else subprocess.CompletedProcess([], 1, "", "")
+
+print(
+    json.dumps(
+        {
+            "root_present": root.exists(),
+            "git_repo": is_repo,
+            "on_release_branch": bool(current.stdout.strip() == branch) if is_repo else False,
+            "remote_tracking_present": remote.returncode == 0,
+            "tracked_dirty_count": count_lines(tracked_dirty),
+            "cached_dirty_count": count_lines(cached_dirty),
+            "untracked_count": count_lines(untracked),
+            "tasks_present": (root / "tasks.yaml").exists(),
+            "logs_present": (root / "logs").exists(),
+            "sync_collision_present": (root / "logs" / ".sync-collision").exists(),
+            "loop_update_pending": (root / "logs" / ".loop-update-pending").exists(),
+            "receipt_globs": len(receipt_globs),
+        },
+        indent=2,
+        sort_keys=True,
+    )
+)
+PY
+  exit 0
+fi
+
 cd "$ROOT" 2>/dev/null || { echo "sync-release: no LIMEN_ROOT ($ROOT) — fail open"; exit 0; }
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "sync-release: not a git repo — fail open"; exit 0; }
 
