@@ -51,21 +51,36 @@ def _ladder_ranks() -> dict[str, int]:
 
 def _value_repos() -> set[str]:
     try:
-        return set(json.loads((ROOT / "value-repos.json").read_text()))
+        data = json.loads((ROOT / "value-repos.json").read_text())
     except (OSError, ValueError):
         return set()
+    if isinstance(data, dict):
+        repos = data.get("repos") or []
+    elif isinstance(data, list):
+        repos = data
+    else:
+        repos = []
+    return {str(repo) for repo in repos if repo}
 
 
-def main() -> int:
+def _open_prs(md, scan: int) -> list[tuple[str, int]]:
+    if hasattr(md, "enumerate_open_prs"):
+        return md.enumerate_open_prs(md.OWNERS, md.gh, max_total=scan, want_url=False)
+    if hasattr(md, "open_prs"):
+        return md.open_prs(scan)
+    return []
+
+
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scan", type=int, default=80, help="max open PRs to assess")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     md = _load_merge_drain()
     ranks = _ladder_ranks()
     value = _value_repos()
 
-    prs = md.open_prs(args.scan)
+    prs = _open_prs(md, args.scan)
     rows = []
     if prs:
         import concurrent.futures as cf
