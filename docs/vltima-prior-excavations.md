@@ -1,6 +1,6 @@
 # VLTIMA Prior Excavations
 
-Generated: `2026-07-06T14:03:54+00:00`
+Generated: `2026-07-06T14:05:43+00:00`
 
 ## Canonical Decision
 
@@ -14,7 +14,7 @@ Generated: `2026-07-06T14:03:54+00:00`
 - Prior surfaces: `23`.
 - Scripts present: `21`.
 - Outputs present: tracked `27`, private `20`, logs `3`.
-- Discovered extra artifacts: `150`.
+- Discovered extra artifacts: `152`.
 - Lanes: `archive-durability` 3, `capability-substrate` 1, `hooks-orientation` 1, `priority-routing` 5, `product-surface` 1, `prompt-lifecycle` 3, `repo-surfaces` 2, `session-corpus` 5, `worktree-preservation` 2.
 - Statuses: `current` 18, `private-only` 1, `script-only` 1, `stale` 1, `tracked-only` 2.
 - Refresh modes: `dry-run-first` 4, `manual-doc` 2, `manual-only` 2, `read-only` 2, `write-safe-ignored` 1, `write-safe-redacted` 12.
@@ -127,7 +127,7 @@ These matched excavation naming patterns but are not part of the canonical surfa
 | `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035840Z-organvm` | `session-corpus` | `private` |
 | `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035938Z-organvm-i-theoria` | `session-corpus` | `private` |
 | `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T040023Z-organvm-vi-koinonia` | `session-corpus` | `private` |
-| `...` | `truncated` | `110 more in private index` |
+| `...` | `truncated` | `112 more in private index` |
 
 ## Contract
 
