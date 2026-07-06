@@ -81,11 +81,12 @@ echo "● retained empty-root fixture: $tmp"
 LIMEN_ROOT="$tmp" python3 "$GEN" >/dev/null 2>&1 || fail "generator crashed on empty root (not fail-open)"
 ok "generator fails open on a missing/empty root"
 
-# 6. hook fails open outside a project — emits nothing, exits 0
+# 6. hook fails open with a stale Claude project dir — the executable may live in the
+#    stable Limen checkout while Claude reports a since-reaped worktree.
 hk="$(CLAUDE_PROJECT_DIR=/nonexistent-$$ bash "$HOOK" 2>/dev/null)"; rc=$?
-[ "$rc" -eq 0 ] || fail "hook non-zero outside a project (rc=$rc)"
-[ -z "$hk" ] || fail "hook emitted output outside a project (should be silent)"
-ok "hook is a clean no-op outside a project"
+[ "$rc" -eq 0 ] || fail "hook non-zero with stale project dir (rc=$rc)"
+printf '%s' "$hk" | grep -q "Session orientation" || fail "hook did not fall back to stable Limen root"
+ok "hook survives a stale Claude project dir"
 
 # 7. lint the generator + syntax-check the hook
 if command -v ruff >/dev/null 2>&1 || python3 -m ruff --version >/dev/null 2>&1; then

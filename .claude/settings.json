@@ -15,7 +15,7 @@
       {
         "matcher": "startup|resume",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/scripts/hooks/session-orient.sh" }
+          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-orient.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-orient.sh\" || true" }
         ]
       }
     ],
@@ -23,15 +23,15 @@
       {
         "matcher": "Write|Edit",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/scripts/hooks/lint-edited-file.sh" }
+          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/lint-edited-file.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/lint-edited-file.sh\" || true" }
         ]
       }
     ],
     "SessionEnd": [
       {
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/scripts/hooks/session-closeout.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/scripts/hooks/session-lifecycle-pressure.sh" }
+          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-closeout.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-closeout.sh\" || true" },
+          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-lifecycle-pressure.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-lifecycle-pressure.sh\" || true" }
         ]
       }
     ]
