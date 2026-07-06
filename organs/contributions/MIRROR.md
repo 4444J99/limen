@@ -65,17 +65,17 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 | dependency | used across our repos |
 |---|---|
 | pytest | 30 |
-| typescript | 26 |
+| typescript | 28 |
+| vitest | 22 |
 | ruff | 21 |
-| vitest | 20 |
+| eslint | 19 |
 | pyyaml | 19 |
-| eslint | 18 |
 | react | 14 |
 | node | 13 |
 | react-dom | 13 |
 | pytest-cov | 12 |
+| js | 9 |
 | jsdom | 9 |
-| tailwindcss | 9 |
 
 ## Backflow (the inward product)
 

@@ -8,23 +8,23 @@
     },
     {
       "dependency": "typescript",
-      "used_in_repos": 26
+      "used_in_repos": 28
+    },
+    {
+      "dependency": "vitest",
+      "used_in_repos": 22
     },
     {
       "dependency": "ruff",
       "used_in_repos": 21
     },
     {
-      "dependency": "vitest",
-      "used_in_repos": 20
+      "dependency": "eslint",
+      "used_in_repos": 19
     },
     {
       "dependency": "pyyaml",
       "used_in_repos": 19
-    },
-    {
-      "dependency": "eslint",
-      "used_in_repos": 18
     },
     {
       "dependency": "react",
@@ -43,11 +43,11 @@
       "used_in_repos": 12
     },
     {
-      "dependency": "jsdom",
+      "dependency": "js",
       "used_in_repos": 9
     },
     {
-      "dependency": "tailwindcss",
+      "dependency": "jsdom",
       "used_in_repos": 9
     }
   ]
