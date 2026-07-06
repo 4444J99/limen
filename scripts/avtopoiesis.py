@@ -32,6 +32,7 @@ CANON = SPEC / "canon.yaml"
 SCRIPTS = ROOT / "scripts"
 DOC_PATH = ROOT / "docs" / "avtopoiesis.md"
 LOG_PATH = ROOT / "logs" / "avtopoiesis.json"
+ORGAN_HEALTH_PATH = ROOT / "logs" / "organ-health.json"
 
 try:
     import yaml
@@ -133,8 +134,52 @@ def _door_scripts(key):
     return out
 
 
+_ORGAN_HEALTH_CACHE = None
+
+
+def _organ_health():
+    """Latest proprioception snapshot, if available. Fail open to the heartbeat-derived fallback."""
+    global _ORGAN_HEALTH_CACHE
+    if _ORGAN_HEALTH_CACHE is not None:
+        return _ORGAN_HEALTH_CACHE
+    try:
+        data = json.loads(ORGAN_HEALTH_PATH.read_text())
+    except (OSError, json.JSONDecodeError):
+        data = {}
+    organs = data.get("organs") if isinstance(data, dict) else None
+    if not isinstance(organs, list):
+        _ORGAN_HEALTH_CACHE = {}
+        return _ORGAN_HEALTH_CACHE
+    by_key = {}
+    for item in organs:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key") or "").lower()
+        if key:
+            by_key[key] = item
+    _ORGAN_HEALTH_CACHE = by_key
+    return by_key
+
+
+def _present_from_organ_health(key):
+    entry = _organ_health().get(key)
+    if not entry:
+        return None
+    status = str(entry.get("status") or "").lower()
+    if status == "green":
+        return 1.0
+    if status == "down":
+        return 0.0
+    if status in {"gated", "stale", "unknown"}:
+        return 0.5
+    return None
+
+
 def sense_present(door, _canon):
-    """Runs unbidden: discovered from a beat (so it is wired); half-alive if gated dormant by default."""
+    """Runs unbidden: prefer organ-health liveness; fall back to heartbeat wiring."""
+    sensed = _present_from_organ_health(door["key"])
+    if sensed is not None:
+        return sensed
     return 0.5 if door["dormant"] else 1.0
 
 
@@ -265,6 +310,7 @@ def render_markdown(v):
         f"- Mean score: `{s['mean_score']:.3f}`.",
         f"- Distance from ideal: `{s['distance_from_ideal']:.1%}`.",
         f"- Weakest tense: `{s['weakest_tense']}`.",
+        "- Present tense source: `logs/organ-health.json` when available; heartbeat wiring fallback otherwise.",
         "- Below-threshold doors by primary gap: "
         + ", ".join(f"`{tense}` {count}" for tense, count in s["below_by_primary_gap"].items())
         + ".",

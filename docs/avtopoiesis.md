@@ -1,6 +1,6 @@
 # AVTOPOIESIS
 
-Generated: `2026-07-06T02:01:14+00:00`
+Generated: `2026-07-06T04:09:10+00:00`
 
 ## How Far
 
@@ -8,6 +8,7 @@ Generated: `2026-07-06T02:01:14+00:00`
 - Mean score: `0.694`.
 - Distance from ideal: `30.6%`.
 - Weakest tense: `past`.
+- Present tense source: `logs/organ-health.json` when available; heartbeat wiring fallback otherwise.
 - Below-threshold doors by primary gap: `past` 10, `present` 0, `future` 4.
 
 ## Tense Averages

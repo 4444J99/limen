@@ -52,7 +52,9 @@ gaps_remaining:
   # two organs can no longer hold two door-lists that drift.
   organ_health_probe_depth: "organ-health now FEELS every beat, but the newly-surfaced beats (drain/sync/web/censor/report/quicken/corpus_feed) carry no artifact probe yet — they read 'unknown' until each is enriched with a last-fire signal"
   past_sense_is_heuristic: "the 'past' score reads source-signatures (does it crawl?); deepen to whether the metabolized history actually changed an output"
-  present_sense_is_binary: "present = wired-and-not-dormant; deepen to organ-health's real last-fire-vs-cadence liveness"
+  # CLOSED: scripts/avtopoiesis.py now reads logs/organ-health.json when present, so present-tense
+  # scores use real last-fire-vs-cadence proprioception before falling back to heartbeat wiring.
+  present_sense_is_binary: "closed: present reads organ-health liveness when available; heartbeat wiring remains the fail-open fallback"
   # CLOSED: scripts/avtopoiesis.py now reads the exact heartbeat command block for each discovered
   # door and extracts $LIMEN_ROOT/scripts/... before falling back to name matching.
   door_to_script_by_name: "closed: exact heartbeat script resolution is active; remaining work is to connect non-Limen external scripts such as session-meta corpus-feed"
