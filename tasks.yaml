@@ -88537,7 +88537,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -88553,7 +88553,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:57:49.631704Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:10:45.260408Z'
     agent: codex
@@ -88577,6 +88577,11 @@ tasks:
     agent: claude
     session_id: limen/heal-cifix-organvm-public-process-30-40a0fb19
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-public-process-31
   title: fix failing CI on organvm/public-process#31
   repo: organvm/public-process
@@ -88584,7 +88589,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -88600,7 +88605,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:33:27.448853Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:28:53.029757Z'
     agent: codex
@@ -88640,6 +88645,11 @@ tasks:
     agent: agy
     session_id: limen/heal-cifix-organvm-public-process-31-42c38b3d
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-public-process-32
   title: fix failing CI on organvm/public-process#32
   repo: organvm/public-process
@@ -89113,7 +89123,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -89128,7 +89138,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:33:27.448853Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:35:34.931721Z'
     agent: agy
@@ -89163,6 +89173,11 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/recursive-engine--generative-entity/pull/22
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-cifix-organvm-recursive-engine--generative-entity-18
   title: fix failing CI on organvm/recursive-engine--generative-entity#18
   repo: organvm/recursive-engine--generative-entity
@@ -89307,7 +89322,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - rebase
   - self-heal
@@ -89323,7 +89338,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:37:54.582289Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:28:53.029757Z'
     agent: agy
@@ -89378,6 +89393,12 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-rebase-organvm-rules-system-bound-9
   title: rebase/resolve conflicts on organvm/rules-system-bound#9
   repo: organvm/rules-system-bound
@@ -90410,7 +90431,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -90425,7 +90446,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:44:37.265011Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:57:49.631704Z'
     agent: agy
@@ -90454,6 +90475,11 @@ tasks:
     agent: claude
     session_id: https://github.com/organvm/domus-genoma/pull/186
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-domus-genoma-153
   title: fix failing CI on organvm/domus-genoma#153
   repo: organvm/domus-genoma
@@ -90838,7 +90864,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -90853,7 +90879,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:11:41.955922Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:11:54.142565Z'
     agent: codex
@@ -90873,6 +90899,11 @@ tasks:
     agent: claude
     session_id: limen/heal-cifix-organvm-mirror-mirror-71-d83257ef
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-mirror-mirror-73
   title: fix failing CI on organvm/mirror-mirror#73
   repo: organvm/mirror-mirror
@@ -91153,7 +91184,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -91168,7 +91199,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:12:22.456580Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:59:27.426499Z'
     agent: claude
@@ -91179,6 +91210,11 @@ tasks:
     agent: claude
     session_id: limen/heal-cifix-organvm-mirror-mirror-90-028f12b1
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-mirror-mirror-91
   title: fix failing CI on organvm/mirror-mirror#91
   repo: organvm/mirror-mirror
@@ -91526,7 +91562,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -91541,7 +91577,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:28:47.071608Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:13:03.442656Z'
     agent: codex
@@ -91561,6 +91597,11 @@ tasks:
     agent: claude
     session_id: https://github.com/organvm/mirror-mirror/pull/108
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-cifix-organvm-my--father-mother-19
   title: fix failing CI on organvm/my--father-mother#19
   repo: organvm/my--father-mother
@@ -91778,7 +91819,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -91793,7 +91834,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:28:47.071608Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:13:38.567460Z'
     agent: codex
@@ -91813,6 +91854,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/nexus--babel-alexandria/pull/127
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-cifix-organvm-tab-bookmark-manager-28
   title: fix failing CI on organvm/tab-bookmark-manager#28
   repo: organvm/tab-bookmark-manager
@@ -92210,7 +92256,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -92225,7 +92271,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:50:02.576427Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:38:21.277451Z'
     agent: codex
@@ -92236,6 +92282,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/the-invisible-ledger/pull/80
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-the-invisible-ledger-53
   title: fix failing CI on organvm/the-invisible-ledger#53
   repo: organvm/the-invisible-ledger
@@ -92524,7 +92575,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -92539,7 +92590,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:25:42.198959Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:59:24.656292Z'
     agent: codex
@@ -92550,6 +92601,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/trendpulse/pull/11
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-cifix-organvm-universal-mail--automation-118
   title: fix failing CI on organvm/universal-mail--automation#118
   repo: organvm/universal-mail--automation
@@ -92848,7 +92904,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -92863,7 +92919,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:21:55.539998Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:03:56.988929Z'
     agent: codex
@@ -92874,6 +92930,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/growth-auditor/pull/18
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-growth-auditor-15
   title: fix failing CI on organvm/growth-auditor#15
   repo: organvm/growth-auditor
@@ -93977,7 +94038,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -93992,7 +94053,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:03:19.336912Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:59:24.656292Z'
     agent: claude
@@ -94003,6 +94064,11 @@ tasks:
     agent: claude
     session_id: limen/heal-cifix-organvm-bountyscope-8-2120cf4d
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-bountyscope-9
   title: fix failing CI on organvm/bountyscope#9
   repo: organvm/bountyscope
@@ -94117,7 +94183,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -94132,7 +94198,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:03:19.336912Z'
+  updated: '2026-07-06T22:44:49.881280Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:59:24.656292Z'
     agent: claude
@@ -94143,6 +94209,11 @@ tasks:
     agent: claude
     session_id: limen/heal-cifix-organvm-bountyscope-13-3199dbf4
     status: dispatched
+  - timestamp: '2026-07-06T22:44:49.881280Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-bountyscope-14
   title: fix failing CI on organvm/bountyscope#14
   repo: organvm/bountyscope
@@ -101740,4 +101811,96 @@ tasks:
   depends_on: []
   created: '2026-07-06'
   updated: '2026-07-06T20:55:39.525593Z'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-mirror-mirror-106
+  title: fix failing CI on organvm/mirror-mirror#106
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/mirror-mirror/pull/106
+  context: "PR organvm/mirror-mirror#106 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/mirror-mirror/pull/106\
+    \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-06'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-mirror-mirror-107
+  title: fix failing CI on organvm/mirror-mirror#107
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/mirror-mirror/pull/107
+  context: "PR organvm/mirror-mirror#107 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/mirror-mirror/pull/107\
+    \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-06'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-my--father-mother-21
+  title: rebase/resolve conflicts on organvm/my--father-mother#21
+  repo: organvm/my--father-mother
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/my--father-mother/pull/21
+  context: 'PR organvm/my--father-mother#21 is CONFLICTING with its base branch and
+    merge-drain correctly refuses to merge it. Check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE with
+    green CI. Do not open a new PR. PR: https://github.com/organvm/my--father-mother/pull/21
+    [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-06'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-narratological-algorithmic-lenses-36
+  title: rebase/resolve conflicts on organvm/narratological-algorithmic-lenses#36
+  repo: organvm/narratological-algorithmic-lenses
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/narratological-algorithmic-lenses/pull/36
+  context: 'PR organvm/narratological-algorithmic-lenses#36 is CONFLICTING with its
+    base branch and merge-drain correctly refuses to merge it. Check out the PR branch,
+    rebase it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/narratological-algorithmic-lenses/pull/36
+    [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-06'
   dispatch_log: []
