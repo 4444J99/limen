@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-07-06T13:01:48+00:00`
+Generated: `2026-07-06T13:25:35+00:00`
 
 ## Canonical Decision
 
@@ -18,7 +18,7 @@ Generated: `2026-07-06T13:01:48+00:00`
 - Worktree preservation receipts: `87`.
 - Parked blockers: `5`.
 - Local lifecycle footprint: `29.1 GiB`.
-- Candidate lanes: `family` 7, `human-gate` 17, `observe` 45, `owner-blocker` 6, `parked` 5, `remote-close` 1, `remote-pr-open` 12.
+- Candidate lanes: `family` 7, `human-gate` 17, `observe` 50, `owner-blocker` 6, `parked` 5, `remote-close` 1, `remote-pr-open` 12.
 
 ## Ordering Model
 
