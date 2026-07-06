@@ -131,7 +131,13 @@ def tail(text: str, *, limit: int = 12) -> list[str]:
 
 def public_line(text: Any) -> str:
     line = str(text)
-    root_aliases = {str(ROOT), str(Path.cwd()), os.environ.get("LIMEN_ROOT", "")}
+    root_aliases = {
+        str(ROOT),
+        str(Path.cwd()),
+        str((Path.home() / "Workspace" / "limen").expanduser()),
+        os.environ.get("LIMEN_ROOT", ""),
+        os.environ.get("LIMEN_LIVE_ROOT", ""),
+    }
     for alias in sorted((item for item in root_aliases if item), key=len, reverse=True):
         line = line.replace(alias, "$LIMEN_ROOT")
     line = WORKSPACE_CHECKOUT_RE.sub("$LIMEN_ROOT", line)
