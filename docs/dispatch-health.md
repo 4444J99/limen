@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-06T10:30:21+00:00`
+Generated: `2026-07-06T13:29:18+00:00`
 
 Status: `healthy`
 
@@ -18,29 +18,27 @@ Status: `healthy`
 - Plist LIMEN_DISPATCH_ASYNC: `1`.
 - Plist LIMEN_DISPATCH_LANES: `auto`.
 - Plist LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Loaded launchd state: `running` pid `51335`.
+- Loaded launchd state: `running` pid `79488`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T10:30:21.560956+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T13:29:18.547193+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 4 ; 0 still running ; would launch 12 (cap 12) -> ['HEAL-cifix-organvm-organvm-ontologia-13', 'HEAL-rebase-4444j99-hokage-chess-94', 'HEAL-rebase-4444j99-hokage-chess-108', 'GH-4444j99-hokage-chess-39', 'HEAL-cifix-organvm-organvm-engine-139', 'HEAL-cifix-organvm-organvm-engine-144', 'HEAL-cifix-organvm-organvm-ontologia-11', 'HEAL-rebase-4444j99-hokage-chess-89', 'HEAL-rebase-4444j99-hokage-chess-107', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-721', 'ORG-financial-organ-face-0704', 'HEAL-rebase-4444j99-hokage-chess-114']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 4 ; 1 still running ; would launch 14 (cap 12) -> ['ORG-financial-organ-face-0704', 'HEAL-rebase-4444j99-hokage-chess-94', 'HEAL-rebase-organvm-payrail-4', 'HEAL-rebase-4444j99-hokage-chess-89', 'HEAL-rebase-4444j99-hokage-chess-114', 'HEAL-cifix-organvm-organvm-engine-144', 'HEAL-cifix-organvm-a-i--skills-27', 'HEAL-rebase-4444j99-hokage-chess-108', 'HEAL-rebase-4444j99-hokage-chess-85', 'HEAL-rebase-4444j99-hokage-chess-107', 'HEAL-cifix-organvm-a-i--skills-26', 'HEAL-cifix-organvm-organvm-ontologia-11', 'HEAL-rebase-organvm-a-i-chat--exporter-31', 'HEAL-cifix-organvm-public-process-32']`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `bacbcaaa24ff6846e506106e822c395a14c42cbd`.
-- origin/main: `bacbcaaa24ff6846e506106e822c395a14c42cbd`.
+- HEAD: `b124d140301b2f8c90a01d5f3b07a12b3a893a63`.
+- origin/main: `b124d140301b2f8c90a01d5f3b07a12b3a893a63`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
-- Ignored generated receipt dirty entries: `1`.
-  - `docs/live-root-gate.md`
 
 ## Verified Worktree
 

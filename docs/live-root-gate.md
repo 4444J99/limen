@@ -1,6 +1,6 @@
 # Live Root Gate
 
-Generated: `2026-07-06T12:36:55+00:00`
+Generated: `2026-07-06T13:29:18+00:00`
 
 Status: `ready`
 
@@ -21,21 +21,16 @@ Status: `ready`
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `1284d81908c067bff778401c01a9f1f6dbbf440c`.
-- Release head: `1284d81908c067bff778401c01a9f1f6dbbf440c`.
+- HEAD: `b124d140301b2f8c90a01d5f3b07a12b3a893a63`.
+- Release head: `b124d140301b2f8c90a01d5f3b07a12b3a893a63`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
 - Dirty entries: `0`.
-- Ignored generated receipt dirty entries: `4`.
-  - `docs/conductor-tranche.md`
-  - `docs/session-attack-paths.md`
-  - `docs/session-corpus-ledger.md`
-  - `docs/session-lifecycle-blockers.md`
 
 ## Heartbeat
 
 - Plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `True`.
-- Loaded launchd state: `running` pid `51335`.
+- Loaded launchd state: `running` pid `79488`.
 - Loaded env matches plist for tracked LIMEN_* keys.
 
 ## Verified Worktree
