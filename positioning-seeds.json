@@ -2,7 +2,7 @@
   "_comment": "Judgment layer for scripts/generate-positioning.py \u2014 per-repo inbound positioning. The deepest ladder level is the recruiter bridge (see docs/inbound-magnet-system.md). internal_anchor values are NEVER published; they render only into the .internal artifact. PUBLIC pages carry NO prices (tool-enforced).",
   "frontdoor": {
     "_contact_note": "Set `contact` to the inbound address you want on the public surface (a dedicated alias is wiser than a personal inbox \u2014 it gets indexed). When set, every CTA becomes a mailto: pre-tagged with the repo + door, so clicks land already-classified in your inbox triage. Empty = plain CTA text, nothing published. This is the one switch that turns the capture funnel live; it's your call which address.",
-    "contact": "",
+    "contact": "contact@4444j99.dev",
     "headline": "I build production systems that solve expensive problems.",
     "subhead": "Not demos. Live platforms \u2014 tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:",
     "door_client": {

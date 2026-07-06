@@ -32,6 +32,7 @@ Usage:
 """
 
 import argparse
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -46,6 +47,12 @@ except ImportError:
 # (Mirrors validate-seed.py. A future refactor should share one source.)
 CURSUS: list[str] = ["INCUBATOR", "ALPHA", "BETA", "STABLE", "MATURE"]
 CURSUS_SET: set[str] = set(CURSUS)
+
+# Expected schema_version — semver-like pattern
+SCHEMA_VERSION_PATTERN: str = r"^\d+\.\d+(\.\d+)?$"
+
+# Expected updated field format — ISO-8601 date (YYYY-MM-DD) or datetime
+DATE_PATTERN: str = r"^\d{4}-\d{2}-\d{2}"
 
 
 # --------------------------------------------------------------------------- #
@@ -73,8 +80,17 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
     if doc.get("organ") != "governance":
         violations.append("top-level 'organ' must be 'governance'")
 
-    if not isinstance(doc.get("schema_version"), str):
+    sv = doc.get("schema_version")
+    if not isinstance(sv, str):
         violations.append("missing or non-string 'schema_version'")
+    elif not re.match(SCHEMA_VERSION_PATTERN, sv):
+        violations.append(
+            f"'schema_version' {sv!r} does not match expected pattern (e.g. '1.0', '1.0.0')"
+        )
+
+    updated = doc.get("updated")
+    if updated is not None and (not isinstance(updated, str) or not re.match(DATE_PATTERN, str(updated))):
+        violations.append("'updated' must be an ISO-8601 date string (YYYY-MM-DD) or omitted")
 
     # -- Entity taxonomy ---------------------------------------------------- #
     taxonomy = doc.get("entity_taxonomy")
@@ -121,7 +137,7 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
         else:
             seen_ids.add(eid)
 
-        # Rule 3a — required fields per type
+        # Rule 3a — required fields per type (must be present and non-empty for string fields)
         etype = entity.get("type")
         if not isinstance(etype, str):
             violations.append(f"entities[{idx}] ({eid}) missing 'type'")
@@ -130,9 +146,14 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
         type_req = taxonomy.get(etype, {}).get("required_fields") if isinstance(taxonomy, dict) else None
         if isinstance(type_req, list):
             for field in type_req:
-                if field not in entity or entity.get(field) is None:
+                val = entity.get(field)
+                if val is None:
                     violations.append(
                         f"entities[{idx}] ({eid}) of type {etype!r} missing required field: {field!r}"
+                    )
+                elif isinstance(val, str) and not val.strip():
+                    violations.append(
+                        f"entities[{idx}] ({eid}) required field {field!r} is empty"
                     )
 
         # Rule 3b — mandates are allowed for this type
