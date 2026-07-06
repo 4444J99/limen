@@ -1,6 +1,6 @@
 # VLTIMA Prior Excavations
 
-Generated: `2026-07-06T15:37:45+00:00`
+Generated: `2026-07-06T15:46:22+00:00`
 
 ## Canonical Decision
 

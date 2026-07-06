@@ -1,6 +1,6 @@
 # VLTIMA Result Digest
 
-Generated: `2026-07-06T15:37:45+00:00`
+Generated: `2026-07-06T15:46:22+00:00`
 
 ## Canonical Decision
 
@@ -11,11 +11,11 @@ Generated: `2026-07-06T15:37:45+00:00`
 
 ## Coverage
 
-- Prior index generated: `2026-07-06T15:37:45+00:00`.
+- Prior index generated: `2026-07-06T15:46:22+00:00`.
 - Prior surfaces: `23`.
-- Result claims: `435`.
-- Authority mix: `current_doctrine` 422, `dormant_ore` 7, `quarantined_ghost` 5, `superseded_material` 1.
-- Freshness mix: `fresh` 428, `unknown` 7.
+- Result claims: `434`.
+- Authority mix: `current_doctrine` 421, `dormant_ore` 7, `quarantined_ghost` 5, `superseded_material` 1.
+- Freshness mix: `fresh` 427, `unknown` 7.
 
 ## Continual Absorption Cadence
 
@@ -36,32 +36,32 @@ Generated: `2026-07-06T15:37:45+00:00`
 
 | Surface | Subject | Trust | Evidence | Next |
 |---|---|---|---|---|
-| `session-attack-paths` | `local_pressure_bytes` | `high` | local_pressure_bytes = 35205579610 | current_doctrine |
+| `session-attack-paths` | `local_pressure_bytes` | `high` | local_pressure_bytes = 35775126919 | current_doctrine |
 | `session-corpus-ledger` | `object_bytes` | `high` | object_bytes = 6686897790 | current_doctrine |
 | `capability-substrate-ledger` | `bytes` | `high` | bytes = 2726650513 | current_doctrine |
-| `corpus-command-center` | `units` | `high` | units = 664430 | current_doctrine |
-| `corpus-command-center` | `units` | `high` | units = 664430 | current_doctrine |
-| `corpus-command-center` | `private_object_count` | `high` | private_object_count = 399265 | current_doctrine |
-| `corpus-command-center` | `unique_hashes` | `high` | unique_hashes = 399265 | current_doctrine |
-| `corpus-command-center` | `clusters` | `high` | clusters = 359628 | current_doctrine |
-| `corpus-command-center` | `clusters` | `high` | clusters = 359628 | current_doctrine |
+| `corpus-command-center` | `units` | `high` | units = 665397 | current_doctrine |
+| `corpus-command-center` | `units` | `high` | units = 665397 | current_doctrine |
+| `corpus-command-center` | `private_object_count` | `high` | private_object_count = 399789 | current_doctrine |
+| `corpus-command-center` | `unique_hashes` | `high` | unique_hashes = 399789 | current_doctrine |
+| `corpus-command-center` | `clusters` | `high` | clusters = 360059 | current_doctrine |
+| `corpus-command-center` | `clusters` | `high` | clusters = 360059 | current_doctrine |
 | `session-attack-paths` | `prompt_events` | `high` | prompt_events = 131758 | current_doctrine |
 | `prompt-lifecycle-ledger` | `direct` | `high` | direct = 126994 | current_doctrine |
-| `prompt-lifecycle-ledger` | `claude-projects` | `high` | claude-projects: 120740 prompt events; newest 2026-07-06T15:28:32+00:00 | current_doctrine |
+| `prompt-lifecycle-ledger` | `claude-projects` | `high` | claude-projects: 120740 prompt events; newest 2026-07-06T15:30:51+00:00 | current_doctrine |
 | `prompt-priority-map` | `prompt_units` | `high` | prompt_units = 78155 | current_doctrine |
 | `capability-substrate-ledger` | `scanned_files` | `high` | scanned_files = 67532 | current_doctrine |
 | `session-value-review` | `insertions` | `high` | insertions = 38724 | current_doctrine |
 | `session-value-review` | `prompt_events_recorded` | `high` | prompt_events_recorded = 22600 | current_doctrine |
 | `session-value-review` | `unique_prompt_hash_refs_recorded` | `high` | unique_prompt_hash_refs_recorded = 17794 | current_doctrine |
-| `agent-reconstruction-review` | `local-path:limen` | `high` | 1126 sessions; 2320 prompt events; risk 16065 | current_doctrine |
+| `agent-reconstruction-review` | `.` | `high` | 1126 sessions; 2320 prompt events; risk 16065 | current_doctrine |
 | `prompt-lifecycle-ledger` | `sessions` | `high` | sessions = 15291 | current_doctrine |
 | `session-attack-paths` | `prompt_files` | `high` | prompt_files = 15291 | current_doctrine |
-| `session-corpus-ledger` | `local_files` | `high` | local_files = 14101 | current_doctrine |
+| `session-corpus-ledger` | `local_files` | `high` | local_files = 14099 | current_doctrine |
 | `session-corpus-ledger` | `object_count` | `high` | object_count = 13845 | current_doctrine |
 | `product-ledger` | `products` | `high` | products = 11570 | current_doctrine |
-| `prompt-lifecycle-ledger` | `codex-sessions` | `high` | codex-sessions: 7787 prompt events; newest 2026-07-06T15:29:31+00:00 | current_doctrine |
+| `prompt-lifecycle-ledger` | `codex-sessions` | `high` | codex-sessions: 7787 prompt events; newest 2026-07-06T15:38:37+00:00 | current_doctrine |
 | `prompt-priority-map` | `session_items` | `high` | session_items = 6869 | current_doctrine |
-| `session-corpus-ledger` | `claude-projects` | `high` | claude-projects: 6646 files; newest 2026-07-06T15:28:32+00:00 | current_doctrine |
+| `session-corpus-ledger` | `claude-projects` | `high` | claude-projects: 6646 files; newest 2026-07-06T15:30:51+00:00 | current_doctrine |
 | `session-corpus-ledger` | `claude-file-history` | `high` | claude-file-history: 5059 files; newest 2026-07-05T18:01:34+00:00 | current_doctrine |
 | `corpus-command-center` | `sessions_indexed` | `high` | sessions_indexed = 4800 | current_doctrine |
 | `session-value-review` | `deletions` | `high` | deletions = 4776 | current_doctrine |

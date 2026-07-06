@@ -1,6 +1,6 @@
 # VLTIMA Absorption Cadence
 
-Generated: `2026-07-06T15:36:28+00:00`
+Generated: `2026-07-06T15:46:22+00:00`
 Status: `ok`
 Mode: `write`
 Materialize private raw inputs: `False`
@@ -34,59 +34,59 @@ Materialize private raw inputs: `False`
 
 stdout:
 ```
-session-corpus-ledger: 14101 files, 3.5 GiB over all history; wrote ~/Workspace/limen/docs/session-corpus-ledger.md
+session-corpus-ledger: 14099 files, 3.5 GiB over all history; wrote $LIMEN_ROOT/docs/session-corpus-ledger.md
 ```
 
 ### `crosswalk`
 
 stdout:
 ```
-prompt-lifecycle-ledger: 15291 files, 131758 prompt events over all history; wrote ~/limen/docs/prompt-lifecycle-ledger.md
+prompt-lifecycle-ledger: 15291 files, 131758 prompt events over all history; wrote $LIMEN_ROOT/docs/prompt-lifecycle-ledger.md
 ```
 
 ### `blockers`
 
 stdout:
 ```
-session-blockers-ledger: 8 blockers; wrote ~/limen/docs/session-lifecycle-blockers.md
+session-blockers-ledger: 8 blockers; wrote $LIMEN_ROOT/docs/session-lifecycle-blockers.md
 ```
 
 ### `pressure`
 
 stdout:
 ```
-**Lifecycle pressure** — worktrees 152 roots / 24.3 GiB / debt 5/12 · private corpus 8.5 GiB (13845 objects) · remote branches present/missing 33/110 (unresolved 4) · state: worktree debt open, remote branch gaps, runtime unconfigured
+**Lifecycle pressure** — worktrees 162 roots / 24.8 GiB / debt 7/12 · private corpus 8.5 GiB (13845 objects) · remote branches present/missing 36/108 (unresolved 5) · state: worktree debt open, remote branch gaps, runtime unconfigured
 ```
 
 ### `attack-paths`
 
 stdout:
 ```
-session-attack-paths: 168 candidate paths; wrote ~/limen/docs/session-attack-paths.md
+session-attack-paths: 178 candidate paths; wrote $LIMEN_ROOT/docs/session-attack-paths.md
 ```
 
 ### `priority-map`
 
 stdout:
 ```
-prompt-priority-map: 131758 prompt events, 78155 unique hashes, 294 batches; wrote ~/limen/docs/prompt-priority-map.md
+prompt-priority-map: 131758 prompt events, 78155 unique hashes, 294 batches; wrote $LIMEN_ROOT/docs/prompt-priority-map.md
 ```
 
 ### `command-center`
 
 stdout:
 ```
-corpus-command-center: 664430 units, 359628 clusters, 24 comparisons
-wrote ~/limen/.limen-private/session-corpus/lifecycle/corpus-command-center.private.json
-wrote ~/limen/.limen-private/session-corpus/lifecycle/corpus-command-center.public.json
-wrote ~/limen/docs/corpus-command-center.md
+corpus-command-center: 665397 units, 360059 clusters, 24 comparisons
+wrote $LIMEN_ROOT/.limen-private/session-corpus/lifecycle/corpus-command-center.private.json
+wrote $LIMEN_ROOT/.limen-private/session-corpus/lifecycle/corpus-command-center.public.json
+wrote $LIMEN_ROOT/docs/corpus-command-center.md
 ```
 
 ### `substrate-ledger`
 
 stdout:
 ```
-substrate-ledger: ready; wrote ~/limen/docs/substrate-ledger.md and ~/limen/.limen-private/session-corpus/lifecycle/substrate-ledger.json
+substrate-ledger: ready; wrote $LIMEN_ROOT/docs/substrate-ledger.md and $LIMEN_ROOT/.limen-private/session-corpus/lifecycle/substrate-ledger.json
 ```
 
 ### `agent-reconstruction-review`
@@ -100,12 +100,12 @@ agent-reconstruction-review: 2398 sessions, 875 roots, 20 analyzed
 
 stdout:
 ```
-vltima-prior-excavations: wrote ~/Workspace/limen/docs/vltima-prior-excavations.md and ~/Workspace/limen/.limen-private/session-corpus/lifecycle/vltima-prior-excavations.json
+vltima-prior-excavations: wrote $LIMEN_ROOT/docs/vltima-prior-excavations.md and $LIMEN_ROOT/.limen-private/session-corpus/lifecycle/vltima-prior-excavations.json
 ```
 
 ### `result-digest`
 
 stdout:
 ```
-vltima-result-digest: wrote ~/Workspace/limen/docs/vltima-result-digest.md and ~/Workspace/limen/.limen-private/session-corpus/lifecycle/vltima-result-digest.json
+vltima-result-digest: wrote $LIMEN_ROOT/docs/vltima-result-digest.md and $LIMEN_ROOT/.limen-private/session-corpus/lifecycle/vltima-result-digest.json
 ```
