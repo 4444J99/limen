@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-06T09:24:33Z",
+  "generated_utc": "2026-07-06T09:30:54Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -1633,6 +1633,21 @@
         "scripts/consolidation-transfer-apply.sh"
       ],
       "worktree": "/Users/4jp/limen/.claude/worktrees/linear-conjuring-bear"
+    },
+    {
+      "branch": "worktree-fluttering-twirling-abelson",
+      "classification": "local worktree head preserved by current default branch",
+      "default_branch": "origin/main",
+      "default_head": "b80e782aa0c93f5d5cca4c57bed82bc8d390e993",
+      "evidence_updated_utc": "2026-07-06T09:30:54Z",
+      "head": "034ab5f61f364f4acd99266a10fc00de856698da",
+      "lane": "remote-merged",
+      "next_action": "No local-only source preservation remains. Local HEAD is an ancestor of current origin/main and `git diff origin/main...HEAD` is empty. Reclaim the local checkout only after operator acceptance.",
+      "repo": "organvm/limen",
+      "root": "fluttering-twirling-abelson",
+      "score_discount": 35,
+      "status": "default_branch_preserved",
+      "worktree": "/Users/4jp/limen/.claude/worktrees/fluttering-twirling-abelson"
     }
   ],
   "schema": 1

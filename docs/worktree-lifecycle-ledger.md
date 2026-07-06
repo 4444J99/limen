@@ -39,6 +39,11 @@ The unique work remains preserved on the remote branches and open draft PRs.
 - Re-run proof after the receipt: `python3 scripts/worktree-debt.py --fail-over-cap` reports
   0 debt roots / 49 scanned roots, with `linear-conjuring-bear` classified as
   `remote-superseded`.
+- Also classified active root `fluttering-twirling-abelson` as default-branch-preserved:
+  local `HEAD` `034ab5f61f364f4acd99266a10fc00de856698da` is an ancestor of current
+  `origin/main` `b80e782aa0c93f5d5cca4c57bed82bc8d390e993`, and
+  `git diff origin/main...HEAD` is empty. No PR was opened, no branch was pushed, and no local
+  checkout was removed.
 
 2026-07-04 lifecycle closeout pass:
 

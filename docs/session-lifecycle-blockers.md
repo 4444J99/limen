@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-07-06T09:27:51+00:00`
+Generated: `2026-07-06T09:35:43+00:00`
 
 ## Canonical Handling
 
@@ -17,7 +17,7 @@ Generated: `2026-07-06T09:27:51+00:00`
 - Network health receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/network-health.json`.
 - Dispatch health receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/dispatch-health.json`.
 - Live root gate receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/live-root-gate.json`.
-- Redacted local prompt coverage: `15221` files, `131016` prompt-like events.
+- Redacted local prompt coverage: `15223` files, `131021` prompt-like events.
 - Codex classified sessions: `887`.
 - Worktree debt roots: `0`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.

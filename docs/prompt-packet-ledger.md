@@ -1,6 +1,6 @@
 # Prompt Packet Ledger
 
-Generated: `2026-07-06T09:28:07+00:00`
+Generated: `2026-07-06T09:35:35+00:00`
 
 ## Canonical Decision
 
@@ -11,7 +11,7 @@ Generated: `2026-07-06T09:28:07+00:00`
 
 ## Coverage
 
-- Source review batches: `290`.
+- Source review batches: `291`.
 - Batches needing packetization: `2`.
 - Packets emitted: `9`.
 - Recorded packets: `7`.
