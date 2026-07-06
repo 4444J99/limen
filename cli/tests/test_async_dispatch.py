@@ -69,10 +69,7 @@ def test_inflight_markers_consume_per_lane_limit(tmp_path):
             Task(id=f"C{i}", title="t", repo="x/y", target_agent="codex", status="open", created=today)
             for i in range(3)
         ],
-        *[
-            Task(id=f"A{i}", title="t", repo="x/y", target_agent="agy", status="open", created=today)
-            for i in range(3)
-        ],
+        *[Task(id=f"A{i}", title="t", repo="x/y", target_agent="agy", status="open", created=today) for i in range(3)],
     ]
     save_limen_file(tmp_path / "tasks.yaml", lf)
     for i in range(2):
