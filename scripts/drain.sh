@@ -21,6 +21,63 @@ stamp_voice() {
   printf '%s\n' "$(date -u +%FT%TZ)" > "$LIMEN_ROOT/logs/.voice/$1" 2>/dev/null || true
 }
 
+if [ "${1:-}" = "--census" ]; then
+  python3 - "$LIMEN_ROOT" "$LIMEN_TASKS" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+tasks_path = Path(sys.argv[2])
+
+
+def enabled(name: str, default: str) -> bool:
+    return os.environ.get(name, default) == "1"
+
+
+status_counts = {}
+try:
+    import yaml
+
+    data = yaml.safe_load(tasks_path.read_text()) or {}
+    tasks = data.get("tasks", []) if isinstance(data, dict) else []
+    for task in tasks:
+        if isinstance(task, dict):
+            status = str(task.get("status") or "unknown")
+            status_counts[status] = status_counts.get(status, 0) + 1
+except Exception:
+    try:
+        for line in tasks_path.read_text().splitlines():
+            stripped = line.strip()
+            if stripped.startswith("status:"):
+                status = stripped.split(":", 1)[1].strip() or "unknown"
+                status_counts[status] = status_counts.get(status, 0) + 1
+    except Exception:
+        status_counts = {}
+
+print(
+    json.dumps(
+        {
+            "tasks_present": tasks_path.exists(),
+            "task_status_counts": status_counts,
+            "logs_present": (root / "logs").exists(),
+            "voice_dir_present": (root / "logs" / ".voice").exists(),
+            "jules_land_enabled": enabled("LIMEN_JULES_LAND", "1"),
+            "merge_drain_enabled": enabled("LIMEN_MERGE_DRAIN", "1"),
+            "self_heal_enabled": enabled("LIMEN_SELF_HEAL", "1"),
+            "converge_enabled": enabled("LIMEN_CONVERGE", "0"),
+            "reclaim_enabled": enabled("LIMEN_RECLAIM", "1"),
+            "reclaim_apply_enabled": enabled("LIMEN_RECLAIM_APPLY", "1"),
+        },
+        indent=2,
+        sort_keys=True,
+    )
+)
+PY
+  exit 0
+fi
+
 echo "[drain] pulling completed Jules sessions…"
 python3 "$LIMEN_ROOT/scripts/harvest-pull-completed.py" 2>&1 | tail -4 || true
 
