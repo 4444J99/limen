@@ -4,12 +4,13 @@
 The posture this organ exists to hold: *the Mac stays FACTORY; the system I'm building lives in
 an ejectable CARTRIDGE (chezmoi → organvm/domus-genoma).* Nothing should be truly on the PATH or
 local. CVSTOS (custos = the keeper/guardian) owns the TERMINAL stage of the local-artifact
-lifecycle — **eviction** — the stage that today never fires, which is why the host accretes:
+lifecycle — **eviction readiness** — the stage that today never becomes accepted cleanup, which is
+why the host accretes:
 
-    spawn → work → preserve-to-cartridge → EVICT-from-host → factory restored
+    spawn → work → preserve-to-cartridge → accepted eviction from host → factory restored
 
-Three departments, each fail-open, none blocking another, all READ-ONLY on the host by default
-(they size and classify; the reclaim of regenerable cache runs only under --apply):
+Three departments, each fail-open, none blocking another, all READ-ONLY on the host
+(they size and classify; regenerable cache is reported, not physically removed):
 
   EVICTVS  — the debt the chat/agent apps leave on the host, for EVERY vendor, not just Claude:
              ChatGPT, Cursor, Windsurf, Copilot, the Claude desktop app, and Claude Code's own
@@ -29,11 +30,10 @@ Three departments, each fail-open, none blocking another, all READ-ONLY on the h
              They run inline in the hygiene + backup voices with no health face of their own, so a
              stale or broken reaper is invisible and creep goes unbounded. Here it becomes visible.
 
-DATA / SAFETY (the whole point — this organ can delete, so the rails matter):
-  - READ-ONLY on the host by default. It never deletes without --apply, and even then only the
-    allowlisted regenerable classes. Irreplaceable / unsynced app state is never an eviction
-    candidate — it is surfaced so the human decides, matching library-preserve.py's "never
-    auto-delete personal data" precedent.
+DATA / SAFETY (the whole point — this organ must not become a side-door deletion surface):
+  - READ-ONLY on the host. Physical cache removal needs a separate archive/redaction acceptance
+    surface. Irreplaceable / unsynced app state is never an eviction candidate — it is surfaced so
+    the human decides, matching library-preserve.py's "never auto-delete personal data" precedent.
   - Writes a COUNTS-ONLY liveness stamp to logs/cvstos-organ-state.json (bytes + counts only; no
     file contents, no per-file paths beyond app/dir names) so organ-health.py sees it fired.
   - Fail-open everywhere + lockless: a missing app, absent chezmoi, unreadable dir → a "skipped"
@@ -44,8 +44,8 @@ DATA / SAFETY (the whole point — this organ can delete, so the rails matter):
   --check : the executable Definition of Done (exit 0 ⟺ the host is at factory). Composes the
             already-shipped cartridge-connected.py and worktree-debt.py predicates and adds the
             chat-app-debt + bin-orphan measures. exit 1 names each unmet invariant.
-  --apply : the owner's opt-in — reclaim the regenerable chat-app caches (regenerates on next use).
-            The beat never passes this; it stays a human lever until he classifies what is safe.
+  --apply : compatibility flag — report the regenerable chat-app cache bytes that an accepted
+            cache-reap organ could reclaim. It does not physically remove files.
 """
 
 from __future__ import annotations
@@ -247,9 +247,11 @@ def census_debt() -> dict:
 
 
 def reclaim_debt(census: dict) -> int:
-    """--apply: delete the *contents* of the regenerable eviction candidates (they regenerate).
-    Only regen/electron-cache classes are ever removed; retained paths are never touched. Returns
-    bytes reclaimed. Fail-open per item."""
+    """--apply compatibility: report regenerable eviction candidates without removing them.
+
+    Only regen/electron-cache classes are counted; retained paths are never touched. Physical cache
+    removal belongs to a future acceptance-gated cache reaper.
+    """
     reclaimed = 0
     for _app, glob_rel, kind in _TARGETS:
         if kind == "retained":
@@ -258,18 +260,7 @@ def reclaim_debt(census: dict) -> int:
             targets = [path] if kind == "regen" else [path / s for s in _REGEN_SUBDIRS if (path / s).is_dir()]
             for t in targets:
                 b, _ = _dir_bytes(t)
-                try:
-                    for child in t.iterdir():
-                        if child.is_dir() and not child.is_symlink():
-                            shutil.rmtree(child, ignore_errors=True)
-                        else:
-                            try:
-                                child.unlink()
-                            except OSError:
-                                pass
-                    reclaimed += b
-                except OSError:
-                    continue
+                reclaimed += b
     return reclaimed
 
 
@@ -535,7 +526,7 @@ def write_stamp(a: dict, reclaimed: int | None = None) -> None:
         "open_invariants": failures(a),
     }
     if reclaimed is not None:
-        rec["reclaimed_gb"] = round(reclaimed / GB, 2)
+        rec["reclaimable_gb"] = round(reclaimed / GB, 2)
     (LOGS / "cvstos-organ-state.json").write_text(json.dumps(rec, indent=2))
     try:
         vd = LOGS / ".voice"
@@ -564,7 +555,7 @@ def _oneliner(a: dict) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description="CVSTOS — keeper of the host (factory ⇄ cartridge).")
     ap.add_argument("--check", action="store_true", help="Definition of Done: exit 0 iff the host is at factory")
-    ap.add_argument("--apply", action="store_true", help="reclaim the regenerable chat-app caches (owner opt-in)")
+    ap.add_argument("--apply", action="store_true", help="report accepted-reaper candidate cache bytes")
     ap.add_argument("--json", action="store_true", help="print the full assessment as JSON")
     args = ap.parse_args()
 
@@ -573,7 +564,6 @@ def main() -> int:
     reclaimed = None
     if args.apply:
         reclaimed = reclaim_debt(a["debt"])
-        a = assess()  # re-measure so the stamp reflects post-eviction truth
 
     write_stamp(a, reclaimed)
 

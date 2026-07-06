@@ -36,6 +36,7 @@ DIRECT_REMOVAL_BANS = {
     "scripts/done-insight-cadence.sh": ("rm -rf", "rm -f"),
     "scripts/clone-maintenance.sh": ("shutil.rmtree(nm", "--delete-branch"),
     "scripts/library-preserve.py": ("shutil.rmtree",),
+    "scripts/cvstos-organ.py": ("shutil.rmtree", ".unlink()"),
     "CLAUDE.md": ("--delete-branch",),
     "docs/MERGE-READY.md": ("--delete-branch", "deletes the branches"),
 }
