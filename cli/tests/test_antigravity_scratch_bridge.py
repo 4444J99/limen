@@ -86,3 +86,21 @@ def test_container_root_requires_nested_review(tmp_path: Path):
     assert row["disposition"] == "container_review_required"
     assert row["nested_git_roots"] == 1
     assert row["nested_by_disposition"] == {"safe_reap_candidate": 1}
+
+
+def test_apply_safe_reap_deletes_only_reclassified_candidates(tmp_path: Path):
+    bridge = _load()
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    clean = _make_remote_preserved_repo(scratch, "clean-root")
+    dirty = _make_remote_preserved_repo(scratch, "dirty-root")
+    (dirty / "new_delta.py").write_text("unbridged work\n", encoding="utf-8")
+
+    report = bridge.build_report(scratch, min_idle_hours=0)
+    reap = bridge.apply_safe_reap(report, min_idle_hours=0)
+
+    assert reap["summary"]["reaped"] == 1
+    assert reap["summary"]["skipped"] == 0
+    assert reap["summary"]["failed"] == 0
+    assert not clean.exists()
+    assert dirty.exists()

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Read-only Antigravity/Agy scratch bridge.
+"""Antigravity/Agy scratch bridge.
 
 Inventory ~/.gemini/antigravity-cli/scratch and classify each root before any
-local deletion. This script never deletes files.
+local deletion. Deletion is opt-in and limited to roots reclassified as
+`safe_reap_candidate` immediately before removal.
 """
 from __future__ import annotations
 
@@ -11,6 +12,7 @@ import datetime as dt
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 from collections import Counter
@@ -233,6 +235,86 @@ def build_report(scratch_root: Path = SCRATCH_ROOT, min_idle_hours: float = 24.0
     }
 
 
+def apply_safe_reap(report: dict[str, Any], min_idle_hours: float) -> dict[str, Any]:
+    scratch_root = Path(report["scratch_root"]).expanduser().resolve()
+    results: list[dict[str, Any]] = []
+    for row in report.get("roots", []):
+        if row.get("disposition") != "safe_reap_candidate":
+            continue
+        raw_path = Path(str(row.get("path", ""))).expanduser()
+        try:
+            path = raw_path.resolve()
+            path.relative_to(scratch_root)
+        except (OSError, ValueError):
+            results.append({
+                "name": row.get("name"),
+                "path": str(raw_path),
+                "status": "skipped",
+                "reason": "path-outside-scratch-root",
+            })
+            continue
+        if path == scratch_root:
+            results.append({
+                "name": row.get("name"),
+                "path": str(path),
+                "status": "skipped",
+                "reason": "refused-scratch-root",
+            })
+            continue
+        if not path.exists():
+            results.append({
+                "name": row.get("name"),
+                "path": str(path),
+                "status": "skipped",
+                "reason": "already-missing",
+            })
+            continue
+
+        checked = classify_root(path, min_idle_hours)
+        if checked.get("disposition") != "safe_reap_candidate":
+            results.append({
+                "name": checked.get("name"),
+                "path": checked.get("path"),
+                "status": "skipped",
+                "reason": f"reclassified-{checked.get('disposition')}",
+            })
+            continue
+        try:
+            shutil.rmtree(path)
+            results.append({
+                "name": checked.get("name"),
+                "path": checked.get("path"),
+                "status": "reaped",
+                "reason": checked.get("reason"),
+                "size_bytes": int(checked.get("size_bytes", 0)),
+                "size": checked.get("size"),
+                "repo": checked.get("repo"),
+                "head": checked.get("head"),
+            })
+        except OSError as exc:
+            results.append({
+                "name": checked.get("name"),
+                "path": checked.get("path"),
+                "status": "failed",
+                "reason": str(exc),
+            })
+
+    reaped_bytes = sum(int(item.get("size_bytes", 0)) for item in results if item["status"] == "reaped")
+    by_status = Counter(str(item["status"]) for item in results)
+    return {
+        "applied_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "summary": {
+            "candidates_considered": len(results),
+            "reaped": by_status.get("reaped", 0),
+            "skipped": by_status.get("skipped", 0),
+            "failed": by_status.get("failed", 0),
+            "reaped_bytes": reaped_bytes,
+            "reaped_size": fmt_bytes(reaped_bytes),
+        },
+        "results": results,
+    }
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     summary = report["summary"]
     lines = [
@@ -257,6 +339,33 @@ def render_markdown(report: dict[str, Any]) -> str:
     by_disp = summary.get("by_disposition") or {}
     if by_disp:
         lines.append("- Dispositions: " + ", ".join(f"`{k}` {v}" for k, v in by_disp.items()) + ".")
+    if report.get("post_reap_summary"):
+        post = report["post_reap_summary"]
+        lines.append(
+            f"- Post-reap scratch size: `{post.get('total_size', '0 B')}` "
+            f"across `{post.get('total_roots', 0)}` roots."
+        )
+    if report.get("reap"):
+        reap = report["reap"]["summary"]
+        lines += [
+            "",
+            "## Reap Results",
+            "",
+            f"- Applied at: `{report['reap']['applied_at']}`.",
+            f"- Reaped: `{reap.get('reaped', 0)}` roots, `{reap.get('reaped_size', '0 B')}`.",
+            f"- Skipped: `{reap.get('skipped', 0)}`; failed: `{reap.get('failed', 0)}`.",
+        ]
+        for item in report["reap"].get("results", []):
+            if item.get("status") == "reaped":
+                proof = item.get("repo") or "remote"
+                if item.get("head"):
+                    proof = f"{proof}@{item['head']}"
+                lines.append(f"- Reaped `{item.get('name')}` `{item.get('size')}` ({proof}).")
+            else:
+                lines.append(
+                    f"- {item.get('status', 'skipped').title()} `{item.get('name')}`: "
+                    f"{item.get('reason')}."
+                )
     lines += ["", "## Largest Roots", "", "| Root | Size | Kind | Disposition | Reason | Remote / nested proof |", "|---|---:|---|---|---|---|"]
     for row in report.get("roots", [])[:40]:
         if row.get("kind") == "git":
@@ -271,7 +380,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "## Operating Rule",
         "",
-        "- `safe_reap_candidate`: local deletion can be considered by a separate reaper, not this script.",
+        "- `safe_reap_candidate`: local deletion is allowed only through `--apply-safe-reap --write`, "
+        "which reclassifies the root before removal and writes a receipt.",
         "- `bridge_required`: preserve/carry the uncommitted delta first.",
         "- `preserve_required`: push, archive, or receipt the local commit before deletion.",
         "- `container_review_required`: inspect nested repos; do not delete the parent as one blob.",
@@ -281,13 +391,23 @@ def render_markdown(report: dict[str, Any]) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Audit Antigravity scratch roots without deleting them.")
+    parser = argparse.ArgumentParser(description="Audit Antigravity scratch roots before deletion.")
     parser.add_argument("--root", type=Path, default=SCRATCH_ROOT, help="scratch root to scan")
     parser.add_argument("--min-idle-hours", type=float, default=24.0, help="idle age required for reap candidates")
     parser.add_argument("--json", action="store_true", help="print machine JSON")
     parser.add_argument("--write", action="store_true", help="write docs/ and logs/ receipts")
+    parser.add_argument(
+        "--apply-safe-reap",
+        action="store_true",
+        help="delete roots that reclassify as safe_reap_candidate; requires --write",
+    )
     args = parser.parse_args()
+    if args.apply_safe_reap and not args.write:
+        parser.error("--apply-safe-reap requires --write")
     report = build_report(args.root.expanduser(), args.min_idle_hours)
+    if args.apply_safe_reap:
+        report["reap"] = apply_safe_reap(report, args.min_idle_hours)
+        report["post_reap_summary"] = build_report(args.root.expanduser(), args.min_idle_hours)["summary"]
     if args.write:
         LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         DOC_PATH.parent.mkdir(parents=True, exist_ok=True)
