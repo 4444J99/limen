@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 274
+      spent: 277
       per_agent:
         jules: 100
         gemini: 2
-        codex: 49
+        codex: 50
         opencode: 29
-        agy: 85
+        agy: 87
         claude: 8
         github_actions: 1
       per_agent_reset:
@@ -86502,7 +86502,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -86519,7 +86519,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:56:12.037249Z'
+  updated: '2026-07-06T20:06:20.491445Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:58:55.312907Z'
     agent: claude
@@ -86577,6 +86577,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T20:06:20.491445Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-limen-431
   title: fix failing CI on organvm/limen#431
   repo: organvm/limen
@@ -89281,7 +89286,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -89297,7 +89302,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:48:50.786668Z'
+  updated: '2026-07-06T20:06:23.630330Z'
   dispatch_log:
   - timestamp: '2026-07-06T19:32:12.138279Z'
     agent: codex
@@ -89314,6 +89319,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-06T20:06:23.630330Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-137
   title: fix failing CI on organvm/domus-genoma#137
   repo: organvm/domus-genoma
@@ -99353,13 +99363,17 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T20:02:43.208712Z'
+  updated: '2026-07-06T20:06:20.491445Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:02:43.208712Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T20:06:20.491445Z'
+    agent: agy
+    session_id: limen/discover-organvm-sovereign--ground--4444j99-0f507a63
+    status: dispatched
 - id: DISCOVER-organvm-hokage-chess--4444j99
   title: Discover the latent value of organvm/hokage-chess--4444j99
   repo: organvm/hokage-chess--4444j99
@@ -99723,7 +99737,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -99742,8 +99756,13 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:43:04.245244Z'
-  dispatch_log: []
+  updated: '2026-07-06T20:06:23.630330Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T20:06:23.630330Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-laurea
   title: Discover the latent value of organvm/laurea
   repo: organvm/laurea
