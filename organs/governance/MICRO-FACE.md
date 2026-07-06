@@ -31,7 +31,7 @@ crossing.
 | Repo | Entity | Home | Cursus standing | Next gate |
 |---|---|---|---|---|
 | organvm/limen | Cind & Sol Foundation | organs/governance/ | BETA | STABLE (maturity >= 60%; beat wired into heartbeat loop) |
-| organvm/limen (publication policy) | Cind & Sol Foundation | organs/governance/ | BUILDING (60%) | BETA (seed.yaml + full face documentation) |
+| organvm/limen (publication policy) | Cind & Sol Foundation | organs/governance/ | INCUBATOR (entities.yaml) / BUILDING (60%, organ-ladder) | BETA (seed.yaml + full face documentation) — registered in entities.yaml (2026-07-05). Convergence verified every beat via C_PUBPOLICY → --verify. |
 
 The organ's own repo — the governance office itself — holds BETA standing on the cursus
 honorum, validated by its own rules. There is no exemption for self-governance.

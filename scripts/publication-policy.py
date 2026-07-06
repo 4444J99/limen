@@ -351,6 +351,35 @@ def cmd_audit(args) -> int:
 # ---------------------------------------------------------------------------
 # Predicates
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Convergence integrity — verify every scattered gate still references this rule table
+# ---------------------------------------------------------------------------
+_CONVERGENCE_GATES: list[tuple[str, str]] = [
+    ("scripts/creds-hydrate.py", "_SECRET_RX"),
+    ("scripts/scan-legacy-session-batch.py", "SENSITIVE_PATTERNS"),
+    ("spec/contracts/surface-manifest.schema.json", "persona contracts"),
+    ("scripts/generate-positioning.py", "awaiting_publish"),
+]
+
+GATE_REF = "PUBLICATION-POLICY.md"
+
+
+def _check_convergence() -> list[str]:
+    """Verify every scattered gate still references PUBLICATION-POLICY.md (the convergence table)."""
+    fails = []
+    for rel_path, gate_name in _CONVERGENCE_GATES:
+        target = ROOT / rel_path
+        if not target.exists():
+            fails.append(f"convergence: {rel_path} — file missing; convergence table row ({gate_name}) cannot be verified")
+            continue
+        if GATE_REF not in target.read_text(encoding="utf-8", errors="replace"):
+            fails.append(
+                f"convergence: {rel_path} — file no longer references {GATE_REF}; "
+                f"convergence table row '{gate_name}' has drifted"
+            )
+    return fails
+
+
 def _self_test() -> list[str]:
     """Return a list of failure strings (empty => sound)."""
     fails = []
@@ -406,6 +435,8 @@ def _self_test() -> list[str]:
     check(disposition("PUBLIC", "secret")[0] == "REMOVE_ROTATE", "secret disposition wrong")
     check(disposition("PUBLIC", "public_safe") == ("PUBLISH", "his_lever"), "publish disposition wrong")
     check(disposition("PUBLIC", "personal_pii") == ("REDACT_IDENTIFIERS", "auto"), "pii disposition wrong")
+    # 5. convergence integrity — scattered gates still reference this rule table
+    fails.extend(_check_convergence())
     return fails
 
 

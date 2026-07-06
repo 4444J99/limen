@@ -94,6 +94,20 @@ repos:
       - "Entity Registrar"
       - "Compliance Sentinel"
 
+  - repo: "organvm/limen"
+    organ: "Publication Policy (the disclosure court)"
+    home: "organs/governance/"
+    entity: "cind-and-sol-foundation"
+    cursus: "INCUBATOR"
+    implementation_status: "INCUBATOR"
+    description: >
+      The disclosure court — the ONE disposition engine for "what goes on which repo."
+      Content-disposition matrix (repo visibility x content class) with owner-scoped
+      redaction. Convergence table for all scattered content-safety gates (_SECRET_RX,
+      SENSITIVE_PATTERNS, persona contracts, awaiting_publish) behind PUBLICATION-POLICY.md.
+    governance_roles:
+      - "Content Disposition"
+
 # ── ENTITIES (MICRO: ORGANVM's own) ─────────────────────────────────────
 # Legal entities under governance. Each has mandates (what it may do) and
 # forbidden_acts (what it must never do). The validator checks all.
