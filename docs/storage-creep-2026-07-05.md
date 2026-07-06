@@ -6,11 +6,11 @@ personal data stores or agent scratch roots.
 
 ## Live Footprint
 
-- Internal data volume: `460Gi` size, `403Gi` used, `28Gi` available, `94%` capacity after the
+- Internal data volume: `460Gi` size, `398Gi` used, `32Gi` available, `93%` capacity after the
   2026-07-06 safe reaps.
 - Archive4T: `3.6Ti` size, `523Gi` used, `3.0Ti` available.
-- `~/.gemini`: about `30G`; `~/.gemini/antigravity-cli`: about `30G`.
-- `~/.gemini/antigravity-cli/scratch`: about `28G`.
+- `~/.gemini`: about `26G`.
+- `~/.gemini/antigravity-cli/scratch`: about `24G`.
 - Largest Antigravity scratch roots observed before the safe reap:
   - `session-meta`: `4.7G`
   - `organvm-session-meta`: `4.7G`
@@ -67,6 +67,11 @@ personal data stores or agent scratch roots.
   `python3 scripts/corpus-command-center.py --write` reduced
   `.limen-private/session-corpus/lifecycle/corpus-command-center.private.json` from `1.4G` to
   `960M`, and `.limen-private/session-corpus` from `8.4G` to `7.9G`.
+- A small `~/.gemini/antigravity-cli/scratch/session-meta` delta was bridged into
+  `organvm/session-meta#164`, then `python3 scripts/antigravity-scratch-bridge.py --write --apply-safe-reap`
+  reclassified and reaped that root. This reclaimed another `4.7 GiB`; current bridge summary is
+  `42` roots, `23.7 GiB`, and `0 B` safe-reap candidates. Current `du` readings:
+  `~/.gemini/antigravity-cli/scratch` about `24G`, `~/.gemini` about `26G`.
 
 ## Decision
 
