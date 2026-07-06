@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-06T13:29:18+00:00`
+Generated: `2026-07-06T15:01:13+00:00`
 
 Status: `healthy`
 
@@ -23,22 +23,24 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T13:29:18.547193+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T15:01:13.657624+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 4 ; 1 still running ; would launch 14 (cap 12) -> ['ORG-financial-organ-face-0704', 'HEAL-rebase-4444j99-hokage-chess-94', 'HEAL-rebase-organvm-payrail-4', 'HEAL-rebase-4444j99-hokage-chess-89', 'HEAL-rebase-4444j99-hokage-chess-114', 'HEAL-cifix-organvm-organvm-engine-144', 'HEAL-cifix-organvm-a-i--skills-27', 'HEAL-rebase-4444j99-hokage-chess-108', 'HEAL-rebase-4444j99-hokage-chess-85', 'HEAL-rebase-4444j99-hokage-chess-107', 'HEAL-cifix-organvm-a-i--skills-26', 'HEAL-cifix-organvm-organvm-ontologia-11', 'HEAL-rebase-organvm-a-i-chat--exporter-31', 'HEAL-cifix-organvm-public-process-32']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 5 ; 11 still running ; would launch 4 (cap 12) -> ['HEAL-cifix-organvm-limen-432', 'HEAL-cifix-organvm-a-i--skills-28', 'HEAL-rebase-organvm-a-i-chat--exporter-61', 'HEAL-cifix-organvm-domus-genoma-137']`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `b124d140301b2f8c90a01d5f3b07a12b3a893a63`.
-- origin/main: `b124d140301b2f8c90a01d5f3b07a12b3a893a63`.
+- HEAD: `ef96986214e9f037b91eb79af011c90e03471a67`.
+- origin/main: `ef96986214e9f037b91eb79af011c90e03471a67`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/live-root-gate.md`
 
 ## Verified Worktree
 
