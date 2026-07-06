@@ -174,18 +174,89 @@ The intake batch will include:
 
 ---
 
-## Validation
+## Operating constraints (invariants across all chambers)
 
-Run:
+These are not best practices. They are non-negotiable structural constraints enforced by the
+organ's guardrails:
+
+- **No AI-generated art in the archive.** The source archive contains what the artist made.
+  No generated composition, no altered source substitution, no unlabeled additions.
+- **Source files are sacred.** The organ catalogs, indexes, preserves, and drafts; it never
+  edits, overwrites, or recompresses original source assets.
+- **Provenance is written, not assumed.** Every piece carries medium, date, source path,
+  custody history, and cross-references. Nothing enters without a trail.
+- **No outward action without a gate.** Publication, portfolio deployment, and social
+  distribution are staged, surfaced, and approved per event — never by default.
+- **The artist's vision is final.** Curation proposals, caption drafts, and exhibition
+  groupings are advisory. The artist accepts, rewrites, or rejects each output.
+
+---
+
+## Validation — actual output
 
 ```bash
-python organs/artist/validate-artist.py --fleet
+$ python organs/artist/validate-artist.py --fleet
+PASS  chambers/et4l.yaml
+PASS  chambers/locreance.yaml
+PASS  chambers/photo-archive.yaml
+
+3/3 passed
 ```
 
-Expected result: all three chamber records pass the full six-rule artist-organ
-validation suite (standing progression, artist gate, primitive completeness,
-standard evidence, overreach prohibition, artifact requirement).
-`scripts/verify-whole.sh` invokes this fleet check as part of the repo gate.
+All three micro-instance chambers pass the full six-rule artist-organ validation suite:
+- **Rule #1**: Archive Standing — valid state and forward next_standing
+- **Rule #2**: Artist Gate — `governance.artist_gate` true; human gates named
+- **Rule #3**: 5-Primitive Completeness — member, mandate, standing, standard, governance
+- **Rule #4**: Evidence Integrity — real evidence, no placeholder text
+- **Rule #5**: No Overreach — no autonomous publication, source alteration, or substitute authorship
+- **Rule #6**: Reviewable Output — `artifacts.next_reviewable_output` present
+
+`scripts/verify-whole.sh` invokes this fleet check as part of the repo predicate —
+a chamber regression fails the whole repo gate.
+
+---
+
+## Organ-ladder entry
+
+A-MAVS-OLEVM is rank 7 on the VLTIMA institutional census:
+
+```json
+{
+  "rank": 7,
+  "pillar": "artist",
+  "organ": "A-MAVS-OLEVM (Poiesis)",
+  "repo": "organvm/limen",
+  "home": "organs/artist/",
+  "maturity": 70,
+  "stage": "maturing",
+  "whose_hand": "mine",
+  "rival": "a living museum / studio (the 9-chamber Pantheon)",
+  "domain_map": "Member=work; Mandate=exhibition; Standing=archive state; Standard=aesthetic rubric; Governance=curation",
+  "macro": "a studio/temple platform any artist can hold — 9-chamber toolkit with Curatorial Voice and Provenance Contract frameworks",
+  "micro": "Anthony's a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE) — all 3/3 validated"
+}
+```
+
+Maturity assessment: 70% (maturing). All three chambers validated; Curatorial Voice and
+Provenance Contract formalized; macro and micro faces polished; no longer subordinate to
+education. The remaining lift to 80% requires a full RAW→EXHIBITED cycle and the Press
+chamber producing artist-reviewed language.
+
+---
+
+## Files in this organ
+
+| File | Purpose |
+|---|---|
+| `KERNEL.md` | Architecture, 5-primitive map, 9-chamber operating surface, exhibition arc, hard guardrails |
+| `CHARTER.md` | AI roles, workflows, authority contract |
+| `MACRO-FACE.md` | The portable studio/temple platform any artist can hold |
+| **`MICRO-FACE.md`** | **This file** — Anthony's live chambers (proof the platform holds) |
+| `A-MAVS-OLEVM-DECK.md` | One-page artist-facing summary of the micro instance |
+| `validate-artist.py` | Governance Rules #1-6 (204 lines) |
+| `chambers/photo-archive.yaml` | Chamber record: 444-file primary archive (CATALOGED) |
+| `chambers/et4l.yaml` | Chamber record: ET4L thematic series (CURATED) |
+| `chambers/locreance.yaml` | Chamber record: LOCREANCE active practice (RAW) |
 
 ---
 

@@ -145,21 +145,37 @@ and the artist's authorship intact.
 
 ## What the operator actually receives
 
-1. **A Vault with stable intake records** — every piece logged with provenance, date,
-   medium, and source file path. Nothing floating. Nothing undocumented.
-2. **A Catalog with full custody state** — one record per piece; Standing is current
-   and auditable. The artist sees the entire archive's state at a glance.
+Adopting this platform gives you seven concrete artifacts, each produced by a named chamber:
+
+1. **Vault intake records** — every piece logged with provenance, date, medium, and source
+   file path. The first invariant against loss: nothing floating, nothing undocumented.
+   *(Chamber: The Vault)*
+
+2. **Catalog with full custody state** — one record per piece with Standing current and
+   auditable. The artist sees the entire archive's state at a glance: how many pieces are
+   RAW, CATALOGED, CURATED, or AT-RISK. *(Chamber: The Catalog)*
+
 3. **Proposed curatorial groupings** — exhibition-ready sequences with named Mandate,
-   proposed arc logic, and Standing report for each selected piece.
+   proposed arc logic, and Standing report for each selected piece. The organ applies
+   the artist's Selection Rubric; the artist approves, revises, or rejects.
+   *(Chamber: The Gallery)*
+
 4. **Draft press language** — titles, statements, and captions under the artist's rubric,
-   ready for the artist to rewrite and own.
-5. **A preservation-risk report** — what is stable, what is at format-risk, and what
-   is dormant and needs a decision.
-6. **A Calendar with cadence** — recommended exhibition rhythm, pending gates, and
-   the sequence of the next three release cycles.
+   ready for the artist to rewrite and own. The organ drafts in the artist's established
+   Framing Language; the artist signs the final. *(Chamber: The Press)*
+
+5. **A preservation-risk report** — what is stable, what is at format-risk, and what is
+   dormant and needs a decision. The Conservator audits every piece's format and custody
+   state; the artist decides what happens to at-risk work. *(Chamber: The Archive)*
+
+6. **A Calendar with cadence** — recommended exhibition rhythm, pending artist gates,
+   and the sequence of the next three release cycles. The organ tracks deadlines; the
+   artist approves the rhythm. *(Chamber: The Calendar)*
+
 7. **Staged deployment packages** — approved groupings assembled with all associated
    language, ready to submit to a gallery, portfolio, or publication surface once the
-   artist opens the gate.
+   artist opens the gate. Nothing leaves without a per-event approval.
+   *(Chamber: The Atrium)*
 
 ---
 
@@ -211,11 +227,62 @@ The artist is the final authority for every institutional act that touches the w
 
 ---
 
-## Current stage and validation
+## How to adopt (for any practicing artist)
 
-The macro platform is **70% mature** (maturing stage). The 9-chamber structure is
-defined, the 5-primitive kernel is mapped, the Curatorial Voice and Provenance Contract
-are named, and the micro instance has three active chambers proving the model in practice.
+This platform does not require installation. It requires **commitment to the posture**:
+every piece gets a record, every grouping has a named argument, every release is staged
+before it reaches the world.
+
+### Step 1: Define your five primitives
+
+```yaml
+member:  # what counts as a piece — medium, source path, custody state
+mandate: # what a grouping is built to argue — exhibition thesis
+standing: RAW · CATALOGED · CURATED · STAGED · EXHIBITED · DORMANT · AT-RISK
+standard: # your aesthetic rubric — what qualifies for inclusion and sequencing
+governance: # what requires your hand before anything moves outward
+```
+
+### Step 2: Name your chambers
+
+Copy the nine-chamber structure — Vault, Catalog, Studio, Gallery, Archive, Press,
+Calendar, Atrium, Scriptorium — and fill in your actual works, your actual series,
+your actual rubric. Each chamber needs a YAML record with Standing, human gates,
+and forbidden acts.
+
+### Step 3: Run validation
+
+```bash
+python organs/artist/validate-artist.py chambers/*.yaml
+```
+
+Expected result: `PASS` for every file, `X/X passed`. The organ checks that every
+chamber holds valid Standing, names artist gates, and forbids overreach. The artist
+remains Chief Curator — every output is a proposal until the artist approves it.
+
+---
+
+## Stage and maturity
+
+The macro platform is **70% mature** (maturing stage) on the VLTIMA institutional census.
+A-MAVS-OLEVM is rank 7:
+
+```json
+{
+  "rank": 7,
+  "pillar": "artist",
+  "organ": "A-MAVS-OLEVM (Poiesis)",
+  "repo": "organvm/limen",
+  "home": "organs/artist/",
+  "maturity": 70,
+  "stage": "maturing",
+  "whose_hand": "mine",
+  "rival": "a living museum / studio (the 9-chamber Pantheon)",
+  "domain_map": "Member=work; Mandate=exhibition; Standing=archive state; Standard=aesthetic rubric; Governance=curation",
+  "macro": "a studio/temple platform any artist can hold — 9-chamber toolkit with Curatorial Voice and Provenance Contract frameworks",
+  "micro": "Anthony's a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE) — all 3/3 validated"
+}
+```
 
 **What exists now:**
 - 9 chambers defined with named outputs
@@ -231,13 +298,43 @@ are named, and the micro instance has three active chambers proving the model in
 - The Preservation chamber issuing a current risk report against the full archive
 - The Scriptorium chamber holding a written aesthetic rubric for at least one medium
 
-**Validation:**
+### Validation — actual output
 
 ```bash
-# confirm chamber structure and posture records are well-formed
-python organs/artist/validate-artist.py --fleet
-python organs/artist/validate-artist.py --checklist
+$ python organs/artist/validate-artist.py --fleet
+PASS  chambers/et4l.yaml
+PASS  chambers/locreance.yaml
+PASS  chambers/photo-archive.yaml
+
+3/3 passed
+
+$ python organs/artist/validate-artist.py --checklist
+Rule #1: Archive Standing: valid state, forward next_standing before EXHIBITED
+Rule #2: Artist Gate: artist_gate true plus at least one human gate
+Rule #3: 5-Primitive Completeness: member, mandate, standing, standard, governance
+Rule #4: Evidence Integrity: real standard.evidence, no placeholder text
+Rule #5: No Overreach: no autonomous publication, source alteration, or substitute authorship
+Rule #6: Reviewable Output: artifacts.next_reviewable_output is present
 ```
+
+All three micro-instance chambers pass every rule. `scripts/verify-whole.sh` runs the
+fleet check as part of the repo predicate — a chamber regression fails the whole repo gate.
+
+---
+
+## Files in this organ
+
+| File | Purpose |
+|---|---|
+| `KERNEL.md` | Architecture, 5-primitive map, 9-chamber operating surface, exhibition arc, hard guardrails |
+| `CHARTER.md` | AI roles (Archivist, Exhibition Designer, Conservator, Copywriter, Publisher, Calendar Manager), workflows, authority contract |
+| **`MACRO-FACE.md`** | **This file** — the portable studio/temple platform any artist can hold |
+| `MICRO-FACE.md` | Anthony's live chambers (444-file archive, ET4L, LOCREANCE) — proof the platform holds |
+| `A-MAVS-OLEVM-DECK.md` | One-page artist-facing summary of the micro instance |
+| `validate-artist.py` | Governance Rules #1-6: Standing, artist gate, primitive completeness, evidence integrity, overreach prohibition, reviewable output |
+| `chambers/photo-archive.yaml` | Chamber record: 444-file primary archive (CATALOGED) |
+| `chambers/et4l.yaml` | Chamber record: ET4L thematic series (CURATED) |
+| `chambers/locreance.yaml` | Chamber record: LOCREANCE active practice (RAW) |
 
 ---
 
