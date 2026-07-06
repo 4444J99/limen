@@ -71,6 +71,29 @@ def test_script_name_fallback_does_not_cross_feed_doors():
     assert "corpus-feed.py" not in feed_scripts
 
 
+def test_future_tense_counts_exact_door_tokens_not_substrings(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location("avtopoiesis_future_under_test", GATE)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    (tmp_path / "his-hand-levers.json").write_text(
+        json.dumps(
+            {
+                "levers": [
+                    {"id": "feedback-only", "label": "collect feedback"},
+                    {"id": "email-only", "label": "send email"},
+                    {"id": "explicit-feed", "door": "feed", "label": "human gate"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert module.sense_future({"key": "mail", "name": "MAIL"}, {"senses": {"future": {}}}) == 1.0
+    assert module.sense_future({"key": "feed", "name": "FEED"}, {"senses": {"future": {}}}) == 0.5
+
+
 def test_summary_reports_distance_from_ideal():
     v = _audit()
     s = v["summary"]

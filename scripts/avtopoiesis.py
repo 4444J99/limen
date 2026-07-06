@@ -196,6 +196,39 @@ def sense_past(door, canon):
     return 0.0
 
 
+def _normalized_door_values(value):
+    if value is None:
+        return set()
+    if isinstance(value, str):
+        return {value.lower().replace("-", "_").strip()} if value.strip() else set()
+    if isinstance(value, list):
+        out = set()
+        for item in value:
+            out.update(_normalized_door_values(item))
+        return out
+    return set()
+
+
+def _declared_lever_doors(lever):
+    out = set()
+    for key in ("door", "doors", "organ", "organs"):
+        out.update(_normalized_door_values(lever.get(key) if isinstance(lever, dict) else None))
+    return out
+
+
+def _lever_tokens(lever):
+    text = json.dumps(lever).lower()
+    return {token.replace("-", "_") for token in re.findall(r"[a-z0-9_]+", text)}
+
+
+def lever_mentions_door(lever, door):
+    needles = {door["key"].lower().replace("-", "_"), door["name"].lower().replace("-", "_")}
+    declared = _declared_lever_doors(lever)
+    if declared:
+        return bool(needles & declared)
+    return bool(needles & _lever_tokens(lever))
+
+
 def sense_future(door, canon):
     """Self-evolves, asks less: how many open his-hand levers does this door still own?"""
     fut = (canon.get("senses") or {}).get("future") or {}
@@ -208,8 +241,7 @@ def sense_future(door, canon):
     except (OSError, json.JSONDecodeError):
         return 1.0
     levers = data.get("levers") if isinstance(data, dict) else data
-    needles = {door["key"], door["name"].lower()}
-    owned = sum(1 for lv in (levers or []) if any(n in json.dumps(lv).lower() for n in needles))
+    owned = sum(1 for lv in (levers or []) if lever_mentions_door(lv, door))
     return max(0.0, 1.0 - owned * penalty)
 
 
