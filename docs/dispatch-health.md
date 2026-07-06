@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-06T15:12:20+00:00`
+Generated: `2026-07-06T15:25:31+00:00`
 
 Status: `healthy`
 
@@ -23,25 +23,24 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T15:12:20.294442+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T15:25:31.910098+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 3 ; 12 still running ; would launch 3 (cap 12) -> ['HEAL-cifix-organvm-the-invisible-ledger-55', 'HEAL-cifix-organvm-trendpulse-5', 'HEAL-cifix-organvm-universal-mail--automation-123']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 12 still running ; would launch 0 (cap 12) -> []`.
+- Async skipped down lanes: `jules`.
+  - `jules`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `100`; headroom `0%`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `8908615e79ef141118230a436bcc594ea38112bb`.
-- origin/main: `8908615e79ef141118230a436bcc594ea38112bb`.
+- HEAD: `d0034a5d0a419a23bd1a65a6b8190a8faf808ded`.
+- origin/main: `d0034a5d0a419a23bd1a65a6b8190a8faf808ded`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
-- Ignored generated receipt dirty entries: `2`.
-  - `docs/dispatch-health.md`
-  - `docs/live-root-gate.md`
 
 ## Verified Worktree
 
