@@ -195,7 +195,7 @@ PY
 #    their OWN git-tracked home (docs/branch-hygiene.md), never here.
 # ---------------------------------------------------------------------------
 if ! python3 "$ROOT/scripts/reap-branches.py" --check; then
-  bad "spent branches are lingering — write/review docs/branch-reap-acceptance.jsonl with archive + redaction proof before any scripts/reap-branches.py --apply"
+  bad "spent branches are lingering — review docs/branch-reap-acceptance.md, then write docs/branch-reap-acceptance.jsonl with archive + redaction proof before any scripts/reap-branches.py --apply"
 fi
 
 echo

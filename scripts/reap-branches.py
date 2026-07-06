@@ -93,6 +93,7 @@ ACCEPTED_REDACTION_REVIEWS = {
     "not_required_landed_ref",
     "not_required_remote_only",
 }
+REQUIRED_ACCEPTANCE_PROOF_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
 
 
 def _int_env(name: str, default: int, *, minimum: int | None = None) -> int:
@@ -159,6 +160,7 @@ def _branch_tip_sha(branch: str) -> str | None:
 
 def branch_reap_accepted(branch: str, reason: str, acceptance_events: list[dict]) -> tuple[bool, str]:
     tip = _branch_tip_sha(branch)
+    matched_candidate = False
     for event in reversed(acceptance_events):
         if event.get("branch") != branch:
             continue
@@ -168,12 +170,17 @@ def branch_reap_accepted(branch: str, reason: str, acceptance_events: list[dict]
             continue
         if event.get("tip") and event.get("tip") != tip:
             continue
+        matched_candidate = True
         archive_ok = event.get("archive_verified") is True or event.get("archive_status") in ACCEPTED_ARCHIVE_STATUSES
         if not archive_ok:
             continue
         if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
             continue
+        if any(not str(event.get(field, "")).strip() for field in REQUIRED_ACCEPTANCE_PROOF_FIELDS):
+            continue
         return True, "branch-reap-accepted"
+    if matched_candidate:
+        return False, "incomplete-branch-reap-acceptance"
     return False, "missing-branch-reap-acceptance"
 
 
@@ -411,7 +418,8 @@ def main() -> int:
         if reap:
             print(
                 f"[reap-branches] FAIL — {len(reap)} landed branch(es) still lingering "
-                f"(requires docs/branch-reap-acceptance.jsonl, then scripts/reap-branches.py --apply):"
+                f"(review docs/branch-reap-acceptance.md, write docs/branch-reap-acceptance.jsonl, "
+                "then scripts/reap-branches.py --apply):"
             )
             for b, why in sorted(reap)[:20]:
                 print(f"  landed  {b}  ({why})")

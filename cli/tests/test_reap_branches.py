@@ -160,7 +160,9 @@ def test_branch_reap_acceptance_matches_tip(repo):
             "reason": "landed-ancestor",
             "tip": tip,
             "archive_status": "landed_on_default_verified",
+            "archive_proof": "tip is reachable from the default branch",
             "redaction_review": "not_required_landed_ref",
+            "redaction_proof": "branch ref carries no additional content beyond landed git objects",
         }
     ]
 
@@ -168,6 +170,26 @@ def test_branch_reap_acceptance_matches_tip(repo):
 
     assert ok is True
     assert reason == "branch-reap-accepted"
+
+
+def test_branch_reap_acceptance_requires_archive_and_redaction_proof(repo):
+    tip = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "refs/heads/spent"], text=True).strip()
+    events = [
+        {
+            "accepted_at": "2026-07-06T06:30:00Z",
+            "branch": "spent",
+            "accepted": True,
+            "reason": "landed-ancestor",
+            "tip": tip,
+            "archive_status": "landed_on_default_verified",
+            "redaction_review": "not_required_landed_ref",
+        }
+    ]
+
+    ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", events)
+
+    assert ok is False
+    assert reason == "incomplete-branch-reap-acceptance"
 
 
 def test_livework_branch_is_kept(repo):
