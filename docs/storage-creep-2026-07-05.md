@@ -62,6 +62,11 @@ personal data stores or agent scratch roots.
 - Post-reap predicates are tighter: `python3 scripts/worktree-debt.py --json` now reports `debt: 1`
   across `29` targets, and `python3 scripts/reclaim-worktrees.py --force` reports
   `0 reclaimed, 29 kept-safe`.
+- `scripts/corpus-command-center.py` now keeps full raw text in private body objects while dropping
+  per-unit preview duplication from the generated private index. Regenerating with
+  `python3 scripts/corpus-command-center.py --write` reduced
+  `.limen-private/session-corpus/lifecycle/corpus-command-center.private.json` from `1.4G` to
+  `960M`, and `.limen-private/session-corpus` from `8.4G` to `7.9G`.
 
 ## Decision
 
