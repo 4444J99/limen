@@ -6,8 +6,9 @@ open PRs piled up until a human ran a manual drain. This makes merge autonomic: 
 drain beat it merges the PRs that are genuinely READY (mergeable + CI-green), surfaces
 the blocked ones, and NEVER force-merges. Bounded per run so it never dominates a beat.
 Idempotent and concurrency-safe: if another agent already merged a PR, gh reports it and
-we count it, no error. Touches only GitHub — not tasks.yaml ownership or agent worktrees —
-so it cannot race the dispatcher.
+we count it, no error. It preserves source branches; branch cleanup is a separate accepted reap.
+Touches only GitHub — not tasks.yaml ownership or agent worktrees — so it cannot race the
+dispatcher.
 
 It also REFUSES stale-base PRs (the #111 guard): a mergeable+green PR that branched from an old
 base can silently REVERT work that landed since — self-heal reroutes those to a rebase-onto-current
@@ -96,7 +97,7 @@ def assess(rn):
 
 def merge(repo, num):
     for m in ("--squash", "--merge", "--rebase"):
-        r = gh(["pr", "merge", str(num), "-R", repo, m, "--delete-branch"], timeout=90)
+        r = gh(["pr", "merge", str(num), "-R", repo, m], timeout=90)
         out = (r.stdout + r.stderr).lower()
         if r.returncode == 0 or "merged" in out:
             return True

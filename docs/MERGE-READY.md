@@ -2,7 +2,7 @@
 
 Scanned **80** open PRs (authored by you, across `organvm` + `4444J99`). **2 are CLEAN** (mergeable + CI-green + non-trivial) and ranked revenue-first below.
 
-> This is the **single go/no-go**: say *"open the merge gate"* and `merge-drain.py` squash-merges exactly this READY set (revenue-first), deletes the branches, and never force-merges. Nothing here is merged by generating this list — the gate is yours.
+> This is the **single go/no-go**: say *"open the merge gate"* and `merge-drain.py` squash-merges exactly this READY set (revenue-first), preserves the source branches for later accepted cleanup, and never force-merges. Nothing here is merged by generating this list — the gate is yours.
 
 ## ✅ READY — clean, ranked revenue-first
 

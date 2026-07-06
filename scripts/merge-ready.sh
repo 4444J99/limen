@@ -9,7 +9,8 @@
 #
 # SAFE: dry-run by DEFAULT (prints the plan). --apply actually merges. Even with --apply this is
 # the user's authorized action — run it yourself, or grant `Bash(gh pr merge:*)` so the agent may.
-# Per-PR --squash keeps history clean; a failed merge is logged and skipped (never aborts the run).
+# Per-PR --squash keeps history clean; branch cleanup is a separate accepted reap. A failed merge is
+# logged and skipped (never aborts the run).
 #
 # Usage:  bash scripts/merge-ready.sh            # dry-run plan
 #         bash scripts/merge-ready.sh --apply    # actually merge the clean set
@@ -74,7 +75,7 @@ while IFS=$'\t' read -r repo num title; do
   [ "$LIMIT" -gt 0 ] && [ "$n" -gt "$LIMIT" ] && { echo "  …(stopped at --limit $LIMIT)"; break; }
   if [ "$APPLY" = 1 ]; then
     record_review "$repo" "$num"
-    if gh pr merge "$num" --repo "$repo" --squash --delete-branch >/dev/null 2>&1; then
+    if gh pr merge "$num" --repo "$repo" --squash >/dev/null 2>&1; then
       echo "  ✓ merged  $repo#$num  $title"
     else
       echo "  ✗ FAILED  $repo#$num (skipped — check manually)"
