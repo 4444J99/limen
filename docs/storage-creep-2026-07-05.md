@@ -92,6 +92,24 @@ personal data stores or agent scratch roots.
   `~/.gemini/antigravity-cli/scratch` remains about `24G` until the archive receipts are accepted
   or a narrower owner bridge proves a root can be removed.
 
+## 2026-07-06 Deletion Gate Update
+
+- `python3 scripts/antigravity-scratch-bridge.py --write` was rerun at
+  `2026-07-06T05:19:04Z`: it still reports `42` roots, `23.7 GiB`, and `0 B`
+  safe-reap candidates. No Antigravity scratch root was deleted in this pass.
+- `bash scripts/no-tasks-on-me.sh` now fails only on two landed branches gated by
+  `docs/branch-reap-acceptance.jsonl`; no branch deletion was performed because no
+  human archive/redaction acceptance event exists.
+- Async dispatch harvesting now archives a redacted private receipt with raw SHA-256
+  before unlinking a live `logs/async-runs/*.result.json` file. The three pending
+  result receipts from this pass were archived under
+  `.limen-private/async-runs/archive/2026-07-06/` before the live queue files were
+  cleared.
+- Current deletion posture: candidate discovery and preservation may run
+  autonomously; physical removal of roots, branches, worktrees, clones, or app data
+  remains blocked on matching archive/preservation proof plus explicit
+  redaction-aware human acceptance.
+
 ## Decision
 
 Do not delete `~/Library/Messages`, Notes/Freeform/iCloud/Mail/Photos stores, or
