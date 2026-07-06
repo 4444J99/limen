@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+"""Read-only Antigravity/Agy scratch bridge.
+
+Inventory ~/.gemini/antigravity-cli/scratch and classify each root before any
+local deletion. This script never deletes files.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import json
+import os
+import re
+import subprocess
+import time
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).resolve()
+HOME = Path.home()
+SCRATCH_ROOT = Path(os.environ.get("LIMEN_AGY_SCRATCH_ROOT", HOME / ".gemini/antigravity-cli/scratch"))
+DOC_PATH = ROOT / "docs" / "antigravity-scratch-bridge.md"
+LOG_PATH = ROOT / "logs" / "antigravity-scratch-bridge.json"
+REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
+
+
+def fmt_bytes(n: int) -> str:
+    units = ["B", "KiB", "MiB", "GiB", "TiB"]
+    val = float(n)
+    for unit in units:
+        if val < 1024 or unit == units[-1]:
+            return f"{int(val)} {unit}" if unit == "B" else f"{val:.1f} {unit}"
+        val /= 1024
+    return f"{n} B"
+
+
+def relpath(path: Path) -> str:
+    try:
+        return "~/" + str(path.expanduser().resolve().relative_to(HOME))
+    except (OSError, ValueError):
+        return str(path)
+
+
+def run_git(path: Path, args: list[str], timeout: int = 20) -> subprocess.CompletedProcess[str]:
+    cmd = ["git", "-C", str(path), *args]
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return subprocess.CompletedProcess(cmd, 1, "", str(exc))
+
+
+def dir_size_bytes(path: Path) -> int:
+    try:
+        proc = subprocess.run(["du", "-sk", str(path)], capture_output=True, text=True, timeout=120)
+        if proc.returncode == 0 and proc.stdout.strip():
+            return int(proc.stdout.split()[0]) * 1024
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        pass
+    total = 0
+    for root, dirs, files in os.walk(path):
+        dirs[:] = [d for d in dirs if d not in {".git", "node_modules", ".venv", "venv"}]
+        for name in files:
+            try:
+                total += (Path(root) / name).stat().st_size
+            except OSError:
+                continue
+    return total
+
+
+def repo_slug(remote: str | None) -> str | None:
+    if not remote:
+        return None
+    match = REMOTE_RE.search(remote.strip())
+    return f"{match.group(1)}/{match.group(2)}" if match else None
+
+
+def porcelain_counts(path: Path) -> dict[str, int]:
+    proc = run_git(path, ["status", "--porcelain", "-z"], timeout=30)
+    if proc.returncode != 0:
+        return {"entries": 0, "untracked": 0, "tracked": 0, "deletions": 0}
+    entries = [part for part in proc.stdout.split("\0") if part]
+    tracked = untracked = deletions = 0
+    i = 0
+    while i < len(entries):
+        xy = entries[i][:2]
+        if xy == "??":
+            untracked += 1
+        else:
+            tracked += 1
+            deletions += "D" in xy
+        i += 2 if ("R" in xy or "C" in xy) else 1
+    return {"entries": tracked + untracked, "untracked": untracked, "tracked": tracked, "deletions": deletions}
+
+
+def remote_default_ref(path: Path) -> str | None:
+    proc = run_git(path, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"])
+    if proc.returncode == 0 and proc.stdout.strip():
+        return proc.stdout.strip()
+    for ref in ("origin/main", "origin/master"):
+        if run_git(path, ["show-ref", "--verify", "--quiet", f"refs/remotes/{ref}"]).returncode == 0:
+            return ref
+    return None
+
+
+def head_reachable_from_remote(path: Path, head: str) -> bool:
+    refs = run_git(path, ["for-each-ref", "--format=%(refname)", "refs/remotes"], timeout=30)
+    if refs.returncode != 0:
+        return False
+    return any(run_git(path, ["merge-base", "--is-ancestor", head, ref], timeout=30).returncode == 0 for ref in refs.stdout.splitlines())
+
+
+def merged_into_default(path: Path, head: str) -> bool:
+    ref = remote_default_ref(path)
+    return bool(ref and run_git(path, ["merge-base", "--is-ancestor", head, ref], timeout=30).returncode == 0)
+
+
+def patch_equivalent_to_default(path: Path) -> bool:
+    ref = remote_default_ref(path)
+    if not ref:
+        return False
+    proc = run_git(path, ["cherry", ref, "HEAD"], timeout=30)
+    if proc.returncode != 0:
+        return False
+    lines = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+    return bool(lines) and all(line.startswith("-") for line in lines)
+
+
+def git_snapshot(path: Path, min_idle_hours: float) -> dict[str, Any]:
+    status = run_git(path, ["status", "--short", "--branch"], timeout=30)
+    branch_line = status.stdout.splitlines()[0] if status.returncode == 0 and status.stdout.splitlines() else "unknown"
+    remote = run_git(path, ["remote", "get-url", "origin"]).stdout.strip() or None
+    head = run_git(path, ["rev-parse", "HEAD"]).stdout.strip() or None
+    counts = porcelain_counts(path)
+    remote_preserved = head_reachable_from_remote(path, head) if head else False
+    patch_equiv = patch_equivalent_to_default(path)
+    idle_hours = max(0.0, (time.time() - path.stat().st_mtime) / 3600)
+    clean = counts["entries"] == 0
+    if not clean:
+        disposition, reason = "bridge_required", "dirty-or-untracked"
+    elif idle_hours < min_idle_hours:
+        disposition, reason = "keep_active", "idle-window-not-met"
+    elif remote_preserved or patch_equiv:
+        disposition, reason = "safe_reap_candidate", "clean-idle-remote-preserved"
+    else:
+        disposition, reason = "preserve_required", "clean-but-head-not-proven-on-remote"
+    return {
+        "kind": "git",
+        "branch": branch_line,
+        "remote": remote,
+        "repo": repo_slug(remote),
+        "head": head[:12] if head else None,
+        "dirty_entries": counts["entries"],
+        "untracked_entries": counts["untracked"],
+        "tracked_dirty_entries": counts["tracked"],
+        "deleted_entries": counts["deletions"],
+        "remote_preserved": remote_preserved,
+        "merged_to_default": merged_into_default(path, head) if head else False,
+        "patch_equivalent_to_default": patch_equiv,
+        "idle_hours": round(idle_hours, 2),
+        "disposition": disposition,
+        "reason": reason,
+    }
+
+
+def nested_git_roots(path: Path, max_depth: int = 2) -> list[Path]:
+    roots: list[Path] = []
+    base_parts = len(path.parts)
+    for current, dirs, _files in os.walk(path):
+        cur = Path(current)
+        depth = len(cur.parts) - base_parts
+        if ".git" in dirs:
+            roots.append(cur)
+            dirs[:] = []
+            continue
+        if depth >= max_depth:
+            dirs[:] = []
+            continue
+        dirs[:] = [d for d in dirs if d not in {".git", "node_modules", ".venv", "venv", "__pycache__"}]
+    return roots
+
+
+def classify_root(path: Path, min_idle_hours: float) -> dict[str, Any]:
+    st = path.stat()
+    row: dict[str, Any] = {
+        "name": path.name,
+        "path": str(path),
+        "display_path": relpath(path),
+        "size_bytes": dir_size_bytes(path),
+        "mtime": dt.datetime.fromtimestamp(st.st_mtime, tz=dt.timezone.utc).isoformat(timespec="seconds"),
+    }
+    row["size"] = fmt_bytes(int(row["size_bytes"]))
+    if (path / ".git").exists():
+        row.update(git_snapshot(path, min_idle_hours))
+        return row
+    nested_rows = [classify_root(p, min_idle_hours) for p in nested_git_roots(path)]
+    nested_by_disposition = Counter(str(r["disposition"]) for r in nested_rows)
+    row.update(
+        {
+            "kind": "container" if nested_rows else "non_git",
+            "nested_git_roots": len(nested_rows),
+            "nested_by_disposition": dict(sorted(nested_by_disposition.items())),
+            "disposition": "container_review_required" if nested_rows else "non_git_review_required",
+            "reason": "nested-git-roots" if nested_rows else "no-git-receipt",
+        }
+    )
+    return row
+
+
+def build_report(scratch_root: Path = SCRATCH_ROOT, min_idle_hours: float = 24.0) -> dict[str, Any]:
+    generated = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    if not scratch_root.is_dir():
+        return {"generated_at": generated, "scratch_root": str(scratch_root), "present": False, "summary": {"total_roots": 0, "total_bytes": 0, "by_disposition": {}}, "roots": []}
+    rows = [classify_root(path, min_idle_hours) for path in sorted(scratch_root.iterdir()) if path.is_dir()]
+    rows.sort(key=lambda item: int(item["size_bytes"]), reverse=True)
+    by_disp = Counter(str(row["disposition"]) for row in rows)
+    safe_reap_bytes = sum(int(row["size_bytes"]) for row in rows if row["disposition"] == "safe_reap_candidate")
+    total_bytes = sum(int(row["size_bytes"]) for row in rows)
+    return {
+        "generated_at": generated,
+        "scratch_root": str(scratch_root),
+        "present": True,
+        "min_idle_hours": min_idle_hours,
+        "summary": {
+            "total_roots": len(rows),
+            "total_bytes": total_bytes,
+            "total_size": fmt_bytes(total_bytes),
+            "by_disposition": dict(sorted(by_disp.items())),
+            "safe_reap_bytes": safe_reap_bytes,
+            "safe_reap_size": fmt_bytes(safe_reap_bytes),
+        },
+        "roots": rows,
+    }
+
+
+def render_markdown(report: dict[str, Any]) -> str:
+    summary = report["summary"]
+    lines = [
+        "# Antigravity Scratch Bridge",
+        "",
+        f"Generated: `{report['generated_at']}`",
+        f"Scratch root: `{relpath(Path(report['scratch_root']))}`",
+        "",
+        "## Decision",
+        "",
+        "Do not delete Antigravity scratch roots by size alone. A root is only a reclaim candidate",
+        "when this bridge proves it is clean, idle, and preserved on a remote/default-equivalent ref.",
+        "Dirty roots are `bridge_required`: their per-root delta must be carried home or archived",
+        "before any deletion.",
+        "",
+        "## Summary",
+        "",
+        f"- Roots scanned: `{summary.get('total_roots', 0)}`.",
+        f"- Total scratch size: `{summary.get('total_size', '0 B')}`.",
+        f"- Safe-reap candidate size: `{summary.get('safe_reap_size', '0 B')}`.",
+    ]
+    by_disp = summary.get("by_disposition") or {}
+    if by_disp:
+        lines.append("- Dispositions: " + ", ".join(f"`{k}` {v}" for k, v in by_disp.items()) + ".")
+    lines += ["", "## Largest Roots", "", "| Root | Size | Kind | Disposition | Reason | Remote / nested proof |", "|---|---:|---|---|---|---|"]
+    for row in report.get("roots", [])[:40]:
+        if row.get("kind") == "git":
+            proof = row.get("repo") or row.get("remote") or "no origin"
+            if row.get("head"):
+                proof = f"{proof}@{row['head']}"
+        else:
+            nested = row.get("nested_by_disposition") or {}
+            proof = ", ".join(f"{k}:{v}" for k, v in nested.items()) or "none"
+        lines.append(f"| `{row['name']}` | `{row['size']}` | `{row.get('kind')}` | `{row.get('disposition')}` | `{row.get('reason')}` | `{proof}` |")
+    lines += [
+        "",
+        "## Operating Rule",
+        "",
+        "- `safe_reap_candidate`: local deletion can be considered by a separate reaper, not this script.",
+        "- `bridge_required`: preserve/carry the uncommitted delta first.",
+        "- `preserve_required`: push, archive, or receipt the local commit before deletion.",
+        "- `container_review_required`: inspect nested repos; do not delete the parent as one blob.",
+        "- `non_git_review_required`: classify the directory owner before deleting it.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Audit Antigravity scratch roots without deleting them.")
+    parser.add_argument("--root", type=Path, default=SCRATCH_ROOT, help="scratch root to scan")
+    parser.add_argument("--min-idle-hours", type=float, default=24.0, help="idle age required for reap candidates")
+    parser.add_argument("--json", action="store_true", help="print machine JSON")
+    parser.add_argument("--write", action="store_true", help="write docs/ and logs/ receipts")
+    args = parser.parse_args()
+    report = build_report(args.root.expanduser(), args.min_idle_hours)
+    if args.write:
+        LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        DOC_PATH.parent.mkdir(parents=True, exist_ok=True)
+        LOG_PATH.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+        DOC_PATH.write_text(render_markdown(report), encoding="utf-8")
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        summary = report["summary"]
+        print(f"antigravity-scratch: {summary.get('total_roots', 0)} roots, {summary.get('total_size', '0 B')}; safe-reap candidates {summary.get('safe_reap_size', '0 B')}")
+        for name, count in (summary.get("by_disposition") or {}).items():
+            print(f"  {name}: {count}")
+        if args.write:
+            print(f"  wrote: {relpath(DOC_PATH)}")
+            print(f"  wrote: {relpath(LOG_PATH)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

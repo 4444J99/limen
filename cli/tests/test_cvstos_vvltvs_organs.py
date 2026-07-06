@@ -18,12 +18,39 @@ def test_cvstos_malformed_env_knobs_fail_open(monkeypatch):
     monkeypatch.setenv("LIMEN_CVSTOS_DEBT_CAP_GB", "bad")
     monkeypatch.setenv("LIMEN_CVSTOS_REAPER_STALE_H", "nan")
     monkeypatch.setenv("LIMEN_CVSTOS_SCAN_CAP", "0")
+    monkeypatch.setenv("LIMEN_AGY_SCRATCH_MIN_IDLE_H", "bad")
 
     mod = _load("cvstos_organ_test", CVSTOS)
 
     assert mod.DEBT_CAP_GB == 5
     assert mod.REAPER_STALE_H == 48
     assert mod.SCAN_ENTRY_CAP == 600000
+    assert mod.AGY_SCRATCH_MIN_IDLE_H == 24
+
+
+def test_cvstos_reports_unsafe_antigravity_scratch_roots():
+    mod = _load("cvstos_organ_scratch_test", CVSTOS)
+
+    assessment = {
+        "debt": {"over_cap": False},
+        "factory": {
+            "cartridge_connected": True,
+            "bin_orphans": {"measured": True, "count": 0},
+        },
+        "reapers": {"stale": 0},
+        "worktree_over_cap": False,
+        "antigravity_scratch": {
+            "measured": True,
+            "unsafe_dispositions": {"bridge_required": 2, "preserve_required": 1},
+        },
+    }
+
+    failures = mod.failures(assessment)
+
+    assert failures == [
+        "Antigravity scratch roots need bridge/preserve/review before local deletion "
+        "(bridge_required=2, preserve_required=1)"
+    ]
 
 
 def test_vvltvs_malformed_env_knobs_fail_open(monkeypatch, tmp_path):

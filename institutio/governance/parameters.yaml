@@ -566,6 +566,18 @@ parameters:
     self_update: none
     owner: cvstos
     note: "Max directory entries the debt-sizing walk visits before returning an approximate total. Bounds the beat's cost; never blocks."
+  LIMEN_AGY_SCRATCH_ROOT:
+    default: "$HOME/.gemini/antigravity-cli/scratch"
+    env: LIMEN_AGY_SCRATCH_ROOT
+    self_update: none
+    owner: cvstos
+    note: "Antigravity/Agy scratch checkout root audited by antigravity-scratch-bridge.py and surfaced by CVSTOS. Inventory only; deletion is a separate receipt-gated action."
+  LIMEN_AGY_SCRATCH_MIN_IDLE_H:
+    default: 24
+    env: LIMEN_AGY_SCRATCH_MIN_IDLE_H
+    self_update: none
+    owner: cvstos
+    note: "Minimum idle hours before the Antigravity scratch bridge may label a clean remote-preserved root as a safe-reap candidate."
   # --- VVLTVS: the countenance — verify the public face reflects the live SSOT (sibling of CVSTOS) ---
   LIMEN_BEAT_VVLTVS:
     default: 24                 # cadence: verify the public face every 24 beats (offline file reads ⇒ cheap)
