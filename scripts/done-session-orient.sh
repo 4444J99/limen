@@ -18,13 +18,6 @@ PRESSURE_HOOK="scripts/hooks/session-lifecycle-pressure.sh"
 DIGEST="logs/session-orientation.md"
 fail() { echo "✗ $*"; exit 1; }
 ok()   { echo "✓ $*"; }
-cleanup_paths=()
-cleanup() {
-  for path in "${cleanup_paths[@]}"; do
-    [ -n "$path" ] && rm -rf "$path"
-  done
-}
-trap cleanup EXIT
 
 # 1. artifacts exist
 [ -f "$GEN" ]  || fail "missing generator $GEN"
@@ -58,7 +51,7 @@ ok "PII-free: no clinical literal in generator source or digest"
 
 # 4. idempotent — two consecutive runs are byte-identical for a stable input snapshot
 tasks_snapshot="$(mktemp)"
-cleanup_paths+=("$tasks_snapshot")
+echo "● retained verification snapshot: $tasks_snapshot"
 cp "tasks.yaml" "$tasks_snapshot"
 git_section=""
 branch="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
@@ -84,7 +77,7 @@ ok "idempotent across consecutive runs"
 
 # 5. fail-open — empty LIMEN_ROOT yields exit 0 and an (almost) empty digest, never a crash
 tmp="$(mktemp -d)"
-cleanup_paths+=("$tmp")
+echo "● retained empty-root fixture: $tmp"
 LIMEN_ROOT="$tmp" python3 "$GEN" >/dev/null 2>&1 || fail "generator crashed on empty root (not fail-open)"
 ok "generator fails open on a missing/empty root"
 
