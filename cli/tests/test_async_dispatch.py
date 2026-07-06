@@ -104,11 +104,11 @@ def test_agy_skips_limen_registry_discovery_tasks(tmp_path):
     ]
 
 
-def test_agy_skips_limen_repo_tasks(tmp_path):
+def test_agy_codex_and_claude_skip_limen_repo_tasks(tmp_path):
     da = _load(tmp_path, n_open=0)
     today = datetime.date.today()
     lf = load_limen_file(tmp_path / "tasks.yaml")
-    lf.portal.budget.per_agent = {"agy": 50, "claude": 50}
+    lf.portal.budget.per_agent = {"agy": 50, "codex": 50, "claude": 50}
     lf.tasks = [
         Task(
             id="HEAL-cifix-organvm-limen-999",
@@ -122,9 +122,9 @@ def test_agy_skips_limen_repo_tasks(tmp_path):
     save_limen_file(tmp_path / "tasks.yaml", lf)
 
     assert da.reserve_and_launch(["agy"], per_agent=4, cap=4, dry=True) == []
-    assert da.reserve_and_launch(["agy", "claude"], per_agent=4, cap=4, dry=True) == [
-        ("claude", "HEAL-cifix-organvm-limen-999")
-    ]
+    assert da.reserve_and_launch(["codex"], per_agent=4, cap=4, dry=True) == []
+    assert da.reserve_and_launch(["claude"], per_agent=4, cap=4, dry=True) == []
+    assert da.reserve_and_launch(["agy", "codex", "claude"], per_agent=4, cap=4, dry=True) == []
 
 
 def test_async_remote_lane_not_gated_by_local_concurrency_cap(tmp_path):
