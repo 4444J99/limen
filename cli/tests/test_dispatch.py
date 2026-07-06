@@ -112,6 +112,60 @@ def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_k
     assert "oz" not in lanes
 
 
+def test_auto_lane_selector_keeps_agy_up_on_weak_proxy_budget_saturation(
+    tmp_path: Path, monkeypatch
+) -> None:
+    agy = tmp_path / "agy"
+    agy.write_text("#!/bin/sh\nexit 0\n")
+    agy.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "agy": {
+                        "health": "exhausted",
+                        "signal": "dispatch-count",
+                        "limit_source": "operator board cap until live vendor meter",
+                        "remaining": 0,
+                        "headroom_pct": 0,
+                    }
+                }
+            }
+        )
+    )
+    tasks_path = tmp_path / "tasks.yaml"
+    tasks_path.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "name": "Universal Task Intake",
+                    "budget": {
+                        "daily": 10,
+                        "unit": "runs",
+                        "per_agent": {"agy": 1},
+                        "track": {"date": "", "spent": 1, "per_agent": {"agy": 1}},
+                    },
+                },
+                "tasks": [],
+            },
+            sort_keys=False,
+        )
+    )
+    board = load_limen_file(tasks_path)
+
+    rows = {row["agent"]: row for row in capacity_census(board)}
+    lanes = select_lanes("auto", board)
+
+    assert rows["agy"]["reachable"] is True
+    assert rows["agy"]["remaining"] == 9
+    assert "agy" in lanes
+
+
 def test_github_actions_lane_requires_configured_workflow(tmp_path: Path, monkeypatch) -> None:
     gh = tmp_path / "gh"
     gh.write_text(

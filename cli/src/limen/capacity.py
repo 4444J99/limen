@@ -368,13 +368,22 @@ def capacity_census(board: object = None, budget_limit: int | None = None) -> li
     if not isinstance(per_agent_spent, dict):
         per_agent_spent = {}
     daily_remaining = max(0, daily - total_spent) if daily else None
+    usage = _load_usage()
 
     rows: list[CapacityRow] = []
     for agent in PAID_AGENT_ORDER:
         status = agent_status(agent)
         cap = _int(per_agent_caps.get(agent), daily)
         spent = _int(per_agent_spent.get(agent), 0)
-        if daily_remaining is None:
+        weak_proxy = _weak_proxy_exhaustion(agent, _usage_vendor(agent, usage))
+        detail = str(status["detail"])
+        if weak_proxy:
+            remaining = daily_remaining
+            if detail:
+                detail = f"{detail}; weak dispatch-count proxy, using daily budget runway"
+            else:
+                detail = "weak dispatch-count proxy, using daily budget runway"
+        elif daily_remaining is None:
             remaining = max(0, cap - spent) if cap else None
         else:
             remaining = max(0, min(daily_remaining, cap - spent))
@@ -382,6 +391,7 @@ def capacity_census(board: object = None, budget_limit: int | None = None) -> li
         rows.append(
             {
                 **status,
+                "detail": detail,
                 "limit": cap,
                 "spent": spent,
                 "remaining": remaining,
@@ -442,6 +452,23 @@ def _load_usage(root: Path | None = None) -> dict[str, object]:
     except (OSError, ValueError):
         return {}
     return data if isinstance(data, dict) else {}
+
+
+def _usage_vendor(agent: str, usage: dict[str, object]) -> dict[str, object]:
+    vendors = usage.get("vendors") if isinstance(usage, dict) else {}
+    info = vendors.get(agent) if isinstance(vendors, dict) else {}
+    return info if isinstance(info, dict) else {}
+
+
+def _weak_proxy_exhaustion(agent: str, info: dict[str, object]) -> bool:
+    """Agy's dispatch-count proxy is not a hard provider quota meter."""
+    if agent != "agy":
+        return False
+    if info.get("health") == "rate-limited" or info.get("recent_rate_limit"):
+        return False
+    signal = str(info.get("signal") or "")
+    source = str(info.get("limit_source") or "")
+    return signal in {"dispatch-count", "count", "runs"} and "operator board cap" in source
 
 
 def _parse_dt(value: object) -> datetime | None:

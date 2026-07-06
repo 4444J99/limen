@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.capacity import select_lanes  # noqa: E402
+from limen.capacity import _weak_proxy_exhaustion, select_lanes  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import (  # noqa: E402
@@ -448,7 +448,18 @@ def _running_for(agent: str) -> int:
     return len(list(RUNS.glob(f"*__{agent}.running")))
 
 
-def _usage_remaining_by_agent() -> dict[str, int]:
+def _usage_by_agent() -> dict[str, dict[str, object]]:
+    path = ROOT / "logs" / "usage.json"
+    try:
+        vendors = (json.loads(path.read_text(encoding="utf-8")) or {}).get("vendors", {})
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(vendors, dict):
+        return {}
+    return {str(agent): info for agent, info in vendors.items() if isinstance(info, dict)}
+
+
+def _usage_remaining_by_agent(usage: dict[str, dict[str, object]]) -> dict[str, int]:
     """Live usage runway from logs/usage.json.
 
     The task board budget is a reservation ledger; usage telemetry is the live provider/run
@@ -456,14 +467,9 @@ def _usage_remaining_by_agent() -> dict[str, int]:
     make a lane selectable and then reserve every board-budget slot even when the rolling provider
     window only has a few runs left.
     """
-    path = ROOT / "logs" / "usage.json"
-    try:
-        vendors = (json.loads(path.read_text(encoding="utf-8")) or {}).get("vendors", {})
-    except (OSError, ValueError):
-        return {}
     remaining: dict[str, int] = {}
-    for agent, info in vendors.items():
-        if not isinstance(info, dict) or "remaining" not in info:
+    for agent, info in usage.items():
+        if "remaining" not in info:
             continue
         try:
             value = int(float(info["remaining"]))
@@ -473,7 +479,11 @@ def _usage_remaining_by_agent() -> dict[str, int]:
     return remaining
 
 
-def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining):
+def _weak_proxy_agents(usage: dict[str, dict[str, object]]) -> set[str]:
+    return {agent for agent, info in usage.items() if _weak_proxy_exhaustion(agent, info)}
+
+
+def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents):
     picked = []
     picked_ids = set()
     reset_changed = _reset_budget_if_needed(lf, now)
@@ -493,7 +503,10 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining):
             continue
         capa = lf.portal.budget.per_agent.get(agent)
         aspent = track.per_agent.get(agent, 0) + running_for_agent  # count in-flight vs budget
-        agent_rem = None if capa is None else max(0, capa - aspent)
+        if agent in weak_proxy_agents:
+            agent_rem = None
+        else:
+            agent_rem = None if capa is None else max(0, capa - aspent)
         live_rem = usage_remaining.get(agent) if is_async else None
         if live_rem is not None:
             agent_rem = live_rem if agent_rem is None else min(agent_rem, live_rem)
@@ -582,10 +595,14 @@ def reserve_and_launch(agents, per_agent, cap, dry):
     """Reserve open tasks (under lock) up to the concurrency cap + per-agent budget, then spawn
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
     now = _now()
-    usage_remaining = _usage_remaining_by_agent()
+    usage = _usage_by_agent()
+    usage_remaining = _usage_remaining_by_agent(usage)
+    weak_proxy_agents = _weak_proxy_agents(usage)
     if dry:
         lf = load_limen_file(TASKS)
-        picked, _reset_changed = _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining)
+        picked, _reset_changed = _pick_reservations(
+            lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents
+        )
         return picked
     with _queue_lock(TASKS) as got:
         if not got:
@@ -594,7 +611,9 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             # 'dispatched', which would double-dispatch. Self-corrects next beat.
             return []
         lf = load_limen_file(TASKS)
-        picked, reset_changed = _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining)
+        picked, reset_changed = _pick_reservations(
+            lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents
+        )
         if not dry and (picked or reset_changed):
             save_limen_file(TASKS, lf)
     # outside the lock: write markers + spawn detached workers (fast; we never wait on them)

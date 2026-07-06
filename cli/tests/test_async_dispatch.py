@@ -80,6 +80,78 @@ def test_inflight_markers_consume_per_lane_limit(tmp_path):
     assert picked == [("agy", "A0"), ("agy", "A1")]
 
 
+def test_agy_weak_proxy_can_reserve_against_daily_runway(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    reset_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.daily = 5
+    lf.portal.budget.per_agent = {"agy": 1}
+    lf.portal.budget.track = BudgetTrack(
+        date=today.isoformat(), spent=1, per_agent={"agy": 1}, per_agent_reset={"agy": reset_at}
+    )
+    lf.tasks = [
+        Task(id=f"A{i}", title="t", repo="x/y", target_agent="agy", status="open", created=today)
+        for i in range(2)
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir(exist_ok=True)
+    (tmp_path / "logs" / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "agy": {
+                        "health": "exhausted",
+                        "signal": "dispatch-count",
+                        "limit_source": "operator board cap until live vendor meter",
+                        "remaining": 0,
+                        "headroom_pct": 0,
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    picked = da.reserve_and_launch(["agy"], per_agent=4, cap=4, dry=True)
+
+    assert picked == [("agy", "A0"), ("agy", "A1")]
+
+
+def test_agy_recent_rate_limit_does_not_bypass_proxy_budget(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    reset_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.daily = 5
+    lf.portal.budget.per_agent = {"agy": 1}
+    lf.portal.budget.track = BudgetTrack(
+        date=today.isoformat(), spent=1, per_agent={"agy": 1}, per_agent_reset={"agy": reset_at}
+    )
+    lf.tasks = [Task(id="A0", title="t", repo="x/y", target_agent="agy", status="open", created=today)]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir(exist_ok=True)
+    (tmp_path / "logs" / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "agy": {
+                        "health": "rate-limited",
+                        "signal": "dispatch-count",
+                        "limit_source": "operator board cap until live vendor meter",
+                        "recent_rate_limit": True,
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    picked = da.reserve_and_launch(["agy"], per_agent=4, cap=4, dry=True)
+
+    assert picked == []
+
+
 def test_agy_skips_limen_registry_discovery_tasks(tmp_path):
     da = _load(tmp_path, n_open=0)
     today = datetime.date.today()
