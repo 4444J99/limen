@@ -42,6 +42,7 @@ def board(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(dispatch_async, "TASKS", tasks_path)
     monkeypatch.setattr(dispatch_async, "RUNS", runs)
+    monkeypatch.setattr(dispatch_async, "RECEIPT_ARCHIVE", tmp_path / ".limen-private" / "async-runs" / "archive")
     return tasks_path, runs
 
 
@@ -152,5 +153,49 @@ def test_reap_leaves_live_pid_marker_before_grace(board, monkeypatch):
 
     assert reaped == []
     assert marker.exists()
+    got = {t.id: t for t in load_limen_file(tasks_path).tasks}
+    assert got["T1"].status == "dispatched"
+
+
+def test_harvest_archives_result_receipt_before_unlink(board):
+    tasks_path, runs = board
+    result = {
+        "task_id": "T1",
+        "agent": "agy",
+        "result": False,
+        "ts": "2026-07-06T00:00:00+00:00",
+        "err": "token sk-secretsecretsecret and contact test@example.com",
+    }
+    receipt = runs / "T1.result.json"
+    receipt.write_text(json.dumps(result))
+
+    applied = dispatch_async.harvest()
+
+    assert applied == 1
+    assert not receipt.exists()
+    archives = list(dispatch_async.RECEIPT_ARCHIVE.glob("*/*.result.json"))
+    assert len(archives) == 1
+    archived = json.loads(archives[0].read_text())
+    assert archived["reason"] == "harvested"
+    assert archived["raw_sha256"]
+    assert archived["receipt"]["err"] == "token [REDACTED_TOKEN] and contact [REDACTED_EMAIL]"
+    got = {t.id: t for t in load_limen_file(tasks_path).tasks}
+    assert got["T1"].dispatch_log[-1].agent == "agy"
+
+
+def test_harvest_archives_malformed_result_receipt_before_unlink(board):
+    tasks_path, runs = board
+    receipt = runs / "T1.result.json"
+    receipt.write_text("[1, 2, 3]")
+
+    applied = dispatch_async.harvest()
+
+    assert applied == 0
+    assert not receipt.exists()
+    archives = list(dispatch_async.RECEIPT_ARCHIVE.glob("*/*.result.json"))
+    assert len(archives) == 1
+    archived = json.loads(archives[0].read_text())
+    assert archived["reason"] == "malformed-result"
+    assert archived["parse_error"] == "result receipt JSON root is not an object"
     got = {t.id: t for t in load_limen_file(tasks_path).tasks}
     assert got["T1"].status == "dispatched"

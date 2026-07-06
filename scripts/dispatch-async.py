@@ -20,8 +20,10 @@ Usage: dispatch-async.py --lanes auto --per-lane 8 --max 12 [--dry-run]
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -47,7 +49,10 @@ from limen.dispatch import (  # noqa: E402
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 RUNS = ROOT / "logs" / "async-runs"
+RECEIPT_ARCHIVE = ROOT / ".limen-private" / "async-runs" / "archive"
 WORKER = ROOT / "scripts" / "async-run-one.py"
+_TOKEN_RE = re.compile(r"(github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{12,})")
+_EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 
 
 def _int_or_default(raw: object, default: int) -> int:
@@ -129,6 +134,57 @@ def _kill_worker_group(pid: int | None) -> None:
             pass
 
 
+def _redact_receipt_value(value: object) -> object:
+    if isinstance(value, str):
+        redacted = _TOKEN_RE.sub("[REDACTED_TOKEN]", value)
+        redacted = _EMAIL_RE.sub("[REDACTED_EMAIL]", redacted)
+        if len(redacted) > 4000:
+            redacted = f"{redacted[:4000]}...[TRUNCATED {len(redacted) - 4000} chars]"
+        return redacted
+    if isinstance(value, list):
+        return [_redact_receipt_value(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _redact_receipt_value(item) for key, item in value.items()}
+    return value
+
+
+def _archive_result_receipt(
+    receipt_path: Path,
+    raw: bytes,
+    now: datetime.datetime,
+    *,
+    parsed: object | None,
+    reason: str,
+    parse_error: str | None = None,
+) -> Path:
+    day_dir = RECEIPT_ARCHIVE / now.strftime("%Y-%m-%d")
+    day_dir.mkdir(parents=True, exist_ok=True)
+    stamp = now.strftime("%Y%m%dT%H%M%SZ")
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", receipt_path.name)
+    out = day_dir / f"{stamp}-{safe_name}"
+    counter = 1
+    while out.exists():
+        out = day_dir / f"{stamp}-{counter}-{safe_name}"
+        counter += 1
+    try:
+        source = str(receipt_path.relative_to(ROOT))
+    except ValueError:
+        source = str(receipt_path)
+    archive = {
+        "archived_at": now.isoformat(),
+        "source": source,
+        "reason": reason,
+        "raw_sha256": hashlib.sha256(raw).hexdigest(),
+        "raw_bytes": len(raw),
+        "receipt": _redact_receipt_value(parsed) if parsed is not None else None,
+    }
+    if parse_error:
+        archive["parse_error"] = _redact_receipt_value(parse_error)
+        archive["raw_preview"] = _redact_receipt_value(raw.decode("utf-8", errors="replace"))
+    out.write_text(json.dumps(archive, indent=2, sort_keys=True) + "\n")
+    return out
+
+
 def harvest() -> int:
     """Apply finished background runs to tasks.yaml under the lock. Returns count applied."""
     RUNS.mkdir(parents=True, exist_ok=True)
@@ -146,9 +202,30 @@ def harvest() -> int:
         byid = {t.id: t for t in lf.tasks}
         track = lf.portal.budget.track
         for rf in files:
+            raw = b""
             try:
-                data = json.loads(rf.read_text())
-            except Exception:
+                raw = rf.read_bytes()
+                data = json.loads(raw.decode("utf-8"))
+            except Exception as exc:
+                _archive_result_receipt(
+                    rf,
+                    raw,
+                    now,
+                    parsed=None,
+                    reason="malformed-result",
+                    parse_error=str(exc),
+                )
+                rf.unlink(missing_ok=True)
+                continue
+            if not isinstance(data, dict):
+                _archive_result_receipt(
+                    rf,
+                    raw,
+                    now,
+                    parsed=data,
+                    reason="malformed-result",
+                    parse_error="result receipt JSON root is not an object",
+                )
                 rf.unlink(missing_ok=True)
                 continue
             t = byid.get(data.get("task_id"))
@@ -157,6 +234,7 @@ def harvest() -> int:
                 applied += 1
             if data.get("task_id"):
                 _clear_running_markers(str(data.get("task_id")))
+            _archive_result_receipt(rf, raw, now, parsed=data, reason="harvested")
             rf.unlink(missing_ok=True)
         if applied:
             save_limen_file(TASKS, lf)
