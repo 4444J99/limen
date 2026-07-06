@@ -402,6 +402,11 @@ def build_task_units(*, write_objects: bool) -> list[dict[str, Any]]:
 def doc_candidates() -> list[Path]:
     explicit = [
         DOC_PATH,
+        ROOT / "docs" / "session-corpus-ledger.md",
+        ROOT / "docs" / "antigravity-scratch-bridge.md",
+        ROOT / "docs" / "storage-creep-2026-07-05.md",
+        ROOT / "docs" / "avtopoiesis.md",
+        ROOT / "docs" / "agent-code-review-queue.md",
         ROOT / "docs" / "prompt-lifecycle-ledger.md",
         ROOT / "docs" / "prompt-priority-map.md",
         ROOT / "docs" / "prompt-packet-ledger.md",
@@ -411,10 +416,11 @@ def doc_candidates() -> list[Path]:
         POSITIONING_DIR / "_frontdoor.md",
         POSITIONING_DIR / "_discoverability.md",
     ]
+    agent_reviews = sorted((ROOT / "docs").glob("agent-*-review.md"))
     generated = sorted(POSITIONING_DIR.glob("*.md")) if POSITIONING_DIR.exists() else []
     paths = []
     seen = set()
-    for path in explicit + generated:
+    for path in explicit + agent_reviews + generated:
         if path.exists() and path not in seen and ".internal" not in path.name:
             paths.append(path)
             seen.add(path)

@@ -207,3 +207,27 @@ tasks:
     assert ccc.PRIVATE_HTML.exists()
     assert ccc.DOC_PATH.exists()
     assert "Corpus Command Center" in ccc.DOC_PATH.read_text(encoding="utf-8")
+
+
+def test_doc_candidates_include_control_plane_receipts(tmp_path: Path):
+    ccc = _load()
+    _wire_paths(ccc, tmp_path)
+    (tmp_path / "docs").mkdir(parents=True)
+    for name in (
+        "session-corpus-ledger.md",
+        "antigravity-scratch-bridge.md",
+        "storage-creep-2026-07-05.md",
+        "avtopoiesis.md",
+        "agent-codex-review.md",
+    ):
+        (tmp_path / "docs" / name).write_text(f"# {name}\n", encoding="utf-8")
+
+    candidates = {path.name for path in ccc.doc_candidates()}
+
+    assert {
+        "session-corpus-ledger.md",
+        "antigravity-scratch-bridge.md",
+        "storage-creep-2026-07-05.md",
+        "avtopoiesis.md",
+        "agent-codex-review.md",
+    } <= candidates
