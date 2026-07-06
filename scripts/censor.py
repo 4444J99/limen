@@ -44,6 +44,7 @@ STATE_PATH = LOGS / "censor-state.json"
 LEDGER_PATH = LOGS / "censor-decisions.jsonl"      # high-volume audit trail → runtime (gitignored)
 PRECEDENTS_PATH = CENSOR_DIR / "precedents.jsonl"  # judicial case law → durable, committed
 LAST_PATH = LOGS / "censor-last.json"   # compact summary the view reads
+RESIDUAL_PATH = LOGS / "censor-residual.json"
 
 TIER_SECONDS = {"hourly": 3600, "daily": 86400, "weekly": 604800, "monthly": 2592000}
 
@@ -333,12 +334,34 @@ def run_tier(tier, protocols, precedents, apply):
     return decisions
 
 
+def census() -> dict:
+    """Counts-only public census; no signal subjects, protocol ids, residual titles, or decisions."""
+    protocols = (_load_yaml(PROTOCOLS) or {}).get("protocols", [])
+    precedents = _load_jsonl(PRECEDENTS_PATH)
+    state = _load_json(STATE_PATH, {"last_run": {}})
+    last = _load_json(LAST_PATH, {"decisions": []})
+    residuals = _load_json(RESIDUAL_PATH, [])
+    return {
+        "tiers": len(TIER_SECONDS),
+        "protocols": len(protocols) if isinstance(protocols, list) else 0,
+        "precedents": len(precedents),
+        "state_tiers": len((state or {}).get("last_run") or {}) if isinstance(state, dict) else 0,
+        "last_decisions": len(last.get("decisions") or []) if isinstance(last, dict) else 0,
+        "residuals": len(residuals) if isinstance(residuals, list) else 0,
+        "actuator_timeout_s": ACTUATOR_TIMEOUT,
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description="The Censor — insights→actions on cadences.")
     ap.add_argument("--apply", action="store_true", help="let the executive act (default: dry report)")
     ap.add_argument("--tier", choices=list(TIER_SECONDS), help="force one tier regardless of cadence")
     ap.add_argument("--all", action="store_true", help="run every tier regardless of cadence")
+    ap.add_argument("--census", action="store_true", help="print counts-only public census JSON")
     args = ap.parse_args()
+    if args.census:
+        print(json.dumps(census(), indent=2, sort_keys=True))
+        return 0
 
     protocols = (_load_yaml(PROTOCOLS) or {}).get("protocols", [])
     precedents = _load_jsonl(PRECEDENTS_PATH)
