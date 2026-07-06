@@ -73,6 +73,22 @@ personal data stores or agent scratch roots.
   `42` roots, `23.7 GiB`, and `0 B` safe-reap candidates. Current `du` readings:
   `~/.gemini/antigravity-cli/scratch` about `24G`, `~/.gemini` about `26G`.
 
+## 2026-07-06 Overnight Preservation Update
+
+- The current Antigravity scratch inventory reached a preservation fixed point:
+  `42` observed roots and `42` roots present in `docs/antigravity-scratch-preservation.jsonl`.
+- The preservation ledger now has `43` events because one early preservation attempt was superseded
+  by a verified external archive receipt. Every public event hash was checked against its private
+  receipt, and no private receipt contains its own self-hash.
+- All currently observed scratch roots now have external Archive4T preservation receipts under
+  `/Volumes/Archive4T/limen-private/agy-scratch-preserve/...`.
+- This overnight pass did **not** delete local Antigravity scratch roots. Local reaping remains a
+  separate human-gated lifecycle action after archive acceptance, owner review, and any required
+  redaction.
+- The largest remaining local reclaim opportunity is therefore known and preserved, not reclaimed:
+  `~/.gemini/antigravity-cli/scratch` remains about `24G` until the archive receipts are accepted
+  or a narrower owner bridge proves a root can be removed.
+
 ## Decision
 
 Do not delete `~/Library/Messages`, Notes/Freeform/iCloud/Mail/Photos stores, or
