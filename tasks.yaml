@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 269
+      spent: 270
       per_agent:
         jules: 100
         gemini: 2
         codex: 49
         opencode: 29
-        agy: 81
+        agy: 82
         claude: 7
         github_actions: 1
       per_agent_reset:
@@ -99120,10 +99120,11 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - discover
   - value-discovery
+  - noop
   urls: []
   context: "DISCOVER the latent value of organvm/pages--theoria-copy--ergon. This\
     \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
@@ -99139,13 +99140,18 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T20:01:16.600855Z'
+  updated: '2026-07-06T20:03:34.345960Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:01:16.600855Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T20:03:34.345960Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: DISCOVER-organvm-pages--theoria-copy--taxis
   title: Discover the latent value of organvm/pages--theoria-copy--taxis
   repo: organvm/pages--theoria-copy--taxis
@@ -99379,7 +99385,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -99399,8 +99405,13 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.746984Z'
-  dispatch_log: []
+  updated: '2026-07-06T20:03:38.283216Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T20:03:38.283216Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-studium-generale--4444j99
   title: Discover the latent value of organvm/studium-generale--4444j99
   repo: organvm/studium-generale--4444j99
