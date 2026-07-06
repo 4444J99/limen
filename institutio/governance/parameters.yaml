@@ -577,6 +577,30 @@ parameters:
     self_update: none
     owner: health
     note: "Minimum logged observations before the learning department surfaces a pattern (avoids inferring from noise)."
+  LIMEN_GITHUB_ACTIONS_REPO:
+    default: "organvm/limen"
+    env: LIMEN_GITHUB_ACTIONS_REPO
+    self_update: none
+    owner: dispatch
+    note: "Fallback repository used by capacity health probes for the GitHub Actions lane when no explicit health repo is configured."
+  LIMEN_GITHUB_ACTIONS_HEALTH_REPO:
+    default: "organvm/limen"
+    env: LIMEN_GITHUB_ACTIONS_HEALTH_REPO
+    self_update: none
+    owner: dispatch
+    note: "Repository target for read-only workflow health checks in the capacity/agent availability surface."
+  LIMEN_MAIL_ENVELOPE_INDEX:
+    default: "$HOME/Library/Mail/V10/MailData/Envelope Index"
+    env: LIMEN_MAIL_ENVELOPE_INDEX
+    self_update: none
+    owner: mail
+    note: "Apple Mail Envelope Index used by the private mail story ledger for read-only clustering."
+  LIMEN_PRIVATE_MAIL_STORY:
+    default: "$LIMEN_ROOT/.limen-private/mail-story"
+    env: LIMEN_PRIVATE_MAIL_STORY
+    self_update: none
+    owner: mail
+    note: "Private working root for mail-story raw atom inventory and snapshots."
   # --- CVSTOS: the keeper of the host (chat-app/local debt + factory invariant + reaper proprioception) ---
   LIMEN_BEAT_CVSTOS:
     default: 24                 # cadence: census the host every 24 beats (filesystem walk ⇒ rare)
