@@ -20,7 +20,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -399,6 +398,26 @@ def acquire_lock() -> bool:
         return False
 
 
+def census() -> dict[str, Any]:
+    """Counts-only public census; no worktree paths, receipt roots, logs, or token details."""
+    receipts_data = load_json_file(PRESERVATION_RECEIPTS) or {}
+    receipts = receipts_data.get("receipts") if isinstance(receipts_data, dict) else []
+    last = load_json_file(LOG_PATH) or {}
+    steps = last.get("steps") if isinstance(last, dict) else {}
+    return {
+        "receipts_present": PRESERVATION_RECEIPTS.exists(),
+        "preservation_receipts": len(receipts) if isinstance(receipts, list) else 0,
+        "last_log_present": LOG_PATH.exists(),
+        "last_step_count": len(steps) if isinstance(steps, dict) else 0,
+        "last_ok": last.get("ok") if isinstance(last, dict) else None,
+        "token_report_present": TOKEN_REPORT.exists(),
+        "photos_root_present": PHOTOS.is_dir(),
+        "portvs_root_present": PORTVS.is_dir(),
+        "triptych_root_present": TRIPTYCH.is_dir(),
+        "lock_present": LOCK_DIR.exists(),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true", help="commit/push bounded receipt changes")
@@ -407,7 +426,11 @@ def main() -> int:
         type=int,
         default=int(os.environ.get("LIMEN_CONTINUE_PHOTOS_GROUPS", "25")),
     )
+    parser.add_argument("--census", action="store_true", help="print counts-only public census JSON")
     args = parser.parse_args()
+    if args.census:
+        print(json.dumps(census(), indent=2, sort_keys=True))
+        return 0
 
     if not acquire_lock():
         payload = {"generated_at": utc_now(), "ok": True, "skipped": "continuation beat already running"}
