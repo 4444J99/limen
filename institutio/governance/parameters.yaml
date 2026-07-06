@@ -238,6 +238,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional archive target list for substrate/product ledger classification. Read-only; no archive mutation."
+  LIMEN_AGY_ARCHIVE_ROOT:
+    default: "$LIMEN_ROOT/.limen-private/agy-scratch-preserve"
+    env: LIMEN_AGY_ARCHIVE_ROOT
+    self_update: none
+    owner: continuity
+    note: "Private preservation root for Antigravity scratch deltas before any safe-reap decision. Ignored locally; public receipts carry redacted aggregate proof only."
   LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC:
     default: 600                # seconds: per-entry rsync cap so one big repo copy never wedges the beat
     env: LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC
@@ -829,6 +835,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Fleet dispatch boundary selector. `auto` derives reachable registered lanes from the capacity registry; explicit comma lists are normalized and filtered for down lanes."
+  LIMEN_ASYNC_DEFUNCT_GRACE:
+    default: 120
+    env: LIMEN_ASYNC_DEFUNCT_GRACE
+    self_update: none
+    owner: arms-agents
+    note: "Seconds to wait before a live async worker with a zombie child is treated as defunct and reaped through the queue-locked reopen path."
   LIMEN_QUEUE_LOCK_HELD:
     default: ""
     env: LIMEN_QUEUE_LOCK_HELD

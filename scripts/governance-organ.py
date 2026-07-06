@@ -31,6 +31,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
 VOICED = LOGS / ".voice"
 VALIDATOR = ROOT / "organs" / "governance" / "validate-seed.py"
+ENTITIES_VALIDATOR = ROOT / "organs" / "governance" / "validate-entities.py"
 LADDER = ROOT / "organ-ladder.json"
 GOV_HOME = ROOT / "organs" / "governance"
 
@@ -98,9 +99,9 @@ def _assess_maturity() -> dict:
         elif key == "voice_fresh":
             ok = _file_modified_within("logs/.voice/governance", _CADENCE_SEC * 2 + 60)
         elif key == "entity_registrar":
-            ok = _exists("organs/governance/entity-registrar.py") or _exists("organs/governance/entity-register.yaml")
+            ok = _exists("organs/governance/validate-entities.py") and _exists("organs/governance/entities.yaml")
         elif key == "cursus_tracking":
-            ok = _exists("organs/governance/standing-register.yaml") or _exists("organs/governance/cursus-track.py")
+            ok = _exists("organs/governance/entities.yaml") and _exists("organs/governance/validate-seed.py")
 
         if ok:
             passed.append(key)
@@ -233,22 +234,29 @@ def _advance_maturity(assessment: dict) -> dict:
 # --------------------------------------------------------------------------- #
 
 def _run_validator() -> dict:
-    """Run validate-seed.py --fleet --quiet, return the outcome."""
+    """Run validate-seed.py and validate-entities.py --fleet --quiet, return the outcome."""
     if not VALIDATOR.exists():
         return {"status": "no_validator", "detail": f"missing {VALIDATOR}"}
+    if not ENTITIES_VALIDATOR.exists():
+        return {"status": "no_validator", "detail": f"missing {ENTITIES_VALIDATOR}"}
     try:
-        r = subprocess.run(
-            [sys.executable, str(VALIDATOR), "--fleet", "--quiet"],
+        r1 = subprocess.run(
+            [sys.executable, str(VALIDATOR), "--fleet", "--quiet", "--strict-graph"],
             capture_output=True, text=True, timeout=30,
         )
+        r2 = subprocess.run(
+            [sys.executable, str(ENTITIES_VALIDATOR), "--fleet", "--quiet", "--strict-graph"],
+            capture_output=True, text=True, timeout=30,
+        )
+        passed = (r1.returncode == 0 and r2.returncode == 0)
         return {
-            "status": "pass" if r.returncode == 0 else "violations",
-            "returncode": r.returncode,
-            "stdout": r.stdout.strip(),
-            "stderr": r.stderr.strip(),
+            "status": "pass" if passed else "violations",
+            "returncode": r1.returncode or r2.returncode,
+            "stdout": (r1.stdout.strip() + "\n" + r2.stdout.strip()).strip(),
+            "stderr": (r1.stderr.strip() + "\n" + r2.stderr.strip()).strip(),
         }
     except subprocess.TimeoutExpired:
-        return {"status": "timeout", "detail": "validate-seed.py exceeded 30s"}
+        return {"status": "timeout", "detail": "validators exceeded 30s"}
     except OSError as exc:
         return {"status": "error", "detail": str(exc)}
 
