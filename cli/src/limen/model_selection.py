@@ -156,10 +156,7 @@ def _guard_claude_model_pin(model: str | None) -> str | None:
     """
     if _claude_model_is_fable(model) and not _claude_fable_acceptance_present():
         return _resolve_claude_model(_fable_fallback_tier())
-    if (
-        (_claude_model_is_opus(model) or _claude_model_uses_large_context(model))
-        and not _expensive_model_pin_allowed()
-    ):
+    if (_claude_model_is_opus(model) or _claude_model_uses_large_context(model)) and not _expensive_model_pin_allowed():
         return _resolve_claude_model(_max_inherited_tier())
     if _claude_model_uses_large_context(model) and not _large_context_allowed():
         return _resolve_claude_model(_max_inherited_tier())
