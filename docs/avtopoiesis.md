@@ -1,21 +1,21 @@
 # AVTOPOIESIS
 
-Generated: `2026-07-06T05:23:12+00:00`
+Generated: `2026-07-06T05:25:17+00:00`
 
 ## How Far
 
-- Alive doors: `16/29` (`55.2%`).
-- Mean score: `0.705`.
-- Distance from ideal: `29.5%`.
+- Alive doors: `17/29` (`58.6%`).
+- Mean score: `0.717`.
+- Distance from ideal: `28.3%`.
 - Weakest tense: `past`.
 - Present tense source: `logs/organ-health.json` when available; heartbeat wiring fallback otherwise.
-- Below-threshold doors by primary gap: `past` 9, `present` 0, `future` 4.
+- Below-threshold doors by primary gap: `past` 9, `present` 0, `future` 3.
 
 ## Tense Averages
 
 | Tense | Average |
 |---|---:|
-| `past` | `0.552` |
+| `past` | `0.586` |
 | `present` | `0.948` |
 | `future` | `0.621` |
 
@@ -24,7 +24,6 @@ Generated: `2026-07-06T05:23:12+00:00`
 | Door | Past | Present | Future | Score | State | Primary gap |
 |---|---:|---:|---:|---:|---|---|
 | `feed` | `0.00` | `1.00` | `0.00` | `0.330` | `nota` | `future` `1.000` |
-| `health` | `0.00` | `1.00` | `0.00` | `0.330` | `nota` | `future` `1.000` |
 | `mail` | `0.00` | `1.00` | `0.00` | `0.330` | `nota` | `future` `1.000` |
 | `positioning` | `0.00` | `0.50` | `0.50` | `0.330` | `nota` | `past` `1.000` |
 | `report` | `0.00` | `1.00` | `0.00` | `0.330` | `nota` | `future` `1.000` |
@@ -38,6 +37,7 @@ Generated: `2026-07-06T05:23:12+00:00`
 | `walls` | `0.00` | `1.00` | `1.00` | `0.660` | `nota` | `past` `1.000` |
 | `backup` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `heal` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
+| `health` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `life` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `sync` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `avtopoiesis` | `1.00` | `0.50` | `1.00` | `0.835` | `alive` | `present` `0.500` |
@@ -62,9 +62,9 @@ Generated: `2026-07-06T05:23:12+00:00`
 - `evocator`: score `0.660`, primary gap `past` (`1.000`).
 - `feed`: score `0.330`, primary gap `future` (`1.000`).
 - `financial`: score `0.660`, primary gap `past` (`1.000`).
-- `health`: score `0.330`, primary gap `future` (`1.000`).
 - `mail`: score `0.330`, primary gap `future` (`1.000`).
 - `positioning`: score `0.330`, primary gap `past` (`1.000`).
+- `pubpolicy`: score `0.495`, primary gap `past` (`1.000`).
 
 ## Commands
 

@@ -43,6 +43,7 @@ Anti-waste + never-"NO": read-only on the chart, lockless (a pure generator — 
 shared queue), fail-open everywhere. A missing chart yields a "no chart yet" stamp, never a
 crash, and never blocks the beat.
 """
+
 import json
 import os
 import re
@@ -51,11 +52,14 @@ from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
+HEALTH_HOME = ROOT / "organs" / "health"
 HEALTH_DIR = Path(os.environ.get("LIMEN_HEALTH_DIR", Path.home() / "Workspace" / "_health-private"))
 CHART = HEALTH_DIR / "chart.json"
 PREP = HEALTH_DIR / "prep"
 CHRONICLE = HEALTH_DIR / "chronicle.jsonl"
-OBSERVATIONS = HEALTH_DIR / "observations.jsonl"   # off-repo: what ACTUALLY happened (he logs it / another organ feeds it)
+OBSERVATIONS = (
+    HEALTH_DIR / "observations.jsonl"
+)  # off-repo: what ACTUALLY happened (he logs it / another organ feeds it)
 
 
 def _env_positive_int(name, default):
@@ -68,33 +72,58 @@ def _env_positive_int(name, default):
 
 OVERDUE_DAYS = _env_positive_int("LIMEN_HEALTH_OVERDUE_DAYS", 14)
 LEARN_WINDOW_DAYS = _env_positive_int("LIMEN_HEALTH_LEARN_DAYS", 21)  # how far back the office learns your real rhythm
-MIN_OBSERVATIONS = _env_positive_int("LIMEN_HEALTH_MIN_OBS", 3)       # won't reshape an anchor on fewer days than this
+MIN_OBSERVATIONS = _env_positive_int("LIMEN_HEALTH_MIN_OBS", 3)  # won't reshape an anchor on fewer days than this
 
-_WEEKDAYS = {"monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
-             "friday": 4, "saturday": 5, "sunday": 6}
+_WEEKDAYS = {"monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6}
 
 # ── SURVEILLANCE protocol library (general clinical knowledge — derived, not patient data) ──
 # Second-generation ("atypical") antipsychotics carry an FDA hyperglycemia warning and an
 # ADA/APA consensus metabolic-monitoring schedule. We DERIVE the obligation from the drug
 # name (never pin it in the chart), so adding any drug in this class lights up the schedule.
 ANTIPSYCHOTICS = {
-    "quetiapine", "olanzapine", "risperidone", "paliperidone", "aripiprazole",
-    "clozapine", "ziprasidone", "lurasidone", "asenapine", "cariprazine", "brexpiprazole",
+    "quetiapine",
+    "olanzapine",
+    "risperidone",
+    "paliperidone",
+    "aripiprazole",
+    "clozapine",
+    "ziprasidone",
+    "lurasidone",
+    "asenapine",
+    "cariprazine",
+    "brexpiprazole",
 }
 # weeks-after-start → panel that comes due at that visit (ADA/APA consensus)
 METABOLIC_SCHEDULE = [
-    {"key": "baseline", "week": 0, "label": "Baseline (at start)",
-     "items": ["weight / BMI", "waist", "blood pressure", "fasting glucose", "fasting lipids", "personal & family history"]},
-    {"key": "wk4", "week": 4, "label": "4 weeks",
-     "items": ["weight / BMI", "fasting lipids"]},
-    {"key": "wk8", "week": 8, "label": "8 weeks",
-     "items": ["weight / BMI"]},
-    {"key": "wk12", "week": 12, "label": "12 weeks",
-     "items": ["weight / BMI", "waist", "blood pressure", "fasting glucose or A1c", "fasting lipids"]},
+    {
+        "key": "baseline",
+        "week": 0,
+        "label": "Baseline (at start)",
+        "items": [
+            "weight / BMI",
+            "waist",
+            "blood pressure",
+            "fasting glucose",
+            "fasting lipids",
+            "personal & family history",
+        ],
+    },
+    {"key": "wk4", "week": 4, "label": "4 weeks", "items": ["weight / BMI", "fasting lipids"]},
+    {"key": "wk8", "week": 8, "label": "8 weeks", "items": ["weight / BMI"]},
+    {
+        "key": "wk12",
+        "week": 12,
+        "label": "12 weeks",
+        "items": ["weight / BMI", "waist", "blood pressure", "fasting glucose or A1c", "fasting lipids"],
+    },
 ]
 METABOLIC_RECURRING = [
-    {"key": "annual", "every_weeks": 52, "label": "Annually",
-     "items": ["weight / BMI", "waist", "blood pressure", "fasting glucose or A1c", "fasting lipids"]},
+    {
+        "key": "annual",
+        "every_weeks": 52,
+        "label": "Annually",
+        "items": ["weight / BMI", "waist", "blood pressure", "fasting glucose or A1c", "fasting lipids"],
+    },
 ]
 METABOLIC_SOURCE = "ADA/APA consensus on antipsychotic drugs, obesity & diabetes — see docs/health-office/reference/quetiapine-metabolic-monitoring.md"
 
@@ -113,12 +142,18 @@ MENU = {
         {"name": "Chicken & chickpea salad bowl", "buy": ["chicken breast", "chickpeas", "mixed greens", "olive oil"]},
         {"name": "Tuna & white-bean lettuce wraps", "buy": ["canned tuna", "white beans", "lettuce", "lemon"]},
         {"name": "Lentil soup with a side salad", "buy": ["lentils", "carrots", "onion", "mixed greens"]},
-        {"name": "Turkey & hummus whole-grain wrap", "buy": ["turkey slices", "hummus", "whole-grain wraps", "spinach"]},
+        {
+            "name": "Turkey & hummus whole-grain wrap",
+            "buy": ["turkey slices", "hummus", "whole-grain wraps", "spinach"],
+        },
         {"name": "Quinoa bowl, black beans & salsa", "buy": ["quinoa", "black beans", "salsa", "bell pepper"]},
     ],
     "dinner": [
         {"name": "Baked salmon, roasted broccoli, brown rice", "buy": ["salmon", "broccoli", "brown rice"]},
-        {"name": "Chicken & vegetable stir-fry", "buy": ["chicken breast", "frozen stir-fry vegetables", "soy sauce", "brown rice"]},
+        {
+            "name": "Chicken & vegetable stir-fry",
+            "buy": ["chicken breast", "frozen stir-fry vegetables", "soy sauce", "brown rice"],
+        },
         {"name": "Turkey chili with beans", "buy": ["ground turkey", "kidney beans", "canned tomatoes", "onion"]},
         {"name": "Sheet-pan tofu & vegetables", "buy": ["firm tofu", "mixed vegetables", "olive oil"]},
         {"name": "White-fish tacos with cabbage slaw", "buy": ["white fish", "corn tortillas", "cabbage", "lime"]},
@@ -194,6 +229,7 @@ def _parse_start(s):
 # render-time and narrated, so the schedule fits the principal instead of the principal fitting
 # the schedule, and so being well costs a little less thought each week.
 
+
 def _to_min(hhmm):
     """'HH:MM' → minutes since midnight, or None."""
     try:
@@ -263,24 +299,36 @@ def learn_rhythm(chart, obs):
     the renderers use to shape the day — and to narrate what changed and why."""
     reg = chart.get("regimen", {}) or {}
     recent = _recent_obs(obs)
-    out = {"learned": False, "n": len(recent), "window": LEARN_WINDOW_DAYS,
-           "wake": None, "sleep": None, "moved_rate": None, "changes": []}
+    out = {
+        "learned": False,
+        "n": len(recent),
+        "window": LEARN_WINDOW_DAYS,
+        "wake": None,
+        "sleep": None,
+        "moved_rate": None,
+        "changes": [],
+    }
 
     def fit(field, target_hhmm, label):
         vals = [_to_min(o.get(field)) for o in recent if o.get(field)]
         vals = [v for v in vals if v is not None]
         tgt = _to_min(target_hhmm)
         if len(vals) < MIN_OBSERVATIONS:
-            return {"target": target_hhmm, "observed": None, "frame": target_hhmm,
-                    "n": len(vals), "learned": False}
+            return {"target": target_hhmm, "observed": None, "frame": target_hhmm, "n": len(vals), "learned": False}
         observed = _round5(_median(vals))
-        info = {"target": target_hhmm, "observed": _from_min(observed),
-                "frame": _from_min(observed), "n": len(vals), "learned": True}
+        info = {
+            "target": target_hhmm,
+            "observed": _from_min(observed),
+            "frame": _from_min(observed),
+            "n": len(vals),
+            "learned": True,
+        }
         if tgt is not None and abs(observed - tgt) >= 10:
             out["changes"].append(
                 f"Set your **{label}** frame to {_fmt_time(_from_min(observed))} — that's your real "
                 f"median over {len(vals)} days (your stated target is {_fmt_time(target_hhmm)}). "
-                "The office fit the day to you, not the other way around.")
+                "The office fit the day to you, not the other way around."
+            )
         return info
 
     out["wake"] = fit("wake", reg.get("wake"), "wake")
@@ -321,8 +369,12 @@ def read_chronicle():
 
 def chronicle_trends(entries, chart):
     """Metabolize that memory: where things are heading vs where they were."""
-    t = {"days_on_record": len(entries), "since": entries[0]["date"] if entries else None,
-         "lines": [], "habit_streak": 0}
+    t = {
+        "days_on_record": len(entries),
+        "since": entries[0]["date"] if entries else None,
+        "lines": [],
+        "habit_streak": 0,
+    }
     if len(entries) >= 2:
         a, b = entries[-2], entries[-1]
 
@@ -333,6 +385,7 @@ def chronicle_trends(entries, chart):
             arrow = "↑" if y > x else "↓"
             tone = "easing" if y < x else "climbing"
             t["lines"].append(f"{noun}: {x} → {y} {arrow} ({tone})")
+
         delta("open_loops", "Open clinical loops")
         delta("surveillance_due", "Monitoring due")
         delta("overdue_loops", "Overdue items")
@@ -352,8 +405,9 @@ def chronicle_trends(entries, chart):
         early, late = _median(vals[:half]), _median(vals[half:])
         if early is not None and late is not None and early != late:
             dirn = "down" if late < early else "up"
-            t["lines"].append(f"Night-time wake-ups trending **{dirn}** "
-                              f"({early:g}→{late:g} median) — the fluid cutoff is the lever.")
+            t["lines"].append(
+                f"Night-time wake-ups trending **{dirn}** ({early:g}→{late:g} median) — the fluid cutoff is the lever."
+            )
     return t
 
 
@@ -402,7 +456,9 @@ def surveillance(chart, meds_active):
                 track["due_count"] += 1
                 if status == "overdue":
                     track["overdue_count"] += 1
-            track["windows"].append({**win, "status": status, "detail": detail, "due_on": due_on.isoformat() if start else None})
+            track["windows"].append(
+                {**win, "status": status, "detail": detail, "due_on": due_on.isoformat() if start else None}
+            )
         tracks.append(track)
     return tracks
 
@@ -418,8 +474,7 @@ def derive(chart):
     loops = chart.get("open_loops", []) or []
     open_loops = [lp for lp in loops if lp.get("status") == "open"]
     high = [lp for lp in open_loops if lp.get("priority") == "high"]
-    overdue = [lp for lp in open_loops
-               if (_days_since(lp.get("opened", "")) or 0) >= OVERDUE_DAYS]
+    overdue = [lp for lp in open_loops if (_days_since(lp.get("opened", "")) or 0) >= OVERDUE_DAYS]
     atoms = [a for a in (chart.get("human_atoms", []) or []) if a.get("status") == "open"]
     appts = chart.get("appointments", []) or []
     next_days = min([d for d in (_next_appt_days(a) for a in appts) if d is not None], default=None)
@@ -430,12 +485,22 @@ def derive(chart):
     # the living layer — learn the real rhythm, metabolize the office's own memory
     learn = learn_rhythm(chart, load_observations())
     trends = chronicle_trends(read_chronicle(), chart)
-    return dict(open_loops=open_loops, high=high, overdue=overdue, atoms=atoms,
-                appts=appts, next_days=next_days, meds_active=meds_active,
-                tracks=tracks, surv_due=surv_due, surv_overdue=surv_overdue,
-                open_results=open_results(chart),
-                results_on_file=len(_ledger(chart)),
-                learn=learn, trends=trends)
+    return dict(
+        open_loops=open_loops,
+        high=high,
+        overdue=overdue,
+        atoms=atoms,
+        appts=appts,
+        next_days=next_days,
+        meds_active=meds_active,
+        tracks=tracks,
+        surv_due=surv_due,
+        surv_overdue=surv_overdue,
+        open_results=open_results(chart),
+        results_on_file=len(_ledger(chart)),
+        learn=learn,
+        trends=trends,
+    )
 
 
 # ── renderers (PRIVATE dir only — these carry PII) ──────────────────────────────────────────
@@ -464,11 +529,13 @@ def _bottom_line(d):
 def render_briefing(chart, d):
     """The flagship — the Executive Health Briefing. The office's front door."""
     L = ["# Executive Health Briefing\n", _stamp_line(), ""]
-    L.append("> The standing report from your health office. Behind it: the clinical spine — the "
-             "**board** (`health-digest.md`), the **recall** (`surveillance.md`), your **visit kit** "
-             "(`prep/`), your **inbox** (`human-atoms.md`) — and the habilitation wing that runs your "
-             "day: **`regimen.md`**, **`kitchen/`**, **`movement.md`**, **`sleep.md`** — plus the office "
-             "watching itself: **`office-log.md`** (what it's learned about you, and changed).\n")
+    L.append(
+        "> The standing report from your health office. Behind it: the clinical spine — the "
+        "**board** (`health-digest.md`), the **recall** (`surveillance.md`), your **visit kit** "
+        "(`prep/`), your **inbox** (`human-atoms.md`) — and the habilitation wing that runs your "
+        "day: **`regimen.md`**, **`kitchen/`**, **`movement.md`**, **`sleep.md`** — plus the office "
+        "watching itself: **`office-log.md`** (what it's learned about you, and changed).\n"
+    )
 
     safety = chart.get("safety", {}) or {}
     if safety.get("urgent_care_if"):
@@ -490,7 +557,9 @@ def render_briefing(chart, d):
             nd = _next_appt_days(a)
             innd = "" if nd is None else (" — **today**" if nd == 0 else f" — in {nd}d")
             synced = " · ✅ on calendar" if a.get("calendar_synced") else " · ⚠️ not yet on calendar"
-            L.append(f"- **{a.get('title','?')}** — {a.get('day_of_week','day TBD')} {a.get('time','')}{innd}{synced}")
+            L.append(
+                f"- **{a.get('title', '?')}** — {a.get('day_of_week', 'day TBD')} {a.get('time', '')}{innd}{synced}"
+            )
         L.append("")
 
     # Habilitation wing — the office runs the day toward fitness
@@ -525,9 +594,11 @@ def render_briefing(chart, d):
         L.append("")
     elif trends.get("days_on_record", 0) <= 1:
         L.append("## What the office is learning")
-        L.append("- Just getting started. As the days accumulate, the office learns your real rhythm "
-                 "and reshapes the day's frame to fit you — tell it when you wake, sleep, or move "
-                 "(or log a line in `observations.jsonl`).")
+        L.append(
+            "- Just getting started. As the days accumulate, the office learns your real rhythm "
+            "and reshapes the day's frame to fit you — tell it when you wake, sleep, or move "
+            "(or log a line in `observations.jsonl`)."
+        )
         L.append("\n_See `office-log.md`._")
         L.append("")
 
@@ -538,7 +609,9 @@ def render_briefing(chart, d):
             wk = "" if t["weeks_in"] is None else f" (~{t['weeks_in']} weeks in)"
             L.append(f"**{t['drug']}**{wk} — metabolic monitoring:")
             for w in t["windows"]:
-                icon = {"done": "✅", "due": "🔴", "overdue": "⏰", "upcoming": "🗓️", "unknown": "❔"}.get(w["status"], "•")
+                icon = {"done": "✅", "due": "🔴", "overdue": "⏰", "upcoming": "🗓️", "unknown": "❔"}.get(
+                    w["status"], "•"
+                )
                 if w["status"] in ("due", "overdue", "unknown"):
                     L.append(f"- {icon} **{w['label']}** — {', '.join(w['items'])} · _{w['detail']}_")
                 else:
@@ -551,7 +624,7 @@ def render_briefing(chart, d):
     if d["open_loops"]:
         for lp in d["open_loops"]:
             mark = "\U0001f534" if lp.get("priority") == "high" else "•"
-            L.append(f"- {mark} **{lp.get('title','?')}** — _{lp.get('next_action','')}_")
+            L.append(f"- {mark} **{lp.get('title', '?')}** — _{lp.get('next_action', '')}_")
     else:
         L.append("- _(none open)_")
     L.append("")
@@ -562,7 +635,7 @@ def render_briefing(chart, d):
     L.append("- **visit-script.md** — what to say and ask for, in order.")
     L.append("- **prescriber-note.md** — a message ready to read or send to the prescriber.")
     for a in d["appts"]:
-        L.append(f"- **{a.get('id','appt')}-prep.md** — prep for your {a.get('title','appointment')}.")
+        L.append(f"- **{a.get('id', 'appt')}-prep.md** — prep for your {a.get('title', 'appointment')}.")
     L.append("")
 
     # Pharmacy
@@ -570,14 +643,16 @@ def render_briefing(chart, d):
     for m in d["meds_active"]:
         dose = m.get("dose") or "_dose TBD_"
         mon = " · ⚕️ requires metabolic monitoring" if (m.get("name", "").lower() in ANTIPSYCHOTICS) else ""
-        L.append(f"- **{m.get('brand') or m.get('name','?')}** ({m.get('name','')}) — {dose} · {m.get('purpose','')} · started {m.get('started','?')}{mon}")
+        L.append(
+            f"- **{m.get('brand') or m.get('name', '?')}** ({m.get('name', '')}) — {dose} · {m.get('purpose', '')} · started {m.get('started', '?')}{mon}"
+        )
     L.append("")
 
     # Inbox
     if d["atoms"]:
         L.append("## Waiting on you (only you can do these)")
         for a in d["atoms"]:
-            L.append(f"- {a.get('ask','?')}")
+            L.append(f"- {a.get('ask', '?')}")
         L.append("")
 
     return "\n".join(L) + "\n"
@@ -597,7 +672,9 @@ def render_digest(chart, d):
     if d["overdue"]:
         L.append("## ⏰ Overdue — has been open too long")
         for lp in d["overdue"]:
-            L.append(f"- **{lp.get('title','?')}** (open {_days_since(lp.get('opened',''))}d) — {lp.get('next_action','')}")
+            L.append(
+                f"- **{lp.get('title', '?')}** (open {_days_since(lp.get('opened', ''))}d) — {lp.get('next_action', '')}"
+            )
         L.append("")
 
     L.append("## The plan — open loops the office is chasing")
@@ -605,11 +682,11 @@ def render_digest(chart, d):
         for lp in d["open_loops"]:
             pr = lp.get("priority", "")
             mark = "\U0001f534" if pr == "high" else "•"
-            L.append(f"- {mark} **{lp.get('title','?')}**")
+            L.append(f"- {mark} **{lp.get('title', '?')}**")
             if lp.get("why"):
                 L.append(f"  - _why:_ {lp['why']}")
-            L.append(f"  - _next:_ {lp.get('next_action','')}")
-            L.append(f"  - _owner:_ {lp.get('owner','')}")
+            L.append(f"  - _next:_ {lp.get('next_action', '')}")
+            L.append(f"  - _owner:_ {lp.get('owner', '')}")
     else:
         L.append("- _(none open)_")
     L.append("")
@@ -617,7 +694,9 @@ def render_digest(chart, d):
     L.append("## Medications")
     for m in d["meds_active"]:
         dose = m.get("dose") or "dose TBD"
-        L.append(f"- **{m.get('brand') or m.get('name','?')}** ({m.get('name','')}) — {dose} · {m.get('purpose','')} · started {m.get('started','?')}")
+        L.append(
+            f"- **{m.get('brand') or m.get('name', '?')}** ({m.get('name', '')}) — {dose} · {m.get('purpose', '')} · started {m.get('started', '?')}"
+        )
     L.append("")
 
     L.append("## Appointments")
@@ -626,25 +705,30 @@ def render_digest(chart, d):
         nd = _next_appt_days(a)
         innd = "" if nd is None else (" — today" if nd == 0 else f" — in {nd}d")
         synced = " · ✅ on calendar" if a.get("calendar_synced") else " · not yet on calendar"
-        L.append(f"- **{a.get('title','?')}** — {when} {a.get('time','')}{innd}{synced}")
+        L.append(f"- **{a.get('title', '?')}** — {when} {a.get('time', '')}{innd}{synced}")
     L.append("")
 
     L.append("## Trackers")
     noct = (chart.get("logs", {}) or {}).get("nocturia", []) or []
     if noct:
         recent = noct[-7:]
-        L.append("- Nocturia (wakes/night): " + ", ".join(f"{n.get('date','?')[5:]}={n.get('wakes','?')}" for n in recent))
+        L.append(
+            "- Nocturia (wakes/night): " + ", ".join(f"{n.get('date', '?')[5:]}={n.get('wakes', '?')}" for n in recent)
+        )
     else:
-        L.append("- Nocturia: _no nights logged yet — say \"I woke up N times last night\"_")
+        L.append('- Nocturia: _no nights logged yet — say "I woke up N times last night"_')
     L.append("")
     return "\n".join(L) + "\n"
 
 
 def render_surveillance(chart, d):
-    L = ["# Surveillance — what preventive care is due\n", _stamp_line(),
-         "Protocol-driven recalls the office tracks so they don't get dropped. "
-         "Nothing here is a diagnosis — it's what the standard of care schedules, and "
-         "what to ask a clinician to order.\n"]
+    L = [
+        "# Surveillance — what preventive care is due\n",
+        _stamp_line(),
+        "Protocol-driven recalls the office tracks so they don't get dropped. "
+        "Nothing here is a diagnosis — it's what the standard of care schedules, and "
+        "what to ask a clinician to order.\n",
+    ]
     if not d["tracks"]:
         L.append("- _(no monitoring obligations derived from the current medications)_")
     for t in d["tracks"]:
@@ -652,8 +736,11 @@ def render_surveillance(chart, d):
         approx = " _(start date approximate — confirm for exact timing)_" if t["approx"] else ""
         L.append(f"## {t['drug']} — metabolic monitoring{wk}{approx}")
         if t["due_count"]:
-            L.append(f"**{t['due_count']} item(s) due and not on file"
-                     + (f", {t['overdue_count']} overdue" if t["overdue_count"] else "") + ".**\n")
+            L.append(
+                f"**{t['due_count']} item(s) due and not on file"
+                + (f", {t['overdue_count']} overdue" if t["overdue_count"] else "")
+                + ".**\n"
+            )
         for w in t["windows"]:
             icon = {"done": "✅", "due": "🔴", "overdue": "⏰", "upcoming": "🗓️", "unknown": "❔"}.get(w["status"], "•")
             L.append(f"- {icon} **{w['label']}** — {', '.join(w['items'])}")
@@ -662,18 +749,21 @@ def render_surveillance(chart, d):
     if d["open_results"]:
         L.append("## Ordered, awaiting result")
         for r in d["open_results"]:
-            L.append(f"- **{r.get('what','?')}** — ordered {r.get('date','?')}")
+            L.append(f"- **{r.get('what', '?')}** — ordered {r.get('date', '?')}")
         L.append("")
     return "\n".join(L) + "\n"
 
 
 def render_atoms(chart, d):
-    L = ["# What only you can do\n", _stamp_line(),
-         "The irreducible human acts. Surfaced once; the office stops nagging after.\n"]
+    L = [
+        "# What only you can do\n",
+        _stamp_line(),
+        "The irreducible human acts. Surfaced once; the office stops nagging after.\n",
+    ]
     if not d["atoms"]:
         L.append("- _(nothing waiting on you right now)_")
     for a in d["atoms"]:
-        L.append(f"- **{a.get('ask','?')}**")
+        L.append(f"- **{a.get('ask', '?')}**")
         if a.get("why"):
             L.append(f"  - _why:_ {a['why']}")
     return "\n".join(L) + "\n"
@@ -694,20 +784,24 @@ def render_prescriber_note(chart, d):
     log = (chart.get("logs", {}) or {}).get("nocturia", []) or []
     log_str = ""
     if log:
-        log_str = "\n\nRecent nights logged: " + ", ".join(f"{n.get('date','?')}: {n.get('wakes','?')}" for n in log[-7:]) + "."
+        log_str = (
+            "\n\nRecent nights logged: "
+            + ", ".join(f"{n.get('date', '?')}: {n.get('wakes', '?')}" for n in log[-7:])
+            + "."
+        )
     opening = f"Hi — I started taking {name}{dose_str}{purpose_str}, around {started}."
     if concerns:
         opening += " Since then, here's what I want to raise: " + "; ".join(concerns) + "."
     ask_line = (" Specifically, I'd like to: " + "; ".join(asks) + ".") if asks else ""
     return (
-        "# Note for the prescriber\n\n"
-        + _stamp_line() + "\n"
+        "# Note for the prescriber\n\n" + _stamp_line() + "\n"
         "_Short message — ready to send or read aloud._\n\n"
         "---\n\n"
-        + opening + ask_line +
-        " I'm not changing anything on my own — should the medication or dose be reviewed?"
-        + log_str +
-        "\n\n---\n"
+        + opening
+        + ask_line
+        + " I'm not changing anything on my own — should the medication or dose be reviewed?"
+        + log_str
+        + "\n\n---\n"
     )
 
 
@@ -721,14 +815,16 @@ def render_visit_script(chart, d):
     if med:
         name = med.get("brand") or med.get("name") or "a medication"
         purpose = f" for {med['purpose']}" if med.get("purpose") else ""
-        L.append(f"- I started **{name}**{purpose} around {med.get('started','recently')}, "
-                 "and I've noticed some things since then that I want to raise (below).")
+        L.append(
+            f"- I started **{name}**{purpose} around {med.get('started', 'recently')}, "
+            "and I've noticed some things since then that I want to raise (below)."
+        )
     else:
         L.append("- Here's what I'd like to raise today (below).")
     L.append("")
     L.append("## Ask for")
     for lp in d["high"] or d["open_loops"]:
-        L.append(f"- {lp.get('next_action', lp.get('title',''))}")
+        L.append(f"- {lp.get('next_action', lp.get('title', ''))}")
     # surveillance items that are due become explicit asks
     due_items = []
     for t in d["tracks"]:
@@ -760,17 +856,20 @@ def render_appt_prep(chart, d, appt):
     L.append("## If it's useful to raise")
     L.append("_Only if you want to — these are yours to bring up or not._")
     for lp in d["high"] or d["open_loops"]:
-        L.append(f"- {lp.get('title','')}")
+        L.append(f"- {lp.get('title', '')}")
     if "therap" in title.lower():
-        L.append("- Anything affecting your sleep, mood, or energy is worth naming here — your "
-                 "therapist can help you think it through, and coordinate with your prescriber if "
-                 "a medication is involved.")
+        L.append(
+            "- Anything affecting your sleep, mood, or energy is worth naming here — your "
+            "therapist can help you think it through, and coordinate with your prescriber if "
+            "a medication is involved."
+        )
     L.append("")
     L.append("_The office isn't in the room with you. This is just so you don't walk in cold._")
     return "\n".join(L) + "\n"
 
 
 # ══ THE HABILITATION WING — the proactive day (carry the load; he shouldn't think or remember) ══
+
 
 # ── REGIMEN department — the shape of the day ────────────────────────────────────────────────
 def regimen_plan(chart, d):
@@ -789,7 +888,12 @@ def regimen_plan(chart, d):
         if t:
             blocks.append({"time": str(t), "label": label, "kind": kind, "note": note})
 
-    add(eff_time(d, "wake", reg.get("wake")), "Wake", "keystone", "the one to keep steady — consistency is the biggest sleep lever")
+    add(
+        eff_time(d, "wake", reg.get("wake")),
+        "Wake",
+        "keystone",
+        "the one to keep steady — consistency is the biggest sleep lever",
+    )
     add(meals.get("breakfast"), "Breakfast", "flex", "protein + fiber")
     for a in d.get("appts", []):
         if _next_appt_days(a) == 0 and a.get("time"):
@@ -797,20 +901,33 @@ def regimen_plan(chart, d):
     add(meals.get("lunch"), "Lunch", "flex", "")
     add(reg.get("movement_slot"), "Movement", "flex", "today's session — see movement.md")
     add(meals.get("dinner"), "Dinner", "flex", "")
-    add(reg.get("evening_fluid_cutoff"), "Last fluids", "keystone", "the one clinical win — cuts the night-time wake-ups")
+    add(
+        reg.get("evening_fluid_cutoff"),
+        "Last fluids",
+        "keystone",
+        "the one clinical win — cuts the night-time wake-ups",
+    )
     add(reg.get("wind_down_start"), "Wind-down", "flex", "dim lights, screens off")
-    add(eff_time(d, "sleep", reg.get("sleep_target")), "Bed", "keystone", "keep steady with wake — the pair that sets your rhythm")
+    add(
+        eff_time(d, "sleep", reg.get("sleep_target")),
+        "Bed",
+        "keystone",
+        "keep steady with wake — the pair that sets your rhythm",
+    )
     blocks.sort(key=lambda b: b["time"])
     return blocks
 
 
 def render_regimen(chart, d):
     reg = chart.get("regimen", {}) or {}
-    L = ["# Your day — the regimen\n", _stamp_line(),
-         "> Scaffolding, not a timetable. This bends to you — it's here to make a good day the easy "
-         "default, not to box you in. Only the few points marked ⚓ are worth keeping steady; "
-         "everything marked ~ slides to fit the day. A schedule that's *right* is one that fits you — "
-         "so reshape any of it, and tell the office to make the change stick.\n"]
+    L = [
+        "# Your day — the regimen\n",
+        _stamp_line(),
+        "> Scaffolding, not a timetable. This bends to you — it's here to make a good day the easy "
+        "default, not to box you in. Only the few points marked ⚓ are worth keeping steady; "
+        "everything marked ~ slides to fit the day. A schedule that's *right* is one that fits you — "
+        "so reshape any of it, and tell the office to make the change stick.\n",
+    ]
     blocks = regimen_plan(chart, d)
     fixed = [b for b in blocks if b["kind"] == "fixed"]
     L.append(f"## Today — {date.today().strftime('%A')}")
@@ -834,19 +951,29 @@ def render_regimen(chart, d):
     wake_f = eff_time(d, "wake", reg.get("wake"))
     bed_f = eff_time(d, "sleep", reg.get("sleep_target"))
     L.append("## The few anchors worth keeping (⚓)")
-    L.append(f"- Wake **{_fmt_time(wake_f)}** and bed **{_fmt_time(bed_f)}** — "
-             "holding *just these two* steady is the single biggest sleep lever. Everything else can move around them.")
-    L.append(f"- Last fluids by **{_fmt_time(reg.get('evening_fluid_cutoff'))}** — the one change with a direct "
-             "payoff: fewer night-time wake-ups.")
+    L.append(
+        f"- Wake **{_fmt_time(wake_f)}** and bed **{_fmt_time(bed_f)}** — "
+        "holding *just these two* steady is the single biggest sleep lever. Everything else can move around them."
+    )
+    L.append(
+        f"- Last fluids by **{_fmt_time(reg.get('evening_fluid_cutoff'))}** — the one change with a direct "
+        "payoff: fewer night-time wake-ups."
+    )
     if ((d or {}).get("learn") or {}).get("learned"):
-        L.append("\n_These reflect what you **actually do** — your real rhythm over the last few weeks, "
-                 "not a target handed to you. The office fit the frame to you; see `office-log.md`._")
+        L.append(
+            "\n_These reflect what you **actually do** — your real rhythm over the last few weeks, "
+            "not a target handed to you. The office fit the frame to you; see `office-log.md`._"
+        )
     else:
-        L.append("\n_These are still the starting frame. Tell the office when you actually wake or turn in "
-                 "(or log a line in `observations.jsonl`) and it reshapes the anchors to your real rhythm — "
-                 "see `office-log.md`._")
-    L.append("\n_Nothing here is a rule except what you make one. The office holds the frame so you don't have to — "
-             "you decide what the day actually looks like._")
+        L.append(
+            "\n_These are still the starting frame. Tell the office when you actually wake or turn in "
+            "(or log a line in `observations.jsonl`) and it reshapes the anchors to your real rhythm — "
+            "see `office-log.md`._"
+        )
+    L.append(
+        "\n_Nothing here is a rule except what you make one. The office holds the frame so you don't have to — "
+        "you decide what the day actually looks like._"
+    )
     L.append("\n_Reference: docs/health-office/reference/sleep-hygiene.md_")
     return "\n".join(L) + "\n"
 
@@ -879,27 +1006,38 @@ def nutrition_menu(chart):
 
 def render_kitchen(chart, plan):
     nut = chart.get("nutrition", {}) or {}
-    L = ["# This week's kitchen — meals, already decided\n", _stamp_line(),
-         "> So you're not thinking about what to eat or cook. A simple rotation, emphasis on "
-         f"**{nut.get('pattern', 'balanced, whole foods')}**. This is a starting menu — tell the "
-         "office your likes, dislikes, and allergies and it rebuilds around them.\n"]
+    L = [
+        "# This week's kitchen — meals, already decided\n",
+        _stamp_line(),
+        "> So you're not thinking about what to eat or cook. A simple rotation, emphasis on "
+        f"**{nut.get('pattern', 'balanced, whole foods')}**. This is a starting menu — tell the "
+        "office your likes, dislikes, and allergies and it rebuilds around them.\n",
+    ]
     if nut.get("dislikes") or nut.get("allergies"):
-        L.append("_Already steering around: " + ", ".join(
-            (nut.get("dislikes", []) or []) + (nut.get("allergies", []) or [])) + "._\n")
+        L.append(
+            "_Already steering around: "
+            + ", ".join((nut.get("dislikes", []) or []) + (nut.get("allergies", []) or []))
+            + "._\n"
+        )
     L.append("| Day | Breakfast | Lunch | Dinner |")
     L.append("|---|---|---|---|")
     for r in plan:
         L.append(f"| {r['day']} | {r['breakfast']} | {r['lunch']} | {r['dinner']} |")
-    L.append(f"\n_Goal: {nut.get('goal', 'balanced eating')}. The grocery list for all of this is in "
-             f"`kitchen/grocery-list.md`._")
+    L.append(
+        f"\n_Goal: {nut.get('goal', 'balanced eating')}. The grocery list for all of this is in "
+        f"`kitchen/grocery-list.md`._"
+    )
     L.append(f"\n_Why these foods: {MENU_SOURCE}_")
     return "\n".join(L) + "\n"
 
 
 def render_grocery(grocery):
-    L = ["# Grocery list — one pass for the week\n", _stamp_line(),
-         "> Everything this week's menu needs, consolidated into a single shop. Pantry staples "
-         "(oil, salt, spices) assumed on hand.\n"]
+    L = [
+        "# Grocery list — one pass for the week\n",
+        _stamp_line(),
+        "> Everything this week's menu needs, consolidated into a single shop. Pantry staples "
+        "(oil, salt, spices) assumed on hand.\n",
+    ]
     if not grocery:
         L.append("- _(no menu generated)_")
     for item in sorted(grocery):
@@ -932,18 +1070,23 @@ def movement_plan(chart):
 def render_movement(chart):
     reg = chart.get("regimen", {}) or {}
     slot = reg.get("movement_slot")
-    L = ["# Movement — this week, gently\n", _stamp_line(),
-         "> So you don't have to remember to move — small and sustainable beats heroic and "
-         "abandoned. "
-         + (f"Your daily slot is **{_fmt_time(slot)}**. " if slot else "")
-         + "Clear a new program with a clinician given your weight.\n"]
+    L = [
+        "# Movement — this week, gently\n",
+        _stamp_line(),
+        "> So you don't have to remember to move — small and sustainable beats heroic and "
+        "abandoned. "
+        + (f"Your daily slot is **{_fmt_time(slot)}**. " if slot else "")
+        + "Clear a new program with a clinician given your weight.\n",
+    ]
     L.append("| Day | Session | Why |")
     L.append("|---|---|---|")
     for s in movement_plan(chart):
         L.append(f"| {s['day']} | {s['what']} | {s.get('note', '')} |")
     L.append("")
-    L.append("> **Want these on your calendar?** Say the word and the office will add the week's "
-             "sessions to your Google Calendar — it won't fill your calendar uninvited.")
+    L.append(
+        "> **Want these on your calendar?** Say the word and the office will add the week's "
+        "sessions to your Google Calendar — it won't fill your calendar uninvited."
+    )
     L.append("\n_Reference: docs/health-office/reference/movement-when-starting-out.md_")
     return "\n".join(L) + "\n"
 
@@ -951,17 +1094,25 @@ def render_movement(chart):
 # ── SLEEP department — the keystone habit ────────────────────────────────────────────────────
 def render_sleep(chart, d):
     reg = chart.get("regimen", {}) or {}
-    L = ["# Sleep — the keystone\n", _stamp_line(),
-         "> Fix sleep and the rest gets easier: appetite, blood sugar, mood, the energy to move. "
-         "This is the office's nightly protocol — a sleep *disorder* (insomnia, apnea) is a "
-         "clinician's to treat.\n"]
+    L = [
+        "# Sleep — the keystone\n",
+        _stamp_line(),
+        "> Fix sleep and the rest gets easier: appetite, blood sugar, mood, the energy to move. "
+        "This is the office's nightly protocol — a sleep *disorder* (insomnia, apnea) is a "
+        "clinician's to treat.\n",
+    ]
     L.append("## Tonight's plan")
-    L.append(f"- Last fluids by **{_fmt_time(reg.get('evening_fluid_cutoff'))}** — the most direct "
-             "lever on the night-time wake-ups.")
-    L.append(f"- Wind-down from **{_fmt_time(reg.get('wind_down_start'))}**: dim lights, screens off, "
-             "nothing stimulating.")
-    L.append(f"- Lights out **{_fmt_time(eff_time(d, 'sleep', reg.get('sleep_target')))}**, up at "
-             f"**{_fmt_time(eff_time(d, 'wake', reg.get('wake')))}** — the same times every day, weekends included.")
+    L.append(
+        f"- Last fluids by **{_fmt_time(reg.get('evening_fluid_cutoff'))}** — the most direct "
+        "lever on the night-time wake-ups."
+    )
+    L.append(
+        f"- Wind-down from **{_fmt_time(reg.get('wind_down_start'))}**: dim lights, screens off, nothing stimulating."
+    )
+    L.append(
+        f"- Lights out **{_fmt_time(eff_time(d, 'sleep', reg.get('sleep_target')))}**, up at "
+        f"**{_fmt_time(eff_time(d, 'wake', reg.get('wake')))}** — the same times every day, weekends included."
+    )
     L.append("")
     L.append("## The trend")
     noct = (chart.get("logs", {}) or {}).get("nocturia", []) or []
@@ -969,12 +1120,15 @@ def render_sleep(chart, d):
         recent = noct[-7:]
         L.append("- Wakes to urinate: " + ", ".join(f"{n.get('date', '?')[5:]}={n.get('wakes', '?')}" for n in recent))
     else:
-        L.append("- _No nights logged yet — tell the office \"I woke up N times last night\" and it'll "
-                 "track the trend._")
+        L.append(
+            '- _No nights logged yet — tell the office "I woke up N times last night" and it\'ll track the trend._'
+        )
     L.append("")
-    L.append("> If the wake-ups persist despite the fluid cutoff and a steady schedule, that routes "
-             "back to the clinical workup — high blood sugar and sleep apnea both cause this and are "
-             "both checkable.")
+    L.append(
+        "> If the wake-ups persist despite the fluid cutoff and a steady schedule, that routes "
+        "back to the clinical workup — high blood sugar and sleep apnea both cause this and are "
+        "both checkable."
+    )
     L.append("\n_Reference: docs/health-office/reference/sleep-hygiene.md_")
     return "\n".join(L) + "\n"
 
@@ -983,30 +1137,38 @@ def render_sleep(chart, d):
 def render_office_log(chart, d):
     learn = d.get("learn") or {}
     trends = d.get("trends") or {}
-    L = ["# The office, learning\n", _stamp_line(),
-         "> An institution is alive only if it reaches into its past, lives in the present, and "
-         "reshapes its future. This is the office watching itself: what it has learned about you, "
-         "what it changed, and what it's keeping an eye on — so being well costs you a little less "
-         "thought each week, not the same amount forever.\n"]
+    L = [
+        "# The office, learning\n",
+        _stamp_line(),
+        "> An institution is alive only if it reaches into its past, lives in the present, and "
+        "reshapes its future. This is the office watching itself: what it has learned about you, "
+        "what it changed, and what it's keeping an eye on — so being well costs you a little less "
+        "thought each week, not the same amount forever.\n",
+    ]
 
     L.append("## What I've learned about your rhythm")
     if learn.get("learned"):
         for key, label in (("wake", "Wake"), ("sleep", "Bed")):
             info = learn.get(key) or {}
             if info.get("learned"):
-                L.append(f"- **{label}** — you actually land near **{_fmt_time(info['observed'])}** "
-                         f"(over {info['n']} days). Stated target: {_fmt_time(info['target'])}. "
-                         f"Working frame: **{_fmt_time(info['frame'])}**.")
+                L.append(
+                    f"- **{label}** — you actually land near **{_fmt_time(info['observed'])}** "
+                    f"(over {info['n']} days). Stated target: {_fmt_time(info['target'])}. "
+                    f"Working frame: **{_fmt_time(info['frame'])}**."
+                )
         if learn.get("moved_rate") is not None:
-            L.append(f"- **Movement** — you moved on about **{round(learn['moved_rate'] * 100)}%** "
-                     "of logged days.")
+            L.append(f"- **Movement** — you moved on about **{round(learn['moved_rate'] * 100)}%** of logged days.")
     else:
-        L.append(f"- Still learning. I have **{learn.get('n', 0)} day(s)** of your real wake/sleep on "
-                 f"record and reshape the anchors once I have {MIN_OBSERVATIONS}. Until then I hold "
-                 "the starting frame.")
-        L.append("- **Teach me in one line** — append to `observations.jsonl`, e.g. "
-                 "`{\"date\":\"2026-06-24\",\"wake\":\"07:25\",\"sleep\":\"23:10\",\"moved\":true}` — "
-                 "or just tell me \"I woke at 7:30\" and I'll record it.")
+        L.append(
+            f"- Still learning. I have **{learn.get('n', 0)} day(s)** of your real wake/sleep on "
+            f"record and reshape the anchors once I have {MIN_OBSERVATIONS}. Until then I hold "
+            "the starting frame."
+        )
+        L.append(
+            "- **Teach me in one line** — append to `observations.jsonl`, e.g. "
+            '`{"date":"2026-06-24","wake":"07:25","sleep":"23:10","moved":true}` — '
+            'or just tell me "I woke at 7:30" and I\'ll record it.'
+        )
 
     L.append("\n## What I changed this cycle")
     if learn.get("changes"):
@@ -1031,11 +1193,16 @@ def render_office_log(chart, d):
 
     L.append("\n## My memory")
     if trends.get("days_on_record"):
-        L.append(f"- **{trends['days_on_record']} day(s)** on record"
-                 + (f", since {trends['since']}" if trends.get("since") else "") + ".")
+        L.append(
+            f"- **{trends['days_on_record']} day(s)** on record"
+            + (f", since {trends['since']}" if trends.get("since") else "")
+            + "."
+        )
     else:
-        L.append("- This is the first entry. From here the office keeps a memory of your health "
-                 "over time, not just today's snapshot.")
+        L.append(
+            "- This is the first entry. From here the office keeps a memory of your health "
+            "over time, not just today's snapshot."
+        )
     return "\n".join(L) + "\n"
 
 
@@ -1063,8 +1230,9 @@ def append_chronicle(d):
     try:
         lines = []
         if CHRONICLE.exists():
-            lines = [ln for ln in CHRONICLE.read_text().splitlines()
-                     if ln.strip() and json.loads(ln).get("date") != today]
+            lines = [
+                ln for ln in CHRONICLE.read_text().splitlines() if ln.strip() and json.loads(ln).get("date") != today
+            ]
         lines.append(json.dumps(entry))
         CHRONICLE.write_text("\n".join(lines) + "\n")
     except (OSError, ValueError):
@@ -1072,25 +1240,46 @@ def append_chronicle(d):
 
 
 # ── PII-free liveness stamp (repo logs/) ────────────────────────────────────────────────────
+def _health_public_census():
+    """Counts-only census of the public health organ surface; no private chart data."""
+    public_files = sorted(path for path in HEALTH_HOME.glob("*") if path.is_file())
+    case_root = HEALTH_HOME / "cases"
+    case_dirs = sorted(path for path in case_root.glob("*") if path.is_dir()) if case_root.exists() else []
+    case_files = sorted(path for path in case_root.glob("*/*") if path.is_file()) if case_root.exists() else []
+    return {
+        "public_artifacts": len(public_files),
+        "case_dirs": len(case_dirs),
+        "case_files": len(case_files),
+        "has_safety_sentinel": (HEALTH_HOME / "safety-sentinel.sh").exists(),
+        "has_workflow_runner": (HEALTH_HOME / "workflow-runner.sh").exists(),
+    }
+
+
 def write_stamp(present, d=None):
     LOGS.mkdir(parents=True, exist_ok=True)
-    rec = {"ran_at": datetime.now().isoformat(timespec="seconds"), "chart_present": present}
+    rec = {
+        "ran_at": datetime.now().isoformat(timespec="seconds"),
+        "chart_present": present,
+        "public_census": _health_public_census(),
+    }
     if d is not None:
-        rec.update({
-            "open_loops": len(d["open_loops"]),
-            "high_priority_loops": len(d["high"]),
-            "overdue_loops": len(d["overdue"]),
-            "surveillance_due": d["surv_due"],
-            "surveillance_overdue": d["surv_overdue"],
-            "results_on_file": d["results_on_file"],
-            "human_atoms_open": len(d["atoms"]),
-            "appointments": len(d["appts"]),
-            "next_appt_in_days": d["next_days"],
-            "meds_active": len(d["meds_active"]),
-            "regimen_today_blocks": d.get("regimen_today_blocks", 0),
-            "menu_days": d.get("menu_days", 0),
-            "movement_sessions": d.get("movement_sessions", 0),
-        })
+        rec.update(
+            {
+                "open_loops": len(d["open_loops"]),
+                "high_priority_loops": len(d["high"]),
+                "overdue_loops": len(d["overdue"]),
+                "surveillance_due": d["surv_due"],
+                "surveillance_overdue": d["surv_overdue"],
+                "results_on_file": d["results_on_file"],
+                "human_atoms_open": len(d["atoms"]),
+                "appointments": len(d["appts"]),
+                "next_appt_in_days": d["next_days"],
+                "meds_active": len(d["meds_active"]),
+                "regimen_today_blocks": d.get("regimen_today_blocks", 0),
+                "menu_days": d.get("menu_days", 0),
+                "movement_sessions": d.get("movement_sessions", 0),
+            }
+        )
     (LOGS / "health-organ-state.json").write_text(json.dumps(rec, indent=2))
     # voice-stamp (ground-truth fire signal for organ-health), mtime is what matters
     try:
@@ -1120,7 +1309,7 @@ def main():
         (PREP / "prescriber-note.md").write_text(render_prescriber_note(chart, d))
         (PREP / "visit-script.md").write_text(render_visit_script(chart, d))
         for a in d["appts"]:
-            (PREP / f"{a.get('id','appt')}-prep.md").write_text(render_appt_prep(chart, d, a))
+            (PREP / f"{a.get('id', 'appt')}-prep.md").write_text(render_appt_prep(chart, d, a))
         # HABILITATION wing — the proactive day (off-repo products)
         if chart.get("regimen"):
             (HEALTH_DIR / "regimen.md").write_text(render_regimen(chart, d))
@@ -1151,15 +1340,20 @@ def main():
     # NON-PII one-liner only (counts, no medical content)
     nd = d["next_days"]
     appt = "next appt: day TBD" if nd is None else ("next appt: today" if nd == 0 else f"next appt: in {nd}d")
-    habits = [name for name, key in (("day", "regimen_today_blocks"), ("meals", "menu_days"),
-                                     ("movement", "movement_sessions")) if d.get(key)]
+    habits = [
+        name
+        for name, key in (("day", "regimen_today_blocks"), ("meals", "menu_days"), ("movement", "movement_sessions"))
+        if d.get(key)
+    ]
     hb = (" · habits: " + "+".join(habits)) if habits else ""
     learn = d.get("learn") or {}
     learning = "adapting" if learn.get("learned") else f"seed ({learn.get('n', 0)} obs)"
-    print(f"health-office: {len(d['open_loops'])} open loops "
-          f"({len(d['high'])} high, {len(d['overdue'])} overdue) · "
-          f"{d['surv_due']} monitoring due ({d['surv_overdue']} overdue) · "
-          f"{len(d['atoms'])} inputs needed · {appt}{hb} · learning: {learning}")
+    print(
+        f"health-office: {len(d['open_loops'])} open loops "
+        f"({len(d['high'])} high, {len(d['overdue'])} overdue) · "
+        f"{d['surv_due']} monitoring due ({d['surv_overdue']} overdue) · "
+        f"{len(d['atoms'])} inputs needed · {appt}{hb} · learning: {learning}"
+    )
     return 0
 
 

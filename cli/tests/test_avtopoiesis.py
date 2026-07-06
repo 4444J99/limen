@@ -53,6 +53,7 @@ def test_past_tense_resolves_scripts_from_heartbeat_commands():
 
     assert doors["hygiene"]["tenses"]["past"] == 1.0
     assert doors["governance"]["tenses"]["past"] == 1.0
+    assert doors["health"]["tenses"]["past"] == 1.0
 
 
 def test_summary_reports_distance_from_ideal():
