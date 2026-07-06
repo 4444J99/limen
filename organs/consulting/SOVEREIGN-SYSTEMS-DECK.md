@@ -1,7 +1,7 @@
 # Sovereign Systems
 ## The institutional consulting toolkit — ready to show
 
-*ORGANVM-as-a-service · Micro instance: Maddie · Rob · Derek*
+*ORGANVM-as-a-service · Micro instance: Maddie · Rob · Derek · Jessica · John F.*
 
 ---
 
@@ -23,8 +23,7 @@ Every solo consulting practice hits the same four walls:
 | Rushed handoff | Deliverables go out before anyone checks them against the agreed standard. Quality is uneven. |
 | No closeout | The engagement just *stops*. No archive. No lessons. The next engagement starts from zero. |
 
-An agency solves these with staff — PMs, reviewers, principals. A solo operator solves them
-with **process infrastructure**. Sovereign Systems is that infrastructure.
+An agency solves these with staff — PMs, reviewers, principals. A solo operator solves them with **process infrastructure**. Sovereign Systems is that infrastructure.
 
 ---
 
@@ -38,9 +37,7 @@ with **process infrastructure**. Sovereign Systems is that infrastructure.
 | **Quality** | Per-deliverable audit against standard | Evidence must reference real artifacts — no TODOs, no TBDs |
 | **Archive** | Complete closeout package | Standing advances through ARCHIVED with full delivery record |
 
-Each function is executable. The same rule engine that validates one engagement validates
-all of them. The platform does not ask the operator to *remember* the discipline — it
-checks it.
+Each function is executable. The same rule engine that validates one engagement validates all of them. The platform does not ask the operator to *remember* the discipline — it checks it.
 
 ---
 
@@ -52,8 +49,7 @@ DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION → REVIEW → ARCHIVED
                                               HOLD
 ```
 
-Standing advances. It never regresses. A scope change is explicit. A hold is declared.
-An archive is written. Nothing is implied.
+Standing advances. It never regresses. A scope change is explicit. A hold is declared. An archive is written. Nothing is implied.
 
 ---
 
@@ -67,8 +63,7 @@ An archive is written. Nothing is implied.
 | Drafts deliverables, flags quality gaps | Signs off each handoff |
 | Stages outbound artifacts for review | Sends, signs, commits externally |
 
-The system drafts and stages. The operator decides and acts. Nothing external happens
-without explicit human authorization.
+The system drafts and stages. The operator decides and acts. Nothing external happens without explicit human authorization.
 
 ---
 
@@ -79,44 +74,66 @@ Six executable rules, one command:
 ```bash
 $ python3 organs/consulting/validate-consulting.py --fleet
 
-PASS  engagements/derek.yaml  posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
-PASS  engagements/maddie.yaml  posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
-PASS  engagements/rob.yaml     posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
+PASS  engagements/derek.yaml     posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
+PASS  engagements/jessica.yaml   posture: DISCOVERY  |  next: PROPOSAL
+PASS  engagements/john-f.yaml    posture: DISCOVERY  |  next: PROPOSAL
+PASS  engagements/maddie.yaml    posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
+PASS  engagements/rob.yaml       posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
 ────────────────────────────────────────────────────────────
-  3/3 passed  |  0 violation(s)
+  5/5 passed  |  0 violation(s)
   Sovereign Systems Rules #1-6: all checks passed.
 ```
 
-When it passes, the engagement is structurally sound. When it fails, the output names
-the exact rule, field, and value — no guessing about what broke.
+When it passes, the engagement is structurally sound. When it fails, the output names the exact rule, field, and value — no guessing about what broke.
 
 ---
 
-## The live proof — three active deployments
+## The live proof — five active engagements across four domains
 
 ### Maddie — scope stability under shifting priorities
 
 - **File:** `engagements/maddie.yaml`
+- **Domain:** wellness (Elevate Align)
 - **Standing:** EXECUTION — delivery artifacts in progress
 - **Scope changes:** 0 (unchanged since acceptance — the mandate has held)
 - **Next gate:** Anthony signs off deliverable package → REVIEW
 - **What it proves:** the posture model holds when requirements move
 
-### Rob — cadence stability across recurring work
+### Rob — cadence stability across recurring work + funnel engineering
 
 - **File:** `engagements/rob.yaml`
-- **Standing:** EXECUTION — milestone checkpoint in progress
-- **Scope changes:** 1 logged, attributed, approved change (2026-06-15)
+- **Domain:** fitness + chess (HokageChess + BODi)
+- **Standing:** EXECUTION — milestone checkpoint in progress, funnel instance published
+- **Scope changes:** 2 logged, attributed, approved (2026-06-15, 2026-07-04)
 - **Next gate:** Anthony confirms milestone checkpoint → REVIEW
-- **What it proves:** the platform records and gates scope changes — it does not absorb them silently
+- **What it proves:** the platform records and gates scope changes — it does not absorb them silently. Also: the niche-funnel engine's flagship instance (operating floor, talk tracks, capture form, validator — all published)
 
 ### Derek — portability across different work idioms
 
 - **File:** `engagements/derek.yaml`
+- **Domain:** education + narrative (cross-program)
 - **Standing:** EXECUTION — brief format + milestone ledger active
 - **Scope changes:** 0 (original brief structure held across education and narrative domains)
 - **Next gate:** Anthony reviews brief + ledger → REVIEW
 - **What it proves:** one operating model works for scope-stability, cadence-stability, and cross-domain work
+
+### Jessica — greenfield niche entry
+
+- **File:** `engagements/jessica.yaml`
+- **Domain:** human resources + Styx
+- **Standing:** DISCOVERY — record created from principal directive; Jessica's participation to confirm
+- **Scope changes:** 1 (record creation)
+- **Next gate:** stand up HR funnel instance → produce scoped proposal
+- **What it proves:** the platform captures a new niche from zero prior written record — same six rules, first write
+
+### John F. — minimal-signal capture
+
+- **File:** `engagements/john-f.yaml`
+- **Domain:** finance
+- **Standing:** DISCOVERY — thin thread made durable; what is known is recorded, what is owed is marked
+- **Scope changes:** 1 (record creation)
+- **Next gate:** fill in niche, offer, channels
+- **What it proves:** the platform works when the starting point is nearly zero signal — record what you know, mark the gap, validate structure
 
 ---
 
@@ -124,10 +141,12 @@ the exact rule, field, and value — no guessing about what broke.
 
 | Metric | Value |
 |---|---|
-| Active engagements | 3 |
-| Rule checks passed | 18/18 (6 rules × 3 engagements) |
-| Scope changes logged | 1 (attributed and approved) |
-| Human gates declared | 9 total (3 per engagement) |
+| Active engagements | 5 |
+| Domains covered | 4 (wellness, fitness+chess, education+narrative, HR, finance) |
+| Rule checks passed | 30/30 (6 rules × 5 engagements) |
+| Funnel engine instances | 1 (Rob — fitness lane, validated) |
+| Scope changes logged | 3 (all attributed and approved) |
+| Human gates declared | 17 total |
 | Placeholder evidence fields | 0 |
 | Autonomic claims | 0 |
 | Overreach violations | 0 |

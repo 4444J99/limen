@@ -58,15 +58,17 @@ The macro form carries no hardcoded client names, no private pricing assumptions
 idiom specific to one personality. It is the generic institutional platform. The full
 platform description is in [`MACRO-FACE.md`](MACRO-FACE.md).
 
-### MICRO instance — Maddie / Rob / Derek
+### MICRO instance — five active engagements across four domains
 
-Three live client deployments that prove the macro platform under different stress conditions:
+Five live client deployments that prove the macro platform under different stress conditions:
 
 - **Maddie** — scope capture under shifting priorities (tests mandate stability)
 - **Rob** — recurring execution support with staged deadlines (tests cadence stability)
 - **Derek** — cross-program, education-adjacent, narrative-facing work (tests portability)
+- **Jessica** — greenfield niche entry, HR domain with Styx product tie (tests greenfield capture)
+- **John F.** — minimal-signal finance thread captured from a principal directive (tests intake honesty)
 
-All three are at EXECUTION standing. All three pass the six-rule validator. The full
+Three at EXECUTION standing, two at DISCOVERY. All five pass the six-rule validator. The full
 deployment record is in [`MICRO-FACE.md`](MICRO-FACE.md).
 
 ---
@@ -151,5 +153,5 @@ From the `organ-backlog` for the maturing stage:
 ---
 
 *Companion documents: [MACRO-FACE.md](MACRO-FACE.md) (platform pitch · institutional face),
-[MICRO-FACE.md](MICRO-FACE.md) (live deployments · Maddie / Rob / Derek),
+[MICRO-FACE.md](MICRO-FACE.md) (live deployments · Maddie / Rob / Derek / Jessica / John F.),
 [CHARTER.md](CHARTER.md) (org chart + role assignments + workflow steps).*
