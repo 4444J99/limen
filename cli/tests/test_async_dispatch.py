@@ -80,6 +80,20 @@ def test_inflight_markers_consume_per_lane_limit(tmp_path):
     assert picked == [("agy", "A0"), ("agy", "A1")]
 
 
+def test_running_marker_blocks_duplicate_task_reservation_across_agents(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"codex": 50, "claude": 50}
+    lf.tasks = [Task(id="DUP", title="t", repo="x/y", target_agent="any", status="open", created=today)]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (da.RUNS / "DUP__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+
+    picked = da.reserve_and_launch(["claude"], per_agent=4, cap=4, dry=True)
+
+    assert picked == []
+
+
 def test_agy_weak_proxy_can_reserve_against_daily_runway(tmp_path):
     da = _load(tmp_path, n_open=0)
     today = datetime.date.today()

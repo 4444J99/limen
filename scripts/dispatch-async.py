@@ -448,6 +448,15 @@ def _running_for(agent: str) -> int:
     return len(list(RUNS.glob(f"*__{agent}.running")))
 
 
+def _running_task_ids() -> set[str]:
+    ids: set[str] = set()
+    for marker in RUNS.glob("*__*.running"):
+        task_part = marker.name[: -len(".running")].rsplit("__", 1)[0]
+        if task_part:
+            ids.add(task_part)
+    return ids
+
+
 def _usage_by_agent() -> dict[str, dict[str, object]]:
     path = ROOT / "logs" / "usage.json"
     try:
@@ -485,7 +494,7 @@ def _weak_proxy_agents(usage: dict[str, dict[str, object]]) -> set[str]:
 
 def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents):
     picked = []
-    picked_ids = set()
+    picked_ids = set(_running_task_ids())
     reset_changed = _reset_budget_if_needed(lf, now)
     track = lf.portal.budget.track
     daily = lf.portal.budget.daily
