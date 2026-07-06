@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-07-06T12:35:15+00:00`
+Generated: `2026-07-06T12:37:07+00:00`
 
 ## Canonical Decision
 
@@ -16,9 +16,9 @@ Generated: `2026-07-06T12:35:15+00:00`
 - Codex classified sessions: `887`.
 - Worktree debt roots: `0`.
 - Worktree preservation receipts: `86`.
-- Parked blockers: `7`.
+- Parked blockers: `6`.
 - Local lifecycle footprint: `29.0 GiB`.
-- Candidate lanes: `blocker` 1, `family` 7, `human-gate` 17, `observe` 46, `owner-blocker` 6, `parked` 5, `remote-close` 1, `remote-pr-open` 12.
+- Candidate lanes: `family` 7, `human-gate` 17, `observe` 46, `owner-blocker` 6, `parked` 5, `remote-close` 1, `remote-pr-open` 12.
 
 ## Ordering Model
 

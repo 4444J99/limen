@@ -1,6 +1,6 @@
 # Live Root Gate
 
-Generated: `2026-07-06T10:30:16+00:00`
+Generated: `2026-07-06T12:36:55+00:00`
 
 Status: `ready`
 
@@ -21,11 +21,16 @@ Status: `ready`
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `bacbcaaa24ff6846e506106e822c395a14c42cbd`.
-- Release head: `bacbcaaa24ff6846e506106e822c395a14c42cbd`.
+- HEAD: `1284d81908c067bff778401c01a9f1f6dbbf440c`.
+- Release head: `1284d81908c067bff778401c01a9f1f6dbbf440c`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
 - Dirty entries: `0`.
+- Ignored generated receipt dirty entries: `4`.
+  - `docs/conductor-tranche.md`
+  - `docs/session-attack-paths.md`
+  - `docs/session-corpus-ledger.md`
+  - `docs/session-lifecycle-blockers.md`
 
 ## Heartbeat
 

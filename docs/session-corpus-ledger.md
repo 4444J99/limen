@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-07-06T12:34:54+00:00`
+Generated: `2026-07-06T12:36:21+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -20,9 +20,9 @@ Total seen: `14056` files, `3.5 GiB`.
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
 | `claude-projects` | `~/.claude/projects` | 6632 | 1.9 GiB | `2026-07-06T12:30:51+00:00` |
-| `codex-sessions` | `~/.local/share/codex/sessions` | 1367 | 1.5 GiB | `2026-07-06T12:34:51+00:00` |
+| `codex-sessions` | `~/.local/share/codex/sessions` | 1367 | 1.5 GiB | `2026-07-06T12:36:15+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 5059 | 67.2 MiB | `2026-07-05T18:01:34+00:00` |
-| `codex-goals-state` | `~/.local/share/codex` | 6 | 19.6 MiB | `2026-07-06T12:34:51+00:00` |
+| `codex-goals-state` | `~/.local/share/codex` | 6 | 19.6 MiB | `2026-07-06T12:36:15+00:00` |
 | `chatgpt-desktop-app-support` | `~/Library/Application Support/com.openai.chat` | 257 | 15.7 MiB | `2026-07-06T09:55:47+00:00` |
 | `codex-shell-snapshots` | `~/.local/share/codex/shell_snapshots` | 6 | 1.9 MiB | `2026-07-06T11:42:20+00:00` |
 | `codex-history` | `~/.local/share/codex` | 1 | 816.1 KiB | `2026-07-06T12:22:04+00:00` |
@@ -73,8 +73,8 @@ These are known local app/store adapters with no matched files in this scan. Thi
 - Private root: `~/Workspace/limen/.limen-private/session-corpus`.
 - Private inventory: `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
 - `.limen-private/` is ignored by Git; it is the local raw/private landing zone.
-- Raw object materialization was not requested on this run.
-- Private object store currently holds `13812` unique objects, `6.1 GiB`.
+- Materialized objects this run: copied `33`, already present `14023`, bytes copied `96.6 MiB`.
+- Private object store now holds `13845` unique objects, `6.2 GiB`.
 - Private screenshot evidence: `14` PNG artifacts, `22.9 MiB`, newest `2026-06-27T13:41:25+00:00`.
 - Screenshot batches: `2026-06-27` 14.
 
