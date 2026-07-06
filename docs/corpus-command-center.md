@@ -1,6 +1,6 @@
 # Corpus Command Center
 
-Generated: `2026-06-29T17:42:28+00:00`
+Generated: `2026-07-06T01:34:20+00:00`
 
 ## Canonical Decision
 
@@ -10,27 +10,27 @@ Generated: `2026-06-29T17:42:28+00:00`
 
 ## Coverage
 
-- Units indexed: `353277`.
-- Unique hashes: `219803`.
-- Clusters: `202168`.
+- Units indexed: `615049`.
+- Unique hashes: `372524`.
+- Clusters: `335499`.
 - Side-by-side comparisons: `24`.
-- Private body objects: `219803`.
+- Private body objects: `372524`.
 
 ## Kind Mix
 
 | Kind | Units |
 |---|---:|
-| `tool` | 165972 |
-| `prompt` | 93079 |
-| `response` | 86272 |
-| `system` | 3753 |
-| `artifact` | 2701 |
-| `task` | 1500 |
+| `tool` | 330401 |
+| `response` | 144152 |
+| `prompt` | 127604 |
+| `system` | 6775 |
+| `artifact` | 4011 |
+| `task` | 2106 |
 
 ## Goal Panels
 
 - Aug-1 gate: `false`; legs `0` / `5`; deadline `2026-08-01`.
-- Inbound magnet: value repos `12`, seeded repos `9`, scraper model present `True`.
+- Inbound magnet: value repos `13`, seeded repos `9`, scraper model present `True`.
 
 ## Private Outputs
 
