@@ -7,6 +7,7 @@ disposition matrix must be deterministic so "the answer is clear" per repo.
 """
 
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -123,3 +124,15 @@ def test_self_test_passes():
 def test_residual_pii_detects_and_clears():
     assert pp._residual_pii("Anthony Padavano here") is not None
     assert pp._residual_pii(pp.redact("Anthony Padavano here")) is None
+
+
+def test_census_is_counts_only():
+    census = pp.census()
+    encoded = json.dumps(census, sort_keys=True)
+
+    assert census["classes"] == len(pp.CLASSES)
+    assert census["disposition_rows"] == 10
+    assert census["convergence_gates"] == len(pp._CONVERGENCE_GATES)
+    assert "Anthony" not in encoded
+    assert "padavano" not in encoded.lower()
+    assert "gmail" not in encoded.lower()

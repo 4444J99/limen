@@ -479,10 +479,36 @@ def cmd_check(_args) -> int:
     return 0 if fresh else 1
 
 
+def census() -> dict:
+    """Counts-only public census; no owner identifiers, sample text, paths, or raw policy bodies."""
+    owner = _owner()
+    return {
+        "classes": len(CLASSES),
+        "disposition_rows": sum(len(rows) for rows in DISPOSITIONS.values()),
+        "disposition_docs": len(DISPOSITION_DOC),
+        "convergence_gates": len(_CONVERGENCE_GATES),
+        "convergence_failures": len(_check_convergence()),
+        "owner_scope_shape": {
+            "handles": len(owner.get("handles") or []),
+            "email_domains": len(owner.get("email_domains") or []),
+            "names": len(owner.get("names") or []),
+            "username_configured": bool(owner.get("username")),
+            "phone_configured": bool(owner.get("phone")),
+        },
+        "stamp_present": STAMP.exists(),
+    }
+
+
+def cmd_census(_args) -> int:
+    print(json.dumps(census(), indent=2, sort_keys=True))
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="publication-policy — the disposition engine")
     ap.add_argument("--verify", action="store_true", help="self-test predicate (exit 0 <=> sound)")
     ap.add_argument("--check", action="store_true", help="cheap stamp presence check")
+    ap.add_argument("--census", action="store_true", help="counts-only public census JSON")
     sub = ap.add_subparsers(dest="cmd")
 
     c = sub.add_parser("classify")
@@ -503,6 +529,8 @@ def main(argv=None) -> int:
         return cmd_verify(args)
     if args.check:
         return cmd_check(args)
+    if args.census:
+        return cmd_census(args)
     if args.cmd == "classify":
         return cmd_classify(args)
     if args.cmd == "disposition":

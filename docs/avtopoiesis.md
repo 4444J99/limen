@@ -1,21 +1,21 @@
 # AVTOPOIESIS
 
-Generated: `2026-07-06T07:31:56+00:00`
+Generated: `2026-07-06T07:34:05+00:00`
 
 ## How Far
 
-- Alive doors: `19/29` (`65.5%`).
-- Mean score: `0.780`.
-- Distance from ideal: `22.0%`.
+- Alive doors: `20/29` (`69.0%`).
+- Mean score: `0.792`.
+- Distance from ideal: `20.8%`.
 - Weakest tense: `past`.
 - Present tense source: `logs/organ-health.json` when available; heartbeat wiring fallback otherwise.
-- Below-threshold doors by primary gap: `past` 9, `present` 0, `future` 1.
+- Below-threshold doors by primary gap: `past` 8, `present` 0, `future` 1.
 
 ## Tense Averages
 
 | Tense | Average |
 |---|---:|
-| `past` | `0.655` |
+| `past` | `0.690` |
 | `present` | `0.948` |
 | `future` | `0.741` |
 
@@ -26,7 +26,6 @@ Generated: `2026-07-06T07:31:56+00:00`
 | `mail` | `0.00` | `1.00` | `0.00` | `0.330` | `nota` | `future` `1.000` |
 | `positioning` | `0.00` | `0.50` | `0.50` | `0.330` | `nota` | `past` `1.000` |
 | `feed` | `0.00` | `1.00` | `0.50` | `0.495` | `nota` | `past` `1.000` |
-| `pubpolicy` | `0.00` | `1.00` | `0.50` | `0.495` | `nota` | `past` `1.000` |
 | `censor` | `0.00` | `1.00` | `1.00` | `0.660` | `nota` | `past` `1.000` |
 | `continuation` | `0.00` | `1.00` | `1.00` | `0.660` | `nota` | `past` `1.000` |
 | `drain` | `0.00` | `1.00` | `1.00` | `0.660` | `nota` | `past` `1.000` |
@@ -42,6 +41,7 @@ Generated: `2026-07-06T07:31:56+00:00`
 | `heal` | `1.00` | `1.00` | `0.50` | `0.835` | `alive` | `future` `0.500` |
 | `hygiene` | `1.00` | `1.00` | `0.50` | `0.835` | `alive` | `future` `0.500` |
 | `nomenclator` | `1.00` | `0.50` | `1.00` | `0.835` | `alive` | `present` `0.500` |
+| `pubpolicy` | `1.00` | `1.00` | `0.50` | `0.835` | `alive` | `future` `0.500` |
 | `contrib` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 | `corpus` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 | `corpus_feed` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
@@ -61,7 +61,6 @@ Generated: `2026-07-06T07:31:56+00:00`
 - `feed`: score `0.495`, primary gap `past` (`1.000`).
 - `mail`: score `0.330`, primary gap `future` (`1.000`).
 - `positioning`: score `0.330`, primary gap `past` (`1.000`).
-- `pubpolicy`: score `0.495`, primary gap `past` (`1.000`).
 - `report`: score `0.660`, primary gap `past` (`1.000`).
 - `sync`: score `0.660`, primary gap `past` (`1.000`).
 - `walls`: score `0.660`, primary gap `past` (`1.000`).
@@ -75,7 +74,6 @@ Evidence is redacted metadata only: paths, configured signatures, liveness statu
 | `mail` | missing metabolize signature in mail-beat.sh | logs/organ-health.json:green | 2 open his-hand levers from his-hand-levers.json |
 | `positioning` | missing metabolize signature in generate-positioning.py | logs/organ-health.json:gated | 1 open his-hand levers from his-hand-levers.json |
 | `feed` | missing metabolize signature in mine-backlog.py, generate-revenue-backlog.py, generate-organ-backlog.py | logs/organ-health.json:green | 1 open his-hand levers from his-hand-levers.json |
-| `pubpolicy` | missing metabolize signature in publication-policy.py | logs/organ-health.json:green | 1 open his-hand levers from his-hand-levers.json |
 | `censor` | missing metabolize signature in censor.py, sync-censor-issues.py, censor-view.py | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `continuation` | missing metabolize signature in continuation-beat.py | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `drain` | missing metabolize signature in drain.sh | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
@@ -91,6 +89,7 @@ Evidence is redacted metadata only: paths, configured signatures, liveness statu
 | `heal` | matched verify-dispatch.py:.glob(; health-organ.py:.glob(; heal-board.py:.glob( | logs/organ-health.json:green | 1 open his-hand levers from his-hand-levers.json |
 | `hygiene` | matched clone-maintenance.sh:os.walk(,.glob(,glob.glob | logs/organ-health.json:green | 1 open his-hand levers from his-hand-levers.json |
 | `nomenclator` | matched nomenclator.py:.iterdir(,--census,def census | logs/organ-health.json:gated | 0 open his-hand levers from his-hand-levers.json |
+| `pubpolicy` | matched publication-policy.py:--census,def census | logs/organ-health.json:green | 1 open his-hand levers from his-hand-levers.json |
 | `contrib` | matched contributions-organ.py:.iterdir( | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
 | `corpus` | matched corpus-feed.py:rglob(; corpus-converge.py:rglob(,.glob(; media-atomize.py:os.walk(,.glob( | heartbeat-wiring:wired | 0 open his-hand levers from his-hand-levers.json |
 | `corpus_feed` | matched corpus-feed.py:rglob( | logs/organ-health.json:green | 0 open his-hand levers from his-hand-levers.json |
