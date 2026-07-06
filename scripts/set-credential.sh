@@ -20,7 +20,10 @@ ENV_FILE="${LIMEN_ENV:-$HOME/.limen.env}"
 # codex uses ChatGPT OAuth, opencode derives a free model; no fleet code reads either; retired
 # 2026-06-25), and the Claude token (owned by the credential-race / Rung-0 self-heal, not this floor).
 EXPECTED=(GEMINI_API_KEY GOOGLE_GENERATIVE_AI_API_KEY \
-          GH_TOKEN GITHUB_TOKEN CLOUDFLARE_API_TOKEN)
+          GH_TOKEN GITHUB_TOKEN \
+          GITHUB_APP_ID GITHUB_APP_PRIVATE_KEY \
+          CLOUDFLARE_API_TOKEN)
+OPTIONAL=(GITHUB_APP_INSTALLATION_ID)
 
 ensure_file() { [ -f "$ENV_FILE" ] || touch "$ENV_FILE"; chmod 600 "$ENV_FILE"; }
 has_key() { grep -qE "^(export )?$1=" "$ENV_FILE" 2>/dev/null; }
@@ -30,6 +33,7 @@ case "${1:-}" in
     ensure_file
     echo "Credential presence in $ENV_FILE (names only — values never shown):"
     for k in "${EXPECTED[@]}"; do has_key "$k" && echo "  ✓ $k set" || echo "  ✗ $k missing"; done
+    for k in "${OPTIONAL[@]}"; do has_key "$k" && echo "  ✓ $k set (optional)" || echo "  - $k optional missing"; done
     exit 0 ;;
   --list)
     ensure_file
