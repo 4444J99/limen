@@ -87,7 +87,7 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 
 ## Estate register (`ESTATE.yaml`)
 
-40 artifacts registered — 36 verified present locally, 3 cited (remote/receipt), 0 DRIFT, 1 optional-absent.
+42 artifacts registered — 38 verified present locally, 3 cited (remote/receipt), 0 DRIFT, 1 optional-absent.
 
 _Optional-absent (expected): `hub-seed-root`_
 
