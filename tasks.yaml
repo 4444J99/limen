@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 262
+      spent: 266
       per_agent:
         jules: 100
         gemini: 2
         codex: 49
         opencode: 29
-        agy: 75
+        agy: 79
         claude: 6
         github_actions: 1
       per_agent_reset:
@@ -89146,7 +89146,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:57:50.275136Z'
+  updated: '2026-07-06T20:01:13.439892Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:28:53.029757Z'
     agent: agy
@@ -89167,6 +89167,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T20:01:13.439892Z'
+    agent: agy
+    session_id: limen/heal-cifix-organvm-schema-definitions-7-4535f14e
+    status: dispatched
 - id: HEAL-cifix-organvm-domus-genoma-134
   title: fix failing CI on organvm/domus-genoma#134
   repo: organvm/domus-genoma
@@ -96738,13 +96742,17 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-06T19:57:50.275136Z'
+  updated: '2026-07-06T20:01:13.439892Z'
   dispatch_log:
   - timestamp: '2026-07-06T19:57:50.275136Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T20:01:13.439892Z'
+    agent: agy
+    session_id: https://github.com/organvm/system-governance-framework/pull/49
+    status: dispatched
 - id: HEAL-cifix-organvm-system-governance-framework-42
   title: fix failing CI on organvm/system-governance-framework#42
   repo: organvm/system-governance-framework
@@ -99096,7 +99104,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -99115,8 +99123,13 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.731069Z'
-  dispatch_log: []
+  updated: '2026-07-06T20:01:16.600855Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T20:01:16.600855Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-pages--theoria-copy--taxis
   title: Discover the latent value of organvm/pages--theoria-copy--taxis
   repo: organvm/pages--theoria-copy--taxis
@@ -99154,7 +99167,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -99173,8 +99186,13 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.734370Z'
-  dispatch_log: []
+  updated: '2026-07-06T20:01:16.600855Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T20:01:16.600855Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-pages--theoria-copy--koinonia
   title: Discover the latent value of organvm/pages--theoria-copy--koinonia
   repo: organvm/pages--theoria-copy--koinonia
