@@ -1,8 +1,8 @@
 # Live Root Gate
 
-Generated: `2026-07-04T19:26:42+00:00`
+Generated: `2026-07-06T10:18:46+00:00`
 
-Status: `ready`
+Status: `blocked`
 
 ## Rule
 
@@ -12,30 +12,29 @@ Status: `ready`
 
 ## Gate State
 
-- Operator gate required: `False`.
+- Operator gate required: `True`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: none.
+- Blocking gates: `live-root-dirty`, `live-root-task-board-dirty`.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `44b0c845c750e8c0dd79e570a631493e61fc7890`.
-- Release head: `44b0c845c750e8c0dd79e570a631493e61fc7890`.
+- HEAD: `de55c7e8b7dc62aa0bb97a3393648428c15b8f5b`.
+- Release head: `de55c7e8b7dc62aa0bb97a3393648428c15b8f5b`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
-- Dirty entries: `0`.
-- Ignored generated receipt dirty entries: `4`.
-  - `docs/conductor-tranche.md`
-  - `docs/live-root-gate.md`
-  - `docs/session-attack-paths.md`
-  - `docs/session-lifecycle-blockers.md`
+- Dirty entries: `1`.
+
+### Dirty Paths
+
+- `tasks.yaml`
 
 ## Heartbeat
 
 - Plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `True`.
-- Loaded launchd state: `running` pid `51378`.
+- Loaded launchd state: `running` pid `51335`.
 - Loaded env matches plist for tracked LIMEN_* keys.
 
 ## Verified Worktree

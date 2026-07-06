@@ -1,8 +1,8 @@
 # Dispatch Health
 
-Generated: `2026-07-03T11:40:26+00:00`
+Generated: `2026-07-06T10:19:01+00:00`
 
-Status: `healthy`
+Status: `blocked`
 
 ## Incident Class
 
@@ -16,32 +16,32 @@ Status: `healthy`
 - Plist KeepAlive: `True`; RunAtLoad: `True`.
 - Plist LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Plist LIMEN_DISPATCH_ASYNC: `1`.
-- Plist LIMEN_DISPATCH_LANES: `opencode,agy`.
+- Plist LIMEN_DISPATCH_LANES: `auto`.
 - Plist LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Loaded launchd state: `running` pid `4306`.
+- Loaded launchd state: `running` pid `51335`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
-- Loaded LIMEN_DISPATCH_LANES: `opencode,agy`.
+- Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-03T11:40:27.037507+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T10:19:01.999964+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 2 still running ; would launch 10 (cap 12) -> ['ORG-financial-organ-face-0703', 'DISCOVER-organvm-styx-behavioral-art', 'GEN-organvm-session-meta-typing-0702', 'ORG-health-organ-firstslice-0703', 'REV-organvm-mirror-mirror-revenue-ship-0703', 'ORG-education-organ-operationalize-0701', 'GEN-organvm-mirror-mirror-simplify-0630', 'DISCOVER-organvm-sovereign-systems--layer-above-hokage', 'GEN-organvm-domus-genoma-test-coverage-0702', 'ORG-social-organ-firstslice-0703']`.
-- Async skipped down lanes: `gemini, jules`.
-  - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
-  - `jules`: usage health `exhausted`; signal `count`; remaining `0` of `100`; headroom `0%`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 4 ; 0 still running ; would launch 12 (cap 12) -> ['HEAL-cifix-organvm-organvm-ontologia-13', 'HEAL-rebase-4444j99-hokage-chess-94', 'HEAL-rebase-4444j99-hokage-chess-108', 'GH-4444j99-hokage-chess-39', 'HEAL-cifix-organvm-organvm-engine-139', 'HEAL-cifix-organvm-organvm-engine-144', 'HEAL-cifix-organvm-organvm-ontologia-11', 'HEAL-rebase-4444j99-hokage-chess-89', 'HEAL-rebase-4444j99-hokage-chess-107', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-721', 'ORG-financial-organ-face-0704', 'HEAL-rebase-4444j99-hokage-chess-114']`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `75580d8eea1a9423fc4c9b8aede9c554b4db5dd0`.
-- origin/main: `75580d8eea1a9423fc4c9b8aede9c554b4db5dd0`.
+- HEAD: `de55c7e8b7dc62aa0bb97a3393648428c15b8f5b`.
+- origin/main: `de55c7e8b7dc62aa0bb97a3393648428c15b8f5b`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `0`.
+- Dirty entries: `1`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/live-root-gate.md`
+  - `tasks.yaml`
 
 ## Verified Worktree
 
@@ -51,7 +51,7 @@ Status: `healthy`
 
 ## Blockers
 
-- none
+- `live-root-dirty`: live root has 1 dirty entries.
 
 ## Commands
 
