@@ -42,3 +42,46 @@ def test_rebalance_skips_down_lanes(tmp_path, monkeypatch):
     assert lanes.get("gemini", 0) == 0, f"down lane got work: {lanes}"
     assert set(lanes) == {"codex", "claude"}, f"expected only productive lanes: {lanes}"
     assert lanes["codex"] == 3 and lanes["claude"] == 3, f"not evenly fanned: {lanes}"
+
+
+def test_rebalance_skips_unsafe_agy_registry_discovery(tmp_path, monkeypatch):
+    import datetime
+
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
+    today = datetime.date.today()
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(today)))),
+        tasks=[
+            Task(
+                id="DISCOVER-organvm-example",
+                title="Discover value",
+                repo="organvm/example",
+                target_agent="opencode",
+                status="open",
+                context="Update value-repos.json and DISCOVERY.md if this repo is promoted.",
+                created=today,
+            ),
+            Task(
+                id="HEAL-cifix-organvm-example-1",
+                title="Fix CI",
+                repo="organvm/example",
+                target_agent="opencode",
+                status="open",
+                created=today,
+            ),
+        ],
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir()
+
+    spec = importlib.util.spec_from_file_location("rebalance_uut", SCRIPT)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    monkeypatch.setattr(m, "_resolve_repo_dir", lambda t: tmp_path)
+    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "agy,opencode", "--apply"])
+    m.main()
+
+    tasks = {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
+    assert tasks["DISCOVER-organvm-example"].target_agent == "opencode"
+    assert tasks["HEAL-cifix-organvm-example-1"].target_agent == "agy"
