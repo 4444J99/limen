@@ -67,12 +67,16 @@ def _clear(monkeypatch):
         "LIMEN_CLAUDE_RETRY_BUMP",
         "LIMEN_CLAUDE_OPUS_CLASSES",
         "LIMEN_CLAUDE_FABLE_CLASSES",
+        "LIMEN_CLAUDE_MAX_INHERITED_TIER",
+        "LIMEN_CLAUDE_FABLE_FALLBACK_TIER",
         "LIMEN_CLAUDE_HAIKU_MODEL",
         "LIMEN_CLAUDE_SONNET_MODEL",
         "LIMEN_CLAUDE_OPUS_MODEL",
         "LIMEN_CLAUDE_FABLE_MODEL",
         "LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE",
         "LIMEN_FABLE_ACCEPTANCE",
+        "LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN",
+        "LIMEN_ALLOW_CLAUDE_1M_CONTEXT",
     ):
         monkeypatch.delenv(k, raising=False)
 
@@ -114,7 +118,7 @@ def test_fable_is_reserved_above_opus_and_requires_acceptance(tmp_path, monkeypa
 
     _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
     task = _task(type_="final-canonical-decision")
-    assert D._claude_model(task) == "opus"
+    assert D._claude_model(task) == "sonnet"
 
     acceptance = _write_fable_acceptance(tmp_path)
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(acceptance))
@@ -125,12 +129,27 @@ def test_fable_is_reserved_above_opus_and_requires_acceptance(tmp_path, monkeypa
 
 
 def test_env_override_wins(tmp_path, monkeypatch):
-    """An explicit LIMEN_CLAUDE_MODEL pin always wins over class derivation."""
+    """An explicit cheap LIMEN_CLAUDE_MODEL pin wins over class derivation."""
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-opus-4-8")
+    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-sonnet-4-6")
     _write_ledger(tmp_path, {"waste_classes": []})
-    assert D._claude_model(_task(type_="code")) == "claude-opus-4-8"
+    assert D._claude_model(_task(type_="code")) == "claude-sonnet-4-6"
+
+
+def test_global_opus_and_large_context_pin_is_guarded(tmp_path, monkeypatch):
+    """A global Opus/1M pin would become inherited fan-out, so it needs explicit gates."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-opus-4-8[1m]")
+    _write_ledger(tmp_path, {"waste_classes": []})
+    assert D._claude_model(_task(type_="code")) == "sonnet"
+
+    monkeypatch.setenv("LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN", "1")
+    assert D._claude_model(_task(type_="code")) == "sonnet"
+
+    monkeypatch.setenv("LIMEN_ALLOW_CLAUDE_1M_CONTEXT", "1")
+    assert D._claude_model(_task(type_="code")) == "claude-opus-4-8[1m]"
 
 
 def test_env_fable_pin_is_guarded_by_acceptance(tmp_path, monkeypatch):
@@ -139,7 +158,7 @@ def test_env_fable_pin_is_guarded_by_acceptance(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": []})
     monkeypatch.setenv("LIMEN_CLAUDE_MODEL", "claude-fable-5")
-    assert D._claude_model(_task(type_="code")) == "opus"
+    assert D._claude_model(_task(type_="code")) == "sonnet"
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
     assert D._claude_model(_task(type_="code")) == "claude-fable-5"
 

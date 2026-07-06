@@ -883,13 +883,37 @@ parameters:
     env: LIMEN_CLAUDE_SHIM_FLOOR
     self_update: none
     owner: arms-agents
-    note: "Floor the non-bypassable `claude` shim injects when a fleet spawn carries no --model. Spawns that earned more declare --model and pass through untouched; subagents inherit it. NOT a blanket downgrade — it is the ladder's own default for unsignaled work. See fleet-model-floor-bleed."
+    note: "Floor the non-bypassable `claude` shim injects when a fleet spawn carries no --model. Spawns that earned more declare --model and pass through untouched; subagents inherit it. Capped by LIMEN_CLAUDE_MAX_INHERITED_TIER so this cannot silently become an Opus/Fable/1M default. See fleet-model-floor-bleed."
+  LIMEN_CLAUDE_MAX_INHERITED_TIER:
+    default: "sonnet"
+    env: LIMEN_CLAUDE_MAX_INHERITED_TIER
+    self_update: none
+    owner: arms-agents
+    note: "Maximum tier allowed for inherited/default Claude choices such as shim floors and global LIMEN_CLAUDE_MODEL pins. Default Sonnet keeps routine fan-out cheap; task-specific declaration sites may still earn Opus/Fable through the ladder and acceptance gates."
+  LIMEN_CLAUDE_FABLE_FALLBACK_TIER:
+    default: "sonnet"
+    env: LIMEN_CLAUDE_FABLE_FALLBACK_TIER
+    self_update: none
+    owner: arms-agents
+    note: "Fallback tier when a Fable-class task or Fable model pin lacks a current LIMEN_FABLE_ACCEPTANCE receipt. Default Sonnet prevents unaccepted Fable requests from becoming default Opus spend; set to opus only for an explicit emergency policy change."
+  LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN:
+    default: "0"
+    env: LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN
+    self_update: none
+    owner: arms-agents
+    note: "Emergency override allowing a global LIMEN_CLAUDE_MODEL pin to route inherited/default fleet spawns to Opus or explicit large-context models. Default 0 forces expensive defaults back under LIMEN_CLAUDE_MAX_INHERITED_TIER."
+  LIMEN_ALLOW_CLAUDE_1M_CONTEXT:
+    default: "0"
+    env: LIMEN_ALLOW_CLAUDE_1M_CONTEXT
+    self_update: none
+    owner: arms-agents
+    note: "Emergency override allowing explicit 1M/large-context Claude model pins. Default 0 strips large-context pins from tier resolution unless a current Fable acceptance receipt is present."
   LIMEN_CLAUDE_FABLE_CLASSES:
     default: "fable,long-horizon,huge-context,ambiguous-root-cause,final-canonical-decision"
     env: LIMEN_CLAUDE_FABLE_CLASSES
     self_update: none
     owner: arms-agents
-    note: "Comma-separated task classes that may select the reserved Fable rung. Class membership is not enough by itself: LIMEN_FABLE_ACCEPTANCE must point at a written scripts/fable-allotment.py receipt before dispatch may return fable instead of falling back to opus."
+    note: "Comma-separated task classes that may select the reserved Fable rung. Class membership is not enough by itself: LIMEN_FABLE_ACCEPTANCE must point at a written scripts/fable-allotment.py receipt before dispatch may return fable instead of falling back to LIMEN_CLAUDE_FABLE_FALLBACK_TIER."
   LIMEN_FABLE_ACCEPTANCE:
     default: ""
     env: LIMEN_FABLE_ACCEPTANCE

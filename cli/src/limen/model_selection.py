@@ -88,21 +88,87 @@ def _claude_model_is_fable(model: str | None) -> bool:
     return bool(model and "fable" in str(model).lower())
 
 
+def _claude_model_is_opus(model: str | None) -> bool:
+    return bool(model and "opus" in str(model).lower())
+
+
+def _claude_model_uses_large_context(model: str | None) -> bool:
+    text = str(model or "").lower()
+    return bool("1m" in text or "1000000" in text or "1,000,000" in text)
+
+
+def _tier_index(tier: str) -> int:
+    try:
+        return _CLAUDE_TIER_ORDER.index(tier)
+    except ValueError:
+        return 0
+
+
+def _cap_tier(tier: str, cap: str) -> str:
+    """Return ``tier`` capped to ``cap`` in the shared cheap→expensive ladder."""
+    if tier not in _CLAUDE_TIER_ORDER:
+        tier = "haiku"
+    if cap not in _CLAUDE_TIER_ORDER:
+        cap = "sonnet"
+    return _CLAUDE_TIER_ORDER[min(_tier_index(tier), _tier_index(cap))]
+
+
+def _max_inherited_tier() -> str:
+    """The highest tier allowed for inherited/default fleet choices.
+
+    This applies to unclassed shim floors and global ``LIMEN_CLAUDE_MODEL`` pins. Task-specific
+    declaration sites can still earn Opus/Fable through the ladder and acceptance gates.
+    """
+    hard_cap = "fable" if _expensive_model_pin_allowed() else "sonnet"
+    return _cap_tier(os.environ.get("LIMEN_CLAUDE_MAX_INHERITED_TIER", "sonnet"), hard_cap)
+
+
+def _fable_fallback_tier() -> str:
+    return _cap_tier(os.environ.get("LIMEN_CLAUDE_FABLE_FALLBACK_TIER", "sonnet"), "opus")
+
+
+def _expensive_model_pin_allowed() -> bool:
+    return os.environ.get("LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN") == "1"
+
+
+def _large_context_allowed() -> bool:
+    return os.environ.get("LIMEN_ALLOW_CLAUDE_1M_CONTEXT") == "1" or _claude_fable_acceptance_present()
+
+
 def _resolve_claude_model(tier: str) -> str:
     """tier → the ``claude --model`` value. Env pin wins (LIMEN_CLAUDE_<TIER>_MODEL); else the
     bare CLI tier alias, which the ``claude`` CLI resolves to the current dated model itself
     (nothing pinned, survives renames). ([[derive-never-pin-hardcodes]])"""
     model = os.environ.get(f"LIMEN_CLAUDE_{tier.upper()}_MODEL") or tier
     if _claude_model_is_fable(model) and not _claude_fable_acceptance_present():
-        return "opus" if tier == "fable" else tier
+        return _resolve_claude_model(_fable_fallback_tier()) if tier == "fable" else tier
+    if _claude_model_uses_large_context(model) and not _large_context_allowed():
+        return tier if tier in _CLAUDE_TIER_ORDER else _max_inherited_tier()
+    return model
+
+
+def _guard_claude_model_pin(model: str | None) -> str | None:
+    """Prevent global model pins from turning every inherited fleet spawn expensive.
+
+    Per-task declaration sites still pass explicit ``--model`` values through the shim; those are
+    audited by transcript/workflow guards. This guard covers the global default pin
+    ``LIMEN_CLAUDE_MODEL``, which otherwise becomes inherited fan-out for unrelated cheap work.
+    """
+    if _claude_model_is_fable(model) and not _claude_fable_acceptance_present():
+        return _resolve_claude_model(_fable_fallback_tier())
+    if (
+        (_claude_model_is_opus(model) or _claude_model_uses_large_context(model))
+        and not _expensive_model_pin_allowed()
+    ):
+        return _resolve_claude_model(_max_inherited_tier())
+    if _claude_model_uses_large_context(model) and not _large_context_allowed():
+        return _resolve_claude_model(_max_inherited_tier())
     return model
 
 
 def _guard_fable_model_pin(model: str | None) -> str | None:
-    """Prevent model-name pins from routing Fable without the receipt-backed tier gate."""
-    if _claude_model_is_fable(model) and not _claude_fable_acceptance_present():
-        return _resolve_claude_model("opus")
-    return model
+    """Backward-compatible name for the global Claude model-pin guard."""
+    return _guard_claude_model_pin(model)
 
 
 # ── The non-bypassable shim's per-spawn floor sort ──────────────────────────────────────────
@@ -124,12 +190,16 @@ def _guard_fable_model_pin(model: str | None) -> str | None:
 
 
 def _shim_floor_tier() -> str:
-    """The floor tier for an unclassed fleet spawn. LIMEN_CLAUDE_SHIM_FLOOR tunes it; defaults to
-    "haiku" to match dispatch._claude_tier_for(None). Guarded to a real rung."""
+    """The floor tier for an unclassed fleet spawn.
+
+    ``LIMEN_CLAUDE_SHIM_FLOOR`` tunes it, but inherited/default floors are capped by
+    ``LIMEN_CLAUDE_MAX_INHERITED_TIER`` (default Sonnet) so a shell export cannot make trivial
+    workers inherit Opus/Fable or 1M context by default.
+    """
     tier = os.environ.get("LIMEN_CLAUDE_SHIM_FLOOR", "haiku")
-    if tier == "fable":
-        return "opus"
-    return tier if tier in _CLAUDE_TIER_ORDER else "haiku"
+    if tier not in _CLAUDE_TIER_ORDER:
+        return "haiku"
+    return _cap_tier(tier, _max_inherited_tier())
 
 
 def model_for_argv(args: list[str]) -> str | None:
@@ -149,7 +219,7 @@ def model_for_argv(args: list[str]) -> str | None:
             return None  # interactive / `claude mcp …` / any non-print — never re-tier
         pin = os.environ.get("LIMEN_CLAUDE_MODEL")
         if pin:
-            return _guard_fable_model_pin(pin)  # a manual pin wins only inside the Fable gate
+            return _guard_claude_model_pin(pin)  # a manual pin wins only inside the expensive gates
         if os.environ.get("LIMEN_CLAUDE_TIER_SELECT", "1") != "1":
             return None  # tiering deliberately disabled → bare invocation (account default)
         return _resolve_claude_model(_shim_floor_tier())

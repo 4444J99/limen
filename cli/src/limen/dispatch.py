@@ -30,6 +30,7 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _claude_fable_acceptance_present,
     _claude_fable_classes,
     _claude_opus_classes,
+    _fable_fallback_tier,
     _guard_fable_model_pin,
     _resolve_claude_model,
 )
@@ -1950,12 +1951,12 @@ def _claude_tier_for(task: Task | None) -> str:
     pin = task.claude_tier
     if pin in _CLAUDE_TIER_ORDER:
         if pin == "fable" and not _claude_fable_acceptance_present():
-            return "opus"
+            return _fable_fallback_tier()
         return str(pin)
     classes = _task_classes(task)
     override = _claude_tier_overrides()
     if classes & (_claude_fable_classes() | set(override.get("fable") or [])):
-        return "fable" if _claude_fable_acceptance_present() else "opus"
+        return "fable" if _claude_fable_acceptance_present() else _fable_fallback_tier()
     if classes & (_claude_opus_classes() | set(override.get("opus") or [])):
         return "opus"
     lane_data = _ledger_lanes().get("claude") or {}

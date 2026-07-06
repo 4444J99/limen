@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 
@@ -58,3 +59,30 @@ def test_census_is_counts_only(tmp_path, monkeypatch):
     assert "/private/path" not in encoded
     assert "private-step" not in encoded
     assert "token detail" not in encoded
+
+
+def test_advance_photos_treats_nothing_to_prove_as_skip(tmp_path, monkeypatch):
+    root = tmp_path / "limen"
+    photos = tmp_path / "photos"
+    portvs = tmp_path / "portvs"
+    root.mkdir()
+    photos.mkdir()
+    portvs.mkdir()
+    module = _load(monkeypatch, root, photos, portvs)
+
+    monkeypatch.setattr(module, "repo_clean", lambda repo: True)
+    monkeypatch.setattr(
+        module,
+        "run",
+        lambda *a, **k: subprocess.CompletedProcess(
+            a[0],
+            1,
+            "",
+            "[photos-duplicate-proof] candidates missing - nothing to prove",
+        ),
+    )
+
+    result = module.advance_photos(apply=False, limit_groups=25)
+
+    assert result["ok"] is True
+    assert result["skipped"] == "no duplicate candidates to prove"

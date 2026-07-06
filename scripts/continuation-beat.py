@@ -256,6 +256,9 @@ def advance_photos(apply: bool, limit_groups: int) -> dict[str, Any]:
     dry = run(["python3", "scripts/photos-duplicate-proof.py", "--limit-groups", str(limit_groups), "--dry-run"], PHOTOS)
     dry_data = load_json_output(dry)
     if dry_data is None:
+        detail = short_output(dry)
+        if "nothing to prove" in detail.lower():
+            return {"ok": True, "skipped": "no duplicate candidates to prove", "detail": detail}
         return {"ok": False, "detail": short_output(dry)}
     processed = int(dry_data.get("processed_this_run") or 0)
     applied: dict[str, Any] = {"skipped": "no unprocessed duplicate groups"}
