@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """library-preserve.py — process ~/Library toward ideal form: preserve the irreplaceable
-DURABLY, reclaim only regenerable cache as a byproduct, and PROPOSE (never auto-execute)
+DURABLY, census regenerable cache as a byproduct, and PROPOSE (never auto-execute)
 the irreversible. The personal-data analogue of clone-maintenance.sh.
 
 The user's directive (2026-06-22): "all of the above and more; reduction is laziness" and
@@ -11,20 +11,20 @@ The user's directive (2026-06-22): "all of the above and more; reduction is lazi
   PRESERVE   copy every at-risk irreplaceable class to /Volumes/Archive4T and CHECKSUM-verify
              — additive, copy->verify, NEVER move/delete. Closes the documented "only two
              local copies, no offsite 3rd" gap for the consciousness sliver.
-  RECLAIM    (byproduct, safe) purge only REGENERABLE dev/build caches. Reversible (re-fetch).
+  CENSUS     (byproduct, safe) report REGENERABLE dev/build cache candidates. Physical cache
+             removal still needs a separate archive/redaction acceptance surface.
   PROPOSE    the irreversible / big levers (iCloud Drive optimize ~34G, offsite 3rd copy,
              no-Time-Machine-backup) as KNOWN-OWNED-PERVASIVE levers — printed + written to a
              registry, executed only on the user's word.
 
 HARD RULES (allwheres): NEVER auto-delete personal DATA, NEVER auto-send. Reversible only.
-Dry-run by DEFAULT; set LIMEN_LIB_APPLY=1 to perform the SAFE phases (preserve + cache purge);
+Dry-run by DEFAULT; set LIMEN_LIB_APPLY=1 to perform the SAFE preserve phases;
 the PROPOSE phase is never auto-executed regardless.
 """
 from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -52,7 +52,7 @@ WORKSPACE_DST = os.path.join(ARCHIVE, "workspace-backup")
 WORKSPACE_LOCK = os.path.join(ROOT, "logs", ".workspace-preserve.lock")
 WORKSPACE_UNIT_TIMEOUT_SEC = int(os.environ.get("LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC", "600"))
 
-# ── REGENERABLE caches — definitively safe to purge (re-fetch on next use) ─────────────
+# ── REGENERABLE caches — safe to report; physical removal needs acceptance ─────────────
 REGENERABLE = [
     "Library/Caches/Homebrew", "Library/Caches/node-gyp", "Library/Caches/go-build",
     "Library/Caches/ms-playwright", "Library/Caches/ms-playwright-go", "Library/Caches/dotslash",
@@ -129,7 +129,7 @@ def _archive_mounted() -> bool:
 
 
 def reclaim_caches() -> int:
-    print("── reclaim regenerable caches (reversible: re-fetch on next use) ──")
+    print("── census regenerable caches (reversible, but removal requires acceptance) ──")
     freed = 0
     for rel in REGENERABLE:
         p = os.path.join(HOME, rel)
@@ -137,10 +137,8 @@ def reclaim_caches() -> int:
         if sz == 0:
             continue
         freed += sz
-        print(f"  {'purge' if APPLY else 'WOULD purge'}: ~/{rel}  ({_gb(sz)})")
-        if APPLY:
-            shutil.rmtree(p, ignore_errors=True) if os.path.isdir(p) else os.remove(p)
-    print(f"  {'' if APPLY else '(dry-run) '}caches: {_gb(freed)} {'freed' if APPLY else 'reclaimable'}.")
+        print(f"  WOULD purge: ~/{rel}  ({_gb(sz)})")
+    print(f"  (dry-run) caches: {_gb(freed)} reclaimable; physical cache removal requires acceptance.")
     return freed
 
 

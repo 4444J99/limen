@@ -569,9 +569,9 @@ while true; do
     if [ -x "$LIMEN_ROOT/scripts/capture.sh" ]; then bash "$LIMEN_ROOT/scripts/capture.sh" 2>&1 | tail -3 || true
     elif [ -x "$LIMEN_ROOT/scripts/backup.sh" ]; then bash "$LIMEN_ROOT/scripts/backup.sh" 2>&1 | tail -2 || true; fi
     # LIBRARY PRESERVE — process ~/Library toward ideal form WITHOUT his hand: preserve the
-    # irreplaceable sliver to Archive4T (copy→verify, Backblaze-offsite), reclaim regenerable
-    # caches + the reversible iCloud local-cache (copy→verify→brctl-evict). Solves the recurring
-    # local-storage creep autonomically; safe/reversible only; fails open if Archive4T is unmounted.
+    # irreplaceable sliver to Archive4T (copy→verify, Backblaze-offsite), census regenerable
+    # caches, and propose reversible iCloud local-cache levers. Physical cache removal is separate
+    # acceptance-gated work; preservation fails open if Archive4T is unmounted.
     LIMEN_LIB_APPLY="${LIMEN_LIB_APPLY:-1}" python3 "$LIMEN_ROOT/scripts/library-preserve.py" 2>&1 | tail -4 || true
     stamp backup
   fi
