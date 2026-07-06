@@ -22,6 +22,7 @@ import argparse
 import datetime
 import json
 import os
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -71,6 +72,63 @@ def _clear_running_markers(task_id: str) -> None:
             marker.unlink(missing_ok=True)
 
 
+def _running_marker_info(marker: Path) -> dict[str, object]:
+    raw = marker.read_text().strip()
+    try:
+        data = json.loads(raw)
+        started = datetime.datetime.fromisoformat(str(data.get("started_at") or ""))
+        pid = data.get("pid")
+        return {"started_at": started, "pid": int(pid) if pid is not None else None}
+    except Exception:
+        return {"started_at": datetime.datetime.fromisoformat(raw), "pid": None}
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _worker_has_defunct_child(pid: int) -> bool:
+    try:
+        proc = subprocess.run(
+            ["ps", "-axo", "pid=,ppid=,stat="],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    for line in proc.stdout.splitlines():
+        parts = line.split(None, 2)
+        if len(parts) < 3:
+            continue
+        try:
+            ppid = int(parts[1])
+        except ValueError:
+            continue
+        if ppid == pid and "Z" in parts[2]:
+            return True
+    return False
+
+
+def _kill_worker_group(pid: int | None) -> None:
+    if pid is None:
+        return
+    try:
+        os.killpg(pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+
+
 def harvest() -> int:
     """Apply finished background runs to tasks.yaml under the lock. Returns count applied."""
     RUNS.mkdir(parents=True, exist_ok=True)
@@ -118,20 +176,32 @@ def reap_stale(max_age_s: int):
     A live slow worker is younger than max_age (call_agent_dispatch caps the agent at its timeout)."""
     RUNS.mkdir(parents=True, exist_ok=True)
     now = _now()
+    defunct_grace_s = max(1, _env_int("LIMEN_ASYNC_DEFUNCT_GRACE", 120))
     reaped = []
     for m in RUNS.glob("*__*.running"):
         try:
-            age = (now - datetime.datetime.fromisoformat(m.read_text().strip())).total_seconds()
+            info = _running_marker_info(m)
+            age = (now - info["started_at"]).total_seconds()  # type: ignore[operator]
         except Exception:
             age = max_age_s + 1  # unreadable/empty marker → treat as stale
+            info = {"pid": None}
+        pid = info.get("pid")
+        dead_pid = isinstance(pid, int) and not _pid_alive(pid)
+        zombie_stuck = isinstance(pid, int) and age > defunct_grace_s and _worker_has_defunct_child(pid)
         if age > max_age_s:
             tid, agent = m.name[: -len(".running")].rsplit("__", 1)
             # if the worker DID finish (result file present), let harvest handle it; don't reap
             if not (RUNS / f"{tid}.result.json").exists():
                 # Defer the marker unlink until the reopen is committed under the lock (below), so a
                 # lock timeout can't leave the slot leaked (marker gone, task still 'dispatched').
-                reaped.append((tid, agent, m))
+                reaped.append((tid, agent, m, pid if isinstance(pid, int) else None))
+        elif dead_pid or zombie_stuck:
+            tid, agent = m.name[: -len(".running")].rsplit("__", 1)
+            if not (RUNS / f"{tid}.result.json").exists():
+                reaped.append((tid, agent, m, pid if isinstance(pid, int) else None))
     if reaped:
+        for _tid, _agent, _m, pid in reaped:
+            _kill_worker_group(pid)
         with _queue_lock(TASKS) as got:
             if not got:
                 # Lock busy — keep the markers (not yet unlinked) so a later beat retries the reap;
@@ -139,7 +209,7 @@ def reap_stale(max_age_s: int):
                 return []
             lf = load_limen_file(TASKS)
             byid = {t.id: t for t in lf.tasks}
-            for tid, agent, _m in reaped:
+            for tid, agent, _m, _pid in reaped:
                 t = byid.get(tid)
                 if t is not None and t.status == "dispatched":
                     if _has_done_transition(t):
@@ -166,9 +236,9 @@ def reap_stale(max_age_s: int):
                         )
             save_limen_file(TASKS, lf)
         # reopen is committed → now safe to remove the markers that freed these slots
-        for _tid, _agent, m in reaped:
+        for _tid, _agent, m, _pid in reaped:
             m.unlink(missing_ok=True)
-    return [tid for tid, _agent, _m in reaped]
+    return [tid for tid, _agent, _m, _pid in reaped]
 
 
 def inspect_stale(max_age_s: int) -> list[str]:
@@ -178,7 +248,8 @@ def inspect_stale(max_age_s: int) -> list[str]:
     stale = []
     for m in RUNS.glob("*__*.running"):
         try:
-            age = (now - datetime.datetime.fromisoformat(m.read_text().strip())).total_seconds()
+            info = _running_marker_info(m)
+            age = (now - info["started_at"]).total_seconds()  # type: ignore[operator]
         except Exception:
             age = max_age_s + 1
         if age > max_age_s:
@@ -294,15 +365,17 @@ def reserve_and_launch(agents, per_agent, cap, dry):
         return picked
     # outside the lock: write markers + spawn detached workers (fast; we never wait on them)
     for agent, tid in picked:
-        (RUNS / f"{tid}__{agent}.running").write_text(now.isoformat())
         logf = open(RUNS / f"{tid}.log", "a")
-        subprocess.Popen(
+        proc = subprocess.Popen(
             [sys.executable, str(WORKER), "--agent", agent, "--task-id", tid],
             stdout=logf,
             stderr=logf,
             stdin=subprocess.DEVNULL,
             start_new_session=True,
             env={**os.environ, "PYTHONPATH": str(ROOT / "cli" / "src")},
+        )
+        (RUNS / f"{tid}__{agent}.running").write_text(
+            json.dumps({"started_at": now.isoformat(), "agent": agent, "task_id": tid, "pid": proc.pid})
         )
     return picked
 
