@@ -253,12 +253,19 @@ def reap_stale(max_age_s: int):
     """Free slots from DEAD workers. A .running marker older than max_age with no result file means
     the detached worker crashed/was-killed before finishing (OOM, host sleep, SIGKILL). Remove the
     marker and reopen the task so it's retried — otherwise it would leak a concurrency slot forever.
-    A live slow worker is younger than max_age (call_agent_dispatch caps the agent at its timeout)."""
+    Also reopen markerless async reservations after the same grace window: a worker that exits between
+    board reservation and result publication can leave tasks.yaml stuck at dispatched with no .running
+    marker for the normal reaper to see. A live slow worker is younger than max_age (call_agent_dispatch
+    caps the agent at its timeout)."""
     RUNS.mkdir(parents=True, exist_ok=True)
     now = _now()
     defunct_grace_s = max(1, _env_int("LIMEN_ASYNC_DEFUNCT_GRACE", 120))
     reaped = []
+    marker_task_ids = set()
+    result_task_ids = {rf.name[: -len(".result.json")] for rf in RUNS.glob("*.result.json")}
     for m in RUNS.glob("*__*.running"):
+        tid, agent = m.name[: -len(".running")].rsplit("__", 1)
+        marker_task_ids.add(tid)
         try:
             info = _running_marker_info(m)
             age = (now - info["started_at"]).total_seconds()  # type: ignore[operator]
@@ -269,17 +276,32 @@ def reap_stale(max_age_s: int):
         dead_pid = isinstance(pid, int) and not _pid_alive(pid)
         zombie_stuck = isinstance(pid, int) and age > defunct_grace_s and _worker_has_defunct_child(pid)
         if age > max_age_s:
-            tid, agent = m.name[: -len(".running")].rsplit("__", 1)
             # if the worker DID finish (result file present), let harvest handle it; don't reap
             if not (RUNS / f"{tid}.result.json").exists():
                 # Defer the marker unlink until the reopen is committed under the lock (below), so a
                 # lock timeout can't leave the slot leaked (marker gone, task still 'dispatched').
                 reaped.append((tid, agent, m, pid if isinstance(pid, int) else None))
         elif dead_pid or zombie_stuck:
-            tid, agent = m.name[: -len(".running")].rsplit("__", 1)
             if not (RUNS / f"{tid}.result.json").exists():
                 reaped.append((tid, agent, m, pid if isinstance(pid, int) else None))
-    if reaped:
+    markerless = []
+    try:
+        lf_preview = load_limen_file(TASKS)
+        for t in lf_preview.tasks:
+            if t.status != "dispatched" or t.id in marker_task_ids or t.id in result_task_ids:
+                continue
+            if not t.dispatch_log:
+                continue
+            last = t.dispatch_log[-1]
+            if last.session_id != "async-reserve" or last.status != "dispatched":
+                continue
+            stamp = t.updated or last.timestamp
+            if stamp and (now - stamp).total_seconds() > max_age_s:
+                markerless.append((t.id, last.agent or t.target_agent))
+    except Exception:
+        markerless = []
+    applied_markerless = []
+    if reaped or markerless:
         for _tid, _agent, _m, pid in reaped:
             _kill_worker_group(pid)
         with _queue_lock(TASKS) as got:
@@ -289,6 +311,7 @@ def reap_stale(max_age_s: int):
                 return []
             lf = load_limen_file(TASKS)
             byid = {t.id: t for t in lf.tasks}
+            changed = False
             for tid, agent, _m, _pid in reaped:
                 t = byid.get(tid)
                 if t is not None and t.status == "dispatched":
@@ -302,6 +325,7 @@ def reap_stale(max_age_s: int):
                                 "dispatch-async: stale worker marker reaped after prior done; restored terminal status"
                             ),
                         )
+                        changed = True
                     else:
                         t.status = "open"  # dead worker left no result → retry on a later beat
                         t.updated = now
@@ -314,11 +338,64 @@ def reap_stale(max_age_s: int):
                                 output=f"dispatch-async: stale worker marker older than {max_age_s}s reaped; task reopened",
                             )
                         )
-            save_limen_file(TASKS, lf)
+                        changed = True
+            if markerless:
+                fresh_marker_task_ids = {
+                    m.name[: -len(".running")].rsplit("__", 1)[0] for m in RUNS.glob("*__*.running")
+                }
+                fresh_result_task_ids = {rf.name[: -len(".result.json")] for rf in RUNS.glob("*.result.json")}
+                for tid, agent in markerless:
+                    t = byid.get(tid)
+                    if (
+                        t is None
+                        or t.status != "dispatched"
+                        or tid in fresh_marker_task_ids
+                        or tid in fresh_result_task_ids
+                        or not t.dispatch_log
+                    ):
+                        continue
+                    last = t.dispatch_log[-1]
+                    stamp = t.updated or last.timestamp
+                    if (
+                        last.session_id != "async-reserve"
+                        or last.status != "dispatched"
+                        or not stamp
+                        or (now - stamp).total_seconds() <= max_age_s
+                    ):
+                        continue
+                    if _has_done_transition(t):
+                        _restore_done_status(
+                            t,
+                            now,
+                            agent=agent,
+                            session_id="async-reap-stale",
+                            output="dispatch-async: markerless stale async reservation restored terminal status",
+                        )
+                        applied_markerless.append(tid)
+                        changed = True
+                    else:
+                        t.status = "open"
+                        t.updated = now
+                        t.dispatch_log.append(
+                            DispatchLogEntry(
+                                timestamp=now,
+                                agent=agent,
+                                session_id="async-reap-stale",
+                                status="open",
+                                output=(
+                                    f"dispatch-async: markerless async reservation older than {max_age_s}s "
+                                    "reaped; task reopened"
+                                ),
+                            )
+                        )
+                        applied_markerless.append(tid)
+                        changed = True
+            if changed:
+                save_limen_file(TASKS, lf)
         # reopen is committed → now safe to remove the markers that freed these slots
         for _tid, _agent, m, _pid in reaped:
             m.unlink(missing_ok=True)
-    return [tid for tid, _agent, _m, _pid in reaped]
+    return [tid for tid, _agent, _m, _pid in reaped] + applied_markerless
 
 
 def inspect_stale(max_age_s: int) -> list[str]:

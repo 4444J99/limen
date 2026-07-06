@@ -368,6 +368,42 @@ def test_reaper_restores_prior_done_instead_of_reopening(tmp_path):
     assert task.dispatch_log[-1].session_id == "async-reap-stale"
 
 
+def test_reaper_reopens_markerless_async_reservation(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    today = datetime.date.today()
+    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    lf.tasks.append(
+        Task(
+            id="MARKERLESS",
+            title="t",
+            repo="x/y",
+            target_agent="agy",
+            status="dispatched",
+            created=today,
+            updated=reserved_at,
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="agy",
+                    session_id="async-reserve",
+                    status="dispatched",
+                    output="dispatch-async: reserved before detached worker launch",
+                )
+            ],
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    reaped = da.reap_stale(1200)
+
+    assert reaped == ["MARKERLESS"]
+    task = _board(tmp_path)["MARKERLESS"]
+    assert task.status == "open"
+    assert task.dispatch_log[-1].session_id == "async-reap-stale"
+    assert "markerless async reservation" in task.dispatch_log[-1].output
+
+
 def test_async_reserve_counts_inflight_against_budget(tmp_path):
     """In-flight .running markers count toward a lane's per-agent budget, so a lane already at its
     cap via in-flight runs reserves nothing more (prevents over-dispatch between reserve & harvest)."""
