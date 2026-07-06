@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T03:41:38+00:00`
+Generated: `2026-07-06T03:42:39+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `25`.
-- External archives verified: `24`.
-- Verified external archive source size: `22.6 GiB`.
+- Preservation receipts: `26`.
+- External archives verified: `25`.
+- Verified external archive source size: `22.7 GiB`.
 - Event source size total: `27.3 GiB` (includes retries).
+- `2026-07-06T03:42:51Z` `studium-generale`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034251Z-studium-generale/receipt.json`.
 - `2026-07-06T03:41:50Z` `hokage-chess`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034150Z-hokage-chess/receipt.json`.
 - `2026-07-06T03:40:48Z` `anon-hookup-now`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034048Z-anon-hookup-now/receipt.json`.
 - `2026-07-06T03:39:46Z` `4444J99`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033946Z-4444J99/receipt.json`.
@@ -43,14 +44,13 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T03:15:41Z` `organvm-i-theoria-mesh`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031541Z-organvm-i-theoria-mesh/receipt.json`.
 - `2026-07-06T03:11:11Z` `domus-genoma`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031111Z-domus-genoma/receipt.json`.
 - `2026-07-06T03:09:59Z` `vulnpulse`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030959Z-vulnpulse/receipt.json`.
-- `2026-07-06T03:09:05Z` `bountyscope`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030905Z-bountyscope/receipt.json`.
 
 ## Preservation Results
 
 - Requested roots: `1`.
-- Source size receipted: `59.4 MiB`.
+- Source size receipted: `58.8 MiB`.
 - Statuses: `external_archive_preserved` 1.
-- Preserved `hokage-chess` `59.4 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034150Z-hokage-chess/receipt.json`.
+- Preserved `studium-generale` `58.8 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034251Z-studium-generale/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
