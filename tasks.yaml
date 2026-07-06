@@ -95474,3 +95474,341 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+- id: DISCOVER-organvm-pages--theoria-copy--poiesis
+  title: Discover the latent value of organvm/pages--theoria-copy--poiesis
+  repo: organvm/pages--theoria-copy--poiesis
+  type: research
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/pages--theoria-copy--poiesis. This\
+    \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/pages--theoria-copy--poiesis\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.726462Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-pages--theoria-copy--ergon
+  title: Discover the latent value of organvm/pages--theoria-copy--ergon
+  repo: organvm/pages--theoria-copy--ergon
+  type: research
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/pages--theoria-copy--ergon. This\
+    \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/pages--theoria-copy--ergon\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.731069Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-pages--theoria-copy--taxis
+  title: Discover the latent value of organvm/pages--theoria-copy--taxis
+  repo: organvm/pages--theoria-copy--taxis
+  type: research
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/pages--theoria-copy--taxis. This\
+    \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/pages--theoria-copy--taxis\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.732752Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-pages--theoria-copy--logos
+  title: Discover the latent value of organvm/pages--theoria-copy--logos
+  repo: organvm/pages--theoria-copy--logos
+  type: research
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/pages--theoria-copy--logos. This\
+    \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/pages--theoria-copy--logos\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.734370Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-pages--theoria-copy--koinonia
+  title: Discover the latent value of organvm/pages--theoria-copy--koinonia
+  repo: organvm/pages--theoria-copy--koinonia
+  type: research
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/pages--theoria-copy--koinonia. This\
+    \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/pages--theoria-copy--koinonia\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.736967Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-pages--theoria-copy--kerygma
+  title: Discover the latent value of organvm/pages--theoria-copy--kerygma
+  repo: organvm/pages--theoria-copy--kerygma
+  type: research
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/pages--theoria-copy--kerygma. This\
+    \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/pages--theoria-copy--kerygma\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.738684Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-pages--theoria-copy--meta-organvm
+  title: Discover the latent value of organvm/pages--theoria-copy--meta-organvm
+  repo: organvm/pages--theoria-copy--meta-organvm
+  type: research
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/pages--theoria-copy--meta-organvm.\
+    \ This repo currently has NO ranked value \u2014 your job is to find it (value\
+    \ is discovered, never assumed absent). Steps: (1) Read the repo \u2014 what it\
+    \ is, its real entrypoints/exports, what it already does. (2) Identify its highest\
+    \ latent value: a concrete product, revenue path, reusable asset, or capability\
+    \ the rest of the estate could use \u2014 be specific and honest. (3) DECIDE:\
+    \ if there is real value, write a one-paragraph value thesis to DISCOVERY.md AND\
+    \ open a PR that ALSO appends \"organvm/pages--theoria-copy--meta-organvm\" to\
+    \ value-repos.json (promote it into the ranked tier so build-out can follow) AND\
+    \ name the single best concrete first task; if it is genuinely archival, write\
+    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
+    \ Keep any build green. Output the thesis. [auto-discovery 2026-07-06; no repo\
+    \ stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.741624Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-sovereign--ground--4444j99
+  title: Discover the latent value of organvm/sovereign--ground--4444j99
+  repo: organvm/sovereign--ground--4444j99
+  type: research
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/sovereign--ground--4444j99. This\
+    \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/sovereign--ground--4444j99\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.743334Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-hokage-chess--4444j99
+  title: Discover the latent value of organvm/hokage-chess--4444j99
+  repo: organvm/hokage-chess--4444j99
+  type: research
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/hokage-chess--4444j99. This repo\
+    \ currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/hokage-chess--4444j99\" to value-repos.json (promote\
+    \ it into the ranked tier so build-out can follow) AND name the single best concrete\
+    \ first task; if it is genuinely archival, write the thesis saying so (so it is\
+    \ never re-discovered) \u2014 do NOT promote it. Keep any build green. Output\
+    \ the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.744921Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy
+  title: Discover the latent value of organvm/content-engine--asset-amplifier--a-organvm-legacy
+  repo: organvm/content-engine--asset-amplifier--a-organvm-legacy
+  type: research
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/content-engine--asset-amplifier--a-organvm-legacy.\
+    \ This repo currently has NO ranked value \u2014 your job is to find it (value\
+    \ is discovered, never assumed absent). Steps: (1) Read the repo \u2014 what it\
+    \ is, its real entrypoints/exports, what it already does. (2) Identify its highest\
+    \ latent value: a concrete product, revenue path, reusable asset, or capability\
+    \ the rest of the estate could use \u2014 be specific and honest. (3) DECIDE:\
+    \ if there is real value, write a one-paragraph value thesis to DISCOVERY.md AND\
+    \ open a PR that ALSO appends \"organvm/content-engine--asset-amplifier--a-organvm-legacy\"\
+    \ to value-repos.json (promote it into the ranked tier so build-out can follow)\
+    \ AND name the single best concrete first task; if it is genuinely archival, write\
+    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
+    \ Keep any build green. Output the thesis. [auto-discovery 2026-07-06; no repo\
+    \ stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.746984Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-studium-generale--4444j99
+  title: Discover the latent value of organvm/studium-generale--4444j99
+  repo: organvm/studium-generale--4444j99
+  type: research
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/studium-generale--4444j99. This repo\
+    \ currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/studium-generale--4444j99\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.748506Z'
+  dispatch_log: []
+- id: DISCOVER-organvm-micro-tato
+  title: Discover the latent value of organvm/micro-tato
+  repo: organvm/micro-tato
+  type: research
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/micro-tato. This repo currently has\
+    \ NO ranked value \u2014 your job is to find it (value is discovered, never assumed\
+    \ absent). Steps: (1) Read the repo \u2014 what it is, its real entrypoints/exports,\
+    \ what it already does. (2) Identify its highest latent value: a concrete product,\
+    \ revenue path, reusable asset, or capability the rest of the estate could use\
+    \ \u2014 be specific and honest. (3) DECIDE: if there is real value, write a one-paragraph\
+    \ value thesis to DISCOVERY.md AND open a PR that ALSO appends \"organvm/micro-tato\"\
+    \ to value-repos.json (promote it into the ranked tier so build-out can follow)\
+    \ AND name the single best concrete first task; if it is genuinely archival, write\
+    \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
+    \ Keep any build green. Output the thesis. [auto-discovery 2026-07-06; no repo\
+    \ stays dark]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T13:27:09.750037Z'
+  dispatch_log: []
