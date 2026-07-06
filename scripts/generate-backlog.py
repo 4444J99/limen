@@ -173,6 +173,89 @@ def _dispatch_lanes(board: object, dead: set[str]) -> set[str]:
     return set(select_lanes(selector, board, down_lanes=dead)) | {"any"}
 
 
+def _headroom_bucket(value: float | None) -> str:
+    if value is None:
+        return "unknown"
+    if value >= 90:
+        return "very_high"
+    if value >= 75:
+        return "high"
+    if value >= 50:
+        return "medium"
+    if value >= 25:
+        return "low"
+    return "very_low"
+
+
+def census(tasks_path: Path) -> dict:
+    """Redacted feed census: aggregate queue/gate shape only, never task text or repo names."""
+    report = {
+        "tasks_present": tasks_path.exists(),
+        "tasks_readable": False,
+        "task_count": 0,
+        "status_counts": {},
+        "routable_open_count": 0,
+        "active_buildout_count": 0,
+        "generated_buildout_count": 0,
+        "value_tier_count": len(_allowed_repos()),
+        "template_count": len(TEMPLATES),
+        "headroom_bucket": _headroom_bucket(_avg_headroom_pct()),
+        "worktree_debt_gate_enabled": os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") == "1",
+        "worktree_debt_readable": False,
+        "worktree_debt_count": 0,
+        "worktree_debt_limit": None,
+        "worktree_debt_exceeded": False,
+    }
+    try:
+        lf = load_limen_file(tasks_path)
+    except Exception:
+        return report
+    tasks = lf.tasks
+    report["tasks_readable"] = True
+    report["task_count"] = len(tasks)
+    report["status_counts"] = dict(sorted(Counter(str(t.status) for t in tasks).items()))
+
+    try:
+        from limen.dispatch import _down_lanes, _routine_generated_buildout_allowed
+
+        dead = _down_lanes()
+    except Exception:
+        dead = set()
+
+        def _routine_generated_buildout_allowed(_task):
+            return True
+
+    dispatch_lanes = _dispatch_lanes(lf, dead)
+    template_keys = {k for k, *_ in TEMPLATES}
+    report["routable_open_count"] = sum(
+        1
+        for t in tasks
+        if t.status == "open"
+        and (t.target_agent or "any") in dispatch_lanes
+        and (t.target_agent or "any") not in dead
+        and _routine_generated_buildout_allowed(t)
+    )
+    report["active_buildout_count"] = sum(
+        1
+        for t in tasks
+        if t.status in _ACTIVE and t.labels and t.labels[0] in template_keys
+    )
+    report["generated_buildout_count"] = sum(
+        1
+        for t in tasks
+        if t.labels and "generated" in t.labels and "build-out" in t.labels
+    )
+    try:
+        debt_exceeded, debt_report, limit = worktree_debt_exceeded()
+        report["worktree_debt_readable"] = True
+        report["worktree_debt_count"] = int(debt_report.get("debt", 0))
+        report["worktree_debt_limit"] = limit
+        report["worktree_debt_exceeded"] = bool(debt_exceeded)
+    except Exception:
+        pass
+    return report
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
@@ -189,9 +272,14 @@ def main() -> int:
         help="hard cap on tasks generated in one run (anti-flood)",
     )
     ap.add_argument("--apply", action="store_true", help="append to tasks.yaml (validated, atomic)")
+    ap.add_argument("--census", action="store_true", help="print redacted feed queue/gate counts and exit")
     args = ap.parse_args()
 
     path = Path(args.tasks)
+    if args.census:
+        print(json.dumps(census(path), indent=2, sort_keys=True))
+        return 0
+
     lf = load_limen_file(path)
     tasks = lf.tasks
 

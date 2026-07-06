@@ -8,6 +8,7 @@ generate-backlog.py runs autonomously in the heartbeat, so its safety properties
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -93,6 +94,51 @@ def _run(
 def _count_generated(path: Path) -> int:
     doc = yaml.safe_load(path.read_text())
     return sum(1 for t in doc["tasks"] if str(t["id"]).startswith("GEN-"))
+
+
+def test_census_is_counts_only(tmp_path: Path):
+    p = tmp_path / "tasks.yaml"
+    p.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {"name": "t"},
+                "tasks": [
+                    {
+                        "id": "SECRET-FEED-1",
+                        "title": "confidential launch task",
+                        "repo": "secret-owner/private-repo",
+                        "type": "code",
+                        "target_agent": "codex",
+                        "priority": "medium",
+                        "budget_cost": 1,
+                        "status": "open",
+                        "labels": ["test-coverage", "secret-label", "generated", "build-out"],
+                        "context": "private customer context",
+                        "created": "2026-06-01",
+                        "dispatch_log": [],
+                    }
+                ],
+            },
+            sort_keys=False,
+        )
+    )
+
+    census = json.loads(_run(p, "--census"))
+    encoded = json.dumps(census, sort_keys=True)
+
+    assert census["tasks_present"] is True
+    assert census["tasks_readable"] is True
+    assert census["task_count"] == 1
+    assert census["status_counts"] == {"open": 1}
+    assert census["value_tier_count"] == 1
+    assert census["generated_buildout_count"] == 1
+    assert "SECRET-FEED-1" not in encoded
+    assert "confidential" not in encoded
+    assert "secret-owner" not in encoded
+    assert "private-repo" not in encoded
+    assert "secret-label" not in encoded
+    assert "private customer" not in encoded
 
 
 def test_noop_when_queue_healthy(tmp_path: Path):
