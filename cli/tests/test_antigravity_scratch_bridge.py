@@ -22,7 +22,7 @@ def _git(args: list[str], cwd: Path) -> None:
 
 def _make_remote_preserved_repo(root: Path, name: str = "clean-root") -> Path:
     remote_parent = root.parent.parent if root.parent != root else root.parent
-    remote = remote_parent / f"{name}.git"
+    remote = remote_parent / f"{root.parent.name}-{root.name}-{name}.git"
     subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
     repo = root / name
     repo.mkdir()

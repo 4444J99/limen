@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T01:21:57+00:00`
+Generated: `2026-07-06T01:27:24+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -16,8 +16,38 @@ before any deletion.
 - Total scratch size: `30.6 GiB`.
 - Safe-reap candidate size: `2.2 GiB`.
 - Dispositions: `bridge_required` 34, `container_review_required` 3, `non_git_review_required` 3, `preserve_required` 3, `safe_reap_candidate` 23.
+- Post-reap scratch size: `28.4 GiB` across `43` roots.
 
-## Largest Roots
+## Reap Results
+
+- Applied at: `2026-07-06T01:27:51+00:00`.
+- Reaped: `23` roots, `2.2 GiB`.
+- Skipped: `0`; failed: `0`.
+- Reaped `growth-auditor` `972.0 MiB` (organvm-i-theoria/growth-auditor@3ecf369a7dea).
+- Reaped `the-invisible-ledger` `463.5 MiB` (a-organvm/the-invisible-ledger@bf9aa21ccea4).
+- Reaped `organvm-corpvs-testamentvm` `266.9 MiB` (organvm/organvm-corpvs-testamentvm@5668a653c7e2).
+- Reaped `organvm_domus_genoma` `167.8 MiB` (organvm/domus-genoma@8ea995bb587a).
+- Reaped `persona-fleet` `122.5 MiB` (organvm/persona-fleet@fd4fac20af13).
+- Reaped `a-i--skills` `96.2 MiB` (organvm/a-i--skills@c022ef82c30a).
+- Reaped `prompt-registry-archive` `83.3 MiB` (organvm/prompt-registry-archive@bd736d12a69a).
+- Reaped `portfolio` `34.6 MiB` (organvm/portfolio@dca52ecb1500).
+- Reaped `pr-454-workspace` `21.5 MiB` (organvm-i-theoria/.github@3fb7cc7506ad).
+- Reaped `cognitive-archaelogy-tribunal` `8.4 MiB` (organvm/cognitive-archaelogy-tribunal@e551af57c257).
+- Reaped `contrib` `7.5 MiB` (organvm/contrib@0f47a9614839).
+- Reaped `scale-threshold-emergence` `7.2 MiB` (organvm/scale-threshold-emergence@d37379040294).
+- Reaped `domus` `6.4 MiB` (organvm/domus@ed122a4af822).
+- Reaped `media-ark` `4.7 MiB` (4444J99/media-ark@8b6aab975143).
+- Reaped `my--father-mother` `2.2 MiB` (a-organvm/my--father-mother@3652902fa4e4).
+- Reaped `styx-behavioral-economics-theory` `520.0 KiB` (organvm/styx-behavioral-economics-theory@65d21cca29e4).
+- Reaped `organvm-iii-ergon-github` `472.0 KiB` (organvm-iii-ergon/.github@54f326b4b526).
+- Reaped `reading-group-curriculum` `464.0 KiB` (a-organvm/reading-group-curriculum@88bc60408101).
+- Reaped `organvm-vi-koinonia-github` `396.0 KiB` (organvm-vi-koinonia/.github@1c0e8ee1f8e7).
+- Reaped `relationship-pipeline` `340.0 KiB` (4444J99/relationship-pipeline@f432652365ef).
+- Reaped `4444J99.github.io` `232.0 KiB` (organvm/4444J99.github.io@e174f03e7616).
+- Reaped `process-environment-enactment-public-20260609173432` `160.0 KiB` (organvm/process-environment-enactment-public-20260609173432@cd7215ca8921).
+- Reaped `dot-github--4444j99` `128.0 KiB` (organvm/dot-github--4444j99@ffe8c305d18c).
+
+## Largest Roots Before Reap
 
 | Root | Size | Kind | Disposition | Reason | Remote / nested proof |
 |---|---:|---|---|---|---|
@@ -64,7 +94,7 @@ before any deletion.
 
 ## Operating Rule
 
-- `safe_reap_candidate`: local deletion can be considered by a separate reaper, not this script.
+- `safe_reap_candidate`: local deletion is allowed only through `--apply-safe-reap --write`, which reclassifies the root before removal and writes a receipt.
 - `bridge_required`: preserve/carry the uncommitted delta first.
 - `preserve_required`: push, archive, or receipt the local commit before deletion.
 - `container_review_required`: inspect nested repos; do not delete the parent as one blob.

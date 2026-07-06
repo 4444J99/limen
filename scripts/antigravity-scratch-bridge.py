@@ -5,6 +5,7 @@ Inventory ~/.gemini/antigravity-cli/scratch and classify each root before any
 local deletion. Deletion is opt-in and limited to roots reclassified as
 `safe_reap_candidate` immediately before removal.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,7 +48,9 @@ def relpath(path: Path) -> str:
 def run_git(path: Path, args: list[str], timeout: int = 20) -> subprocess.CompletedProcess[str]:
     cmd = ["git", "-C", str(path), *args]
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False, stdin=subprocess.DEVNULL)
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout, check=False, stdin=subprocess.DEVNULL
+        )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return subprocess.CompletedProcess(cmd, 1, "", str(exc))
 
@@ -109,7 +112,10 @@ def head_reachable_from_remote(path: Path, head: str) -> bool:
     refs = run_git(path, ["for-each-ref", "--format=%(refname)", "refs/remotes"], timeout=30)
     if refs.returncode != 0:
         return False
-    return any(run_git(path, ["merge-base", "--is-ancestor", head, ref], timeout=30).returncode == 0 for ref in refs.stdout.splitlines())
+    return any(
+        run_git(path, ["merge-base", "--is-ancestor", head, ref], timeout=30).returncode == 0
+        for ref in refs.stdout.splitlines()
+    )
 
 
 def merged_into_default(path: Path, head: str) -> bool:
@@ -212,7 +218,13 @@ def classify_root(path: Path, min_idle_hours: float) -> dict[str, Any]:
 def build_report(scratch_root: Path = SCRATCH_ROOT, min_idle_hours: float = 24.0) -> dict[str, Any]:
     generated = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     if not scratch_root.is_dir():
-        return {"generated_at": generated, "scratch_root": str(scratch_root), "present": False, "summary": {"total_roots": 0, "total_bytes": 0, "by_disposition": {}}, "roots": []}
+        return {
+            "generated_at": generated,
+            "scratch_root": str(scratch_root),
+            "present": False,
+            "summary": {"total_roots": 0, "total_bytes": 0, "by_disposition": {}},
+            "roots": [],
+        }
     rows = [classify_root(path, min_idle_hours) for path in sorted(scratch_root.iterdir()) if path.is_dir()]
     rows.sort(key=lambda item: int(item["size_bytes"]), reverse=True)
     by_disp = Counter(str(row["disposition"]) for row in rows)
@@ -246,58 +258,70 @@ def apply_safe_reap(report: dict[str, Any], min_idle_hours: float) -> dict[str, 
             path = raw_path.resolve()
             path.relative_to(scratch_root)
         except (OSError, ValueError):
-            results.append({
-                "name": row.get("name"),
-                "path": str(raw_path),
-                "status": "skipped",
-                "reason": "path-outside-scratch-root",
-            })
+            results.append(
+                {
+                    "name": row.get("name"),
+                    "path": str(raw_path),
+                    "status": "skipped",
+                    "reason": "path-outside-scratch-root",
+                }
+            )
             continue
         if path == scratch_root:
-            results.append({
-                "name": row.get("name"),
-                "path": str(path),
-                "status": "skipped",
-                "reason": "refused-scratch-root",
-            })
+            results.append(
+                {
+                    "name": row.get("name"),
+                    "path": str(path),
+                    "status": "skipped",
+                    "reason": "refused-scratch-root",
+                }
+            )
             continue
         if not path.exists():
-            results.append({
-                "name": row.get("name"),
-                "path": str(path),
-                "status": "skipped",
-                "reason": "already-missing",
-            })
+            results.append(
+                {
+                    "name": row.get("name"),
+                    "path": str(path),
+                    "status": "skipped",
+                    "reason": "already-missing",
+                }
+            )
             continue
 
         checked = classify_root(path, min_idle_hours)
         if checked.get("disposition") != "safe_reap_candidate":
-            results.append({
-                "name": checked.get("name"),
-                "path": checked.get("path"),
-                "status": "skipped",
-                "reason": f"reclassified-{checked.get('disposition')}",
-            })
+            results.append(
+                {
+                    "name": checked.get("name"),
+                    "path": checked.get("path"),
+                    "status": "skipped",
+                    "reason": f"reclassified-{checked.get('disposition')}",
+                }
+            )
             continue
         try:
             shutil.rmtree(path)
-            results.append({
-                "name": checked.get("name"),
-                "path": checked.get("path"),
-                "status": "reaped",
-                "reason": checked.get("reason"),
-                "size_bytes": int(checked.get("size_bytes", 0)),
-                "size": checked.get("size"),
-                "repo": checked.get("repo"),
-                "head": checked.get("head"),
-            })
+            results.append(
+                {
+                    "name": checked.get("name"),
+                    "path": checked.get("path"),
+                    "status": "reaped",
+                    "reason": checked.get("reason"),
+                    "size_bytes": int(checked.get("size_bytes", 0)),
+                    "size": checked.get("size"),
+                    "repo": checked.get("repo"),
+                    "head": checked.get("head"),
+                }
+            )
         except OSError as exc:
-            results.append({
-                "name": checked.get("name"),
-                "path": checked.get("path"),
-                "status": "failed",
-                "reason": str(exc),
-            })
+            results.append(
+                {
+                    "name": checked.get("name"),
+                    "path": checked.get("path"),
+                    "status": "failed",
+                    "reason": str(exc),
+                }
+            )
 
     reaped_bytes = sum(int(item.get("size_bytes", 0)) for item in results if item["status"] == "reaped")
     by_status = Counter(str(item["status"]) for item in results)
@@ -342,8 +366,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     if report.get("post_reap_summary"):
         post = report["post_reap_summary"]
         lines.append(
-            f"- Post-reap scratch size: `{post.get('total_size', '0 B')}` "
-            f"across `{post.get('total_roots', 0)}` roots."
+            f"- Post-reap scratch size: `{post.get('total_size', '0 B')}` across `{post.get('total_roots', 0)}` roots."
         )
     if report.get("reap"):
         reap = report["reap"]["summary"]
@@ -362,11 +385,17 @@ def render_markdown(report: dict[str, Any]) -> str:
                     proof = f"{proof}@{item['head']}"
                 lines.append(f"- Reaped `{item.get('name')}` `{item.get('size')}` ({proof}).")
             else:
-                lines.append(
-                    f"- {item.get('status', 'skipped').title()} `{item.get('name')}`: "
-                    f"{item.get('reason')}."
-                )
-    lines += ["", "## Largest Roots", "", "| Root | Size | Kind | Disposition | Reason | Remote / nested proof |", "|---|---:|---|---|---|---|"]
+                lines.append(f"- {item.get('status', 'skipped').title()} `{item.get('name')}`: {item.get('reason')}.")
+    largest_heading = "## Largest Roots"
+    if report.get("reap"):
+        largest_heading = "## Largest Roots Before Reap"
+    lines += [
+        "",
+        largest_heading,
+        "",
+        "| Root | Size | Kind | Disposition | Reason | Remote / nested proof |",
+        "|---|---:|---|---|---|---|",
+    ]
     for row in report.get("roots", [])[:40]:
         if row.get("kind") == "git":
             proof = row.get("repo") or row.get("remote") or "no origin"
@@ -375,7 +404,9 @@ def render_markdown(report: dict[str, Any]) -> str:
         else:
             nested = row.get("nested_by_disposition") or {}
             proof = ", ".join(f"{k}:{v}" for k, v in nested.items()) or "none"
-        lines.append(f"| `{row['name']}` | `{row['size']}` | `{row.get('kind')}` | `{row.get('disposition')}` | `{row.get('reason')}` | `{proof}` |")
+        lines.append(
+            f"| `{row['name']}` | `{row['size']}` | `{row.get('kind')}` | `{row.get('disposition')}` | `{row.get('reason')}` | `{proof}` |"
+        )
     lines += [
         "",
         "## Operating Rule",
@@ -417,7 +448,9 @@ def main() -> int:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
         summary = report["summary"]
-        print(f"antigravity-scratch: {summary.get('total_roots', 0)} roots, {summary.get('total_size', '0 B')}; safe-reap candidates {summary.get('safe_reap_size', '0 B')}")
+        print(
+            f"antigravity-scratch: {summary.get('total_roots', 0)} roots, {summary.get('total_size', '0 B')}; safe-reap candidates {summary.get('safe_reap_size', '0 B')}"
+        )
         for name, count in (summary.get("by_disposition") or {}).items():
             print(f"  {name}: {count}")
         if args.write:
