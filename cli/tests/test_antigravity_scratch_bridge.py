@@ -56,7 +56,9 @@ def _accepted_reap_proof(row: dict) -> tuple[list[dict], list[dict]]:
             "accepted_at": "2026-07-06T05:00:00Z",
             "root": row["name"],
             "accepted": True,
+            "archive_proof": "matching preservation event is archive_verified:true",
             "redaction_review": "private_archive_only",
+            "redaction_proof": "raw scratch content remains in private archive only",
             "private_receipt_sha256": "abc123",
         }
     ]
@@ -169,8 +171,31 @@ def test_apply_safe_reap_deletes_only_with_matching_archive_acceptance(tmp_path:
     assert reap["summary"]["failed"] == 0
     assert reap["results"][0]["reason"] == "clean-idle-remote-preserved"
     assert reap["results"][0]["private_receipt_sha256"] == "abc123"
+    assert reap["results"][0]["archive_proof"] == "matching preservation event is archive_verified:true"
     assert reap["results"][0]["redaction_review"] == "private_archive_only"
+    assert reap["results"][0]["redaction_proof"] == "raw scratch content remains in private archive only"
     assert not clean.exists()
+
+
+def test_apply_safe_reap_requires_acceptance_archive_and_redaction_proofs(tmp_path: Path):
+    bridge = _load()
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    clean = _make_remote_preserved_repo(scratch, "clean-root")
+
+    report = bridge.build_report(scratch, min_idle_hours=0)
+    for required_field in bridge.REAP_ACCEPTANCE_REQUIRED_FIELDS:
+        preservation, acceptance = _accepted_reap_proof(report["roots"][0])
+        acceptance[0].pop(required_field)
+
+        reap = bridge.apply_safe_reap(
+            report, min_idle_hours=0, preservation_history=preservation, acceptance_history=acceptance
+        )
+
+        assert reap["summary"]["reaped"] == 0
+        assert reap["summary"]["skipped"] == 1
+        assert reap["results"][0]["reason"] == "missing-human-reap-acceptance"
+        assert clean.exists()
 
 
 def test_reap_history_appends_once_and_renders_cumulative_receipt(tmp_path: Path):

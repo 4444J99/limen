@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T05:19:04+00:00`
+Generated: `2026-07-06T06:14:33+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -9,6 +9,7 @@ Do not delete Antigravity scratch roots by size alone. A root is only a review c
 when this bridge proves it is clean, idle, and preserved on a remote/default-equivalent ref.
 Physical deletion additionally requires a verified archive preservation receipt plus a
 human acceptance/redaction-review event in `docs/antigravity-scratch-reap-acceptance.jsonl`.
+The required acceptance shape is documented in `docs/antigravity-scratch-reap-acceptance.md`.
 Dirty roots are `bridge_required`: their per-root delta must be carried home or archived
 before any deletion.
 
@@ -20,7 +21,7 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - Roots scanned: `42`.
 - Total scratch size: `23.7 GiB`.
 - Safe-reap candidate size: `0 B`.
-- Dispositions: `bridge_required` 33, `container_review_required` 3, `non_git_review_required` 3, `preserve_required` 3.
+- Dispositions: `bridge_required` 32, `container_review_required` 3, `keep_active` 1, `non_git_review_required` 3, `preserve_required` 3.
 
 ## Reap History
 
@@ -90,7 +91,7 @@ before any local root can be removed.
 | `domus-genoma` | `166.0 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/domus-genoma@57d176ccb52d` |
 | `organvm-i-theoria-mesh` | `148.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/mesh@b4f0ed18fedf` |
 | `rules-system-bound` | `133.2 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/rules-system-bound@2d8061dd02c1` |
-| `organvm-engine` | `122.7 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/organvm-engine@026b7efe8601` |
+| `organvm-engine` | `131.3 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/organvm-engine@91dfc45769da` |
 | `conversation-corpus-engine` | `120.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/conversation-corpus-engine@9d7b3cff6e1f` |
 | `4444J99` | `81.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/_agent@acbca74f95ec` |
 | `anon-hookup-now` | `69.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/anon-hookup-now@92fd88681fde` |
@@ -112,7 +113,7 @@ before any local root can be removed.
 
 ## Operating Rule
 
-- `safe_reap_candidate`: local deletion is allowed only through `--apply-safe-reap --write`, which reclassifies the root before removal, then requires a matching verified archive receipt and human redaction acceptance before writing a deletion receipt.
+- `safe_reap_candidate`: local deletion is allowed only through `--apply-safe-reap --write`, which reclassifies the root before removal, then requires a matching verified archive receipt and human redaction acceptance with `accepted_at`, `archive_proof`, and `redaction_proof` before writing a deletion receipt.
 - `bridge_required`: preserve/carry the uncommitted delta first.
 - `preserve_required`: push, archive, or receipt the local commit before deletion.
 - `container_review_required`: inspect nested repos; do not delete the parent as one blob.

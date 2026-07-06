@@ -28,6 +28,7 @@ DOC_PATH = ROOT / "docs" / "antigravity-scratch-bridge.md"
 HISTORY_PATH = ROOT / "docs" / "antigravity-scratch-bridge-history.jsonl"
 PRESERVATION_HISTORY_PATH = ROOT / "docs" / "antigravity-scratch-preservation.jsonl"
 REAP_ACCEPTANCE_PATH = ROOT / "docs" / "antigravity-scratch-reap-acceptance.jsonl"
+REAP_ACCEPTANCE_DOC = ROOT / "docs" / "antigravity-scratch-reap-acceptance.md"
 LOG_PATH = ROOT / "logs" / "antigravity-scratch-bridge.json"
 PRIVATE_ROOT = Path(
     os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
@@ -40,6 +41,7 @@ ARCHIVE_PRESERVE_ROOT = Path(
 REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 ACCEPTED_REDACTION_REVIEWS = {"accepted", "private_archive_only", "not_required_private_archive"}
+REAP_ACCEPTANCE_REQUIRED_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
 
 
 def fmt_bytes(n: int) -> str:
@@ -424,6 +426,8 @@ def matching_reap_acceptance(
             continue
         if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
             continue
+        if any(not str(event.get(field) or "").strip() for field in REAP_ACCEPTANCE_REQUIRED_FIELDS):
+            continue
         return event
     return None
 
@@ -445,7 +449,9 @@ def reap_permission(
         "private_receipt_sha256": preservation.get("private_receipt_sha256"),
         "archive_path": preservation.get("archive_path"),
         "accepted_at": acceptance.get("accepted_at"),
+        "archive_proof": acceptance.get("archive_proof"),
         "redaction_review": acceptance.get("redaction_review"),
+        "redaction_proof": acceptance.get("redaction_proof"),
     }
 
 
@@ -570,7 +576,21 @@ def build_reap_history_event(report: dict[str, Any]) -> dict[str, Any] | None:
     for item in reap.get("results", []):
         compact = {
             key: item[key]
-            for key in ("name", "status", "reason", "size_bytes", "size", "repo", "head")
+            for key in (
+                "name",
+                "status",
+                "reason",
+                "size_bytes",
+                "size",
+                "repo",
+                "head",
+                "archive_path",
+                "accepted_at",
+                "archive_proof",
+                "redaction_review",
+                "redaction_proof",
+                "private_receipt_sha256",
+            )
             if key in item and item[key] is not None
         }
         results.append(compact)
@@ -884,6 +904,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "when this bridge proves it is clean, idle, and preserved on a remote/default-equivalent ref.",
         "Physical deletion additionally requires a verified archive preservation receipt plus a",
         f"human acceptance/redaction-review event in `{rel_to_root(REAP_ACCEPTANCE_PATH)}`.",
+        f"The required acceptance shape is documented in `{rel_to_root(REAP_ACCEPTANCE_DOC)}`.",
         "Dirty roots are `bridge_required`: their per-root delta must be carried home or archived",
         "before any deletion.",
         "",
@@ -919,7 +940,13 @@ def render_markdown(report: dict[str, Any]) -> str:
                 proof = item.get("repo") or "remote"
                 if item.get("head"):
                     proof = f"{proof}@{item['head']}"
-                lines.append(f"- Reaped `{item.get('name')}` `{item.get('size')}` ({proof}).")
+                extra = ""
+                if item.get("accepted_at") or item.get("redaction_review"):
+                    extra = (
+                        f"; accepted `{item.get('accepted_at', 'unknown')}`; "
+                        f"redaction `{item.get('redaction_review', 'unknown')}`"
+                    )
+                lines.append(f"- Reaped `{item.get('name')}` `{item.get('size')}` ({proof}{extra}).")
             else:
                 lines.append(f"- {item.get('status', 'skipped').title()} `{item.get('name')}`: {item.get('reason')}.")
     history = report.get("reap_history") or []
@@ -1105,7 +1132,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "- `safe_reap_candidate`: local deletion is allowed only through `--apply-safe-reap --write`, "
         "which reclassifies the root before removal, then requires a matching verified archive receipt "
-        "and human redaction acceptance before writing a deletion receipt.",
+        "and human redaction acceptance with `accepted_at`, `archive_proof`, and `redaction_proof` "
+        "before writing a deletion receipt.",
         "- `bridge_required`: preserve/carry the uncommitted delta first.",
         "- `preserve_required`: push, archive, or receipt the local commit before deletion.",
         "- `container_review_required`: inspect nested repos; do not delete the parent as one blob.",
