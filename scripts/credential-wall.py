@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import os
 import subprocess
 import tempfile
@@ -197,6 +198,22 @@ def check() -> int:
     return 0
 
 
+def census() -> dict:
+    """Counts-only public census; no env names, homes, secret names, or issue prose."""
+    default_map = _load_default_map()
+    return {
+        "wall_issue": WALL_ISSUE,
+        "hydration_lanes": len(default_map),
+        "enabled_lanes": sum(1 for entry in default_map if entry.get("enabled")),
+        "derived_lanes": sum(1 for entry in default_map if entry.get("derive")),
+        "probed_lanes": sum(1 for entry in default_map if entry.get("verify")),
+        "parked_lanes": sum(1 for entry in default_map if not entry.get("enabled")),
+        "ci_runtime_secrets": len(CI_SECRETS),
+        "homeless_secret_atoms": sum(1 for entry in default_map if not (entry.get("ref") or entry.get("derive")))
+        + sum(1 for secret in CI_SECRETS if not str(secret.get("home", "")).strip()),
+    }
+
+
 def sync() -> int:
     body = wall_body()
     with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
@@ -214,11 +231,15 @@ def main() -> int:
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--check", action="store_true", help="exit 1 if any secret atom lacks a home")
     g.add_argument("--sync", action="store_true", help="write the generated body into issue #320 + pin it")
+    g.add_argument("--census", action="store_true", help="print counts-only public census JSON")
     args = ap.parse_args()
     if args.check:
         return check()
     if args.sync:
         return sync()
+    if args.census:
+        print(json.dumps(census(), indent=2, sort_keys=True))
+        return 0
     print(wall_body())
     return 0
 

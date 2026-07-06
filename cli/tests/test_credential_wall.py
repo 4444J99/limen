@@ -6,6 +6,7 @@ that `--check` is a real predicate — exit 0 ⟺ every credential in use has a 
 """
 
 import importlib.util
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -67,3 +68,20 @@ def test_malformed_wall_issue_env_falls_back(monkeypatch):
 
     monkeypatch.setenv("LIMEN_CRED_WALL_ISSUE", "0")
     assert _wall().WALL_ISSUE == 320
+
+
+def test_census_is_counts_only():
+    m = _wall()
+    census = m.census()
+    encoded = json.dumps(census, sort_keys=True)
+
+    assert census["hydration_lanes"] == len(m._load_default_map())
+    assert census["ci_runtime_secrets"] == len(m.CI_SECRETS)
+    for entry in m._load_default_map():
+        for env in entry.get("env", []):
+            assert env not in encoded
+        if entry.get("ref"):
+            assert entry["ref"] not in encoded
+    for secret in m.CI_SECRETS:
+        assert secret["name"] not in encoded
+        assert secret["home"] not in encoded
