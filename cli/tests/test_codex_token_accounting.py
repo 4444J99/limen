@@ -6,7 +6,6 @@ import json
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 
@@ -14,15 +13,20 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "codex-token-accounting.py"
 
 
-def write_fixture(path: Path, sid: str = "fixture-session") -> None:
+def _iso(ts: dt.datetime) -> str:
+    return ts.astimezone(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def write_fixture(path: Path, sid: str = "fixture-session", base_time: dt.datetime | None = None) -> None:
+    start = base_time or (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=2))
     rows = [
         {
-            "timestamp": "2026-06-30T12:00:00Z",
+            "timestamp": _iso(start),
             "type": "session_meta",
             "payload": {"id": sid},
         },
         {
-            "timestamp": "2026-06-30T12:01:00Z",
+            "timestamp": _iso(start + dt.timedelta(minutes=1)),
             "type": "event_msg",
             "payload": {
                 "type": "token_count",
@@ -46,7 +50,7 @@ def write_fixture(path: Path, sid: str = "fixture-session") -> None:
             },
         },
         {
-            "timestamp": "2026-06-30T12:03:00Z",
+            "timestamp": _iso(start + dt.timedelta(minutes=3)),
             "type": "event_msg",
             "payload": {
                 "type": "token_count",
@@ -135,9 +139,7 @@ def test_codex_token_accounting_fails_budget_gate(tmp_path: Path) -> None:
 def test_codex_token_accounting_active_gate_ignores_stale_failures(tmp_path: Path) -> None:
     fixture = tmp_path / "session.jsonl"
     report = tmp_path / "report.json"
-    write_fixture(fixture)
-    stale = time.time() - 3600
-    os.utime(fixture, (stale, stale))
+    write_fixture(fixture, base_time=dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1))
 
     result = subprocess.run(
         [
@@ -196,15 +198,79 @@ def test_codex_token_accounting_active_gate_fails_fresh_failures(tmp_path: Path)
     assert "active_failures=1" in result.stdout
 
 
+def test_active_gate_ignores_current_codex_thread_by_default(tmp_path: Path) -> None:
+    fixture = tmp_path / "session.jsonl"
+    report = tmp_path / "report.json"
+    write_fixture(fixture, sid="thread-123")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            str(fixture),
+            "--since-hours",
+            "0",
+            "--max-budget-tokens",
+            "900",
+            "--active-session-seconds",
+            "3600",
+            "--output",
+            str(report),
+            "--fail-on-active-budget",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+        env={**os.environ, "CODEX_THREAD_ID": "thread-123"},
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(report.read_text())
+    assert payload["status"] == "fail"
+    assert payload["active_status"] == "ok"
+    assert payload["active_failures"] == []
+    assert payload["historical_failures"] == ["thread-123: budget_tokens=920"]
+    assert payload["sessions"][0]["active"] is True
+    assert payload["sessions"][0]["current_thread"] is True
+    assert payload["sessions"][0]["active_gate_exclusion"] == "current-codex-thread"
+
+
+def test_active_gate_can_include_current_codex_thread(tmp_path: Path) -> None:
+    fixture = tmp_path / "session.jsonl"
+    write_fixture(fixture, sid="thread-123")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            str(fixture),
+            "--since-hours",
+            "0",
+            "--max-budget-tokens",
+            "900",
+            "--active-session-seconds",
+            "3600",
+            "--no-write",
+            "--fail-on-active-budget",
+            "--include-current-thread",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+        env={**os.environ, "CODEX_THREAD_ID": "thread-123"},
+    )
+
+    assert result.returncode == 2
+    assert "active_failures=1" in result.stdout
+
+
 def test_codex_token_accounting_active_gate_mixed_sessions(tmp_path: Path) -> None:
     """One fresh + one finished over-budget session: only the fresh one blocks."""
     fresh = tmp_path / "fresh.jsonl"
     stale = tmp_path / "stale.jsonl"
     report = tmp_path / "report.json"
     write_fixture(fresh, sid="fresh-session")
-    write_fixture(stale, sid="stale-session")
-    old = time.time() - 3600
-    os.utime(stale, (old, old))
+    write_fixture(stale, sid="stale-session", base_time=dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1))
 
     result = subprocess.run(
         [
@@ -240,9 +306,7 @@ def test_codex_token_accounting_active_gate_mixed_sessions(tmp_path: Path) -> No
 def test_codex_token_accounting_active_seconds_zero_treats_all_active(tmp_path: Path) -> None:
     """--active-session-seconds 0 collapses back to strict --fail-on-budget semantics."""
     fixture = tmp_path / "session.jsonl"
-    write_fixture(fixture)
-    old = time.time() - 86400
-    os.utime(fixture, (old, old))
+    write_fixture(fixture, base_time=dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=1))
 
     result = subprocess.run(
         [
@@ -276,21 +340,30 @@ def _load_accounting_module():
 
 
 def test_active_helpers_fail_open_and_window() -> None:
-    """Pin the liveness contract: fail-open on unknown mtime, window boundary, zero-collapse."""
+    """Pin active liveness: token timestamp first, mtime fallback, zero-collapse."""
     mod = _load_accounting_module()
     now = dt.datetime(2026, 7, 1, 12, 0, 0, tzinfo=dt.timezone.utc)
 
-    # Unknown liveness (no / null mtime) -> fail-open: NOT active, routed to historical.
+    # Unknown liveness -> fail-open: NOT active, routed to historical.
     assert mod.session_age_seconds({}, now) is None
     assert mod.session_age_seconds({"mtime": None}, now) is None
     assert mod.is_active_session({}, now, 900) is False
 
     # active_seconds <= 0 -> every session counts as active (strict budget gate).
     assert mod.is_active_session({}, now, 0) is True
-    assert mod.is_active_session({"mtime": None}, now, 0) is True
+    assert mod.is_active_session({"last_token_at": None, "mtime": None}, now, 0) is True
 
-    fresh = {"mtime": (now - dt.timedelta(seconds=30)).isoformat(timespec="seconds")}
-    stale = {"mtime": (now - dt.timedelta(seconds=3600)).isoformat(timespec="seconds")}
+    fresh = {"last_token_at": (now - dt.timedelta(seconds=30)).isoformat(timespec="seconds")}
+    stale = {"last_token_at": (now - dt.timedelta(seconds=3600)).isoformat(timespec="seconds")}
     assert mod.is_active_session(fresh, now, 900) is True
     assert mod.is_active_session(stale, now, 900) is False
     assert mod.session_age_seconds(stale, now) == 3600
+
+    touched_old_session = {
+        "last_token_at": (now - dt.timedelta(seconds=3600)).isoformat(timespec="seconds"),
+        "mtime": (now - dt.timedelta(seconds=10)).isoformat(timespec="seconds"),
+    }
+    assert mod.is_active_session(touched_old_session, now, 900) is False
+
+    mtime_fallback = {"mtime": (now - dt.timedelta(seconds=30)).isoformat(timespec="seconds")}
+    assert mod.is_active_session(mtime_fallback, now, 900) is True

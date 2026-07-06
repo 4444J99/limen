@@ -423,7 +423,13 @@ parameters:
     env: LIMEN_CODEX_TOKEN_GATE_ACTIVE_SECONDS
     self_update: none
     owner: continuity
-    note: "Session JSONL mtime freshness window for the continuation hard spend gate. Older over-budget sessions remain report failures but do not block receipt-safe continuation."
+    note: "Token-count freshness window for the continuation hard spend gate. Older over-budget sessions remain report failures but do not block receipt-safe continuation; JSONL mtime is only a compatibility fallback when token timestamps are missing."
+  LIMEN_CODEX_TOKEN_GATE_IGNORE_CURRENT_THREAD:
+    default: "1"
+    env: LIMEN_CODEX_TOKEN_GATE_IGNORE_CURRENT_THREAD
+    self_update: none
+    owner: continuity
+    note: "When 1, a Codex direct-session audit excludes CODEX_THREAD_ID from active_failures while still reporting its total/historical spend. Prevents closeout probes from self-blocking on the measuring chat; daemon runs without CODEX_THREAD_ID are unchanged."
   LIMEN_CODEX_WARN_UNCACHED_INPUT_TOKENS:
     default: 300000
     env: LIMEN_CODEX_WARN_UNCACHED_INPUT_TOKENS

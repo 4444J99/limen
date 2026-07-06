@@ -30,13 +30,12 @@ window -- cross-session contamination. So failures are split by liveness:
 ``--fail-on-active-budget`` exits non-zero only on ``active_failures`` -- the
 right signal for the continuation beat's backpressure breaker.
 
-Liveness is keyed on the session file's mtime (``--active-session-seconds``),
-not on the in-band ``last_token_at``. For a JSONL the harness is actively
-appending, mtime tracks real activity precisely, and its only failure mode -- a
-stray touch making a finished file look fresh -- is fail-safe: it can only
-*over*-block the breaker briefly (self-heals once the window elapses), never let
-a genuine runaway through. Do not "fix" this to ``last_token_at`` without also
-reworking the fixtures, which deliberately drive staleness via ``os.utime``.
+Liveness is keyed on the newest in-band ``token_count`` timestamp, with the
+session file's mtime only as a compatibility fallback when no token timestamp is
+available. This keeps shell/tool polling, receipt generation, and closeout log
+collection from making a finished over-budget transcript look like a live model
+runaway. A genuine active runaway still emits fresh token_count events, which is
+the signal this breaker exists to stop.
 """
 
 from __future__ import annotations
@@ -280,23 +279,27 @@ def evaluate_session(session: dict[str, Any], thresholds: dict[str, int]) -> tup
     return warnings, failures
 
 
+def session_activity_timestamp(session: dict[str, Any]) -> dt.datetime | None:
+    """Return the timestamp that should drive active-budget liveness."""
+    return parse_ts(session.get("last_token_at")) or parse_ts(session.get("mtime"))
+
+
 def session_age_seconds(session: dict[str, Any], now: dt.datetime) -> int | None:
-    mtime = parse_ts(session.get("mtime"))
-    if mtime is None:
+    active_at = session_activity_timestamp(session)
+    if active_at is None:
         return None
-    return int(max(0, (now - mtime).total_seconds()))
+    return int(max(0, (now - active_at).total_seconds()))
 
 
 def is_active_session(session: dict[str, Any], now: dt.datetime, active_seconds: int) -> bool:
     if active_seconds <= 0:
         return True
     age = session_age_seconds(session, now)
-    # Fail-open on unknown liveness: a session whose mtime we cannot read is
+    # Fail-open on unknown liveness: a session whose token timestamp / mtime we cannot read is
     # treated as NOT active (routed to historical / non-blocking). This breaker
     # exists to stop piling work on a live runaway; when liveness is unknowable
     # we prefer not to stall receipt-safe continuation -- the exact bug this
-    # split fixes. The case is near-impossible: the file was just read to build
-    # the summary. See test_active_helpers_* for the pinned contract.
+    # split fixes. See test_active_helpers_* for the pinned contract.
     return age is not None and age <= active_seconds
 
 
@@ -307,6 +310,12 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     thresholds = thresholds_from_args(args)
     now = dt.datetime.now(dt.timezone.utc)
     active_seconds = max(0, int(args.active_session_seconds))
+    current_thread_id = os.environ.get("CODEX_THREAD_ID", "").strip()
+    ignore_current_thread = (
+        bool(current_thread_id)
+        and not args.include_current_thread
+        and os.environ.get("LIMEN_CODEX_TOKEN_GATE_IGNORE_CURRENT_THREAD", "1") == "1"
+    )
 
     warnings: list[str] = []
     failures: list[str] = []
@@ -316,12 +325,17 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     for session in sessions:
         age = session_age_seconds(session, now)
         active = is_active_session(session, now, active_seconds)
-        session["mtime_age_seconds"] = age
+        current_thread = ignore_current_thread and session.get("session_id") == current_thread_id
+        session["active_age_seconds"] = age
+        session["mtime_age_seconds"] = session_age_seconds({"mtime": session.get("mtime")}, now)
         session["active"] = active
+        session["current_thread"] = current_thread
+        if current_thread:
+            session["active_gate_exclusion"] = "current-codex-thread"
         sw, sf = evaluate_session(session, thresholds)
         warnings.extend(sw)
         failures.extend(sf)
-        if active:
+        if active and not current_thread:
             active_warnings.extend(sw)
             active_failures.extend(sf)
         else:
@@ -346,6 +360,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "session_count": len(sessions),
         "thresholds": thresholds,
         "active_session_seconds": active_seconds,
+        "current_thread_id": current_thread_id if ignore_current_thread else None,
         "status": status,
         "active_status": active_status,
         "aggregate_totals": aggregate,
@@ -405,7 +420,12 @@ def main(argv: list[str] | None = None) -> int:
         "--active-session-seconds",
         type=int,
         default=int(os.environ.get("LIMEN_CODEX_TOKEN_GATE_ACTIVE_SECONDS", "900")),
-        help="mtime freshness window for --fail-on-active-budget; 0 treats every reported session as active",
+        help="token-count freshness window for --fail-on-active-budget; 0 treats every reported session as active",
+    )
+    parser.add_argument(
+        "--include-current-thread",
+        action="store_true",
+        help="include CODEX_THREAD_ID in active failures instead of treating the measuring thread as historical",
     )
     args = parser.parse_args(argv)
 
