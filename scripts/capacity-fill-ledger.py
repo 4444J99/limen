@@ -34,7 +34,7 @@ RATE_LIMIT_TAIL_LINES = 400
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.capacity import capacity_census  # noqa: E402
-from limen.dispatch import _down_lanes, _reset_budget_if_needed  # noqa: E402
+from limen.dispatch import _down_lanes, _reset_budget_if_needed, _weak_proxy_exhaustion  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 
 
@@ -323,6 +323,7 @@ def apply_usage_to_census_row(row: dict[str, Any]) -> dict[str, Any]:
         return row
 
     health = str(vendor.get("health") or "").strip()
+    weak_proxy = _weak_proxy_exhaustion(agent, vendor)
     remaining = vendor.get("remaining")
     live_remaining: int | None = None
     if remaining is not None:
@@ -330,7 +331,7 @@ def apply_usage_to_census_row(row: dict[str, Any]) -> dict[str, Any]:
             live_remaining = max(0, int(float(remaining)))
         except (TypeError, ValueError):
             live_remaining = None
-    if live_remaining is not None:
+    if live_remaining is not None and not weak_proxy:
         row["remaining"] = live_remaining
     possible = vendor.get("possible")
     if possible is not None:
@@ -339,7 +340,7 @@ def apply_usage_to_census_row(row: dict[str, Any]) -> dict[str, Any]:
         except (TypeError, ValueError):
             pass
 
-    if health in {"exhausted", "rate-limited", "low"} or live_remaining == 0:
+    if not weak_proxy and (health in {"exhausted", "rate-limited", "low"} or live_remaining == 0):
         row["reachable"] = False
         detail = str(row.get("detail") or "")
         suffix = f"usage health={health or 'unknown'}"

@@ -123,12 +123,30 @@ def _usage_dead_lanes() -> set[str]:
         if not isinstance(info, dict):
             continue
         health = info.get("health")
+        if _weak_proxy_exhaustion(name, info):
+            continue
         if health in ("exhausted", "rate-limited", "low"):
             dead.add(name)
             continue
         if health == "throttle" and (_usage_zero(info.get("remaining")) or _usage_zero(info.get("headroom_pct"))):
             dead.add(name)
     return dead
+
+
+def _weak_proxy_exhaustion(name: str, info: dict) -> bool:
+    """A weak dispatch-count proxy is not proof of provider exhaustion.
+
+    Agy has no readable vendor quota meter yet. Its usage row is a board-derived dispatch-count
+    proxy, so a high count should pace reservations through the board budget, not remove the lane
+    entirely. A real rate-limit signal still gates it.
+    """
+    if name != "agy":
+        return False
+    if info.get("health") == "rate-limited" or info.get("recent_rate_limit"):
+        return False
+    signal = str(info.get("signal") or "")
+    source = str(info.get("limit_source") or "")
+    return signal in {"dispatch-count", "count", "runs"} and "operator board cap" in source
 
 
 def _usage_zero(value: object) -> bool:

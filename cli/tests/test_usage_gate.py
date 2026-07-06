@@ -38,6 +38,54 @@ def test_usage_dead_lanes_flags_exhausted_ratelimited_and_reserve(tmp_path, monk
     assert _usage_dead_lanes() == {"codex", "gemini", "jules"}
 
 
+def test_agy_dispatch_count_proxy_exhaustion_stays_up(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_usage(
+        tmp_path,
+        {
+            "agy": {
+                "health": "exhausted",
+                "signal": "dispatch-count",
+                "limit_source": "operator board cap until live vendor meter",
+                "remaining": 0,
+                "headroom_pct": 0,
+            },
+            "gemini": {
+                "health": "exhausted",
+                "signal": "dispatch-count",
+                "limit_source": "operator board cap until live vendor meter",
+                "remaining": 0,
+                "headroom_pct": 0,
+            },
+            "jules": {
+                "health": "exhausted",
+                "signal": "dispatch-count",
+                "limit_source": "known hard cap",
+                "remaining": 0,
+                "headroom_pct": 0,
+            },
+        },
+    )
+    assert _usage_dead_lanes() == {"gemini", "jules"}
+    assert _down_lanes() == {"gemini", "jules"}
+
+
+def test_agy_recent_rate_limit_still_down(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_usage(
+        tmp_path,
+        {
+            "agy": {
+                "health": "rate-limited",
+                "signal": "dispatch-count",
+                "limit_source": "operator board cap until live vendor meter",
+                "recent_rate_limit": True,
+            },
+        },
+    )
+    assert _usage_dead_lanes() == {"agy"}
+
+
 def test_throttle_lane_stays_up(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_usage(tmp_path, {"codex": {"health": "throttle", "remaining": 10}, "claude": {"health": "ok"}})

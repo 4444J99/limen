@@ -202,6 +202,48 @@ def test_census_uses_live_usage_exhaustion_for_reachability(monkeypatch):
     assert snapshot["blocked_agents"] == ["jules"]
 
 
+def test_census_does_not_block_agy_on_weak_dispatch_count_proxy(monkeypatch):
+    module = _load_capacity_fill_module()
+    monkeypatch.setattr(
+        module,
+        "capacity_census",
+        lambda board: [
+            {
+                "agent": "agy",
+                "kind": "local-cli",
+                "reachable": True,
+                "remaining": 31,
+                "limit": 100,
+                "detail": "/opt/homebrew/bin/agy",
+            }
+        ],
+    )
+
+    def usage_vendor(agent):
+        if agent == "agy":
+            return {
+                "health": "exhausted",
+                "signal": "dispatch-count",
+                "limit_source": "operator board cap until live vendor meter",
+                "remaining": 0,
+                "consumed": 107,
+                "possible": 100,
+                "unit": "runs",
+            }
+        return None
+
+    monkeypatch.setattr(module, "usage_vendor", usage_vendor)
+    monkeypatch.setattr(module, "_down_lanes", lambda: set())
+
+    snapshot = module.build_snapshot({})
+    row = snapshot["census"][0]
+
+    assert row["reachable"] is True
+    assert row["remaining"] == 31
+    assert "usage health=exhausted" not in row["detail"]
+    assert snapshot["blocked_agents"] == []
+
+
 def test_census_uses_dispatch_down_gate_for_reachability(monkeypatch):
     module = _load_capacity_fill_module()
     monkeypatch.setattr(
