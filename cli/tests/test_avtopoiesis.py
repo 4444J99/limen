@@ -57,6 +57,7 @@ def test_past_tense_resolves_scripts_from_heartbeat_commands():
     assert doors["health"]["tenses"]["past"] == 1.0
     assert doors["financial"]["tenses"]["past"] == 1.0
     assert doors["corpus_feed"]["tenses"]["past"] == 1.0
+    assert doors["life"]["tenses"]["past"] == 1.0
 
 
 def test_script_name_fallback_does_not_cross_feed_doors():
