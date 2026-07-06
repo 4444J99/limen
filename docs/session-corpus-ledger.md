@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-07-06T04:17:16+00:00`
+Generated: `2026-07-06T04:42:46+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -15,16 +15,16 @@ Horizon: `all local history`
 
 ## Local Session Sources
 
-Total seen: `17577` files, `6.8 GiB`.
+Total seen: `17580` files, `6.8 GiB`.
 
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
-| `claude-projects` | `~/.claude/projects` | 6601 | 1.9 GiB | `2026-07-06T04:00:29+00:00` |
+| `claude-projects` | `~/.claude/projects` | 6604 | 1.9 GiB | `2026-07-06T04:42:21+00:00` |
 | `external-session:T7Recovery` | `/Volumes/T7Recovery` | 1826 | 1.7 GiB | `2026-06-14T01:12:10+00:00` |
-| `external-session:Archive4T` | `/Volumes/Archive4T` | 2000 | 1.6 GiB | `2026-07-06T04:16:32+00:00` |
-| `codex-sessions` | `~/.local/share/codex/sessions` | 1363 | 1.5 GiB | `2026-07-06T04:17:14+00:00` |
+| `external-session:Archive4T` | `/Volumes/Archive4T` | 2000 | 1.6 GiB | `2026-07-06T04:36:33+00:00` |
+| `codex-sessions` | `~/.local/share/codex/sessions` | 1363 | 1.5 GiB | `2026-07-06T04:42:45+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 5059 | 67.2 MiB | `2026-07-05T18:01:34+00:00` |
-| `codex-goals-state` | `~/.local/share/codex` | 6 | 23.9 MiB | `2026-07-06T04:17:14+00:00` |
+| `codex-goals-state` | `~/.local/share/codex` | 6 | 23.9 MiB | `2026-07-06T04:42:45+00:00` |
 | `codex-shell-snapshots` | `~/.local/share/codex/shell_snapshots` | 6 | 2.0 MiB | `2026-07-06T00:36:57+00:00` |
 | `codex-history` | `~/.local/share/codex` | 1 | 813.0 KiB | `2026-07-06T02:17:32+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 397 | 426.9 KiB | `2026-07-03T13:33:18+00:00` |
@@ -72,7 +72,7 @@ These are known local app/store adapters with no matched files in this scan. Thi
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-07-06T03:49:28+00:00`.
+- Last `quicken.py` journal: `2026-07-06T04:22:36+00:00`.
 - Claude FleetView sessions classified: `0` total; `0` stalled, `0` closed, `0` alive, `0` done.
 - Reaped worktrees in that pass: `0`.
 - Last `codex-quicken.py` journal: `2026-06-27T21:42:32+00:00`.
