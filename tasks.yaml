@@ -83924,7 +83924,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -83940,7 +83940,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T13:34:42.175576Z'
+  updated: '2026-07-06T14:03:46.493339Z'
   dispatch_log:
   - timestamp: '2026-07-06T08:34:01.541601Z'
     agent: agy
@@ -83966,6 +83966,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-06T14:03:46.493339Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-organvm-ontologia-11
   title: fix failing CI on organvm/organvm-ontologia#11
   repo: organvm/organvm-ontologia
@@ -84374,15 +84379,14 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#89
   repo: organvm/hokage-chess
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
-  - tried:claude
   - noop
   urls:
   - https://github.com/4444J99/hokage-chess/pull/89
@@ -84394,7 +84398,7 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T13:43:13.607008Z'
+  updated: '2026-07-06T14:03:46.493339Z'
   dispatch_log:
   - timestamp: '2026-07-06T08:42:38.629122Z'
     agent: claude
@@ -84415,6 +84419,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-06T14:03:46.493339Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-4444j99-hokage-chess-94
   title: rebase/resolve conflicts on 4444J99/hokage-chess#94
   repo: organvm/hokage-chess
@@ -84733,10 +84742,10 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#139
   repo: organvm/hokage-chess
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -84752,7 +84761,7 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T13:53:49.943340Z'
+  updated: '2026-07-06T14:03:46.493339Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:43:26.488803Z'
     agent: agy
@@ -84764,6 +84773,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-06T14:03:46.493339Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-4444j99.github.io-9
   title: rebase/resolve conflicts on organvm/4444J99.github.io#9
   repo: organvm/4444J99.github.io
@@ -84834,7 +84848,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -84850,7 +84864,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T13:53:49.943340Z'
+  updated: '2026-07-06T14:03:46.493339Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:35:01.040512Z'
     agent: codex
@@ -84862,6 +84876,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-06T14:03:46.493339Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-a-i--skills-28
   title: fix failing CI on organvm/a-i--skills#28
   repo: organvm/a-i--skills
