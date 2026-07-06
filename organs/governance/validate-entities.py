@@ -1,22 +1,32 @@
 #!/usr/bin/env python3
 """
 Cvrsvs Honorvm Rule #3 — Entity Register Integrity (the dual-entity boundary).
-Cvrsvs Honorvm Rule #4 — Repo Registration (cursus standing in the entity register).
+Cvrsvs Honorvm Rule #4 — Repo Registration + Promotion Rules (cursus standing in the entity
+register and the structured promotion-rule contract).
 
 The governance entity register (entities.yaml) lists every legal entity under governance,
 its mandates, its forbidden acts, and the cursus standing of every registered repo.
 This validator checks:
 
-  Rule #3a — Entity structure: all required fields present.
-  Rule #3b — Dual-entity boundary: mandates are allowed for the entity type.
-  Rule #3c — Dual-entity boundary: no forbidden_acts overlap with allowed mandates.
-  Rule #4a — Repo cursus: every declared cursus office is a valid cursus stage.
-  Rule #4b — Repo consistency: implementation_status matches promotion_status.
+  Always active:
+    Rule #3a — Entity structure: all required fields present per type (entity_taxonomy).
+    Rule #3b — Dual-entity boundary: mandates are within the allowed set for the entity type.
+    Rule #3c — Dual-entity boundary: forbidden_acts are within the standard forbidden set;
+               no forbidden_acts overlap with mandates.
+    Rule #3d — Entity cursus: every declared cursus office is a valid cursus stage.
+    Rule #4a — Repo cursus: every repo's cursus office is a valid cursus stage.
+    Rule #4b — Repo consistency: implementation_status matches cursus (no split office).
+    Rule #4c — Repo entity reference: every repo references a known entity by id.
+
+  Strict-graph mode (--strict-graph):
+    Rule #4d — Promotion rules structure: every promotion map references valid cursus
+               offices (from → to) and has well-formed prerequisites.
 
 Usage:
   python organs/governance/validate-entities.py                    # validate default register
   python organs/governance/validate-entities.py path/to/entities.yaml
   python organs/governance/validate-entities.py --fleet            # check all governance registers
+  python organs/governance/validate-entities.py --fleet --strict-graph  # + promotion rules check
   python organs/governance/validate-entities.py --quiet            # exit code only
   echo $?   # 0 = all pass, 1 = violations found
 """
@@ -42,7 +52,7 @@ CURSUS_SET: set[str] = set(CURSUS)
 # Rule predicates                                                              #
 # --------------------------------------------------------------------------- #
 
-def _validate_one(path: Path) -> list[str]:
+def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
     """Return a list of violation strings for one entities.yaml (empty = pass)."""
     try:
         raw = path.read_text(encoding="utf-8")
@@ -212,6 +222,57 @@ def _validate_one(path: Path) -> list[str]:
             f"({' → '.join(CURSUS)})"
         )
 
+    # -- Rule 4d (strict-graph): promotion_rules structure ------------------ #
+    if strict_graph:
+        violations.extend(_validate_strict_graph(doc))
+
+    return violations
+
+
+def _validate_strict_graph(doc: dict[str, Any]) -> list[str]:
+    """Rule #4d: validate promotion_rules structure. Return violations."""
+    violations: list[str] = []
+    promo = doc.get("promotion_rules")
+    if not isinstance(promo, dict):
+        violations.append("missing or non-dict 'promotion_rules'")
+        return violations
+
+    valid_pair: set[str] = set()
+    for i in range(len(CURSUS) - 1):
+        valid_pair.add(f"{CURSUS[i]}_to_{CURSUS[i+1]}")
+
+    seen_rules: set[str] = set()
+    for key, rule in promo.items():
+        if not isinstance(key, str):
+            violations.append(f"promotion_rules key {key!r} must be a string")
+            continue
+        if key in seen_rules:
+            violations.append(f"promotion_rules duplicate key: {key!r}")
+        seen_rules.add(key)
+
+        # Check key format: FROM_to_TO
+        if key not in valid_pair and key.upper() not in valid_pair:
+            violations.append(
+                f"promotion_rules.{key!r} does not match any valid cursus transition "
+                f"({' → '.join(CURSUS)})"
+            )
+
+        if not isinstance(rule, dict):
+            violations.append(f"promotion_rules.{key!r} must be a mapping")
+            continue
+
+        prereqs = rule.get("prerequisites")
+        if not isinstance(prereqs, list):
+            violations.append(f"promotion_rules.{key!r} missing or non-list 'prerequisites'")
+        elif not prereqs:
+            violations.append(f"promotion_rules.{key!r} 'prerequisites' list is empty")
+
+        validated_by = rule.get("validated_by")
+        if validated_by is not None and not isinstance(validated_by, str):
+            violations.append(
+                f"promotion_rules.{key!r} 'validated_by' must be a string"
+            )
+
     return violations
 
 
@@ -242,6 +303,11 @@ def main() -> int:
         action="store_true",
         help="suppress per-file output; exit code only",
     )
+    parser.add_argument(
+        "--strict-graph",
+        action="store_true",
+        help="validate promotion_rules structure (Rule #4d)",
+    )
     args = parser.parse_args()
 
     targets: list[Path] = []
@@ -271,7 +337,7 @@ def main() -> int:
     failed = 0
 
     for path in targets:
-        violations = _validate_one(path)
+        violations = _validate_one(path, strict_graph=args.strict_graph)
         if not violations:
             passed += 1
             if not args.quiet:
@@ -287,7 +353,10 @@ def main() -> int:
         print(f"\n{'─' * 60}")
         print(f"  {passed}/{total} passed  |  {failed} violation(s)")
         if failed == 0:
-            print("  Cvrsvs Honorvm Rules #3 & #4: all checks passed. Concordia.")
+            if args.strict_graph:
+                print("  Cvrsvs Honorvm Rules #3 & #4 (strict-graph): all checks passed. Concordia.")
+            else:
+                print("  Cvrsvs Honorvm Rules #3 & #4: all checks passed. Concordia.")
         else:
             print("  Cvrsvs Honorvm Rules #3 & #4: violations found. Cursus not satisfied.")
 

@@ -10,7 +10,7 @@
 schema_version: "1.0"
 organ: "governance"
 repo: "organvm/limen"
-updated: "2026-07-03"
+updated: "2026-07-05"
 
 # ── Entity taxonomy ──────────────────────────────────────────────────────
 # Governance-specific types with their required mandate fields.
@@ -59,20 +59,24 @@ promotion_rules:
     prerequisites:
       - "seed.yaml exists and validates"
       - "organ KERNEL.md and CHARTER.md exist"
+    validated_by: "validate-seed.py — schema_version + topology checks"
   ALPHA_to_BETA:
     prerequisites:
       - "first vertical slice artifact exists"
       - "organ registered in organ-ladder.json"
       - "seed.yaml promotion_status matches implementation_status"
+    validated_by: "validate-seed.py — Rule 1e: no split declaration"
   BETA_to_STABLE:
     prerequisites:
       - "organ beat wired into heartbeat loop"
       - "maturity >= 60% in organ-ladder.json"
+    validated_by: "validate-seed.py + manual beat verification"
   STABLE_to_MATURE:
     prerequisites:
       - "organ face (macro + micro) documented"
       - "governance rules operationalized as checks"
       - "maturity >= 90% in organ-ladder.json"
+    validated_by: "validate-seed.py + manual beat verification"
 
 # ── REPOSITORY REGISTRATIONS ────────────────────────────────────────────
 # Every organ repo registered under governance, with its cursus standing.
