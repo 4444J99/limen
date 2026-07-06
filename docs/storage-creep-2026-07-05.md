@@ -34,17 +34,37 @@ personal data stores or agent scratch roots.
 - `python3 scripts/worktree-debt.py --json` still reports worktree debt, but current debt is mostly
   non-git scratch roots or owner-blocked/live-work roots, not loss-free cache.
 
+## 2026-07-06 Update
+
+- The Agy/Antigravity scratch bridge now exists: `scripts/antigravity-scratch-bridge.py`.
+- `python3 scripts/antigravity-scratch-bridge.py --write` produced
+  `docs/antigravity-scratch-bridge.md` and measured `66` scratch roots, `30.6 GiB` total, with
+  `2.2 GiB` marked `safe_reap_candidate`.
+- Scratch deletion is still not authorized by size alone. The same receipt found `34`
+  `bridge_required` roots plus container/non-git/preserve review roots; those require owner-proof or
+  delta preservation before local removal.
+- CVSTOS now surfaces Antigravity scratch health through `LIMEN_AGY_SCRATCH_ROOT` and
+  `LIMEN_AGY_SCRATCH_MIN_IDLE_H`, so unsafe scratch dispositions become part of the regular
+  proprioception signal instead of a one-off storage note.
+- The generated worktree log-shell residue class was made mechanically reclaimable and then reaped:
+  `LIMEN_RECLAIM_MAX=100 python3 scripts/reclaim-worktrees.py --apply --force` removed `53` exact
+  generated log-shell roots.
+- Post-reap predicates are tighter: `python3 scripts/worktree-debt.py --json` now reports `debt: 1`,
+  and `python3 scripts/reclaim-worktrees.py --force` reports `0 reclaimed, 36 kept-safe`.
+
 ## Decision
 
 Do not delete `~/Library/Messages`, Notes/Freeform/iCloud/Mail/Photos stores, or
 `~/.gemini/antigravity-cli/scratch` blindly.
 
-The next real storage fix is a new Agy/Antigravity scratch bridge:
+The next real storage fix is to act through the Agy/Antigravity scratch bridge:
 
 1. Inventory each scratch root.
 2. Prove whether it has a git remote, clean status, PR/commit receipt, or explicit owner blocker.
 3. Preserve unique deltas to the owning repo or Archive4T with a receipt.
 4. Reap only roots that are either pure pushed mirrors or archived with verification.
 
-Until that bridge exists, the current large reclaim candidate is known but intentionally parked:
-`~/.gemini/antigravity-cli/scratch` is the major local creep source and needs proof before removal.
+The current large reclaim candidate is known but intentionally parked behind proof:
+`~/.gemini/antigravity-cli/scratch` is the major local creep source, and removal should proceed only
+from the bridge's `safe_reap_candidate` set or from roots whose dirty/preserve blockers have been
+bridged into their owner repository or an Archive4T receipt.
