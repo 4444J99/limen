@@ -370,12 +370,38 @@ def _running_for(agent: str) -> int:
     return len(list(RUNS.glob(f"*__{agent}.running")))
 
 
+def _usage_remaining_by_agent() -> dict[str, int]:
+    """Live usage runway from logs/usage.json.
+
+    The task board budget is a reservation ledger; usage telemetry is the live provider/run
+    meter. Remote lanes such as Jules must satisfy both. Without this cap, a reserve override can
+    make a lane selectable and then reserve every board-budget slot even when the rolling provider
+    window only has a few runs left.
+    """
+    path = ROOT / "logs" / "usage.json"
+    try:
+        vendors = (json.loads(path.read_text(encoding="utf-8")) or {}).get("vendors", {})
+    except (OSError, ValueError):
+        return {}
+    remaining: dict[str, int] = {}
+    for agent, info in vendors.items():
+        if not isinstance(info, dict) or "remaining" not in info:
+            continue
+        try:
+            value = int(float(info["remaining"]))
+        except (TypeError, ValueError):
+            continue
+        remaining[str(agent)] = max(0, value)
+    return remaining
+
+
 def reserve_and_launch(agents, per_agent, cap, dry):
     """Reserve open tasks (under lock) up to the concurrency cap + per-agent budget, then spawn
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
     now = _now()
     picked = []
     picked_ids = set()
+    usage_remaining = _usage_remaining_by_agent()
     with _queue_lock(TASKS) as got:
         if not got:
             # Lock busy — reserve nothing this round. Returning BEFORE `picked` is used to spawn
@@ -397,6 +423,9 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             capa = lf.portal.budget.per_agent.get(agent)
             aspent = track.per_agent.get(agent, 0) + _running_for(agent)  # count in-flight vs budget
             agent_rem = None if capa is None else max(0, capa - aspent)
+            live_rem = usage_remaining.get(agent) if is_async else None
+            if live_rem is not None:
+                agent_rem = live_rem if agent_rem is None else min(agent_rem, live_rem)
             rem = daily - spent if agent_rem is None else max(0, min(daily - spent, agent_rem))
             if rem <= 0:
                 continue
@@ -454,6 +483,8 @@ def reserve_and_launch(agents, per_agent, cap, dry):
                     state["agent_rem"] = max(0, agent_rem - t.budget_cost)
                 spent += t.budget_cost
                 if not dry:
+                    track.spent = spent
+                    track.per_agent[agent] = track.per_agent.get(agent, 0) + t.budget_cost
                     t.status = "dispatched"
                     t.updated = now
                     t.dispatch_log.append(
@@ -499,7 +530,11 @@ def resolve_lanes(selector: str, down: set[str]) -> list[str]:
     except Exception:
         board = None
     lanes = select_lanes(selector, board, down_lanes=down)
-    return lanes or [agent for agent in ("codex",) if agent not in down]
+    if lanes:
+        return lanes
+    if selector.strip().lower() == "auto":
+        return [agent for agent in ("codex",) if agent not in down]
+    return []
 
 
 def main() -> int:

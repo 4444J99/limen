@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import importlib.util
 import datetime as dt
+import sys
 from pathlib import Path
+
+CLI_SRC = Path(__file__).resolve().parents[1] / "src"
+sys.path.insert(0, str(CLI_SRC))
 
 from limen.io import save_limen_file
 from limen.models import Budget, BudgetTrack, LimenFile, Portal
@@ -157,6 +161,45 @@ def test_proxy_lane_signal_includes_usage_telemetry(monkeypatch):
     assert "used=14/100 runs" in signal["use"]
     assert "remaining=86" in signal["use"]
     assert "headroom=86%" in signal["use"]
+
+
+def test_census_uses_live_usage_exhaustion_for_reachability(monkeypatch):
+    module = _load_capacity_fill_module()
+    monkeypatch.setattr(
+        module,
+        "capacity_census",
+        lambda board: [
+            {
+                "agent": "jules",
+                "kind": "cloud-cli",
+                "reachable": True,
+                "remaining": 51,
+                "limit": 100,
+                "detail": "/opt/homebrew/bin/jules",
+            }
+        ],
+    )
+
+    def usage_vendor(agent):
+        if agent == "jules":
+            return {
+                "health": "exhausted",
+                "remaining": 0,
+                "consumed": 141,
+                "possible": 100,
+                "unit": "runs",
+            }
+        return None
+
+    monkeypatch.setattr(module, "usage_vendor", usage_vendor)
+
+    snapshot = module.build_snapshot({})
+    row = snapshot["census"][0]
+
+    assert row["reachable"] is False
+    assert row["remaining"] == 0
+    assert "usage health=exhausted" in row["detail"]
+    assert snapshot["blocked_agents"] == ["jules"]
 
 
 def test_load_tasks_board_projects_stale_budget_reset(tmp_path, monkeypatch):

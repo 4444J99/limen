@@ -79,6 +79,33 @@ def test_async_remote_lane_not_gated_by_local_concurrency_cap(tmp_path):
     assert picked == [("jules", "JT")], f"jules starved by the local concurrency cap: {picked}"
 
 
+def test_async_remote_lane_is_bounded_by_live_usage_remaining(tmp_path):
+    """Remote lanes skip the local host cap, but they must still honor the live provider/run meter.
+    Board budget can lag the rolling provider window; dispatch should cap reservations to the
+    provider remaining count when logs/usage.json has one."""
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"codex": 50, "jules": 100}
+    lf.tasks = [
+        Task(id=f"JT{i}", title="slow", repo="x/y", target_agent="jules", status="open", created=today)
+        for i in range(10)
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir(exist_ok=True)
+    (tmp_path / "logs" / "usage.json").write_text(
+        json.dumps({"vendors": {"jules": {"remaining": 6, "possible": 100, "health": "ok"}}}),
+        encoding="utf-8",
+    )
+    for i in range(4):
+        (da.RUNS / f"L{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
+
+    picked = da.reserve_and_launch(["jules"], per_agent=100, cap=4, dry=True)
+
+    assert len(picked) == 6
+    assert [task_id for _, task_id in picked] == [f"JT{i}" for i in range(6)]
+
+
 def test_local_lane_still_bounded_by_cap_after_async_carveout(tmp_path):
     """The carve-out is remote-only: a jules run in flight must NOT free a slot for local lanes, and a
     local lane is still hard-capped by the concurrency budget (no over-dispatch of the host)."""
@@ -148,6 +175,9 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     assert all(t.dispatch_log[-1].status == "dispatched" for t in dispatched)
     assert all(t.dispatch_log[-1].session_id == "async-reserve" for t in dispatched)
     assert len(list(da.RUNS.glob("*__codex.running"))) == 2
+    track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
+    assert track.spent == 2
+    assert track.per_agent["codex"] == 2
 
 
 def test_dry_run_does_not_pick_same_any_task_for_multiple_lanes(tmp_path):
@@ -427,6 +457,14 @@ def test_resolve_lanes_auto_and_all_use_capacity_registry(tmp_path, monkeypatch)
     assert da.resolve_lanes("auto", down={"claude"}) == ["codex", "github_actions"]
     assert "warp" not in da.resolve_lanes("all", down={"warp"})
     assert da.resolve_lanes("github-actions,antigravity,unknown", down=set()) == ["github_actions", "agy"]
+
+
+def test_explicit_down_lane_does_not_fallback_to_codex(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=0)
+    monkeypatch.setattr(da, "select_lanes", lambda selector, board, down_lanes=None: [])
+
+    assert da.resolve_lanes("jules", down={"jules"}) == []
+    assert da.resolve_lanes("auto", down=set()) == ["codex"]
 
 
 def test_async_dry_run_does_not_reap_harvest_or_reserve_mutations(tmp_path, monkeypatch):

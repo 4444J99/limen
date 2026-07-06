@@ -316,9 +316,43 @@ def signal_quality(agent: str) -> dict[str, str]:
     )
 
 
+def apply_usage_to_census_row(row: dict[str, Any]) -> dict[str, Any]:
+    agent = str(row.get("agent") or "")
+    vendor = usage_vendor(agent)
+    if not vendor:
+        return row
+
+    health = str(vendor.get("health") or "").strip()
+    remaining = vendor.get("remaining")
+    live_remaining: int | None = None
+    if remaining is not None:
+        try:
+            live_remaining = max(0, int(float(remaining)))
+        except (TypeError, ValueError):
+            live_remaining = None
+    if live_remaining is not None:
+        row["remaining"] = live_remaining
+    possible = vendor.get("possible")
+    if possible is not None:
+        try:
+            row["limit"] = int(float(possible))
+        except (TypeError, ValueError):
+            pass
+
+    if health in {"exhausted", "rate-limited", "low"} or live_remaining == 0:
+        row["reachable"] = False
+        detail = str(row.get("detail") or "")
+        suffix = f"usage health={health or 'unknown'}"
+        if live_remaining is not None:
+            suffix = f"{suffix}; live remaining={live_remaining}"
+        row["detail"] = f"{detail}; {suffix}" if detail else suffix
+    return row
+
+
 def build_snapshot(board: dict[str, Any]) -> dict[str, Any]:
     census = [dict(row) for row in capacity_census(board)]
     for row in census:
+        apply_usage_to_census_row(row)
         if row.get("agent") == "ollama" and not row.get("reachable"):
             row["detail"] = ollama_capacity_detail(str(row.get("detail", "unreachable")))
     blocked = [row for row in census if not row["reachable"]]
