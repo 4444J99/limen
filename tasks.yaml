@@ -93583,3 +93583,63 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+- id: ORG-consulting-organ-face-0705
+  title: Make the consulting organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-face
+  - pillar:consulting
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/consulting/, author the polished MACRO face (ORGANVM-as-a-service:\
+    \ the institutional toolkit offered to clients \u2014 the platform anyone can\
+    \ hold) AND the MICRO instance (the Maddie / Rob / Derek client deployments \u2014\
+    \ his own), grounded in what the organ actually does. Real copy, ready to show.\
+    \ One PR. CONSTRAINT: working manual prototypes; not yet autonomic or scaled back\
+    \ to self. [organ-backlog 2026-07-05: rank 6, maturity 60% stage maturing \u2014\
+    \ convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-05'
+  updated: '2026-07-06T02:05:11.787995Z'
+  dispatch_log: []
+- id: ORG-health-organ-firstslice-0705
+  title: Build the first working vertical slice of the health organ
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-firstslice
+  - pillar:health
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/health/, deliver one real end-to-end artifact\
+    \ the organ produces: charter the health organ + a personal recovery/access protocol\
+    \ (informational, not medical advice). A tangible proof the institution works\
+    \ for ONE real case. One PR; tested where it is code; drafts only for anything\
+    \ outbound (his hand on send/sign). CONSTRAINT: unnamed; post-injury (4th-story\
+    \ fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md\
+    \ + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional\
+    \ prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow\
+    \ orchestration, AI role org-chart, leverage math, platform + instance faces.\
+    \ PROTOCOL-recovery-access.md + posture.md generated for 01-post-injury case.\
+    \ Maturity 18%\u219220% by agy beat 2026-07-05.. [organ-backlog 2026-07-05: rank\
+    \ 9, maturity 20% stage scaffold \u2014 convert idle fleet capacity into institutional\
+    \ weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-05'
+  updated: '2026-07-06T02:05:11.789526Z'
+  dispatch_log: []
