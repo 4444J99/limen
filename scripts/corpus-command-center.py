@@ -601,6 +601,36 @@ def build_comparisons(
     return rows
 
 
+def build_comparison_previews(
+    comparisons: list[dict[str, Any]], units: list[dict[str, Any]], limit: int = 40
+) -> list[dict[str, Any]]:
+    units_by_id = {unit["unit_id"]: unit for unit in units}
+    previews = []
+    for item in comparisons[:limit]:
+        left = units_by_id.get(item["left_unit_id"], {})
+        right = units_by_id.get(item["right_unit_id"], {})
+        previews.append(
+            {
+                "comparison_id": item["comparison_id"],
+                "cluster_id": item["cluster_id"],
+                "left_unit_id": item["left_unit_id"],
+                "right_unit_id": item["right_unit_id"],
+                "left_body_preview": str(left.get("body_preview") or ""),
+                "right_body_preview": str(right.get("body_preview") or ""),
+                "left_body_object": left.get("body_object"),
+                "right_body_object": right.get("body_object"),
+            }
+        )
+    return previews
+
+
+def compact_private_unit(unit: dict[str, Any]) -> dict[str, Any]:
+    """Drop generated preview duplication; raw text remains addressable through body_object."""
+    compact = dict(unit)
+    compact.pop("body_preview", None)
+    return compact
+
+
 def redact_unit(unit: dict[str, Any]) -> dict[str, Any]:
     redacted = {
         "unit_id": unit["unit_id"],
@@ -663,6 +693,7 @@ def build_snapshots(
     public_units_source = units[:PUBLIC_UNIT_LIMIT]
     allusions = build_allusions(public_units_source, cluster_atoms)
     comparisons = build_comparisons(clusters, units)
+    comparison_previews = build_comparison_previews(comparisons, units)
     kind_counts = Counter(str(unit.get("kind") or "unknown") for unit in units)
     lane_counts = Counter(str(unit.get("lane_id") or "unknown") for unit in units)
     source_counts = Counter(str(unit.get("source") or "unknown") for unit in units)
@@ -684,7 +715,8 @@ def build_snapshots(
         "privacy": {
             "raw_text_location": str(BODY_OBJECT_ROOT),
             "public_contains_raw_text": False,
-            "private_contains_body_previews": True,
+            "private_contains_body_previews": False,
+            "private_comparison_previews": True,
         },
         "inputs": {
             "prompt_lifecycle_index": str(LIFECYCLE_INDEX),
@@ -693,10 +725,11 @@ def build_snapshots(
             "tasks": str(TASKS_PATH),
         },
         "coverage": coverage,
-        "units": units,
+        "units": [compact_private_unit(unit) for unit in units],
         "clusters": clusters,
         "allusions": allusions,
         "comparisons": comparisons,
+        "comparison_previews": comparison_previews,
         "aug1": aug1_panel(),
         "inbound": inbound_panel(),
         "attack_paths": attack.get("ranked_paths", []) if isinstance(attack, dict) else [],
@@ -796,20 +829,17 @@ def render_markdown(public: dict[str, Any]) -> str:
 
 
 def render_private_html(private: dict[str, Any]) -> str:
-    comparisons = private.get("comparisons", [])[:40]
-    units_by_id = {unit["unit_id"]: unit for unit in private.get("units", [])}
+    comparison_previews = private.get("comparison_previews") or []
     cards = []
-    for item in comparisons:
-        left = units_by_id.get(item["left_unit_id"], {})
-        right = units_by_id.get(item["right_unit_id"], {})
+    for item in comparison_previews[:40]:
         cards.append(
             "<section class='cmp'>"
             f"<h2>{html.escape(item['cluster_id'])}</h2>"
             "<div class='cols'>"
-            f"<pre>{html.escape(str(left.get('body_preview') or ''))}</pre>"
-            f"<pre>{html.escape(str(right.get('body_preview') or ''))}</pre>"
+            f"<pre>{html.escape(str(item.get('left_body_preview') or ''))}</pre>"
+            f"<pre>{html.escape(str(item.get('right_body_preview') or ''))}</pre>"
             "</div>"
-            f"<p>{html.escape(str(left.get('body_object') or ''))} -> {html.escape(str(right.get('body_object') or ''))}</p>"
+            f"<p>{html.escape(str(item.get('left_body_object') or ''))} -> {html.escape(str(item.get('right_body_object') or ''))}</p>"
             "</section>"
         )
     return (
@@ -841,7 +871,7 @@ def write_outputs(private: dict[str, Any], public: dict[str, Any], markdown: str
     PRIVATE_INDEX.parent.mkdir(parents=True, exist_ok=True)
     PUBLIC_INDEX.parent.mkdir(parents=True, exist_ok=True)
     DOC_PATH.parent.mkdir(parents=True, exist_ok=True)
-    PRIVATE_INDEX.write_text(json.dumps(private, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    PRIVATE_INDEX.write_text(json.dumps(private, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     PUBLIC_INDEX.write_text(json.dumps(public, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     DOC_PATH.write_text(markdown, encoding="utf-8")
     PRIVATE_HTML.write_text(render_private_html(private), encoding="utf-8")

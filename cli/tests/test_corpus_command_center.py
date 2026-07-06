@@ -182,6 +182,8 @@ tasks:
     assert private["coverage"]["units"] == len(private["units"])
     assert private["coverage"]["body_objects"] > 0
     assert any(unit["body_object"] for unit in private["units"] if unit["kind"] == "prompt")
+    assert all("body_preview" not in unit for unit in private["units"])
+    assert private["comparison_previews"]
     assert any(cluster["unit_count"] >= 2 for cluster in private["clusters"])
     assert private["comparisons"], "duplicate prompt should create a side-by-side comparison"
     assert any(row["absent_adjacent_atoms"] for row in private["allusions"])
@@ -205,6 +207,7 @@ tasks:
     assert ccc.PRIVATE_INDEX.exists()
     assert ccc.PUBLIC_INDEX.exists()
     assert ccc.PRIVATE_HTML.exists()
+    assert "RAW_PRIVATE_PROMPT" in ccc.PRIVATE_HTML.read_text(encoding="utf-8")
     assert ccc.DOC_PATH.exists()
     assert "Corpus Command Center" in ccc.DOC_PATH.read_text(encoding="utf-8")
 
