@@ -119,6 +119,18 @@ def write_private(path: Path, content: str) -> dict[str, Any]:
     return {"path": rel_to_root(path), "bytes": path.stat().st_size, "sha256": file_sha256(path)}
 
 
+def resolve_recorded_path(value: str | None) -> Path | None:
+    if not value:
+        return None
+    raw = str(value)
+    if raw.startswith("~/"):
+        return HOME / raw[2:]
+    path = Path(raw).expanduser()
+    if path.is_absolute():
+        return path
+    return ROOT / path
+
+
 def archive_available(path: Path = ARCHIVE_PRESERVE_ROOT) -> bool:
     root = path
     while not root.exists() and root != root.parent:
@@ -661,15 +673,42 @@ def preserve_root(row: dict[str, Any], scratch_root: Path, min_idle_hours: float
         ),
     }
     receipt_path = private_dir / "receipt.json"
-    receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     receipt["private_receipt"] = rel_to_root(receipt_path)
-    receipt["private_receipt_sha256"] = file_sha256(receipt_path)
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    receipt["private_receipt_sha256"] = file_sha256(receipt_path)
     return receipt
+
+
+def refresh_preservation_receipt_hash(event: dict[str, Any]) -> bool:
+    receipt_path = resolve_recorded_path(event.get("private_receipt"))
+    if not receipt_path or not receipt_path.exists() or not receipt_path.is_file():
+        return False
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        receipt = None
+    if isinstance(receipt, dict) and "private_receipt_sha256" in receipt:
+        receipt.pop("private_receipt_sha256", None)
+        receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    digest = file_sha256(receipt_path)
+    if event.get("private_receipt_sha256") == digest:
+        return False
+    event["private_receipt_sha256"] = digest
+    return True
+
+
+def write_jsonl(path: Path, events: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fh:
+        for event in events:
+            fh.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
 
 
 def append_preservation_history(receipts: list[dict[str, Any]], path: Path = PRESERVATION_HISTORY_PATH) -> list[dict[str, Any]]:
     history = load_jsonl(path)
+    hash_refreshed = False
+    for event in history:
+        hash_refreshed = refresh_preservation_receipt_hash(event) or hash_refreshed
     existing_keys = {(item.get("preserved_at"), item.get("root")) for item in history}
     new_events: list[dict[str, Any]] = []
     for receipt in receipts:
@@ -690,18 +729,17 @@ def append_preservation_history(receipts: list[dict[str, Any]], path: Path = PRE
             "archive_verified": (receipt.get("archive") or {}).get("verified"),
             "archive_path": (receipt.get("archive") or {}).get("path"),
         }
+        refresh_preservation_receipt_hash(event)
         key = (event.get("preserved_at"), event.get("root"))
         if key in existing_keys:
             continue
         new_events.append(event)
         existing_keys.add(key)
     if new_events:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("a", encoding="utf-8") as fh:
-            for event in new_events:
-                fh.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
-    history.extend(new_events)
-    history.sort(key=lambda event: str(event.get("preserved_at", "")))
+        history.extend(new_events)
+        history.sort(key=lambda event: str(event.get("preserved_at", "")))
+    if hash_refreshed or new_events:
+        write_jsonl(path, history)
     return history
 
 
@@ -1021,7 +1059,7 @@ def main() -> int:
         else:
             report["reap_history"] = load_reap_history(HISTORY_PATH)
         if not args.preserve_root:
-            report["preservation_history"] = load_jsonl(PRESERVATION_HISTORY_PATH)
+            report["preservation_history"] = append_preservation_history([], PRESERVATION_HISTORY_PATH)
         LOG_PATH.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
         DOC_PATH.write_text(render_markdown(report), encoding="utf-8")
     if args.json:

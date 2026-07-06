@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 from pathlib import Path
 
@@ -229,3 +230,47 @@ def test_render_markdown_shows_redacted_preservation_history():
     assert "External archives verified: `1`" in rendered
     assert "scratch-a" in rendered
     assert "receipt.json" in rendered
+
+
+def test_preserve_root_returns_final_private_receipt_hash(tmp_path: Path, monkeypatch):
+    bridge = _load()
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    repo = _make_remote_preserved_repo(scratch, "dirty-root")
+    (repo / "delta.txt").write_text("unbridged work\n", encoding="utf-8")
+    monkeypatch.setattr(bridge, "PRIVATE_PRESERVE_ROOT", tmp_path / "private")
+    monkeypatch.setattr(bridge, "ARCHIVE_PRESERVE_ROOT", tmp_path / "archive")
+
+    report = bridge.build_report(scratch, min_idle_hours=0)
+    receipt = bridge.preserve_root(report["roots"][0], scratch.resolve(), min_idle_hours=0, timeout=30)
+    receipt_files = list((tmp_path / "private").rglob("receipt.json"))
+
+    assert len(receipt_files) == 1
+    private_receipt = json.loads(receipt_files[0].read_text(encoding="utf-8"))
+    assert "private_receipt_sha256" not in private_receipt
+    assert receipt["private_receipt_sha256"] == bridge.file_sha256(receipt_files[0])
+    assert receipt["private_receipt"].endswith("receipt.json")
+
+
+def test_append_preservation_history_repairs_existing_private_receipt_hash(tmp_path: Path):
+    bridge = _load()
+    receipt_file = tmp_path / "private" / "receipt.json"
+    receipt_file.parent.mkdir()
+    receipt_file.write_text('{"private_receipt_sha256":"old-self-hash","receipt":"final"}\n', encoding="utf-8")
+    history = tmp_path / "preservation.jsonl"
+    stale_event = {
+        "preserved_at": "2026-07-06T00:00:00Z",
+        "root": "scratch-a",
+        "status": "external_archive_preserved",
+        "private_receipt": str(receipt_file),
+        "private_receipt_sha256": "stale",
+    }
+    history.write_text(json.dumps(stale_event, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+
+    updated = bridge.append_preservation_history([], path=history)
+    persisted = json.loads(history.read_text(encoding="utf-8").strip())
+    private_receipt = json.loads(receipt_file.read_text(encoding="utf-8"))
+
+    assert "private_receipt_sha256" not in private_receipt
+    assert updated[0]["private_receipt_sha256"] == bridge.file_sha256(receipt_file)
+    assert persisted["private_receipt_sha256"] == bridge.file_sha256(receipt_file)
