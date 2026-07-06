@@ -1,8 +1,8 @@
 # Dispatch Health
 
-Generated: `2026-07-06T10:19:01+00:00`
+Generated: `2026-07-06T10:30:21+00:00`
 
-Status: `blocked`
+Status: `healthy`
 
 ## Incident Class
 
@@ -23,7 +23,7 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T10:19:01.999964+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T10:30:21.560956+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -35,13 +35,12 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `de55c7e8b7dc62aa0bb97a3393648428c15b8f5b`.
-- origin/main: `de55c7e8b7dc62aa0bb97a3393648428c15b8f5b`.
+- HEAD: `bacbcaaa24ff6846e506106e822c395a14c42cbd`.
+- origin/main: `bacbcaaa24ff6846e506106e822c395a14c42cbd`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `1`.
+- Dirty entries: `0`.
 - Ignored generated receipt dirty entries: `1`.
   - `docs/live-root-gate.md`
-  - `tasks.yaml`
 
 ## Verified Worktree
 
@@ -51,7 +50,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 1 dirty entries.
+- none
 
 ## Commands
 
