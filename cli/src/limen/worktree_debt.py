@@ -180,11 +180,7 @@ def is_generated_log_shell(path: Path) -> bool:
     if not path.is_dir():
         return False
     try:
-        files = {
-            item.relative_to(path).as_posix()
-            for item in path.rglob("*")
-            if item.is_file()
-        }
+        files = {item.relative_to(path).as_posix() for item in path.rglob("*") if item.is_file()}
     except OSError:
         return False
     return bool(files) and files <= GENERATED_LOG_SHELL_FILES
