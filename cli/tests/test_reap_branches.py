@@ -143,6 +143,33 @@ def test_spent_branch_is_ancestor_and_reaped(repo):
     assert reap.classify(f).action == "reap"
 
 
+def test_branch_reap_requires_acceptance(repo):
+    ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", [])
+
+    assert ok is False
+    assert reason == "missing-branch-reap-acceptance"
+
+
+def test_branch_reap_acceptance_matches_tip(repo):
+    tip = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "refs/heads/spent"], text=True).strip()
+    events = [
+        {
+            "accepted_at": "2026-07-06T06:30:00Z",
+            "branch": "spent",
+            "accepted": True,
+            "reason": "landed-ancestor",
+            "tip": tip,
+            "archive_status": "landed_on_default_verified",
+            "redaction_review": "not_required_landed_ref",
+        }
+    ]
+
+    ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", events)
+
+    assert ok is True
+    assert reason == "branch-reap-accepted"
+
+
 def test_livework_branch_is_kept(repo):
     f = reap.gather_facts("livework", "main", set(), {}, set(), "main")
     assert f.is_ancestor is False and f.pr_merged_raw is False
