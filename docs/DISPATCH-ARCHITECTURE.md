@@ -51,6 +51,10 @@ results → **reserve + launch** detached workers up to a global cap, then **ret
   timeout the WHOLE process group is `SIGKILL`ed. Plain `subprocess.run(timeout=)` only kills the
   direct child — if an agent CLI spawns grandchildren holding the stdout pipe, `communicate()`
   hangs forever past the timeout (caused a real 23-min beat freeze). This makes timeouts actually fire.
+- **Isolated root retention** (`dispatch._cleanup_isolated_worktree`): local lane worktrees and
+  branch refs are classified after each run but not physically deleted by dispatch. Reclaim/removal
+  happens later through `docs/worktree-reclaim-acceptance.jsonl` and
+  `docs/branch-reap-acceptance.jsonl`, after archive and redaction proof.
 - **Queue-lock (#11)** (`dispatch._queue_lock(tasks_path)`): cross-process mutex on tasks.yaml
   (`logs/.queue.lock.d`, sibling of tasks.yaml). The heartbeat releases it BEFORE the slow dispatch
   so supervisors (seed/heal/verify) aren't starved; dispatch self-locks its reserve and

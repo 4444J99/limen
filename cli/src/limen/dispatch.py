@@ -1297,11 +1297,11 @@ def _push_isolated_branch(task: Task, wt: Path, branch: str) -> bool:
 
 
 def _unpreserved_work_reason(wt: Path, base_ref: str) -> str:
-    """Return why removing an isolated worktree would discard local-only work.
+    """Return why reclaiming an isolated worktree needs preservation first.
 
-    Empty/no-op worktrees have no value beyond the task dispatch log and can be
-    cleaned. Dirty worktrees, unreadable worktrees, or branches with commits not
-    proven on the remote/base ref must stay for the worktree preservation lane.
+    Empty/no-op worktrees are cleanup candidates, but physical removal still belongs to the
+    receipt-backed reclaim/reap organs. Dirty worktrees, unreadable worktrees, or branches with
+    commits not proven on the remote/base ref must stay for the worktree preservation lane.
     """
     status = _git(["status", "--porcelain", "-z"], wt)
     if status.returncode != 0:
@@ -1321,10 +1321,18 @@ def _unpreserved_work_reason(wt: Path, base_ref: str) -> str:
 
 
 def _cleanup_isolated_worktree(repo_dir: Path, wt: Path, branch: str, base_ref: str, pushed: bool) -> None:
-    """Remove only worktrees whose content is already preserved or provably empty."""
+    """Classify isolated worktrees for later receipt-backed cleanup.
+
+    This function intentionally does not remove roots or branch refs. Local deletion requires the
+    shared archive/redaction acceptance ledgers consumed by reclaim-worktrees.py and
+    reap-branches.py.
+    """
     if not wt.exists():
         if pushed:
-            _git_plumbing(["branch", "-D", branch], repo_dir)
+            print(
+                f"  retained isolated branch {branch}; "
+                "branch cleanup delegated to docs/branch-reap-acceptance.jsonl + reap-branches.py"
+            )
         return
 
     reason = "" if pushed else _unpreserved_work_reason(wt, base_ref)
@@ -1332,8 +1340,11 @@ def _cleanup_isolated_worktree(repo_dir: Path, wt: Path, branch: str, base_ref: 
         print(f"  preserved isolated worktree {wt} for bridge ({reason}; branch {branch})")
         return
 
-    _git_plumbing(["worktree", "remove", "--force", str(wt)], repo_dir)
-    _git_plumbing(["branch", "-D", branch], repo_dir)
+    print(
+        f"  retained isolated worktree {wt} ({'pushed' if pushed else 'clean-noop'}; branch {branch}); "
+        "cleanup delegated to docs/worktree-reclaim-acceptance.jsonl + reclaim-worktrees.py "
+        "and docs/branch-reap-acceptance.jsonl + reap-branches.py"
+    )
 
 
 def _create_isolated_pr(task: Task, wt: Path, base: str, branch: str) -> str:
@@ -1462,7 +1473,6 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
                 if wt.exists():
                     print(f"  retrying worktree add {task.id}: preserved existing worktree at {wt}")
                     continue
-            _git_plumbing(["branch", "-D", branch], repo_dir)  # clear stale same-named branch if safe
             add = _git_plumbing(["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120)
         if add.returncode == 0:
             break
