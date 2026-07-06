@@ -89144,7 +89144,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -89160,7 +89160,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:57:49.631704Z'
+  updated: '2026-07-06T21:00:54.702591Z'
   dispatch_log:
   - timestamp: '2026-07-06T19:31:15.848900Z'
     agent: codex
@@ -89184,6 +89184,11 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/rules-system-bound/pull/15
     status: dispatched
+  - timestamp: '2026-07-06T21:00:54.702591Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-rebase-organvm-rules-system-bound-10
   title: rebase/resolve conflicts on organvm/rules-system-bound#10
   repo: organvm/rules-system-bound
@@ -90269,7 +90274,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -90284,12 +90289,17 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:57:49.631704Z'
+  updated: '2026-07-06T21:00:54.702591Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:57:49.631704Z'
     agent: agy
     session_id: https://github.com/organvm/mirror-mirror/pull/107
     status: dispatched
+  - timestamp: '2026-07-06T21:00:54.702591Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-mirror-mirror-71
   title: fix failing CI on organvm/mirror-mirror#71
   repo: organvm/mirror-mirror
@@ -99834,7 +99844,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - discover
   - value-discovery
@@ -99853,7 +99863,7 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T20:06:20.491445Z'
+  updated: '2026-07-06T21:00:54.702591Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:02:43.208712Z'
     agent: agy
@@ -99864,6 +99874,11 @@ tasks:
     agent: agy
     session_id: limen/discover-organvm-sovereign--ground--4444j99-0f507a63
     status: dispatched
+  - timestamp: '2026-07-06T21:00:54.702591Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: DISCOVER-organvm-hokage-chess--4444j99
   title: Discover the latent value of organvm/hokage-chess--4444j99
   repo: organvm/hokage-chess--4444j99
