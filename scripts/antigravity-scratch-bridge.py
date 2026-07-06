@@ -27,6 +27,7 @@ SCRATCH_ROOT = Path(os.environ.get("LIMEN_AGY_SCRATCH_ROOT", HOME / ".gemini/ant
 DOC_PATH = ROOT / "docs" / "antigravity-scratch-bridge.md"
 HISTORY_PATH = ROOT / "docs" / "antigravity-scratch-bridge-history.jsonl"
 PRESERVATION_HISTORY_PATH = ROOT / "docs" / "antigravity-scratch-preservation.jsonl"
+REAP_ACCEPTANCE_PATH = ROOT / "docs" / "antigravity-scratch-reap-acceptance.jsonl"
 LOG_PATH = ROOT / "logs" / "antigravity-scratch-bridge.json"
 PRIVATE_ROOT = Path(
     os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
@@ -38,6 +39,7 @@ ARCHIVE_PRESERVE_ROOT = Path(
 )
 REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
+ACCEPTED_REDACTION_REVIEWS = {"accepted", "private_archive_only", "not_required_private_archive"}
 
 
 def fmt_bytes(n: int) -> str:
@@ -380,8 +382,82 @@ def build_report(scratch_root: Path = SCRATCH_ROOT, min_idle_hours: float = 24.0
     }
 
 
-def apply_safe_reap(report: dict[str, Any], min_idle_hours: float) -> dict[str, Any]:
+def matching_preservation_event(row: dict[str, Any], history: list[dict[str, Any]]) -> dict[str, Any] | None:
+    name = str(row.get("name") or "")
+    head = row.get("head")
+    disposition = row.get("disposition")
+    size_bytes = row.get("size_bytes")
+    for event in reversed(history):
+        if event.get("root") != name:
+            continue
+        if not event.get("archive_verified"):
+            continue
+        if not event.get("archive_path"):
+            continue
+        if not event.get("private_receipt") or not event.get("private_receipt_sha256"):
+            continue
+        if head and event.get("head") and event.get("head") != head:
+            continue
+        if disposition and event.get("disposition") and event.get("disposition") != disposition:
+            continue
+        if size_bytes is not None and event.get("size_bytes") is not None:
+            try:
+                if int(event["size_bytes"]) != int(size_bytes):
+                    continue
+            except (TypeError, ValueError):
+                continue
+        return event
+    return None
+
+
+def matching_reap_acceptance(
+    row: dict[str, Any], preservation: dict[str, Any], history: list[dict[str, Any]]
+) -> dict[str, Any] | None:
+    name = str(row.get("name") or "")
+    receipt_hash = preservation.get("private_receipt_sha256")
+    for event in reversed(history):
+        if event.get("root") != name:
+            continue
+        if event.get("private_receipt_sha256") != receipt_hash:
+            continue
+        if event.get("accepted") is not True:
+            continue
+        if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
+            continue
+        return event
+    return None
+
+
+def reap_permission(
+    row: dict[str, Any], preservation_history: list[dict[str, Any]], acceptance_history: list[dict[str, Any]]
+) -> tuple[bool, str, dict[str, Any]]:
+    preservation = matching_preservation_event(row, preservation_history)
+    if not preservation:
+        return False, "missing-verified-archive-preservation", {}
+    acceptance = matching_reap_acceptance(row, preservation, acceptance_history)
+    if not acceptance:
+        return False, "missing-human-reap-acceptance", {
+            "private_receipt": preservation.get("private_receipt"),
+            "private_receipt_sha256": preservation.get("private_receipt_sha256"),
+        }
+    return True, "human-accepted-archive-preserved-redaction-reviewed", {
+        "private_receipt": preservation.get("private_receipt"),
+        "private_receipt_sha256": preservation.get("private_receipt_sha256"),
+        "archive_path": preservation.get("archive_path"),
+        "accepted_at": acceptance.get("accepted_at"),
+        "redaction_review": acceptance.get("redaction_review"),
+    }
+
+
+def apply_safe_reap(
+    report: dict[str, Any],
+    min_idle_hours: float,
+    preservation_history: list[dict[str, Any]] | None = None,
+    acceptance_history: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     scratch_root = Path(report["scratch_root"]).expanduser().resolve()
+    preservation_history = preservation_history or []
+    acceptance_history = acceptance_history or []
     results: list[dict[str, Any]] = []
     for row in report.get("roots", []):
         if row.get("disposition") != "safe_reap_candidate":
@@ -432,6 +508,18 @@ def apply_safe_reap(report: dict[str, Any], min_idle_hours: float) -> dict[str, 
                 }
             )
             continue
+        allowed, reason, proof = reap_permission(checked, preservation_history, acceptance_history)
+        if not allowed:
+            results.append(
+                {
+                    "name": checked.get("name"),
+                    "path": checked.get("path"),
+                    "status": "skipped",
+                    "reason": reason,
+                    **proof,
+                }
+            )
+            continue
         try:
             shutil.rmtree(path)
             results.append(
@@ -444,6 +532,7 @@ def apply_safe_reap(report: dict[str, Any], min_idle_hours: float) -> dict[str, 
                     "size": checked.get("size"),
                     "repo": checked.get("repo"),
                     "head": checked.get("head"),
+                    **proof,
                 }
             )
         except OSError as exc:
@@ -791,8 +880,10 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "## Decision",
         "",
-        "Do not delete Antigravity scratch roots by size alone. A root is only a reclaim candidate",
+        "Do not delete Antigravity scratch roots by size alone. A root is only a review candidate",
         "when this bridge proves it is clean, idle, and preserved on a remote/default-equivalent ref.",
+        "Physical deletion additionally requires a verified archive preservation receipt plus a",
+        f"human acceptance/redaction-review event in `{rel_to_root(REAP_ACCEPTANCE_PATH)}`.",
         "Dirty roots are `bridge_required`: their per-root delta must be carried home or archived",
         "before any deletion.",
         "",
@@ -1013,7 +1104,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "## Operating Rule",
         "",
         "- `safe_reap_candidate`: local deletion is allowed only through `--apply-safe-reap --write`, "
-        "which reclassifies the root before removal and writes a receipt.",
+        "which reclassifies the root before removal, then requires a matching verified archive receipt "
+        "and human redaction acceptance before writing a deletion receipt.",
         "- `bridge_required`: preserve/carry the uncommitted delta first.",
         "- `preserve_required`: push, archive, or receipt the local commit before deletion.",
         "- `container_review_required`: inspect nested repos; do not delete the parent as one blob.",
@@ -1052,7 +1144,9 @@ def main() -> int:
         parser.error("--preserve-root requires --write")
     report = build_report(args.root.expanduser(), args.min_idle_hours)
     if args.apply_safe_reap:
-        report["reap"] = apply_safe_reap(report, args.min_idle_hours)
+        preservation_history = load_jsonl(PRESERVATION_HISTORY_PATH)
+        acceptance_history = load_jsonl(REAP_ACCEPTANCE_PATH)
+        report["reap"] = apply_safe_reap(report, args.min_idle_hours, preservation_history, acceptance_history)
         report["post_reap_summary"] = build_report(args.root.expanduser(), args.min_idle_hours)["summary"]
     if args.preserve_root:
         report["preservation"] = preserve_named_roots(

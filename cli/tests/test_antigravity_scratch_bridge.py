@@ -38,6 +38,31 @@ def _make_remote_preserved_repo(root: Path, name: str = "clean-root") -> Path:
     return repo
 
 
+def _accepted_reap_proof(row: dict) -> tuple[list[dict], list[dict]]:
+    preservation = [
+        {
+            "root": row["name"],
+            "archive_verified": True,
+            "archive_path": "/Volumes/Archive4T/limen-private/agy-scratch-preserve/demo/root",
+            "private_receipt": ".limen-private/session-corpus/lifecycle/agy-scratch-preserve/demo/receipt.json",
+            "private_receipt_sha256": "abc123",
+            "head": row.get("head"),
+            "disposition": row.get("disposition"),
+            "size_bytes": row.get("size_bytes"),
+        }
+    ]
+    acceptance = [
+        {
+            "accepted_at": "2026-07-06T05:00:00Z",
+            "root": row["name"],
+            "accepted": True,
+            "redaction_review": "private_archive_only",
+            "private_receipt_sha256": "abc123",
+        }
+    ]
+    return preservation, acceptance
+
+
 def test_clean_remote_preserved_root_is_reap_candidate(tmp_path: Path):
     bridge = _load()
     scratch = tmp_path / "scratch"
@@ -107,7 +132,7 @@ def test_container_root_requires_nested_review(tmp_path: Path):
     assert row["nested_by_disposition"] == {"safe_reap_candidate": 1}
 
 
-def test_apply_safe_reap_deletes_only_reclassified_candidates(tmp_path: Path):
+def test_apply_safe_reap_requires_verified_archive_and_acceptance(tmp_path: Path):
     bridge = _load()
     scratch = tmp_path / "scratch"
     scratch.mkdir()
@@ -118,11 +143,32 @@ def test_apply_safe_reap_deletes_only_reclassified_candidates(tmp_path: Path):
     report = bridge.build_report(scratch, min_idle_hours=0)
     reap = bridge.apply_safe_reap(report, min_idle_hours=0)
 
+    assert reap["summary"]["reaped"] == 0
+    assert reap["summary"]["skipped"] == 1
+    assert reap["summary"]["failed"] == 0
+    assert reap["results"][0]["reason"] == "missing-verified-archive-preservation"
+    assert clean.exists()
+    assert dirty.exists()
+
+
+def test_apply_safe_reap_deletes_only_with_matching_archive_acceptance(tmp_path: Path):
+    bridge = _load()
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    clean = _make_remote_preserved_repo(scratch, "clean-root")
+
+    report = bridge.build_report(scratch, min_idle_hours=0)
+    row = report["roots"][0]
+    preservation, acceptance = _accepted_reap_proof(row)
+    reap = bridge.apply_safe_reap(report, min_idle_hours=0, preservation_history=preservation, acceptance_history=acceptance)
+
     assert reap["summary"]["reaped"] == 1
     assert reap["summary"]["skipped"] == 0
     assert reap["summary"]["failed"] == 0
+    assert reap["results"][0]["reason"] == "clean-idle-remote-preserved"
+    assert reap["results"][0]["private_receipt_sha256"] == "abc123"
+    assert reap["results"][0]["redaction_review"] == "private_archive_only"
     assert not clean.exists()
-    assert dirty.exists()
 
 
 def test_reap_history_appends_once_and_renders_cumulative_receipt(tmp_path: Path):
@@ -133,7 +179,10 @@ def test_reap_history_appends_once_and_renders_cumulative_receipt(tmp_path: Path
     history = tmp_path / "history.jsonl"
 
     report = bridge.build_report(scratch, min_idle_hours=0)
-    report["reap"] = bridge.apply_safe_reap(report, min_idle_hours=0)
+    preservation, acceptance = _accepted_reap_proof(report["roots"][0])
+    report["reap"] = bridge.apply_safe_reap(
+        report, min_idle_hours=0, preservation_history=preservation, acceptance_history=acceptance
+    )
     report["post_reap_summary"] = bridge.build_report(scratch, min_idle_hours=0)["summary"]
     report["reap_history"] = bridge.append_reap_history(report, history)
     report["reap_history"] = bridge.append_reap_history(report, history)

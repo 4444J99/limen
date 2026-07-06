@@ -1,12 +1,14 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T04:03:30+00:00`
+Generated: `2026-07-06T04:21:49+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
 
-Do not delete Antigravity scratch roots by size alone. A root is only a reclaim candidate
+Do not delete Antigravity scratch roots by size alone. A root is only a review candidate
 when this bridge proves it is clean, idle, and preserved on a remote/default-equivalent ref.
+Physical deletion additionally requires a verified archive preservation receipt plus a
+human acceptance/redaction-review event in `docs/antigravity-scratch-reap-acceptance.jsonl`.
 Dirty roots are `bridge_required`: their per-root delta must be carried home or archived
 before any deletion.
 
@@ -44,13 +46,6 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T03:57:06Z` `.github`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035706Z-github/receipt.json`.
 - `2026-07-06T03:56:31Z` `sovereign--ground`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035631Z-sovereign--ground/receipt.json`.
 - `2026-07-06T03:55:47Z` `organvm-ontologia`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035547Z-organvm-ontologia/receipt.json`.
-
-## Preservation Results
-
-- Requested roots: `1`.
-- Source size receipted: `4.0 KiB`.
-- Statuses: `external_archive_preserved` 1.
-- Preserved `hello_workspace` `4.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T040342Z-hello_workspace/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
@@ -117,7 +112,7 @@ before any local root can be removed.
 
 ## Operating Rule
 
-- `safe_reap_candidate`: local deletion is allowed only through `--apply-safe-reap --write`, which reclassifies the root before removal and writes a receipt.
+- `safe_reap_candidate`: local deletion is allowed only through `--apply-safe-reap --write`, which reclassifies the root before removal, then requires a matching verified archive receipt and human redaction acceptance before writing a deletion receipt.
 - `bridge_required`: preserve/carry the uncommitted delta first.
 - `preserve_required`: push, archive, or receipt the local commit before deletion.
 - `container_review_required`: inspect nested repos; do not delete the parent as one blob.
