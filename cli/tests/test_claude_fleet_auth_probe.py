@@ -17,7 +17,5 @@ def test_claude_fleet_auth_probe_records_redacted_secret_temp_cleanup() -> None:
     assert "receipt excludes token, content, filenames, and raw path" in text
     assert 'TOK_TO_REDACT="$TOK"' in text
     assert '.replace(os.environ["TOK_TO_REDACT"], "[REDACTED_TOKEN]")' in text
-    assert "rm -rf -- \"$tmpcfg\"" in text
-    assert text.index("receipt_file=\"$(secret_temp_receipt \"$tmpcfg\")\"") < text.index(
-        "rm -rf -- \"$tmpcfg\""
-    )
+    assert 'rm -rf -- "$tmpcfg"' in text
+    assert text.index('receipt_file="$(secret_temp_receipt "$tmpcfg")"') < text.index('rm -rf -- "$tmpcfg"')
