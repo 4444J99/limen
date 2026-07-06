@@ -498,78 +498,68 @@
       ]
     },
     "organvm/limen": {
-      "display_name": "Universal Agent Task Intake & Dispatch System",
-      "what_it_is": "A cross-agent, cross-repo task intake system. One YAML file (`tasks.yaml`) lives in every repo; every agent reads it, applies filters, and processes work. Includes a CLI for local task management, a REST API, a SaaS dashboard, and a CLI-driven task broker. Scales from single-agent to fleet-wide orchestration.",
+      "display_name": "Self-Healing Agent Fleet Infrastructure",
+      "what_it_is": "A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that run autonomously on a heartbeat. The fleet maintains itself: monitors liveness, reaps stale work, syncs state, escalates failures. Built-in organs: proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, health monitoring.",
       "proof_signals": [
-        "1,058 files across the system",
-        "35,811 lines of Python \u00b7 4,319 lines of TypeScript/JavaScript",
-        "54 pytest test files \u00b7 5 jest test files (59 total, 335+ passing)",
-        "2 deploy workflows (Firebase + Cloud Run)",
-        "CLI + REST API + SaaS dashboard",
-        "Multi-repo, multi-agent orchestration",
-        "MCP-accessible — exposes the task system over the Model Context Protocol (server + ianva doorway/aggregator)",
-        "Self-* organ ladder — self-sustaining, self-routing, self-feeding, self-healing, all live"
+        "9-rung organ ladder (each self-* owns its own domain)",
+        "Heartbeat-driven autonomic loop (scripts/metabolize.sh)",
+        "Self-healing on regression (heal/ branch pattern)",
+        "Live: proprioception organ, VIGILIA federation, branch-reap, credential-wall",
+        "Zero manual upkeep \u2014 runs forever once seeded"
       ],
-      "buyer": "AI engineering teams running multiple agents across multiple repos; organizations scaling from single-agent to fleet orchestration.",
-      "expensive_problem": "Managing task routing across agents and repos is ad hoc \u2014 each agent has its own intake, routing is hardcoded, scaling to 5+ agents becomes coordination hell, and visibility into what's being worked is absent.",
-      "cost_of_not_having_it": "Duplicate work, missed priority signals, agents stepping on each other, no unified visibility into the pipeline, human wrangling of task assignments.",
-      "public_face": "The entire task system \u2014 CLI, API, the schema, the dashboard code, all 59 test files, the two deploy workflows, the multi-repo orchestration logic.",
-      "private_operation": "The running SaaS instance \u2014 your tasks, your agent runs, your historical logs, the live API that your fleet reads each beat.",
+      "buyer": "Teams running 5+ agents who want infrastructure that fixes itself instead of paging on-call.",
+      "expensive_problem": "Every agent fleet needs: health checks, credential refresh, stale-work cleanup, state reconciliation, failure escalation. If manual, each system costs ~2h/week ops. If ignored, cascading failures ripple through the fleet.",
+      "cost_of_not_having_it": "One missed credential rotation = entire lane down for hours. One stale clone = 100GB leak. One diverged state = silent corruption. Manual fixes cost 10\u201320h/month + the incidents themselves (lost work, unhappy users).",
+      "public_face": "the full organ ladder \u2014 each self-* source, the beat loop, the escalation protocol, the federation dance. Read how proprioception sees itself; how VIGILIA heals divergence; how the credential organ stays valid.",
+      "private_operation": "your fleet breathing on its own \u2014 credentials auto-refresh, stale work auto-reaped, divergence auto-healed, health always visible. No ops work; everything Just Works until it doesn't, and then it fixes itself.",
       "ladder": [
         {
           "level": 1,
-          "name": "Use it in your repo",
-          "kind": "Self-serve",
-          "what_they_get": "Clone the tasks.yaml schema, run agents locally with limen CLI pointing at your repo.",
-          "cadence": "Ongoing"
+          "name": "Health monitoring + alerting",
+          "kind": "Observability",
+          "what_they_get": "Real-time health dashboard for your fleet organs; alerts on liveness failure or divergence; historical trend data.",
+          "internal_anchor": "$1k\u2013$3k setup + $500/mo monitoring",
+          "cadence": "Setup + recurring"
         },
         {
           "level": 2,
-          "name": "Multi-repo orchestration",
-          "kind": "Self-hosted",
-          "what_they_get": "Run the dashboard and API on your infrastructure; orchestrate agents across your repo portfolio.",
-          "internal_anchor": "$8k\u2013$20k one-time setup",
-          "cadence": "One-time + support"
+          "name": "Self-healing deployed in my fleet",
+          "kind": "Autonomous ops",
+          "what_they_get": "The full organ ladder running on your heartbeat; automatic remediation of known failure modes; zero manual ops work.",
+          "internal_anchor": "$5k\u2013$15k wiring + $2k/mo ops backup",
+          "cadence": "Deploy once + retainer"
         },
         {
           "level": 3,
-          "name": "Cloud-hosted SaaS",
-          "kind": "SaaS subscription",
-          "what_they_get": "Hosted limen dashboard, REST API, agents auto-scaled by Limen, historical logs and analytics.",
-          "internal_anchor": "$200\u2013$1k / mo (by agent fleet size)",
-          "cadence": "Monthly subscription"
+          "name": "Extend the ladder for my domain",
+          "kind": "Custom organs",
+          "what_they_get": "New self-* organs tailored to your infrastructure (e.g. self-capacity, self-optimizing); integrated into the heartbeat.",
+          "internal_anchor": "$25k\u2013$75k per organ",
+          "cadence": "Project + optional retainer"
         },
         {
           "level": 4,
-          "name": "Custom fleet orchestration",
-          "kind": "Managed service",
-          "what_they_get": "Limen running your entire agent fleet, tuned to your dispatch priority rules, on-call monitoring, capacity planning as you scale.",
-          "internal_anchor": "$5k\u2013$20k / mo managed service",
-          "cadence": "Ongoing"
+          "name": "Own the fleet as your core platform",
+          "kind": "Strategic platform build",
+          "what_they_get": "We build your entire agent fleet infrastructure on the self-* ladder \u2014 you own a platform that scales forever with zero ops burden.",
+          "internal_anchor": "$50k\u2013$150k platform + $5k\u2013$20k / mo",
+          "cadence": "Build + ongoing partnership"
         }
       ],
-      "cta_client": "Orchestrate your agents",
-      "cta_recruiter": "Study the fleet architecture",
+      "cta_client": "Adopt self-healing fleet ops",
+      "cta_recruiter": "Work with the team that built autonomic infrastructure",
       "recruiter_bridge_level": 4,
-      "seo_description": "MCP-accessible multi-agent task orchestration: cross-repo task intake, universal dispatch schema, self-healing fleet-scale coordination over the Model Context Protocol.",
+      "seo_description": "Self-healing agent fleet \u2014 autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat.",
       "search_topics": [
-        "task-orchestration",
-        "agent-dispatch",
-        "multi-agent",
-        "mcp",
-        "model-context-protocol",
-        "agent-tools",
+        "agent-orchestration",
+        "autonomous-systems",
+        "fleet-management",
         "self-healing",
-        "autonomic",
-        "workflow",
-        "task-queue",
-        "distributed-systems",
-        "api",
-        "saas",
-        "python",
-        "typescript",
-        "firebase",
-        "cloud-run"
+        "infrastructure-automation",
+        "zero-ops",
+        "heartbeat-driven",
+        "organ-architecture",
+        "agent-reliability"
       ]
     },
     "organvm/session-meta": {
@@ -626,6 +616,134 @@
         "observability",
         "history",
         "tracking"
+      ]
+    },
+    "organvm/ianva": {
+      "display_name": "Single Gateway for MCP Across All Agents",
+      "what_it_is": "A unified MCP doorway that sits between your agents (Claude Code, Codex, Gemini, opencode, etc.) and every MCP server (Gmail, Sentry, Notion, GitHub, etc.). Each agent connects once; ianva handles all OAuth, auto-refresh, and server aggregation. Built on MCPHub with auto-refresh, Docker-optional, local + cloud faces.",
+      "proof_signals": [
+        "Wraps MCPHub with full OAuth 2.1 (PKCE, DCR, resource indicators)",
+        "Single-writer refresh + flock serialization (no race conditions)",
+        "4 faces: local HTTP, stdio via mcp-proxy, cloud HTTPS tunnel, discipline layer",
+        "Every MCP server authed once, forever \u2014 no re-prompts per agent",
+        "Tested with Claude Code, Codex, Gemini, agy, opencode, Copilot, Cline"
+      ],
+      "buyer": "Development teams and individual builders running multiple AI agents who need consistent MCP server access without re-authenticating per agent.",
+      "expensive_problem": "Every agent that touches MCP requires independent OAuth setup. With 6+ agents, you're authorizing the same servers 6+ times. Each agent has its own credential storage, refresh logic, and re-prompt on expiry \u2014 hours burned on auth flaps instead of building.",
+      "cost_of_not_having_it": "3\u20135 hours per agent per month wasted on MCP re-authorization, OAuth expiry surprises, and per-agent credential sync. For teams: per-agent divergence creates support burden. Build velocity drops 10\u201315% when half your energy goes to 'why won't this MCP server respond' instead of shipping.",
+      "public_face": "the full ianva stack \u2014 the MCPHub wrapper, the 4 faces, the auto-refresh logic, the flock serialization, the configuration system, the doctor + quickstart. Read every line; run `ianva doctor` and see it work.",
+      "private_operation": "your agents all talking to one ianva endpoint; token refresh silent in the background; new MCP servers added once and available to every agent immediately; no more per-agent re-auth dances. The engine that makes your toolchain feel cohesive instead of fragmented.",
+      "ladder": [
+        {
+          "level": 1,
+          "name": "Unified MCP access across my agents",
+          "kind": "Standalone gateway",
+          "what_they_get": "Deploy ianva on your machine; configure once per MCP server; every agent auto-connects. OAuth, refresh, aggregation, all handled. One endpoint, infinite agents.",
+          "internal_anchor": "Self-hosted (free / sweat), or managed via us (optional retainer for ops)",
+          "cadence": "Deploy once, refresh automatic"
+        },
+        {
+          "level": 2,
+          "name": "Integrate ianva into my agent platform",
+          "kind": "Embedded gateway",
+          "what_they_get": "ianva as a library in your platform; agents register, ianva coordinates OAuth and server aggregation. You own the endpoint, ianva owns the mechanics.",
+          "internal_anchor": "$5k\u2013$15k integration + $1k\u2013$3k / mo ops",
+          "cadence": "Integration + recurring"
+        },
+        {
+          "level": 3,
+          "name": "Build my own agent fleet on ianva",
+          "kind": "White-label fleet operator",
+          "what_they_get": "ianva powers your end-to-end agent platform \u2014 credential management, MCP routing, auth, auto-refresh. You brand it, sell it, operate it.",
+          "internal_anchor": "$25k\u2013$75k platform build + $3k\u2013$10k / mo managed",
+          "cadence": "Build + recurring"
+        },
+        {
+          "level": 4,
+          "name": "Be our MCP infrastructure engine",
+          "kind": "Strategic partnership",
+          "what_they_get": "We build your MCP backbone \u2014 standardize auth across your org's N agents, handle the refresh/expiry/retry layer, own the compliance + audit trail. You focus on agent capability.",
+          "internal_anchor": "$10k\u2013$30k / mo retainer",
+          "cadence": "Ongoing partnership"
+        }
+      ],
+      "cta_client": "Unify your agents' MCP access",
+      "cta_recruiter": "Work with the team that built this",
+      "recruiter_bridge_level": 4,
+      "seo_description": "Unified MCP gateway for multiple AI agents \u2014 single OAuth per server, auto-refresh, no re-prompts. Gateway for Claude Code, Codex, Gemini, opencode, Copilot, and Cline.",
+      "search_topics": [
+        "mcp",
+        "model-context-protocol",
+        "agent-tools",
+        "agent-orchestration",
+        "oauth-gateway",
+        "credential-management",
+        "mcp-server",
+        "multi-agent",
+        "ai-tools",
+        "api-gateway"
+      ]
+    },
+    "organvm/agentic-titan": {
+      "display_name": "Agentic Titan \u2014 Multi-Agent Coordinator",
+      "what_it_is": "A meta-agent orchestrator that reasons about which sub-agent (Claude, Codex, Gemini, opencode) fits a given task, dispatches to them, aggregates their outputs, and escalates disagreements. Prevents sub-agent thrashing; maximizes accuracy by agent specialization.",
+      "proof_signals": [
+        "Agent model-selection engine (cost vs. capability vs. latency)",
+        "Escalation ladder (Haiku \u2192 Sonnet \u2192 Opus on disagreement)",
+        "Output aggregation + consensus voting",
+        "Deployed across 5+ agent lanes in production"
+      ],
+      "buyer": "Teams running diverse agent fleets who need one orchestrator to route work optimally instead of trying all agents blindly.",
+      "expensive_problem": "Running a task through all agents = N \u00d7 cost + slow. Routing to the wrong agent = inaccurate or wasted spend. No orchestrator = manual triage per task.",
+      "cost_of_not_having_it": "Blind multi-agent dispatch burns 5\u201310\u00d7 compute. Repeated re-runs on wrong agents = 10\u201320h/week wasted. Inconsistent results erode confidence in the system.",
+      "public_face": "the orchestrator logic, the model-selection heuristics, the escalation protocol, the aggregation strategy.",
+      "private_operation": "your fleet working in concert \u2014 each agent specialized, one coordinator routing cleanly.",
+      "ladder": [
+        {
+          "level": 1,
+          "name": "Route my tasks across my agent lanes",
+          "kind": "Orchestration service",
+          "what_they_get": "One API; Titan handles agent selection + dispatch + output aggregation. You get answers, not agent headaches.",
+          "internal_anchor": "$1k\u2013$5k setup + $500\u2013$2k / mo usage-based",
+          "cadence": "Setup + recurring"
+        },
+        {
+          "level": 2,
+          "name": "Embed Titan in my platform",
+          "kind": "Library / integrated orchestrator",
+          "what_they_get": "Titan as a component in your agent platform; your rules for escalation + aggregation; your control.",
+          "internal_anchor": "$10k\u2013$25k integration",
+          "cadence": "Integration project"
+        },
+        {
+          "level": 3,
+          "name": "Customize Titan for my domain",
+          "kind": "Domain-specific orchestrator",
+          "what_they_get": "Titan tuned to your task types, agents, SLAs; proprietary escalation rules; domain knowledge baked in.",
+          "internal_anchor": "$25k\u2013$75k custom build",
+          "cadence": "Build project"
+        },
+        {
+          "level": 4,
+          "name": "Titan as my agent platform core",
+          "kind": "Strategic partnership",
+          "what_they_get": "We build your entire agent platform with Titan at the core \u2014 you run a fleet that Just Works, all coordination hidden.",
+          "internal_anchor": "$50k\u2013$150k + $10k\u2013$30k / mo retainer",
+          "cadence": "Build + ongoing"
+        }
+      ],
+      "cta_client": "Orchestrate my agent fleet",
+      "cta_recruiter": "Work with the team that built multi-agent coordination",
+      "recruiter_bridge_level": 4,
+      "seo_description": "Multi-agent orchestrator \u2014 route tasks across Claude, Codex, Gemini, agy, opencode. Model selection + escalation + output aggregation.",
+      "search_topics": [
+        "multi-agent",
+        "agent-orchestration",
+        "model-selection",
+        "task-routing",
+        "agent-coordination",
+        "ensemble-methods",
+        "llm-orchestration"
       ]
     }
   }
