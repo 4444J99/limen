@@ -377,6 +377,22 @@ def test_reclaim_dry_run_removes_nothing(tmp_path):
     assert "dry-run" in r.stdout
 
 
+def test_reclaim_removes_generated_log_shell(tmp_path):
+    limen_root = tmp_path / "limen"
+    (limen_root / "logs").mkdir(parents=True)
+    wtroot = tmp_path / ".limen-worktrees"
+    shell = wtroot / "generated-log-shell"
+    (shell / "logs").mkdir(parents=True)
+    (shell / "logs" / "session-lifecycle-pressure.md").write_text("generated\n", encoding="utf-8")
+    (shell / "logs" / "session-lifecycle-pressure.json").write_text("{}", encoding="utf-8")
+
+    r = _run_reclaim(wtroot, limen_root, apply=True)
+
+    assert r.returncode == 0, r.stderr
+    assert not shell.exists(), r.stdout
+    assert "generated-log-shell" in r.stdout
+
+
 def test_reclaim_malformed_numeric_env_fails_open(tmp_path):
     main, bare, wtroot = _wt_root_with(tmp_path)
     dead = _add_wt(main, wtroot, "dead")

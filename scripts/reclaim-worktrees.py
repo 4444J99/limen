@@ -44,6 +44,7 @@ from pathlib import Path
 SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 
+from limen.worktree_debt import is_generated_log_shell  # noqa: E402
 from limen.worktree_roots import iter_worktree_targets  # noqa: E402
 
 HOME = os.environ.get("HOME", "/Users/4jp")
@@ -138,13 +139,15 @@ def superproject(cwd) -> str | None:
 
 
 def classify(d: Path, now: float, min_age_h: float):
-    """Return (action, reason). action in {remove-worktree, remove-clone, skip}."""
+    """Return (action, reason). action in {remove-worktree, remove-clone, remove-residue, skip}."""
     try:
         if d.resolve() in _SELF_GUARD:
             return "skip", "self/live-checkout"
     except Exception:
         return "skip", "unresolved"
     if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
+        if is_generated_log_shell(d):
+            return "remove-residue", "generated-log-shell"
         return "skip", "not-a-git-dir"
     age_h = (now - d.stat().st_mtime) / 3600.0
     if age_h < min_age_h:

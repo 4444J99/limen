@@ -49,6 +49,23 @@ def test_documented_non_source_residue_is_visible_but_not_debt(tmp_path: Path, m
     assert report["debt"] == 1
 
 
+def test_generated_log_shell_is_visible_but_not_debt(tmp_path: Path, monkeypatch):
+    worktrees = tmp_path / ".limen-worktrees"
+    shell = worktrees / "generated-log-shell"
+    (shell / "logs").mkdir(parents=True)
+    (shell / "logs" / "session-lifecycle-pressure.md").write_text("generated\n", encoding="utf-8")
+    (shell / "logs" / "session-lifecycle-pressure.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(worktrees))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+
+    report = worktree_debt_report(tmp_path)
+
+    assert report["items"][0]["name"] == "generated-log-shell"
+    assert report["items"][0]["reason"] == "generated-log-shell"
+    assert report["items"][0]["debt"] is False
+    assert report["debt"] == 0
+
+
 def test_remote_superseded_receipt_is_visible_but_not_debt(tmp_path: Path, monkeypatch):
     worktrees = tmp_path / ".limen-worktrees"
     root = worktrees / "superseded-root"
