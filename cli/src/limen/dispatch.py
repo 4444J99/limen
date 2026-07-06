@@ -922,9 +922,14 @@ def _agy_live_root_registry_task(task: Task) -> bool:
     return str(task.id or "").startswith("DISCOVER-") and ("value-repos.json" in text or "discovery.md" in text)
 
 
+def _agy_limen_repo_task(task: Task) -> bool:
+    """Agy has repeatedly ignored the Limen isolation contract on Limen-root PR work."""
+    return str(task.repo or "").lower() == "organvm/limen"
+
+
 def agent_can_run_task(agent: str, task: Task) -> bool:
     agent = canonical_agent(agent)
-    if agent in {"agy", "antigravity"} and _agy_live_root_registry_task(task):
+    if agent in {"agy", "antigravity"} and (_agy_live_root_registry_task(task) or _agy_limen_repo_task(task)):
         return False
     return True
 
