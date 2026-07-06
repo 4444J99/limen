@@ -91,6 +91,8 @@ def test_isolated_lane_env_points_limen_root_at_worktree(tmp_path: Path, monkeyp
     assert env["LIMEN_LIVE_ROOT"] == str(live_root)
     assert env["LIMEN_ROOT"] == str(wt)
     assert env["LIMEN_TASKS"] == str(wt / "tasks.yaml")
+    assert env["PWD"] == str(wt)
+    assert env["OLDPWD"] == str(live_root)
 
 
 def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_key(tmp_path: Path, monkeypatch) -> None:

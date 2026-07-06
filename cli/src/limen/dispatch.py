@@ -1182,6 +1182,8 @@ def _lane_run_env(agent: str, wt: Path | None = None) -> dict[str, str]:
         run_env["LIMEN_LIVE_ROOT"] = live_root
         run_env["LIMEN_ROOT"] = str(wt)
         run_env["LIMEN_TASKS"] = str(wt / "tasks.yaml")
+        run_env["PWD"] = str(wt)
+        run_env["OLDPWD"] = live_root
     # gemini: API-key mode throttles hard under agentic use. If the user has done the
     # one-time Google sign-in, drop API keys for gemini only so it uses OAuth / Code-Assist.
     if agent == "gemini" and os.environ.get("LIMEN_GEMINI_OAUTH") == "1":
