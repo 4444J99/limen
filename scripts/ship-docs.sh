@@ -4,7 +4,7 @@
 # THE SIDE-DOOR CLOSER. The `docs: review … run` append class was landing as direct
 # commits to main (35 of 40 recent main commits bypassed PRs) because no tool made
 # the charter's branch cadence a single command. This does: it stages ONLY the named
-# files onto a fresh branch cut from origin/main inside a throwaway worktree — your
+# files onto a fresh branch cut from origin/main inside an isolated worktree — your
 # current checkout (branch, dirt, daemon contention) is never touched — opens the PR,
 # and self-merges the moment scripts/merge-policy.sh clears it (the standing grant).
 #
@@ -38,10 +38,13 @@ done
 
 git -C "$root" fetch origin main --quiet
 br="docs/${slug}-$(date -u +%Y%m%d%H%M%S)"
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/ship-docs.XXXXXX")"
+wt_root="${LIMEN_WORKTREES:-$HOME/Workspace/.limen-worktrees}"
+mkdir -p "$wt_root"
+tmp="$wt_root/ship-docs-${slug}-$(date -u +%Y%m%d%H%M%S)-$$"
 cleanup() {
-  git -C "$root" worktree remove --force "$tmp" 2>/dev/null || true
-  git -C "$root" branch -D "$br" 2>/dev/null || true
+  echo "ship-docs: retained local worktree $tmp"
+  echo "ship-docs: retained local/remote branch $br"
+  echo "ship-docs: cleanup delegated to docs/worktree-reclaim-acceptance.jsonl + reclaim-worktrees.py and docs/branch-reap-acceptance.jsonl + reap-branches.py"
 }
 trap cleanup EXIT
 
@@ -69,8 +72,8 @@ if "$root/scripts/merge-policy.sh" "$pr_num"; then
   gh pr review "$pr_num" --comment --body \
     "Adjudicated by merge-policy.sh: CLEARED (non-deploy or green-CI website path). Squash-merge per the standing grant (CLAUDE.md § Merge & Branch Protocol)." \
     >/dev/null 2>&1 || true
-  gh pr merge "$pr_num" --squash --delete-branch
-  echo "ship-docs: merged #$pr_num (merge-policy CLEARED)"
+  gh pr merge "$pr_num" --squash
+  echo "ship-docs: merged #$pr_num (merge-policy CLEARED; branch retained)"
   exit 0
 else
   rc=$?

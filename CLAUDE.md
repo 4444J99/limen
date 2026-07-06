@@ -213,16 +213,18 @@ Authoritative and permanent. Claude **owns the branch cadence and the merge deci
 | `refactor/` | behavior-preserving restructure |
 | `worktree-*` | auto-named isolation branches (fleet / bg jobs) |
 
-One PR per branch → `main`. Squash-merge, delete the branch. `main` is the trunk **and** the live deploy source.
+One PR per branch → `main`. Squash-merge; branch cleanup is a separate receipt-backed reap, not an
+automatic delete. `main` is the trunk **and** the live deploy source.
 
 **Chunking.** A branch is **one concern, not one session.** When a session produces multiple concerns, cut a fresh branch per concern off `origin/main` — finish → push → PR → next branch — never accumulate heterogeneous commits on a single session branch. And the **live checkout rests on `main`**: parking it on a work branch pins the running fleet to stale code and entangles every autonomic capture into that branch (the 2026-06-29 jules-capfill park: 5 days, 65 behind, a feature slice + daemon receipts fused onto one ref). `scripts/sync-release.sh` auto-unparks a fully-pushed, clean park each beat and fails open loudly otherwise — do session work in a worktree, never in the live checkout.
 
 **No side doors — docs included.** The branch cadence applies to *every* tracked change, including
 one-file docs appends (the `docs: review … run` class, which was landing as direct `main` commits —
 35 of 40 at its worst). Ship those with **`scripts/ship-docs.sh <slug> "<msg>" <file…>`**: it stages
-only the named files onto a fresh branch cut from `origin/main` in a throwaway worktree (your
-checkout is never touched), opens the PR, and self-merges the moment `merge-policy.sh` clears —
-one command, so the PR path is never harder than the side door. The system's own findings are
+only the named files onto a fresh branch cut from `origin/main` in an isolated reclaim-tracked
+worktree (your checkout is never touched), opens the PR, and self-merges the moment
+`merge-policy.sh` clears while retaining the branch/root for later accepted cleanup — one command,
+so the PR path is never harder than the side door. The system's own findings are
 githubbed the same way: **`scripts/sync-censor-issues.py`** (beat-wired, dry-run until
 `LIMEN_CENSOR_ISSUES_APPLY=1` arms it) mirrors live censor residuals to public `censor`-labelled
 issues and auto-closes them when the lineage clears — so insight→correction work arrives as an
@@ -241,7 +243,8 @@ For a **website-sensitive** PR, merging *is* the deploy — so it requires **gre
 
 **The predicate decides — not your memory.** Run `scripts/merge-policy.sh <PR#>` (or no arg for the current branch):
 
-- exit **0 CLEARED** → `gh pr merge <PR#> --squash --delete-branch`. Do it; don't ask.
+- exit **0 CLEARED** → `gh pr merge <PR#> --squash`. Do it; don't ask. Branch cleanup is
+  receipt-backed and separate from the merge.
 - exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or non-deploy checks still running. Wait for green, then merge.
 - exit **3 BLOCKED** → GitHub itself refuses the merge: conflicts (DIRTY), stale base (BEHIND), or a branch-protection gate unsatisfied (BLOCKED — e.g. the required `pr-gate` check never ran on a PR opened before that check existed). Rebase onto current `main` first (the PR#111 silent-revert guard; a rebase also retriggers the required checks), then re-run. If BLOCKED persists after a clean green rebase, a required review or admin merge is needed — surface it, don't force it.
 
