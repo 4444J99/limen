@@ -84669,7 +84669,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -84685,7 +84685,7 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T13:11:26.477385Z'
+  updated: '2026-07-06T14:07:04.484377Z'
   dispatch_log:
   - timestamp: '2026-07-06T09:57:15.230830Z'
     agent: claude
@@ -84705,6 +84705,11 @@ tasks:
     agent: codex
     session_id: https://github.com/4444J99/hokage-chess/pull/151
     status: dispatched
+  - timestamp: '2026-07-06T14:07:04.484377Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-stale-4444j99-hokage-chess-122
   title: "rebase 4444J99/hokage-chess#122 onto current base \u2014 branched far behind"
   repo: organvm/hokage-chess
@@ -85148,7 +85153,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -85164,7 +85169,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T14:05:45.790245Z'
+  updated: '2026-07-06T14:07:04.484377Z'
   dispatch_log:
   - timestamp: '2026-07-04T11:52:21.295273Z'
     agent: github_actions
@@ -85185,6 +85190,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/limen/pull/671
     status: dispatched
+  - timestamp: '2026-07-06T14:07:04.484377Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-cifix-organvm-limen-422
   title: fix failing CI on organvm/limen#422
   repo: organvm/limen
