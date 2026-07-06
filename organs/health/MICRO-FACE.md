@@ -111,8 +111,17 @@ structural. The record proves what the institution can do without naming who it 
     beat, and routes every output through the safety sentinel.
 
 13. **Executive Health Office integrated** — `scripts/health-organ.py` (the broader daily health
-    operations engine) runs as the organ's primary execution engine, producing the health
-    briefing, digest, regimen, and surveillance reports, and stamping liveness for proprioception.
+     operations engine) runs as the organ's primary execution engine, producing the health
+     briefing, digest, regimen, and surveillance reports, and stamping liveness for proprioception.
+
+14. **Appointment calendar created** — `cases/01-post-injury/calendar.md` with 6 upcoming
+     appointments across PT, orthopedics, and neurology, sorted by proximity with alert status,
+     prep notes, post-visit action items, prep-to-do tracking, conflict scan, and risk flags.
+     Workflow 4 (Appointments → calendar) is operational.
+
+15. **Beat log established** — `cases/01-post-injury/beat-log.yaml` — an append-only orchestration
+     record capturing every reception event: which workflow fired, trigger, artifact produced,
+     and sentinel status. Provides the audit trail for proprioception.
 
 ---
 

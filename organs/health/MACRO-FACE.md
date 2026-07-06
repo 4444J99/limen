@@ -150,6 +150,7 @@ all 6 workflows producing artifacts.
 - **Workflow 1 (Intake → posture):** `cases/01-post-injury/posture.md` — one-page standing record with baseline, protocol, functional status, accommodation status, and open coordination items
 - **Workflow 2 (State → record):** `cases/01-post-injury/state-log.yaml` — first daily beat with structured markers (pain, sleep, mood, energy, cognition, function, medication effects) and trend indicators
 - **Workflow 3 (Protocol → adherence):** `cases/01-post-injury/protocol-log.md` — 96% adherence rate with per-action tracking across PT, specialist appointments, cognitive pacing, and medication
+- **Workflow 4 (Appointments → calendar):** `cases/01-post-injury/calendar.md` — 6 upcoming appointments across PT, orthopedics, and neurology with proximity alerts, prep tracking, and conflict scan
 - **Workflow 5 (Accommodation → documentation):** `cases/01-post-injury/accommodation-log.md` — 4 accommodation requests tracked with full limitation/request/response/correspondence structure, wired to legal organ intake
 - **Workflow 6 (Safety sentinel):** `organs/health/safety-sentinel.sh` — executable gate checking 6 guardrails (clinical boundary, contradiction, self-scheduling, privacy, UPL, legal boundary)
 - **Reception script:** `organs/health/RECEPTION.md` — conductor prompt routing patient input to the correct workflow, loaded with KERNEL boundaries
@@ -163,7 +164,7 @@ all 6 workflows producing artifacts.
 - Accommodation record successfully consumed by legal organ (`organs/legal/` evidence index)
 - Safety sentinel showing zero failures over a continuous 14-day period
 - Posture brief shared with and confirmed by a new provider at intake
-- Appointment calendar operational (W4) with proximity alerts
+- Beat log receiving continuous daily entries for 14+ days
 
 **Validation:**
 
@@ -171,7 +172,7 @@ all 6 workflows producing artifacts.
 # Check the health organ structure and workflow artifacts
 ls organs/health/KERNEL.md organs/health/CHARTER.md organs/health/MACRO-FACE.md organs/health/MICRO-FACE.md
 ls organs/health/RECEPTION.md organs/health/safety-sentinel.sh organs/health/workflow-runner.sh
-ls organs/health/cases/01-post-injury/{posture.md,state-log.yaml,protocol-log.md,accommodation-log.md}
+ls organs/health/cases/01-post-injury/{posture.md,state-log.yaml,protocol-log.md,accommodation-log.md,calendar.md,beat-log.yaml}
 
 # Run the safety sentinel against an existing artifact
 ./organs/health/safety-sentinel.sh organs/health/cases/01-post-injury/protocol-log.md --check-only

@@ -59,7 +59,7 @@ run_state() {
   echo "  → W2: State → record"
   LOG="$CASE/state-log.yaml"
   if [ -f "$LOG" ]; then
-    ENTRIES=$(grep -c "^  timestamp:" "$LOG" 2>/dev/null || echo 0)
+    ENTRIES=$(grep -c "^- .*timestamp:" "$LOG" 2>/dev/null || echo 0)
     echo "    ✓ $ENTRIES state entries recorded"
     "$SENTINEL" "$LOG" --check-only 2>&1 | sed 's/^/    /'
   else
@@ -116,7 +116,7 @@ run_status() {
   fi
   echo ""
   echo "Artifacts:"
-  for f in posture.md state-log.yaml protocol-log.md calendar.md accommodation-log.md; do
+  for f in posture.md state-log.yaml protocol-log.md calendar.md accommodation-log.md beat-log.yaml; do
     if [ -f "$CASE/$f" ]; then
       echo "  ✓ $f"
     else
