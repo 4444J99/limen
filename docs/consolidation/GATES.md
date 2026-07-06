@@ -1,6 +1,6 @@
 # GitHub Consolidation Gates
 
-Generated: `2026-07-06T13:26:03+00:00`
+Generated: `2026-07-06T13:44:13+00:00`
 
 ## Rule
 
@@ -23,11 +23,11 @@ Generated: `2026-07-06T13:26:03+00:00`
 | `tasks.yaml` repo refs to rewrite post-transfer | `0` |
 | Local remotes to rewrite post-transfer | `0` |
 | Deploy literal to fix post-transfer | `False` |
-| `gh-app-token --which` | `pat (GITHUB_TOKEN fallback)` |
-| `limen[bot]` App installed | `False` |
-| App token wired | `False` |
-| Installed org Apps | `claude`, `google-labs-jules`, `oz-by-warp`, `chatgpt-codex-connector` |
-| Blocking gates | `limen-bot-token-not-wired`, `limen-bot-app-not-installed` |
+| `gh-app-token --which` | `app (limen[bot] installation token)` |
+| `limen[bot]` App installed | `True` |
+| App token wired | `True` |
+| Installed org Apps | `claude`, `google-labs-jules`, `oz-by-warp`, `chatgpt-codex-connector`, `limen-conductor` |
+| Blocking gates | none |
 
 ## Collision Examples
 
