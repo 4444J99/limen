@@ -83,8 +83,8 @@ python3 "$LIMEN_ROOT/scripts/harvest-pull-completed.py" 2>&1 | tail -4 || true
 
 # #18: LAND completed jules sessions as PRs (the jules→PR gap). Bounded per beat so it never
 # dominates the cycle; skips repos with no local checkout (clone-maintenance handles those).
-# Same isolation keystone as local dispatch (throwaway worktree). On by default for the live
-# daemon (already authorized to open PRs via dispatch); set LIMEN_JULES_LAND=0 to disable.
+# Same isolation keystone as local dispatch. The isolated root is retained after PR creation and
+# later reclaimed only by the receipt-backed reclaim/reap organs; set LIMEN_JULES_LAND=0 to disable.
 if [ "${LIMEN_JULES_LAND:-1}" = "1" ]; then
   echo "[drain] landing completed jules sessions as PRs (limit ${LIMEN_JULES_LAND_LIMIT:-3})…"
   PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/jules-land.py" --apply --recover \

@@ -63,6 +63,8 @@ results → **reserve + launch** detached workers up to a global cap, then **ret
   DISPATCHED_NO_PR→open (re-dispatch). Respects async `.running` markers (won't reopen a live run).
 - **jules→PR** (`scripts/jules-land.py`, wired into `drain.sh`): lands completed jules sessions as
   PRs (the async-cloud equivalent of worktree→PR), dup-safe via PR-URL backfill in dispatch_log.
+  It retains the isolated local worktree/branch after PR creation; physical cleanup belongs to the
+  receipt-backed reclaim/reap organs once merged/archive/redaction proof exists.
 
 ## Shipping the output
 `scripts/merge-ready.sh` (dry-run default, `--apply` gated) merges CLEAN non-junk PRs revenue-first.

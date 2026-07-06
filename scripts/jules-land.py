@@ -7,7 +7,9 @@ work never lands in the repo. Local lanes go worktree→apply→commit→push→
 equivalent. This is that equivalent: for each COMPLETED jules session matched to a task,
 resolve the repo, make an isolated worktree off origin/<base>, `jules remote pull --apply`
 the session patch into it, then commit→push→PR and mark the task done. Same isolation
-keystone as local dispatch (throwaway worktree, never the live tree).
+keystone as local dispatch (isolated worktree, never the live tree). Physical local cleanup is
+delegated to the receipt-backed reclaim/reap organs after archive and redaction proof; this script
+never force-removes the isolated root or branch itself.
 
 Dry-run by default (prints the plan); --apply does real worktree→PR. --limit N bounds it.
 Idempotent-ish: skips sessions whose task is already done and empty-diff sessions (no PR).
@@ -72,33 +74,40 @@ def land_one(task: Task, sid: str, apply: bool) -> str:
     add = _git(["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120)
     if add.returncode != 0:
         return f"FAIL {task.id}: worktree add ({add.stderr.strip()[:120]})"
-    try:
-        # apply the jules session patch directly into the isolated worktree (the staged-diff check
-        # below is the real signal — a failed pull just yields an empty diff → no-op, never a crash)
-        subprocess.run([JULES, "remote", "pull", "--session", sid, "--apply"],
-                       cwd=str(wt), capture_output=True, text=True, timeout=180)
-        _git(["add", "-A"], wt)
-        if _git(["diff", "--cached", "--quiet"], wt).returncode == 0:
-            return f"no-op {task.id}: jules session {sid} produced no diff"
-        msg = f"{task.title}\n\nlimen task {task.id} (jules session {sid})"
-        c = _git(["-c", f"user.name={os.environ.get('LIMEN_COMMIT_NAME', '4444J99')}",
-                  "-c", f"user.email={os.environ.get('LIMEN_COMMIT_EMAIL', '4444J99@users.noreply.github.com')}",
-                  "commit", "-m", msg], wt)
-        if c.returncode != 0:
-            return f"FAIL {task.id}: commit ({c.stderr.strip()[:120]})"
-        p = _git(["push", "-u", "origin", branch], wt, timeout=300)
-        if p.returncode != 0:
-            return f"FAIL {task.id}: push ({p.stderr.strip()[:120]})"
-        pr = subprocess.run(["gh", "pr", "create", "--repo", task.repo, "--head", branch,
-                             "--base", base, "--title", f"[limen jules {task.id}] {task.title}"[:100],
-                             "--body", f"Lands completed jules session {sid}.\n\nlimen task {task.id}"],
-                            capture_output=True, text=True, timeout=120)
-        if pr.returncode != 0:
-            return f"FAIL {task.id}: pr create ({pr.stderr.strip()[:120]})"
-        return f"LANDED {task.id} -> {pr.stdout.strip()}"
-    finally:
-        _git(["worktree", "remove", "--force", str(wt)], repo_dir)
-        _git(["branch", "-D", branch], repo_dir)
+    # apply the jules session patch directly into the isolated worktree (the staged-diff check
+    # below is the real signal — a failed pull just yields an empty diff → no-op, never a crash)
+    subprocess.run([JULES, "remote", "pull", "--session", sid, "--apply"],
+                   cwd=str(wt), capture_output=True, text=True, timeout=180)
+    _git(["add", "-A"], wt)
+    retain = (
+        f"local root retained: {wt}; branch retained: {branch}; "
+        "cleanup delegated to docs/worktree-reclaim-acceptance.jsonl + reclaim-worktrees.py "
+        "and docs/branch-reap-acceptance.jsonl + reap-branches.py"
+    )
+    if _git(["diff", "--cached", "--quiet"], wt).returncode == 0:
+        return f"no-op {task.id}: jules session {sid} produced no diff; {retain}"
+    msg = f"{task.title}\n\nlimen task {task.id} (jules session {sid})"
+    c = _git(["-c", f"user.name={os.environ.get('LIMEN_COMMIT_NAME', '4444J99')}",
+              "-c", f"user.email={os.environ.get('LIMEN_COMMIT_EMAIL', '4444J99@users.noreply.github.com')}",
+              "commit", "-m", msg], wt)
+    if c.returncode != 0:
+        return f"FAIL {task.id}: commit ({c.stderr.strip()[:120]}); {retain}"
+    p = _git(["push", "-u", "origin", branch], wt, timeout=300)
+    if p.returncode != 0:
+        return f"FAIL {task.id}: push ({p.stderr.strip()[:120]}); {retain}"
+    pr = subprocess.run(["gh", "pr", "create", "--repo", task.repo, "--head", branch,
+                         "--base", base, "--title", f"[limen jules {task.id}] {task.title}"[:100],
+                         "--body", f"Lands completed jules session {sid}.\n\nlimen task {task.id}"],
+                        capture_output=True, text=True, timeout=120)
+    if pr.returncode != 0:
+        return f"FAIL {task.id}: pr create ({pr.stderr.strip()[:120]}); {retain}"
+    return f"LANDED {task.id} -> {pr.stdout.strip()} ; {retain}"
+
+
+def landed_pr_url(message: str, fallback: str) -> str:
+    if "-> " not in message:
+        return fallback
+    return message.split("-> ", 1)[1].split(" ; ", 1)[0].strip() or fallback
 
 
 def main() -> int:
@@ -142,7 +151,7 @@ def main() -> int:
         print(f"  {msg}")
         if args.apply and msg.startswith("LANDED"):
             # record the PR URL in session_id so ever_pr() sees it → never re-land (no dupes)
-            pr_url = msg.split("-> ", 1)[1].strip() if "-> " in msg else sid
+            pr_url = landed_pr_url(msg, sid)
             t.status = "done"
             t.updated = now
             t.dispatch_log.append(DispatchLogEntry(
