@@ -83764,10 +83764,10 @@ tasks:
   title: fix failing CI on organvm/organvm-ontologia#10
   repo: organvm/organvm-ontologia
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -83782,7 +83782,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T08:38:29.549967Z'
+  updated: '2026-07-06T09:52:44.297457Z'
   dispatch_log:
   - timestamp: '2026-07-06T08:34:01.541601Z'
     agent: agy
@@ -83793,6 +83793,11 @@ tasks:
     agent: agy
     session_id: limen/heal-cifix-organvm-organvm-ontologia-10-64603ca7
     status: dispatched
+  - timestamp: '2026-07-06T09:52:44.297457Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-organvm-ontologia-11
   title: fix failing CI on organvm/organvm-ontologia#11
   repo: organvm/organvm-ontologia
@@ -83844,7 +83849,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -83860,7 +83865,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T09:42:40.786435Z'
+  updated: '2026-07-06T09:52:44.297457Z'
   dispatch_log:
   - timestamp: '2026-07-06T08:38:46.066439Z'
     agent: claude
@@ -83880,6 +83885,11 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/organvm-ontologia/pull/14
     status: dispatched
+  - timestamp: '2026-07-06T09:52:44.297457Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-organvm-ontologia-13
   title: fix failing CI on organvm/organvm-ontologia#13
   repo: organvm/organvm-ontologia
@@ -83887,7 +83897,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -83903,7 +83913,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T09:42:56.038791Z'
+  updated: '2026-07-06T09:51:40.792960Z'
   dispatch_log:
   - timestamp: '2026-07-06T07:47:13.504084Z'
     agent: claude
@@ -83928,6 +83938,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T09:51:40.792960Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: HEAL-rebase-organvm-payrail-4
   title: rebase/resolve conflicts on organvm/payrail#4
   repo: organvm/payrail
@@ -83955,7 +83969,7 @@ tasks:
   title: Make the financial organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: gemini
   workstream: financial
   priority: high
   budget_cost: 2
@@ -84000,7 +84014,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/your-fit-tailored#15
   repo: organvm/your-fit-tailored
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -84009,6 +84023,7 @@ tasks:
   - self-heal
   - conflict
   - tried:github_actions
+  - tried:claude
   urls:
   - https://github.com/organvm/your-fit-tailored/pull/15
   context: 'PR organvm/your-fit-tailored#15 is CONFLICTING with its base branch and
@@ -84019,7 +84034,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-04T11:09:32.324014Z'
+  updated: '2026-07-06T09:56:59.975722Z'
   dispatch_log:
   - timestamp: '2026-07-04T11:05:03.500427Z'
     agent: github_actions
@@ -84031,11 +84046,20 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-06T09:51:56.157647Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T09:56:59.975722Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: HEAL-rebase-4444j99-hokage-chess-85
   title: rebase/resolve conflicts on 4444J99/hokage-chess#85
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -84058,7 +84082,7 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#89
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -84092,7 +84116,7 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#94
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -84115,7 +84139,7 @@ tasks:
   title: "rebase 4444J99/hokage-chess#101 onto current base \u2014 branched far behind"
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: normal
   budget_cost: 1
   status: open
@@ -84139,7 +84163,7 @@ tasks:
   title: "rebase 4444J99/hokage-chess#102 onto current base \u2014 branched far behind"
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: normal
   budget_cost: 1
   status: open
@@ -84163,7 +84187,7 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#103
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -84186,7 +84210,7 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#107
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -84209,7 +84233,7 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#108
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -84232,7 +84256,7 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#114
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -84255,10 +84279,10 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#121
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -84273,7 +84297,13 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T09:57:15.230830Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T09:57:15.230830Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-4444j99-hokage-chess-122
   title: "rebase 4444J99/hokage-chess#122 onto current base \u2014 branched far behind"
   repo: 4444J99/hokage-chess
@@ -94819,6 +94849,58 @@ tasks:
     \ of the red checks (lint / types / failing test / config), fix it, push to the\
     \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
     \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/dot-github--theoria/pull/492\
+    \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-06'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-media-ark-47
+  title: fix failing CI on organvm/media-ark#47
+  repo: organvm/media-ark
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/media-ark/pull/47
+  context: "PR organvm/media-ark#47 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/media-ark/pull/47\
+    \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-06'
+  updated: '2026-07-06T09:57:15.230830Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T09:57:15.230830Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: HEAL-cifix-organvm-metasystem-master-33
+  title: fix failing CI on organvm/metasystem-master#33
+  repo: organvm/metasystem-master
+  type: code
+  target_agent: gemini
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/metasystem-master/pull/33
+  context: "PR organvm/metasystem-master#33 has FAILING CI checks and merge-drain\
+    \ correctly refuses to merge it. Check out the PR branch, find the root cause\
+    \ of the red checks (lint / types / failing test / config), fix it, push to the\
+    \ SAME PR branch, and confirm every check goes green. Do not open a new PR \u2014\
+    \ repair the existing one so merge-drain lands it. PR: https://github.com/organvm/metasystem-master/pull/33\
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
