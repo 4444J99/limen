@@ -160,7 +160,9 @@ def test_apply_safe_reap_deletes_only_with_matching_archive_acceptance(tmp_path:
     report = bridge.build_report(scratch, min_idle_hours=0)
     row = report["roots"][0]
     preservation, acceptance = _accepted_reap_proof(row)
-    reap = bridge.apply_safe_reap(report, min_idle_hours=0, preservation_history=preservation, acceptance_history=acceptance)
+    reap = bridge.apply_safe_reap(
+        report, min_idle_hours=0, preservation_history=preservation, acceptance_history=acceptance
+    )
 
     assert reap["summary"]["reaped"] == 1
     assert reap["summary"]["skipped"] == 0
