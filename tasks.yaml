@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 297
+      spent: 299
       per_agent:
         jules: 100
         gemini: 2
         codex: 16
         opencode: 49
-        agy: 102
-        claude: 27
+        agy: 103
+        claude: 28
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-06T11:41:52.375322+00:00'
@@ -88537,7 +88537,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -88553,7 +88553,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:44:49.881280Z'
+  updated: '2026-07-06T22:50:17.501103Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:10:45.260408Z'
     agent: codex
@@ -88582,6 +88582,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-07-06T22:50:17.501103Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-public-process-31
   title: fix failing CI on organvm/public-process#31
   repo: organvm/public-process
@@ -88589,7 +88594,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -88605,7 +88610,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:44:49.881280Z'
+  updated: '2026-07-06T22:50:17.501103Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:28:53.029757Z'
     agent: codex
@@ -88650,6 +88655,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-07-06T22:50:17.501103Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-public-process-32
   title: fix failing CI on organvm/public-process#32
   repo: organvm/public-process
@@ -88687,16 +88697,17 @@ tasks:
   title: fix failing CI on organvm/public-process#33
   repo: organvm/public-process
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
   - slow
   - noop
+  - tried:agy
   urls:
   - https://github.com/organvm/public-process/pull/33
   context: "PR organvm/public-process#33 has FAILING CI checks and merge-drain correctly\
@@ -88707,7 +88718,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:44:16.652865Z'
+  updated: '2026-07-06T22:50:14.088551Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:28:53.029757Z'
     agent: opencode
@@ -88768,6 +88779,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:50:14.088551Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: HEAL-cifix-organvm-public-process-34
   title: fix failing CI on organvm/public-process#34
   repo: organvm/public-process
@@ -89458,7 +89473,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -89475,7 +89490,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:44:16.652865Z'
+  updated: '2026-07-06T22:50:14.088551Z'
   dispatch_log:
   - timestamp: '2026-07-06T19:42:01.440119Z'
     agent: opencode
@@ -89520,6 +89535,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:50:14.088551Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-scale-threshold-emergence-4
   title: fix failing CI on organvm/scale-threshold-emergence#4
   repo: organvm/scale-threshold-emergence
