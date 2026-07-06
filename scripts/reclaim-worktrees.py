@@ -45,9 +45,17 @@ import sys
 import time
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
 SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 
+from reap_acceptance import (  # noqa: E402
+    REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
+    has_required_acceptance_proof,
+)
 from limen.worktree_debt import is_generated_log_shell  # noqa: E402
 from limen.worktree_roots import iter_worktree_targets  # noqa: E402
 
@@ -91,7 +99,7 @@ ACCEPTED_REDACTION_REVIEWS = {
     "not_required_remote_only",
     "not_required_generated_residue",
 }
-REQUIRED_ACCEPTANCE_PROOF_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
+REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
 
 # Never reap the live checkout nor the worktree this process is running from (else we yank
 # the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
@@ -208,7 +216,7 @@ def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) ->
             continue
         if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
             continue
-        if any(not str(event.get(field) or "").strip() for field in REQUIRED_ACCEPTANCE_PROOF_FIELDS):
+        if not has_required_acceptance_proof(event):
             continue
         return True, "reclaim-accepted"
     return False, "missing-reclaim-acceptance"

@@ -55,6 +55,15 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from reap_acceptance import (  # noqa: E402
+    REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
+    has_required_acceptance_proof,
+)
+
 HOME = os.environ.get("HOME", str(Path.home()))
 WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE", f"{HOME}/Workspace"))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen")).resolve()
@@ -94,7 +103,7 @@ ACCEPTED_REDACTION_REVIEWS = {
     "private_archive_only",
     "not_required_remote_only",
 }
-REQUIRED_ACCEPTANCE_PROOF_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
+REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
 
 
 def _run(args: list[str], cwd: Path | None = None) -> str:
@@ -145,7 +154,7 @@ def clone_reap_accepted(repo: Path, slug: str, reason: str, acceptance_events: l
             continue
         if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
             continue
-        if any(not str(event.get(field) or "").strip() for field in REQUIRED_ACCEPTANCE_PROOF_FIELDS):
+        if not has_required_acceptance_proof(event):
             continue
         return True, "clone-reap-accepted"
     return False, "missing-clone-reap-acceptance"

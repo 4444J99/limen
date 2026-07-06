@@ -307,7 +307,9 @@ def _write_reclaim_acceptance(
         "action": action,
         "accepted": True,
         "archive_status": archive_status,
+        "archive_proof": f"{archive_status} accepted for {root}",
         "redaction_review": redaction_review,
+        "redaction_proof": f"{redaction_review} accepted for {root}",
     }
     if reason:
         event["reason"] = reason

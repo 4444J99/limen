@@ -64,6 +64,15 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from reap_acceptance import (  # noqa: E402
+    REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
+    has_required_acceptance_proof,
+)
+
 HOME = os.environ.get("HOME", str(Path.home()))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen")).resolve()
 LOG = LIMEN_ROOT / "logs" / "reap-branches.jsonl"
@@ -93,7 +102,7 @@ ACCEPTED_REDACTION_REVIEWS = {
     "not_required_landed_ref",
     "not_required_remote_only",
 }
-REQUIRED_ACCEPTANCE_PROOF_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
+REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
 
 
 def _int_env(name: str, default: int, *, minimum: int | None = None) -> int:
@@ -176,7 +185,7 @@ def branch_reap_accepted(branch: str, reason: str, acceptance_events: list[dict]
             continue
         if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
             continue
-        if any(not str(event.get(field, "")).strip() for field in REQUIRED_ACCEPTANCE_PROOF_FIELDS):
+        if not has_required_acceptance_proof(event):
             continue
         return True, "branch-reap-accepted"
     if matched_candidate:

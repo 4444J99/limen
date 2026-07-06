@@ -16,10 +16,17 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from reap_acceptance import REQUIRED_ACCEPTANCE_PROOF_FIELDS, has_required_acceptance_proof  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).resolve()
 HOME = Path.home()
@@ -41,7 +48,7 @@ ARCHIVE_PRESERVE_ROOT = Path(
 REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 ACCEPTED_REDACTION_REVIEWS = {"accepted", "private_archive_only", "not_required_private_archive"}
-REAP_ACCEPTANCE_REQUIRED_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
+REAP_ACCEPTANCE_REQUIRED_FIELDS = REQUIRED_ACCEPTANCE_PROOF_FIELDS
 
 
 def fmt_bytes(n: int) -> str:
@@ -426,7 +433,7 @@ def matching_reap_acceptance(
             continue
         if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
             continue
-        if any(not str(event.get(field) or "").strip() for field in REAP_ACCEPTANCE_REQUIRED_FIELDS):
+        if not has_required_acceptance_proof(event):
             continue
         return event
     return None
