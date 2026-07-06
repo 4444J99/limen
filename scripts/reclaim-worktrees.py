@@ -74,6 +74,7 @@ LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
 RECLAIM_ACCEPTANCE = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
+RECLAIM_ACCEPTANCE_DOC = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.md"
 APPLY = "--apply" in sys.argv
 FORCE = "--force" in sys.argv  # ignore the throttle
 REMOTE_MERGED_LANES = {"remote-merged"}
@@ -90,6 +91,7 @@ ACCEPTED_REDACTION_REVIEWS = {
     "not_required_remote_only",
     "not_required_generated_residue",
 }
+REQUIRED_ACCEPTANCE_PROOF_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
 
 # Never reap the live checkout nor the worktree this process is running from (else we yank
 # the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
@@ -205,6 +207,8 @@ def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) ->
         if not archive_ok:
             continue
         if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
+            continue
+        if any(not str(event.get(field) or "").strip() for field in REQUIRED_ACCEPTANCE_PROOF_FIELDS):
             continue
         return True, "reclaim-accepted"
     return False, "missing-reclaim-acceptance"
