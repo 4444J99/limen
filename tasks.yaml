@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-03'
-      spent: 267
+      spent: 268
       per_agent:
         jules: 100
         gemini: 0
         codex: 100
-        opencode: 47
+        opencode: 48
         agy: 20
         claude: 0
       per_agent_reset:
@@ -81713,7 +81713,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T00:52:31.373816Z'
+  updated: '2026-07-06T01:26:25.703652Z'
   dispatch_log:
   - timestamp: '2026-07-05T19:47:03.152249Z'
     agent: claude
@@ -81774,6 +81774,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T01:26:25.703652Z'
+    agent: opencode
+    session_id: https://github.com/organvm/dot-github--theoria/pull/497
+    status: dispatched
 - id: HEAL-cifix-organvm-dot-github--theoria-484
   title: fix failing CI on organvm/dot-github--theoria#484
   repo: organvm/dot-github--theoria
@@ -81848,7 +81852,7 @@ tasks:
   workstream: consulting
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-face
   - pillar:consulting
@@ -81867,7 +81871,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T00:31:44.823219Z'
+  updated: '2026-07-06T01:26:39.018572Z'
   dispatch_log:
   - timestamp: '2026-07-05T20:51:17.294866Z'
     agent: claude
@@ -81887,6 +81891,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-07-06T01:26:39.018572Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-artist-organ-face-0704
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen
@@ -82163,11 +82172,11 @@ tasks:
   title: Deepen the governance organ toward a usable institution
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: gemini
   workstream: governance
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-deepen
   - pillar:governance
@@ -82176,6 +82185,7 @@ tasks:
   - vltima
   - generated
   - tried:claude
+  - tried:agy
   urls: []
   context: "In organvm/limen organs/governance/ (and reference its product repo where\
     \ relevant), close the single highest-leverage gap between the current scaffold\
@@ -82188,7 +82198,7 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T00:52:31.373816Z'
+  updated: '2026-07-06T01:26:25.703652Z'
   dispatch_log:
   - timestamp: '2026-07-05T22:37:06.677122Z'
     agent: claude
@@ -82213,6 +82223,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T01:26:25.703652Z'
+    agent: agy
+    session_id: cli
+    status: failed->gemini
 - id: ORG-health-organ-charter-0704
   title: Charter the health organ as an institution rivaling a concierge medical /
     recovery team
@@ -82294,11 +82308,11 @@ tasks:
   title: Build the first working vertical slice of the health organ
   repo: organvm/limen
   type: content
-  target_agent: claude
+  target_agent: opencode
   workstream: health
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-firstslice
   - pillar:health
@@ -82321,7 +82335,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T00:52:31.373816Z'
+  updated: '2026-07-06T01:26:25.703652Z'
   dispatch_log:
   - timestamp: '2026-07-05T22:52:24.115920Z'
     agent: claude
@@ -82337,6 +82351,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T01:26:25.703652Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: HEAL-cifix-organvm-organvm-engine-115
   title: fix failing CI on organvm/organvm-engine#115
   repo: organvm/organvm-engine
@@ -82425,7 +82443,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -82440,7 +82458,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T01:26:39.018572Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T01:26:39.018572Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-organvm-engine-126
   title: fix failing CI on organvm/organvm-engine#126
   repo: organvm/organvm-engine
@@ -82448,7 +82472,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -82463,7 +82487,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T01:26:39.018572Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T01:26:39.018572Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-organvm-engine-127
   title: fix failing CI on organvm/organvm-engine#127
   repo: organvm/organvm-engine
@@ -93406,3 +93436,38 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+- id: ORG-artist-organ-face-0705
+  title: Make the artist organ's macro + micro face excellent
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: dispatched
+  labels:
+  - organ-face
+  - pillar:artist
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/artist/, author the polished MACRO face (a studio/temple\
+    \ platform any artist can hold \u2014 9-chamber toolkit with Curatorial Voice\
+    \ and Provenance Contract frameworks \u2014 the platform anyone can hold) AND\
+    \ the MICRO instance (Anthony's a-mavs-olevm chambers (444-file photo archive,\
+    \ ET4L, LOCREANCE) \u2014 all 3/3 validated \u2014 his own), grounded in what\
+    \ the organ actually does. Real copy, ready to show. One PR. CONSTRAINT: temple\
+    \ built (70%) chambers filling; Curatorial Voice + Provenance Contract frameworks\
+    \ formalized; macro + micro faces polished; 3/3 chambers validated; no longer\
+    \ subordinate to education. [organ-backlog 2026-07-05: rank 7, maturity 70% stage\
+    \ maturing \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-05'
+  updated: '2026-07-06T01:26:39.018572Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T01:26:39.018572Z'
+    agent: github_actions
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
