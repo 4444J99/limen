@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 254
+      spent: 260
       per_agent:
         jules: 100
         gemini: 2
-        codex: 45
+        codex: 48
         opencode: 29
-        agy: 73
-        claude: 4
+        agy: 75
+        claude: 5
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-06T11:41:52.375322+00:00'
@@ -85191,7 +85191,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:53:06.580239Z'
+  updated: '2026-07-06T19:57:47.366107Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:35:01.040512Z'
     agent: codex
@@ -85293,6 +85293,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T19:57:47.366107Z'
+    agent: codex
+    session_id: https://github.com/organvm/a-i--skills/pull/34
+    status: dispatched
 - id: HEAL-cifix-organvm-a-i--skills-28
   title: fix failing CI on organvm/a-i--skills#28
   repo: organvm/a-i--skills
@@ -85745,7 +85749,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -85762,7 +85766,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:53:06.580239Z'
+  updated: '2026-07-06T19:57:47.366107Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:30:40.601862Z'
     agent: agy
@@ -85832,6 +85836,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T19:57:47.366107Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-limen-421
   title: fix failing CI on organvm/limen#421
   repo: organvm/limen
@@ -87503,7 +87512,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -87520,7 +87529,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:48:50.786668Z'
+  updated: '2026-07-06T19:57:50.275136Z'
   dispatch_log:
   - timestamp: '2026-07-06T17:47:45.844476Z'
     agent: opencode
@@ -87546,6 +87555,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-06T19:57:50.275136Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-444
   title: fix failing CI on organvm/limen#444
   repo: organvm/limen
@@ -88404,7 +88418,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -88421,7 +88435,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:48:50.786668Z'
+  updated: '2026-07-06T19:57:50.275136Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:28:53.029757Z'
     agent: opencode
@@ -88447,6 +88461,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-06T19:57:50.275136Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-public-process-34
   title: fix failing CI on organvm/public-process#34
   repo: organvm/public-process
@@ -89103,7 +89122,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -89118,7 +89137,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:53:44.888383Z'
+  updated: '2026-07-06T19:57:50.275136Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:28:53.029757Z'
     agent: agy
@@ -89134,6 +89153,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-07-06T19:57:50.275136Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-134
   title: fix failing CI on organvm/domus-genoma#134
   repo: organvm/domus-genoma
@@ -96680,7 +96704,7 @@ tasks:
   workstream: governance
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -96695,7 +96719,13 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  dispatch_log: []
+  updated: '2026-07-06T19:57:50.275136Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T19:57:50.275136Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-system-governance-framework-42
   title: fix failing CI on organvm/system-governance-framework#42
   repo: organvm/system-governance-framework
@@ -96743,13 +96773,17 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-06T19:53:06.580239Z'
+  updated: '2026-07-06T19:57:47.366107Z'
   dispatch_log:
   - timestamp: '2026-07-06T19:53:06.580239Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T19:57:47.366107Z'
+    agent: claude
+    session_id: limen/heal-cifix-organvm-system-governance-framework-43-e369b224
+    status: dispatched
 - id: HEAL-cifix-organvm-system-governance-framework-45
   title: fix failing CI on organvm/system-governance-framework#45
   repo: organvm/system-governance-framework
@@ -96885,11 +96919,12 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
+  - noop
   urls:
   - https://github.com/organvm/dot-github--logos/pull/37
   context: 'PR organvm/dot-github--logos#37 is CONFLICTING with its base branch and
@@ -96900,13 +96935,18 @@ tasks:
     [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-06T19:56:12.037249Z'
+  updated: '2026-07-06T19:57:47.366107Z'
   dispatch_log:
   - timestamp: '2026-07-06T19:56:12.037249Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T19:57:47.366107Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-dot-github--theoria-457
   title: fix failing CI on organvm/dot-github--theoria#457
   repo: organvm/dot-github--theoria
