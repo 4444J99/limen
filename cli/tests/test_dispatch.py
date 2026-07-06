@@ -111,19 +111,19 @@ def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_k
 
 
 def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path) -> None:
-    """Ideal-form router (origin's local-first split + the extended-fleet graft): local-checkout
-    work spreads across LOCAL lanes by budget+refresh-runway (no single-lane serialization), and a
-    repo with NO local checkout but a GitHub issue still reaches the extended fleet (copilot/jules)
-    instead of being stranded. Supersedes the old fan-everything-round-robin assertion — which routed
-    local work to copilot/warp/oz the daemon can't dispatch (the 'don't strand' lesson origin learned)."""
+    """Ideal-form router: repo work spreads across repo-capable lanes by budget+refresh-runway.
+
+    Local checkout work may now include the jules remote batch-fill lane; copilot/warp/oz still stay
+    out of ordinary repo routing unless reached through the extended-fleet fallback.
+    """
     route = load_route_module()
     workdir = tmp_path / "work"
     checkout = workdir / "organvm" / "limen"
     (checkout / ".git").mkdir(parents=True)
     health = {agent: True for agent in PAID_AGENT_ORDER}
-    budget = {a: 10 for a in ("codex", "claude", "agy", "opencode")}
+    budget = {a: 10 for a in ("codex", "claude", "agy", "opencode", "jules")}
 
-    # Many local-checkout tasks must SPREAD across local lanes, never serialize onto one.
+    # Many local-checkout tasks must SPREAD across repo-capable lanes, never serialize onto one.
     tally: dict[str, int] = {}
     picks = []
     for i in range(8):
@@ -138,8 +138,8 @@ def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path)
         vendor, _ = route.route_task(task, health, workdir, assigned=tally, budget=budget)
         tally[vendor] = tally.get(vendor, 0) + 1
         picks.append(vendor)
-    local_lanes = {"codex", "claude", "agy", "opencode", "gemini", "ollama"}
-    assert set(picks) <= local_lanes, f"local work leaked to {set(picks)}"
+    repo_worker_lanes = {"codex", "claude", "agy", "opencode", "gemini", "ollama", "jules"}
+    assert set(picks) <= repo_worker_lanes, f"repo work leaked to {set(picks)}"
     assert len(set(picks)) >= 2, f"work serialized onto {set(picks)}"
 
     # A repo with NO local checkout still reaches a local lane because dispatch.py clones on demand.
@@ -152,8 +152,8 @@ def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path)
         "urls": ["https://github.com/someorg/no-local-here/issues/9"],
     }
     vendor, reason = route.route_task(remote, health, workdir, assigned={}, budget=budget)
-    assert vendor in local_lanes, (vendor, reason)
-    assert "clone-on-demand" in reason
+    assert vendor in repo_worker_lanes, (vendor, reason)
+    assert "clone" in reason
 
 
 def test_self_improve_weight_nudge_steers_local_split(monkeypatch) -> None:

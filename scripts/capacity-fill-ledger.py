@@ -34,15 +34,15 @@ RATE_LIMIT_TAIL_LINES = 400
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.capacity import capacity_census  # noqa: E402
+from limen.dispatch import _reset_budget_if_needed  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 
 
 def load_tasks_board() -> dict[str, Any]:
     try:
-        import yaml
-    except ModuleNotFoundError:
-        return {}
-    try:
-        return yaml.safe_load(TASKS_PATH.read_text(encoding="utf-8")) or {}
+        lf = load_limen_file(TASKS_PATH)
+        _reset_budget_if_needed(lf, dt.datetime.now(dt.timezone.utc))
+        return lf.model_dump(mode="json", exclude_none=True)
     except Exception:
         return {}
 
@@ -234,6 +234,7 @@ def codex_signal_quality() -> dict[str, str]:
 def signal_quality(agent: str) -> dict[str, str]:
     agy_usage = usage_signal_detail("agy")
     gemini_usage = usage_signal_detail("gemini")
+    jules_usage = usage_signal_detail("jules")
     rows: dict[str, dict[str, str]] = {
         "codex": codex_signal_quality(),
         "claude": {
@@ -277,10 +278,13 @@ def signal_quality(agent: str) -> dict[str, str]:
             "next_build": ollama_next_build(),
         },
         "jules": {
-            "signal": "dispatch-count cap",
-            "trust": "known cap",
-            "use": "down locally until CLI/service path is available",
-            "next_build": "Restore Jules CLI/service reachability.",
+            "signal": "usage-telemetry proxy" if jules_usage else "dispatch-count cap",
+            "trust": "proxy + known cap" if jules_usage else "known cap",
+            "use": signal_use(
+                "jules",
+                f"remote async service; {rate_limit_watch('jules')}; use for remote batch fill",
+            ),
+            "next_build": "Keep Jules remote-launch receipts and harvest status fresh.",
         },
         "copilot": {
             "signal": "assignability probe",

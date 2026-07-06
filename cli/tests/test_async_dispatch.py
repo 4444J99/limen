@@ -316,6 +316,53 @@ def test_async_reserve_accumulates_picked_cost_against_daily_budget(tmp_path):
     assert picked == [("codex", "C0"), ("codex", "C1")]
 
 
+def test_async_reserve_projects_stale_budget_reset_before_selection(tmp_path, monkeypatch):
+    now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.timezone.utc)
+    stale = (now - datetime.timedelta(days=2)).isoformat()
+    da = _load(tmp_path, n_open=0)
+    monkeypatch.setattr(da, "_now", lambda: now)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.daily = 600
+    lf.portal.budget.per_agent = {"jules": 100}
+    lf.portal.budget.track = BudgetTrack(
+        date="2026-07-03",
+        spent=100,
+        per_agent={"jules": 100},
+        per_agent_reset={"jules": stale},
+    )
+    lf.tasks = [Task(id="JT", title="remote", repo="x/y", target_agent="jules", status="open", created=now.date())]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["jules"], per_agent=8, cap=0, dry=True)
+
+    assert picked == [("jules", "JT")]
+    assert load_limen_file(tmp_path / "tasks.yaml").portal.budget.track.per_agent["jules"] == 100
+
+
+def test_async_reserve_persists_stale_budget_reset_even_without_launches(tmp_path, monkeypatch):
+    now = datetime.datetime(2026, 7, 6, 12, 0, tzinfo=datetime.timezone.utc)
+    stale = (now - datetime.timedelta(days=2)).isoformat()
+    da = _load(tmp_path, n_open=0)
+    monkeypatch.setattr(da, "_now", lambda: now)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.daily = 600
+    lf.portal.budget.per_agent = {"jules": 100}
+    lf.portal.budget.track = BudgetTrack(
+        date="2026-07-03",
+        spent=100,
+        per_agent={"jules": 100},
+        per_agent_reset={"jules": stale},
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    assert da.reserve_and_launch(["jules"], per_agent=8, cap=0, dry=False) == []
+
+    track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
+    assert track.per_agent["jules"] == 0
+    assert track.spent == 0
+    assert track.per_agent_reset["jules"] == now.isoformat()
+
+
 def test_async_reserve_skips_open_task_with_prior_done(tmp_path):
     da = _load(tmp_path, n_open=0)
     lf = load_limen_file(tmp_path / "tasks.yaml")

@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import datetime as dt
 from pathlib import Path
+
+from limen.io import save_limen_file
+from limen.models import Budget, BudgetTrack, LimenFile, Portal
 
 
 def _load_capacity_fill_module():
@@ -153,3 +157,34 @@ def test_proxy_lane_signal_includes_usage_telemetry(monkeypatch):
     assert "used=14/100 runs" in signal["use"]
     assert "remaining=86" in signal["use"]
     assert "headroom=86%" in signal["use"]
+
+
+def test_load_tasks_board_projects_stale_budget_reset(tmp_path, monkeypatch):
+    module = _load_capacity_fill_module()
+    now = dt.datetime.now(dt.timezone.utc)
+    stale = (now - dt.timedelta(days=2)).isoformat()
+    tasks_path = tmp_path / "tasks.yaml"
+    save_limen_file(
+        tasks_path,
+        LimenFile(
+            portal=Portal(
+                budget=Budget(
+                    daily=600,
+                    per_agent={"jules": 100},
+                    track=BudgetTrack(
+                        date="2026-07-03",
+                        spent=100,
+                        per_agent={"jules": 100},
+                        per_agent_reset={"jules": stale},
+                    ),
+                )
+            )
+        ),
+    )
+    monkeypatch.setattr(module, "TASKS_PATH", tasks_path)
+
+    board = module.load_tasks_board()
+
+    track = board["portal"]["budget"]["track"]
+    assert track["per_agent"]["jules"] == 0
+    assert track["spent"] == 0

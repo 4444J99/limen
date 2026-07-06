@@ -38,6 +38,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import os
 import subprocess
@@ -59,7 +60,7 @@ from limen.capacity import (  # noqa: E402
     task_has_github_issue,
 )
 from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
-from limen.dispatch import _down_lanes  # noqa: E402
+from limen.dispatch import _down_lanes, _reset_budget_if_needed  # noqa: E402
 from limen.workstream import UNASSIGNED, assign_channel  # noqa: E402
 
 
@@ -110,6 +111,22 @@ def _read_usage_vendors() -> dict:
         return (json.loads(f.read_text()) or {}).get("vendors", {})
     except (OSError, ValueError):
         return {}
+
+
+def _now_utc() -> datetime.datetime:
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+def _load_limen_for_routing(tasks_path: Path):
+    """Load a routing snapshot with budget windows projected forward.
+
+    Route and dispatch must agree on lane availability. Without this projection, a lane such as
+    jules can be healthy in live usage telemetry but still look exhausted to capacity_census because
+    tasks.yaml has a stale per-agent counter from a prior window.
+    """
+    lf = load_limen_file(tasks_path)
+    _reset_budget_if_needed(lf, _now_utc())
+    return lf
 
 
 def _float_or_default(raw: object, default: float) -> float:
@@ -187,6 +204,7 @@ def _task_cost(task: dict) -> int:
 # deploy/infra work (the _DEPLOY_HINTS branch below) when that's unblocked.
 _DEPLOY_HINTS = ("deploy", "cloudflare", "worker", "wrangler", "infra", "hosting")
 _LOCAL_LANES = tuple(agent for agent in PAID_AGENT_ORDER if agent in LOCAL_CHECKOUT_AGENTS)
+_REMOTE_BATCH_LANES = ("jules",)
 
 
 def _learned_weights() -> dict[str, float]:
@@ -343,6 +361,53 @@ def _pick_local(
     return min(candidates, key=lambda v: (load(v), -urgency_of(v), -runway_of(v), -budget.get(v, 0), v))
 
 
+def _pick_repo_worker(
+    task: dict,
+    health: dict[str, bool],
+    assigned: dict[str, int],
+    budget: dict[str, int],
+    runway: dict[str, float] | None = None,
+) -> str | None:
+    """Pick from every healthy repo-capable worker that should be actively filled.
+
+    Jules is remote, but it is still repo-capable and has a known daily run budget. Keeping it only
+    as a slow/fallback lane leaves 100/day unused while local lanes churn. For ordinary repo work it
+    therefore competes with the local pool by the same budget/runway cadence; special deploy work
+    still gets opencode first because that is an explicit lane specialization.
+    """
+    runway = runway or {}
+    text = f"{task.get('type', '')} {task.get('title', '')} {task.get('context', '')}".lower()
+    if any(h in text for h in _DEPLOY_HINTS) and health.get("opencode"):
+        return "opencode"
+
+    candidates = [v for v in _LOCAL_LANES if health.get(v)]
+    if os.environ.get("LIMEN_JULES_BATCH_FILL", "1") == "1":
+        candidates.extend(v for v in _REMOTE_BATCH_LANES if health.get(v))
+    if not candidates:
+        return None
+
+    weights = {**_learned_weights(), **_ledger_bias(task)}
+    if os.environ.get("LIMEN_REMOTE_BATCH_BIAS", "0") != "1":
+        # Batch-fill lanes have an explicit daily utilization target. A historical ledger penalty can
+        # still be inspected and re-enabled, but it must not quietly suppress a healthy 100/day lane.
+        for lane in _REMOTE_BATCH_LANES:
+            weights.pop(lane, None)
+
+    def load(v: str) -> float:
+        b = budget.get(v, 0) or 1
+        return round((assigned.get(v, 0) / b) / weights.get(v, 1.0), 3)
+
+    def runway_of(v: str) -> float:
+        return runway.get(v, float("inf"))
+
+    cliff = _vendor_cliff_urgency()
+
+    def urgency_of(v: str) -> float:
+        return cliff.get(v, 0.0)
+
+    return min(candidates, key=lambda v: (load(v), -urgency_of(v), -runway_of(v), -budget.get(v, 0), v))
+
+
 def _capable_agents(
     task: dict,
     health: dict[str, bool],
@@ -423,11 +488,13 @@ def route_task(
     if repo and "slow" in set(task.get("labels") or []) and health.get("jules"):
         return "jules", "slow (timed out on a sync local lane) -> jules async remote (no wall-clock cap)"
     if repo:
-        local = _pick_local(task, health, assigned, budget, runway)
-        if local:
+        lane = _pick_repo_worker(task, health, assigned, budget, runway)
+        if lane:
+            if lane == "jules":
+                return lane, "repo set -> jules remote async clone (split by budget+refresh runway)"
             if checkout is not None:
-                return local, f"local checkout at {checkout} -> {local} (split by budget+refresh runway)"
-            return local, f"repo set -> {local} clone-on-demand (split by budget+refresh runway)"
+                return lane, f"local checkout at {checkout} -> {lane} (split by budget+refresh runway)"
+            return lane, f"repo set -> {lane} clone-on-demand (split by budget+refresh runway)"
         # repo exists but no healthy local lane -> fall through to the extended fleet / jules
 
     # No (healthy) local lane: reach the extended paid fleet (jules/copilot/github_actions/warp/oz)
@@ -471,7 +538,7 @@ def main() -> int:
     # snapshot WITHOUT the lock, because the capacity census/health probes shell out (which/gh) and
     # we must not hold the queue mutex across slow work. The actual write re-reads fresh UNDER the
     # lock below, so we only ever clobber our own target_agent field, never a dispatcher's append.
-    data = load_limen_file(tasks_path).model_dump(mode="json", exclude_none=True)
+    data = _load_limen_for_routing(tasks_path).model_dump(mode="json", exclude_none=True)
     census = capacity_census(data)
     health = _fleet_health(data)
 
@@ -531,6 +598,7 @@ def main() -> int:
             print("queue busy — skipped applying target_agent this pass (self-corrects next beat).")
             return 0
         lf = load_limen_file(tasks_path)
+        _reset_budget_if_needed(lf, _now_utc())
         applied = 0
         ws_applied = 0
         for task in lf.tasks:

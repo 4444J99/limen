@@ -42,6 +42,7 @@ from limen.dispatch import (  # noqa: E402
     _down_lanes,
     _has_done_transition,
     _queue_lock,
+    _reset_budget_if_needed,
     _restore_done_status,
     _routine_generated_buildout_allowed,
 )
@@ -382,6 +383,7 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             # 'dispatched', which would double-dispatch. Self-corrects next beat.
             return []
         lf = load_limen_file(TASKS)
+        reset_changed = _reset_budget_if_needed(lf, now)
         track = lf.portal.budget.track
         daily = lf.portal.budget.daily
         # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
@@ -437,7 +439,7 @@ def reserve_and_launch(agents, per_agent, cap, dry):
                 if not is_async:
                     slots -= 1  # only local runs consume a local concurrency slot
                 taken += 1
-        if not dry and picked:
+        if not dry and (picked or reset_changed):
             save_limen_file(TASKS, lf)
     if dry:
         return picked
@@ -461,6 +463,7 @@ def reserve_and_launch(agents, per_agent, cap, dry):
 def resolve_lanes(selector: str, down: set[str]) -> list[str]:
     try:
         board = load_limen_file(TASKS)
+        _reset_budget_if_needed(board, _now())
     except Exception:
         board = None
     lanes = select_lanes(selector, board, down_lanes=down)
