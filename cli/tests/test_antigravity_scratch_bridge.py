@@ -54,6 +54,24 @@ def test_clean_remote_preserved_root_is_reap_candidate(tmp_path: Path):
     assert report["summary"]["by_disposition"] == {"safe_reap_candidate": 1}
 
 
+def test_unborn_git_root_has_no_fake_head(tmp_path: Path):
+    bridge = _load()
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    repo = scratch / "empty-root"
+    repo.mkdir()
+    _git(["init", "-q", "-b", "main"], repo)
+
+    report = bridge.build_report(scratch, min_idle_hours=0)
+    row = report["roots"][0]
+
+    assert row["name"] == "empty-root"
+    assert row["kind"] == "git"
+    assert row["head"] is None
+    assert row["disposition"] == "preserve_required"
+    assert row["reason"] == "clean-but-head-not-proven-on-remote"
+
+
 def test_dirty_root_requires_bridge(tmp_path: Path):
     bridge = _load()
     scratch = tmp_path / "scratch"

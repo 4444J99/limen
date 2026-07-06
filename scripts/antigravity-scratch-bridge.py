@@ -245,6 +245,14 @@ def merged_into_default(path: Path, head: str) -> bool:
     return bool(ref and run_git(path, ["merge-base", "--is-ancestor", head, ref], timeout=30).returncode == 0)
 
 
+def current_head(path: Path) -> str | None:
+    proc = run_git(path, ["rev-parse", "HEAD"], timeout=30)
+    head = proc.stdout.strip()
+    if proc.returncode != 0 or len(head) != 40 or any(ch not in "0123456789abcdefABCDEF" for ch in head):
+        return None
+    return head
+
+
 def patch_equivalent_to_default(path: Path) -> bool:
     ref = remote_default_ref(path)
     if not ref:
@@ -260,7 +268,7 @@ def git_snapshot(path: Path, min_idle_hours: float) -> dict[str, Any]:
     status = run_git(path, ["status", "--short", "--branch"], timeout=30)
     branch_line = status.stdout.splitlines()[0] if status.returncode == 0 and status.stdout.splitlines() else "unknown"
     remote = run_git(path, ["remote", "get-url", "origin"]).stdout.strip() or None
-    head = run_git(path, ["rev-parse", "HEAD"]).stdout.strip() or None
+    head = current_head(path)
     counts = porcelain_counts(path)
     remote_preserved = head_reachable_from_remote(path, head) if head else False
     patch_equiv = patch_equivalent_to_default(path)

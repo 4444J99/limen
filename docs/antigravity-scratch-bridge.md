@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T03:42:39+00:00`
+Generated: `2026-07-06T03:47:03+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `26`.
-- External archives verified: `25`.
+- Preservation receipts: `27`.
+- External archives verified: `26`.
 - Verified external archive source size: `22.7 GiB`.
-- Event source size total: `27.3 GiB` (includes retries).
+- Event source size total: `27.4 GiB` (includes retries).
+- `2026-07-06T03:45:37Z` `session-meta-4`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034537Z-session-meta-4/receipt.json`.
 - `2026-07-06T03:42:51Z` `studium-generale`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034251Z-studium-generale/receipt.json`.
 - `2026-07-06T03:41:50Z` `hokage-chess`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034150Z-hokage-chess/receipt.json`.
 - `2026-07-06T03:40:48Z` `anon-hookup-now`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034048Z-anon-hookup-now/receipt.json`.
@@ -43,14 +44,6 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T03:22:35Z` `rules-system-bound`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T032235Z-rules-system-bound/receipt.json`.
 - `2026-07-06T03:15:41Z` `organvm-i-theoria-mesh`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031541Z-organvm-i-theoria-mesh/receipt.json`.
 - `2026-07-06T03:11:11Z` `domus-genoma`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031111Z-domus-genoma/receipt.json`.
-- `2026-07-06T03:09:59Z` `vulnpulse`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030959Z-vulnpulse/receipt.json`.
-
-## Preservation Results
-
-- Requested roots: `1`.
-- Source size receipted: `58.8 MiB`.
-- Statuses: `external_archive_preserved` 1.
-- Preserved `studium-generale` `58.8 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034251Z-studium-generale/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
@@ -101,7 +94,7 @@ before any local root can be removed.
 | `anon-hookup-now` | `69.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/anon-hookup-now@92fd88681fde` |
 | `hokage-chess` | `59.4 MiB` | `git` | `preserve_required` | `clean-but-head-not-proven-on-remote` | `4444J99/hokage-chess@dd9cb425b9ef` |
 | `studium-generale` | `58.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/studium-generale@6ca4f9a12527` |
-| `session-meta-4` | `44.3 MiB` | `git` | `preserve_required` | `clean-but-head-not-proven-on-remote` | `organvm/session-meta@HEAD` |
+| `session-meta-4` | `44.3 MiB` | `git` | `preserve_required` | `clean-but-head-not-proven-on-remote` | `organvm/session-meta` |
 | `atomic-substrata` | `40.2 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/atomic-substrata@5b71447bbcef` |
 | `adaptive-personal-syllabus` | `31.9 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/adaptive-personal-syllabus@cf0abef19af6` |
 | `brainstorm-20260423` | `5.1 MiB` | `git` | `preserve_required` | `clean-but-head-not-proven-on-remote` | `organvm/brainstorm-20260423@d7393d8a9197` |
