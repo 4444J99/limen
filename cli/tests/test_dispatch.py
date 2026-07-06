@@ -773,6 +773,55 @@ def test_git_plumbing_retries_transient_config_lock(tmp_path: Path, monkeypatch)
     assert len(calls) == 2
 
 
+def _git_ok(cwd: Path, *args: str) -> str:
+    result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=True)
+    return result.stdout
+
+
+def _make_cleanup_repo(tmp_path: Path) -> tuple[Path, Path, str]:
+    repo = tmp_path / "repo"
+    wt = tmp_path / "wt"
+    repo.mkdir()
+    _git_ok(repo, "init", "-q", "-b", "main")
+    (repo / "README.md").write_text("base\n", encoding="utf-8")
+    _git_ok(repo, "add", "README.md")
+    _git_ok(repo, "-c", "user.email=t@example.com", "-c", "user.name=test", "commit", "-qm", "base")
+    branch = "limen/test-cleanup"
+    _git_ok(repo, "worktree", "add", "-q", "-b", branch, str(wt), "main")
+    return repo, wt, branch
+
+
+def test_cleanup_isolated_worktree_removes_clean_noop_branch(tmp_path: Path) -> None:
+    repo, wt, branch = _make_cleanup_repo(tmp_path)
+
+    D._cleanup_isolated_worktree(repo, wt, branch, "main", pushed=False)
+
+    assert not wt.exists()
+    assert branch not in _git_ok(repo, "branch", "--list", branch)
+
+
+def test_cleanup_isolated_worktree_preserves_dirty_failed_work(tmp_path: Path) -> None:
+    repo, wt, branch = _make_cleanup_repo(tmp_path)
+    (wt / "local.txt").write_text("local-only\n", encoding="utf-8")
+
+    D._cleanup_isolated_worktree(repo, wt, branch, "main", pushed=False)
+
+    assert wt.exists()
+    assert branch in _git_ok(repo, "branch", "--list", branch)
+
+
+def test_cleanup_isolated_worktree_preserves_unpushed_commits(tmp_path: Path) -> None:
+    repo, wt, branch = _make_cleanup_repo(tmp_path)
+    (wt / "README.md").write_text("base\nlocal commit\n", encoding="utf-8")
+    _git_ok(wt, "add", "README.md")
+    _git_ok(wt, "-c", "user.email=t@example.com", "-c", "user.name=test", "commit", "-qm", "local work")
+
+    D._cleanup_isolated_worktree(repo, wt, branch, "main", pushed=False)
+
+    assert wt.exists()
+    assert D._unpreserved_work_reason(wt, "main") == "unpushed-commits"
+
+
 def test_noop_result_stays_recoverable_not_cancelled() -> None:
     import datetime
 

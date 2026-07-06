@@ -1296,6 +1296,46 @@ def _push_isolated_branch(task: Task, wt: Path, branch: str) -> bool:
     return True
 
 
+def _unpreserved_work_reason(wt: Path, base_ref: str) -> str:
+    """Return why removing an isolated worktree would discard local-only work.
+
+    Empty/no-op worktrees have no value beyond the task dispatch log and can be
+    cleaned. Dirty worktrees, unreadable worktrees, or branches with commits not
+    proven on the remote/base ref must stay for the worktree preservation lane.
+    """
+    status = _git(["status", "--porcelain", "-z"], wt)
+    if status.returncode != 0:
+        return "status-unreadable"
+    if status.stdout:
+        return "dirty-working-tree"
+
+    ahead = _git(["rev-list", "--count", f"{base_ref}..HEAD"], wt)
+    if ahead.returncode != 0:
+        return "ahead-check-unreadable"
+    try:
+        if int((ahead.stdout or "0").strip() or "0") > 0:
+            return "unpushed-commits"
+    except ValueError:
+        return "ahead-check-unreadable"
+    return ""
+
+
+def _cleanup_isolated_worktree(repo_dir: Path, wt: Path, branch: str, base_ref: str, pushed: bool) -> None:
+    """Remove only worktrees whose content is already preserved or provably empty."""
+    if not wt.exists():
+        if pushed:
+            _git_plumbing(["branch", "-D", branch], repo_dir)
+        return
+
+    reason = "" if pushed else _unpreserved_work_reason(wt, base_ref)
+    if reason:
+        print(f"  preserved isolated worktree {wt} for bridge ({reason}; branch {branch})")
+        return
+
+    _git_plumbing(["worktree", "remove", "--force", str(wt)], repo_dir)
+    _git_plumbing(["branch", "-D", branch], repo_dir)
+
+
 def _create_isolated_pr(task: Task, wt: Path, base: str, branch: str) -> str:
     pr = subprocess.run(
         [
@@ -1374,8 +1414,9 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
 
     base = _default_branch(repo_dir)
     slug = re.sub(r"[^a-zA-Z0-9._/-]+", "-", task.id.lower())
-    # short unique suffix → retries never collide with a stale remote branch (non-fast-forward)
-    suffix = secrets.token_hex(2)
+    # Unique suffix: retries should not collide with stale local/remote refs. The add path still
+    # retries because old no-op runs left many empty local branches behind.
+    suffix = secrets.token_hex(4)
     branch = f"limen/{slug}-{suffix}"
     wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
     agent_args = _agent_argv(agent, task)
@@ -1406,13 +1447,29 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     # 1) fresh base from origin — never the user's possibly-dirty working tree.
     # Hold the git-plumbing lock only for these fast parent-repo ops so concurrent
     # same-repo dispatches don't collide on index.lock (the slow run is unlocked).
-    with _GIT_PLUMBING_LOCK:
-        _git_plumbing(["fetch", "origin", base], repo_dir, timeout=300)
-        _ISOLATION_ROOT.mkdir(parents=True, exist_ok=True)
-        if wt.exists():  # leftover from a prior run
-            _git_plumbing(["worktree", "remove", "--force", str(wt)], repo_dir)
-        _git_plumbing(["branch", "-D", branch], repo_dir)  # clear stale same-named branch
-        add = _git_plumbing(["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120)
+    add = subprocess.CompletedProcess([], 1, "", "worktree add was not attempted")
+    for attempt in range(6):
+        if attempt:
+            suffix = secrets.token_hex(4)
+            branch = f"limen/{slug}-{suffix}"
+            wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
+        with _GIT_PLUMBING_LOCK:
+            if attempt == 0:
+                _git_plumbing(["fetch", "origin", base], repo_dir, timeout=300)
+            _ISOLATION_ROOT.mkdir(parents=True, exist_ok=True)
+            if wt.exists():  # leftover from a prior clean/no-op run
+                _cleanup_isolated_worktree(repo_dir, wt, branch, f"origin/{base}", pushed=False)
+                if wt.exists():
+                    print(f"  retrying worktree add {task.id}: preserved existing worktree at {wt}")
+                    continue
+            _git_plumbing(["branch", "-D", branch], repo_dir)  # clear stale same-named branch if safe
+            add = _git_plumbing(["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120)
+        if add.returncode == 0:
+            break
+        if re.search(r"branch .* already exists|is already checked out", add.stderr or "", re.IGNORECASE):
+            print(f"  retrying worktree add {task.id}: stale branch collision on {branch}")
+            continue
+        break
     if add.returncode != 0:
         print(f"  FAILED worktree add {task.id}: {add.stderr.strip()[:300]}")
         return False
@@ -1433,12 +1490,10 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         return _create_isolated_pr(task, wt, base, branch)
     finally:
         # leave the user's checkout pristine: drop the worktree, and the local
-        # branch too once its commits are safely on the remote. Guard the parent-repo
-        # plumbing so concurrent teardowns don't collide on index.lock.
+        # branch too once its commits are safely on the remote, or when the attempt
+        # produced no local work. Keep dirty/ahead failed worktrees for preservation.
         with _GIT_PLUMBING_LOCK:
-            _git_plumbing(["worktree", "remove", "--force", str(wt)], repo_dir)
-            if pushed:
-                _git_plumbing(["branch", "-D", branch], repo_dir)
+            _cleanup_isolated_worktree(repo_dir, wt, branch, f"origin/{base}", pushed=pushed)
 
 
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
