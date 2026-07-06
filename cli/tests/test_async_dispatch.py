@@ -313,7 +313,30 @@ def test_async_reserve_accumulates_picked_cost_against_daily_budget(tmp_path):
 
     picked = da.reserve_and_launch(["codex", "agy"], per_agent=8, cap=20, dry=True)
 
-    assert picked == [("codex", "C0"), ("codex", "C1")]
+    assert picked == [("codex", "C0"), ("agy", "A0")]
+
+
+def test_async_reserve_round_robins_local_slots_across_lanes(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.daily = 20
+    lf.portal.budget.per_agent = {"codex": 20, "opencode": 20, "agy": 20}
+    lf.tasks = [
+        Task(id=f"C{i}", title="t", repo="x/y", target_agent="codex", status="open", created=today)
+        for i in range(4)
+    ] + [
+        Task(id=f"O{i}", title="t", repo="x/y", target_agent="opencode", status="open", created=today)
+        for i in range(4)
+    ] + [
+        Task(id=f"A{i}", title="t", repo="x/y", target_agent="agy", status="open", created=today)
+        for i in range(4)
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex", "opencode", "agy"], per_agent=8, cap=4, dry=True)
+
+    assert picked == [("codex", "C0"), ("opencode", "O0"), ("agy", "A0"), ("codex", "C1")]
 
 
 def test_async_reserve_projects_stale_budget_reset_before_selection(tmp_path, monkeypatch):
