@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 286
+      spent: 291
       per_agent:
         jules: 100
         gemini: 2
         codex: 14
-        opencode: 48
+        opencode: 49
         agy: 100
-        claude: 21
+        claude: 25
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-06T11:41:52.375322+00:00'
@@ -86230,7 +86230,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -86247,7 +86247,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:46:21.539178Z'
+  updated: '2026-07-06T22:30:07.016437Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:40:17.443054Z'
     agent: gemini
@@ -86327,6 +86327,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-06T22:30:07.016437Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-427
   title: fix failing CI on organvm/limen#427
   repo: organvm/limen
@@ -90196,7 +90201,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -90212,7 +90217,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:25:45.453490Z'
+  updated: '2026-07-06T22:31:25.492366Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:38:29.979474Z'
     agent: agy
@@ -90238,6 +90243,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:31:25.492366Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-cifix-organvm-domus-genoma-150
   title: fix failing CI on organvm/domus-genoma#150
   repo: organvm/domus-genoma
@@ -90569,10 +90579,10 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#157
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -90588,7 +90598,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:59:24.656292Z'
+  updated: '2026-07-06T22:30:03.044256Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:43:07.868799Z'
     agent: opencode
@@ -90604,6 +90614,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:30:03.044256Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-domus-genoma-159
   title: fix failing CI on organvm/domus-genoma#159
   repo: organvm/domus-genoma
@@ -93676,13 +93690,17 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:26:49.837647Z'
+  updated: '2026-07-06T22:32:06.166225Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:26:49.837647Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:32:06.166225Z'
+    agent: claude
+    session_id: limen/heal-cifix-organvm-atomic-substrata-4-41b9ec96
+    status: dispatched
 - id: HEAL-cifix-organvm-bountyscope-7
   title: fix failing CI on organvm/bountyscope#7
   repo: organvm/bountyscope
@@ -93911,13 +93929,17 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:28:52.823327Z'
+  updated: '2026-07-06T22:32:06.166225Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:28:52.823327Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:32:06.166225Z'
+    agent: claude
+    session_id: limen/heal-cifix-organvm-bountyscope-14-f7b2ff23
+    status: dispatched
 - id: HEAL-cifix-organvm-bountyscope-15
   title: fix failing CI on organvm/bountyscope#15
   repo: organvm/bountyscope
@@ -94449,7 +94471,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -94464,7 +94486,13 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:32:09.857601Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:32:09.857601Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-organvm-corpvs-testamentvm-498
   title: rebase/resolve conflicts on organvm/organvm-corpvs-testamentvm#498
   repo: organvm/organvm-corpvs-testamentvm
@@ -95207,7 +95235,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -95222,7 +95250,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:32:09.857601Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:32:09.857601Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-universal-node-network-9
   title: fix failing CI on organvm/universal-node-network#9
   repo: organvm/universal-node-network
