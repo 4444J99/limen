@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-07-06T12:52:48+00:00`
+Generated: `2026-07-06T13:01:47+00:00`
 
 ## Canonical Handling
 
@@ -28,12 +28,12 @@ Generated: `2026-07-06T12:52:48+00:00`
 - Local network substrate: status `healthy`, mode `observe`, route `en0` via `192.168.1.1`.
 - Dispatch substrate: status `healthy`, launchd `running`, live root `main`, dirty entries `0`, async dry-run ok `True`.
 - Live root gate: status `ready`, branch `main`, unique commits `0`, dirty entries `0`, launchd env drift `0`.
-- GitHub consolidation gate: `36` source repos, `0` collision groups, collision packet complete `True`, App token wired `False`.
+- GitHub consolidation gate: `0` source repos, `0` collision groups, collision packet complete `True`, App token wired `False`.
 
 ## Parked / Hung Workstreams
 
-- By category: `auth_credentials` 2, `cloud_runtime` 1, `github_app_identity` 1, `github_consolidation` 1, `local_lean` 1.
-- By status: `needs_human_gate` 2, `parked` 4.
+- By category: `auth_credentials` 2, `cloud_runtime` 1, `github_app_identity` 1, `local_lean` 1.
+- By status: `needs_human_gate` 1, `parked` 4.
 
 | ID | Category | Status | Evidence | Owner | Route |
 |---|---|---|---|---|---|
@@ -41,7 +41,6 @@ Generated: `2026-07-06T12:52:48+00:00`
 | `cloud-credential-handles-unconfigured` | `auth_credentials` | `parked` | 6 credential/deploy handles absent; 0 present. No values inspected. | credential workstream | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
 | `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 29.1 GiB (20.7 GiB worktrees, 8.4 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
-| `github-consolidation-collisions` | `github_consolidation` | `needs_human_gate` | 36 source repos remain outside `organvm`; 0 name-collision groups remain, so transfer apply is ready only behind an explicit human gate. | GitHub consolidation | Name collisions are clear; under an explicit human transfer gate, run `PYTHONPATH=cli/src python3 scripts/consolidate-github.py --apply`, then refresh gates and run `PYTHONPATH=cli/src python3 scripts/rewrite-owners.py --apply --emit-remotes /tmp/limen-remotes.sh` after transfer. |
 | `github-app-limen-bot-not-wired` | `github_app_identity` | `needs_human_gate` | `gh-app-token --which` resolves to `pat (GITHUB_TOKEN fallback)`; 4 org Apps are installed, and `limen[bot]` is not wired. | limen[bot] App identity | Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; verify `bash scripts/gh-app-token.sh --which` reports the App path. |
 
 ## Private Output

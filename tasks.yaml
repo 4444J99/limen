@@ -40728,7 +40728,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-52
   title: '[V-F] Chezmoi mirror of ~/.local/share/hokage-chess/operational/ (data-parity
     gap)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: high
@@ -40765,7 +40765,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-50
   title: '[V-D] Maddie-side parallel substrate doc (sister-stream governance parity)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -40802,7 +40802,7 @@ tasks:
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-4444j99-hokage-chess-47
   title: "[V-A] Phase 2 \u2014 pre-commit guard for cross-client keyword bleed"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: high
@@ -40848,7 +40848,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-43
   title: '[MP-10] Rob''s actual time budget (hours/week, current allocation, target
     re-allocation)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -40885,7 +40885,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-40
   title: '[MP-7] Email list architecture decision (single unified vs. two pillar-separate)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: high
@@ -40925,7 +40925,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-39
   title: '[MP-6] Legion of Fitness FB group migration plan'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: jules
   priority: high
@@ -40991,7 +40991,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-38
   title: '[MP-5] BODI exit transition messaging plan (how to communicate without burning
     bridges)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -41028,7 +41028,7 @@ tasks:
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-4444j99-hokage-chess-37
   title: '[MP-4] Avatar archetype canonical doc (Hokage underdog dual-discipline persona)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: high
@@ -41065,7 +41065,7 @@ tasks:
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-4444j99-hokage-chess-36
   title: '[MP-3] Audience overlap analysis (do chess viewers care about fitness?)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: high
@@ -41105,7 +41105,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-35
   title: '[MP-2] Cross-pillar content rhythm spec (when chess vs. fitness vs. bridge)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -41138,7 +41138,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-34
   title: "[MP-1] Pillar architecture taxonomy doc (Chess / Fitness / Bridge \u2014\
     \ what's shared, what's separate)"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: high
@@ -41170,7 +41170,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-32
   title: '[BR-2] ''Discipline transfers across domains'' canonical thesis essay'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: high
@@ -41215,7 +41215,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-31
   title: "[BR-1] Hokage \xD7 Legion identity-fusion content pillar (chess discipline\
     \ + iron discipline)"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -41247,7 +41247,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-26
   title: "[FWS-3] Owned digital product \u2014 first non-BODI asset (PDF / cohort)"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: high
@@ -41279,7 +41279,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-25
   title: '[FWS-2] Skool/Whop paid community gate (Legion of Fitness migration)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: jules
   priority: high
@@ -41324,7 +41324,7 @@ tasks:
     output: 'jules-land: landed session 506119267984171306 as PR'
 - id: GH-4444j99-hokage-chess-24
   title: '[FWS-1] Beehiiv newsletter (fitness or unified discipline newsletter)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: high
@@ -41364,7 +41364,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-19
   title: '[CWS-3] Beehiiv newsletter ''Hokage Scroll'' weekly'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -41397,7 +41397,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-18
   title: "[CWS-2] Discord community \u2014 Hidden Leaf Village structure (free + paid\
     \ tier)"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: high
@@ -41429,7 +41429,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-17
   title: '[CWS-1] Twitch live streaming setup (Hokage-themed live training arcs)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -41464,7 +41464,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-16
   title: '[AF-5] Commit corpvs fossil-record.jsonl (parity break)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: high
@@ -42753,7 +42753,7 @@ tasks:
       \ stop re-looping"
 - id: GH-4444j99-hokage-chess-51
   title: '[V-E] Cross-scope conventions reconciliation (transcript-routing drift)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: claude
   priority: medium
@@ -42788,7 +42788,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-49
   title: "[V-C] Phase 4 \u2014 conductor MCP scope-binding (require client param when\
     \ CWD \u2208 client tree)"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: jules
   priority: medium
@@ -42869,7 +42869,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-48
   title: "[V-B] Phase 3 \u2014 substrate-doc canonical-home promotion + seed.yaml\
     \ normalization"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: medium
@@ -42901,7 +42901,7 @@ tasks:
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-4444j99-hokage-chess-46
   title: 'V7: Kit email capture wiring + setup runbook'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: medium
@@ -42934,7 +42934,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-45
   title: 'V8: Vercel landing page deploy'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: medium
@@ -42964,7 +42964,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-44
   title: 'PRT-046: 75-person constellation master file'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: claude
   priority: medium
@@ -42998,7 +42998,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-42
   title: '[MP-9] Cohort challenge ritual design (quarterly Legion challenges, paid
     entry)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: jules
   priority: medium
@@ -43034,7 +43034,7 @@ tasks:
     output: 'jules-land: landed session 1610351311395263153 as PR'
 - id: GH-4444j99-hokage-chess-41
   title: '[MP-8] Wearable integration content plan (Whoop or Oura, when, what content)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: medium
@@ -43066,7 +43066,7 @@ tasks:
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-4444j99-hokage-chess-33
   title: '[BR-3] Public ritual / event (Hyrox heat, Murph Challenge, ''Legion Test'')'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: jules
   priority: medium
@@ -43103,7 +43103,7 @@ tasks:
     output: 'jules-land: landed session 16330137604456892528 as PR'
 - id: GH-4444j99-hokage-chess-30
   title: '[FWS-7] Owned domain at fitness identity (e.g. robbonavoglia.com)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: medium
@@ -43135,7 +43135,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-29
   title: '[FWS-6] Wearable affiliate stack (Whoop / Oura / Element / AG1)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: claude
   priority: medium
@@ -43170,7 +43170,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-28
   title: '[FWS-5] Coaching software backend (TrueCoach / Trainerize / Everfit)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: jules
   priority: medium
@@ -43206,7 +43206,7 @@ tasks:
     output: 'jules-land: landed session 17830999121267002738 as PR'
 - id: GH-4444j99-hokage-chess-27
   title: '[FWS-4] Long-form authority surface (YouTube long-form OR podcast)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: medium
@@ -43238,7 +43238,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-23
   title: '[CWS-7] Chessable course design (audience-permitting; Solveig Friberg playbook)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: medium
@@ -43273,7 +43273,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-22
   title: '[CWS-6] Pitch Chess.com Creator of the Month'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: medium
@@ -43305,7 +43305,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-21
   title: '[CWS-5] Pitch Perpetual Chess Adult Improver Series appearance'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: claude
   priority: medium
@@ -43337,7 +43337,7 @@ tasks:
     output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-4444j99-hokage-chess-20
   title: '[CWS-4] YouTube Shorts decoupled-feed strategy (tactic of the day)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: gemini
   priority: medium
@@ -43365,7 +43365,7 @@ tasks:
     output: 'jules-land: landed session 10571850255987087383 as PR'
 - id: GH-4444j99-hokage-chess-15
   title: '[AF-4] Update PRT-048 IRF row to reflect DONE-474 (skill exists)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: jules
   priority: medium
@@ -43444,7 +43444,7 @@ tasks:
       \ stop re-looping"
 - id: GH-4444j99-hokage-chess-14
   title: '[AF-3] Deepen Stratum 2 timeslices (real research, not seed prose)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: medium
@@ -43473,7 +43473,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-13
   title: "[AF-2] Rename bodi-constellation.yaml \u2192 .md (file is markdown, not\
     \ YAML)"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: medium
@@ -51886,7 +51886,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-11
   title: '[RB-11] Rob: read + react to BODI Reformation Spec (avatar premise)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: high
@@ -51920,7 +51920,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-10
   title: '[RB-10] Rob: register hokagechess.com via Cloudflare (~5 min checkout)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: high
@@ -51960,7 +51960,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-9
   title: '[RB-9] Rob: Teamzy CRM field schema'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: high
@@ -51995,7 +51995,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-8
   title: '[RB-8] Rob: confirm canonical FB Page + Instagram handles'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: high
@@ -52026,7 +52026,7 @@ tasks:
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-4444j99-hokage-chess-7
   title: '[RB-7] Rob: green-light Episode 1 of Jutsu of the Week / Boss Battle'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: high
@@ -52059,7 +52059,7 @@ tasks:
 - id: GH-4444j99-hokage-chess-6
   title: '[RB-6] Rob: provision Discord server (Welcome Wed / Loot Drop Fri / Quest
     Log Sun)'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: high
@@ -52091,7 +52091,7 @@ tasks:
     output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-4444j99-hokage-chess-5
   title: '[RB-5] Rob: review v6 strategy refresh'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: high
@@ -52126,7 +52126,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-4
   title: '[RB-4] Rob: acknowledge cross-pollination master diagnosis'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: high
@@ -52161,7 +52161,7 @@ tasks:
       as label.
 - id: GH-4444j99-hokage-chess-12
   title: '[AF-1] Delete duplicate PDE-AUDIT-BASELINE.md at substrate root'
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: any
   priority: medium
@@ -84239,7 +84239,7 @@ tasks:
     status: failed->opencode
 - id: HEAL-rebase-4444j99-hokage-chess-85
   title: rebase/resolve conflicts on 4444J99/hokage-chess#85
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: gemini
   priority: high
@@ -84262,7 +84262,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-4444j99-hokage-chess-89
   title: rebase/resolve conflicts on 4444J99/hokage-chess#89
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -84296,7 +84296,7 @@ tasks:
     status: failed->opencode
 - id: HEAL-rebase-4444j99-hokage-chess-94
   title: rebase/resolve conflicts on 4444J99/hokage-chess#94
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: high
@@ -84319,7 +84319,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-stale-4444j99-hokage-chess-101
   title: "rebase 4444J99/hokage-chess#101 onto current base \u2014 branched far behind"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: normal
@@ -84343,7 +84343,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-stale-4444j99-hokage-chess-102
   title: "rebase 4444J99/hokage-chess#102 onto current base \u2014 branched far behind"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: claude
   priority: normal
@@ -84367,7 +84367,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-4444j99-hokage-chess-103
   title: rebase/resolve conflicts on 4444J99/hokage-chess#103
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: gemini
   priority: high
@@ -84390,7 +84390,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-4444j99-hokage-chess-107
   title: rebase/resolve conflicts on 4444J99/hokage-chess#107
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -84413,7 +84413,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-4444j99-hokage-chess-108
   title: rebase/resolve conflicts on 4444J99/hokage-chess#108
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: opencode
   priority: high
@@ -84436,7 +84436,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-4444j99-hokage-chess-114
   title: rebase/resolve conflicts on 4444J99/hokage-chess#114
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: agy
   priority: high
@@ -84459,7 +84459,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-4444j99-hokage-chess-121
   title: rebase/resolve conflicts on 4444J99/hokage-chess#121
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high
@@ -84498,7 +84498,7 @@ tasks:
     output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-4444j99-hokage-chess-122
   title: "rebase 4444J99/hokage-chess#122 onto current base \u2014 branched far behind"
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: claude
   priority: normal
@@ -84522,7 +84522,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-4444j99-hokage-chess-136
   title: rebase/resolve conflicts on 4444J99/hokage-chess#136
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: gemini
   priority: high
@@ -84545,7 +84545,7 @@ tasks:
   dispatch_log: []
 - id: HEAL-rebase-4444j99-hokage-chess-139
   title: rebase/resolve conflicts on 4444J99/hokage-chess#139
-  repo: 4444J99/hokage-chess
+  repo: organvm/hokage-chess
   type: code
   target_agent: codex
   priority: high

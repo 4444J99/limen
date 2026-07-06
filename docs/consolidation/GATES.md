@@ -1,6 +1,6 @@
 # GitHub Consolidation Gates
 
-Generated: `2026-07-06T12:52:37+00:00`
+Generated: `2026-07-06T13:01:36+00:00`
 
 ## Rule
 
@@ -12,7 +12,7 @@ Generated: `2026-07-06T12:52:37+00:00`
 
 | Gate | Value |
 |---|---|
-| Source repos outside `organvm` | `36` |
+| Source repos outside `organvm` | `0` |
 | Source owners scanned | `10` |
 | Name collision groups | `0` |
 | Collision packet complete | `True` |
@@ -20,14 +20,14 @@ Generated: `2026-07-06T12:52:37+00:00`
 | Collision packet rename commands | `13` / required `0` |
 | Rename target conflicts/unknown | `0` / `0` |
 | Transfer apply gate open | `True` |
-| `tasks.yaml` repo refs to rewrite post-transfer | `62` |
-| Local remotes to rewrite post-transfer | `23` |
+| `tasks.yaml` repo refs to rewrite post-transfer | `0` |
+| Local remotes to rewrite post-transfer | `0` |
 | Deploy literal to fix post-transfer | `False` |
 | `gh-app-token --which` | `pat (GITHUB_TOKEN fallback)` |
 | `limen[bot]` App installed | `False` |
 | App token wired | `False` |
 | Installed org Apps | `claude`, `google-labs-jules`, `oz-by-warp`, `chatgpt-codex-connector` |
-| Blocking gates | `limen-bot-token-not-wired`, `limen-bot-app-not-installed`, `post-transfer-owner-rewrite-pending` |
+| Blocking gates | `limen-bot-token-not-wired`, `limen-bot-app-not-installed` |
 
 ## Collision Examples
 
