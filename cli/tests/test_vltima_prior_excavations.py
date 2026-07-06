@@ -84,10 +84,7 @@ def test_build_snapshot_classifies_known_surface_and_redacts_markdown(tmp_path: 
 
 def test_refresh_order_keeps_lifecycle_dependencies() -> None:
     excavations = _load("vltima_prior_refresh_order")
-    surfaces = [
-        {"id": spec.id, "depends_on": list(spec.depends_on)}
-        for spec in excavations.SURFACES
-    ]
+    surfaces = [{"id": spec.id, "depends_on": list(spec.depends_on)} for spec in excavations.SURFACES]
 
     order = excavations.refresh_order(surfaces)
 
