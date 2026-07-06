@@ -136,6 +136,30 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local raw/private session cartridge. Stores manifests and optional content-addressed object copies; never committed."
+  LIMEN_EXTERNAL_SESSION_ROOTS:
+    default: ""
+    env: LIMEN_EXTERNAL_SESSION_ROOTS
+    self_update: none
+    owner: continuity
+    note: "Optional os.pathsep-separated archive/external roots for session-corpus-ledger.py inventory. Bounded scan only; never a deletion target."
+  LIMEN_EXTERNAL_SESSION_MAX_FILES_PER_ROOT:
+    default: 2000
+    env: LIMEN_EXTERNAL_SESSION_MAX_FILES_PER_ROOT
+    self_update: none
+    owner: continuity
+    note: "Per-root file cap for external/archive session inventory so large mounted volumes cannot turn a ledger refresh into an unbounded crawl."
+  LIMEN_EXTERNAL_SESSION_MAX_DEPTH:
+    default: 5
+    env: LIMEN_EXTERNAL_SESSION_MAX_DEPTH
+    self_update: none
+    owner: continuity
+    note: "Maximum directory depth for external/archive session inventory roots."
+  LIMEN_EXTERNAL_SESSION_MAX_DIRS_PER_ROOT:
+    default: 5000
+    env: LIMEN_EXTERNAL_SESSION_MAX_DIRS_PER_ROOT
+    self_update: none
+    owner: continuity
+    note: "Per-root directory visit cap for external/archive session inventory roots."
   LIMEN_CURRENT_SESSION_JSONL:
     default: ""
     env: LIMEN_CURRENT_SESSION_JSONL
