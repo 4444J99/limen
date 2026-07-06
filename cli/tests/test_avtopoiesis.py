@@ -44,6 +44,20 @@ def test_three_tenses_bounded():
         assert set(d["tenses"]) == {"past", "present", "future"}
         assert 0.0 <= d["score"] <= 1.0
         assert all(0.0 <= val <= 1.0 for val in d["tenses"].values())
+        assert d["primary_gap"]["tense"] in {"past", "present", "future"}
+        assert 0.0 <= d["primary_gap"]["gap"] <= 1.0
+
+
+def test_summary_reports_distance_from_ideal():
+    v = _audit()
+    s = v["summary"]
+
+    assert 0.0 <= s["alive_ratio"] <= 1.0
+    assert 0.0 <= s["mean_score"] <= 1.0
+    assert s["distance_from_ideal"] == round(1.0 - s["mean_score"], 3)
+    assert set(s["tense_averages"]) == {"past", "present", "future"}
+    assert s["weakest_tense"] in {"past", "present", "future"}
+    assert sum(s["below_by_primary_gap"].values()) == s["below"]
 
 
 def test_idempotent():
