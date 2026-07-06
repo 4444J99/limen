@@ -116,7 +116,7 @@ def test_github_actions_lane_requires_configured_workflow(tmp_path: Path, monkey
     gh = tmp_path / "gh"
     gh.write_text(
         "#!/bin/sh\n"
-        "if [ \"$1\" = workflow ] && [ \"$2\" = view ]; then\n"
+        'if [ "$1" = workflow ] && [ "$2" = view ]; then\n'
         "  echo 'workflow missing' >&2\n"
         "  exit 1\n"
         "fi\n"
