@@ -21,12 +21,12 @@
 #                                # the conductor sees only that channel's board (one-worker-one-lane).
 #   cell stop  <slug>            # stop this cell's conductor
 #   cell merge <slug>            # push + open/merge its PR via merge-policy (the standing grant)
-#   cell reap  <slug>            # stop + LOSS-FREE remove (refuses if dirty or unpushed)
+#   cell reap  <slug>            # stop + hand off removal to receipt-backed reclaim/reap organs
 #   cell reap-dead               # reclaim every provably-dead cell (clean+content-preserved+idle)
 #   cell help
 #
 # Safe by construction: `new` always fetches and branches from origin/main; `reap` refuses to
-# drop a dirty/unpushed cell (use --force to override); conductors default to a SCOPED loop
+# drop a dirty/unpushed cell and never force-discards; conductors default to a SCOPED loop
 # (build/verify within the cell), never fleet-wide merges, so two cells never fight over main.
 set -uo pipefail
 
@@ -163,23 +163,22 @@ cmd_merge() {
 }
 
 cmd_reap() {
-  local slug="${1:-}"; shift || true; [ -n "$slug" ] || die "usage: cell reap <slug> [--force]"
-  local force=0; [ "${1:-}" = "--force" ] && force=1
+  local slug="${1:-}"; shift || true; [ -n "$slug" ] || die "usage: cell reap <slug>"
+  [ "${1:-}" = "--force" ] && die "cell reap --force is retired; archive/merge/preserve first, then use receipt-backed reclaim"
+  [ $# -eq 0 ] || die "cell reap: unexpected argument '$1'"
   local p b; p="$(cell_path "$slug")"; b="$(cell_branch "$slug")"
   require_cell "$slug"
   conductor_running "$slug" && cmd_stop "$slug"
-  if [ "$force" != "1" ]; then
-    [ -n "$(git -C "$p" status --porcelain 2>/dev/null)" ] && die "cell '$slug' is DIRTY — commit/push or use --force"
-    local head; head="$(git -C "$p" rev-parse HEAD 2>/dev/null)"
-    if [ -n "$head" ] && ! git -C "$p" for-each-ref --format='%(refname)' refs/remotes | while read -r r; do
-         git -C "$p" merge-base --is-ancestor "$head" "$r" 2>/dev/null && { echo found; break; }; done | grep -q found; then
-      die "cell '$slug' has UNPUSHED commits — 'cell merge $slug' first, or --force to discard"
-    fi
+  [ -n "$(git -C "$p" status --porcelain 2>/dev/null)" ] && die "cell '$slug' is DIRTY — commit/push before reclaim"
+  local head; head="$(git -C "$p" rev-parse HEAD 2>/dev/null)"
+  if [ -n "$head" ] && ! git -C "$p" for-each-ref --format='%(refname)' refs/remotes | while read -r r; do
+       git -C "$p" merge-base --is-ancestor "$head" "$r" 2>/dev/null && { echo found; break; }; done | grep -q found; then
+    die "cell '$slug' has UNPUSHED commits — 'cell merge $slug' first, then receipt-backed reclaim"
   fi
-  git -C "$LIMEN_ROOT" worktree remove --force "$p" && echo "cell '$slug' worktree removed"
-  git -C "$LIMEN_ROOT" branch -D "$b" 2>/dev/null && echo "branch $b deleted" || true
-  git -C "$LIMEN_ROOT" worktree prune
-  rm -f "$(pidfile "$slug")" "$CELL_LOGS/$slug".*.log 2>/dev/null || true
+  echo "cell '$slug' is a clean preserved reclaim candidate at $p"
+  echo "cell: physical removal is delegated to docs/worktree-reclaim-acceptance.jsonl + reclaim-worktrees.py"
+  echo "cell: branch cleanup is delegated to docs/branch-reap-acceptance.jsonl + reap-branches.py"
+  python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" --force
 }
 
 cmd_reap_dead() {

@@ -18,6 +18,28 @@ def _init_repo(path: Path, branch: str) -> None:
     subprocess.run(["git", "commit", "-m", "init"], cwd=path, check=True, capture_output=True, text=True)
 
 
+def _init_cell_with_remote(root: Path, slug: str) -> Path:
+    cell = root / ".claude" / "worktrees" / slug
+    cell.mkdir(parents=True)
+    (cell / "README.md").write_text("cell\n", encoding="utf-8")
+    _init_repo(cell, "main")
+    remote = root / f"{slug}.git"
+    subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True, text=True)
+    subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=cell, check=True)
+    subprocess.run(["git", "push", "-u", "origin", "main"], cwd=cell, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "checkout", "-b", f"cell/{slug}"], cwd=cell, check=True, capture_output=True, text=True)
+    return cell
+
+
+def _write_fake_reclaim(root: Path) -> None:
+    scripts = root / "scripts"
+    scripts.mkdir(parents=True, exist_ok=True)
+    (scripts / "reclaim-worktrees.py").write_text(
+        "import sys\nprint('fake reclaim ' + ' '.join(sys.argv[1:]))\n",
+        encoding="utf-8",
+    )
+
+
 def test_scoped_conductor_never_falls_back_to_full_board(tmp_path: Path) -> None:
     root = tmp_path / "limen"
     cell = root / ".claude" / "worktrees" / "demo"
@@ -106,3 +128,48 @@ def test_cell_commands_ignore_non_cell_worktrees(tmp_path: Path) -> None:
     )
     assert rejected.returncode != 0
     assert "not a cell" in rejected.stderr
+
+
+def test_cell_reap_force_is_retired(tmp_path: Path) -> None:
+    root = tmp_path / "limen"
+    cell = _init_cell_with_remote(root, "demo")
+    _write_fake_reclaim(root)
+
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "cells.sh"), "reap", "demo", "--force"],
+        text=True,
+        capture_output=True,
+        env={**os.environ, "LIMEN_ROOT": str(root)},
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert "cell reap --force is retired" in result.stderr
+    assert cell.exists()
+
+
+def test_cell_reap_delegates_without_removing_worktree_or_branch(tmp_path: Path) -> None:
+    root = tmp_path / "limen"
+    cell = _init_cell_with_remote(root, "demo")
+    _write_fake_reclaim(root)
+
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "cells.sh"), "reap", "demo"],
+        text=True,
+        capture_output=True,
+        env={**os.environ, "LIMEN_ROOT": str(root)},
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "physical removal is delegated" in result.stdout
+    assert "fake reclaim --force" in result.stdout
+    assert cell.exists()
+    branches = subprocess.run(
+        ["git", "branch", "--list", "cell/demo"],
+        cwd=cell,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert "cell/demo" in branches.stdout

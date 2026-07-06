@@ -37,7 +37,7 @@ cell cd    <slug>            # print the cell path:  cd "$(cell cd foo)"
 cell conduct <slug> [--loop] # start this cell's scoped conductor (bg). --loop = continuous
 cell stop  <slug>            # stop this cell's conductor
 cell merge <slug>            # push + hand off to the standing merge grant (merge-policy.sh)
-cell reap  <slug> [--force]  # stop + LOSS-FREE remove (refuses if dirty or unpushed)
+cell reap  <slug>            # stop + hand off to receipt-backed reclaim/reap organs
 cell reap-dead               # preview every provably-dead cell (clean+content-preserved+idle)
 cell help
 ```
@@ -104,12 +104,14 @@ freely once CLEAN). See [[merge-authority-standing-grant]].
 
 ```sh
 cell reap spiral-bvh        # refuses if the cell is DIRTY or has UNPUSHED commits
-cell reap spiral-bvh --force   # only if you truly mean to discard
 ```
 
-`reap` removes the worktree, deletes the local branch, prunes, and clears the pidfile/logs.
-It will **not** silently drop work — an empty/unpushed cell is treated as an unfulfilled
-intention, not garbage. See [[empty-branch-is-a-todo-not-a-delete]].
+`reap` does not delete the worktree or branch directly. It stops the conductor, proves the cell is
+clean and content-preserved, then delegates physical removal to the receipt-backed organs:
+`docs/worktree-reclaim-acceptance.jsonl` + `reclaim-worktrees.py` for the root, and
+`docs/branch-reap-acceptance.jsonl` + `reap-branches.py` for the branch ref. It will **not**
+silently drop work — an empty/unpushed cell is treated as an unfulfilled intention, not garbage.
+See [[empty-branch-is-a-todo-not-a-delete]].
 
 ### 5 — Sweep the dead automatically
 
@@ -131,7 +133,7 @@ cell reap-dead --apply      # actually reclaim after operator acceptance
 | Stale base reverting main | `new` always branches from freshly-fetched `origin/main` |
 | Conductors racing `main` | scoped conductor: own branch namespace, fleet merges OFF |
 | Conductors racing each other | own `LIMEN_ROOT` + tasks file + pidfile + lock per cell |
-| Losing uncommitted work | `reap` refuses dirty/unpushed; `--force` is explicit |
+| Losing uncommitted work | `reap` refuses dirty/unpushed; physical removal requires acceptance receipts |
 | Disk leak | known worktree roots swept; loss-free gates; live-session guard |
 | Hardcoded knobs | every `LIMEN_*` toggle declared in `institutio/governance/parameters.yaml` |
 
