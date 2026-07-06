@@ -81915,11 +81915,11 @@ tasks:
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: codex
   workstream: consulting
   priority: high
   budget_cost: 2
-  status: failed
+  status: open
   labels:
   - organ-face
   - pillar:consulting
@@ -81927,7 +81927,6 @@ tasks:
   - institution
   - vltima
   - generated
-  - tried:claude
   - noop
   urls: []
   context: "In organvm/limen organs/consulting/, author the polished MACRO face (ORGANVM-as-a-service:\
@@ -81939,7 +81938,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T01:37:26.768124Z'
+  updated: '2026-07-06T02:21:56.823685Z'
   dispatch_log:
   - timestamp: '2026-07-05T20:51:17.294866Z'
     agent: claude
@@ -81969,6 +81968,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-06T02:21:56.823685Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: ORG-artist-organ-face-0704
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen
@@ -82401,11 +82405,11 @@ tasks:
   title: Build the first working vertical slice of the health organ
   repo: organvm/limen
   type: content
-  target_agent: agy
+  target_agent: codex
   workstream: health
   priority: high
   budget_cost: 2
-  status: failed
+  status: open
   labels:
   - organ-firstslice
   - pillar:health
@@ -82413,7 +82417,6 @@ tasks:
   - institution
   - vltima
   - generated
-  - tried:claude
   - noop
   urls: []
   context: "In organvm/limen organs/health/, deliver one real end-to-end artifact\
@@ -82429,7 +82432,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T01:57:49.140864Z'
+  updated: '2026-07-06T02:21:56.823685Z'
   dispatch_log:
   - timestamp: '2026-07-05T22:52:24.115920Z'
     agent: claude
@@ -82459,6 +82462,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-06T02:21:56.823685Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-organvm-engine-115
   title: fix failing CI on organvm/organvm-engine#115
   repo: organvm/organvm-engine
