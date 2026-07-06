@@ -56,12 +56,13 @@ LEDGER = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 _POSTURE = {"push": "ASK-5-open-merge-gate (the standing gate-hold)"}
 
 # ── the CLOSEOUT ritual, autonomic: a finished session leaves a spent isolation worktree behind.
-#    These are the only trees the reaper may touch (never a clone or the live main checkout). ────────
+#    QUICKEN identifies those roots, but terminal removal is delegated to the acceptance-gated
+#    worktree/branch reapers so archive + redaction proof stay in the shared covenant. ───────────────
 WORKTREE_MARKERS = ("/.claude/worktrees/", "/.worktrees/", "/.limen-worktrees/")
-# SessionEnd hook drops a breadcrumb here so a deliberately-ended session is reaped on the NEXT beat
-# instead of waiting out CLOSED_HRS. The reap itself still happens here (you can't remove your own cwd).
+# SessionEnd hook drops a breadcrumb here so a deliberately-ended session is classified on the NEXT beat
+# instead of waiting out CLOSED_HRS. Removal stays with the acceptance-gated reaper organs.
 CLOSEOUT_LOG = ROOT / "logs" / "session-closeout.jsonl"
-# the reaper is ON by default (it IS the requested behavior); kill-switch for a cautious operator.
+# the candidate detector is ON by default; physical removal is not performed here.
 REAP_ON = os.environ.get("LIMEN_QUICKEN_REAP", "1") == "1"
 
 
@@ -572,16 +573,16 @@ def _branch_merged(cwd: str, branch: str) -> tuple[bool, str]:
 
 def reap_done(rows: list[dict], self_cwd: str, apply: bool) -> dict:
     """The CLOSEOUT ritual, autonomic. A session whose purpose is finished (DONE) or that was
-    deliberately ended (CLOSED) leaves a spent isolation worktree behind; drive it to its terminal
-    state by reversibly reaping the worktree + branch — but ONLY when verified safe on every axis:
+    deliberately ended (CLOSED) leaves a spent isolation worktree behind; identify its terminal
+    removal packet — but ONLY when verified safe on every axis:
       * the cwd is an isolation worktree (never a clone or the live main checkout);
       * not our own / a live / a contended tree (errs safe — skip on any doubt);
       * the tree is CLEAN — fail closed on a single uncommitted byte;
       * the branch is VERIFIED fully-merged into origin/main (see _branch_merged).
-    Reversible by construction: the content lives in main, the branch SHA stays in reflog ~90d, and the
-    working copy regenerates from the branch — this is reap, not data-delete. Fail-open: any error
-    leaves the tree intact and never crashes the beat. Without `apply` it only previews (no mutation)."""
-    res = {"reaped": [], "kept": [], "would": [], "on": REAP_ON}
+    Physical removal is delegated to reclaim-worktrees.py and reap-branches.py, whose acceptance
+    ledgers require archive/redaction proof. Fail-open: any error leaves the tree intact and never
+    crashes the beat. Without `apply` it only previews (no mutation)."""
+    res = {"reaped": [], "kept": [], "would": [], "delegated": [], "on": REAP_ON}
     if not REAP_ON:
         return res
     alive = {r["cwd"] for r in rows if r["state"] == "ALIVE"}
@@ -612,14 +613,7 @@ def reap_done(rows: list[dict], self_cwd: str, apply: bool) -> dict:
         if not apply:
             res["would"].append((title, branch, why))
             continue
-        rc1, _, e1 = _git(live_main, "worktree", "remove", cwd)  # refuses if dirty/locked
-        if rc1 != 0:
-            res["kept"].append((title, f"worktree remove failed: {e1[:60]}"))
-            continue
-        rc2, _, e2 = _git(live_main, "branch", "-D", branch)  # -D after OUR merge-verify
-        res["reaped"].append((title, branch, why))
-        if rc2 != 0:
-            res["kept"].append((title, f"worktree reaped; branch {branch} kept: {e2[:50]}"))
+        res["delegated"].append((title, branch, why))
     return res
 
 
@@ -660,9 +654,18 @@ def main() -> int:
     elif reap["reaped"]:
         for t, b, why in reap["reaped"]:
             print(f"[reap] removed worktree+branch {b} ({t}) — {why}")
+    elif reap["delegated"]:
+        for t, b, why in reap["delegated"]:
+            print(
+                f"[reap] candidate worktree+branch {b} ({t}) — {why}; "
+                "physical removal delegated to reclaim-worktrees.py + reap-branches.py acceptance ledgers"
+            )
     elif reap["would"]:
         for t, b, why in reap["would"]:
-            print(f"[reap] WOULD remove worktree+branch {b} ({t}) — {why}  (run --apply)")
+            print(
+                f"[reap] WOULD delegate worktree+branch {b} ({t}) — {why}  "
+                "(run --apply to record the delegated candidate; removal still requires acceptance ledgers)"
+            )
     if reap["kept"]:
         for t, why in reap["kept"]:
             print(f"[reap] kept {t}: {why}")
@@ -676,6 +679,7 @@ def main() -> int:
             "alive": [r["sessionId"] for r in rows if r["state"] == "ALIVE"],
             "done": [r["sessionId"] for r in rows if r["state"] == "DONE"],
             "reaped": [b for _t, b, _w in reap["reaped"]],
+            "delegated_reap": [b for _t, b, _w in reap["delegated"]],
         }
         with JOURNAL.open("a") as fh:
             fh.write(json.dumps(rec) + "\n")

@@ -13,11 +13,12 @@
   reclaim caches + iCloud local-cache (copy→verify→`brctl evict`, reversible). 19.78 GB reclaimed in one
   pass; finishes the rest each C_BACKUP beat. [[storage-autonomic-solve]]
 - **node_modules creep** — `clone-maintenance.sh`, every 8 beats; `.claude/worktrees/` hard-excluded.
-- **Session / worktree closeout** — DAEMON-OWNED (`quicken.py reap_done`, every `C_QUICKEN` beat): a
-  finished (DONE) or deliberately-ended (CLOSED) session's spent isolation worktree is classified only
+- **Session / worktree closeout** — DAEMON-OWNED classifier (`quicken.py reap_done`, every
+  `C_QUICKEN` beat) plus receipt-backed removal organs (`reclaim-worktrees.py` / `reap-branches.py`):
+  a finished (DONE) or deliberately-ended (CLOSED) session's spent isolation worktree is only surfaced
   when verified clean **and** fully merged into `origin/main` (rev-list empty, or `git cherry` shows
   every commit patch-present for squash/rebase, or a merged PR exists). As of 2026-07-06, physical
-  removal also requires an explicit human acceptance/redaction/archive event in
+  removal requires an explicit human acceptance/redaction/archive event in
   `docs/worktree-reclaim-acceptance.jsonl`; the daemon can surface candidates, but it does not delete
   local roots on merge proof alone. You **never** run `git worktree remove` / `git branch -D` by hand
   again; accepted candidates are reaped by the receipt-backed organ. (Optional accelerator: a

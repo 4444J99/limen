@@ -106,3 +106,42 @@ def test_write_residue_splits_queued_unblocks_before_deduping(monkeypatch):
 
     assert "effort-level-ultracode, effort-level-ultracode" not in doc
     assert "unblocks: effort-level-ultracode, nous research outreach p" in doc
+
+
+def test_reap_done_apply_delegates_without_removing_worktree(tmp_path, monkeypatch):
+    quicken = _load()
+    worktree = tmp_path / ".claude" / "worktrees" / "spent"
+    worktree.mkdir(parents=True)
+    calls: list[tuple[str, ...]] = []
+
+    def fake_git(_cwd: str, *args: str) -> tuple[int, str, str]:
+        calls.append(args)
+        if args == ("status", "--porcelain"):
+            return 0, "", ""
+        if args == ("rev-parse", "--abbrev-ref", "HEAD"):
+            return 0, "spent-branch", ""
+        if args[:2] in {("worktree", "remove"), ("branch", "-D")}:
+            raise AssertionError(f"quicken must not physically remove roots: {args}")
+        return 1, "", "unexpected"
+
+    monkeypatch.setattr(quicken, "_git", fake_git)
+    monkeypatch.setattr(quicken, "_branch_merged", lambda _cwd, _branch: (True, "0 commits ahead of origin/main"))
+
+    result = quicken.reap_done(
+        [
+            {
+                "state": "DONE",
+                "cwd": str(worktree),
+                "title": "Spent finished session",
+                "is_self": False,
+            }
+        ],
+        self_cwd=str(tmp_path / "other"),
+        apply=True,
+    )
+
+    assert result["reaped"] == []
+    assert result["delegated"] == [("Spent finished session", "spent-branch", "0 commits ahead of origin/main")]
+    assert worktree.exists()
+    assert ("worktree", "remove", str(worktree)) not in calls
+    assert ("branch", "-D", "spent-branch") not in calls
