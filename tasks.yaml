@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 266
+      spent: 284
       per_agent:
         jules: 100
         gemini: 2
-        codex: 6
-        opencode: 45
+        codex: 13
+        opencode: 48
         agy: 100
-        claude: 12
+        claude: 20
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-06T11:41:52.375322+00:00'
@@ -35237,7 +35237,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-iv-taxis.github.io
   repo: organvm/organvm-iv-taxis.github.io
   type: code
-  target_agent: claude
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -35979,7 +35979,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-v-logos.github.io
   repo: organvm/organvm-v-logos.github.io
   type: code
-  target_agent: codex
+  target_agent: claude
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -36071,7 +36071,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-vi-koinonia.github.io
   repo: organvm/organvm-vi-koinonia.github.io
   type: code
-  target_agent: opencode
+  target_agent: codex
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -38140,7 +38140,7 @@ tasks:
   title: Raise test coverage in organvm-vii-kerygma/organvm-vii-kerygma.github.io
   repo: organvm/organvm-vii-kerygma.github.io
   type: code
-  target_agent: claude
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -38772,7 +38772,7 @@ tasks:
   title: Raise test coverage in organvm-iv-taxis/organvm-iv-taxis--superproject
   repo: organvm/organvm-iv-taxis--superproject
   type: code
-  target_agent: codex
+  target_agent: claude
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -41631,7 +41631,7 @@ tasks:
   title: Raise test coverage in organvm/collective-persona-operations
   repo: organvm/collective-persona-operations
   type: code
-  target_agent: opencode
+  target_agent: codex
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -86227,7 +86227,7 @@ tasks:
   title: fix failing CI on organvm/limen#426
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -86395,7 +86395,7 @@ tasks:
   title: fix failing CI on organvm/limen#428
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -86565,7 +86565,7 @@ tasks:
   title: fix failing CI on organvm/limen#430
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -87272,7 +87272,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -87288,7 +87288,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:44:54.105689Z'
+  updated: '2026-07-06T22:21:55.539998Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:26:42.299113Z'
     agent: codex
@@ -87349,6 +87349,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-limen-439
   title: fix failing CI on organvm/limen#439
   repo: organvm/limen
@@ -87683,7 +87687,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -87700,7 +87704,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:44:54.105689Z'
+  updated: '2026-07-06T22:21:55.539998Z'
   dispatch_log:
   - timestamp: '2026-07-06T17:47:45.844476Z'
     agent: opencode
@@ -87746,6 +87750,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-limen-444
   title: fix failing CI on organvm/limen#444
   repo: organvm/limen
@@ -90090,7 +90098,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#146
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: dispatched
@@ -90109,7 +90117,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:46:24.829647Z'
+  updated: '2026-07-06T22:25:45.453490Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:11:06.264967Z'
     agent: codex
@@ -90131,6 +90139,15 @@ tasks:
     status: timeout->jules
   - timestamp: '2026-07-06T21:46:24.829647Z'
     agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: codex
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-07-06T22:25:45.453490Z'
+    agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
@@ -90176,7 +90193,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#149
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: dispatched
@@ -90184,6 +90201,7 @@ tasks:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/domus-genoma/pull/149
   context: "PR organvm/domus-genoma#149 has FAILING CI checks and merge-drain correctly\
@@ -90194,7 +90212,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:46:24.829647Z'
+  updated: '2026-07-06T22:25:45.453490Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:38:29.979474Z'
     agent: agy
@@ -90211,11 +90229,20 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-07-06T22:25:45.453490Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-150
   title: fix failing CI on organvm/domus-genoma#150
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -90901,10 +90928,10 @@ tasks:
   title: fix failing CI on organvm/mirror-mirror#83
   repo: organvm/mirror-mirror
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -90920,7 +90947,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:46:21.539178Z'
+  updated: '2026-07-06T22:25:45.453490Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:14:45.781244Z'
     agent: opencode
@@ -90931,6 +90958,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-06T22:25:45.453490Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-86
   title: fix failing CI on organvm/mirror-mirror#86
   repo: organvm/mirror-mirror
@@ -91624,7 +91656,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -91639,7 +91671,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:21:58.540280Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-the-invisible-ledger-31
   title: fix failing CI on organvm/the-invisible-ledger#31
   repo: organvm/the-invisible-ledger
@@ -91789,10 +91827,10 @@ tasks:
   title: fix failing CI on organvm/the-invisible-ledger#41
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -91807,7 +91845,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:14:39.175626Z'
+  updated: '2026-07-06T22:26:49.837647Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:13:38.567460Z'
     agent: codex
@@ -91818,6 +91856,11 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-07-06T22:26:49.837647Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-the-invisible-ledger-42
   title: fix failing CI on organvm/the-invisible-ledger#42
   repo: organvm/the-invisible-ledger
@@ -92106,7 +92149,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -92121,12 +92164,18 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:21:58.540280Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-the-invisible-ledger-59
   title: fix failing CI on organvm/the-invisible-ledger#59
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -92235,7 +92284,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T15:57:32.123235Z'
+  updated: '2026-07-06T22:06:47.736928Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -92258,6 +92307,11 @@ tasks:
       \ trigger (30-min rate limit)     (free)\n-GET  /api/status           \u2014\
       \ System health + usage metrics         (free)\n+GET  /api/status          \
       \ \u2014 Syste"
+  - timestamp: '2026-07-06T22:06:47.736928Z'
+    agent: jules
+    session_id: https://github.com/organvm/trendpulse/pull/10
+    status: done
+    output: 'jules-land: landed session 4483542200527245182 as PR'
 - id: HEAL-cifix-organvm-trendpulse-8
   title: fix failing CI on organvm/trendpulse#8
   repo: organvm/trendpulse
@@ -92280,13 +92334,17 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:59:24.656292Z'
+  updated: '2026-07-06T22:25:42.198959Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:59:24.656292Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:25:42.198959Z'
+    agent: codex
+    session_id: https://github.com/organvm/trendpulse/pull/11
+    status: dispatched
 - id: HEAL-cifix-organvm-universal-mail--automation-118
   title: fix failing CI on organvm/universal-mail--automation#118
   repo: organvm/universal-mail--automation
@@ -92331,11 +92389,12 @@ tasks:
   workstream: correspondence
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
+  - noop
   urls:
   - https://github.com/organvm/universal-mail--automation/pull/119
   context: 'PR organvm/universal-mail--automation#119 is CONFLICTING with its base
@@ -92346,19 +92405,24 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:03:22.354370Z'
+  updated: '2026-07-06T22:21:55.539998Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:03:22.354370Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-stale-organvm-universal-mail--automation-122
   title: "rebase organvm/universal-mail--automation#122 onto current base \u2014 branched\
     \ far behind"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: agy
   workstream: correspondence
   priority: normal
   budget_cost: 1
@@ -92486,10 +92550,10 @@ tasks:
   title: fix failing CI on organvm/growth-auditor#12
   repo: organvm/growth-auditor
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -92504,7 +92568,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:25:45.453490Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:25:45.453490Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-growth-auditor-13
   title: fix failing CI on organvm/growth-auditor#13
   repo: organvm/growth-auditor
@@ -92562,13 +92632,17 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:03:56.988929Z'
+  updated: '2026-07-06T22:21:55.539998Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:03:56.988929Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: codex
+    session_id: https://github.com/organvm/growth-auditor/pull/18
+    status: dispatched
 - id: HEAL-cifix-organvm-growth-auditor-15
   title: fix failing CI on organvm/growth-auditor#15
   repo: organvm/growth-auditor
@@ -92609,7 +92683,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -92624,12 +92698,18 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:21:58.540280Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-growth-auditor-17
   title: fix failing CI on organvm/growth-auditor#17
   repo: organvm/growth-auditor
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -92690,7 +92770,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -92706,7 +92786,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:22:49.733430Z'
+  updated: '2026-07-06T22:26:46.014320Z'
   dispatch_log:
   - timestamp: '2026-07-06T19:53:06.580239Z'
     agent: claude
@@ -92723,6 +92803,16 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:26:46.014320Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-limen-367
   title: rebase/resolve conflicts on organvm/limen#367
   repo: organvm/limen
@@ -93213,7 +93303,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -93228,13 +93318,19 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:21:58.540280Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-organvm-peer-audited--behavioral-blockchain-715
   title: "rebase organvm/peer-audited--behavioral-blockchain#715 onto current base\
     \ \u2014 branched far behind"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: normal
   budget_cost: 1
   status: open
@@ -93259,7 +93355,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#716
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -93316,7 +93412,7 @@ tasks:
     \ \u2014 branched far behind"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: normal
   budget_cost: 1
   status: open
@@ -93342,7 +93438,7 @@ tasks:
     \ \u2014 branched far behind"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -93367,7 +93463,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#726
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -93390,7 +93486,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#728
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -93449,12 +93545,13 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
   - tried:github_actions
+  - noop
   urls:
   - https://github.com/organvm/a-i-council--coliseum/pull/175
   context: "PR organvm/a-i-council--coliseum#175 has FAILING CI checks and merge-drain\
@@ -93465,7 +93562,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:55:25.464706Z'
+  updated: '2026-07-06T22:21:55.539998Z'
   dispatch_log:
   - timestamp: '2026-07-04T17:40:38.979909Z'
     agent: github_actions
@@ -93482,6 +93579,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-a-i-council--coliseum-177
   title: fix failing CI on organvm/a-i-council--coliseum#177
   repo: organvm/a-i-council--coliseum
@@ -93489,7 +93591,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -93504,12 +93606,18 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:21:58.540280Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-a-i-council--coliseum-179
   title: fix failing CI on organvm/a-i-council--coliseum#179
   repo: organvm/a-i-council--coliseum
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -93532,10 +93640,10 @@ tasks:
   title: fix failing CI on organvm/atomic-substrata#4
   repo: organvm/atomic-substrata
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -93550,7 +93658,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:26:49.837647Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:26:49.837647Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-bountyscope-7
   title: fix failing CI on organvm/bountyscope#7
   repo: organvm/bountyscope
@@ -93761,7 +93875,7 @@ tasks:
   title: fix failing CI on organvm/bountyscope#14
   repo: organvm/bountyscope
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -93784,7 +93898,7 @@ tasks:
   title: fix failing CI on organvm/bountyscope#15
   repo: organvm/bountyscope
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -93807,7 +93921,7 @@ tasks:
   title: fix failing CI on organvm/bountyscope#16
   repo: organvm/bountyscope
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -93865,7 +93979,7 @@ tasks:
   title: Discover the latent value of organvm/advocata
   repo: organvm/advocata
   type: research
-  target_agent: codex
+  target_agent: claude
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -94276,11 +94390,12 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
+  - noop
   urls:
   - https://github.com/organvm/organvm-corpvs-testamentvm/pull/495
   context: 'PR organvm/organvm-corpvs-testamentvm#495 is CONFLICTING with its base
@@ -94291,18 +94406,23 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:03:22.354370Z'
+  updated: '2026-07-06T22:21:55.539998Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:03:22.354370Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-organvm-corpvs-testamentvm-496
   title: rebase/resolve conflicts on organvm/organvm-corpvs-testamentvm#496
   repo: organvm/organvm-corpvs-testamentvm
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -94325,7 +94445,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/organvm-corpvs-testamentvm#498
   repo: organvm/organvm-corpvs-testamentvm
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -94348,7 +94468,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/organvm-corpvs-testamentvm#505
   repo: organvm/organvm-corpvs-testamentvm
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -94374,11 +94494,12 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/organvm-corpvs-testamentvm/pull/511
   context: "PR organvm/organvm-corpvs-testamentvm#511 has FAILING CI checks and merge-drain\
@@ -94389,13 +94510,18 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:03:22.354370Z'
+  updated: '2026-07-06T22:21:55.539998Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:03:22.354370Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:55.539998Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-organvm-engine-99
   title: fix failing CI on organvm/organvm-engine#99
   repo: organvm/organvm-engine
@@ -94433,7 +94559,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#100
   repo: organvm/organvm-engine
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -94456,7 +94582,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#101
   repo: organvm/organvm-engine
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -94479,7 +94605,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#104
   repo: organvm/organvm-engine
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -94505,7 +94631,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -94520,13 +94646,28 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T22:03:22.354370Z'
+  updated: '2026-07-06T22:26:39.423210Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:03:22.354370Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:21:50.657754Z'
+    agent: claude
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 2100s reaped; task reopened'
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:26:39.423210Z'
+    agent: claude
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 2100s reaped; task reopened'
 - id: HEAL-cifix-organvm-organvm-engine-106
   title: fix failing CI on organvm/organvm-engine#106
   repo: organvm/organvm-engine
@@ -94564,7 +94705,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#107
   repo: organvm/organvm-engine
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -94587,7 +94728,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#108
   repo: organvm/organvm-engine
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -94610,7 +94751,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#109
   repo: organvm/organvm-engine
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -94651,12 +94792,23 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:24:37.396886Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:24:37.396886Z'
+    agent: claude
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 2100s reaped; task reopened'
 - id: HEAL-cifix-organvm-organvm-engine-111
   title: fix failing CI on organvm/organvm-engine#111
   repo: organvm/organvm-engine
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -94712,7 +94864,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#113
   repo: organvm/organvm-engine
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -94759,7 +94911,7 @@ tasks:
     \ far behind"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: agy
+  target_agent: opencode
   workstream: correspondence
   priority: normal
   budget_cost: 1
@@ -94789,12 +94941,13 @@ tasks:
   workstream: correspondence
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:github_actions
+  - noop
   urls:
   - https://github.com/organvm/universal-mail--automation/pull/130
   context: 'PR organvm/universal-mail--automation#130 is CONFLICTING with its base
@@ -94805,7 +94958,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-04T19:44:06.539240Z'
+  updated: '2026-07-06T22:25:42.198959Z'
   dispatch_log:
   - timestamp: '2026-07-04T19:40:23.317772Z'
     agent: github_actions
@@ -94817,11 +94970,21 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:25:42.198959Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-universal-mail--automation-131
   title: fix failing CI on organvm/universal-mail--automation#131
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: codex
+  target_agent: agy
   workstream: correspondence
   priority: high
   budget_cost: 1
@@ -94846,7 +95009,7 @@ tasks:
     \ far behind"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: claude
   workstream: correspondence
   priority: normal
   budget_cost: 1
@@ -94872,7 +95035,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/universal-mail--automation#133
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: agy
+  target_agent: codex
   workstream: correspondence
   priority: high
   budget_cost: 1
@@ -94900,11 +95063,12 @@ tasks:
   workstream: correspondence
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
+  - noop
   urls:
   - https://github.com/organvm/universal-mail--automation/pull/134
   context: 'PR organvm/universal-mail--automation#134 is CONFLICTING with its base
@@ -94915,12 +95079,23 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T22:25:42.198959Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T22:21:58.540280Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T22:25:42.198959Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-universal-mail--automation-135
   title: fix failing CI on organvm/universal-mail--automation#135
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: codex
+  target_agent: opencode
   workstream: correspondence
   priority: high
   budget_cost: 1
@@ -94945,7 +95120,7 @@ tasks:
     \ far behind"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: agy
   workstream: correspondence
   priority: normal
   budget_cost: 1
@@ -95005,7 +95180,7 @@ tasks:
   title: fix failing CI on organvm/universal-node-network#7
   repo: organvm/universal-node-network
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -95066,7 +95241,7 @@ tasks:
   title: fix failing CI on organvm/universal-node-network#10
   repo: organvm/universal-node-network
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -95089,7 +95264,7 @@ tasks:
   title: fix failing CI on organvm/vigiles-aeternae--agon-cosmogonicum#7
   repo: organvm/vigiles-aeternae--agon-cosmogonicum
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -95162,7 +95337,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/vulnpulse#12
   repo: organvm/vulnpulse
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -95185,7 +95360,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/writelens#5
   repo: organvm/writelens
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -95208,7 +95383,7 @@ tasks:
   title: fix failing CI on organvm/writelens#6
   repo: organvm/writelens
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -95231,7 +95406,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/writelens#7
   repo: organvm/writelens
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -95254,7 +95429,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/writelens#8
   repo: organvm/writelens
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -96475,7 +96650,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/client-sdk#12
   repo: organvm/client-sdk
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
