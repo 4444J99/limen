@@ -346,13 +346,15 @@ while true; do
 
     if [ "$locked" = 1 ]; then
       export LIMEN_QUEUE_LOCK_HELD=1
-      due_voice drain "$C_DRAIN"   && { bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
+      DRAIN_VOICE_DUE=0
+      due_voice drain "$C_DRAIN"   && { DRAIN_VOICE_DUE=1
+                                       bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
                                        python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
       due_voice heal "$C_HEAL"     && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
       play "$C_FEED"               && { python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-25}" --apply 2>&1 | tail -1 || true  # EXPLORE
                                        [ "${LIMEN_REVENUE_BACKLOG:-1}" = "1" ] && timeout "${LIMEN_REVENUE_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-revenue-backlog.py" --apply 2>&1 | tail -1 || true  # REVENUE FIRST: ladder→tasks so win-class capacity builds products, not busywork (default-ON; floor-gated)
                                        [ "${LIMEN_ORGAN_BACKLOG:-1}" = "1" ] && timeout "${LIMEN_ORGAN_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-organ-backlog.py" --apply 2>&1 | tail -1 || true  # ORGANS (VLTIMA): organ-ladder->tasks so idle capacity builds the institutional pillars (legal/financial/education/...), not busywork (default-ON; floor-gated; lockless)
-                                       python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true  # SELF-FEED: build-out levers on the ranked tier
+                                       timeout "${LIMEN_GENERATE_BACKLOG_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true  # SELF-FEED: build-out levers on the ranked tier
                                        [ "${LIMEN_STUDIUM:-0}" = "1" ] && timeout "${LIMEN_STUDIUM_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/ingest-backlog.py" --apply 2>&1 | tail -1 || true  # STUDIUM: re-emit the staged canon-breadth content tasks each beat so they SURVIVE the prune (a one-shot hand-apply gets clobbered; idempotent, gated, lockless)
                                        python3 "$LIMEN_ROOT/scripts/discover-value.py" --apply 2>&1 | tail -1 || true; }  # DISCOVER: no repo stays dark — surface latent value, burn the tank
       play "$C_BALANCE"            && { python3 "$LIMEN_ROOT/scripts/route.py" --apply 2>&1 | tail -1 || true   # PLAN
@@ -373,6 +375,14 @@ while true; do
       unset LIMEN_QUEUE_LOCK_HELD
       rm -f "$LOCKD/pid" "$LOCKD/created_at" 2>/dev/null || true
       rmdir "$LOCKD" 2>/dev/null || true
+
+      # RECLAIM is intentionally outside the queue lock. It can spend minutes scanning
+      # worktrees with git status/cherry; holding the board mutex there starves harvest/refill.
+      if [ "${DRAIN_VOICE_DUE:-0}" = "1" ] && [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
+        reclaim_args=()
+        [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
+        PYTHONPATH="$PYTHONPATH" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+      fi
 
       # BUILD — dispatch every beat. Default = SYNC parallel (reserve→run→commit, beat waits for the
       # slowest agent). Opt in to ASYNC (LIMEN_DISPATCH_ASYNC=1): fire detached workers + harvest

@@ -927,11 +927,18 @@ def _limen_repo_task(task: Task) -> bool:
     return str(task.repo or "").lower() == "organvm/limen"
 
 
+def _organvm_engine_task(task: Task) -> bool:
+    """Claude has repeatedly used full pytest on organvm-engine PR repair tasks."""
+    return str(task.repo or "").lower() == "organvm/organvm-engine"
+
+
 def agent_can_run_task(agent: str, task: Task) -> bool:
     agent = canonical_agent(agent)
     if agent in {"agy", "antigravity"} and (_agy_live_root_registry_task(task) or _limen_repo_task(task)):
         return False
     if agent in {"codex", "claude"} and _limen_repo_task(task):
+        return False
+    if agent == "claude" and _organvm_engine_task(task):
         return False
     return True
 

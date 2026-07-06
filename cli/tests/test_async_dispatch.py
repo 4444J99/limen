@@ -127,6 +127,29 @@ def test_agy_codex_and_claude_skip_limen_repo_tasks(tmp_path):
     assert da.reserve_and_launch(["agy", "codex", "claude"], per_agent=4, cap=4, dry=True) == []
 
 
+def test_claude_skips_organvm_engine_pr_repair_tasks(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"claude": 50, "codex": 50}
+    lf.tasks = [
+        Task(
+            id="HEAL-cifix-organvm-organvm-engine-999",
+            title="Fix organvm-engine CI",
+            repo="organvm/organvm-engine",
+            target_agent="any",
+            status="open",
+            created=today,
+        )
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    assert da.reserve_and_launch(["claude"], per_agent=4, cap=4, dry=True) == []
+    assert da.reserve_and_launch(["claude", "codex"], per_agent=4, cap=4, dry=True) == [
+        ("codex", "HEAL-cifix-organvm-organvm-engine-999")
+    ]
+
+
 def test_async_remote_lane_not_gated_by_local_concurrency_cap(tmp_path):
     """A jules (async/remote) task runs OFF-BOX (a `jules remote new` session executes on Google's VM),
     so it must NOT be starved by the LOCAL concurrency cap even when local in-flight runs have consumed

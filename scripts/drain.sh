@@ -134,9 +134,13 @@ fi
 # Visibility is ON by default. Safe removal is ON by default; set LIMEN_RECLAIM_APPLY=0 for
 # preview-only operation. ([[known-owned-pervasive-then-idgaf]], [[storage-autonomic-solve]])
 if [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
-  reclaim_args=()
-  [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
-  PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+  if [ "${LIMEN_QUEUE_LOCK_HELD:-0}" = "1" ]; then
+    echo "[drain] reclaim skipped under queue lock; heartbeat runs it after release"
+  else
+    reclaim_args=()
+    [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
+    PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+  fi
 fi
 
 echo "[drain] board:"
