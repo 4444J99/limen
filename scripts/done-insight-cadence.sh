@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
+SOURCE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+VERIFY_ROOT="${LIMEN_INSIGHT_CADENCE_VERIFY_ROOT:-$(mktemp -d "${TMPDIR:-/tmp}/limen-insight-cadence.XXXXXX")}"
+export LIMEN_ROOT="$VERIFY_ROOT"
+export LIMEN_TASKS="$VERIFY_ROOT/tasks.yaml"
 LOGS="$LIMEN_ROOT/logs"
 STATE="$LOGS/insight-cadence-state.json"
 OUT_DIR="$LOGS/insight-cadence"
-
-# clean up
-rm -rf "$OUT_DIR"
-rm -f "$STATE"
+TOOL="$SOURCE_ROOT/scripts/insight-cadence.py"
+mkdir -p "$LOGS"
+if [ -f "$SOURCE_ROOT/tasks.yaml" ]; then
+    cp "$SOURCE_ROOT/tasks.yaml" "$LIMEN_TASKS"
+else
+    printf 'version: "1.0"\ntasks: []\n' > "$LIMEN_TASKS"
+fi
+echo "0. Verification sandbox retained at $VERIFY_ROOT"
 
 echo "1. Run initially to ensure all tiers fire because they have never run"
-python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once
+python3 "$TOOL" --once
 
 echo "2. Assert files land in logs/insight-cadence/"
 if [ ! -d "$OUT_DIR" ]; then
@@ -56,7 +63,7 @@ state_before=$(md5sum "$STATE" | awk '{print $1}')
 files_before=$(find "$OUT_DIR" -type f | wc -l)
 
 # Run again, shouldn't do anything because window hasn't elapsed
-python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --once
+python3 "$TOOL" --once
 
 state_after=$(md5sum "$STATE" | awk '{print $1}')
 files_after=$(find "$OUT_DIR" -type f | wc -l)
@@ -78,7 +85,7 @@ if [ -z "$DRIFT_TOOL" ]; then
     echo "   (insights-drift not deployed on this host — lineage checks skipped)"
 else
     FIX="$(mktemp -d)"
-    trap 'rm -rf "$FIX"' EXIT
+    echo "   fixture sandbox retained at $FIX"
     python3 - "$FIX" <<'PY'
 import json, pathlib, sys
 fix = pathlib.Path(sys.argv[1])
@@ -119,8 +126,7 @@ print(f"   clustering ok: {len(rec)} recurring, {len(res)} resolved")
 PY
     # End-to-end: the cadence organ refreshes the drift file and surfaces
     # recurring frictions in its reports.
-    rm -rf "$OUT_DIR"; rm -f "$STATE" "$LOGS/insights-drift.json"
-    INSIGHTS_SNAPDIR="$FIX" python3 "$LIMEN_ROOT/scripts/insight-cadence.py" --force hourly
+    INSIGHTS_SNAPDIR="$FIX" python3 "$TOOL" --force hourly
     if [ ! -f "$LOGS/insights-drift.json" ]; then
         echo "ERROR: insight-cadence did not refresh logs/insights-drift.json"
         exit 1
