@@ -58,3 +58,19 @@ def test_surface_check_rejects_doc_missing_required_proof(tmp_path: Path) -> Non
     errors = module.check_surface(tmp_path, surface)
 
     assert "example: doc does not require proof field archive_proof" in errors
+
+
+def test_direct_removal_bans_reject_guarded_tokens(tmp_path: Path) -> None:
+    module = load_script(SCRIPT, "check_removal_acceptance_direct_bans_under_test")
+    guarded = tmp_path / "scripts" / "unsafe.sh"
+    guarded.parent.mkdir()
+    guarded.write_text("git worktree remove --force /tmp/example\n", encoding="utf-8")
+
+    errors = module.check_direct_removal_bans(
+        tmp_path,
+        {"scripts/unsafe.sh": ("worktree remove",)},
+    )
+
+    assert errors == [
+        "direct-removal-ban: scripts/unsafe.sh contains forbidden token 'worktree remove'",
+    ]

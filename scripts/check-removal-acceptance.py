@@ -26,6 +26,17 @@ from reap_acceptance import (  # noqa: E402
 
 HELPER_TOKENS = ("has_required_acceptance_proof", "missing_required_acceptance_proof_fields")
 NO_SHORTCUT_PHRASE = "Do not create that JSONL as a cleanup shortcut"
+DIRECT_REMOVAL_BANS = {
+    "cli/src/limen/dispatch.py": ("worktree remove", "branch -D", "--delete-branch"),
+    "scripts/cells.sh": ("worktree remove", "branch -D", "--delete-branch"),
+    "scripts/jules-land.py": ("worktree remove", "branch -D", "--delete-branch"),
+    "scripts/ship-docs.sh": ("worktree remove", "branch -D", "--delete-branch"),
+    "scripts/merge-ready.sh": ("--delete-branch",),
+    "scripts/merge-drain.py": ("--delete-branch",),
+    "scripts/done-insight-cadence.sh": ("rm -rf", "rm -f"),
+    "CLAUDE.md": ("--delete-branch",),
+    "docs/MERGE-READY.md": ("--delete-branch", "deletes the branches"),
+}
 
 
 def _read(path: Path) -> str:
@@ -83,10 +94,28 @@ def check_covenant(root: Path) -> list[str]:
     return errors
 
 
+def check_direct_removal_bans(
+    root: Path,
+    bans: dict[str, tuple[str, ...]] = DIRECT_REMOVAL_BANS,
+) -> list[str]:
+    errors: list[str] = []
+    for rel, tokens in bans.items():
+        path = root / rel
+        if not path.exists():
+            errors.append(f"direct-removal-ban: missing guarded path {rel}")
+            continue
+        text = _read(path)
+        for token in tokens:
+            if token in text:
+                errors.append(f"direct-removal-ban: {rel} contains forbidden token {token!r}")
+    return errors
+
+
 def check_all(root: Path = ROOT) -> list[str]:
     errors = check_covenant(root)
     for surface in REMOVAL_ACCEPTANCE_SURFACES:
         errors.extend(check_surface(root, surface))
+    errors.extend(check_direct_removal_bans(root))
     return errors
 
 
