@@ -26,8 +26,18 @@ HOME = Path.home()
 SCRATCH_ROOT = Path(os.environ.get("LIMEN_AGY_SCRATCH_ROOT", HOME / ".gemini/antigravity-cli/scratch"))
 DOC_PATH = ROOT / "docs" / "antigravity-scratch-bridge.md"
 HISTORY_PATH = ROOT / "docs" / "antigravity-scratch-bridge-history.jsonl"
+PRESERVATION_HISTORY_PATH = ROOT / "docs" / "antigravity-scratch-preservation.jsonl"
 LOG_PATH = ROOT / "logs" / "antigravity-scratch-bridge.json"
+PRIVATE_ROOT = Path(
+    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
+)
+PRIVATE_PRESERVE_ROOT = PRIVATE_ROOT / "lifecycle" / "agy-scratch-preserve"
+ARCHIVE_ROOT = Path(os.environ.get("LIMEN_ARCHIVE_ROOT", "/Volumes/Archive4T"))
+ARCHIVE_PRESERVE_ROOT = Path(
+    os.environ.get("LIMEN_AGY_ARCHIVE_ROOT", str(ARCHIVE_ROOT / "limen-private" / "agy-scratch-preserve"))
+)
 REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
+SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 
 
 def fmt_bytes(n: int) -> str:
@@ -53,6 +63,18 @@ def relpath(path: Path) -> str:
         return "~/" + str(path.expanduser().resolve().relative_to(HOME))
     except (OSError, ValueError):
         return str(path)
+
+
+def rel_to_root(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except (OSError, ValueError):
+        return relpath(path)
+
+
+def safe_name(value: str) -> str:
+    cleaned = SAFE_NAME_RE.sub("-", value.strip()).strip("-._")
+    return cleaned[:80] or "scratch-root"
 
 
 def run_git(path: Path, args: list[str], timeout: int = 20) -> subprocess.CompletedProcess[str]:
@@ -81,6 +103,27 @@ def dir_size_bytes(path: Path) -> int:
             except OSError:
                 continue
     return total
+
+
+def file_sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def write_private(path: Path, content: str) -> dict[str, Any]:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8", errors="replace")
+    return {"path": rel_to_root(path), "bytes": path.stat().st_size, "sha256": file_sha256(path)}
+
+
+def archive_available(path: Path = ARCHIVE_PRESERVE_ROOT) -> bool:
+    root = path
+    while not root.exists() and root != root.parent:
+        root = root.parent
+    return root.exists() and os.access(root, os.W_OK)
 
 
 def repo_slug(remote: str | None) -> str | None:
@@ -465,6 +508,233 @@ def append_reap_history(report: dict[str, Any], path: Path = HISTORY_PATH) -> li
     return history
 
 
+def load_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    out: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict):
+            out.append(data)
+    out.sort(key=lambda event: str(event.get("preserved_at", event.get("applied_at", ""))))
+    return out
+
+
+def run_rsync_archive(src: Path, dst: Path, timeout: int) -> dict[str, Any]:
+    dst.mkdir(parents=True, exist_ok=True)
+    src_arg = str(src) + "/"
+    dst_arg = str(dst) + "/"
+    copy = subprocess.run(
+        ["rsync", "-a", "--protect-args", src_arg, dst_arg],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
+        stdin=subprocess.DEVNULL,
+    )
+    verify = subprocess.run(
+        ["rsync", "-anci", "--protect-args", src_arg, dst_arg],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
+        stdin=subprocess.DEVNULL,
+    )
+    pending = [line for line in verify.stdout.splitlines() if line[:1] in "<>"]
+    return {
+        "copy_returncode": copy.returncode,
+        "verify_returncode": verify.returncode,
+        "verified": copy.returncode == 0 and verify.returncode == 0 and not pending,
+        "pending_count": len(pending),
+        "copy_stdout": copy.stdout,
+        "copy_stderr": copy.stderr,
+        "verify_stdout": verify.stdout,
+        "verify_stderr": verify.stderr,
+    }
+
+
+def preserve_root(row: dict[str, Any], scratch_root: Path, min_idle_hours: float, timeout: int) -> dict[str, Any]:
+    preserved_at = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    name = str(row.get("name") or "scratch-root")
+    raw_path = Path(str(row.get("path") or "")).expanduser()
+    try:
+        path = raw_path.resolve()
+        path.relative_to(scratch_root)
+    except (OSError, ValueError):
+        return {
+            "preserved_at": preserved_at,
+            "name": name,
+            "status": "skipped",
+            "reason": "path-outside-scratch-root",
+        }
+    if not path.exists():
+        return {"preserved_at": preserved_at, "name": name, "status": "skipped", "reason": "already-missing"}
+
+    checked = classify_root(path, min_idle_hours)
+    private_dir = PRIVATE_PRESERVE_ROOT / f"{stamp}-{safe_name(name)}"
+    private_dir.mkdir(parents=True, exist_ok=True)
+    private_files: dict[str, Any] = {
+        "status_porcelain": write_private(
+            private_dir / "status-porcelain.txt",
+            run_git(path, ["status", "--porcelain=v1"], timeout=60).stdout,
+        ),
+        "status_branch": write_private(
+            private_dir / "status-branch.txt",
+            run_git(path, ["status", "--short", "--branch"], timeout=60).stdout,
+        ),
+        "staged_deleted": write_private(
+            private_dir / "staged-deleted.txt",
+            "\n".join(git_lines(path, ["diff", "--cached", "--name-only", "--diff-filter=D"], timeout=60))
+            + "\n",
+        ),
+        "untracked": write_private(
+            private_dir / "untracked.txt",
+            "\n".join(git_lines(path, ["ls-files", "--others", "--exclude-standard"], timeout=60)) + "\n",
+        ),
+        "dirty_profile": write_private(
+            private_dir / "dirty-profile.json",
+            json.dumps(checked.get("dirty_profile") or {}, indent=2, sort_keys=True) + "\n",
+        ),
+    }
+
+    archive_status = "unavailable"
+    archive_path: str | None = None
+    archive_verified = False
+    archive_pending_count: int | None = None
+    if archive_available(ARCHIVE_PRESERVE_ROOT):
+        archive_dir = ARCHIVE_PRESERVE_ROOT / f"{stamp}-{safe_name(name)}" / "root"
+        archive_path = str(archive_dir)
+        try:
+            archive_result = run_rsync_archive(path, archive_dir, timeout)
+            archive_status = "verified" if archive_result["verified"] else "failed"
+            archive_verified = bool(archive_result["verified"])
+            archive_pending_count = int(archive_result["pending_count"])
+            private_files["rsync_copy_stdout"] = write_private(
+                private_dir / "rsync-copy.stdout", archive_result["copy_stdout"]
+            )
+            private_files["rsync_copy_stderr"] = write_private(
+                private_dir / "rsync-copy.stderr", archive_result["copy_stderr"]
+            )
+            private_files["rsync_verify_stdout"] = write_private(
+                private_dir / "rsync-verify.stdout", archive_result["verify_stdout"]
+            )
+            private_files["rsync_verify_stderr"] = write_private(
+                private_dir / "rsync-verify.stderr", archive_result["verify_stderr"]
+            )
+        except subprocess.TimeoutExpired:
+            archive_status = "timeout"
+        except OSError as exc:
+            archive_status = f"error:{exc}"
+
+    status = "external_archive_preserved" if archive_verified else "private_manifest_preserved"
+    receipt = {
+        "preserved_at": preserved_at,
+        "root": name,
+        "status": status,
+        "classification": "antigravity scratch root preservation receipt",
+        "source": checked.get("display_path") or relpath(path),
+        "repo": checked.get("repo"),
+        "head": checked.get("head"),
+        "disposition": checked.get("disposition"),
+        "reason": checked.get("reason"),
+        "size_bytes": int(checked.get("size_bytes", 0)),
+        "size": checked.get("size"),
+        "dirty_profile": checked.get("dirty_profile") or {},
+        "private_files": private_files,
+        "archive": {
+            "root": str(ARCHIVE_PRESERVE_ROOT),
+            "path": archive_path,
+            "status": archive_status,
+            "verified": archive_verified,
+            "pending_count": archive_pending_count,
+        },
+        "next_action": (
+            "Do not delete the scratch root from local storage until a human accepts this preservation "
+            "receipt or a narrower bridge proves every delta has landed in the owner repository."
+        ),
+    }
+    receipt_path = private_dir / "receipt.json"
+    receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    receipt["private_receipt"] = rel_to_root(receipt_path)
+    receipt["private_receipt_sha256"] = file_sha256(receipt_path)
+    receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return receipt
+
+
+def append_preservation_history(receipts: list[dict[str, Any]], path: Path = PRESERVATION_HISTORY_PATH) -> list[dict[str, Any]]:
+    history = load_jsonl(path)
+    existing_keys = {(item.get("preserved_at"), item.get("root")) for item in history}
+    new_events: list[dict[str, Any]] = []
+    for receipt in receipts:
+        if receipt.get("status") == "skipped":
+            continue
+        event = {
+            "preserved_at": receipt.get("preserved_at"),
+            "root": receipt.get("root"),
+            "status": receipt.get("status"),
+            "repo": receipt.get("repo"),
+            "head": receipt.get("head"),
+            "size_bytes": receipt.get("size_bytes"),
+            "size": receipt.get("size"),
+            "disposition": receipt.get("disposition"),
+            "private_receipt": receipt.get("private_receipt"),
+            "private_receipt_sha256": receipt.get("private_receipt_sha256"),
+            "archive_status": (receipt.get("archive") or {}).get("status"),
+            "archive_verified": (receipt.get("archive") or {}).get("verified"),
+            "archive_path": (receipt.get("archive") or {}).get("path"),
+        }
+        key = (event.get("preserved_at"), event.get("root"))
+        if key in existing_keys:
+            continue
+        new_events.append(event)
+        existing_keys.add(key)
+    if new_events:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as fh:
+            for event in new_events:
+                fh.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
+    history.extend(new_events)
+    history.sort(key=lambda event: str(event.get("preserved_at", "")))
+    return history
+
+
+def preserve_named_roots(report: dict[str, Any], names: list[str], min_idle_hours: float, timeout: int) -> dict[str, Any]:
+    scratch_root = Path(report["scratch_root"]).expanduser().resolve()
+    by_name = {str(row.get("name")): row for row in report.get("roots", [])}
+    receipts: list[dict[str, Any]] = []
+    for name in names:
+        row = by_name.get(name)
+        if not row:
+            receipts.append(
+                {
+                    "preserved_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "name": name,
+                    "status": "skipped",
+                    "reason": "root-not-found",
+                }
+            )
+            continue
+        receipts.append(preserve_root(row, scratch_root, min_idle_hours, timeout))
+    by_status = Counter(str(item.get("status")) for item in receipts)
+    preserved_bytes = sum(int(item.get("size_bytes", 0)) for item in receipts if item.get("status") != "skipped")
+    return {
+        "summary": {
+            "requested": len(names),
+            "by_status": dict(sorted(by_status.items())),
+            "preserved_bytes": preserved_bytes,
+            "preserved_size": fmt_bytes(preserved_bytes),
+        },
+        "results": receipts,
+    }
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     summary = report["summary"]
     lines = [
@@ -541,6 +811,46 @@ def render_markdown(report: dict[str, Any]) -> str:
                 f"- `{event.get('applied_at')}`: `{event_summary.get('reaped', 0)}` roots, "
                 f"`{event_summary.get('reaped_size', '0 B')}`"
                 + (f" ({shown_roots})." if shown_roots else ".")
+            )
+    preservation_history = report.get("preservation_history") or []
+    if preservation_history:
+        total_preserved_bytes = sum(int(event.get("size_bytes") or 0) for event in preservation_history)
+        verified = sum(1 for event in preservation_history if event.get("archive_verified"))
+        lines += [
+            "",
+            "## Preservation History",
+            "",
+            f"- Preservation receipts: `{len(preservation_history)}`.",
+            f"- External archives verified: `{verified}`.",
+            f"- Total source size receipted: `{fmt_bytes(total_preserved_bytes)}`.",
+        ]
+        for event in reversed(preservation_history[-10:]):
+            archive_status = event.get("archive_status") or "none"
+            private_receipt = event.get("private_receipt") or "none"
+            lines.append(
+                f"- `{event.get('preserved_at')}` `{event.get('root')}`: `{event.get('status')}`; "
+                f"archive `{archive_status}`; private receipt `{private_receipt}`."
+            )
+    if report.get("preservation"):
+        preservation = report["preservation"]
+        lines += [
+            "",
+            "## Preservation Results",
+            "",
+            f"- Requested roots: `{preservation['summary'].get('requested', 0)}`.",
+            f"- Source size receipted: `{preservation['summary'].get('preserved_size', '0 B')}`.",
+        ]
+        by_status = preservation["summary"].get("by_status") or {}
+        if by_status:
+            lines.append("- Statuses: " + ", ".join(f"`{key}` {value}" for key, value in by_status.items()) + ".")
+        for item in preservation.get("results", []):
+            if item.get("status") == "skipped":
+                lines.append(f"- Skipped `{item.get('name') or item.get('root')}`: {item.get('reason')}.")
+                continue
+            archive = item.get("archive") or {}
+            lines.append(
+                f"- Preserved `{item.get('root')}` `{item.get('size')}` as `{item.get('status')}`; "
+                f"archive `{archive.get('status')}`; private receipt `{item.get('private_receipt')}`."
             )
     staged_missing_groups: dict[str, dict[str, Any]] = {}
     dirty_groups: dict[str, dict[str, Any]] = {}
@@ -673,13 +983,32 @@ def main() -> int:
         action="store_true",
         help="delete roots that reclassify as safe_reap_candidate; requires --write",
     )
+    parser.add_argument(
+        "--preserve-root",
+        action="append",
+        default=[],
+        help="copy a named scratch root to the private external archive and write redacted receipts; requires --write",
+    )
+    parser.add_argument(
+        "--archive-timeout",
+        type=int,
+        default=7200,
+        help="seconds allowed for each rsync copy/verify during --preserve-root",
+    )
     args = parser.parse_args()
     if args.apply_safe_reap and not args.write:
         parser.error("--apply-safe-reap requires --write")
+    if args.preserve_root and not args.write:
+        parser.error("--preserve-root requires --write")
     report = build_report(args.root.expanduser(), args.min_idle_hours)
     if args.apply_safe_reap:
         report["reap"] = apply_safe_reap(report, args.min_idle_hours)
         report["post_reap_summary"] = build_report(args.root.expanduser(), args.min_idle_hours)["summary"]
+    if args.preserve_root:
+        report["preservation"] = preserve_named_roots(
+            report, args.preserve_root, args.min_idle_hours, args.archive_timeout
+        )
+        report["preservation_history"] = append_preservation_history(report["preservation"]["results"])
     if args.write:
         LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         DOC_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -687,6 +1016,8 @@ def main() -> int:
             report["reap_history"] = append_reap_history(report, HISTORY_PATH)
         else:
             report["reap_history"] = load_reap_history(HISTORY_PATH)
+        if not args.preserve_root:
+            report["preservation_history"] = load_jsonl(PRESERVATION_HISTORY_PATH)
         LOG_PATH.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
         DOC_PATH.write_text(render_markdown(report), encoding="utf-8")
     if args.json:

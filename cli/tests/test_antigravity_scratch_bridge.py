@@ -196,3 +196,36 @@ def test_render_markdown_groups_staged_missing_fingerprints_without_root_filenam
     assert "`0-1`" in rendered
     assert "`1-2`" in rendered
     assert "DISCOVERY.md" not in rendered
+
+
+def test_render_markdown_shows_redacted_preservation_history():
+    bridge = _load()
+    report = {
+        "generated_at": "2026-07-06T00:00:00+00:00",
+        "scratch_root": "/tmp/scratch",
+        "summary": {
+            "total_roots": 1,
+            "total_size": "1 KiB",
+            "safe_reap_size": "0 B",
+            "by_disposition": {"bridge_required": 1},
+        },
+        "roots": [],
+        "preservation_history": [
+            {
+                "preserved_at": "2026-07-06T00:01:00Z",
+                "root": "scratch-a",
+                "status": "external_archive_preserved",
+                "size_bytes": 1024,
+                "archive_status": "verified",
+                "archive_verified": True,
+                "private_receipt": ".limen-private/session-corpus/lifecycle/agy-scratch-preserve/demo/receipt.json",
+            }
+        ],
+    }
+
+    rendered = bridge.render_markdown(report)
+
+    assert "## Preservation History" in rendered
+    assert "External archives verified: `1`" in rendered
+    assert "scratch-a" in rendered
+    assert "receipt.json" in rendered
