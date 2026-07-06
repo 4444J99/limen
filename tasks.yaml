@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 267
+      spent: 269
       per_agent:
         jules: 100
         gemini: 2
         codex: 49
         opencode: 29
-        agy: 79
+        agy: 81
         claude: 7
         github_actions: 1
       per_agent_reset:
@@ -95193,12 +95193,13 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
   - tried:agy
+  - noop
   urls:
   - https://github.com/organvm/community-hub/pull/9
   context: "PR organvm/community-hub#9 has FAILING CI checks and merge-drain correctly\
@@ -95209,7 +95210,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T19:58:32.681050Z'
+  updated: '2026-07-06T20:02:39.949233Z'
   dispatch_log:
   - timestamp: '2026-07-06T19:53:06.580239Z'
     agent: agy
@@ -95225,6 +95226,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T20:02:39.949233Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-community-hub-10
   title: fix failing CI on organvm/community-hub#10
   repo: organvm/community-hub
@@ -99177,10 +99183,11 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - discover
   - value-discovery
+  - noop
   urls: []
   context: "DISCOVER the latent value of organvm/pages--theoria-copy--logos. This\
     \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
@@ -99196,13 +99203,18 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T20:01:16.600855Z'
+  updated: '2026-07-06T20:02:39.949233Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:01:16.600855Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T20:02:39.949233Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: DISCOVER-organvm-pages--theoria-copy--koinonia
   title: Discover the latent value of organvm/pages--theoria-copy--koinonia
   repo: organvm/pages--theoria-copy--koinonia
@@ -99240,7 +99252,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -99259,8 +99271,13 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.738684Z'
-  dispatch_log: []
+  updated: '2026-07-06T20:02:43.208712Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T20:02:43.208712Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-pages--theoria-copy--meta-organvm
   title: Discover the latent value of organvm/pages--theoria-copy--meta-organvm
   repo: organvm/pages--theoria-copy--meta-organvm
@@ -99299,7 +99316,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -99318,8 +99335,13 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.743334Z'
-  dispatch_log: []
+  updated: '2026-07-06T20:02:43.208712Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T20:02:43.208712Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-hokage-chess--4444j99
   title: Discover the latent value of organvm/hokage-chess--4444j99
   repo: organvm/hokage-chess--4444j99
