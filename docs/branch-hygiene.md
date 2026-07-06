@@ -23,13 +23,14 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (123) — decide each
+## Live-work branches (127) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-02T18-41-47Z` — eaca4510 capture: off-disk sync 2026-07-02T18:41:47Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-03T18-23-54Z` — b53f0abc capture: off-disk sync 2026-07-03T18:23:54Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-04T18-44-48Z` — bdc71ecb capture: off-disk sync 2026-07-04T18:44:48Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-06T17-09-22Z` — e85f0909 capture: off-disk sync 2026-07-06T17:09:22Z (main behind origin → side ref, HEAD untouched)
 - `deepen/tao-te-ching-ch6-10` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
 - `discover-carrier-wave-zeitgeist-thesis-value` — fe4f7633 limen: discover corpus-mythicum, promote to ranked tier
 - `discover-limen-value-2026-06-22` — 7ad100f0 capture: autonomic off-disk sync 2026-06-23T13:19:40Z
@@ -137,6 +138,9 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/vigilia-face-dd81` — 93754f97 The face — one pane that renders the C-suite from the seat (CCO)
 - `limen/vigilia-vitals-7fb7` — efa6864a feat(vitals): add CFO's don't-crash executive for memory pressure reaction
 - `live-snapshot-pre-main-2026-06-21` — f8e17798 snapshot: live working state before moving to released main
+- `pr-428` — 1245df4f Jules daily capacity-fill packet 09
+- `pr-432` — f6baee2b OpenCode daily capacity-fill packet 01
+- `pr-445` — 99c28280 Agy daily capacity-fill packet 04
 - `promote-domus-genoma` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
 - `registry-update` — c2490e09 docs(registry): credential CLOSED (keyless lane); Exporter funnel verified BUILT
 - `studium-beowulf-fitts-2-4` — cd8625b8 studium: author Beowulf fitts 2-4 music arcs and essays
