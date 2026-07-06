@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T02:22:29+00:00`
+Generated: `2026-07-06T02:31:08+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -27,6 +27,15 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - Cumulative reclaimed size: `6.9 GiB`.
 - `2026-07-06T02:08:09+00:00`: `1` roots, `4.7 GiB` (`session-meta`).
 - `2026-07-06T01:27:51+00:00`: `23` roots, `2.2 GiB` (`growth-auditor`, `the-invisible-ledger`, `organvm-corpvs-testamentvm`, `organvm_domus_genoma`, `persona-fleet`, `a-i--skills`, `prompt-registry-archive`, `portfolio`, ... +15).
+
+## Preservation History
+
+- Preservation receipts: `2`.
+- External archives verified: `1`.
+- Verified external archive source size: `4.7 GiB`.
+- Event source size total: `9.3 GiB` (includes retries).
+- `2026-07-06T02:29:31Z` `organvm-session-meta`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T022931Z-organvm-session-meta/receipt.json`.
+- `2026-07-06T02:28:11Z` `organvm-session-meta`: `private_manifest_preserved`; archive `failed`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T022811Z-organvm-session-meta/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 

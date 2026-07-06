@@ -531,7 +531,7 @@ def run_rsync_archive(src: Path, dst: Path, timeout: int) -> dict[str, Any]:
     src_arg = str(src) + "/"
     dst_arg = str(dst) + "/"
     copy = subprocess.run(
-        ["rsync", "-a", "--protect-args", src_arg, dst_arg],
+        ["rsync", "-a", src_arg, dst_arg],
         capture_output=True,
         text=True,
         timeout=timeout,
@@ -539,7 +539,7 @@ def run_rsync_archive(src: Path, dst: Path, timeout: int) -> dict[str, Any]:
         stdin=subprocess.DEVNULL,
     )
     verify = subprocess.run(
-        ["rsync", "-anci", "--protect-args", src_arg, dst_arg],
+        ["rsync", "-anci", src_arg, dst_arg],
         capture_output=True,
         text=True,
         timeout=timeout,
@@ -814,7 +814,10 @@ def render_markdown(report: dict[str, Any]) -> str:
             )
     preservation_history = report.get("preservation_history") or []
     if preservation_history:
-        total_preserved_bytes = sum(int(event.get("size_bytes") or 0) for event in preservation_history)
+        total_event_bytes = sum(int(event.get("size_bytes") or 0) for event in preservation_history)
+        verified_bytes = sum(
+            int(event.get("size_bytes") or 0) for event in preservation_history if event.get("archive_verified")
+        )
         verified = sum(1 for event in preservation_history if event.get("archive_verified"))
         lines += [
             "",
@@ -822,7 +825,8 @@ def render_markdown(report: dict[str, Any]) -> str:
             "",
             f"- Preservation receipts: `{len(preservation_history)}`.",
             f"- External archives verified: `{verified}`.",
-            f"- Total source size receipted: `{fmt_bytes(total_preserved_bytes)}`.",
+            f"- Verified external archive source size: `{fmt_bytes(verified_bytes)}`.",
+            f"- Event source size total: `{fmt_bytes(total_event_bytes)}` (includes retries).",
         ]
         for event in reversed(preservation_history[-10:]):
             archive_status = event.get("archive_status") or "none"
