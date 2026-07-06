@@ -105,8 +105,7 @@ def test_agy_weak_proxy_can_reserve_against_daily_runway(tmp_path):
         date=today.isoformat(), spent=1, per_agent={"agy": 1}, per_agent_reset={"agy": reset_at}
     )
     lf.tasks = [
-        Task(id=f"A{i}", title="t", repo="x/y", target_agent="agy", status="open", created=today)
-        for i in range(2)
+        Task(id=f"A{i}", title="t", repo="x/y", target_agent="agy", status="open", created=today) for i in range(2)
     ]
     save_limen_file(tmp_path / "tasks.yaml", lf)
     (tmp_path / "logs").mkdir(exist_ok=True)
