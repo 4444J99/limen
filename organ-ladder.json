@@ -158,7 +158,7 @@
       "organ": "Health / Body",
       "repo": "organvm/limen",
       "home": "organs/health/",
-      "maturity": 18,
+      "maturity": 20,
       "stage": "scaffold",
       "whose_hand": "mine (medical acts + appointments are his)",
       "rival": "a concierge medical / recovery team",
@@ -166,7 +166,7 @@
       "macro": "a health/recovery + disability-access institution anyone can hold",
       "micro": "the principal's unnamed post-injury recovery + disability access (ties directly to the legal ADA matter)",
       "first_artifact": "charter the health organ + a personal recovery/access protocol (informational, not medical advice)",
-      "note": "unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart, leverage math, platform + instance faces. Maturity 15%→18% by opencode beat 2026-07-05."
+      "note": "unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart, leverage math, platform + instance faces. PROTOCOL-recovery-access.md + posture.md generated for 01-post-injury case. Maturity 18%→20% by agy beat 2026-07-05."
     },
     {
       "rank": 11,
