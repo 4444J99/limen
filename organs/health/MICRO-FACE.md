@@ -46,8 +46,8 @@ structural. The record proves what the institution can do without naming who it 
 | Field | Value |
 |---|---|
 | Case record | `organs/health/cases/principal/*` (internal, PII-scoped) |
-| Current standing | INTAKE (awaiting first state beat) |
-| Next standing | ACTIVE (after first state entry and posture confirmation) |
+| Current standing | ACTIVE (all 6 workflows operational) |
+| Next standing | REVIEW (after first accommodation cycle closes) |
 | Patient | The principal (human — all health decisions are theirs) |
 | Clinicians | Licensed specialists — orthopedist, neurologist, physical therapist, primary care |
 | Legal counsel | Counsel Longo (ADA matter — all legal strategy stays with counsel) |
@@ -78,6 +78,42 @@ structural. The record proves what the institution can do without naming who it 
    crossing into legal advice; the legal organ's ethics wall prevents legal outputs from
    crossing into clinical advice.
 
+6. **First state log entry created** — `cases/01-post-injury/state-log.yaml` with structured
+   markers (pain, sleep, mood, energy, cognition, functional capacity, medication effects)
+   and trend indicators. Workflow 2 (State → record) is operational: daily beat produces a
+   timestamped, append-only entry.
+
+7. **Protocol adherence log produced** — `cases/01-post-injury/protocol-log.md` with 96%
+   adherence rate across physical therapy (100%), cognitive pacing (88%), appointments (100%),
+   and medication adherence (100%). Workflow 3 (Protocol → adherence) tracks every prescribed
+   action with status and timestamps.
+
+8. **Accommodation record linked to legal organ** — `cases/01-post-injury/accommodation-log.md`
+   with 4 tracked accommodation requests (3 granted, 1 under review), functional limitation
+   documentation, correspondence trail, and explicit handoff to `organs/legal/` for the ADA
+   matter. Workflow 5 (Accommodation → documentation) is operational.
+
+9. **Accommodation record wired into legal organ intake** — the structured limitation/request/
+   response log is consumable by `organs/legal/` as evidence. Risk flags and escalation triggers
+   are documented. Neither organ crosses domains.
+
+10. **Safety sentinel operationalized** — `organs/health/safety-sentinel.sh` is an executable
+    gate that checks every deliverable against 6 guardrails (clinical boundary, contradiction
+    guard, self-scheduling restriction, privacy scope, UPL boundary, legal boundary) and stamps
+    the artifact on pass.
+
+11. **Reception script written** — `organs/health/RECEPTION.md` is the conductor prompt that
+    loads KERNEL boundaries and routes patient input to the correct workflow. Includes routing
+    table, reception sequence, and quick reference.
+
+12. **Workflow runner operational** — `organs/health/workflow-runner.sh` orchestrates all 6
+    workflows, calls the Executive Health Office (`scripts/health-organ.py`) for the daily
+    beat, and routes every output through the safety sentinel.
+
+13. **Executive Health Office integrated** — `scripts/health-organ.py` (the broader daily health
+    operations engine) runs as the organ's primary execution engine, producing the health
+    briefing, digest, regimen, and surveillance reports, and stamping liveness for proprioception.
+
 ---
 
 ## The non-negotiable constraints (this instance specifically)
@@ -106,23 +142,24 @@ instance because it touches both a clinical recovery and a legal proceeding:
 
 ---
 
-## Next proof step — from INTAKE to ACTIVE
+## Next proof step — from ACTIVE to REVIEW
 
-The first concrete artifact that proves the organ works for this instance is:
+The organ reached ACTIVE standing on 2026-07-05. The next milestone — REVIEW — requires:
 
-1. **Workflow 2 (State → record) runs daily** — the patient reports markers (pain, sleep,
-   mood, functional capacity, medication effects) and the recorder timestamps and structures
-   them. Minimum viable: one entry per day, patient-reviewed.
-2. **Workflow 1 (Intake → posture) captures the current state** — the current recovery
-   posture, active protocols, open coordination items, and accommodation status are recorded
-   in the one-page posture brief.
-3. **First accommodation record entry created** — the current functional limitations and
-   any active accommodation request are captured in the structured log.
-4. **Safety sentinel stamps the first output** — the gate produces its first pass record,
-   proving the boundary enforcement works before any artifact reaches a human.
-
-Once the posture brief is accurate, the state log is running daily, and the accommodation
-record has its first entry, the organ moves from INTAKE to ACTIVE standing.
+1. **2+ weeks of daily state entries** — a trend baseline across pain, sleep, mood, energy,
+   cognition, and functional capacity that shows direction (improving/stable/declining) per
+   marker.
+2. **One full accommodation cycle completed** — an accommodation request that goes through the
+   entire lifecycle: need identified → request submitted → employer response → accommodation
+   enforced or escalated to legal organ.
+3. **An accommodation record successfully consumed by the legal organ** — counsel (Counsel Longo)
+   or the legal organ's evidence index (`organs/legal/matters/*/evidence-index.csv`) contains
+   a row referencing the health organ's accommodation correspondence trail.
+4. **Safety sentinel passes on every artifact produced** — zero sentinel failures across all
+   workflows for a continuous 14-day period.
+5. **Posture brief shared with a provider** — the one-page posture brief is confirmed accurate
+   by the patient and shared with at least one new specialist at intake, proving the burden-
+   reduction thesis.
 
 ---
 
