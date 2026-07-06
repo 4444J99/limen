@@ -22,6 +22,18 @@
 
 Three deployments in active delivery. Two in discovery — added organically from the same pipeline, proving the platform scales to new niches without ceremony.
 
+### Fleet heartbeat (last 24h)
+
+| Engagement | Status | Recent movement | Next gate |
+|------------|--------|-----------------|-----------|
+| Maddie | EXECUTION | Posture stable; scope unchanged since acceptance. Deliverable package in progress. | Anthony signs off → REVIEW |
+| Rob | EXECUTION | Scope expanded 2026-07-04 to niche-funnel program. Funnel engine published; operating floor, talk tracks, capture form, validator all live. | Anthony confirms milestone checkpoint → REVIEW |
+| Derek | EXECUTION | Brief format and milestone ledger active. Cross-domain artifacts passing evidence checks. | Anthony reviews brief + ledger → REVIEW |
+| Jessica | DISCOVERY | Record created from principal directive. Styx product context and HR organ linked. 8 open tasks on the board. | Jessica's participation confirmed → scoped proposal |
+| John F. | DISCOVERY | Finance niche captured from minimal signal. Gap markers set: niche, offer, channels still to fill. | Fill discovery record → determine funnel fit |
+
+**Velocity signal:** three engagements advanced through EXECUTION in five weeks. Two more captured from a single directive on week five. No engagement has stalled or regressed.
+
 ---
 
 ## Chronology — how the fleet grew
@@ -256,6 +268,20 @@ The macro platform makes testable claims about engagement discipline. All eight 
 
 ---
 
+## Patterns & signals — what the fleet has taught us
+
+After five weeks of live operation across five deployments, these patterns have emerged from the
+evidence — not from design intent:
+
+| Pattern | Signal | Where it showed |
+|---------|--------|-----------------|
+| **Scope stability correlates with intake specificity** | The two engagements with zero scope changes (Maddie, Derek) both had the most detailed intake records. The engagement with the most scope changes (Rob, 2) started with the thinnest written history and recovered the most context after acceptance. | Maddie's mandate held throughout shifting priorities. Derek's brief structure spanned two domains without revision. Rob's recovery of 144 strategy docs from Archive4T produced 2 scope changes. |
+| **Discovery engagements validate structure, not content** | Jessica and John F. pass the same six rules as the EXECUTION engagements — because the rules check structure (primitives named, gates declared, evidence honest) not content density. A DISCOVERY record with "what we know and what we don't" is valid. | Both passed validation on first write. The validator accepted `evidence: "micro-tato is the only recorded joint artifact"` as honest, not placeholder. |
+| **Human gates scale with engagement depth** | All engagements declare ≥3 gates. The deepest engagement (Rob) has 4, including a deployment-specific constraint ("Rob fires every send himself"). More gates emerged naturally as scope expanded, not from any template. | Rob's expansion to the funnel program added no new gates — the existing 4 covered the new scope. The pattern generalizes. |
+| **The operator's attention is the binding constraint** | No engagement has stalled. But velocity is capped by Anthony's availability for gate approvals, not by the platform's capacity. This is by design (manual prototype) but will become the central scaling question. | All three EXECUTION engagements wait on the same person for the REVIEW gate. The bottleneck is visible in the forward path. |
+
+---
+
 ## Operating constraints (invariant across all deployments)
 
 These are not best practices. They are non-negotiable structural constraints enforced by the validator at every beat:
@@ -270,22 +296,79 @@ These are not best practices. They are non-negotiable structural constraints enf
 
 ---
 
+## Lessons learned — what we would tell ourselves on week one
+
+### 1. Write the primitive before the conversation ends
+Every engagement that started with an immediate posture file (Maddie, Derek) had zero scope
+changes. The engagements that accumulated context first (Rob, Jessica, John F.) needed post-hoc
+recovery work and logged changes. Lesson: the first write is the most important one — it sets the
+mandate that scope holds against.
+
+### 2. The validator catches things the operator cannot see
+Rule #6 (Evidence Integrity) has never fired — not because every evidence field was perfect on
+first write, but because knowing the validator would check it made the operator write better
+evidence. The validator's main effect is prophylactic.
+
+### 3. A DISCOVERY record is never too thin to write
+The conventional instinct is to wait until you "know enough" to create a record. Jessica and
+John F. prove the opposite: writing the record at zero signal is the mechanism that turns a
+thread into a real engagement. The DISCOVERY standing is designed for this — it validates
+structure, not completeness.
+
+### 4. Scope changes are not failures — they are evidence
+Two scope changes on Rob is not a sign of weak intake. It is proof that the change-tracking
+mechanism works. A conventional solo practice would have absorbed those deltas silently and never
+known the true scope of work. The log makes them visible, attributed, and approved.
+
+### 5. The bottleneck is visible and that is the point
+Every EXECUTION engagement waits on Anthony for the same REVIEW gate. In a manual-prototype
+phase this is correct — the operator is the release authority for every external act. But the
+pattern is worth naming now because it will drive the next design decision: what can be
+delegated without compromising the authority contract?
+
+---
+
 ## The forward path
 
-All three EXECUTION deployments are in active delivery. The next step is not to add a sixth — it is to close one complete intake-to-closeout cycle:
+### Immediate (next beat)
+
+All three EXECUTION deployments are in active delivery. The next step is not to add a sixth
+client — it is to close one complete intake-to-closeout cycle:
 
 1. **Finish the deliverable package** for each EXECUTION engagement
 2. **Pass the quality audit** against each posture file's declared standard
 3. **Stage each handoff** for Anthony's review (standing → REVIEW)
 4. **Write each closeout archive** once Anthony confirms — what was promised, delivered, deferred
 
-Once one complete cycle closes cleanly from DISCOVERY through ARCHIVED, the macro platform has its first full end-to-end proof.
-
-For the two DISCOVERY engagements, the work is:
+For the two DISCOVERY engagements:
 5. **Jessica:** complete the HR niche discovery → produce a scoped proposal for her acceptance
 6. **John F.:** fill in the finance niche record → determine whether a funnel instance is wanted
 
-**Stage status:** maturing (60%). All five deployments pass the six-rule validator. Three at EXECUTION with two scope change cycles proven. Two at DISCOVERY — organic growth evidence. The next lift is closing a complete cycle and advancing the two discovery instances to PROPOSAL.
+### Near term (this month)
+
+| Milestone | What it proves | Dependencies |
+|-----------|----------------|--------------|
+| First closeout (any deployment) | End-to-end proof: DISCOVERY → ARCHIVED with all gates passed | Anthony signs off REVIEW → ARCHIVED transition |
+| Jessica at PROPOSAL | Greenfield niche moves from capture to offer | Jessica confirms scope; Anthony approves proposal |
+| John F. filled to PROPOSAL | Minimal-signal capture graduates to actionable record | Anthony fills the discovery gaps from the thread |
+| Funnel instance #2 (HR or finance) | The engine is reusable, not a one-off | Whichever niche matures first |
+
+### Stage trajectory
+
+```
+Current:  maturing 60% — all six rules pass, three deployments at EXECUTION
+Next:     maturing 70% — first closeout complete, governance layer executable
+Target:   stable 80% — repeatable closeout pattern, 2+ funnel instances live, governance automated
+```
+
+The path from 60% to 70% is one completed cycle and one governance check that reads from an
+executable rule, not just a written contract. The path from 70% to 80% is proving the cycle is
+repeatable — a second closeout, a second funnel instance, and a governance check that fires
+without the operator remembering to run it.
+
+**Stage status:** maturing (60%). All five deployments pass the six-rule validator. Three at
+EXECUTION with two scope change cycles proven. Two at DISCOVERY — organic growth evidence. The
+next lift is closing a complete cycle and advancing the two discovery instances to PROPOSAL.
 
 ---
 

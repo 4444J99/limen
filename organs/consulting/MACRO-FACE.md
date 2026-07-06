@@ -9,6 +9,21 @@
 
 ---
 
+## Executive summary
+
+Sovereign Systems is a portable, executable operating floor for solo and small-team consulting
+practices. It replaces the institutional infrastructure that an agency provides — structured intake,
+explicit scope, staged delivery, quality gates, and closeout archives — with five file-level
+primitives and a six-rule validator. No dashboard, no API, no install. The discipline is enforced
+by a script, not remembered by the operator.
+
+The platform runs on real client work right now: five engagements across wellness, fitness+chess,
+education+narrative, HR, and finance. All five pass the same six rules. The rule engine is the
+onboarding; the posture file is the source of truth; the operator holds the authority for every
+external act.
+
+---
+
 ## The one-sentence position
 
 > **Sovereign Systems gives any solo or small-team operator the same institutional delivery floor that a boutique agency provides — structured intake, explicit scope, staged delivery, quality gates, and closeout archives — without the overhead of a firm, the rent of an office, or the dependency on staff whose availability you cannot control.**
@@ -28,6 +43,17 @@ Sovereign Systems is built for three kinds of operator:
 | **Operator transitioning from freelance to firm** | Ad-hoc project management, invoices as the only engagement record, and a growing sense that "this should not be this hard" | An institutional scaffold that grows with you: one client, then five, then a practice. The same five primitives hold at every scale |
 
 The platform is domain-agnostic. It works for wellness, fitness, education, narrative, HR, finance, and any niche where a human delivers expertise to another human.
+
+### Who this does NOT serve
+
+| Profile | Why |
+|---------|-----|
+| **Teams of 20+ with dedicated operations staff** | You already have the institutional floor. Sovereign Systems replaces what you already staffed. |
+| **High-volume freelance marketplaces** | This platform optimizes for depth of relationship and quality of outcome, not throughput. |
+| **Anyone needing legal, tax, or medical advice** | This is delivery infrastructure, not professional services. The validator enforces that boundary at every beat. |
+| **Agencies wanting white-label ops** | Not yet. The platform is designed for operators who own the client relationship, not for resale. (May change at a later stage.) |
+
+The boundary is intentional. Sovereign Systems is an operating floor, not a business model.
 
 ---
 
@@ -237,6 +263,20 @@ The full engagement record is in [`MICRO-FACE.md`](MICRO-FACE.md).
 - Publish the closeout archive as the first repeatable handoff artifact
 - Operationalize the governance layer: make the authority contract executable, not just stated
 
+**What excellence looks like at 70%+:**
+
+```yaml
+# One full cycle closed — DISCOVERY → ARCHIVED. Every archive names:
+#   what was promised, delivered, deferred, unresolved
+# The governance organ reads the authority contract, not just the charter text
+# The fleet validator includes a governance-rule check
+# The closeout package is a published artifact the next engagement starts from
+```
+
+Excellence at this stage is not more clients, more automation, or more complexity. It is one
+completed cycle — the first end-to-end proof that the platform can take an engagement from first
+signal to clean archive, with every gate passed, every rule enforced, and every artifact in place.
+
 **Validation command:**
 
 ```bash
@@ -249,6 +289,26 @@ python3 organs/consulting/validate-consulting.py --fleet
 # PASS  engagements/maddie.yaml    posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
 # PASS  engagements/rob.yaml       posture: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION  |  next: REVIEW
 ```
+
+---
+
+## Current constraints (the honest stage)
+
+Sovereign Systems is stage-maturing at 60%. What it does today — and what it does not yet do:
+
+| Capability | Status | What that means day-to-day |
+|------------|--------|----------------------------|
+| Engagement posture model | **Live** | All five primitives, delivery sequence, six rules — enforced by the validator |
+| Fleet validation | **Live** | One command validates all engagements; 30/30 checks pass |
+| Scope change tracking | **Live** | 3 scope changes logged, attributed, and approved across 5 engagements |
+| Niche-funnel engine | **Operational** | Rob's fitness lane: operating floor, talk tracks, capture form, validator — all published |
+| Intake-to-closeout cycle | **Not yet closed** | No engagement has completed DISCOVERY through ARCHIVED. That is the next milestone. |
+| Governance layer | **Stated, not executable** | The authority contract is documented and validated by Rule #2, but not independently enforced by a governance organ. |
+| Autonomic delivery | **Deliberately absent** | The organ drafts and stages; the operator sends and commits. This protects the operator's license and client trust. |
+| Client-facing deployment | **Manual only** | Every engagement file is created, edited, and validated by hand. No automated intake, no client dashboard. |
+
+The remaining lift to 70%+ is closing one complete intake-to-closeout cycle and operationalizing
+the governance layer. After that, the platform has its first complete end-to-end proof.
 
 ---
 
