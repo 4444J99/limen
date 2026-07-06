@@ -113,6 +113,34 @@ def test_financial_dashboard_surfaces_macro_and_micro_faces(tmp_path: Path, monk
     assert "MONETA intakes value" in web_face["rail_boundary"]
 
 
+def test_public_census_is_counts_only(tmp_path: Path, monkeypatch) -> None:
+    fin = tmp_path / "organs" / "financial"
+    fin.mkdir(parents=True)
+    (fin / "CHARTER.md").write_text("# Charter\n")
+    (fin / "balance-sheet.md").write_text("# Balance\n")
+    (fin / "cashflow.md").write_text("# Cashflow\n")
+    (fin / "entities.yaml").write_text("entities: []\n")
+    (fin / "balances-history.json").write_text("[]\n")
+    (fin / "consolidate.py").write_text("# generated\n")
+    cache = fin / "__pycache__"
+    cache.mkdir()
+    (cache / "consolidate.cpython-314.pyc").write_bytes(b"compiled")
+
+    module = load_financial_organ(tmp_path, monkeypatch)
+    census = module._financial_public_census()
+
+    assert census["public_artifacts"] == 6
+    assert census["markdown_artifacts"] == 3
+    assert census["registry_artifacts"] == 2
+    assert census["has_consolidator"] is True
+    assert census["has_balance_sheet"] is True
+    assert census["has_cashflow"] is True
+    assert census["has_payrail"] is False
+    assert "__pycache__" not in json.dumps(census)
+    assert "entities.yaml" not in json.dumps(census)
+    assert str(tmp_path) not in json.dumps(census)
+
+
 def test_cashflow_uses_registry_obligation_fallback(tmp_path: Path, monkeypatch) -> None:
     module = load_consolidate(tmp_path, monkeypatch)
     entities = {

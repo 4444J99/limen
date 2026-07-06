@@ -129,6 +129,26 @@ def _has_content(rel: str) -> bool:
         return False
 
 
+def _financial_public_census() -> dict:
+    """Counts-only census of the public financial organ surface."""
+    artifacts = [
+        path
+        for path in FIN_HOME.rglob("*")
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+    ]
+    return {
+        "public_artifacts": len(artifacts),
+        "markdown_artifacts": sum(1 for path in artifacts if path.suffix == ".md"),
+        "registry_artifacts": sum(1 for path in artifacts if path.suffix in {".json", ".yaml", ".yml"}),
+        "has_consolidator": (FIN_HOME / "consolidate.py").exists(),
+        "has_balance_sheet": (FIN_HOME / "balance-sheet.md").exists(),
+        "has_cashflow": (FIN_HOME / "cashflow.md").exists(),
+        "has_payrail": (FIN_HOME / "payrail.md").exists(),
+        "has_status_dashboard": (FIN_HOME / "STATUS.md").exists(),
+        "web_face_present": (ROOT / "web" / "app" / "public" / "financial-standing.json").exists(),
+    }
+
+
 def _ladder_maturity() -> int:
     """Read the stored maturity from organ-ladder.json."""
     try:
@@ -397,6 +417,7 @@ def main() -> int:
         },
         "advancement": advancement,
         "standing": standing,
+        "public_census": _financial_public_census(),
     }
     (LOGS / "financial-organ-state.json").write_text(json.dumps(report, indent=2))
 
