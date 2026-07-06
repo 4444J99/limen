@@ -73,12 +73,14 @@ Everything below is the irreducible manual step a script cannot do (it generates
    time, not a pinned list ("names are outputs").
 3. **Hand the conductor the creds** (silent, never echoed):
    ```sh
+   scripts/bootstrap-github-app.py
+   # or, if the App was created manually:
    bash scripts/set-credential.sh GITHUB_APP_ID
    bash scripts/set-credential.sh GITHUB_APP_PRIVATE_KEY   # paste full PEM, or store the .pem and give its path
    bash scripts/set-credential.sh --check                  # names only; confirms the App keys are present
    # GITHUB_APP_INSTALLATION_ID is optional — derived if omitted
    ```
-4. Verify: `bash scripts/gh-app-token.sh --which` → `app (limen[bot] installation token)`.
+4. Verify: `bash scripts/gh-app-token.sh --verify-app` → `app verified (limen[bot] installation token mint succeeds)`.
 5. **Let the Enterprise trial lapse.** No migration, no payment. (Do NOT delete `organvm` — it
    now holds 301 repos; the earlier "delete the empty organvm" note is stale.)
 
