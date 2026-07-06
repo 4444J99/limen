@@ -122,6 +122,81 @@ crosses the boundary is flagged and surfaced to the human fiduciaries — never 
 
 ---
 
+## Try it yourself in 30 seconds — one entity, one repo
+
+You don't need a dual-entity structure to benefit from this platform. A solo operator with a single
+GitHub org and one project gets the same institutional floor:
+
+```bash
+# Create a governance directory
+mkdir -p organs/governance
+
+# Copy the boilerplate (see Step 1 for the full template)
+# Create your entity register with ONE entity and ONE repo:
+cat > organs/governance/entities.yaml << 'YAML'
+schema_version: "1.0"
+organ: "governance"
+repo: "your-org/your-repo"
+entity_taxonomy:
+  sole_proprietor:
+    required_fields: [name, jurisdiction, mandates, forbidden_acts, fiduciary]
+boundary_matrix:
+  sole_proprietor:
+    allowed_mandates: ["project-development", "open-source"]
+    always_forbidden: ["fiduciary-delegation", "entity-blurring"]
+cursus_offices: ["INCUBATOR", "ALPHA", "BETA", "STABLE", "MATURE"]
+promotion_rules:
+  INCUBATOR_to_ALPHA:
+    prerequisites: ["seed.yaml exists and validates"]
+    validated_by: "validate-seed.py"
+  ALPHA_to_BETA:
+    prerequisites: ["vertical slice exists", "promotion matches implementation"]
+    validated_by: "validate-seed.py"
+  BETA_to_STABLE:
+    prerequisites: ["maturity >= 60%"]
+    validated_by: "validate-seed.py + manual"
+  STABLE_to_MATURE:
+    prerequisites: ["governance operationalized", "maturity >= 90%"]
+    validated_by: "validate-seed.py + manual"
+entities:
+  - id: "your-entity"
+    name: "Your Entity"
+    type: sole_proprietor
+    jurisdiction: "your-jurisdiction"
+    fiduciary: "you"
+    mandates: ["project-development", "open-source"]
+    forbidden_acts: ["fiduciary-delegation"]
+    cursus: "STABLE"
+repos:
+  - repo: "your-org/your-repo"
+    organ: "Your First Organ"
+    home: "organs/your-organ/"
+    entity: "your-entity"
+    cursus: "INCUBATOR"
+    implementation_status: "INCUBATOR"
+YAML
+
+# Create a seed declaration
+cat > organs/governance/seed.yaml << 'YAML'
+schema_version: "1.0"
+organ: "governance"
+repo: "your-org/your-repo"
+org: "your-org"
+metadata:
+  implementation_status: "INCUBATOR"
+  promotion_status: "INCUBATOR"
+YAML
+
+# Run the validators
+python organs/governance/validate-seed.py organs/governance/seed.yaml --strict-graph
+python organs/governance/validate-entities.py organs/governance/entities.yaml --strict-graph
+```
+
+That is the entire governance floor for a one-person institution. Add more entities and repos as
+you grow. The structure scales to any size because the rules are the same at every scale.
+
+---
+
 ## What the operator actually receives
 
 Adopting this platform gives you six concrete artifacts, each machine-checkable:
@@ -212,20 +287,39 @@ Both exit 0 when governance is satisfied. Wire them into your CI/CD or heartbeat
 
 ---
 
-## What this platform is not
+## What this platform is not (and why that is the point)
 
 This platform does **not** issue binding resolutions, sign on behalf of entities, replace board
 judgment, or practice law. Entity formation signatures, governance votes, and formal resolutions
 stay with the human fiduciaries.
 
-It also does **not** self-ratify. The organ audits governance; it does not govern. Final decisions
-stay with the human fiduciaries, every time.
+It does **not** self-ratify. The organ audits governance; it does not govern. Final decisions stay
+with the human fiduciaries, every time.
 
-It also does **not** provide legal, tax, or regulatory advice. It is **governance infrastructure**,
-not a law firm or compliance consultancy.
+It does **not** provide legal, tax, or regulatory advice. It is **governance infrastructure**, not a
+law firm or compliance consultancy.
 
-The constraint is a feature. It enforces the boundary that keeps the platform trustworthy and
-the fiduciaries' authority intact.
+It does **not** require a board, a legal department, or a governance team to operate. The machine
+runs the machine-checks; the human runs the human-decisions. That is the entire division of labor.
+
+The constraint is a feature. It enforces the boundary that keeps the platform trustworthy and the
+fiduciaries' authority intact. A governance tool that could override its governors is not a tool —
+it is a coup.
+
+---
+
+## Why this, not a legal agreement or a spreadsheet
+
+| Alternative | What it gives you | What it misses |
+|---|---|---|
+| **Legal agreement** (operating agreement, bylaws) | Binding authority, enforceable rights | No machine enforcement. A violation is only discovered when someone sues — after the damage is done. |
+| **Spreadsheet / database** | A list of entities and cursus stages | No validation. No boundary enforcement. No sequence checking. The spreadsheet lies silently until an audit. |
+| **CI pipeline / automated governance** | Machine enforcement of rules | Brittle, organization-specific. Hard to adopt across multiple repos, entities, or jurisdictions. No portable standard. |
+| **This platform** | Machine-checkable rules + portable standard + append-only trail | Does not form entities, sign documents, or replace fiduciaries — by design |
+
+The platform fills the gap between "we wrote it down" and "the machine enforces it." Agreements
+define rights; this platform enforces the invariants that keep those rights from being violated
+before anyone notices.
 
 ---
 
@@ -269,15 +363,16 @@ maturity levels is the micro instance — ORGANVM's own dual-entity operation do
 
 ```bash
 # Rules #1-2: cursus office integrity + structured edges
-python organs/governance/validate-seed.py --fleet --strict-graph
+python3 organs/governance/validate-seed.py organs/governance/seed.yaml --strict-graph
 
 # Rules #3-4: entity register integrity + repo registration
-python organs/governance/validate-entities.py --fleet
+python3 organs/governance/validate-entities.py organs/governance/entities.yaml --strict-graph
 ```
 
-Expected result: `PASS` for every file, `Cvrsvs Honorvm Rules #1 & #2: all checks passed. Concordia.`
-for the seed validator, and `Cvrsvs Honorvm Rules #3 & #4: all checks passed. Concordia.` for the
-entity validator. Both exit 0.
+Expected result: `PASS` for the governance seed and entity register,
+`Cvrsvs Honorvm Rules #1 & #2: all checks passed. Concordia.` for the seed validator, and
+`Cvrsvs Honorvm Rules #3 & #4 (strict-graph): all checks passed. Concordia.` for the entity
+validator. Both exit 0.
 
 ---
 

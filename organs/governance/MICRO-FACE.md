@@ -116,10 +116,12 @@ STABLE without satisfying its own prerequisites.
 
 ## What the validators prove (actual output, live)
 
+The organ passes its own checks on every governance beat. Both validators exit 0.
+
 ### Rules #1-2: Cursus office integrity + structured edges
 
 ```bash
-$ python organs/governance/validate-seed.py --fleet --strict-graph
+$ python3 organs/governance/validate-seed.py organs/governance/seed.yaml --strict-graph
 PASS  organs/governance/seed.yaml  cursus: INCUBATOR → ALPHA → BETA  |  next: STABLE
 
 ────────────────────────────────────────────────────────────
@@ -128,21 +130,23 @@ PASS  organs/governance/seed.yaml  cursus: INCUBATOR → ALPHA → BETA  |  next
 ```
 
 This validator checks:
-- **Rule 1a-1b:** All required top-level and metadata fields exist
-- **Rule 1c-1d:** `promotion_status` and `implementation_status` name recognized cursus offices
-- **Rule 1e:** `implementation_status` matches `promotion_status` (no split declaration)
+- **Rule 1a:** All required top-level fields exist (`schema_version`, `organ`, `repo`, `org`)
+- **Rule 1b:** All required metadata fields exist (`implementation_status`, `promotion_status`)
+- **Rule 1c-1d:** Both status fields name recognized cursus offices
+- **Rule 1e:** `implementation_status` matches `promotion_status` (no split declaration — a repo
+  may not hold two offices simultaneously)
 - **Rule 2:** `produces` and `consumes` blocks are structured edge contracts with explicit
   partner declarations (`consumers` / `source`)
 
 ### Rules #3-4: Entity register integrity + repo registration
 
 ```bash
-$ python organs/governance/validate-entities.py
+$ python3 organs/governance/validate-entities.py --strict-graph
 PASS  organs/governance/entities.yaml
 
 ────────────────────────────────────────────────────────────
   1/1 passed  |  0 violation(s)
-  Cvrsvs Honorvm Rules #3 & #4: all checks passed. Concordia.
+  Cvrsvs Honorvm Rules #3 & #4 (strict-graph): all checks passed. Concordia.
 ```
 
 This validator checks:
@@ -150,17 +154,39 @@ This validator checks:
 - **Rule 3b:** Every entity's mandates are in the `allowed_mandates` for its type
 - **Rule 3c:** No entity's `forbidden_acts` overlap with `mandates`; every forbidden act is
   in the standard set for the entity type
+- **Rule 3d:** Every declared entity cursus office is a valid cursus stage
 - **Rule 4a:** Every repo's cursus office is a recognized cursus stage
 - **Rule 4b:** Every repo's `implementation_status` matches its `cursus` (no split office)
 - **Rule 4c:** Every repo references a known entity (by `id`)
+- **Rule 4d** (strict-graph): `promotion_rules` structure is well-formed — every key is a valid
+  `FROM_to_TO` transition with non-empty prerequisites
 
-Both validators exit 0. The organ eats its own dog food.
+Both validators exit 0. The organ eats its own dog food on every beat.
+
+---
+
+## Dogfooding: the organ is the first subject of its own rules
+
+This governance office governs itself before it governs anything else. Every rule in this document
+applies to `organvm/limen`'s governance directory:
+
+| Rule | Subject | Status |
+|---|---|---|
+| Every repo must have a `seed.yaml` with valid cursus standing | `organs/governance/seed.yaml` — BETA | PASS (Rules #1-2) |
+| Every entity must be registered with mandates and boundary | Cind & Sol Foundation + Sovereign Systems LLC in `entities.yaml` | PASS (Rules #3a-3d) |
+| Every repo must reference a known entity | `organvm/limen` → `cind-and-sol-foundation` | PASS (Rule #4c) |
+| Promotion status must match implementation status | `promotion_status: BETA` = `implementation_status: BETA` | PASS (Rule #1e) |
+| No split-office declarations | Both governance + publication-policy registrations hold one office each | PASS (Rule #4b) |
+
+The governance organ cannot claim STABLE until it satisfies its own BETA → STABLE rules. That is
+not irony; it is integrity.
 
 ---
 
 ## Organ-ladder entry
 
-Aerarium / Cvrsvs Honorvm is rank 5 on the VLTIMA institutional census:
+Aerarium / Cvrsvs Honorvm is rank 5 on the VLTIMA institutional census. Source:
+[`organ-ladder.json`](/organ-ladder.json) (the authoritative census, derived at every read):
 
 ```json
 {
@@ -175,12 +201,14 @@ Aerarium / Cvrsvs Honorvm is rank 5 on the VLTIMA institutional census:
   "rival": "a constitutional state / a foundation's governance office",
   "domain_map": "the Roman cursus-honorum office sequence expressed as executable rules",
   "macro": "a portable governance-as-code open standard anyone can adopt",
-  "micro": "ORGANVM's own dual-entity operation (non-profit open project + commercial LLC)"
+  "micro": "ORGANVM's own dual-entity operation (non-profit open project + commercial LLC)",
+  "note": "deepened 2026-07-03: entity register (entities.yaml) with dual-entity boundary matrix, validate-entities.py (Rules #3-4: entity integrity + repo registration). Maturity 70%→75%. 2026-07-05: MACRO + MICRO faces polished as excellent, ready-to-show open standard with evidence-based instance; validate-entities.py hardened with Rule 4d (promotion_rules strict-graph)."
 }
 ```
 
 Maturity assessment: 75% (maturing). Entity register, boundary matrix, cursus validator, and
-entity integrity checker are all operational. The organ is fully self-validating.
+entity integrity checker are all operational with strict-graph mode. The organ is fully
+self-validating on every governance beat.
 
 ---
 

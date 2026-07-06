@@ -10,7 +10,7 @@
 schema_version: "1.0"
 organ: "governance"
 repo: "organvm/limen"
-updated: "2026-07-05"
+updated: "2026-07-06"
 
 # ── Entity taxonomy ──────────────────────────────────────────────────────
 # Governance-specific types with their required mandate fields.
