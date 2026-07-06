@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T02:47:33+00:00`
+Generated: `2026-07-06T02:49:13+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `7`.
-- External archives verified: `6`.
-- Verified external archive source size: `18.1 GiB`.
-- Event source size total: `22.7 GiB` (includes retries).
+- Preservation receipts: `8`.
+- External archives verified: `7`.
+- Verified external archive source size: `18.7 GiB`.
+- Event source size total: `23.4 GiB` (includes retries).
+- `2026-07-06T02:49:25Z` `dot-github--theoria`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024925Z-dot-github--theoria/receipt.json`.
 - `2026-07-06T02:47:45Z` `public-record-data-scrapper`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024745Z-public-record-data-scrapper/receipt.json`.
 - `2026-07-06T02:46:27Z` `sovereign-systems--elevate-align`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024627Z-sovereign-systems--elevate-align/receipt.json`.
 - `2026-07-06T02:44:23Z` `peer-audited--behavioral-blockchain`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024423Z-peer-audited--behavioral-blockchain/receipt.json`.
@@ -45,9 +46,9 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 ## Preservation Results
 
 - Requested roots: `1`.
-- Source size receipted: `1.0 GiB`.
+- Source size receipted: `650.3 MiB`.
 - Statuses: `external_archive_preserved` 1.
-- Preserved `public-record-data-scrapper` `1.0 GiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024745Z-public-record-data-scrapper/receipt.json`.
+- Preserved `dot-github--theoria` `650.3 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024925Z-dot-github--theoria/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
