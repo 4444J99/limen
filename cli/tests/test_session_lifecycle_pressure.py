@@ -1375,7 +1375,9 @@ def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: P
 
 def test_session_blockers_points_to_transfer_after_collisions_clear(tmp_path: Path):
     blockers = _load(BLOCKERS_SCRIPT, "session_blockers_post_collision_clear")
-    blockers.CONSOLIDATION_INDEX = tmp_path / ".limen-private" / "session-corpus" / "lifecycle" / "consolidation-gates.json"
+    blockers.CONSOLIDATION_INDEX = (
+        tmp_path / ".limen-private" / "session-corpus" / "lifecycle" / "consolidation-gates.json"
+    )
     blockers.CONSOLIDATION_INDEX.parent.mkdir(parents=True)
     blockers.CONSOLIDATION_INDEX.write_text(
         json.dumps(
