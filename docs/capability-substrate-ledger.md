@@ -1,6 +1,6 @@
 # Capability Substrate Ledger
 
-Generated: `2026-07-06T09:12:28+00:00`
+Generated: `2026-07-06T12:33:52+00:00`
 
 ## Canonical Decision
 
@@ -11,13 +11,13 @@ Generated: `2026-07-06T09:12:28+00:00`
 
 ## Coverage
 
-- Roots seen: `10`.
-- Scanned files: `62063`; truncated roots: `1`.
-- Skill files: `467`; unique skill names: `356`.
-- Plugin/MCP manifests: `43`; MCP/ACP markers: `182`.
+- Roots seen: `11`.
+- Scanned files: `67532`; truncated roots: `1`.
+- Skill files: `1374`; unique skill names: `377`.
+- Plugin/MCP manifests: `47`; MCP/ACP markers: `214`.
 - Capability bytes counted by metadata only: `2.5 GiB`.
-- Lanes: `claude-plugin-cache` 1, `codex-plugin-cache` 1, `codex-user-skills` 1, `domus-genoma-config` 1, `limen-local-skills` 2, `limen-mcp` 1, `organvm-agent-archive` 1, `organvm-runtime-tasks` 1, `workspace-mirror` 1.
-- Domains: `agent_orchestration` 22, `data_research` 18, `mcp_acp` 6, `other` 313, `product_frontend` 21, `repo_delivery` 29, `security_ops` 8, `session_corpus` 15, `verification_quality` 22, `writing_docs` 13.
+- Lanes: `claude-plugin-cache` 1, `codex-plugin-cache` 1, `codex-user-skills` 1, `domus-genoma-config` 1, `limen-local-skills` 2, `limen-mcp` 1, `organvm-agent-archive` 1, `organvm-ai-skills` 1, `organvm-runtime-tasks` 1, `workspace-mirror` 1.
+- Domains: `agent_orchestration` 87, `data_research` 58, `mcp_acp` 37, `other` 771, `product_frontend` 104, `repo_delivery` 77, `security_ops` 43, `session_corpus` 86, `verification_quality` 54, `writing_docs` 57.
 
 ## Roots
 
@@ -28,6 +28,7 @@ Generated: `2026-07-06T09:12:28+00:00`
 | `~/.claude/plugins` | `claude-plugin-cache` | `legacy-plugin-cache` | 0 | 0 | 3 | 0 | 46 | Treat as Claude-side plugin state; inspect only through its plugin owner. |
 | `~/Workspace/organvm/_agent` | `organvm-agent-archive` | `custom-agent-archive` | 164 | 164 | 0 | 11 | 1155 | Converge legacy global skills and MCP registry pieces into the current capability layer. |
 | `~/Workspace/organvm/claude-runtime-state` | `organvm-runtime-tasks` | `scheduled-runtime-archive` | 17 | 17 | 0 | 17 | 3915 | Convert scheduled-task skills into Limen packets or LaunchAgent receipts, not chat-only memory. |
+| `~/Workspace/organvm/a-i--skills` | `organvm-ai-skills` | `custom-skill-archive` | 907 | 183 | 4 | 32 | 5469 | Port selected high-signal skills into the current Codex skill registry after body review. |
 | `~/Workspace/domus-genoma` | `domus-genoma-config` | `config-mcp-wrapper-substrate` | 74 | 20 | 3 | 98 | 50000 | Keep as dotfile/config owner state; activate through chezmoi and MCP wrapper receipts. |
 | `~/Workspace/4444J99` | `workspace-mirror` | `mirror-candidate` | 24 | 19 | 1 | 36 | 4323 | Use only after checking the source owner; count it so duplicate capability copies are visible. |
 | `~/Workspace/limen/.agents` | `limen-local-skills` | `repo-local-active` | 2 | 2 | 0 | 0 | 2 | Keep mirrored local skills minimal and tested by Limen verification. |
@@ -38,36 +39,36 @@ Generated: `2026-07-06T09:12:28+00:00`
 
 | Rank | Capability | Domain | Lane | Score | Source | Route |
 |---:|---|---|---|---:|---|---|
-| 1 | `closeout` | `other` | `limen-local-skills` | 122 | `~/Workspace/limen/.claude/skills/closeout/SKILL.md` | Already repo-local; keep mirrored only when Limen verification needs it. |
-| 2 | `session-lifecycle-patterns` | `session_corpus` | `organvm-agent-archive` | 122 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/session-lifecycle-patterns/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 3 | `agent-swarm-orchestrator` | `agent_orchestration` | `organvm-agent-archive` | 106 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/agent-swarm-orchestrator/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 4 | `cross-agent-handoff` | `agent_orchestration` | `organvm-agent-archive` | 106 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/cross-agent-handoff/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 5 | `skill-creator` | `other` | `codex-user-skills` | 102 | `~/.local/share/codex/skills/.system/skill-creator/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
-| 6 | `skill-installer` | `other` | `codex-user-skills` | 102 | `~/.local/share/codex/skills/.system/skill-installer/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
-| 7 | `agent-testing-patterns` | `agent_orchestration` | `organvm-agent-archive` | 100 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/agent-testing-patterns/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 8 | `skill-chain-prompts` | `session_corpus` | `organvm-agent-archive` | 100 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/skill-chain-prompts/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 9 | `specstory-session-summary` | `session_corpus` | `organvm-agent-archive` | 96 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/specstory-session-summary/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 10 | `github-repo-curator` | `repo_delivery` | `organvm-agent-archive` | 94 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/github-repo-curator/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 11 | `github-repository-standards` | `repo_delivery` | `organvm-agent-archive` | 94 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/github-repository-standards/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 12 | `imagegen` | `other` | `codex-user-skills` | 94 | `~/.local/share/codex/skills/.system/imagegen/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
-| 13 | `openai-docs` | `writing_docs` | `codex-user-skills` | 94 | `~/.local/share/codex/skills/.system/openai-docs/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
-| 14 | `plugin-creator` | `other` | `codex-user-skills` | 94 | `~/.local/share/codex/skills/.system/plugin-creator/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
-| 15 | `uma-ops-semantic-layer` | `other` | `codex-user-skills` | 94 | `~/.local/share/codex/skills/uma-ops-semantic-layer/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
-| 16 | `agy_conductor` | `other` | `limen-local-skills` | 92 | `~/Workspace/limen/.agents/skills/agy_conductor/SKILL.md` | Already repo-local; keep mirrored only when Limen verification needs it. |
-| 17 | `artifact-resurfacing` | `session_corpus` | `organvm-agent-archive` | 92 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/artifact-resurfacing/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 18 | `artifacts-builder` | `session_corpus` | `organvm-agent-archive` | 92 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/artifacts-builder/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 19 | `prompt-engineering-patterns` | `session_corpus` | `organvm-agent-archive` | 92 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/prompt-engineering-patterns/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 20 | `web-artifacts-builder` | `session_corpus` | `organvm-agent-archive` | 92 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/web-artifacts-builder/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 21 | `deployment-cicd` | `repo_delivery` | `organvm-agent-archive` | 90 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/deployment-cicd/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 22 | `mcp-builder` | `mcp_acp` | `organvm-agent-archive` | 90 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/mcp-builder/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 23 | `mcp-integration-patterns` | `mcp_acp` | `organvm-agent-archive` | 90 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/mcp-integration-patterns/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 24 | `mcp-server-orchestrator` | `agent_orchestration` | `organvm-agent-archive` | 90 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/mcp-server-orchestrator/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 25 | `agent-development-pack` | `agent_orchestration` | `organvm-agent-archive` | 88 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/agent-development-pack/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 26 | `continuous-learning-agent` | `agent_orchestration` | `organvm-agent-archive` | 88 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/continuous-learning-agent/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 27 | `multi-agent-workforce-planner` | `agent_orchestration` | `organvm-agent-archive` | 88 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/multi-agent-workforce-planner/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 28 | `knowledge-architecture` | `session_corpus` | `organvm-agent-archive` | 86 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/knowledge-architecture/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 29 | `knowledge-graph-builder` | `session_corpus` | `organvm-agent-archive` | 86 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/knowledge-graph-builder/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
-| 30 | `verification-loop` | `verification_quality` | `organvm-agent-archive` | 85 | `~/Workspace/organvm/_agent/_agent.claudebrain/global/skills/verification-loop/SKILL.md` | Converge the legacy agent skill into the current Codex skill format. |
+| 1 | `session-lifecycle-patterns` | `session_corpus` | `organvm-ai-skills` | 126 | `~/Workspace/organvm/a-i--skills/skills/tools/session-lifecycle-patterns/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 2 | `closeout` | `other` | `limen-local-skills` | 122 | `~/Workspace/limen/.claude/skills/closeout/SKILL.md` | Already repo-local; keep mirrored only when Limen verification needs it. |
+| 3 | `agent-swarm-orchestrator` | `agent_orchestration` | `organvm-ai-skills` | 110 | `~/Workspace/organvm/a-i--skills/skills/tools/agent-swarm-orchestrator/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 4 | `cross-agent-handoff` | `agent_orchestration` | `organvm-ai-skills` | 110 | `~/Workspace/organvm/a-i--skills/skills/tools/cross-agent-handoff/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 5 | `agent-testing-patterns` | `agent_orchestration` | `organvm-ai-skills` | 104 | `~/Workspace/organvm/a-i--skills/skills/development/agent-testing-patterns/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 6 | `skill-chain-prompts` | `session_corpus` | `organvm-ai-skills` | 104 | `~/Workspace/organvm/a-i--skills/skills/tools/skill-chain-prompts/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 7 | `skill-creator` | `other` | `codex-user-skills` | 102 | `~/.local/share/codex/skills/.system/skill-creator/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
+| 8 | `skill-installer` | `other` | `codex-user-skills` | 102 | `~/.local/share/codex/skills/.system/skill-installer/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
+| 9 | `session-governance-audit` | `session_corpus` | `organvm-ai-skills` | 100 | `~/Workspace/organvm/a-i--skills/skills/tools/session-governance-audit/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 10 | `specstory-session-summary` | `session_corpus` | `organvm-ai-skills` | 100 | `~/Workspace/organvm/a-i--skills/skills/integrations/specstory-session-summary/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 11 | `github-repo-curator` | `repo_delivery` | `organvm-ai-skills` | 98 | `~/Workspace/organvm/a-i--skills/skills/github-repo-curator.skill` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 12 | `github-repository-standards` | `repo_delivery` | `organvm-ai-skills` | 98 | `~/Workspace/organvm/a-i--skills/skills/documentation/github-repository-standards/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 13 | `artifact-resurfacing` | `session_corpus` | `organvm-ai-skills` | 96 | `~/Workspace/organvm/a-i--skills/skills/tools/artifact-resurfacing/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 14 | `artifacts-builder` | `session_corpus` | `organvm-ai-skills` | 96 | `~/Workspace/organvm/a-i--skills/skills/development/artifacts-builder/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 15 | `prompt-atom-formalization` | `session_corpus` | `organvm-ai-skills` | 96 | `~/Workspace/organvm/a-i--skills/skills/data/prompt-atom-formalization/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 16 | `prompt-engineering-patterns` | `session_corpus` | `organvm-ai-skills` | 96 | `~/Workspace/organvm/a-i--skills/skills/tools/prompt-engineering-patterns/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 17 | `transcript-promotion` | `session_corpus` | `organvm-ai-skills` | 96 | `~/Workspace/organvm/a-i--skills/skills/tools/transcript-promotion/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 18 | `web-artifacts-builder` | `session_corpus` | `organvm-ai-skills` | 96 | `~/Workspace/organvm/a-i--skills/skills/development/web-artifacts-builder/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 19 | `deployment-cicd` | `repo_delivery` | `organvm-ai-skills` | 94 | `~/Workspace/organvm/a-i--skills/skills/deployment-cicd.skill` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 20 | `imagegen` | `other` | `codex-user-skills` | 94 | `~/.local/share/codex/skills/.system/imagegen/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
+| 21 | `mcp-builder` | `mcp_acp` | `organvm-ai-skills` | 94 | `~/Workspace/organvm/a-i--skills/skills/development/mcp-builder/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 22 | `mcp-integration-patterns` | `mcp_acp` | `organvm-ai-skills` | 94 | `~/Workspace/organvm/a-i--skills/skills/integrations/mcp-integration-patterns/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 23 | `mcp-server-orchestrator` | `agent_orchestration` | `organvm-ai-skills` | 94 | `~/Workspace/organvm/a-i--skills/skills/mcp-server-orchestrator.skill` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 24 | `openai-docs` | `writing_docs` | `codex-user-skills` | 94 | `~/.local/share/codex/skills/.system/openai-docs/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
+| 25 | `plugin-creator` | `other` | `codex-user-skills` | 94 | `~/.local/share/codex/skills/.system/plugin-creator/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
+| 26 | `uma-ops-semantic-layer` | `other` | `codex-user-skills` | 94 | `~/.local/share/codex/skills/uma-ops-semantic-layer/SKILL.md` | Already active in the Codex skill registry; keep as baseline. |
+| 27 | `agent-development-pack` | `agent_orchestration` | `organvm-ai-skills` | 92 | `~/Workspace/organvm/a-i--skills/skills/tools/agent-development-pack/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 28 | `agy_conductor` | `other` | `limen-local-skills` | 92 | `~/Workspace/limen/.agents/skills/agy_conductor/SKILL.md` | Already repo-local; keep mirrored only when Limen verification needs it. |
+| 29 | `continuous-learning-agent` | `agent_orchestration` | `organvm-ai-skills` | 92 | `~/Workspace/organvm/a-i--skills/skills/development/continuous-learning-agent/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
+| 30 | `multi-agent-workforce-planner` | `agent_orchestration` | `organvm-ai-skills` | 92 | `~/Workspace/organvm/a-i--skills/skills/tools/multi-agent-workforce-planner/SKILL.md` | Port after body review into `~/.codex/skills` or a checked-in Limen skill. |
 
 ## High-Signal Groups
 
@@ -75,13 +76,12 @@ Generated: `2026-07-06T09:12:28+00:00`
 - `mcp_acp`: `mcp-builder`, `mcp-integration-patterns`.
 - `other`: `closeout`, `skill-creator`, `skill-installer`, `imagegen`, `plugin-creator`, `uma-ops-semantic-layer`, `agy_conductor`.
 - `repo_delivery`: `github-repo-curator`, `github-repository-standards`, `deployment-cicd`.
-- `session_corpus`: `session-lifecycle-patterns`, `skill-chain-prompts`, `specstory-session-summary`, `artifact-resurfacing`, `artifacts-builder`, `prompt-engineering-patterns`, `web-artifacts-builder`, `knowledge-architecture`, `knowledge-graph-builder`.
-- `verification_quality`: `verification-loop`.
+- `session_corpus`: `session-lifecycle-patterns`, `skill-chain-prompts`, `session-governance-audit`, `specstory-session-summary`, `artifact-resurfacing`, `artifacts-builder`, `prompt-atom-formalization`, `prompt-engineering-patterns`, `transcript-promotion`, `web-artifacts-builder`.
 - `writing_docs`: `openai-docs`.
 
 ## Duplicate Names
 
-- `daily-orphan-plans` x9, `daily-pr-execute-by-tier` x9, `daily-pr-promote-and-triage` x9, `daily-push-feature-branches` x9, `daily-unpushed-commits` x9, `daily-code-review` x5, `daily-dependabot-merge` x5, `daily-hook-drift` x5, `daily-operational-heartbeat` x5, `daily-pr-management` x5, `daily-repo-hygiene` x5, `daily-worktree-triage-and-cleanup` x5.
+- `daily-orphan-plans` x9, `daily-pr-execute-by-tier` x9, `daily-pr-promote-and-triage` x9, `daily-push-feature-branches` x9, `daily-unpushed-commits` x9, `portal-router` x9, `api-design-patterns` x8, `audio-engineering-patterns` x8, `closeout` x8, `creative-writing-craft` x8, `cv-resume-builder` x8, `evaluation-to-growth` x8.
 
 ## Private Output
 

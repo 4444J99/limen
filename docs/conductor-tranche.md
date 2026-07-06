@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-07-06T12:33:02+00:00`
+Generated: `2026-07-06T12:34:06+00:00`
 
-Summary: `tranche-capability-substrate-not-resurfaced` -> `capability-substrate-not-resurfaced` (`blocker`); stop before: Stop before reading private skill bodies, installing plugins/connectors, editing MCP auth, moving capability roots, or dispatching broad capability work without a scoped activation packet.
+Summary: `tranche-owner-state-dirty-session-meta` -> `owner-state-dirty-session-meta` (`blocker`); stop before: Stop before content rewriting, synthesis, deletion/revert of owner changes, broad corpus convergence, owner repo push/PR, or edits outside the listed dirty owner paths unless a new explicit owner packet opens that scope.
 
 ## Cadence Contract
 
@@ -16,33 +16,30 @@ Summary: `tranche-capability-substrate-not-resurfaced` -> `capability-substrate-
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-capability-substrate-not-resurfaced` |
-| Selected path | `capability-substrate-not-resurfaced` |
+| Packet | `tranche-owner-state-dirty-session-meta` |
+| Selected path | `owner-state-dirty-session-meta` |
 | Kind | `blocker` |
 | Lane | `blocker` |
-| Score | `48` |
+| Score | `42` |
 | Agent fit | `codex` |
-| Attack index generated | `2026-07-06T12:32:59+00:00` |
-| Ranked paths read | `96` |
+| Attack index generated | `2026-07-06T12:34:01+00:00` |
+| Ranked paths read | `95` |
 | Skipped unactionable paths | `session_lifecycle`, `github-app-limen-bot-not-wired`, `worktree_lifecycle`, `github_review`, `github-consolidation-collisions`, `heal-cifix-organvm-organvm-ontologia-11-a86cf99f`, `heal-cifix-organvm-organvm-ontologia-12-2c2c85ba`, `heal-cifix-organvm-organvm-ontologia-13-953633bb`, `heal-rebase-4444j99-hokage-chess-89-0448f70e`, `org-financial-organ-face-0704-5a117787`, `agent_coordination`, `fluttering-twirling-abelson`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `feat-gcp-sa-organ`, `heal-cifix-organvm-organvm-engine-139-9dbf53bf`, `heal-cifix-organvm-organvm-engine-143-a164221c`, `heal-cifix-organvm-organvm-engine-144-0ef4c596`, `heal-cifix-organvm-organvm-engine-144-e2096564`, `heal-cifix-organvm-organvm-ontologia-10-64603ca7`, `heal-cifix-organvm-organvm-ontologia-11-55899198`, `heal-cifix-organvm-organvm-ontologia-12-c16ea5ad`, `limen_jules-org-health-organ-kernel-0630-0289`, `limen_jules-org-health-organ-kernel-0630-02fb`, `limen_jules-org-health-organ-kernel-0630-f8cb`, `peer-audited--behavioral-blockchain`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `org-health-organ-firstslice-0704-aac2b482`, `org-health-organ-firstslice-0704-caa4e142`, `agent-aefc63d95daa3131b`, `gh-4444j99-hokage-chess-39-25daa3dd`, `gh-4444j99-hokage-chess-39-c15d2ce9`, `heal-cifix-organvm-a-i--skills-28-d93d775c`, `heal-cifix-organvm-organvm-engine-139-b438a568`, `heal-cifix-organvm-organvm-engine-144-6ffd7057`, `heal-cifix-organvm-organvm-ontologia-11-2978d499`, `heal-cifix-organvm-organvm-ontologia-11-f753ad04`, `heal-cifix-organvm-organvm-ontologia-13-517e2cb9`, `heal-cifix-organvm-organvm-ontologia-13-c96051e5`, `heal-cifix-organvm-organvm-ontologia-13-ebb63927`, `heal-rebase-4444j99-hokage-chess-121-22d63bd9`, `heal-rebase-4444j99-hokage-chess-121-89f977f6`, `heal-rebase-organvm-peer-audited--behavioral-blockchain-721-4cf098da`, `heal-rebase-organvm-peer-audited--behavioral-blockchain-721-68871455`, `heal-rebase-organvm-peer-audited--behavioral-blockchain-721-d20ed684`, `heal-rebase-organvm-your-fit-tailored-15-3def5941`, `heal-rebase-organvm-your-fit-tailored-15-fad950e3`, `limen_jules-gh-4444j99-hokage-chess-39-c953`, `limen_jules-org-health-organ-kernel-0630-02b9`, `limen_jules-org-health-organ-kernel-0630-1481`, `limen_jules-org-health-organ-kernel-0630-274f`, `limen_jules-org-health-organ-kernel-0630-47a3`, `limen_jules-org-health-organ-kernel-0630-7bbc`, `limen_jules-org-health-organ-kernel-0630-8195`, `limen_jules-org-health-organ-kernel-0630-a46c`, `org-financial-organ-face-0704-9855f329`, `org-governance-organ-selffeed-0703-00694775`, `org-governance-organ-selffeed-0703-ae95b1bf`, `wf_29a15be5-9f8-2`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `universal-kernel-recordkeeper-20260705`, `photos-universe-20260629-182431`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `gen-a-organvm-a-i-council--coliseum-ci-green-0620-29ec`, `gh-organvm-domus-genoma-170-bbbc`, `heal-cifix-organvm-organvm-engine-124-e0bb2d06`, `heal-cifix-organvm-organvm-engine-130-8a6060e4`, `linear-conjuring-bear`, `pr-669-governance-deepen`, `review-avditor-billing-pr43`, `ticklish-bubbling-robin`, `heal-cifix-organvm-organvm-engine-130-ec1fdfaf`, `heal-cifix-organvm-organvm-engine-136-c3d543d8`, `heal-cifix-organvm-organvm-engine-139-11d32b27`, `discover-organvm-kerygma-profiles-6c74`, `resolve-organvm-i-theoria-.github-459-1ade`, `the-invisible-ledger`, `domus-quarantine-retire-20260629`, `maddie-boundary-20260629`, `student-email-d2l-support-20260629`, `triptych-story`, `feat+workstream-channels`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `warp-agent-routing-20260629`, `auth_credentials`, `limen-network-substrate-20260628`, `limen-main-trench-20260628`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde`, `financial-codex-finish-0704`, `universal-entry-20260629` |
 
 ## Work Packet
 
-Purpose: Refresh the local agent capability substrate as a public-safe receipt so skill/plugin/MCP surface area is counted and routed before any lane tries to install, port, or activate tools.
+Purpose: Preserve `owner-state-dirty-session-meta` as a scoped owner-state packet for `session-meta` without rewriting corpus content or broadening into creative placement work.
 
-Repo/worktree: `organvm/limen` conductor checkout plus read-only path scans of configured capability roots.
+Repo/worktree: `session-meta` owner repo at `~/Workspace/session-meta` plus `organvm/limen` conductor receipts.
 
 Allowed files:
 
-- `scripts/capability-substrate-ledger.py`
-- `scripts/session-blockers-ledger.py`
-- `scripts/session-attack-paths.py`
-- `scripts/conductor-tranche.py`
-- `docs/capability-substrate-ledger.md`
+- `~/Workspace/session-meta/<dirty owner files>`
+- `docs/session-corpus-ledger.md`
 - `docs/session-lifecycle-blockers.md`
 - `docs/session-attack-paths.md`
 - `docs/conductor-tranche.md`
-- `.limen-private/session-corpus/lifecycle/capability-substrate-index.json`
+- `.limen-private/session-corpus/inventory/session-corpus-ledger.json`
 - `.limen-private/session-corpus/lifecycle/session-lifecycle-blockers.json`
 - `.limen-private/session-corpus/lifecycle/session-attack-paths.json`
 - `.limen-private/session-corpus/lifecycle/conductor-tranche.json`
@@ -55,20 +52,23 @@ Forbidden:
 - `irreversible GitHub transfer/rename/App install/credential actions`
 - `task-board mutation unless the direct request explicitly requires it`
 
-Stop condition: Stop before reading private skill bodies, installing plugins/connectors, editing MCP auth, moving capability roots, or dispatching broad capability work without a scoped activation packet.
+Stop condition: Stop before content rewriting, synthesis, deletion/revert of owner changes, broad corpus convergence, owner repo push/PR, or edits outside the listed dirty owner paths unless a new explicit owner packet opens that scope.
 
-Receipt: docs/capability-substrate-ledger.md plus refreshed blocker/attack/tranche receipts; private counts under .limen-private/session-corpus/lifecycle/.
+Receipt: `session-meta` owner branch/commit or patch receipt, plus refreshed docs/session-corpus-ledger.md, docs/session-lifecycle-blockers.md, and docs/conductor-tranche.md.
 
 Verification:
 
-- `python3 scripts/capability-substrate-ledger.py --write`
+- `git -C ~/Workspace/session-meta status --branch --short`
+- `git -C ~/Workspace/session-meta diff --name-status`
+- `git -C ~/Workspace/session-meta diff --check`
+- `python3 scripts/session-corpus-ledger.py --write --all`
 - `python3 scripts/session-blockers-ledger.py --write`
 - `python3 scripts/session-attack-paths.py --write`
 - `python3 scripts/conductor-tranche.py --write`
 
 ## Source Next Action
 
-Run `python3 scripts/capability-substrate-ledger.py --write` to index names/counts and choose activation order; do not read private skill bodies, install plugins, or repair MCP/ACP auth inside session lifecycle closeout.
+Preserve in that owner repo before treating corpus substrate as clean.
 
 ## Refresh
 
