@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T02:19:28+00:00`
+Generated: `2026-07-06T02:22:29+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -33,9 +33,9 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 These roots have the same set of files already missing/staged inside their scratch clone.
 That is a preservation blocker and duplicate-state signal, not deletion permission.
 
-| Count | Roots | Staged missing | Top staged buckets |
-|---:|---|---:|---|
-| `3` | `organvm-session-meta`, `session-meta-no-prompt`, `session-meta-2` | `2741` | `claude:1269, codex:692, escape-velocity:339, scheduler:151, .claude:147, gemini:31, opencode:23, analysis:21` |
+| Count | Roots | Staged missing | Same path untracked | Absent from worktree | Top staged buckets |
+|---:|---|---:|---:|---:|---|
+| `3` | `organvm-session-meta`, `session-meta-no-prompt`, `session-meta-2` | `2741` | `1451-2323` | `418-1290` | `claude:1269, codex:692, escape-velocity:339, scheduler:151, .claude:147, gemini:31, opencode:23, analysis:21` |
 
 ## Repeated Dirty Fingerprints
 

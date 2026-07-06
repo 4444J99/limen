@@ -40,6 +40,14 @@ def fmt_bytes(n: int) -> str:
     return f"{n} B"
 
 
+def fmt_count_span(counts: list[int]) -> str:
+    if not counts:
+        return "0"
+    low = min(counts)
+    high = max(counts)
+    return str(low) if low == high else f"{low}-{high}"
+
+
 def relpath(path: Path) -> str:
     try:
         return "~/" + str(path.expanduser().resolve().relative_to(HOME))
@@ -124,6 +132,11 @@ def dirty_profile(path: Path) -> dict[str, Any]:
     staged_other = git_lines(path, ["diff", "--cached", "--name-only", "--diff-filter=ACMRTUXB"], timeout=60)
     unstaged = git_lines(path, ["diff", "--name-only"], timeout=60)
     untracked = git_lines(path, ["ls-files", "--others", "--exclude-standard"], timeout=60)
+    staged_deleted_set = set(staged_deleted)
+    untracked_set = set(untracked)
+    staged_deleted_untracked_overlap = sorted(staged_deleted_set & untracked_set)
+    staged_deleted_absent = sorted(staged_deleted_set - untracked_set)
+    extra_untracked = sorted(untracked_set - staged_deleted_set)
     combined = [f"D:{item}" for item in staged_deleted]
     combined += [f"S:{item}" for item in staged_other]
     combined += [f"W:{item}" for item in unstaged]
@@ -141,6 +154,14 @@ def dirty_profile(path: Path) -> dict[str, Any]:
         "top_buckets": path_buckets(staged_deleted + staged_other + unstaged + untracked),
         "staged_deleted_buckets": path_buckets(staged_deleted),
         "untracked_buckets": path_buckets(untracked),
+        "staged_deleted_untracked_overlap_count": len(staged_deleted_untracked_overlap),
+        "staged_deleted_untracked_overlap_hash": path_digest(staged_deleted_untracked_overlap),
+        "staged_deleted_absent_count": len(staged_deleted_absent),
+        "staged_deleted_absent_hash": path_digest(staged_deleted_absent),
+        "staged_deleted_absent_buckets": path_buckets(staged_deleted_absent),
+        "extra_untracked_count": len(extra_untracked),
+        "extra_untracked_hash": path_digest(extra_untracked),
+        "extra_untracked_buckets": path_buckets(extra_untracked),
     }
 
 
@@ -532,10 +553,17 @@ def render_markdown(report: dict[str, Any]) -> str:
                 {
                     "roots": [],
                     "staged_deleted_count": profile.get("staged_deleted_count", 0),
+                    "staged_deleted_untracked_overlap_counts": [],
+                    "staged_deleted_absent_counts": [],
                     "staged_deleted_buckets": profile.get("staged_deleted_buckets") or {},
+                    "staged_deleted_absent_buckets": profile.get("staged_deleted_absent_buckets") or {},
                 },
             )
             group["roots"].append(str(row.get("name")))
+            group["staged_deleted_untracked_overlap_counts"].append(
+                int(profile.get("staged_deleted_untracked_overlap_count", 0))
+            )
+            group["staged_deleted_absent_counts"].append(int(profile.get("staged_deleted_absent_count", 0)))
         fingerprint = profile.get("fingerprint")
         if not fingerprint:
             continue
@@ -561,8 +589,8 @@ def render_markdown(report: dict[str, Any]) -> str:
             "These roots have the same set of files already missing/staged inside their scratch clone.",
             "That is a preservation blocker and duplicate-state signal, not deletion permission.",
             "",
-            "| Count | Roots | Staged missing | Top staged buckets |",
-            "|---:|---|---:|---|",
+            "| Count | Roots | Staged missing | Same path untracked | Absent from worktree | Top staged buckets |",
+            "|---:|---|---:|---:|---:|---|",
         ]
         for group in repeated_staged_missing[:10]:
             buckets = ", ".join(
@@ -572,7 +600,9 @@ def render_markdown(report: dict[str, Any]) -> str:
             if len(group["roots"]) > 8:
                 roots += f", ... +{len(group['roots']) - 8}"
             lines.append(
-                f"| `{len(group['roots'])}` | {roots} | `{group['staged_deleted_count']}` | `{buckets}` |"
+                f"| `{len(group['roots'])}` | {roots} | `{group['staged_deleted_count']}` | "
+                f"`{fmt_count_span(group['staged_deleted_untracked_overlap_counts'])}` | "
+                f"`{fmt_count_span(group['staged_deleted_absent_counts'])}` | `{buckets}` |"
             )
     repeated_dirty = sorted(
         (group for group in dirty_groups.values() if len(group["roots"]) > 1),

@@ -155,9 +155,12 @@ def test_render_markdown_groups_staged_missing_fingerprints_without_root_filenam
                     "fingerprint": "full-one",
                     "staged_deleted_hash": "same-deleted",
                     "staged_deleted_count": 2,
+                    "staged_deleted_untracked_overlap_count": 0,
+                    "staged_deleted_absent_count": 2,
                     "untracked_count": 1,
                     "top_buckets": {"(root)": 1},
                     "staged_deleted_buckets": {"claude": 2},
+                    "staged_deleted_absent_buckets": {"claude": 1},
                 },
             },
             {
@@ -172,9 +175,12 @@ def test_render_markdown_groups_staged_missing_fingerprints_without_root_filenam
                     "fingerprint": "full-two",
                     "staged_deleted_hash": "same-deleted",
                     "staged_deleted_count": 2,
+                    "staged_deleted_untracked_overlap_count": 1,
+                    "staged_deleted_absent_count": 1,
                     "untracked_count": 1,
                     "top_buckets": {"(root)": 1},
                     "staged_deleted_buckets": {"claude": 2},
+                    "staged_deleted_absent_buckets": {"claude": 1},
                 },
             },
         ],
@@ -185,4 +191,8 @@ def test_render_markdown_groups_staged_missing_fingerprints_without_root_filenam
     assert "## Repeated Staged-Missing Fingerprints" in rendered
     assert "`one`, `two`" in rendered
     assert "`claude:2`" in rendered
+    assert "Same path untracked" in rendered
+    assert "Absent from worktree" in rendered
+    assert "`0-1`" in rendered
+    assert "`1-2`" in rendered
     assert "DISCOVERY.md" not in rendered
