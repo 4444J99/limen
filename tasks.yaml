@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 144
+      spent: 145
       per_agent:
         jules: 100
         gemini: 2
-        codex: 22
+        codex: 23
         opencode: 9
         agy: 8
         claude: 3
@@ -87202,7 +87202,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -87217,7 +87217,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T16:38:24.956460Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T16:38:24.956460Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-public-process-30
   title: fix failing CI on organvm/public-process#30
   repo: organvm/public-process
