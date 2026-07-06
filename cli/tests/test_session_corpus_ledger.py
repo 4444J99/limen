@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 from pathlib import Path
 
@@ -132,3 +133,35 @@ def test_limen_root_symlink_is_resolved(monkeypatch, tmp_path: Path):
 
     assert ledger.ROOT == real_root.resolve()
     assert ledger.WORKSPACE == real_root.parent.resolve()
+
+
+def test_quicken_snapshot_uses_latest_summary_event(tmp_path: Path):
+    ledger = _load("session_corpus_ledger_quicken_summary")
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+    log_path = log_dir / "session-lifecycle.jsonl"
+    events = [
+        {"ts": 1000, "sessions": 2, "stalled": ["old"], "alive": [], "done": [], "reaped": []},
+        {
+            "ts": 2000,
+            "sessions": 3,
+            "stalled": ["a"],
+            "alive": ["b"],
+            "done": [],
+            "reaped": [],
+        },
+        {"ts": 3000, "breathed": "a", "ok": True},
+    ]
+    log_path.write_text(
+        "".join(json.dumps(event) + "\n" for event in events),
+        encoding="utf-8",
+    )
+    ledger.ROOT = tmp_path
+
+    snapshot = ledger.quicken_snapshot()
+
+    assert snapshot["sessions"] == 3
+    assert snapshot["stalled"] == 1
+    assert snapshot["alive"] == 1
+    assert snapshot["closed"] == 1
+    assert snapshot["reaped"] == 0

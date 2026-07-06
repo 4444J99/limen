@@ -13,6 +13,7 @@ Default behavior is read-only. Use --write to refresh the tracked ledger plus an
 private inventory. Use --materialize with --write to copy the last N days of raw local
 session files into the ignored object store.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,9 +32,7 @@ HOME = Path.home()
 WORKSPACE = ROOT.parent
 DOC_PATH = ROOT / "docs" / "session-corpus-ledger.md"
 LOG_PATH = ROOT / "logs" / "session-corpus-ledger.json"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 
 LOCAL_SOURCES = [
@@ -246,8 +245,7 @@ def external_candidates(root: Path, patterns: tuple[str, ...]) -> tuple[list[Pat
             dirnames[:] = []
         else:
             dirnames[:] = sorted(
-                name for name in dirnames
-                if name not in EXTERNAL_SKIP_DIRS and not name.endswith(".noindex")
+                name for name in dirnames if name not in EXTERNAL_SKIP_DIRS and not name.endswith(".noindex")
             )
             if depth >= max_depth:
                 dirnames[:] = []
@@ -493,9 +491,7 @@ def substrate_snapshot() -> dict[str, Any]:
     one = kc / "00-THE-ONE.md"
     reduced = kc / "reduced"
     return {
-        "organs": [
-            {**organ, "path": str(organ["path"]), "git": git_status(organ["path"])} for organ in ORGANS
-        ],
+        "organs": [{**organ, "path": str(organ["path"]), "git": git_status(organ["path"])} for organ in ORGANS],
         "session_meta": {
             "manifest": count_jsonl(sm / "ingest" / "manifest.jsonl", source_counts=True),
             "atoms": count_jsonl(sm / "ingest" / "atoms.jsonl", source_counts=False),
@@ -528,9 +524,11 @@ def quicken_snapshot() -> dict[str, Any]:
                 if not line:
                     continue
                 try:
-                    last = json.loads(line)
+                    event = json.loads(line)
                 except ValueError:
                     continue
+                if "sessions" in event:
+                    last = event
     except OSError:
         return {"present": False, "path": str(path)}
     if not last:
@@ -662,8 +660,9 @@ def infer_roadblocks(snapshot: dict[str, Any], rows: list[dict[str, Any]]) -> li
     return roadblocks
 
 
-def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: argparse.Namespace,
-                    mat: dict[str, Any] | None) -> str:
+def render_markdown(
+    snapshot: dict[str, Any], rows: list[dict[str, Any]], args: argparse.Namespace, mat: dict[str, Any] | None
+) -> str:
     generated = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     local = summarize_local(rows)
     total_files = sum(int(r["files"]) for r in local)
@@ -728,10 +727,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
             "|---|---|---:|---:|---:|---|---|",
         ]
         for item in scan_limits:
-            caps = (
-                f"files {item.get('max_files')}, dirs {item.get('max_dirs')}, "
-                f"depth {item.get('max_depth')}"
-            )
+            caps = f"files {item.get('max_files')}, dirs {item.get('max_dirs')}, depth {item.get('max_depth')}"
             truncated = item.get("reason") if item.get("truncated") else "no"
             lines.append(
                 f"| `{item.get('source')}` | `{item.get('root')}` | "
@@ -773,11 +769,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
     ]
     if manifest.get("by_source"):
         top = list(manifest["by_source"].items())[:8]
-        lines.append(
-            "- Top manifest sources: "
-            + ", ".join(f"`{src}` {count:,}" for src, count in top)
-            + "."
-        )
+        lines.append("- Top manifest sources: " + ", ".join(f"`{src}` {count:,}" for src, count in top) + ".")
 
     q = snapshot.get("quicken", {})
     lines += [
@@ -797,17 +789,14 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         lines.append("- No `quicken.py` journal found yet.")
     cq = snapshot.get("codex_quicken", {})
     if cq.get("present"):
-        states = ", ".join(
-            f"`{state}` {count}" for state, count in sorted((cq.get("by_state") or {}).items())
-        )
+        states = ", ".join(f"`{state}` {count}" for state, count in sorted((cq.get("by_state") or {}).items()))
         families = ", ".join(
             f"`{family}` {count}"
             for family, count in sorted((cq.get("by_family") or {}).items(), key=lambda kv: (-kv[1], kv[0]))[:6]
         )
         lines += [
             f"- Last `codex-quicken.py` journal: `{cq.get('ts')}`.",
-            f"- Codex sessions classified: `{cq.get('sessions', 0)}` total"
-            f"{'; ' + states if states else ''}.",
+            f"- Codex sessions classified: `{cq.get('sessions', 0)}` total{'; ' + states if states else ''}.",
             f"- Top Codex lifecycle families: {families or 'none'}.",
         ]
     else:
@@ -843,9 +832,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
 
     screenshots = snapshot.get("private_screenshots", {})
     if screenshots.get("files"):
-        batch_bits = ", ".join(
-            f"`{batch}` {count}" for batch, count in screenshots.get("batches", {}).items()
-        )
+        batch_bits = ", ".join(f"`{batch}` {count}" for batch, count in screenshots.get("batches", {}).items())
         lines += [
             f"- Private screenshot evidence: `{screenshots['files']}` PNG artifacts, "
             f"`{fmt_bytes(int(screenshots.get('bytes', 0)))}`, newest `{screenshots.get('newest')}`.",
@@ -914,8 +901,7 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         "- Refresh a bounded ledger: `python3 scripts/session-corpus-ledger.py --write --days 7`",
         "- Absorb raw local objects into the ignored cartridge: "
         "`python3 scripts/session-corpus-ledger.py --write --all --materialize`",
-        "- Refresh local/remote/cloud prompt lifecycle: "
-        "`python3 scripts/prompt-lifecycle-ledger.py --write --all`",
+        "- Refresh local/remote/cloud prompt lifecycle: `python3 scripts/prompt-lifecycle-ledger.py --write --all`",
         "- Refresh capability resurfacing: `python3 scripts/capability-substrate-ledger.py --write`",
         "- Refresh parked blockers: `python3 scripts/session-blockers-ledger.py --write`",
         "- Refresh ranked attack paths: `python3 scripts/session-attack-paths.py --write`",
