@@ -1212,7 +1212,7 @@ def _failed_agent_result(agent: str, task: Task, run: subprocess.CompletedProces
     if _is_rate_limited(blob):
         print(f"  RATE-LIMIT {agent} on {task.id}: real limit hit (token/rate) — cooling lane, cascading")
         return _RATELIMIT
-    print(f"  FAILED agent {task.id} ({run.returncode}): {run.stderr.strip()[:300]}")
+    print(f"  FAILED agent {agent} on {task.id} ({run.returncode}): {run.stderr.strip()[:300]}")
     return False
 
 

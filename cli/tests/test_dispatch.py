@@ -690,6 +690,23 @@ def test_lane_run_env_keeps_lane_specific_isolation(tmp_path: Path, monkeypatch)
     assert "CLAUDE_CODE_OAUTH_TOKEN" not in claude_api_env
 
 
+def test_failed_agent_result_names_lane_and_task(capsys) -> None:
+    task = Task(
+        id="LIMEN-FAIL-LANE",
+        title="Fail lane",
+        repo="organvm/limen",
+        target_agent="claude",
+        priority="high",
+        budget_cost=1,
+        status="open",
+        created="2026-07-06",
+    )
+    run = subprocess.CompletedProcess(["claude"], 1, stdout="", stderr="connector shadowed")
+
+    assert D._failed_agent_result("claude", task, run) is False
+    assert "FAILED agent claude on LIMEN-FAIL-LANE (1): connector shadowed" in capsys.readouterr().out
+
+
 def test_resolve_agent_binary_uses_opencode_clock_when_installed(monkeypatch) -> None:
     monkeypatch.delenv("LIMEN_OPENCODE_BIN", raising=False)
     monkeypatch.setattr(D.shutil, "which", lambda binary: f"/bin/{binary}" if binary == "opencode-clock" else None)
