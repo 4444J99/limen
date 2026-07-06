@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T02:57:22+00:00`
+Generated: `2026-07-06T03:02:21+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -18,7 +18,7 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - Roots scanned: `42`.
 - Total scratch size: `23.7 GiB`.
 - Safe-reap candidate size: `0 B`.
-- Dispositions: `bridge_required` 32, `container_review_required` 3, `keep_active` 1, `non_git_review_required` 3, `preserve_required` 3.
+- Dispositions: `bridge_required` 33, `container_review_required` 3, `non_git_review_required` 3, `preserve_required` 3.
 
 ## Reap History
 
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `13`.
-- External archives verified: `12`.
-- Verified external archive source size: `20.8 GiB`.
-- Event source size total: `25.5 GiB` (includes retries).
+- Preservation receipts: `14`.
+- External archives verified: `13`.
+- Verified external archive source size: `21.1 GiB`.
+- Event source size total: `25.7 GiB` (includes retries).
+- `2026-07-06T03:02:34Z` `bountyscope-test-coverage`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030234Z-bountyscope-test-coverage/receipt.json`.
 - `2026-07-06T02:57:34Z` `universal-mail--automation`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025734Z-universal-mail--automation/receipt.json`.
 - `2026-07-06T02:55:35Z` `a-i-chat--exporter`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025535Z-a-i-chat--exporter/receipt.json`.
 - `2026-07-06T02:54:21Z` `organvm-i-theoria-github`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025421Z-organvm-i-theoria-github/receipt.json`.
@@ -43,14 +44,13 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T02:47:45Z` `public-record-data-scrapper`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024745Z-public-record-data-scrapper/receipt.json`.
 - `2026-07-06T02:46:27Z` `sovereign-systems--elevate-align`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024627Z-sovereign-systems--elevate-align/receipt.json`.
 - `2026-07-06T02:44:23Z` `peer-audited--behavioral-blockchain`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024423Z-peer-audited--behavioral-blockchain/receipt.json`.
-- `2026-07-06T02:42:19Z` `session-meta-2`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024219Z-session-meta-2/receipt.json`.
 
 ## Preservation Results
 
 - Requested roots: `1`.
-- Source size receipted: `327.5 MiB`.
+- Source size receipted: `234.9 MiB`.
 - Statuses: `external_archive_preserved` 1.
-- Preserved `universal-mail--automation` `327.5 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025734Z-universal-mail--automation/receipt.json`.
+- Preserved `bountyscope-test-coverage` `234.9 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030234Z-bountyscope-test-coverage/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
@@ -95,7 +95,7 @@ before any local root can be removed.
 | `domus-genoma` | `166.0 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/domus-genoma@57d176ccb52d` |
 | `organvm-i-theoria-mesh` | `148.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/mesh@b4f0ed18fedf` |
 | `rules-system-bound` | `133.2 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/rules-system-bound@2d8061dd02c1` |
-| `organvm-engine` | `122.7 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/organvm-engine@ffeb44eced01` |
+| `organvm-engine` | `122.7 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/organvm-engine@ffeb44eced01` |
 | `conversation-corpus-engine` | `120.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/conversation-corpus-engine@9d7b3cff6e1f` |
 | `4444J99` | `81.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/_agent@acbca74f95ec` |
 | `anon-hookup-now` | `69.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/anon-hookup-now@92fd88681fde` |
