@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-07-06T13:57:50+00:00`
+Generated: `2026-07-06T14:00:39+00:00`
 
 ## Canonical Decision
 
@@ -16,9 +16,9 @@ Generated: `2026-07-06T13:57:50+00:00`
 - Codex classified sessions: `887`.
 - Worktree debt roots: `0`.
 - Worktree preservation receipts: `89`.
-- Parked blockers: `5`.
+- Parked blockers: `4`.
 - Local lifecycle footprint: `29.7 GiB`.
-- Candidate lanes: `blocker` 1, `family` 7, `human-gate` 17, `observe` 68, `owner-blocker` 7, `parked` 5, `remote-close` 1, `remote-pr-open` 12.
+- Candidate lanes: `family` 7, `human-gate` 17, `observe` 70, `owner-blocker` 7, `parked` 5, `remote-close` 1, `remote-pr-open` 12.
 
 ## Ordering Model
 
@@ -34,31 +34,31 @@ Generated: `2026-07-06T13:57:50+00:00`
 
 | Rank | Path | Kind | Lane | Score | Evidence | Agent Fit | Next Action |
 |---:|---|---|---|---:|---|---|---|
-| 1 | `worktree-lifecycle-debt` | `blocker` | `blocker` | 70 | category `worktree_lifecycle`; status `parked` | codex | Preserve or owner-record each root; no deletion of unique work. |
-| 2 | `worktree_lifecycle` | `family` | `family` | 67 | sessions 77; states CLOSED 62, STALLED 15; prompts 289 | codex/openCode | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
-| 3 | `session_lifecycle` | `family` | `family` | 66 | sessions 159; states CLOSED 139, STALLED 20; prompts 636 | codex | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
-| 4 | `github_review` | `family` | `family` | 55 | sessions 158; states CLOSED 145, STALLED 13; prompts 615 | opencode/jules | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 5 | `heal-cifix-organvm-organvm-ontologia-11-a86cf99f` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 6 | `heal-cifix-organvm-organvm-ontologia-12-2c2c85ba` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 7 | `heal-cifix-organvm-organvm-ontologia-13-953633bb` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 8 | `heal-rebase-4444j99-hokage-chess-89-0448f70e` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 9 | `org-financial-organ-face-0704-5a117787` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 10 | `agent_coordination` | `family` | `family` | 40 | sessions 40; states CLOSED 30, STALLED 10; prompts 133 | codex | Packetize bounded work; do not dispatch broad sprawl prompts. |
-| 11 | `fluttering-twirling-abelson` | `worktree` | `human-gate` | 35 | reason `remote-merged`; prompts 315; remote `missing`; open PRs 0; receipt `default_branch_preserved` | human/codex-prep | No local-only source preservation remains. Local HEAD is an ancestor of current origin/main and `git diff origin/main...HEAD` is empty. Reclaim the local checkout only after operator acceptance. |
-| 12 | `local-lifecycle-disk-pressure` | `blocker` | `parked` | 34 | category `local_lean`; status `parked` | codex | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
-| 13 | `technical_debt_ci` | `family` | `family` | 34 | sessions 36; states CLOSED 33, STALLED 3; prompts 128 | opencode/jules | Run narrow predicates and preserve failures in owner repos. |
-| 14 | `feat-gcp-sa-organ` | `worktree` | `owner-blocker` | 34 | reason `owner-blocker`; prompts 727; remote `missing`; open PRs 0; receipt `owner_commit_needs_packet` | codex first; opencode/jules after packetization | Do not delete, reclaim, or auto-port this Claude worktree without a narrower owner packet. PR #544 merged only through f20bb66, while local HEAD 0a4f21f remains unique and changes organs/media/NEXT.md to mark operator-cleared media-ark PR/issue atoms done. Preserve this as an owner blocker; if still wanted, port only that owner-record update onto current main with a named branch and predicate. |
-| 15 | `heal-cifix-organvm-organvm-engine-139-9dbf53bf` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 16 | `heal-cifix-organvm-organvm-engine-143-a164221c` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 17 | `heal-cifix-organvm-organvm-engine-144-0ef4c596` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 18 | `heal-cifix-organvm-organvm-engine-144-e2096564` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 19 | `heal-cifix-organvm-organvm-ontologia-10-64603ca7` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 20 | `heal-cifix-organvm-organvm-ontologia-11-55899198` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 21 | `heal-cifix-organvm-organvm-ontologia-12-c16ea5ad` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 22 | `limen_jules-org-health-organ-kernel-0630-0289` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 23 | `limen_jules-org-health-organ-kernel-0630-02fb` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 24 | `limen_jules-org-health-organ-kernel-0630-f8cb` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
-| 25 | `peer-audited--behavioral-blockchain` | `worktree` | `owner-blocker` | 29 | reason `owner-blocker`; prompts 650; remote `missing`; open PRs 0; receipt `private_patch_preserved` | codex first; opencode/jules after packetization | No PR or remote branch preserves this exact local commit. Do not reclaim from lifecycle cleanup; create a narrow owner packet to review, push, supersede, or retire the patch. |
+| 1 | `session_lifecycle` | `family` | `family` | 66 | sessions 159; states CLOSED 139, STALLED 20; prompts 636 | codex | Keep corpus/session ledgers current, collapse repeats into owner receipts. |
+| 2 | `worktree_lifecycle` | `family` | `family` | 57 | sessions 77; states CLOSED 62, STALLED 15; prompts 289 | codex/openCode | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
+| 3 | `github_review` | `family` | `family` | 55 | sessions 158; states CLOSED 145, STALLED 13; prompts 615 | opencode/jules | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
+| 4 | `heal-cifix-organvm-organvm-ontologia-11-a86cf99f` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 5 | `heal-cifix-organvm-organvm-ontologia-12-2c2c85ba` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 6 | `heal-cifix-organvm-organvm-ontologia-13-953633bb` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 7 | `heal-rebase-4444j99-hokage-chess-89-0448f70e` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 8 | `org-financial-organ-face-0704-5a117787` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 9 | `agent_coordination` | `family` | `family` | 40 | sessions 40; states CLOSED 30, STALLED 10; prompts 133 | codex | Packetize bounded work; do not dispatch broad sprawl prompts. |
+| 10 | `fluttering-twirling-abelson` | `worktree` | `human-gate` | 35 | reason `remote-merged`; prompts 315; remote `missing`; open PRs 0; receipt `default_branch_preserved` | human/codex-prep | No local-only source preservation remains. Local HEAD is an ancestor of current origin/main and `git diff origin/main...HEAD` is empty. Reclaim the local checkout only after operator acceptance. |
+| 11 | `local-lifecycle-disk-pressure` | `blocker` | `parked` | 34 | category `local_lean`; status `parked` | codex | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
+| 12 | `technical_debt_ci` | `family` | `family` | 34 | sessions 36; states CLOSED 33, STALLED 3; prompts 128 | opencode/jules | Run narrow predicates and preserve failures in owner repos. |
+| 13 | `feat-gcp-sa-organ` | `worktree` | `owner-blocker` | 34 | reason `owner-blocker`; prompts 727; remote `missing`; open PRs 0; receipt `owner_commit_needs_packet` | codex first; opencode/jules after packetization | Do not delete, reclaim, or auto-port this Claude worktree without a narrower owner packet. PR #544 merged only through f20bb66, while local HEAD 0a4f21f remains unique and changes organs/media/NEXT.md to mark operator-cleared media-ark PR/issue atoms done. Preserve this as an owner blocker; if still wanted, port only that owner-record update onto current main with a named branch and predicate. |
+| 14 | `heal-cifix-organvm-organvm-engine-139-9dbf53bf` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 15 | `heal-cifix-organvm-organvm-engine-143-a164221c` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 16 | `heal-cifix-organvm-organvm-engine-144-0ef4c596` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 17 | `heal-cifix-organvm-organvm-engine-144-e2096564` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 18 | `heal-cifix-organvm-organvm-ontologia-10-64603ca7` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 19 | `heal-cifix-organvm-organvm-ontologia-11-55899198` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 20 | `heal-cifix-organvm-organvm-ontologia-12-c16ea5ad` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 21 | `limen_jules-org-health-organ-kernel-0630-0289` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 22 | `limen_jules-org-health-organ-kernel-0630-02fb` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 23 | `limen_jules-org-health-organ-kernel-0630-f8cb` | `worktree` | `observe` | 32 | reason `active(<6h)`; prompts 0; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
+| 24 | `peer-audited--behavioral-blockchain` | `worktree` | `owner-blocker` | 29 | reason `owner-blocker`; prompts 650; remote `missing`; open PRs 0; receipt `private_patch_preserved` | codex first; opencode/jules after packetization | No PR or remote branch preserves this exact local commit. Do not reclaim from lifecycle cleanup; create a narrow owner packet to review, push, supersede, or retire the patch. |
+| 25 | `convergence_corpus` | `family` | `family` | 26 | sessions 10; states CLOSED 10; prompts 37 | codex | Promote durable atoms through session-meta and knowledge-corpus. |
 
 ## Delegation Gate
 
