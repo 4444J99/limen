@@ -110,6 +110,27 @@ personal data stores or agent scratch roots.
   remains blocked on matching archive/preservation proof plus explicit
   redaction-aware human acceptance.
 
+## 2026-07-06 07:18Z Current Pressure Snapshot
+
+- Internal Data volume remains pressure-bound: `460Gi` size, `398Gi` used,
+  `31Gi` available, `93%` capacity.
+- External storage is healthy: Archive4T has `3.0Ti` available, T7Recovery has
+  `499Gi` available, Ingress has `466Gi` available, and Scratch has `279Gi`
+  available.
+- Current local root readings:
+  - `~/.gemini/antigravity-cli/scratch`: `24G`.
+  - `~/Workspace/limen/.limen-private`: `7.9G`.
+  - `~/.claude`: `2.0G`.
+  - `~/Library/Application Support/com.openai.chat`: `16M`.
+  - `~/Library/Application Support/com.google.GeminiMacOS`: `612K`.
+  - `~/Library/Application Support/ai.perplexity.macv3`: `4.0K`.
+- `python3 scripts/antigravity-scratch-bridge.py --write` was rerun at
+  `2026-07-06T07:18:39Z`: `42` roots, `23.8 GiB`, and `0 B` safe-reap
+  candidates. No Antigravity scratch root was deleted in this pass.
+- The scratch bridge now classifies the remaining roots as:
+  `bridge_required` 32, `container_review_required` 3, `preserve_required` 3,
+  `non_git_review_required` 3, and `keep_active` 1.
+
 ## Decision
 
 Do not delete `~/Library/Messages`, Notes/Freeform/iCloud/Mail/Photos stores, or

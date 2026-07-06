@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T06:14:33+00:00`
+Generated: `2026-07-06T07:18:39+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -19,7 +19,7 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 ## Summary
 
 - Roots scanned: `42`.
-- Total scratch size: `23.7 GiB`.
+- Total scratch size: `23.8 GiB`.
 - Safe-reap candidate size: `0 B`.
 - Dispositions: `bridge_required` 32, `container_review_required` 3, `keep_active` 1, `non_git_review_required` 3, `preserve_required` 3.
 
@@ -88,10 +88,10 @@ before any local root can be removed.
 | `edgarflash` | `234.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/edgarflash@1e74592c935b` |
 | `bountyscope` | `234.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/bountyscope@e100c8b0dc4a` |
 | `vulnpulse` | `223.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/vulnpulse@e0b94ed724b9` |
+| `organvm-engine` | `186.6 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/organvm-engine@13b38de95a3d` |
 | `domus-genoma` | `166.0 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/domus-genoma@57d176ccb52d` |
 | `organvm-i-theoria-mesh` | `148.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/mesh@b4f0ed18fedf` |
 | `rules-system-bound` | `133.2 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/rules-system-bound@2d8061dd02c1` |
-| `organvm-engine` | `131.3 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/organvm-engine@91dfc45769da` |
 | `conversation-corpus-engine` | `120.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/conversation-corpus-engine@9d7b3cff6e1f` |
 | `4444J99` | `81.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/_agent@acbca74f95ec` |
 | `anon-hookup-now` | `69.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/anon-hookup-now@92fd88681fde` |
