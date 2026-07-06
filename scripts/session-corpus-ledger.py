@@ -316,6 +316,23 @@ def summarize_local(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(by_source.values(), key=lambda r: (-r["bytes"], r["source"]))
 
 
+def missing_local_sources(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    present = {str(row.get("source")) for row in rows}
+    missing: list[dict[str, Any]] = []
+    for source, root, _patterns in local_sources():
+        if is_external_source(source) or source in present:
+            continue
+        expanded = root.expanduser()
+        reason = "missing-root"
+        try:
+            if expanded.exists():
+                reason = "no-matching-files"
+        except OSError:
+            reason = "unreadable-root"
+        missing.append({"source": source, "root": relpath(expanded), "reason": reason})
+    return missing
+
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -652,6 +669,21 @@ def render_markdown(snapshot: dict[str, Any], rows: list[dict[str, Any]], args: 
         )
     if not local:
         lines.append("| none | n/a | 0 | 0 B | n/a |")
+
+    missing_sources = missing_local_sources(rows)
+    if missing_sources:
+        lines += [
+            "",
+            "## Missing Local App Sources",
+            "",
+            "These are known local app/store adapters with no matched files in this scan. This is a "
+            "coverage signal only; roots are not deletion targets.",
+            "",
+            "| Source | Root | Reason |",
+            "|---|---|---|",
+        ]
+        for item in missing_sources:
+            lines.append(f"| `{item['source']}` | `{item['root']}` | `{item['reason']}` |")
 
     scan_limits = snapshot.get("scan_limits") or []
     if scan_limits:

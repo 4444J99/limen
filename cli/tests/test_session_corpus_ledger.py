@@ -85,6 +85,26 @@ def test_external_roots_accept_multiple_paths(monkeypatch, tmp_path: Path):
     }
 
 
+def test_missing_local_sources_distinguish_absent_and_empty(tmp_path: Path):
+    ledger = _load("session_corpus_ledger_missing_sources")
+    missing = tmp_path / "missing"
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    present = tmp_path / "present"
+    present.mkdir()
+    (present / "chat.json").write_text("{}\n", encoding="utf-8")
+    ledger.LOCAL_SOURCES = [
+        ("missing-app", missing, ("*.json",)),
+        ("empty-app", empty, ("*.json",)),
+        ("present-app", present, ("*.json",)),
+    ]
+
+    rows, _limits = ledger.scan_local_files(None)
+    gaps = {item["source"]: item["reason"] for item in ledger.missing_local_sources(rows)}
+
+    assert gaps == {"empty-app": "no-matching-files", "missing-app": "missing-root"}
+
+
 def test_limen_root_symlink_is_resolved(monkeypatch, tmp_path: Path):
     real_root = tmp_path / "real-limen"
     link_root = tmp_path / "link-limen"
