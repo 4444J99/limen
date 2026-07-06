@@ -29,6 +29,7 @@ These surfaces no longer perform direct branch/root/cache deletion:
 | `scripts/clone-maintenance.sh` | directly removed `node_modules` | reports reclaimable `node_modules` bytes only |
 | `scripts/library-preserve.py` | `LIMEN_LIB_APPLY=1` purged regenerable home caches | preserves data, reports cache candidates only |
 | `scripts/cvstos-organ.py` | `--apply` removed chat-app cache children | reports accepted-reaper candidate bytes only |
+| `scripts/claude-fleet-auth-probe.sh` | removed throwaway Claude config without a receipt | writes a private redacted secret-temp cleanup receipt before removing the config |
 
 `scripts/check-removal-acceptance.py` now statically guards these surfaces against
 reintroducing direct cleanup tokens.
@@ -48,6 +49,15 @@ their required proof fields pass:
 Do not create acceptance JSONL as a shortcut. The JSONL is the human-reviewed
 storage/archive/redaction ledger, not a way to quiet a script.
 
+## Classified Secret-Temp Cleanup
+
+`scripts/claude-fleet-auth-probe.sh` handles a temporary Claude config directory
+that may contain bearer-token material. Raw archival is the wrong preservation mode
+for that surface. The script now writes a private redacted receipt under
+`.limen-private/secret-temp-cleanups.jsonl` first, recording only aggregate counts,
+a path hash, and the archive/redaction rationale. If the receipt cannot be written,
+the temp config is retained and reported instead of being silently removed.
+
 ## Remaining Exceptions To Classify Later
 
 These are not general lifecycle cleanup paths, but they still deserve explicit
@@ -56,7 +66,6 @@ classification in a future pass:
 | Surface | Current reason it remains | Future policy needed |
 | --- | --- | --- |
 | `cli/src/limen/dispatch.py` Agy bridge | Mirrors an agent-authored file deletion into an isolated PR diff | Distinguish semantic code deletion from storage cleanup in static policy |
-| `scripts/claude-fleet-auth-probe.sh` | Removes a temporary Claude config dir that may contain auth material | Secret-temp cleanup policy: redact/no-archive/delete explicitly |
 | `scripts/netmode.sh` self-tests | Removes generated self-test temp files | Generated-test-fixture retention or secret-free temp cleanup policy |
 
 ## Measurement
