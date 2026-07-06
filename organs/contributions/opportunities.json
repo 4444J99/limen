@@ -8,7 +8,7 @@
     },
     {
       "dependency": "pytest",
-      "used_in_repos": 23
+      "used_in_repos": 24
     },
     {
       "dependency": "vitest",
@@ -23,11 +23,11 @@
       "used_in_repos": 15
     },
     {
-      "dependency": "react",
-      "used_in_repos": 14
+      "dependency": "ruff",
+      "used_in_repos": 15
     },
     {
-      "dependency": "ruff",
+      "dependency": "react",
       "used_in_repos": 14
     },
     {
