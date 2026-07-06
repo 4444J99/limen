@@ -396,6 +396,84 @@ def _atomic_write(path: Path, text: str) -> None:
             os.unlink(tmp)
 
 
+def census() -> dict:
+    """Redacted positioning census: aggregate seed/artifact shape only, never repo names or copy."""
+    report = {
+        "value_repos_present": _value_repos_path().exists(),
+        "value_repos_readable": False,
+        "value_repo_count": 0,
+        "seeds_present": _seeds_path().exists(),
+        "seeds_readable": False,
+        "seed_repo_count": 0,
+        "seeded_value_repo_count": 0,
+        "publishable_seed_count": 0,
+        "awaiting_publish_count": 0,
+        "missing_seed_count": 0,
+        "frontdoor_configured": False,
+        "contact_configured": False,
+        "repo_topic_seed_count": 0,
+        "valid_topic_count": 0,
+        "invalid_topic_count": 0,
+        "seo_description_count": 0,
+        "ladder_step_count": 0,
+        "internal_anchor_count": 0,
+        "out_dir_present": _out_dir().exists(),
+        "public_artifact_count": 0,
+        "internal_artifact_count": 0,
+        "system_artifact_count": 0,
+    }
+    try:
+        value_repos = _value_repos(_value_repos_path())
+        report["value_repos_readable"] = True
+        report["value_repo_count"] = len(value_repos)
+    except Exception:
+        value_repos = []
+
+    try:
+        doc = _load_json(_seeds_path())
+        seeds = doc.get("repos", {}) if isinstance(doc.get("repos", {}), dict) else {}
+        frontdoor = doc.get("frontdoor", {}) if isinstance(doc.get("frontdoor", {}), dict) else {}
+        report["seeds_readable"] = True
+        report["seed_repo_count"] = len(seeds)
+        report["frontdoor_configured"] = bool(frontdoor)
+        report["contact_configured"] = bool(frontdoor.get("contact"))
+    except Exception:
+        seeds = {}
+
+    seeded_value_repos = [repo for repo in value_repos if repo in seeds]
+    report["seeded_value_repo_count"] = len(seeded_value_repos)
+    report["awaiting_publish_count"] = sum(1 for repo in seeded_value_repos if _awaiting_publish(seeds[repo]))
+    report["publishable_seed_count"] = report["seeded_value_repo_count"] - report["awaiting_publish_count"]
+    report["missing_seed_count"] = max(0, report["value_repo_count"] - report["seeded_value_repo_count"])
+
+    for seed in seeds.values():
+        if not isinstance(seed, dict):
+            continue
+        topics = seed.get("search_topics") if isinstance(seed.get("search_topics"), list) else []
+        if topics:
+            report["repo_topic_seed_count"] += 1
+            good, bad = _validate_topics([str(topic) for topic in topics])
+            report["valid_topic_count"] += len(good)
+            report["invalid_topic_count"] += len(bad)
+        if seed.get("seo_description"):
+            report["seo_description_count"] += 1
+        ladder = seed.get("ladder") if isinstance(seed.get("ladder"), list) else []
+        report["ladder_step_count"] += len(ladder)
+        report["internal_anchor_count"] += sum(1 for step in ladder if isinstance(step, dict) and step.get("internal_anchor"))
+
+    out_dir = _out_dir()
+    if out_dir.is_dir():
+        for path in out_dir.glob("*.md"):
+            name = path.name
+            if name.endswith(".internal.md"):
+                report["internal_artifact_count"] += 1
+            elif name.startswith("_"):
+                report["system_artifact_count"] += 1
+            else:
+                report["public_artifact_count"] += 1
+    return report
+
+
 def generate_for(repo: str, seed: dict, *, apply: bool, fetch: bool, out_dir: Path,
                  contact: str | None = None) -> dict:
     signals = _fetch_signals(repo) if fetch else {}
@@ -426,7 +504,12 @@ def main(argv: list[str] | None = None) -> int:
                     help="render the aggregate two-door front door over all seeded value-repos")
     ap.add_argument("--discoverability", action="store_true",
                     help="render buyer-search topics + SEO + apply-commands per repo (recommends, never mutates)")
+    ap.add_argument("--census", action="store_true", help="print redacted positioning seed/artifact counts and exit")
     args = ap.parse_args(argv)
+
+    if args.census:
+        print(json.dumps(census(), indent=2, sort_keys=True))
+        return 0
 
     doc = _load_json(_seeds_path())
     seeds = doc.get("repos", {})
