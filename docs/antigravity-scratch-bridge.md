@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T03:10:59+00:00`
+Generated: `2026-07-06T03:15:29+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `18`.
-- External archives verified: `17`.
-- Verified external archive source size: `21.9 GiB`.
-- Event source size total: `26.6 GiB` (includes retries).
+- Preservation receipts: `19`.
+- External archives verified: `18`.
+- Verified external archive source size: `22.0 GiB`.
+- Event source size total: `26.7 GiB` (includes retries).
+- `2026-07-06T03:15:41Z` `organvm-i-theoria-mesh`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031541Z-organvm-i-theoria-mesh/receipt.json`.
 - `2026-07-06T03:11:11Z` `domus-genoma`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031111Z-domus-genoma/receipt.json`.
 - `2026-07-06T03:09:59Z` `vulnpulse`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030959Z-vulnpulse/receipt.json`.
 - `2026-07-06T03:09:05Z` `bountyscope`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030905Z-bountyscope/receipt.json`.
@@ -43,14 +44,13 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T02:55:35Z` `a-i-chat--exporter`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025535Z-a-i-chat--exporter/receipt.json`.
 - `2026-07-06T02:54:21Z` `organvm-i-theoria-github`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025421Z-organvm-i-theoria-github/receipt.json`.
 - `2026-07-06T02:53:02Z` `mirror-mirror`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025302Z-mirror-mirror/receipt.json`.
-- `2026-07-06T02:51:08Z` `limen`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025108Z-limen/receipt.json`.
 
 ## Preservation Results
 
 - Requested roots: `1`.
-- Source size receipted: `166.0 MiB`.
+- Source size receipted: `148.1 MiB`.
 - Statuses: `external_archive_preserved` 1.
-- Preserved `domus-genoma` `166.0 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031111Z-domus-genoma/receipt.json`.
+- Preserved `organvm-i-theoria-mesh` `148.1 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031541Z-organvm-i-theoria-mesh/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
