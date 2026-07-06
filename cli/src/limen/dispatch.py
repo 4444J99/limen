@@ -919,9 +919,7 @@ def _agy_live_root_registry_task(task: Task) -> bool:
     """
     fields = [task.id or "", task.title or "", task.context or "", *(task.urls or [])]
     text = "\n".join(str(field) for field in fields).lower()
-    return str(task.id or "").startswith("DISCOVER-") and (
-        "value-repos.json" in text or "discovery.md" in text
-    )
+    return str(task.id or "").startswith("DISCOVER-") and ("value-repos.json" in text or "discovery.md" in text)
 
 
 def agent_can_run_task(agent: str, task: Task) -> bool:
