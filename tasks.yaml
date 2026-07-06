@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 338
+      spent: 343
       per_agent:
         jules: 100
         gemini: 2
-        codex: 72
-        opencode: 37
+        codex: 73
+        opencode: 40
         agy: 94
-        claude: 32
+        claude: 33
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-06T11:41:52.375322+00:00'
@@ -86230,7 +86230,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -86247,7 +86247,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:11:41.955922Z'
+  updated: '2026-07-06T21:14:45.781244Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:40:17.443054Z'
     agent: gemini
@@ -86318,6 +86318,11 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-07-06T21:14:45.781244Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-427
   title: fix failing CI on organvm/limen#427
   repo: organvm/limen
@@ -86389,7 +86394,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -86406,7 +86411,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:42:28.570302Z'
+  updated: '2026-07-06T21:14:45.781244Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:02:23.426042Z'
     agent: opencode
@@ -86473,6 +86478,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-06T21:14:45.781244Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-429
   title: fix failing CI on organvm/limen#429
   repo: organvm/limen
@@ -88618,15 +88628,16 @@ tasks:
   title: fix failing CI on organvm/public-process#34
   repo: organvm/public-process
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
   - noop
+  - slow
   urls:
   - https://github.com/organvm/public-process/pull/34
   context: "PR organvm/public-process#34 has FAILING CI checks and merge-drain correctly\
@@ -88637,7 +88648,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:43:07.868799Z'
+  updated: '2026-07-06T21:14:42.310537Z'
   dispatch_log:
   - timestamp: '2026-07-06T18:15:32.556534Z'
     agent: agy
@@ -88673,6 +88684,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T21:14:42.310537Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-public-process-35
   title: fix failing CI on organvm/public-process#35
   repo: organvm/public-process
@@ -89836,14 +89851,15 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#146
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/domus-genoma/pull/146
   context: "PR organvm/domus-genoma#146 has FAILING CI checks and merge-drain correctly\
@@ -89854,7 +89870,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:43:07.868799Z'
+  updated: '2026-07-06T21:14:42.310537Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:11:06.264967Z'
     agent: codex
@@ -89870,6 +89886,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T21:14:42.310537Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-domus-genoma-148
   title: fix failing CI on organvm/domus-genoma#148
   repo: organvm/domus-genoma
@@ -90206,14 +90226,15 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#157
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/domus-genoma/pull/157
   context: "PR organvm/domus-genoma#157 has FAILING CI checks and merge-drain correctly\
@@ -90224,13 +90245,17 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:43:07.868799Z'
+  updated: '2026-07-06T21:14:42.310537Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:43:07.868799Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T21:14:42.310537Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-domus-genoma-159
   title: fix failing CI on organvm/domus-genoma#159
   repo: organvm/domus-genoma
@@ -90523,7 +90548,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -90538,7 +90563,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T21:14:45.781244Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T21:14:45.781244Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-86
   title: fix failing CI on organvm/mirror-mirror#86
   repo: organvm/mirror-mirror
@@ -90721,11 +90752,12 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/mirror-mirror/pull/94
   context: "PR organvm/mirror-mirror#94 has FAILING CI checks and merge-drain correctly\
@@ -90736,13 +90768,18 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:03:25.322807Z'
+  updated: '2026-07-06T21:15:38.614287Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:03:25.322807Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T21:15:38.614287Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-mirror-mirror-95
   title: fix failing CI on organvm/mirror-mirror#95
   repo: organvm/mirror-mirror
@@ -91016,11 +91053,12 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/narratological-algorithmic-lenses/pull/36
   context: "PR organvm/narratological-algorithmic-lenses#36 has FAILING CI checks\
@@ -91031,13 +91069,18 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:11:45.955297Z'
+  updated: '2026-07-06T21:15:38.614287Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:11:45.955297Z'
     agent: claude
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T21:15:38.614287Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-nexus--babel-alexandria-121
   title: fix failing CI on organvm/nexus--babel-alexandria#121
   repo: organvm/nexus--babel-alexandria
@@ -91305,7 +91348,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -91320,7 +91363,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T21:15:41.849720Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T21:15:41.849720Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-the-invisible-ledger-43
   title: fix failing CI on organvm/the-invisible-ledger#43
   repo: organvm/the-invisible-ledger
@@ -91361,7 +91410,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -91376,7 +91425,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T20:14:39.175626Z'
+  updated: '2026-07-06T21:15:41.849720Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:13:38.567460Z'
     agent: codex
@@ -91387,6 +91436,11 @@ tasks:
     agent: codex
     session_id: cli
     status: ratelimited->opencode
+  - timestamp: '2026-07-06T21:15:41.849720Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-the-invisible-ledger-47
   title: fix failing CI on organvm/the-invisible-ledger#47
   repo: organvm/the-invisible-ledger
