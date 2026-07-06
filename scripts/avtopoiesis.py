@@ -17,6 +17,7 @@ A door alive in all three needs nothing from his hand.
   python3 scripts/avtopoiesis.py --strict   # PREDICATE — exit 1 if any door is below the alive threshold
   python3 scripts/avtopoiesis.py --json     # machine form (organ-health / dashboards)
 """
+
 import argparse
 import datetime as dt
 import json
@@ -58,20 +59,78 @@ def discover_doors(canon):
         dormant = False
         if "%s" in gate_tmpl:
             dormant = bool(re.search(gate_tmpl % name, text))
-        doors[key] = {"key": key, "name": name, "cadence": int(cadence),
-                      "role": role, "dormant": dormant}
+        doors[key] = {"key": key, "name": name, "cadence": int(cadence), "role": role, "dormant": dormant}
     return list(doors.values())
 
 
-def _door_scripts(key):
-    """The implementing script(s) for a door — found by name across scripts/ (derived, not a roster)."""
-    variants = {key, key.replace("_", "-"), key.replace("_", "")}
+def _script_path_refs(text):
+    refs = []
+    for rel in re.findall(r"\$LIMEN_ROOT/scripts/([^\"'\s;)]+)", text):
+        path = (ROOT / "scripts" / rel).resolve()
+        try:
+            path.relative_to(SCRIPTS.resolve())
+        except ValueError:
+            continue
+        if path.exists() and path.is_file():
+            refs.append(path)
+    return refs
+
+
+def _heartbeat_command_block(lines, index):
+    """Return the shell command block around a beat invocation."""
+    block = [lines[index]]
+    stripped = lines[index].strip()
+    if stripped.startswith("if ") or stripped.endswith("then"):
+        for line in lines[index + 1 : index + 40]:
+            block.append(line)
+            if line.strip() == "fi":
+                break
+        return "\n".join(block)
+
+    brace_depth = lines[index].count("{") - lines[index].count("}")
+    cursor = index
+    while cursor + 1 < len(lines) and (lines[cursor].rstrip().endswith("\\") or brace_depth > 0):
+        cursor += 1
+        block.append(lines[cursor])
+        brace_depth += lines[cursor].count("{") - lines[cursor].count("}")
+        if cursor - index >= 30:
+            break
+    return "\n".join(block)
+
+
+def _heartbeat_scripts_for(key):
+    source = ROOT / "scripts" / "heartbeat-loop.sh"
+    try:
+        lines = source.read_text(errors="ignore").splitlines()
+    except OSError:
+        return []
+    upper = key.upper()
+    markers = (f"$C_{upper}", f"due_voice {key}", f'play "$C_{upper}"')
     hits = []
+    for index, line in enumerate(lines):
+        if not any(marker in line for marker in markers):
+            continue
+        hits.extend(_script_path_refs(_heartbeat_command_block(lines, index)))
+    return hits
+
+
+def _door_scripts(key):
+    """The implementing script(s) for a door — resolved from heartbeat, then by name fallback."""
+    variants = {key, key.replace("_", "-"), key.replace("_", "")}
+    hits = _heartbeat_scripts_for(key)
     for p in sorted(SCRIPTS.glob("*.py")) + sorted(SCRIPTS.glob("*.sh")):
         stem = p.stem.lower()
         if stem in variants or any(v and v in stem for v in variants):
             hits.append(p)
-    return hits
+    out = []
+    seen = set()
+    for path in hits:
+        key_path = str(path)
+        if key_path in seen:
+            continue
+        seen.add(key_path)
+        out.append(path)
+    return out
 
 
 def sense_present(door, _canon):
@@ -132,8 +191,7 @@ def summarize(rows, threshold):
     tense_averages = {}
     for tense in SENSES:
         tense_averages[tense] = (
-            round(sum(float(r["tenses"].get(tense, 0.0)) for r in rows) / total, 3)
-            if total else 0.0
+            round(sum(float(r["tenses"].get(tense, 0.0)) for r in rows) / total, 3) if total else 0.0
         )
     weakest_tense = min(tense_averages.items(), key=lambda kv: (kv[1], kv[0]))[0] if total else None
     below_by_primary_gap = {tense: 0 for tense in SENSES}
@@ -162,30 +220,34 @@ def build():
     rows = []
     for d in discover_doors(canon):
         senses, total = score_door(d, canon)
-        rows.append({
-            **d,
-            "tenses": senses,
-            "score": total,
-            "alive": total >= threshold,
-            "primary_gap": primary_gap(senses),
-        })
+        rows.append(
+            {
+                **d,
+                "tenses": senses,
+                "score": total,
+                "alive": total >= threshold,
+                "primary_gap": primary_gap(senses),
+            }
+        )
     rows.sort(key=lambda r: (r["score"], r["key"]))
     return {"threshold": threshold, "doors": rows, "summary": summarize(rows, threshold)}
 
 
 def render_text(v):
     s = v["summary"]
-    out = [f"AVTOPOIESIS — {s['alive']}/{s['total']} doors alive (score ≥ {v['threshold']}); "
-           f"{s['below']} below the line",
-           f"  mean score {s['mean_score']:.3f}; distance from ideal {s['distance_from_ideal']:.1%}; "
-           f"weakest tense {s['weakest_tense']}",
-           "  (past = metabolizes · present = runs unbidden · future = asks less)\n",
-           f"  {'door':<15}{'past':>6}{'present':>8}{'future':>7}{'score':>7}  state"]
+    out = [
+        f"AVTOPOIESIS — {s['alive']}/{s['total']} doors alive (score ≥ {v['threshold']}); {s['below']} below the line",
+        f"  mean score {s['mean_score']:.3f}; distance from ideal {s['distance_from_ideal']:.1%}; "
+        f"weakest tense {s['weakest_tense']}",
+        "  (past = metabolizes · present = runs unbidden · future = asks less)\n",
+        f"  {'door':<15}{'past':>6}{'present':>8}{'future':>7}{'score':>7}  state",
+    ]
     for r in v["doors"]:
         t = r["tenses"]
         mark = "✓ alive" if r["alive"] else "✗ nota"
-        out.append(f"  {r['key']:<15}{t['past']:>6.2f}{t['present']:>8.2f}{t['future']:>7.2f}"
-                   f"{r['score']:>7.3f}  {mark}")
+        out.append(
+            f"  {r['key']:<15}{t['past']:>6.2f}{t['present']:>8.2f}{t['future']:>7.2f}{r['score']:>7.3f}  {mark}"
+        )
     return "\n".join(out)
 
 
@@ -242,8 +304,7 @@ def render_markdown(v):
         for r in sorted(below, key=lambda row: (-row["primary_gap"]["gap"], row["key"]))[:10]:
             gap = r["primary_gap"]
             lines.append(
-                f"- `{r['key']}`: score `{r['score']:.3f}`, primary gap `{gap['tense']}` "
-                f"(`{gap['gap']:.3f}`)."
+                f"- `{r['key']}`: score `{r['score']:.3f}`, primary gap `{gap['tense']}` (`{gap['gap']:.3f}`)."
             )
 
     lines += [
