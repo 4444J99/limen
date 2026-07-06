@@ -105,6 +105,19 @@ def test_missing_local_sources_distinguish_absent_and_empty(tmp_path: Path):
     assert gaps == {"empty-app": "no-matching-files", "missing-app": "missing-root"}
 
 
+def test_current_desktop_app_sources_cover_real_store_roots():
+    ledger = _load("session_corpus_ledger_current_app_sources")
+    sources = {source: (root, patterns) for source, root, patterns in ledger.LOCAL_SOURCES}
+
+    chatgpt_root, chatgpt_patterns = sources["chatgpt-desktop-app-support"]
+    assert chatgpt_root.parts[-1] == "com.openai.chat"
+    assert "*.data" in chatgpt_patterns
+    assert sources["chatgpt-atlas-app-support"][0].parts[-2:] == ("OpenAI", "ChatGPT Atlas")
+    assert sources["gemini-desktop-stores"][0].parts[-1] == "com.google.GeminiMacOS"
+    assert sources["perplexity-desktop-stores"][0].parts[-1] == "ai.perplexity.macv3"
+    assert "*.data" in ledger.EXTERNAL_PATTERNS
+
+
 def test_limen_root_symlink_is_resolved(monkeypatch, tmp_path: Path):
     real_root = tmp_path / "real-limen"
     link_root = tmp_path / "link-limen"

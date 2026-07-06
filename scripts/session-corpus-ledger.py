@@ -49,15 +49,36 @@ LOCAL_SOURCES = [
     ("claude-tasks", HOME / ".claude" / "tasks", ("*",)),
     ("claude-plans", HOME / ".claude" / "plans", ("*",)),
     ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
-    ("chatgpt-desktop-conversations", HOME / "Library" / "Application Support" / "com.openai.chat" / "conversations", ("*.json", "*.jsonl", "*.md", "*.txt")),
-    ("chatgpt-desktop-gizmos", HOME / "Library" / "Application Support" / "com.openai.chat" / "gizmos", ("*.json", "*.jsonl", "*.md", "*.txt")),
-    ("claude-desktop-indexeddb", HOME / "Library" / "Application Support" / "Claude" / "IndexedDB", ("*.ldb", "*.log", "*.sqlite", "*.db", "*.json", "*.jsonl")),
-    ("gemini-desktop-stores", HOME / "Library" / "Application Support" / "Gemini", ("*.json", "*.jsonl", "*.ldb", "*.log", "*.sqlite", "*.db", "*.md", "*.txt")),
-    ("perplexity-desktop-stores", HOME / "Library" / "Application Support" / "Perplexity", ("*.json", "*.jsonl", "*.ldb", "*.log", "*.sqlite", "*.db", "*.md", "*.txt")),
+    (
+        "chatgpt-desktop-app-support",
+        HOME / "Library" / "Application Support" / "com.openai.chat",
+        ("*.data", "*.json", "*.jsonl", "*.md", "*.txt"),
+    ),
+    (
+        "chatgpt-atlas-app-support",
+        HOME / "Library" / "Application Support" / "OpenAI" / "ChatGPT Atlas",
+        ("*.data", "*.json", "*.jsonl", "*.md", "*.txt"),
+    ),
+    (
+        "claude-desktop-indexeddb",
+        HOME / "Library" / "Application Support" / "Claude" / "IndexedDB",
+        ("*.ldb", "*.log", "*.sqlite", "*.db", "*.json", "*.jsonl"),
+    ),
+    (
+        "gemini-desktop-stores",
+        HOME / "Library" / "Application Support" / "com.google.GeminiMacOS",
+        ("*.data", "*.json", "*.jsonl", "*.ldb", "*.log", "*.sqlite", "*.db", "*.md", "*.txt"),
+    ),
+    (
+        "perplexity-desktop-stores",
+        HOME / "Library" / "Application Support" / "ai.perplexity.macv3",
+        ("*.data", "*.json", "*.jsonl", "*.ldb", "*.log", "*.sqlite", "*.db", "*.md", "*.txt"),
+    ),
 ]
 
 EXTERNAL_SOURCE_PREFIX = "external-session"
 EXTERNAL_PATTERNS = (
+    "*.data",
     "*.json",
     "*.jsonl",
     "*.md",
