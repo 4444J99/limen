@@ -910,6 +910,27 @@ def _cascade_or_requeue(agent: str) -> str:
     return _next_lane(agent) or _fallback_dispatch_lane() or "any"
 
 
+def _agy_live_root_registry_task(task: Task) -> bool:
+    """Agy has been observed ignoring cwd for registry-discovery prompts.
+
+    Discovery tasks that promote an external repo by editing Limen registry files
+    (`value-repos.json`, `DISCOVERY.md`) must not run on Agy/Antigravity until
+    that CLI can be proven to honor the isolated worktree.
+    """
+    fields = [task.id or "", task.title or "", task.context or "", *(task.urls or [])]
+    text = "\n".join(str(field) for field in fields).lower()
+    return str(task.id or "").startswith("DISCOVER-") and (
+        "value-repos.json" in text or "discovery.md" in text
+    )
+
+
+def agent_can_run_task(agent: str, task: Task) -> bool:
+    agent = canonical_agent(agent)
+    if agent in {"agy", "antigravity"} and _agy_live_root_registry_task(task):
+        return False
+    return True
+
+
 # A lane's REAL limit is usually token-usage / rate, NOT the fixed per-day count. Every
 # vendor signals exhaustion in its output; detect it and treat the LANE (not the task) as
 # temporarily spent → cascade the task down + let the caller cool the lane. The per-day
@@ -1540,6 +1561,9 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
 
 
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
+    if not agent_can_run_task(agent, task):
+        print(f"  SKIP {task.id}: {agent} is gated for Limen registry discovery tasks")
+        return False
     if os.environ.get("LIMEN_ISOLATION", "worktree").lower() != "off":
         return _isolated_local_run(agent, task, dry_run)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)

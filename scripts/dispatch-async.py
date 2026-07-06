@@ -45,6 +45,7 @@ from limen.dispatch import (  # noqa: E402
     _reset_budget_if_needed,
     _restore_done_status,
     _routine_generated_buildout_allowed,
+    agent_can_run_task,
 )
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
@@ -427,6 +428,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining):
             for t in lf.tasks
             if _dispatchable(t)
             and (t.target_agent == agent or t.target_agent == "any")
+            and agent_can_run_task(agent, t)
             and t.budget_cost <= rem
             and _deps_met(t, id2)
             and _routine_generated_buildout_allowed(t)
