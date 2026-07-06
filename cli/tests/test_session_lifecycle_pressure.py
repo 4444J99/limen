@@ -181,6 +181,91 @@ DRY-RUN - nothing written.
     assert "Collision packet complete | `True`" in markdown
 
 
+def test_consolidation_gates_treats_zero_collision_dry_run_as_resolved_packet(tmp_path: Path):
+    gates = _load(CONSOLIDATION_GATES_SCRIPT, "consolidation_gates_zero_collisions")
+    gates.ROOT = tmp_path
+    gates.DOC_PATH = tmp_path / "docs" / "consolidation" / "GATES.md"
+    gates.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    gates.PRIVATE_INDEX = gates.PRIVATE_ROOT / "lifecycle" / "consolidation-gates.json"
+    gates.RUNBOOK = tmp_path / "docs" / "consolidation" / "RUNBOOK.md"
+    gates.COLLISION_RENAMES = tmp_path / "docs" / "consolidation" / "COLLISION-RENAMES.md"
+    gates.SCOPE_AND_APP = tmp_path / "docs" / "consolidation" / "SCOPE-AND-APP.md"
+    gates.COLLISION_RENAMES.parent.mkdir(parents=True)
+    gates.COLLISION_RENAMES.write_text(
+        """# Collision Rename Packet
+
+| Collision | Keeper |
+|---|---|
+| `demo-repo` | `keeper-org/demo-repo` |
+
+```bash
+gh repo rename demo-repo--source-org-legacy --repo source-org/demo-repo
+```
+""",
+        encoding="utf-8",
+    )
+
+    def fake_run_command(args, *, env=None, timeout=180):
+        text = " ".join(args)
+        if args[:3] == ["gh", "repo", "view"]:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": '{"nameWithOwner":"source-org/demo-repo--source-org-legacy"}',
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "consolidate-github.py" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": """=== consolidation plan -> organvm ===
+  2 repos across 2 owners
+  name collisions (must rename before transfer): 0
+
+DRY-RUN - nothing executed.
+""",
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "rewrite-owners.py" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": """[1] tasks.yaml repo: refs to rewrite = 0
+[2] deploy-api.yml LIMEN_GITHUB_REPO literal: none (already organvm or absent)
+[3] git checkouts under /tmp with origin on an OLD owner = 0 (emit-only, never run)
+DRY-RUN - nothing written.
+""",
+                "stderr": "",
+                "timed_out": False,
+            }
+        if "gh-app-token.sh" in text:
+            return {
+                "args": args,
+                "returncode": 0,
+                "stdout": "app (limen[bot] installation token)\n",
+                "stderr": "",
+                "timed_out": False,
+            }
+        return {"args": args, "returncode": 0, "stdout": "limen-bot\n", "stderr": "", "timed_out": False}
+
+    gates.run_command = fake_run_command
+
+    snapshot = gates.build_snapshot()
+    markdown = gates.render_markdown(snapshot)
+
+    assert snapshot["consolidation"]["collision_groups"] == 0
+    assert snapshot["collision_packet"]["complete"] is True
+    assert snapshot["collision_packet"]["rename_commands"] == 1
+    assert snapshot["collision_packet"]["required_rename_commands"] == 0
+    assert snapshot["collision_packet"]["target_conflicts"] == []
+    assert "collision-packet-incomplete" not in snapshot["gates"]["blocking"]
+    assert "Rename target conflicts: `0`" in markdown
+    assert "Collision names are resolved" in markdown
+    assert "1. Resolve collision names" not in markdown
+
+
 def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp_path: Path):
     pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure")
     pressure.ROOT = tmp_path
@@ -1286,6 +1371,48 @@ def test_session_blockers_records_github_consolidation_and_app_gates(tmp_path: P
     assert snapshot["coverage"]["github_consolidation"]["collision_groups"] == 13
     assert snapshot["coverage"]["github_consolidation"]["app_token_wired"] is False
     assert "GitHub consolidation gate: `34` source repos, `13` collision groups" in markdown
+
+
+def test_session_blockers_points_to_transfer_after_collisions_clear(tmp_path: Path):
+    blockers = _load(BLOCKERS_SCRIPT, "session_blockers_post_collision_clear")
+    blockers.CONSOLIDATION_INDEX = tmp_path / ".limen-private" / "session-corpus" / "lifecycle" / "consolidation-gates.json"
+    blockers.CONSOLIDATION_INDEX.parent.mkdir(parents=True)
+    blockers.CONSOLIDATION_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-07-06T12:00:00+00:00",
+                "consolidation": {"source_repos": 36, "collision_groups": 0},
+                "owner_rewrite": {"task_repo_refs_to_rewrite": 62, "local_remotes_to_rewrite": 23},
+                "app_identity": {
+                    "gh_app_token_which": "pat (GITHUB_TOKEN fallback)",
+                    "app_token_wired": False,
+                    "limen_app_installed": False,
+                    "installed_app_slugs": ["claude", "google-labs-jules"],
+                },
+                "collision_packet": {"complete": True},
+                "gates": {
+                    "blocking": [
+                        "limen-bot-token-not-wired",
+                        "limen-bot-app-not-installed",
+                        "post-transfer-owner-rewrite-pending",
+                    ],
+                    "can_run_transfer_apply_after_human_gate": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    collected: list[dict[str, object]] = []
+    coverage = blockers.consolidation_gate_blockers(collected)
+    route = str(collected[0]["route"])
+
+    assert coverage["collision_groups"] == 0
+    assert collected[0]["id"] == "github-consolidation-collisions"
+    assert collected[0]["details"]["transfer_apply_gate_open"] is True
+    assert "0 name-collision groups remain" in str(collected[0]["evidence"])
+    assert "consolidate-github.py --apply" in route
+    assert "COLLISION-RENAMES.md" not in route
 
 
 def test_session_attack_paths_prioritize_system_clogs_before_delegation(tmp_path: Path):

@@ -51,6 +51,12 @@ The unique work remains preserved on the remote branches and open draft PRs.
   `d98e3edd238e252444d7f08b78508f4951d45bb78bbb9ea6d0e4e8bde4a61b0b`).
 - No local reclaim, deletion, force-push, merge, owner-repo source edit, or task-board mutation was
   performed while closing these lifecycle debt receipts.
+- Later in the same gate-open pass, `heal-cifix-organvm-organvm-engine-130-ec1fdfaf` aged out of
+  the active window and was classified as a duplicate local checkout for the same open PR
+  [#130](https://github.com/organvm/organvm-engine/pull/130). Live PR inspection at
+  `2026-07-06T12:46:10Z` showed the PR remains `OPEN`, non-draft, merge state `DIRTY`, and
+  `headRefOid` `520a81385ac3049e8eb62e10d560dce04fe61c29` equals local `HEAD`. No local reclaim,
+  deletion, force-push, merge, owner-repo source edit, or task-board mutation was performed.
 
 2026-07-06 remote-supersession pass:
 

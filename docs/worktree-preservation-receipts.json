@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-06T12:26:34Z",
+  "generated_utc": "2026-07-06T12:46:10Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -1709,6 +1709,25 @@
       "score_discount": 35,
       "status": "open_pr_preserved",
       "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-organvm-engine-130-8a6060e4"
+    },
+    {
+      "branch": "limen/resolve-a-organvm-organvm-engine-117-ceab",
+      "classification": "duplicate local worktree preserved by open PR",
+      "evidence_updated_utc": "2026-07-06T12:46:10Z",
+      "head": "520a81385ac3049e8eb62e10d560dce04fe61c29",
+      "lane": "remote-pr-open",
+      "merge_state": "DIRTY",
+      "next_action": "No local-only source preservation remains. GitHub PR #130 is OPEN and its head OID equals the local worktree HEAD; this root duplicates the already-preserved PR #130 checkout. Reclaim the local checkout only after normal operator acceptance.",
+      "pr_draft": false,
+      "pr_number": 130,
+      "pr_state": "OPEN",
+      "pr_title": "[limen RESOLVE-a-organvm-organvm-engine-117] resolve organvm-engine#117 (BLOCKED)",
+      "pr_url": "https://github.com/organvm/organvm-engine/pull/130",
+      "repo": "organvm/organvm-engine",
+      "root": "heal-cifix-organvm-organvm-engine-130-ec1fdfaf",
+      "score_discount": 35,
+      "status": "open_pr_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-organvm-engine-130-ec1fdfaf"
     },
     {
       "branch": "limen/org-governance-organ-deepen-0704-e3b89a35",

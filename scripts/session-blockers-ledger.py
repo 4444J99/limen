@@ -828,6 +828,39 @@ def live_root_gate_summary() -> dict[str, Any]:
     }
 
 
+def consolidation_phase_text(source_repos: int, collisions: int, packet_complete: bool) -> tuple[str, str]:
+    if collisions:
+        evidence = (
+            f"{source_repos} source repos remain outside `organvm`; "
+            f"{collisions} name-collision groups block the transfer apply gate."
+        )
+        if packet_complete:
+            route = (
+                "Collision packet is complete; await an explicit human GitHub mutation gate to run "
+                "`docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and "
+                "require 0 collisions before transfer."
+            )
+        else:
+            route = (
+                "Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require "
+                "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions "
+                "before any transfer."
+            )
+        return evidence, route
+
+    evidence = (
+        f"{source_repos} source repos remain outside `organvm`; "
+        "0 name-collision groups remain, so transfer apply is ready only behind an explicit human gate."
+    )
+    route = (
+        "Name collisions are clear; under an explicit human transfer gate, run "
+        "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py --apply`, then refresh gates and run "
+        "`PYTHONPATH=cli/src python3 scripts/rewrite-owners.py --apply --emit-remotes /tmp/limen-remotes.sh` "
+        "after transfer."
+    )
+    return evidence, route
+
+
 def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any]:
     gate = load_json(CONSOLIDATION_INDEX)
     if not gate:
@@ -856,27 +889,15 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
 
     if source_repos or collisions:
         packet_complete = bool(collision_packet.get("complete"))
+        evidence, route = consolidation_phase_text(source_repos, collisions, packet_complete)
         add_blocker(
             blockers,
             blocker_id="github-consolidation-collisions",
             category="github_consolidation",
             status="needs_human_gate",
-            evidence=(
-                f"{source_repos} source repos remain outside `organvm`; "
-                f"{collisions} name-collision groups block the transfer apply gate."
-            ),
+            evidence=evidence,
             owner="GitHub consolidation",
-            route=(
-                "Collision packet is complete; await an explicit human GitHub mutation gate to run "
-                "`docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and "
-                "require 0 collisions before transfer."
-                if packet_complete
-                else (
-                    "Resolve `docs/consolidation/COLLISION-RENAMES.md`, then require "
-                    "`PYTHONPATH=cli/src python3 scripts/consolidate-github.py` to report 0 collisions "
-                    "before any transfer."
-                )
-            ),
+            route=route,
             source="consolidation-gates",
             details={
                 "source_repos": source_repos,
@@ -884,6 +905,7 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
                 "task_repo_refs_to_rewrite_post_transfer": task_refs,
                 "local_remotes_to_rewrite_post_transfer": remotes,
                 "collision_packet_complete": bool(collision_packet.get("complete")),
+                "transfer_apply_gate_open": bool((gates or {}).get("can_run_transfer_apply_after_human_gate")),
                 "collision_packet_missing_keepers": len(collision_packet.get("missing_keepers") or []),
                 "collision_packet_missing_rename_commands": len(
                     collision_packet.get("missing_rename_commands") or []

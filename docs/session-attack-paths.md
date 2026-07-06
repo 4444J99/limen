@@ -1,6 +1,6 @@
 # Session Attack Paths
 
-Generated: `2026-07-06T12:37:07+00:00`
+Generated: `2026-07-06T12:52:48+00:00`
 
 ## Canonical Decision
 
@@ -15,10 +15,10 @@ Generated: `2026-07-06T12:37:07+00:00`
 - Redacted prompt corpus: `15223` files, `131021` prompt-like events.
 - Codex classified sessions: `887`.
 - Worktree debt roots: `0`.
-- Worktree preservation receipts: `86`.
+- Worktree preservation receipts: `87`.
 - Parked blockers: `6`.
-- Local lifecycle footprint: `29.0 GiB`.
-- Candidate lanes: `family` 7, `human-gate` 17, `observe` 46, `owner-blocker` 6, `parked` 5, `remote-close` 1, `remote-pr-open` 12.
+- Local lifecycle footprint: `29.1 GiB`.
+- Candidate lanes: `family` 7, `human-gate` 18, `observe` 45, `owner-blocker` 6, `parked` 5, `remote-close` 1, `remote-pr-open` 12.
 
 ## Ordering Model
 
@@ -38,7 +38,7 @@ Generated: `2026-07-06T12:37:07+00:00`
 | 2 | `github-app-limen-bot-not-wired` | `blocker` | `human-gate` | 58 | category `github_app_identity`; status `needs_human_gate` | human/codex-prep | Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; verify `bash scripts/gh-app-token.sh --which` reports the App path. |
 | 3 | `worktree_lifecycle` | `family` | `family` | 57 | sessions 77; states CLOSED 62, STALLED 15; prompts 289 | codex/openCode | Preserve dirty or missing-remote roots, then reclaim duplicate local state. |
 | 4 | `github_review` | `family` | `family` | 55 | sessions 158; states CLOSED 145, STALLED 13; prompts 615 | opencode/jules | Review PR/issue receipts only after owner repo, predicate, and blocker are explicit. |
-| 5 | `github-consolidation-collisions` | `blocker` | `human-gate` | 52 | category `github_consolidation`; status `needs_human_gate` | human/codex-prep | Collision packet is complete; await an explicit human GitHub mutation gate to run `docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and require 0 collisions before transfer. |
+| 5 | `github-consolidation-collisions` | `blocker` | `human-gate` | 52 | category `github_consolidation`; status `needs_human_gate` | human/codex-prep | Name collisions are clear; under an explicit human transfer gate, run `PYTHONPATH=cli/src python3 scripts/consolidate-github.py --apply`, then refresh gates and run `PYTHONPATH=cli/src python3 scripts/rewrite-owners.py --apply --emit-remotes /tmp/limen-remotes.sh` after transfer. |
 | 6 | `heal-cifix-organvm-organvm-ontologia-11-a86cf99f` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
 | 7 | `heal-cifix-organvm-organvm-ontologia-12-2c2c85ba` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |
 | 8 | `heal-cifix-organvm-organvm-ontologia-13-953633bb` | `worktree` | `observe` | 50 | reason `active(<6h)`; prompts 3; remote `missing`; open PRs 0 | codex first; opencode/jules after packetization | Keep active work visible; do not interrupt unless it becomes stale. |

@@ -207,6 +207,25 @@ def validate_collision_packet(
     collisions = [item for item in consolidation.get("collision_examples") or [] if isinstance(item, dict)]
     keepers = packet.get("keepers") or {}
     commands = packet.get("rename_commands") or []
+    collision_count = int(consolidation.get("collision_groups") or 0)
+    if collision_count == 0 and not collisions:
+        return {
+            "path": packet.get("path"),
+            "present": bool(packet.get("present")),
+            "live_collision_groups": 0,
+            "live_collision_groups_parsed": 0,
+            "keeper_rows": len(keepers),
+            "rename_commands": len(commands),
+            "required_rename_commands": 0,
+            "missing_keepers": [],
+            "invalid_keepers": [],
+            "missing_rename_commands": [],
+            "extra_rename_commands": [],
+            "target_checks": [],
+            "target_conflicts": [],
+            "target_unknown": [],
+            "complete": True,
+        }
     command_by_repo = {str(command.get("source_repo")): command for command in commands if command.get("source_repo")}
     missing_keepers: list[str] = []
     invalid_keepers: list[dict[str, Any]] = []
@@ -353,6 +372,11 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         collision_lines = ["- none"]
     installed = ", ".join(f"`{slug}`" for slug in app.get("installed_app_slugs") or []) or "none"
     blocking_text = ", ".join(f"`{gate}`" for gate in blocking) or "none"
+    collision_gate_step = (
+        "1. Collision names are resolved; keep `docs/consolidation/COLLISION-RENAMES.md` as the historical rename receipt."
+        if int(consolidation.get("collision_groups") or 0) == 0
+        else "1. Resolve collision names from `docs/consolidation/COLLISION-RENAMES.md`."
+    )
     lines = [
         "# GitHub Consolidation Gates",
         "",
@@ -402,7 +426,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "## Exact Gates",
         "",
-        "1. Resolve collision names from `docs/consolidation/COLLISION-RENAMES.md`.",
+        collision_gate_step,
         "2. Re-run `PYTHONPATH=cli/src python3 scripts/consolidate-github.py` and require `name collisions (must rename before transfer): 0`.",
         "3. Only after the human transfer gate, run `PYTHONPATH=cli/src python3 scripts/consolidate-github.py --apply`.",
         "4. Only after transfer, run `PYTHONPATH=cli/src python3 scripts/rewrite-owners.py --apply --emit-remotes /tmp/limen-remotes.sh`.",
