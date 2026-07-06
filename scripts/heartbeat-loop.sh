@@ -589,16 +589,8 @@ while true; do
   # NEVER wedge the beat (the prior wedge bug); the multi-provider rescan is heavier than
   # the old one-provider run, hence the larger default budget.
   if play "$C_CORPUS_FEED" && [ "${LIMEN_CORPUS_FEED:-1}" = "1" ]; then
-    SM="${LIMEN_SESSION_META:-$HOME/Workspace/session-meta}"
-    [ -d "$SM" ] && ( cd "$SM" && timeout "${LIMEN_CORPUS_FEED_TIMEOUT:-600}" sh -c '
-        if [ -x ingest/refresh-atoms.sh ]; then
-          bash ingest/refresh-atoms.sh
-        else
-          python3 ingest/manifest.py data/session-transcripts \
-            --extra-root "$HOME/.claude/projects:claude-projects" --out ingest/manifest.jsonl --merge \
-          && python3 ingest/atomize.py --manifest ingest/manifest.jsonl --out ingest/atoms.jsonl
-        fi
-      ' 2>&1 | tail -6 ) || true
+    python3 "$LIMEN_ROOT/scripts/corpus-feed.py" 2>&1 | tail -6 || true
+    stamp corpus_feed
   fi
   # CONVERGE his WORDS — distill the knowledge base toward ONE. Gated OFF by default
   # (LIMEN_CORPUS_CONVERGE=1); the script self-selects live synthesis (LIMEN_CORPUS_CONVERGE_LIVE=1)

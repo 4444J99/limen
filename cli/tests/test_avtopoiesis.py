@@ -5,6 +5,7 @@ includes ITSELF as a door (operational closure), scores three bounded tenses, re
 identical verdict each run (idempotent), and that strict-mode's exit code tracks the audit.
 """
 
+import importlib.util
 import json
 import os
 import subprocess
@@ -55,6 +56,18 @@ def test_past_tense_resolves_scripts_from_heartbeat_commands():
     assert doors["governance"]["tenses"]["past"] == 1.0
     assert doors["health"]["tenses"]["past"] == 1.0
     assert doors["financial"]["tenses"]["past"] == 1.0
+    assert doors["corpus_feed"]["tenses"]["past"] == 1.0
+
+
+def test_script_name_fallback_does_not_cross_feed_doors():
+    spec = importlib.util.spec_from_file_location("avtopoiesis_under_test", GATE)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+
+    feed_scripts = {path.name for path in module._door_scripts("feed")}
+
+    assert "corpus-feed.py" not in feed_scripts
 
 
 def test_summary_reports_distance_from_ideal():

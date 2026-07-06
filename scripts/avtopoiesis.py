@@ -121,7 +121,7 @@ def _door_scripts(key):
     hits = _heartbeat_scripts_for(key)
     for p in sorted(SCRIPTS.glob("*.py")) + sorted(SCRIPTS.glob("*.sh")):
         stem = p.stem.lower()
-        if stem in variants or any(v and v in stem for v in variants):
+        if stem in variants or any(v and (stem.startswith(f"{v}-") or stem.startswith(f"{v}_")) for v in variants):
             hits.append(p)
     out = []
     seen = set()
