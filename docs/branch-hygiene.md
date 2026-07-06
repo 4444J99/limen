@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (121) — decide each
+## Live-work branches (122) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -76,6 +76,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/gh-organvm-limen-262-0a16` — 3ebc05c2 docs(levers): L-IANVA-LOCAL — launchd plist staged, ONE command to bootstrap (#262)
 - `limen/gh-organvm-limen-352-b4c3` — 18129a47 fix(cli): type-modernization — PEP 604 syntax and TypedDict definitions
 - `limen/org-artist-organ-face-0704-2152` — 0bf299b0 artist: polish macro and micro faces (ORG-artist-organ-face-0704)
+- `limen/org-artist-organ-face-0704-54ed` — f0ca6297 chore(artist): mark ORG-artist-organ-face-0704 as done
 - `limen/org-governance-organ-deepen-0628-90ee` — 3b2001f6 feat: operationalize cvrsvs-honorvm rule as executable validator
 - `limen/org-governance-organ-deepen-0703-9f8e` — 6d486017 governance: enforce publication-policy convergence
 - `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf04 limen: close governance organ self-feed task
