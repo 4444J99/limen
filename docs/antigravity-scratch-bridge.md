@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T03:22:22+00:00`
+Generated: `2026-07-06T03:37:17+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `20`.
-- External archives verified: `19`.
-- Verified external archive source size: `22.2 GiB`.
-- Event source size total: `26.8 GiB` (includes retries).
+- Preservation receipts: `21`.
+- External archives verified: `20`.
+- Verified external archive source size: `22.3 GiB`.
+- Event source size total: `27.0 GiB` (includes retries).
+- `2026-07-06T03:37:29Z` `organvm-engine`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033729Z-organvm-engine/receipt.json`.
 - `2026-07-06T03:22:35Z` `rules-system-bound`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T032235Z-rules-system-bound/receipt.json`.
 - `2026-07-06T03:15:41Z` `organvm-i-theoria-mesh`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031541Z-organvm-i-theoria-mesh/receipt.json`.
 - `2026-07-06T03:11:11Z` `domus-genoma`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031111Z-domus-genoma/receipt.json`.
@@ -43,14 +44,13 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T03:02:34Z` `bountyscope-test-coverage`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030234Z-bountyscope-test-coverage/receipt.json`.
 - `2026-07-06T02:57:34Z` `universal-mail--automation`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025734Z-universal-mail--automation/receipt.json`.
 - `2026-07-06T02:55:35Z` `a-i-chat--exporter`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025535Z-a-i-chat--exporter/receipt.json`.
-- `2026-07-06T02:54:21Z` `organvm-i-theoria-github`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025421Z-organvm-i-theoria-github/receipt.json`.
 
 ## Preservation Results
 
 - Requested roots: `1`.
-- Source size receipted: `133.2 MiB`.
+- Source size receipted: `122.6 MiB`.
 - Statuses: `external_archive_preserved` 1.
-- Preserved `rules-system-bound` `133.2 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T032235Z-rules-system-bound/receipt.json`.
+- Preserved `organvm-engine` `122.6 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033729Z-organvm-engine/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
@@ -95,7 +95,7 @@ before any local root can be removed.
 | `domus-genoma` | `166.0 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/domus-genoma@57d176ccb52d` |
 | `organvm-i-theoria-mesh` | `148.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/mesh@b4f0ed18fedf` |
 | `rules-system-bound` | `133.2 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/rules-system-bound@2d8061dd02c1` |
-| `organvm-engine` | `122.7 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/organvm-engine@ffeb44eced01` |
+| `organvm-engine` | `122.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/organvm-engine@026b7efe8601` |
 | `conversation-corpus-engine` | `120.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/conversation-corpus-engine@9d7b3cff6e1f` |
 | `4444J99` | `81.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/_agent@acbca74f95ec` |
 | `anon-hookup-now` | `69.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/anon-hookup-now@92fd88681fde` |
