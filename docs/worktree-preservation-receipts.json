@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-06T12:23:19Z",
+  "generated_utc": "2026-07-06T12:26:34Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -1673,6 +1673,84 @@
       "status": "documented_non_source_residue",
       "total_bytes": 1430,
       "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-health-organ-firstslice-0704-aac2b482"
+    },
+    {
+      "branch": "limen/resolve-a-organvm-organvm-engine-116-2997",
+      "classification": "merged PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-06T12:26:34Z",
+      "head": "1209c8b5e5c6539876d0188f5b1cd75a78884c2d",
+      "lane": "remote-merged",
+      "next_action": "No local PR or branch preservation action remains. GitHub PR #124 is MERGED and its head OID equals the local worktree HEAD. Reclaim the local checkout only after normal operator acceptance.",
+      "pr_number": 124,
+      "pr_state": "MERGED",
+      "pr_title": "[limen RESOLVE-a-organvm-organvm-engine-116] resolve organvm-engine#116 (BLOCKED)",
+      "pr_url": "https://github.com/organvm/organvm-engine/pull/124",
+      "repo": "organvm/organvm-engine",
+      "root": "heal-cifix-organvm-organvm-engine-124-e0bb2d06",
+      "score_discount": 35,
+      "status": "merged_pr_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-organvm-engine-124-e0bb2d06"
+    },
+    {
+      "branch": "limen/resolve-a-organvm-organvm-engine-117-ceab",
+      "classification": "open PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-06T12:26:34Z",
+      "head": "520a81385ac3049e8eb62e10d560dce04fe61c29",
+      "lane": "remote-pr-open",
+      "merge_state": "DIRTY",
+      "next_action": "No local-only source preservation remains. GitHub PR #130 is OPEN and its head OID equals the local worktree HEAD; rebase or supersede before merge. Reclaim the local checkout only after normal operator acceptance.",
+      "pr_draft": false,
+      "pr_number": 130,
+      "pr_state": "OPEN",
+      "pr_title": "[limen RESOLVE-a-organvm-organvm-engine-117] resolve organvm-engine#117 (BLOCKED)",
+      "pr_url": "https://github.com/organvm/organvm-engine/pull/130",
+      "repo": "organvm/organvm-engine",
+      "root": "heal-cifix-organvm-organvm-engine-130-8a6060e4",
+      "score_discount": 35,
+      "status": "open_pr_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-organvm-engine-130-8a6060e4"
+    },
+    {
+      "branch": "limen/org-governance-organ-deepen-0704-e3b89a35",
+      "classification": "merged PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-06T12:26:34Z",
+      "head": "3dc75166a4a254a025c0f2e8f77b10d5956a3a3a",
+      "lane": "remote-merged",
+      "next_action": "No local PR or branch preservation action remains. GitHub PR #669 is MERGED and its head OID equals the local worktree HEAD. Reclaim the local checkout only after normal operator acceptance.",
+      "pr_number": 669,
+      "pr_state": "MERGED",
+      "pr_title": "[limen ORG-governance-organ-deepen-0704] Deepen the governance organ toward a usable institution",
+      "pr_url": "https://github.com/organvm/limen/pull/669",
+      "repo": "organvm/limen",
+      "root": "pr-669-governance-deepen",
+      "score_discount": 35,
+      "status": "merged_pr_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/pr-669-governance-deepen"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-06T12:26:34Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1205,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "58efbe4718acd7127093a7cb079e3d41a9aa868fe55f40f3db33ba4454ede8f7"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "d98e3edd238e252444d7f08b78508f4951d45bb78bbb9ea6d0e4e8bde4a61b0b"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-health-organ-firstslice-0704-caa4e142",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1398,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-health-organ-firstslice-0704-caa4e142"
     }
   ],
   "schema": 1

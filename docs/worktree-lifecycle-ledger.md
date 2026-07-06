@@ -34,6 +34,23 @@ The unique work remains preserved on the remote branches and open draft PRs.
   `docs/worktree-preservation-receipts.json`. This records a non-source residue proof only:
   no local reclaim, deletion, force-push, merge, task-board mutation, or owner-repo source edit
   was performed.
+- Continued under the regenerated `tranche-worktree-lifecycle-debt` packet and classified the
+  remaining visible debt roots by receipt only. Live GitHub PR inspection showed
+  `heal-cifix-organvm-organvm-engine-124-e0bb2d06` is preserved by merged PR
+  [#124](https://github.com/organvm/organvm-engine/pull/124), whose `headRefOid`
+  `1209c8b5e5c6539876d0188f5b1cd75a78884c2d` equals local `HEAD`; `pr-669-governance-deepen` is
+  preserved by merged PR [#669](https://github.com/organvm/limen/pull/669), whose `headRefOid`
+  `3dc75166a4a254a025c0f2e8f77b10d5956a3a3a` equals local `HEAD`; and
+  `heal-cifix-organvm-organvm-engine-130-8a6060e4` is preserved by open PR
+  [#130](https://github.com/organvm/organvm-engine/pull/130), whose `headRefOid`
+  `520a81385ac3049e8eb62e10d560dce04fe61c29` equals local `HEAD` but remains `DIRTY`.
+- Also classified `org-health-organ-firstslice-0704-caa4e142` as documented non-source residue
+  after read-only inspection found only `logs/session-lifecycle-pressure.json` (1,205 bytes,
+  SHA-256 `58efbe4718acd7127093a7cb079e3d41a9aa868fe55f40f3db33ba4454ede8f7`) and
+  `logs/session-lifecycle-pressure.md` (193 bytes, SHA-256
+  `d98e3edd238e252444d7f08b78508f4951d45bb78bbb9ea6d0e4e8bde4a61b0b`).
+- No local reclaim, deletion, force-push, merge, owner-repo source edit, or task-board mutation was
+  performed while closing these lifecycle debt receipts.
 
 2026-07-06 remote-supersession pass:
 
