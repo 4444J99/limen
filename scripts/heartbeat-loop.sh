@@ -274,6 +274,7 @@ C_QUICKEN="${LIMEN_BEAT_QUICKEN:-4}"   # QUICKEN (give stalled FleetView session
 C_POSITIONING="${LIMEN_BEAT_POSITIONING:-12}"  # POSITIONING (refresh inbound-magnet surfaces; gated OFF)
 C_AVTOPOIESIS="${LIMEN_BEAT_AVTOPOIESIS:-12}"  # AVTOPOIESIS (is each door alive? past/present/future — distance-from-ideal; gated OFF)
 C_EVOCATOR="${LIMEN_BEAT_EVOCATOR:-6}"   # EVOCATOR (the summoner — keep canonical truths present in every channel: FLAME/beat, corpus, memory)
+C_VLTIMA="${LIMEN_BEAT_VLTIMA:-12}"       # VLTIMA (absorb movement into owner-certified packets; gated OFF)
 C_HEALTH="${LIMEN_BEAT_HEALTH:-6}"       # CARE (refresh the personal health office: chart digest + visit-prep + clinical-loop chase; PII off-repo)
 C_MAT="${LIMEN_BEAT_MAT:-8}"             # MAT (daily-engine keeper: session pull + card pre-compose + roadblocks; ~20h self-throttle in-organ; counts-only off-repo)
 C_LIFE="${LIMEN_BEAT_LIFE:-6}"           # STEWARD (refresh the digital-life office: accounts/assets/subscription purge clock; PII off-repo)
@@ -1278,6 +1279,15 @@ while true; do
     python3 "$LIMEN_ROOT/scripts/evocator.py" --apply 2>&1 | tail -2 || true
     stamp evocator
   fi
+  # VLTIMA — absorb local/AI movement into a closed, privacy-safe metabolism: current receipts ->
+  # temporal authority -> owner certainty -> bounded packets. Gated OFF by default
+  # (LIMEN_VLTIMA=1) because broad absorption is a deliberate organ, not surprise dispatch.
+  # The default write path touches only VLTIMA-owned doctrine/state and never mutates tasks.yaml.
+  if due_voice vltima "$C_VLTIMA" && [ "${LIMEN_VLTIMA:-0}" = "1" ]; then
+    timeout "${LIMEN_VLTIMA_TIMEOUT:-900}" python3 "$LIMEN_ROOT/scripts/vltima-organ.py" --write 2>&1 | tail -2 || true
+    stamp vltima
+  fi
+
   # HANDOFF — final read after this beat's board, usage, reconciliation, and provider mutations.
   # metabolize.sh has its own caller, but the live heartbeat never invokes metabolize.
   beat_run handoff-relay python3 "$LIMEN_ROOT/scripts/handoff-relay.py" || true

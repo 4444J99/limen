@@ -806,6 +806,84 @@ def channels(scope, emit, prs_mode, json_output):
     ws.print_channels(limen, root, scope=scope)
 
 
+def _run_limen_script(script_name: str, args: list[str]) -> None:
+    root = resolve_limen_repo_root()
+    script = root / "scripts" / script_name
+    result = subprocess.run([sys.executable, str(script), *args], cwd=root, text=True, capture_output=True)
+    if result.stdout:
+        click.echo(result.stdout, nl=False)
+    if result.stderr:
+        click.echo(result.stderr, err=True, nl=False)
+    raise SystemExit(result.returncode)
+
+
+@main.group()
+def vltima():
+    """VLTIMA absorption, owner-certainty, and packet surfaces."""
+
+
+@vltima.command("plan")
+def vltima_plan():
+    """Print the VLTIMA organ's non-mutating execution plan."""
+    _run_limen_script("vltima-organ.py", ["--plan"])
+
+
+@vltima.command("run")
+@click.option("--write", is_flag=True, help="Write VLTIMA owner, packet, and state surfaces.")
+@click.option("--run-cadence", is_flag=True, help="Run the safe absorption cadence first.")
+@click.option("--materialize-private", is_flag=True, help="Opt into raw private materialization.")
+@click.option("--include-github-meta", is_flag=True, help="Include local GitHub metadata only.")
+@click.option("--json-output", "json_output", is_flag=True, help="Print state JSON.")
+def vltima_run(write, run_cadence, materialize_private, include_github_meta, json_output):
+    """Run the VLTIMA organ. Without --write this is read-only status."""
+    args = []
+    if write:
+        args.append("--write")
+    if run_cadence:
+        args.append("--run-cadence")
+    if materialize_private:
+        args.append("--materialize-private")
+    if include_github_meta:
+        args.append("--include-github-meta")
+    if json_output:
+        args.append("--json")
+    _run_limen_script("vltima-organ.py", args)
+
+
+@vltima.command("check")
+@click.option("--json-output", "json_output", is_flag=True, help="Print state JSON.")
+def vltima_check(json_output):
+    """Run the read-only VLTIMA predicate."""
+    args = ["--check"]
+    if json_output:
+        args.append("--json")
+    _run_limen_script("vltima-organ.py", args)
+
+
+@vltima.command("status")
+@click.option("--json-output", "json_output", is_flag=True, help="Print state JSON.")
+def vltima_status(json_output):
+    """Show current VLTIMA state without mutation."""
+    args = ["--status"]
+    if json_output:
+        args.append("--json")
+    _run_limen_script("vltima-organ.py", args)
+
+
+@vltima.command("packetize")
+@click.option("--write", is_flag=True, help="Write packet docs and private packet index.")
+@click.option("--limit", default=40, type=int, help="Maximum packet candidates to emit.")
+@click.option("--json-output", "json_output", is_flag=True, help="Print packet JSON.")
+def vltima_packetize(write, limit, json_output):
+    """Packetize owner-certified current doctrine without enqueueing."""
+    args = ["--limit", str(limit)]
+    if write:
+        args.append("--write")
+    if json_output:
+        args.append("--json")
+    _run_limen_script("vltima-packetize.py", args)
+
+
 @main.command()
 @click.option("--agent", default=None, help="Filter by agent")
 def harvest(agent):

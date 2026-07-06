@@ -609,6 +609,24 @@ parameters:
     self_update: none
     owner: evocator
     note: "The declarative canon of truths the organ summons everywhere."
+  LIMEN_VLTIMA:
+    default: "0"
+    env: LIMEN_VLTIMA
+    self_update: none
+    owner: vltima
+    note: "Gate for the VLTIMA absorption organ. =1 arms owner-certainty and packet refresh on cadence; v1 never mutates tasks.yaml."
+  LIMEN_BEAT_VLTIMA:
+    default: 12
+    env: LIMEN_BEAT_VLTIMA
+    self_update: none
+    owner: vltima
+    note: "How often the VLTIMA organ refreshes owner-certified packets once armed."
+  LIMEN_VLTIMA_TIMEOUT:
+    default: 900
+    env: LIMEN_VLTIMA_TIMEOUT
+    self_update: none
+    owner: vltima
+    note: "Heartbeat timeout for the VLTIMA organ write path; broad absorption remains explicit via the CLI."
   LIMEN_KNOWLEDGE_CORPUS:
     default: "~/Workspace/knowledge-corpus"
     env: LIMEN_KNOWLEDGE_CORPUS

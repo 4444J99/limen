@@ -524,6 +524,18 @@ def _registry():
             probe=lambda: _mtime(LOGS / "evocator.json"),
         ),
         dict(
+            key="vltima",
+            rung="VLTIMA",
+            voice="vltima",
+            cadence_key="VLTIMA",
+            gate="LIMEN_VLTIMA",
+            gate_default="0",
+            hold=True,
+            bound_lever="LIMEN_VLTIMA=1",
+            what="autopoietic absorption membrane: evidence -> owner certainty -> packets",
+            probe=lambda: _json_field_ts(LOGS / "vltima-organ-state.json", "generated_at"),
+        ),
+        dict(
             key="positioning",
             rung="POSITIONING",
             voice="positioning",

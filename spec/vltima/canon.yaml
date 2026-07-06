@@ -1,0 +1,66 @@
+# VLTIMA canon
+#
+# The mechanism is deliberately not a product-shell choice. It defines the
+# membrane that lets the system derive rightful owner, certainty, scope, and
+# action from evidence.
+schema_version: 1
+
+membrane:
+  raw_private_material: ".limen-private/session-corpus"
+  public_doctrine: "docs/"
+  state_log: "logs/vltima-organ-state.json"
+  default_remote_scope: "metadata-only"
+  task_board_mutation: "forbidden in v1"
+
+privacy_classes:
+  public_redacted:
+    tracked: true
+    raw_bodies_allowed: false
+  private_index:
+    tracked: false
+    raw_bodies_allowed: false
+  private_raw:
+    tracked: false
+    raw_bodies_allowed: true
+    requires_flag: "--materialize-private"
+
+authority_classes:
+  current_doctrine:
+    action: "may seed bounded packets when owner and verification are explicit"
+  living_lineage:
+    action: "review input; does not override current doctrine"
+  dormant_ore:
+    action: "recoverable idea material; not dispatchable"
+  superseded_material:
+    action: "parked unless fresh evidence reverses it"
+  quarantined_ghost:
+    action: "parked behind privacy, credential, or human-safety boundary"
+  unowned_ore:
+    action: "not dispatchable until owner certainty is resolved"
+
+owner_certainty:
+  owned_current:
+    dispatchable: true
+    requires:
+      - "authority=current_doctrine"
+      - "source_status=current"
+      - "owner is explicit"
+  owned_lineage:
+    dispatchable: false
+    requires:
+      - "owner is explicit"
+      - "authority is lineage or dormant"
+  parked:
+    dispatchable: false
+    requires:
+      - "authority is superseded or quarantined"
+  unowned_ore:
+    dispatchable: false
+    requires:
+      - "owner cannot be derived from surface, lane, or evidence"
+
+packet_contract:
+  default_status: "candidate"
+  default_mutation_level: "review_only"
+  verification_command: "python3 scripts/vltima-organ.py --check"
+  enqueue: "not implemented in v1"

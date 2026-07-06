@@ -846,3 +846,12 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   `note-link-baseline.txt` exactly one way — by writing the note it names — and a stale line fails
   the gate, so the baseline cannot quietly become permission. `at-ideal` is an empty baseline.
 - **Owner:** Claude (`scripts/check-note-links.py` · `institutio/governance/note-link-baseline.txt`).
+
+### IF-VLTIMA-AUTOPOIETIC-MEMBRANE — movement becomes owner-certified action
+- **Ideal form:** every local/remote AI movement is absorbed through a privacy-safe membrane,
+  classified by temporal authority, assigned to its rightful owner, and converted only into bounded
+  packets with receipt and verification.
+- **Distance:** absorption, prior-excavation, and result-digest surfaces exist; this tranche adds
+  owner certainty, packetization, a gated heartbeat organ, a CLI surface, and a read-only predicate.
+- **Status:** PARTIAL.
+- **Owner:** VLTIMA organ (`scripts/vltima-organ.py`) + Anthony for future enqueue/daemon arming.
