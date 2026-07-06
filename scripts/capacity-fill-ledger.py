@@ -34,7 +34,7 @@ RATE_LIMIT_TAIL_LINES = 400
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.capacity import capacity_census  # noqa: E402
-from limen.dispatch import _reset_budget_if_needed  # noqa: E402
+from limen.dispatch import _down_lanes, _reset_budget_if_needed  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 
 
@@ -349,10 +349,31 @@ def apply_usage_to_census_row(row: dict[str, Any]) -> dict[str, Any]:
     return row
 
 
+def apply_dispatch_down_gate_to_census_row(
+    row: dict[str, Any], down_lanes: set[str] | None = None
+) -> dict[str, Any]:
+    agent = str(row.get("agent") or "")
+    aliases = {agent}
+    if agent == "agy":
+        aliases.add("antigravity")
+    down = down_lanes if down_lanes is not None else _down_lanes()
+    if not aliases.intersection(down):
+        return row
+
+    row["reachable"] = False
+    row["remaining"] = 0
+    detail = str(row.get("detail") or "")
+    suffix = "dispatch down-lane gate"
+    row["detail"] = f"{detail}; {suffix}" if detail else suffix
+    return row
+
+
 def build_snapshot(board: dict[str, Any]) -> dict[str, Any]:
     census = [dict(row) for row in capacity_census(board)]
+    down_lanes = _down_lanes()
     for row in census:
         apply_usage_to_census_row(row)
+        apply_dispatch_down_gate_to_census_row(row, down_lanes)
         if row.get("agent") == "ollama" and not row.get("reachable"):
             row["detail"] = ollama_capacity_detail(str(row.get("detail", "unreachable")))
     blocked = [row for row in census if not row["reachable"]]

@@ -202,6 +202,34 @@ def test_census_uses_live_usage_exhaustion_for_reachability(monkeypatch):
     assert snapshot["blocked_agents"] == ["jules"]
 
 
+def test_census_uses_dispatch_down_gate_for_reachability(monkeypatch):
+    module = _load_capacity_fill_module()
+    monkeypatch.setattr(
+        module,
+        "capacity_census",
+        lambda board: [
+            {
+                "agent": "claude",
+                "kind": "local-cli",
+                "reachable": True,
+                "remaining": 12,
+                "limit": 100,
+                "detail": "/Users/test/.local/bin/claude",
+            }
+        ],
+    )
+    monkeypatch.setattr(module, "usage_vendor", lambda agent: None)
+    monkeypatch.setattr(module, "_down_lanes", lambda: {"claude"})
+
+    snapshot = module.build_snapshot({})
+    row = snapshot["census"][0]
+
+    assert row["reachable"] is False
+    assert row["remaining"] == 0
+    assert "dispatch down-lane gate" in row["detail"]
+    assert snapshot["blocked_agents"] == ["claude"]
+
+
 def test_load_tasks_board_projects_stale_budget_reset(tmp_path, monkeypatch):
     module = _load_capacity_fill_module()
     now = dt.datetime.now(dt.timezone.utc)
