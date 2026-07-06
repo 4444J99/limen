@@ -36,6 +36,10 @@ available. This keeps shell/tool polling, receipt generation, and closeout log
 collection from making a finished over-budget transcript look like a live model
 runaway. A genuine active runaway still emits fresh token_count events, which is
 the signal this breaker exists to stop.
+
+If a session has a terminal ``task_complete`` event after its newest token event,
+it is immediately historical. Do not make the operator wait for an arbitrary
+age-out window once the harness has already recorded that the task ended.
 """
 
 from __future__ import annotations
@@ -44,7 +48,6 @@ import argparse
 import datetime as dt
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -148,6 +151,8 @@ def summarize_session(path: Path, *, max_phases: int) -> dict[str, Any]:
     missing_usage_events = 0
     context_window: int | None = None
     rate_limits: dict[str, Any] | None = None
+    last_task_started_at: dt.datetime | None = None
+    last_task_complete_at: dt.datetime | None = None
 
     for line_no, row in iter_jsonl(path):
         row_type = row.get("type")
@@ -155,11 +160,17 @@ def summarize_session(path: Path, *, max_phases: int) -> dict[str, Any]:
         if row_type == "session_meta" and isinstance(payload, dict):
             session_id = str(payload.get("id") or session_id)
 
-        if payload.get("type") != "token_count":
+        event_type = payload.get("type")
+        timestamp = parse_ts(row.get("timestamp"))
+        if event_type == "task_started" and timestamp is not None:
+            last_task_started_at = timestamp
+        elif event_type == "task_complete" and timestamp is not None:
+            last_task_complete_at = timestamp
+
+        if event_type != "token_count":
             continue
 
         token_events += 1
-        timestamp = parse_ts(row.get("timestamp"))
         if timestamp is not None:
             first_ts = timestamp if first_ts is None else min(first_ts, timestamp)
             last_ts = timestamp if last_ts is None else max(last_ts, timestamp)
@@ -205,6 +216,8 @@ def summarize_session(path: Path, *, max_phases: int) -> dict[str, Any]:
         "mtime": mtime,
         "first_token_at": first_ts.isoformat(timespec="seconds") if first_ts else None,
         "last_token_at": last_ts.isoformat(timespec="seconds") if last_ts else None,
+        "last_task_started_at": last_task_started_at.isoformat(timespec="seconds") if last_task_started_at else None,
+        "last_task_complete_at": last_task_complete_at.isoformat(timespec="seconds") if last_task_complete_at else None,
         "elapsed_seconds": elapsed_seconds,
         "token_count_events": token_events,
         "missing_usage_events": missing_usage_events,
@@ -281,7 +294,16 @@ def evaluate_session(session: dict[str, Any], thresholds: dict[str, int]) -> tup
 
 def session_activity_timestamp(session: dict[str, Any]) -> dt.datetime | None:
     """Return the timestamp that should drive active-budget liveness."""
-    return parse_ts(session.get("last_token_at")) or parse_ts(session.get("mtime"))
+    last_token_at = parse_ts(session.get("last_token_at"))
+    last_started_at = parse_ts(session.get("last_task_started_at"))
+    last_complete_at = parse_ts(session.get("last_task_complete_at"))
+    if last_complete_at is not None:
+        last_work_at = max(ts for ts in [last_token_at, last_started_at] if ts is not None) if (
+            last_token_at or last_started_at
+        ) else None
+        if last_work_at is None or last_complete_at >= last_work_at:
+            return None
+    return last_token_at or parse_ts(session.get("mtime"))
 
 
 def session_age_seconds(session: dict[str, Any], now: dt.datetime) -> int | None:

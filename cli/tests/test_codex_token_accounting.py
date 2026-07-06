@@ -17,7 +17,12 @@ def _iso(ts: dt.datetime) -> str:
     return ts.astimezone(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
-def write_fixture(path: Path, sid: str = "fixture-session", base_time: dt.datetime | None = None) -> None:
+def write_fixture(
+    path: Path,
+    sid: str = "fixture-session",
+    base_time: dt.datetime | None = None,
+    complete: bool = False,
+) -> None:
     start = base_time or (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=2))
     rows = [
         {
@@ -74,6 +79,14 @@ def write_fixture(path: Path, sid: str = "fixture-session", base_time: dt.dateti
             },
         },
     ]
+    if complete:
+        rows.append(
+            {
+                "timestamp": _iso(start + dt.timedelta(minutes=4)),
+                "type": "event_msg",
+                "payload": {"type": "task_complete"},
+            }
+        )
     path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
 
 
@@ -196,6 +209,40 @@ def test_codex_token_accounting_active_gate_fails_fresh_failures(tmp_path: Path)
 
     assert result.returncode == 2
     assert "active_failures=1" in result.stdout
+
+
+def test_codex_token_accounting_active_gate_ignores_completed_fresh_failures(tmp_path: Path) -> None:
+    fixture = tmp_path / "session.jsonl"
+    report = tmp_path / "report.json"
+    write_fixture(fixture, complete=True)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            str(fixture),
+            "--since-hours",
+            "0",
+            "--max-budget-tokens",
+            "900",
+            "--active-session-seconds",
+            "3600",
+            "--output",
+            str(report),
+            "--fail-on-active-budget",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    payload = json.loads(report.read_text())
+    assert payload["status"] == "fail"
+    assert payload["active_status"] == "ok"
+    assert payload["active_failures"] == []
+    assert payload["historical_failures"] == ["fixture-session: budget_tokens=920"]
+    assert payload["sessions"][0]["active"] is False
 
 
 def test_active_gate_ignores_current_codex_thread_by_default(tmp_path: Path) -> None:
@@ -367,3 +414,17 @@ def test_active_helpers_fail_open_and_window() -> None:
 
     mtime_fallback = {"mtime": (now - dt.timedelta(seconds=30)).isoformat(timespec="seconds")}
     assert mod.is_active_session(mtime_fallback, now, 900) is True
+
+    completed = {
+        "last_token_at": (now - dt.timedelta(seconds=30)).isoformat(timespec="seconds"),
+        "last_task_complete_at": (now - dt.timedelta(seconds=1)).isoformat(timespec="seconds"),
+    }
+    assert mod.session_age_seconds(completed, now) is None
+    assert mod.is_active_session(completed, now, 900) is False
+
+    restarted_after_completion = {
+        "last_token_at": (now - dt.timedelta(seconds=30)).isoformat(timespec="seconds"),
+        "last_task_started_at": (now - dt.timedelta(seconds=1)).isoformat(timespec="seconds"),
+        "last_task_complete_at": (now - dt.timedelta(seconds=60)).isoformat(timespec="seconds"),
+    }
+    assert mod.is_active_session(restarted_after_completion, now, 900) is True
