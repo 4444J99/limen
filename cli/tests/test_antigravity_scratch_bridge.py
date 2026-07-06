@@ -129,3 +129,60 @@ def test_reap_history_appends_once_and_renders_cumulative_receipt(tmp_path: Path
     assert "## Reap History" in rendered
     assert "Cumulative reaped roots: `1`" in rendered
     assert "clean-root" in rendered
+
+
+def test_render_markdown_groups_staged_missing_fingerprints_without_root_filenames():
+    bridge = _load()
+    report = {
+        "generated_at": "2026-07-06T00:00:00+00:00",
+        "scratch_root": "/tmp/scratch",
+        "summary": {
+            "total_roots": 2,
+            "total_size": "2 KiB",
+            "safe_reap_size": "0 B",
+            "by_disposition": {"bridge_required": 2},
+        },
+        "roots": [
+            {
+                "name": "one",
+                "size": "1 KiB",
+                "kind": "git",
+                "disposition": "bridge_required",
+                "reason": "dirty-or-untracked",
+                "repo": "example/one",
+                "head": "abc123",
+                "dirty_profile": {
+                    "fingerprint": "full-one",
+                    "staged_deleted_hash": "same-deleted",
+                    "staged_deleted_count": 2,
+                    "untracked_count": 1,
+                    "top_buckets": {"(root)": 1},
+                    "staged_deleted_buckets": {"claude": 2},
+                },
+            },
+            {
+                "name": "two",
+                "size": "1 KiB",
+                "kind": "git",
+                "disposition": "bridge_required",
+                "reason": "dirty-or-untracked",
+                "repo": "example/two",
+                "head": "def456",
+                "dirty_profile": {
+                    "fingerprint": "full-two",
+                    "staged_deleted_hash": "same-deleted",
+                    "staged_deleted_count": 2,
+                    "untracked_count": 1,
+                    "top_buckets": {"(root)": 1},
+                    "staged_deleted_buckets": {"claude": 2},
+                },
+            },
+        ],
+    }
+
+    rendered = bridge.render_markdown(report)
+
+    assert "## Repeated Staged-Missing Fingerprints" in rendered
+    assert "`one`, `two`" in rendered
+    assert "`claude:2`" in rendered
+    assert "DISCOVERY.md" not in rendered

@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T02:14:54+00:00`
+Generated: `2026-07-06T02:19:28+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -9,6 +9,9 @@ Do not delete Antigravity scratch roots by size alone. A root is only a reclaim 
 when this bridge proves it is clean, idle, and preserved on a remote/default-equivalent ref.
 Dirty roots are `bridge_required`: their per-root delta must be carried home or archived
 before any deletion.
+
+`staged_deleted_count` in this receipt means Git observed files already missing/staged
+inside a scratch clone. It is a preservation blocker, not authorization to delete the root.
 
 ## Summary
 
@@ -24,6 +27,24 @@ before any deletion.
 - Cumulative reclaimed size: `6.9 GiB`.
 - `2026-07-06T02:08:09+00:00`: `1` roots, `4.7 GiB` (`session-meta`).
 - `2026-07-06T01:27:51+00:00`: `23` roots, `2.2 GiB` (`growth-auditor`, `the-invisible-ledger`, `organvm-corpvs-testamentvm`, `organvm_domus_genoma`, `persona-fleet`, `a-i--skills`, `prompt-registry-archive`, `portfolio`, ... +15).
+
+## Repeated Staged-Missing Fingerprints
+
+These roots have the same set of files already missing/staged inside their scratch clone.
+That is a preservation blocker and duplicate-state signal, not deletion permission.
+
+| Count | Roots | Staged missing | Top staged buckets |
+|---:|---|---:|---|
+| `3` | `organvm-session-meta`, `session-meta-no-prompt`, `session-meta-2` | `2741` | `claude:1269, codex:692, escape-velocity:339, scheduler:151, .claude:147, gemini:31, opencode:23, analysis:21` |
+
+## Repeated Dirty Fingerprints
+
+These are duplicate-looking unsafe scratch states. They still require bridge/archive proof
+before any local root can be removed.
+
+| Count | Roots | Staged missing | Untracked | Top buckets |
+|---:|---|---:|---:|---|
+| `2` | `anon-hookup-now`, `system-system--system--monad` | `0` | `1` | `(root):1` |
 
 ## Largest Roots
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import re
@@ -99,6 +100,50 @@ def porcelain_counts(path: Path) -> dict[str, int]:
     return {"entries": tracked + untracked, "untracked": untracked, "tracked": tracked, "deletions": deletions}
 
 
+def git_lines(path: Path, args: list[str], timeout: int = 30) -> list[str]:
+    proc = run_git(path, args, timeout=timeout)
+    if proc.returncode != 0:
+        return []
+    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
+def path_digest(paths: list[str]) -> str:
+    payload = "\n".join(sorted(paths)).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()[:16]
+
+
+def path_buckets(paths: list[str], limit: int = 8) -> dict[str, int]:
+    counts: Counter[str] = Counter()
+    for path in paths:
+        counts[path.split("/", 1)[0] if "/" in path else "(root)"] += 1
+    return dict(sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:limit])
+
+
+def dirty_profile(path: Path) -> dict[str, Any]:
+    staged_deleted = git_lines(path, ["diff", "--cached", "--name-only", "--diff-filter=D"], timeout=60)
+    staged_other = git_lines(path, ["diff", "--cached", "--name-only", "--diff-filter=ACMRTUXB"], timeout=60)
+    unstaged = git_lines(path, ["diff", "--name-only"], timeout=60)
+    untracked = git_lines(path, ["ls-files", "--others", "--exclude-standard"], timeout=60)
+    combined = [f"D:{item}" for item in staged_deleted]
+    combined += [f"S:{item}" for item in staged_other]
+    combined += [f"W:{item}" for item in unstaged]
+    combined += [f"U:{item}" for item in untracked]
+    return {
+        "fingerprint": path_digest(combined),
+        "staged_deleted_count": len(staged_deleted),
+        "staged_deleted_hash": path_digest(staged_deleted),
+        "staged_other_count": len(staged_other),
+        "staged_other_hash": path_digest(staged_other),
+        "unstaged_count": len(unstaged),
+        "unstaged_hash": path_digest(unstaged),
+        "untracked_count": len(untracked),
+        "untracked_hash": path_digest(untracked),
+        "top_buckets": path_buckets(staged_deleted + staged_other + unstaged + untracked),
+        "staged_deleted_buckets": path_buckets(staged_deleted),
+        "untracked_buckets": path_buckets(untracked),
+    }
+
+
 def remote_default_ref(path: Path) -> str | None:
     proc = run_git(path, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"])
     if proc.returncode == 0 and proc.stdout.strip():
@@ -153,7 +198,7 @@ def git_snapshot(path: Path, min_idle_hours: float) -> dict[str, Any]:
         disposition, reason = "safe_reap_candidate", "clean-idle-remote-preserved"
     else:
         disposition, reason = "preserve_required", "clean-but-head-not-proven-on-remote"
-    return {
+    snapshot = {
         "kind": "git",
         "branch": branch_line,
         "remote": remote,
@@ -170,6 +215,9 @@ def git_snapshot(path: Path, min_idle_hours: float) -> dict[str, Any]:
         "disposition": disposition,
         "reason": reason,
     }
+    if not clean:
+        snapshot["dirty_profile"] = dirty_profile(path)
+    return snapshot
 
 
 def nested_git_roots(path: Path, max_depth: int = 2) -> list[Path]:
@@ -411,6 +459,9 @@ def render_markdown(report: dict[str, Any]) -> str:
         "Dirty roots are `bridge_required`: their per-root delta must be carried home or archived",
         "before any deletion.",
         "",
+        "`staged_deleted_count` in this receipt means Git observed files already missing/staged",
+        "inside a scratch clone. It is a preservation blocker, not authorization to delete the root.",
+        "",
         "## Summary",
         "",
         f"- Roots scanned: `{summary.get('total_roots', 0)}`.",
@@ -469,6 +520,82 @@ def render_markdown(report: dict[str, Any]) -> str:
                 f"- `{event.get('applied_at')}`: `{event_summary.get('reaped', 0)}` roots, "
                 f"`{event_summary.get('reaped_size', '0 B')}`"
                 + (f" ({shown_roots})." if shown_roots else ".")
+            )
+    staged_missing_groups: dict[str, dict[str, Any]] = {}
+    dirty_groups: dict[str, dict[str, Any]] = {}
+    for row in report.get("roots", []):
+        profile = row.get("dirty_profile") or {}
+        staged_deleted_hash = profile.get("staged_deleted_hash")
+        if staged_deleted_hash and int(profile.get("staged_deleted_count", 0)) > 0:
+            group = staged_missing_groups.setdefault(
+                str(staged_deleted_hash),
+                {
+                    "roots": [],
+                    "staged_deleted_count": profile.get("staged_deleted_count", 0),
+                    "staged_deleted_buckets": profile.get("staged_deleted_buckets") or {},
+                },
+            )
+            group["roots"].append(str(row.get("name")))
+        fingerprint = profile.get("fingerprint")
+        if not fingerprint:
+            continue
+        group = dirty_groups.setdefault(
+            str(fingerprint),
+            {
+                "roots": [],
+                "staged_deleted_count": profile.get("staged_deleted_count", 0),
+                "untracked_count": profile.get("untracked_count", 0),
+                "top_buckets": profile.get("top_buckets") or {},
+            },
+        )
+        group["roots"].append(str(row.get("name")))
+    repeated_staged_missing = sorted(
+        (group for group in staged_missing_groups.values() if len(group["roots"]) > 1),
+        key=lambda group: (-len(group["roots"]), str(group["roots"][0])),
+    )
+    if repeated_staged_missing:
+        lines += [
+            "",
+            "## Repeated Staged-Missing Fingerprints",
+            "",
+            "These roots have the same set of files already missing/staged inside their scratch clone.",
+            "That is a preservation blocker and duplicate-state signal, not deletion permission.",
+            "",
+            "| Count | Roots | Staged missing | Top staged buckets |",
+            "|---:|---|---:|---|",
+        ]
+        for group in repeated_staged_missing[:10]:
+            buckets = ", ".join(
+                f"{key}:{value}" for key, value in group["staged_deleted_buckets"].items()
+            ) or "none"
+            roots = ", ".join(f"`{name}`" for name in group["roots"][:8])
+            if len(group["roots"]) > 8:
+                roots += f", ... +{len(group['roots']) - 8}"
+            lines.append(
+                f"| `{len(group['roots'])}` | {roots} | `{group['staged_deleted_count']}` | `{buckets}` |"
+            )
+    repeated_dirty = sorted(
+        (group for group in dirty_groups.values() if len(group["roots"]) > 1),
+        key=lambda group: (-len(group["roots"]), str(group["roots"][0])),
+    )
+    if repeated_dirty:
+        lines += [
+            "",
+            "## Repeated Dirty Fingerprints",
+            "",
+            "These are duplicate-looking unsafe scratch states. They still require bridge/archive proof",
+            "before any local root can be removed.",
+            "",
+            "| Count | Roots | Staged missing | Untracked | Top buckets |",
+            "|---:|---|---:|---:|---|",
+        ]
+        for group in repeated_dirty[:10]:
+            buckets = ", ".join(f"{key}:{value}" for key, value in group["top_buckets"].items()) or "none"
+            roots = ", ".join(f"`{name}`" for name in group["roots"][:8])
+            if len(group["roots"]) > 8:
+                roots += f", ... +{len(group['roots']) - 8}"
+            lines.append(
+                f"| `{len(group['roots'])}` | {roots} | `{group['staged_deleted_count']}` | `{group['untracked_count']}` | `{buckets}` |"
             )
     largest_heading = "## Largest Roots"
     if report.get("reap"):
