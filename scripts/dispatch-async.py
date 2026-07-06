@@ -409,8 +409,12 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining):
     states = []
     for agent in agents:
         is_async = agent in _ASYNC_LANES  # remote lane (jules, ...) — off-box, not gated by the local cap
+        running_for_agent = _running_for(agent)
+        launch_room = max(0, per_agent - running_for_agent)
+        if launch_room <= 0:
+            continue
         capa = lf.portal.budget.per_agent.get(agent)
-        aspent = track.per_agent.get(agent, 0) + _running_for(agent)  # count in-flight vs budget
+        aspent = track.per_agent.get(agent, 0) + running_for_agent  # count in-flight vs budget
         agent_rem = None if capa is None else max(0, capa - aspent)
         live_rem = usage_remaining.get(agent) if is_async else None
         if live_rem is not None:
@@ -433,6 +437,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining):
                 "agent": agent,
                 "is_async": is_async,
                 "agent_rem": agent_rem,
+                "launch_room": launch_room,
                 "cands": cands,
                 "index": 0,
                 "taken": 0,
@@ -441,7 +446,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining):
     while states:
         progressed = False
         for state in states:
-            if state["taken"] >= per_agent:
+            if state["taken"] >= state["launch_room"]:
                 continue
             if daily - spent <= 0:
                 continue
