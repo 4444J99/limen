@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T03:52:33+00:00`
+Generated: `2026-07-06T03:53:16+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `29`.
-- External archives verified: `28`.
+- Preservation receipts: `30`.
+- External archives verified: `29`.
 - Verified external archive source size: `22.8 GiB`.
 - Event source size total: `27.4 GiB` (includes retries).
+- `2026-07-06T03:53:27Z` `brainstorm-20260423`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035327Z-brainstorm-20260423/receipt.json`.
 - `2026-07-06T03:52:44Z` `adaptive-personal-syllabus`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035244Z-adaptive-personal-syllabus/receipt.json`.
 - `2026-07-06T03:52:07Z` `atomic-substrata`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035207Z-atomic-substrata/receipt.json`.
 - `2026-07-06T03:45:37Z` `session-meta-4`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T034537Z-session-meta-4/receipt.json`.
@@ -43,14 +44,13 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T03:39:46Z` `4444J99`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033946Z-4444J99/receipt.json`.
 - `2026-07-06T03:38:37Z` `conversation-corpus-engine`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033837Z-conversation-corpus-engine/receipt.json`.
 - `2026-07-06T03:37:29Z` `organvm-engine`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033729Z-organvm-engine/receipt.json`.
-- `2026-07-06T03:22:35Z` `rules-system-bound`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T032235Z-rules-system-bound/receipt.json`.
 
 ## Preservation Results
 
 - Requested roots: `1`.
-- Source size receipted: `31.9 MiB`.
+- Source size receipted: `5.1 MiB`.
 - Statuses: `external_archive_preserved` 1.
-- Preserved `adaptive-personal-syllabus` `31.9 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035244Z-adaptive-personal-syllabus/receipt.json`.
+- Preserved `brainstorm-20260423` `5.1 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035327Z-brainstorm-20260423/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
