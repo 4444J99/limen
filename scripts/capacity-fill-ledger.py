@@ -350,9 +350,7 @@ def apply_usage_to_census_row(row: dict[str, Any]) -> dict[str, Any]:
     return row
 
 
-def apply_dispatch_down_gate_to_census_row(
-    row: dict[str, Any], down_lanes: set[str] | None = None
-) -> dict[str, Any]:
+def apply_dispatch_down_gate_to_census_row(row: dict[str, Any], down_lanes: set[str] | None = None) -> dict[str, Any]:
     agent = str(row.get("agent") or "")
     aliases = {agent}
     if agent == "agy":
