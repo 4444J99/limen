@@ -44,6 +44,7 @@ from limen.dispatch import (  # noqa: E402
     _queue_lock,
     _reset_budget_if_needed,
     _restore_done_status,
+    _restore_pr_open_status,
     _routine_generated_buildout_allowed,
     agent_can_run_task,
 )
@@ -326,6 +327,14 @@ def reap_stale(max_age_s: int):
                             ),
                         )
                         changed = True
+                    elif _restore_pr_open_status(
+                        t,
+                        now,
+                        agent=agent,
+                        session_id="async-reap-stale",
+                        output="dispatch-async: stale worker marker reaped after prior open PR; restored PR-open status",
+                    ):
+                        changed = True
                     else:
                         t.status = "open"  # dead worker left no result → retry on a later beat
                         t.updated = now
@@ -371,6 +380,15 @@ def reap_stale(max_age_s: int):
                             session_id="async-reap-stale",
                             output="dispatch-async: markerless stale async reservation restored terminal status",
                         )
+                        applied_markerless.append(tid)
+                        changed = True
+                    elif _restore_pr_open_status(
+                        t,
+                        now,
+                        agent=agent,
+                        session_id="async-reap-stale",
+                        output="dispatch-async: markerless stale async reservation restored PR-open status",
+                    ):
                         applied_markerless.append(tid)
                         changed = True
                     else:
@@ -457,6 +475,14 @@ def _running_task_ids() -> set[str]:
     return ids
 
 
+def _result_task_ids() -> set[str]:
+    return {rf.name[: -len(".result.json")] for rf in RUNS.glob("*.result.json")}
+
+
+def _claimed_task_ids() -> set[str]:
+    return _running_task_ids() | _result_task_ids()
+
+
 def _usage_by_agent() -> dict[str, dict[str, object]]:
     path = ROOT / "logs" / "usage.json"
     try:
@@ -494,7 +520,7 @@ def _weak_proxy_agents(usage: dict[str, dict[str, object]]) -> set[str]:
 
 def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents):
     picked = []
-    picked_ids = set(_running_task_ids())
+    picked_ids = set(_claimed_task_ids())
     reset_changed = _reset_budget_if_needed(lf, now)
     track = lf.portal.budget.track
     daily = lf.portal.budget.daily

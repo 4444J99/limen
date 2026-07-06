@@ -94,6 +94,22 @@ def test_running_marker_blocks_duplicate_task_reservation_across_agents(tmp_path
     assert picked == []
 
 
+def test_pending_result_blocks_duplicate_task_reservation_across_agents(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"codex": 50, "claude": 50}
+    lf.tasks = [Task(id="DUP", title="t", repo="x/y", target_agent="any", status="open", created=today)]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (da.RUNS / "DUP.result.json").write_text(
+        json.dumps({"task_id": "DUP", "agent": "codex", "result": "https://github.com/x/y/pull/9"})
+    )
+
+    picked = da.reserve_and_launch(["claude"], per_agent=4, cap=4, dry=True)
+
+    assert picked == []
+
+
 def test_agy_weak_proxy_can_reserve_against_daily_runway(tmp_path):
     da = _load(tmp_path, n_open=0)
     today = datetime.date.today()
@@ -477,6 +493,48 @@ def test_reaper_restores_prior_done_instead_of_reopening(tmp_path):
     assert task.dispatch_log[-1].session_id == "async-reap-stale"
 
 
+def test_reaper_restores_prior_pr_open_instead_of_reopening(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    today = datetime.date.today()
+    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    lf.tasks.append(
+        Task(
+            id="PR-DEAD",
+            title="t",
+            repo="x/y",
+            target_agent="codex",
+            status="dispatched",
+            created=today,
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="codex",
+                    session_id="https://github.com/x/y/pull/9",
+                    status="pr_open",
+                    output="prior PR",
+                ),
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="codex",
+                    session_id="async-reserve",
+                    status="dispatched",
+                ),
+            ],
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (da.RUNS / "PR-DEAD__codex.running").write_text(reserved_at.isoformat())
+
+    reaped = da.reap_stale(1200)
+
+    assert reaped == ["PR-DEAD"]
+    task = _board(tmp_path)["PR-DEAD"]
+    assert task.status == "dispatched"
+    assert task.dispatch_log[-1].status == "pr_open"
+    assert task.dispatch_log[-1].session_id == "async-reap-stale"
+
+
 def test_reaper_reopens_markerless_async_reservation(tmp_path):
     da = _load(tmp_path, n_open=0)
     lf = load_limen_file(tmp_path / "tasks.yaml")
@@ -511,6 +569,49 @@ def test_reaper_reopens_markerless_async_reservation(tmp_path):
     assert task.status == "open"
     assert task.dispatch_log[-1].session_id == "async-reap-stale"
     assert "markerless async reservation" in task.dispatch_log[-1].output
+
+
+def test_reaper_restores_markerless_prior_pr_open_instead_of_reopening(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    today = datetime.date.today()
+    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    lf.tasks.append(
+        Task(
+            id="PR-MARKERLESS",
+            title="t",
+            repo="x/y",
+            target_agent="agy",
+            status="dispatched",
+            created=today,
+            updated=reserved_at,
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="agy",
+                    session_id="https://github.com/x/y/pull/9",
+                    status="pr_open",
+                    output="prior PR",
+                ),
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="agy",
+                    session_id="async-reserve",
+                    status="dispatched",
+                    output="dispatch-async: reserved before detached worker launch",
+                ),
+            ],
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    reaped = da.reap_stale(1200)
+
+    assert reaped == ["PR-MARKERLESS"]
+    task = _board(tmp_path)["PR-MARKERLESS"]
+    assert task.status == "dispatched"
+    assert task.dispatch_log[-1].status == "pr_open"
+    assert task.dispatch_log[-1].session_id == "async-reap-stale"
 
 
 def test_async_reserve_counts_inflight_against_budget(tmp_path):
