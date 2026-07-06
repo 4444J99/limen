@@ -15,22 +15,22 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 377
+      spent: 250
       per_agent:
         jules: 100
         gemini: 2
-        codex: 83
+        codex: 2
         opencode: 44
         agy: 100
-        claude: 47
+        claude: 1
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-06T11:41:52.375322+00:00'
         gemini: '2026-07-06T11:41:52.375322+00:00'
-        codex: '2026-07-06T16:48:31.085077+00:00'
+        codex: '2026-07-06T21:50:05.654578+00:00'
         opencode: '2026-07-06T11:41:52.375322+00:00'
         agy: '2026-07-06T11:41:52.375322+00:00'
-        claude: '2026-07-06T16:48:31.085077+00:00'
+        claude: '2026-07-06T21:50:05.654578+00:00'
   agents:
     opencode:
       status: idle
@@ -90443,7 +90443,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -90459,7 +90459,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:22:49.733430Z'
+  updated: '2026-07-06T21:50:05.654578Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:11:54.142565Z'
     agent: codex
@@ -90485,6 +90485,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-06T21:50:05.654578Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-156
   title: fix failing CI on organvm/domus-genoma#156
   repo: organvm/domus-genoma
@@ -91214,7 +91219,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -91229,7 +91234,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T21:50:05.654578Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T21:50:05.654578Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-102
   title: fix failing CI on organvm/mirror-mirror#102
   repo: organvm/mirror-mirror
@@ -91380,11 +91391,12 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/my--father-mother/pull/21
   context: "PR organvm/my--father-mother#21 has FAILING CI checks and merge-drain\
@@ -91395,7 +91407,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:40:53.883515Z'
+  updated: '2026-07-06T21:50:02.576427Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:13:03.442656Z'
     agent: codex
@@ -91411,6 +91423,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T21:50:02.576427Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-narratological-algorithmic-lenses-35
   title: fix failing CI on organvm/narratological-algorithmic-lenses#35
   repo: organvm/narratological-algorithmic-lenses
@@ -91933,13 +91950,17 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:38:21.277451Z'
+  updated: '2026-07-06T21:50:02.576427Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:38:21.277451Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T21:50:02.576427Z'
+    agent: codex
+    session_id: https://github.com/organvm/the-invisible-ledger/pull/80
+    status: dispatched
 - id: HEAL-cifix-organvm-the-invisible-ledger-53
   title: fix failing CI on organvm/the-invisible-ledger#53
   repo: organvm/the-invisible-ledger
@@ -92213,7 +92234,7 @@ tasks:
   workstream: correspondence
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -92228,7 +92249,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-06T21:50:05.654578Z'
+  dispatch_log:
+  - timestamp: '2026-07-06T21:50:05.654578Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-universal-mail--automation-119
   title: rebase/resolve conflicts on organvm/universal-mail--automation#119
   repo: organvm/universal-mail--automation
@@ -92354,11 +92381,12 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/growth-auditor/pull/11
   context: "PR organvm/growth-auditor#11 has FAILING CI checks and merge-drain correctly\
@@ -92369,13 +92397,18 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T21:39:37.275988Z'
+  updated: '2026-07-06T21:50:02.576427Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:39:37.275988Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T21:50:02.576427Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-growth-auditor-12
   title: fix failing CI on organvm/growth-auditor#12
   repo: organvm/growth-auditor
