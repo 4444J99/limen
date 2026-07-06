@@ -60,6 +60,7 @@ WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE", f"{HOME}/Workspace"))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen")).resolve()
 LOG = LIMEN_ROOT / "logs" / "reap-clones.jsonl"
 CLONE_REAP_ACCEPTANCE = LIMEN_ROOT / "docs" / "clone-reap-acceptance.jsonl"
+CLONE_REAP_ACCEPTANCE_DOC = LIMEN_ROOT / "docs" / "clone-reap-acceptance.md"
 
 # CORE repos the operator lives in / the conductor needs local — never reaped even if pushed-clean.
 DEFAULT_CORE = "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
@@ -93,6 +94,7 @@ ACCEPTED_REDACTION_REVIEWS = {
     "private_archive_only",
     "not_required_remote_only",
 }
+REQUIRED_ACCEPTANCE_PROOF_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
 
 
 def _run(args: list[str], cwd: Path | None = None) -> str:
@@ -142,6 +144,8 @@ def clone_reap_accepted(repo: Path, slug: str, reason: str, acceptance_events: l
         if not archive_ok:
             continue
         if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
+            continue
+        if any(not str(event.get(field) or "").strip() for field in REQUIRED_ACCEPTANCE_PROOF_FIELDS):
             continue
         return True, "clone-reap-accepted"
     return False, "missing-clone-reap-acceptance"

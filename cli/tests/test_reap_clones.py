@@ -215,7 +215,9 @@ def test_clone_reap_acceptance_matches_remote_mirror(tmp_path):
             "accepted": True,
             "reason": "pushed-mirror",
             "archive_status": "not_required_clean_remote_mirror",
+            "archive_proof": "fresh fetch proved the clone is remote-reachable",
             "redaction_review": "not_required_remote_only",
+            "redaction_proof": "clean clone cache; no private-only data present",
         }
     ]
 
@@ -223,6 +225,31 @@ def test_clone_reap_acceptance_matches_remote_mirror(tmp_path):
 
     assert ok is True
     assert reason == "clone-reap-accepted"
+
+
+def test_clone_reap_acceptance_requires_archive_and_redaction_proofs(tmp_path):
+    clone = _init_origin_and_clone(tmp_path, "proofrequired")
+    slug = reap.origin_slug(clone)
+    base_event = {
+        "accepted_at": "2026-07-06T06:00:00Z",
+        "root": "proofrequired",
+        "slug": slug,
+        "accepted": True,
+        "reason": "pushed-mirror",
+        "archive_status": "not_required_clean_remote_mirror",
+        "archive_proof": "fresh fetch proved the clone is remote-reachable",
+        "redaction_review": "not_required_remote_only",
+        "redaction_proof": "clean clone cache; no private-only data present",
+    }
+
+    for required_field in reap.REQUIRED_ACCEPTANCE_PROOF_FIELDS:
+        event = dict(base_event)
+        event.pop(required_field)
+
+        ok, reason = reap.clone_reap_accepted(clone, slug, "pushed-mirror", [event])
+
+        assert ok is False
+        assert reason == "missing-clone-reap-acceptance"
 
 
 def test_confirm_recloneable_false_when_our_branch_deleted_on_origin(tmp_path):
