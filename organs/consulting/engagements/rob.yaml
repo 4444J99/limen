@@ -3,14 +3,14 @@
 # (Archive4T workspace-backup + T7Recovery lifeboat). See FUNNEL-ENGINE.md.
 
 member:
-  name: "Rob"
+  name: "{{MEMBER_NAME}}"
   context: >
-    NYC-based dual-discipline creator: chess content (@HokageChess on YouTube,
-    322+ videos, Road to 1500 arc) + fitness coaching built on 3+ years
+    {{MEMBER_LOCATION}}-based dual-discipline creator: chess content ({{CHESS_CHANNEL}},
+    {{CHESS_CONTENT_COUNT}} videos, {{CHESS_SERIES}}) + fitness coaching built on {{YEARS_FITNESS}}
     operating a Beachbody/BODi funnel (a 1-level affiliate model since BODi
-    ended its multi-level coach network 2025-01-01). Runs Teamzy CRM,
-    Instagram (@robbonav), and a proven 4-level sales funnel. This engagement
-    treats the funnel discipline Rob already owns as the seed of the
+    ended its multi-level coach network 2025-01-01). Runs {{CRM_PLATFORM}},
+    {{FITNESS_CHANNEL}}, and a proven 4-level sales funnel. This engagement
+    treats the funnel discipline {{MEMBER_NAME}} already owns as the seed of the
     generalized niche-funnel engine.
 
 mandate:
@@ -35,18 +35,18 @@ next_standing: "REVIEW"
 
 channels:
   live:
-    - "YouTube: https://www.youtube.com/@HokageChess"
-    - "Instagram: @robbonav"
-    - "BODi affiliate program page: https://www.bodi.com/us/en/affiliate"
+    - "{{PRIMARY_VIDEO_CHANNEL}}"
+    - "{{PRIMARY_SOCIAL_CHANNEL}}"
+    - "{{AFFILIATE_PROGRAM_URL}}"
   planned:
-    - "hokagechess.com — RB-10, awaiting Rob's Cloudflare registration (fallback: 4jp.io/rob)"
-    - "The Scroll — weekly newsletter (Kit/ConvertKit per the 2026-04-25 business plan v2)"
-    - "The Village — Discord community, Genin/Chunin/Jonin role tiers (Welcome Wed / Loot Drop Fri / Quest Log Sun)"
-  owed_by_rob:
-    - "Personal BODi affiliate/referral link — never recorded in any system; only the generic program page is on file"
-    - "Canonical Facebook + Instagram handle confirmation (board atom RB-8)"
-    - "Current Teamzy field schema (screenshot or list) so attribution fields land without collision — recovered from the 2026-04-25 residual-blockers ledger"
-    - "Existing reel/short links to seed the L0 content inventory — recovered from the 2026-04-25 residual-blockers ledger"
+    - "{{OWNED_DOMAIN}} — {{OWNED_DOMAIN_TICKET}}, awaiting registration (fallback: {{FALLBACK_URL}})"
+    - "{{NEWSLETTER_NAME}} — weekly newsletter ({{NEWSLETTER_PLATFORM}} per the 2026-04-25 business plan v2)"
+    - "{{COMMUNITY_NAME}} — Discord community, role tiers (Welcome Wed / Loot Drop Fri / Quest Log Sun)"
+  owed_by_partner:
+    - "Personal affiliate/referral link — never recorded in any system; only the generic program page is on file"
+    - "Canonical platform handle confirmations (board atom {{HANDLE_CONFIRMATION_TICKET}})"
+    - "Current CRM field schema (screenshot or list) so attribution fields land without collision — recovered from the 2026-04-25 residual-blockers ledger"
+    - "Existing content links to seed the L0 content inventory — recovered from the 2026-04-25 residual-blockers ledger"
 
 funnel:
   engine: "organs/consulting/FUNNEL-ENGINE.md — Rob is instance #1, the proven shape"

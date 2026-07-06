@@ -10,13 +10,13 @@ operating_floor: "organs/consulting/funnel/ROB-BODI-OPERATING-FLOOR.md"
 
 channels:
   content:
-    - "Instagram: @robbonav (reels — canonical handle confirmation owed, RB-8)"
-    - "Facebook (handle confirmation owed, RB-8)"
-    - "YouTube Shorts (fitness cut-downs, planned)"
+    - "{{PRIMARY_SOCIAL_CHANNEL}} (reels — canonical handle confirmation owed, {{HANDLE_CONFIRMATION_TICKET}})"
+    - "{{SECONDARY_SOCIAL_CHANNEL}} (handle confirmation owed, {{HANDLE_CONFIRMATION_TICKET}})"
+    - "{{VIDEO_SHORTS_CHANNEL}} (fitness cut-downs, planned)"
   owned:
-    - "Email list (Scroll-pattern newsletter; Kit or Beehiiv — Beehiiv provisional per production stack)"
+    - "Email list ({{NEWSLETTER_NAME}}-pattern; {{NEWSLETTER_PLATFORM_1}} or {{NEWSLETTER_PLATFORM_2}} — {{NEWSLETTER_PLATFORM_2}} provisional per production stack)"
     - "Private VIP group chat (existing, active)"
-  crm: "Teamzy"
+  crm: "{{CRM_PLATFORM}}"
 
 # Named so no future session rebuilds them. These are rejected by Rob's own
 # attractor law ("cold pressure models") and by the engine boundary.
