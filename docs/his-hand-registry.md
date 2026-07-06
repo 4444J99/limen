@@ -14,14 +14,16 @@
   pass; finishes the rest each C_BACKUP beat. [[storage-autonomic-solve]]
 - **node_modules creep** — `clone-maintenance.sh`, every 8 beats; `.claude/worktrees/` hard-excluded.
 - **Session / worktree closeout** — DAEMON-OWNED (`quicken.py reap_done`, every `C_QUICKEN` beat): a
-  finished (DONE) or deliberately-ended (CLOSED) session's spent isolation worktree is reversibly
-  reaped — worktree + branch removed — but ONLY when verified clean **and** fully-merged into
-  `origin/main` (rev-list empty, or `git cherry` shows every commit patch-present for squash/rebase,
-  or a merged PR exists). Reversible by construction (content in main, branch SHA in reflog ~90d).
-  You **never** run `git worktree remove` / `git branch -D` by hand again; ctrl+x and the daemon reaps
-  it within a few beats. (Optional accelerator: a `SessionEnd` hook `scripts/hooks/session-closeout.sh`
-  drops a breadcrumb so a ctrl+x'd session is reaped next beat instead of after the idle window — the
-  daemon already covers the common case, so registering it is nice-to-have, not required.)
+  finished (DONE) or deliberately-ended (CLOSED) session's spent isolation worktree is classified only
+  when verified clean **and** fully merged into `origin/main` (rev-list empty, or `git cherry` shows
+  every commit patch-present for squash/rebase, or a merged PR exists). As of 2026-07-06, physical
+  removal also requires an explicit human acceptance/redaction/archive event in
+  `docs/worktree-reclaim-acceptance.jsonl`; the daemon can surface candidates, but it does not delete
+  local roots on merge proof alone. You **never** run `git worktree remove` / `git branch -D` by hand
+  again; accepted candidates are reaped by the receipt-backed organ. (Optional accelerator: a
+  `SessionEnd` hook `scripts/hooks/session-closeout.sh` drops a breadcrumb so a ctrl+x'd session is
+  classified next beat instead of after the idle window — the daemon already covers the common case,
+  so registering it is nice-to-have, not required.)
 - **Value measurement** — LIVE: every dispatched task carries a weight (`budget_cost`) and a graded
   return (`score-dispatch.py` → `ledger.py`). Current verdict: *"net WORTH IT — 514 shipped, 252 wasted;
   1110/1253 debits productive."* The "justify your value or die" loop is structural, not a slogan.

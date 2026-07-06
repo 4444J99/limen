@@ -11,6 +11,8 @@ those:
   • HEAD/content is already merged into the remote default branch (the work finished its PR/base lifecycle), AND
     OR a clean+idle preservation receipt proves the PR is merged with no private patch marker, AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
+  • --apply also requires a matching human acceptance/redaction/archive event in
+    docs/worktree-reclaim-acceptance.jsonl immediately before physical removal.
 
 It scans every known creation site (the historical blind spot — see worktree-lifecycle-blind-spot):
   • LIMEN_WORKTREE_ROOT (~/Workspace/.limen-worktrees) — dispatch throwaway, min-age 6h.
@@ -71,10 +73,23 @@ EVERY_MIN = _float_env("LIMEN_RECLAIM_EVERY_MIN", 30)
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
+RECLAIM_ACCEPTANCE = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
 APPLY = "--apply" in sys.argv
 FORCE = "--force" in sys.argv  # ignore the throttle
 REMOTE_MERGED_LANES = {"remote-merged"}
 REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
+ACCEPTED_ARCHIVE_STATUSES = {
+    "verified",
+    "remote_merged_receipt_verified",
+    "not_required_clean_merged_remote",
+    "not_required_generated_residue",
+}
+ACCEPTED_REDACTION_REVIEWS = {
+    "accepted",
+    "private_archive_only",
+    "not_required_remote_only",
+    "not_required_generated_residue",
+}
 
 # Never reap the live checkout nor the worktree this process is running from (else we yank
 # the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
@@ -151,6 +166,50 @@ def load_preservation_receipts():
     return receipts
 
 
+def load_reclaim_acceptance():
+    try:
+        lines = RECLAIM_ACCEPTANCE.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+    events = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+    return events
+
+
+def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) -> tuple[bool, str]:
+    try:
+        resolved = str(path.resolve())
+    except OSError:
+        resolved = str(path)
+    for event in reversed(acceptance_events):
+        if event.get("root") != path.name:
+            continue
+        if event.get("accepted") is not True:
+            continue
+        if event.get("action") and event.get("action") != action:
+            continue
+        if event.get("reason") and event.get("reason") != reason:
+            continue
+        if event.get("path") and event.get("path") != resolved:
+            continue
+        archive_ok = event.get("archive_verified") is True or event.get("archive_status") in ACCEPTED_ARCHIVE_STATUSES
+        if not archive_ok:
+            continue
+        if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
+            continue
+        return True, "reclaim-accepted"
+    return False, "missing-reclaim-acceptance"
+
+
 def receipt_remote_merged(path: Path, preservation_receipts) -> bool:
     receipt = preservation_receipts.get(path.name)
     if not isinstance(receipt, dict):
@@ -219,6 +278,7 @@ def main():
             return 0
     now = time.time()
     preservation_receipts = load_preservation_receipts()
+    reclaim_acceptance = load_reclaim_acceptance()
     dirs = [(target.path, target.min_age_h) for target in targets]
     removed, skipped, failed, deferred = [], [], [], []
     for d, min_age_h in dirs:
@@ -231,6 +291,10 @@ def main():
             continue  # bounded — but NOT silent (logged below)
         if not APPLY:
             removed.append((d.name, f"would-{action}:{reason}"))
+            continue
+        accepted, accept_reason = reclaim_accepted(d, action, reason, reclaim_acceptance)
+        if not accepted:
+            skipped.append((d.name, accept_reason))
             continue
         try:
             if action == "remove-worktree":

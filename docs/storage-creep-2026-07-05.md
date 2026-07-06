@@ -62,6 +62,9 @@ personal data stores or agent scratch roots.
 - Post-reap predicates are tighter: `python3 scripts/worktree-debt.py --json` now reports `debt: 1`
   across `29` targets, and `python3 scripts/reclaim-worktrees.py --force` reports
   `0 reclaimed, 29 kept-safe`.
+- 2026-07-06 tightening: `scripts/reclaim-worktrees.py --apply` now requires a matching
+  `docs/worktree-reclaim-acceptance.jsonl` event with archive/redaction acceptance before physical
+  local root removal. Clean/merged proof alone is a candidate signal, not deletion authority.
 - `scripts/corpus-command-center.py` now keeps full raw text in private body objects while dropping
   per-unit preview duplication from the generated private index. Regenerating with
   `python3 scripts/corpus-command-center.py --write` reduced
