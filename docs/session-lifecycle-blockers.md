@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-07-06T09:12:28+00:00`
+Generated: `2026-07-06T09:20:30+00:00`
 
 ## Canonical Handling
 
@@ -32,8 +32,8 @@ Generated: `2026-07-06T09:12:28+00:00`
 
 ## Parked / Hung Workstreams
 
-- By category: `auth_credentials` 2, `cloud_runtime` 1, `github_app_identity` 1, `github_consolidation` 1, `local_lean` 1, `owner_state` 1, `private_absorption` 1, `worktree_lifecycle` 1.
-- By status: `needs_human_gate` 2, `needs_refresh` 1, `parked` 6.
+- By category: `auth_credentials` 2, `cloud_runtime` 1, `github_app_identity` 1, `github_consolidation` 1, `local_lean` 1, `owner_state` 1, `worktree_lifecycle` 1.
+- By status: `needs_human_gate` 2, `parked` 6.
 
 | ID | Category | Status | Evidence | Owner | Route |
 |---|---|---|---|---|---|
@@ -42,7 +42,6 @@ Generated: `2026-07-06T09:12:28+00:00`
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
 | `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 1 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
 | `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
-| `private-raw-materialization-not-receipted` | `private_absorption` | `needs_refresh` | The latest session corpus inventory did not include a materialization receipt. | limen private cartridge | Run `session-corpus-ledger.py --write --all --materialize` when absorbing raw local files. |
 | `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 26.1 GiB (19.4 GiB worktrees, 6.7 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
 | `github-consolidation-collisions` | `github_consolidation` | `needs_human_gate` | 36 source repos remain outside `organvm`; 13 name-collision groups block the transfer apply gate. | GitHub consolidation | Collision packet is complete; await an explicit human GitHub mutation gate to run `docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and require 0 collisions before transfer. |
 | `github-app-limen-bot-not-wired` | `github_app_identity` | `needs_human_gate` | `gh-app-token --which` resolves to `pat (GITHUB_TOKEN fallback)`; 4 org Apps are installed, and `limen[bot]` is not wired. | limen[bot] App identity | Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; verify `bash scripts/gh-app-token.sh --which` reports the App path. |
