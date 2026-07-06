@@ -175,25 +175,54 @@ def _present_from_organ_health(key):
     return None
 
 
-def sense_present(door, _canon):
-    """Runs unbidden: prefer organ-health liveness; fall back to heartbeat wiring."""
-    sensed = _present_from_organ_health(door["key"])
-    if sensed is not None:
-        return sensed
-    return 0.5 if door["dormant"] else 1.0
-
-
-def sense_past(door, canon):
-    """Metabolizes its own history: does its source CRAWL/regenerate, or only read a hand-fed input?"""
+def assess_past(door, canon):
+    """Metabolizes its own history: redacted proof from source paths and configured signatures."""
     sigs = ((canon.get("senses") or {}).get("past") or {}).get("metabolize_signatures") or []
+    scripts = []
     for p in _door_scripts(door["key"]):
         try:
             body = p.read_text(errors="ignore")
         except OSError:
             continue
-        if any(s in body for s in sigs):
-            return 1.0
-    return 0.0
+        matches = [s for s in sigs if s in body]
+        scripts.append({"path": str(p.relative_to(ROOT)), "signatures": matches})
+    matched = [script for script in scripts if script["signatures"]]
+    return {
+        "score": 1.0 if matched else 0.0,
+        "source": "script-signature",
+        "reason": "metabolizes-history" if matched else "missing-metabolize-signature",
+        "scripts": scripts,
+    }
+
+
+def sense_past(door, canon):
+    return float(assess_past(door, canon)["score"])
+
+
+def assess_present(door, _canon):
+    """Runs unbidden: redacted liveness source and score."""
+    entry = _organ_health().get(door["key"])
+    if entry:
+        status = str(entry.get("status") or "").lower()
+        sensed = _present_from_organ_health(door["key"])
+        if sensed is not None:
+            return {
+                "score": sensed,
+                "source": "logs/organ-health.json",
+                "reason": status or "unknown",
+                "dormant": bool(door["dormant"]),
+            }
+    score = 0.5 if door["dormant"] else 1.0
+    return {
+        "score": score,
+        "source": "heartbeat-wiring",
+        "reason": "dormant" if door["dormant"] else "wired",
+        "dormant": bool(door["dormant"]),
+    }
+
+
+def sense_present(door, canon):
+    return float(assess_present(door, canon)["score"])
 
 
 def _normalized_door_values(value):
@@ -229,23 +258,46 @@ def lever_mentions_door(lever, door):
     return bool(needles & _lever_tokens(lever))
 
 
-def sense_future(door, canon):
-    """Self-evolves, asks less: how many open his-hand levers does this door still own?"""
+def assess_future(door, canon):
+    """Self-evolves, asks less: counts-only his-hand ownership proof."""
     fut = (canon.get("senses") or {}).get("future") or {}
     reg = ROOT / fut.get("his_hand_registry", "his-hand-levers.json")
     penalty = float(fut.get("penalty_per_lever", 0.5))
     if not reg.exists():
-        return 1.0
+        return {
+            "score": 1.0,
+            "source": str(reg.relative_to(ROOT)),
+            "reason": "registry-missing",
+            "open_levers": 0,
+            "penalty_per_lever": penalty,
+        }
     try:
         data = json.loads(reg.read_text())
     except (OSError, json.JSONDecodeError):
-        return 1.0
+        return {
+            "score": 1.0,
+            "source": str(reg.relative_to(ROOT)),
+            "reason": "registry-unreadable",
+            "open_levers": 0,
+            "penalty_per_lever": penalty,
+        }
     levers = data.get("levers") if isinstance(data, dict) else data
     owned = sum(1 for lv in (levers or []) if lever_mentions_door(lv, door))
-    return max(0.0, 1.0 - owned * penalty)
+    return {
+        "score": max(0.0, 1.0 - owned * penalty),
+        "source": str(reg.relative_to(ROOT)),
+        "reason": "counts-only-open-levers",
+        "open_levers": owned,
+        "penalty_per_lever": penalty,
+    }
+
+
+def sense_future(door, canon):
+    return float(assess_future(door, canon)["score"])
 
 
 SENSES = {"past": sense_past, "present": sense_present, "future": sense_future}
+ASSESSORS = {"past": assess_past, "present": assess_present, "future": assess_future}
 
 
 def primary_gap(tenses):
@@ -255,9 +307,10 @@ def primary_gap(tenses):
 
 def score_door(door, canon):
     tenses = canon.get("tenses") or {}
-    senses = {t: round(SENSES[t](door, canon), 3) for t in SENSES}
+    evidence = {t: ASSESSORS[t](door, canon) for t in ASSESSORS}
+    senses = {t: round(float(evidence[t].get("score", 0.0)), 3) for t in SENSES}
     total = sum(float(spec.get("weight", 0)) * senses.get(t, 0.0) for t, spec in tenses.items())
-    return senses, round(total, 3)
+    return senses, round(total, 3), evidence
 
 
 def summarize(rows, threshold):
@@ -296,11 +349,12 @@ def build():
     threshold = float(canon.get("alive_threshold", 0.67))
     rows = []
     for d in discover_doors(canon):
-        senses, total = score_door(d, canon)
+        senses, total, evidence = score_door(d, canon)
         rows.append(
             {
                 **d,
                 "tenses": senses,
+                "evidence": evidence,
                 "score": total,
                 "alive": total >= threshold,
                 "primary_gap": primary_gap(senses),
@@ -326,6 +380,30 @@ def render_text(v):
             f"  {r['key']:<15}{t['past']:>6.2f}{t['present']:>8.2f}{t['future']:>7.2f}{r['score']:>7.3f}  {mark}"
         )
     return "\n".join(out)
+
+
+def _evidence_summary(row, tense):
+    evidence = row.get("evidence", {}).get(tense, {})
+    if tense == "past":
+        matched = [
+            f"{Path(script['path']).name}:{','.join(script.get('signatures') or [])}"
+            for script in evidence.get("scripts", [])
+            if script.get("signatures")
+        ]
+        if matched:
+            return "matched " + "; ".join(matched[:3])
+        scripts = [Path(script["path"]).name for script in evidence.get("scripts", []) if script.get("path")]
+        if scripts:
+            return "missing metabolize signature in " + ", ".join(scripts[:3])
+        return "no implementing script found"
+    if tense == "present":
+        return f"{evidence.get('source', 'unknown')}:{evidence.get('reason', 'unknown')}"
+    if tense == "future":
+        return (
+            f"{evidence.get('open_levers', 0)} open his-hand levers "
+            f"from {evidence.get('source', 'unknown')}"
+        )
+    return str(evidence.get("reason") or "unknown")
 
 
 def render_markdown(v):
@@ -384,6 +462,21 @@ def render_markdown(v):
             lines.append(
                 f"- `{r['key']}`: score `{r['score']:.3f}`, primary gap `{gap['tense']}` (`{gap['gap']:.3f}`)."
             )
+
+    lines += [
+        "",
+        "## Evidence",
+        "",
+        "Evidence is redacted metadata only: paths, configured signatures, liveness status, and counts.",
+        "",
+        "| Door | Past evidence | Present evidence | Future evidence |",
+        "|---|---|---|---|",
+    ]
+    for r in v["doors"]:
+        lines.append(
+            f"| `{r['key']}` | {_evidence_summary(r, 'past')} | "
+            f"{_evidence_summary(r, 'present')} | {_evidence_summary(r, 'future')} |"
+        )
 
     lines += [
         "",

@@ -43,8 +43,10 @@ def test_includes_itself():
 def test_three_tenses_bounded():
     for d in _audit()["doors"]:
         assert set(d["tenses"]) == {"past", "present", "future"}
+        assert set(d["evidence"]) == {"past", "present", "future"}
         assert 0.0 <= d["score"] <= 1.0
         assert all(0.0 <= val <= 1.0 for val in d["tenses"].values())
+        assert all(0.0 <= float(item["score"]) <= 1.0 for item in d["evidence"].values())
         assert d["primary_gap"]["tense"] in {"past", "present", "future"}
         assert 0.0 <= d["primary_gap"]["gap"] <= 1.0
 
@@ -92,6 +94,11 @@ def test_future_tense_counts_exact_door_tokens_not_substrings(tmp_path, monkeypa
 
     assert module.sense_future({"key": "mail", "name": "MAIL"}, {"senses": {"future": {}}}) == 1.0
     assert module.sense_future({"key": "feed", "name": "FEED"}, {"senses": {"future": {}}}) == 0.5
+    evidence = module.assess_future({"key": "feed", "name": "FEED"}, {"senses": {"future": {}}})
+    encoded = json.dumps(evidence, sort_keys=True)
+    assert evidence["open_levers"] == 1
+    assert "explicit-feed" not in encoded
+    assert "human gate" not in encoded
 
 
 def test_summary_reports_distance_from_ideal():
