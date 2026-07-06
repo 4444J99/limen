@@ -375,6 +375,10 @@ def _atom_key(atom: str) -> str:
     return next((k for k, _rx, a in PROTOCOL if a == atom), "misc")
 
 
+def _split_unblocks(value: str) -> list[str]:
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
 def _queue_residue_atoms() -> dict[str, list[str]]:
     """Residue already hung in tasks.yaml must stay visible in the digest."""
     atoms: dict[str, list[str]] = {}
@@ -403,7 +407,8 @@ def _queue_residue_atoms() -> dict[str, list[str]]:
             match = re.search(r"Unblocks: ([^.]+)", task.context)
             if match:
                 unblocks = match.group(1).strip()
-        atoms.setdefault(atom, []).append(unblocks[:48])
+        for title in _split_unblocks(unblocks):
+            atoms.setdefault(atom, []).append(title[:48])
     return atoms
 
 
@@ -500,7 +505,8 @@ def write_residue(rows: list[dict]) -> str:
         if r["state"] == "STALLED" and r["decision"]["residue"]:
             atoms.setdefault(r["decision"]["residue"], []).append(r["title"][:48])
     for atom, titles in _queue_residue_atoms().items():
-        atoms.setdefault(atom, []).extend(titles)
+        for title in titles:
+            atoms.setdefault(atom, []).extend(t[:48] for t in _split_unblocks(title))
     lines = [
         "# QUICKEN residue — the irreducible human atoms (deduped)",
         "",
