@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T02:07:57+00:00`
+Generated: `2026-07-06T02:14:54+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -12,24 +12,23 @@ before any deletion.
 
 ## Summary
 
-- Roots scanned: `43`.
-- Total scratch size: `28.4 GiB`.
-- Safe-reap candidate size: `4.7 GiB`.
-- Dispositions: `bridge_required` 33, `container_review_required` 3, `non_git_review_required` 3, `preserve_required` 3, `safe_reap_candidate` 1.
-- Post-reap scratch size: `23.7 GiB` across `42` roots.
+- Roots scanned: `42`.
+- Total scratch size: `23.7 GiB`.
+- Safe-reap candidate size: `0 B`.
+- Dispositions: `bridge_required` 33, `container_review_required` 3, `non_git_review_required` 3, `preserve_required` 3.
 
-## Reap Results
+## Reap History
 
-- Applied at: `2026-07-06T02:08:09+00:00`.
-- Reaped: `1` roots, `4.7 GiB`.
-- Skipped: `0`; failed: `0`.
-- Reaped `session-meta` `4.7 GiB` (4444J99/session-meta@3314dabea07d).
+- Recorded reap events: `2`.
+- Cumulative reaped roots: `24`.
+- Cumulative reclaimed size: `6.9 GiB`.
+- `2026-07-06T02:08:09+00:00`: `1` roots, `4.7 GiB` (`session-meta`).
+- `2026-07-06T01:27:51+00:00`: `23` roots, `2.2 GiB` (`growth-auditor`, `the-invisible-ledger`, `organvm-corpvs-testamentvm`, `organvm_domus_genoma`, `persona-fleet`, `a-i--skills`, `prompt-registry-archive`, `portfolio`, ... +15).
 
-## Largest Roots Before Reap
+## Largest Roots
 
 | Root | Size | Kind | Disposition | Reason | Remote / nested proof |
 |---|---:|---|---|---|---|
-| `session-meta` | `4.7 GiB` | `git` | `safe_reap_candidate` | `clean-idle-remote-preserved` | `4444J99/session-meta@3314dabea07d` |
 | `organvm-session-meta` | `4.7 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/session-meta@2954214acb76` |
 | `session-meta-no-prompt` | `4.5 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/session-meta@2954214acb76` |
 | `session-meta-2` | `4.5 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/session-meta@2954214acb76` |
@@ -69,6 +68,7 @@ before any deletion.
 | `organvm-vi-koinonia` | `508.0 KiB` | `container` | `container_review_required` | `nested-git-roots` | `safe_reap_candidate:1` |
 | `.github` | `312.0 KiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-v-logos/.github@c0cb8d043c0d` |
 | `writelens` | `208.0 KiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/writelens@196fa1a48f4b` |
+| `my-project` | `8.0 KiB` | `non_git` | `non_git_review_required` | `no-git-receipt` | `none` |
 
 ## Operating Rule
 

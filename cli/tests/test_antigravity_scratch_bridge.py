@@ -104,3 +104,28 @@ def test_apply_safe_reap_deletes_only_reclassified_candidates(tmp_path: Path):
     assert reap["summary"]["failed"] == 0
     assert not clean.exists()
     assert dirty.exists()
+
+
+def test_reap_history_appends_once_and_renders_cumulative_receipt(tmp_path: Path):
+    bridge = _load()
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    clean = _make_remote_preserved_repo(scratch, "clean-root")
+    history = tmp_path / "history.jsonl"
+
+    report = bridge.build_report(scratch, min_idle_hours=0)
+    report["reap"] = bridge.apply_safe_reap(report, min_idle_hours=0)
+    report["post_reap_summary"] = bridge.build_report(scratch, min_idle_hours=0)["summary"]
+    report["reap_history"] = bridge.append_reap_history(report, history)
+    report["reap_history"] = bridge.append_reap_history(report, history)
+
+    assert not clean.exists()
+    assert len(history.read_text(encoding="utf-8").splitlines()) == 1
+    assert len(report["reap_history"]) == 1
+    assert report["reap_history"][0]["summary"]["reaped"] == 1
+
+    rendered = bridge.render_markdown(report)
+
+    assert "## Reap History" in rendered
+    assert "Cumulative reaped roots: `1`" in rendered
+    assert "clean-root" in rendered

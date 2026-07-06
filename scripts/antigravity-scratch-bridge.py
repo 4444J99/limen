@@ -24,6 +24,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).r
 HOME = Path.home()
 SCRATCH_ROOT = Path(os.environ.get("LIMEN_AGY_SCRATCH_ROOT", HOME / ".gemini/antigravity-cli/scratch"))
 DOC_PATH = ROOT / "docs" / "antigravity-scratch-bridge.md"
+HISTORY_PATH = ROOT / "docs" / "antigravity-scratch-bridge-history.jsonl"
 LOG_PATH = ROOT / "logs" / "antigravity-scratch-bridge.json"
 REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
 
@@ -339,6 +340,62 @@ def apply_safe_reap(report: dict[str, Any], min_idle_hours: float) -> dict[str, 
     }
 
 
+def build_reap_history_event(report: dict[str, Any]) -> dict[str, Any] | None:
+    reap = report.get("reap") or {}
+    summary = reap.get("summary") or {}
+    if int(summary.get("candidates_considered", 0)) <= 0:
+        return None
+    results: list[dict[str, Any]] = []
+    for item in reap.get("results", []):
+        compact = {
+            key: item[key]
+            for key in ("name", "status", "reason", "size_bytes", "size", "repo", "head")
+            if key in item and item[key] is not None
+        }
+        results.append(compact)
+    return {
+        "applied_at": reap.get("applied_at"),
+        "generated_at": report.get("generated_at"),
+        "scratch_root": relpath(Path(str(report.get("scratch_root", "")))),
+        "summary": summary,
+        "results": results,
+    }
+
+
+def load_reap_history(path: Path = HISTORY_PATH) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    events: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+    events.sort(key=lambda event: str(event.get("applied_at", "")))
+    return events
+
+
+def append_reap_history(report: dict[str, Any], path: Path = HISTORY_PATH) -> list[dict[str, Any]]:
+    history = load_reap_history(path)
+    event = build_reap_history_event(report)
+    if not event:
+        return history
+    event_key = (event.get("applied_at"), event.get("scratch_root"))
+    if any((existing.get("applied_at"), existing.get("scratch_root")) == event_key for existing in history):
+        return history
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
+    history.append(event)
+    history.sort(key=lambda item: str(item.get("applied_at", "")))
+    return history
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     summary = report["summary"]
     lines = [
@@ -386,6 +443,33 @@ def render_markdown(report: dict[str, Any]) -> str:
                 lines.append(f"- Reaped `{item.get('name')}` `{item.get('size')}` ({proof}).")
             else:
                 lines.append(f"- {item.get('status', 'skipped').title()} `{item.get('name')}`: {item.get('reason')}.")
+    history = report.get("reap_history") or []
+    if history:
+        total_reaped = sum(int((event.get("summary") or {}).get("reaped", 0)) for event in history)
+        total_reaped_bytes = sum(int((event.get("summary") or {}).get("reaped_bytes", 0)) for event in history)
+        lines += [
+            "",
+            "## Reap History",
+            "",
+            f"- Recorded reap events: `{len(history)}`.",
+            f"- Cumulative reaped roots: `{total_reaped}`.",
+            f"- Cumulative reclaimed size: `{fmt_bytes(total_reaped_bytes)}`.",
+        ]
+        for event in reversed(history[-10:]):
+            event_summary = event.get("summary") or {}
+            roots = [
+                str(item.get("name"))
+                for item in event.get("results", [])
+                if item.get("status") == "reaped" and item.get("name")
+            ]
+            shown_roots = ", ".join(f"`{name}`" for name in roots[:8])
+            if len(roots) > 8:
+                shown_roots += f", ... +{len(roots) - 8}"
+            lines.append(
+                f"- `{event.get('applied_at')}`: `{event_summary.get('reaped', 0)}` roots, "
+                f"`{event_summary.get('reaped_size', '0 B')}`"
+                + (f" ({shown_roots})." if shown_roots else ".")
+            )
     largest_heading = "## Largest Roots"
     if report.get("reap"):
         largest_heading = "## Largest Roots Before Reap"
@@ -442,6 +526,10 @@ def main() -> int:
     if args.write:
         LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         DOC_PATH.parent.mkdir(parents=True, exist_ok=True)
+        if args.apply_safe_reap:
+            report["reap_history"] = append_reap_history(report, HISTORY_PATH)
+        else:
+            report["reap_history"] = load_reap_history(HISTORY_PATH)
         LOG_PATH.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
         DOC_PATH.write_text(render_markdown(report), encoding="utf-8")
     if args.json:
