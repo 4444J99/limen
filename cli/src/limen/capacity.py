@@ -220,6 +220,24 @@ def _copilot_assignable(binary: str, repo: str, actor: str) -> bool:
     return False
 
 
+def _github_actions_workflow_status(binary: str, workflow: str, repo: str) -> tuple[bool, str]:
+    try:
+        result = subprocess.run(
+            [binary, "workflow", "view", workflow, "--repo", repo],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            stdin=subprocess.DEVNULL,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as exc:
+        return False, f"workflow={workflow}@{repo} unavailable ({exc})"
+    if result.returncode == 0:
+        return True, f"workflow={workflow}@{repo}"
+    detail = (result.stderr or result.stdout or "").strip().splitlines()
+    suffix = f": {detail[0]}" if detail else ""
+    return False, f"workflow={workflow}@{repo} unavailable{suffix}"
+
+
 def agent_status(agent: str) -> AgentStatus:
     agent = canonical_agent(agent)
     if agent not in PAID_AGENT_ORDER:
@@ -288,7 +306,13 @@ def agent_status(agent: str) -> AgentStatus:
             detail = f"{detail}; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane"
     if agent == "github_actions" and ok:
         workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", "limen-agent.yml")
-        detail = f"{detail}; workflow={workflow}"
+        health_repo = os.environ.get(
+            "LIMEN_GITHUB_ACTIONS_HEALTH_REPO",
+            os.environ.get("LIMEN_GITHUB_ACTIONS_REPO", "organvm/limen"),
+        )
+        workflow_ok, workflow_detail = _github_actions_workflow_status(binary, workflow, health_repo)
+        ok = ok and workflow_ok
+        detail = f"{detail}; {workflow_detail}"
     if agent == "copilot" and ok:
         actor = os.environ.get("LIMEN_COPILOT_ACTOR", "copilot-swe-agent")
         if _truthy(os.environ.get("LIMEN_COPILOT_ENABLED")):

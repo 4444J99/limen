@@ -395,13 +395,114 @@ def _usage_remaining_by_agent() -> dict[str, int]:
     return remaining
 
 
+def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining):
+    picked = []
+    picked_ids = set()
+    reset_changed = _reset_budget_if_needed(lf, now)
+    track = lf.portal.budget.track
+    daily = lf.portal.budget.daily
+    # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
+    # separately below (see _running_local).
+    slots = max(0, cap - _running_local())
+    spent = track.spent
+    id2 = {t.id: t for t in lf.tasks}  # for dependency resolution
+    states = []
+    for agent in agents:
+        is_async = agent in _ASYNC_LANES  # remote lane (jules, ...) — off-box, not gated by the local cap
+        capa = lf.portal.budget.per_agent.get(agent)
+        aspent = track.per_agent.get(agent, 0) + _running_for(agent)  # count in-flight vs budget
+        agent_rem = None if capa is None else max(0, capa - aspent)
+        live_rem = usage_remaining.get(agent) if is_async else None
+        if live_rem is not None:
+            agent_rem = live_rem if agent_rem is None else min(agent_rem, live_rem)
+        rem = daily - spent if agent_rem is None else max(0, min(daily - spent, agent_rem))
+        if rem <= 0:
+            continue
+        cands = [
+            t
+            for t in lf.tasks
+            if _dispatchable(t)
+            and (t.target_agent == agent or t.target_agent == "any")
+            and t.budget_cost <= rem
+            and _deps_met(t, id2)
+            and _routine_generated_buildout_allowed(t)
+        ]
+        cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
+        states.append(
+            {
+                "agent": agent,
+                "is_async": is_async,
+                "agent_rem": agent_rem,
+                "cands": cands,
+                "index": 0,
+                "taken": 0,
+            }
+        )
+    while states:
+        progressed = False
+        for state in states:
+            if state["taken"] >= per_agent:
+                continue
+            if daily - spent <= 0:
+                continue
+            if not state["is_async"] and slots <= 0:
+                continue  # local slot budget spent — but a later async lane may still launch off-box
+
+            agent_rem = state["agent_rem"]
+            rem = daily - spent if agent_rem is None else max(0, min(daily - spent, agent_rem))
+            if rem <= 0:
+                continue
+
+            cands = state["cands"]
+            t = None
+            while state["index"] < len(cands):
+                cand = cands[state["index"]]
+                state["index"] += 1
+                if cand.id in picked_ids or cand.budget_cost > rem:
+                    continue
+                t = cand
+                break
+            if t is None:
+                continue
+
+            agent = state["agent"]
+            picked.append((agent, t.id))
+            picked_ids.add(t.id)
+            if agent_rem is not None:
+                state["agent_rem"] = max(0, agent_rem - t.budget_cost)
+            spent += t.budget_cost
+            if not dry:
+                track.spent = spent
+                track.per_agent[agent] = track.per_agent.get(agent, 0) + t.budget_cost
+                t.status = "dispatched"
+                t.updated = now
+                t.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent=agent,
+                        session_id="async-reserve",
+                        status="dispatched",
+                        output="dispatch-async: reserved before detached worker launch",
+                    )
+                )
+            if not state["is_async"]:
+                slots -= 1  # only local runs consume a local concurrency slot
+            state["taken"] += 1
+            progressed = True
+        if not progressed:
+            break
+    return picked, reset_changed
+
+
 def reserve_and_launch(agents, per_agent, cap, dry):
     """Reserve open tasks (under lock) up to the concurrency cap + per-agent budget, then spawn
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
     now = _now()
-    picked = []
-    picked_ids = set()
     usage_remaining = _usage_remaining_by_agent()
+    if dry:
+        lf = load_limen_file(TASKS)
+        picked, _reset_changed = _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining)
+        return picked
     with _queue_lock(TASKS) as got:
         if not got:
             # Lock busy — reserve nothing this round. Returning BEFORE `picked` is used to spawn
@@ -409,103 +510,9 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             # 'dispatched', which would double-dispatch. Self-corrects next beat.
             return []
         lf = load_limen_file(TASKS)
-        reset_changed = _reset_budget_if_needed(lf, now)
-        track = lf.portal.budget.track
-        daily = lf.portal.budget.daily
-        # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
-        # separately below (see _running_local).
-        slots = max(0, cap - _running_local())
-        spent = track.spent
-        id2 = {t.id: t for t in lf.tasks}  # for dependency resolution
-        states = []
-        for agent in agents:
-            is_async = agent in _ASYNC_LANES  # remote lane (jules, ...) — off-box, not gated by the local cap
-            capa = lf.portal.budget.per_agent.get(agent)
-            aspent = track.per_agent.get(agent, 0) + _running_for(agent)  # count in-flight vs budget
-            agent_rem = None if capa is None else max(0, capa - aspent)
-            live_rem = usage_remaining.get(agent) if is_async else None
-            if live_rem is not None:
-                agent_rem = live_rem if agent_rem is None else min(agent_rem, live_rem)
-            rem = daily - spent if agent_rem is None else max(0, min(daily - spent, agent_rem))
-            if rem <= 0:
-                continue
-            cands = [
-                t
-                for t in lf.tasks
-                if _dispatchable(t)
-                and (t.target_agent == agent or t.target_agent == "any")
-                and t.budget_cost <= rem
-                and _deps_met(t, id2)
-                and _routine_generated_buildout_allowed(t)
-            ]
-            cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
-            states.append(
-                {
-                    "agent": agent,
-                    "is_async": is_async,
-                    "agent_rem": agent_rem,
-                    "cands": cands,
-                    "index": 0,
-                    "taken": 0,
-                }
-            )
-        while states:
-            progressed = False
-            for state in states:
-                if state["taken"] >= per_agent:
-                    continue
-                if daily - spent <= 0:
-                    continue
-                if not state["is_async"] and slots <= 0:
-                    continue  # local slot budget spent — but a later async lane may still launch off-box
-
-                agent_rem = state["agent_rem"]
-                rem = daily - spent if agent_rem is None else max(0, min(daily - spent, agent_rem))
-                if rem <= 0:
-                    continue
-
-                cands = state["cands"]
-                t = None
-                while state["index"] < len(cands):
-                    cand = cands[state["index"]]
-                    state["index"] += 1
-                    if cand.id in picked_ids or cand.budget_cost > rem:
-                        continue
-                    t = cand
-                    break
-                if t is None:
-                    continue
-
-                agent = state["agent"]
-                picked.append((agent, t.id))
-                picked_ids.add(t.id)
-                if agent_rem is not None:
-                    state["agent_rem"] = max(0, agent_rem - t.budget_cost)
-                spent += t.budget_cost
-                if not dry:
-                    track.spent = spent
-                    track.per_agent[agent] = track.per_agent.get(agent, 0) + t.budget_cost
-                    t.status = "dispatched"
-                    t.updated = now
-                    t.dispatch_log.append(
-                        DispatchLogEntry(
-                            timestamp=now,
-                            agent=agent,
-                            session_id="async-reserve",
-                            status="dispatched",
-                            output="dispatch-async: reserved before detached worker launch",
-                        )
-                    )
-                if not state["is_async"]:
-                    slots -= 1  # only local runs consume a local concurrency slot
-                state["taken"] += 1
-                progressed = True
-            if not progressed:
-                break
+        picked, reset_changed = _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining)
         if not dry and (picked or reset_changed):
             save_limen_file(TASKS, lf)
-    if dry:
-        return picked
     # outside the lock: write markers + spawn detached workers (fast; we never wait on them)
     for agent, tid in picked:
         logf = open(RUNS / f"{tid}.log", "a")

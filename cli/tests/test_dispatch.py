@@ -14,7 +14,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import limen.dispatch as D
-from limen.capacity import PAID_AGENT_ORDER, capacity_census, format_capacity_census, select_lanes
+from limen.capacity import PAID_AGENT_ORDER, agent_status, capacity_census, format_capacity_census, select_lanes
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
@@ -110,6 +110,32 @@ def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_k
 
     assert "github_actions" in lanes
     assert "oz" not in lanes
+
+
+def test_github_actions_lane_requires_configured_workflow(tmp_path: Path, monkeypatch) -> None:
+    gh = tmp_path / "gh"
+    gh.write_text(
+        "#!/bin/sh\n"
+        "if [ \"$1\" = workflow ] && [ \"$2\" = view ]; then\n"
+        "  echo 'workflow missing' >&2\n"
+        "  exit 1\n"
+        "fi\n"
+        "exit 0\n"
+    )
+    gh.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.delenv("WARP_API_KEY", raising=False)
+
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(tasks_path, [])
+    board = load_limen_file(tasks_path)
+
+    status = agent_status("github_actions")
+    lanes = select_lanes("auto", board)
+
+    assert status["reachable"] is False
+    assert "workflow=limen-agent.yml@organvm/limen unavailable" in status["detail"]
+    assert "github_actions" not in lanes
 
 
 def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path) -> None:

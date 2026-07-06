@@ -497,3 +497,15 @@ def test_async_dry_run_does_not_reap_harvest_or_reserve_mutations(tmp_path, monk
     assert (tmp_path / "tasks.yaml").read_text() == before_board
     assert marker.read_text() == before_marker
     assert result.read_text() == before_result
+
+
+def test_async_dry_run_does_not_take_queue_lock(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+
+    def fail_lock(*_args, **_kwargs):
+        raise AssertionError("dry-run must not wait on the queue write lock")
+
+    monkeypatch.setattr(da, "_queue_lock", fail_lock)
+    monkeypatch.setattr(sys, "argv", ["dispatch-async.py", "--lanes", "codex", "--max", "4", "--dry-run"])
+
+    assert da.main() == 0
