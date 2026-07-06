@@ -1,21 +1,21 @@
 # AVTOPOIESIS
 
-Generated: `2026-07-06T07:55:01+00:00`
+Generated: `2026-07-06T07:58:01+00:00`
 
 ## How Far
 
-- Alive doors: `28/29` (`96.6%`).
-- Mean score: `0.886`.
-- Distance from ideal: `11.4%`.
+- Alive doors: `29/29` (`100.0%`).
+- Mean score: `0.898`.
+- Distance from ideal: `10.2%`.
 - Weakest tense: `future`.
 - Present tense source: `logs/organ-health.json` when available; heartbeat wiring fallback otherwise.
-- Below-threshold doors by primary gap: `past` 0, `present` 0, `future` 1.
+- Below-threshold doors by primary gap: `past` 0, `present` 0, `future` 0.
 
 ## Tense Averages
 
 | Tense | Average |
 |---|---:|
-| `past` | `0.966` |
+| `past` | `1.000` |
 | `present` | `0.948` |
 | `future` | `0.741` |
 
@@ -23,10 +23,10 @@ Generated: `2026-07-06T07:55:01+00:00`
 
 | Door | Past | Present | Future | Score | State | Primary gap |
 |---|---:|---:|---:|---:|---|---|
-| `mail` | `0.00` | `1.00` | `0.00` | `0.330` | `nota` | `future` `1.000` |
 | `backup` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `health` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `life` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
+| `mail` | `1.00` | `1.00` | `0.00` | `0.670` | `alive` | `future` `1.000` |
 | `positioning` | `1.00` | `0.50` | `0.50` | `0.670` | `alive` | `future` `0.500` |
 | `avtopoiesis` | `1.00` | `0.50` | `1.00` | `0.835` | `alive` | `present` `0.500` |
 | `balance` | `1.00` | `1.00` | `0.50` | `0.835` | `alive` | `future` `0.500` |
@@ -53,20 +53,16 @@ Generated: `2026-07-06T07:55:01+00:00`
 | `walls` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 | `web` | `1.00` | `1.00` | `1.00` | `1.000` | `alive` | `future` `0.000` |
 
-## Largest Gaps
-
-- `mail`: score `0.330`, primary gap `future` (`1.000`).
-
 ## Evidence
 
 Evidence is redacted metadata only: paths, configured signatures, liveness status, and counts.
 
 | Door | Past evidence | Present evidence | Future evidence |
 |---|---|---|---|
-| `mail` | missing metabolize signature in mail-beat.sh | logs/organ-health.json:green | 2 open his-hand levers from his-hand-levers.json |
 | `backup` | matched library-preserve.py:os.walk( | heartbeat-wiring:wired | 3 open his-hand levers from his-hand-levers.json |
 | `health` | matched health-organ.py:.glob( | logs/organ-health.json:green | 4 open his-hand levers from his-hand-levers.json |
 | `life` | matched life-organ.py:def census | logs/organ-health.json:green | 3 open his-hand levers from his-hand-levers.json |
+| `mail` | matched mail-beat.sh:--census | logs/organ-health.json:green | 2 open his-hand levers from his-hand-levers.json |
 | `positioning` | matched generate-positioning.py:.glob(,--census,def census | logs/organ-health.json:gated | 1 open his-hand levers from his-hand-levers.json |
 | `avtopoiesis` | matched avtopoiesis.py:.glob( | logs/organ-health.json:gated | 0 open his-hand levers from his-hand-levers.json |
 | `balance` | matched route.py:.glob( | heartbeat-wiring:wired | 1 open his-hand levers from his-hand-levers.json |

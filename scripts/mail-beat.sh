@@ -19,6 +19,68 @@ LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 UMA_ROOT="${UMA_ROOT:-$HOME/Workspace/universal-mail--automation}"
 LEDGER="${LIMEN_OBLIGATIONS_LEDGER:-$LIMEN_ROOT/obligations-ledger.json}"
 PY="${LIMEN_PY:-python3}"
+SWEEP_LIMIT="${LIMEN_MAIL_SWEEP_LIMIT:-80}"
+
+if [ "${1:-}" = "--census" ]; then
+  "$PY" - "$LIMEN_ROOT" "$UMA_ROOT" "$LEDGER" "$SWEEP_LIMIT" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+uma = Path(sys.argv[2])
+ledger_path = Path(sys.argv[3])
+sweep_limit = sys.argv[4]
+
+
+def load_json(path: Path):
+    try:
+        data = json.loads(path.read_text())
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def list_count(data: dict, key: str) -> int:
+    value = data.get(key)
+    return len(value) if isinstance(value, list) else 0
+
+
+ledger = load_json(ledger_path)
+expected_uma_scripts = ("inbox_sweep.py", "obligations_build.py", "draft_writer.py")
+web_candidates = (
+    root / "web" / "app" / "public" / "obligations.html",
+    root / "web" / "app" / "out" / "obligations.html",
+)
+
+print(
+    json.dumps(
+        {
+            "limen_root_present": root.exists(),
+            "uma_root_present": uma.exists(),
+            "uma_expected_script_count": len(expected_uma_scripts),
+            "uma_present_script_count": sum(1 for name in expected_uma_scripts if (uma / name).exists()),
+            "ledger_present": ledger_path.exists(),
+            "ledger_readable": bool(ledger),
+            "obligation_count": list_count(ledger, "obligations"),
+            "account_count": list_count(ledger, "accounts"),
+            "noise_killer_count": list_count(ledger, "noise_killers"),
+            "lever_count": list_count(ledger, "levers"),
+            "voice_stamp_present": (root / "logs" / ".voice" / "mail").exists(),
+            "view_state_present": (root / "logs" / "obligations-view.json").exists(),
+            "web_face_count": sum(1 for path in web_candidates if path.exists()),
+            "sweep_enabled": os.environ.get("LIMEN_MAIL_SWEEP", "1") == "1",
+            "draft_persistence_enabled": os.environ.get("LIMEN_MAIL_DRAFTS", "0") == "1",
+            "sweep_limit_positive": str(sweep_limit).isdigit() and int(sweep_limit) > 0,
+        },
+        indent=2,
+        sort_keys=True,
+    )
+)
+PY
+  exit 0
+fi
 
 # DAEMON-SAFETY: never let a hung/slow Mail AppleScript block the heartbeat beat. Two
 # structural bounds: (1) the sweep reads only the most-recent N messages (new arrivals —
@@ -26,7 +88,6 @@ PY="${LIMEN_PY:-python3}"
 # whole inbox; (2) every step runs under `timeout` when available (homebrew coreutils on the
 # daemon PATH), so even an unresponsive Mail.app can't stall the beat. Without `timeout`,
 # the small --limit + the provider's per-call 30s AppleScript cap keep it bounded anyway.
-SWEEP_LIMIT="${LIMEN_MAIL_SWEEP_LIMIT:-80}"
 TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
 bounded() {  # bounded <secs> <cmd...>  — time-box if a timeout binary exists, else run plain
   if [ -n "$TIMEOUT_BIN" ]; then "$TIMEOUT_BIN" "$@"; else shift; "$@"; fi
