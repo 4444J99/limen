@@ -15,7 +15,12 @@ Fail-open: missing seed files, unparseable YAML, or a broken validator never sto
 
 Its constitution is organs/governance/CHARTER.md. The validatable rules live in:
   - organs/governance/validate-seed.py  (Cvrsvs Honorvm Rules #1-2)
+
+The organ also carries a census limb: every beat re-reads the governance estate and
+the organ seed surface so the standing report metabolizes current history instead
+of relying on a hand-maintained roster.
 """
+
 from __future__ import annotations
 
 import json
@@ -123,6 +128,7 @@ def _assess_maturity() -> dict:
 # Maturity advancement — lockless, idempotent bump in organ-ladder.json         #
 # --------------------------------------------------------------------------- #
 
+
 def _queue_lock(path: Path, timeout: float = 5.0) -> bool:
     """mkdir-based mutex. Returns True if lock acquired."""
     lock_dir = path.with_name(path.name + ".lock")
@@ -156,7 +162,7 @@ def _advance_maturity(assessment: dict) -> dict:
         return {"bumped": False, "old": None, "new": None, "reason": f"cannot read ladder: {exc}"}
 
     gov_entry = None
-    for o in (data.get("organs") or []):
+    for o in data.get("organs") or []:
         if o.get("pillar") == "governance":
             gov_entry = o
             break
@@ -183,7 +189,12 @@ def _advance_maturity(assessment: dict) -> dict:
     stage_mismatch = correct_stage != current_stage
 
     if assessed <= stored and not stage_mismatch:
-        return {"bumped": False, "old": stored, "new": assessed, "reason": f"assessed ({assessed}%) <= stored ({stored}%)"}
+        return {
+            "bumped": False,
+            "old": stored,
+            "new": assessed,
+            "reason": f"assessed ({assessed}%) <= stored ({stored}%)",
+        }
 
     # Bump: acquire lock, re-read, write
     if not _queue_lock(LADDER, timeout=5.0):
@@ -191,7 +202,7 @@ def _advance_maturity(assessment: dict) -> dict:
 
     try:
         data = json.loads(LADDER.read_text())
-        for o in (data.get("organs") or []):
+        for o in data.get("organs") or []:
             if o.get("pillar") == "governance":
                 should_write = False
                 if assessed > stored:
@@ -202,7 +213,9 @@ def _advance_maturity(assessment: dict) -> dict:
                     o["stage"] = derived_stage
                     should_write = True
                 if should_write:
-                    o["note"] = f"auto-advanced by governance-organ.py beat ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})"
+                    o["note"] = (
+                        f"auto-advanced by governance-organ.py beat ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})"
+                    )
                 if not should_write:
                     _queue_unlock(LADDER)
                     return {"bumped": False, "old": stored, "new": assessed, "reason": "no change needed"}
@@ -233,6 +246,7 @@ def _advance_maturity(assessment: dict) -> dict:
 # Core ops                                                                      #
 # --------------------------------------------------------------------------- #
 
+
 def _run_validator() -> dict:
     """Run validate-seed.py and validate-entities.py --fleet --quiet, return the outcome."""
     if not VALIDATOR.exists():
@@ -242,13 +256,17 @@ def _run_validator() -> dict:
     try:
         r1 = subprocess.run(
             [sys.executable, str(VALIDATOR), "--fleet", "--quiet", "--strict-graph"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         r2 = subprocess.run(
             [sys.executable, str(ENTITIES_VALIDATOR), "--fleet", "--quiet", "--strict-graph"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
-        passed = (r1.returncode == 0 and r2.returncode == 0)
+        passed = r1.returncode == 0 and r2.returncode == 0
         return {
             "status": "pass" if passed else "violations",
             "returncode": r1.returncode or r2.returncode,
@@ -267,7 +285,7 @@ def _governance_standing() -> dict:
         data = json.loads(LADDER.read_text()) if LADDER.exists() else {}
     except (json.JSONDecodeError, OSError):
         return {}
-    for o in (data.get("organs") or []):
+    for o in data.get("organs") or []:
         if o.get("pillar") == "governance":
             return {
                 "maturity": o.get("maturity"),
@@ -277,9 +295,24 @@ def _governance_standing() -> dict:
     return {}
 
 
+def _governance_census() -> dict:
+    """Read-only census of the governance estate and organ seed surface."""
+    governance_files = sorted(path for path in GOV_HOME.glob("*") if path.is_file())
+    seed_files = sorted(path for path in (ROOT / "organs").glob("*/seed.yaml") if path.is_file())
+    entity_files = sorted(path for path in GOV_HOME.glob("entities*.yaml") if path.is_file())
+    return {
+        "governance_artifacts": len(governance_files),
+        "organ_seed_files": len(seed_files),
+        "entity_artifacts": len(entity_files),
+        "governance_artifact_names": [path.name for path in governance_files],
+        "organ_seed_paths": [str(path.relative_to(ROOT)) for path in seed_files],
+    }
+
+
 # --------------------------------------------------------------------------- #
 # Main                                                                          #
 # --------------------------------------------------------------------------- #
+
 
 def main() -> int:
     LOGS.mkdir(parents=True, exist_ok=True)
@@ -297,7 +330,10 @@ def main() -> int:
     # 4. Read current standing
     standing = _governance_standing()
 
-    # 5. Write state report
+    # 5. Census the estate surface this organ governs
+    census = _governance_census()
+
+    # 6. Write state report
     report = {
         "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "validator": outcome,
@@ -310,13 +346,15 @@ def main() -> int:
         },
         "advancement": advancement,
         "standing": standing,
+        "census": census,
     }
     (LOGS / "governance-organ-state.json").write_text(json.dumps(report, indent=2))
 
-    # 6. Print beat summary
+    # 7. Print beat summary
     parts = [
         f"validator={outcome['status']}",
         f"maturity={assessment['maturity_pct']}%",
+        f"seeds={census['organ_seed_files']}",
     ]
     m = standing.get("maturity")
     if m is not None:
@@ -331,21 +369,29 @@ def main() -> int:
         parts.append(f"needs:{','.join(failed_list)}")
     print("governance-organ: " + " | ".join(parts))
 
-    # 7. Stamp voice for proprioception
+    # 8. Stamp voice for proprioception
     (VOICED / "governance").write_text(report["ts"])
 
     # Write a human-readable face for the governance dashboard
     face = ROOT / "web" / "app" / "public" / "governance-standing.json"
     try:
         face.parent.mkdir(parents=True, exist_ok=True)
-        face.write_text(json.dumps({
-            "ts": report["ts"],
-            "maturity": assessment["maturity_pct"],
-            "stage": standing.get("stage", "?"),
-            "validator": outcome["status"],
-            "passed_checks": assessment["passed"],
-            "next_slices": [k for k in assessment["failed"] if k not in ("entity_registrar", "cursus_tracking") or True],
-        }, indent=2))
+        face.write_text(
+            json.dumps(
+                {
+                    "ts": report["ts"],
+                    "maturity": assessment["maturity_pct"],
+                    "stage": standing.get("stage", "?"),
+                    "validator": outcome["status"],
+                    "passed_checks": assessment["passed"],
+                    "census": census,
+                    "next_slices": [
+                        k for k in assessment["failed"] if k not in ("entity_registrar", "cursus_tracking") or True
+                    ],
+                },
+                indent=2,
+            )
+        )
     except OSError:
         pass
 
