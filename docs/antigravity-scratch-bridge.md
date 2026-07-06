@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T03:08:51+00:00`
+Generated: `2026-07-06T03:09:47+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `16`.
-- External archives verified: `15`.
-- Verified external archive source size: `21.5 GiB`.
-- Event source size total: `26.2 GiB` (includes retries).
+- Preservation receipts: `17`.
+- External archives verified: `16`.
+- Verified external archive source size: `21.7 GiB`.
+- Event source size total: `26.4 GiB` (includes retries).
+- `2026-07-06T03:09:59Z` `vulnpulse`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030959Z-vulnpulse/receipt.json`.
 - `2026-07-06T03:09:05Z` `bountyscope`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030905Z-bountyscope/receipt.json`.
 - `2026-07-06T03:07:47Z` `edgarflash`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030747Z-edgarflash/receipt.json`.
 - `2026-07-06T03:02:34Z` `bountyscope-test-coverage`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030234Z-bountyscope-test-coverage/receipt.json`.
@@ -43,14 +44,13 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T02:53:02Z` `mirror-mirror`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025302Z-mirror-mirror/receipt.json`.
 - `2026-07-06T02:51:08Z` `limen`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025108Z-limen/receipt.json`.
 - `2026-07-06T02:49:25Z` `dot-github--theoria`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024925Z-dot-github--theoria/receipt.json`.
-- `2026-07-06T02:47:45Z` `public-record-data-scrapper`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T024745Z-public-record-data-scrapper/receipt.json`.
 
 ## Preservation Results
 
 - Requested roots: `1`.
-- Source size receipted: `234.8 MiB`.
+- Source size receipted: `223.8 MiB`.
 - Statuses: `external_archive_preserved` 1.
-- Preserved `bountyscope` `234.8 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030905Z-bountyscope/receipt.json`.
+- Preserved `vulnpulse` `223.8 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030959Z-vulnpulse/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
