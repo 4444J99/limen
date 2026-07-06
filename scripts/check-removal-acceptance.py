@@ -34,6 +34,7 @@ DIRECT_REMOVAL_BANS = {
     "scripts/merge-ready.sh": ("--delete-branch",),
     "scripts/merge-drain.py": ("--delete-branch",),
     "scripts/done-insight-cadence.sh": ("rm -rf", "rm -f"),
+    "scripts/clone-maintenance.sh": ("shutil.rmtree(nm", "--delete-branch"),
     "CLAUDE.md": ("--delete-branch",),
     "docs/MERGE-READY.md": ("--delete-branch", "deletes the branches"),
 }

@@ -38,23 +38,20 @@ while IFS= read -r g; do
 done < <(find "$WS" -maxdepth 3 -name .git -type d 2>/dev/null)
 echo "  hygiene pass over $n repo(s)."
 
-# ── node_modules reclaim (REGENERABLE build cache, not data; reversible via reinstall) ──
+# ── node_modules census (REGENERABLE build cache, not data; reversible via reinstall) ──
 # The single biggest creep source the fleet leaves behind (per-dispatch worktree builds).
-# DATA-SAFE by construction: node_modules is always reproducible from a lockfile, so this is
-# cache reclamation, NOT the never-auto-delete-DATA rule. Guarded HARD anyway: never CORE,
-# never the live $LIMEN_ROOT, never a dirty tree, never a repo with an active limen task, and
-# never one touched within LIMEN_NM_IDLE_DAYS — EXCEPT a throwaway .limen-worktrees/gen-* whose
-# work is already a PR (age-exempt, but still clean + no-active-task gated). LIMEN_RECLAIM_DRYRUN=1
-# reports without removing. Every reclaim is logged (no silent truncation).
-# Under disk pressure the idle window is WAIVED (idle_days=0): node_modules is always regenerable
-# from a lockfile, so when the disk is full we reclaim every non-active/non-dirty one immediately.
+# Even regenerable cache removal now needs a separate archive/redaction acceptance surface, so this
+# organ only reports candidates. Guarded HARD anyway: never CORE, never the live $LIMEN_ROOT, never
+# a dirty tree, never a repo with an active limen task, and never one touched within
+# LIMEN_NM_IDLE_DAYS — EXCEPT a .limen-worktrees/gen-* root whose work is already a PR
+# (age-exempt, but still clean + no-active-task gated).
 NM_IDLE="${LIMEN_NM_IDLE_DAYS:-2}"; [ "$PRESSURE" = 1 ] && NM_IDLE=0
-echo "── node_modules reclaim (regenerable; core/live/dirty/active/fresh skipped; idle=${NM_IDLE}d) ──"
-python3 - "$ROOT/tasks.yaml" "$WS" "$CORE" "$ROOT" "$NM_IDLE" "${LIMEN_RECLAIM_DRYRUN:-0}" <<'PY'
-import glob, os, shutil, subprocess, sys, time
+echo "── node_modules census (regenerable; core/live/dirty/active/fresh skipped; idle=${NM_IDLE}d) ──"
+python3 - "$ROOT/tasks.yaml" "$WS" "$CORE" "$ROOT" "$NM_IDLE" <<'PY'
+import glob, os, subprocess, sys, time
 import yaml
-tasks_path, ws, core, live_root, idle_days, dry = sys.argv[1:7]
-core = set(core.split()); idle_days = int(idle_days); dry = (dry == "1")
+tasks_path, ws, core, live_root, idle_days = sys.argv[1:6]
+core = set(core.split()); idle_days = int(idle_days)
 d = yaml.safe_load(open(tasks_path)) or {}
 active = {t.get("repo") for t in d.get("tasks", [])
           if t.get("status") in ("open", "dispatched", "in_progress") and t.get("repo")}
@@ -106,18 +103,15 @@ for nm in glob.glob(os.path.join(ws, "**", "node_modules"), recursive=True):
             except OSError:
                 pass
     freed += sz; n += 1
-    print(f"  {'WOULD reclaim' if dry else 'reclaimed'}: {nm}  ({sz/1e9:.2f} GB)")
-    if not dry:
-        shutil.rmtree(nm, ignore_errors=True)
-print(f"  {'(dry-run) ' if dry else ''}node_modules: {n} dir(s) "
-      f"{'would free' if dry else 'freed'} {freed/1e9:.2f} GB; {kept} kept (core/live/dirty/active/fresh).")
+    print(f"  WOULD reclaim: {nm}  ({sz/1e9:.2f} GB)")
+print(f"  (dry-run) node_modules: {n} dir(s) would free {freed/1e9:.2f} GB; "
+      f"{kept} kept (core/live/dirty/active/fresh); physical cache removal requires acceptance.")
 PY
 
-# ── clone reap — the LAST step of the developer lifecycle (clone→work→push→DELETE the clone).
-# A pure pushed mirror is a disposable cache of GitHub; reaping it loses nothing (re-cloneable), so
-# this is REVERSIBLE and runs autonomically — no longer "removal gated on user OK" (the leak that let
-# ~/Workspace creep back to full). reap-clones.py enforces the loss-free gate + df-driven pressure and
-# is unit-proven by cli/tests/test_reap_clones.py. Escape hatch: LIMEN_CLONE_REAP_APPLY=0 → dry-run.
+# ── clone reap — the LAST step of the developer lifecycle (clone→work→push→accepted reclaim).
+# A pure pushed mirror is a disposable cache of GitHub, but physical local removal still requires
+# archive/redaction acceptance. reap-clones.py enforces the loss-free gate + acceptance ledger and is
+# unit-proven by cli/tests/test_reap_clones.py. Escape hatch: LIMEN_CLONE_REAP_APPLY=0 → dry-run.
 # Under pressure, CAPTURE first (push every repo's work to origin, recursively) so the dirty/unpushed
 # clones become pure mirrors this cycle instead of waiting for the every-48 backup beat.
 if [ "$PRESSURE" = 1 ] && [ -x "$ROOT/scripts/capture.sh" ]; then
@@ -127,12 +121,10 @@ fi
 reap_args=(); [ "${LIMEN_CLONE_REAP_APPLY:-1}" = "1" ] && reap_args+=(--apply)
 LIMEN_WORKSPACE="$WS" python3 "$ROOT/scripts/reap-clones.py" "${reap_args[@]}" 2>&1 | tail -6 || true
 
-# ── branch reap — the REF sibling of the clone/worktree reapers. `git worktree remove` and
-# `gh pr merge --delete-branch` drop the worktree + the REMOTE branch but leave the LOCAL head ref,
-# so squash-merged branches pile up forever (the "1 ahead / N behind housekeeping" that gets
-# hand-waved every session). reap-branches.py deletes ONLY provably-landed branches (tip is an
-# ancestor of main, OR the PR is MERGED and the tip is not advanced past mergedAt) — loss-free and
-# reflog-recoverable, so reversible + ungated. Unfinished branches are KEPT and surfaced to
-# docs/branch-hygiene.md. Unit-proven by cli/tests/test_reap_branches.py. Escape: LIMEN_BRANCH_REAP_APPLY=0.
+# ── branch reap — the REF sibling of the clone/worktree reapers. Local branch refs can pile up after
+# merges. reap-branches.py deletes ONLY accepted, provably-landed branches (tip is an ancestor of
+# main, OR the PR is MERGED and the tip is not advanced past mergedAt). Unfinished branches are KEPT
+# and surfaced to docs/branch-hygiene.md. Unit-proven by cli/tests/test_reap_branches.py. Escape:
+# LIMEN_BRANCH_REAP_APPLY=0.
 breap_args=(); [ "${LIMEN_BRANCH_REAP_APPLY:-1}" = "1" ] && breap_args+=(--apply)
 python3 "$ROOT/scripts/reap-branches.py" "${breap_args[@]}" 2>&1 | tail -4 || true
