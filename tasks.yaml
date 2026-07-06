@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 1
+      spent: 2
       per_agent:
-        jules: 1
+        jules: 2
         gemini: 0
         codex: 0
         opencode: 0
@@ -40927,7 +40927,7 @@ tasks:
   title: '[MP-6] Legion of Fitness FB group migration plan'
   repo: 4444J99/hokage-chess
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: dispatched
@@ -40945,7 +40945,7 @@ tasks:
     \ actively move members to owned platform ## Spec need"
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-06T11:26:08.865936Z'
+  updated: '2026-07-06T11:59:09.655729Z'
   dispatch_log:
   - timestamp: '2026-06-22T01:47:39.476754Z'
     agent: opencode
@@ -40967,6 +40967,15 @@ tasks:
     status: timeout->jules
   - timestamp: '2026-07-06T11:26:08.865936Z'
     agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T11:58:56.893671Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
+  - timestamp: '2026-07-06T11:59:09.655729Z'
+    agent: jules
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
@@ -79872,7 +79881,7 @@ tasks:
     \ [auto-emitted 2026-07-03 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-06T11:46:21.142873Z'
+  updated: '2026-07-06T11:58:56.893671Z'
   dispatch_log:
   - timestamp: '2026-07-04T10:47:12.481099Z'
     agent: claude
@@ -79936,6 +79945,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-06T11:58:56.893671Z'
+    agent: jules
+    session_id: '14470496643016719869'
+    status: dispatched
 - id: HEAL-cifix-organvm-peer-audited--behavioral-blockchain-752
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#752
   repo: organvm/peer-audited--behavioral-blockchain
@@ -84437,7 +84450,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -84453,7 +84466,7 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T10:31:31.915710Z'
+  updated: '2026-07-06T11:59:09.655729Z'
   dispatch_log:
   - timestamp: '2026-07-06T09:57:15.230830Z'
     agent: claude
@@ -84464,6 +84477,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-07-06T11:59:09.655729Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-4444j99-hokage-chess-122
   title: "rebase 4444J99/hokage-chess#122 onto current base \u2014 branched far behind"
   repo: 4444J99/hokage-chess
