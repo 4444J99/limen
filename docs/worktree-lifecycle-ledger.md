@@ -1,6 +1,6 @@
 # Canonical Worktree Lifecycle Ledger
 
-Last audited: 2026-07-04 from `/Users/4jp/Workspace/limen`.
+Last audited: 2026-07-06 from `/Users/4jp/Workspace/limen`.
 
 This is the canonical working ledger for roots under
 `/Users/4jp/Workspace/.limen-worktrees`. A root exits this ledger only through a
@@ -19,6 +19,26 @@ only after their local `HEAD` matched the fetched remote PR head exactly:
 The unique work remains preserved on the remote branches and open draft PRs.
 
 ## Current Scan
+
+2026-07-06 remote-supersession pass:
+
+- `python3 scripts/worktree-debt.py --json` initially reported 48 roots with 1 debt-bearing
+  root: `linear-conjuring-bear`, classified as `not-merged-to-default`.
+- Read-only inspection found branch `session/post-moneta-durability` at
+  `01c7773cd42adf2e9a3c4277bb635bc1a53eaf3f`, preserved by draft PR
+  [#635](https://github.com/organvm/limen/pull/635), but the PR is `CONFLICTING` and not
+  merge-ready.
+- The branch is superseded by current `origin/main`: commit `21ba3f3b` already staged the
+  consolidation execution packet under `docs/consolidation/EXECUTION-MANIFEST.md` and
+  `scripts/consolidation-*-apply.sh`; current main's scripts retain the explicit
+  `LIMEN_CONSOLIDATION_GATE=consolidation-gate-open` hard gate, while the draft branch's copies
+  remove that guard. Main also carries the richer `docs/session-2026-07-03-audit-trail.md`.
+- Added a `remote-superseded` receipt for `linear-conjuring-bear` in
+  `docs/worktree-preservation-receipts.json`. No PR was merged or closed, no branch was deleted,
+  no local checkout was removed, and no GitHub consolidation command was run.
+- Re-run proof after the receipt: `python3 scripts/worktree-debt.py --fail-over-cap` reports
+  0 debt roots / 49 scanned roots, with `linear-conjuring-bear` classified as
+  `remote-superseded`.
 
 2026-07-04 lifecycle closeout pass:
 

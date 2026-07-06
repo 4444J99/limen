@@ -1,6 +1,6 @@
 # Prompt Lifecycle Ledger
 
-Generated: `2026-07-06T09:09:41+00:00`
+Generated: `2026-07-06T09:27:40+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -12,13 +12,13 @@ Horizon: `all local history`
 
 ## Redacted Prompt Coverage
 
-Indexed `15221` app/session files, `4.3 GiB`, with `131012` prompt-like user events hashed into the private index.
+Indexed `15221` app/session files, `4.3 GiB`, with `131016` prompt-like user events hashed into the private index.
 Normalized task-body payload covered `259.7 MiB` after stripping recognized scaffold-only prompt frames.
 
 | Source | Files/Sessions | Prompt Events | Prompt Bytes | Task Body Bytes | Event Records | Size | Newest |
 |---|---:|---:|---:|---:|---:|---:|---|
-| `claude-projects` | 6620 | 120291 | 245.3 MiB | 239.6 MiB | 458646 | 1.9 GiB | `2026-07-06T09:06:20+00:00` |
-| `codex-sessions` | 1363 | 7566 | 18.8 MiB | 13.4 MiB | 515859 | 1.5 GiB | `2026-07-06T09:07:48+00:00` |
+| `claude-projects` | 6620 | 120295 | 245.3 MiB | 239.6 MiB | 458666 | 1.9 GiB | `2026-07-06T09:24:19+00:00` |
+| `codex-sessions` | 1363 | 7566 | 18.8 MiB | 13.4 MiB | 516615 | 1.5 GiB | `2026-07-06T09:26:01+00:00` |
 | `opencode-db` | 1408 | 1415 | 3.7 MiB | 3.7 MiB | 81621 | 0 B | `2026-07-06T08:52:27+00:00` |
 | `codex-history` | 1 | 1047 | 709.6 KiB | 709.6 KiB | 1047 | 813.0 KiB | `2026-07-06T02:17:32+00:00` |
 | `agy-cli-conversations` | 501 | 481 | 2.3 MiB | 2.3 MiB | 29662 | 870.0 MiB | `2026-07-06T08:44:10+00:00` |
@@ -33,14 +33,14 @@ Normalized task-body payload covered `259.7 MiB` after stripping recognized scaf
 
 | Body Kind | Prompt Events |
 |---|---:|
-| `direct` | 126413 |
+| `direct` | 126417 |
 | `flame_scaffold` | 2433 |
 | `flame_with_task_body` | 2151 |
 | `session_context` | 15 |
 
 ## Prompt To Worktree Crosswalk
 
-- Current `.limen-worktrees` roots scanned: `48`; debt roots: `1`.
+- Current `.limen-worktrees` roots scanned: `48`; debt roots: `0`.
 - Current worktree roots with at least one local session/prompt receipt: `30`.
 - Current worktree roots without a local session receipt in this index: `18`.
 
@@ -77,7 +77,7 @@ Normalized task-body payload covered `259.7 MiB` after stripping recognized scaf
 | `limen-network-substrate-20260628` | 2 | 21 | `remote-pr-open` |
 | `limen_jules-org-health-organ-kernel-0630-0289` | 0 | 0 | `active(<6h)` |
 | `limen_jules-org-health-organ-kernel-0630-02fb` | 0 | 0 | `active(<6h)` |
-| `linear-conjuring-bear` | 43 | 2215 | `not-merged-to-default` |
+| `linear-conjuring-bear` | 43 | 2215 | `remote-superseded` |
 | `maddie-boundary-20260629` | 2 | 68 | `remote-pr-open` |
 | `org-health-organ-firstslice-0704-aac2b482` | 1 | 3 | `generated-log-shell` |
 | `org-health-organ-firstslice-0704-caa4e142` | 1 | 3 | `generated-log-shell` |
@@ -88,7 +88,7 @@ Normalized task-body payload covered `259.7 MiB` after stripping recognized scaf
 | `review-avditor-billing-pr43` | 0 | 0 | `owner-blocker` |
 | `student-email-d2l-support-20260629` | 2 | 67 | `remote-pr-open` |
 | `the-invisible-ledger` | 106 | 3036 | `remote-pr-open` |
-| `ticklish-bubbling-robin` | 69 | 2168 | `remote-pr-open` |
+| `ticklish-bubbling-robin` | 69 | 2172 | `remote-pr-open` |
 | `triptych-story` | 3 | 212 | `remote-pr-open` |
 | `universal-entry-20260629` | 0 | 0 | `remote-pr-open` |
 | `universal-kernel-recordkeeper-20260705` | 0 | 0 | `active(<24h)` |

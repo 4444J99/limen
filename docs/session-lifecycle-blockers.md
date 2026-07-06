@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-07-06T09:20:30+00:00`
+Generated: `2026-07-06T09:27:51+00:00`
 
 ## Canonical Handling
 
@@ -17,9 +17,9 @@ Generated: `2026-07-06T09:20:30+00:00`
 - Network health receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/network-health.json`.
 - Dispatch health receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/dispatch-health.json`.
 - Live root gate receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/live-root-gate.json`.
-- Redacted local prompt coverage: `15221` files, `131012` prompt-like events.
+- Redacted local prompt coverage: `15221` files, `131016` prompt-like events.
 - Codex classified sessions: `887`.
-- Worktree debt roots: `1`.
+- Worktree debt roots: `0`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
 - Session pressure hook wired: `True`; last pressure snapshot present: `True`.
 - Local lifecycle footprint: `26.1 GiB`.
@@ -32,15 +32,14 @@ Generated: `2026-07-06T09:20:30+00:00`
 
 ## Parked / Hung Workstreams
 
-- By category: `auth_credentials` 2, `cloud_runtime` 1, `github_app_identity` 1, `github_consolidation` 1, `local_lean` 1, `owner_state` 1, `worktree_lifecycle` 1.
-- By status: `needs_human_gate` 2, `parked` 6.
+- By category: `auth_credentials` 2, `cloud_runtime` 1, `github_app_identity` 1, `github_consolidation` 1, `local_lean` 1, `owner_state` 1.
+- By status: `needs_human_gate` 2, `parked` 5.
 
 | ID | Category | Status | Evidence | Owner | Route |
 |---|---|---|---|---|---|
 | `credential-codex-auth-sessions` | `auth_credentials` | `parked` | 405 Codex sessions classified as auth/credential work; states: ALIVE 1, CLOSED 364, PARKED 40 | credential workstream | Keep parked unless a future scoped task explicitly requires the account action. |
 | `cloud-credential-handles-unconfigured` | `auth_credentials` | `parked` | 6 credential/deploy handles absent; 0 present. No values inspected. | credential workstream | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 1 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
 | `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
 | `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 26.1 GiB (19.4 GiB worktrees, 6.7 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
 | `github-consolidation-collisions` | `github_consolidation` | `needs_human_gate` | 36 source repos remain outside `organvm`; 13 name-collision groups block the transfer apply gate. | GitHub consolidation | Collision packet is complete; await an explicit human GitHub mutation gate to run `docs/consolidation/COLLISION-RENAMES.md`, then re-run the consolidation dry-run and require 0 collisions before transfer. |

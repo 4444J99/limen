@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-04T19:00:29Z",
+  "generated_utc": "2026-07-06T09:24:33Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -1606,6 +1606,33 @@
       "root": "ticklish-bubbling-robin",
       "score_discount": 35,
       "status": "open_pr_preserved"
+    },
+    {
+      "branch": "session/post-moneta-durability",
+      "classification": "draft PR superseded by current main consolidation packet",
+      "evidence_updated_utc": "2026-07-06T09:24:33Z",
+      "head": "01c7773cd42adf2e9a3c4277bb635bc1a53eaf3f",
+      "lane": "remote-superseded",
+      "next_action": "Do not merge PR #635 as-is. Current main preserves the consolidation execution packet under docs/consolidation/ and scripts/ with stricter LIMEN_CONSOLIDATION_GATE guards; PR #635 remains a draft review artifact and should be closed or superseded by a new narrow PR only after human review. Reclaim the local checkout only after operator acceptance.",
+      "pr_draft": true,
+      "pr_mergeable": "CONFLICTING",
+      "pr_number": 635,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/635",
+      "remote_default_head": "64880c2eb33ab633e67d66cdea7969b28e3e6111",
+      "repo": "organvm/limen",
+      "root": "linear-conjuring-bear",
+      "score_discount": 35,
+      "status": "superseded_on_origin_main",
+      "superseding_commit": "21ba3f3b15963540a37fa6de10b595a32dcc7a68",
+      "superseding_paths": [
+        "docs/consolidation/EXECUTION-MANIFEST.md",
+        "docs/session-2026-07-03-audit-trail.md",
+        "scripts/consolidation-owner-rewrite-apply.sh",
+        "scripts/consolidation-renames-apply.sh",
+        "scripts/consolidation-transfer-apply.sh"
+      ],
+      "worktree": "/Users/4jp/limen/.claude/worktrees/linear-conjuring-bear"
     }
   ],
   "schema": 1
