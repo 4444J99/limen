@@ -1,6 +1,6 @@
 # Capability Substrate Ledger
 
-Generated: `2026-07-02T20:56:36+00:00`
+Generated: `2026-07-06T09:12:28+00:00`
 
 ## Canonical Decision
 
@@ -25,9 +25,9 @@ Generated: `2026-07-02T20:56:36+00:00`
 |---|---|---|---:|---:|---:|---:|---:|---|
 | `~/.local/share/codex/skills` | `codex-user-skills` | `available` | 6 | 6 | 0 | 0 | 53 | Already visible to Codex when the skill registry loads; keep as the active baseline. |
 | `~/.local/share/codex/plugins` | `codex-plugin-cache` | `available-vendor-cache` | 179 | 166 | 36 | 11 | 2559 | Already surfaced by installed Codex plugins; do not port cache internals by hand. |
-| `~/.claude/plugins` | `claude-plugin-cache` | `legacy-plugin-cache` | 0 | 0 | 3 | 0 | 53 | Treat as Claude-side plugin state; inspect only through its plugin owner. |
+| `~/.claude/plugins` | `claude-plugin-cache` | `legacy-plugin-cache` | 0 | 0 | 3 | 0 | 46 | Treat as Claude-side plugin state; inspect only through its plugin owner. |
 | `~/Workspace/organvm/_agent` | `organvm-agent-archive` | `custom-agent-archive` | 164 | 164 | 0 | 11 | 1155 | Converge legacy global skills and MCP registry pieces into the current capability layer. |
-| `~/Workspace/organvm/claude-runtime-state` | `organvm-runtime-tasks` | `scheduled-runtime-archive` | 17 | 17 | 0 | 17 | 3908 | Convert scheduled-task skills into Limen packets or LaunchAgent receipts, not chat-only memory. |
+| `~/Workspace/organvm/claude-runtime-state` | `organvm-runtime-tasks` | `scheduled-runtime-archive` | 17 | 17 | 0 | 17 | 3915 | Convert scheduled-task skills into Limen packets or LaunchAgent receipts, not chat-only memory. |
 | `~/Workspace/domus-genoma` | `domus-genoma-config` | `config-mcp-wrapper-substrate` | 74 | 20 | 3 | 98 | 50000 | Keep as dotfile/config owner state; activate through chezmoi and MCP wrapper receipts. |
 | `~/Workspace/4444J99` | `workspace-mirror` | `mirror-candidate` | 24 | 19 | 1 | 36 | 4323 | Use only after checking the source owner; count it so duplicate capability copies are visible. |
 | `~/Workspace/limen/.agents` | `limen-local-skills` | `repo-local-active` | 2 | 2 | 0 | 0 | 2 | Keep mirrored local skills minimal and tested by Limen verification. |
