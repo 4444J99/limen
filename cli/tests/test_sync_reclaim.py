@@ -12,6 +12,7 @@
 Both run as real subprocesses against throwaway git repos, so the actual shell/Python ships.
 """
 
+import json
 import os
 import subprocess
 import time
@@ -339,6 +340,75 @@ def test_reclaim_keeps_clean_pushed_unmerged_branch(tmp_path):
     assert r.returncode == 0, r.stderr
     assert branch.exists(), r.stdout
     assert "not-merged-to-default" in r.stdout
+
+
+def test_reclaim_removes_clean_idle_remote_merged_receipt(tmp_path):
+    main, bare, wtroot = _wt_root_with(tmp_path)
+    (main / "logs").mkdir(exist_ok=True)
+    receipts = main / "docs" / "worktree-preservation-receipts.json"
+    receipts.parent.mkdir(exist_ok=True)
+
+    merged = _add_wt(main, wtroot, "receipt-merged")
+    _git("checkout", "-q", "-b", "merged-pr", cwd=merged)
+    _commit(merged, "squashed.txt", "merged elsewhere\n", "local pre-squash commit")
+    _age(merged, 5)
+
+    receipts.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "receipt-merged",
+                        "lane": "remote-merged",
+                        "status": "merged_pr_preserved",
+                        "pr_state": "MERGED",
+                        "pr_url": "https://github.com/organvm/example/pull/1",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    r = _run_reclaim(wtroot, main, apply=True)
+
+    assert r.returncode == 0, r.stderr
+    assert not merged.exists(), r.stdout
+    assert "receipt-remote-merged+clean+idle" in r.stdout
+
+
+def test_reclaim_keeps_dirty_remote_merged_receipt(tmp_path):
+    main, bare, wtroot = _wt_root_with(tmp_path)
+    (main / "logs").mkdir(exist_ok=True)
+    receipts = main / "docs" / "worktree-preservation-receipts.json"
+    receipts.parent.mkdir(exist_ok=True)
+
+    dirty = _add_wt(main, wtroot, "dirty-receipt-merged")
+    _age(dirty, 5)
+    (dirty / "local-only.txt").write_text("uncommitted local data\n", encoding="utf-8")
+
+    receipts.write_text(
+        json.dumps(
+            {
+                "receipts": [
+                    {
+                        "root": "dirty-receipt-merged",
+                        "lane": "remote-merged",
+                        "status": "merged_pr_preserved",
+                        "pr_state": "MERGED",
+                        "pr_url": "https://github.com/organvm/example/pull/2",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    r = _run_reclaim(wtroot, main, apply=True)
+
+    assert r.returncode == 0, r.stderr
+    assert dirty.exists(), r.stdout
+    assert "dirty" in r.stdout
 
 
 def test_reclaim_removes_patch_equivalent_local_replay(tmp_path):

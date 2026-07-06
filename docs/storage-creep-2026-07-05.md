@@ -6,8 +6,8 @@ personal data stores or agent scratch roots.
 
 ## Live Footprint
 
-- Internal data volume: `460Gi` size, `402Gi` used, `27Gi` available, `94%` capacity after the
-  2026-07-06 safe reap.
+- Internal data volume: `460Gi` size, `403Gi` used, `28Gi` available, `94%` capacity after the
+  2026-07-06 safe reaps.
 - Archive4T: `3.6Ti` size, `523Gi` used, `3.0Ti` available.
 - `~/.gemini`: about `30G`; `~/.gemini/antigravity-cli`: about `30G`.
 - `~/.gemini/antigravity-cli/scratch`: about `28G`.
@@ -20,8 +20,8 @@ personal data stores or agent scratch roots.
   - `sovereign-systems--elevate-align`: `1.2G`
   - `public-record-data-scrapper`: `1.0G`
   - `growth-auditor`: `972M`
-- `~/Workspace` remains large, but the Limen-owned loss-free cleanup path did not find meaningful
-  immediate reclaim this run.
+- `~/Workspace` remains large, but Limen-owned cleanup now has proof-backed reapers for pure mirrors,
+  generated worktree log shells, and clean remote-merged preservation receipts.
 
 ## Owner-Safe Reclaim Check
 
@@ -53,8 +53,15 @@ personal data stores or agent scratch roots.
 - The generated worktree log-shell residue class was made mechanically reclaimable and then reaped:
   `LIMEN_RECLAIM_MAX=100 python3 scripts/reclaim-worktrees.py --apply --force` removed `53` exact
   generated log-shell roots.
-- Post-reap predicates are tighter: `python3 scripts/worktree-debt.py --json` now reports `debt: 1`,
-  and `python3 scripts/reclaim-worktrees.py --force` reports `0 reclaimed, 36 kept-safe`.
+- `scripts/reclaim-worktrees.py` now accepts a clean+idle `remote-merged` preservation receipt as
+  lifecycle proof when the receipt has `pr_state: MERGED`, a durable PR URL, and no private patch
+  marker.
+- `python3 scripts/reclaim-worktrees.py --apply --force` reaped another `7` clean receipt-backed
+  completed roots: `pr-463`, `pr-466`, `pr-467`, `pr-468`, `pr-471`, `pr-475`, and
+  `GEN-organvm-limen-ci-green-0702`.
+- Post-reap predicates are tighter: `python3 scripts/worktree-debt.py --json` now reports `debt: 1`
+  across `29` targets, and `python3 scripts/reclaim-worktrees.py --force` reports
+  `0 reclaimed, 29 kept-safe`.
 
 ## Decision
 

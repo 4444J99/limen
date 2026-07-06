@@ -9,6 +9,7 @@ those:
   • clean working tree (no uncommitted or untracked changes), AND
   • HEAD is reachable from some remote ref, or every local patch is equivalent to default, AND
   • HEAD/content is already merged into the remote default branch (the work finished its PR/base lifecycle), AND
+    OR a clean+idle preservation receipt proves the PR is merged with no private patch marker, AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
 
 It scans every known creation site (the historical blind spot — see worktree-lifecycle-blind-spot):
@@ -32,6 +33,7 @@ Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (
      LIMEN_RECLAIM_REGISTERED_WT, LIMEN_RECLAIM_REGISTERED_AGE_H, LIMEN_RECLAIM_MAIN_REPOS,
      LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30).
 """
+
 from __future__ import annotations
 import json
 import os
@@ -71,6 +73,8 @@ LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
 APPLY = "--apply" in sys.argv
 FORCE = "--force" in sys.argv  # ignore the throttle
+REMOTE_MERGED_LANES = {"remote-merged"}
+REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
 
 # Never reap the live checkout nor the worktree this process is running from (else we yank
 # the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
@@ -79,15 +83,15 @@ try:
     _cwd = Path.cwd().resolve()
     for _p in (_cwd, *_cwd.parents):
         if (_p / ".git").exists():
-            _SELF_GUARD.add(_p); break
+            _SELF_GUARD.add(_p)
+            break
 except Exception:
     _SELF_GUARD = {LIMEN_ROOT}
 
 
 def git(args, cwd, timeout=30):
     try:
-        return subprocess.run(["git", *args], cwd=str(cwd), capture_output=True,
-                              text=True, timeout=timeout)
+        return subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True, timeout=timeout)
     except Exception as e:  # fail open per-dir
         r = subprocess.CompletedProcess(args, 1, "", str(e))
         return r
@@ -131,6 +135,40 @@ def patch_equivalent_to_default(cwd) -> bool:
     return bool(lines) and all(line.startswith("-") for line in lines)
 
 
+def load_preservation_receipts():
+    path = LIMEN_ROOT / "docs" / "worktree-preservation-receipts.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, ValueError):
+        return {}
+    receipts = {}
+    for receipt in data.get("receipts") or []:
+        if not isinstance(receipt, dict):
+            continue
+        root = receipt.get("root")
+        if root:
+            receipts[str(root)] = receipt
+    return receipts
+
+
+def receipt_remote_merged(path: Path, preservation_receipts) -> bool:
+    receipt = preservation_receipts.get(path.name)
+    if not isinstance(receipt, dict):
+        return False
+    if receipt.get("private_receipt") or receipt.get("private_patch_sha256"):
+        return False
+    lane = str(receipt.get("lane") or "")
+    status = str(receipt.get("status") or "")
+    pr_state = str(receipt.get("pr_state") or "")
+    pr_url = str(receipt.get("pr_url") or "")
+    return (
+        lane in REMOTE_MERGED_LANES
+        and status in REMOTE_MERGED_STATUSES
+        and pr_state == "MERGED"
+        and pr_url.startswith("https://")
+    )
+
+
 def superproject(cwd) -> str | None:
     wl = git(["worktree", "list", "--porcelain"], cwd).stdout.splitlines()
     if wl and wl[0].startswith("worktree "):
@@ -138,8 +176,9 @@ def superproject(cwd) -> str | None:
     return None
 
 
-def classify(d: Path, now: float, min_age_h: float):
+def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None):
     """Return (action, reason). action in {remove-worktree, remove-clone, remove-residue, skip}."""
+    preservation_receipts = preservation_receipts or {}
     try:
         if d.resolve() in _SELF_GUARD:
             return "skip", "self/live-checkout"
@@ -154,13 +193,15 @@ def classify(d: Path, now: float, min_age_h: float):
         return "skip", f"active(<{min_age_h:g}h, age={age_h:.1f}h)"
     if git(["status", "--porcelain"], d).stdout.strip():
         return "skip", "dirty"
+    is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
+    if receipt_remote_merged(d, preservation_receipts):
+        return ("remove-worktree" if is_wt else "remove-clone"), "receipt-remote-merged+clean+idle"
     head = git(["rev-parse", "HEAD"], d).stdout.strip()
     patch_equivalent = patch_equivalent_to_default(d)
     if not head or (not reachable_from_remote(d, head) and not patch_equivalent):
         return "skip", "unpushed-commits"
     if not (merged_into_default(d, head) or patch_equivalent):
         return "skip", "not-merged-to-default"
-    is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
     return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"
 
 
@@ -177,26 +218,31 @@ def main():
             print(f"reclaim: ran < {EVERY_MIN}min ago — skip (set --force to override)")
             return 0
     now = time.time()
+    preservation_receipts = load_preservation_receipts()
     dirs = [(target.path, target.min_age_h) for target in targets]
     removed, skipped, failed, deferred = [], [], [], []
     for d, min_age_h in dirs:
-        action, reason = classify(d, now, min_age_h)
+        action, reason = classify(d, now, min_age_h, preservation_receipts)
         if action == "skip":
-            skipped.append((d.name, reason)); continue
+            skipped.append((d.name, reason))
+            continue
         if len(removed) >= MAX_REMOVE:
-            deferred.append(d.name); continue  # bounded — but NOT silent (logged below)
+            deferred.append(d.name)
+            continue  # bounded — but NOT silent (logged below)
         if not APPLY:
-            removed.append((d.name, f"would-{action}")); continue
+            removed.append((d.name, f"would-{action}:{reason}"))
+            continue
         try:
             if action == "remove-worktree":
                 sp = superproject(d)
                 base = sp if sp and Path(sp).resolve() != d.resolve() else d
                 r = git(["worktree", "remove", "--force", str(d)], base)
                 if r.returncode != 0:
-                    failed.append((d.name, r.stderr.strip()[:120])); continue
+                    failed.append((d.name, r.stderr.strip()[:120]))
+                    continue
             else:
                 shutil.rmtree(d)
-            removed.append((d.name, action))
+            removed.append((d.name, f"{action}:{reason}"))
         except Exception as e:  # fail open
             failed.append((d.name, str(e)[:120]))
 
@@ -205,24 +251,38 @@ def main():
             MARKER.parent.mkdir(parents=True, exist_ok=True)
             MARKER.write_text(str(now))
             with LOG.open("a") as fh:
-                fh.write(json.dumps({
-                    "ts": now, "apply": APPLY, "scanned": len(dirs),
-                    "removed": [n for n, _ in removed], "skipped": dict(skipped),
-                    "failed": dict(failed), "deferred_over_cap": deferred,
-                }) + "\n")
+                fh.write(
+                    json.dumps(
+                        {
+                            "ts": now,
+                            "apply": APPLY,
+                            "scanned": len(dirs),
+                            "removed": [n for n, _ in removed],
+                            "skipped": dict(skipped),
+                            "failed": dict(failed),
+                            "deferred_over_cap": deferred,
+                        }
+                    )
+                    + "\n"
+                )
         except Exception:
             pass  # logging must never break the beat
 
     mode = "APPLY" if APPLY else "dry-run"
-    print(f"reclaim [{mode}]: {len(removed)} reclaimed, {len(skipped)} kept-safe, "
-          f"{len(failed)} failed, {len(deferred)} deferred-over-cap (of {len(dirs)})")
+    print(
+        f"reclaim [{mode}]: {len(removed)} reclaimed, {len(skipped)} kept-safe, "
+        f"{len(failed)} failed, {len(deferred)} deferred-over-cap (of {len(dirs)})"
+    )
     for n, why in skipped:
         print(f"  keep {why:24} {n}")
     for n, why in removed:
-        print(f"  {'reclaimed' if APPLY else 'would'}: {n}")
+        print(f"  {'reclaimed' if APPLY else 'would'}: {n} ({why})")
     if deferred:
-        print(f"  NOTE: {len(deferred)} dirs over the {MAX_REMOVE}-cap this run, next run takes them: "
-              + ", ".join(deferred[:5]) + ("…" if len(deferred) > 5 else ""))
+        print(
+            f"  NOTE: {len(deferred)} dirs over the {MAX_REMOVE}-cap this run, next run takes them: "
+            + ", ".join(deferred[:5])
+            + ("…" if len(deferred) > 5 else "")
+        )
     for n, why in failed:
         print(f"  FAIL {n}: {why}")
     return 0
