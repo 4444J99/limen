@@ -1,6 +1,6 @@
 # Capacity Fill
 
-Generated: `2026-07-06T15:05:50+00:00`
+Generated: `2026-07-06T15:11:39+00:00`
 Status: `blocked`
 
 ## Capacity Census
@@ -12,24 +12,24 @@ Status: `blocked`
 | `opencode` | local-cli | `up` | 100 | 100 | /opt/homebrew/bin/opencode |
 | `agy` | local-cli | `up` | 100 | 100 | /opt/homebrew/bin/agy |
 | `gemini` | local-cli | `up` | 10 | 10 | /opt/homebrew/bin/gemini |
-| `ollama` | local-cli | `down` | 558 | 600 | /opt/homebrew/bin/ollama; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull (21.8 GiB free, need >= 50 GiB) |
-| `jules` | cloud-cli | `up` | 63 | 100 | /opt/homebrew/bin/jules |
-| `copilot` | github-issue | `down` | 558 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
-| `warp` | paid-service | `down` | 558 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
-| `oz` | paid-service | `down` | 558 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
-| `github_actions` | github-actions | `up` | 558 | 600 | /opt/homebrew/bin/gh; workflow=limen-agent.yml |
+| `ollama` | local-cli | `down` | 555 | 600 | /opt/homebrew/bin/ollama; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull (21.7 GiB free, need >= 50 GiB) |
+| `jules` | cloud-cli | `up` | 60 | 100 | /opt/homebrew/bin/jules |
+| `copilot` | github-issue | `down` | 555 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
+| `warp` | paid-service | `down` | 555 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
+| `oz` | paid-service | `down` | 555 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
+| `github_actions` | github-actions | `up` | 555 | 600 | /opt/homebrew/bin/gh; workflow=limen-agent.yml |
 
 ## Signal Quality
 
 | Agent | Signal | Trust | Use | Next Build |
 |---|---|---|---|---|
-| `codex` | vendor rate-limit meter | measured | usage health=ok; used=46/100 percent; remaining=54; headroom=54%; weekly=37.0%; source=vendor rate_limits; usable for pacing from provider rate_limits; weekly plan headroom is a steering input | Keep harvesting Codex vendor rate_limits into usage telemetry. |
-| `claude` | transcript-token estimate | estimate | usage health=ok; used=1718616/100000000 tokens; remaining=98281384; headroom=98%; source=ESTIMATE - tune to plan (/status); usable for pacing; rate-limit events still dominate stop decisions | Calibrate Claude plan pool cap from a trusted account meter. |
+| `codex` | vendor rate-limit meter | measured | usage health=ok; used=48/100 percent; remaining=52; headroom=52%; weekly=37.0%; source=vendor rate_limits; usable for pacing from provider rate_limits; weekly plan headroom is a steering input | Keep harvesting Codex vendor rate_limits into usage telemetry. |
+| `claude` | transcript-token estimate | estimate | usage health=ok; used=1742709/100000000 tokens; remaining=98257291; headroom=98%; source=ESTIMATE - tune to plan (/status); usable for pacing; rate-limit events still dominate stop decisions | Calibrate Claude plan pool cap from a trusted account meter. |
 | `opencode` | db-meter | measured | token clock health=ok; used=44.31%; accepting_tasks=True; updated=2026-07-06T15:02:31.883378+00:00; usage health=ok; used=22155965/50000000 tokens; remaining=27844035; headroom=56%; source=operator board cap until live vendor meter | Keep opencode-clock fresh from the SQLite usage DB. |
 | `agy` | usage-telemetry proxy | proxy + recent-rl | usage health=ok; used=41/100 runs; remaining=59; headroom=59%; source=operator board cap until live vendor meter; reachable; no recent heartbeat rate-limit marker; not proof of provider quota | Add a provider-backed Agy meter or recent rate-limit receipt. |
 | `gemini` | usage-telemetry proxy | proxy + recent-rl | usage health=throttle; used=8/10 runs; remaining=2; headroom=20%; source=operator board cap until live vendor meter; reachable when auth is configured; no recent heartbeat rate-limit marker; daily cap remains board-derived | Add a Gemini quota/rate-limit receipt if available. |
-| `ollama` | local model presence | binary/model | down until a model is pulled | Clear local disk pressure before pulling qwen2.5-coder:7b; current free space is 21.8 GiB. |
-| `jules` | usage-telemetry proxy | proxy + known cap | usage health=ok; used=61/100 runs; remaining=39; headroom=39%; source=known hard cap; remote async service; no recent heartbeat rate-limit marker; use for remote batch fill | Keep Jules remote-launch receipts and harvest status fresh. |
+| `ollama` | local model presence | binary/model | down until a model is pulled | Clear local disk pressure before pulling qwen2.5-coder:7b; current free space is 21.7 GiB. |
+| `jules` | usage-telemetry proxy | proxy + known cap | usage health=throttle; used=73/100 runs; remaining=27; headroom=27%; source=known hard cap; remote async service; no recent heartbeat rate-limit marker; use for remote batch fill | Keep Jules remote-launch receipts and harvest status fresh. |
 | `copilot` | assignability probe | reachability | down until Copilot coding agent assignment is confirmed | Enable Copilot coding agent and set LIMEN_COPILOT_ENABLED=1. |
 | `warp` | credential presence | credential gate | down until WARP_API_KEY is installed | Install WARP_API_KEY locally and as the workflow secret. |
 | `oz` | credential presence | credential gate | down until WARP_API_KEY is installed | Install WARP_API_KEY locally and as the workflow secret. |
@@ -37,7 +37,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `ollama`: /opt/homebrew/bin/ollama; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull (21.8 GiB free, need >= 50 GiB)
+- `ollama`: /opt/homebrew/bin/ollama; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull (21.7 GiB free, need >= 50 GiB)
 - `copilot`: /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent)
 - `warp`: WARP_API_KEY not set (set env var + add as org/repo Actions secret)
 - `oz`: WARP_API_KEY not set (set env var + add as org/repo Actions secret)
