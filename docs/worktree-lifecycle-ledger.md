@@ -20,6 +20,21 @@ The unique work remains preserved on the remote branches and open draft PRs.
 
 ## Current Scan
 
+2026-07-06 org-health first-slice residue pass:
+
+- Selected conductor packet `tranche-org-health-organ-firstslice-0704-aac2b482`.
+- Read-only inspection of
+  `/Users/4jp/Workspace/.limen-worktrees/org-health-organ-firstslice-0704-aac2b482`
+  found no `.git` metadata and no owner source files. The root contains only
+  `logs/session-lifecycle-pressure.json` (1,237 bytes, SHA-256
+  `4cad9d67c495f4bdd076b7fb985ab26b3f2d179ca998cd3577a216a3f134b399`) and
+  `logs/session-lifecycle-pressure.md` (193 bytes, SHA-256
+  `f7796610ac423010cd88a9a9e516eebf1ccfac4ffa09337a9e04502cfb1a0c3e`).
+- Added a `documented-residue` receipt for `org-health-organ-firstslice-0704-aac2b482` in
+  `docs/worktree-preservation-receipts.json`. This records a non-source residue proof only:
+  no local reclaim, deletion, force-push, merge, task-board mutation, or owner-repo source edit
+  was performed.
+
 2026-07-06 remote-supersession pass:
 
 - `python3 scripts/worktree-debt.py --json` initially reported 48 roots with 1 debt-bearing

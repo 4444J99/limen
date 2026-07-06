@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-06T09:30:54Z",
+  "generated_utc": "2026-07-06T12:23:19Z",
   "receipts": [
     {
       "branch": "limen/gen-organvm-universal-mail--automation-test-coverage-0625-151e",
@@ -1648,6 +1648,31 @@
       "score_discount": 35,
       "status": "default_branch_preserved",
       "worktree": "/Users/4jp/limen/.claude/worktrees/fluttering-twirling-abelson"
+    },
+    {
+      "classification": "documented non-source residue",
+      "evidence_updated_utc": "2026-07-06T12:23:19Z",
+      "file_count": 2,
+      "files": [
+        {
+          "bytes": 1237,
+          "path": "logs/session-lifecycle-pressure.json",
+          "sha256": "4cad9d67c495f4bdd076b7fb985ab26b3f2d179ca998cd3577a216a3f134b399"
+        },
+        {
+          "bytes": 193,
+          "path": "logs/session-lifecycle-pressure.md",
+          "sha256": "f7796610ac423010cd88a9a9e516eebf1ccfac4ffa09337a9e04502cfb1a0c3e"
+        }
+      ],
+      "lane": "documented-residue",
+      "next_action": "No unique source to preserve; directory is not a Git checkout and contains only stale lifecycle-pressure logs. Reclaim only after normal operator acceptance; no deletion in this pass.",
+      "repo": "organvm/limen",
+      "root": "org-health-organ-firstslice-0704-aac2b482",
+      "score_discount": 35,
+      "status": "documented_non_source_residue",
+      "total_bytes": 1430,
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-health-organ-firstslice-0704-aac2b482"
     }
   ],
   "schema": 1
