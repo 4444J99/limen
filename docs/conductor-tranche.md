@@ -1,6 +1,6 @@
 # Conductor Tranche
 
-Generated: `2026-07-06T13:44:17+00:00`
+Generated: `2026-07-06T13:57:49+00:00`
 
 Summary: `tranche-worktree-lifecycle-debt` -> `worktree-lifecycle-debt` (`blocker`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 

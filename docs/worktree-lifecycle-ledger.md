@@ -20,6 +20,32 @@ The unique work remains preserved on the remote branches and open draft PRs.
 
 ## Current Scan
 
+2026-07-06 organvm-engine #136 dirty-owner blocker pass:
+
+- `python3 scripts/worktree-debt.py --json` reported 102 scanned roots with 1 debt-bearing root:
+  `heal-cifix-organvm-organvm-engine-136-c3d543d8`, classified as `dirty`.
+- Read-only owner-worktree inspection showed the root is on branch `limen/jules-limen-067-1688`
+  at local `HEAD` `48a61947641c392246ebb74a15945340fbc4a7af`, with dirty tracked changes in
+  `src/organvm_engine/cli/__init__.py`, `src/organvm_engine/cli/context.py`, and
+  `src/organvm_engine/contextmd/sync.py`.
+- Live remote/PR proof showed GitHub PR
+  [#136](https://github.com/organvm/organvm-engine/pull/136) and remote branch
+  `limen/jules-limen-067-1688` preserve `e137b6c3df27ec940f176f649f5bf5468166adde`, not the
+  local `HEAD` `48a61947641c392246ebb74a15945340fbc4a7af`.
+- Preserved the local-only commit patch and the dirty worktree patch under
+  `.limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-06T135343Z-heal-cifix-organvm-organvm-engine-136-c3d543d8/`.
+  Public SHA-256 evidence is recorded in `docs/worktree-preservation-receipts.json`.
+- Classified the root as `owner-blocker` / `private_patch_preserved`. No local reclaim, deletion,
+  force-push, merge, owner-repo source edit, or task-board mutation was performed.
+- During the same pass, `heal-cifix-organvm-organvm-engine-139-11d32b27` aged out of the active
+  grace window and appeared as `unpushed-commits` because the local checkout had not fetched the
+  remote PR ref. Live proof showed GitHub PR
+  [#139](https://github.com/organvm/organvm-engine/pull/139) is `OPEN`, non-draft, and its
+  `headRefOid` `81f218a1a83bc6fc623ee6242e824c8018fa2508` equals local `HEAD`; `git ls-remote`
+  also shows `refs/heads/limen/resolve-a-organvm-organvm-engine-112-c362` at the same commit.
+  Added a `remote-pr-open` receipt only. No local reclaim, deletion, force-push, merge,
+  owner-repo source edit, or task-board mutation was performed.
+
 2026-07-06 org-health first-slice residue pass:
 
 - Selected conductor packet `tranche-org-health-organ-firstslice-0704-aac2b482`.
