@@ -13,7 +13,7 @@ gate **principally** (gate on CI, not on a non-existent human reviewer) so PRs s
 
 For each repo that currently has open author PRs (`gh search prs --author @me --state open`):
 
-1. **`PATCH /repos/{repo}`** → `allow_auto_merge=true`, `delete_branch_on_merge=true`.
+1. **`PATCH /repos/{repo}`** → `allow_auto_merge=true`, `delete_branch_on_merge=false`.
 2. If genuine CI checks are detected on the newest open PR's status rollup:
    **`PUT /repos/{repo}/branches/{branch}/protection`** with:
    - `required_status_checks = {strict:false, contexts:[detected CI names]}`
@@ -56,7 +56,7 @@ Highest-value repos in scope include the exporter/revenue chain and product repo
   confirms protection is genuinely absent today (the premise is real).
 - `allow_auto_merge` currently **false** on samples (`trendpulse`, `mirror-mirror`, `limen`);
   `allow_squash_merge` **true** everywhere checked (so the `gh pr merge --auto --squash` follow-up
-  will work); `delete_branch_on_merge` currently **false** (script flips it on).
+  will work); `delete_branch_on_merge` currently **false** and the script now keeps it false.
 - `permissions.admin = true` on samples → the apply has the rights to PUT protection / PATCH repo.
 - `gh auth` scopes: `repo, read:org, gist` — sufficient for branch protection + repo settings.
 
@@ -65,7 +65,7 @@ Highest-value repos in scope include the exporter/revenue chain and product repo
 **Fully reversible.** Each change is undoable:
 - Branch protection: `gh api -X DELETE /repos/{repo}/branches/{branch}/protection`.
 - Auto-merge: `gh api -X PATCH /repos/{repo} -F allow_auto_merge=false`.
-- `delete_branch_on_merge`: `gh api -X PATCH /repos/{repo} -F delete_branch_on_merge=false`.
+- Source-branch retention: `gh api -X PATCH /repos/{repo} -F delete_branch_on_merge=false`.
 No commits, no merges, no history rewrite — only repo/branch settings. The script's own docstring
 states "Reversible: branch protection can be removed."
 
@@ -75,9 +75,9 @@ states "Reversible: branch protection can be removed."
    repo whose newest PR didn't trigger CI (or whose CI was added later) could be misclassified as
    "no CI" and left ungated, or detect a partial set of contexts. Mitigation: re-run after PRs
    refresh, or pass `--repo` to fix specific repos.
-2. **`delete_branch_on_merge=true` is a side effect** beyond the stated "branch protection + auto-
-   merge" goal. It's standard hygiene (auto-cleanup of merged limen/* branches) and reversible, but
-   it is an extra mutation the human should know about.
+2. **Source branches are retained** after merge. That creates local/remote residue, but the residue
+   is intentional: branch removal belongs to `scripts/reap-branches.py` after receipt-backed
+   archive/redaction proof, not to GitHub's automatic merge cleanup.
 3. **No human review on the default branch:** by design (there is no reviewer team), but it means CI
    green is the *only* gate. If a repo's CI is weak/missing, weak PRs can auto-merge. Pair with the
    no-CI list above — those 11 repos have no gate at all and merge on creation.
@@ -94,9 +94,10 @@ states "Reversible: branch protection can be removed."
 it converts hand-merging (which loses the race against fleet output) into a self-draining,
 zero-bypass gate, and it is fully reversible with admin rights already in place. The premise is
 verified (protection absent, auto-merge off today). Two caveats to flag before applying:
-(a) it also flips `delete_branch_on_merge=true`; (b) detection relies on the newest PR, so a
-post-apply re-run (or targeted `--repo` passes) may be needed to catch any repo whose CI wasn't
-visible on its newest PR. The 11 no-CI repos gain no real gate — track those separately.
+(a) source branches remain after merge and need receipt-backed reaping later; (b) detection relies
+on the newest PR, so a post-apply re-run (or targeted `--repo` passes) may be needed to catch any
+repo whose CI wasn't visible on its newest PR. The 11 no-CI repos gain no real gate — track those
+separately.
 
 Suggested sequencing after apply: `gh pr merge <n> --auto --squash` on the already-green merge-ready
 PRs (see merge-readiness map) to prime the self-draining loop.

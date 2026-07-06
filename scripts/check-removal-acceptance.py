@@ -38,8 +38,10 @@ DIRECT_REMOVAL_BANS = {
     "scripts/clone-maintenance.sh": ("shutil.rmtree(nm", "--delete-branch"),
     "scripts/library-preserve.py": ("shutil.rmtree",),
     "scripts/cvstos-organ.py": ("shutil.rmtree", ".unlink()"),
+    "scripts/setup-rulesets.py": ("delete_branch_on_merge=true",),
     "CLAUDE.md": ("--delete-branch",),
     "docs/MERGE-READY.md": ("--delete-branch", "deletes the branches"),
+    "docs/RULESETS-DRYRUN.md": ("delete_branch_on_merge=true", "script flips it on"),
 }
 
 

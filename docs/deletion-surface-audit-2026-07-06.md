@@ -30,6 +30,7 @@ These surfaces no longer perform direct branch/root/cache deletion:
 | `scripts/library-preserve.py` | `LIMEN_LIB_APPLY=1` purged regenerable home caches | preserves data, reports cache candidates only |
 | `scripts/cvstos-organ.py` | `--apply` removed chat-app cache children | reports accepted-reaper candidate bytes only |
 | `scripts/claude-fleet-auth-probe.sh` | removed throwaway Claude config without a receipt | writes a private redacted secret-temp cleanup receipt before removing the config |
+| `scripts/setup-rulesets.py` | enabled GitHub source-branch auto-delete on merge | keeps `delete_branch_on_merge=false`; branch removal stays with receipt-backed reapers |
 
 `scripts/check-removal-acceptance.py` now statically guards these surfaces against
 reintroducing direct cleanup tokens.

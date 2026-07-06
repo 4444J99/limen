@@ -6,6 +6,7 @@ For each repo that currently has open author PRs, configure the default branch s
   • required_pull_request_reviews = NONE  (there is no human reviewer team — requiring one is the
     faulty old element that forced the admin-bypass; we gate on CI instead)
   • allow_auto_merge = true  (so a PR armed with --auto merges itself the instant CI is green)
+  • delete_branch_on_merge = false  (source branches are retained for receipt-backed reaping)
 
 Then `gh pr merge <n> --auto --squash` on every green PR → the gate drains itself continuously,
 matching the fleet's PR output, with zero bypass and zero babysitting.
@@ -109,7 +110,7 @@ def main():
             continue
         # --- APPLY ---
         gh(["api", "-X", "PATCH", f"/repos/{repo}", "-F", "allow_auto_merge=true",
-            "-F", "delete_branch_on_merge=true"])
+            "-F", "delete_branch_on_merge=false"])
         if checks:
             body = {
                 # strict:false — gate on checks passing, NOT on branch-up-to-date, else auto-merge
