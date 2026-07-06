@@ -31,6 +31,7 @@ These surfaces no longer perform direct branch/root/cache deletion:
 | `scripts/cvstos-organ.py` | `--apply` removed chat-app cache children | reports accepted-reaper candidate bytes only |
 | `scripts/claude-fleet-auth-probe.sh` | removed throwaway Claude config without a receipt | writes a private redacted secret-temp cleanup receipt before removing the config |
 | `scripts/setup-rulesets.py` | enabled GitHub source-branch auto-delete on merge | keeps `delete_branch_on_merge=false`; branch removal stays with receipt-backed reapers |
+| `scripts/op-service-account.sh` | `remove` deleted the 1Password service-account token file without a receipt | writes a private redacted credential-removal receipt before removing the token file |
 
 `scripts/check-removal-acceptance.py` now statically guards these surfaces against
 reintroducing direct cleanup tokens.
@@ -50,7 +51,7 @@ their required proof fields pass:
 Do not create acceptance JSONL as a shortcut. The JSONL is the human-reviewed
 storage/archive/redaction ledger, not a way to quiet a script.
 
-## Classified Secret-Temp Cleanup
+## Classified Secret Cleanup
 
 `scripts/claude-fleet-auth-probe.sh` handles a temporary Claude config directory
 that may contain bearer-token material. Raw archival is the wrong preservation mode
@@ -58,6 +59,13 @@ for that surface. The script now writes a private redacted receipt under
 `.limen-private/secret-temp-cleanups.jsonl` first, recording only aggregate counts,
 a path hash, and the archive/redaction rationale. If the receipt cannot be written,
 the temp config is retained and reported instead of being silently removed.
+
+`scripts/op-service-account.sh remove` handles a persistent 1Password service-account
+token file. Raw archival is also wrong for that surface. The script now writes a
+private redacted receipt under `.limen-private/secret-removals.jsonl` before removal,
+recording only byte count, a path hash, and the archive/redaction rationale. If the
+receipt cannot be written, the token file is retained and the remove command fails
+closed.
 
 ## Remaining Exceptions To Classify Later
 
