@@ -678,6 +678,17 @@ def test_lane_run_env_keeps_lane_specific_isolation(tmp_path: Path, monkeypatch)
     assert "ANTHROPIC_API_KEY" not in claude_env
     assert "CLAUDE_CODE_OAUTH_TOKEN" not in claude_env
 
+    monkeypatch.delenv("LIMEN_CLAUDE_AUTH_TOKEN", raising=False)
+    monkeypatch.delenv("LIMEN_CLAUDE_API_KEY", raising=False)
+    claude_keyless_env = D._lane_run_env("claude")
+    assert "ANTHROPIC_API_KEY" not in claude_keyless_env
+    assert "CLAUDE_CODE_OAUTH_TOKEN" not in claude_keyless_env
+
+    monkeypatch.setenv("LIMEN_CLAUDE_API_KEY", "fleet-api-key")
+    claude_api_env = D._lane_run_env("claude")
+    assert claude_api_env["ANTHROPIC_API_KEY"] == "fleet-api-key"
+    assert "CLAUDE_CODE_OAUTH_TOKEN" not in claude_api_env
+
 
 def test_resolve_agent_binary_uses_opencode_clock_when_installed(monkeypatch) -> None:
     monkeypatch.delenv("LIMEN_OPENCODE_BIN", raising=False)

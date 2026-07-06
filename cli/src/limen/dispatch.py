@@ -1198,9 +1198,9 @@ def _lane_run_env(agent: str, wt: Path | None = None) -> dict[str, str]:
     if agent == "claude":
         fleet_token = os.environ.get("LIMEN_CLAUDE_AUTH_TOKEN")
         fleet_key = os.environ.get("LIMEN_CLAUDE_API_KEY")
+        run_env.pop("ANTHROPIC_API_KEY", None)
         if fleet_token:
             run_env["ANTHROPIC_AUTH_TOKEN"] = fleet_token
-            run_env.pop("ANTHROPIC_API_KEY", None)
         elif fleet_key:
             run_env["ANTHROPIC_API_KEY"] = fleet_key
         run_env.pop("CLAUDE_CODE_OAUTH_TOKEN", None)
