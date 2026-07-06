@@ -464,6 +464,18 @@ def _flame_preamble() -> str:
         return ""  # no kernel on disk yet → bare prompt, never a blocked lane
 
 
+def _verification_discipline() -> str:
+    return (
+        "--- VERIFICATION DISCIPLINE ---\n"
+        "Use the narrowest predicate that proves this task: inspect the failing CI check, "
+        "run the specific test/lint/typecheck/build it names, or run a focused local equivalent. "
+        "Do not run scripts/verify-whole.sh, the full pytest suite, or broad commands like "
+        "`python -m pytest web/api/tests cli/tests -q` unless this task explicitly requires full "
+        "repo readiness or the narrow predicate proves the broader gate is the only relevant failure. "
+        "Record the exact predicate you ran and its result."
+    )
+
+
 def _build_prompt(task: Task, task_first: bool = False) -> str:
     parts = [f"Complete task {task.id}: {task.title}"]
     if task.repo:
@@ -472,7 +484,7 @@ def _build_prompt(task: Task, task_first: bool = False) -> str:
         parts.append(f"\nContext: {task.context}")
     if task.urls:
         parts.append(f"\nReferences: {', '.join(task.urls)}")
-    body = "".join(parts)
+    body = f"{''.join(parts)}\n\n{_verification_discipline()}"
     flame = _flame_preamble()
     if not flame:
         return body

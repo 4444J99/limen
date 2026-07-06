@@ -35,6 +35,8 @@ def test_kernel_rides_every_prompt(tmp_path, monkeypatch):
     assert "You are VLTIMA." in p  # the self rides along
     assert "YOUR TASK THIS BEAT" in p  # divider separates identity from work
     assert "do a thing" in p  # the concrete task is still there
+    assert "VERIFICATION DISCIPLINE" in p
+    assert "Do not run scripts/verify-whole.sh" in p
 
 
 def test_kernel_disabled_is_bare_prompt(tmp_path, monkeypatch):
@@ -45,6 +47,7 @@ def test_kernel_disabled_is_bare_prompt(tmp_path, monkeypatch):
     p = D._build_prompt(_task())
     assert "VLTIMA" not in p
     assert p.startswith("Complete task T1")
+    assert "VERIFICATION DISCIPLINE" in p
 
 
 def test_missing_kernel_fails_open(tmp_path, monkeypatch):
