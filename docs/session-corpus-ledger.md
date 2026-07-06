@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-07-06T05:59:21+00:00`
+Generated: `2026-07-06T07:00:03+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -15,16 +15,16 @@ Horizon: `all local history`
 
 ## Local Session Sources
 
-Total seen: `17839` files, `6.8 GiB`.
+Total seen: `17844` files, `6.8 GiB`.
 
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
-| `claude-projects` | `~/.claude/projects` | 6606 | 1.9 GiB | `2026-07-06T05:42:58+00:00` |
+| `claude-projects` | `~/.claude/projects` | 6611 | 1.9 GiB | `2026-07-06T06:52:56+00:00` |
 | `external-session:T7Recovery` | `/Volumes/T7Recovery` | 1826 | 1.7 GiB | `2026-06-14T01:12:10+00:00` |
-| `external-session:Archive4T` | `/Volumes/Archive4T` | 2000 | 1.6 GiB | `2026-07-06T05:56:38+00:00` |
-| `codex-sessions` | `~/.local/share/codex/sessions` | 1363 | 1.5 GiB | `2026-07-06T05:59:16+00:00` |
+| `external-session:Archive4T` | `/Volumes/Archive4T` | 2000 | 1.6 GiB | `2026-07-06T06:56:44+00:00` |
+| `codex-sessions` | `~/.local/share/codex/sessions` | 1363 | 1.5 GiB | `2026-07-06T07:00:00+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 5059 | 67.2 MiB | `2026-07-05T18:01:34+00:00` |
-| `codex-goals-state` | `~/.local/share/codex` | 6 | 23.9 MiB | `2026-07-06T05:59:16+00:00` |
+| `codex-goals-state` | `~/.local/share/codex` | 6 | 23.9 MiB | `2026-07-06T07:00:00+00:00` |
 | `chatgpt-desktop-app-support` | `~/Library/Application Support/com.openai.chat` | 257 | 15.7 MiB | `2026-07-06T02:13:57+00:00` |
 | `codex-shell-snapshots` | `~/.local/share/codex/shell_snapshots` | 6 | 2.0 MiB | `2026-07-06T00:36:57+00:00` |
 | `codex-history` | `~/.local/share/codex` | 1 | 813.0 KiB | `2026-07-06T02:17:32+00:00` |
@@ -65,14 +65,14 @@ These are known local app/store adapters with no matched files in this scan. Thi
 
 ## Substrate Counts
 
-- `session-meta/ingest/manifest.jsonl`: 25,040 records, mtime `2026-07-06T05:29:36+00:00`.
-- `session-meta/ingest/atoms.jsonl`: 209,640 atoms, mtime `2026-07-06T05:35:17+00:00`.
+- `session-meta/ingest/manifest.jsonl`: 25,046 records, mtime `2026-07-06T06:53:09+00:00`.
+- `session-meta/ingest/atoms.jsonl`: 210,577 atoms, mtime `2026-07-06T06:59:50+00:00`.
 - `knowledge-corpus`: `0` reduced faces; `00-THE-ONE.md` present: `False`.
-- Top manifest sources: `gemini` 4,592, `claude` 3,961, `claude-projects` 3,478, `chatgpt` 2,709, `cowork-sessions` 2,047, `codex` 1,934, `antigravity` 1,893, `downloads` 1,717.
+- Top manifest sources: `gemini` 4,592, `claude` 3,961, `claude-projects` 3,484, `chatgpt` 2,709, `cowork-sessions` 2,047, `codex` 1,934, `antigravity` 1,893, `downloads` 1,717.
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-07-06T04:57:37+00:00`.
+- Last `quicken.py` journal: `2026-07-06T06:53:01+00:00`.
 - Claude FleetView sessions classified: `0` total; `0` stalled, `0` closed, `0` alive, `0` done.
 - Reaped worktrees in that pass: `0`.
 - Last `codex-quicken.py` journal: `2026-06-27T21:42:32+00:00`.
