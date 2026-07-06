@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-06'
-      spent: 135
+      spent: 138
       per_agent:
         jules: 100
         gemini: 2
-        codex: 17
-        opencode: 7
-        agy: 6
+        codex: 18
+        opencode: 8
+        agy: 7
         claude: 3
       per_agent_reset:
         jules: '2026-07-06T11:41:52.375322+00:00'
@@ -85772,7 +85772,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -85788,7 +85788,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T16:25:57.277530Z'
+  updated: '2026-07-06T16:26:31.013458Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:58:55.312907Z'
     agent: agy
@@ -85824,6 +85824,11 @@ tasks:
     session_id: async-reap-stale
     status: open
     output: 'dispatch-async: stale worker marker older than 2100s reaped; task reopened'
+  - timestamp: '2026-07-06T16:26:31.013458Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-424
   title: fix failing CI on organvm/limen#424
   repo: organvm/limen
@@ -86159,7 +86164,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -86175,7 +86180,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T16:16:55.765336Z'
+  updated: '2026-07-06T16:26:31.013458Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:05:23.799955Z'
     agent: codex
@@ -86192,6 +86197,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-06T16:26:31.013458Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-432
   title: fix failing CI on organvm/limen#432
   repo: organvm/limen
@@ -86380,7 +86390,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -86396,7 +86406,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-06T16:11:13.135241Z'
+  updated: '2026-07-06T16:26:31.013458Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:40:17.443054Z'
     agent: gemini
@@ -86407,6 +86417,11 @@ tasks:
     agent: gemini
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-06T16:26:31.013458Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-437
   title: fix failing CI on organvm/limen#437
   repo: organvm/limen
