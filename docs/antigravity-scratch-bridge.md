@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-06T03:37:17+00:00`
+Generated: `2026-07-06T03:38:26+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -30,10 +30,11 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `21`.
-- External archives verified: `20`.
-- Verified external archive source size: `22.3 GiB`.
-- Event source size total: `27.0 GiB` (includes retries).
+- Preservation receipts: `22`.
+- External archives verified: `21`.
+- Verified external archive source size: `22.4 GiB`.
+- Event source size total: `27.1 GiB` (includes retries).
+- `2026-07-06T03:38:37Z` `conversation-corpus-engine`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033837Z-conversation-corpus-engine/receipt.json`.
 - `2026-07-06T03:37:29Z` `organvm-engine`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033729Z-organvm-engine/receipt.json`.
 - `2026-07-06T03:22:35Z` `rules-system-bound`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T032235Z-rules-system-bound/receipt.json`.
 - `2026-07-06T03:15:41Z` `organvm-i-theoria-mesh`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T031541Z-organvm-i-theoria-mesh/receipt.json`.
@@ -43,14 +44,13 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T03:07:47Z` `edgarflash`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030747Z-edgarflash/receipt.json`.
 - `2026-07-06T03:02:34Z` `bountyscope-test-coverage`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T030234Z-bountyscope-test-coverage/receipt.json`.
 - `2026-07-06T02:57:34Z` `universal-mail--automation`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025734Z-universal-mail--automation/receipt.json`.
-- `2026-07-06T02:55:35Z` `a-i-chat--exporter`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T025535Z-a-i-chat--exporter/receipt.json`.
 
 ## Preservation Results
 
 - Requested roots: `1`.
-- Source size receipted: `122.6 MiB`.
+- Source size receipted: `120.3 MiB`.
 - Statuses: `external_archive_preserved` 1.
-- Preserved `organvm-engine` `122.6 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033729Z-organvm-engine/receipt.json`.
+- Preserved `conversation-corpus-engine` `120.3 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T033837Z-conversation-corpus-engine/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
