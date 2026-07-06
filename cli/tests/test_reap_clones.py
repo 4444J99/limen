@@ -194,6 +194,37 @@ def test_behind_origin_mirror_is_reaped_end_to_end(tmp_path):
     assert reap.confirm_recloneable(clone) is True
 
 
+def test_clone_reap_requires_acceptance_event(tmp_path):
+    clone = _init_origin_and_clone(tmp_path, "needsaccept")
+    slug = reap.origin_slug(clone)
+
+    ok, reason = reap.clone_reap_accepted(clone, slug, "pushed-mirror", [])
+
+    assert ok is False
+    assert reason == "missing-clone-reap-acceptance"
+
+
+def test_clone_reap_acceptance_matches_remote_mirror(tmp_path):
+    clone = _init_origin_and_clone(tmp_path, "acceptedmirror")
+    slug = reap.origin_slug(clone)
+    events = [
+        {
+            "accepted_at": "2026-07-06T06:00:00Z",
+            "root": "acceptedmirror",
+            "slug": slug,
+            "accepted": True,
+            "reason": "pushed-mirror",
+            "archive_status": "not_required_clean_remote_mirror",
+            "redaction_review": "not_required_remote_only",
+        }
+    ]
+
+    ok, reason = reap.clone_reap_accepted(clone, slug, "pushed-mirror", events)
+
+    assert ok is True
+    assert reason == "clone-reap-accepted"
+
+
 def test_confirm_recloneable_false_when_our_branch_deleted_on_origin(tmp_path):
     """Repo alive but OUR branch was deleted on origin (possible unmerged local-only work) → keep."""
     clone = _init_origin_and_clone(tmp_path, "branchgone")

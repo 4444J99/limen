@@ -27,12 +27,13 @@ force-push/ahead-of-origin, submodules, LFS, linked worktrees, TOCTOU — all no
     (catches stale/force-rewound remotes that make refs/heads commits merely LOOK pushed), re-checked
     a final time (porcelain + stash) at the instant before rmtree to close the TOCTOU window.
 
-Every gate is loss-free (re-cloneable from GitHub; nothing local unpushed or untracked), so removal
-is REVERSIBLE and therefore NOT a human-gated action — it runs autonomically. It NEVER deletes DATA:
-a clone with untracked files (possible hand-dropped inputs — the "7 genesis screenshots" rule) or with
-unpushed work is SKIPPED and reported as needs-capture, never removed. capture.sh pushes that work
-first; a later beat then finds a pure mirror and reaps it. It only ever touches STANDALONE clones
-(`.git` is a directory); registered worktrees (`.git` is a file) are reclaim-worktrees.py's job.
+Every data gate is loss-free (re-cloneable from GitHub; nothing local unpushed or untracked). As of
+2026-07-06, --apply still requires a matching human acceptance/redaction/archive event in
+docs/clone-reap-acceptance.jsonl before physical removal. It NEVER deletes DATA: a clone with
+untracked files (possible hand-dropped inputs — the "7 genesis screenshots" rule) or with unpushed
+work is SKIPPED and reported as needs-capture, never removed. capture.sh pushes that work first; a
+later beat then finds a pure mirror and proposes it. It only ever touches STANDALONE clones (`.git`
+is a directory); registered worktrees (`.git` is a file) are reclaim-worktrees.py's job.
 
 Dry-run by default; --apply removes (rmtree — a clone is not a registered worktree). Disk pressure is
 auto-detected via df on the workspace volume, or forced with --pressure / disabled with --no-pressure.
@@ -58,6 +59,7 @@ HOME = os.environ.get("HOME", str(Path.home()))
 WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE", f"{HOME}/Workspace"))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen")).resolve()
 LOG = LIMEN_ROOT / "logs" / "reap-clones.jsonl"
+CLONE_REAP_ACCEPTANCE = LIMEN_ROOT / "docs" / "clone-reap-acceptance.jsonl"
 
 # CORE repos the operator lives in / the conductor needs local — never reaped even if pushed-clean.
 DEFAULT_CORE = "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
@@ -81,6 +83,16 @@ REGENERABLE_FILES = {".DS_Store"}
 
 # Non-interactive git: fail (→ fail-safe KEEP) rather than block on a credential/GUI prompt.
 _GIT_ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+ACCEPTED_ARCHIVE_STATUSES = {
+    "verified",
+    "remote_mirror_verified",
+    "not_required_clean_remote_mirror",
+}
+ACCEPTED_REDACTION_REVIEWS = {
+    "accepted",
+    "private_archive_only",
+    "not_required_remote_only",
+}
 
 
 def _run(args: list[str], cwd: Path | None = None) -> str:
@@ -90,6 +102,49 @@ def _run(args: list[str], cwd: Path | None = None) -> str:
         ).stdout.strip()
     except Exception:
         return ""
+
+
+def load_clone_reap_acceptance() -> list[dict]:
+    try:
+        lines = CLONE_REAP_ACCEPTANCE.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+    events = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+    return events
+
+
+def clone_reap_accepted(repo: Path, slug: str, reason: str, acceptance_events: list[dict]) -> tuple[bool, str]:
+    try:
+        resolved = str(repo.resolve())
+    except OSError:
+        resolved = str(repo)
+    names = {repo.name, slug}
+    for event in reversed(acceptance_events):
+        if event.get("root") not in names and event.get("slug") != slug:
+            continue
+        if event.get("accepted") is not True:
+            continue
+        if event.get("reason") and event.get("reason") != reason:
+            continue
+        if event.get("path") and event.get("path") != resolved:
+            continue
+        archive_ok = event.get("archive_verified") is True or event.get("archive_status") in ACCEPTED_ARCHIVE_STATUSES
+        if not archive_ok:
+            continue
+        if event.get("redaction_review") not in ACCEPTED_REDACTION_REVIEWS:
+            continue
+        return True, "clone-reap-accepted"
+    return False, "missing-clone-reap-acceptance"
 
 
 def _ignored_is_all_regenerable(repo: Path) -> bool:
@@ -402,6 +457,7 @@ def main() -> int:
     reaped = kept = 0
     freed = 0
     kept_reasons: dict[str, int] = {}
+    clone_reap_acceptance = load_clone_reap_acceptance()
     LOG.parent.mkdir(parents=True, exist_ok=True)
     logf = LOG.open("a") if args.apply else None
     try:
@@ -431,6 +487,12 @@ def main() -> int:
                 kept += 1
                 kept_reasons["raced-dirty"] = kept_reasons.get("raced-dirty", 0) + 1
                 continue
+            if args.apply:
+                accepted, accept_reason = clone_reap_accepted(repo, slug, v.reason, clone_reap_acceptance)
+                if not accepted:
+                    kept += 1
+                    kept_reasons[accept_reason] = kept_reasons.get(accept_reason, 0) + 1
+                    continue
             print(f"  {'REAP' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB, {v.reason})")
             if args.apply:
                 shutil.rmtree(repo, ignore_errors=True)
