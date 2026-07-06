@@ -1,6 +1,6 @@
 # Agent Reconstruction Review
 
-Generated: `2026-07-04T02:34:22Z`
+Generated: `2026-07-06T15:36:21Z`
 
 ## Scope
 
@@ -42,22 +42,22 @@ Generated: `2026-07-04T02:34:22Z`
 
 | Rank | Root | Sessions | Agents | Risk | Prompt events | Top gaps |
 |---:|---|---:|---|---:|---:|---|
-| 1 | `.` | 1126 | opencode:836, claude:242, codex:45, agy:3 | 16065 | 2320 | session outcome lacks verification signal (507); prompt missing expected receipt/artifact (392); prompt missing executable predicate (340); +4 more |
+| 1 | `~/Workspace/limen` | 1126 | opencode:836, claude:242, codex:45, agy:3 | 16065 | 2320 | session outcome lacks verification signal (507); prompt missing expected receipt/artifact (392); prompt missing executable predicate (340); +4 more |
 | 2 | `unknown` | 266 | agy:265, codex:1 | 4136 | 264 | failure/blocker language outweighs done language (246); session outcome lacks verification signal (156); prompt missing expected receipt/artifact (36); +3 more |
 | 3 | `~/Workspace/.limen-worktrees/cifix-a-organvm-public-record-data-scrapper-d4e6` | 1 | claude:1 | 811 | 782 | repeated broad/invariant prompt pressure (1); failure/blocker language outweighs done language (1) |
 | 4 | `~` | 17 | agy:10, codex:5, claude:2 | 455 | 203 | session outcome lacks durable receipt signal (11); session outcome lacks verification signal (10); likely no-op or unrecorded work (10); +5 more |
-| 5 | `.claude/worktrees/tender-sniffing-marshmallow` | 1 | claude:1 | 439 | 381 | repeated broad/invariant prompt pressure (1); failure/blocker language outweighs done language (1) |
-| 6 | `.claude/worktrees/woolly-forging-sedgewick` | 1 | claude:1 | 271 | 205 | repeated broad/invariant prompt pressure (1); failure/blocker language outweighs done language (1) |
+| 5 | `~/Workspace/limen/.claude/worktrees/tender-sniffing-marshmallow` | 1 | claude:1 | 439 | 381 | repeated broad/invariant prompt pressure (1); failure/blocker language outweighs done language (1) |
+| 6 | `~/Workspace/limen/.claude/worktrees/woolly-forging-sedgewick` | 1 | claude:1 | 271 | 205 | repeated broad/invariant prompt pressure (1); failure/blocker language outweighs done language (1) |
 | 7 | `~/Workspace/.limen-worktrees/gen-organvm-limen-ci-green-0628-cdb4` | 18 | claude:18 | 269 | 184 | failure/blocker language outweighs done language (8); session outcome lacks verification signal (2); repeated broad/invariant prompt pressure (1); +2 more |
-| 8 | `.claude/worktrees/parsed-finding-fern` | 1 | claude:1 | 263 | 258 | repeated broad/invariant prompt pressure (1); session outcome lacks verification signal (1) |
-| 9 | `.claude/worktrees/giggly-cuddling-quilt` | 2 | claude:2 | 255 | 181 | failure/blocker language outweighs done language (2); repeated broad/invariant prompt pressure (1); prompt missing executable predicate (1); +1 more |
+| 8 | `~/Workspace/limen/.claude/worktrees/parsed-finding-fern` | 1 | claude:1 | 263 | 258 | repeated broad/invariant prompt pressure (1); session outcome lacks verification signal (1) |
+| 9 | `~/Workspace/limen/.claude/worktrees/giggly-cuddling-quilt` | 2 | claude:2 | 255 | 181 | failure/blocker language outweighs done language (2); repeated broad/invariant prompt pressure (1); prompt missing executable predicate (1); +1 more |
 | 10 | `~/Workspace/.limen-worktrees/gen-organvm-limen-test-coverage-0625-1c32` | 13 | claude:13 | 220 | 41 | prompt missing executable predicate (13); session outcome lacks verification signal (13); session outcome lacks durable receipt signal (5); +1 more |
 | 11 | `~/Workspace/.limen-worktrees/gen-organvm-limen-security-0625-b412` | 12 | claude:12 | 200 | 39 | prompt missing executable predicate (12); session outcome lacks verification signal (11); session outcome lacks durable receipt signal (5); +1 more |
 | 12 | `~/Workspace/.limen-worktrees/gen-organvm-limen-typing-0627-ccac` | 11 | claude:11 | 171 | 102 | failure/blocker language outweighs done language (8); session outcome lacks durable receipt signal (2); repeated broad/invariant prompt pressure (1); +2 more |
 | 13 | `~/Workspace/.limen-worktrees/vigilia-face-706a` | 9 | claude:9 | 160 | 27 | prompt missing executable predicate (9); session outcome lacks verification signal (9); session outcome lacks durable receipt signal (5); +1 more |
-| 14 | `.claude/worktrees/temporal-percolating-token` | 1 | claude:1 | 158 | 155 | repeated broad/invariant prompt pressure (1) |
+| 14 | `~/Workspace/limen/.claude/worktrees/temporal-percolating-token` | 1 | claude:1 | 158 | 155 | repeated broad/invariant prompt pressure (1) |
 | 15 | `~/Workspace/.limen-worktrees/gen-organvm-limen-ci-green-0627-6659` | 9 | claude:9 | 150 | 107 | failure/blocker language outweighs done language (6); session outcome lacks verification signal (2); repeated broad/invariant prompt pressure (1); +3 more |
-| 16 | `.claude/worktrees/calm-questing-ember` | 1 | claude:1 | 149 | 145 | repeated broad/invariant prompt pressure (1) |
+| 16 | `~/Workspace/limen/.claude/worktrees/calm-questing-ember` | 1 | claude:1 | 149 | 145 | repeated broad/invariant prompt pressure (1) |
 | 17 | `~/Workspace/.limen-worktrees/gen-organvm-limen-security-0624-a9e5` | 6 | claude:6 | 141 | 93 | session outcome lacks verification signal (5); prompt missing executable predicate (4); session outcome lacks durable receipt signal (2); +2 more |
 | 18 | `~/Workspace/.limen-worktrees/gh-organvm-limen-352-b4c3` | 6 | claude:6 | 132 | 135 | failure/blocker language outweighs done language (4); repeated broad/invariant prompt pressure (1) |
 | 19 | `~/Workspace/.limen-worktrees/gh-organvm-limen-320-6304` | 5 | claude:5 | 130 | 64 | failure/blocker language outweighs done language (3); session outcome lacks durable receipt signal (2); repeated broad/invariant prompt pressure (1); +2 more |
@@ -87,22 +87,22 @@ Generated: `2026-07-04T02:34:22Z`
 
 | Root | Sessions | Commits in window | Sessions with commits | Sessions without commits | Top overlapping commits |
 |---|---:|---:|---:|---:|---|
-| `.` | 1126 | 1065 | 774 | 352 | `a7e5425` (33), `b07cfe2` (31), `b2c6398` (29), `7736427` (27), `a161929` (27) |
+| `~/Workspace/limen` | 1126 | 1065 | 774 | 352 | `a7e5425f` (33), `b07cfe28` (31), `b2c63981` (29), `77364276` (27), `a161929e` (27) |
 | `unknown` | 266 | 0 | 0 | 266 | none |
 | `~/Workspace/.limen-worktrees/cifix-a-organvm-public-record-data-scrapper-d4e6` | 1 | 0 | 0 | 1 | none |
 | `~` | 17 | 0 | 0 | 17 | none |
-| `.claude/worktrees/tender-sniffing-marshmallow` | 1 | 0 | 0 | 1 | none |
-| `.claude/worktrees/woolly-forging-sedgewick` | 1 | 0 | 0 | 1 | none |
+| `~/Workspace/limen/.claude/worktrees/tender-sniffing-marshmallow` | 1 | 0 | 0 | 1 | none |
+| `~/Workspace/limen/.claude/worktrees/woolly-forging-sedgewick` | 1 | 0 | 0 | 1 | none |
 | `~/Workspace/.limen-worktrees/gen-organvm-limen-ci-green-0628-cdb4` | 18 | 0 | 0 | 18 | none |
-| `.claude/worktrees/parsed-finding-fern` | 1 | 0 | 0 | 1 | none |
-| `.claude/worktrees/giggly-cuddling-quilt` | 2 | 0 | 0 | 2 | none |
+| `~/Workspace/limen/.claude/worktrees/parsed-finding-fern` | 1 | 0 | 0 | 1 | none |
+| `~/Workspace/limen/.claude/worktrees/giggly-cuddling-quilt` | 2 | 0 | 0 | 2 | none |
 | `~/Workspace/.limen-worktrees/gen-organvm-limen-test-coverage-0625-1c32` | 13 | 0 | 0 | 13 | none |
 | `~/Workspace/.limen-worktrees/gen-organvm-limen-security-0625-b412` | 12 | 0 | 0 | 12 | none |
 | `~/Workspace/.limen-worktrees/gen-organvm-limen-typing-0627-ccac` | 11 | 0 | 0 | 11 | none |
 | `~/Workspace/.limen-worktrees/vigilia-face-706a` | 9 | 0 | 0 | 9 | none |
-| `.claude/worktrees/temporal-percolating-token` | 1 | 0 | 0 | 1 | none |
+| `~/Workspace/limen/.claude/worktrees/temporal-percolating-token` | 1 | 0 | 0 | 1 | none |
 | `~/Workspace/.limen-worktrees/gen-organvm-limen-ci-green-0627-6659` | 9 | 0 | 0 | 9 | none |
-| `.claude/worktrees/calm-questing-ember` | 1 | 0 | 0 | 1 | none |
+| `~/Workspace/limen/.claude/worktrees/calm-questing-ember` | 1 | 0 | 0 | 1 | none |
 | `~/Workspace/.limen-worktrees/gen-organvm-limen-security-0624-a9e5` | 6 | 0 | 0 | 6 | none |
 | `~/Workspace/.limen-worktrees/gh-organvm-limen-352-b4c3` | 6 | 0 | 0 | 6 | none |
 | `~/Workspace/.limen-worktrees/gh-organvm-limen-320-6304` | 5 | 0 | 0 | 5 | none |
@@ -114,18 +114,18 @@ Generated: `2026-07-04T02:34:22Z`
 
 Top overlapping commits:
 
-- `a7e5425` overlapped `33` session windows: limen: BLD-vulnpulse-harden done - PR #5
-- `b07cfe2` overlapped `31` session windows: docs: record domus CI worktree preservation
-- `b2c6398` overlapped `29` session windows: docs: record media-ark test preservation
-- `7736427` overlapped `27` session windows: ops: realignment follow-on - auto-scale task creation test coverage (#8)
-- `a161929` overlapped `27` session windows: fix: preserve worktree lifecycle receipts
-- `c42cef7` overlapped `27` session windows: limen: sync healed task states
-- `29dc7a0` overlapped `27` session windows: docs: record universal mail README preservation
-- `652f3d8` overlapped `23` session windows: feat(vigilia): no-hardcode gate - the parameter-panel ratchet (build #3) (#285)
-- `e72a6c7` overlapped `23` session windows: Gilgamesh film companion (mortality/grief) (#287)
-- `5438c91` overlapped `23` session windows: Gilgamesh film companion (mortality/grief) (#290)
-- `7f21f96` overlapped `23` session windows: fix(dialogs): one predicate for the permission-dialog estate + home the firewall class (#293)
-- `d127cc2` overlapped `20` session windows: feat(obligations): lever face gains its own clock - deadlines self-flag (#275)
+- `a7e5425f` overlapped `33` session windows: limen: BLD-vulnpulse-harden done - PR #5
+- `b07cfe28` overlapped `31` session windows: docs: record domus CI worktree preservation
+- `b2c63981` overlapped `29` session windows: docs: record media-ark test preservation
+- `77364276` overlapped `27` session windows: ops: realignment follow-on - auto-scale task creation test coverage (#8)
+- `a161929e` overlapped `27` session windows: fix: preserve worktree lifecycle receipts
+- `c42cef70` overlapped `27` session windows: limen: sync healed task states
+- `29dc7a02` overlapped `27` session windows: docs: record universal mail README preservation
+- `652f3d85` overlapped `23` session windows: feat(vigilia): no-hardcode gate - the parameter-panel ratchet (build #3) (#285)
+- `e72a6c7f` overlapped `23` session windows: Gilgamesh film companion (mortality/grief) (#287)
+- `5438c91f` overlapped `23` session windows: Gilgamesh film companion (mortality/grief) (#290)
+- `7f21f960` overlapped `23` session windows: fix(dialogs): one predicate for the permission-dialog estate + home the firewall class (#293)
+- `d127cc22` overlapped `20` session windows: feat(obligations): lever face gains its own clock - deadlines self-flag (#275)
 
 Top high-risk sessions in this root:
 
@@ -156,4 +156,4 @@ Top high-risk sessions in this root:
 - Refresh source review first: `env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-session-full-stack-review.py --write`
 - Refresh queue next: `env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-code-review-queue.py --write`
 - Refresh this reconstruction review: `env LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/agent-reconstruction-review.py --write`
-- Private structured output: `.limen-private/session-corpus/full-stack-review/agent-reconstruction-review.json`
+- Private structured output: `~/limen/.limen-private/session-corpus/full-stack-review/agent-reconstruction-review.json`

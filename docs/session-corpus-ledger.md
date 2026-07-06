@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-07-06T12:36:21+00:00`
+Generated: `2026-07-06T15:38:37+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -15,17 +15,17 @@ Horizon: `all local history`
 
 ## Local Session Sources
 
-Total seen: `14056` files, `3.5 GiB`.
+Total seen: `14099` files, `3.5 GiB`.
 
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
-| `claude-projects` | `~/.claude/projects` | 6632 | 1.9 GiB | `2026-07-06T12:30:51+00:00` |
-| `codex-sessions` | `~/.local/share/codex/sessions` | 1367 | 1.5 GiB | `2026-07-06T12:36:15+00:00` |
+| `claude-projects` | `~/.claude/projects` | 6646 | 1.9 GiB | `2026-07-06T15:30:51+00:00` |
+| `codex-sessions` | `~/.local/share/codex/sessions` | 1389 | 1.5 GiB | `2026-07-06T15:38:33+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 5059 | 67.2 MiB | `2026-07-05T18:01:34+00:00` |
-| `codex-goals-state` | `~/.local/share/codex` | 6 | 19.6 MiB | `2026-07-06T12:36:15+00:00` |
-| `chatgpt-desktop-app-support` | `~/Library/Application Support/com.openai.chat` | 257 | 15.7 MiB | `2026-07-06T09:55:47+00:00` |
-| `codex-shell-snapshots` | `~/.local/share/codex/shell_snapshots` | 6 | 1.9 MiB | `2026-07-06T11:42:20+00:00` |
-| `codex-history` | `~/.local/share/codex` | 1 | 816.1 KiB | `2026-07-06T12:22:04+00:00` |
+| `codex-goals-state` | `~/.local/share/codex` | 6 | 21.1 MiB | `2026-07-06T15:38:33+00:00` |
+| `chatgpt-desktop-app-support` | `~/Library/Application Support/com.openai.chat` | 257 | 15.7 MiB | `2026-07-06T14:19:50+00:00` |
+| `codex-shell-snapshots` | `~/.local/share/codex/shell_snapshots` | 13 | 4.2 MiB | `2026-07-06T15:26:49+00:00` |
+| `codex-history` | `~/.local/share/codex` | 1 | 823.1 KiB | `2026-07-06T15:28:28+00:00` |
 | `gemini-desktop-stores` | `~/Library/Application Support/com.google.GeminiMacOS` | 12 | 569.0 KiB | `2026-06-23T21:43:47+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 397 | 426.9 KiB | `2026-07-03T13:33:18+00:00` |
 | `claude-plans` | `~/.claude/plans` | 43 | 369.8 KiB | `2026-07-03T15:08:54+00:00` |
@@ -48,20 +48,20 @@ These are known local app/store adapters with no matched files in this scan. Thi
 
 | Organ | Role | Path | Git state |
 |---|---|---|---|
-| `session-meta` | producer: redacted, deduped multi-provider atoms | `~/Workspace/session-meta` | `## fix/security-hardening-0629` |
+| `session-meta` | producer: redacted, deduped multi-provider atoms | `~/Workspace/session-meta` | `## fix/security-hardening-0629; 15 dirty entries` |
 | `knowledge-corpus` | distillation target: collection, reduced faces, THE ONE | `~/Workspace/knowledge-corpus` | `not a git repo` |
 | `conversation-corpus-engine` | product/research engine: provider import and corpus promotion | `~/Workspace/conversation-corpus-engine` | `not a git repo` |
 
 ## Substrate Counts
 
-- `session-meta/ingest/manifest.jsonl`: 25,067 records, mtime `2026-07-06T11:15:50+00:00`.
-- `session-meta/ingest/atoms.jsonl`: 213,227 atoms, mtime `2026-07-06T11:22:27+00:00`.
+- `session-meta/ingest/manifest.jsonl`: 25,105 records, mtime `2026-07-06T15:19:11+00:00`.
+- `session-meta/ingest/atoms.jsonl`: 218,477 atoms, mtime `2026-07-06T15:24:31+00:00`.
 - `knowledge-corpus`: `0` reduced faces; `00-THE-ONE.md` present: `False`.
-- Top manifest sources: `gemini` 4,592, `claude` 3,961, `claude-projects` 3,503, `chatgpt` 2,709, `cowork-sessions` 2,047, `codex` 1,936, `antigravity` 1,893, `downloads` 1,717.
+- Top manifest sources: `gemini` 4,592, `claude` 3,961, `claude-projects` 3,519, `chatgpt` 2,709, `cowork-sessions` 2,047, `codex` 1,958, `antigravity` 1,893, `downloads` 1,717.
 
 ## Session Lifecycle
 
-- Last `quicken.py` journal: `2026-07-06T12:23:15+00:00`.
+- Last `quicken.py` journal: `2026-07-06T15:17:59+00:00`.
 - Claude FleetView sessions classified: `25` total; `9` stalled, `16` closed, `0` alive, `0` done.
 - Reaped worktrees in that pass: `0`.
 - Last `codex-quicken.py` journal: `2026-06-27T21:42:32+00:00`.
@@ -73,8 +73,8 @@ These are known local app/store adapters with no matched files in this scan. Thi
 - Private root: `~/Workspace/limen/.limen-private/session-corpus`.
 - Private inventory: `~/Workspace/limen/.limen-private/session-corpus/inventory/session-corpus-ledger.json`.
 - `.limen-private/` is ignored by Git; it is the local raw/private landing zone.
-- Materialized objects this run: copied `33`, already present `14023`, bytes copied `96.6 MiB`.
-- Private object store now holds `13845` unique objects, `6.2 GiB`.
+- Raw object materialization was not requested on this run.
+- Private object store currently holds `13845` unique objects, `6.2 GiB`.
 - Private screenshot evidence: `14` PNG artifacts, `22.9 MiB`, newest `2026-06-27T13:41:25+00:00`.
 - Screenshot batches: `2026-06-27` 14.
 
@@ -92,6 +92,7 @@ These are known local app/store adapters with no matched files in this scan. Thi
 
 ## Roadblocks And Potholes
 
+- session-meta is not clean/in-sync; do not mutate it from Limen until its existing dirty and divergent work is preserved or merged.
 - Local Claude/Codex app stores are live private data; screenshots are only UI evidence. Canonical ingestion must come from the filesystem stores, not from the screenshots.
 
 ## Commands

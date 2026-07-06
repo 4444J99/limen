@@ -298,6 +298,7 @@ SURFACES: tuple[SurfaceSpec, ...] = (
         lane="repo-surfaces",
         role="pre-build duplicate-work excavation predicate over PR/commit streams",
         script="scripts/pre-build-excavate.sh",
+        tracked=("docs/pre-build-excavate.md",),
         command="scripts/pre-build-excavate.sh <owner/repo> [keyword ...]",
         refresh_mode="read-only",
     ),

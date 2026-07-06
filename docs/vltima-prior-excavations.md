@@ -1,6 +1,6 @@
 # VLTIMA Prior Excavations
 
-Generated: `2026-07-06T14:05:43+00:00`
+Generated: `2026-07-06T15:37:45+00:00`
 
 ## Canonical Decision
 
@@ -13,10 +13,10 @@ Generated: `2026-07-06T14:05:43+00:00`
 
 - Prior surfaces: `23`.
 - Scripts present: `21`.
-- Outputs present: tracked `27`, private `20`, logs `3`.
-- Discovered extra artifacts: `152`.
+- Outputs present: tracked `29`, private `20`, logs `3`.
+- Discovered extra artifacts: `158`.
 - Lanes: `archive-durability` 3, `capability-substrate` 1, `hooks-orientation` 1, `priority-routing` 5, `product-surface` 1, `prompt-lifecycle` 3, `repo-surfaces` 2, `session-corpus` 5, `worktree-preservation` 2.
-- Statuses: `current` 18, `private-only` 1, `script-only` 1, `stale` 1, `tracked-only` 2.
+- Statuses: `current` 20, `tracked-only` 3.
 - Refresh modes: `dry-run-first` 4, `manual-doc` 2, `manual-only` 2, `read-only` 2, `write-safe-ignored` 1, `write-safe-redacted` 12.
 
 ## Refresh Order
@@ -59,27 +59,23 @@ Generated: `2026-07-06T14:05:43+00:00`
 | `repo-surface-ledger` | `repo-surfaces` | `current` | 2 | `dry-run-first` | `python3 scripts/repo-surface-ledger.py --max-depth 8 --dry-run` |
 | `capability-substrate-ledger` | `capability-substrate` | `current` | 2 | `write-safe-redacted` | `python3 scripts/capability-substrate-ledger.py --write` |
 | `product-ledger` | `product-surface` | `current` | 2 | `write-safe-redacted` | `python3 scripts/product-ledger.py --write` |
-| `substrate-ledger` | `archive-durability` | `private-only` | 1 | `write-safe-redacted` | `python3 scripts/substrate-ledger.py --write` |
+| `substrate-ledger` | `archive-durability` | `current` | 2 | `write-safe-redacted` | `python3 scripts/substrate-ledger.py --write` |
 | `worktree-preservation` | `worktree-preservation` | `current` | 5 | `read-only` | `python3 scripts/worktree-debt.py --json` |
 | `prompt-batch-review-ledger` | `prompt-lifecycle` | `current` | 3 | `write-safe-redacted` | `python3 scripts/prompt-batch-review-ledger.py --write` |
 | `prompt-packet-ledger` | `prompt-lifecycle` | `current` | 3 | `write-safe-redacted` | `python3 scripts/prompt-packet-ledger.py --write` |
 | `agent-session-full-stack-review` | `session-corpus` | `current` | 2 | `dry-run-first` | `python3 scripts/agent-session-full-stack-review.py --write` |
-| `agent-reconstruction-review` | `session-corpus` | `stale` | 2 | `dry-run-first` | `python3 scripts/agent-reconstruction-review.py --write` |
+| `agent-reconstruction-review` | `session-corpus` | `current` | 2 | `dry-run-first` | `python3 scripts/agent-reconstruction-review.py --write` |
 | `agent-code-review-queue` | `session-corpus` | `current` | 3 | `dry-run-first` | `python3 scripts/agent-code-review-queue.py --write` |
 | `session-value-review` | `priority-routing` | `current` | 2 | `write-safe-redacted` | `python3 scripts/session-value-review.py --write` |
 | `antigravity-scratch-bridge` | `worktree-preservation` | `current` | 4 | `manual-only` | `python3 scripts/antigravity-scratch-bridge.py --help` |
 | `hooks-excavation` | `hooks-orientation` | `tracked-only` | 1 | `manual-doc` | `read docs/hooks-excavation-and-plan.md` |
 | `offsite-durability-proposal` | `archive-durability` | `tracked-only` | 1 | `manual-doc` | `read docs/OFFSITE-DURABILITY-PROPOSAL-2026-06-19.md` |
 | `library-preserve` | `archive-durability` | `current` | 1 | `manual-only` | `python3 scripts/library-preserve.py` |
-| `pre-build-excavate` | `repo-surfaces` | `script-only` | 0 | `read-only` | `scripts/pre-build-excavate.sh <owner/repo> [keyword ...]` |
+| `pre-build-excavate` | `repo-surfaces` | `tracked-only` | 1 | `read-only` | `scripts/pre-build-excavate.sh <owner/repo> [keyword ...]` |
 
 ## Mismatches To Reconcile
 
-| Surface | Lane | Status | Reason |
-|---|---|---|---|
-| `substrate-ledger` | `archive-durability` | `private-only` | missing or asymmetric outputs |
-| `agent-reconstruction-review` | `session-corpus` | `stale` | missing or asymmetric outputs |
-| `pre-build-excavate` | `repo-surfaces` | `script-only` | missing or asymmetric outputs |
+- No prior-excavation mismatches detected.
 
 ## Extra Artifacts
 
@@ -127,7 +123,7 @@ These matched excavation naming patterns but are not part of the canonical surfa
 | `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035840Z-organvm` | `session-corpus` | `private` |
 | `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035938Z-organvm-i-theoria` | `session-corpus` | `private` |
 | `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T040023Z-organvm-vi-koinonia` | `session-corpus` | `private` |
-| `...` | `truncated` | `112 more in private index` |
+| `...` | `truncated` | `118 more in private index` |
 
 ## Contract
 
