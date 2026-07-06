@@ -20,6 +20,12 @@ def test_required_acceptance_proof_fields_are_shared() -> None:
     module = load_reap_acceptance()
 
     assert module.REQUIRED_ACCEPTANCE_PROOF_FIELDS == ("accepted_at", "archive_proof", "redaction_proof")
+    assert module.removal_acceptance_surface_names() == (
+        "branch",
+        "clone",
+        "worktree",
+        "antigravity_scratch",
+    )
 
 
 def test_required_acceptance_proof_rejects_blank_fields() -> None:

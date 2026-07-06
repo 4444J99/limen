@@ -7,6 +7,37 @@ from typing import Any
 
 
 REQUIRED_ACCEPTANCE_PROOF_FIELDS = ("accepted_at", "archive_proof", "redaction_proof")
+REMOVAL_ACCEPTANCE_COVENANT_DOC = "docs/removal-acceptance-covenant.md"
+REMOVAL_ACCEPTANCE_SURFACES = (
+    {
+        "name": "branch",
+        "script": "scripts/reap-branches.py",
+        "doc": "docs/branch-reap-acceptance.md",
+        "ledger": "docs/branch-reap-acceptance.jsonl",
+        "destructive_action": "git branch -D",
+    },
+    {
+        "name": "clone",
+        "script": "scripts/reap-clones.py",
+        "doc": "docs/clone-reap-acceptance.md",
+        "ledger": "docs/clone-reap-acceptance.jsonl",
+        "destructive_action": "shutil.rmtree clone root",
+    },
+    {
+        "name": "worktree",
+        "script": "scripts/reclaim-worktrees.py",
+        "doc": "docs/worktree-reclaim-acceptance.md",
+        "ledger": "docs/worktree-reclaim-acceptance.jsonl",
+        "destructive_action": "git worktree remove / local root removal",
+    },
+    {
+        "name": "antigravity_scratch",
+        "script": "scripts/antigravity-scratch-bridge.py",
+        "doc": "docs/antigravity-scratch-reap-acceptance.md",
+        "ledger": "docs/antigravity-scratch-reap-acceptance.jsonl",
+        "destructive_action": "shutil.rmtree scratch root",
+    },
+)
 
 
 def missing_required_acceptance_proof_fields(
@@ -21,3 +52,7 @@ def has_required_acceptance_proof(
     required_fields: tuple[str, ...] = REQUIRED_ACCEPTANCE_PROOF_FIELDS,
 ) -> bool:
     return not missing_required_acceptance_proof_fields(event, required_fields)
+
+
+def removal_acceptance_surface_names() -> tuple[str, ...]:
+    return tuple(str(surface["name"]) for surface in REMOVAL_ACCEPTANCE_SURFACES)
