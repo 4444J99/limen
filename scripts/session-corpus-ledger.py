@@ -67,12 +67,24 @@ LOCAL_SOURCES = [
     (
         "gemini-desktop-stores",
         HOME / "Library" / "Application Support" / "com.google.GeminiMacOS",
-        ("*.data", "*.json", "*.jsonl", "*.ldb", "*.log", "*.sqlite", "*.db", "*.md", "*.txt"),
+        (
+            "*.data",
+            "*.json",
+            "*.jsonl",
+            "*.ldb",
+            "*.log",
+            "*.sqlite",
+            "*.db",
+            "*.store",
+            "*.store-*",
+            "*.md",
+            "*.txt",
+        ),
     ),
     (
         "perplexity-desktop-stores",
         HOME / "Library" / "Application Support" / "ai.perplexity.macv3",
-        ("*.data", "*.json", "*.jsonl", "*.ldb", "*.log", "*.sqlite", "*.db", "*.md", "*.txt"),
+        ("*.data", "*.json", "*.jsonl", "*.ldb", "*.log", "*.sqlite", "*.db", "*.plist", "*.md", "*.txt"),
     ),
 ]
 

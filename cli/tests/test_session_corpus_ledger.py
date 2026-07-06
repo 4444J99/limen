@@ -114,7 +114,10 @@ def test_current_desktop_app_sources_cover_real_store_roots():
     assert "*.data" in chatgpt_patterns
     assert sources["chatgpt-atlas-app-support"][0].parts[-2:] == ("OpenAI", "ChatGPT Atlas")
     assert sources["gemini-desktop-stores"][0].parts[-1] == "com.google.GeminiMacOS"
+    assert "*.store" in sources["gemini-desktop-stores"][1]
+    assert "*.store-*" in sources["gemini-desktop-stores"][1]
     assert sources["perplexity-desktop-stores"][0].parts[-1] == "ai.perplexity.macv3"
+    assert "*.plist" in sources["perplexity-desktop-stores"][1]
     assert "*.data" in ledger.EXTERNAL_PATTERNS
 
 

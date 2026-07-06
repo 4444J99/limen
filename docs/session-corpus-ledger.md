@@ -1,6 +1,6 @@
 # Session Corpus Ledger
 
-Generated: `2026-07-06T07:00:03+00:00`
+Generated: `2026-07-06T07:11:04+00:00`
 Horizon: `all local history`
 
 ## Canonical Decision
@@ -15,19 +15,20 @@ Horizon: `all local history`
 
 ## Local Session Sources
 
-Total seen: `17844` files, `6.8 GiB`.
+Total seen: `17857` files, `6.8 GiB`.
 
 | Source | Root | Files | Size | Newest |
 |---|---:|---:|---:|---|
 | `claude-projects` | `~/.claude/projects` | 6611 | 1.9 GiB | `2026-07-06T06:52:56+00:00` |
 | `external-session:T7Recovery` | `/Volumes/T7Recovery` | 1826 | 1.7 GiB | `2026-06-14T01:12:10+00:00` |
-| `external-session:Archive4T` | `/Volumes/Archive4T` | 2000 | 1.6 GiB | `2026-07-06T06:56:44+00:00` |
-| `codex-sessions` | `~/.local/share/codex/sessions` | 1363 | 1.5 GiB | `2026-07-06T07:00:00+00:00` |
+| `external-session:Archive4T` | `/Volumes/Archive4T` | 2000 | 1.6 GiB | `2026-07-06T07:06:45+00:00` |
+| `codex-sessions` | `~/.local/share/codex/sessions` | 1363 | 1.5 GiB | `2026-07-06T07:11:01+00:00` |
 | `claude-file-history` | `~/.claude/file-history` | 5059 | 67.2 MiB | `2026-07-05T18:01:34+00:00` |
-| `codex-goals-state` | `~/.local/share/codex` | 6 | 23.9 MiB | `2026-07-06T07:00:00+00:00` |
+| `codex-goals-state` | `~/.local/share/codex` | 6 | 23.9 MiB | `2026-07-06T07:11:01+00:00` |
 | `chatgpt-desktop-app-support` | `~/Library/Application Support/com.openai.chat` | 257 | 15.7 MiB | `2026-07-06T02:13:57+00:00` |
 | `codex-shell-snapshots` | `~/.local/share/codex/shell_snapshots` | 6 | 2.0 MiB | `2026-07-06T00:36:57+00:00` |
 | `codex-history` | `~/.local/share/codex` | 1 | 813.0 KiB | `2026-07-06T02:17:32+00:00` |
+| `gemini-desktop-stores` | `~/Library/Application Support/com.google.GeminiMacOS` | 12 | 569.0 KiB | `2026-06-23T21:43:47+00:00` |
 | `claude-usage-session-meta` | `~/.claude/usage-data/session-meta` | 397 | 426.9 KiB | `2026-07-03T13:33:18+00:00` |
 | `claude-plans` | `~/.claude/plans` | 43 | 369.8 KiB | `2026-07-03T15:08:54+00:00` |
 | `claude-desktop-indexeddb` | `~/Library/Application Support/Claude/IndexedDB` | 2 | 359.2 KiB | `2026-06-30T11:06:52+00:00` |
@@ -35,6 +36,7 @@ Total seen: `17844` files, `6.8 GiB`.
 | `claude-tasks` | `~/.claude/tasks` | 206 | 59.9 KiB | `2026-07-03T15:47:52+00:00` |
 | `claude-usage-facets` | `~/.claude/usage-data/facets` | 62 | 55.3 KiB | `2026-07-03T13:33:30+00:00` |
 | `codex-attachments` | `~/.local/share/codex/attachments` | 4 | 6.2 KiB | `2026-06-27T18:15:45+00:00` |
+| `perplexity-desktop-stores` | `~/Library/Application Support/ai.perplexity.macv3` | 1 | 400 B | `2026-06-02T13:20:10+00:00` |
 
 ## Missing Local App Sources
 
@@ -43,8 +45,6 @@ These are known local app/store adapters with no matched files in this scan. Thi
 | Source | Root | Reason |
 |---|---|---|
 | `chatgpt-atlas-app-support` | `~/Library/Application Support/OpenAI/ChatGPT Atlas` | `no-matching-files` |
-| `gemini-desktop-stores` | `~/Library/Application Support/com.google.GeminiMacOS` | `no-matching-files` |
-| `perplexity-desktop-stores` | `~/Library/Application Support/ai.perplexity.macv3` | `no-matching-files` |
 
 ## External Scan Bounds
 
