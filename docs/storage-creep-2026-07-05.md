@@ -6,11 +6,12 @@ personal data stores or agent scratch roots.
 
 ## Live Footprint
 
-- Internal data volume: `460Gi` size, `406Gi` used, `25-26Gi` available, `95%` capacity.
+- Internal data volume: `460Gi` size, `402Gi` used, `27Gi` available, `94%` capacity after the
+  2026-07-06 safe reap.
 - Archive4T: `3.6Ti` size, `523Gi` used, `3.0Ti` available.
-- `~/.gemini`: about `33G`; `~/.gemini/antigravity-cli`: about `32G`.
-- `~/.gemini/antigravity-cli/scratch`: about `31G`.
-- Largest Antigravity scratch roots observed:
+- `~/.gemini`: about `30G`; `~/.gemini/antigravity-cli`: about `30G`.
+- `~/.gemini/antigravity-cli/scratch`: about `28G`.
+- Largest Antigravity scratch roots observed before the safe reap:
   - `session-meta`: `4.7G`
   - `organvm-session-meta`: `4.7G`
   - `session-meta-2`: `4.5G`
@@ -40,6 +41,9 @@ personal data stores or agent scratch roots.
 - `python3 scripts/antigravity-scratch-bridge.py --write` produced
   `docs/antigravity-scratch-bridge.md` and measured `66` scratch roots, `30.6 GiB` total, with
   `2.2 GiB` marked `safe_reap_candidate`.
+- `python3 scripts/antigravity-scratch-bridge.py --write --apply-safe-reap` reclassified each
+  candidate immediately before deletion, then reaped `23` clean remote-preserved roots, reclaiming
+  `2.2 GiB` with `0` skipped and `0` failed. Post-reap scratch size: `28.4 GiB` across `43` roots.
 - Scratch deletion is still not authorized by size alone. The same receipt found `34`
   `bridge_required` roots plus container/non-git/preserve review roots; those require owner-proof or
   delta preservation before local removal.
@@ -64,7 +68,7 @@ The next real storage fix is to act through the Agy/Antigravity scratch bridge:
 3. Preserve unique deltas to the owning repo or Archive4T with a receipt.
 4. Reap only roots that are either pure pushed mirrors or archived with verification.
 
-The current large reclaim candidate is known but intentionally parked behind proof:
-`~/.gemini/antigravity-cli/scratch` is the major local creep source, and removal should proceed only
-from the bridge's `safe_reap_candidate` set or from roots whose dirty/preserve blockers have been
-bridged into their owner repository or an Archive4T receipt.
+The remaining large reclaim candidate is known but intentionally parked behind proof:
+`~/.gemini/antigravity-cli/scratch` is still the major local creep source, and further removal should
+proceed only from future `safe_reap_candidate` roots or from roots whose dirty/preserve blockers have
+been bridged into their owner repository or an Archive4T receipt.
