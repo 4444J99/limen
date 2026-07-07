@@ -640,6 +640,8 @@ while true; do
     python3 "$LIMEN_ROOT/scripts/evocator.py" --apply 2>&1 | tail -2 || true
     stamp evocator
   fi
+  [ "${LIMEN_PRESERVE_LIVE_STATE:-1}" = "1" ] && \
+    python3 "$LIMEN_ROOT/scripts/preserve-live-state.py" 2>&1 | tail -1 || true
 
   # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
   # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min
