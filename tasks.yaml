@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 178
+      spent: 179
       per_agent:
         jules: 100
         gemini: 3
-        codex: 18
+        codex: 19
         opencode: 25
         agy: 31
         claude: 0
@@ -102809,7 +102809,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -102825,7 +102825,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T21:57:26.887792Z'
+  updated: '2026-07-07T22:25:50.472800Z'
   dispatch_log:
   - timestamp: '2026-07-07T18:48:50.268336Z'
     agent: codex
@@ -102857,6 +102857,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-07T22:25:50.472800Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-118
   title: fix failing CI on organvm/domus-genoma#118
   repo: organvm/domus-genoma
@@ -102940,7 +102945,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -102957,7 +102962,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T22:01:06.029108Z'
+  updated: '2026-07-07T22:25:30.622325Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:50:31.892215Z'
     agent: codex
@@ -102988,6 +102993,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T22:25:30.622325Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-domus-genoma-121
   title: fix failing CI on organvm/domus-genoma#121
   repo: organvm/domus-genoma
