@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T20:08:42+00:00`
+Generated: `2026-07-07T20:10:06+00:00`
 
 Status: `blocked`
 
@@ -25,14 +25,14 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `1`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T20:08:42.918301+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T20:10:06.946640+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run lanes: `auto`; max `1`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 1 ; 0 still running ; would launch 1 (cap 1) -> ['HEAL-cifix-organvm-domus-genoma-118']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 0 (cap 1) -> []`.
 - Async skipped down lanes: `claude, gemini, jules`.
   - `claude`: usage health `rate-limited`; signal `tokens`; remaining `100000000` of `100000000`; headroom `100%`.
   - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
@@ -64,17 +64,11 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `d061ad3e69d0ff6415da97312a77f0927d6873c8`.
-- origin/main: `d061ad3e69d0ff6415da97312a77f0927d6873c8`.
+- HEAD: `e768febe0a11f0cd0d88ef26913a57d5a47cf1fa`.
+- origin/main: `e768febe0a11f0cd0d88ef26913a57d5a47cf1fa`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `5`.
-- Ignored generated receipt dirty entries: `1`.
-  - `docs/dispatch-health.md`
-  - `cli/tests/test_always_working.py`
+- Dirty entries: `1`.
   - `docs/always-working.md`
-  - `docs/repo-surface-ledger.md`
-  - `scripts/always-working.py`
-  - `tasks.yaml`
 
 ## Verified Worktree
 
@@ -84,7 +78,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 5 dirty entries.
+- `live-root-dirty`: live root has 1 dirty entries.
 - `always-working-required-work-open`: 2 required promise workstream(s) remain open; next item VALUE-REPOS.
 
 ## Commands
