@@ -108826,3 +108826,72 @@ tasks:
   created: '2026-07-07'
   updated: '2026-07-07T18:58:52.715900Z'
   dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-152
+  title: rebase/resolve conflicts on organvm/domus-genoma#152
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/152
+  context: 'PR organvm/domus-genoma#152 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/152 [auto-emitted
+    2026-07-07 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-07'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-153
+  title: rebase/resolve conflicts on organvm/domus-genoma#153
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/153
+  context: 'PR organvm/domus-genoma#153 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/153 [auto-emitted
+    2026-07-07 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-07'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-155
+  title: rebase/resolve conflicts on organvm/domus-genoma#155
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/155
+  context: 'PR organvm/domus-genoma#155 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/155 [auto-emitted
+    2026-07-07 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-07'
+  dispatch_log: []
