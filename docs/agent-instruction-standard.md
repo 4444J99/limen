@@ -36,9 +36,15 @@ back to `AGENTS.md` instead.
 3. If the human correction changes workflow, priority, ownership, cadence, evidence, or acceptance
    criteria, propagate it through a durable surface future agents read: protocol doc, TABVLARIVS
    ticket, task packet, PR body, receipt, or explicit blocker. A chat-only apology is not enough.
-4. Keep examples machine-checkable where practical.
-5. Keep direct-session behavior distinct from dispatch-mode behavior.
-6. Prefer bounded loops, explicit evidence, and append-only history over prose promises.
+4. Do not gate routine engineering mechanics on the human. The human owns ideal forms, priorities,
+   taste, and human-risk decisions; agents own implementation choices, tests, cleanup mechanics, and
+   best-practice tradeoffs when the repo evidence supports a path.
+5. Preserve full lifecycle closure. A prompt, idea, viewpoint, branch, worktree, scratch root, or
+   lane closes only as shipped, open PR, pushed plan/task, preservation receipt with next owner, or
+   explicit blocker. No-diff, timeout, stale, or context-loss is not closure by itself.
+6. Keep examples machine-checkable where practical.
+7. Keep direct-session behavior distinct from dispatch-mode behavior.
+8. Prefer bounded loops, explicit evidence, and append-only history over prose promises.
 
 ## Home-scope generated surfaces
 

@@ -803,6 +803,45 @@ def test_resolve_agent_binary_falls_back_when_wrapper_missing(monkeypatch) -> No
     assert D._resolve_agent_binary("opencode") == "opencode"
 
 
+def test_path_like_repo_resolves_to_local_checkout(tmp_path: Path) -> None:
+    repo = tmp_path / "checkout"
+    (repo / ".git").mkdir(parents=True)
+    task = Task(id="LOCAL-PATH", title="local", repo=str(repo), target_agent="codex", created=date(2026, 7, 7))
+
+    assert D._resolve_repo_dir(task) == repo
+    assert D._clone_repo(task) == repo
+
+
+def test_jules_path_repo_derives_remote_slug(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "checkout"
+    (repo / ".git").mkdir(parents=True)
+    task = Task(id="JULES-PATH", title="jules", repo=str(repo), target_agent="jules", created=date(2026, 7, 7))
+    calls: list[list[str]] = []
+
+    monkeypatch.setattr(D, "_github_slug_from_local_repo", lambda path: "organvm/limen")
+
+    def fake_run_cmd(cmd, task, dry_run, cwd=None):
+        calls.append(cmd)
+        return "123456789012345"
+
+    monkeypatch.setattr(D, "_run_cmd", fake_run_cmd)
+
+    assert D._call_jules(task, dry_run=False) == "123456789012345"
+    assert calls[0][3:5] == ["--repo", "organvm/limen"]
+
+
+def test_jules_success_without_session_id_is_failure(monkeypatch, capsys) -> None:
+    task = Task(id="JULES-NO-ID", title="jules", repo="organvm/limen", target_agent="jules", created=date(2026, 7, 7))
+
+    def fake_run_capture(cmd, cwd=None, timeout=600, env=None):
+        return subprocess.CompletedProcess(cmd, 0, "Session is created.\n", "")
+
+    monkeypatch.setattr(D, "_run_capture", fake_run_capture)
+
+    assert D._run_cmd(["jules", "remote", "new"], task, dry_run=False) is False
+    assert "no session id" in capsys.readouterr().out
+
+
 def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, monkeypatch) -> None:
     calls: list[dict] = []
 

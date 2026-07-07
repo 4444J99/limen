@@ -546,6 +546,10 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
                     m = re.search(pat, result.stdout, re.IGNORECASE | re.MULTILINE)
                     if m:
                         return m.group(1)
+                print(f"  FAILED jules dispatch {task.id}: no session id in CLI output")
+                if result.stdout:
+                    print(f"    stdout: {result.stdout[:500]}")
+                return False
             return True
         print(f"  FAILED ({result.returncode}): {task.id}")
         if result.stderr:
@@ -581,7 +585,14 @@ def _build_jules_prompt(task: Task) -> str:
 
 
 def _call_jules(task: Task, dry_run: bool) -> bool | str:
-    repo = task.repo or os.environ.get("LIMEN_ROOT", ".")
+    repo = _remote_repo_arg(task)
+    if repo is None:
+        msg = f"remote lane needs GitHub owner/repo, got {task.repo or '(no repo)'}"
+        if dry_run:
+            print(f"  would BLOCK {task.id}: {msg}")
+            return True
+        print(f"  BLOCKED {task.id}: {msg}")
+        return _blocked_result(msg)
     # `jules remote new` runs the session autonomously in a VM and yields a pullable result; plain
     # `jules new` routes through the web-UI plan-approval flow, which strands every headless
     # dispatch at "Awaiting User Feedback" (no CLI verb can approve it) — the bug that made jules
@@ -1020,6 +1031,60 @@ def _is_auth_blip(text: str) -> bool:
     return bool(_AUTH_BLIP_PATTERNS.search(text or "")) and not _is_rate_limited(text)
 
 
+_GITHUB_REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
+
+
+def _path_like_repo(repo: str | None) -> bool:
+    if not repo:
+        return False
+    return repo.startswith(("~/", "/", "./", "../"))
+
+
+def _local_repo_path(repo: str | None) -> Path | None:
+    if not _path_like_repo(repo):
+        return None
+    path = Path(str(repo)).expanduser()
+    if (path / ".git").exists():
+        return path
+    return None
+
+
+def _github_slug_from_remote(remote: str | None) -> str | None:
+    match = _GITHUB_REMOTE_RE.search((remote or "").strip())
+    if not match:
+        return None
+    return f"{match.group(1)}/{match.group(2)}"
+
+
+def _github_slug_from_local_repo(path: Path) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(path), "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except Exception:
+        return None
+    if result.returncode != 0:
+        return None
+    return _github_slug_from_remote(result.stdout)
+
+
+def _remote_repo_arg(task: Task) -> str | None:
+    """Return a GitHub owner/repo slug for remote service lanes.
+
+    Remote lanes cannot clone `~/Workspace/...` paths. Local-path tasks may still name a real repo;
+    derive the slug from origin so the cloud lane receives a valid repository argument.
+    """
+    repo = task.repo or os.environ.get("LIMEN_ROOT", ".")
+    if _path_like_repo(repo):
+        path = _local_repo_path(repo)
+        return _github_slug_from_local_repo(path) if path is not None else None
+    return repo if "/" in repo else None
+
+
 def _resolve_repo_dir(task: Task) -> Path | None:
     """Find a local git checkout of task.repo (owner/name) across known roots.
 
@@ -1029,6 +1094,9 @@ def _resolve_repo_dir(task: Task) -> Path | None:
     """
     if not task.repo:
         return None
+    local_path = _local_repo_path(task.repo)
+    if local_path is not None:
+        return local_path
     org, _, name = task.repo.partition("/")
     ws = Path(os.environ.get("LIMEN_WORKDIR", Path.home() / "Workspace"))
     cart = Path.home() / "Workspace" / ".home-cartridge" / "Code"
@@ -1064,6 +1132,8 @@ def _clone_repo(task: Task) -> Path | None:
     the next _resolve_repo_dir finds it. Serialized on the git-plumbing lock so
     two same-repo dispatches don't race the same clone. Returns the dir or None.
     """
+    if _path_like_repo(task.repo):
+        return _resolve_repo_dir(task)
     if not task.repo or "/" not in task.repo:
         return None
     ws = Path(os.environ.get("LIMEN_WORKDIR", Path.home() / "Workspace"))

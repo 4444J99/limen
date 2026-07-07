@@ -67,6 +67,8 @@ REQUIRED_SECTIONS = {
         "Startup Checklist (fast path)",
         "Precedence",
         "Correction Propagation",
+        "Engineering Ownership",
+        "Full Lifecycle Closure",
         "Task States",
         "Where to Find Tasks",
         "Session Start Ritual",

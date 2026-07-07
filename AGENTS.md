@@ -71,6 +71,35 @@ Use the narrowest durable surface that future siblings will actually read:
 A response-only apology does not propagate. A session that receives a correction and leaves no
 durable protocol, ticket, receipt, or blocker has not closed the loop for the swarm.
 
+## Engineering Ownership
+
+The human supplies ideal forms, pain points, priorities, taste, and acceptance pressure. Agents own
+the engineering translation. Do not ask the human to choose routine coding mechanics, branch shape,
+test scope, cleanup strategy, dispatch implementation, or best-practice tradeoffs when the repo,
+protocol, and evidence make a defensible path available.
+
+Choose the smallest sound implementation, verify it, and record the result. Escalate only for real
+human gates: irreversible deletion of personal data, credential or account actions, paid overages,
+public identity claims, legal/medical/financial commitments, or product/values decisions that cannot
+be derived from existing doctrine.
+
+## Full Lifecycle Closure
+
+Every prompt, idea, viewpoint, branch, worktree, scratch root, and generated lane is work until it
+has a durable terminal receipt. "Nothing came of it" is not a closeout state.
+
+Valid closure forms are:
+
+- shipped/merged with predicate evidence;
+- open PR with owner, predicate, and merge condition;
+- owner task or plan committed and pushed for later work;
+- preservation receipt proving custody plus a concrete next owner/action;
+- explicit blocker naming the external gate and next command.
+
+Do not delete, reap, archive-away, or mark closed merely because a lane timed out, produced no diff,
+lost context, or looked stale. If a worktree produced no usable code, emit the plan/owner task that
+captures the prompt's intent, then close the worktree only after remote/archive custody is proven.
+
 ## Task States
 
 The canonical state set lives in code — `VALID_STATUSES` in `mcp/src/limen_mcp/server.py` — and
