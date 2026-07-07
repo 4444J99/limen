@@ -276,6 +276,53 @@ def test_mail_active_flagged_done_when_story_ledger_covers_current_flags(monkeyp
     assert "classified into 1 clusters" in receipts["MAIL-ACTIVE-FLAGGED"]["verdict"]
 
 
+def test_mail_historical_done_when_bounded_batch_is_atomized(monkeypatch, tmp_path):
+    mod = _load("always_working_mail_history_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    mail_index = tmp_path / "Envelope Index"
+    log_path = root / "logs" / "mail-story-ledger.json"
+
+    root.mkdir()
+    log_path.parent.mkdir()
+    _mail_index(mail_index)
+    log_path.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-07-07T20:00:00Z",
+                "atom_count": 3,
+                "mode": {
+                    "scope": "all",
+                    "limit": 500,
+                    "read_only": True,
+                    "body_reads": False,
+                    "mailbox_mutations": False,
+                    "gmail_writes": False,
+                },
+                "stats": {"not_deleted_messages": 3, "flagged_non_deleted": 2},
+                "clusters": [
+                    {
+                        "cluster_id": "billing-continuity",
+                        "atom_count": 3,
+                        "next_actions": {"human_review": 3},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "MAIL_INDEX", mail_index)
+    monkeypatch.setattr(mod, "MAIL_STORY_LOG", log_path)
+    monkeypatch.setattr(mod, "mail_census", lambda: {"ok": True, "account_count": 1, "obligation_count": 2})
+
+    receipts = {item["id"]: item for item in mod.mail_receipts()}
+
+    assert receipts["MAIL-HISTORICAL-BACKLOG"]["status"] == mod.STATUS_DONE
+    assert receipts["MAIL-HISTORICAL-BACKLOG"]["evidence"]["mail_story"]["classified_current"] is True
+    assert "bounded batch" in receipts["MAIL-HISTORICAL-BACKLOG"]["verdict"]
+
+
 def test_dispatch_health_blocks_when_always_working_required_items_are_open(tmp_path):
     mod = _load("dispatch_health_always_working_uut", DISPATCH_HEALTH)
     index = tmp_path / "always-working.json"

@@ -181,6 +181,9 @@ def test_markdown_is_redacted_while_private_atoms_keep_source(tmp_path):
     public_text = doc.read_text(encoding="utf-8")
     private_text = private_atoms.read_text(encoding="utf-8")
     log_payload = json.loads(log.read_text(encoding="utf-8"))
+    scoped_log = log.with_name("mail-story-ledger-flagged.json")
+    scoped_atoms = private_atoms.with_name("atoms-flagged.jsonl")
+    scoped_snapshot = private_snapshot.with_name("snapshot-flagged.json")
 
     for forbidden in (
         "notifications@stripe.example.test",
@@ -196,3 +199,6 @@ def test_markdown_is_redacted_while_private_atoms_keep_source(tmp_path):
     assert "notifications@stripe.example.test" in private_text
     assert "private body-ish summary should stay private" in private_text
     assert log_payload["privacy"]["raw_mail_in_git"] is False
+    assert json.loads(scoped_log.read_text(encoding="utf-8"))["mode"]["scope"] == "flagged"
+    assert scoped_atoms.read_text(encoding="utf-8") == private_text
+    assert json.loads(scoped_snapshot.read_text(encoding="utf-8"))["mode"]["scope"] == "flagged"

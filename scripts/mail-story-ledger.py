@@ -270,6 +270,10 @@ def utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def scoped_receipt_path(path: Path, scope: str) -> Path:
+    return path.with_name(f"{path.stem}-{scope}{path.suffix}")
+
+
 def iso_from_unix(value: int | None) -> str | None:
     if not value:
         return None
@@ -688,10 +692,22 @@ def write_outputs(
     doc_path.write_text(markdown, encoding="utf-8")
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_path.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
+    scoped_log = scoped_receipt_path(log_path, str(snapshot["mode"]["scope"]))
+    if scoped_log != log_path:
+        scoped_log.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
     private_atoms.parent.mkdir(parents=True, exist_ok=True)
     private_atoms.write_text("".join(json.dumps(atom, sort_keys=True) + "\n" for atom in atoms), encoding="utf-8")
+    scoped_atoms = scoped_receipt_path(private_atoms, str(snapshot["mode"]["scope"]))
+    if scoped_atoms != private_atoms:
+        scoped_atoms.write_text("".join(json.dumps(atom, sort_keys=True) + "\n" for atom in atoms), encoding="utf-8")
     private_snapshot.parent.mkdir(parents=True, exist_ok=True)
     private_snapshot.write_text(json.dumps({**snapshot, "atoms": atoms}, indent=2, sort_keys=True), encoding="utf-8")
+    scoped_snapshot = scoped_receipt_path(private_snapshot, str(snapshot["mode"]["scope"]))
+    if scoped_snapshot != private_snapshot:
+        scoped_snapshot.write_text(
+            json.dumps({**snapshot, "atoms": atoms}, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
 
 
 def parse_args() -> argparse.Namespace:

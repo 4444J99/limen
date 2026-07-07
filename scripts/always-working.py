@@ -363,8 +363,17 @@ def mail_census() -> dict[str, Any]:
         return {"ok": False, "error": "mail census did not return JSON"}
 
 
-def mail_story_receipt(scope: str, expected_count: int) -> dict[str, Any]:
-    ledger = load_json(MAIL_STORY_LOG, {})
+def mail_story_receipt(
+    scope: str,
+    expected_count: int,
+    *,
+    expected_limit: int | None = None,
+    require_flagged_total: bool = True,
+) -> dict[str, Any]:
+    scoped_log = MAIL_STORY_LOG.with_name(f"{MAIL_STORY_LOG.stem}-{scope}{MAIL_STORY_LOG.suffix}")
+    ledger = load_json(scoped_log, None)
+    if not isinstance(ledger, dict):
+        ledger = load_json(MAIL_STORY_LOG, {})
     if not isinstance(ledger, dict):
         ledger = {}
     mode = ledger.get("mode") if isinstance(ledger.get("mode"), dict) else {}
@@ -378,13 +387,18 @@ def mail_story_receipt(scope: str, expected_count: int) -> dict[str, Any]:
             continue
         actions = cluster.get("next_actions") if isinstance(cluster.get("next_actions"), dict) else {}
         next_action_count += sum(int(value or 0) for value in actions.values())
+    flagged_total_ok = True
+    if require_flagged_total:
+        flagged_total_ok = int(stats.get("flagged_non_deleted") or -1) == expected_count
+    limit_ok = True if expected_limit is None else mode.get("limit") == expected_limit
     classified_current = (
         mode.get("scope") == scope
+        and limit_ok
         and mode.get("read_only") is True
         and mode.get("body_reads") is False
         and mode.get("mailbox_mutations") is False
         and mode.get("gmail_writes") is False
-        and int(stats.get("flagged_non_deleted") or -1) == expected_count
+        and flagged_total_ok
         and atom_count == expected_count
         and cluster_atom_count == atom_count
         and next_action_count == atom_count
@@ -394,6 +408,7 @@ def mail_story_receipt(scope: str, expected_count: int) -> dict[str, Any]:
         "present": bool(ledger),
         "generated_at": ledger.get("generated_at"),
         "scope": mode.get("scope"),
+        "limit": mode.get("limit"),
         "atom_count": atom_count,
         "cluster_count": len(clusters),
         "cluster_atom_count": cluster_atom_count,
@@ -412,9 +427,17 @@ def mail_receipts() -> list[dict[str, Any]]:
     flagged = int(stats.get("flagged_non_deleted") or 0)
     not_deleted = int(stats.get("not_deleted_messages") or 0)
     flagged_story = mail_story_receipt("flagged", flagged)
+    history_batch_target = min(500, not_deleted) if not_deleted else 0
+    history_story = mail_story_receipt(
+        "all",
+        history_batch_target,
+        expected_limit=500,
+        require_flagged_total=False,
+    )
     active_done = flagged == 0 or bool(flagged_story.get("classified_current"))
     active_status = STATUS_DONE if active_done else STATUS_ASSIGNED
-    history_status = STATUS_DONE if not_deleted == 0 else STATUS_ASSIGNED
+    history_done = not_deleted == 0 or bool(history_story.get("classified_current"))
+    history_status = STATUS_DONE if history_done else STATUS_ASSIGNED
     common = {
         "evidence": {"mail_stats": stats, "mail_census": census, "mail_story": flagged_story},
         "existing_receipts": [
@@ -453,8 +476,14 @@ def mail_receipts() -> list[dict[str, Any]]:
             "priority": PRIORITY["mail-historical"],
             "status": history_status,
             "title": "Continue historical mail backlog in resumable batches",
-            "verdict": f"{not_deleted} indexed non-deleted messages exist; process in batches, not one giant run" if not_deleted else "no indexed mail backlog visible",
-            **common,
+            "verdict": (
+                f"{history_story.get('atom_count')} historical messages atomized in this bounded batch; {not_deleted} indexed non-deleted messages remain for future batches"
+                if history_done and not_deleted
+                else f"{not_deleted} indexed non-deleted messages exist; process in batches, not one giant run"
+                if not_deleted
+                else "no indexed mail backlog visible"
+            ),
+            **{**common, "evidence": {**common["evidence"], "mail_story": history_story}},
             "assignment_packet": {
                 "lane_fit": "local-codex-or-opencode",
                 "repo": relpath(ROOT),

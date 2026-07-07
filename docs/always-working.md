@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-07T20:01:24+00:00`
+Generated: `2026-07-07T20:04:41+00:00`
 Status: `needs-work`
-Required open: `4`
+Required open: `3`
 Blocked: `1`
-Done from receipt: `3`
+Done from receipt: `4`
 
 ## Contract
 
@@ -16,13 +16,13 @@ Done from receipt: `3`
 
 ## Next Packet
 
-- ID: `MAIL-HISTORICAL-BACKLOG`
-- Workstream: `mail-historical`
+- ID: `REPO-BOIL-UP`
+- Workstream: `repo-boil-up`
 - Status: `assigned_from_existing_work`
-- Verdict: 82042 indexed non-deleted messages exist; process in batches, not one giant run
-- Lane fit: `local-codex-or-opencode`
-- Predicate: `python3 scripts/mail-story-ledger.py --scope all --limit 500 --write`
-- Receipt target: `~/Workspace/limen/docs/mail-story-ledger.md`
+- Verdict: broad repo surface ledger exists, but it is stale for current boil-up work
+- Lane fit: `agy-or-opencode-readonly`
+- Predicate: `python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write`
+- Receipt target: `~/Workspace/limen/docs/repo-surface-ledger.md`
 
 ## Workstreams
 
@@ -31,7 +31,7 @@ Done from receipt: `3`
 | 0 | `SUBSTRATE-DISK-TEMP` | `done_from_receipt` | disk/temp above configured floor |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
 | 20 | `MAIL-ACTIVE-FLAGGED` | `done_from_receipt` | 127 active flagged messages classified into 11 clusters; no body reads or mailbox mutations |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `assigned_from_existing_work` | 82042 indexed non-deleted messages exist; process in batches, not one giant run |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82042 indexed non-deleted messages remain for future batches |
 | 40 | `REPO-BOIL-UP` | `assigned_from_existing_work` | broad repo surface ledger exists, but it is stale for current boil-up work |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `assigned_from_existing_work` | 14 value repos define the funded work lane |
@@ -53,21 +53,6 @@ Done from receipt: `3`
   - `~/Workspace/limen/face-ownership.json`
   - `~/Workspace/organvm/4444J99/README.md`
   - `https://github.com/4444J99/4444J99`
-
-### MAIL-HISTORICAL-BACKLOG
-
-- Lane fit: `local-codex-or-opencode`
-- Repo/root: `~/Workspace/limen`
-- Task: Continue the historical metadata sweep from existing receipts; emit batch cursor/count receipt before any thread enrichment.
-- Predicate: `python3 scripts/mail-story-ledger.py --scope all --limit 500 --write`
-- Receipt target: `~/Workspace/limen/docs/mail-story-ledger.md`
-- Stop condition: next 500 historical messages are atomized or a precise cursor/blocker is recorded
-- Existing receipts:
-  - `~/Workspace/limen/docs/mail-story-ledger.md`
-  - `~/Workspace/limen/docs/his-hand-registry-mail-a290329e.md`
-  - `~/Workspace/limen/obligations-ledger.json`
-  - `~/Workspace/limen/scripts/mail-story-ledger.py`
-  - `~/Workspace/limen/scripts/mail-beat.sh`
 
 ### REPO-BOIL-UP
 
