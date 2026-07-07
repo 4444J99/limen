@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 179
+      spent: 161
       per_agent:
         jules: 100
         gemini: 3
-        codex: 19
+        codex: 1
         opencode: 25
         agy: 31
         claude: 0
@@ -27,10 +27,10 @@ portal:
       per_agent_reset:
         jules: '2026-07-07T11:50:27.108419+00:00'
         gemini: '2026-07-07T11:50:27.108419+00:00'
-        codex: '2026-07-07T17:58:04.383222+00:00'
+        codex: '2026-07-07T23:05:14.351359+00:00'
         opencode: '2026-07-07T11:50:27.108419+00:00'
         agy: '2026-07-07T11:50:27.108419+00:00'
-        claude: '2026-07-07T17:58:04.383222+00:00'
+        claude: '2026-07-07T23:05:14.351359+00:00'
   agents:
     opencode:
       status: idle
@@ -102809,7 +102809,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -102825,7 +102825,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T22:25:50.472800Z'
+  updated: '2026-07-07T23:04:56.040332Z'
   dispatch_log:
   - timestamp: '2026-07-07T18:48:50.268336Z'
     agent: codex
@@ -102862,6 +102862,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T23:04:56.040332Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-domus-genoma-118
   title: fix failing CI on organvm/domus-genoma#118
   repo: organvm/domus-genoma
@@ -103096,7 +103101,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -103112,7 +103117,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T22:42:51.449632Z'
+  updated: '2026-07-07T23:05:14.351359Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:28:49.330824Z'
     agent: jules
@@ -103144,6 +103149,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-07T23:05:14.351359Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-132
   title: fix failing CI on organvm/domus-genoma#132
   repo: organvm/domus-genoma
