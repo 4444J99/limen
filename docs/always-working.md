@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-07T13:15:28+00:00`
+Generated: `2026-07-07T19:33:34+00:00`
 Status: `needs-work`
-Required open: `7`
+Required open: `6`
 Blocked: `0`
-Done from receipt: `1`
+Done from receipt: `2`
 
 ## Contract
 
@@ -16,41 +16,28 @@ Done from receipt: `1`
 
 ## Next Packet
 
-- ID: `SUBSTRATE-DISK-TEMP`
-- Workstream: `substrate`
+- ID: `PUBLIC-FACE-PROFILE`
+- Workstream: `public-face`
 - Status: `assigned_from_existing_work`
-- Verdict: disk/temp pressure needs owner work
-- Lane fit: `codex-local`
-- Predicate: `python3 scripts/cvstos-organ.py --check`
-- Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
+- Verdict: existing profile/frontdoor work is present but not projected
+- Lane fit: `codex-integrator`
+- Predicate: `python3 scripts/test_sync_readme.py && python3 scripts/sync-readme.py --check`
+- Receipt target: `~/Workspace/organvm/4444J99/README.md`
 
 ## Workstreams
 
 | Priority | ID | Status | Verdict |
 |---:|---|---|---|
-| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | disk/temp pressure needs owner work |
+| 0 | `SUBSTRATE-DISK-TEMP` | `done_from_receipt` | disk/temp above configured floor |
 | 10 | `PUBLIC-FACE-PROFILE` | `assigned_from_existing_work` | existing profile/frontdoor work is present but not projected |
-| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 128 active flagged non-deleted messages require classification |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `assigned_from_existing_work` | 81982 indexed non-deleted messages exist; process in batches, not one giant run |
+| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 127 active flagged non-deleted messages require classification |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `assigned_from_existing_work` | 82041 indexed non-deleted messages exist; process in batches, not one giant run |
 | 40 | `REPO-BOIL-UP` | `assigned_from_existing_work` | broad repo surface ledger exists, but it is stale for current boil-up work |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
-| 60 | `VALUE-REPOS` | `assigned_from_existing_work` | 13 value repos define the funded work lane |
+| 60 | `VALUE-REPOS` | `assigned_from_existing_work` | 14 value repos define the funded work lane |
 | 70 | `TABVLARIVS-STATUS-WRITERS` | `assigned_from_existing_work` | Step 2.2 still open in the keeper doc |
 
 ## Assignment Packets
-
-### SUBSTRATE-DISK-TEMP
-
-- Lane fit: `codex-local`
-- Repo/root: `~/Workspace/limen`
-- Task: Audit disk/temp pressure and stop wrong-priority churn before spawning more lanes.
-- Predicate: `python3 scripts/cvstos-organ.py --check`
-- Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
-- Stop condition: free disk is above floor and temp writes are usable
-- Existing receipts:
-  - `~/Workspace/limen/logs/heartbeat.out.log`
-  - `~/Workspace/limen/scripts/cvstos-organ.py`
-  - `~/Workspace/limen/scripts/dispatch-health.py`
 
 ### PUBLIC-FACE-PROFILE
 
@@ -114,7 +101,7 @@ Done from receipt: `1`
 ### VALUE-REPOS
 
 - Lane fit: `jules-or-opencode-repo-specific`
-- Repo/root: `organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation`
+- Repo/root: `organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/peer-audited--behavioral-blockchain,organvm/mirror-mirror`
 - Task: Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.
 - Predicate: `python3 scripts/product-ledger.py --write`
 - Receipt target: `~/Workspace/limen/docs/product-ledger.md`

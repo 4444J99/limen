@@ -1,8 +1,8 @@
 # Live Root Gate
 
-Generated: `2026-07-06T15:49:44+00:00`
+Generated: `2026-07-07T19:33:34+00:00`
 
-Status: `ready`
+Status: `blocked`
 
 ## Rule
 
@@ -12,25 +12,30 @@ Status: `ready`
 
 ## Gate State
 
-- Operator gate required: `False`.
+- Operator gate required: `True`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: none.
+- Blocking gates: `live-root-dirty`.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `32eb8dbd599e53e22cf678a8a023c402eb7e0df3`.
-- Release head: `32eb8dbd599e53e22cf678a8a023c402eb7e0df3`.
+- HEAD: `60f0b730213e346f7943d2a08bf2d312c1615a3c`.
+- Release head: `60f0b730213e346f7943d2a08bf2d312c1615a3c`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
-- Dirty entries: `0`.
+- Dirty entries: `2`.
+
+### Dirty Paths
+
+- `docs/always-working.md`
+- `docs/prompt-packet-ledger.md`
 
 ## Heartbeat
 
 - Plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `True`.
-- Loaded launchd state: `running` pid `79488`.
+- Loaded launchd state: `running` pid `30310`.
 - Loaded env matches plist for tracked LIMEN_* keys.
 
 ## Verified Worktree
