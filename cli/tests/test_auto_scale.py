@@ -166,7 +166,22 @@ def test_auto_scale_adds_schema_shaped_tasks_and_skips_existing_urls(
     assert calls[0]["headers"]["Authorization"] == "token test-token"
     assert calls[0]["timeout"] == 30
     projected = [
-        {k: task[k] for k in ("id", "title", "repo", "type", "target_agent", "priority", "budget_cost", "status", "labels", "urls", "created")}
+        {
+            k: task[k]
+            for k in (
+                "id",
+                "title",
+                "repo",
+                "type",
+                "target_agent",
+                "priority",
+                "budget_cost",
+                "status",
+                "labels",
+                "urls",
+                "created",
+            )
+        }
         for task in board["tasks"][1:]
     ]
     assert projected == [
