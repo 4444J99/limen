@@ -115,7 +115,9 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
         "github_profile_surface",
         lambda: {"checked": True, "verified": True, "readme_total_repos": "171", "account_profile_stale": False},
     )
-    monkeypatch.setattr(mod, "disk_receipt", lambda: {"free_gib": 100.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""})
+    monkeypatch.setattr(
+        mod, "disk_receipt", lambda: {"free_gib": 100.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""}
+    )
     monkeypatch.setattr(mod, "mail_census", lambda: {"ok": True, "account_count": 1, "obligation_count": 2})
 
     snapshot = mod.build_snapshot()
