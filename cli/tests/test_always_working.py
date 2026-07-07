@@ -115,7 +115,9 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
         "github_profile_surface",
         lambda: {"checked": True, "verified": True, "readme_total_repos": "171", "account_profile_stale": False},
     )
-    monkeypatch.setattr(mod, "disk_receipt", lambda: {"free_gib": 100.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""})
+    monkeypatch.setattr(
+        mod, "disk_receipt", lambda: {"free_gib": 100.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""}
+    )
     monkeypatch.setattr(mod, "mail_census", lambda: {"ok": True, "account_count": 1, "obligation_count": 2})
 
     snapshot = mod.build_snapshot()
@@ -417,14 +419,11 @@ def test_tabularius_status_writers_done_when_owner_recorded(monkeypatch, tmp_pat
     docs.mkdir(parents=True)
     logs.mkdir()
     (docs / "tabularius-record-keeper.md").write_text(
-        "- [x] Step 2.2 owner-recorded\n"
-        "- [ ] Step 2.2A — convert async reserve/reap/heal transitions\n",
+        "- [x] Step 2.2 owner-recorded\n- [ ] Step 2.2A — convert async reserve/reap/heal transitions\n",
         encoding="utf-8",
     )
     (docs / "tabularius-writer-audit.md").write_text(
-        "# Tabularius Writer Audit\n\n"
-        "<!-- tabularius-writer-audit:owner-recorded -->\n\n"
-        "Unclassified calls: `0`\n",
+        "# Tabularius Writer Audit\n\n<!-- tabularius-writer-audit:owner-recorded -->\n\nUnclassified calls: `0`\n",
         encoding="utf-8",
     )
     (logs / "task-writer-audit.json").write_text(
