@@ -35,6 +35,20 @@ gh api -X PUT repos/organvm/public-record-data-scrapper/topics \
 gh repo edit organvm/public-record-data-scrapper --description "50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI."
 ```
 
+## Styx Peer-Audited Behavioral Market — `organvm/peer-audited--behavioral-blockchain`
+
+- **Recommended topics:** behavioral-economics, accountability, corporate-wellness, peer-review, fintech, stripe, escrow, double-entry-ledger, privacy, proof-of-completion, habit-tracking, incentive-design
+- **Recommended description:** Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests.
+
+```sh
+# apply topics (his hand — outward-facing public change):
+gh api -X PUT repos/organvm/peer-audited--behavioral-blockchain/topics \
+  -H 'Accept: application/vnd.github+json' \
+  -f 'names[]=behavioral-economics' -f 'names[]=accountability' -f 'names[]=corporate-wellness' -f 'names[]=peer-review' -f 'names[]=fintech' -f 'names[]=stripe' -f 'names[]=escrow' -f 'names[]=double-entry-ledger' -f 'names[]=privacy' -f 'names[]=proof-of-completion' -f 'names[]=habit-tracking' -f 'names[]=incentive-design'
+# apply description:
+gh repo edit organvm/peer-audited--behavioral-blockchain --description "Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests."
+```
+
 ## Autonomous Inbox-Triage & Draft System — `organvm/universal-mail--automation`
 
 - **Recommended topics:** email-automation, inbox-zero, gmail-automation, email-triage, productivity, workflow-automation, cloudflare-workers, email-management

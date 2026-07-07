@@ -34,6 +34,16 @@ A production platform that collects UCC-1 filings from all 50 Secretary-of-State
 
 → **Deploy this for your shop** · see [the ways to work together](docs/positioning/public-record-data-scrapper.md)
 
+### [Styx Peer-Audited Behavioral Market](https://github.com/organvm/peer-audited--behavioral-blockchain)
+
+A production-grade enforcement layer for commitments with real financial stakes: Stripe FBO escrow, a double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.
+
+`1,107 tests across workspaces` · `public pitch surface returns 200 OK` · `NestJS + Next.js + React Native + Tauri monorepo` · `Stripe escrow and double-entry ledger` · `CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates`
+
+**Solves:** Accountability and corporate-wellness programs spend money on intent but do not create follow-through. The proof is usually self-reported, the incentives are weak, and holding personal health data creates liability.
+
+→ **Deploy this for a commitment program** · see [the ways to work together](docs/positioning/peer-audited--behavioral-blockchain.md)
+
 ### [Autonomous Inbox-Triage & Draft System](https://github.com/organvm/universal-mail--automation)
 
 A production system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).
