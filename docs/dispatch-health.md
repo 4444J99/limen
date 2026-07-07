@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T00:45:42+00:00`
+Generated: `2026-07-07T00:52:32+00:00`
 
 Status: `healthy`
 
@@ -23,13 +23,13 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T00:45:42.630204+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T00:52:32.794290+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
-- Async dry-run requested: `True`.
-- Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 3 ; 9 still running ; would launch 3 (cap 12) -> ['HEAL-rebase-organvm-universal-mail--automation-119', 'HEAL-cifix-organvm-the-invisible-ledger-47', 'HEAL-cifix-organvm-narratological-algorithmic-lenses-36']`.
+- Async dry-run requested: `False`.
+- Async dry-run ok: `None`; timed out `False`.
+- Async dry-run summary: ``.
 
 ## Prompt Packet Gate
 
@@ -45,8 +45,8 @@ Status: `healthy`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `da28e79b0f0c40fbfda5c1934af4e0025d599dbb`.
-- origin/main: `da28e79b0f0c40fbfda5c1934af4e0025d599dbb`.
+- HEAD: `bda8cfd51aec38552e099b55c6696209763d1de3`.
+- origin/main: `bda8cfd51aec38552e099b55c6696209763d1de3`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
