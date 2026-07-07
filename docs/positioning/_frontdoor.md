@@ -4,10 +4,10 @@
 
 Not demos. Live platforms — tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:
 
-**Have a problem one of these solves? — Deploy it for your shop →**
+**[Have a problem one of these solves? — Deploy it for your shop](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20deploy%5D%20%E2%80%94%20inbound) →**
 > Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine.
 
-**Hiring someone who ships at this level? — Work with the builder →**
+**[Hiring someone who ships at this level? — Work with the builder](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20hire%5D%20%E2%80%94%20inbound) →**
 > Everything here is the portfolio. If you need a senior builder who owns systems end-to-end — data, infra, AI, deploy — this is the evidence.
 
 ---
@@ -44,15 +44,15 @@ A production system that sweeps Gmail and Apple Mail across accounts, classifies
 
 → **Run this on my inbox** · see [the ways to work together](docs/positioning/universal-mail--automation.md)
 
-### [Universal Agent Task Intake & Dispatch System](https://github.com/organvm/limen)
+### [Self-Healing Agent Fleet Infrastructure](https://github.com/organvm/limen)
 
-A cross-agent, cross-repo task intake system. One YAML file (`tasks.yaml`) lives in every repo; every agent reads it, applies filters, and processes work. Includes a CLI for local task management, a REST API, a SaaS dashboard, and a CLI-driven task broker. Scales from single-agent to fleet-wide orchestration.
+A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that run autonomously on a heartbeat. The fleet maintains itself: monitors liveness, reaps stale work, syncs state, escalates failures. Built-in organs: proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, health monitoring.
 
-`1,058 files across the system` · `35,811 lines of Python · 4,319 lines of TypeScript/JavaScript` · `54 pytest test files · 5 jest test files (59 total, 335+ passing)` · `2 deploy workflows (Firebase + Cloud Run)` · `CLI + REST API + SaaS dashboard` · `Multi-repo, multi-agent orchestration` · `MCP-accessible — exposes the task system over the Model Context Protocol (server + ianva doorway/aggregator)` · `Self-* organ ladder — self-sustaining, self-routing, self-feeding, self-healing, all live`
+`9-rung organ ladder (each self-* owns its own domain)` · `Heartbeat-driven autonomic loop (scripts/metabolize.sh)` · `Self-healing on regression (heal/ branch pattern)` · `Live: proprioception organ, VIGILIA federation, branch-reap, credential-wall` · `Zero manual upkeep — runs forever once seeded`
 
-**Solves:** Managing task routing across agents and repos is ad hoc — each agent has its own intake, routing is hardcoded, scaling to 5+ agents becomes coordination hell, and visibility into what's being worked is absent.
+**Solves:** Every agent fleet needs: health checks, credential refresh, stale-work cleanup, state reconciliation, failure escalation. If manual, each system costs ~2h/week ops. If ignored, cascading failures ripple through the fleet.
 
-→ **Orchestrate your agents** · see [the ways to work together](docs/positioning/limen.md)
+→ **Adopt self-healing fleet ops** · see [the ways to work together](docs/positioning/limen.md)
 
 ### [Portfolio & Case Studies — 16 Production Systems](https://github.com/organvm/portfolio)
 

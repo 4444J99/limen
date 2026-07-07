@@ -1,16 +1,16 @@
 # Product Ledger
 
-Generated: `2026-06-30T14:21:03+00:00`
-Products: `1534`
-Blocked local: `78`
+Generated: `2026-07-07T16:37:58+00:00`
+Products: `17934`
+Blocked local: `238`
 Global status: `active`
 
 ## Counts
 
-- states: `blocked_local` 78, `build` 140, `omega` 439, `ship` 12, `verify` 865
-- dispositions: `build` 116, `human-gated` 78, `publish-stage` 24, `retire` 439, `sell-ready` 12, `verify` 865
-- source_kinds: `contrib` 24, `repo` 12, `task` 1498
-- outward_paths: `contrib-mirror` 24, `not_applicable` 1130, `publish-stage` 3, `revenue-path` 368, `seo-proof` 9
+- states: `alpha` 174, `blocked_local` 238, `build` 361, `idea` 15566, `omega` 439, `ship` 14, `verify` 1142
+- dispositions: `blocked_local` 3, `build` 16050, `consolidate` 49, `human-gated` 235, `publish-stage` 2, `retire` 439, `sell-ready` 14, `verify` 1142
+- source_kinds: `prompt` 15566, `repo` 16, `repo-surface` 172, `task` 2180
+- outward_paths: `not_applicable` 17367, `publish-stage` 5, `revenue-path` 379, `seo-proof` 183
 
 ## Next Unblocked Products
 
@@ -26,11 +26,12 @@ Global status: `active`
 | `PROD-repo-81e3c17d9373f280` | `ship` | `sell-ready` | `seo-proof` | `organvm/limen` |
 | `PROD-repo-b48f6bb95f117cd8` | `ship` | `sell-ready` | `seo-proof` | `organvm/public-record-data-scrapper` |
 | `PROD-repo-b94d9f402207e91d` | `ship` | `sell-ready` | `seo-proof` | `organvm/session-meta` |
+| `PROD-repo-bba57f954f38831a` | `ship` | `sell-ready` | `publish-stage` | `organvm/my-knowledge-base` |
 | `PROD-repo-bd98668bd51abb4d` | `ship` | `sell-ready` | `seo-proof` | `organvm/the-invisible-ledger` |
 | `PROD-repo-daf8c129eb8dc5d1` | `ship` | `sell-ready` | `seo-proof` | `organvm/domus-genoma` |
+| `PROD-repo-f39284afe7b47f8f` | `ship` | `sell-ready` | `publish-stage` | `organvm/peer-audited--behavioral-blockchain` |
 | `PROD-task-00d1f2b646b2f930` | `verify` | `verify` | `revenue-path` | `organvm/public-record-data-scrapper` |
 | `PROD-task-00eeb1ef369b06af` | `verify` | `verify` | `revenue-path` | `organvm/universal-mail--automation` |
-| `PROD-task-018180881f5b831b` | `build` | `build` | `revenue-path` | `organvm/universal-mail--automation` |
 | `PROD-task-033ffd501955cc3c` | `verify` | `verify` | `revenue-path` | `organvm/universal-mail--automation` |
 | `PROD-task-04294fe26f7a0079` | `verify` | `verify` | `revenue-path` | `organvm/domus-genoma` |
 | `PROD-task-0436fc66a9efbca0` | `verify` | `verify` | `revenue-path` | `organvm/trendpulse` |
@@ -40,7 +41,6 @@ Global status: `active`
 | `PROD-task-06458b03b629865a` | `verify` | `verify` | `revenue-path` | `organvm/the-invisible-ledger` |
 | `PROD-task-06890b85dad170cc` | `verify` | `verify` | `revenue-path` | `organvm/media-ark` |
 | `PROD-task-071111cd15458ec3` | `verify` | `verify` | `revenue-path` | `organvm/universal-mail--automation` |
-| `PROD-task-087210cfd11ca46b` | `verify` | `verify` | `revenue-path` | `organvm/a-i-chat--exporter` |
 
 ## Contract
 
