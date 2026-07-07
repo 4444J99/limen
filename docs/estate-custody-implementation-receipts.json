@@ -3,7 +3,7 @@
   "schema": "limen.estate_custody_implementation.v1",
   "status": "in_progress",
   "complete": false,
-  "summary": "External estate doctrine is tracked. Three largest Antigravity session-meta scratch roots were externally archived and verified. Implementation remains open because internal disk is below target, worktree debt exceeds cap, local deletion still requires reap acceptance/redaction gates, and media/prompt/productization owner packets are still active.",
+  "summary": "External estate doctrine is tracked. Three largest Antigravity session-meta scratch roots were externally archived and verified. Worktree reclaim candidates are now emitted with the existing value/score/agent authority chain, but implementation remains open because internal disk is below target, worktree debt exceeds cap, local deletion still requires reap acceptance/redaction gates, and media/prompt/productization owner packets are still active.",
   "targets": {
     "internal_free_gib_target": 200,
     "laptop_role": "thin hot cache and remote-controlled workbench",
@@ -25,14 +25,21 @@
       "limen_private": "10G"
     },
     "worktree_debt": {
-      "debt_roots": 145,
-      "scanned_roots": 925,
+      "debt_roots": 148,
+      "scanned_roots": 927,
       "cap": 12,
       "clean_merged_idle": 467,
-      "dirty": 57,
-      "not_merged_to_default": 51,
-      "unpushed_commits": 31,
+      "dirty": 58,
+      "not_merged_to_default": 52,
+      "unpushed_commits": 32,
       "remote_pr_open": 21
+    },
+    "worktree_reclaim_candidates": {
+      "candidate_packet": "docs/worktree-reclaim-candidates.md",
+      "candidate_roots": 50,
+      "measured_candidate_size": "7.7 GiB",
+      "authority_gate": "value-repos.json + session-attack-paths worktree_lifecycle score 32 + capacity/census/model-selection + score-dispatch + reclaim acceptance covenant",
+      "local_deletion_status": "blocked_pending_human_reap_acceptance_redaction_gate"
     },
     "antigravity_scratch": {
       "total_roots": 55,
@@ -91,6 +98,12 @@
       "path": "docs/antigravity-scratch-preservation.jsonl",
       "status": "updated",
       "scope": "external archive preservation receipts for the three largest session-meta roots"
+    },
+    {
+      "type": "worktree_reclaim_candidates",
+      "path": "docs/worktree-reclaim-candidates.md",
+      "status": "written",
+      "scope": "top 50 clean merged idle roots emitted as non-destructive acceptance candidates with value/score/agent authority gate"
     }
   ],
   "verification": [
@@ -116,10 +129,16 @@
       "command": "python3 scripts/antigravity-scratch-bridge.py --write --archive-timeout 900 --preserve-root organvm-session-meta --preserve-root session-meta-no-prompt --preserve-root session-meta-2",
       "result": "pass",
       "reason": "13.7 GiB source custody archived and verified on Archive4T; no local deletion performed"
+    },
+    {
+      "command": "python3 scripts/worktree-reclaim-candidates.py --write --limit 50",
+      "result": "pass",
+      "reason": "top 50 clean merged idle reclaim candidates emitted; measured size 7.7 GiB; no acceptance ledger write and no deletion"
     }
   ],
   "next_predicates": [
     "python3 scripts/antigravity-scratch-bridge.py --help",
+    "python3 scripts/worktree-reclaim-candidates.py --write --limit 50",
     "python3 scripts/reclaim-worktrees.py --force",
     "python3 scripts/worktree-debt.py --json",
     "python3 scripts/always-working.py --write"

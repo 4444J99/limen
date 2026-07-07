@@ -59,6 +59,8 @@ T7RECOVERY_ROOT = Path(os.environ.get("LIMEN_T7RECOVERY_ROOT", "/Volumes/T7Recov
 T7_LIFEBOAT_ROOT = T7RECOVERY_ROOT / "CleanUnique-Lifeboat-2026-06-13"
 ESTATE_CUSTODY_DOC = ROOT / "docs" / "estate-custody-primitives.md"
 ESTATE_CUSTODY_RECEIPT = ROOT / "docs" / "estate-custody-implementation-receipts.json"
+WORKTREE_RECLAIM_CANDIDATES_DOC = ROOT / "docs" / "worktree-reclaim-candidates.md"
+WORKTREE_RECLAIM_CANDIDATES_JSON = ROOT / "docs" / "worktree-reclaim-candidates.json"
 STORAGE_OPERATING_MANUAL = ARCHIVE4T_ROOT / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
 LOCAL_DISK_EXPULSION_POLICY = ARCHIVE4T_ROOT / "_OPERATIONS" / "LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md"
 PROFILE_POSITIONING_RE = re.compile(
@@ -726,6 +728,7 @@ def estate_custody_receipt() -> dict[str, Any]:
     missing_layers = [relpath(path) for path in primitive_layers if not path.exists()]
     doctrine_present = ESTATE_CUSTODY_DOC.exists()
     receipt = load_json(ESTATE_CUSTODY_RECEIPT, {})
+    reclaim_candidates = load_json(WORKTREE_RECLAIM_CANDIDATES_JSON, {})
     implementation_receipts = receipt.get("receipts") if isinstance(receipt, dict) else []
     implementation_status = str(receipt.get("status") or "") if isinstance(receipt, dict) else ""
     implementation_complete = implementation_status == "complete" and bool(implementation_receipts)
@@ -760,6 +763,15 @@ def estate_custody_receipt() -> dict[str, Any]:
             "implementation_receipt_complete": implementation_complete,
             "implementation_receipt": relpath(ESTATE_CUSTODY_RECEIPT),
             "implementation_receipt_count": len(implementation_receipts) if isinstance(implementation_receipts, list) else 0,
+            "worktree_reclaim_candidates_present": WORKTREE_RECLAIM_CANDIDATES_DOC.exists(),
+            "worktree_reclaim_candidate_roots": (reclaim_candidates.get("summary") or {}).get("candidate_roots")
+            if isinstance(reclaim_candidates, dict)
+            else None,
+            "worktree_reclaim_candidate_size": (reclaim_candidates.get("summary") or {}).get(
+                "measured_candidate_size"
+            )
+            if isinstance(reclaim_candidates, dict)
+            else None,
         },
         "existing_receipts": [
             relpath(STORAGE_OPERATING_MANUAL),
@@ -768,6 +780,8 @@ def estate_custody_receipt() -> dict[str, Any]:
             relpath(ROOT / "docs" / "vltima-prior-excavations.md"),
             relpath(ROOT / "docs" / "photos-universe-recovery-2026-06-29.md"),
             relpath(ESTATE_CUSTODY_DOC),
+            relpath(WORKTREE_RECLAIM_CANDIDATES_DOC),
+            relpath(WORKTREE_RECLAIM_CANDIDATES_JSON),
             "https://github.com/organvm/limen/issues/685",
             "https://github.com/organvm/limen/issues/688",
             "https://github.com/organvm/media-ark/issues/56",
@@ -780,10 +794,12 @@ def estate_custody_receipt() -> dict[str, Any]:
                 "Build the run-and-gun estate lifecycle: external SSDs hold durable private/raw data, "
                 "processed/redacted corpora, repo/org mirrors, photos/media packages, and recovery copies; "
                 "the laptop stays a thin hot cache. Route every pain point to an owner repo and a reusable "
-                "public shell when private data can be redacted."
+                "public shell when private data can be redacted. Use the worktree reclaim candidate packet "
+                "as the score-gated cleanup input; do not delete local roots without acceptance/redaction proof."
             ),
             "predicate": (
                 "test -f docs/estate-custody-primitives.md && "
+                "python3 scripts/worktree-reclaim-candidates.py --write --limit 50 && "
                 "python3 scripts/substrate-ledger.py --write && "
                 "python3 scripts/vltima-prior-excavations.py --write"
             ),

@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-07T22:35:01+00:00`
+Generated: `2026-07-07T22:56:18+00:00`
 Status: `needs-work`
 Required open: `5`
 Blocked: `1`
@@ -34,7 +34,7 @@ Done from receipt: `5`
 | 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 74.0%, PRs 13.3%, issues 12.1%, reviews 0.6% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `assigned_from_existing_work` | credential wall passes current-home check; historical token tombstone audit still needs owner receipt |
 | 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 128 active flagged non-deleted messages require classification |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82066 indexed non-deleted messages remain for future batches |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82068 indexed non-deleted messages remain for future batches |
 | 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 48 duplicate remote group(s) recorded |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `done_from_receipt` | top 5 value repos have owner receipts; 14 value repos are sell-ready in the product ledger |
@@ -62,8 +62,8 @@ Done from receipt: `5`
 
 - Lane fit: `codex-conductor`
 - Repo/root: `~/Workspace/limen`
-- Task: Build the run-and-gun estate lifecycle: external SSDs hold durable private/raw data, processed/redacted corpora, repo/org mirrors, photos/media packages, and recovery copies; the laptop stays a thin hot cache. Route every pain point to an owner repo and a reusable public shell when private data can be redacted.
-- Predicate: `test -f docs/estate-custody-primitives.md && python3 scripts/substrate-ledger.py --write && python3 scripts/vltima-prior-excavations.py --write`
+- Task: Build the run-and-gun estate lifecycle: external SSDs hold durable private/raw data, processed/redacted corpora, repo/org mirrors, photos/media packages, and recovery copies; the laptop stays a thin hot cache. Route every pain point to an owner repo and a reusable public shell when private data can be redacted. Use the worktree reclaim candidate packet as the score-gated cleanup input; do not delete local roots without acceptance/redaction proof.
+- Predicate: `test -f docs/estate-custody-primitives.md && python3 scripts/worktree-reclaim-candidates.py --write --limit 50 && python3 scripts/substrate-ledger.py --write && python3 scripts/vltima-prior-excavations.py --write`
 - Receipt target: `~/Workspace/limen/docs/estate-custody-implementation-receipts.json`
 - Stop condition: external estate cleanup, prompt chronology, repo/org custody, photos processing, and pain-point productization each have owner receipts without destructive local-only action
 - Existing receipts:
@@ -73,6 +73,8 @@ Done from receipt: `5`
   - `~/Workspace/limen/docs/vltima-prior-excavations.md`
   - `~/Workspace/limen/docs/photos-universe-recovery-2026-06-29.md`
   - `~/Workspace/limen/docs/estate-custody-primitives.md`
+  - `~/Workspace/limen/docs/worktree-reclaim-candidates.md`
+  - `~/Workspace/limen/docs/worktree-reclaim-candidates.json`
   - `https://github.com/organvm/limen/issues/685`
   - `https://github.com/organvm/limen/issues/688`
   - `https://github.com/organvm/media-ark/issues/56`
