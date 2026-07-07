@@ -618,7 +618,8 @@ def _task_id(item: dict[str, Any]) -> str:
 
 
 def _priority(item: dict[str, Any]) -> str:
-    value = int(item.get("priority") or 100)
+    raw = item.get("priority")
+    value = 100 if raw is None else int(raw)
     if value <= 20:
         return "critical"
     if value <= 50:

@@ -123,6 +123,7 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
     assert by_id["PROMPT-PACKETS"]["status"] == mod.STATUS_DONE
     assert snapshot["next_item_id"] == "PUBLIC-FACE-PROFILE"
     assert snapshot["contract"]["first_run_forbidden"] is True
+    assert mod._task_from_item({"id": "SUBSTRATE", "priority": 0, "workstream": "substrate"})["priority"] == "critical"
 
 
 def test_dispatch_health_blocks_when_always_working_required_items_are_open(tmp_path):
