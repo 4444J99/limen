@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T13:18:41+00:00`
+Generated: `2026-07-07T13:19:23+00:00`
 
 Status: `blocked`
 
@@ -23,13 +23,13 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T13:18:41.311727+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T13:19:24.040580+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 8 ; 4 still running ; would launch 8 (cap 12) -> ['HEAL-rebase-organvm-limen-387', 'HEAL-cifix-organvm-organvm-engine-111', 'AW-SUBSTRATE-AGY-SCRATCH-CUSTODY', 'HEAL-cifix-organvm-limen-388', 'HEAL-cifix-organvm-vigiles-aeternae--agon-cosmogonicum-7', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-713', 'HEAL-cifix-organvm-petasum-super-petasum-150', 'HEAL-cifix-organvm-limen-403']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 4 still running ; would launch 8 (cap 12) -> ['HEAL-rebase-organvm-limen-379', 'HEAL-cifix-organvm-organvm-engine-101', 'AW-SUBSTRATE-AGY-SCRATCH-CUSTODY', 'HEAL-rebase-stale-organvm-limen-383', 'HEAL-cifix-organvm-vigiles-aeternae--agon-cosmogonicum-7', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-713', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-757', 'HEAL-cifix-organvm-organvm-engine-100']`.
 - Async skipped down lanes: `claude, gemini`.
   - `claude`: usage health `rate-limited`; signal `tokens`; remaining `99784764` of `100000000`; headroom `100%`.
   - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
@@ -63,16 +63,10 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `6bee82d393c11e7e5972ab9b17287b61b535c588`.
-- origin/main: `6bee82d393c11e7e5972ab9b17287b61b535c588`.
+- HEAD: `b1f75d1b96f0e59e97016ffe495f937d2dfa42c9`.
+- origin/main: `b1f75d1b96f0e59e97016ffe495f937d2dfa42c9`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `7`.
-  - `AGENTS.md`
-  - `docs/agent-instruction-standard.md`
-  - `docs/always-working.md`
-  - `docs/antigravity-scratch-bridge.md`
-  - `scripts/check-agent-docs.py`
-  - `scripts/cvstos-organ.py`
+- Dirty entries: `1`.
   - `tasks.yaml`
 
 ## Verified Worktree
@@ -83,7 +77,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 7 dirty entries.
+- `live-root-dirty`: live root has 1 dirty entries.
 - `always-working-required-work-open`: 7 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
