@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 134
+      spent: 136
       per_agent:
         jules: 69
         gemini: 3
         codex: 8
-        opencode: 23
+        opencode: 25
         agy: 30
         claude: 0
         github_actions: 1
@@ -107236,11 +107236,11 @@ tasks:
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: jules
+  target_agent: opencode
   workstream: financial
   priority: critical
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
@@ -107257,7 +107257,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T16:15:40.588183Z'
+  updated: '2026-07-07T17:00:44.083751Z'
   dispatch_log:
   - timestamp: '2026-07-07T15:42:38.620450Z'
     agent: codex
@@ -107274,20 +107274,26 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-07T17:00:44.083751Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-106
   title: fix failing CI on organvm/mirror-mirror#106
   repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
   - value-repo
   - low-burn-priority
+  - slow
   urls:
   - https://github.com/organvm/mirror-mirror/pull/106
   context: "PR organvm/mirror-mirror#106 has FAILING CI checks and merge-drain correctly\
@@ -107298,7 +107304,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T16:20:30.556702Z'
+  updated: '2026-07-07T17:00:40.850460Z'
   dispatch_log:
   - timestamp: '2026-07-07T16:16:30.076888Z'
     agent: codex
@@ -107311,6 +107317,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T17:00:40.850460Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-mirror-mirror-107
   title: fix failing CI on organvm/mirror-mirror#107
   repo: organvm/mirror-mirror
