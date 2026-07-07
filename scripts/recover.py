@@ -4,8 +4,9 @@
 Two failure modes leak capacity:
   1. status==failed tasks just sit there. Re-open them at the TOP of the lane cascade
      (codex) so the dispatcher's per-task failover gives them a fresh run across lanes.
-  2. status==dispatched jules tasks whose recorded session is no longer in `jules
-     remote list` (aged out / lost) are orphaned — re-open so they re-dispatch fresh.
+  2. status==dispatched jules tasks whose recorded session failed or is no longer
+     in `jules remote list` (aged out / lost) are orphaned — re-open so they
+     re-dispatch fresh.
 
 Reversible (only flips status→open + target_agent + logs a heal entry); never deletes,
 never dispatches. Bounded by --limit. Run by the daemon's heal voice AND by supervision.
@@ -25,14 +26,30 @@ from limen.dispatch import _has_done_transition, _restore_done_status  # noqa: E
 CASCADE_TOP = "codex"
 
 
-def live_jules_sessions() -> set[str]:
+def live_jules_sessions() -> dict[str, str]:
     try:
         r = subprocess.run(["jules", "remote", "list", "--session"],
                            capture_output=True, text=True, timeout=90)
-        return {p[0] for ln in r.stdout.splitlines()
-                if (p := ln.split()) and p[0].isdigit()}
+        sessions = {}
+        for line in r.stdout.splitlines():
+            parts = line.split()
+            if not parts or not parts[0].isdigit():
+                continue
+            low = line.lower()
+            if "failed" in low:
+                status = "failed"
+            elif "completed" in low:
+                status = "completed"
+            elif "planning" in low:
+                status = "planning"
+            elif "in progress" in low or "running" in low:
+                status = "in_progress"
+            else:
+                status = "unknown"
+            sessions[parts[0]] = status
+        return sessions
     except Exception:
-        return set()
+        return {}
 
 
 def main() -> int:
@@ -46,10 +63,10 @@ def main() -> int:
     now = datetime.datetime.now(datetime.timezone.utc)
 
     live = None  # lazily fetched only if we have orphan candidates
-    reopened_failed, reopened_orphan = [], []
+    reopened_failed, reopened_orphan, reopened_remote_failed = [], [], []
 
     for t in lf.tasks:
-        if len(reopened_failed) + len(reopened_orphan) >= args.limit:
+        if len(reopened_failed) + len(reopened_orphan) + len(reopened_remote_failed) >= args.limit:
             break
         if _has_done_transition(t):
             _restore_done_status(
@@ -77,7 +94,15 @@ def main() -> int:
                 continue
             if live is None:
                 live = live_jules_sessions()
-            if live and sid not in live:  # session aged out / lost → orphaned
+            if live and live.get(sid) == "failed":
+                t.status = "open"
+                t.target_agent = CASCADE_TOP
+                t.updated = now
+                t.dispatch_log.append(DispatchLogEntry(
+                    timestamp=now, agent="limen", session_id="heal",
+                    status="open", output=f"recover: jules session {sid} failed remotely → reopened"))
+                reopened_remote_failed.append(t.id)
+            elif live and sid not in live:  # session aged out / lost → orphaned
                 t.status = "open"
                 t.updated = now
                 t.dispatch_log.append(DispatchLogEntry(
@@ -85,7 +110,11 @@ def main() -> int:
                     status="open", output=f"recover: orphaned (session {sid} gone) → reopened"))
                 reopened_orphan.append(t.id)
 
-    print(f"recover: {len(reopened_failed)} failed reopened, {len(reopened_orphan)} orphaned reopened")
+    print(
+        f"recover: {len(reopened_failed)} failed reopened, "
+        f"{len(reopened_orphan)} orphaned reopened, "
+        f"{len(reopened_remote_failed)} remote-failed reopened"
+    )
     if args.apply:
         save_limen_file(path, lf)
         print("  APPLIED -> tasks.yaml")
