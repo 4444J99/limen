@@ -1,8 +1,8 @@
 # Dispatch Health
 
-Generated: `2026-07-07T20:20:37+00:00`
+Generated: `2026-07-07T23:56:06+00:00`
 
-Status: `healthy`
+Status: `blocked`
 
 ## Incident Class
 
@@ -25,7 +25,7 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `1`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T20:20:37.643700+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T23:56:06.787721+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -51,23 +51,27 @@ Status: `healthy`
 ## Always-Working Gate
 
 - Reconciliation index present: `True`.
-- Reconciliation status: `blocked`.
-- Required open workstreams: `0`.
+- Reconciliation status: `needs-work`.
+- Required open workstreams: `5`.
 - Blocked workstreams: `1`.
-- Done from receipt: `7`.
-- Next item: `PUBLIC-FACE-PROFILE` (`blocked`).
+- Done from receipt: `5`.
+- Next item: `SUBSTRATE-DISK-TEMP` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
+  - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; disk/temp pressure needs owner work.
+  - `ESTATE-CUSTODY`: `estate-custody` / `assigned_from_existing_work`; estate doctrine exists; implementation receipt is not complete.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 74.0%, PRs 13.3%, issues 12.1%, reviews 0.6%.
+  - `CREDENTIAL-WALL-TOKEN-HYGIENE`: `credential-wall` / `assigned_from_existing_work`; credential wall passes current-home check; historical token tombstone audit still needs owner receipt.
+  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 128 active flagged non-deleted messages require classification.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `8ada79827005e7305d38cb53048a66ee8864bd08`.
-- origin/main: `8ada79827005e7305d38cb53048a66ee8864bd08`.
+- HEAD: `24677477101e1ec719960c615d5b59baa678780b`.
+- origin/main: `24677477101e1ec719960c615d5b59baa678780b`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `0`.
-- Ignored generated receipt dirty entries: `1`.
-  - `docs/dispatch-health.md`
+- Dirty entries: `1`.
+  - `docs/tabularius-writer-audit.md`
 
 ## Verified Worktree
 
@@ -77,7 +81,8 @@ Status: `healthy`
 
 ## Blockers
 
-- none
+- `live-root-dirty`: live root has 1 dirty entries.
+- `always-working-required-work-open`: 5 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
 
