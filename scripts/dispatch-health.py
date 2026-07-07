@@ -27,6 +27,8 @@ HOME = Path.home()
 PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
 DOC_PATH = ROOT / "docs" / "dispatch-health.md"
+PROMPT_PACKET_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
+PROMPT_PACKET_DOC = ROOT / "docs" / "prompt-packet-ledger.md"
 LIVE_ROOT = Path(os.environ.get("LIMEN_LIVE_ROOT", HOME / "Workspace" / "limen"))
 HEARTBEAT_PLIST = Path(
     os.environ.get("LIMEN_HEARTBEAT_PLIST", HOME / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist")
@@ -360,6 +362,69 @@ def async_probe_snapshot(enabled: bool) -> dict[str, Any]:
     return summary
 
 
+def load_json(path: Path) -> dict[str, Any]:
+    try:
+        obj = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, ValueError):
+        return {}
+    return obj if isinstance(obj, dict) else {}
+
+
+def prompt_packet_snapshot() -> dict[str, Any]:
+    index = load_json(PROMPT_PACKET_INDEX)
+    if not index:
+        return {
+            "present": False,
+            "path": str(PROMPT_PACKET_INDEX),
+            "public_doc": str(PROMPT_PACKET_DOC),
+            "status": "missing",
+            "open_packets": 0,
+            "conductor_required_packets": 0,
+            "ready_after_predicate_packets": 0,
+            "recorded_packets": 0,
+            "dispatchability": {},
+            "top_open_packets": [],
+        }
+
+    open_packets = [item for item in index.get("open_packets") or [] if isinstance(item, dict)]
+    recorded_packets = [item for item in index.get("recorded_packets") or [] if isinstance(item, dict)]
+    dispatchability: dict[str, int] = {}
+    for packet in open_packets:
+        key = str(packet.get("dispatchability") or "unknown")
+        dispatchability[key] = dispatchability.get(key, 0) + 1
+    conductor_required = sum(
+        1
+        for packet in open_packets
+        if str(packet.get("dispatchability") or "")
+        in {"codex-owner-packet", "needs-owner-repo", "needs-predicate", "unknown"}
+    )
+    ready_after_predicate = sum(
+        1 for packet in open_packets if str(packet.get("dispatchability") or "") == "ready-after-predicate"
+    )
+    return {
+        "present": True,
+        "path": str(PROMPT_PACKET_INDEX),
+        "public_doc": str(PROMPT_PACKET_DOC),
+        "status": "clear" if not open_packets else "needs-conductor",
+        "generated_at": index.get("generated_at"),
+        "open_packets": len(open_packets),
+        "conductor_required_packets": conductor_required,
+        "ready_after_predicate_packets": ready_after_predicate,
+        "recorded_packets": len(recorded_packets),
+        "dispatchability": dispatchability,
+        "top_open_packets": [
+            {
+                "id": str(packet.get("id") or ""),
+                "family": str(packet.get("family") or ""),
+                "dispatchability": str(packet.get("dispatchability") or "unknown"),
+                "agent_fit": receipt_line(str(packet.get("agent_fit") or "")),
+                "verification": receipt_line(str(packet.get("verification") or "")),
+            }
+            for packet in open_packets[:5]
+        ],
+    }
+
+
 def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
     blockers: list[dict[str, str]] = []
     plist = snapshot["heartbeat_plist"]
@@ -367,6 +432,7 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
     git = snapshot["live_root_git"]
     watchdog = snapshot["watchdog"]
     async_probe = snapshot["async_probe"]
+    prompt_packets = snapshot["prompt_packets"]
 
     if not plist.get("present"):
         blockers.append({"id": "heartbeat-plist-missing", "evidence": "LaunchAgent plist was not found."})
@@ -430,6 +496,17 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
             }
         )
 
+    if int(prompt_packets.get("conductor_required_packets") or 0):
+        blockers.append(
+            {
+                "id": "prompt-packets-need-conductor",
+                "evidence": (
+                    f"{prompt_packets.get('conductor_required_packets')} open prompt packet(s) need "
+                    "conductor owner/predicate routing before lane dispatch can claim prompt progress."
+                ),
+            }
+        )
+
     return blockers
 
 
@@ -442,6 +519,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "verified_worktree": git_snapshot(ROOT),
         "watchdog": watchdog_snapshot(),
         "async_probe": async_probe_snapshot(bool(args.probe_async)),
+        "prompt_packets": prompt_packet_snapshot(),
     }
     blockers = derive_blockers(snapshot)
     snapshot["blockers"] = blockers
@@ -456,6 +534,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     verified = snapshot["verified_worktree"]
     watchdog = snapshot["watchdog"]
     async_probe = snapshot["async_probe"]
+    prompt_packets = snapshot["prompt_packets"]
     blockers = snapshot["blockers"]
     lines = [
         "# Dispatch Health",
@@ -503,6 +582,24 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
 
     lines += [
         "",
+        "## Prompt Packet Gate",
+        "",
+        f"- Prompt packet index present: `{prompt_packets.get('present')}`.",
+        f"- Prompt packet status: `{prompt_packets.get('status')}`.",
+        f"- Open prompt packets: `{prompt_packets.get('open_packets')}`.",
+        f"- Conductor-required packets: `{prompt_packets.get('conductor_required_packets')}`.",
+        f"- Ready-after-predicate packets: `{prompt_packets.get('ready_after_predicate_packets')}`.",
+        f"- Recorded packets: `{prompt_packets.get('recorded_packets')}`.",
+        f"- Public packet ledger: `{relpath(Path(prompt_packets.get('public_doc') or PROMPT_PACKET_DOC))}`.",
+    ]
+    for packet in prompt_packets.get("top_open_packets") or []:
+        lines.append(
+            f"  - `{packet.get('id')}`: `{packet.get('dispatchability')}`; "
+            f"{packet.get('agent_fit') or 'no agent fit recorded'}."
+        )
+
+    lines += [
+        "",
         "## Live Root",
         "",
         f"- Live root: `{relpath(Path(live.get('path') or LIVE_ROOT))}`.",
@@ -544,6 +641,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "- Refresh this receipt: `python3 scripts/dispatch-health.py --write --probe-async`",
         "- Refresh the operator gate: `python3 scripts/live-root-gate.py --write`",
+        "- Refresh prompt packets: `python3 scripts/prompt-packet-ledger.py --write`",
         "- Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`",
         "- Probe heartbeat: `python3 scripts/watchdog.py --dry-run`",
         "- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run`",

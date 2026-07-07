@@ -692,6 +692,87 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
     assert dispatch.PRIVATE_INDEX.exists()
 
 
+def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_prompt_gate")
+    dispatch.ROOT = tmp_path
+    dispatch.HOME = tmp_path
+    dispatch.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    dispatch.PRIVATE_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
+    dispatch.PROMPT_PACKET_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
+    dispatch.PROMPT_PACKET_DOC = tmp_path / "docs" / "prompt-packet-ledger.md"
+    dispatch.DOC_PATH = tmp_path / "docs" / "dispatch-health.md"
+    dispatch.LIVE_ROOT = tmp_path
+    dispatch.HEARTBEAT_PLIST = tmp_path / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist"
+
+    dispatch.PROMPT_PACKET_INDEX.parent.mkdir(parents=True)
+    dispatch.PROMPT_PACKET_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-07-06T00:00:00+00:00",
+                "recorded_packets": [],
+                "open_packets": [
+                    {
+                        "id": "packet-prompt-batch-critical-stalled-review-001-github_review",
+                        "family": "github_review",
+                        "dispatchability": "needs-owner-repo",
+                        "agent_fit": "codex conducts; opencode/gemini inspect bounded PR evidence",
+                        "verification": "python3 scripts/prompt-packet-ledger.py --write",
+                    },
+                    {
+                        "id": "packet-prompt-batch-critical-stalled-review-001-technical_debt_ci",
+                        "family": "technical_debt_ci",
+                        "dispatchability": "ready-after-predicate",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    dispatch.read_plist = lambda path: {
+        "present": True,
+        "path": str(path),
+        "keep_alive": True,
+        "run_at_load": True,
+        "env": {"LIMEN_DISPATCH_ASYNC": "0", "LIMEN_DISPATCH_LANES": "auto"},
+    }
+    dispatch.launchd_snapshot = lambda: {
+        "present": True,
+        "running": True,
+        "state": "running",
+        "pid": "123",
+        "env": {"LIMEN_DISPATCH_ASYNC": "0", "LIMEN_DISPATCH_LANES": "auto"},
+    }
+    dispatch.git_snapshot = lambda path: {
+        "path": str(path),
+        "present": True,
+        "is_git": True,
+        "branch": "main",
+        "head": "abc",
+        "origin_main": "abc",
+        "matches_origin_main": True,
+        "ahead_origin_main": 0,
+        "behind_origin_main": 0,
+        "status_summary": "## main...origin/main",
+        "dirty_entries": 0,
+        "dirty_paths": [],
+        "dirty_truncated": False,
+    }
+    dispatch.watchdog_snapshot = lambda: {"healthy": True, "first_line": "[watchdog] HEALTHY"}
+    dispatch.async_probe_snapshot = lambda enabled: {"requested": enabled, "ok": True, "timed_out": False}
+
+    snapshot = dispatch.build_snapshot(type("Args", (), {"probe_async": False})())
+    markdown = dispatch.render_markdown(snapshot)
+
+    assert snapshot["status"] == "blocked"
+    assert snapshot["prompt_packets"]["open_packets"] == 2
+    assert snapshot["prompt_packets"]["conductor_required_packets"] == 1
+    assert {item["id"] for item in snapshot["blockers"]} == {"prompt-packets-need-conductor"}
+    assert "Prompt Packet Gate" in markdown
+    assert "packet-prompt-batch-critical-stalled-review-001-github_review" in markdown
+    assert "prompt-packets-need-conductor" in markdown
+
+
 def test_dispatch_health_parses_async_skipped_down_lanes():
     dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_async_skips")
 
