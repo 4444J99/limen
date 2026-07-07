@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T13:29:41+00:00`
+Generated: `2026-07-07T14:05:52+00:00`
 
 Status: `blocked`
 
@@ -16,20 +16,23 @@ Status: `blocked`
 - Plist KeepAlive: `True`; RunAtLoad: `True`.
 - Plist LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Plist LIMEN_DISPATCH_ASYNC: `1`.
-- Plist LIMEN_DISPATCH_LANES: `auto`.
+- Plist LIMEN_DISPATCH_LANES: `jules,opencode`.
+- Plist LIMEN_ASYNC_MAX: `4`.
 - Plist LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Loaded launchd state: `running` pid `1477`.
+- Loaded launchd state: `running` pid `48894`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
-- Loaded LIMEN_DISPATCH_LANES: `auto`.
+- Loaded LIMEN_DISPATCH_LANES: `jules,opencode`.
+- Loaded LIMEN_ASYNC_MAX: `4`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T13:29:41.942691+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T14:05:53.096549+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
+- Async dry-run lanes: `jules,opencode`; max `4`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 9 ; 2 still running ; would launch 10 (cap 12) -> ['AW-SUBSTRATE-DISK-TEMP', 'HEAL-cifix-organvm-limen-386', 'AW-SUBSTRATE-AGY-SCRATCH-CUSTODY', 'HEAL-cifix-organvm-organvm-engine-109', 'HEAL-cifix-organvm-organvm-engine-104', 'HEAL-cifix-organvm-petasum-super-petasum-151', 'HEAL-cifix-organvm-limen-403', 'HEAL-cifix-organvm-universal-mail--automation-131', 'HEAL-rebase-organvm-portfolio-169', 'HEAL-cifix-organvm-limen-409']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 3 ; 3 still running ; would launch 3 (cap 4) -> ['HEAL-cifix-organvm-limen-407', 'HEAL-cifix-organvm-limen-414', 'HEAL-cifix-organvm-limen-418']`.
 - Async skipped down lanes: `gemini`.
   - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
 
@@ -62,10 +65,12 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `7a96797b8728b8b819609484ca2539ef058a5cd9`.
-- origin/main: `7a96797b8728b8b819609484ca2539ef058a5cd9`.
+- HEAD: `d9a3c089951ab4ec435bce400cc08bcef6a9b509`.
+- origin/main: `d9a3c089951ab4ec435bce400cc08bcef6a9b509`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `1`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/dispatch-health.md`
   - `tasks.yaml`
 
 ## Verified Worktree
@@ -87,4 +92,4 @@ Status: `blocked`
 - Refresh always-working reconciliation: `python3 scripts/always-working.py --write`
 - Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`
 - Probe heartbeat: `python3 scripts/watchdog.py --dry-run`
-- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run`
+- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes jules,opencode --per-lane 3 --max 4 --dry-run`
