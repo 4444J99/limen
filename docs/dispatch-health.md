@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T12:43:05+00:00`
+Generated: `2026-07-07T13:18:41+00:00`
 
 Status: `blocked`
 
@@ -23,14 +23,15 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T12:43:06.054482+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T13:18:41.311727+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 12 ; 0 still running ; would launch 15 (cap 12) -> ['HEAL-cifix-organvm-call-function--ontological-10', 'HEAL-cifix-organvm-bountyscope-14', 'HEAL-cifix-organvm-organvm-engine-100', 'HEAL-cifix-organvm-bountyscope-8', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-721', 'HEAL-rebase-organvm-organvm-corpvs-testamentvm-505', 'HEAL-rebase-organvm-organvm-corpvs-testamentvm-498', 'HEAL-cifix-organvm-organvm-engine-109', 'HEAL-rebase-organvm-organvm-corpvs-testamentvm-496', 'HEAL-cifix-organvm-peer-audited--behavioral-blockchain-744', 'HEAL-cifix-organvm-organvm-engine-108', 'HEAL-cifix-organvm-universal-mail--automation-131', 'HEAL-cifix-organvm-universal-mail--automation-135', 'HEAL-cifix-organvm-organvm-engine-107', 'HEAL-cifix-organvm-limen-426']`.
-- Async skipped down lanes: `gemini`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 8 ; 4 still running ; would launch 8 (cap 12) -> ['HEAL-rebase-organvm-limen-387', 'HEAL-cifix-organvm-organvm-engine-111', 'AW-SUBSTRATE-AGY-SCRATCH-CUSTODY', 'HEAL-cifix-organvm-limen-388', 'HEAL-cifix-organvm-vigiles-aeternae--agon-cosmogonicum-7', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-713', 'HEAL-cifix-organvm-petasum-super-petasum-150', 'HEAL-cifix-organvm-limen-403']`.
+- Async skipped down lanes: `claude, gemini`.
+  - `claude`: usage health `rate-limited`; signal `tokens`; remaining `99784764` of `100000000`; headroom `100%`.
   - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
 
 ## Prompt Packet Gate
@@ -54,30 +55,35 @@ Status: `blocked`
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
   - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; disk/temp pressure needs owner work.
   - `PUBLIC-FACE-PROFILE`: `public-face` / `assigned_from_existing_work`; existing profile/frontdoor work is present but not projected.
-  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 111 active flagged non-deleted messages require classification.
-  - `MAIL-HISTORICAL-BACKLOG`: `mail-historical` / `assigned_from_existing_work`; 81976 indexed non-deleted messages exist; process in batches, not one giant run.
+  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 128 active flagged non-deleted messages require classification.
+  - `MAIL-HISTORICAL-BACKLOG`: `mail-historical` / `assigned_from_existing_work`; 81982 indexed non-deleted messages exist; process in batches, not one giant run.
   - `REPO-BOIL-UP`: `repo-boil-up` / `assigned_from_existing_work`; broad repo surface ledger exists, but it is stale for current boil-up work.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [ahead 1]`.
-- HEAD: `cd17bf295755f3744199b6d9982463a09505f1a7`.
-- origin/main: `a4abcd69c5eb8a1bb0ef0549b38e0bd5d0ae436a`.
-- Matches origin/main: `False`; ahead `1` behind `0`.
-- Dirty entries: `1`.
+- Branch: `main`; status `## main...origin/main`.
+- HEAD: `6bee82d393c11e7e5972ab9b17287b61b535c588`.
+- origin/main: `6bee82d393c11e7e5972ab9b17287b61b535c588`.
+- Matches origin/main: `True`; ahead `0` behind `0`.
+- Dirty entries: `7`.
+  - `AGENTS.md`
+  - `docs/agent-instruction-standard.md`
+  - `docs/always-working.md`
+  - `docs/antigravity-scratch-bridge.md`
+  - `scripts/check-agent-docs.py`
+  - `scripts/cvstos-organ.py`
   - `tasks.yaml`
 
 ## Verified Worktree
 
 - Verified worktree: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [ahead 1]`.
-- HEAD matches origin/main: `False`.
+- Branch: `main`; status `## main...origin/main`.
+- HEAD matches origin/main: `True`.
 
 ## Blockers
 
-- `live-root-not-at-origin-main`: live root branch main head cd17bf295755 differs from origin/main a4abcd69c5eb.
-- `live-root-dirty`: live root has 1 dirty entries.
+- `live-root-dirty`: live root has 7 dirty entries.
 - `always-working-required-work-open`: 7 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands

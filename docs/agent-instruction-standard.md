@@ -33,9 +33,12 @@ back to `AGENTS.md` instead.
 1. Update the owning source file, not every surface by hand.
 2. If the change touches states, precedence, agent names, referenced scripts, or examples, update
    `scripts/check-agent-docs.py`.
-3. Keep examples machine-checkable where practical.
-4. Keep direct-session behavior distinct from dispatch-mode behavior.
-5. Prefer bounded loops, explicit evidence, and append-only history over prose promises.
+3. If the human correction changes workflow, priority, ownership, cadence, evidence, or acceptance
+   criteria, propagate it through a durable surface future agents read: protocol doc, TABVLARIVS
+   ticket, task packet, PR body, receipt, or explicit blocker. A chat-only apology is not enough.
+4. Keep examples machine-checkable where practical.
+5. Keep direct-session behavior distinct from dispatch-mode behavior.
+6. Prefer bounded loops, explicit evidence, and append-only history over prose promises.
 
 ## Home-scope generated surfaces
 

@@ -51,6 +51,26 @@ When instructions conflict, the higher rule wins:
 `tasks.yaml` is authoritative for *state*; `AGENTS.md` is authoritative for *protocol*. Where a
 tool charter restates a rule from this file, this file is the source of truth.
 
+## Correction Propagation
+
+Human corrections are system input, not local chat residue. When the human corrects an agent about
+workflow, priority, ownership, evidence, cadence, or acceptance criteria, the active agent must
+propagate that correction before treating the session as closed.
+
+Use the narrowest durable surface that future siblings will actually read:
+
+- If the correction changes cross-agent behavior, update `AGENTS.md` or the owning instruction
+  standard and run the instruction drift predicate.
+- If the correction creates or changes work, submit a TABVLARIVS ticket/task packet instead of
+  editing the board ad hoc.
+- If the correction changes a lane's acceptance criteria, update that task, packet, PR body, or
+  receipt target with the new predicate.
+- If a correction cannot be applied immediately, record a precise blocker with the owner, missing
+  gate, and next command.
+
+A response-only apology does not propagate. A session that receives a correction and leaves no
+durable protocol, ticket, receipt, or blocker has not closed the loop for the swarm.
+
 ## Task States
 
 The canonical state set lives in code — `VALID_STATUSES` in `mcp/src/limen_mcp/server.py` — and

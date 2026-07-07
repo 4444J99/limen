@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-07T12:41:12+00:00`
+Generated: `2026-07-07T13:15:28+00:00`
 Status: `needs-work`
 Required open: `7`
 Blocked: `0`
@@ -30,8 +30,8 @@ Done from receipt: `1`
 |---:|---|---|---|
 | 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | disk/temp pressure needs owner work |
 | 10 | `PUBLIC-FACE-PROFILE` | `assigned_from_existing_work` | existing profile/frontdoor work is present but not projected |
-| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 111 active flagged non-deleted messages require classification |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `assigned_from_existing_work` | 81976 indexed non-deleted messages exist; process in batches, not one giant run |
+| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 128 active flagged non-deleted messages require classification |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `assigned_from_existing_work` | 81982 indexed non-deleted messages exist; process in batches, not one giant run |
 | 40 | `REPO-BOIL-UP` | `assigned_from_existing_work` | broad repo surface ledger exists, but it is stale for current boil-up work |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `assigned_from_existing_work` | 13 value repos define the funded work lane |
@@ -135,3 +135,4 @@ Done from receipt: `1`
 - Existing receipts:
   - `~/Workspace/limen/docs/tabularius-record-keeper.md`
   - `~/Workspace/limen/cli/src/limen/tabularius.py`
+

@@ -66,6 +66,7 @@ REQUIRED_SECTIONS = {
         "Operating Modes",
         "Startup Checklist (fast path)",
         "Precedence",
+        "Correction Propagation",
         "Task States",
         "Where to Find Tasks",
         "Session Start Ritual",
