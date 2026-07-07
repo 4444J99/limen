@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T00:43:50+00:00`
+Generated: `2026-07-07T00:44:55+00:00`
 
 Status: `blocked`
 
@@ -23,13 +23,13 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T00:43:50.287985+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T00:44:55.967127+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 2 ; 10 still running ; would launch 2 (cap 12) -> ['HEAL-rebase-organvm-universal-mail--automation-119', 'HEAL-cifix-organvm-the-invisible-ledger-47']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 3 ; 9 still running ; would launch 3 (cap 12) -> ['HEAL-rebase-organvm-universal-mail--automation-119', 'HEAL-cifix-organvm-the-invisible-ledger-47', 'HEAL-cifix-organvm-narratological-algorithmic-lenses-36']`.
 
 ## Prompt Packet Gate
 
@@ -44,31 +44,21 @@ Status: `blocked`
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main`.
-- HEAD: `72f4e4eab294cefc6ce249ba440f3673a7c1c500`.
+- Branch: `main`; status `## main...origin/main [ahead 2]`.
+- HEAD: `336036b5def232a9ca5700b2e43ad614e7b5e570`.
 - origin/main: `72f4e4eab294cefc6ce249ba440f3673a7c1c500`.
-- Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `7`.
-- Ignored generated receipt dirty entries: `2`.
-  - `docs/session-attack-paths.md`
-  - `docs/session-lifecycle-blockers.md`
-  - `docs/current-session-fanout.md`
-  - `docs/prompt-batch-review-ledger.md`
-  - `docs/prompt-lifecycle-ledger.md`
-  - `docs/prompt-packet-ledger.md`
-  - `docs/prompt-packet-resolution-receipts.json`
-  - `docs/prompt-priority-map.md`
-  - `tasks.yaml`
+- Matches origin/main: `False`; ahead `2` behind `0`.
+- Dirty entries: `0`.
 
 ## Verified Worktree
 
 - Verified worktree: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main`.
-- HEAD matches origin/main: `True`.
+- Branch: `main`; status `## main...origin/main [ahead 2]`.
+- HEAD matches origin/main: `False`.
 
 ## Blockers
 
-- `live-root-dirty`: live root has 7 dirty entries.
+- `live-root-not-at-origin-main`: live root branch main head 336036b5def2 differs from origin/main 72f4e4eab294.
 
 ## Commands
 
