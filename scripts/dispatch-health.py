@@ -29,6 +29,10 @@ PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
 DOC_PATH = ROOT / "docs" / "dispatch-health.md"
 PROMPT_PACKET_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
 PROMPT_PACKET_DOC = ROOT / "docs" / "prompt-packet-ledger.md"
+ALWAYS_WORKING_INDEX = Path(
+    os.environ.get("LIMEN_ALWAYS_WORKING_INDEX", PRIVATE_ROOT / "lifecycle" / "always-working.json")
+)
+ALWAYS_WORKING_DOC = Path(os.environ.get("LIMEN_ALWAYS_WORKING_DOC", ROOT / "docs" / "always-working.md"))
 LIVE_ROOT = Path(os.environ.get("LIMEN_LIVE_ROOT", HOME / "Workspace" / "limen"))
 HEARTBEAT_PLIST = Path(
     os.environ.get("LIMEN_HEARTBEAT_PLIST", HOME / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist")
@@ -425,6 +429,51 @@ def prompt_packet_snapshot() -> dict[str, Any]:
     }
 
 
+def always_working_snapshot() -> dict[str, Any]:
+    index = load_json(ALWAYS_WORKING_INDEX)
+    if not index:
+        return {
+            "present": False,
+            "path": str(ALWAYS_WORKING_INDEX),
+            "public_doc": str(ALWAYS_WORKING_DOC),
+            "status": "missing",
+            "required_open_count": 0,
+            "blocked_count": 0,
+            "done_count": 0,
+            "next_item_id": "",
+            "next_item_status": "",
+            "top_required_items": [],
+        }
+
+    items = [item for item in index.get("items") or [] if isinstance(item, dict)]
+    required = [
+        item
+        for item in items
+        if str(item.get("status") or "") in {"assigned_from_existing_work", "needs_assignment"}
+    ]
+    return {
+        "present": True,
+        "path": str(ALWAYS_WORKING_INDEX),
+        "public_doc": str(ALWAYS_WORKING_DOC),
+        "status": str(index.get("status") or "unknown"),
+        "generated_at": index.get("generated_at"),
+        "required_open_count": int(index.get("required_open_count") or len(required)),
+        "blocked_count": int(index.get("blocked_count") or 0),
+        "done_count": int(index.get("done_count") or 0),
+        "next_item_id": str(index.get("next_item_id") or ""),
+        "next_item_status": str(index.get("next_item_status") or ""),
+        "top_required_items": [
+            {
+                "id": str(item.get("id") or ""),
+                "workstream": str(item.get("workstream") or ""),
+                "status": str(item.get("status") or ""),
+                "verdict": receipt_line(str(item.get("verdict") or "")),
+            }
+            for item in required[:5]
+        ],
+    }
+
+
 def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
     blockers: list[dict[str, str]] = []
     plist = snapshot["heartbeat_plist"]
@@ -433,6 +482,7 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
     watchdog = snapshot["watchdog"]
     async_probe = snapshot["async_probe"]
     prompt_packets = snapshot["prompt_packets"]
+    always_working = snapshot["always_working"]
 
     if not plist.get("present"):
         blockers.append({"id": "heartbeat-plist-missing", "evidence": "LaunchAgent plist was not found."})
@@ -507,6 +557,24 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
             }
         )
 
+    if not always_working.get("present"):
+        blockers.append(
+            {
+                "id": "always-working-reconciliation-missing",
+                "evidence": "No current always-working reconciliation receipt is available.",
+            }
+        )
+    elif int(always_working.get("required_open_count") or 0):
+        blockers.append(
+            {
+                "id": "always-working-required-work-open",
+                "evidence": (
+                    f"{always_working.get('required_open_count')} required promise workstream(s) remain open; "
+                    f"next item {always_working.get('next_item_id') or 'unknown'}."
+                ),
+            }
+        )
+
     return blockers
 
 
@@ -520,6 +588,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "watchdog": watchdog_snapshot(),
         "async_probe": async_probe_snapshot(bool(args.probe_async)),
         "prompt_packets": prompt_packet_snapshot(),
+        "always_working": always_working_snapshot(),
     }
     blockers = derive_blockers(snapshot)
     snapshot["blockers"] = blockers
@@ -535,6 +604,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     watchdog = snapshot["watchdog"]
     async_probe = snapshot["async_probe"]
     prompt_packets = snapshot["prompt_packets"]
+    always_working = snapshot["always_working"]
     blockers = snapshot["blockers"]
     lines = [
         "# Dispatch Health",
@@ -600,6 +670,24 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
 
     lines += [
         "",
+        "## Always-Working Gate",
+        "",
+        f"- Reconciliation index present: `{always_working.get('present')}`.",
+        f"- Reconciliation status: `{always_working.get('status')}`.",
+        f"- Required open workstreams: `{always_working.get('required_open_count')}`.",
+        f"- Blocked workstreams: `{always_working.get('blocked_count')}`.",
+        f"- Done from receipt: `{always_working.get('done_count')}`.",
+        f"- Next item: `{always_working.get('next_item_id')}` (`{always_working.get('next_item_status')}`).",
+        f"- Public reconciliation: `{relpath(Path(always_working.get('public_doc') or ALWAYS_WORKING_DOC))}`.",
+    ]
+    for item in always_working.get("top_required_items") or []:
+        lines.append(
+            f"  - `{item.get('id')}`: `{item.get('workstream')}` / `{item.get('status')}`; "
+            f"{item.get('verdict') or 'no verdict'}."
+        )
+
+    lines += [
+        "",
         "## Live Root",
         "",
         f"- Live root: `{relpath(Path(live.get('path') or LIVE_ROOT))}`.",
@@ -642,6 +730,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Refresh this receipt: `python3 scripts/dispatch-health.py --write --probe-async`",
         "- Refresh the operator gate: `python3 scripts/live-root-gate.py --write`",
         "- Refresh prompt packets: `python3 scripts/prompt-packet-ledger.py --write`",
+        "- Refresh always-working reconciliation: `python3 scripts/always-working.py --write`",
         "- Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`",
         "- Probe heartbeat: `python3 scripts/watchdog.py --dry-run`",
         "- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run`",

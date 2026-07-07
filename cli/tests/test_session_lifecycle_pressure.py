@@ -700,6 +700,8 @@ def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
     dispatch.PRIVATE_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "dispatch-health.json"
     dispatch.PROMPT_PACKET_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
     dispatch.PROMPT_PACKET_DOC = tmp_path / "docs" / "prompt-packet-ledger.md"
+    dispatch.ALWAYS_WORKING_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "always-working.json"
+    dispatch.ALWAYS_WORKING_DOC = tmp_path / "docs" / "always-working.md"
     dispatch.DOC_PATH = tmp_path / "docs" / "dispatch-health.md"
     dispatch.LIVE_ROOT = tmp_path
     dispatch.HEARTBEAT_PLIST = tmp_path / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist"
@@ -724,6 +726,19 @@ def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
                         "dispatchability": "ready-after-predicate",
                     },
                 ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    dispatch.ALWAYS_WORKING_INDEX.write_text(
+        json.dumps(
+            {
+                "status": "clear",
+                "required_open_count": 0,
+                "blocked_count": 0,
+                "done_count": 1,
+                "next_item_id": None,
+                "items": [],
             }
         ),
         encoding="utf-8",
