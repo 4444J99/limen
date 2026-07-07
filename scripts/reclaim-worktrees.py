@@ -17,6 +17,8 @@ those:
 It scans every known creation site (the historical blind spot — see worktree-lifecycle-blind-spot):
   • LIMEN_WORKTREE_ROOT (~/Workspace/.limen-worktrees) — dispatch throwaway, min-age 6h.
   • LIMEN_ROOT/.claude/worktrees — EnterWorktree / bg-job / interactive cells, min-age 24h.
+  • LIMEN_AGY_SCRATCH_ROOT (~/.gemini/antigravity-cli/scratch) — Antigravity/Agy scratch clones,
+    min-age LIMEN_AGY_SCRATCH_MIN_IDLE_H.
   • repo-local .worktrees roots discovered under LIMEN_RECLAIM_WORKSPACE_ROOTS.
   • registered git worktrees from LIMEN_RECLAIM_MAIN_REPOS (default: Limen and Portvs).
 Set LIMEN_RECLAIM_CLAUDE_WT=0 to disable the interactive sweep.
@@ -32,6 +34,7 @@ LIMEN_RECLAIM_EVERY_MIN minutes so it is cheap to call every beat.
 
 Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (1),
      LIMEN_RECLAIM_CLAUDE_AGE_H (24), LIMEN_RECLAIM_REPO_LOCAL_WT, LIMEN_RECLAIM_REPO_LOCAL_AGE_H,
+     LIMEN_RECLAIM_AGY_SCRATCH, LIMEN_AGY_SCRATCH_ROOT, LIMEN_AGY_SCRATCH_MIN_IDLE_H,
      LIMEN_RECLAIM_REGISTERED_WT, LIMEN_RECLAIM_REGISTERED_AGE_H, LIMEN_RECLAIM_MAIN_REPOS,
      LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30).
 """
@@ -78,6 +81,7 @@ def _float_env(name: str, default: float) -> float:
 
 MAX_REMOVE = _int_env("LIMEN_RECLAIM_MAX", 50)
 EVERY_MIN = _float_env("LIMEN_RECLAIM_EVERY_MIN", 30)
+GENERATED_RECLAIM_MAX = _int_env("LIMEN_RECLAIM_GENERATED_MAX", 80)
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
@@ -85,6 +89,7 @@ RECLAIM_ACCEPTANCE = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
 RECLAIM_ACCEPTANCE_DOC = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.md"
 APPLY = "--apply" in sys.argv
 FORCE = "--force" in sys.argv  # ignore the throttle
+GENERATED_ONLY = "--generated-only" in sys.argv
 REMOTE_MERGED_LANES = {"remote-merged"}
 REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
 ACCEPTED_ARCHIVE_STATUSES = {
@@ -100,6 +105,20 @@ ACCEPTED_REDACTION_REVIEWS = {
     "not_required_generated_residue",
 }
 REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
+GENERATED_CLEAN_PATHS = (
+    "node_modules",
+    ".venv",
+    ".next",
+    "dist",
+    "build",
+    "coverage",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".parcel-cache",
+    ".turbo",
+    "__pycache__",
+)
 
 # Never reap the live checkout nor the worktree this process is running from (else we yank
 # the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
@@ -120,6 +139,78 @@ def git(args, cwd, timeout=30):
     except Exception as e:  # fail open per-dir
         r = subprocess.CompletedProcess(args, 1, "", str(e))
         return r
+
+
+def active_async_task_prefixes() -> set[str]:
+    runs = LIMEN_ROOT / "logs" / "async-runs"
+    prefixes = set()
+    for marker in runs.glob("*.running"):
+        name = marker.name.split("__", 1)[0].strip().lower()
+        if name:
+            prefixes.add(name)
+    return prefixes
+
+
+def active_async_root(d: Path, active_prefixes: set[str]) -> bool:
+    name = d.name.lower()
+    return any(name.startswith(prefix) for prefix in active_prefixes)
+
+
+def has_generated_payload(d: Path) -> bool:
+    return any((d / path).exists() for path in GENERATED_CLEAN_PATHS)
+
+
+def idle_enough(target, now: float) -> bool:
+    min_age_h = getattr(target, "min_age_h", 0)
+    try:
+        return (now - target.path.stat().st_mtime) / 3600.0 >= float(min_age_h)
+    except (OSError, TypeError, ValueError):
+        return False
+
+
+def purge_generated_payloads(d: Path) -> tuple[bool, str]:
+    r = git(["clean", "-Xdf", "--", *GENERATED_CLEAN_PATHS], d, timeout=180)
+    if r.returncode != 0:
+        return False, (r.stderr or r.stdout or "git clean failed").strip()[:160]
+    removed = sum(1 for line in (r.stdout or "").splitlines() if line.strip().startswith("Removing "))
+    return True, f"removed:{removed}"
+
+
+def reclaim_generated_payloads(targets) -> dict[str, object]:
+    """Bounded, source-safe cleanup for retained worktrees.
+
+    This removes only ignored generated payload paths from inactive git roots. It does not remove
+    source files, untracked non-ignored files, worktree roots, branches, or private artifacts.
+    """
+    if os.environ.get("LIMEN_RECLAIM_GENERATED", "1") != "1":
+        return {"enabled": False, "cleaned": [], "failed": []}
+    active_prefixes = active_async_task_prefixes()
+    now = time.time()
+    cleaned, failed = [], []
+    for target in targets:
+        d = target.path
+        try:
+            if d.resolve() in _SELF_GUARD:
+                continue
+        except Exception:
+            continue
+        if len(cleaned) >= GENERATED_RECLAIM_MAX:
+            break
+        if active_async_root(d, active_prefixes):
+            continue
+        if not idle_enough(target, now):
+            continue
+        if not has_generated_payload(d):
+            continue
+        if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
+            continue
+        ok, detail = purge_generated_payloads(d)
+        row = {"root": d.name, "detail": detail}
+        if ok:
+            cleaned.append(row)
+        else:
+            failed.append(row)
+    return {"enabled": True, "cleaned": cleaned, "failed": failed}
 
 
 def reachable_from_remote(cwd, head) -> bool:
@@ -289,6 +380,14 @@ def main():
             print(f"reclaim: ran < {EVERY_MIN}min ago — skip (set --force to override)")
             return 0
     now = time.time()
+    generated_reclaim = reclaim_generated_payloads(targets) if APPLY else {"enabled": False, "cleaned": [], "failed": []}
+    if GENERATED_ONLY:
+        cleaned = generated_reclaim.get("cleaned") or []
+        gen_failed = generated_reclaim.get("failed") or []
+        print(f"reclaim [generated-only]: {len(cleaned)} cleaned, {len(gen_failed)} failed")
+        for row in cleaned[:20]:
+            print(f"  generated-clean {row['detail']:14} {row['root']}")
+        return 0
     preservation_receipts = load_preservation_receipts()
     reclaim_acceptance = load_reclaim_acceptance()
     dirs = [(target.path, target.min_age_h) for target in targets]
@@ -337,6 +436,7 @@ def main():
                             "skipped": dict(skipped),
                             "failed": dict(failed),
                             "deferred_over_cap": deferred,
+                            "generated_reclaim": generated_reclaim,
                         }
                     )
                     + "\n"
@@ -349,6 +449,12 @@ def main():
         f"reclaim [{mode}]: {len(removed)} reclaimed, {len(skipped)} kept-safe, "
         f"{len(failed)} failed, {len(deferred)} deferred-over-cap (of {len(dirs)})"
     )
+    if generated_reclaim.get("enabled"):
+        cleaned = generated_reclaim.get("cleaned") or []
+        gen_failed = generated_reclaim.get("failed") or []
+        print(f"  generated-payloads: {len(cleaned)} cleaned, {len(gen_failed)} failed")
+        for row in cleaned[:10]:
+            print(f"    generated-clean {row['detail']:14} {row['root']}")
     for n, why in skipped:
         print(f"  keep {why:24} {n}")
     for n, why in removed:

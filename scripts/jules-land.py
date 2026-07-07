@@ -33,6 +33,30 @@ TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 WT_ROOT = Path(os.environ.get("LIMEN_WORKTREES", Path.home() / "Workspace" / ".limen-worktrees"))
 JULES = os.environ.get("LIMEN_JULES_BIN", "jules")
 _TASK_ID_RE = re.compile(r"Complete task (\S+?):")
+_GENERATED_CLEAN_PATHS = (
+    "node_modules",
+    ".venv",
+    ".next",
+    "dist",
+    "build",
+    "coverage",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".parcel-cache",
+    ".turbo",
+    "__pycache__",
+)
+
+
+def purge_generated_payloads(wt: Path) -> str:
+    if not wt.exists():
+        return "missing"
+    clean = _git(["clean", "-Xdf", "--", *_GENERATED_CLEAN_PATHS], wt, timeout=180)
+    if clean.returncode != 0:
+        return f"failed:{(clean.stderr or clean.stdout).strip()[:160]}"
+    removed = sum(1 for line in (clean.stdout or "").splitlines() if line.strip().startswith("Removing "))
+    return f"removed:{removed}"
 
 
 def completed_sessions(sid_map: dict | None = None):
@@ -85,23 +109,28 @@ def land_one(task: Task, sid: str, apply: bool) -> str:
         "and docs/branch-reap-acceptance.jsonl + reap-branches.py"
     )
     if _git(["diff", "--cached", "--quiet"], wt).returncode == 0:
-        return f"no-op {task.id}: jules session {sid} produced no diff; {retain}"
+        generated_cleanup = purge_generated_payloads(wt)
+        return f"no-op {task.id}: jules session {sid} produced no diff; generated cleanup {generated_cleanup}; {retain}"
     msg = f"{task.title}\n\nlimen task {task.id} (jules session {sid})"
     c = _git(["-c", f"user.name={os.environ.get('LIMEN_COMMIT_NAME', '4444J99')}",
               "-c", f"user.email={os.environ.get('LIMEN_COMMIT_EMAIL', '4444J99@users.noreply.github.com')}",
               "commit", "-m", msg], wt)
     if c.returncode != 0:
-        return f"FAIL {task.id}: commit ({c.stderr.strip()[:120]}); {retain}"
+        generated_cleanup = purge_generated_payloads(wt)
+        return f"FAIL {task.id}: commit ({c.stderr.strip()[:120]}); generated cleanup {generated_cleanup}; {retain}"
     p = _git(["push", "-u", "origin", branch], wt, timeout=300)
     if p.returncode != 0:
-        return f"FAIL {task.id}: push ({p.stderr.strip()[:120]}); {retain}"
+        generated_cleanup = purge_generated_payloads(wt)
+        return f"FAIL {task.id}: push ({p.stderr.strip()[:120]}); generated cleanup {generated_cleanup}; {retain}"
     pr = subprocess.run(["gh", "pr", "create", "--repo", task.repo, "--head", branch,
                          "--base", base, "--title", f"[limen jules {task.id}] {task.title}"[:100],
                          "--body", f"Lands completed jules session {sid}.\n\nlimen task {task.id}"],
                         capture_output=True, text=True, timeout=120)
     if pr.returncode != 0:
-        return f"FAIL {task.id}: pr create ({pr.stderr.strip()[:120]}); {retain}"
-    return f"LANDED {task.id} -> {pr.stdout.strip()} ; {retain}"
+        generated_cleanup = purge_generated_payloads(wt)
+        return f"FAIL {task.id}: pr create ({pr.stderr.strip()[:120]}); generated cleanup {generated_cleanup}; {retain}"
+    generated_cleanup = purge_generated_payloads(wt)
+    return f"LANDED {task.id} -> {pr.stdout.strip()} ; generated cleanup {generated_cleanup}; {retain}"
 
 
 def landed_pr_url(message: str, fallback: str) -> str:

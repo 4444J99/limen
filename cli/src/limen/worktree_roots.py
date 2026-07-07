@@ -185,6 +185,7 @@ def iter_worktree_targets(limen_root: Path | None = None) -> list[WorktreeTarget
     targets: list[WorktreeTarget] = []
     dispatch_root = Path(os.environ.get("LIMEN_WORKTREE_ROOT", Path.home() / "Workspace" / ".limen-worktrees"))
     targets.extend(_children(dispatch_root, _float_env("LIMEN_RECLAIM_MIN_AGE_H", 6), "dispatch-root"))
+    broad_default = "LIMEN_WORKTREE_ROOT" not in os.environ
 
     if _flag("LIMEN_RECLAIM_CLAUDE_WT", True):
         targets.extend(
@@ -195,7 +196,18 @@ def iter_worktree_targets(limen_root: Path | None = None) -> list[WorktreeTarget
             )
         )
 
-    broad_default = "LIMEN_WORKTREE_ROOT" not in os.environ
+    if _flag("LIMEN_RECLAIM_AGY_SCRATCH", broad_default):
+        agy_scratch = Path(
+            os.environ.get("LIMEN_AGY_SCRATCH_ROOT", Path.home() / ".gemini" / "antigravity-cli" / "scratch")
+        )
+        targets.extend(
+            _children(
+                agy_scratch,
+                _float_env("LIMEN_AGY_SCRATCH_MIN_IDLE_H", 24),
+                "agy-scratch",
+            )
+        )
+
     if _flag("LIMEN_RECLAIM_REPO_LOCAL_WT", broad_default):
         repo_age = _float_env("LIMEN_RECLAIM_REPO_LOCAL_AGE_H", 24)
         for repo_root in _discover_repo_local_roots(root):

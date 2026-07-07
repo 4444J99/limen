@@ -321,6 +321,24 @@ def test_iter_worktree_targets_claude_worktrees(tmp_path, monkeypatch):
     assert session.source == "claude-worktrees"
 
 
+def test_iter_worktree_targets_agy_scratch_children(tmp_path, monkeypatch):
+    agy_scratch = tmp_path / "agy-scratch"
+    (agy_scratch / "mirror-mirror").mkdir(parents=True)
+    dispatch = tmp_path / ".limen-worktrees"
+    dispatch.mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_AGY_SCRATCH", "1")
+    monkeypatch.setenv("LIMEN_AGY_SCRATCH_ROOT", str(agy_scratch))
+    monkeypatch.setenv("LIMEN_AGY_SCRATCH_MIN_IDLE_H", "3")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+    targets = iter_worktree_targets(tmp_path)
+    target = next(t for t in targets if t.path.name == "mirror-mirror")
+    assert target.min_age_h == 3.0
+    assert target.source == "agy-scratch"
+
+
 def test_iter_worktree_targets_deduplicates(tmp_path, monkeypatch):
     dispatch = tmp_path / ".limen-worktrees"
     shared = dispatch / "shared"

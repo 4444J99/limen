@@ -1199,6 +1199,20 @@ def _clone_repo(task: Task) -> Path | None:
 # PR. This is the universal default for ALL local lanes (codex/opencode/agy/
 # claude/gemini) — set LIMEN_ISOLATION=off only for a deliberate in-place run.
 _ISOLATION_ROOT = Path(os.environ.get("LIMEN_WORKTREES", Path.home() / "Workspace" / ".limen-worktrees"))
+_GENERATED_CLEAN_PATHS = (
+    "node_modules",
+    ".venv",
+    ".next",
+    "dist",
+    "build",
+    "coverage",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".parcel-cache",
+    ".turbo",
+    "__pycache__",
+)
 
 
 def _git(args: list[str], cwd: Path, timeout: int = 120) -> subprocess.CompletedProcess[str]:
@@ -1483,7 +1497,64 @@ def _unpreserved_work_reason(wt: Path, base_ref: str) -> str:
     return ""
 
 
-def _cleanup_isolated_worktree(repo_dir: Path, wt: Path, branch: str, base_ref: str, pushed: bool) -> None:
+def _purge_generated_payloads(wt: Path) -> str:
+    """Remove ignored/generated weight from a retained isolated worktree.
+
+    Source and untracked non-ignored files are preserved. This is the lifecycle invariant that keeps
+    retained checkouts from becoming 1-2 GiB roots just because an agent installed dependencies.
+    """
+    if not wt.exists():
+        return "missing"
+    clean = _git(["clean", "-Xdf", "--", *_GENERATED_CLEAN_PATHS], wt, timeout=180)
+    if clean.returncode != 0:
+        return f"failed:{(clean.stderr or clean.stdout).strip()[:160]}"
+    removed = sum(1 for line in (clean.stdout or "").splitlines() if line.strip().startswith("Removing "))
+    return f"removed:{removed}"
+
+
+def _record_worktree_lifecycle(
+    task: Task | None,
+    wt: Path,
+    branch: str,
+    state: str,
+    reason: str,
+    generated_cleanup: str,
+    pushed: bool,
+) -> None:
+    root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+    try:
+        log = root / "logs" / "worktree-lifecycle.jsonl"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        with log.open("a", encoding="utf-8") as fh:
+            fh.write(
+                json.dumps(
+                    {
+                        "ts": datetime.now(timezone.utc).isoformat(),
+                        "task_id": getattr(task, "id", None),
+                        "repo": getattr(task, "repo", None),
+                        "root": str(wt),
+                        "branch": branch,
+                        "state": state,
+                        "reason": reason,
+                        "pushed": pushed,
+                        "generated_cleanup": generated_cleanup,
+                    },
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+    except OSError:
+        pass
+
+
+def _cleanup_isolated_worktree(
+    repo_dir: Path,
+    wt: Path,
+    branch: str,
+    base_ref: str,
+    pushed: bool,
+    task: Task | None = None,
+) -> None:
     """Classify isolated worktrees for later receipt-backed cleanup.
 
     This function intentionally does not remove roots or branch refs. Local deletion requires the
@@ -1496,17 +1567,30 @@ def _cleanup_isolated_worktree(repo_dir: Path, wt: Path, branch: str, base_ref: 
                 f"  retained isolated branch {branch}; "
                 "branch cleanup delegated to docs/branch-reap-acceptance.jsonl + reap-branches.py"
             )
+            _record_worktree_lifecycle(task, wt, branch, "branch-retained", "worktree-missing", "missing", pushed)
         return
 
     reason = "" if pushed else _unpreserved_work_reason(wt, base_ref)
+    generated_cleanup = _purge_generated_payloads(wt)
     if reason:
         print(f"  preserved isolated worktree {wt} for bridge ({reason}; branch {branch})")
+        _record_worktree_lifecycle(task, wt, branch, "preserved", reason, generated_cleanup, pushed)
         return
 
     print(
         f"  retained isolated worktree {wt} ({'pushed' if pushed else 'clean-noop'}; branch {branch}); "
+        f"generated cleanup {generated_cleanup}; "
         "cleanup delegated to docs/worktree-reclaim-acceptance.jsonl + reclaim-worktrees.py "
         "and docs/branch-reap-acceptance.jsonl + reap-branches.py"
+    )
+    _record_worktree_lifecycle(
+        task,
+        wt,
+        branch,
+        "retained",
+        "pushed" if pushed else "clean-noop",
+        generated_cleanup,
+        pushed,
     )
 
 
@@ -1632,7 +1716,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
                 _git_plumbing(["fetch", "origin", base], repo_dir, timeout=300)
             _ISOLATION_ROOT.mkdir(parents=True, exist_ok=True)
             if wt.exists():  # leftover from a prior clean/no-op run
-                _cleanup_isolated_worktree(repo_dir, wt, branch, f"origin/{base}", pushed=False)
+                _cleanup_isolated_worktree(repo_dir, wt, branch, f"origin/{base}", pushed=False, task=task)
                 if wt.exists():
                     print(f"  retrying worktree add {task.id}: preserved existing worktree at {wt}")
                     continue
@@ -1666,7 +1750,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         # branch too once its commits are safely on the remote, or when the attempt
         # produced no local work. Keep dirty/ahead failed worktrees for preservation.
         with _GIT_PLUMBING_LOCK:
-            _cleanup_isolated_worktree(repo_dir, wt, branch, f"origin/{base}", pushed=pushed)
+            _cleanup_isolated_worktree(repo_dir, wt, branch, f"origin/{base}", pushed=pushed, task=task)
 
 
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:

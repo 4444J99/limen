@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
 
@@ -66,3 +67,51 @@ def test_reclaim_acceptance_requires_archive_and_redaction_proofs(tmp_path: Path
 
         assert ok is False
         assert reason == "missing-reclaim-acceptance"
+
+
+def test_reclaim_generated_payloads_cleans_inactive_ignored_dirs(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+    (repo / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    (repo / "README.md").write_text("source\n", encoding="utf-8")
+    subprocess.run(["git", "add", ".gitignore", "README.md"], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "-c", "user.email=t@example.com", "-c", "user.name=test", "commit", "-qm", "base"],
+        cwd=repo,
+        check=True,
+    )
+    (repo / "node_modules").mkdir()
+    (repo / "node_modules" / "dep.txt").write_text("generated\n", encoding="utf-8")
+
+    monkeypatch.setattr(reclaim, "active_async_task_prefixes", lambda: set())
+    target = type("Target", (), {"path": repo, "min_age_h": 0})()
+    result = reclaim.reclaim_generated_payloads([target])
+
+    assert len(result["cleaned"]) == 1
+    assert (repo / "README.md").exists()
+    assert not (repo / "node_modules").exists()
+
+
+def test_reclaim_generated_payloads_skips_non_idle_roots(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+    (repo / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    subprocess.run(["git", "add", ".gitignore"], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "-c", "user.email=t@example.com", "-c", "user.name=test", "commit", "-qm", "base"],
+        cwd=repo,
+        check=True,
+    )
+    (repo / "node_modules").mkdir()
+    (repo / "node_modules" / "dep.txt").write_text("generated\n", encoding="utf-8")
+
+    monkeypatch.setattr(reclaim, "active_async_task_prefixes", lambda: set())
+    target = type("Target", (), {"path": repo, "min_age_h": 24})()
+    result = reclaim.reclaim_generated_payloads([target])
+
+    assert result["cleaned"] == []
+    assert (repo / "node_modules").exists()

@@ -942,20 +942,29 @@ def _make_cleanup_repo(tmp_path: Path) -> tuple[Path, Path, str]:
 
 def test_cleanup_isolated_worktree_retains_clean_noop_branch_for_reclaim(tmp_path: Path) -> None:
     repo, wt, branch = _make_cleanup_repo(tmp_path)
+    (wt / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    (wt / "node_modules").mkdir()
+    (wt / "node_modules" / "dep.txt").write_text("generated\n", encoding="utf-8")
 
     D._cleanup_isolated_worktree(repo, wt, branch, "main", pushed=False)
 
     assert wt.exists()
+    assert not (wt / "node_modules").exists()
     assert branch in _git_ok(repo, "branch", "--list", branch)
 
 
 def test_cleanup_isolated_worktree_preserves_dirty_failed_work(tmp_path: Path) -> None:
     repo, wt, branch = _make_cleanup_repo(tmp_path)
     (wt / "local.txt").write_text("local-only\n", encoding="utf-8")
+    (wt / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    (wt / "node_modules").mkdir()
+    (wt / "node_modules" / "dep.txt").write_text("generated\n", encoding="utf-8")
 
     D._cleanup_isolated_worktree(repo, wt, branch, "main", pushed=False)
 
     assert wt.exists()
+    assert (wt / "local.txt").exists()
+    assert not (wt / "node_modules").exists()
     assert branch in _git_ok(repo, "branch", "--list", branch)
 
 

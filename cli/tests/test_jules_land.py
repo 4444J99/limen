@@ -28,6 +28,8 @@ def test_land_one_retains_local_worktree_and_branch_after_pr(monkeypatch, tmp_pa
 
     def fake_git(args, cwd, timeout=30):
         git_calls.append(tuple(args))
+        if args[:2] == ["worktree", "add"]:
+            Path(args[4]).mkdir(parents=True, exist_ok=True)
         if args == ["diff", "--cached", "--quiet"]:
             return subprocess.CompletedProcess(args, 1, "", "")
         return subprocess.CompletedProcess(args, 0, "", "")
@@ -58,8 +60,10 @@ def test_land_one_retains_local_worktree_and_branch_after_pr(monkeypatch, tmp_pa
     assert message.startswith("LANDED T1 -> https://github.com/organvm/example/pull/42")
     assert "local root retained" in message
     assert "branch retained" in message
+    assert "generated cleanup removed:0" in message
     assert "worktree-reclaim-acceptance.jsonl" in message
     assert "branch-reap-acceptance.jsonl" in message
     assert module.landed_pr_url(message, "123") == "https://github.com/organvm/example/pull/42"
+    assert ("clean", "-Xdf", "--", *module._GENERATED_CLEAN_PATHS) in git_calls
     assert ("worktree", "remove", "--force", str(module.WT_ROOT / "limen_jules-t1-abcd")) not in git_calls
     assert ("branch", "-D", "limen/jules-t1-abcd") not in git_calls

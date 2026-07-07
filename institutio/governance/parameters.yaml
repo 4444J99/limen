@@ -1074,6 +1074,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Min idle hours before a .claude/worktrees cell is eligible for reclaim. Longer than the dispatch root's 6h because an interactive/bg session can legitimately sit idle between beats."
+  LIMEN_RECLAIM_AGY_SCRATCH:
+    default: "auto"
+    env: LIMEN_RECLAIM_AGY_SCRATCH
+    self_update: none
+    owner: limen-daemon
+    note: "Whether reclaim/debt discovery includes children of LIMEN_AGY_SCRATCH_ROOT. Auto means enabled in live sessions and disabled when a test/probe supplies an explicit LIMEN_WORKTREE_ROOT. Physical scratch-root deletion remains governed by antigravity-scratch-bridge acceptance; generated-only cleanup may remove ignored cache/build payloads after the idle gate."
   LIMEN_RECLAIM_REPO_LOCAL_WT:
     default: "auto"
     env: LIMEN_RECLAIM_REPO_LOCAL_WT
