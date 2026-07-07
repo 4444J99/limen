@@ -1,8 +1,8 @@
 # Dispatch Health
 
-Generated: `2026-07-07T00:44:55+00:00`
+Generated: `2026-07-07T00:45:42+00:00`
 
-Status: `blocked`
+Status: `healthy`
 
 ## Incident Class
 
@@ -23,7 +23,7 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T00:44:55.967127+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T00:45:42.630204+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -44,21 +44,21 @@ Status: `blocked`
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [ahead 2]`.
-- HEAD: `336036b5def232a9ca5700b2e43ad614e7b5e570`.
-- origin/main: `72f4e4eab294cefc6ce249ba440f3673a7c1c500`.
-- Matches origin/main: `False`; ahead `2` behind `0`.
+- Branch: `main`; status `## main...origin/main`.
+- HEAD: `da28e79b0f0c40fbfda5c1934af4e0025d599dbb`.
+- origin/main: `da28e79b0f0c40fbfda5c1934af4e0025d599dbb`.
+- Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
 ## Verified Worktree
 
 - Verified worktree: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [ahead 2]`.
-- HEAD matches origin/main: `False`.
+- Branch: `main`; status `## main...origin/main`.
+- HEAD matches origin/main: `True`.
 
 ## Blockers
 
-- `live-root-not-at-origin-main`: live root branch main head 336036b5def2 differs from origin/main 72f4e4eab294.
+- none
 
 ## Commands
 
