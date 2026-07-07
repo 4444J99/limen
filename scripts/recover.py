@@ -5,7 +5,7 @@ Two failure modes leak capacity:
   1. status==failed tasks just sit there. Re-open them at the TOP of the lane cascade
      (codex) so the dispatcher's per-task failover gives them a fresh run across lanes.
   2. status==dispatched jules tasks whose recorded session failed, stalled for
-     user feedback, or is no longer in `jules remote list` (aged out / lost) are
+     user feedback / plan approval, or is no longer in `jules remote list` (aged out / lost) are
      orphaned — re-open so they re-dispatch fresh.
 
 Reversible (only flips status→open + target_agent + logs a heal entry); never deletes,
@@ -38,6 +38,8 @@ def live_jules_sessions() -> dict[str, str]:
             low = line.lower()
             if "failed" in low:
                 status = "failed"
+            elif "awaiting plan" in low:
+                status = "awaiting_plan_approval"
             elif "awaiting user" in low or "awaiting feedback" in low:
                 status = "awaiting_user_feedback"
             elif "completed" in low:
@@ -56,18 +58,22 @@ def live_jules_sessions() -> dict[str, str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS"))
+    ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
     ap.add_argument("--limit", type=int, default=40)
+    ap.add_argument("--task-id", action="append", dest="task_ids", help="Limit recovery to a specific task id")
     ap.add_argument("--apply", action="store_true")
     args = ap.parse_args()
     path = Path(args.tasks)
     lf = load_limen_file(path)
     now = datetime.datetime.now(datetime.timezone.utc)
+    selected_ids = set(args.task_ids or [])
 
     live = None  # lazily fetched only if we have orphan candidates
     reopened_failed, reopened_orphan, reopened_remote_failed = [], [], []
 
     for t in lf.tasks:
+        if selected_ids and t.id not in selected_ids:
+            continue
         if len(reopened_failed) + len(reopened_orphan) + len(reopened_remote_failed) >= args.limit:
             break
         if _has_done_transition(t):
@@ -96,7 +102,7 @@ def main() -> int:
                 continue
             if live is None:
                 live = live_jules_sessions()
-            if live and live.get(sid) in {"failed", "awaiting_user_feedback"}:
+            if live and live.get(sid) in {"failed", "awaiting_user_feedback", "awaiting_plan_approval"}:
                 remote_status = live.get(sid)
                 t.status = "open"
                 t.target_agent = CASCADE_TOP

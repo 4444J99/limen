@@ -87,3 +87,139 @@ def test_recover_reopens_jules_session_awaiting_feedback(tmp_path, monkeypatch):
     assert task.status == "open"
     assert task.target_agent == "codex"
     assert "awaiting_user_feedback" in task.dispatch_log[-1].output
+
+
+def test_recover_reopens_jules_session_awaiting_plan_approval(tmp_path, monkeypatch):
+    tasks_path = tmp_path / "tasks.yaml"
+    now = dt.datetime.now(dt.timezone.utc)
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
+        tasks=[
+            Task(
+                id="REV-organvm-mirror-mirror-revenue-ship-0706",
+                title="Drive Mirror Mirror to deploy-ready",
+                repo="organvm/mirror-mirror",
+                target_agent="jules",
+                status="dispatched",
+                created=now.date(),
+                dispatch_log=[
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="jules",
+                        session_id="10569058041124478902",
+                        status="dispatched",
+                    )
+                ],
+            )
+        ],
+    )
+    save_limen_file(tasks_path, lf)
+
+    spec = importlib.util.spec_from_file_location("recover_uut_plan_approval", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "live_jules_sessions", lambda: {"10569058041124478902": "awaiting_plan_approval"})
+    monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
+
+    assert module.main() == 0
+    task = load_limen_file(tasks_path).tasks[0]
+    assert task.status == "open"
+    assert task.target_agent == "codex"
+    assert "awaiting_plan_approval" in task.dispatch_log[-1].output
+
+
+def test_recover_task_id_limits_remote_reopen(tmp_path, monkeypatch):
+    tasks_path = tmp_path / "tasks.yaml"
+    now = dt.datetime.now(dt.timezone.utc)
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
+        tasks=[
+            Task(
+                id="REV-organvm-mirror-mirror-revenue-ship-0706",
+                title="Drive Mirror Mirror to deploy-ready",
+                repo="organvm/mirror-mirror",
+                target_agent="jules",
+                status="dispatched",
+                created=now.date(),
+                dispatch_log=[
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="jules",
+                        session_id="10569058041124478902",
+                        status="dispatched",
+                    )
+                ],
+            ),
+            Task(
+                id="HEAL-rebase-organvm-peer-audited--behavioral-blockchain-721",
+                title="rebase peer audited",
+                repo="organvm/peer-audited--behavioral-blockchain",
+                target_agent="jules",
+                status="dispatched",
+                created=now.date(),
+                dispatch_log=[
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="jules",
+                        session_id="14435689243703333273",
+                        status="dispatched",
+                    )
+                ],
+            ),
+        ],
+    )
+    save_limen_file(tasks_path, lf)
+
+    spec = importlib.util.spec_from_file_location("recover_uut_task_id", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(
+        module,
+        "live_jules_sessions",
+        lambda: {
+            "10569058041124478902": "awaiting_plan_approval",
+            "14435689243703333273": "awaiting_plan_approval",
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["recover", "--tasks", str(tasks_path), "--task-id", "REV-organvm-mirror-mirror-revenue-ship-0706", "--apply"],
+    )
+
+    assert module.main() == 0
+    mirror, peer = load_limen_file(tasks_path).tasks
+    assert mirror.status == "open"
+    assert mirror.target_agent == "codex"
+    assert peer.status == "dispatched"
+    assert peer.target_agent == "jules"
+
+
+def test_recover_defaults_to_local_tasks_yaml(tmp_path, monkeypatch):
+    now = dt.datetime.now(dt.timezone.utc)
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
+        tasks=[
+            Task(
+                id="HEAL-cifix-organvm-a-i-chat--exporter-49",
+                title="fix exporter CI",
+                repo="organvm/a-i-chat--exporter",
+                target_agent="jules",
+                status="failed",
+                created=now.date(),
+            )
+        ],
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    spec = importlib.util.spec_from_file_location("recover_uut_default_tasks", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LIMEN_TASKS", raising=False)
+    monkeypatch.setattr(sys, "argv", ["recover", "--apply"])
+
+    assert module.main() == 0
+    task = load_limen_file(tmp_path / "tasks.yaml").tasks[0]
+    assert task.status == "open"
+    assert task.target_agent == "codex"
