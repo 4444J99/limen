@@ -97122,6 +97122,47 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR merged \u2192 done"
+- id: REVIEW-peer-audited-726-thread-remediation-0707
+  title: Address live review blockers on peer-audited#726 before merge
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: jules
+  workstream: financial
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - review-feedback
+  - merge-blocker
+  - value-repo
+  - peer-audited
+  - p1
+  - revenue-path
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/726
+  context: 'Live GitHub state on 2026-07-07T17:06Z: PR #726 is OPEN,
+    mergeStateStatus=BEHIND, and merge is correctly blocked by 11 unresolved
+    Codex review threads. Do not merge or dismiss. Check out the same PR branch
+    limen/cifix-a-organvm-peer-audited--behavioral-blockchain-c905, update it
+    onto current main, and address the actual review findings: restore TierGuard
+    on contract creation, keep BannedUserGuard registered for contract routes,
+    reject client-supplied system messages in Ask Styx, handle null JSON bodies,
+    fail open on KV rate-limit failures, return structured 502 on upstream fetch
+    failures, reject empty upstream bodies, keep stream errors generic, preserve
+    enrolled waitlist guards, send onboarding after waitlist joins, and keep KYC
+    tier-upgrade onboarding. Run the narrow affected tests plus the PR CI gates.
+    Resolve only threads that are actually fixed, then confirm mergeStateStatus is
+    clean or record the exact remaining blocker.'
+  depends_on: []
+  created: '2026-07-07'
+  updated: '2026-07-07T17:06:00Z'
+  dispatch_log:
+  - timestamp: '2026-07-07T17:06:00Z'
+    agent: codex
+    session_id: direct-conductor
+    status: open
+    output: 'Owner task created after live GitHub verification showed #726 still
+      behind base with 11 unresolved review threads despite earlier green CI work.'
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-728
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#728
   repo: organvm/peer-audited--behavioral-blockchain
