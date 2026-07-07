@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T13:19:23+00:00`
+Generated: `2026-07-07T13:29:41+00:00`
 
 Status: `blocked`
 
@@ -23,15 +23,14 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T13:19:24.040580+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T13:29:41.942691+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 4 still running ; would launch 8 (cap 12) -> ['HEAL-rebase-organvm-limen-379', 'HEAL-cifix-organvm-organvm-engine-101', 'AW-SUBSTRATE-AGY-SCRATCH-CUSTODY', 'HEAL-rebase-stale-organvm-limen-383', 'HEAL-cifix-organvm-vigiles-aeternae--agon-cosmogonicum-7', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-713', 'HEAL-rebase-organvm-peer-audited--behavioral-blockchain-757', 'HEAL-cifix-organvm-organvm-engine-100']`.
-- Async skipped down lanes: `claude, gemini`.
-  - `claude`: usage health `rate-limited`; signal `tokens`; remaining `99784764` of `100000000`; headroom `100%`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 9 ; 2 still running ; would launch 10 (cap 12) -> ['AW-SUBSTRATE-DISK-TEMP', 'HEAL-cifix-organvm-limen-386', 'AW-SUBSTRATE-AGY-SCRATCH-CUSTODY', 'HEAL-cifix-organvm-organvm-engine-109', 'HEAL-cifix-organvm-organvm-engine-104', 'HEAL-cifix-organvm-petasum-super-petasum-151', 'HEAL-cifix-organvm-limen-403', 'HEAL-cifix-organvm-universal-mail--automation-131', 'HEAL-rebase-organvm-portfolio-169', 'HEAL-cifix-organvm-limen-409']`.
+- Async skipped down lanes: `gemini`.
   - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
 
 ## Prompt Packet Gate
@@ -63,8 +62,8 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `b1f75d1b96f0e59e97016ffe495f937d2dfa42c9`.
-- origin/main: `b1f75d1b96f0e59e97016ffe495f937d2dfa42c9`.
+- HEAD: `7a96797b8728b8b819609484ca2539ef058a5cd9`.
+- origin/main: `7a96797b8728b8b819609484ca2539ef058a5cd9`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `1`.
   - `tasks.yaml`
