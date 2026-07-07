@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 155
+      spent: 157
       per_agent:
         jules: 95
         gemini: 3
-        codex: 0
+        codex: 2
         opencode: 25
         agy: 31
         claude: 0
@@ -78647,11 +78647,11 @@ tasks:
   title: Wire the governance organ to advance autonomously
   repo: organvm/limen
   type: content
-  target_agent: jules
+  target_agent: codex
   workstream: governance
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-selffeed
   - pillar:governance
@@ -78673,7 +78673,7 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-07T14:02:22.779496Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-03T11:39:08.194857Z'
     agent: agy
@@ -78768,6 +78768,12 @@ tasks:
     agent: jules
     session_id: '16130482564936571038'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 16130482564936571038 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: ORG-legal-organ-firstslice-0703
   title: Build the first working vertical slice of the legal organ
   repo: organvm/limen
@@ -79361,10 +79367,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#721
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -79382,7 +79388,7 @@ tasks:
     [auto-emitted 2026-07-03 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-07T12:54:35.333007Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-04T10:38:04.849307Z'
     agent: codex
@@ -79491,6 +79497,12 @@ tasks:
     agent: jules
     session_id: '14435689243703333273'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 14435689243703333273 is awaiting_plan_approval\
+      \ \u2192 reopened"
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-725
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#725
   repo: organvm/peer-audited--behavioral-blockchain
@@ -87561,10 +87573,10 @@ tasks:
   title: fix failing CI on organvm/limen#438
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -87581,7 +87593,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T12:07:02.518428Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:26:42.299113Z'
     agent: codex
@@ -87718,6 +87730,12 @@ tasks:
     agent: jules
     session_id: '1477791658254346425'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 1477791658254346425 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-limen-439
   title: fix failing CI on organvm/limen#439
   repo: organvm/limen
@@ -94318,10 +94336,10 @@ tasks:
   title: fix failing CI on organvm/the-invisible-ledger#47
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -94338,7 +94356,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T13:19:10.331810Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:46:58.427125Z'
     agent: claude
@@ -94493,6 +94511,12 @@ tasks:
     agent: jules
     session_id: '4936411901026823521'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 4936411901026823521 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-rebase-organvm-the-invisible-ledger-52
   title: rebase/resolve conflicts on organvm/the-invisible-ledger#52
   repo: organvm/the-invisible-ledger
@@ -96420,10 +96444,10 @@ tasks:
     \ daemon body"
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -96447,7 +96471,7 @@ tasks:
     \ by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T14:07:48.561374Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-07T11:51:16.792799Z'
     agent: gemini
@@ -96482,6 +96506,12 @@ tasks:
     agent: jules
     session_id: '1184836163939652497'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 1184836163939652497 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-limen-384
   title: fix failing CI on organvm/limen#384
   repo: organvm/limen
@@ -96819,10 +96849,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#713
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -96839,7 +96869,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T13:58:30.629437Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-06T22:21:58.540280Z'
     agent: codex
@@ -96947,6 +96977,12 @@ tasks:
     agent: jules
     session_id: '9211233674846629016'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 9211233674846629016 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-rebase-stale-organvm-peer-audited--behavioral-blockchain-715
   title: "rebase organvm/peer-audited--behavioral-blockchain#715 onto current base\
     \ \u2014 branched far behind"
@@ -98187,10 +98223,10 @@ tasks:
   title: fix failing CI on organvm/bountyscope#13
   repo: organvm/bountyscope
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -98207,7 +98243,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T12:46:43.352702Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-06T21:59:24.656292Z'
     agent: claude
@@ -98256,6 +98292,12 @@ tasks:
     agent: jules
     session_id: '8884473714231098880'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 8884473714231098880 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-bountyscope-14
   title: fix failing CI on organvm/bountyscope#14
   repo: organvm/bountyscope
@@ -99521,10 +99563,10 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#100
   repo: organvm/organvm-engine
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -99540,7 +99582,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T13:58:30.629437Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-07T12:46:53.859778Z'
     agent: opencode
@@ -99560,6 +99602,12 @@ tasks:
     agent: jules
     session_id: '15551414894757122391'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 15551414894757122391 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-organvm-engine-101
   title: fix failing CI on organvm/organvm-engine#101
   repo: organvm/organvm-engine
@@ -102137,10 +102185,10 @@ tasks:
   title: fix failing CI on organvm/portfolio#146
   repo: organvm/portfolio
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -102155,7 +102203,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T13:08:49.777461Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-07T12:54:53.715477Z'
     agent: jules
@@ -102166,6 +102214,12 @@ tasks:
     agent: jules
     session_id: '8776200898623608256'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 8776200898623608256 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-portfolio-149
   title: fix failing CI on organvm/portfolio#149
   repo: organvm/portfolio
@@ -102625,10 +102679,10 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#103
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -102643,7 +102697,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T17:31:35.659576Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -102668,6 +102722,12 @@ tasks:
     agent: jules
     session_id: '12916459182728116972'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 12916459182728116972 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-domus-genoma-109
   title: fix failing CI on organvm/domus-genoma#109
   repo: organvm/domus-genoma
@@ -102698,7 +102758,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -102714,7 +102774,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T17:37:05.476884Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:25:17.252644Z'
     agent: codex
@@ -102726,6 +102786,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-domus-genoma-120
   title: fix failing CI on organvm/domus-genoma#120
   repo: organvm/domus-genoma
@@ -102829,10 +102894,10 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#125
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -102847,7 +102912,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T17:31:35.659576Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:28:49.330824Z'
     agent: jules
@@ -102858,6 +102923,12 @@ tasks:
     agent: jules
     session_id: '10886990250656750404'
     status: dispatched
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 10886990250656750404 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-domus-genoma-132
   title: fix failing CI on organvm/domus-genoma#132
   repo: organvm/domus-genoma
@@ -107407,7 +107478,7 @@ tasks:
   workstream: financial
   priority: critical
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-ship
   - revenue
@@ -107424,7 +107495,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T17:58:55.668962Z'
+  updated: '2026-07-07T18:06:06.715100Z'
   dispatch_log:
   - timestamp: '2026-07-07T15:42:38.620450Z'
     agent: codex
@@ -107465,6 +107536,11 @@ tasks:
     status: open
     output: "recover: jules session 10569058041124478902 is awaiting_plan_approval\
       \ \u2192 reopened"
+  - timestamp: '2026-07-07T18:06:06.715100Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-106
   title: fix failing CI on organvm/mirror-mirror#106
   repo: organvm/mirror-mirror
@@ -108171,11 +108247,11 @@ tasks:
     work
   repo: ~/Workspace/limen
   type: coordination
-  target_agent: agy
+  target_agent: codex
   workstream: repo-boil-up
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - always-working
   - receipt-first
@@ -108204,7 +108280,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T17:22:50.835455Z'
+  updated: '2026-07-07T18:05:01.499313Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:22:21.721601Z'
     agent: agy
@@ -108216,6 +108292,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-07T18:05:01.499313Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: AW-VALUE-REPOS
   title: Assign revenue/value repo work from existing ledgers
   description: 13 value repos define the funded work lane
