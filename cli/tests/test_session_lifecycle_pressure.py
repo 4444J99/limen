@@ -774,7 +774,7 @@ def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
         "dirty_truncated": False,
     }
     dispatch.watchdog_snapshot = lambda: {"healthy": True, "first_line": "[watchdog] HEALTHY"}
-    dispatch.async_probe_snapshot = lambda enabled: {"requested": enabled, "ok": True, "timed_out": False}
+    dispatch.async_probe_snapshot = lambda enabled, **_: {"requested": enabled, "ok": True, "timed_out": False}
 
     snapshot = dispatch.build_snapshot(type("Args", (), {"probe_async": False})())
     markdown = dispatch.render_markdown(snapshot)

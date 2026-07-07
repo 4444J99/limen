@@ -45,6 +45,10 @@ PROMPT_PACKET_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
 REPO_SURFACE_INDEX = PRIVATE_ROOT / "lifecycle" / "repo-surface-ledger.json"
 PRODUCT_LEDGER_INDEX = PRIVATE_ROOT / "lifecycle" / "product-ledger.json"
 VALUE_REPOS = ROOT / "value-repos.json"
+PROFILE_POSITIONING_RE = re.compile(
+    r"top[- ]tier|top\s+\d+(?:\.\d+)?%\s+engineering|top[- ]1%|top engineer|top engineers|world",
+    re.I,
+)
 
 STATUS_DONE = "done_from_receipt"
 STATUS_ASSIGNED = "assigned_from_existing_work"
@@ -185,7 +189,7 @@ def profile_receipt() -> dict[str, Any]:
         "ssot_total_words_numeric": ssot_words,
         "old_portfolio_link_count": text.count("4444j99.github.io/portfolio"),
         "live_portfolio_link_count": text.count("organvm.github.io/portfolio"),
-        "top_engineer_claim_present": bool(re.search(r"top engineer|top engineers|world", text, re.I)),
+        "top_engineer_claim_present": bool(PROFILE_POSITIONING_RE.search(text)),
         "frontdoor_present": (ROOT / "docs" / "positioning" / "_frontdoor.md").exists(),
     }
     stale_count = str(current["readme_total_repos"] or "") != str(ssot_repos or "")
