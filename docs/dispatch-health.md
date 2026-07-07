@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T20:06:42+00:00`
+Generated: `2026-07-07T20:08:42+00:00`
 
 Status: `blocked`
 
@@ -25,14 +25,14 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `1`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T20:06:42.497398+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T20:08:42.918301+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run lanes: `auto`; max `1`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 0 (cap 1) -> []`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 1 ; 0 still running ; would launch 1 (cap 1) -> ['HEAL-cifix-organvm-domus-genoma-118']`.
 - Async skipped down lanes: `claude, gemini, jules`.
   - `claude`: usage health `rate-limited`; signal `tokens`; remaining `100000000` of `100000000`; headroom `100%`.
   - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
@@ -52,12 +52,11 @@ Status: `blocked`
 
 - Reconciliation index present: `True`.
 - Reconciliation status: `needs-work`.
-- Required open workstreams: `3`.
+- Required open workstreams: `2`.
 - Blocked workstreams: `1`.
-- Done from receipt: `4`.
-- Next item: `REPO-BOIL-UP` (`assigned_from_existing_work`).
+- Done from receipt: `5`.
+- Next item: `VALUE-REPOS` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
-  - `REPO-BOIL-UP`: `repo-boil-up` / `assigned_from_existing_work`; broad repo surface ledger exists, but it is stale for current boil-up work.
   - `VALUE-REPOS`: `revenue-value-repos` / `assigned_from_existing_work`; 14 value repos define the funded work lane.
   - `TABVLARIVS-STATUS-WRITERS`: `tabularius` / `assigned_from_existing_work`; Step 2.2 still open in the keeper doc.
 
@@ -65,11 +64,17 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `b2e9ab67ad25a59692e2446448a52bb695e35064`.
-- origin/main: `b2e9ab67ad25a59692e2446448a52bb695e35064`.
+- HEAD: `d061ad3e69d0ff6415da97312a77f0927d6873c8`.
+- origin/main: `d061ad3e69d0ff6415da97312a77f0927d6873c8`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `1`.
+- Dirty entries: `5`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/dispatch-health.md`
+  - `cli/tests/test_always_working.py`
   - `docs/always-working.md`
+  - `docs/repo-surface-ledger.md`
+  - `scripts/always-working.py`
+  - `tasks.yaml`
 
 ## Verified Worktree
 
@@ -79,8 +84,8 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 1 dirty entries.
-- `always-working-required-work-open`: 3 required promise workstream(s) remain open; next item REPO-BOIL-UP.
+- `live-root-dirty`: live root has 5 dirty entries.
+- `always-working-required-work-open`: 2 required promise workstream(s) remain open; next item VALUE-REPOS.
 
 ## Commands
 

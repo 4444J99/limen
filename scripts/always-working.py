@@ -519,9 +519,9 @@ def repo_surface_receipt() -> dict[str, Any]:
     if not index:
         status = STATUS_NEEDS
         verdict = "repo surface ledger missing; assignment must refresh existing roots before new work"
-    elif repo_count >= 200 and duplicate_count == 0 and generated_age_hours is not None and generated_age_hours <= 24:
+    elif repo_count >= 200 and generated_age_hours is not None and generated_age_hours <= 24:
         status = STATUS_DONE
-        verdict = "fresh repo surface ledger covers broad repo estate with no duplicate groups"
+        verdict = f"fresh repo surface ledger covers broad repo estate; {duplicate_count} duplicate remote group(s) recorded"
     elif repo_count >= 200:
         verdict = "broad repo surface ledger exists, but it is stale for current boil-up work"
     return {

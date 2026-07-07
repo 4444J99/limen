@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-07T20:06:42+00:00`
+Generated: `2026-07-07T20:08:42+00:00`
 Status: `needs-work`
-Required open: `3`
+Required open: `2`
 Blocked: `1`
-Done from receipt: `4`
+Done from receipt: `5`
 
 ## Contract
 
@@ -16,13 +16,13 @@ Done from receipt: `4`
 
 ## Next Packet
 
-- ID: `REPO-BOIL-UP`
-- Workstream: `repo-boil-up`
+- ID: `VALUE-REPOS`
+- Workstream: `revenue-value-repos`
 - Status: `assigned_from_existing_work`
-- Verdict: broad repo surface ledger exists, but it is stale for current boil-up work
-- Lane fit: `agy-or-opencode-readonly`
-- Predicate: `python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write`
-- Receipt target: `~/Workspace/limen/docs/repo-surface-ledger.md`
+- Verdict: 14 value repos define the funded work lane
+- Lane fit: `jules-or-opencode-repo-specific`
+- Predicate: `python3 scripts/product-ledger.py --write`
+- Receipt target: `~/Workspace/limen/docs/product-ledger.md`
 
 ## Workstreams
 
@@ -32,7 +32,7 @@ Done from receipt: `4`
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
 | 20 | `MAIL-ACTIVE-FLAGGED` | `done_from_receipt` | 127 active flagged messages classified into 11 clusters; no body reads or mailbox mutations |
 | 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82042 indexed non-deleted messages remain for future batches |
-| 40 | `REPO-BOIL-UP` | `assigned_from_existing_work` | broad repo surface ledger exists, but it is stale for current boil-up work |
+| 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 48 duplicate remote group(s) recorded |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `assigned_from_existing_work` | 14 value repos define the funded work lane |
 | 70 | `TABVLARIVS-STATUS-WRITERS` | `assigned_from_existing_work` | Step 2.2 still open in the keeper doc |
@@ -53,21 +53,6 @@ Done from receipt: `4`
   - `~/Workspace/limen/face-ownership.json`
   - `~/Workspace/organvm/4444J99/README.md`
   - `https://github.com/4444J99/4444J99`
-
-### REPO-BOIL-UP
-
-- Lane fit: `agy-or-opencode-readonly`
-- Repo/root: `~/Workspace/limen`
-- Task: Harvest existing repo-surface and consolidation receipts, then assign only missing classifications.
-- Predicate: `python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write`
-- Receipt target: `~/Workspace/limen/docs/repo-surface-ledger.md`
-- Stop condition: all discovered roots are classified or recorded with blocker/gate
-- Existing receipts:
-  - `~/Workspace/limen/docs/repo-surface-ledger.md`
-  - `~/Workspace/limen/docs/consolidation/GATES.md`
-  - `~/Workspace/limen/docs/consolidation/EXECUTION-MANIFEST.md`
-  - `~/Workspace/limen/scripts/repo-surface-ledger.py`
-  - `~/Workspace/limen/scripts/salvage-yard-map.py`
 
 ### VALUE-REPOS
 

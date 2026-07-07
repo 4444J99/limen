@@ -323,6 +323,33 @@ def test_mail_historical_done_when_bounded_batch_is_atomized(monkeypatch, tmp_pa
     assert "bounded batch" in receipts["MAIL-HISTORICAL-BACKLOG"]["verdict"]
 
 
+def test_repo_surface_done_when_fresh_duplicates_are_recorded(monkeypatch, tmp_path):
+    mod = _load("always_working_repo_surface_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    lifecycle = root / ".limen-private" / "session-corpus" / "lifecycle"
+    index = lifecycle / "repo-surface-ledger.json"
+
+    lifecycle.mkdir(parents=True)
+    index.write_text(
+        json.dumps(
+            {
+                "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+                "repo_count": 300,
+                "duplicate_remotes": [{"remote_hash": "abc", "repos": ["r1", "r2"]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "REPO_SURFACE_INDEX", index)
+
+    receipt = mod.repo_surface_receipt()
+
+    assert receipt["status"] == mod.STATUS_DONE
+    assert "duplicate remote group(s) recorded" in receipt["verdict"]
+
+
 def test_dispatch_health_blocks_when_always_working_required_items_are_open(tmp_path):
     mod = _load("dispatch_health_always_working_uut", DISPATCH_HEALTH)
     index = tmp_path / "always-working.json"
