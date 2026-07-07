@@ -233,6 +233,7 @@ def read_plist(path: Path) -> dict[str, Any]:
             "LIMEN_LANES": env.get("LIMEN_LANES"),
             "LIMEN_DISPATCH_LANES": env.get("LIMEN_DISPATCH_LANES"),
             "LIMEN_LOCAL_LIMIT": env.get("LIMEN_LOCAL_LIMIT"),
+            "LIMEN_ASYNC_MAX": env.get("LIMEN_ASYNC_MAX"),
         },
     }
 
@@ -336,21 +337,35 @@ def watchdog_snapshot() -> dict[str, Any]:
     return summary
 
 
-def async_probe_snapshot(enabled: bool) -> dict[str, Any]:
+def _positive_int(value: Any, default: int) -> int:
+    try:
+        parsed = int(str(value))
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed > 0 else default
+
+
+def async_probe_snapshot(enabled: bool, *, launchd: dict[str, Any], plist: dict[str, Any]) -> dict[str, Any]:
     if not enabled:
         return {"requested": False}
+    loaded_env = launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
+    plist_env = plist.get("env") if isinstance(plist.get("env"), dict) else {}
+    lanes = str(loaded_env.get("LIMEN_DISPATCH_LANES") or plist_env.get("LIMEN_DISPATCH_LANES") or "auto")
+    max_runs = _positive_int(loaded_env.get("LIMEN_ASYNC_MAX") or plist_env.get("LIMEN_ASYNC_MAX"), 12)
     env = dict(os.environ)
     env["PYTHONPATH"] = f"{ROOT / 'cli' / 'src'}:{env.get('PYTHONPATH', '')}"
+    env["LIMEN_DISPATCH_LANES"] = lanes
+    env["LIMEN_ASYNC_MAX"] = str(max_runs)
     result = run_command(
         [
             "python3",
             "scripts/dispatch-async.py",
             "--lanes",
-            "auto",
+            lanes,
             "--per-lane",
             "3",
             "--max",
-            "12",
+            str(max_runs),
             "--dry-run",
         ],
         cwd=ROOT,
@@ -360,6 +375,8 @@ def async_probe_snapshot(enabled: bool) -> dict[str, Any]:
     summary = command_summary(result)
     output = f"{result.get('stdout') or ''}\n{result.get('stderr') or ''}"
     summary["requested"] = True
+    summary["lanes"] = lanes
+    summary["max"] = max_runs
     summary["ok"] = result.get("returncode") == 0 and not result.get("timed_out")
     summary["skipped_down_lanes"] = parse_async_skipped_down_lanes(output)
     summary["skipped_down_reasons"] = skipped_down_lane_reasons(summary["skipped_down_lanes"], ROOT)
@@ -579,14 +596,16 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
 
 
 def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
+    plist = read_plist(HEARTBEAT_PLIST)
+    launchd = launchd_snapshot()
     snapshot: dict[str, Any] = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-        "heartbeat_plist": read_plist(HEARTBEAT_PLIST),
-        "launchd": launchd_snapshot(),
+        "heartbeat_plist": plist,
+        "launchd": launchd,
         "live_root_git": git_snapshot(LIVE_ROOT),
         "verified_worktree": git_snapshot(ROOT),
         "watchdog": watchdog_snapshot(),
-        "async_probe": async_probe_snapshot(bool(args.probe_async)),
+        "async_probe": async_probe_snapshot(bool(args.probe_async), launchd=launchd, plist=plist),
         "prompt_packets": prompt_packet_snapshot(),
         "always_working": always_working_snapshot(),
     }
@@ -626,17 +645,20 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Plist LIMEN_ROOT: `{(plist.get('env') or {}).get('LIMEN_ROOT')}`.",
         f"- Plist LIMEN_DISPATCH_ASYNC: `{(plist.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
         f"- Plist LIMEN_DISPATCH_LANES: `{(plist.get('env') or {}).get('LIMEN_DISPATCH_LANES')}`.",
+        f"- Plist LIMEN_ASYNC_MAX: `{(plist.get('env') or {}).get('LIMEN_ASYNC_MAX')}`.",
         f"- Plist LIMEN_LANES: `{(plist.get('env') or {}).get('LIMEN_LANES')}`.",
         f"- Loaded launchd state: `{loaded.get('state')}` pid `{loaded.get('pid')}`.",
         f"- Loaded LIMEN_ROOT: `{(loaded.get('env') or {}).get('LIMEN_ROOT')}`.",
         f"- Loaded LIMEN_DISPATCH_ASYNC: `{(loaded.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
         f"- Loaded LIMEN_DISPATCH_LANES: `{(loaded.get('env') or {}).get('LIMEN_DISPATCH_LANES')}`.",
+        f"- Loaded LIMEN_ASYNC_MAX: `{(loaded.get('env') or {}).get('LIMEN_ASYNC_MAX')}`.",
         f"- Loaded LIMEN_LANES: `{(loaded.get('env') or {}).get('LIMEN_LANES')}`.",
         f"- Watchdog dry-run healthy: `{watchdog.get('healthy')}`; `{watchdog.get('first_line')}`.",
         "",
         "## Async Dispatch",
         "",
         f"- Async dry-run requested: `{async_probe.get('requested')}`.",
+        f"- Async dry-run lanes: `{async_probe.get('lanes', '')}`; max `{async_probe.get('max', '')}`.",
         f"- Async dry-run ok: `{async_probe.get('ok')}`; timed out `{async_probe.get('timed_out', False)}`.",
         f"- Async dry-run summary: `{async_probe.get('last_line', '')}`.",
     ]
@@ -733,7 +755,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Refresh always-working reconciliation: `python3 scripts/always-working.py --write`",
         "- Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`",
         "- Probe heartbeat: `python3 scripts/watchdog.py --dry-run`",
-        "- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run`",
+        f"- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes {async_probe.get('lanes') or 'auto'} --per-lane 3 --max {async_probe.get('max') or 12} --dry-run`",
         "",
     ]
     return "\n".join(lines)
