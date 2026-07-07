@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 167
+      spent: 169
       per_agent:
         jules: 100
         gemini: 3
-        codex: 7
+        codex: 9
         opencode: 25
         agy: 31
         claude: 0
@@ -103042,13 +103042,17 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T19:07:30.508529Z'
+  updated: '2026-07-07T19:32:36.326103Z'
   dispatch_log:
   - timestamp: '2026-07-07T19:07:30.508529Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T19:32:36.326103Z'
+    agent: codex
+    session_id: https://github.com/organvm/domus-genoma/pull/195
+    status: dispatched
 - id: HEAL-cifix-organvm-domus-genoma-133
   title: fix failing CI on organvm/domus-genoma#133
   repo: organvm/domus-genoma
@@ -107660,7 +107664,7 @@ tasks:
   target_agent: codex
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -107678,7 +107682,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T19:29:31.054081Z'
+  updated: '2026-07-07T19:32:44.544781Z'
   dispatch_log:
   - timestamp: '2026-07-07T16:16:30.076888Z'
     agent: codex
@@ -107731,6 +107735,11 @@ tasks:
     status: open
     output: "recover: jules session 15205446705144059680 is awaiting_plan_approval\
       \ \u2192 reopened"
+  - timestamp: '2026-07-07T19:32:44.544781Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-107
   title: fix failing CI on organvm/mirror-mirror#107
   repo: organvm/mirror-mirror
