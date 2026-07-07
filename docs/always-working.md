@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-07T20:10:06+00:00`
+Generated: `2026-07-07T20:15:17+00:00`
 Status: `needs-work`
-Required open: `2`
+Required open: `1`
 Blocked: `1`
-Done from receipt: `5`
+Done from receipt: `6`
 
 ## Contract
 
@@ -16,13 +16,13 @@ Done from receipt: `5`
 
 ## Next Packet
 
-- ID: `VALUE-REPOS`
-- Workstream: `revenue-value-repos`
+- ID: `TABVLARIVS-STATUS-WRITERS`
+- Workstream: `tabularius`
 - Status: `assigned_from_existing_work`
-- Verdict: 14 value repos define the funded work lane
-- Lane fit: `jules-or-opencode-repo-specific`
-- Predicate: `python3 scripts/product-ledger.py --write`
-- Receipt target: `~/Workspace/limen/docs/product-ledger.md`
+- Verdict: Step 2.2 still open in the keeper doc
+- Lane fit: `codex-integrator`
+- Predicate: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q`
+- Receipt target: `~/Workspace/limen/docs/tabularius-record-keeper.md`
 
 ## Workstreams
 
@@ -34,7 +34,7 @@ Done from receipt: `5`
 | 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82042 indexed non-deleted messages remain for future batches |
 | 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 48 duplicate remote group(s) recorded |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
-| 60 | `VALUE-REPOS` | `assigned_from_existing_work` | 14 value repos define the funded work lane |
+| 60 | `VALUE-REPOS` | `done_from_receipt` | top 5 value repos have owner receipts; 14 value repos are sell-ready in the product ledger |
 | 70 | `TABVLARIVS-STATUS-WRITERS` | `assigned_from_existing_work` | Step 2.2 still open in the keeper doc |
 
 ## Assignment Packets
@@ -53,19 +53,6 @@ Done from receipt: `5`
   - `~/Workspace/limen/face-ownership.json`
   - `~/Workspace/organvm/4444J99/README.md`
   - `https://github.com/4444J99/4444J99`
-
-### VALUE-REPOS
-
-- Lane fit: `jules-or-opencode-repo-specific`
-- Repo/root: `organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/peer-audited--behavioral-blockchain,organvm/mirror-mirror`
-- Task: Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.
-- Predicate: `python3 scripts/product-ledger.py --write`
-- Receipt target: `~/Workspace/limen/docs/product-ledger.md`
-- Stop condition: top value repo has shipped PR, open PR with predicate, owner task, or blocker
-- Existing receipts:
-  - `~/Workspace/limen/value-repos.json`
-  - `~/Workspace/limen/docs/product-ledger.md`
-  - `~/Workspace/limen/docs/positioning/_frontdoor.md`
 
 ### TABVLARIVS-STATUS-WRITERS
 

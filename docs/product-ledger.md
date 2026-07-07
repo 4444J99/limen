@@ -1,16 +1,16 @@
 # Product Ledger
 
-Generated: `2026-07-07T16:37:58+00:00`
-Products: `17934`
-Blocked local: `238`
+Generated: `2026-07-07T20:12:41+00:00`
+Products: `17881`
+Blocked local: `244`
 Global status: `active`
 
 ## Counts
 
-- states: `alpha` 174, `blocked_local` 238, `build` 361, `idea` 15566, `omega` 439, `ship` 14, `verify` 1142
-- dispositions: `blocked_local` 3, `build` 16050, `consolidate` 49, `human-gated` 235, `publish-stage` 2, `retire` 439, `sell-ready` 14, `verify` 1142
-- source_kinds: `prompt` 15566, `repo` 16, `repo-surface` 172, `task` 2180
-- outward_paths: `not_applicable` 17367, `publish-stage` 5, `revenue-path` 379, `seo-proof` 183
+- states: `alpha` 114, `blocked_local` 244, `build` 358, `idea` 15566, `omega` 439, `ship` 14, `verify` 1146
+- dispositions: `blocked_local` 3, `build` 16000, `consolidate` 36, `human-gated` 241, `publish-stage` 2, `retire` 439, `sell-ready` 14, `verify` 1146
+- source_kinds: `prompt` 15566, `repo` 16, `repo-surface` 112, `task` 2187
+- outward_paths: `not_applicable` 17376, `publish-stage` 4, `revenue-path` 380, `seo-proof` 121
 
 ## Next Unblocked Products
 
@@ -29,7 +29,7 @@ Global status: `active`
 | `PROD-repo-bba57f954f38831a` | `ship` | `sell-ready` | `publish-stage` | `organvm/my-knowledge-base` |
 | `PROD-repo-bd98668bd51abb4d` | `ship` | `sell-ready` | `seo-proof` | `organvm/the-invisible-ledger` |
 | `PROD-repo-daf8c129eb8dc5d1` | `ship` | `sell-ready` | `seo-proof` | `organvm/domus-genoma` |
-| `PROD-repo-f39284afe7b47f8f` | `ship` | `sell-ready` | `publish-stage` | `organvm/peer-audited--behavioral-blockchain` |
+| `PROD-repo-f39284afe7b47f8f` | `ship` | `sell-ready` | `seo-proof` | `organvm/peer-audited--behavioral-blockchain` |
 | `PROD-task-00d1f2b646b2f930` | `verify` | `verify` | `revenue-path` | `organvm/public-record-data-scrapper` |
 | `PROD-task-00eeb1ef369b06af` | `verify` | `verify` | `revenue-path` | `organvm/universal-mail--automation` |
 | `PROD-task-033ffd501955cc3c` | `verify` | `verify` | `revenue-path` | `organvm/universal-mail--automation` |

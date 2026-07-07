@@ -104,6 +104,18 @@ def load_json(path: Path, default: Any) -> Any:
         return default
 
 
+def iso_age_hours(generated: Any) -> float | None:
+    if not generated:
+        return None
+    try:
+        generated_at = dt.datetime.fromisoformat(str(generated).replace("Z", "+00:00"))
+        if generated_at.tzinfo is None:
+            generated_at = generated_at.replace(tzinfo=dt.timezone.utc)
+        return round((dt.datetime.now(dt.timezone.utc) - generated_at).total_seconds() / 3600, 1)
+    except ValueError:
+        return None
+
+
 def run_command(args: list[str], *, cwd: Path = ROOT, timeout: int = 30) -> dict[str, Any]:
     try:
         proc = subprocess.run(
@@ -499,18 +511,7 @@ def mail_receipts() -> list[dict[str, Any]]:
 def repo_surface_receipt() -> dict[str, Any]:
     index = load_json(REPO_SURFACE_INDEX, {})
     generated = index.get("generated_at") if isinstance(index, dict) else None
-    generated_age_hours = None
-    if generated:
-        try:
-            generated_at = dt.datetime.fromisoformat(str(generated).replace("Z", "+00:00"))
-            if generated_at.tzinfo is None:
-                generated_at = generated_at.replace(tzinfo=dt.timezone.utc)
-            generated_age_hours = round(
-                (dt.datetime.now(dt.timezone.utc) - generated_at).total_seconds() / 3600,
-                1,
-            )
-        except ValueError:
-            generated_age_hours = None
+    generated_age_hours = iso_age_hours(generated)
     repo_count = int(index.get("repo_count") or 0) if isinstance(index, dict) else 0
     duplicate_groups = index.get("duplicate_remotes") if isinstance(index, dict) else []
     duplicate_count = len(duplicate_groups) if isinstance(duplicate_groups, list) else 0
@@ -592,11 +593,60 @@ def prompt_packet_receipt() -> dict[str, Any]:
 
 def value_repo_receipt() -> dict[str, Any]:
     values = load_json(VALUE_REPOS, {})
-    repos = values.get("repos") if isinstance(values, dict) else []
+    repos = [str(repo) for repo in values.get("repos", [])] if isinstance(values, dict) else []
     product = load_json(PRODUCT_LEDGER_INDEX, {})
     next_rows = product.get("next_unblocked") if isinstance(product, dict) else []
-    status = STATUS_ASSIGNED if repos else STATUS_BLOCKED
-    verdict = f"{len(repos or [])} value repos define the funded work lane" if repos else "value repo list missing or empty"
+    products = product.get("products") if isinstance(product, dict) else []
+    products = products if isinstance(products, list) else []
+    generated = product.get("generated_at") if isinstance(product, dict) else None
+    generated_age_hours = iso_age_hours(generated)
+    top_repos = repos[:5]
+    sell_ready_owners = {
+        str(row.get("owner"))
+        for row in products
+        if isinstance(row, dict)
+        and row.get("source_kind") == "repo"
+        and row.get("state") == "ship"
+        and row.get("disposition") == "sell-ready"
+    }
+    independent_receipt_owners = {
+        str(row.get("owner"))
+        for row in products
+        if isinstance(row, dict)
+        and row.get("source_kind") != "repo"
+        and str(row.get("owner") or "") in repos
+    }
+    missing_sell_ready = [repo for repo in repos if repo not in sell_ready_owners]
+    missing_top_receipts = [repo for repo in top_repos if repo not in independent_receipt_owners]
+    fresh_product = generated_age_hours is not None and generated_age_hours <= 24
+    if not repos:
+        status = STATUS_BLOCKED
+        verdict = "value repo list missing or empty"
+    elif (
+        product
+        and fresh_product
+        and not missing_sell_ready
+        and not missing_top_receipts
+        and isinstance(next_rows, list)
+        and next_rows
+    ):
+        status = STATUS_DONE
+        verdict = (
+            f"top {len(top_repos)} value repos have owner receipts; "
+            f"{len(sell_ready_owners & set(repos))} value repos are sell-ready in the product ledger"
+        )
+    elif product and not fresh_product:
+        status = STATUS_ASSIGNED
+        verdict = "value repo product ledger exists, but it is stale for current funded-lane steering"
+    elif product and missing_top_receipts:
+        status = STATUS_ASSIGNED
+        verdict = "top value repos still need owner receipts: " + ", ".join(missing_top_receipts[:5])
+    elif product and missing_sell_ready:
+        status = STATUS_ASSIGNED
+        verdict = "value repo product ledger is missing sell-ready rows: " + ", ".join(missing_sell_ready[:5])
+    else:
+        status = STATUS_ASSIGNED
+        verdict = f"{len(repos)} value repos define the funded work lane"
     return {
         "id": "VALUE-REPOS",
         "workstream": "revenue-value-repos",
@@ -605,10 +655,16 @@ def value_repo_receipt() -> dict[str, Any]:
         "title": "Assign revenue/value repo work from existing ledgers",
         "verdict": verdict,
         "evidence": {
-            "value_repo_count": len(repos or []),
-            "top_value_repos": list(repos or [])[:8],
+            "value_repo_count": len(repos),
+            "top_value_repos": repos[:8],
             "product_ledger_present": bool(product),
+            "product_ledger_generated_at": generated,
+            "product_ledger_age_hours": generated_age_hours,
             "next_unblocked_count": len(next_rows) if isinstance(next_rows, list) else 0,
+            "sell_ready_value_repo_count": len(sell_ready_owners & set(repos)),
+            "top_value_repos_with_owner_receipts": [repo for repo in top_repos if repo in independent_receipt_owners],
+            "missing_top_value_receipts": missing_top_receipts,
+            "missing_sell_ready_value_repos": missing_sell_ready,
         },
         "existing_receipts": [
             relpath(ROOT / "value-repos.json"),
@@ -617,7 +673,7 @@ def value_repo_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "jules-or-opencode-repo-specific",
-            "repo": ",".join(list(repos or [])[:5]),
+            "repo": ",".join(repos[:5]),
             "task": "Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.",
             "predicate": "python3 scripts/product-ledger.py --write",
             "receipt_target": relpath(ROOT / "docs" / "product-ledger.md"),

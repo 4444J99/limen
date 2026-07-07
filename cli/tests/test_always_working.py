@@ -350,6 +350,65 @@ def test_repo_surface_done_when_fresh_duplicates_are_recorded(monkeypatch, tmp_p
     assert "duplicate remote group(s) recorded" in receipt["verdict"]
 
 
+def test_value_repos_done_when_fresh_product_ledger_has_owner_receipts(monkeypatch, tmp_path):
+    mod = _load("always_working_value_repos_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    lifecycle = root / ".limen-private" / "session-corpus" / "lifecycle"
+    value_repos = root / "value-repos.json"
+    product_index = lifecycle / "product-ledger.json"
+    repos = [
+        "organvm/a-i-chat--exporter",
+        "organvm/my-knowledge-base",
+        "organvm/public-record-data-scrapper",
+        "organvm/peer-audited--behavioral-blockchain",
+        "organvm/mirror-mirror",
+        "organvm/universal-mail--automation",
+    ]
+    products = [
+        {
+            "source_kind": "repo",
+            "owner": repo,
+            "state": "ship",
+            "disposition": "sell-ready",
+            "outward_path": "seo-proof",
+        }
+        for repo in repos
+    ]
+    products.extend(
+        {
+            "source_kind": "task",
+            "owner": repo,
+            "state": "verify",
+            "disposition": "verify",
+            "outward_path": "revenue-path",
+        }
+        for repo in repos[:5]
+    )
+
+    lifecycle.mkdir(parents=True)
+    value_repos.write_text(json.dumps({"repos": repos}), encoding="utf-8")
+    product_index.write_text(
+        json.dumps(
+            {
+                "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+                "next_unblocked": [{"id": "p1"}],
+                "products": products,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "VALUE_REPOS", value_repos)
+    monkeypatch.setattr(mod, "PRODUCT_LEDGER_INDEX", product_index)
+
+    receipt = mod.value_repo_receipt()
+
+    assert receipt["status"] == mod.STATUS_DONE
+    assert receipt["evidence"]["sell_ready_value_repo_count"] == len(repos)
+    assert receipt["evidence"]["missing_top_value_receipts"] == []
+
+
 def test_dispatch_health_blocks_when_always_working_required_items_are_open(tmp_path):
     mod = _load("dispatch_health_always_working_uut", DISPATCH_HEALTH)
     index = tmp_path / "always-working.json"

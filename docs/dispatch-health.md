@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T20:10:06+00:00`
+Generated: `2026-07-07T20:15:15+00:00`
 
 Status: `blocked`
 
@@ -25,7 +25,7 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `1`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T20:10:06.946640+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T20:15:15.971475+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -52,23 +52,25 @@ Status: `blocked`
 
 - Reconciliation index present: `True`.
 - Reconciliation status: `needs-work`.
-- Required open workstreams: `2`.
+- Required open workstreams: `1`.
 - Blocked workstreams: `1`.
-- Done from receipt: `5`.
-- Next item: `VALUE-REPOS` (`assigned_from_existing_work`).
+- Done from receipt: `6`.
+- Next item: `TABVLARIVS-STATUS-WRITERS` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
-  - `VALUE-REPOS`: `revenue-value-repos` / `assigned_from_existing_work`; 14 value repos define the funded work lane.
   - `TABVLARIVS-STATUS-WRITERS`: `tabularius` / `assigned_from_existing_work`; Step 2.2 still open in the keeper doc.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `e768febe0a11f0cd0d88ef26913a57d5a47cf1fa`.
-- origin/main: `e768febe0a11f0cd0d88ef26913a57d5a47cf1fa`.
+- HEAD: `537aea7c36f6b8630cc05b1b03e71ffb9efa69f4`.
+- origin/main: `537aea7c36f6b8630cc05b1b03e71ffb9efa69f4`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `1`.
+- Dirty entries: `4`.
+  - `cli/tests/test_always_working.py`
   - `docs/always-working.md`
+  - `docs/product-ledger.md`
+  - `scripts/always-working.py`
 
 ## Verified Worktree
 
@@ -78,8 +80,8 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 1 dirty entries.
-- `always-working-required-work-open`: 2 required promise workstream(s) remain open; next item VALUE-REPOS.
+- `live-root-dirty`: live root has 4 dirty entries.
+- `always-working-required-work-open`: 1 required promise workstream(s) remain open; next item TABVLARIVS-STATUS-WRITERS.
 
 ## Commands
 
