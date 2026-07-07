@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-07-06T15:41:53+00:00`
+Generated: `2026-07-07T00:18:31+00:00`
 
 ## Canonical Handling
 
@@ -17,34 +17,34 @@ Generated: `2026-07-06T15:41:53+00:00`
 - Network health receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/network-health.json`.
 - Dispatch health receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/dispatch-health.json`.
 - Live root gate receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/live-root-gate.json`.
-- Redacted local prompt coverage: `15291` files, `131758` prompt-like events.
+- Redacted local prompt coverage: `15590` files, `136694` prompt-like events.
 - Codex classified sessions: `887`.
-- Worktree debt roots: `7`.
+- Worktree debt roots: `69`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
 - Session pressure hook wired: `True`; last pressure snapshot present: `True`.
-- Local lifecycle footprint: `33.2 GiB`.
+- Local lifecycle footprint: `39.7 GiB`.
 - Capability substrate detected: `11` roots, `1374` skill files, `47` plugin/MCP manifests.
 - Capability resurfacing receipt present/current: `True`/`True`; activation candidates `30`.
 - Local network substrate: status `healthy`, mode `observe`, route `en0` via `192.168.1.1`.
-- Dispatch substrate: status `healthy`, launchd `running`, live root `main`, dirty entries `0`, async dry-run ok `True`.
+- Dispatch substrate: status `blocked`, launchd `running`, live root `main`, dirty entries `4`, async dry-run ok `True`.
 - Live root gate: status `ready`, branch `main`, unique commits `0`, dirty entries `0`, launchd env drift `0`.
 - GitHub consolidation gate: `0` source repos, `0` collision groups, collision packet complete `True`, App token wired `True`.
 
 ## Parked / Hung Workstreams
 
-- By category: `auth_credentials` 2, `cloud_runtime` 1, `local_lean` 1, `owner_state` 1, `private_absorption` 1, `worktree_lifecycle` 2.
-- By status: `needs_refresh` 1, `parked` 7.
+- By category: `auth_credentials` 2, `cloud_runtime` 1, `dispatch_lifecycle` 1, `local_lean` 1, `owner_state` 1, `worktree_lifecycle` 2.
+- By status: `needs_human_gate` 1, `parked` 7.
 
 | ID | Category | Status | Evidence | Owner | Route |
 |---|---|---|---|---|---|
 | `credential-codex-auth-sessions` | `auth_credentials` | `parked` | 405 Codex sessions classified as auth/credential work; states: ALIVE 1, CLOSED 364, PARKED 40 | credential workstream | Keep parked unless a future scoped task explicitly requires the account action. |
 | `cloud-credential-handles-unconfigured` | `auth_credentials` | `parked` | 6 credential/deploy handles absent; 0 present. No values inspected. | credential workstream | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| `worktree-remote-branches-missing` | `worktree_lifecycle` | `parked` | 5 git worktree roots still lack remote-branch preservation proof (108 raw missing; 103 closed by live scanner receipts). | worktree lifecycle | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
-| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 7 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
-| `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 15 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
-| `private-raw-materialization-not-receipted` | `private_absorption` | `needs_refresh` | The latest session corpus inventory did not include a materialization receipt. | limen private cartridge | Run `session-corpus-ledger.py --write --all --materialize` when absorbing raw local files. |
-| `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 33.2 GiB (24.6 GiB worktrees, 8.5 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
+| `worktree-remote-branches-missing` | `worktree_lifecycle` | `parked` | 48 git worktree roots still lack remote-branch preservation proof (398 raw missing; 350 closed by live scanner receipts). | worktree lifecycle | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
+| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 69 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
+| `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
+| `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 39.7 GiB (31.1 GiB worktrees, 8.5 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
+| `dispatch-heartbeat-substrate-unhealthy` | `dispatch_lifecycle` | `needs_human_gate` | Dispatch-health receipt is `blocked` with 1 blocker(s): live-root-dirty. | dispatch heartbeat substrate | Use `docs/live-root-gate.md` to preserve/reconcile the live Limen root and reload launchd only under an explicit operator gate; stop before reset, branch switch, task-board edits, or async enablement. |
 
 ## Private Output
 

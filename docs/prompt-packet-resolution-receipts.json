@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-28T03:37:04Z",
+  "generated_at": "2026-07-07T00:43:28Z",
   "receipts": [
     {
       "packet": "packet-prompt-batch-critical-stalled-review-001-worktree_lifecycle",
@@ -574,6 +574,48 @@
           "status": "local_recovery_context_recorded",
           "evidence": "Redacted prompt lifecycle row exists; no worktree_slug or cwd_repo_hint is present; private Codex session source record exists.",
           "next_action": "No local root to preserve; do not delegate without a later explicit infrastructure diagnostic task."
+        }
+      ]
+    },
+    {
+      "packet": "packet-prompt-batch-critical-stalled-review-001-github_review",
+      "source_batch": "prompt-batch-critical-stalled-review-001",
+      "family": "github_review",
+      "status": "owner-recorded",
+      "classification": "stalled harden root shipped through a merged owner PR with local and GitHub predicate evidence",
+      "evidence": [
+        "resolved root bld-narratological-algorithmic-lenses-harden-6b26 to owner repo organvm/narratological-algorithmic-lenses",
+        "preserved the existing dirty hardening patch from /Users/4jp/Workspace/a-organvm/narratological-algorithmic-lenses as commit 91368cd on limen/bld-narratological-algorithmic-lenses-harden-20260707",
+        "rebased the branch onto origin/main 1a8d78d before opening the PR",
+        "opened https://github.com/organvm/narratological-algorithmic-lenses/pull/47",
+        "gh pr view 47 reported OPEN, MERGEABLE, head 91368cd, with CI running at 2026-07-07T00:41:27Z",
+        "GitHub CI, Release Drafter, and Secret Pattern Detection passed on PR #47",
+        "merged PR #47 at 2026-07-07T00:43:08Z as db9181a9cb76f63ff5ca882b22832c3ac35983a4",
+        "uv run ruff check .",
+        "uv run mypy .",
+        "uv run pytest (325 passed, 1 skipped)",
+        "uv run python scripts/test_api_smoke.py",
+        "uv run python scripts/test_mcp_smoke.py",
+        "npm ci",
+        "npm run web:test (6 files / 17 tests passed)",
+        "npm run lint -w packages/web (exit 0; one existing react-refresh warning for StatusDashboard helper export)",
+        "npm run typecheck -w packages/web",
+        "npm run web:build",
+        "git diff --check origin/main..HEAD"
+      ],
+      "next_action": "No further work remains for this packet. Do not rehydrate the historical harden root; use merged PR #47 as the owner receipt.",
+      "roots": [
+        {
+          "root": "bld-narratological-algorithmic-lenses-harden-6b26",
+          "status": "merged_pr_shipped",
+          "repo": "organvm/narratological-algorithmic-lenses",
+          "branch": "limen/bld-narratological-algorithmic-lenses-harden-20260707",
+          "commit": "91368cd70a71c4cd081989dcb7cbe0328f437d1b",
+          "merge_commit": "db9181a9cb76f63ff5ca882b22832c3ac35983a4",
+          "pr": "https://github.com/organvm/narratological-algorithmic-lenses/pull/47",
+          "predicate": "uv run ruff check . && uv run mypy . && uv run pytest && uv run python scripts/test_api_smoke.py && uv run python scripts/test_mcp_smoke.py && npm ci && npm run web:test && npm run lint -w packages/web && npm run typecheck -w packages/web && npm run web:build",
+          "evidence": "The harden patch adds API request bounds, structured error handling/logging, CLI error hardening, web lint/typecheck CI gates, and a local ESLint flat config; all local predicates and GitHub checks passed before merge.",
+          "next_action": "Shipped in PR #47; no remaining owner action."
         }
       ]
     }

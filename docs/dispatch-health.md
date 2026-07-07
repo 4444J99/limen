@@ -1,8 +1,8 @@
 # Dispatch Health
 
-Generated: `2026-07-06T15:49:44+00:00`
+Generated: `2026-07-07T00:43:50+00:00`
 
-Status: `healthy`
+Status: `blocked`
 
 ## Incident Class
 
@@ -23,26 +23,42 @@ Status: `healthy`
 - Loaded LIMEN_DISPATCH_ASYNC: `1`.
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-06T15:49:44.556845+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T00:43:50.287985+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 11 still running ; would launch 1 (cap 12) -> ['HEAL-cifix-organvm-limen-434']`.
-- Async skipped down lanes: `claude, gemini, jules`.
-  - `claude`: manual down file `logs/lanes-down.txt`; 2026-07-06 operator override: subscription/account nearly maxed for ~2 days.
-  - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
-  - `jules`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `100`; headroom `0%`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 2 ; 10 still running ; would launch 2 (cap 12) -> ['HEAL-rebase-organvm-universal-mail--automation-119', 'HEAL-cifix-organvm-the-invisible-ledger-47']`.
+
+## Prompt Packet Gate
+
+- Prompt packet index present: `True`.
+- Prompt packet status: `clear`.
+- Open prompt packets: `0`.
+- Conductor-required packets: `0`.
+- Ready-after-predicate packets: `0`.
+- Recorded packets: `8`.
+- Public packet ledger: `~/Workspace/limen/docs/prompt-packet-ledger.md`.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `32eb8dbd599e53e22cf678a8a023c402eb7e0df3`.
-- origin/main: `32eb8dbd599e53e22cf678a8a023c402eb7e0df3`.
+- HEAD: `72f4e4eab294cefc6ce249ba440f3673a7c1c500`.
+- origin/main: `72f4e4eab294cefc6ce249ba440f3673a7c1c500`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `0`.
+- Dirty entries: `7`.
+- Ignored generated receipt dirty entries: `2`.
+  - `docs/session-attack-paths.md`
+  - `docs/session-lifecycle-blockers.md`
+  - `docs/current-session-fanout.md`
+  - `docs/prompt-batch-review-ledger.md`
+  - `docs/prompt-lifecycle-ledger.md`
+  - `docs/prompt-packet-ledger.md`
+  - `docs/prompt-packet-resolution-receipts.json`
+  - `docs/prompt-priority-map.md`
+  - `tasks.yaml`
 
 ## Verified Worktree
 
@@ -52,12 +68,13 @@ Status: `healthy`
 
 ## Blockers
 
-- none
+- `live-root-dirty`: live root has 7 dirty entries.
 
 ## Commands
 
 - Refresh this receipt: `python3 scripts/dispatch-health.py --write --probe-async`
 - Refresh the operator gate: `python3 scripts/live-root-gate.py --write`
+- Refresh prompt packets: `python3 scripts/prompt-packet-ledger.py --write`
 - Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`
 - Probe heartbeat: `python3 scripts/watchdog.py --dry-run`
 - Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run`
