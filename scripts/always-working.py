@@ -684,27 +684,52 @@ def value_repo_receipt() -> dict[str, Any]:
 
 def tabularius_receipt() -> dict[str, Any]:
     doc = ROOT / "docs" / "tabularius-record-keeper.md"
+    audit_doc = ROOT / "docs" / "tabularius-writer-audit.md"
+    audit_log = ROOT / "logs" / "task-writer-audit.json"
     text = ""
+    audit_text = ""
     try:
         text = doc.read_text(encoding="utf-8", errors="replace")
     except OSError:
         pass
-    step_22_open = "- [ ] Step 2.2" in text
+    try:
+        audit_text = audit_doc.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        pass
+    audit = load_json(audit_log, {})
+    packet_counts = audit.get("owner_packet_counts") if isinstance(audit, dict) else {}
+    unclassified = int((packet_counts or {}).get("TAB-UNCLASSIFIED-WRITER") or 0) if isinstance(packet_counts, dict) else 0
+    step_22_open = bool(re.search(r"(?m)^- \[ \] Step 2\.2(?:\s|$|—)", text))
+    owner_recorded = "tabularius-writer-audit:owner-recorded" in audit_text and unclassified == 0
+    status = STATUS_DONE if not step_22_open or owner_recorded else STATUS_ASSIGNED
+    if owner_recorded and step_22_open:
+        verdict = "Step 2.2 status/result writers are owner-recorded in the tracked writer audit"
+    elif step_22_open:
+        verdict = "Step 2.2 still open in the keeper doc"
+    else:
+        verdict = "status-mutator tier is recorded closed"
     return {
         "id": "TABVLARIVS-STATUS-WRITERS",
         "workstream": "tabularius",
         "priority": PRIORITY["tabularius"],
-        "status": STATUS_ASSIGNED if step_22_open else STATUS_DONE,
+        "status": status,
         "title": "Finish single-writer status/result mutation conversion",
-        "verdict": "Step 2.2 still open in the keeper doc" if step_22_open else "status-mutator tier is recorded closed",
-        "evidence": {"step_2_2_open": step_22_open},
-        "existing_receipts": [relpath(doc), relpath(ROOT / "cli" / "src" / "limen" / "tabularius.py")],
+        "verdict": verdict,
+        "evidence": {
+            "step_2_2_open": step_22_open,
+            "writer_audit_doc_present": audit_doc.exists(),
+            "writer_audit_owner_recorded": owner_recorded,
+            "writer_audit_direct_writer_count": audit.get("direct_writer_count") if isinstance(audit, dict) else None,
+            "writer_audit_unclassified_count": unclassified,
+            "writer_audit_owner_packet_counts": packet_counts if isinstance(packet_counts, dict) else {},
+        },
+        "existing_receipts": [relpath(doc), relpath(audit_doc), relpath(ROOT / "cli" / "src" / "limen" / "tabularius.py")],
         "assignment_packet": {
             "lane_fit": "codex-integrator",
             "repo": relpath(ROOT),
             "task": "Convert status/result writers to keeper tickets; preserve tasks.yaml drift as separate board state.",
-            "predicate": "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q",
-            "receipt_target": relpath(doc),
+            "predicate": "python3 scripts/task-writer-audit.py && PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q",
+            "receipt_target": relpath(audit_doc),
             "stop_condition": "non-keeper status/result direct writers are converted or explicitly owner-recorded",
         },
     }

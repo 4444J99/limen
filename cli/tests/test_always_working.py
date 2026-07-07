@@ -409,6 +409,46 @@ def test_value_repos_done_when_fresh_product_ledger_has_owner_receipts(monkeypat
     assert receipt["evidence"]["missing_top_value_receipts"] == []
 
 
+def test_tabularius_status_writers_done_when_owner_recorded(monkeypatch, tmp_path):
+    mod = _load("always_working_tabularius_owner_record_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    docs = root / "docs"
+    logs = root / "logs"
+    docs.mkdir(parents=True)
+    logs.mkdir()
+    (docs / "tabularius-record-keeper.md").write_text(
+        "- [x] Step 2.2 owner-recorded\n"
+        "- [ ] Step 2.2A — convert async reserve/reap/heal transitions\n",
+        encoding="utf-8",
+    )
+    (docs / "tabularius-writer-audit.md").write_text(
+        "# Tabularius Writer Audit\n\n"
+        "<!-- tabularius-writer-audit:owner-recorded -->\n\n"
+        "Unclassified calls: `0`\n",
+        encoding="utf-8",
+    )
+    (logs / "task-writer-audit.json").write_text(
+        json.dumps(
+            {
+                "direct_writer_count": 22,
+                "owner_packet_counts": {
+                    "TAB-STATUS-ASYNC-HEAL": 4,
+                    "TAB-UNCLASSIFIED-WRITER": 0,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(mod, "ROOT", root)
+
+    receipt = mod.tabularius_receipt()
+
+    assert receipt["status"] == mod.STATUS_DONE
+    assert receipt["evidence"]["writer_audit_owner_recorded"] is True
+    assert receipt["evidence"]["step_2_2_open"] is False
+
+
 def test_dispatch_health_blocks_when_always_working_required_items_are_open(tmp_path):
     mod = _load("dispatch_health_always_working_uut", DISPATCH_HEALTH)
     index = tmp_path / "always-working.json"

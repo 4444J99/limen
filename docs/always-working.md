@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-07T20:15:17+00:00`
-Status: `needs-work`
-Required open: `1`
+Generated: `2026-07-07T20:19:32+00:00`
+Status: `blocked`
+Required open: `0`
 Blocked: `1`
-Done from receipt: `6`
+Done from receipt: `7`
 
 ## Contract
 
@@ -16,13 +16,13 @@ Done from receipt: `6`
 
 ## Next Packet
 
-- ID: `TABVLARIVS-STATUS-WRITERS`
-- Workstream: `tabularius`
-- Status: `assigned_from_existing_work`
-- Verdict: Step 2.2 still open in the keeper doc
+- ID: `PUBLIC-FACE-PROFILE`
+- Workstream: `public-face`
+- Status: `blocked`
+- Verdict: visible profile README is current; GitHub sidebar bio/link needs profile-settings scope
 - Lane fit: `codex-integrator`
-- Predicate: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q`
-- Receipt target: `~/Workspace/limen/docs/tabularius-record-keeper.md`
+- Predicate: `python3 scripts/test_sync_readme.py && python3 scripts/sync-readme.py --check`
+- Receipt target: `~/Workspace/organvm/4444J99/README.md`
 
 ## Workstreams
 
@@ -35,7 +35,7 @@ Done from receipt: `6`
 | 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 48 duplicate remote group(s) recorded |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `done_from_receipt` | top 5 value repos have owner receipts; 14 value repos are sell-ready in the product ledger |
-| 70 | `TABVLARIVS-STATUS-WRITERS` | `assigned_from_existing_work` | Step 2.2 still open in the keeper doc |
+| 70 | `TABVLARIVS-STATUS-WRITERS` | `done_from_receipt` | status-mutator tier is recorded closed |
 
 ## Assignment Packets
 
@@ -53,16 +53,4 @@ Done from receipt: `6`
   - `~/Workspace/limen/face-ownership.json`
   - `~/Workspace/organvm/4444J99/README.md`
   - `https://github.com/4444J99/4444J99`
-
-### TABVLARIVS-STATUS-WRITERS
-
-- Lane fit: `codex-integrator`
-- Repo/root: `~/Workspace/limen`
-- Task: Convert status/result writers to keeper tickets; preserve tasks.yaml drift as separate board state.
-- Predicate: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q`
-- Receipt target: `~/Workspace/limen/docs/tabularius-record-keeper.md`
-- Stop condition: non-keeper status/result direct writers are converted or explicitly owner-recorded
-- Existing receipts:
-  - `~/Workspace/limen/docs/tabularius-record-keeper.md`
-  - `~/Workspace/limen/cli/src/limen/tabularius.py`
 

@@ -134,12 +134,30 @@ above it is autonomous.
       tickets instead of directly rewriting the board. The auto-scale workflow runs `tabularius-organ`
       after producing tickets, so CI still commits the projection but the writer is the keeper.
       `scripts/task-writer-audit.py` now reports 22 legacy direct writer calls (down from 29).
+- [x] Step 2.2 owner-recorded — the status/result writer tier is no longer an implicit side channel.
+      `scripts/task-writer-audit.py` now writes the tracked receipt
+      `docs/tabularius-writer-audit.md`, with every remaining direct writer mapped to a bounded owner
+      packet and zero unclassified rows. This does **not** mean the direct writers are burned down; it
+      means the work has named owners, predicates, and receipt targets instead of hiding in the beat.
 - [ ] Burn down the legacy writer audit — `scripts/task-writer-audit.py` records the remaining direct
       `save_limen_file`/`atomic_write_text` board writers so each conversion becomes a bounded owner task
       instead of an implicit side channel.
-- [ ] Step 2.2 — the STATUS-mutator tier (`route`, `dispatch-async`, `heal-dispatch`, `rebalance`,
-      `recover`, `quicken`) → emit an INTENT_STATUS ticket instead of a direct RMW (NOT an upsert — an
-      upsert of a live id merge-clobbers; these change existing tasks). Also CLI harvest/dispatch result-apply.
+- [ ] Step 2.2A — `TAB-STATUS-ASYNC-HEAL`: convert async reserve/reap/heal transitions to
+      `task.status` tickets or keeper-drained status batches without introducing a double-dispatch
+      window. Predicate: `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py
+      cli/tests/test_async_dispatch.py -q`.
+- [ ] Step 2.2B — `TAB-STATUS-DISPATCH-RESULTS`: convert CLI dispatch claim/result application to
+      keeper-owned status batches. Predicate: `PYTHONPATH=cli/src python3 -m pytest
+      cli/tests/test_tabularius.py -q`.
+- [ ] Step 2.2C — `TAB-STATUS-HARVEST-RESULTS`: convert harvest/Jules landing result application to
+      `task.status` tickets. Predicate: `PYTHONPATH=cli/src python3 -m pytest
+      cli/tests/test_tabularius.py -q`.
+- [ ] Step 2.2D — `TAB-ROUTE-RESIDUE-MUTATORS`: convert route, quicken, rewrite-owners, and
+      self-improve board patches to keeper-owned tickets. Predicate: `PYTHONPATH=cli/src python3 -m
+      pytest cli/tests/test_tabularius.py -q`.
+- [ ] Step 2.2E — `TAB-CREATION-FALLBACKS` and `TAB-MAINTENANCE-BOARD-FALLBACKS`: remove/gate legacy
+      fallback branches or explicitly move board-maintenance writers into the Tabularius/io allowlist.
+      Predicate: `python3 scripts/task-writer-audit.py`.
 - [ ] Step 2.3 — MCP server → ticket producer (retire the raw write + duplicate models).
 - [ ] Step 2.4 — live API/Worker tier (needs the consistency decision above; website-sensitive).
 - [ ] Step 3 — flip SSOT to the event log; add an archive→`events.jsonl` compactor + a standing
