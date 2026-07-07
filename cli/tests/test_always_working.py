@@ -110,7 +110,9 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
     monkeypatch.setattr(mod, "REPO_SURFACE_INDEX", lifecycle / "repo-surface-ledger.json")
     monkeypatch.setattr(mod, "PRODUCT_LEDGER_INDEX", lifecycle / "product-ledger.json")
     monkeypatch.setattr(mod, "VALUE_REPOS", root / "value-repos.json")
-    monkeypatch.setattr(mod, "disk_receipt", lambda: {"free_gib": 100.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""})
+    monkeypatch.setattr(
+        mod, "disk_receipt", lambda: {"free_gib": 100.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""}
+    )
     monkeypatch.setattr(mod, "mail_census", lambda: {"ok": True, "account_count": 1, "obligation_count": 2})
 
     snapshot = mod.build_snapshot()
