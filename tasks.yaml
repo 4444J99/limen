@@ -84328,7 +84328,7 @@ tasks:
   workstream: financial
   priority: high
   budget_cost: 2
-  status: open
+  status: failed_blocked
   labels:
   - organ-face
   - pillar:financial
@@ -84355,7 +84355,7 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T14:47:25.374541Z'
+  updated: '2026-07-07T15:42:13.744507Z'
   dispatch_log:
   - timestamp: '2026-07-06T09:32:14.038196Z'
     agent: claude
@@ -84404,6 +84404,15 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-07T15:42:13.744507Z'
+    agent: codex
+    session_id: codex-low-burn-conductor-20260707
+    status: failed_blocked
+    output: Low-burn conductor skipped this repeatedly failed/no-op/slow organ-face
+      packet during the user-away watch. Prior logs show claude failed->opencode,
+      agy no-op failed, codex timeout->jules, then stale release. Do not spend the
+      single OpenCode slot here until a narrower financial-organ predicate/receipt
+      is written.
 - id: HEAL-rebase-organvm-your-fit-tailored-15
   title: rebase/resolve conflicts on organvm/your-fit-tailored#15
   repo: organvm/your-fit-tailored
@@ -106993,7 +107002,7 @@ tasks:
   type: code
   target_agent: opencode
   workstream: financial
-  priority: high
+  priority: critical
   budget_cost: 2
   status: open
   labels:
@@ -107002,6 +107011,7 @@ tasks:
   - product
   - ship-order
   - generated
+  - low-burn-priority
   urls: []
   context: "In organvm/mirror-mirror, clear the concrete blockers between the current\
     \ state and a DEPLOYABLE product: get open PRs green + merged, fix the critical\
@@ -107010,8 +107020,14 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T20:55:39.525593Z'
-  dispatch_log: []
+  updated: '2026-07-07T15:42:38.620450Z'
+  dispatch_log:
+  - timestamp: '2026-07-07T15:42:38.620450Z'
+    agent: codex
+    session_id: codex-low-burn-conductor-20260707
+    status: open
+    output: Low-burn conductor promoted this named value repo so the single OpenCode
+      slot targets revenue work before generic CI/rebase churn.
 - id: HEAL-cifix-organvm-mirror-mirror-106
   title: fix failing CI on organvm/mirror-mirror#106
   repo: organvm/mirror-mirror
