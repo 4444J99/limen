@@ -102900,7 +102900,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#120
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -102934,7 +102934,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#121
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -103020,7 +103020,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#125
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -108841,7 +108841,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#152
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -108864,7 +108864,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#153
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -108887,7 +108887,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#155
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
