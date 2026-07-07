@@ -102850,7 +102850,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -102865,7 +102865,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T17:53:00.967939Z'
+  updated: '2026-07-07T18:07:54.325592Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -102890,6 +102890,17 @@ tasks:
     agent: jules
     session_id: '9944411705433828849'
     status: dispatched
+  - timestamp: '2026-07-07T18:07:54.325592Z'
+    agent: jules
+    session_id: '9944411705433828849'
+    status: done
+    output: "diff --git a/dot_local/bin/executable_check-agent-hooks-drift b/dot_local/bin/executable_check-agent-hooks-drift\n\
+      index 4641c6c..77df8d2 100755\n--- a/dot_local/bin/executable_check-agent-hooks-drift\n\
+      +++ b/dot_local/bin/executable_check-agent-hooks-drift\n@@ -271,7 +271,7 @@\
+      \ sanitize_agent_list() {\n \n if [ ${#drifted[@]} -eq 0 ] && [ ${#errors[@]}\
+      \ -eq 0 ]; then\n   echo \"STATUS=no-drift\"\n-  >&2 echo \"[hooks-drift] OK:\
+      \ $checked agent(s) checked, $skipped_absent absent, $skipped_unmanaged unmanaged.\"\
+      \n"
 - id: HEAL-cifix-organvm-domus-genoma-125
   title: fix failing CI on organvm/domus-genoma#125
   repo: organvm/domus-genoma
