@@ -288,7 +288,14 @@ def preserve_board_projection(
             stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             commit = _git(
                 repo,
-                ["commit-tree", tree.stdout.strip(), "-p", head, "-m", f"tabularius: preserve board projection {stamp}"],
+                [
+                    "commit-tree",
+                    tree.stdout.strip(),
+                    "-p",
+                    head,
+                    "-m",
+                    f"tabularius: preserve board projection {stamp}",
+                ],
                 env=env,
             )
             if commit.returncode != 0 or not commit.stdout.strip():
