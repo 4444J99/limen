@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-07-07T22:23:00Z",
+  "generated_at": "2026-07-07T22:34:00Z",
   "schema": "limen.estate_custody_implementation.v1",
   "status": "in_progress",
   "complete": false,
-  "summary": "External estate doctrine is tracked. Implementation remains open because internal disk is below target, worktree debt exceeds cap, Antigravity scratch roots require bridge/preserve/review, and media/prompt/productization owner packets are still active.",
+  "summary": "External estate doctrine is tracked. Three largest Antigravity session-meta scratch roots were externally archived and verified. Implementation remains open because internal disk is below target, worktree debt exceeds cap, local deletion still requires reap acceptance/redaction gates, and media/prompt/productization owner packets are still active.",
   "targets": {
     "internal_free_gib_target": 200,
     "laptop_role": "thin hot cache and remote-controlled workbench",
@@ -33,6 +33,20 @@
       "not_merged_to_default": 51,
       "unpushed_commits": 31,
       "remote_pr_open": 21
+    },
+    "antigravity_scratch": {
+      "total_roots": 55,
+      "total_size": "22.1 GiB",
+      "safe_reap_size": "8.5 MiB",
+      "bridge_required": 34,
+      "preserved_this_pass": "13.7 GiB",
+      "preserved_this_pass_roots": [
+        "organvm-session-meta",
+        "session-meta-no-prompt",
+        "session-meta-2"
+      ],
+      "preservation_status": "external_archive_preserved_and_verified",
+      "local_deletion_status": "blocked_pending_reap_acceptance_redaction_gate"
     },
     "cvstos_gate": "Antigravity scratch roots need bridge/preserve/review before local deletion"
   },
@@ -65,6 +79,18 @@
       "url": "https://github.com/organvm/limen/issues/685",
       "status": "open",
       "scope": "disk/worktree lifecycle and local cache reclamation"
+    },
+    {
+      "type": "scratch_preservation",
+      "path": "docs/antigravity-scratch-bridge.md",
+      "status": "written",
+      "scope": "Antigravity scratch custody audit"
+    },
+    {
+      "type": "scratch_preservation",
+      "path": "docs/antigravity-scratch-preservation.jsonl",
+      "status": "updated",
+      "scope": "external archive preservation receipts for the three largest session-meta roots"
     }
   ],
   "verification": [
@@ -85,6 +111,11 @@
       "command": "python3 scripts/worktree-debt.py --fail-over-cap",
       "result": "fail",
       "reason": "145 debt roots over cap 12"
+    },
+    {
+      "command": "python3 scripts/antigravity-scratch-bridge.py --write --archive-timeout 900 --preserve-root organvm-session-meta --preserve-root session-meta-no-prompt --preserve-root session-meta-2",
+      "result": "pass",
+      "reason": "13.7 GiB source custody archived and verified on Archive4T; no local deletion performed"
     }
   ],
   "next_predicates": [

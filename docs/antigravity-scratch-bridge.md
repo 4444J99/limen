@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-07T13:12:27+00:00`
+Generated: `2026-07-07T22:31:19+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -19,9 +19,9 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 ## Summary
 
 - Roots scanned: `55`.
-- Total scratch size: `29.1 GiB`.
-- Safe-reap candidate size: `88.2 MiB`.
-- Dispositions: `bridge_required` 34, `container_review_required` 3, `keep_active` 12, `non_git_review_required` 3, `preserve_required` 2, `safe_reap_candidate` 1.
+- Total scratch size: `22.1 GiB`.
+- Safe-reap candidate size: `8.5 MiB`.
+- Dispositions: `bridge_required` 34, `container_review_required` 3, `keep_active` 11, `non_git_review_required` 3, `preserve_required` 2, `safe_reap_candidate` 2.
 
 ## Reap History
 
@@ -33,10 +33,13 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `43`.
-- External archives verified: `42`.
-- Verified external archive source size: `23.7 GiB`.
-- Event source size total: `28.4 GiB` (includes retries).
+- Preservation receipts: `46`.
+- External archives verified: `45`.
+- Verified external archive source size: `37.4 GiB`.
+- Event source size total: `42.1 GiB` (includes retries).
+- `2026-07-07T22:33:13Z` `session-meta-2`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223313Z-session-meta-2/receipt.json`.
+- `2026-07-07T22:32:23Z` `session-meta-no-prompt`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223223Z-session-meta-no-prompt/receipt.json`.
+- `2026-07-07T22:31:34Z` `organvm-session-meta`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223134Z-organvm-session-meta/receipt.json`.
 - `2026-07-06T04:03:42Z` `hello_workspace`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T040342Z-hello_workspace/receipt.json`.
 - `2026-07-06T04:02:18Z` `hello_project`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T040218Z-hello_project/receipt.json`.
 - `2026-07-06T04:01:13Z` `my-project`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T040113Z-my-project/receipt.json`.
@@ -44,9 +47,15 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T03:59:38Z` `organvm-i-theoria`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035938Z-organvm-i-theoria/receipt.json`.
 - `2026-07-06T03:58:40Z` `organvm`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035840Z-organvm/receipt.json`.
 - `2026-07-06T03:57:39Z` `writelens`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035739Z-writelens/receipt.json`.
-- `2026-07-06T03:57:06Z` `.github`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035706Z-github/receipt.json`.
-- `2026-07-06T03:56:31Z` `sovereign--ground`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035631Z-sovereign--ground/receipt.json`.
-- `2026-07-06T03:55:47Z` `organvm-ontologia`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035547Z-organvm-ontologia/receipt.json`.
+
+## Preservation Results
+
+- Requested roots: `3`.
+- Source size receipted: `13.7 GiB`.
+- Statuses: `external_archive_preserved` 3.
+- Preserved `organvm-session-meta` `4.7 GiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223134Z-organvm-session-meta/receipt.json`.
+- Preserved `session-meta-no-prompt` `4.5 GiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223223Z-session-meta-no-prompt/receipt.json`.
+- Preserved `session-meta-2` `4.5 GiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223313Z-session-meta-2/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
@@ -73,43 +82,43 @@ before any local root can be removed.
 | `organvm-session-meta` | `4.7 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/session-meta@2954214acb76` |
 | `session-meta-no-prompt` | `4.5 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/session-meta@2954214acb76` |
 | `session-meta-2` | `4.5 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/session-meta@2954214acb76` |
-| `peer-audited--behavioral-blockchain` | `2.5 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/peer-audited--behavioral-blockchain@18e881f0a29f` |
 | `a-i-council--coliseum` | `2.3 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/a-i-council--coliseum@fcacc4a1b202` |
-| `sovereign-systems--elevate-align` | `1.2 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-iii-ergon/sovereign-systems--elevate-align@3ac45f92ba16` |
-| `public-record-data-scrapper` | `1.0 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/public-record-data-scrapper@60f4c68a033f` |
-| `growth-auditor` | `896.1 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm/growth-auditor@93cad2b4974d` |
-| `dot-github--theoria` | `650.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/dot-github--theoria@a96c76a24b52` |
-| `organvm` | `632.4 MiB` | `container` | `container_review_required` | `nested-git-roots` | `bridge_required:3, keep_active:1, safe_reap_candidate:2` |
-| `limen` | `559.2 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/limen@7aff62eb8ba1` |
-| `the-invisible-ledger` | `468.1 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm/the-invisible-ledger@2bd0d2ef29e0` |
-| `mirror-mirror-healing` | `455.9 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/mirror-mirror@6491c27c636c` |
-| `mirror-mirror` | `451.7 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/mirror-mirror@cd59f5e6fd7f` |
-| `organvm-i-theoria-github` | `413.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/.github@af9232b68d53` |
-| `a-i-chat--exporter` | `410.1 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/a-i-chat--exporter@c2861dfad7bf` |
-| `hokage-chess` | `352.2 MiB` | `git` | `keep_active` | `idle-window-not-met` | `4444J99/hokage-chess@bf52a0eb33ec` |
-| `universal-mail--automation` | `330.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/universal-mail--automation@dd402c34450f` |
+| `peer-audited--behavioral-blockchain` | `1.8 GiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/peer-audited--behavioral-blockchain@18e881f0a29f` |
+| `organvm` | `632.4 MiB` | `container` | `container_review_required` | `nested-git-roots` | `bridge_required:3, safe_reap_candidate:3` |
+| `sovereign-systems--elevate-align` | `584.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-iii-ergon/sovereign-systems--elevate-align@3ac45f92ba16` |
+| `limen` | `497.4 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/limen@7aff62eb8ba1` |
+| `organvm-i-theoria-github` | `412.9 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/.github@af9232b68d53` |
+| `dot-github--theoria` | `369.0 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/dot-github--theoria@a96c76a24b52` |
+| `universal-mail--automation` | `330.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/universal-mail--automation@dd402c34450f` |
 | `organvm-i-theoria` | `295.4 MiB` | `container` | `container_review_required` | `nested-git-roots` | `preserve_required:2` |
-| `bountyscope` | `235.5 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/bountyscope@ecf83bcee32a` |
-| `bountyscope-test-coverage` | `234.9 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/bountyscope@e100c8b0dc4a` |
-| `edgarflash` | `234.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/edgarflash@1e74592c935b` |
 | `domus-genoma` | `229.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/domus-genoma@c483b81daaef` |
-| `vulnpulse` | `223.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `4444J99/vulnpulse@e0b94ed724b9` |
-| `organvm-engine` | `197.8 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/organvm-engine@26872c12d8d3` |
 | `my-domus-genoma` | `168.7 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/domus-genoma@f8cfcbb46f80` |
-| `organvm-i-theoria-mesh` | `148.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/mesh@b4f0ed18fedf` |
-| `rules-system-bound` | `133.5 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm-i-theoria/rules-system-bound@4482ba84cc56` |
-| `conversation-corpus-engine` | `120.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/conversation-corpus-engine@9d7b3cff6e1f` |
-| `schema-definitions` | `90.7 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm/schema-definitions@f11d1a5361d0` |
-| `organvm-ontologia` | `88.2 MiB` | `git` | `safe_reap_candidate` | `clean-idle-remote-preserved` | `a-organvm/organvm-ontologia@511a5582911c` |
+| `rules-system-bound` | `130.6 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm-i-theoria/rules-system-bound@4482ba84cc56` |
+| `schema-definitions` | `90.6 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm/schema-definitions@f11d1a5361d0` |
+| `public-record-data-scrapper` | `87.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/public-record-data-scrapper@60f4c68a033f` |
 | `4444J99` | `81.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/_agent@acbca74f95ec` |
 | `anon-hookup-now` | `69.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/anon-hookup-now@92fd88681fde` |
-| `studium-generale` | `58.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/studium-generale@6ca4f9a12527` |
+| `hokage-chess` | `60.2 MiB` | `git` | `keep_active` | `idle-window-not-met` | `4444J99/hokage-chess@bf52a0eb33ec` |
 | `public-process` | `54.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/public-process@9065f56fe2b3` |
 | `organvm-rules-system-bound` | `51.3 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm/rules-system-bound@160cc18784cc` |
-| `recursive-engine--generative-entity` | `45.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/recursive-engine--generative-entity@77786fd5c1c6` |
 | `session-meta-4` | `44.3 MiB` | `git` | `preserve_required` | `clean-but-head-not-proven-on-remote` | `organvm/session-meta` |
-| `atomic-substrata` | `40.2 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/atomic-substrata@5b71447bbcef` |
+| `atomic-substrata` | `40.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/atomic-substrata@5b71447bbcef` |
+| `organvm-engine` | `33.2 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/organvm-engine@26872c12d8d3` |
 | `adaptive-personal-syllabus` | `31.9 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/adaptive-personal-syllabus@cf0abef19af6` |
+| `studium-generale` | `28.6 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/studium-generale@6ca4f9a12527` |
+| `recursive-engine--generative-entity` | `28.5 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/recursive-engine--generative-entity@77786fd5c1c6` |
+| `browser-state` | `8.2 MiB` | `git` | `safe_reap_candidate` | `clean-idle-remote-preserved` | `organvm/browser-state@e515a8541d4b` |
+| `the-invisible-ledger` | `5.9 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm/the-invisible-ledger@2bd0d2ef29e0` |
+| `a-i-chat--exporter` | `5.5 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/a-i-chat--exporter@c2861dfad7bf` |
+| `growth-auditor` | `5.2 MiB` | `git` | `keep_active` | `idle-window-not-met` | `organvm/growth-auditor@93cad2b4974d` |
+| `brainstorm-20260423` | `5.1 MiB` | `git` | `preserve_required` | `clean-but-head-not-proven-on-remote` | `organvm/brainstorm-20260423@d7393d8a9197` |
+| `conversation-corpus-engine` | `5.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/conversation-corpus-engine@9d7b3cff6e1f` |
+| `mirror-mirror` | `4.3 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `a-organvm/mirror-mirror@cd59f5e6fd7f` |
+| `mirror-mirror-healing` | `4.1 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/mirror-mirror@6491c27c636c` |
+| `system-system--system--monad` | `2.8 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm/system-system--system--monad@134b01e01c41` |
+| `organvm-i-theoria-mesh` | `2.5 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/mesh@b4f0ed18fedf` |
+| `organvm-ontologia` | `2.4 MiB` | `git` | `keep_active` | `idle-window-not-met` | `a-organvm/organvm-ontologia@511a5582911c` |
+| `vigiles-aeternae--corpus-mythicum` | `2.2 MiB` | `git` | `bridge_required` | `dirty-or-untracked` | `organvm-i-theoria/vigiles-aeternae--corpus-mythicum@0098cd7d46a4` |
 
 ## Operating Rule
 
