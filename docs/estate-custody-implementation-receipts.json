@@ -1,0 +1,102 @@
+{
+  "generated_at": "2026-07-07T22:23:00Z",
+  "schema": "limen.estate_custody_implementation.v1",
+  "status": "in_progress",
+  "complete": false,
+  "summary": "External estate doctrine is tracked. Implementation remains open because internal disk is below target, worktree debt exceeds cap, Antigravity scratch roots require bridge/preserve/review, and media/prompt/productization owner packets are still active.",
+  "targets": {
+    "internal_free_gib_target": 200,
+    "laptop_role": "thin hot cache and remote-controlled workbench",
+    "external_ssd_role": "durable private/raw estate, processed/redacted corpora, repo/org custody, photos/media packages, and recovery copies"
+  },
+  "current_state": {
+    "internal_data_volume_free_gib": 83,
+    "external_volumes": {
+      "Archive4T_free": "2.9Ti",
+      "Ingress_free": "466Gi",
+      "Scratch_free": "277Gi",
+      "T7Recovery_free": "499Gi"
+    },
+    "local_weight": {
+      "workspace": "87G",
+      "limen_worktrees": "36G",
+      "gemini_home": "25G",
+      "antigravity_scratch": "22G",
+      "limen_private": "10G"
+    },
+    "worktree_debt": {
+      "debt_roots": 145,
+      "scanned_roots": 925,
+      "cap": 12,
+      "clean_merged_idle": 467,
+      "dirty": 57,
+      "not_merged_to_default": 51,
+      "unpushed_commits": 31,
+      "remote_pr_open": 21
+    },
+    "cvstos_gate": "Antigravity scratch roots need bridge/preserve/review before local deletion"
+  },
+  "receipts": [
+    {
+      "type": "doctrine",
+      "path": "docs/estate-custody-primitives.md",
+      "status": "written"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/limen/issues/688",
+      "status": "open",
+      "scope": "external estate custody implementation"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/media-ark/issues/56",
+      "status": "open",
+      "scope": "Photos Universe private-processing/public-aggregate pipeline"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/portvs/issues/2",
+      "status": "open",
+      "scope": "triptych Instagram-ready export"
+    },
+    {
+      "type": "owner_issue",
+      "url": "https://github.com/organvm/limen/issues/685",
+      "status": "open",
+      "scope": "disk/worktree lifecycle and local cache reclamation"
+    }
+  ],
+  "verification": [
+    {
+      "command": "LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/substrate-ledger.py --write",
+      "result": "pass"
+    },
+    {
+      "command": "LIMEN_ROOT=/Users/4jp/Workspace/limen python3 scripts/vltima-prior-excavations.py --write",
+      "result": "pass"
+    },
+    {
+      "command": "python3 scripts/cvstos-organ.py --check",
+      "result": "fail",
+      "reason": "Antigravity scratch roots need bridge/preserve/review before local deletion"
+    },
+    {
+      "command": "python3 scripts/worktree-debt.py --fail-over-cap",
+      "result": "fail",
+      "reason": "145 debt roots over cap 12"
+    }
+  ],
+  "next_predicates": [
+    "python3 scripts/antigravity-scratch-bridge.py --help",
+    "python3 scripts/reclaim-worktrees.py --force",
+    "python3 scripts/worktree-debt.py --json",
+    "python3 scripts/always-working.py --write"
+  ],
+  "safety": {
+    "destructive_cleanup_performed": false,
+    "private_raw_paths_published": false,
+    "secret_values_published": false,
+    "mass_dedupe_authorized": false
+  }
+}

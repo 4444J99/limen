@@ -49,6 +49,18 @@ PROMPT_PACKET_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
 REPO_SURFACE_INDEX = PRIVATE_ROOT / "lifecycle" / "repo-surface-ledger.json"
 PRODUCT_LEDGER_INDEX = PRIVATE_ROOT / "lifecycle" / "product-ledger.json"
 VALUE_REPOS = ROOT / "value-repos.json"
+CONTRIBUTION_BALANCE_SCRIPT = ROOT / "scripts" / "github-contribution-balance.py"
+CONTRIBUTION_BALANCE_LOGIN = os.environ.get("LIMEN_CONTRIBUTION_BALANCE_LOGIN", "4444J99")
+CREDENTIAL_TOMBSTONE_DOC = ROOT / "docs" / "credential-token-tombstone-audit.md"
+ARCHIVE4T_ROOT = Path(os.environ.get("LIMEN_ARCHIVE4T_ROOT", "/Volumes/Archive4T"))
+INGRESS_ROOT = Path(os.environ.get("LIMEN_INGRESS_ROOT", "/Volumes/Ingress"))
+SCRATCH_ROOT = Path(os.environ.get("LIMEN_SCRATCH_ROOT", "/Volumes/Scratch"))
+T7RECOVERY_ROOT = Path(os.environ.get("LIMEN_T7RECOVERY_ROOT", "/Volumes/T7Recovery"))
+T7_LIFEBOAT_ROOT = T7RECOVERY_ROOT / "CleanUnique-Lifeboat-2026-06-13"
+ESTATE_CUSTODY_DOC = ROOT / "docs" / "estate-custody-primitives.md"
+ESTATE_CUSTODY_RECEIPT = ROOT / "docs" / "estate-custody-implementation-receipts.json"
+STORAGE_OPERATING_MANUAL = ARCHIVE4T_ROOT / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
+LOCAL_DISK_EXPULSION_POLICY = ARCHIVE4T_ROOT / "_OPERATIONS" / "LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md"
 PROFILE_POSITIONING_RE = re.compile(
     r"top[- ]tier|top\s+\d+(?:\.\d+)?%\s+engineering|top[- ]1%|top engineer|top engineers|world",
     re.I,
@@ -62,7 +74,10 @@ STATUS_BLOCKED = "blocked"
 REQUIRED_OPEN = {STATUS_ASSIGNED, STATUS_NEEDS}
 AGENT_BY_WORKSTREAM = {
     "substrate": "codex",
+    "estate-custody": "codex",
     "public-face": "codex",
+    "contribution-balance": "codex",
+    "credential-wall": "codex",
     "mail-active": "opencode",
     "mail-historical": "opencode",
     "repo-boil-up": "agy",
@@ -73,7 +88,10 @@ AGENT_BY_WORKSTREAM = {
 
 PRIORITY = {
     "substrate": 0,
+    "estate-custody": 5,
     "public-face": 10,
+    "contribution-balance": 15,
+    "credential-wall": 18,
     "mail-active": 20,
     "mail-historical": 30,
     "repo-boil-up": 40,
@@ -682,6 +700,235 @@ def value_repo_receipt() -> dict[str, Any]:
     }
 
 
+def estate_custody_receipt() -> dict[str, Any]:
+    volumes = {
+        "Archive4T": ARCHIVE4T_ROOT.exists(),
+        "Ingress": INGRESS_ROOT.exists(),
+        "Scratch": SCRATCH_ROOT.exists(),
+        "T7Recovery": T7RECOVERY_ROOT.exists(),
+    }
+    required_docs = [
+        STORAGE_OPERATING_MANUAL,
+        LOCAL_DISK_EXPULSION_POLICY,
+        ROOT / "docs" / "vltima-absorb-cadence.md",
+        ROOT / "docs" / "vltima-prior-excavations.md",
+        ROOT / "docs" / "photos-universe-recovery-2026-06-29.md",
+    ]
+    primitive_layers = [
+        T7_LIFEBOAT_ROOT / "00_SUBSTRATE",
+        T7_LIFEBOAT_ROOT / "10_PROFILE",
+        T7_LIFEBOAT_ROOT / "20_TEXT",
+        T7_LIFEBOAT_ROOT / "30_CODE",
+        T7_LIFEBOAT_ROOT / "_MANIFESTS",
+    ]
+    missing_volumes = [name for name, mounted in volumes.items() if not mounted]
+    missing_docs = [relpath(path) for path in required_docs if not path.exists()]
+    missing_layers = [relpath(path) for path in primitive_layers if not path.exists()]
+    doctrine_present = ESTATE_CUSTODY_DOC.exists()
+    receipt = load_json(ESTATE_CUSTODY_RECEIPT, {})
+    implementation_receipts = receipt.get("receipts") if isinstance(receipt, dict) else []
+    implementation_status = str(receipt.get("status") or "") if isinstance(receipt, dict) else ""
+    implementation_complete = implementation_status == "complete" and bool(implementation_receipts)
+    if missing_volumes or missing_docs or missing_layers:
+        status = STATUS_BLOCKED
+        verdict = "external estate custody is missing required mounted evidence"
+    elif not doctrine_present:
+        status = STATUS_ASSIGNED
+        verdict = "external estate doctrine needs a tracked owner surface"
+    elif not implementation_complete:
+        status = STATUS_ASSIGNED
+        verdict = "estate doctrine exists; implementation receipt is not complete"
+    else:
+        status = STATUS_DONE
+        verdict = "run-and-gun laptop cache and external estate custody have implementation receipts"
+    return {
+        "id": "ESTATE-CUSTODY",
+        "workstream": "estate-custody",
+        "priority": PRIORITY["estate-custody"],
+        "status": status,
+        "title": "Make external SSDs the durable estate and the laptop a hot cache",
+        "verdict": verdict,
+        "evidence": {
+            "volumes": volumes,
+            "missing_volumes": missing_volumes,
+            "required_docs_missing": missing_docs,
+            "primitive_layers_missing": missing_layers,
+            "doctrine_doc_present": doctrine_present,
+            "doctrine_doc": relpath(ESTATE_CUSTODY_DOC),
+            "implementation_receipt_present": bool(receipt),
+            "implementation_receipt_status": implementation_status,
+            "implementation_receipt_complete": implementation_complete,
+            "implementation_receipt": relpath(ESTATE_CUSTODY_RECEIPT),
+            "implementation_receipt_count": len(implementation_receipts) if isinstance(implementation_receipts, list) else 0,
+        },
+        "existing_receipts": [
+            relpath(STORAGE_OPERATING_MANUAL),
+            relpath(LOCAL_DISK_EXPULSION_POLICY),
+            relpath(ROOT / "docs" / "vltima-absorb-cadence.md"),
+            relpath(ROOT / "docs" / "vltima-prior-excavations.md"),
+            relpath(ROOT / "docs" / "photos-universe-recovery-2026-06-29.md"),
+            relpath(ESTATE_CUSTODY_DOC),
+            "https://github.com/organvm/limen/issues/685",
+            "https://github.com/organvm/limen/issues/688",
+            "https://github.com/organvm/media-ark/issues/56",
+            "https://github.com/organvm/portvs/issues/2",
+        ],
+        "assignment_packet": {
+            "lane_fit": "codex-conductor",
+            "repo": relpath(ROOT),
+            "task": (
+                "Build the run-and-gun estate lifecycle: external SSDs hold durable private/raw data, "
+                "processed/redacted corpora, repo/org mirrors, photos/media packages, and recovery copies; "
+                "the laptop stays a thin hot cache. Route every pain point to an owner repo and a reusable "
+                "public shell when private data can be redacted."
+            ),
+            "predicate": (
+                "test -f docs/estate-custody-primitives.md && "
+                "python3 scripts/substrate-ledger.py --write && "
+                "python3 scripts/vltima-prior-excavations.py --write"
+            ),
+            "receipt_target": relpath(ESTATE_CUSTODY_RECEIPT),
+            "stop_condition": (
+                "external estate cleanup, prompt chronology, repo/org custody, photos processing, and "
+                "pain-point productization each have owner receipts without destructive local-only action"
+            ),
+        },
+    }
+
+
+def contribution_balance_receipt() -> dict[str, Any]:
+    result = run_command(
+        ["python3", str(CONTRIBUTION_BALANCE_SCRIPT), "--login", CONTRIBUTION_BALANCE_LOGIN, "--json"],
+        timeout=90,
+    )
+    report: dict[str, Any] = {}
+    error = ""
+    if result["returncode"] == 0:
+        try:
+            loaded = json.loads(result["stdout"] or "{}")
+            if isinstance(loaded, dict):
+                report = loaded
+        except ValueError as exc:
+            error = f"invalid contribution balance JSON: {exc}"
+    else:
+        error = (result["stderr"] or result["stdout"] or "contribution balance command failed").strip()[:500]
+
+    needs_balance = report.get("status") == "needs_balance"
+    status = STATUS_ASSIGNED if error or needs_balance else STATUS_DONE
+    shares = report.get("shares") if isinstance(report.get("shares"), dict) else {}
+    counts = report.get("counts") if isinstance(report.get("counts"), dict) else {}
+    if error:
+        verdict = f"contribution balance receipt failed: {error}"
+    elif needs_balance:
+        verdict = (
+            "GitHub activity mix needs owner action: "
+            f"commits {float(shares.get('commits') or 0):.1%}, "
+            f"PRs {float(shares.get('pull_requests') or 0):.1%}, "
+            f"issues {float(shares.get('issues') or 0):.1%}, "
+            f"reviews {float(shares.get('reviews') or 0):.1%}"
+        )
+    else:
+        verdict = "GitHub activity mix is within the configured issue -> PR -> review target"
+    return {
+        "id": "PUBLIC-FACE-CONTRIBUTION-BALANCE",
+        "workstream": "contribution-balance",
+        "priority": PRIORITY["contribution-balance"],
+        "status": status,
+        "title": "Rebalance public GitHub activity away from commit-only churn",
+        "verdict": verdict,
+        "evidence": {
+            "login": report.get("login") or CONTRIBUTION_BALANCE_LOGIN,
+            "status": report.get("status") or ("error" if error else "unknown"),
+            "counts": counts,
+            "shares": shares,
+            "targets": report.get("targets") if isinstance(report.get("targets"), dict) else {},
+            "next_action": report.get("next_action") or "",
+            "error": error,
+        },
+        "existing_receipts": [
+            relpath(CONTRIBUTION_BALANCE_SCRIPT),
+            relpath(ROOT / "cli" / "tests" / "test_github_contribution_balance.py"),
+            "https://github.com/4444J99",
+        ],
+        "assignment_packet": {
+            "lane_fit": "codex-conductor",
+            "repo": relpath(ROOT),
+            "task": (
+                "Use the live contribution balance as a value gate: route the next public work to "
+                "substantive PR review first, then real issue criteria and PR packaging, before more "
+                "commit-heavy implementation churn."
+            ),
+            "predicate": f"python3 scripts/github-contribution-balance.py --login {CONTRIBUTION_BALANCE_LOGIN} --json",
+            "receipt_target": relpath(ROOT / "docs" / "always-working.md"),
+            "stop_condition": "reviews/issues/PRs have owner receipts and commit-only churn is no longer the next public action",
+        },
+    }
+
+
+def credential_wall_receipt() -> dict[str, Any]:
+    check = run_command(["python3", "scripts/credential-wall.py", "--check"], timeout=60)
+    census_result = run_command(["python3", "scripts/credential-wall.py", "--census"], timeout=60)
+    census: dict[str, Any] = {}
+    census_error = ""
+    if census_result["returncode"] == 0:
+        try:
+            loaded = json.loads(census_result["stdout"] or "{}")
+            if isinstance(loaded, dict):
+                census = loaded
+        except ValueError as exc:
+            census_error = f"invalid credential census JSON: {exc}"
+    else:
+        census_error = (census_result["stderr"] or census_result["stdout"] or "credential census failed").strip()[:500]
+
+    tombstone_present = CREDENTIAL_TOMBSTONE_DOC.exists()
+    check_ok = check["returncode"] == 0
+    status = STATUS_DONE if check_ok and tombstone_present and not census_error else STATUS_ASSIGNED
+    if not check_ok:
+        verdict = "credential wall check failed; token/secret ownership has gaps"
+    elif census_error:
+        verdict = f"credential wall census failed: {census_error}"
+    elif not tombstone_present:
+        verdict = "credential wall passes current-home check; historical token tombstone audit still needs owner receipt"
+    else:
+        verdict = "credential wall and historical token tombstone receipt are present"
+    return {
+        "id": "CREDENTIAL-WALL-TOKEN-HYGIENE",
+        "workstream": "credential-wall",
+        "priority": PRIORITY["credential-wall"],
+        "status": status,
+        "title": "Own every token, secret, scope, and credential pain point in the credential wall",
+        "verdict": verdict,
+        "evidence": {
+            "credential_wall_check_returncode": check["returncode"],
+            "credential_wall_check_first_line": (check["stdout"] or check["stderr"]).splitlines()[0]
+            if (check["stdout"] or check["stderr"]).splitlines()
+            else "",
+            "credential_census": census,
+            "credential_census_error": census_error,
+            "historical_token_tombstone_doc_present": tombstone_present,
+            "historical_token_tombstone_doc": relpath(CREDENTIAL_TOMBSTONE_DOC),
+        },
+        "existing_receipts": [
+            relpath(ROOT / "scripts" / "credential-wall.py"),
+            relpath(ROOT / "scripts" / "creds-hydrate.py"),
+            "https://github.com/organvm/limen/issues/320",
+            "https://github.com/organvm/limen/labels/credential",
+        ],
+        "assignment_packet": {
+            "lane_fit": "codex-integrator",
+            "repo": relpath(ROOT),
+            "task": (
+                "Keep token/scope failures out of chat by registering every current credential atom "
+                "and adding a historical tombstone receipt for formerly exposed or rotated tokens. "
+                "Never record secret values."
+            ),
+            "predicate": "python3 scripts/credential-wall.py --check && test -f docs/credential-token-tombstone-audit.md",
+            "receipt_target": relpath(CREDENTIAL_TOMBSTONE_DOC),
+            "stop_condition": "current credential wall passes and historic token existence/revocation custody is recorded without values",
+        },
+    }
+
+
 def tabularius_receipt() -> dict[str, Any]:
     doc = ROOT / "docs" / "tabularius-record-keeper.md"
     audit_doc = ROOT / "docs" / "tabularius-writer-audit.md"
@@ -737,27 +984,31 @@ def tabularius_receipt() -> dict[str, Any]:
 
 def substrate_receipt() -> dict[str, Any]:
     disk = disk_receipt()
-    open_substrate = (disk["free_gib"] < float(os.environ.get("LIMEN_ALWAYS_WORKING_MIN_FREE_GIB", "60"))) or not disk["tmp_ok"]
+    target_free_gib = float(os.environ.get("LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB", "200"))
+    open_substrate = (disk["free_gib"] < target_free_gib) or not disk["tmp_ok"]
     return {
         "id": "SUBSTRATE-DISK-TEMP",
         "workstream": "substrate",
         "priority": PRIORITY["substrate"],
         "status": STATUS_ASSIGNED if open_substrate else STATUS_DONE,
         "title": "Keep disk/temp/voice substrate from starving the swarm",
-        "verdict": "disk/temp pressure needs owner work" if open_substrate else "disk/temp above configured floor",
-        "evidence": disk,
+        "verdict": "disk/temp pressure needs owner work" if open_substrate else "disk/temp above configured target",
+        "evidence": {**disk, "target_free_gib": target_free_gib},
         "existing_receipts": [
             relpath(ROOT / "logs" / "heartbeat.out.log"),
             relpath(ROOT / "scripts" / "cvstos-organ.py"),
             relpath(ROOT / "scripts" / "dispatch-health.py"),
+            relpath(ROOT / "scripts" / "reclaim-worktrees.py"),
+            relpath(ROOT / "scripts" / "reap-clones.py"),
+            relpath(ROOT / "scripts" / "worktree-debt.py"),
         ],
         "assignment_packet": {
             "lane_fit": "codex-local",
             "repo": relpath(ROOT),
-            "task": "Audit disk/temp pressure and stop wrong-priority churn before spawning more lanes.",
-            "predicate": "python3 scripts/cvstos-organ.py --check",
+            "task": "Audit disk/temp pressure, worktree debt, and disposable local clone lifecycle before spawning more lanes.",
+            "predicate": "python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap",
             "receipt_target": relpath(ROOT / "logs" / "cvstos-organ-state.json"),
-            "stop_condition": "free disk is above floor and temp writes are usable",
+            "stop_condition": "free disk is at target, temp writes are usable, and reclaimable worktree debt is owner-routed",
         },
     }
 
@@ -765,7 +1016,10 @@ def substrate_receipt() -> dict[str, Any]:
 def build_snapshot() -> dict[str, Any]:
     items = [
         substrate_receipt(),
+        estate_custody_receipt(),
         profile_receipt(),
+        contribution_balance_receipt(),
+        credential_wall_receipt(),
         *mail_receipts(),
         repo_surface_receipt(),
         prompt_packet_receipt(),

@@ -83,6 +83,48 @@ human gates: irreversible deletion of personal data, credential or account actio
 public identity claims, legal/medical/financial commitments, or product/values decisions that cannot
 be derived from existing doctrine.
 
+## Source of Truth and Local Cache
+
+For GitHub, profile, repo inventory, credential, and public proof surfaces, the remote owner is the
+source of truth. A local checkout is a disposable cache or staging area; it is not the golden state.
+
+- Read remote state first through the GitHub API, live deployed endpoint, pinned issue, or owner repo
+  receipt before trusting a local clone.
+- If local work is required, create it in an isolated worktree or scratch lane, push/open the remote
+  receipt, then reap the local cache once lifecycle custody is proven.
+- Do not fall back to local files when the canonical object is remote and queryable.
+- Do not let local clone presence, local profile copies, or stale generated artifacts define public
+  truth. If a remote cannot be updated, record the owner repo, missing gate, and next command.
+
+## Run-and-Gun Substrate
+
+The laptop must be able to operate alone as a thin control plane. External SSDs are the durable
+library and processing substrate, not random leftovers from a recovery event.
+
+- Keep the laptop as hot cache: active worktrees, small receipts, local tools, and enough context to
+  continue from the remote owner without needing a drive at a coffee shop.
+- Keep external drives as durable custody: complete private/raw data, processed/redacted corpora,
+  archived repo/org mirrors, photos/media packages, and restore-tested recovery copies.
+- At the desk, assume externals are plugged in and use them for hydration, archive, media processing,
+  and bulk scans; when unplugged, continue from remote receipts and cached indexes.
+- Do not move, delete, dedupe, or purge personal data without the relevant two-copy/restore gate and
+  an owner receipt.
+
+## Pain Point Ownership
+
+Every repeated pain point needs an owner. Missing scopes, stale profile metadata, disk pressure,
+credential/token hygiene, contribution imbalance, voice/temp failure, and queue/lane drift are not
+chat-only blockers.
+
+- Put each pain point in the repo that owns the fix: issue, task packet, PR, pinned wall, or receipt.
+- Credential, token, secret, API-key, login, and env-var problems belong to the credential wall owner;
+  never paste values into chat, tasks, commits, or PRs.
+- A blocker is incomplete unless it names the owning repo/surface, the failed predicate, and the next
+  command that would clear it.
+- If the same pain point appears twice, update the owner receipt instead of explaining it again.
+- Default toward productizing the fix: split private adapters from reusable public shells, publish a
+  redacted demo or method when safe, and route the outward-facing value surface through the owner repo.
+
 ## Full Lifecycle Closure
 
 Every prompt, idea, viewpoint, branch, worktree, scratch root, and generated lane is work until it

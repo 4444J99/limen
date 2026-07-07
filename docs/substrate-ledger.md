@@ -1,13 +1,12 @@
 # Substrate Ledger
 
-Generated: `2026-07-06T15:46:14+00:00`
+Generated: `2026-07-07T22:20:27+00:00`
 Status: `ready`
 
 ## Counts
 
-- `active`: 4
-- `full`: 6
-- `read_only`: 2
+- `active`: 10
+- `read_only`: 3
 
 ## Roots
 
@@ -17,14 +16,15 @@ Status: `ready`
 | `/Volumes/Ingress` | `active` | `mounted-volume` | exists and is usable |
 | `/Volumes/Scratch` | `active` | `mounted-volume` | exists and is usable |
 | `/Volumes/T7Recovery` | `active` | `mounted-volume` | exists and is usable |
+| `~/.claude/projects` | `active` | `prompt-default` | exists and is usable |
+| `~/.local/share/codex/history.jsonl` | `active` | `prompt-default` | exists and is usable |
+| `~/.local/share/codex/sessions` | `active` | `prompt-default` | exists and is usable |
+| `~/Workspace` | `active` | `repo-default`, `repo-default` | exists and is usable |
+| `~/Workspace/limen` | `active` | `repo-default` | exists and is usable |
+| `~/Workspace/limen/.limen-private/session-corpus` | `active` | `private-default` | exists and is usable |
 | `/` | `read_only` | `mounted-volume` | exists but is not writable |
+| `/Volumes/.timemachine` | `read_only` | `mounted-volume` | exists but is not writable |
 | `/Volumes/TM-Mac` | `read_only` | `mounted-volume` | exists but is not writable |
-| `~/.claude/projects` | `full` | `prompt-default` | usage 96.8% above 95.0% ceiling |
-| `~/.local/share/codex/history.jsonl` | `full` | `prompt-default` | usage 96.8% above 95.0% ceiling |
-| `~/.local/share/codex/sessions` | `full` | `prompt-default` | usage 96.8% above 95.0% ceiling |
-| `~/Workspace` | `full` | `repo-default`, `repo-default` | usage 96.8% above 95.0% ceiling |
-| `~/Workspace/limen` | `full` | `repo-default` | usage 96.8% above 95.0% ceiling |
-| `~/Workspace/limen/.limen-private/session-corpus` | `full` | `private-default` | usage 96.8% above 95.0% ceiling |
 
 ## Contract
 

@@ -115,13 +115,56 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
         "github_profile_surface",
         lambda: {"checked": True, "verified": True, "readme_total_repos": "171", "account_profile_stale": False},
     )
-    monkeypatch.setattr(mod, "disk_receipt", lambda: {"free_gib": 100.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""})
+    monkeypatch.setattr(mod, "disk_receipt", lambda: {"free_gib": 250.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""})
+    monkeypatch.setattr(
+        mod,
+        "estate_custody_receipt",
+        lambda: {
+            "id": "ESTATE-CUSTODY",
+            "workstream": "estate-custody",
+            "priority": 5,
+            "status": mod.STATUS_DONE,
+            "title": "estate",
+            "verdict": "owned",
+            "evidence": {},
+            "assignment_packet": {},
+        },
+    )
+    monkeypatch.setattr(
+        mod,
+        "contribution_balance_receipt",
+        lambda: {
+            "id": "PUBLIC-FACE-CONTRIBUTION-BALANCE",
+            "workstream": "contribution-balance",
+            "priority": 15,
+            "status": mod.STATUS_DONE,
+            "title": "balance",
+            "verdict": "balanced",
+            "evidence": {},
+            "assignment_packet": {},
+        },
+    )
+    monkeypatch.setattr(
+        mod,
+        "credential_wall_receipt",
+        lambda: {
+            "id": "CREDENTIAL-WALL-TOKEN-HYGIENE",
+            "workstream": "credential-wall",
+            "priority": 18,
+            "status": mod.STATUS_DONE,
+            "title": "credentials",
+            "verdict": "owned",
+            "evidence": {},
+            "assignment_packet": {},
+        },
+    )
     monkeypatch.setattr(mod, "mail_census", lambda: {"ok": True, "account_count": 1, "obligation_count": 2})
 
     snapshot = mod.build_snapshot()
     by_id = {item["id"]: item for item in snapshot["items"]}
 
     assert by_id["PUBLIC-FACE-PROFILE"]["status"] == mod.STATUS_ASSIGNED
+    assert by_id["ESTATE-CUSTODY"]["status"] == mod.STATUS_DONE
     assert by_id["MAIL-ACTIVE-FLAGGED"]["status"] == mod.STATUS_ASSIGNED
     assert by_id["MAIL-HISTORICAL-BACKLOG"]["status"] == mod.STATUS_ASSIGNED
     assert by_id["REPO-BOIL-UP"]["status"] == mod.STATUS_ASSIGNED
@@ -228,6 +271,124 @@ def test_profile_receipt_blocks_stale_github_sidebar(monkeypatch, tmp_path):
 
     assert receipt["status"] == mod.STATUS_BLOCKED
     assert "sidebar bio" in receipt["verdict"]
+
+
+def test_contribution_balance_receipt_assigns_review_first(monkeypatch):
+    mod = _load("always_working_contribution_balance_uut", ALWAYS_WORKING)
+
+    monkeypatch.setattr(
+        mod,
+        "run_command",
+        lambda *args, **kwargs: {
+            "returncode": 0,
+            "stdout": json.dumps(
+                {
+                    "status": "needs_balance",
+                    "login": "4444J99",
+                    "counts": {"commits": 12885, "issues": 2097, "pull_requests": 2317, "reviews": 106},
+                    "shares": {"commits": 0.7403, "issues": 0.1205, "pull_requests": 0.1331, "reviews": 0.0061},
+                    "targets": {"commits_max_share": 0.6, "reviews_min_share": 0.1},
+                    "next_action": "Review an existing PR with a substantive approval, request-change, or comment receipt before new feature work.",
+                }
+            ),
+            "stderr": "",
+            "timed_out": False,
+        },
+    )
+
+    receipt = mod.contribution_balance_receipt()
+
+    assert receipt["status"] == mod.STATUS_ASSIGNED
+    assert receipt["id"] == "PUBLIC-FACE-CONTRIBUTION-BALANCE"
+    assert receipt["evidence"]["shares"]["reviews"] == 0.0061
+    assert "substantive PR review" in receipt["assignment_packet"]["task"]
+
+
+def test_credential_wall_receipt_requires_historical_tombstone(monkeypatch, tmp_path):
+    mod = _load("always_working_credential_wall_uut", ALWAYS_WORKING)
+    tombstone = tmp_path / "docs" / "credential-token-tombstone-audit.md"
+    monkeypatch.setattr(mod, "CREDENTIAL_TOMBSTONE_DOC", tombstone)
+
+    def fake_run(args, **kwargs):
+        if "--census" in args:
+            return {
+                "returncode": 0,
+                "stdout": json.dumps(
+                    {
+                        "hydration_lanes": 8,
+                        "ci_runtime_secrets": 5,
+                        "homeless_secret_atoms": 0,
+                    }
+                ),
+                "stderr": "",
+                "timed_out": False,
+            }
+        return {
+            "returncode": 0,
+            "stdout": "credential-wall: all secret atoms registered",
+            "stderr": "",
+            "timed_out": False,
+        }
+
+    monkeypatch.setattr(mod, "run_command", fake_run)
+
+    receipt = mod.credential_wall_receipt()
+
+    assert receipt["status"] == mod.STATUS_ASSIGNED
+    assert receipt["evidence"]["historical_token_tombstone_doc_present"] is False
+    assert "Never record secret values" in receipt["assignment_packet"]["task"]
+
+
+def test_estate_custody_receipt_requires_implementation_receipts(monkeypatch, tmp_path):
+    mod = _load("always_working_estate_custody_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    archive = tmp_path / "Archive4T"
+    ingress = tmp_path / "Ingress"
+    scratch = tmp_path / "Scratch"
+    t7 = tmp_path / "T7Recovery"
+    lifeboat = t7 / "CleanUnique-Lifeboat-2026-06-13"
+
+    for path in (
+        archive / "_OPERATIONS",
+        ingress,
+        scratch,
+        lifeboat / "00_SUBSTRATE",
+        lifeboat / "10_PROFILE",
+        lifeboat / "20_TEXT",
+        lifeboat / "30_CODE",
+        lifeboat / "_MANIFESTS",
+        root / "docs",
+    ):
+        path.mkdir(parents=True, exist_ok=True)
+    storage_manual = archive / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
+    disk_policy = archive / "_OPERATIONS" / "LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md"
+    for path in (
+        storage_manual,
+        disk_policy,
+        root / "docs" / "vltima-absorb-cadence.md",
+        root / "docs" / "vltima-prior-excavations.md",
+        root / "docs" / "photos-universe-recovery-2026-06-29.md",
+        root / "docs" / "estate-custody-primitives.md",
+    ):
+        path.write_text("# receipt\n", encoding="utf-8")
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "ARCHIVE4T_ROOT", archive)
+    monkeypatch.setattr(mod, "INGRESS_ROOT", ingress)
+    monkeypatch.setattr(mod, "SCRATCH_ROOT", scratch)
+    monkeypatch.setattr(mod, "T7RECOVERY_ROOT", t7)
+    monkeypatch.setattr(mod, "T7_LIFEBOAT_ROOT", lifeboat)
+    monkeypatch.setattr(mod, "ESTATE_CUSTODY_DOC", root / "docs" / "estate-custody-primitives.md")
+    monkeypatch.setattr(mod, "ESTATE_CUSTODY_RECEIPT", root / "docs" / "estate-custody-implementation-receipts.json")
+    monkeypatch.setattr(mod, "STORAGE_OPERATING_MANUAL", storage_manual)
+    monkeypatch.setattr(mod, "LOCAL_DISK_EXPULSION_POLICY", disk_policy)
+
+    receipt = mod.estate_custody_receipt()
+
+    assert receipt["status"] == mod.STATUS_ASSIGNED
+    assert receipt["evidence"]["volumes"]["Archive4T"] is True
+    assert receipt["evidence"]["implementation_receipt_complete"] is False
+    assert "thin hot cache" in receipt["assignment_packet"]["task"]
 
 
 def test_mail_active_flagged_done_when_story_ledger_covers_current_flags(monkeypatch, tmp_path):
