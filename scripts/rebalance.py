@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
 from limen.dispatch import (  # noqa: E402
     _deps_met,
     _dispatchable,
@@ -29,6 +29,18 @@ from limen.dispatch import (  # noqa: E402
 )
 
 LOCAL = set(LOCAL_CHECKOUT_AGENTS)
+
+
+def _timeout_to_jules(task) -> bool:
+    labels = set(getattr(task, "labels", None) or [])
+    if "slow" not in labels:
+        return False
+    for entry in reversed(getattr(task, "dispatch_log", None) or []):
+        status = str(getattr(entry, "status", "") or "")
+        output = str(getattr(entry, "output", "") or "")
+        if "timeout->jules" in status or "timeout->jules" in output:
+            return True
+    return False
 
 
 def main() -> int:
@@ -61,8 +73,10 @@ def main() -> int:
         and _resolve_repo_dir(t) is not None
         and _deps_met(t, id2)
         and _routine_generated_buildout_allowed(t)
+        and not _timeout_to_jules(t)
     ]
     counts = {x: 0 for x in lanes}
+    assignments = {}
     skipped = 0
     lane_index = 0
     for t in cands:
@@ -76,6 +90,7 @@ def main() -> int:
         if assigned is None:
             skipped += 1
             continue
+        assignments[t.id] = assigned
         t.target_agent = assigned
         counts[assigned] += 1
 
@@ -83,8 +98,24 @@ def main() -> int:
     if skipped:
         print(f"skipped {skipped} task(s) with no safe productive lane")
     if args.apply:
-        save_limen_file(path, lf)
-        print("APPLIED -> tasks.yaml")
+        with queue_lock(path) as got:
+            if not got:
+                print("queue busy — skipped applying rebalance this pass (self-corrects next beat).")
+                return 0
+            fresh = load_limen_file(path)
+            applied = 0
+            for task in fresh.tasks:
+                assigned = assignments.get(task.id)
+                if not assigned:
+                    continue
+                if task.status != "open" or canonical_agent(task.target_agent) not in LOCAL:
+                    continue
+                if _timeout_to_jules(task) or not agent_can_run_task(assigned, task):
+                    continue
+                task.target_agent = assigned
+                applied += 1
+            save_limen_file(path, fresh)
+        print(f"APPLIED -> tasks.yaml ({applied} target_agent update(s))")
     else:
         print("dry-run (pass --apply to write)")
     return 0

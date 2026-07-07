@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "rebalance.py"
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task  # noqa: E402
+from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task  # noqa: E402
 
 
 def test_rebalance_skips_down_lanes(tmp_path, monkeypatch):
@@ -85,3 +85,55 @@ def test_rebalance_skips_unsafe_agy_registry_discovery(tmp_path, monkeypatch):
     tasks = {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
     assert tasks["DISCOVER-organvm-example"].target_agent == "opencode"
     assert tasks["HEAL-cifix-organvm-example-1"].target_agent == "agy"
+
+
+def test_rebalance_does_not_steal_timeout_to_jules_task(tmp_path, monkeypatch):
+    import datetime
+
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
+    now = datetime.datetime.now(datetime.timezone.utc)
+    today = now.date()
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(today)))),
+        tasks=[
+            Task(
+                id="SLOW",
+                title="slow timed out",
+                repo="organvm/mirror-mirror",
+                target_agent="codex",
+                status="open",
+                labels=["slow", "cifix"],
+                created=today,
+                dispatch_log=[
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="opencode",
+                        session_id="cli",
+                        status="timeout->jules",
+                    )
+                ],
+            ),
+            Task(
+                id="NORMAL",
+                title="normal local work",
+                repo="organvm/mirror-mirror",
+                target_agent="codex",
+                status="open",
+                created=today,
+            ),
+        ],
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir()
+
+    spec = importlib.util.spec_from_file_location("rebalance_uut", SCRIPT)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    monkeypatch.setattr(m, "_resolve_repo_dir", lambda t: tmp_path)
+    monkeypatch.setattr(sys, "argv", ["rebalance", "--lanes", "agy,opencode", "--apply"])
+    m.main()
+
+    tasks = {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
+    assert tasks["SLOW"].target_agent == "codex"
+    assert tasks["NORMAL"].target_agent == "agy"

@@ -351,10 +351,19 @@ while true; do
                                        bash "$LIMEN_ROOT/scripts/drain.sh" 2>&1 | tail -2 || true        # VERIFY
                                        python3 -m limen release-stale --agent jules --hours 24 --apply 2>&1 | tail -1 || true; }
       due_voice heal "$C_HEAL"     && python3 "$LIMEN_ROOT/scripts/recover.py" --apply 2>&1 | tail -1 || true   # HEAL
-      play "$C_FEED"               && { python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-25}" --apply 2>&1 | tail -1 || true  # EXPLORE
-                                       [ "${LIMEN_REVENUE_BACKLOG:-1}" = "1" ] && timeout "${LIMEN_REVENUE_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-revenue-backlog.py" --apply 2>&1 | tail -1 || true  # REVENUE FIRST: ladder→tasks so win-class capacity builds products, not busywork (default-ON; floor-gated)
-                                       [ "${LIMEN_ORGAN_BACKLOG:-1}" = "1" ] && timeout "${LIMEN_ORGAN_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-organ-backlog.py" --apply 2>&1 | tail -1 || true  # ORGANS (VLTIMA): organ-ladder->tasks so idle capacity builds the institutional pillars (legal/financial/education/...), not busywork (default-ON; floor-gated; lockless)
-                                       timeout "${LIMEN_GENERATE_BACKLOG_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true  # SELF-FEED: build-out levers on the ranked tier
+
+      # Release the broad heartbeat mutex before producer/planner voices. Those scripts either submit
+      # Tabularius tickets or acquire their own short queue_lock, so a slow feed/rebalance pass cannot
+      # starve supervisors and high-value async claims for minutes.
+      unset LIMEN_QUEUE_LOCK_HELD
+      rm -f "$LOCKD/pid" "$LOCKD/created_at" 2>/dev/null || true
+      rmdir "$LOCKD" 2>/dev/null || true
+      locked=0
+
+      play "$C_FEED"               && { LIMEN_TICKETS_PRODUCE=1 python3 "$LIMEN_ROOT/scripts/mine-backlog.py" --limit "${LIMEN_MINE_LIMIT:-25}" --apply 2>&1 | tail -1 || true  # EXPLORE
+                                       [ "${LIMEN_REVENUE_BACKLOG:-1}" = "1" ] && LIMEN_TICKETS_PRODUCE=1 timeout "${LIMEN_REVENUE_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-revenue-backlog.py" --apply 2>&1 | tail -1 || true  # REVENUE FIRST: ladder→tasks so win-class capacity builds products, not busywork (default-ON; floor-gated)
+                                       [ "${LIMEN_ORGAN_BACKLOG:-1}" = "1" ] && LIMEN_TICKETS_PRODUCE=1 timeout "${LIMEN_ORGAN_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-organ-backlog.py" --apply 2>&1 | tail -1 || true  # ORGANS (VLTIMA): organ-ladder->tasks so idle capacity builds the institutional pillars (legal/financial/education/...), not busywork (default-ON; floor-gated)
+                                       LIMEN_TICKETS_PRODUCE=1 timeout "${LIMEN_GENERATE_BACKLOG_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-backlog.py" --apply 2>&1 | tail -1 || true  # SELF-FEED: build-out levers on the ranked tier
                                        [ "${LIMEN_STUDIUM:-0}" = "1" ] && timeout "${LIMEN_STUDIUM_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/ingest-backlog.py" --apply 2>&1 | tail -1 || true  # STUDIUM: re-emit the staged canon-breadth content tasks each beat so they SURVIVE the prune (a one-shot hand-apply gets clobbered; idempotent, gated, lockless)
                                        python3 "$LIMEN_ROOT/scripts/discover-value.py" --apply 2>&1 | tail -1 || true; }  # DISCOVER: no repo stays dark — surface latent value, burn the tank
       play "$C_BALANCE"            && { python3 "$LIMEN_ROOT/scripts/route.py" --apply 2>&1 | tail -1 || true   # PLAN
@@ -368,13 +377,8 @@ while true; do
       play "$C_FEED"               && stamp feed
       play "$C_BALANCE"            && stamp balance
 
-      # #11: RELEASE the queue-lock BEFORE the slow dispatch so supervisors (seed / heal / verify)
-      # aren't starved through the multi-minute run. dispatch-parallel.py now self-acquires the
-      # SAME lockdir around its reserve AND reloads-fresh+commits under it — so nothing races
-      # tasks.yaml, and a seed written mid-run survives instead of being clobbered.
-      unset LIMEN_QUEUE_LOCK_HELD
-      rm -f "$LOCKD/pid" "$LOCKD/created_at" 2>/dev/null || true
-      rmdir "$LOCKD" 2>/dev/null || true
+      # The queue lock was already released before feed/balance; dispatch self-acquires the SAME
+      # lockdir around reserve and reloads-fresh+commits under it.
 
       # RECLAIM is intentionally outside the queue lock. It can spend minutes scanning
       # worktrees with git status/cherry; holding the board mutex there starves harvest/refill.
