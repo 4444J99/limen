@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 177
+      spent: 178
       per_agent:
         jules: 100
         gemini: 3
-        codex: 17
+        codex: 18
         opencode: 25
         agy: 31
         claude: 0
@@ -35237,7 +35237,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-iv-taxis.github.io
   repo: organvm/organvm-iv-taxis.github.io
   type: code
-  target_agent: opencode
+  target_agent: codex
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -35979,7 +35979,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-v-logos.github.io
   repo: organvm/organvm-v-logos.github.io
   type: code
-  target_agent: codex
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -38140,7 +38140,7 @@ tasks:
   title: Raise test coverage in organvm-vii-kerygma/organvm-vii-kerygma.github.io
   repo: organvm/organvm-vii-kerygma.github.io
   type: code
-  target_agent: opencode
+  target_agent: codex
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -38772,7 +38772,7 @@ tasks:
   title: Raise test coverage in organvm-iv-taxis/organvm-iv-taxis--superproject
   repo: organvm/organvm-iv-taxis--superproject
   type: code
-  target_agent: codex
+  target_agent: agy
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -41631,7 +41631,7 @@ tasks:
   title: Raise test coverage in organvm/collective-persona-operations
   repo: organvm/collective-persona-operations
   type: code
-  target_agent: agy
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -76376,7 +76376,7 @@ tasks:
   title: Discover the latent value of organvm/styx-behavioral-art
   repo: organvm/styx-behavioral-art
   type: research
-  target_agent: opencode
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -76570,7 +76570,7 @@ tasks:
   title: Raise test coverage in organvm/domus-genoma
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -85054,7 +85054,7 @@ tasks:
   title: rebase/resolve conflicts on 4444J99/hokage-chess#136
   repo: organvm/hokage-chess
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -85205,7 +85205,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/4444J99.github.io#9
   repo: organvm/4444J99.github.io
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -96506,7 +96506,7 @@ tasks:
     \ daemon body"
   repo: organvm/limen
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -99637,7 +99637,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#100
   repo: organvm/organvm-engine
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -102806,10 +102806,10 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#109
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -102825,7 +102825,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T21:33:06.471617Z'
+  updated: '2026-07-07T21:57:26.887792Z'
   dispatch_log:
   - timestamp: '2026-07-07T18:48:50.268336Z'
     agent: codex
@@ -102852,6 +102852,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-07T21:57:26.887792Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-domus-genoma-118
   title: fix failing CI on organvm/domus-genoma#118
   repo: organvm/domus-genoma
@@ -102935,7 +102940,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -102952,7 +102957,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T21:13:09.839677Z'
+  updated: '2026-07-07T22:01:06.029108Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:50:31.892215Z'
     agent: codex
@@ -102973,11 +102978,21 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-07T21:57:26.887792Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-07T22:01:06.029108Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-121
   title: fix failing CI on organvm/domus-genoma#121
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -103066,11 +103081,12 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/125
   context: "PR organvm/domus-genoma#125 has FAILING CI checks and merge-drain correctly\
@@ -103081,7 +103097,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T21:33:19.911247Z'
+  updated: '2026-07-07T22:00:47.947291Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:28:49.330824Z'
     agent: jules
@@ -103103,6 +103119,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T22:00:47.947291Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-domus-genoma-132
   title: fix failing CI on organvm/domus-genoma#132
   repo: organvm/domus-genoma
@@ -106058,10 +106079,10 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#175
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -106076,7 +106097,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-07T18:00:27.281679Z'
+  updated: '2026-07-07T21:57:26.887792Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:58:04.383222Z'
     agent: jules
@@ -106087,11 +106108,16 @@ tasks:
     agent: jules
     session_id: '17711596651240474183'
     status: dispatched
+  - timestamp: '2026-07-07T21:57:26.887792Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 17711596651240474183 is failed \u2192 reopened"
 - id: HEAL-cifix-organvm-domus-genoma-176
   title: fix failing CI on organvm/domus-genoma#176
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -106114,7 +106140,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#177
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -106137,7 +106163,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--logos#26
   repo: organvm/dot-github--logos
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -106160,7 +106186,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#98
   repo: organvm/mirror-mirror
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -106901,7 +106927,7 @@ tasks:
   title: Discover the latent value of organvm/pages--theoria-copy--poiesis
   repo: organvm/pages--theoria-copy--poiesis
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -106975,7 +107001,7 @@ tasks:
   title: Discover the latent value of organvm/pages--theoria-copy--taxis
   repo: organvm/pages--theoria-copy--taxis
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107049,7 +107075,7 @@ tasks:
   title: Discover the latent value of organvm/pages--theoria-copy--koinonia
   repo: organvm/pages--theoria-copy--koinonia
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107123,7 +107149,7 @@ tasks:
   title: Discover the latent value of organvm/pages--theoria-copy--meta-organvm
   repo: organvm/pages--theoria-copy--meta-organvm
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107196,7 +107222,7 @@ tasks:
   title: Discover the latent value of organvm/hokage-chess--4444j99
   repo: organvm/hokage-chess--4444j99
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107278,7 +107304,7 @@ tasks:
   title: Discover the latent value of organvm/studium-generale--4444j99
   repo: organvm/studium-generale--4444j99
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107336,7 +107362,7 @@ tasks:
   title: Discover the latent value of organvm/micro-tato-play
   repo: organvm/micro-tato-play
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107410,7 +107436,7 @@ tasks:
   title: Discover the latent value of organvm/netmode
   repo: organvm/netmode
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107484,7 +107510,7 @@ tasks:
   title: Discover the latent value of organvm/quaestor
   repo: organvm/quaestor
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107558,7 +107584,7 @@ tasks:
   title: Discover the latent value of organvm/collaboratory
   repo: organvm/collaboratory
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107632,7 +107658,7 @@ tasks:
   title: Discover the latent value of organvm/laurea
   repo: organvm/laurea
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -108962,4 +108988,92 @@ tasks:
     2026-07-07 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-07'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-the-invisible-ledger-31
+  title: "rebase organvm/the-invisible-ledger#31 onto current base \u2014 branched\
+    \ far behind"
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  urls:
+  - https://github.com/organvm/the-invisible-ledger/pull/31
+  context: "PR organvm/the-invisible-ledger#31 is MERGEABLE + green but branched well\
+    \ behind its current base \u2014 the structural condition for a stale-base silent\
+    \ revert. Check out the branch, REBASE it onto the current base, KEEP all of the\
+    \ PR's genuine changes and DROP any hunk that merely reverts base files it didn't\
+    \ mean to touch, push --force-with-lease to the SAME branch, and confirm MERGEABLE\
+    \ + current + green. Do NOT open a new PR; preserve all unique work. PR: https://github.com/organvm/the-invisible-ledger/pull/31\
+    \ [auto-emitted 2026-07-07 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-07'
+  dispatch_log: []
+- id: GH-organvm-limen-686
+  title: Add historical token tombstone audit to the credential wall
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/686
+  context: 'GitHub issue organvm/limen#686. ## Pain point Credential/scope/token failures
+    must belong to the credential wall, not to chat. Current wall checks prove registered
+    homes for current credential atoms, but the system also needs a historical tombstone
+    receipt for formerly existing or rotated tokens without exposing values. ## Existing
+    owner surface - `scripts/credential-wall.py` - `scripts/creds-hydrate.py` - pinned
+    credential wall'
+  depends_on: []
+  created: '2026-07-07'
+  updated: '2026-07-07T21:57:54.814402Z'
+  dispatch_log: []
+- id: GH-organvm-limen-687
+  title: Owner-route contribution balance before more commit-heavy dispatch
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/687
+  context: 'GitHub issue organvm/limen#687. ## Pain point The public GitHub activity
+    graph is commit-heavy and review-light. This makes the work look like churn instead
+    of balanced engineering practice. ## Live receipt `python3 scripts/github-contribution-balance.py
+    --login 4444J99 --json` reported on 2026-07-07: - commits: 12,885, share 74.03%
+    target <= 60% - issues: 2,097, share 12.05% target >= 15% - pull requests: 2,317,
+    share 13.31% ta'
+  depends_on: []
+  created: '2026-07-07'
+  updated: '2026-07-07T21:57:54.816818Z'
+  dispatch_log: []
+- id: GH-organvm-limen-685
+  title: Make disk and worktree lifecycle enforce the 200GiB local-free target
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/685
+  context: 'GitHub issue organvm/limen#685. ## Pain point Local storage should be
+    near-empty disposable cache, not a growing source of truth. The host currently
+    has about 84GiB free on the internal data volume, not the requested ~200GiB target.
+    ## Measured consumers - `/Users/4jp/Workspace`: 87G - `/Users/4jp/Workspace/.limen-worktrees`:
+    36G - `/Users/4jp/.gemini/antigravity-cli/scratch`: 22G - `/Users/4jp/Workspace/limen`:
+    15G - `/Users/4j'
+  depends_on: []
+  created: '2026-07-07'
+  updated: '2026-07-07T21:57:54.818400Z'
   dispatch_log: []
