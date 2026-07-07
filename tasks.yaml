@@ -108373,3 +108373,31 @@ tasks:
   depends_on: []
   created: '2026-07-07'
   dispatch_log: []
+- id: HEAL-drain-lock-scope-0707
+  title: Move drain writers out of heartbeat queue-lock starvation path
+  repo: organvm/limen
+  type: code
+  target_agent: codex
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - dispatch-lock
+  - always-working
+  - lifecycle
+  - record-keeper
+  urls: []
+  context: 'Live blocker observed 2026-07-07T17:32Z: heartbeat drain.sh held logs/.queue.lock.d
+    for roughly two minutes while high-value Mirror Mirror Jules dispatch waited.
+    Do not just delete the lock. Convert drain writers that still assume parent lock
+    (jules-land.py and limen.harvest at minimum) to canonical queue_lock or keeper
+    tickets, then move drain/heal outside the broad heartbeat lock and verify dispatch
+    can claim while drain runs.'
+  depends_on: []
+  created: '2026-07-07'
+  dispatch_log:
+  - timestamp: '2026-07-07T17:39:33.730812Z'
+    agent: codex
+    session_id: direct-conductor
+    status: open
+    output: Created from live queue-lock blocker observed during conductor run.
