@@ -599,7 +599,7 @@ while true; do
   # NEVER wedge the beat (the prior wedge bug); the multi-provider rescan is heavier than
   # the old one-provider run, hence the larger default budget.
   if play "$C_CORPUS_FEED" && [ "${LIMEN_CORPUS_FEED:-1}" = "1" ]; then
-    python3 "$LIMEN_ROOT/scripts/corpus-feed.py" 2>&1 | tail -6 || true
+    timeout "${LIMEN_CORPUS_FEED_OUTER_TIMEOUT:-900}" python3 "$LIMEN_ROOT/scripts/corpus-feed.py" 2>&1 | tail -6 || true
     stamp corpus_feed
   fi
   # CONVERGE his WORDS — distill the knowledge base toward ONE. Gated OFF by default
