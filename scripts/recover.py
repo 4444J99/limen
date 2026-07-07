@@ -4,9 +4,9 @@
 Two failure modes leak capacity:
   1. status==failed tasks just sit there. Re-open them at the TOP of the lane cascade
      (codex) so the dispatcher's per-task failover gives them a fresh run across lanes.
-  2. status==dispatched jules tasks whose recorded session failed or is no longer
-     in `jules remote list` (aged out / lost) are orphaned — re-open so they
-     re-dispatch fresh.
+  2. status==dispatched jules tasks whose recorded session failed, stalled for
+     user feedback, or is no longer in `jules remote list` (aged out / lost) are
+     orphaned — re-open so they re-dispatch fresh.
 
 Reversible (only flips status→open + target_agent + logs a heal entry); never deletes,
 never dispatches. Bounded by --limit. Run by the daemon's heal voice AND by supervision.
@@ -38,6 +38,8 @@ def live_jules_sessions() -> dict[str, str]:
             low = line.lower()
             if "failed" in low:
                 status = "failed"
+            elif "awaiting user" in low or "awaiting feedback" in low:
+                status = "awaiting_user_feedback"
             elif "completed" in low:
                 status = "completed"
             elif "planning" in low:
@@ -94,13 +96,14 @@ def main() -> int:
                 continue
             if live is None:
                 live = live_jules_sessions()
-            if live and live.get(sid) == "failed":
+            if live and live.get(sid) in {"failed", "awaiting_user_feedback"}:
+                remote_status = live.get(sid)
                 t.status = "open"
                 t.target_agent = CASCADE_TOP
                 t.updated = now
                 t.dispatch_log.append(DispatchLogEntry(
                     timestamp=now, agent="limen", session_id="heal",
-                    status="open", output=f"recover: jules session {sid} failed remotely → reopened"))
+                    status="open", output=f"recover: jules session {sid} is {remote_status} → reopened"))
                 reopened_remote_failed.append(t.id)
             elif live and sid not in live:  # session aged out / lost → orphaned
                 t.status = "open"

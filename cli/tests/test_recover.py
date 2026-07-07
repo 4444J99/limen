@@ -47,4 +47,43 @@ def test_recover_reopens_failed_jules_remote_session(tmp_path, monkeypatch):
     task = load_limen_file(tasks_path).tasks[0]
     assert task.status == "open"
     assert task.target_agent == "codex"
-    assert "failed remotely" in task.dispatch_log[-1].output
+    assert "is failed" in task.dispatch_log[-1].output
+
+
+def test_recover_reopens_jules_session_awaiting_feedback(tmp_path, monkeypatch):
+    tasks_path = tmp_path / "tasks.yaml"
+    now = dt.datetime.now(dt.timezone.utc)
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
+        tasks=[
+            Task(
+                id="HEAL-cifix-organvm-mirror-mirror-106",
+                title="fix mirror CI",
+                repo="organvm/mirror-mirror",
+                target_agent="jules",
+                status="dispatched",
+                created=now.date(),
+                dispatch_log=[
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="jules",
+                        session_id="15175913208909090857",
+                        status="dispatched",
+                    )
+                ],
+            )
+        ],
+    )
+    save_limen_file(tasks_path, lf)
+
+    spec = importlib.util.spec_from_file_location("recover_uut_feedback", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "live_jules_sessions", lambda: {"15175913208909090857": "awaiting_user_feedback"})
+    monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
+
+    assert module.main() == 0
+    task = load_limen_file(tasks_path).tasks[0]
+    assert task.status == "open"
+    assert task.target_agent == "codex"
+    assert "awaiting_user_feedback" in task.dispatch_log[-1].output
