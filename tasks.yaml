@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 127
+      spent: 131
       per_agent:
-        jules: 66
+        jules: 69
         gemini: 3
         codex: 8
-        opencode: 19
+        opencode: 20
         agy: 30
         claude: 0
         github_actions: 1
@@ -89690,14 +89690,15 @@ tasks:
   title: fix failing CI on organvm/recursive-engine--generative-entity#18
   repo: organvm/recursive-engine--generative-entity
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/recursive-engine--generative-entity/pull/18
   context: "PR organvm/recursive-engine--generative-entity#18 has FAILING CI checks\
@@ -89708,7 +89709,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T14:31:38.550617Z'
+  updated: '2026-07-07T15:05:42.490985Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:05:58.861134Z'
     agent: jules
@@ -89729,6 +89730,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T15:05:42.490985Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-relationship-pipeline-6
   title: fix failing CI on organvm/relationship-pipeline#6
   repo: organvm/relationship-pipeline
@@ -90083,14 +90088,15 @@ tasks:
   title: fix failing CI on organvm/scale-threshold-emergence#4
   repo: organvm/scale-threshold-emergence
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/scale-threshold-emergence/pull/4
   context: "PR organvm/scale-threshold-emergence#4 has FAILING CI checks and merge-drain\
@@ -90101,7 +90107,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T14:31:38.550617Z'
+  updated: '2026-07-07T15:05:42.490985Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:54:10.420000Z'
     agent: jules
@@ -90122,6 +90128,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T15:05:42.490985Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-rebase-organvm-scale-threshold-emergence-6
   title: rebase/resolve conflicts on organvm/scale-threshold-emergence#6
   repo: organvm/scale-threshold-emergence
@@ -96432,7 +96442,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T14:39:50.025761Z'
+  updated: '2026-07-07T15:05:42.490985Z'
   dispatch_log:
   - timestamp: '2026-07-07T11:51:16.792799Z'
     agent: gemini
@@ -96463,6 +96473,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T15:05:42.490985Z'
+    agent: jules
+    session_id: '9753176769306008125'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-388
   title: fix failing CI on organvm/limen#388
   repo: organvm/limen
@@ -101370,13 +101384,17 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T14:39:50.025761Z'
+  updated: '2026-07-07T15:05:42.490985Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T15:05:42.490985Z'
+    agent: jules
+    session_id: '7021204048482557597'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-416
   title: fix failing CI on organvm/limen#416
   repo: organvm/limen
@@ -101445,13 +101463,17 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T14:39:50.025761Z'
+  updated: '2026-07-07T15:05:42.490985Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-07T15:05:42.490985Z'
+    agent: jules
+    session_id: '11183760651996897748'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-419
   title: fix failing CI on organvm/limen#419
   repo: organvm/limen
@@ -107741,7 +107763,7 @@ tasks:
   workstream: substrate
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - substrate
@@ -107763,5 +107785,10 @@ tasks:
     must show this group is no longer an unowned busy lane.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T14:43:02.085099Z'
-  dispatch_log: []
+  updated: '2026-07-07T15:05:59.317732Z'
+  dispatch_log:
+  - timestamp: '2026-07-07T15:05:59.317732Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
