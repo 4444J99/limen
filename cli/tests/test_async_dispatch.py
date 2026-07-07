@@ -51,6 +51,12 @@ def test_concurrency_cap_bounds_reservation(tmp_path):
     assert len(picked) == 4  # cap (4) < open (6) and < per_agent (8)
 
 
+def test_task_id_limits_async_reservation(tmp_path):
+    da = _load(tmp_path, n_open=6)
+    picked = da.reserve_and_launch(["codex"], per_agent=8, cap=4, dry=True, task_id="T3")
+    assert picked == [("codex", "T3")]
+
+
 def test_inflight_markers_consume_slots(tmp_path):
     da = _load(tmp_path, n_open=6)
     for i in range(4):

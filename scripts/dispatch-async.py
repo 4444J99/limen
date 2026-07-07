@@ -15,7 +15,7 @@ LIMEN_DISPATCH_ASYNC=1. The synchronous dispatch-parallel.py is left completely 
 Concurrency: at most LIMEN_ASYNC_MAX (default 12) background runs at once; per-agent in-flight count
 is tracked via <task-id>__<agent>.running markers so budgets aren't blown between reserve & harvest.
 
-Usage: dispatch-async.py --lanes auto --per-lane 8 --max 12 [--dry-run]
+Usage: dispatch-async.py --lanes auto --per-lane 8 --max 12 [--task-id TASK] [--dry-run]
 """
 
 import argparse
@@ -639,7 +639,7 @@ def _weak_proxy_agents(usage: dict[str, dict[str, object]]) -> set[str]:
     return {agent for agent, info in usage.items() if _weak_proxy_exhaustion(agent, info)}
 
 
-def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents):
+def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents, task_id=None):
     picked = []
     picked_ids = set(_claimed_task_ids())
     reset_changed = _reset_budget_if_needed(lf, now)
@@ -675,6 +675,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
             t
             for t in lf.tasks
             if _dispatchable(t)
+            and (task_id is None or t.id == task_id)
             and (t.target_agent == agent or t.target_agent == "any")
             and agent_can_run_task(agent, t)
             and t.budget_cost <= rem
@@ -749,7 +750,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
     return picked, reset_changed
 
 
-def reserve_and_launch(agents, per_agent, cap, dry):
+def reserve_and_launch(agents, per_agent, cap, dry, task_id=None):
     """Reserve open tasks (under lock) up to the concurrency cap + per-agent budget, then spawn
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
     now = _now()
@@ -759,7 +760,7 @@ def reserve_and_launch(agents, per_agent, cap, dry):
     if dry:
         lf = load_limen_file(TASKS)
         picked, _reset_changed = _pick_reservations(
-            lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents
+            lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents, task_id=task_id
         )
         return picked
     with _queue_lock(TASKS) as got:
@@ -770,7 +771,7 @@ def reserve_and_launch(agents, per_agent, cap, dry):
             return []
         lf = load_limen_file(TASKS)
         picked, reset_changed = _pick_reservations(
-            lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents
+            lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents, task_id=task_id
         )
         if not dry and (picked or reset_changed):
             save_limen_file(TASKS, lf)
@@ -810,6 +811,7 @@ def main() -> int:
     ap.add_argument("--lanes", default="auto")
     ap.add_argument("--per-lane", type=int, default=max(1, _env_int("LIMEN_LOCAL_LIMIT", 8)))
     ap.add_argument("--max", type=int, default=max(1, _env_int("LIMEN_ASYNC_MAX", 12)))
+    ap.add_argument("--task-id", help="Reserve and launch only this task id")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     down = _down_lanes()
@@ -824,7 +826,7 @@ def main() -> int:
         reaped = reap_stale(max_age)
         applied = harvest()
     running = _running_total()
-    launched = reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run)
+    launched = reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run, task_id=a.task_id)
     verb = "would launch" if a.dry_run else "launched"
     print(
         f"── async: reaped {len(reaped)} dead · harvested {applied} · {running} still running · "
