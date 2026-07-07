@@ -85759,14 +85759,12 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
-  - tried:claude
   - slow
-  - tried:jules
   - noop
   urls:
   - https://github.com/organvm/a-i-chat--exporter/pull/49
@@ -85778,7 +85776,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T18:48:26.759229Z'
+  updated: '2026-07-07T19:29:31.054081Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:11:02.708379Z'
     agent: claude
@@ -85851,6 +85849,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-07T19:29:31.054081Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-a-i-chat--exporter-54
   title: fix failing CI on organvm/a-i-chat--exporter#54
   repo: organvm/a-i-chat--exporter
@@ -102785,7 +102788,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -102801,7 +102804,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T19:07:11.698789Z'
+  updated: '2026-07-07T19:29:31.054081Z'
   dispatch_log:
   - timestamp: '2026-07-07T18:48:50.268336Z'
     agent: codex
@@ -102813,6 +102816,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-07T19:29:31.054081Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-domus-genoma-118
   title: fix failing CI on organvm/domus-genoma#118
   repo: organvm/domus-genoma
@@ -105775,10 +105783,10 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#162
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -105794,7 +105802,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-07T17:53:00.967939Z'
+  updated: '2026-07-07T19:29:31.054081Z'
   dispatch_log:
   - timestamp: '2026-07-05T20:51:17.294866Z'
     agent: github_actions
@@ -105815,6 +105823,12 @@ tasks:
     agent: jules
     session_id: '843919725175210510'
     status: dispatched
+  - timestamp: '2026-07-07T19:29:31.054081Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 843919725175210510 is awaiting_user_feedback \u2192\
+      \ reopened"
 - id: HEAL-cifix-organvm-domus-genoma-163
   title: fix failing CI on organvm/domus-genoma#163
   repo: organvm/domus-genoma
@@ -107643,10 +107657,10 @@ tasks:
   title: fix failing CI on organvm/mirror-mirror#106
   repo: organvm/mirror-mirror
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -107664,7 +107678,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T18:34:09.660574Z'
+  updated: '2026-07-07T19:29:31.054081Z'
   dispatch_log:
   - timestamp: '2026-07-07T16:16:30.076888Z'
     agent: codex
@@ -107711,6 +107725,12 @@ tasks:
     agent: jules
     session_id: '15205446705144059680'
     status: dispatched
+  - timestamp: '2026-07-07T19:29:31.054081Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 15205446705144059680 is awaiting_plan_approval\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-mirror-mirror-107
   title: fix failing CI on organvm/mirror-mirror#107
   repo: organvm/mirror-mirror
