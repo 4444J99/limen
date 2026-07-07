@@ -109088,3 +109088,24 @@ tasks:
   created: '2026-07-07'
   updated: '2026-07-07T21:57:54.818400Z'
   dispatch_log: []
+- id: GH-organvm-limen-688
+  title: Build external estate custody implementation receipt
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/688
+  context: 'GitHub issue organvm/limen#688. ## Problem The external SSDs should be
+    the durable estate, not accidental recovery leftovers. The laptop should remain
+    a run-and-gun hot cache that can operate from remotes and small receipts when
+    the drives are unplugged. ## Owner scope - Preserve Archive4T as curated archive,
+    Ingress as intake, Scratch as disposable workspace, and T7Recovery as second local
+    recovery copy. - Keep private/raw data'
+  depends_on: []
+  created: '2026-07-07'
+  updated: '2026-07-07T22:24:02.057061Z'
+  dispatch_log: []
