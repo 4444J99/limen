@@ -53,10 +53,12 @@ archived ticket files are the append-only event log the board projects from.
 | Producer API | `cli/src/limen/tabularius.py` → `submit_task_upsert()` | the one-line conversion target: a writer swaps `save_limen_file` for this call per NEW task (validates up front, then hands the keeper an upsert ticket) |
 | Beat organ | `scripts/tabularius-organ.py` | thin per-beat wrapper (like `heal-board.py`); `--check`/`--dry-run`; writes the liveness stamp |
 | Beat wiring | `scripts/heartbeat-loop.sh` | runs after `heal-board` (fold onto a *healthy* board), before the body's own mutation |
+| Projection preservation | `limen.tabularius.preserve_board_projection()` | keeper-owned commit/push of the current `tasks.yaml` projection, under the queue lock, with a temporary git index so a push failure cannot strand the live checkout ahead |
+| Writer audit | `scripts/task-writer-audit.py` | reports every remaining legacy direct board writer so the migration burns down explicitly instead of allowing another hidden writer |
 | Proprioception | `scripts/organ-health.py` | a TABVLARIVS rung, green when `logs/tabularius-organ-state.json` is fresh |
 | Keeper gate | `institutio/governance/parameters.yaml` → `LIMEN_TABVLARIVS` | master kill-switch for the keeper (default ON) |
 | Cutover gate | `institutio/governance/parameters.yaml` → `LIMEN_TICKETS_PRODUCE` | flips converted writers from direct-write to producer (default **OFF** — a merge changes nothing live; the flip is the deliberate, revertible cutover) |
-| Tests | `cli/tests/test_tabularius.py` | 13 tests: end-to-end submit→drain, ordering, quarantine, lock-deferral, collapse-guard, **and the producer≡direct-write identity invariant** |
+| Tests | `cli/tests/test_tabularius.py` | 16 tests: end-to-end submit→drain, ordering, quarantine, lock-deferral, collapse-guard, projection preservation, **and the producer≡direct-write identity invariant** |
 
 ### Safety invariants (each inherited from a shipped precedent)
 
@@ -71,6 +73,9 @@ archived ticket files are the append-only event log the board projects from.
   defers to the next beat rather than blocking (exactly `heal-board`'s stance).
 - **Idempotent no-op while dark** — an empty inbox touches nothing (no lock, no board I/O), which is
   what makes it safe to run every beat before any producer exists.
+- **Projection preservation is not a second writer** — the keeper may publish the already-sealed
+  `tasks.yaml` projection, but it never edits the board. It commits only `tasks.yaml` from a temporary
+  index, pushes before advancing local refs, and leaves other daemon/receipt drift untouched.
 
 ## Migration path
 
@@ -118,9 +123,15 @@ above it is autonomous.
       `discover-value` converted (behind the same gate). Reading the code corrected the remainder list:
       `generate-positioning` and `ingest-coverage` **never write `tasks.yaml`** (obligations / read-only) —
       not writers, so not converted. **`scripts/heartbeat-loop.sh` sets `LIMEN_TICKETS_PRODUCE=1`**, so the
-      LIVE fleet routes task creation through the keeper (revertible via `~/.limen.env`). Smoke-proven:
-      a real `generate-backlog` run submitted 5 tickets, left the board untouched, and the keeper folded
-      them (2→7). The status-mutator tier still writes directly — that is Step 2.2.
+      creation tier is live under the keeper (revertible via `~/.limen.env`). Smoke-proven: a real
+      `generate-backlog` run submitted 5 tickets, left the board untouched, and the keeper folded them
+      (2→7). The status-mutator tier still writes directly — that is Step 2.2.
+- [x] Projection preservation returned to TABVLARIVS — the standalone live-state preserver was removed;
+      `scripts/tabularius-organ.py` now calls `preserve_board_projection()` after every drain/no-op pass.
+      The focused predicate proves the keeper pushes the board projection without stranding a local commit.
+- [ ] Burn down the legacy writer audit — `scripts/task-writer-audit.py` records the remaining direct
+      `save_limen_file`/`atomic_write_text` board writers so each conversion becomes a bounded owner task
+      instead of an implicit side channel.
 - [ ] Step 2.2 — the STATUS-mutator tier (`route`, `dispatch-async`, `heal-dispatch`, `rebalance`,
       `recover`, `quicken`) → emit an INTENT_STATUS ticket instead of a direct RMW (NOT an upsert — an
       upsert of a live id merge-clobbers; these change existing tasks). Also CLI harvest/dispatch result-apply.

@@ -21,6 +21,17 @@ export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
 export PYTHONPATH="$LIMEN_ROOT/cli/src"
 cd "$LIMEN_ROOT" || exit 1
+if [ -z "${LIMEN_WORKTREES:-}" ]; then
+  if [ -d /Volumes/Scratch ] && [ -w /Volumes/Scratch ]; then
+    export LIMEN_WORKTREES="/Volumes/Scratch/limen-worktrees"
+  else
+    export LIMEN_WORKTREES="$LIMEN_WORKDIR/.limen-worktrees"
+  fi
+else
+  export LIMEN_WORKTREES
+fi
+export LIMEN_WORKTREE_ROOT="${LIMEN_WORKTREE_ROOT:-$LIMEN_WORKTREES}"
+mkdir -p "$LIMEN_WORKTREES" "$LIMEN_WORKTREE_ROOT" 2>/dev/null || true
 
 echo "═══ metabolize $(date '+%F %T') — dispatch=${LIMEN_DISPATCH:-0} isolation=$LIMEN_ISOLATION ═══"
 

@@ -19,6 +19,8 @@
         <key>HOME</key><string>/Users/4jp</string>
         <key>LIMEN_ROOT</key><string>/Users/4jp/Workspace/limen</string>
         <key>LIMEN_WORKDIR</key><string>/Users/4jp/Workspace</string>
+        <key>LIMEN_WORKTREES</key><string>/Volumes/Scratch/limen-worktrees</string>
+        <key>LIMEN_WORKTREE_ROOT</key><string>/Volumes/Scratch/limen-worktrees</string>
         <key>LIMEN_PYTHON</key><string>/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin/python3.14</string>
         <key>LIMEN_LANES</key><string>codex,opencode,agy,claude,gemini</string>
         <key>LIMEN_DISPATCH_LANES</key><string>auto</string>

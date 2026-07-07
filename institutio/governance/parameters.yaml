@@ -136,6 +136,30 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local raw/private session cartridge. Stores manifests and optional content-addressed object copies; never committed."
+  LIMEN_ALWAYS_WORKING_INDEX:
+    default: "$LIMEN_PRIVATE_SESSION_CORPUS/lifecycle/always-working.json"
+    env: LIMEN_ALWAYS_WORKING_INDEX
+    self_update: none
+    owner: continuity
+    note: "Private lifecycle index written by always-working.py to classify user promises as done, assigned, needs assignment, or blocked before dispatch opens more work."
+  LIMEN_ALWAYS_WORKING_DOC:
+    default: "$LIMEN_ROOT/docs/always-working.md"
+    env: LIMEN_ALWAYS_WORKING_DOC
+    self_update: none
+    owner: continuity
+    note: "Public receipt document emitted from the always-working lifecycle index. Contains aggregate statuses and receipt paths, not private raw prompt content."
+  LIMEN_PROFILE_REPO:
+    default: "$LIMEN_WORKSPACE_ROOT/organvm/4444J99"
+    env: LIMEN_PROFILE_REPO
+    self_update: none
+    owner: continuity
+    note: "Local profile/front-door repository used by always-working public-face checks."
+  LIMEN_CORPVS_ROOT:
+    default: "$LIMEN_WORKSPACE_ROOT/organvm-corpvs-testamentvm"
+    env: LIMEN_CORPVS_ROOT
+    self_update: none
+    owner: continuity
+    note: "Local corpus/metrics repository used by always-working to compare public profile claims with system proof."
   LIMEN_EXTERNAL_SESSION_ROOTS:
     default: ""
     env: LIMEN_EXTERNAL_SESSION_ROOTS
@@ -220,12 +244,72 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional local workspace root scanned for repo/product surfaces by repo-surface ledger. Read-only discovery only."
+  LIMEN_WORKTREES:
+    default: "/Volumes/Scratch/limen-worktrees if mounted and writable, otherwise $LIMEN_WORKDIR/.limen-worktrees"
+    env: LIMEN_WORKTREES
+    self_update: none
+    owner: continuity
+    note: "Dispatch isolation root for generated lane checkouts. Heartbeat and launchd derive this onto the external Scratch SSD when available so completed/generated worktrees do not creep on the local system disk."
   LIMEN_WORKTREE_ROOT:
-    default: ""
+    default: "$LIMEN_WORKTREES"
     env: LIMEN_WORKTREE_ROOT
     self_update: none
     owner: continuity
-    note: "Optional local worktree root scanned for repo/product surfaces by repo-surface ledger. Empty means no extra worktree root."
+    note: "Worktree root used by reclaim and repo-surface discovery. Defaults to the dispatch isolation root so lifecycle cleanup watches the same generated checkout surface it creates."
+  LIMEN_RECLAIM_GENERATED:
+    default: "1"
+    env: LIMEN_RECLAIM_GENERATED
+    self_update: none
+    owner: continuity
+    note: "Whether generated checkout payload reclaim is enabled. This removes ignored/cache/build payloads only after lifecycle and idle gates pass."
+  LIMEN_RECLAIM_GENERATED_MAX:
+    default: 80
+    env: LIMEN_RECLAIM_GENERATED_MAX
+    self_update: none
+    owner: continuity
+    note: "Maximum generated payload paths reclaimed per reclaim-worktrees run."
+  LIMEN_RECLAIM_GENERATED_TIMEOUT:
+    default: 120
+    env: LIMEN_RECLAIM_GENERATED_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Heartbeat timeout in seconds for generated-only reclaim."
+  LIMEN_RECLAIM_TIMEOUT:
+    default: 300
+    env: LIMEN_RECLAIM_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Heartbeat timeout in seconds for the broader reclaim-worktrees pass."
+  LIMEN_DISK_PRESSURE_PATH:
+    default: "$LIMEN_ROOT"
+    env: LIMEN_DISK_PRESSURE_PATH
+    self_update: none
+    owner: continuity
+    note: "Filesystem path used by async dispatch to measure local free space before launching more work."
+  LIMEN_DISK_FLOOR_GIB:
+    default: 60
+    env: LIMEN_DISK_FLOOR_GIB
+    self_update: none
+    owner: continuity
+    note: "Minimum local free space in GiB before async dispatch should prefer low-burn value-first work or stop opening new local-heavy lanes."
+  LIMEN_DISK_PRESSURE_VALUE_ONLY:
+    default: "1"
+    env: LIMEN_DISK_PRESSURE_VALUE_ONLY
+    self_update: none
+    owner: continuity
+    note: "When true, disk pressure gates async dispatch toward value-first continuations instead of broad local checkout churn."
+  LIMEN_LOW_BURN_VALUE_FIRST:
+    default: "1"
+    env: LIMEN_LOW_BURN_VALUE_FIRST
+    self_update: none
+    owner: continuity
+    note: "When true, async dispatch chooses prompt/revenue/value-first work under pressure instead of generic queue draining."
+  LIMEN_ALWAYS_WORKING_MIN_FREE_GIB:
+    default: 60
+    env: LIMEN_ALWAYS_WORKING_MIN_FREE_GIB
+    self_update: none
+    owner: continuity
+    note: "Minimum free-space threshold used by always-working receipts when judging substrate pressure."
   LIMEN_REPO_SCAN_DEPTH:
     default: 4
     env: LIMEN_REPO_SCAN_DEPTH
@@ -292,6 +376,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Maximum redacted units exposed to the owner dashboard/public-safe corpus snapshot; coverage still records full bounded-run counts."
+  LIMEN_CORPUS_FEED_OUTER_TIMEOUT:
+    default: 900
+    env: LIMEN_CORPUS_FEED_OUTER_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Heartbeat timeout in seconds for the corpus-feed outer process so prompt ingestion cannot wedge the beat."
   LIMEN_CAPABILITY_ROOTS:
     default: ""
     env: LIMEN_CAPABILITY_ROOTS
@@ -737,6 +827,12 @@ parameters:
     self_update: none
     owner: vltima
     note: "Hard timeout (s) for the organ-backlog generator inside the FEED beat so a slow run never wedges the heartbeat."
+  LIMEN_GENERATE_BACKLOG_TIMEOUT:
+    default: 120
+    env: LIMEN_GENERATE_BACKLOG_TIMEOUT
+    self_update: none
+    owner: vltima
+    note: "Heartbeat timeout in seconds for the general build-out backlog generator."
   LIMEN_ORGAN_LADDER:
     default: "organ-ladder.json"   # repo-root census the generator reads (override for tests)
     env: LIMEN_ORGAN_LADDER

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import subprocess
 
 from limen.io import load_limen_file, queue_lock, save_limen_file
 from limen.models import LimenFile, Task
@@ -30,6 +31,7 @@ from limen.tabularius import (
     drain_once,
     new_ticket_id,
     pending_count,
+    preserve_board_projection,
     submit_ticket,
 )
 
@@ -51,6 +53,20 @@ def _seed_board(tmp_path: Path, n: int = 6) -> Path:
     board = tmp_path / "tasks.yaml"
     save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(n)]))
     return board
+
+
+def _git(repo: Path, *args: str) -> str:
+    proc = subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=True)
+    return proc.stdout.strip()
+
+
+def _commit_all(repo: Path, msg: str) -> None:
+    _git(repo, "add", ".")
+    subprocess.run(
+        ["git", "-c", "user.email=t@example.com", "-c", "user.name=test", "commit", "-qm", msg],
+        cwd=repo,
+        check=True,
+    )
 
 
 def _ticket(intent: str, task_id: str | None = None, ts: datetime = _NOW, **over) -> Ticket:
@@ -81,6 +97,32 @@ def test_missing_inbox_is_noop(tmp_path):
     assert not _inbox(board).exists()
     result = drain_once(board)
     assert result.wrote is False and "empty" in result.note
+
+
+def test_tabularius_preserves_board_projection_without_stranding_local_commit(tmp_path):
+    origin = tmp_path / "origin.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
+    repo = tmp_path / "repo"
+    subprocess.run(["git", "clone", "-q", str(origin), str(repo)], check=True)
+    _git(repo, "switch", "-c", "main")
+    board = repo / "tasks.yaml"
+    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
+    _commit_all(repo, "base")
+    _git(repo, "push", "-u", "origin", "main")
+
+    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done", "output": "ok"}))
+    assert drain_once(board).wrote is True
+    result = preserve_board_projection(board)
+
+    assert result.pushed is True
+    assert _git(repo, "status", "--porcelain", "--", "tasks.yaml") == ""
+    remote_board = subprocess.run(
+        ["git", "--git-dir", str(origin), "show", "main:tasks.yaml"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    assert "status: done" in remote_board
 
 
 # --- the core lifecycle: submit → drain → board updated → archived -------------------------------

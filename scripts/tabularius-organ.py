@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.tabularius import drain_once, pending_count  # noqa: E402
+from limen.tabularius import drain_once, pending_count, preserve_board_projection  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 BOARD = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -59,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     result = drain_once(BOARD, dry_run=args.dry_run)
+    preserve = None if args.dry_run else preserve_board_projection(BOARD)
 
     if result.deferred:
         print(f"tabularius: queue lock held; {result.pending} ticket(s) deferred to next beat")
@@ -66,8 +67,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if result.pending == 0:
-        print("tabularius: OK — inbox empty (no-op)")
-        _stamp(pending=0, applied=0, rejected=0)
+        if preserve and preserve.pushed:
+            print(f"tabularius: OK — inbox empty; board projection pushed {preserve.commit[:8]}")
+        elif preserve and preserve.deferred:
+            print("tabularius: OK — inbox empty; board preservation deferred (queue lock)")
+        elif preserve and preserve.reason not in {"no-board-changes", ""}:
+            print(f"tabularius: OK — inbox empty; board preservation skipped ({preserve.reason})")
+        else:
+            print("tabularius: OK — inbox empty (no-op)")
+        _stamp(
+            pending=0,
+            applied=0,
+            rejected=0,
+            preserve_pushed=bool(preserve and preserve.pushed),
+            preserve_reason=(preserve.reason if preserve else ""),
+        )
         return 0
 
     verb = "WOULD apply" if args.dry_run else "sealed"
@@ -76,6 +90,10 @@ def main(argv: list[str] | None = None) -> int:
         parts.append(f"quarantined {result.rejected}")
     if not args.dry_run and result.wrote:
         parts.append(f"board resealed ({BOARD.name})")
+    if preserve and preserve.pushed:
+        parts.append(f"projection pushed {preserve.commit[:8]}")
+    elif preserve and preserve.reason not in {"no-board-changes", ""}:
+        parts.append(f"projection not pushed: {preserve.reason}")
     print("; ".join(parts))
     _stamp(
         pending=result.pending,
@@ -83,6 +101,8 @@ def main(argv: list[str] | None = None) -> int:
         rejected=result.rejected,
         wrote=result.wrote,
         dry_run=args.dry_run,
+        preserve_pushed=bool(preserve and preserve.pushed),
+        preserve_reason=(preserve.reason if preserve else ""),
     )
     return 0
 

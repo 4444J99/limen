@@ -30,6 +30,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${LIMEN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"        # repo root = parent of scripts/
 HOME_DIR="${HOME:?HOME is unset}"
 WORKDIR="${LIMEN_WORKDIR:-$(cd "$ROOT/.." && pwd)}"        # parent of the repo
+if [ -n "${LIMEN_WORKTREES:-}" ]; then
+  WORKTREES="$LIMEN_WORKTREES"
+elif [ -d /Volumes/Scratch ] && [ -w /Volumes/Scratch ]; then
+  WORKTREES="/Volumes/Scratch/limen-worktrees"
+else
+  WORKTREES="$WORKDIR/.limen-worktrees"
+fi
+WORKTREE_ROOT="${LIMEN_WORKTREE_ROOT:-$WORKTREES}"
 TMPL="$ROOT/container/launchd/com.limen.heartbeat.plist.tmpl"
 [ -f "$TMPL" ] || { echo "template not found: $TMPL" >&2; exit 1; }
 
@@ -53,6 +61,8 @@ render() {
   sed -e "s|@@HOME@@|$HOME_DIR|g" \
       -e "s|@@LIMEN_ROOT@@|$ROOT|g" \
       -e "s|@@LIMEN_WORKDIR@@|$WORKDIR|g" \
+      -e "s|@@LIMEN_WORKTREES@@|$WORKTREES|g" \
+      -e "s|@@LIMEN_WORKTREE_ROOT@@|$WORKTREE_ROOT|g" \
       -e "s|@@LIMEN_PYTHON@@|$PY|g" \
       -e "s|@@LIMEN_LANES@@|$LANES|g" \
       -e "s|@@LIMEN_DISPATCH_LANES@@|$DISPATCH_LANES|g" \

@@ -58,6 +58,17 @@ export PYTHONPATH="$LIMEN_ROOT/cli/src"
 cd "$LIMEN_ROOT" || exit 1
 
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
+if [ -z "${LIMEN_WORKTREES:-}" ]; then
+  if [ -d /Volumes/Scratch ] && [ -w /Volumes/Scratch ]; then
+    export LIMEN_WORKTREES="/Volumes/Scratch/limen-worktrees"
+  else
+    export LIMEN_WORKTREES="$LIMEN_WORKDIR/.limen-worktrees"
+  fi
+else
+  export LIMEN_WORKTREES
+fi
+export LIMEN_WORKTREE_ROOT="${LIMEN_WORKTREE_ROOT:-$LIMEN_WORKTREES}"
+mkdir -p "$LIMEN_WORKTREES" "$LIMEN_WORKTREE_ROOT" 2>/dev/null || true
 # opencode runs on a Google model → it needs the Google generative-AI key (reuse gemini's)
 [ -n "${GEMINI_API_KEY:-}" ] && export GOOGLE_GENERATIVE_AI_API_KEY="${GOOGLE_GENERATIVE_AI_API_KEY:-$GEMINI_API_KEY}"
 # TABVLARIVS single-writer CUTOVER (Step 2.1, watched draining before flip): the fleet routes its
@@ -640,9 +651,6 @@ while true; do
     python3 "$LIMEN_ROOT/scripts/evocator.py" --apply 2>&1 | tail -2 || true
     stamp evocator
   fi
-  [ "${LIMEN_PRESERVE_LIVE_STATE:-1}" = "1" ] && \
-    python3 "$LIMEN_ROOT/scripts/preserve-live-state.py" 2>&1 | tail -1 || true
-
   # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
   # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min
   # while tasks wait); exponential backoff to MAX only when genuinely idle (empty queue, no PR).

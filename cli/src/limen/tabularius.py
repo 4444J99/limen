@@ -38,6 +38,7 @@ Design invariants (each carried over from a shipped safety precedent):
 from __future__ import annotations
 
 import os
+import subprocess
 import tempfile
 import uuid
 from collections import OrderedDict
@@ -189,9 +190,119 @@ class DrainResult:
     rejected_ids: list[str] = field(default_factory=list)
 
 
+@dataclass
+class PreserveResult:
+    changed: bool = False
+    pushed: bool = False
+    deferred: bool = False
+    skipped: bool = False
+    reason: str = ""
+    commit: str = ""
+
+
 def pending_count(board_path: Path) -> int:
     inbox = _inbox(board_path)
     return len(list(inbox.glob("*.json"))) if inbox.is_dir() else 0
+
+
+def _git(repo: Path, args: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    merged_env = os.environ.copy()
+    if env:
+        merged_env.update(env)
+    return subprocess.run(
+        ["git", *args],
+        cwd=str(repo),
+        env=merged_env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+
+def _short_output(proc: subprocess.CompletedProcess[str]) -> str:
+    return (proc.stderr or proc.stdout or "").strip().replace("\n", " ")[:220]
+
+
+def preserve_board_projection(
+    board_path: Path,
+    *,
+    branch: str = "main",
+    remote: str = "origin",
+    dry_run: bool = False,
+    lock_timeout: int = 2,
+) -> PreserveResult:
+    """Commit and push the board projection as a Tabularius-owned action.
+
+    This is not a second writer. It never edits `tasks.yaml`; it preserves the current projection
+    after the record-keeper has sealed it. The commit is built from a temporary index and pushed
+    before the local branch is advanced, so a push failure cannot strand the live checkout ahead.
+    """
+    board_path = Path(board_path)
+    with queue_lock(board_path, timeout=lock_timeout) as locked:
+        if not locked:
+            return PreserveResult(deferred=True, reason="queue-lock-held")
+
+        top = _git(board_path.parent, ["rev-parse", "--show-toplevel"])
+        if top.returncode != 0 or not top.stdout.strip():
+            return PreserveResult(skipped=True, reason="not-a-git-repo")
+        repo = Path(top.stdout.strip())
+        try:
+            rel_board = board_path.resolve().relative_to(repo.resolve()).as_posix()
+        except ValueError:
+            return PreserveResult(skipped=True, reason="board-outside-git-root")
+
+        status = _git(repo, ["status", "--porcelain", "--", rel_board])
+        if status.returncode != 0:
+            return PreserveResult(skipped=True, reason=f"status-failed:{_short_output(status)}")
+        if not status.stdout.strip():
+            return PreserveResult(skipped=True, reason="no-board-changes")
+        if dry_run:
+            return PreserveResult(changed=True, skipped=True, reason=f"would-preserve:{rel_board}")
+
+        current = _git(repo, ["symbolic-ref", "--quiet", "--short", "HEAD"])
+        if current.returncode != 0 or current.stdout.strip() != branch:
+            return PreserveResult(skipped=True, reason=f"not-on-{branch}")
+        fetch = _git(repo, ["fetch", "--quiet", remote, branch])
+        if fetch.returncode != 0:
+            return PreserveResult(skipped=True, reason=f"fetch-failed:{_short_output(fetch)}")
+        head = _git(repo, ["rev-parse", "HEAD"]).stdout.strip()
+        remote_ref = f"{remote}/{branch}"
+        remote_sha = _git(repo, ["rev-parse", remote_ref]).stdout.strip()
+        if not head or head != remote_sha:
+            return PreserveResult(changed=True, skipped=True, reason=f"not-at-{remote_ref}")
+
+        with tempfile.NamedTemporaryFile(prefix="tabularius-board-index-") as tmp:
+            env = {"GIT_INDEX_FILE": tmp.name}
+            read_tree = _git(repo, ["read-tree", "HEAD"], env=env)
+            if read_tree.returncode != 0:
+                return PreserveResult(changed=True, skipped=True, reason=f"read-tree-failed:{_short_output(read_tree)}")
+            add = _git(repo, ["add", "-A", "--", rel_board], env=env)
+            if add.returncode != 0:
+                return PreserveResult(changed=True, skipped=True, reason=f"add-failed:{_short_output(add)}")
+            diff = _git(repo, ["diff", "--cached", "--quiet", "--", rel_board], env=env)
+            if diff.returncode == 0:
+                return PreserveResult(skipped=True, reason="no-index-diff")
+            tree = _git(repo, ["write-tree"], env=env)
+            if tree.returncode != 0 or not tree.stdout.strip():
+                return PreserveResult(changed=True, skipped=True, reason=f"write-tree-failed:{_short_output(tree)}")
+            stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            commit = _git(
+                repo,
+                ["commit-tree", tree.stdout.strip(), "-p", head, "-m", f"tabularius: preserve board projection {stamp}"],
+                env=env,
+            )
+            if commit.returncode != 0 or not commit.stdout.strip():
+                return PreserveResult(changed=True, skipped=True, reason=f"commit-tree-failed:{_short_output(commit)}")
+            commit_sha = commit.stdout.strip()
+
+        push = _git(repo, ["push", remote, f"{commit_sha}:refs/heads/{branch}"])
+        if push.returncode != 0:
+            return PreserveResult(changed=True, skipped=True, reason=f"push-failed:{_short_output(push)}")
+
+        _git(repo, ["update-ref", f"refs/heads/{branch}", commit_sha, head])
+        _git(repo, ["update-ref", f"refs/remotes/{remote_ref}", commit_sha, remote_sha])
+        _git(repo, ["reset", "-q", "--", rel_board])
+        return PreserveResult(changed=True, pushed=True, commit=commit_sha)
 
 
 def _parse_pending(inbox: Path) -> tuple[list[tuple[Path, Ticket]], list[tuple[Path, str]]]:
