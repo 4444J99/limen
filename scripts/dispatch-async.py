@@ -25,6 +25,7 @@ import json
 import os
 import re
 import signal
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -46,6 +47,7 @@ from limen.dispatch import (  # noqa: E402
     _restore_done_status,
     _restore_pr_open_status,
     _routine_generated_buildout_allowed,
+    _value_tier_repos,
     agent_can_run_task,
 )
 
@@ -56,6 +58,45 @@ RECEIPT_ARCHIVE = ROOT / ".limen-private" / "async-runs" / "archive"
 WORKER = ROOT / "scripts" / "async-run-one.py"
 _TOKEN_RE = re.compile(r"(github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{12,})")
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
+_VALUE_LABELS = {
+    "financial",
+    "low-burn-priority",
+    "product",
+    "revenue",
+    "sell-ready",
+    "value",
+    "value-repo",
+    "value-tier",
+}
+_LIFECYCLE_TERMS = {
+    "always-working",
+    "agy-scratch",
+    "corpus",
+    "custody",
+    "cvstos",
+    "disk",
+    "lifecycle",
+    "prompt",
+    "prompt-batch",
+    "prompt-packet",
+    "reclaim",
+    "record-keeper",
+    "recordkeeper",
+    "scratch",
+    "session-lifecycle",
+    "storage",
+    "substrate",
+    "tabvlarivs",
+    "worktree",
+    "worktree-lifecycle",
+}
+
+
+def _truthy_env(name: str, default: bool = True) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
 
 
 def _int_or_default(raw: object, default: int) -> int:
@@ -67,6 +108,86 @@ def _int_or_default(raw: object, default: int) -> int:
 
 def _env_int(name: str, default: int) -> int:
     return _int_or_default(os.environ.get(name), default)
+
+
+def _disk_free_gib() -> float | None:
+    path = Path(os.environ.get("LIMEN_DISK_PRESSURE_PATH", str(ROOT)))
+    try:
+        return shutil.disk_usage(path).free / (1024**3)
+    except OSError:
+        return None
+
+
+def _disk_pressure_active() -> bool:
+    if not _truthy_env("LIMEN_DISK_PRESSURE_VALUE_ONLY", True):
+        return False
+    floor = _env_int(
+        "LIMEN_DISK_FLOOR_GIB",
+        _env_int("LIMEN_ALWAYS_WORKING_MIN_FREE_GIB", 45),
+    )
+    free = _disk_free_gib()
+    return free is not None and free < floor
+
+
+def _normalize_repo_slug(repo: object) -> str:
+    value = str(repo or "").strip()
+    if value.startswith("git@github.com:"):
+        value = value.removeprefix("git@github.com:")
+    for prefix in ("https://github.com/", "http://github.com/", "github.com/"):
+        if value.startswith(prefix):
+            value = value.removeprefix(prefix)
+            break
+    if value.endswith(".git"):
+        value = value[:-4]
+    return value.strip("/").lower()
+
+
+def _task_search_text(task) -> str:
+    parts = [
+        getattr(task, "id", ""),
+        getattr(task, "title", ""),
+        getattr(task, "description", ""),
+        getattr(task, "repo", ""),
+        getattr(task, "workstream", ""),
+        getattr(task, "context", ""),
+        " ".join(str(label) for label in (getattr(task, "labels", None) or [])),
+        " ".join(str(url) for url in (getattr(task, "urls", None) or [])),
+    ]
+    return " ".join(str(part or "") for part in parts).lower()
+
+
+def _dispatch_focus_bucket(task, value_repos: set[str]) -> int:
+    """Rank scarce async slots toward value work and lifecycle relief before generic churn."""
+    repo = _normalize_repo_slug(getattr(task, "repo", ""))
+    labels = {str(label).strip().lower() for label in (getattr(task, "labels", None) or [])}
+    workstream = str(getattr(task, "workstream", "") or "").strip().lower()
+    text = _task_search_text(task)
+    if repo and repo in value_repos:
+        return 0
+    if labels & _VALUE_LABELS or workstream in {"financial", "revenue", "product"}:
+        return 0
+    if str(getattr(task, "id", "") or "").startswith("REV-"):
+        return 0
+    if any(term in text for term in _LIFECYCLE_TERMS):
+        return 0
+    return 1
+
+
+def _sort_async_candidates(cands: list, value_repos: set[str], *, disk_pressure: bool) -> list:
+    if disk_pressure:
+        focused = [task for task in cands if _dispatch_focus_bucket(task, value_repos) == 0]
+        if focused:
+            cands = focused
+    if _truthy_env("LIMEN_LOW_BURN_VALUE_FIRST", True):
+        return sorted(
+            cands,
+            key=lambda t: (
+                _dispatch_focus_bucket(t, value_repos),
+                _PRIORITY_ORDER.get(t.priority, 99),
+                str(t.id),
+            ),
+        )
+    return sorted(cands, key=lambda t: (_PRIORITY_ORDER.get(t.priority, 99), str(t.id)))
 
 
 def _now():
@@ -524,6 +645,8 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
     reset_changed = _reset_budget_if_needed(lf, now)
     track = lf.portal.budget.track
     daily = lf.portal.budget.daily
+    value_repos = {_normalize_repo_slug(repo) for repo in _value_tier_repos()}
+    disk_pressure = _disk_pressure_active()
     # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
     # separately below (see _running_local).
     slots = max(0, cap - _running_local())
@@ -558,7 +681,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
             and _deps_met(t, id2)
             and _routine_generated_buildout_allowed(t)
         ]
-        cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
+        cands = _sort_async_candidates(cands, value_repos, disk_pressure=disk_pressure)
         states.append(
             {
                 "agent": agent,

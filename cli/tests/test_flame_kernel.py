@@ -35,8 +35,25 @@ def test_kernel_rides_every_prompt(tmp_path, monkeypatch):
     assert "You are VLTIMA." in p  # the self rides along
     assert "YOUR TASK THIS BEAT" in p  # divider separates identity from work
     assert "do a thing" in p  # the concrete task is still there
+    assert "VALUE GATE" in p
     assert "VERIFICATION DISCIPLINE" in p
     assert "Do not run scripts/verify-whole.sh" in p
+
+
+def test_value_gate_carries_task_statistics(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_FLAME_KERNEL", "0")
+    monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
+    monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
+    (tmp_path / "value-repos.json").write_text('{"repos":["org/repo"]}', encoding="utf-8")
+    D._FLAME_CACHE.clear()
+    p = D._build_prompt(_task())
+    assert "VALUE GATE" in p
+    assert "priority=medium" in p
+    assert "budget_cost=1" in p
+    assert "repo_in_value_tier=true" in p
+    assert "value_tier_repo_count=1" in p
+    assert "warm leads" in p
 
 
 def test_kernel_disabled_is_bare_prompt(tmp_path, monkeypatch):

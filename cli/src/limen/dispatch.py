@@ -494,6 +494,33 @@ def _verification_discipline() -> str:
     )
 
 
+def _value_gate_discipline(task: Task) -> str:
+    try:
+        value_repos = _value_tier_repos()
+    except Exception:
+        value_repos = set()
+    repo = task.repo or ""
+    labels = task.labels or []
+    urls = task.urls or []
+    depends_on = task.depends_on or []
+    return (
+        "--- VALUE GATE ---\n"
+        "Before editing, state whether this is worth doing now and defend it with the stats below. "
+        "Proceed only when the work is value-tier, prompt/lifecycle, blocker-clearing, or explicitly "
+        "queued revenue/owner work. Do not do generic busywork just because a task exists.\n"
+        "For a value-tier repo, prefer the path that creates public proof, discoverability, warm leads, "
+        "or revenue access; work on internal CI/rebase/test churn only when it directly unblocks that "
+        "outward-facing path.\n"
+        f"Stats: priority={task.priority}; budget_cost={task.budget_cost}; "
+        f"workstream={task.workstream or 'none'}; repo={repo or 'none'}; "
+        f"repo_in_value_tier={str(repo in value_repos).lower()}; "
+        f"value_tier_repo_count={len(value_repos)}; labels={len(labels)}; urls={len(urls)}; "
+        f"depends_on={len(depends_on)}.\n"
+        "If the stats do not justify the work, record the smallest owner route/blocker and stop "
+        "without broad repo churn."
+    )
+
+
 def _build_prompt(task: Task, task_first: bool = False) -> str:
     parts = [f"Complete task {task.id}: {task.title}"]
     if task.repo:
@@ -502,7 +529,7 @@ def _build_prompt(task: Task, task_first: bool = False) -> str:
         parts.append(f"\nContext: {task.context}")
     if task.urls:
         parts.append(f"\nReferences: {', '.join(task.urls)}")
-    body = f"{''.join(parts)}\n\n{_verification_discipline()}"
+    body = f"{''.join(parts)}\n\n{_value_gate_discipline(task)}\n\n{_verification_discipline()}"
     flame = _flame_preamble()
     if not flame:
         return body

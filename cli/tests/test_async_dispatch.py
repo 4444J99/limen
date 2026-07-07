@@ -412,6 +412,79 @@ def test_reserve_skips_generated_buildout_outside_value_tier(tmp_path, monkeypat
     assert picked == [("codex", "VALUE-WORK")]
 
 
+def test_async_prefers_value_repo_over_higher_priority_generic_churn(tmp_path, monkeypatch):
+    monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
+    monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
+    da = _load(tmp_path, n_open=0, agent="opencode")
+    (tmp_path / "value-repos.json").write_text(
+        json.dumps({"repos": ["organvm/mirror-mirror"]}),
+        encoding="utf-8",
+    )
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"opencode": 50}
+    lf.tasks = [
+        Task(
+            id="GENERIC-HIGH-CI",
+            title="fix failing CI on organvm/hokage-chess#85",
+            repo="organvm/hokage-chess",
+            target_agent="opencode",
+            priority="high",
+            status="open",
+            created=today,
+        ),
+        Task(
+            id="VALUE-MEDIUM-MIRROR",
+            title="ship the mirror-mirror revenue predicate",
+            repo="organvm/mirror-mirror",
+            target_agent="opencode",
+            priority="medium",
+            status="open",
+            created=today,
+        ),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["opencode"], per_agent=1, cap=1, dry=True)
+
+    assert picked == [("opencode", "VALUE-MEDIUM-MIRROR")]
+
+
+def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, monkeypatch):
+    monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
+    monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
+    monkeypatch.setenv("LIMEN_DISK_FLOOR_GIB", "999999")
+    da = _load(tmp_path, n_open=0, agent="codex")
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks = [
+        Task(
+            id="GENERIC-HIGH-REBASE",
+            title="rebase/resolve conflicts on organvm/hokage-chess#85",
+            repo="organvm/hokage-chess",
+            target_agent="codex",
+            priority="high",
+            status="open",
+            created=today,
+        ),
+        Task(
+            id="PROMPT-LIFECYCLE-MEDIUM",
+            title="record prompt packet lifecycle receipt",
+            repo="organvm/session-meta",
+            target_agent="codex",
+            workstream="substrate",
+            priority="medium",
+            status="open",
+            created=today,
+        ),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True)
+
+    assert picked == [("codex", "PROMPT-LIFECYCLE-MEDIUM")]
+
+
 def test_reaper_frees_dead_workers_not_live(tmp_path):
     da = _load(tmp_path, n_open=0)
     # two dispatched tasks, one with a stale marker (dead), one fresh (live)
