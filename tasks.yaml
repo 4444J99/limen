@@ -102833,7 +102833,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -102849,7 +102849,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T19:51:31.339492Z'
+  updated: '2026-07-07T20:05:46.346014Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:25:17.252644Z'
     agent: codex
@@ -102876,6 +102876,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-07T20:05:46.346014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-domus-genoma-120
   title: fix failing CI on organvm/domus-genoma#120
   repo: organvm/domus-genoma
@@ -105362,7 +105367,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -105377,7 +105382,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-07T18:00:27.281679Z'
+  updated: '2026-07-07T20:04:02.989219Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:58:04.383222Z'
     agent: jules
@@ -105388,6 +105393,17 @@ tasks:
     agent: jules
     session_id: '15627040801759098951'
     status: dispatched
+  - timestamp: '2026-07-07T20:04:02.989219Z'
+    agent: jules
+    session_id: '15627040801759098951'
+    status: done
+    output: "diff --git a/cli/tests/test_recover.py b/cli/tests/test_recover.py\n\
+      index 8527fa9..95d88e6 100644\n--- a/cli/tests/test_recover.py\n+++ b/cli/tests/test_recover.py\n\
+      @@ -87,3 +87,139 @@ def test_recover_reopens_jules_session_awaiting_feedback(tmp_path,\
+      \ monkeypatch):\n     assert task.status == \"open\"\n     assert task.target_agent\
+      \ == \"codex\"\n     assert \"awaiting_user_feedback\" in task.dispatch_log[-1].output\n\
+      +\n+\n+def test_recover_reopens_jules_session_awaiting_plan_approval(tmp_path,\
+      \ monkeypatch):\n+  "
 - id: HEAL-cifix-organvm-limen-455
   title: fix failing CI on organvm/limen#455
   repo: organvm/limen
@@ -107679,7 +107695,7 @@ tasks:
   target_agent: codex
   priority: critical
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -107698,7 +107714,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T19:46:03.819943Z'
+  updated: '2026-07-07T20:05:46.346014Z'
   dispatch_log:
   - timestamp: '2026-07-07T16:16:30.076888Z'
     agent: codex
@@ -107761,6 +107777,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-07T20:05:46.346014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-mirror-mirror-107
   title: fix failing CI on organvm/mirror-mirror#107
   repo: organvm/mirror-mirror
@@ -108404,11 +108425,11 @@ tasks:
     work
   repo: ~/Workspace/limen
   type: coordination
-  target_agent: jules
+  target_agent: codex
   workstream: repo-boil-up
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - always-working
   - receipt-first
@@ -108437,7 +108458,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T18:34:09.660574Z'
+  updated: '2026-07-07T20:05:46.346014Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:22:21.721601Z'
     agent: agy
@@ -108463,6 +108484,12 @@ tasks:
     agent: jules
     session_id: '10563773448549561079'
     status: dispatched
+  - timestamp: '2026-07-07T20:05:46.346014Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 10563773448549561079 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: AW-VALUE-REPOS
   title: Assign revenue/value repo work from existing ledgers
   description: 13 value repos define the funded work lane
