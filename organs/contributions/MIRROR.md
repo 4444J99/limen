@@ -71,8 +71,8 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 | eslint | 19 |
 | pyyaml | 19 |
 | react | 14 |
-| node | 13 |
 | react-dom | 13 |
+| node | 12 |
 | pytest-cov | 12 |
 | js | 9 |
 | jsdom | 9 |
