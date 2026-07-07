@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 133
+      spent: 134
       per_agent:
         jules: 69
         gemini: 3
         codex: 8
-        opencode: 22
+        opencode: 23
         agy: 30
         claude: 0
         github_actions: 1
@@ -107281,7 +107281,7 @@ tasks:
   target_agent: opencode
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -107298,7 +107298,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T16:16:30.076888Z'
+  updated: '2026-07-07T16:20:30.556702Z'
   dispatch_log:
   - timestamp: '2026-07-07T16:16:30.076888Z'
     agent: codex
@@ -107306,6 +107306,11 @@ tasks:
     status: open
     output: Low-burn conductor promoted Mirror Mirror PR repair so the single OpenCode
       slot stays on named value repo work after the broad revenue packet timed out.
+  - timestamp: '2026-07-07T16:20:30.556702Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-107
   title: fix failing CI on organvm/mirror-mirror#107
   repo: organvm/mirror-mirror
