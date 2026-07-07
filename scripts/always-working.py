@@ -10,6 +10,7 @@ or blocked. Only unresolved work becomes a bounded packet.
 from __future__ import annotations
 
 import argparse
+import base64
 import datetime as dt
 import json
 import os
@@ -33,6 +34,8 @@ PRIVATE_INDEX = Path(
 DOC_PATH = Path(os.environ.get("LIMEN_ALWAYS_WORKING_DOC", ROOT / "docs" / "always-working.md"))
 
 PROFILE_REPO = Path(os.environ.get("LIMEN_PROFILE_REPO", WORKSPACE / "organvm" / "4444J99"))
+VISIBLE_PROFILE_REPO = os.environ.get("LIMEN_VISIBLE_PROFILE_REPO", "4444J99/4444J99")
+CHECK_GITHUB_PROFILE = os.environ.get("LIMEN_CHECK_GITHUB_PROFILE", "1") != "0"
 CORPVS_ROOT = Path(os.environ.get("LIMEN_CORPVS_ROOT", WORKSPACE / "organvm-corpvs-testamentvm"))
 MAIL_INDEX = Path(
     os.environ.get(
@@ -40,6 +43,7 @@ MAIL_INDEX = Path(
         HOME / "Library" / "Mail" / "V10" / "MailData" / "Envelope Index",
     )
 )
+MAIL_STORY_LOG = Path(os.environ.get("LIMEN_MAIL_STORY_LOG", ROOT / "logs" / "mail-story-ledger.json"))
 
 PROMPT_PACKET_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
 REPO_SURFACE_INDEX = PRIVATE_ROOT / "lifecycle" / "repo-surface-ledger.json"
@@ -145,6 +149,87 @@ def readme_marker(text: str, key: str) -> str | None:
     return match.group(1).strip()
 
 
+def _json_command(args: list[str], *, timeout: int = 20) -> tuple[dict[str, Any] | None, str]:
+    result = run_command(args, timeout=timeout)
+    if result["returncode"] != 0:
+        return None, (result["stderr"] or result["stdout"] or "command failed").strip()[:500]
+    try:
+        return json.loads(result["stdout"] or "{}"), ""
+    except ValueError as exc:
+        return None, f"invalid JSON: {exc}"
+
+
+def _decode_github_content(payload: dict[str, Any] | None) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    if payload.get("encoding") != "base64":
+        return ""
+    raw = str(payload.get("content") or "").replace("\n", "")
+    if not raw:
+        return ""
+    try:
+        return base64.b64decode(raw).decode("utf-8", errors="replace")
+    except (ValueError, OSError):
+        return ""
+
+
+def github_profile_surface() -> dict[str, Any]:
+    """Verify the public profile surface GitHub actually renders."""
+    if not CHECK_GITHUB_PROFILE:
+        return {"checked": False, "verified": False, "reason": "disabled"}
+    repo, error = _json_command(
+        [
+            "gh",
+            "api",
+            f"repos/{VISIBLE_PROFILE_REPO}",
+            "--jq",
+            "{full_name,owner:.owner.login,visibility,default_branch,pushed_at,html_url}",
+        ]
+    )
+    if error:
+        return {"checked": True, "verified": False, "repo": VISIBLE_PROFILE_REPO, "error": error}
+    branch = str((repo or {}).get("default_branch") or "main")
+    readme_payload, readme_error = _json_command(
+        [
+            "gh",
+            "api",
+            f"repos/{VISIBLE_PROFILE_REPO}/contents/README.md?ref={branch}",
+            "--jq",
+            "{path,sha,encoding,content,html_url}",
+        ]
+    )
+    readme_text = _decode_github_content(readme_payload)
+    user, user_error = _json_command(
+        ["gh", "api", "user", "--jq", "{bio,blog,public_repos,updated_at}"]
+    )
+    bio = str((user or {}).get("bio") or "")
+    blog = str((user or {}).get("blog") or "")
+    stale_bio = bool(re.search(r"\b91 repos\b|3,586 code files|736 test files|58 CI workflows", bio))
+    stale_blog = "4444j99.github.io/portfolio" in blog
+    return {
+        "checked": True,
+        "verified": bool(repo and readme_text),
+        "repo": VISIBLE_PROFILE_REPO,
+        "repo_full_name": (repo or {}).get("full_name"),
+        "repo_owner": (repo or {}).get("owner"),
+        "repo_visibility": (repo or {}).get("visibility"),
+        "repo_pushed_at": (repo or {}).get("pushed_at"),
+        "repo_html_url": (repo or {}).get("html_url"),
+        "readme_present": bool(readme_text),
+        "readme_sha": (readme_payload or {}).get("sha"),
+        "readme_total_repos": readme_marker(readme_text, "total_repos"),
+        "old_portfolio_link_count": readme_text.count("4444j99.github.io/portfolio"),
+        "live_portfolio_link_count": readme_text.count("organvm.github.io/portfolio"),
+        "top_engineer_claim_present": bool(PROFILE_POSITIONING_RE.search(readme_text)),
+        "account_bio": bio,
+        "account_blog": blog,
+        "account_public_repos": (user or {}).get("public_repos"),
+        "account_profile_stale": stale_bio or stale_blog,
+        "account_profile_error": user_error,
+        "readme_error": readme_error,
+    }
+
+
 def disk_receipt() -> dict[str, Any]:
     usage = shutil.disk_usage(HOME)
     tmp_ok = True
@@ -192,19 +277,33 @@ def profile_receipt() -> dict[str, Any]:
         "top_engineer_claim_present": bool(PROFILE_POSITIONING_RE.search(text)),
         "frontdoor_present": (ROOT / "docs" / "positioning" / "_frontdoor.md").exists(),
     }
+    visible = github_profile_surface()
+    current["visible_profile"] = visible
     stale_count = str(current["readme_total_repos"] or "") != str(ssot_repos or "")
     stale_words = bool(ssot_words) and "988K+" not in text
     old_links = int(current["old_portfolio_link_count"] or 0) > 0
     missing_claim = not current["top_engineer_claim_present"]
+    visible_checked = bool(visible.get("checked"))
+    visible_missing = visible_checked and not visible.get("verified")
+    visible_stale_count = visible_checked and str(visible.get("readme_total_repos") or "") != str(ssot_repos or "")
+    visible_old_links = visible_checked and int(visible.get("old_portfolio_link_count") or 0) > 0
+    visible_missing_claim = visible_checked and not visible.get("top_engineer_claim_present")
+    account_profile_stale = visible_checked and bool(visible.get("account_profile_stale"))
     if not readme.exists():
         status = STATUS_BLOCKED
         verdict = "profile repo README missing"
     elif stale_count or stale_words or old_links or missing_claim:
         status = STATUS_ASSIGNED
         verdict = "existing profile/frontdoor work is present but not projected"
+    elif visible_missing or visible_stale_count or visible_old_links or visible_missing_claim:
+        status = STATUS_ASSIGNED
+        verdict = "visible GitHub profile README is missing or stale"
+    elif account_profile_stale:
+        status = STATUS_BLOCKED
+        verdict = "visible profile README is current; GitHub sidebar bio/link needs profile-settings scope"
     else:
         status = STATUS_DONE
-        verdict = "profile README reflects current proof surface"
+        verdict = "visible profile README reflects current proof surface"
     return {
         "id": "PUBLIC-FACE-PROFILE",
         "workstream": "public-face",
@@ -218,6 +317,7 @@ def profile_receipt() -> dict[str, Any]:
             relpath(ROOT / "his-hand-levers.json"),
             relpath(ROOT / "face-ownership.json"),
             relpath(PROFILE_REPO / "README.md"),
+            f"https://github.com/{VISIBLE_PROFILE_REPO}",
         ],
         "assignment_packet": {
             "lane_fit": "codex-integrator",
@@ -263,15 +363,60 @@ def mail_census() -> dict[str, Any]:
         return {"ok": False, "error": "mail census did not return JSON"}
 
 
+def mail_story_receipt(scope: str, expected_count: int) -> dict[str, Any]:
+    ledger = load_json(MAIL_STORY_LOG, {})
+    if not isinstance(ledger, dict):
+        ledger = {}
+    mode = ledger.get("mode") if isinstance(ledger.get("mode"), dict) else {}
+    stats = ledger.get("stats") if isinstance(ledger.get("stats"), dict) else {}
+    clusters = ledger.get("clusters") if isinstance(ledger.get("clusters"), list) else []
+    atom_count = int(ledger.get("atom_count") or 0)
+    cluster_atom_count = sum(int(cluster.get("atom_count") or 0) for cluster in clusters if isinstance(cluster, dict))
+    next_action_count = 0
+    for cluster in clusters:
+        if not isinstance(cluster, dict):
+            continue
+        actions = cluster.get("next_actions") if isinstance(cluster.get("next_actions"), dict) else {}
+        next_action_count += sum(int(value or 0) for value in actions.values())
+    classified_current = (
+        mode.get("scope") == scope
+        and mode.get("read_only") is True
+        and mode.get("body_reads") is False
+        and mode.get("mailbox_mutations") is False
+        and mode.get("gmail_writes") is False
+        and int(stats.get("flagged_non_deleted") or -1) == expected_count
+        and atom_count == expected_count
+        and cluster_atom_count == atom_count
+        and next_action_count == atom_count
+        and bool(clusters)
+    )
+    return {
+        "present": bool(ledger),
+        "generated_at": ledger.get("generated_at"),
+        "scope": mode.get("scope"),
+        "atom_count": atom_count,
+        "cluster_count": len(clusters),
+        "cluster_atom_count": cluster_atom_count,
+        "next_action_count": next_action_count,
+        "read_only": mode.get("read_only"),
+        "body_reads": mode.get("body_reads"),
+        "mailbox_mutations": mode.get("mailbox_mutations"),
+        "gmail_writes": mode.get("gmail_writes"),
+        "classified_current": classified_current,
+    }
+
+
 def mail_receipts() -> list[dict[str, Any]]:
     stats = mail_stats()
     census = mail_census()
     flagged = int(stats.get("flagged_non_deleted") or 0)
     not_deleted = int(stats.get("not_deleted_messages") or 0)
-    active_status = STATUS_DONE if flagged == 0 else STATUS_ASSIGNED
+    flagged_story = mail_story_receipt("flagged", flagged)
+    active_done = flagged == 0 or bool(flagged_story.get("classified_current"))
+    active_status = STATUS_DONE if active_done else STATUS_ASSIGNED
     history_status = STATUS_DONE if not_deleted == 0 else STATUS_ASSIGNED
     common = {
-        "evidence": {"mail_stats": stats, "mail_census": census},
+        "evidence": {"mail_stats": stats, "mail_census": census, "mail_story": flagged_story},
         "existing_receipts": [
             relpath(ROOT / "docs" / "mail-story-ledger.md"),
             relpath(ROOT / "docs" / "his-hand-registry-mail-a290329e.md"),
@@ -287,7 +432,11 @@ def mail_receipts() -> list[dict[str, Any]]:
             "priority": PRIORITY["mail-active"],
             "status": active_status,
             "title": "Reconcile active flagged mail before historical sweep",
-            "verdict": f"{flagged} active flagged non-deleted messages require classification" if flagged else "no active flagged messages remain",
+            "verdict": (
+                f"{flagged} active flagged messages classified into {flagged_story.get('cluster_count')} clusters; no body reads or mailbox mutations"
+                if active_done and flagged
+                else f"{flagged} active flagged non-deleted messages require classification" if flagged else "no active flagged messages remain"
+            ),
             **common,
             "assignment_packet": {
                 "lane_fit": "local-codex-or-opencode",

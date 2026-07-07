@@ -110,6 +110,11 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
     monkeypatch.setattr(mod, "REPO_SURFACE_INDEX", lifecycle / "repo-surface-ledger.json")
     monkeypatch.setattr(mod, "PRODUCT_LEDGER_INDEX", lifecycle / "product-ledger.json")
     monkeypatch.setattr(mod, "VALUE_REPOS", root / "value-repos.json")
+    monkeypatch.setattr(
+        mod,
+        "github_profile_surface",
+        lambda: {"checked": True, "verified": True, "readme_total_repos": "171", "account_profile_stale": False},
+    )
     monkeypatch.setattr(mod, "disk_receipt", lambda: {"free_gib": 100.0, "used_pct": 50.0, "tmp_ok": True, "tmp_error": ""})
     monkeypatch.setattr(mod, "mail_census", lambda: {"ok": True, "account_count": 1, "obligation_count": 2})
 
@@ -158,11 +163,117 @@ def test_profile_receipt_accepts_computed_laurel_positioning(monkeypatch, tmp_pa
     monkeypatch.setattr(mod, "ROOT", root)
     monkeypatch.setattr(mod, "PROFILE_REPO", profile)
     monkeypatch.setattr(mod, "CORPVS_ROOT", corpvs)
+    monkeypatch.setattr(
+        mod,
+        "github_profile_surface",
+        lambda: {
+            "checked": True,
+            "verified": True,
+            "readme_total_repos": "171",
+            "old_portfolio_link_count": 0,
+            "top_engineer_claim_present": True,
+            "account_profile_stale": False,
+        },
+    )
 
     receipt = mod.profile_receipt()
 
     assert receipt["status"] == mod.STATUS_DONE
     assert receipt["evidence"]["top_engineer_claim_present"] is True
+    assert receipt["evidence"]["visible_profile"]["verified"] is True
+
+
+def test_profile_receipt_blocks_stale_github_sidebar(monkeypatch, tmp_path):
+    mod = _load("always_working_profile_sidebar_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    profile = tmp_path / "organvm" / "4444J99"
+    corpvs = tmp_path / "organvm-corpvs-testamentvm"
+
+    (profile / "data").mkdir(parents=True)
+    (profile / "README.md").write_text(
+        "# Anthony James Padavano\n\n"
+        "**Top-tier Creative Technologist / Systems Architect**\n\n"
+        "**Now:** Shipping across <!-- v:total_repos -->171<!-- /v --> repos and "
+        "<!-- v:total_words_short -->988K+<!-- /v --> words.\n\n"
+        "[Portfolio](https://organvm.github.io/portfolio/)\n",
+        encoding="utf-8",
+    )
+    (profile / "data" / "ecosystem.yml").write_text("total_repos: 171\n", encoding="utf-8")
+    corpvs.mkdir(parents=True)
+    (corpvs / "system-metrics.json").write_text(
+        json.dumps({"computed": {"total_repos": 171, "public_repos_all": 203, "total_words_numeric": 988148}}),
+        encoding="utf-8",
+    )
+    (root / "docs" / "positioning").mkdir(parents=True)
+    (root / "docs" / "positioning" / "_frontdoor.md").write_text("# Front door\n", encoding="utf-8")
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "PROFILE_REPO", profile)
+    monkeypatch.setattr(mod, "CORPVS_ROOT", corpvs)
+    monkeypatch.setattr(
+        mod,
+        "github_profile_surface",
+        lambda: {
+            "checked": True,
+            "verified": True,
+            "readme_total_repos": "171",
+            "old_portfolio_link_count": 0,
+            "top_engineer_claim_present": True,
+            "account_profile_stale": True,
+            "account_bio": "Full-stack developer. 91 repos, 3,586 code files.",
+        },
+    )
+
+    receipt = mod.profile_receipt()
+
+    assert receipt["status"] == mod.STATUS_BLOCKED
+    assert "sidebar bio" in receipt["verdict"]
+
+
+def test_mail_active_flagged_done_when_story_ledger_covers_current_flags(monkeypatch, tmp_path):
+    mod = _load("always_working_mail_story_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    mail_index = tmp_path / "Envelope Index"
+    log_path = root / "logs" / "mail-story-ledger.json"
+
+    root.mkdir()
+    log_path.parent.mkdir()
+    _mail_index(mail_index)
+    log_path.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-07-07T20:00:00Z",
+                "atom_count": 2,
+                "mode": {
+                    "scope": "flagged",
+                    "read_only": True,
+                    "body_reads": False,
+                    "mailbox_mutations": False,
+                    "gmail_writes": False,
+                },
+                "stats": {"flagged_non_deleted": 2},
+                "clusters": [
+                    {
+                        "cluster_id": "billing-continuity",
+                        "atom_count": 2,
+                        "next_actions": {"human_review": 2},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "MAIL_INDEX", mail_index)
+    monkeypatch.setattr(mod, "MAIL_STORY_LOG", log_path)
+    monkeypatch.setattr(mod, "mail_census", lambda: {"ok": True, "account_count": 1, "obligation_count": 2})
+
+    receipts = {item["id"]: item for item in mod.mail_receipts()}
+
+    assert receipts["MAIL-ACTIVE-FLAGGED"]["status"] == mod.STATUS_DONE
+    assert receipts["MAIL-ACTIVE-FLAGGED"]["evidence"]["mail_story"]["classified_current"] is True
+    assert "classified into 1 clusters" in receipts["MAIL-ACTIVE-FLAGGED"]["verdict"]
 
 
 def test_dispatch_health_blocks_when_always_working_required_items_are_open(tmp_path):

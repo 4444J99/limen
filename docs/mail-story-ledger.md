@@ -6,7 +6,7 @@ cluster ids, and synthesized pain-point theses.
 
 ## Snapshot
 
-- Generated: `2026-07-06T16:38:46Z`
+- Generated: `2026-07-07T19:59:25Z`
 - Source: Apple Mail Envelope Index, opened read-only.
 - Processed scope: `flagged`
 - Body/thread reads: `false`
@@ -15,24 +15,24 @@ cluster ids, and synthesized pain-point theses.
 
 ## Corpus Counts
 
-- Total indexed messages: `81542`
-- Non-deleted messages: `81542`
-- Flagged non-deleted messages: `126`
+- Total indexed messages: `82042`
+- Non-deleted messages: `82042`
+- Flagged non-deleted messages: `127`
 - First received: `2008-09-22 02:30:28`
-- Last received: `2026-07-06 16:35:21`
-- Atoms emitted in this run: `126`
+- Last received: `2026-07-07 19:42:59`
+- Atoms emitted in this run: `127`
 
 ## Pain Point Clusters
 
 | cluster | type | atoms | priority | next actions | software thesis |
 | --- | --- | --- | --- | --- | --- |
-| Billing continuity | billing | 30 | 360 | human_review:30 | A custody layer should turn billing and renewal mail into one verified account-continuity queue. |
+| Billing continuity | billing | 32 | 380 | human_review:32 | A custody layer should turn billing and renewal mail into one verified account-continuity queue. |
 | Identity and compliance gates | identity | 20 | 275 | human_review:20 | A compliance dossier should collect requests, evidence, deadline state, and safe verification routes. |
 | Debt and default navigation | debt | 15 | 225 | human_review:15 | A debt-navigation copilot should map notices into verified options, deadlines, and escalation paths. |
 | Relationship and personal administration | relationship | 17 | 200 | product_research:17 | A relationship memory layer should separate human context from institutional noise. |
-| Infrastructure and domain custody | infra | 9 | 150 | human_review:9 | An operator custody ledger should unify infra notices, owners, renewals, and blast-radius state. |
 | Legal and government accountability | legal | 9 | 150 | human_review:9 | A civic/legal organizer should translate notices into timelines, obligations, and evidence packets. |
 | Uncategorized pressure | other | 13 | 145 | read_thread:13 | A story-mining workflow should park ambiguous mail with evidence and a next read action. |
+| Infrastructure and domain custody | infra | 8 | 140 | human_review:8 | An operator custody ledger should unify infra notices, owners, renewals, and blast-radius state. |
 | Security and fraud risk | security | 5 | 125 | human_review:5 | A verify-first security queue should route alerts through safe channels and preserve audit receipts. |
 | Career routing | career | 5 | 80 | product_research:5 | A career router should score fit, extract next steps, and preserve opportunity history. |
 | Platform and developer ecosystem intelligence | platform | 1 | 40 | product_research:1 | A platform-intelligence digest should cluster vendor signals into product and risk theses. |
@@ -49,32 +49,32 @@ cluster ids, and synthesized pain-point theses.
 | nelnet.studentaid.gov | 6 |
 | taxrise.com | 6 |
 | notify.cloudflare.com | 5 |
+| socket.dev | 4 |
 | studentaid.gov | 4 |
 | mail.anthropic.com | 4 |
 | account.chime.com | 4 |
-| socket.dev | 3 |
+| insideapple.apple.com | 3 |
 | longofirm.com | 3 |
 | buytickets.at | 2 |
 | stage4solutions.com | 2 |
-| insideapple.apple.com | 2 |
 | ceiamerica.com | 2 |
-| email.openai.com | 2 |
-| info.hostinger.com | 2 |
 | email.legalzoom.com | 2 |
 | docusign.net | 2 |
+| nav.com | 2 |
+| ssa.gov | 2 |
 
 ## Flagged By Mailbox
 
 | mailbox scope | messages |
 | --- | --- |
 | gmail/all-mail | 115 |
-| inbox | 11 |
+| inbox | 12 |
 
 ## Flagged By Year
 
 | year | messages |
 | --- | --- |
-| 2026 | 115 |
+| 2026 | 116 |
 | 2025 | 10 |
 | 2024 | 1 |
 
