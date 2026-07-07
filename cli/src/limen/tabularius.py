@@ -205,6 +205,35 @@ def pending_count(board_path: Path) -> int:
     return len(list(inbox.glob("*.json"))) if inbox.is_dir() else 0
 
 
+def pending_upsert_patches(board_path: Path) -> list[dict[str, Any]]:
+    """Return valid pending upsert patches without mutating the board.
+
+    Producers use this as a read-side dedup hint: a task can be absent from the board but already
+    waiting in the keeper inbox. Malformed tickets are ignored here; the drain pass owns quarantine.
+    """
+    inbox = _inbox(board_path)
+    if not inbox.is_dir():
+        return []
+    patches: list[dict[str, Any]] = []
+    for path in sorted(inbox.glob("*.json")):
+        try:
+            ticket = Ticket.model_validate_json(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if ticket.intent == INTENT_UPSERT and isinstance(ticket.patch, dict):
+            patches.append(ticket.patch)
+    return patches
+
+
+def pending_task_ids(board_path: Path) -> set[str]:
+    ids: set[str] = set()
+    for patch in pending_upsert_patches(board_path):
+        tid = patch.get("id")
+        if isinstance(tid, str) and tid:
+            ids.add(tid)
+    return ids
+
+
 def _git(repo: Path, args: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     merged_env = os.environ.copy()
     if env:

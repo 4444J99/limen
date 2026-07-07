@@ -8,6 +8,8 @@ from pathlib import Path
 
 import yaml
 
+from limen.tabularius import drain_once
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -372,10 +374,14 @@ def test_current_session_fanout_task_seed_waterfalls_into_queue(tmp_path: Path, 
     assert apply_result["status"] == "ready", apply_result
     assert apply_result["appended"] == 5
     assert apply_result["skipped"] == 0
+    assert apply_result["mode"] == "tabularius-ticket"
     second_apply = mod.apply_task_seed(snap, tasks_path)
     assert second_apply["appended"] == 0
     assert second_apply["skipped"] == 5
 
+    board = yaml.safe_load(tasks_path.read_text(encoding="utf-8"))
+    assert len(board["tasks"]) == 0
+    drain_once(tasks_path)
     board = yaml.safe_load(tasks_path.read_text(encoding="utf-8"))
     assert len(board["tasks"]) == 5
     assert {task["status"] for task in board["tasks"]} == {"open"}
@@ -384,4 +390,4 @@ def test_current_session_fanout_task_seed_waterfalls_into_queue(tmp_path: Path, 
     markdown = mod.render_markdown(snap)
     assert "## Task Seed" in markdown
     assert "Seed tasks: 5" in markdown
-    assert "Task seeding appends only `open` queue items" in markdown
+    assert "Task seeding submits only `open` queue items through Tabularius" in markdown

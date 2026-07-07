@@ -247,9 +247,16 @@ def test_cap_defers_overflow(test_env, monkeypatch):
         patch("insight_route.TASKS_YAML", test_env["tasks"]),
         patch("insight_route.HIS_HAND_FILE", test_env["his_hand"]),
         patch("insight_route.LOGS_DIR", test_env["logs"]),
-    ):
+        ):
         insight_route.process_report(report_file, apply=True, stats=stats)
 
+    limen_file = load_limen_file(test_env["tasks"])
+    assert len(limen_file.tasks) == 0
+    inbox = test_env["root"] / "logs" / "tickets" / "inbox"
+    assert len(list(inbox.glob("*.json"))) == 1
+    from limen.tabularius import drain_once
+
+    drain_once(test_env["tasks"])
     limen_file = load_limen_file(test_env["tasks"])
     assert len(limen_file.tasks) == 1
     assert stats["created"] == 1

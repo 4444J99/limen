@@ -8,6 +8,8 @@ from types import ModuleType
 import pytest
 import yaml
 
+from limen.tabularius import drain_once
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -152,13 +154,22 @@ def test_auto_scale_adds_schema_shaped_tasks_and_skips_existing_urls(
     assert auto_scale.main() == 0
 
     board = read_board(tasks_path)
+    assert len(board["tasks"]) == 1
+    tickets = list((tmp_path / "logs" / "tickets" / "inbox").glob("*.json"))
+    assert len(tickets) == 2
+    drain_once(tasks_path)
+    board = read_board(tasks_path)
     assert len(board["tasks"]) == 3
     assert len(calls) == 1
     assert calls[0]["url"] == "https://api.github.com/search/issues"
     assert calls[0]["params"]["q"] == "org:a-organvm is:issue is:open label:jules-ready"
     assert calls[0]["headers"]["Authorization"] == "token test-token"
     assert calls[0]["timeout"] == 30
-    assert board["tasks"][1:] == [
+    projected = [
+        {k: task[k] for k in ("id", "title", "repo", "type", "target_agent", "priority", "budget_cost", "status", "labels", "urls", "created")}
+        for task in board["tasks"][1:]
+    ]
+    assert projected == [
         {
             "id": "LIMEN-100",
             "title": "First issue",
@@ -171,7 +182,6 @@ def test_auto_scale_adds_schema_shaped_tasks_and_skips_existing_urls(
             "labels": ["jules-ready"],
             "urls": ["https://github.com/a-organvm/repo-one/issues/2"],
             "created": "2026-06-06",
-            "updated": "2026-06-06",
         },
         {
             "id": "LIMEN-101",
@@ -185,7 +195,6 @@ def test_auto_scale_adds_schema_shaped_tasks_and_skips_existing_urls(
             "labels": ["jules-ready"],
             "urls": ["https://github.com/a-organvm/repo-two/issues/3"],
             "created": "2026-06-06",
-            "updated": "2026-06-06",
         },
     ]
 
@@ -254,6 +263,7 @@ def test_auto_scale_reloads_under_queue_lock_before_writing(
 
     assert auto_scale.main() == 0
 
+    drain_once(tasks_path)
     tasks = read_board(tasks_path)["tasks"]
     assert [task["id"] for task in tasks] == ["LIMEN-001", "LIMEN-002", "LIMEN-003"]
     assert tasks[1]["title"] == "Concurrent heartbeat task"

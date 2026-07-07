@@ -13,6 +13,8 @@ from pathlib import Path
 
 import yaml
 
+from limen.tabularius import drain_once
+
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "corpus-converge.py"
 REPO = Path(__file__).resolve().parents[2]
 
@@ -102,6 +104,7 @@ def test_emit_gaps_bounded_idempotent(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_TASKS", str(tmp_path / "tasks.yaml"))
     added = m.emit_gaps(["explore: governance", "explore: governance"], "some-face", apply=True)
     assert added == 1  # duplicate collapsed
+    drain_once(tmp_path / "tasks.yaml")
     out = yaml.safe_load((tmp_path / "tasks.yaml").read_text())
     corp = [t for t in out["tasks"] if t["id"].startswith("CORP-")]
     assert len(corp) == 1 and corp[0]["type"] == "corpus-gap"

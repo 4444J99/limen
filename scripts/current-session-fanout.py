@@ -27,13 +27,12 @@ DOC_PATH = ROOT / "docs" / "current-session-fanout.md"
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 try:
-    from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
-    from limen.models import Task  # noqa: E402
+    from limen.io import load_limen_file  # noqa: E402
+    from limen.tabularius import pending_task_ids, submit_task_upsert  # noqa: E402
 except Exception:  # pragma: no cover - import fallback for hermetic tests
     load_limen_file = None
-    queue_lock = None
-    save_limen_file = None
-    Task = None
+    pending_task_ids = None
+    submit_task_upsert = None
 
 try:
     from limen.capacity import PAID_AGENT_ORDER, canonical_agent, capacity_census, resolve_lane_selector  # noqa: E402
@@ -742,28 +741,35 @@ def task_model_payload(spec: dict[str, Any]) -> dict[str, Any]:
 
 
 def apply_task_seed(snapshot: dict[str, Any], tasks_path: Path) -> dict[str, Any]:
-    if load_limen_file is None or save_limen_file is None or queue_lock is None or Task is None:
+    if load_limen_file is None or pending_task_ids is None or submit_task_upsert is None:
         return {"status": "blocked", "reason": "limen task model unavailable", "appended": 0, "skipped": 0}
     seed = list(snapshot.get("task_seed", []))
     if not seed:
         return {"status": "ready", "reason": "no task seed requested", "appended": 0, "skipped": 0}
     appended = 0
     skipped = 0
-    with queue_lock(tasks_path) as got:
-        if not got:
-            return {"status": "blocked", "reason": "queue lock unavailable", "appended": 0, "skipped": 0}
-        fresh = load_limen_file(tasks_path)
-        existing = {task.id for task in fresh.tasks}
-        for spec in seed:
-            if spec["id"] in existing:
-                skipped += 1
-                continue
-            fresh.tasks.append(Task(**task_model_payload(spec)))
-            existing.add(spec["id"])
-            appended += 1
-        if appended:
-            save_limen_file(tasks_path, fresh)
-    return {"status": "ready", "appended": appended, "skipped": skipped, "tasks_path": str(tasks_path)}
+    fresh = load_limen_file(tasks_path)
+    existing = {task.id for task in fresh.tasks} | pending_task_ids(tasks_path)
+    session_id = os.environ.get("LIMEN_SESSION_ID", "current-session-fanout")
+    for spec in seed:
+        if spec["id"] in existing:
+            skipped += 1
+            continue
+        submit_task_upsert(
+            tasks_path,
+            task_model_payload(spec),
+            agent="current-session-fanout",
+            session_id=session_id,
+        )
+        existing.add(spec["id"])
+        appended += 1
+    return {
+        "status": "ready",
+        "appended": appended,
+        "skipped": skipped,
+        "tasks_path": str(tasks_path),
+        "mode": "tabularius-ticket",
+    }
 
 
 def digest_blockers() -> list[dict[str, str]]:
@@ -1078,7 +1084,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Contract",
         "",
         "- Planner packets are Codex conductor work; executor packets go to active fleet lanes.",
-        "- Task seeding appends only `open` queue items; `dispatch-async.py` or `limen dispatch` launches them.",
+        "- Task seeding submits only `open` queue items through Tabularius; `dispatch-async.py` or `limen dispatch` launches them after the keeper folds the tickets.",
         "- This command never applies Codex resets, credits, top-ups, or paid overages.",
         "- Outbound identity-bearing actions remain human-gated.",
     ]

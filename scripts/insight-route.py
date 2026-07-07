@@ -5,9 +5,7 @@ Routes each insight in the LATEST report per cadence tier (hourly/daily/weekly/
 monthly, from logs/insight-cadence/) to its durable owner:
 
   owner "anthony"    → his-hand-levers.json (+ sync-hishand-issues)
-  owner "org/repo"   → a board task, via the TABVLARIVS keeper when
-                       LIMEN_TICKETS_PRODUCE=1 (Step 2.1 producer path), else the
-                       legacy locked direct append. Insights whose source is the
+  owner "org/repo"   → a board task, via the TABVLARIVS keeper. Insights whose source is the
                        board itself (source == "tasks.yaml", e.g. "Task failed:
                        <id>") are SKIPPED: the board already owns that failure —
                        a heal-twin task would just echo it back onto the board.
@@ -28,9 +26,9 @@ import subprocess
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen.io import load_limen_file, save_limen_file, queue_lock  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
-from limen.tabularius import submit_task_upsert  # noqa: E402
+from limen.tabularius import pending_task_ids, submit_task_upsert  # noqa: E402
 
 HIS_HAND_FILE = ROOT / "his-hand-levers.json"
 TASKS_YAML = ROOT / "tasks.yaml"
@@ -102,45 +100,22 @@ def route_repo_insight(insight, apply, stats=None):
         stats["deferred"] += 1
         return
 
-    if os.environ.get("LIMEN_TICKETS_PRODUCE") == "1":
-        # TABVLARIVS producer path (Step 2.1): read-only dedup, then hand the
-        # keeper an upsert ticket — never a direct board write. insight-route is
-        # the only creator of TASK-<insight-id> ids, so the lock-free dedup read
-        # is race-safe in practice (same contract as generate-backlog).
-        limen_file = load_limen_file(TASKS_YAML)
-        if any(t.id == tid for t in limen_file.tasks):
-            return
-        submit_task_upsert(
-            TASKS_YAML,
-            _task_for(insight, tid, repo),
-            agent="insight-route",
-            session_id=os.environ.get("LIMEN_SESSION_ID", "insight-route"),
-        )
-        if stats is not None:
-            stats["cap_left"] -= 1
-            stats["created"] += 1
-        print(f"Submitted upsert ticket {tid} for {repo} (keeper folds next beat)")
+    # TABVLARIVS producer path: read-only dedup, then hand the keeper an upsert ticket — never a
+    # direct board write. Pending tickets count as existing so repeated beats before a drain do not
+    # submit duplicates.
+    limen_file = load_limen_file(TASKS_YAML)
+    if any(t.id == tid for t in limen_file.tasks) or tid in pending_task_ids(TASKS_YAML):
         return
-
-    with queue_lock(TASKS_YAML) as got:
-        if not got:
-            # Lock timed out — honor the contract and skip this write (never dead-stop; a missed
-            # route self-corrects next beat) rather than clobbering a concurrent board write.
-            print(f"insight-route: queue busy — skipped {tid} this pass (self-corrects next beat)")
-            return
-        limen_file = load_limen_file(TASKS_YAML)
-
-        # Check idempotency
-        for t in limen_file.tasks:
-            if t.id == tid:
-                return
-
-        limen_file.tasks.append(_task_for(insight, tid, repo))
-        save_limen_file(TASKS_YAML, limen_file)
-        if stats is not None:
-            stats["cap_left"] -= 1
-            stats["created"] += 1
-        print(f"Routed {tid} to conductor queue for {repo}")
+    submit_task_upsert(
+        TASKS_YAML,
+        _task_for(insight, tid, repo),
+        agent="insight-route",
+        session_id=os.environ.get("LIMEN_SESSION_ID", "insight-route"),
+    )
+    if stats is not None:
+        stats["cap_left"] -= 1
+        stats["created"] += 1
+    print(f"Submitted upsert ticket {tid} for {repo} (keeper folds next beat)")
 
 def route_organ_insight(insight, apply):
     organ = insight["owner"]

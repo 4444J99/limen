@@ -129,6 +129,11 @@ above it is autonomous.
 - [x] Projection preservation returned to TABVLARIVS — the standalone live-state preserver was removed;
       `scripts/tabularius-organ.py` now calls `preserve_board_projection()` after every drain/no-op pass.
       The focused predicate proves the keeper pushes the board projection without stranding a local commit.
+- [x] Creation-writer audit burn-down pass — `auto-scale`, `current-session-fanout`, `insight-route`,
+      `append-tasks`, `batch-dispatch`, `corpus-converge`, and `converge-organ` now submit upsert
+      tickets instead of directly rewriting the board. The auto-scale workflow runs `tabularius-organ`
+      after producing tickets, so CI still commits the projection but the writer is the keeper.
+      `scripts/task-writer-audit.py` now reports 22 legacy direct writer calls (down from 29).
 - [ ] Burn down the legacy writer audit — `scripts/task-writer-audit.py` records the remaining direct
       `save_limen_file`/`atomic_write_text` board writers so each conversion becomes a bounded owner task
       instead of an implicit side channel.

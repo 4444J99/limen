@@ -371,35 +371,42 @@ def reconverge_the_one(corpus_root: Path, faces: list[dict], kit: dict, threshol
 # ─── gaps become work + state ────────────────────────────────────────
 
 def emit_gaps(gap_texts: list[str], origin: str, apply: bool) -> int:
-    """Gap-finder next_shots → bounded NEW collection tasks under the queue lock. Idempotent:
-    a gap's id derives from its text, so the same gap never duplicates."""
+    """Gap-finder next_shots → bounded NEW collection tasks via Tabularius tickets.
+
+    Idempotent: a gap's id derives from its text, so the same gap never duplicates, including when
+    it is already waiting in the keeper inbox.
+    """
     if not gap_texts:
         return 0
-    from limen.io import load_limen_file, queue_lock, save_limen_file
-    from limen.models import Task
+    from limen.io import load_limen_file
+    from limen.tabularius import pending_task_ids, submit_task_upsert
     tasks_path = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
-    with queue_lock(tasks_path) as got:
-        if not got:
-            print("[corpus-converge] queue busy — skipped emitting gaps this pass")
-            return 0
-        try:
-            lf = load_limen_file(tasks_path)
-        except Exception as exc:
-            print(f"[corpus-converge] could not load tasks ({exc}); skipping gap-emit")
-            return 0
-        have = {t.id for t in lf.tasks}
-        added = 0
-        for g in gap_texts:
-            gid = "CORP-" + re.sub(r"[^a-z0-9]+", "-", g.lower())[:40].strip("-")
-            if gid in have:
-                continue
-            lf.tasks.append(Task(id=gid, title=g[:120], created=_now().date(), status="open",
-                                 target_agent="any", priority="low", type="corpus-gap",
-                                 context=f"corpus gap surfaced by convergence of {origin}"))
-            have.add(gid)
-            added += 1
-        if apply and added:
-            save_limen_file(tasks_path, lf)
+    try:
+        lf = load_limen_file(tasks_path)
+    except Exception as exc:
+        print(f"[corpus-converge] could not load tasks ({exc}); skipping gap-emit")
+        return 0
+    have = {t.id for t in lf.tasks} | pending_task_ids(tasks_path)
+    added = 0
+    session_id = os.environ.get("LIMEN_SESSION_ID", "corpus-converge")
+    for g in gap_texts:
+        gid = "CORP-" + re.sub(r"[^a-z0-9]+", "-", g.lower())[:40].strip("-")
+        if gid in have:
+            continue
+        task = dict(
+            id=gid,
+            title=g[:120],
+            created=_now().date(),
+            status="open",
+            target_agent="any",
+            priority="low",
+            type="corpus-gap",
+            context=f"corpus gap surfaced by convergence of {origin}",
+        )
+        if apply:
+            submit_task_upsert(tasks_path, task, agent="corpus-converge", session_id=session_id)
+        have.add(gid)
+        added += 1
     return added
 
 

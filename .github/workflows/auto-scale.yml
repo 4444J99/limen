@@ -27,7 +27,9 @@ jobs:
       - name: Run Auto-Scaler
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/auto-scale.py
+        run: |
+          python scripts/auto-scale.py
+          python scripts/tabularius-organ.py
 
       - name: Commit changes
         run: |

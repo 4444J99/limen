@@ -7,10 +7,8 @@ import sys
 import yaml
 from pathlib import Path
 
-# route every tasks.yaml write through the ONE atomic primitive (see limen/io.py) so a
-# concurrent heartbeat read can never observe a truncated/empty queue.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import atomic_write_text
+from limen.tabularius import pending_task_ids, submit_task_upsert
 
 TASKS_YAML = Path(__file__).resolve().parent.parent / "tasks.yaml"
 
@@ -307,8 +305,9 @@ AUDIT = [
 ]
 
 
-def next_id(tasks):
+def next_id(tasks, pending_ids=None):
     ids = [t.get("id", "") for t in tasks]
+    ids.extend(pending_ids or [])
     nums = []
     for i in ids:
         parts = i.replace("LIMEN-", "").split("-")
@@ -324,9 +323,11 @@ def main():
         data = yaml.safe_load(f)
 
     tasks = data.setdefault("tasks", [])
-    nid = next_id(tasks)
+    pending_ids = pending_task_ids(TASKS_YAML)
+    nid = next_id(tasks, pending_ids)
     base_num = int(nid.replace("LIMEN-", ""))
     added = 0
+    session_id = "batch-dispatch"
 
     for repo, num, title, cost in AUDIT:
         # skip if already tracked by issue number
@@ -334,37 +335,29 @@ def main():
         if any(url in str(t.get("urls", [])) for t in tasks):
             continue
 
-        tasks.append(
-            dict(
-                id=f"LIMEN-{base_num + added:03d}",
-                title=title,
-                repo=repo,
-                type="code",
-                target_agent="jules",
-                priority="high" if cost >= 3 else "medium",
-                budget_cost=cost,
-                status="dispatched",
-                urls=[url],
-                context=f"Audited 2026-06-01 from Jules-ready batch. Fix issue #{num} in {repo}.",
-                labels=["batch-2026-06-01"],
-                created="2026-06-01",
-                dispatch_log=[],
-            )
+        tid = f"LIMEN-{base_num + added:03d}"
+        if tid in pending_ids:
+            continue
+        task = dict(
+            id=tid,
+            title=title,
+            repo=repo,
+            type="code",
+            target_agent="jules",
+            priority="high" if cost >= 3 else "medium",
+            budget_cost=cost,
+            status="dispatched",
+            urls=[url],
+            context=f"Audited 2026-06-01 from Jules-ready batch. Fix issue #{num} in {repo}.",
+            labels=["batch-2026-06-01"],
+            created="2026-06-01",
+            dispatch_log=[],
         )
+        submit_task_upsert(TASKS_YAML, task, agent="batch-dispatch", session_id=session_id)
+        pending_ids.add(tid)
         added += 1
 
-    atomic_write_text(
-        TASKS_YAML,
-        yaml.dump(
-            data,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-            width=120,
-        ),
-    )
-
-    print(f"Added {added} tasks. Total: {len(tasks)}")
+    print(f"Submitted {added} task upsert ticket(s). Total after keeper fold: {len(tasks) + added}")
 
 
 if __name__ == "__main__":
