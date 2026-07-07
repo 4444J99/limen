@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-07'
-      spent: 153
+      spent: 157
       per_agent:
-        jules: 84
+        jules: 87
         gemini: 3
-        codex: 9
+        codex: 10
         opencode: 25
         agy: 31
         claude: 0
@@ -85735,7 +85735,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -85753,7 +85753,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T17:31:35.659576Z'
+  updated: '2026-07-07T17:50:31.892215Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:11:02.708379Z'
     agent: claude
@@ -85797,6 +85797,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-07T17:50:31.892215Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-a-i-chat--exporter-54
   title: fix failing CI on organvm/a-i-chat--exporter#54
   repo: organvm/a-i-chat--exporter
@@ -102723,7 +102728,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -102738,7 +102743,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-07T17:50:31.892215Z'
+  dispatch_log:
+  - timestamp: '2026-07-07T17:50:31.892215Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-121
   title: fix failing CI on organvm/domus-genoma#121
   repo: organvm/domus-genoma
@@ -102769,7 +102780,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -102784,7 +102795,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:50:02.447078Z'
+  updated: '2026-07-07T17:50:31.892215Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -102800,6 +102811,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-07T17:50:31.892215Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-125
   title: fix failing CI on organvm/domus-genoma#125
   repo: organvm/domus-genoma
@@ -105573,7 +105589,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -105589,7 +105605,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-05T20:55:30.804090Z'
+  updated: '2026-07-07T17:50:31.892215Z'
   dispatch_log:
   - timestamp: '2026-07-05T20:51:17.294866Z'
     agent: github_actions
@@ -105601,6 +105617,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-07T17:50:31.892215Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-163
   title: fix failing CI on organvm/domus-genoma#163
   repo: organvm/domus-genoma
@@ -107399,10 +107420,10 @@ tasks:
   title: fix failing CI on organvm/mirror-mirror#106
   repo: organvm/mirror-mirror
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -107420,7 +107441,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T17:22:18.627532Z'
+  updated: '2026-07-07T17:52:07.292954Z'
   dispatch_log:
   - timestamp: '2026-07-07T16:16:30.076888Z'
     agent: codex
@@ -107452,6 +107473,12 @@ tasks:
     agent: jules
     session_id: '15175913208909090857'
     status: dispatched
+  - timestamp: '2026-07-07T17:52:07.292954Z'
+    agent: codex
+    session_id: direct-conductor
+    status: open
+    output: Jules session 15175913208909090857 is Awaiting User Feedback in live remote
+      list; reopened to codex after stalled-feedback recovery fix
 - id: HEAL-cifix-organvm-mirror-mirror-107
   title: fix failing CI on organvm/mirror-mirror#107
   repo: organvm/mirror-mirror
