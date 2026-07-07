@@ -8,11 +8,11 @@
     },
     {
       "dependency": "typescript",
-      "used_in_repos": 28
+      "used_in_repos": 29
     },
     {
       "dependency": "vitest",
-      "used_in_repos": 22
+      "used_in_repos": 23
     },
     {
       "dependency": "ruff",
@@ -20,7 +20,7 @@
     },
     {
       "dependency": "eslint",
-      "used_in_repos": 19
+      "used_in_repos": 20
     },
     {
       "dependency": "pyyaml",
@@ -44,7 +44,7 @@
     },
     {
       "dependency": "js",
-      "used_in_repos": 9
+      "used_in_repos": 10
     },
     {
       "dependency": "jsdom",
