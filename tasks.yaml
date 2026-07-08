@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 170
+      spent: 171
       per_agent:
         jules: 100
         gemini: 3
-        codex: 10
+        codex: 11
         opencode: 25
         agy: 31
         claude: 0
@@ -103134,7 +103134,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -103149,7 +103149,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T06:12:19.936651Z'
+  updated: '2026-07-08T06:14:21.058209Z'
   dispatch_log:
   - timestamp: '2026-07-08T06:00:27.752545Z'
     agent: codex
@@ -103160,6 +103160,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/domus-genoma/pull/201
     status: dispatched
+  - timestamp: '2026-07-08T06:14:21.058209Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-domus-genoma-124
   title: fix failing CI on organvm/domus-genoma#124
   repo: organvm/domus-genoma
@@ -108812,7 +108817,7 @@ tasks:
   workstream: repo-boil-up
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -108841,7 +108846,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-08T06:08:18.958928Z'
+  updated: '2026-07-08T06:13:28.457115Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:22:21.721601Z'
     agent: agy
@@ -108888,6 +108893,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-08T06:13:28.457115Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-VALUE-REPOS
   title: Assign revenue/value repo work from existing ledgers
   description: 13 value repos define the funded work lane
@@ -110166,6 +110176,29 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/mirror-mirror/pull/95 [auto-emitted
     2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-the-invisible-ledger-57
+  title: rebase/resolve conflicts on organvm/the-invisible-ledger#57
+  repo: organvm/the-invisible-ledger
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/the-invisible-ledger/pull/57
+  context: 'PR organvm/the-invisible-ledger#57 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/the-invisible-ledger/pull/57
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
   dispatch_log: []
