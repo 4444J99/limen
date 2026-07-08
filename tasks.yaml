@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 165
+      spent: 166
       per_agent:
         jules: 100
         gemini: 3
-        codex: 5
+        codex: 6
         opencode: 25
         agy: 31
         claude: 0
@@ -106505,7 +106505,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -106521,7 +106521,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T10:50:43.601680Z'
+  updated: '2026-07-08T11:11:21.267349Z'
   dispatch_log:
   - timestamp: '2026-07-08T09:18:03.775360Z'
     agent: codex
@@ -106547,6 +106547,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/domus-genoma/pull/176
     status: dispatched
+  - timestamp: '2026-07-08T11:11:21.267349Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-domus-genoma-177
   title: fix failing CI on organvm/domus-genoma#177
   repo: organvm/domus-genoma
@@ -106554,7 +106559,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -106570,7 +106575,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T11:06:12.174709Z'
+  updated: '2026-07-08T11:11:21.267349Z'
   dispatch_log:
   - timestamp: '2026-07-08T09:42:46.634190Z'
     agent: codex
@@ -106596,11 +106601,16 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/domus-genoma/pull/177
     status: dispatched
+  - timestamp: '2026-07-08T11:11:21.267349Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-organvm-dot-github--logos-26
   title: rebase/resolve conflicts on organvm/dot-github--logos#26
   repo: organvm/dot-github--logos
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -106623,7 +106633,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#98
   repo: organvm/mirror-mirror
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -108407,7 +108417,7 @@ tasks:
   title: fix failing CI on organvm/universal-node-network#11
   repo: organvm/universal-node-network
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -109076,7 +109086,7 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: opencode
+  target_agent: claude
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
@@ -109989,7 +109999,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -110005,7 +110015,7 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T10:27:10.044856Z'
+  updated: '2026-07-08T11:11:21.267349Z'
   dispatch_log:
   - timestamp: '2026-07-08T07:27:23.018313Z'
     agent: codex
@@ -110038,6 +110048,11 @@ tasks:
     status: dispatched
     output: 'corrected async no-op harvest: existing PR head advanced to 7e677c27
       and all GitHub checks are green'
+  - timestamp: '2026-07-08T11:11:21.267349Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-domus-genoma-180
   title: fix failing CI on organvm/domus-genoma#180
   repo: organvm/domus-genoma
@@ -110045,7 +110060,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -110060,7 +110075,13 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-08T11:10:28.147970Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T11:10:28.147970Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-181
   title: fix failing CI on organvm/domus-genoma#181
   repo: organvm/domus-genoma
@@ -110567,7 +110588,7 @@ tasks:
     \ far behind"
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: normal
   budget_cost: 1
   status: open
@@ -110592,7 +110613,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#94
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110615,7 +110636,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#101
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110638,7 +110659,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#102
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110661,7 +110682,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#103
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110684,7 +110705,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#107
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110707,7 +110728,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#108
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110730,7 +110751,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#114
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110753,7 +110774,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#121
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110776,7 +110797,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#122
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110799,7 +110820,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#136
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -111006,7 +111027,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#165
   repo: organvm/organvm-engine
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -111029,7 +111050,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/organvm-iii-ergon.github.io#5
   repo: organvm/organvm-iii-ergon.github.io
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -111052,7 +111073,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#176
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -111075,7 +111096,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#177
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -111091,6 +111112,29 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/domus-genoma/pull/177 [auto-emitted
     2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-vigiles-aeternae--agon-cosmogonicum-10
+  title: fix failing CI on organvm/vigiles-aeternae--agon-cosmogonicum#10
+  repo: organvm/vigiles-aeternae--agon-cosmogonicum
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/vigiles-aeternae--agon-cosmogonicum/pull/10
+  context: "PR organvm/vigiles-aeternae--agon-cosmogonicum#10 has FAILING CI checks\
+    \ and merge-drain correctly refuses to merge it. Check out the PR branch, find\
+    \ the root cause of the red checks (lint / types / failing test / config), fix\
+    \ it, push to the SAME PR branch, and confirm every check goes green. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/vigiles-aeternae--agon-cosmogonicum/pull/10\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
   dispatch_log: []
