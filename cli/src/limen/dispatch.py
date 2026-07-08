@@ -1766,6 +1766,20 @@ def _push_isolated_branch(task: Task, wt: Path, branch: str) -> bool:
     return True
 
 
+def _existing_pr_url(pr_head: dict[str, str]) -> str:
+    return f"https://github.com/{pr_head['repo']}/pull/{pr_head['number']}"
+
+
+def _push_existing_pr_head(task: Task, wt: Path, pr_head: dict[str, str]) -> bool:
+    head_ref = pr_head["head_ref"]
+    p = _git(["push", "origin", f"HEAD:{head_ref}"], wt, timeout=300)
+    if p.returncode != 0:
+        print(f"  FAILED push existing PR head {task.id}: {p.stderr.strip()[:300]}")
+        return False
+    print(f"  updated existing PR head {task.id}: {pr_head['repo']}#{pr_head['number']} ({head_ref})")
+    return True
+
+
 def _unpreserved_work_reason(wt: Path, base_ref: str) -> str:
     """Return why reclaiming an isolated worktree needs preservation first.
 
@@ -2037,11 +2051,29 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
 
     pushed = False
     try:
+        start_head_result = _git(["rev-parse", "HEAD"], wt)
+        start_head = start_head_result.stdout.strip() if start_head_result.returncode == 0 else ""
         run_result = _run_isolated_agent(agent, task, wt, agent_cmd, lane_timeout)
         if run_result is not True:
             return run_result
 
         commit_result = _commit_isolated_changes(task, wt)
+        if pr_head:
+            current_head_result = _git(["rev-parse", "HEAD"], wt)
+            current_head = current_head_result.stdout.strip() if current_head_result.returncode == 0 else ""
+            agent_committed = bool(start_head and current_head and current_head != start_head)
+            if commit_result == _NOOP and not agent_committed:
+                return commit_result
+            if commit_result is not True and not (commit_result == _NOOP and agent_committed):
+                return commit_result
+            if not _push_existing_pr_head(task, wt, pr_head):
+                return False
+            pushed = True
+            url = _existing_pr_url(pr_head)
+            print(f"  dispatched: {task.id} → existing PR {url}")
+            _arm_auto_merge(task, wt, url)
+            return url
+
         if commit_result is not True:
             return commit_result
 

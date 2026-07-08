@@ -1042,13 +1042,19 @@ def test_pr_repair_prompt_forbids_assumed_limen_workflow() -> None:
     assert "limen-agent.yml" in prompt
 
 
-def test_isolated_local_run_uses_same_repo_pr_head_as_base(tmp_path: Path, monkeypatch) -> None:
+def test_isolated_local_run_updates_same_repo_pr_head(tmp_path: Path, monkeypatch) -> None:
     git_calls: list[list[str]] = []
-    created_prs: list[tuple[str, str, Path]] = []
+    pushed_pr_heads: list[tuple[str, Path]] = []
+    auto_merge_urls: list[str] = []
     cleanups: list[tuple[str, bool]] = []
 
     def fake_git_plumbing(args, cwd, timeout=120):
         git_calls.append(args)
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    def fake_git(args, cwd, timeout=120):
+        if args == ["rev-parse", "HEAD"]:
+            return subprocess.CompletedProcess(args, 0, "base-head\n", "")
         return subprocess.CompletedProcess(args, 0, "", "")
 
     monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
@@ -1065,13 +1071,18 @@ def test_isolated_local_run_uses_same_repo_pr_head_as_base(tmp_path: Path, monke
         },
     )
     monkeypatch.setattr(D, "_git_plumbing", fake_git_plumbing)
+    monkeypatch.setattr(D, "_git", fake_git)
     monkeypatch.setattr(D, "_run_isolated_agent", lambda *args: True)
     monkeypatch.setattr(D, "_commit_isolated_changes", lambda *args: True)
-    monkeypatch.setattr(D, "_push_isolated_branch", lambda *args: True)
     monkeypatch.setattr(
         D,
-        "_create_isolated_pr",
-        lambda task, wt, base, branch: created_prs.append((base, branch, wt)) or "https://github.com/x/y/pull/9",
+        "_push_existing_pr_head",
+        lambda task, wt, pr_head: pushed_pr_heads.append((pr_head["head_ref"], wt)) or True,
+    )
+    monkeypatch.setattr(
+        D,
+        "_arm_auto_merge",
+        lambda task, wt, url: auto_merge_urls.append(url),
     )
     monkeypatch.setattr(
         D,
@@ -1090,7 +1101,7 @@ def test_isolated_local_run_uses_same_repo_pr_head_as_base(tmp_path: Path, monke
 
     result = D._isolated_local_run("codex", task, dry_run=False)
 
-    assert result == "https://github.com/x/y/pull/9"
+    assert result == "https://github.com/organvm/domus-genoma/pull/175"
     assert git_calls[0] == [
         "fetch",
         "origin",
@@ -1104,14 +1115,58 @@ def test_isolated_local_run_uses_same_repo_pr_head_as_base(tmp_path: Path, monke
         str(tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd"),
         "origin/limen/fix-ci-175",
     ]
-    assert created_prs == [
-        (
-            "limen/fix-ci-175",
-            "limen/heal-cifix-organvm-domus-genoma-175-abcd",
-            tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd",
-        )
-    ]
+    assert pushed_pr_heads == [("limen/fix-ci-175", tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd")]
+    assert auto_merge_urls == ["https://github.com/organvm/domus-genoma/pull/175"]
     assert cleanups == [("origin/limen/fix-ci-175", True)]
+
+
+def test_isolated_local_run_treats_agent_committed_pr_head_as_work(tmp_path: Path, monkeypatch) -> None:
+    heads = iter(["base-head\n", "agent-commit\n"])
+    pushed_pr_heads: list[str] = []
+
+    def fake_git(args, cwd, timeout=120):
+        if args == ["rev-parse", "HEAD"]:
+            return subprocess.CompletedProcess(args, 0, next(heads), "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda _task: tmp_path)
+    monkeypatch.setattr(D, "_default_branch", lambda _repo: "master")
+    monkeypatch.setattr(
+        D,
+        "_same_repo_pr_head_for_task",
+        lambda _task: {
+            "repo": "organvm/domus-genoma",
+            "number": "175",
+            "head_ref": "limen/fix-ci-175",
+            "base_ref": "master",
+        },
+    )
+    monkeypatch.setattr(D, "_git_plumbing", lambda *args, **kwargs: subprocess.CompletedProcess(args, 0, "", ""))
+    monkeypatch.setattr(D, "_git", fake_git)
+    monkeypatch.setattr(D, "_run_isolated_agent", lambda *args: True)
+    monkeypatch.setattr(D, "_commit_isolated_changes", lambda *args: D._NOOP)
+    monkeypatch.setattr(
+        D,
+        "_push_existing_pr_head",
+        lambda task, wt, pr_head: pushed_pr_heads.append(pr_head["head_ref"]) or True,
+    )
+    monkeypatch.setattr(D, "_arm_auto_merge", lambda *args: None)
+    monkeypatch.setattr(D, "_cleanup_isolated_worktree", lambda *args, **kwargs: None)
+    monkeypatch.setattr(D.secrets, "token_hex", lambda _n: "abcd")
+    monkeypatch.setattr(D, "_ISOLATION_ROOT", tmp_path / "worktrees")
+    task = Task(
+        id="HEAL-cifix-organvm-domus-genoma-175",
+        title="fix failing CI on organvm/domus-genoma#175",
+        repo="organvm/domus-genoma",
+        target_agent="codex",
+        created=date(2026, 6, 27),
+    )
+
+    result = D._isolated_local_run("codex", task, dry_run=False)
+
+    assert result == "https://github.com/organvm/domus-genoma/pull/175"
+    assert pushed_pr_heads == ["limen/fix-ci-175"]
 
 
 def test_git_plumbing_retries_transient_config_lock(tmp_path: Path, monkeypatch) -> None:
