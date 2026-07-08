@@ -1024,6 +1024,24 @@ def test_same_repo_pr_head_for_task_resolves_open_pr(monkeypatch) -> None:
     assert calls[0][:4] == ["gh", "pr", "view", "175"]
 
 
+def test_pr_repair_prompt_forbids_assumed_limen_workflow() -> None:
+    task = Task(
+        id="HEAL-172",
+        title="fix failing CI on organvm/domus-genoma#172",
+        repo="organvm/domus-genoma",
+        target_agent="codex",
+        urls=["https://github.com/organvm/domus-genoma/pull/172"],
+        created=date(2026, 6, 27),
+    )
+
+    prompt = D._build_prompt(task)
+
+    assert "statusCheckRollup" in prompt
+    assert "workflow list" in prompt
+    assert "do not assume" in prompt
+    assert "limen-agent.yml" in prompt
+
+
 def test_isolated_local_run_uses_same_repo_pr_head_as_base(tmp_path: Path, monkeypatch) -> None:
     git_calls: list[list[str]] = []
     created_prs: list[tuple[str, str, Path]] = []

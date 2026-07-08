@@ -658,6 +658,8 @@ def _verification_discipline() -> str:
         "--- VERIFICATION DISCIPLINE ---\n"
         "Use the narrowest predicate that proves this task: inspect the failing CI check, "
         "run the specific test/lint/typecheck/build it names, or run a focused local equivalent. "
+        "For GitHub PR repair, inspect the PR's actual statusCheckRollup and workflow list; do not "
+        "assume a Limen-owned workflow file such as limen-agent.yml exists in the target repo. "
         "Do not run scripts/verify-whole.sh, the full pytest suite, or broad commands like "
         "`python -m pytest web/api/tests cli/tests -q` unless this task explicitly requires full "
         "repo readiness or the narrow predicate proves the broader gate is the only relevant failure. "
