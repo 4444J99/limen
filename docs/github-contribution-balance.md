@@ -50,16 +50,16 @@ The script is read-only. It uses GitHub through `gh api graphql` when available,
 
 ## Live Receipt
 
-Generated: `2026-07-08T06:35:20Z`
+Generated: `2026-07-08T06:55:53Z`
 
 `python3 scripts/github-contribution-balance.py --login 4444J99 --json`:
 
 | Category | Count | Share | Target |
 |---|---:|---:|---:|
-| Commits | `13,000` | `74.04%` | `<=60%` |
+| Commits | `13,006` | `74.03%` | `<=60%` |
 | Issues | `2,104` | `11.98%` | `>=15%` |
 | Pull requests | `2,321` | `13.22%` | `>=15%` |
-| Reviews | `133` | `0.76%` | `>=10%` |
+| Reviews | `137` | `0.78%` | `>=10%` |
 
 Review-first and owner-blocker receipts in this beat:
 
@@ -68,6 +68,7 @@ Review-first and owner-blocker receipts in this beat:
 - Commented on blocked or under-proven PRs: `organvm/persona-fleet#11`, `organvm/organvm-engine#165`, `organvm/vigiles-aeternae--agon-cosmogonicum#10`, `organvm/universal-mail--automation#149`, and `organvm/domus-genoma#201`.
 - Opened and linked owner blockers for repeated residue/failure patterns: `organvm/universal-mail--automation#150`, `organvm/growth-auditor#23`, `organvm/mirror-mirror#113`, `organvm/domus-genoma#202`, and `organvm/domus-genoma#203`.
 - Linked those owner blockers across the affected PR clusters: UMA `#146`-`#149`, Growth Auditor `#18`-`#22`, Mirror Mirror `#106`, `#107`, `#109`, `#111`, and Domus `#183`, `#184`, `#185`, `#187`.
+- Added review receipts on dependency-maintenance PRs while waiting for async closeout: approved `organvm/application-pipeline#75`, `organvm/promptscope#16`, `organvm/agent--claude-smith#35`, `organvm/system-governance-framework#48`, `organvm/select-or-left-or-right-or#32`, and `organvm/card-trade-social#15`; requested changes on `organvm/padavano#11`, `organvm/meta-source--ledger-output#34`, `organvm/materia-collider#14`, `organvm/vox--publica#10`, `organvm/sign-signal--voice-synth#15`, `organvm/object-lessons#23`, `organvm/a-mavs-olevm#106`, `organvm/classroom-rpg-aetheria#146`, and `organvm/specvla-ergon--avditor-mvndi#53`.
 
 Owner issue receipt: `https://github.com/organvm/limen/issues/687#issuecomment-4911849538`.
 
