@@ -177,12 +177,16 @@ def test_conflict_wins_over_stale_failing_checks(tmp_path, monkeypatch):
         if args[:2] == ["search", "prs"]:
             raise AssertionError("explicit --pr must not enumerate the rotating search window")
         if args[:2] == ["pr", "view"]:
-            return _R(json.dumps({
-                "state": "OPEN",
-                "isDraft": False,
-                "mergeable": "CONFLICTING",
-                "statusCheckRollup": [{"conclusion": "FAILURE"}],
-            }))
+            return _R(
+                json.dumps(
+                    {
+                        "state": "OPEN",
+                        "isDraft": False,
+                        "mergeable": "CONFLICTING",
+                        "statusCheckRollup": [{"conclusion": "FAILURE"}],
+                    }
+                )
+            )
         return _R("[]")
 
     monkeypatch.setattr(m, "gh", fake_gh)
