@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 182
+      spent: 161
       per_agent:
         jules: 100
         gemini: 3
-        codex: 22
+        codex: 1
         opencode: 25
         agy: 31
         claude: 0
@@ -27,10 +27,10 @@ portal:
       per_agent_reset:
         jules: '2026-07-07T11:50:27.108419+00:00'
         gemini: '2026-07-07T11:50:27.108419+00:00'
-        codex: '2026-07-08T04:13:01.347785+00:00'
+        codex: '2026-07-08T09:16:26.677097+00:00'
         opencode: '2026-07-07T11:50:27.108419+00:00'
         agy: '2026-07-07T11:50:27.108419+00:00'
-        claude: '2026-07-08T04:13:01.347785+00:00'
+        claude: '2026-07-08T09:16:26.677097+00:00'
   agents:
     opencode:
       status: idle
@@ -106377,13 +106377,14 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
   - tried:codex
   - slow
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/174
   context: "PR organvm/domus-genoma#174 has FAILING CI checks and merge-drain correctly\
@@ -106394,7 +106395,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T08:57:48.123133Z'
+  updated: '2026-07-08T09:17:28.451433Z'
   dispatch_log:
   - timestamp: '2026-07-08T07:43:57.978405Z'
     agent: codex
@@ -106419,6 +106420,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T09:17:28.451433Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-domus-genoma-175
   title: fix failing CI on organvm/domus-genoma#175
   repo: organvm/domus-genoma
@@ -106426,7 +106432,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -106442,7 +106448,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T08:57:07.988591Z'
+  updated: '2026-07-08T09:13:22.280509Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:58:04.383222Z'
     agent: jules
@@ -106483,6 +106489,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-08T09:13:22.280509Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-cifix-organvm-domus-genoma-176
   title: fix failing CI on organvm/domus-genoma#176
   repo: organvm/domus-genoma
@@ -106490,7 +106501,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106505,7 +106516,13 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  dispatch_log: []
+  updated: '2026-07-08T09:18:03.775360Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T09:18:03.775360Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-177
   title: fix failing CI on organvm/domus-genoma#177
   repo: organvm/domus-genoma
@@ -108340,7 +108357,7 @@ tasks:
   title: fix failing CI on organvm/universal-node-network#11
   repo: organvm/universal-node-network
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -109009,7 +109026,7 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: opencode
+  target_agent: claude
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
@@ -110484,7 +110501,7 @@ tasks:
     \ far behind"
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -110509,7 +110526,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#94
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110532,7 +110549,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#101
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110555,7 +110572,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#102
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110578,7 +110595,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#103
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110601,7 +110618,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#107
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110647,7 +110664,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#114
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110670,7 +110687,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#121
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110693,7 +110710,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#122
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110716,7 +110733,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#136
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110755,6 +110772,167 @@ tasks:
     preserving the PR''s intent, push to the SAME PR branch, and confirm it reports
     MERGEABLE with green CI. Do not open a new PR. PR: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/712
     [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-121
+  title: rebase/resolve conflicts on organvm/domus-genoma#121
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/121
+  context: 'PR organvm/domus-genoma#121 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/121 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-136
+  title: rebase/resolve conflicts on organvm/domus-genoma#136
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/136
+  context: 'PR organvm/domus-genoma#136 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/136 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-138
+  title: rebase/resolve conflicts on organvm/domus-genoma#138
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/138
+  context: 'PR organvm/domus-genoma#138 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/138 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-141
+  title: rebase/resolve conflicts on organvm/domus-genoma#141
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/141
+  context: 'PR organvm/domus-genoma#141 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/141 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-142
+  title: rebase/resolve conflicts on organvm/domus-genoma#142
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/142
+  context: 'PR organvm/domus-genoma#142 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/142 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-146
+  title: rebase/resolve conflicts on organvm/domus-genoma#146
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/146
+  context: 'PR organvm/domus-genoma#146 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/146 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-149
+  title: rebase/resolve conflicts on organvm/domus-genoma#149
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/149
+  context: 'PR organvm/domus-genoma#149 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/149 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
   dispatch_log: []
