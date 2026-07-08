@@ -106238,7 +106238,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -106254,7 +106254,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T06:49:04.238077Z'
+  updated: '2026-07-08T06:57:37.285722Z'
   dispatch_log:
   - timestamp: '2026-07-08T04:43:14.393105Z'
     agent: codex
@@ -106281,6 +106281,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-08T06:57:37.285722Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-domus-genoma-173
   title: fix failing CI on organvm/domus-genoma#173
   repo: organvm/domus-genoma
