@@ -36143,7 +36143,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/organvm-vii-kerygma.github.io
   repo: organvm/organvm-vii-kerygma.github.io
   type: code
-  target_agent: opencode
+  target_agent: codex
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -36225,7 +36225,7 @@ tasks:
   title: Raise test coverage in organvm-i-theoria/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
   type: code
-  target_agent: codex
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -85273,7 +85273,7 @@ tasks:
   title: fix failing CI on organvm/a-i--skills#26
   repo: organvm/a-i--skills
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -85456,7 +85456,7 @@ tasks:
   title: fix failing CI on organvm/a-i--skills#28
   repo: organvm/a-i--skills
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -108837,7 +108837,7 @@ tasks:
   workstream: repo-boil-up
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - always-working
   - receipt-first
@@ -108866,7 +108866,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-08T06:30:07.061452Z'
+  updated: '2026-07-08T07:04:47.986678Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:22:21.721601Z'
     agent: agy
@@ -108922,6 +108922,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/limen/pull/692
     status: dispatched
+  - timestamp: '2026-07-08T07:04:47.986678Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: AW-VALUE-REPOS
   title: Assign revenue/value repo work from existing ledgers
   description: 13 value repos define the funded work lane
@@ -110310,4 +110315,329 @@ tasks:
   depends_on: []
   created: '2026-07-08'
   updated: '2026-07-08T06:35:26.537574Z'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-growth-auditor-20
+  title: fix failing CI on organvm/growth-auditor#20
+  repo: organvm/growth-auditor
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/growth-auditor/pull/20
+  context: "PR organvm/growth-auditor#20 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/growth-auditor/pull/20\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-growth-auditor-21
+  title: fix failing CI on organvm/growth-auditor#21
+  repo: organvm/growth-auditor
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/growth-auditor/pull/21
+  context: "PR organvm/growth-auditor#21 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/growth-auditor/pull/21\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-growth-auditor-22
+  title: fix failing CI on organvm/growth-auditor#22
+  repo: organvm/growth-auditor
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/growth-auditor/pull/22
+  context: "PR organvm/growth-auditor#22 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/growth-auditor/pull/22\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-hokage-chess--4444j99-85
+  title: "rebase organvm/hokage-chess--4444j99#85 onto current base \u2014 branched\
+    \ far behind"
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/85
+  context: "PR organvm/hokage-chess--4444j99#85 is MERGEABLE + green but branched\
+    \ well behind its current base \u2014 the structural condition for a stale-base\
+    \ silent revert. Check out the branch, REBASE it onto the current base, KEEP all\
+    \ of the PR's genuine changes and DROP any hunk that merely reverts base files\
+    \ it didn't mean to touch, push --force-with-lease to the SAME branch, and confirm\
+    \ MERGEABLE + current + green. Do NOT open a new PR; preserve all unique work.\
+    \ PR: https://github.com/organvm/hokage-chess--4444j99/pull/85 [auto-emitted 2026-07-08\
+    \ by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-94
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#94
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/94
+  context: 'PR organvm/hokage-chess--4444j99#94 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/94
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-101
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#101
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/101
+  context: 'PR organvm/hokage-chess--4444j99#101 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/101
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-102
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#102
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/102
+  context: 'PR organvm/hokage-chess--4444j99#102 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/102
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-103
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#103
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/103
+  context: 'PR organvm/hokage-chess--4444j99#103 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/103
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-107
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#107
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/107
+  context: 'PR organvm/hokage-chess--4444j99#107 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/107
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-108
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#108
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/108
+  context: 'PR organvm/hokage-chess--4444j99#108 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/108
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-114
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#114
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/114
+  context: 'PR organvm/hokage-chess--4444j99#114 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/114
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-121
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#121
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/121
+  context: 'PR organvm/hokage-chess--4444j99#121 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/121
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-122
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#122
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/122
+  context: 'PR organvm/hokage-chess--4444j99#122 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/122
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-hokage-chess--4444j99-136
+  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#136
+  repo: organvm/hokage-chess--4444j99
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/hokage-chess--4444j99/pull/136
+  context: 'PR organvm/hokage-chess--4444j99#136 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
+    it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/136
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
   dispatch_log: []
