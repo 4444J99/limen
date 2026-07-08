@@ -59,6 +59,8 @@ RECEIPT_ARCHIVE = ROOT / ".limen-private" / "async-runs" / "archive"
 WORKER = ROOT / "scripts" / "async-run-one.py"
 _TOKEN_RE = re.compile(r"(github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{12,})")
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
+
+
 def _truthy_env(name: str, default: bool = True) -> bool:
     raw = os.environ.get(name)
     if raw is None:
@@ -701,6 +703,16 @@ def reserve_and_launch(agents, per_agent, cap, dry, task_id=None):
     return picked
 
 
+def should_reserve(per_agent: int, cap: int) -> bool:
+    """Whether this invocation may reserve new async work after harvest/reap.
+
+    Closeout and harvest-only probes deliberately call ``--per-lane 0 --max 0``. Those passes must
+    not run pre-dispatch writers such as always-working; otherwise a read-mostly harvest check
+    dirties the live root without launching anything.
+    """
+    return per_agent > 0 and cap > 0
+
+
 def resolve_lanes(selector: str, down: set[str]) -> list[str]:
     try:
         board = load_limen_file(TASKS)
@@ -735,7 +747,11 @@ def main() -> int:
         reaped = reap_stale(max_age)
         applied = harvest()
     running = _running_total()
-    launched = reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run, task_id=a.task_id)
+    launched = (
+        reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run, task_id=a.task_id)
+        if should_reserve(a.per_lane, a.max)
+        else []
+    )
     verb = "would launch" if a.dry_run else "launched"
     print(
         f"── async: reaped {len(reaped)} dead · harvested {applied} · {running} still running · "

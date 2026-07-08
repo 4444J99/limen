@@ -901,3 +901,21 @@ def test_async_dry_run_does_not_take_queue_lock(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["dispatch-async.py", "--lanes", "codex", "--max", "4", "--dry-run"])
 
     assert da.main() == 0
+
+
+def test_no_launch_mode_skips_always_working_writer(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    before = (tmp_path / "tasks.yaml").read_text()
+
+    def fail_always_working(*_args, **_kwargs):
+        raise AssertionError("harvest-only mode must not run pre-dispatch writers")
+
+    monkeypatch.setattr(da, "run_always_working_before_dispatch", fail_always_working)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["dispatch-async.py", "--lanes", "codex", "--per-lane", "0", "--max", "0"],
+    )
+
+    assert da.main() == 0
+    assert (tmp_path / "tasks.yaml").read_text() == before
