@@ -15,21 +15,21 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 167
+      spent: 10
       per_agent:
-        jules: 100
-        gemini: 3
-        codex: 7
-        opencode: 25
-        agy: 31
+        jules: 1
+        gemini: 0
+        codex: 8
+        opencode: 0
+        agy: 0
         claude: 0
         github_actions: 1
       per_agent_reset:
-        jules: '2026-07-07T11:50:27.108419+00:00'
-        gemini: '2026-07-07T11:50:27.108419+00:00'
+        jules: '2026-07-08T12:21:31.555337+00:00'
+        gemini: '2026-07-08T12:21:31.555337+00:00'
         codex: '2026-07-08T09:16:26.677097+00:00'
-        opencode: '2026-07-07T11:50:27.108419+00:00'
-        agy: '2026-07-07T11:50:27.108419+00:00'
+        opencode: '2026-07-08T12:21:31.555337+00:00'
+        agy: '2026-07-08T12:21:31.555337+00:00'
         claude: '2026-07-08T09:16:26.677097+00:00'
   agents:
     opencode:
@@ -92828,7 +92828,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -92843,7 +92843,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:17:57.832919Z'
+  updated: '2026-07-08T12:21:31.555337Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:05:23.799955Z'
     agent: jules
@@ -92859,6 +92859,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-08T12:21:31.555337Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-93
   title: fix failing CI on organvm/mirror-mirror#93
   repo: organvm/mirror-mirror
@@ -111169,7 +111174,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -111184,4 +111189,10 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-08T12:21:31.555337Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T12:21:31.555337Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
