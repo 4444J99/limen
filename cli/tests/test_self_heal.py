@@ -150,6 +150,24 @@ def test_respects_limit_cap(tmp_path, monkeypatch):
     assert len(yaml.safe_load(p.read_text())["tasks"]) == 1, "must emit at most --limit tasks"
 
 
+def test_explicit_pr_bypasses_rotating_search_window(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+
+    def fake_gh(args, timeout=60):
+        if args[:2] == ["search", "prs"]:
+            raise AssertionError("explicit --pr must not enumerate the rotating search window")
+        return _fake_gh(args, timeout=timeout)
+
+    monkeypatch.setattr(m, "gh", fake_gh)
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p), "--pr", "organvm/scale#6"])
+
+    assert m.main() == 0
+    ids = {t["id"] for t in yaml.safe_load(p.read_text())["tasks"]}
+    assert ids == {"HEAL-rebase-organvm-scale-6"}
+
+
 def test_releases_queue_lock_after_live_pass(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
     p = tmp_path / "tasks.yaml"

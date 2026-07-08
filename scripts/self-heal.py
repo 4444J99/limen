@@ -202,6 +202,25 @@ def env_int(name, default):
     return value if value > 0 else default
 
 
+def parse_pr_spec(raw):
+    value = str(raw or "").strip()
+    if not value:
+        raise argparse.ArgumentTypeError("empty PR spec")
+    if "github.com/" in value:
+        tail = value.split("github.com/", 1)[1].strip("/")
+        parts = tail.split("/")
+        if len(parts) >= 4 and parts[2] in {"pull", "pulls"} and parts[3].isdigit():
+            repo = f"{parts[0]}/{parts[1]}"
+            num = int(parts[3])
+            return repo, num, f"https://github.com/{repo}/pull/{num}"
+    if "#" in value:
+        repo, num = value.rsplit("#", 1)
+        repo = repo.strip().strip("/")
+        if "/" in repo and num.strip().isdigit():
+            return repo, int(num), f"https://github.com/{repo}/pull/{int(num)}"
+    raise argparse.ArgumentTypeError(f"expected owner/repo#number or GitHub PR URL, got {raw!r}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scan", type=int, default=env_int("LIMEN_HEAL_SCAN", 30),
@@ -211,6 +230,13 @@ def main():
     ap.add_argument("--limit", type=int, default=env_int("LIMEN_HEAL_LIMIT", 10),
                     help="max heal tasks to EMIT this run (headroom-scaled up to 3x on a full tank)")
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
+    ap.add_argument(
+        "--pr",
+        action="append",
+        type=parse_pr_spec,
+        default=[],
+        help="assess an explicit PR owner/repo#number or GitHub PR URL instead of the rotating search window",
+    )
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
@@ -218,12 +244,15 @@ def main():
     # assess a rotating window of --scan PRs this beat. Over a full rotation every red/conflict PR
     # gets seen → a heal task → merge-drain lands it. The cursor is per-organ so HEAL and MERGE
     # rotate independently. ([[self-star-ladder-shipped-live]])
-    allprs = enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=True)
+    allprs = list(a.pr) if a.pr else enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=True)
     if not allprs:
         print("[self-heal] no open PRs (or gh unavailable)")
         return 0
-    cursor = ROOT / "logs" / ".pr-scan-cursor.heal"
-    prs = rotating_window(allprs, a.scan, str(cursor), persist=not a.dry_run)
+    if a.pr:
+        prs = allprs
+    else:
+        cursor = ROOT / "logs" / ".pr-scan-cursor.heal"
+        prs = rotating_window(allprs, a.scan, str(cursor), persist=not a.dry_run)
     with cf.ThreadPoolExecutor(max_workers=10) as ex:
         rows = list(ex.map(assess, prs))
     b = collections.Counter(r[3] for r in rows)
