@@ -98,6 +98,16 @@ if [ "${LIMEN_SHIP_GATE:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/ship-gate.py" --check || echo "  ↑ product-facing done-claim with NO reachable artifact above — deploy it or reopen the task"
 fi
 
+echo "── 0g. heal convergence — the healer must converge, not re-spend capacity on a wall ──"
+# The gap this closes (retro 06-24→07-08 findings 1–2): the healer opened PRs it could not
+# merge (growth-auditor #16–#22, theoria #492…#500 — same check red every time) and nothing
+# detected the stall; 59% of heal receipts produced no PR with no field separating
+# "already green" from "gave up silently". Chronic = ≥3 open heal PRs failing the SAME
+# check >48h. Receipts now carry a mechanically-derived outcome (async-run-one.py). Fail-open.
+if [ "${LIMEN_HEAL_CONVERGENCE:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/heal-convergence.py" --check || echo "  ↑ CHRONIC heal non-convergence above — fix the named check at its root or park the repo with a chronic receipt"
+fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 

@@ -1539,6 +1539,13 @@ parameters:
     owner: tabularius
     note: "Beat gate for the ship gate (scripts/ship-gate.py --check) run each beat by metabolize.sh section 0f (RETRO-0708-SHIP-GATE; retro findings 4 + gap-model). Product-facing done requires a REACHABLE external artifact — a deployed URL returning 200, a served artifact still carrying its rail — never a merged PR, a receipt, or a filed lever. Probes every entry in spec/ship-surfaces.json plus every done/archived task labelled product-facing (urls or last dispatch_log must contain a live artifact; PR urls never count). verify-whole.sh runs the deterministic fixture test; the live probes stay beat-side. Set 0 to silence."
 
+  LIMEN_HEAL_CONVERGENCE:
+    default: "1"               # ON — trip on chronic heal non-convergence (>=3 open heal PRs failing the same check >48h)
+    env: LIMEN_HEAL_CONVERGENCE
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the heal-convergence report (scripts/heal-convergence.py --check) run each beat by metabolize.sh section 0g (RETRO-0708-HEAL-RECEIPT-OUTCOME; retro findings 1-2). CHRONIC rung: open heal PRs (title-prefixed '[limen HEAL-') grouped by (repo, failing check); >=3 PRs older than 48h on the SAME check = the healer is re-spending capacity on a wall (growth-auditor #16-#22 / theoria #492-#500 class) -> exit 1. COVERAGE rung: archived heal receipts must carry the {outcome: already_green|fixed|gave_up, failing_checks} field derived MECHANICALLY post-run by async-run-one.py (gh pr view of the target PR - never agent prose), reported as a ratio so the 855-emitted-vs-384-receipts gap class is a number. verify-whole runs the fixture test (fixture PRs + fixture clock - deterministic); live counts stay beat-side. Set 0 to silence."
+
   LIMEN_CENSOR_ISSUES_APPLY:
     default: "0"               # SAFE CODE DEFAULT — dry-run; ships observable-before-autonomous (the LIMEN_CENSOR_APPLY constitutional pattern). NO fleet_runtime yet: arming is deliberately a human act.
     env: LIMEN_CENSOR_ISSUES_APPLY

@@ -27,6 +27,46 @@ TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 RUNS = ROOT / "logs" / "async-runs"
 
 
+def heal_outcome(task, result):
+    """Mechanically derive a heal receipt's outcome — never trust agent prose.
+
+    The gap (retro 06-24→07-08 finding 2): 59% of heal receipts produced no PR
+    and nothing distinguished "already green" from "gave up silently", so heal
+    convergence could be neither asserted nor falsified. For HEAL-* tasks this
+    probes the TARGET PR's post-run state via gh and returns
+    {outcome: already_green|fixed|gave_up, failing_checks: [...]}.
+    Fail-open: any probe error returns None (receipt ships without the field,
+    counted by heal-convergence.py as legacy/uncovered).
+    """
+    import re
+    import subprocess
+
+    blob = f"{task.context or ''} {' '.join(str(u) for u in (task.urls or []))}"
+    m = re.search(r"github\.com/([^/\s]+/[^/\s]+)/pull/(\d+)", blob)
+    if not m:
+        return None
+    repo, num = m.group(1), m.group(2)
+    try:
+        v = subprocess.run(
+            ["gh", "pr", "view", num, "-R", repo, "--json", "statusCheckRollup,mergeable"],
+            capture_output=True, text=True, timeout=60,
+        )
+        if v.returncode != 0:
+            return None
+        data = json.loads(v.stdout or "{}") or {}
+        rollup = data.get("statusCheckRollup") or []
+        failing = sorted({c.get("name", "?") for c in rollup
+                          if (c.get("conclusion") or "").upper() in ("FAILURE", "TIMED_OUT", "CANCELLED")})
+        green = not failing and str(data.get("mergeable", "")).upper() != "CONFLICTING"
+        if green:
+            outcome = "already_green" if result in ("__noop__", False, None) else "fixed"
+        else:
+            outcome = "gave_up"
+        return {"outcome": outcome, "failing_checks": failing}
+    except Exception:  # noqa: BLE001 — outcome derivation must never sink the worker
+        return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--agent", required=True)
@@ -34,6 +74,7 @@ def main() -> int:
     a = ap.parse_args()
     RUNS.mkdir(parents=True, exist_ok=True)
     err = None
+    task = None
     try:
         lf = load_limen_file(TASKS)
         task = next((t for t in lf.tasks if t.id == a.task_id), None)
@@ -48,6 +89,10 @@ def main() -> int:
         "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "err": err,
     }
+    if task is not None and a.task_id.startswith("HEAL-"):
+        derived = heal_outcome(task, result)
+        if derived:
+            out.update(derived)
     tmp = RUNS / f"{a.task_id}.result.tmp"
     tmp.write_text(json.dumps(out))
     tmp.replace(RUNS / f"{a.task_id}.result.json")  # atomic publish
