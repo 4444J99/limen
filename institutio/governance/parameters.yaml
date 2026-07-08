@@ -1532,6 +1532,13 @@ parameters:
     owner: tabularius
     note: "Beat gate for the armed-valve audit (scripts/armed-valve-audit.py --check) run each beat by metabolize.sh section 0e (RETRO-0708-ARMED-VALVE-AUDIT; PREC-2026-07-08-armed-valve-outcome). It derives every boolean ${LIMEN_*:-0|1} gate from the beat sources and classifies via spec/armed-valves.json: ARMED / PARKED (a his-hand lever cites it — owned, never nagged) / SILENT-OFF (a deliverable-IS-the-behavior valve disarmed with NO lever — the retro finding-8 failure class: the censor mirror's permanent dry-run, MONETA's dark URL) / UNCLASSIFIED (registry lags the code — self-surfacing). verify-whole.sh enforces the repo-deterministic --contract rung (no UNCLASSIFIED); the env/url liveness rungs stay beat-side so CI never flaps on host env. Set 0 to silence."
 
+  LIMEN_SHIP_GATE:
+    default: "1"               # ON — probe product artifacts + product-facing done-claims each beat
+    env: LIMEN_SHIP_GATE
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the ship gate (scripts/ship-gate.py --check) run each beat by metabolize.sh section 0f (RETRO-0708-SHIP-GATE; retro findings 4 + gap-model). Product-facing done requires a REACHABLE external artifact — a deployed URL returning 200, a served artifact still carrying its rail — never a merged PR, a receipt, or a filed lever. Probes every entry in spec/ship-surfaces.json plus every done/archived task labelled product-facing (urls or last dispatch_log must contain a live artifact; PR urls never count). verify-whole.sh runs the deterministic fixture test; the live probes stay beat-side. Set 0 to silence."
+
   LIMEN_CENSOR_ISSUES_APPLY:
     default: "0"               # SAFE CODE DEFAULT — dry-run; ships observable-before-autonomous (the LIMEN_CENSOR_APPLY constitutional pattern). NO fleet_runtime yet: arming is deliberately a human act.
     env: LIMEN_CENSOR_ISSUES_APPLY

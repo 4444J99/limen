@@ -89,6 +89,15 @@ if [ "${LIMEN_VALVE_AUDIT:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/armed-valve-audit.py" --check || echo "  ↑ SILENTLY-OFF deliverable valve above — arm it, or file its lever in his-hand-levers.json"
 fi
 
+echo "── 0f. ship gate — product-facing done requires a reachable external artifact ──"
+# The gap this closes (retro 06-24→07-08 findings 4 + gap-model): 101 creative asks produced
+# merged PRs and receipts and nothing a user could reach; MONETA's URL returned curl-000 while
+# every internal predicate read green. Probes each registered product artifact
+# (spec/ship-surfaces.json) + every product-facing done-claim on the board. Fail-open.
+if [ "${LIMEN_SHIP_GATE:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/ship-gate.py" --check || echo "  ↑ product-facing done-claim with NO reachable artifact above — deploy it or reopen the task"
+fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 

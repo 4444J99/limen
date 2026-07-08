@@ -1,0 +1,36 @@
+{
+  "_doc": "Registry for ship-gate.py (RETRO-0708-SHIP-GATE; retro findings 4 + gap-model). Each entry is a PRODUCT's user-reachable artifact — the thing that must serve for the product to be SHIPPED rather than code-complete. A product whose artifact goes dark (curl 000/5xx, or the rail stripped from the served artifact) fails the gate: a merged PR, a receipt, or a filed lever never satisfies it (PREC-2026-07-08-armed-valve-outcome). Add a product = add one entry when its first artifact goes live.",
+  "surfaces": [
+    {
+      "id": "moneta-storefront",
+      "kind": "http_200",
+      "url": "https://mint.4444j99.dev/",
+      "what": "MONETA buyer-facing storefront — the checkout users land on (retro finding 4: deployed URL returned nothing while the organ read code-complete)"
+    },
+    {
+      "id": "moneta-pubkey",
+      "kind": "http_200",
+      "url": "https://mint.4444j99.dev/pubkey",
+      "what": "MONETA licence pubkey — offline verification depends on it serving"
+    },
+    {
+      "id": "exporter-install-page",
+      "kind": "http_200",
+      "url": "https://chatgpt-exporter-e08.pages.dev/",
+      "what": "ChatGPT Exporter public install page (Cloudflare Pages, auto-deploys on master)"
+    },
+    {
+      "id": "exporter-userscript-mint-rail",
+      "kind": "http_contains",
+      "url": "https://chatgpt-exporter-e08.pages.dev/chatgpt.user.js",
+      "needle": "mint.4444j99.dev",
+      "what": "the served userscript carries the Buy-Pro mint rail — the user-reachable half of first-dollar (EXCAV-0708-EXPORTER-ARM)"
+    },
+    {
+      "id": "limen-dashboard",
+      "kind": "http_200",
+      "url": "https://limen-dashboard.pages.dev/",
+      "what": "the published limen dashboard (owner/client/public surfaces)"
+    }
+  ]
+}
