@@ -50,20 +50,25 @@ The script is read-only. It uses GitHub through `gh api graphql` when available,
 
 ## Live Receipt
 
-Generated: `2026-07-08T05:57:20Z`
+Generated: `2026-07-08T06:07:27Z`
 
 `python3 scripts/github-contribution-balance.py --login 4444J99 --json`:
 
 | Category | Count | Share | Target |
 |---|---:|---:|---:|
-| Commits | `12,987` | `74.14%` | `<=60%` |
-| Issues | `2,103` | `12.01%` | `>=15%` |
-| Pull requests | `2,320` | `13.24%` | `>=15%` |
-| Reviews | `107` | `0.61%` | `>=10%` |
+| Commits | `12,990` | `74.10%` | `<=60%` |
+| Issues | `2,103` | `12.00%` | `>=15%` |
+| Pull requests | `2,320` | `13.23%` | `>=15%` |
+| Reviews | `117` | `0.67%` | `>=10%` |
 
-Public review receipt: requested changes on `organvm/linguistic-atomization-framework#16` after inspecting failed Python CI. The PR is blocked because `numpy>=2.5.1` requires Python `>=3.12` while the repo still runs Python `3.11`; the failed requirements install led to test collection failing with `ModuleNotFoundError: No module named yaml`.
+Review-first receipts in this beat:
 
-Owner issue receipt: `https://github.com/organvm/limen/issues/687#issuecomment-4911810750`.
+- Requested changes on `organvm/linguistic-atomization-framework#16`: Python dependency floor mismatch against Python 3.11 CI.
+- Requested changes on `organvm/bountyscope#18`: Wrangler 4.107.0 requires Node 22+, but the PR CI build runs Node 20.
+- Approved green action/tooling PRs: `organvm/organon-noumenon--ontogenetic-morphe#9`, `organvm/linguistic-atomization-framework#14`, `organvm/public-record-data-scrapper#339`, `organvm/public-record-data-scrapper#341`, `organvm/hokage-chess#9`, and `organvm/agentic-titan#96`.
+- Commented on blocked or under-proven PRs: `organvm/content-engine--asset-amplifier#33`, `organvm/a-i--skills#1`, and `organvm/a-i--skills#2`.
+
+Owner issue receipt: `https://github.com/organvm/limen/issues/687#issuecomment-4911849538`.
 
 ## ELI5
 
