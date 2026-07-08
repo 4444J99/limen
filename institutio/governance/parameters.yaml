@@ -358,6 +358,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Timeout in seconds for the lifecycle-pressure worktree-debt scan. On timeout, hooks fail open with an explicit pressure receipt instead of crashing closeout."
+  LIMEN_CLOSEOUT_RUN_LIFECYCLE_TESTS:
+    default: "0"
+    env: LIMEN_CLOSEOUT_RUN_LIFECYCLE_TESTS
+    self_update: none
+    owner: continuity
+    note: "Opt-in switch for running the slower lifecycle pytest tranche during closeout-fast. Default closeout stays interactive and uses smoke predicates."
+  LIMEN_CLOSEOUT_LIFECYCLE_TEST_TIMEOUT:
+    default: 90
+    env: LIMEN_CLOSEOUT_LIFECYCLE_TEST_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Timeout in seconds for the opt-in lifecycle pytest tranche in closeout-fast."
   LIMEN_RECLAIM_GENERATED:
     default: "1"
     env: LIMEN_RECLAIM_GENERATED
