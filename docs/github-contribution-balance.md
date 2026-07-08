@@ -50,23 +50,24 @@ The script is read-only. It uses GitHub through `gh api graphql` when available,
 
 ## Live Receipt
 
-Generated: `2026-07-08T06:07:27Z`
+Generated: `2026-07-08T06:35:20Z`
 
 `python3 scripts/github-contribution-balance.py --login 4444J99 --json`:
 
 | Category | Count | Share | Target |
 |---|---:|---:|---:|
-| Commits | `12,990` | `74.10%` | `<=60%` |
-| Issues | `2,103` | `12.00%` | `>=15%` |
-| Pull requests | `2,320` | `13.23%` | `>=15%` |
-| Reviews | `117` | `0.67%` | `>=10%` |
+| Commits | `13,000` | `74.04%` | `<=60%` |
+| Issues | `2,104` | `11.98%` | `>=15%` |
+| Pull requests | `2,321` | `13.22%` | `>=15%` |
+| Reviews | `133` | `0.76%` | `>=10%` |
 
-Review-first receipts in this beat:
+Review-first and owner-blocker receipts in this beat:
 
-- Requested changes on `organvm/linguistic-atomization-framework#16`: Python dependency floor mismatch against Python 3.11 CI.
-- Requested changes on `organvm/bountyscope#18`: Wrangler 4.107.0 requires Node 22+, but the PR CI build runs Node 20.
-- Approved green action/tooling PRs: `organvm/organon-noumenon--ontogenetic-morphe#9`, `organvm/linguistic-atomization-framework#14`, `organvm/public-record-data-scrapper#339`, `organvm/public-record-data-scrapper#341`, `organvm/hokage-chess#9`, and `organvm/agentic-titan#96`.
-- Commented on blocked or under-proven PRs: `organvm/content-engine--asset-amplifier#33`, `organvm/a-i--skills#1`, and `organvm/a-i--skills#2`.
+- Requested changes on `organvm/a-i-council--coliseum#178`: backend dependency resolution and frontend lockfile config mismatch.
+- Approved `organvm/a-i-council--coliseum#174`: scoped PostCSS bump with green CI.
+- Commented on blocked or under-proven PRs: `organvm/persona-fleet#11`, `organvm/organvm-engine#165`, `organvm/vigiles-aeternae--agon-cosmogonicum#10`, `organvm/universal-mail--automation#149`, and `organvm/domus-genoma#201`.
+- Opened and linked owner blockers for repeated residue/failure patterns: `organvm/universal-mail--automation#150`, `organvm/growth-auditor#23`, `organvm/mirror-mirror#113`, `organvm/domus-genoma#202`, and `organvm/domus-genoma#203`.
+- Linked those owner blockers across the affected PR clusters: UMA `#146`-`#149`, Growth Auditor `#18`-`#22`, Mirror Mirror `#106`, `#107`, `#109`, `#111`, and Domus `#183`, `#184`, `#185`, `#187`.
 
 Owner issue receipt: `https://github.com/organvm/limen/issues/687#issuecomment-4911849538`.
 
