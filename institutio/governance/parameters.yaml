@@ -148,18 +148,72 @@ parameters:
     self_update: none
     owner: continuity
     note: "Public receipt document emitted from the always-working lifecycle index. Contains aggregate statuses and receipt paths, not private raw prompt content."
+  LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB:
+    default: 200
+    env: LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB
+    self_update: none
+    owner: continuity
+    note: "Local-system free-space target used by always-working to keep the laptop as hot cache instead of durable storage."
   LIMEN_PROFILE_REPO:
     default: "$LIMEN_WORKSPACE_ROOT/organvm/4444J99"
     env: LIMEN_PROFILE_REPO
     self_update: none
     owner: continuity
     note: "Local profile/front-door repository used by always-working public-face checks."
+  LIMEN_VISIBLE_PROFILE_REPO:
+    default: "4444J99/4444J99"
+    env: LIMEN_VISIBLE_PROFILE_REPO
+    self_update: none
+    owner: continuity
+    note: "Canonical GitHub profile repository queried for public profile proof before trusting local copies."
+  LIMEN_CHECK_GITHUB_PROFILE:
+    default: "1"
+    env: LIMEN_CHECK_GITHUB_PROFILE
+    self_update: none
+    owner: continuity
+    note: "Gate for live GitHub profile verification in always-working. 1 checks remote source of truth; 0 disables only for offline predicates."
   LIMEN_CORPVS_ROOT:
     default: "$LIMEN_WORKSPACE_ROOT/organvm-corpvs-testamentvm"
     env: LIMEN_CORPVS_ROOT
     self_update: none
     owner: continuity
     note: "Local corpus/metrics repository used by always-working to compare public profile claims with system proof."
+  LIMEN_MAIL_STORY_LOG:
+    default: "$LIMEN_ROOT/logs/mail-story-ledger.json"
+    env: LIMEN_MAIL_STORY_LOG
+    self_update: none
+    owner: continuity
+    note: "Private/generated mail-story JSON index used to prove mailbox work from atoms and receipts without sending mail."
+  LIMEN_CONTRIBUTION_BALANCE_LOGIN:
+    default: "4444J99"
+    env: LIMEN_CONTRIBUTION_BALANCE_LOGIN
+    self_update: none
+    owner: continuity
+    note: "GitHub login used by contribution-balance gates to keep public activity from becoming commit-only churn."
+  LIMEN_ARCHIVE4T_ROOT:
+    default: "/Volumes/Archive4T"
+    env: LIMEN_ARCHIVE4T_ROOT
+    self_update: none
+    owner: continuity
+    note: "External archive SSD root used for durable custody receipts and run-and-gun substrate checks."
+  LIMEN_INGRESS_ROOT:
+    default: "/Volumes/Ingress"
+    env: LIMEN_INGRESS_ROOT
+    self_update: none
+    owner: continuity
+    note: "External ingress SSD root used by estate/substrate checks for intake and staging capacity."
+  LIMEN_SCRATCH_ROOT:
+    default: "/Volumes/Scratch"
+    env: LIMEN_SCRATCH_ROOT
+    self_update: none
+    owner: continuity
+    note: "External scratch SSD root used by generated worktree and bulk-processing lifecycle checks."
+  LIMEN_T7RECOVERY_ROOT:
+    default: "/Volumes/T7Recovery"
+    env: LIMEN_T7RECOVERY_ROOT
+    self_update: none
+    owner: continuity
+    note: "External recovery SSD root used by estate custody checks before any local deletion or dedupe action."
   LIMEN_EXTERNAL_SESSION_ROOTS:
     default: ""
     env: LIMEN_EXTERNAL_SESSION_ROOTS
@@ -256,6 +310,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Worktree root used by reclaim and repo-surface discovery. Defaults to the dispatch isolation root so lifecycle cleanup watches the same generated checkout surface it creates."
+  LIMEN_WORKTREE_DEBT_TIMEOUT:
+    default: 120
+    env: LIMEN_WORKTREE_DEBT_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Timeout in seconds for the lifecycle-pressure worktree-debt scan. On timeout, hooks fail open with an explicit pressure receipt instead of crashing closeout."
   LIMEN_RECLAIM_GENERATED:
     default: "1"
     env: LIMEN_RECLAIM_GENERATED
