@@ -1,6 +1,6 @@
 # Session Lifecycle Blockers
 
-Generated: `2026-07-08T03:30:23+00:00`
+Generated: `2026-07-08T03:37:46+00:00`
 
 ## Canonical Handling
 
@@ -19,7 +19,7 @@ Generated: `2026-07-08T03:30:23+00:00`
 - Live root gate receipt present: `True` at `~/Workspace/limen/.limen-private/session-corpus/lifecycle/live-root-gate.json`.
 - Redacted local prompt coverage: `15590` files, `136694` prompt-like events.
 - Codex classified sessions: `887`.
-- Worktree debt roots: `295`.
+- Worktree debt roots: `294`.
 - Remote receipts enabled: `True`; cloud receipts enabled: `True`.
 - Session pressure hook wired: `True`; last pressure snapshot present: `True`.
 - Local lifecycle footprint: `81.4 GiB`.
@@ -40,8 +40,8 @@ Generated: `2026-07-08T03:30:23+00:00`
 | `credential-codex-auth-sessions` | `auth_credentials` | `parked` | 405 Codex sessions classified as auth/credential work; states: ALIVE 1, CLOSED 364, PARKED 40 | credential workstream | Keep parked unless a future scoped task explicitly requires the account action. |
 | `cloud-credential-handles-unconfigured` | `auth_credentials` | `parked` | 6 credential/deploy handles absent; 0 present. No values inspected. | credential workstream | Do not repair inline; open a bounded credential/setup workstream only when a cloud action requires it. |
 | `cloud-runtime-endpoint-unconfigured` | `cloud_runtime` | `parked` | No runtime URL was configured for the last cloud receipt probe. | limen deployment workstream | Keep separate from session intake; configure/probe runtime only in a deploy/runtime task. |
-| `worktree-remote-branches-missing` | `worktree_lifecycle` | `parked` | 102 git worktree roots still lack remote-branch preservation proof (398 raw missing; 296 closed by live scanner receipts). | worktree lifecycle | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
-| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 295 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
+| `worktree-remote-branches-missing` | `worktree_lifecycle` | `parked` | 101 git worktree roots still lack remote-branch preservation proof (398 raw missing; 297 closed by live scanner receipts). | worktree lifecycle | Preserve each root by branch, PR, owner blocker, or documented non-source residue before cleanup. |
+| `worktree-lifecycle-debt` | `worktree_lifecycle` | `parked` | 294 `.limen-worktrees` roots still carry lifecycle debt. | worktree lifecycle | Preserve or owner-record each root; no deletion of unique work. |
 | `owner-state-dirty-session-meta` | `owner_state` | `parked` | session-meta has 1 dirty entries. | session-meta | Preserve in that owner repo before treating corpus substrate as clean. |
 | `local-lifecycle-disk-pressure` | `local_lean` | `parked` | Local lifecycle stores use 81.4 GiB (72.6 GiB worktrees, 8.8 GiB private corpus). | local lifecycle | Drain only after remote/default preservation proof or non-source residue receipt; keep pressure visible in SessionStart. |
 | `capability-substrate-not-resurfaced` | `capability_substrate` | `needs_refresh` | Capability resurfacing receipt is stale; 11 local capability roots detected; 1384 skill files, 47 plugin/MCP manifests, 213 MCP/ACP markers counted. | agent capability substrate | Run `python3 scripts/capability-substrate-ledger.py --write` to index names/counts and choose activation order; do not read private skill bodies, install plugins, or repair MCP/ACP auth inside session lifecycle closeout. |
