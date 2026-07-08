@@ -28,12 +28,16 @@ def test_conflict_wins_over_stale_failing_checks(monkeypatch):
 
     def fake_gh(args, timeout=60):
         if args[:2] == ["pr", "view"]:
-            return _R(json.dumps({
-                "state": "OPEN",
-                "isDraft": False,
-                "mergeable": "CONFLICTING",
-                "statusCheckRollup": [{"conclusion": "FAILURE"}],
-            }))
+            return _R(
+                json.dumps(
+                    {
+                        "state": "OPEN",
+                        "isDraft": False,
+                        "mergeable": "CONFLICTING",
+                        "statusCheckRollup": [{"conclusion": "FAILURE"}],
+                    }
+                )
+            )
         raise AssertionError(f"unexpected gh call: {args!r}")
 
     monkeypatch.setattr(mod, "gh", fake_gh)
