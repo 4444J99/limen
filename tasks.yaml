@@ -109712,7 +109712,7 @@ tasks:
   workstream: credential-wall
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - always-working
   - receipt-first
@@ -109741,7 +109741,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T05:28:57.933415Z'
+  updated: '2026-07-08T05:31:53Z'
   dispatch_log:
   - timestamp: '2026-07-08T02:00:55.567018Z'
     agent: codex
@@ -109773,6 +109773,11 @@ tasks:
     session_id: https://github.com/organvm/limen/pull/691
     status: dispatched
     output: 'manual bridge: opened credential tombstone PR from preserved async worktree'
+  - timestamp: '2026-07-08T05:31:53Z'
+    agent: codex
+    session_id: https://github.com/organvm/limen/pull/691
+    status: done
+    output: 'merged f0f19e32; predicate passed: python3 scripts/credential-wall.py --check && test -f docs/credential-token-tombstone-audit.md'
 - id: HEAL-cifix-organvm-domus-genoma-179
   title: fix failing CI on organvm/domus-genoma#179
   repo: organvm/domus-genoma
