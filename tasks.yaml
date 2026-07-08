@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 174
+      spent: 175
       per_agent:
         jules: 100
         gemini: 3
-        codex: 14
+        codex: 15
         opencode: 25
         agy: 31
         claude: 0
@@ -106283,7 +106283,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106298,7 +106298,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-07T21:57:26.887792Z'
+  updated: '2026-07-08T03:24:21.737489Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:58:04.383222Z'
     agent: jules
@@ -106314,6 +106314,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 17711596651240474183 is failed \u2192 reopened"
+  - timestamp: '2026-07-08T03:24:21.737489Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-176
   title: fix failing CI on organvm/domus-genoma#176
   repo: organvm/domus-genoma
