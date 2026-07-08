@@ -17,7 +17,11 @@ CHRIS = ROOT / "organs" / "representation" / "records" / "christopher-author-one
 ET4L = ROOT / "organs" / "representation" / "records" / "et4l.yaml"
 GENERIC = ROOT / "organs" / "representation" / "records" / "generic-authority-template.yaml"
 OPPORTUNITY = ROOT / "organs" / "representation" / "opportunities" / "literary-submission-landscape.yaml"
+APPROVAL_TEMPLATE = (
+    ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-dry-run.template.yaml"
+)
 READY_CANDIDATE = "chris-metadata-only-nonfiction-candidate"
+YALE_ROUTE = "yale-review-nonfiction-route"
 
 spec = importlib.util.spec_from_file_location("representation_substrate", MODULE)
 rs = importlib.util.module_from_spec(spec)
@@ -50,6 +54,29 @@ def load_record(path: Path = CHRIS) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
+def mark_approval_dry_run(approval: dict) -> None:
+    approval.update(
+        {
+            "approval_scope": "dry_run",
+            "dry_run_only": True,
+            "no_outward_action": True,
+            "permitted_actions": ["render_review_files", "write_review_files", "dry_run_export"],
+        }
+    )
+
+
+def approved_publication_approval_record(tmp_path: Path) -> Path:
+    record = load_record(APPROVAL_TEMPLATE)
+    record["id"] = "fixture-approved-author-one-yale-dry-run"
+    for approval in record["approvals"]:
+        if approval["approval_type"] != "real_send":
+            approval["status"] = "approved"
+            approval["note"] = "Copied fixture approval for dry-run test coverage only."
+    path = tmp_path / "approved-publication-approval-record.yaml"
+    path.write_text(yaml.safe_dump(record, sort_keys=False), encoding="utf-8")
+    return path
+
+
 def test_representation_fleet_passes():
     result = run_validator("--fleet", "--quiet")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -72,11 +99,7 @@ def test_validator_requires_complete_authority_program_axes_and_outputs(tmp_path
     doc["authority_program"]["axes"].pop("hybrid_presence")
     doc["authority_program"]["axes"]["canonical_institution"]["public_copy"] = "TODO"
     doc["authority_program"]["axes"]["mass_readership"]["claim_ids"] = ["missing-claim"]
-    doc["outputs"] = [
-        output
-        for output in doc["outputs"]
-        if output["mode"] != "authority_scorecard"
-    ]
+    doc["outputs"] = [output for output in doc["outputs"] if output["mode"] != "authority_scorecard"]
     path = tmp_path / "broken-authority.yaml"
     path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
 
@@ -105,9 +128,7 @@ def test_validator_rejects_unsupported_authority_axes(tmp_path: Path):
 
 def test_validator_rejects_private_unapproved_public_axis_claims(tmp_path: Path):
     doc = load_record(ET4L)
-    doc["authority_program"]["axes"]["canonical_institution"]["public_claim_ids"].append(
-        "et4l-artist-chamber"
-    )
+    doc["authority_program"]["axes"]["canonical_institution"]["public_claim_ids"].append("et4l-artist-chamber")
     path = tmp_path / "private-public-axis-claim.yaml"
     path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
 
@@ -115,8 +136,7 @@ def test_validator_rejects_private_unapproved_public_axis_claims(tmp_path: Path)
 
     assert result.returncode == 1
     assert (
-        "public_claim_ids must reference public-source or claim-approved private claims: "
-        "et4l-artist-chamber"
+        "public_claim_ids must reference public-source or claim-approved private claims: et4l-artist-chamber"
     ) in result.stdout
 
 
@@ -387,7 +407,9 @@ def test_chris_public_page_draft_uses_public_profile_evidence_only():
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "## Public Page Draft Copy" in result.stdout
-    assert "Christopher Author-One can be presented from public evidence and claim-approved context only" in result.stdout
+    assert (
+        "Christopher Author-One can be presented from public evidence and claim-approved context only" in result.stdout
+    )
     assert "Public writing record" in result.stdout
     assert "Speech Score lineage" not in result.stdout
     assert "Object Lessons lineage" not in result.stdout
@@ -595,10 +617,7 @@ def test_venue_specific_literary_packet_blocks_unresolved_ai_policy_even_with_so
 
 def test_sourced_venue_route_examples_have_guideline_source_refs():
     opportunity = load_record(OPPORTUNITY)
-    routes = {
-        route["id"]: route
-        for route in opportunity["opportunity"]["submission_routes"]
-    }
+    routes = {route["id"]: route for route in opportunity["opportunity"]["submission_routes"]}
 
     yale = routes["yale-review-nonfiction-route"]
     masters = routes["masters-review-summer-short-story-route"]
@@ -631,11 +650,7 @@ def test_chris_remains_blocked_for_sourced_venue_without_candidate_source_ref():
 
 def test_validator_rejects_ready_candidate_without_required_publication_metadata(tmp_path: Path):
     doc = load_record(CHRIS)
-    candidate = next(
-        candidate
-        for candidate in doc["candidate_works"]
-        if candidate["id"] == READY_CANDIDATE
-    )
+    candidate = next(candidate for candidate in doc["candidate_works"] if candidate["id"] == READY_CANDIDATE)
     candidate["content_ref"] = ""
     candidate["source_ids"] = []
     candidate["claim_ids"] = []
@@ -692,7 +707,7 @@ def test_publication_readiness_reports_ready_metadata_candidate_and_sourced_rout
     assert "Route guideline source is public, recorded, and matched to the guidelines URL." in result.stdout
     assert "Route AI policy/disclosure status is sourced and resolved." in result.stdout
     assert "Writer submission approval is not_requested." in result.stdout
-    assert "Opportunity submission approval is not_requested." in result.stdout
+    assert "Opportunity route submission approval is not_requested." in result.stdout
 
 
 def test_publication_readiness_blocks_unsourced_route_guidelines(tmp_path: Path):
@@ -792,32 +807,20 @@ def test_publication_readiness_export_requires_approvals():
 
 
 def test_publication_readiness_allows_approved_dry_run_export(tmp_path: Path):
-    writer = load_record(CHRIS)
-    for approval in writer["approvals"]:
-        if approval["approval_type"] in {"public_export", "submission"}:
-            approval["status"] = "approved"
-            approval["note"] = "Copied fixture approval for dry-run readiness coverage only."
-    writer_path = tmp_path / "writer-approved-publication-dry-run.yaml"
-    writer_path.write_text(yaml.safe_dump(writer, sort_keys=False), encoding="utf-8")
-
-    opportunity = load_record(OPPORTUNITY)
-    for approval in opportunity["approvals"]:
-        if approval["approval_type"] == "submission":
-            approval["status"] = "approved"
-            approval["note"] = "Copied fixture approval for dry-run readiness coverage only."
-    opportunity_path = tmp_path / "opportunity-approved-publication-dry-run.yaml"
-    opportunity_path.write_text(yaml.safe_dump(opportunity, sort_keys=False), encoding="utf-8")
+    approval_record = approved_publication_approval_record(tmp_path)
 
     result = run_tool(
         "publication-readiness",
         "--writer",
-        writer_path,
+        CHRIS,
         "--opportunity",
-        opportunity_path,
+        OPPORTUNITY,
         "--candidate",
         READY_CANDIDATE,
         "--route",
-        "yale-review-nonfiction-route",
+        YALE_ROUTE,
+        "--approval-record",
+        approval_record,
         "--export",
     )
 
@@ -826,6 +829,123 @@ def test_publication_readiness_allows_approved_dry_run_export(tmp_path: Path):
     assert "Publication readiness: READY_FOR_REVIEW" in result.stdout
     assert "Dry-run export: APPROVED_DRY_RUN" in result.stdout
     assert "Real submission: LOCKED; this command has no send path." in result.stdout
+
+
+def test_approval_template_validates_with_real_send_locked():
+    result = run_validator(APPROVAL_TEMPLATE)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_real_send_approval_fails_closed(tmp_path: Path):
+    record = load_record(APPROVAL_TEMPLATE)
+    for approval in record["approvals"]:
+        if approval["approval_type"] == "real_send":
+            approval["status"] = "approved"
+            approval["permitted_actions"] = ["submit"]
+    path = tmp_path / "bad-real-send-approval.yaml"
+    path.write_text(yaml.safe_dump(record, sort_keys=False), encoding="utf-8")
+
+    result = run_validator(path)
+
+    assert result.returncode == 1
+    assert "real-send approval must remain locked" in result.stdout
+    assert "permitted action 'submit' is an outward action" in result.stdout
+
+
+def test_publication_stack_contains_all_required_files(tmp_path: Path):
+    out_dir = tmp_path / "publication-stack"
+
+    result = run_tool(
+        "publication-stack",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        YALE_ROUTE,
+        "--out-dir",
+        out_dir,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert {path.name for path in out_dir.iterdir()} == rs.PUBLICATION_STACK_FILENAMES
+    readme = (out_dir / "README.md").read_text(encoding="utf-8")
+    assert "Candidate metadata: READY_FOR_REVIEW." in readme
+    assert "Route metadata: READY_FOR_REVIEW." in readme
+    assert "Dry-run approval: LOCKED." in readme
+    assert "Real send: LOCKED." in readme
+
+
+def test_publication_stack_approval_fixture_unlocks_dry_run_only(tmp_path: Path):
+    out_dir = tmp_path / "approved-publication-stack"
+    approval_record = approved_publication_approval_record(tmp_path)
+
+    result = run_tool(
+        "publication-stack",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        YALE_ROUTE,
+        "--out-dir",
+        out_dir,
+        "--approval-record",
+        approval_record,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    text = (out_dir / "README.md").read_text(encoding="utf-8")
+    assert "Dry-run approval: APPROVED_DRY_RUN." in text
+    assert "Real send: LOCKED." in text
+    assert "No publication, submission, upload, contact, form action, or public export has happened." in text
+    fit_report = (out_dir / "fit-report.md").read_text(encoding="utf-8")
+    assert "Dry-run export: APPROVED_DRY_RUN" in fit_report
+    assert "Real submission: LOCKED; this command has no send path." in fit_report
+
+
+def test_publication_stack_artifacts_are_private_ref_safe(tmp_path: Path):
+    out_dir = tmp_path / "safe-publication-stack"
+    result = run_tool(
+        "publication-stack",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        YALE_ROUTE,
+        "--out-dir",
+        out_dir,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    forbidden = [
+        "/Users/",
+        "source://private-manuscripts",
+        "local-relationship-pipeline",
+        "github.com/organvm/object-lessons",
+        "github.com/organvm/speech-score-engine",
+        "github.com/organvm/sign-signal",
+        "contact_data",
+        "has been submitted",
+        "was submitted",
+        "has been published",
+        "was published",
+        "accepted for publication",
+    ]
+    for path in out_dir.iterdir():
+        text = path.read_text(encoding="utf-8")
+        lowered = text.lower()
+        for fragment in forbidden:
+            assert fragment.lower() not in lowered, path
+        assert rs.EMAIL_RE.search(text) is None
 
 
 def test_publication_readiness_packet_is_chris_facing_and_private_ref_safe():
@@ -1007,6 +1127,7 @@ def test_public_page_export_uses_copied_approval_fixture_without_private_leak(tm
     for approval in doc["approvals"]:
         if approval["approval_type"] == "public_export":
             approval["status"] = "approved"
+            mark_approval_dry_run(approval)
             approval["note"] = "Copied fixture approval for export-path coverage only."
 
     doc["claims"].extend(
@@ -1040,14 +1161,10 @@ def test_public_page_export_uses_copied_approval_fixture_without_private_leak(tm
     )
     for source in doc["sources"]:
         if source["id"] == "local-relationship-pipeline":
-            source["claim_ids"].extend(
-                ["approved-local-context", "unapproved-local-context"]
-            )
+            source["claim_ids"].extend(["approved-local-context", "unapproved-local-context"])
     for output in doc["outputs"]:
         if output["mode"] == "public_page_draft":
-            output["claim_ids"].extend(
-                ["approved-local-context", "unapproved-local-context"]
-            )
+            output["claim_ids"].extend(["approved-local-context", "unapproved-local-context"])
 
     path = tmp_path / "approved-public-export-copy.yaml"
     path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
@@ -1068,6 +1185,7 @@ def test_public_presence_export_uses_copied_approval_fixture_as_dry_run(tmp_path
     for approval in doc["approvals"]:
         if approval["approval_type"] == "public_export":
             approval["status"] = "approved"
+            mark_approval_dry_run(approval)
             approval["note"] = "Copied fixture approval for authority export-path coverage only."
 
     path = tmp_path / "approved-public-presence-export.yaml"
@@ -1089,6 +1207,10 @@ def test_export_requires_matching_mode_approval():
             "id": "generic-public-export",
             "approval_type": "public_export",
             "status": "approved",
+            "approval_scope": "dry_run",
+            "dry_run_only": True,
+            "no_outward_action": True,
+            "permitted_actions": ["render_review_files"],
             "claim_ids": ["et4l-public-proof"],
             "note": "Generic public export should not unlock project-page export.",
         }
@@ -1100,6 +1222,7 @@ def test_export_requires_matching_mode_approval():
     for approval in et4l["approvals"]:
         if approval["approval_type"] == "project_page":
             approval["status"] = "approved"
+            mark_approval_dry_run(approval)
 
     packet = rs.render_record(et4l, "project_page", export=True)
 

@@ -37,8 +37,9 @@ APPROVAL_TYPES = {
     "submission",
     "outreach",
     "project_page",
+    "real_send",
 }
-APPROVAL_STATUSES = {"not_requested", "pending", "approved", "denied"}
+APPROVAL_STATUSES = {"not_requested", "pending", "approved", "denied", "locked"}
 OUTPUT_MODES = {
     "canon_dossier",
     "public_presence_draft",
@@ -83,6 +84,48 @@ AUTHORITY_AXES = ("canonical_institution", "mass_readership", "hybrid_presence")
 AUTHORITY_MODES = {"canon_dossier", "public_presence_draft", "authority_scorecard"}
 AUTHORITY_ARCHETYPE_FUNCTIONS = ("canonical_institution", "mass_readership")
 PUBLIC_APPROVAL_TYPES = {"public_export", "public_claim", "co_branded_page", "project_page"}
+APPROVAL_RECORD_KIND = "representation_approval_record"
+DRY_RUN_APPROVAL_SCOPE = "dry_run"
+DRY_RUN_APPROVAL_TYPES = {"public_export", "submission"}
+REAL_SEND_APPROVAL_TYPE = "real_send"
+PUBLICATION_APPROVAL_TARGETS = {
+    "writer_public_export",
+    "writer_submission",
+    "opportunity_route_submission",
+}
+SAFE_DRY_RUN_ACTIONS = {
+    "render_review_files",
+    "write_review_files",
+    "dry_run_export",
+    "review_packet",
+}
+FORBIDDEN_APPROVAL_ACTIONS = {
+    "contact",
+    "deliver",
+    "delivery",
+    "email",
+    "form_submit",
+    "outreach",
+    "publish",
+    "send",
+    "submit",
+    "submission",
+    "upload",
+}
+SEND_PATH_FIELDS = {
+    "contact_target",
+    "delivery_path",
+    "email",
+    "form_action",
+    "outbound_url",
+    "publish_url",
+    "recipient",
+    "recipient_email",
+    "send_path",
+    "submission_url",
+    "submit_url",
+    "upload_url",
+}
 REQUIRED_SOURCE_FIELDS = {
     "id",
     "source_type",
@@ -167,6 +210,16 @@ APPROVAL_LABELS = {
     "submission": "Submission",
     "outreach": "Outreach",
     "project_page": "Project page",
+    "real_send": "Real send",
+}
+PUBLICATION_STACK_FILENAMES = {
+    "README.md",
+    "fit-report.md",
+    "cover-letter-options.md",
+    "ai-disclosure-note.md",
+    "rights-checklist.md",
+    "submission-checklist.md",
+    "public-presence-copy-preview.md",
 }
 HANDOFF_PUBLIC_FORBIDDEN_FRAGMENTS = (
     "/Users/",
@@ -177,6 +230,7 @@ HANDOFF_PUBLIC_FORBIDDEN_FRAGMENTS = (
     "submission_text",
     "contact_data",
     "creative_text",
+    "source://private-manuscripts",
 )
 HANDOFF_LOOP_STEPS = (
     (
@@ -258,11 +312,7 @@ def _sources(doc: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _source_types(doc: dict[str, Any]) -> set[str]:
-    return {
-        str(source.get("source_type"))
-        for source in _sources(doc)
-        if source.get("source_type")
-    }
+    return {str(source.get("source_type")) for source in _sources(doc) if source.get("source_type")}
 
 
 def _source_by_id(doc: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -304,10 +354,7 @@ def _submission_routes(doc: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _source_is_public_web(source: dict[str, Any]) -> bool:
-    return (
-        str(source.get("source_type")) == "web"
-        and str(source.get("privacy_level")) == "public"
-    )
+    return str(source.get("source_type")) == "web" and str(source.get("privacy_level")) == "public"
 
 
 def _approved_public_claim_ids(doc: dict[str, Any]) -> set[str]:
@@ -389,9 +436,7 @@ def _validate_core_schema(doc: dict[str, Any], report_label: str) -> list[str]:
             else:
                 unknown = [str(claim_id) for claim_id in refs if str(claim_id) not in claim_ids]
                 if unknown:
-                    violations.append(
-                        f"{prefix} references unknown claim_ids: {', '.join(unknown)}"
-                    )
+                    violations.append(f"{prefix} references unknown claim_ids: {', '.join(unknown)}")
             gates = output.get("acceptance_gates", [])
             if not isinstance(gates, list) or not gates:
                 violations.append(f"{prefix} acceptance_gates must be a non-empty list")
@@ -402,9 +447,7 @@ def _validate_core_schema(doc: dict[str, Any], report_label: str) -> list[str]:
                         violations.append(f"{prefix} acceptance_gates must not include empty gates")
                     for placeholder in PLACEHOLDERS:
                         if placeholder in lowered:
-                            violations.append(
-                                f"{prefix} acceptance gate contains placeholder text {placeholder!r}"
-                            )
+                            violations.append(f"{prefix} acceptance gate contains placeholder text {placeholder!r}")
 
     artifacts = doc.get("artifacts")
     if not isinstance(artifacts, dict) or not str(artifacts.get("next_reviewable_output", "")).strip():
@@ -444,14 +487,10 @@ def _validate_claims(doc: dict[str, Any], report_label: str) -> list[str]:
                 violations.append(f"{prefix} approval_ids must be a list when present")
             else:
                 unknown_approvals = [
-                    str(approval_id)
-                    for approval_id in approval_refs
-                    if str(approval_id) not in approval_ids
+                    str(approval_id) for approval_id in approval_refs if str(approval_id) not in approval_ids
                 ]
                 if unknown_approvals:
-                    violations.append(
-                        f"{prefix} references unknown approval_ids: {', '.join(unknown_approvals)}"
-                    )
+                    violations.append(f"{prefix} references unknown approval_ids: {', '.join(unknown_approvals)}")
     return violations
 
 
@@ -520,9 +559,109 @@ def _validate_sources(doc: dict[str, Any], report_label: str) -> list[str]:
                 f"and web sources; missing {', '.join(missing)}"
             )
     if _requires_message_sources(doc) and "messages" not in present:
-        violations.append(
-            f"{report_label}: private relational/persona claims require messages source evidence"
-        )
+        violations.append(f"{report_label}: private relational/persona claims require messages source evidence")
+
+    return violations
+
+
+def _approval_action_violations(approval: dict[str, Any], prefix: str) -> list[str]:
+    violations: list[str] = []
+    if approval.get("creates_send_path") is True:
+        violations.append(f"{prefix} must not create a send path")
+
+    for key in SEND_PATH_FIELDS:
+        if not _missing(approval.get(key)):
+            violations.append(f"{prefix} must not include outbound field {key!r}")
+
+    actions = approval.get("permitted_actions", [])
+    if actions is None:
+        actions = []
+    if not isinstance(actions, list):
+        violations.append(f"{prefix} permitted_actions must be a list when present")
+        return violations
+
+    for action in actions:
+        normalized = str(action).strip().lower().replace("-", "_").replace(" ", "_")
+        if not normalized:
+            continue
+        if normalized in FORBIDDEN_APPROVAL_ACTIONS:
+            violations.append(f"{prefix} permitted action {normalized!r} is an outward action")
+        elif normalized not in SAFE_DRY_RUN_ACTIONS:
+            violations.append(f"{prefix} permitted action {normalized!r} is not an allowed dry-run action")
+    return violations
+
+
+def _approval_is_dry_run(approval: dict[str, Any]) -> bool:
+    return (
+        str(approval.get("approval_scope")) == DRY_RUN_APPROVAL_SCOPE
+        and approval.get("dry_run_only") is True
+        and approval.get("no_outward_action") is True
+    )
+
+
+def _validate_approval_common(
+    approval: dict[str, Any],
+    prefix: str,
+    claim_ids: set[str] | None,
+    *,
+    approval_record: bool = False,
+) -> list[str]:
+    violations: list[str] = []
+    approval_id = str(approval.get("id", ""))
+    if not approval_id:
+        violations.append(f"{prefix} must include id")
+
+    approval_type = str(approval.get("approval_type", ""))
+    status = str(approval.get("status", ""))
+    if approval_type not in APPROVAL_TYPES:
+        violations.append(f"{prefix} has invalid approval_type {approval_type!r}")
+    if status not in APPROVAL_STATUSES:
+        violations.append(f"{prefix} has invalid status {status!r}")
+
+    refs = approval.get("claim_ids", [])
+    if refs is not None:
+        if not isinstance(refs, list):
+            violations.append(f"{prefix} claim_ids must be a list when present")
+        elif claim_ids is not None:
+            unknown = [str(claim_id) for claim_id in refs if str(claim_id) not in claim_ids]
+            if unknown:
+                violations.append(f"{prefix} references unknown claim_ids: {', '.join(unknown)}")
+
+    violations.extend(_approval_action_violations(approval, prefix))
+
+    if approval_type == REAL_SEND_APPROVAL_TYPE:
+        if status != "locked":
+            violations.append(f"{prefix} real-send approval must remain locked")
+        if approval.get("real_send_lock") is not True:
+            violations.append(f"{prefix} real-send approval must set real_send_lock: true")
+        if approval.get("no_outward_action") is not True:
+            violations.append(f"{prefix} real-send lock must set no_outward_action: true")
+        return violations
+
+    if status == "approved" and approval_type in DRY_RUN_APPROVAL_TYPES:
+        if not _approval_is_dry_run(approval):
+            violations.append(f"{prefix} approved {approval_type} must be explicit dry-run-only approval")
+
+    if approval_record and approval_type in DRY_RUN_APPROVAL_TYPES:
+        target = str(approval.get("approval_target", ""))
+        if target not in PUBLICATION_APPROVAL_TARGETS:
+            violations.append(
+                f"{prefix} approval_target must be one of: {', '.join(sorted(PUBLICATION_APPROVAL_TARGETS))}"
+            )
+        if str(approval.get("approval_scope")) != DRY_RUN_APPROVAL_SCOPE:
+            violations.append(f"{prefix} approval_scope must be {DRY_RUN_APPROVAL_SCOPE!r}")
+        if approval.get("dry_run_only") is not True:
+            violations.append(f"{prefix} must set dry_run_only: true")
+        if approval.get("no_outward_action") is not True:
+            violations.append(f"{prefix} must set no_outward_action: true")
+        if _missing(approval.get("subject_id")):
+            violations.append(f"{prefix} must include subject_id")
+        if _missing(approval.get("candidate_id")):
+            violations.append(f"{prefix} must include candidate_id")
+        if _missing(approval.get("route_id")):
+            violations.append(f"{prefix} must include route_id")
+        if target == "opportunity_route_submission" and _missing(approval.get("opportunity_id")):
+            violations.append(f"{prefix} must include opportunity_id for route submission")
 
     return violations
 
@@ -541,24 +680,52 @@ def _validate_approvals(doc: dict[str, Any], report_label: str) -> list[str]:
             violations.append(f"{prefix} duplicates approval id {approval_id!r}")
         seen_ids.add(approval_id)
 
+        violations.extend(_validate_approval_common(approval, prefix, claim_ids))
+
+    return violations
+
+
+def _validate_approval_record(doc: dict[str, Any], report_label: str) -> list[str]:
+    violations: list[str] = []
+    if str(doc.get("schema_version")) != "representation.v3":
+        violations.append(f"{report_label}: schema_version must be representation.v3")
+    if str(doc.get("kind")) != APPROVAL_RECORD_KIND:
+        violations.append(f"{report_label}: kind must be {APPROVAL_RECORD_KIND}")
+    if _missing(doc.get("id")):
+        violations.append(f"{report_label}: id is required")
+    if doc.get("dry_run_only") is not True:
+        violations.append(f"{report_label}: dry_run_only must be true")
+    if doc.get("no_outward_action") is not True:
+        violations.append(f"{report_label}: no_outward_action must be true")
+
+    approvals = _approvals(doc)
+    if not approvals:
+        violations.append(f"{report_label}: approvals must list at least one approval")
+
+    seen_ids: set[str] = set()
+    has_real_send_lock = False
+    for idx, approval in enumerate(approvals):
+        prefix = f"{report_label}: approvals[{idx}]"
+        approval_id = str(approval.get("id", ""))
+        if approval_id and approval_id in seen_ids:
+            violations.append(f"{prefix} duplicates approval id {approval_id!r}")
+        seen_ids.add(approval_id)
         approval_type = str(approval.get("approval_type", ""))
-        status = str(approval.get("status", ""))
-        if approval_type not in APPROVAL_TYPES:
-            violations.append(f"{prefix} has invalid approval_type {approval_type!r}")
-        if status not in APPROVAL_STATUSES:
-            violations.append(f"{prefix} has invalid status {status!r}")
+        if approval_type == REAL_SEND_APPROVAL_TYPE:
+            has_real_send_lock = True
+        violations.extend(
+            _validate_approval_common(
+                approval,
+                prefix,
+                claim_ids=None,
+                approval_record=True,
+            )
+        )
 
-        refs = approval.get("claim_ids", [])
-        if refs is not None:
-            if not isinstance(refs, list):
-                violations.append(f"{prefix} claim_ids must be a list when present")
-            else:
-                unknown = [str(claim_id) for claim_id in refs if str(claim_id) not in claim_ids]
-                if unknown:
-                    violations.append(
-                        f"{prefix} references unknown claim_ids: {', '.join(unknown)}"
-                    )
+    if not has_real_send_lock:
+        violations.append(f"{report_label}: approvals must include a real-send lock record")
 
+    violations.extend(_validate_privacy(doc, report_label))
     return violations
 
 
@@ -595,13 +762,9 @@ def _validate_literary_metadata(doc: dict[str, Any], report_label: str) -> list[
             if not isinstance(claim_refs, list):
                 violations.append(f"{prefix} claim_ids must be a list when present")
             else:
-                unknown_claims = [
-                    str(claim_id) for claim_id in claim_refs if str(claim_id) not in claim_ids
-                ]
+                unknown_claims = [str(claim_id) for claim_id in claim_refs if str(claim_id) not in claim_ids]
                 if unknown_claims:
-                    violations.append(
-                        f"{prefix} references unknown claim_ids: {', '.join(unknown_claims)}"
-                    )
+                    violations.append(f"{prefix} references unknown claim_ids: {', '.join(unknown_claims)}")
 
         if _ready_for_review_status(candidate.get("status")):
             missing_ready = _missing_field_labels(candidate, CANDIDATE_READY_REQUIRED_FIELDS)
@@ -611,8 +774,7 @@ def _validate_literary_metadata(doc: dict[str, Any], report_label: str) -> list[
                 missing_ready.append("Claim refs")
             if missing_ready:
                 violations.append(
-                    f"{prefix} status {CANDIDATE_READY_STATUS} requires metadata: "
-                    f"{', '.join(missing_ready)}"
+                    f"{prefix} status {CANDIDATE_READY_STATUS} requires metadata: {', '.join(missing_ready)}"
                 )
 
     route_ids: set[str] = set()
@@ -634,33 +796,27 @@ def _validate_literary_metadata(doc: dict[str, Any], report_label: str) -> list[
                 guideline_refs = []
             else:
                 unknown_guideline_refs = [
-                    str(source_id)
-                    for source_id in guideline_refs
-                    if str(source_id) not in source_ids
+                    str(source_id) for source_id in guideline_refs if str(source_id) not in source_ids
                 ]
                 if unknown_guideline_refs:
                     violations.append(
-                        f"{prefix} references unknown guidelines_source_ids: "
-                        f"{', '.join(unknown_guideline_refs)}"
+                        f"{prefix} references unknown guidelines_source_ids: {', '.join(unknown_guideline_refs)}"
                     )
 
         if _route_is_venue_specific(route):
             if not isinstance(guideline_refs, list) or not guideline_refs:
                 violations.append(
-                    f"{prefix} guidelines_source_ids must list public web sources "
-                    "for venue-specific routes"
+                    f"{prefix} guidelines_source_ids must list public web sources for venue-specific routes"
                 )
             else:
                 non_public_web = [
                     str(source_id)
                     for source_id in guideline_refs
-                    if str(source_id) in sources_by_id
-                    and not _source_is_public_web(sources_by_id[str(source_id)])
+                    if str(source_id) in sources_by_id and not _source_is_public_web(sources_by_id[str(source_id)])
                 ]
                 if non_public_web:
                     violations.append(
-                        f"{prefix} guidelines_source_ids must reference public web sources: "
-                        f"{', '.join(non_public_web)}"
+                        f"{prefix} guidelines_source_ids must reference public web sources: {', '.join(non_public_web)}"
                     )
                 guidelines_url = str(route.get("guidelines_url") or "").strip()
                 if guidelines_url:
@@ -670,22 +826,16 @@ def _validate_literary_metadata(doc: dict[str, Any], report_label: str) -> list[
                         if str(source_id) in sources_by_id
                     }
                     if guidelines_url not in source_urls:
-                        violations.append(
-                            f"{prefix} guidelines_url must match a guidelines_source_ids source_ref"
-                        )
+                        violations.append(f"{prefix} guidelines_url must match a guidelines_source_ids source_ref")
 
         ai_refs = route.get("ai_policy_source_ids", [])
         if ai_refs is not None:
             if not isinstance(ai_refs, list):
                 violations.append(f"{prefix} ai_policy_source_ids must be a list when present")
             else:
-                unknown_ai_refs = [
-                    str(source_id) for source_id in ai_refs if str(source_id) not in source_ids
-                ]
+                unknown_ai_refs = [str(source_id) for source_id in ai_refs if str(source_id) not in source_ids]
                 if unknown_ai_refs:
-                    violations.append(
-                        f"{prefix} references unknown ai_policy_source_ids: {', '.join(unknown_ai_refs)}"
-                    )
+                    violations.append(f"{prefix} references unknown ai_policy_source_ids: {', '.join(unknown_ai_refs)}")
 
     return violations
 
@@ -723,9 +873,7 @@ def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[
         return [f"{report_label}: authority_program must be a mapping"]
 
     if str(program.get("goal", "")) != AUTHORITY_GOAL:
-        violations.append(
-            f"{report_label}: authority_program.goal must be {AUTHORITY_GOAL!r}"
-        )
+        violations.append(f"{report_label}: authority_program.goal must be {AUTHORITY_GOAL!r}")
 
     archetypes = program.get("archetype_functions")
     if not isinstance(archetypes, dict):
@@ -734,9 +882,7 @@ def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[
         for archetype in AUTHORITY_ARCHETYPE_FUNCTIONS:
             value = archetypes.get(archetype)
             if _missing(value):
-                violations.append(
-                    f"{report_label}: authority_program.archetype_functions.{archetype} is required"
-                )
+                violations.append(f"{report_label}: authority_program.archetype_functions.{archetype} is required")
             else:
                 placeholder = _contains_placeholder_text(value)
                 if placeholder:
@@ -748,10 +894,7 @@ def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[
     outputs = _output_modes(doc)
     missing_outputs = sorted(AUTHORITY_MODES - outputs)
     if missing_outputs:
-        violations.append(
-            f"{report_label}: authority_program outputs must declare modes: "
-            f"{', '.join(missing_outputs)}"
-        )
+        violations.append(f"{report_label}: authority_program outputs must declare modes: {', '.join(missing_outputs)}")
 
     claim_ids = _claim_ids(doc)
     public_renderable_ids = _public_renderable_claim_ids(doc)
@@ -765,14 +908,10 @@ def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[
     extra_axes = sorted(axis_keys - set(AUTHORITY_AXES))
     if missing_axes:
         violations.append(
-            f"{report_label}: authority_program.axes missing required axis/axes: "
-            f"{', '.join(missing_axes)}"
+            f"{report_label}: authority_program.axes missing required axis/axes: {', '.join(missing_axes)}"
         )
     if extra_axes:
-        violations.append(
-            f"{report_label}: authority_program.axes has unsupported axis/axes: "
-            f"{', '.join(extra_axes)}"
-        )
+        violations.append(f"{report_label}: authority_program.axes has unsupported axis/axes: {', '.join(extra_axes)}")
 
     for axis_name in AUTHORITY_AXES:
         axis = axes.get(axis_name)
@@ -789,9 +928,7 @@ def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[
             axis_claim_ids = {str(claim_id) for claim_id in refs}
             unknown = sorted(claim_id for claim_id in axis_claim_ids if claim_id not in claim_ids)
             if unknown:
-                violations.append(
-                    f"{prefix}.claim_ids references unknown claim_ids: {', '.join(unknown)}"
-                )
+                violations.append(f"{prefix}.claim_ids references unknown claim_ids: {', '.join(unknown)}")
 
         summary = axis.get("summary")
         if _missing(summary):
@@ -811,9 +948,7 @@ def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[
                     continue
                 placeholder = _contains_placeholder_text(gate)
                 if placeholder:
-                    violations.append(
-                        f"{prefix}.output_gates contains placeholder text {placeholder!r}"
-                    )
+                    violations.append(f"{prefix}.output_gates contains placeholder text {placeholder!r}")
 
         public_copy = axis.get("public_copy")
         public_refs = axis.get("public_claim_ids")
@@ -824,9 +959,7 @@ def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[
             if placeholder:
                 violations.append(f"{prefix}.public_copy contains placeholder text {placeholder!r}")
             if not isinstance(public_refs, list) or not public_refs:
-                violations.append(
-                    f"{prefix}.public_claim_ids must be non-empty when public_copy is present"
-                )
+                violations.append(f"{prefix}.public_claim_ids must be non-empty when public_copy is present")
 
         if public_refs is not None:
             if not isinstance(public_refs, list):
@@ -835,15 +968,11 @@ def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[
                 public_ids = {str(claim_id) for claim_id in public_refs}
                 unknown = sorted(claim_id for claim_id in public_ids if claim_id not in claim_ids)
                 if unknown:
-                    violations.append(
-                        f"{prefix}.public_claim_ids references unknown claim_ids: "
-                        f"{', '.join(unknown)}"
-                    )
+                    violations.append(f"{prefix}.public_claim_ids references unknown claim_ids: {', '.join(unknown)}")
                 outside_axis = sorted(public_ids - axis_claim_ids)
                 if outside_axis:
                     violations.append(
-                        f"{prefix}.public_claim_ids must be a subset of axis claim_ids: "
-                        f"{', '.join(outside_axis)}"
+                        f"{prefix}.public_claim_ids must be a subset of axis claim_ids: {', '.join(outside_axis)}"
                     )
                 not_public = sorted(public_ids - public_renderable_ids)
                 if not_public:
@@ -875,15 +1004,16 @@ def _validate_privacy(doc: dict[str, Any], report_label: str) -> list[str]:
             source_text = _text(source).lower()
             for phrase in ("direct quote", "verbatim", "excerpt", "raw transcript"):
                 if phrase in source_text:
-                    violations.append(
-                        f"{report_label}: message source {idx} appears to expose private text"
-                    )
+                    violations.append(f"{report_label}: message source {idx} appears to expose private text")
 
     return violations
 
 
 def validate_doc(doc: dict[str, Any], label: str = "<doc>") -> list[str]:
     """Return validation violations for one Representation Substrate record."""
+    if str(doc.get("kind")) == APPROVAL_RECORD_KIND:
+        return _validate_approval_record(doc, label)
+
     violations: list[str] = []
     violations.extend(_validate_core_schema(doc, label))
     violations.extend(_validate_claims(doc, label))
@@ -903,7 +1033,7 @@ def validate_path(path: Path) -> list[str]:
 
 
 def fleet_paths(base: Path) -> list[Path]:
-    roots = [base / "records", base / "opportunities"]
+    roots = [base / "records", base / "opportunities", base / "approvals"]
     paths: list[Path] = []
     for root in roots:
         if root.exists():
@@ -1029,11 +1159,7 @@ def _output_modes(doc: dict[str, Any]) -> set[str]:
     outputs = doc.get("outputs", [])
     if not isinstance(outputs, list):
         return set()
-    return {
-        str(output.get("mode"))
-        for output in outputs
-        if isinstance(output, dict) and output.get("mode")
-    }
+    return {str(output.get("mode")) for output in outputs if isinstance(output, dict) and output.get("mode")}
 
 
 def _output_claim_ids(doc: dict[str, Any], mode: str) -> set[str]:
@@ -1063,6 +1189,8 @@ def _approved_export(doc: dict[str, Any], mode: str) -> bool:
     required_types = EXPORT_APPROVAL_TYPES_BY_MODE.get(mode, set())
     for approval in _approvals(doc):
         if str(approval.get("status")) != "approved":
+            continue
+        if not _approval_is_dry_run(approval):
             continue
         approval_type = str(approval.get("approval_type"))
         if approval_type in required_types:
@@ -1166,14 +1294,10 @@ def candidate_intake_row(
 ) -> dict[str, Any]:
     """Build a metadata-only candidate row without storing manuscript content."""
     cleaned_source_ids = [
-        _safe_metadata_text(source_id, "source-id", max_len=120)
-        for source_id in source_ids
-        if str(source_id).strip()
+        _safe_metadata_text(source_id, "source-id", max_len=120) for source_id in source_ids if str(source_id).strip()
     ]
     cleaned_claim_ids = [
-        _safe_metadata_text(claim_id, "claim-id", max_len=120)
-        for claim_id in claim_ids
-        if str(claim_id).strip()
+        _safe_metadata_text(claim_id, "claim-id", max_len=120) for claim_id in claim_ids if str(claim_id).strip()
     ]
     if not cleaned_source_ids:
         raise ValueError("at least one source-id is required")
@@ -1329,11 +1453,7 @@ def _claim_map(doc: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def _claim_labels(doc: dict[str, Any], claim_ids: set[str]) -> str:
     claims = _claim_map(doc)
-    labels = [
-        str(claims[claim_id].get("label") or claim_id)
-        for claim_id in sorted(claim_ids)
-        if claim_id in claims
-    ]
+    labels = [str(claims[claim_id].get("label") or claim_id) for claim_id in sorted(claim_ids) if claim_id in claims]
     return ", ".join(labels) if labels else "none"
 
 
@@ -1436,8 +1556,7 @@ def _authority_dossier_rows(doc: dict[str, Any]) -> list[str]:
     for axis_name, axis in _authority_axes(doc).items():
         claim_ids = _axis_claim_ids(axis)
         rows.append(
-            f"- Axis {axis_name}: {_sentence(axis.get('summary'))} "
-            f"Claim refs: {_claim_labels(doc, claim_ids)}."
+            f"- Axis {axis_name}: {_sentence(axis.get('summary'))} Claim refs: {_claim_labels(doc, claim_ids)}."
         )
     return rows
 
@@ -1450,9 +1569,7 @@ def _authority_public_presence_rows(doc: dict[str, Any]) -> list[str]:
     public_renderable_ids = _public_renderable_claim_ids(doc)
     for axis_name in AUTHORITY_AXES:
         axis = _authority_axes(doc).get(axis_name, {})
-        public_claim_ids = _axis_claim_ids(axis, "public_claim_ids").intersection(
-            public_renderable_ids
-        )
+        public_claim_ids = _axis_claim_ids(axis, "public_claim_ids").intersection(public_renderable_ids)
         if not public_claim_ids:
             rows.append(f"- {axis_name}: public proof is not renderable yet.")
             continue
@@ -1489,9 +1606,7 @@ def _authority_scorecard_rows(doc: dict[str, Any]) -> list[str]:
     return rows
 
 
-def _source_rows(
-    doc: dict[str, Any], rendered_claim_ids: set[str], mode: str
-) -> list[str]:
+def _source_rows(doc: dict[str, Any], rendered_claim_ids: set[str], mode: str) -> list[str]:
     rows: list[str] = []
     public_mode = mode in PUBLIC_RENDER_MODES
     for source in _sources(doc):
@@ -1501,17 +1616,12 @@ def _source_rows(
     return rows
 
 
-def _submission_readiness_rows(
-    doc: dict[str, Any], claims: list[dict[str, Any]]
-) -> list[str]:
+def _submission_readiness_rows(doc: dict[str, Any], claims: list[dict[str, Any]]) -> list[str]:
     sources = _source_by_id(doc)
     public_profile_claims: list[dict[str, Any]] = []
     for claim in claims:
         source_ids = [str(source_id) for source_id in claim.get("source_ids", [])]
-        if source_ids and all(
-            sources.get(source_id, {}).get("privacy_level") == "public"
-            for source_id in source_ids
-        ):
+        if source_ids and all(sources.get(source_id, {}).get("privacy_level") == "public" for source_id in source_ids):
             public_profile_claims.append(claim)
 
     rows: list[str] = []
@@ -1547,10 +1657,7 @@ def _public_page_draft_rows(subject_name: str, claims: list[dict[str, Any]]) -> 
     if not claims:
         return ["- No public-source claims are available for draft copy."]
 
-    proof_points = "; ".join(
-        str(claim.get("summary", claim.get("label", "claim"))).rstrip(".!?")
-        for claim in claims
-    )
+    proof_points = "; ".join(str(claim.get("summary", claim.get("label", "claim"))).rstrip(".!?") for claim in claims)
     rows = [
         f"- {subject_name} can be presented from public evidence and claim-approved context only in this draft.",
         f"- Public proof points: {proof_points}.",
@@ -1579,11 +1686,7 @@ def render_record(doc: dict[str, Any], mode: str, export: bool = False) -> str:
     else:
         visible_claims = _claims(doc)
     output_claim_ids = _output_claim_ids(doc, mode)
-    claims = [
-        claim
-        for claim in visible_claims
-        if not output_claim_ids or str(claim.get("id")) in output_claim_ids
-    ]
+    claims = [claim for claim in visible_claims if not output_claim_ids or str(claim.get("id")) in output_claim_ids]
     rendered_claim_ids = {str(claim.get("id")) for claim in claims if claim.get("id")}
     works = _items_for_claims(_works(doc), rendered_claim_ids)
     relations = _items_for_claims(_relations(doc), rendered_claim_ids)
@@ -1595,9 +1698,7 @@ def render_record(doc: dict[str, Any], mode: str, export: bool = False) -> str:
     if not isinstance(artifacts, dict):
         artifacts = {}
     mandate = doc.get("mandate", {})
-    mandate_description = (
-        str(mandate.get("description", "")) if isinstance(mandate, dict) else str(mandate or "")
-    )
+    mandate_description = str(mandate.get("description", "")) if isinstance(mandate, dict) else str(mandate or "")
     acceptance_gates = output.get("acceptance_gates", [])
     if not isinstance(acceptance_gates, list):
         acceptance_gates = []
@@ -1612,17 +1713,17 @@ def render_record(doc: dict[str, Any], mode: str, export: bool = False) -> str:
         lines.append("Export mode: approved dry run only; no publication or delivery occurs.")
     lines.extend(
         [
-        "",
-        "## Subject Summary",
-        "",
-        f"- Subject: {subject_name} ({subject.get('type', 'unknown')}).",
-        f"- Roles: {_comma_list(subject.get('roles', []))}.",
-        f"- Standing: {standing.get('current', 'unknown')} -> {standing.get('next', 'unknown')}.",
-        f"- Mandate: {_sentence(mandate_description)}",
-        f"- Next reviewable output: {_sentence(artifacts.get('next_reviewable_output'))}",
-        "",
-        "## Acceptance Gates",
-        "",
+            "",
+            "## Subject Summary",
+            "",
+            f"- Subject: {subject_name} ({subject.get('type', 'unknown')}).",
+            f"- Roles: {_comma_list(subject.get('roles', []))}.",
+            f"- Standing: {standing.get('current', 'unknown')} -> {standing.get('next', 'unknown')}.",
+            f"- Mandate: {_sentence(mandate_description)}",
+            f"- Next reviewable output: {_sentence(artifacts.get('next_reviewable_output'))}",
+            "",
+            "## Acceptance Gates",
+            "",
         ]
     )
     if acceptance_gates:
@@ -1785,9 +1886,7 @@ def _authority_packet_blocker_rows(doc: dict[str, Any]) -> list[str]:
             rows.append(f"- {axis}: {status}.")
     if not rows:
         rows.append("- none")
-    rows.append(
-        "- Achieved civilizational status is not claimed; the packet stages authority-building evidence only."
-    )
+    rows.append("- Achieved civilizational status is not claimed; the packet stages authority-building evidence only.")
     return rows
 
 
@@ -1864,9 +1963,7 @@ def render_authority_packet(doc: dict[str, Any]) -> str:
 def _literary_writer_claims(writer_doc: dict[str, Any]) -> list[dict[str, Any]]:
     output_claim_ids = _output_claim_ids(writer_doc, "writer_submission")
     return [
-        claim
-        for claim in public_claims(writer_doc)
-        if not output_claim_ids or str(claim.get("id")) in output_claim_ids
+        claim for claim in public_claims(writer_doc) if not output_claim_ids or str(claim.get("id")) in output_claim_ids
     ]
 
 
@@ -1875,9 +1972,7 @@ def _literary_opportunity_claims(opportunity_doc: dict[str, Any]) -> list[dict[s
         opportunity_doc, "writer_submission"
     )
     return [
-        claim
-        for claim in _claims(opportunity_doc)
-        if not output_claim_ids or str(claim.get("id")) in output_claim_ids
+        claim for claim in _claims(opportunity_doc) if not output_claim_ids or str(claim.get("id")) in output_claim_ids
     ]
 
 
@@ -1909,15 +2004,11 @@ def _route_is_venue_specific(route: dict[str, Any]) -> bool:
     return route_type == "venue" or not _missing(route.get("venue"))
 
 
-def _literary_approval_rows(
-    writer_doc: dict[str, Any], opportunity_doc: dict[str, Any]
-) -> list[str]:
+def _literary_approval_rows(writer_doc: dict[str, Any], opportunity_doc: dict[str, Any]) -> list[str]:
     rows: list[str] = []
     for label, doc in (("Writer", writer_doc), ("Opportunity", opportunity_doc)):
         submission_approvals = [
-            approval
-            for approval in _approvals(doc)
-            if str(approval.get("approval_type")) == "submission"
+            approval for approval in _approvals(doc) if str(approval.get("approval_type")) == "submission"
         ]
         if submission_approvals:
             for approval in submission_approvals:
@@ -1990,9 +2081,7 @@ def render_literary_packet(
             blockers.append("Guidelines URL is missing for the selected venue/route.")
 
     ai_policy_sourced = _route_ai_policy_sourced(route, opportunity_doc)
-    ai_policy_status_unresolved = _ai_policy_status_unresolved(
-        route.get("ai_policy_disclosure_status")
-    )
+    ai_policy_status_unresolved = _ai_policy_status_unresolved(route.get("ai_policy_disclosure_status"))
     venue_label = "Venue" if _route_is_venue_specific(route) else "Route"
     if ai_policy_sourced and not ai_policy_status_unresolved:
         matched.append("AI policy/disclosure source is recorded for the selected venue/route.")
@@ -2115,9 +2204,7 @@ def _candidate_publication_status(
         sources = _source_by_id(writer_doc)
         unknown_sources = [str(source_id) for source_id in source_ids if str(source_id) not in sources]
         if unknown_sources:
-            blockers.append(
-                "Candidate Source refs are unknown: " + ", ".join(unknown_sources) + "."
-            )
+            blockers.append("Candidate Source refs are unknown: " + ", ".join(unknown_sources) + ".")
         else:
             matched.append("Candidate source refs are recorded and withheld from public copy.")
 
@@ -2134,9 +2221,7 @@ def _candidate_publication_status(
         return "BLOCKED", matched, blockers
 
     if not _ready_for_review_status(candidate.get("status")):
-        blockers.append(
-            f"Candidate status is {_display_value(candidate.get('status'))}, not {CANDIDATE_READY_STATUS}."
-        )
+        blockers.append(f"Candidate status is {_display_value(candidate.get('status'))}, not {CANDIDATE_READY_STATUS}.")
         return "BLOCKED", matched, blockers
 
     matched.append("Candidate metadata is complete enough for venue fit review.")
@@ -2164,17 +2249,11 @@ def _route_guideline_blockers(route: dict[str, Any], opportunity_doc: dict[str, 
         if str(source_id) in sources and not _source_is_public_web(sources[str(source_id)])
     ]
     if non_public:
-        blockers.append(
-            "Route guideline source refs must be public web sources: "
-            + ", ".join(non_public)
-            + "."
-        )
+        blockers.append("Route guideline source refs must be public web sources: " + ", ".join(non_public) + ".")
 
     if guidelines_url:
         source_urls = {
-            str(sources[str(source_id)].get("source_ref"))
-            for source_id in guideline_refs
-            if str(source_id) in sources
+            str(sources[str(source_id)].get("source_ref")) for source_id in guideline_refs if str(source_id) in sources
         }
         if guidelines_url not in source_urls:
             blockers.append("Route Guidelines URL does not match the recorded guideline source.")
@@ -2214,21 +2293,96 @@ def _route_publication_status(
     return ("BLOCKED" if blockers else CANDIDATE_READY_STATUS), matched, blockers
 
 
+def _approval_matches_publication_requirement(
+    approval: dict[str, Any],
+    *,
+    approval_type: str,
+    target: str,
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+) -> bool:
+    if str(approval.get("approval_type")) != approval_type:
+        return False
+    if str(approval.get("status")) != "approved":
+        return False
+    if not _approval_is_dry_run(approval):
+        return False
+
+    approval_target = str(approval.get("approval_target") or target)
+    if approval_target != target:
+        return False
+
+    subject_id = str(writer_doc.get("id") or "")
+    if not _missing(approval.get("subject_id")) and str(approval.get("subject_id")) != subject_id:
+        return False
+    if not _missing(approval.get("candidate_id")) and str(approval.get("candidate_id")) != candidate_id:
+        return False
+    if not _missing(approval.get("route_id")) and str(approval.get("route_id")) != route_selector:
+        return False
+    if target == "opportunity_route_submission":
+        opportunity_id = str(opportunity_doc.get("id") or "")
+        if not _missing(approval.get("opportunity_id")) and str(approval.get("opportunity_id")) != opportunity_id:
+            return False
+    return True
+
+
+def _matching_publication_approval(
+    approvals: list[dict[str, Any]],
+    *,
+    approval_type: str,
+    target: str,
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+) -> dict[str, Any] | None:
+    for approval in approvals:
+        if _approval_matches_publication_requirement(
+            approval,
+            approval_type=approval_type,
+            target=target,
+            writer_doc=writer_doc,
+            opportunity_doc=opportunity_doc,
+            candidate_id=candidate_id,
+            route_selector=route_selector,
+        ):
+            return approval
+    return None
+
+
 def _publication_approval_status(
-    writer_doc: dict[str, Any], opportunity_doc: dict[str, Any]
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+    approval_doc: dict[str, Any] | None = None,
 ) -> tuple[bool, list[str], list[str]]:
     matched: list[str] = []
     blockers: list[str] = []
     requirements = (
-        ("Writer public export", writer_doc, "public_export"),
-        ("Writer submission", writer_doc, "submission"),
-        ("Opportunity submission", opportunity_doc, "submission"),
+        ("Writer public export", writer_doc, "public_export", "writer_public_export"),
+        ("Writer submission", writer_doc, "submission", "writer_submission"),
+        ("Opportunity route submission", opportunity_doc, "submission", "opportunity_route_submission"),
     )
-    for label, doc, approval_type in requirements:
-        status = _approval_status(doc, approval_type)
-        if status == "approved":
-            matched.append(f"{label} approval is approved for an internal dry run.")
+    extra_approvals = _approvals(approval_doc) if approval_doc else []
+    for label, doc, approval_type, target in requirements:
+        approval = _matching_publication_approval(
+            [*_approvals(doc), *extra_approvals],
+            approval_type=approval_type,
+            target=target,
+            writer_doc=writer_doc,
+            opportunity_doc=opportunity_doc,
+            candidate_id=candidate_id,
+            route_selector=route_selector,
+        )
+        if approval:
+            matched.append(f"{label} approval is APPROVED_DRY_RUN via {approval.get('id', 'approval-record')}.")
         else:
+            status = _approval_status(doc, approval_type)
+            if extra_approvals:
+                status = f"{status}; no matching dry-run approval record"
             blockers.append(f"{label} approval is {status}.")
     return not blockers, matched, blockers
 
@@ -2264,8 +2418,15 @@ def render_publication_readiness(
     candidate_id: str,
     route_selector: str,
     export: bool = False,
+    approval_doc: dict[str, Any] | None = None,
 ) -> str:
     """Render a Chris-facing publication readiness report without exposing private refs."""
+    if approval_doc is not None:
+        approval_label = str(approval_doc.get("id") or "approval-record")
+        approval_violations = validate_doc(approval_doc, approval_label)
+        if approval_violations:
+            raise ValueError("approval record invalid: " + "; ".join(approval_violations[:6]))
+
     writer_subject = writer_doc.get("subject", {})
     if not isinstance(writer_subject, dict):
         writer_subject = {}
@@ -2276,11 +2437,13 @@ def render_publication_readiness(
     candidate_status, candidate_matched, candidate_blockers = _candidate_publication_status(
         writer_doc, candidate, candidate_id
     )
-    route_status, route_matched, route_blockers = _route_publication_status(
-        opportunity_doc, route, route_selector
-    )
+    route_status, route_matched, route_blockers = _route_publication_status(opportunity_doc, route, route_selector)
     approvals_ready, approval_matched, approval_blockers = _publication_approval_status(
-        writer_doc, opportunity_doc
+        writer_doc,
+        opportunity_doc,
+        candidate_id,
+        route_selector,
+        approval_doc=approval_doc,
     )
     if export and not approvals_ready:
         raise ValueError(
@@ -2313,6 +2476,7 @@ def render_publication_readiness(
         "Mode: publication_readiness",
         f"Writer record: {writer_doc.get('id', 'unknown-writer')}",
         f"Opportunity record: {opportunity_doc.get('id', 'unknown-opportunity')}",
+        f"Approval record: {approval_doc.get('id', 'not supplied') if approval_doc else 'not supplied'}",
         f"Candidate: {candidate_id}",
         f"Selected venue/route: {route_selector}",
         "Outward action: locked; this report does not submit, upload, publish, contact, or impersonate.",
@@ -2410,6 +2574,246 @@ def render_publication_readiness(
     return "\n".join(lines) + "\n"
 
 
+def _publication_stack_status_rows(
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+    approval_doc: dict[str, Any] | None,
+) -> tuple[dict[str, str], list[str], list[str]]:
+    candidate = _candidate_by_id(writer_doc, candidate_id)
+    route = _route_by_selector(opportunity_doc, route_selector)
+    candidate_status, candidate_matched, candidate_blockers = _candidate_publication_status(
+        writer_doc, candidate, candidate_id
+    )
+    route_status, route_matched, route_blockers = _route_publication_status(opportunity_doc, route, route_selector)
+    approvals_ready, approval_matched, approval_blockers = _publication_approval_status(
+        writer_doc,
+        opportunity_doc,
+        candidate_id,
+        route_selector,
+        approval_doc=approval_doc,
+    )
+    status = {
+        "candidate": candidate_status,
+        "route": route_status,
+        "dry_run": "APPROVED_DRY_RUN" if approvals_ready else "LOCKED",
+        "real_send": "LOCKED",
+    }
+    return (
+        status,
+        candidate_matched + route_matched + approval_matched,
+        (candidate_blockers + route_blockers + approval_blockers),
+    )
+
+
+def _route_display_name(route: dict[str, Any] | None, fallback: str) -> str:
+    if route is None:
+        return fallback
+    return str(route.get("venue") or route.get("platform") or route.get("id") or fallback)
+
+
+def _public_writer_bio_rows(writer_doc: dict[str, Any]) -> list[str]:
+    rows: list[str] = []
+    for claim in _literary_writer_claims(writer_doc):
+        rows.append(_claim_line(claim))
+    return rows or ["- No public writer claims are renderable."]
+
+
+def render_publication_stack_files(
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+    approval_doc: dict[str, Any] | None = None,
+) -> dict[str, str]:
+    """Build review-only publication stack files without any outward action path."""
+    if approval_doc is not None:
+        approval_label = str(approval_doc.get("id") or "approval-record")
+        approval_violations = validate_doc(approval_doc, approval_label)
+        if approval_violations:
+            raise ValueError("approval record invalid: " + "; ".join(approval_violations[:6]))
+
+    writer_subject = writer_doc.get("subject", {})
+    if not isinstance(writer_subject, dict):
+        writer_subject = {}
+    writer_name = str(writer_subject.get("name") or writer_doc.get("name") or "Unnamed writer")
+    candidate = _candidate_by_id(writer_doc, candidate_id)
+    route = _route_by_selector(opportunity_doc, route_selector)
+    route_name = _route_display_name(route, route_selector)
+    candidate_title = str(candidate.get("title") if candidate else candidate_id)
+    status, matched, blockers = _publication_stack_status_rows(
+        writer_doc,
+        opportunity_doc,
+        candidate_id,
+        route_selector,
+        approval_doc,
+    )
+    has_dry_run_approval = status["dry_run"] == "APPROVED_DRY_RUN"
+    readiness = render_publication_readiness(
+        writer_doc,
+        opportunity_doc,
+        candidate_id=candidate_id,
+        route_selector=route_selector,
+        export=has_dry_run_approval,
+        approval_doc=approval_doc,
+    )
+    public_presence = render_record(writer_doc, "public_presence_draft")
+    matched_rows = [f"- {row}" for row in matched] or ["- none"]
+    blocker_rows = [f"- {row}" for row in blockers] or ["- No readiness blockers remain for a dry-run review packet."]
+
+    header = [
+        f"# {writer_name} / {route_name} Review Packet",
+        "",
+        "Outward action: locked. These files are review drafts only.",
+        f"Candidate metadata: {status['candidate']}.",
+        f"Route metadata: {status['route']}.",
+        f"Dry-run approval: {status['dry_run']}.",
+        "Real send: LOCKED.",
+        "No publication, submission, upload, contact, form action, or public export has happened.",
+        "",
+    ]
+
+    readme = "\n".join(
+        [
+            *header,
+            "## Files",
+            "",
+            "- fit-report.md",
+            "- cover-letter-options.md",
+            "- ai-disclosure-note.md",
+            "- rights-checklist.md",
+            "- submission-checklist.md",
+            "- public-presence-copy-preview.md",
+            "",
+            "## Review Gates",
+            "",
+            "- Chris public export approval remains locked until explicit approval is supplied.",
+            "- Chris submission approval remains locked until explicit approval is supplied.",
+            "- Opportunity/route submission approval remains locked until explicit approval is supplied.",
+            "- Real-send approval remains locked and cannot be approved by this substrate.",
+            "",
+        ]
+    )
+
+    fit_report = "\n".join(
+        [
+            "# Fit Report",
+            "",
+            *header[2:],
+            "## Matched",
+            "",
+            *matched_rows,
+            "",
+            "## Still Gated",
+            "",
+            *blocker_rows,
+            "",
+            "## Readiness Packet",
+            "",
+            readiness.rstrip(),
+            "",
+        ]
+    )
+
+    cover_letter = "\n".join(
+        [
+            "# Cover Letter Draft Options",
+            "",
+            *header[2:],
+            "## Option A",
+            "",
+            "Dear Editors,",
+            "",
+            f"Please consider {candidate_title} for {route_name}. This draft is staged for Chris's voice review and has not been sent.",
+            "",
+            "## Option B",
+            "",
+            "Dear Editors,",
+            "",
+            f"I am sending a nonfiction essay for consideration by {route_name}. Final wording, biography, and any disclosure language remain locked pending Chris approval.",
+            "",
+            "## Public Bio Source Points",
+            "",
+            *_public_writer_bio_rows(writer_doc),
+            "",
+        ]
+    )
+
+    ai_note = "\n".join(
+        [
+            "# AI Disclosure Note",
+            "",
+            *header[2:],
+            "## Draft Disclosure Surface",
+            "",
+            "- The route's AI policy/disclosure posture is sourced and resolved for review.",
+            "- Final disclosure wording must be approved by Chris before any use.",
+            "- This stack was generated as review scaffolding and does not assert that the candidate work contains AI-generated language.",
+            "- Disclosure delivery has not occurred.",
+            "",
+        ]
+    )
+
+    rights_status = _display_value(candidate.get("rights_status")) if candidate else "missing"
+    rights_checklist = "\n".join(
+        [
+            "# Rights Checklist",
+            "",
+            *header[2:],
+            "## Rights Fields",
+            "",
+            f"- Candidate: {_display_value(candidate_title)}.",
+            f"- Rights status: {rights_status}.",
+            "- Content/source ref: recorded and withheld.",
+            "- Manuscript text: not stored or rendered.",
+            "- Chris must confirm final rights and prior-submission history before any send.",
+            "",
+        ]
+    )
+
+    submission_checklist = "\n".join(
+        [
+            "# Submission Checklist",
+            "",
+            *header[2:],
+            "## Locks",
+            "",
+            "- Chris public export approval: LOCKED unless a matching dry-run approval record is supplied.",
+            "- Chris submission approval: LOCKED unless a matching dry-run approval record is supplied.",
+            "- Opportunity/route submission approval: LOCKED unless a matching dry-run approval record is supplied.",
+            "- Real send: LOCKED; approving real send is invalid in this substrate.",
+            "",
+            "## Before Any Human Send Outside This Tool",
+            "",
+            "- Chris reviews candidate, cover letter, disclosure, rights, and venue fit.",
+            "- Human separately approves public export and submission route.",
+            "- Any send happens outside this command after explicit approval; this command has no send path.",
+            "",
+        ]
+    )
+
+    public_preview = "\n".join(
+        [
+            "# Public Presence Copy Preview",
+            "",
+            *header[2:],
+            public_presence.rstrip(),
+            "",
+        ]
+    )
+
+    return {
+        "README.md": readme,
+        "fit-report.md": fit_report,
+        "cover-letter-options.md": cover_letter,
+        "ai-disclosure-note.md": ai_note,
+        "rights-checklist.md": rights_checklist,
+        "submission-checklist.md": submission_checklist,
+        "public-presence-copy-preview.md": public_preview,
+    }
+
+
 def _declared_output_modes(doc: dict[str, Any]) -> list[str]:
     outputs = doc.get("outputs", [])
     if not isinstance(outputs, list):
@@ -2440,9 +2844,7 @@ def _first_matching_line(text: str, prefix: str) -> str:
     return ""
 
 
-def _append_handoff_row(
-    rows: list[tuple[str, str, str]], status: str, name: str, detail: str
-) -> None:
+def _append_handoff_row(rows: list[tuple[str, str, str]], status: str, name: str, detail: str) -> None:
     rows.append((status, name, _sentence(detail)))
 
 
@@ -2512,7 +2914,9 @@ def _build_handoff_audit(
                 "missing required sections: " + ", ".join(missing_sections),
             )
         else:
-            _append_handoff_row(rows, "PROVEN", f"{mode} renderer", "renders with evidence and no-outward-action sections")
+            _append_handoff_row(
+                rows, "PROVEN", f"{mode} renderer", "renders with evidence and no-outward-action sections"
+            )
 
         if mode in PUBLIC_RENDER_MODES:
             leaks = _public_handoff_leaks(rendered)
@@ -2852,22 +3256,60 @@ def _publication_readiness_command(
     candidate: str,
     route: str,
     export: bool,
+    approval_record: Path | None,
     out: Path | None,
 ) -> int:
     try:
         writer_doc = _load_record(writer)
         opportunity_doc = _load_record(opportunity)
+        approval_doc = _load_record(approval_record) if approval_record else None
         output = render_publication_readiness(
             writer_doc,
             opportunity_doc,
             candidate_id=candidate,
             route_selector=route,
             export=export,
+            approval_doc=approval_doc,
         )
     except ValueError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     _write_or_print(output, out)
+    return 0
+
+
+def _publication_stack_command(
+    writer: Path,
+    opportunity: Path,
+    candidate: str,
+    route: str,
+    out_dir: Path,
+    approval_record: Path | None,
+) -> int:
+    try:
+        writer_doc = _load_record(writer)
+        opportunity_doc = _load_record(opportunity)
+        approval_doc = _load_record(approval_record) if approval_record else None
+        files = render_publication_stack_files(
+            writer_doc,
+            opportunity_doc,
+            candidate_id=candidate,
+            route_selector=route,
+            approval_doc=approval_doc,
+        )
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, content in files.items():
+        if name not in PUBLICATION_STACK_FILENAMES:
+            print(f"ERROR: unexpected publication stack file {name}", file=sys.stderr)
+            return 1
+        (out_dir / name).write_text(content, encoding="utf-8")
+    print(f"Wrote publication stack: {out_dir}")
+    for name in sorted(files):
+        print(f"- {name}")
     return 0
 
 
@@ -2926,7 +3368,19 @@ def main(argv: list[str] | None = None) -> int:
     publication_readiness.add_argument("--candidate", required=True)
     publication_readiness.add_argument("--route", required=True)
     publication_readiness.add_argument("--export", action="store_true")
+    publication_readiness.add_argument("--approval-record", type=Path)
     publication_readiness.add_argument("--out", type=Path)
+
+    publication_stack = sub.add_parser(
+        "publication-stack",
+        help="write a review-only publication packet stack for a writer, candidate, and route",
+    )
+    publication_stack.add_argument("--writer", required=True, type=Path)
+    publication_stack.add_argument("--opportunity", required=True, type=Path)
+    publication_stack.add_argument("--candidate", required=True)
+    publication_stack.add_argument("--route", required=True)
+    publication_stack.add_argument("--out-dir", required=True, type=Path)
+    publication_stack.add_argument("--approval-record", type=Path)
 
     handoff_audit = sub.add_parser(
         "handoff-audit",
@@ -3010,7 +3464,18 @@ def main(argv: list[str] | None = None) -> int:
             args.candidate,
             args.route,
             args.export,
+            args.approval_record,
             args.out,
+        )
+
+    if args.cmd == "publication-stack":
+        return _publication_stack_command(
+            args.writer,
+            args.opportunity,
+            args.candidate,
+            args.route,
+            args.out_dir,
+            args.approval_record,
         )
 
     if args.cmd == "handoff-audit":
