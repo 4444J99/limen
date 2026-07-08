@@ -108909,7 +108909,7 @@ tasks:
   description: Step 2.2 still open in the keeper doc
   repo: ~/Workspace/limen
   type: coordination
-  target_agent: opencode
+  target_agent: codex
   workstream: tabularius
   priority: medium
   budget_cost: 1
@@ -109082,7 +109082,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#775
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -109712,7 +109712,7 @@ tasks:
   workstream: credential-wall
   priority: critical
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -109741,7 +109741,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T05:18:07.874974Z'
+  updated: '2026-07-08T05:28:57.933415Z'
   dispatch_log:
   - timestamp: '2026-07-08T02:00:55.567018Z'
     agent: codex
@@ -109768,11 +109768,16 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-08T05:28:57.933415Z'
+    agent: codex
+    session_id: https://github.com/organvm/limen/pull/691
+    status: dispatched
+    output: 'manual bridge: opened credential tombstone PR from preserved async worktree'
 - id: HEAL-cifix-organvm-domus-genoma-179
   title: fix failing CI on organvm/domus-genoma#179
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -109795,7 +109800,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#180
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -109818,7 +109823,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#181
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -109841,7 +109846,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#182
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -109864,7 +109869,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#183
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -109887,7 +109892,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#184
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -109910,7 +109915,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#185
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -109933,7 +109938,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#187
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -109956,7 +109961,7 @@ tasks:
   title: fix failing CI on organvm/limen#680
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -109979,7 +109984,7 @@ tasks:
   title: fix failing CI on organvm/limen#684
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110002,7 +110007,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#70
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110025,7 +110030,7 @@ tasks:
   title: "rebase organvm/mirror-mirror#77 onto current base \u2014 branched far behind"
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -110049,7 +110054,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#79
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -110072,7 +110077,7 @@ tasks:
   title: "rebase organvm/mirror-mirror#86 onto current base \u2014 branched far behind"
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: codex
   priority: normal
   budget_cost: 1
   status: open
@@ -110096,7 +110101,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#93
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110119,7 +110124,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#95
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
