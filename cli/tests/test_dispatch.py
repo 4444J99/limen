@@ -112,9 +112,7 @@ def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_k
     assert "oz" not in lanes
 
 
-def test_auto_lane_selector_keeps_agy_up_on_weak_proxy_budget_saturation(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_auto_lane_selector_keeps_agy_up_on_weak_proxy_budget_saturation(tmp_path: Path, monkeypatch) -> None:
     agy = tmp_path / "agy"
     agy.write_text("#!/bin/sh\nexit 0\n")
     agy.chmod(0o755)
@@ -521,9 +519,7 @@ def test_dispatch_parallel_skips_generated_buildout_outside_value_tier(tmp_path:
     assert "GEN-NONVALUE" not in output
 
 
-def test_serial_dispatch_value_gate_withholds_generic_non_value_work(
-    tmp_path: Path, capsys, monkeypatch
-) -> None:
+def test_serial_dispatch_value_gate_withholds_generic_non_value_work(tmp_path: Path, capsys, monkeypatch) -> None:
     monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/value-repo")
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
     monkeypatch.setenv("LIMEN_DISPATCH_CMD", "agent-stub")
@@ -564,9 +560,7 @@ def test_serial_dispatch_value_gate_withholds_generic_non_value_work(
     assert "GENERIC-WORK" not in output
 
 
-def test_dispatch_parallel_value_gate_withholds_generic_non_value_work(
-    tmp_path: Path, capsys, monkeypatch
-) -> None:
+def test_dispatch_parallel_value_gate_withholds_generic_non_value_work(tmp_path: Path, capsys, monkeypatch) -> None:
     monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/value-repo")
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
