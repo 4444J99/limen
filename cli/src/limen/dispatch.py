@@ -1176,8 +1176,18 @@ def _organvm_engine_task(task: Task) -> bool:
     return str(task.repo or "").lower() == "organvm/organvm-engine"
 
 
+def _agent_timed_out_on_task(agent: str, task: Task) -> bool:
+    return any(
+        canonical_agent(str(entry.agent or "")) == agent
+        and str(entry.status or "").startswith("timeout->")
+        for entry in (task.dispatch_log or [])
+    )
+
+
 def agent_can_run_task(agent: str, task: Task) -> bool:
     agent = canonical_agent(agent)
+    if _agent_timed_out_on_task(agent, task):
+        return False
     if agent in {"agy", "antigravity"} and (_agy_live_root_registry_task(task) or _limen_repo_task(task)):
         return False
     if agent in {"codex", "claude"} and _limen_repo_task(task):
@@ -2219,6 +2229,7 @@ def dispatch_tasks(
         for t in tasks
         if _dispatchable(t)
         and (t.target_agent == agent_filter or t.target_agent == "any")
+        and agent_can_run_task(agent_filter, t)
         and t.budget_cost <= remaining
         and (task_id is not None or _deps_met(t, id2))
         and not (debt_blocked and _routine_generated_buildout(t))
@@ -2579,6 +2590,7 @@ def _select_parallel_reservations(
             for t in limen.tasks
             if _dispatchable(t)
             and (t.target_agent == agent or t.target_agent == "any")
+            and agent_can_run_task(agent, t)
             and t.budget_cost <= rem
             and _deps_met(t, id2)
             and not (debt_blocked and _routine_generated_buildout(t))

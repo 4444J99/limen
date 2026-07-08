@@ -515,6 +515,41 @@ def test_async_value_gate_does_not_treat_corpus_repo_slug_as_lifecycle(tmp_path,
     assert picked == []
 
 
+def test_async_reserve_skips_lane_that_already_timed_out_task(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/domus-genoma")
+    monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
+    da = _load(tmp_path, n_open=0, agent="codex")
+    today = datetime.date.today()
+    now = datetime.datetime.now(datetime.timezone.utc)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"codex": 50}
+    lf.tasks = [
+        Task(
+            id="HEAL-cifix-organvm-domus-genoma-174",
+            title="fix failing CI on organvm/domus-genoma#174",
+            repo="organvm/domus-genoma",
+            target_agent="codex",
+            priority="high",
+            status="open",
+            labels=["cifix", "self-heal", "ci-red", "slow"],
+            created=today,
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent="codex",
+                    session_id="cli",
+                    status="timeout->jules",
+                )
+            ],
+        )
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=5, cap=5, dry=True)
+
+    assert picked == []
+
+
 def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, monkeypatch):
     monkeypatch.delenv("LIMEN_VALUE_REPOS", raising=False)
     monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)

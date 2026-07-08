@@ -1377,6 +1377,32 @@ def test_default_cascade_uses_reachable_auto_lanes(monkeypatch) -> None:
     assert "tried:claude" in task.labels
 
 
+def test_agent_can_not_rerun_task_after_timeout_to_jules() -> None:
+    import datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    task = Task(
+        id="SLOW-CODEX",
+        title="slow local task",
+        repo="organvm/domus-genoma",
+        target_agent="codex",
+        status="open",
+        created=date(2026, 7, 8),
+        labels=["slow"],
+        dispatch_log=[
+            DispatchLogEntry(
+                timestamp=now,
+                agent="codex",
+                session_id="cli",
+                status="timeout->jules",
+            )
+        ],
+    )
+
+    assert not D.agent_can_run_task("codex", task)
+    assert D.agent_can_run_task("jules", task)
+
+
 def test_late_result_does_not_reopen_already_done_task() -> None:
     import datetime
 
