@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 161
+      spent: 162
       per_agent:
         jules: 100
         gemini: 3
-        codex: 1
+        codex: 2
         opencode: 25
         agy: 31
         claude: 0
@@ -106536,7 +106536,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106551,7 +106551,13 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  dispatch_log: []
+  updated: '2026-07-08T09:42:46.634190Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T09:42:46.634190Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-dot-github--logos-26
   title: rebase/resolve conflicts on organvm/dot-github--logos#26
   repo: organvm/dot-github--logos
