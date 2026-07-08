@@ -90,16 +90,19 @@ def test_insight_routing_repo(test_env):
         insight_route.process_report(report_file, apply=True)
 
         limen_file = load_limen_file(test_env["tasks"])
-        assert len(limen_file.tasks) == 1
-        task = limen_file.tasks[0]
-        assert task.id == "TASK-INS-REPO-1"
-        assert task.repo == "test-org/test-repo"
-        assert task.title == "Heal insight: Repo Insight"
+        assert len(limen_file.tasks) == 0
+        inbox = test_env["root"] / "logs" / "tickets" / "inbox"
+        tickets = list(inbox.glob("*.json"))
+        assert len(tickets) == 1
+        ticket = json.loads(tickets[0].read_text())
+        assert ticket["task_id"] == "TASK-INS-REPO-1"
+        assert ticket["intent"] == "task.upsert"
+        assert ticket["patch"]["repo"] == "test-org/test-repo"
+        assert ticket["patch"]["title"] == "Heal insight: Repo Insight"
 
         # Test idempotency
         insight_route.process_report(report_file, apply=True)
-        limen_file = load_limen_file(test_env["tasks"])
-        assert len(limen_file.tasks) == 1  # Still 1
+        assert len(list(inbox.glob("*.json"))) == 1
 
 
 def test_insight_routing_organ(test_env):
