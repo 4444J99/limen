@@ -434,7 +434,7 @@ def _superseded_by_rebase_task(task: Task, tasks_by_id: dict[str, Task]) -> bool
     prefix = "HEAL-cifix-"
     if not task_id.startswith(prefix):
         return False
-    suffix = task_id[len(prefix):]
+    suffix = task_id[len(prefix) :]
     for sibling_id in (f"HEAL-rebase-{suffix}", f"HEAL-rebase-stale-{suffix}"):
         sibling = tasks_by_id.get(sibling_id)
         if sibling is not None and str(sibling.status or "") in _ACTIVE_SUPERSEDER_STATUSES:
@@ -1200,8 +1200,7 @@ def _organvm_engine_task(task: Task) -> bool:
 
 def _agent_timed_out_on_task(agent: str, task: Task) -> bool:
     return any(
-        canonical_agent(str(entry.agent or "")) == agent
-        and str(entry.status or "").startswith("timeout->")
+        canonical_agent(str(entry.agent or "")) == agent and str(entry.status or "").startswith("timeout->")
         for entry in (task.dispatch_log or [])
     )
 
