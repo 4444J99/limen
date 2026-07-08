@@ -464,6 +464,13 @@ _LIFECYCLE_TERMS = {
     "worktree",
     "worktree-lifecycle",
 }
+_LIFECYCLE_TEXT_TERMS = _LIFECYCLE_TERMS - {
+    # These are meaningful as explicit labels/workstreams, but too broad inside repo slugs or
+    # PR titles such as "conversation-corpus-engine" or "promptscope".
+    "corpus",
+    "prompt",
+    "ticket",
+}
 
 
 def _normalize_repo_slug(repo: object) -> str:
@@ -513,14 +520,24 @@ def _dispatch_focus_bucket(task: Task, value_repos: set[str]) -> int:
     repo = _normalize_repo_slug(task.repo)
     labels = {str(label).strip().lower() for label in (task.labels or [])}
     workstream = str(task.workstream or "").strip().lower()
-    text = _task_search_text(task)
     if repo and repo in value_repos:
         return 0
     if labels & _VALUE_LABELS or workstream in _VALUE_WORKSTREAMS:
         return 0
     if str(task.id or "").startswith(("AW-", "REV-")):
         return 0
-    if any(term in text for term in _LIFECYCLE_TERMS):
+    if labels & _LIFECYCLE_TERMS or workstream in _LIFECYCLE_TERMS:
+        return 0
+    text = " ".join(
+        str(part or "")
+        for part in (
+            task.id,
+            task.title,
+            task.context,
+            task.type,
+        )
+    ).lower()
+    if any(term in text for term in _LIFECYCLE_TEXT_TERMS):
         return 0
     return 1
 
