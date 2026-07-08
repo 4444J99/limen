@@ -15,6 +15,7 @@ VALIDATOR = ROOT / "organs" / "representation" / "validate-representation.py"
 MODULE = ROOT / "organs" / "representation" / "representation_substrate.py"
 CHRIS = ROOT / "organs" / "representation" / "records" / "christopher-author-one.yaml"
 ET4L = ROOT / "organs" / "representation" / "records" / "et4l.yaml"
+GENERIC = ROOT / "organs" / "representation" / "records" / "generic-authority-template.yaml"
 OPPORTUNITY = ROOT / "organs" / "representation" / "opportunities" / "literary-submission-landscape.yaml"
 
 spec = importlib.util.spec_from_file_location("representation_substrate", MODULE)
@@ -58,8 +59,64 @@ def test_fleet_includes_non_writer_project_proof():
 
     assert et4l["subject"]["type"] == "project"
     assert "writer_submission" not in et4l["subject"]["representation_modes"]
+    assert {"canon_dossier", "public_presence_draft", "authority_scorecard"}.issubset(
+        set(et4l["subject"]["representation_modes"])
+    )
     assert any(output["mode"] == "project_page" for output in et4l["outputs"])
     assert et4l["artifacts"]["next_reviewable_output"]
+
+
+def test_validator_requires_complete_authority_program_axes_and_outputs(tmp_path: Path):
+    doc = load_record(ET4L)
+    doc["authority_program"]["axes"].pop("hybrid_presence")
+    doc["authority_program"]["axes"]["canonical_institution"]["public_copy"] = "TODO"
+    doc["authority_program"]["axes"]["mass_readership"]["claim_ids"] = ["missing-claim"]
+    doc["outputs"] = [
+        output
+        for output in doc["outputs"]
+        if output["mode"] != "authority_scorecard"
+    ]
+    path = tmp_path / "broken-authority.yaml"
+    path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
+
+    result = run_validator(path)
+
+    assert result.returncode == 1
+    assert "authority_program outputs must declare modes: authority_scorecard" in result.stdout
+    assert "authority_program.axes missing required axis/axes: hybrid_presence" in result.stdout
+    assert "public_copy contains placeholder text" in result.stdout
+    assert "claim_ids references unknown claim_ids: missing-claim" in result.stdout
+
+
+def test_validator_rejects_unsupported_authority_axes(tmp_path: Path):
+    doc = load_record(ET4L)
+    doc["authority_program"]["axes"]["cultural_mythology"] = copy.deepcopy(
+        doc["authority_program"]["axes"]["canonical_institution"]
+    )
+    path = tmp_path / "extra-authority-axis.yaml"
+    path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
+
+    result = run_validator(path)
+
+    assert result.returncode == 1
+    assert "authority_program.axes has unsupported axis/axes: cultural_mythology" in result.stdout
+
+
+def test_validator_rejects_private_unapproved_public_axis_claims(tmp_path: Path):
+    doc = load_record(ET4L)
+    doc["authority_program"]["axes"]["canonical_institution"]["public_claim_ids"].append(
+        "et4l-artist-chamber"
+    )
+    path = tmp_path / "private-public-axis-claim.yaml"
+    path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
+
+    result = run_validator(path)
+
+    assert result.returncode == 1
+    assert (
+        "public_claim_ids must reference public-source or claim-approved private claims: "
+        "et4l-artist-chamber"
+    ) in result.stdout
 
 
 def test_validator_requires_next_reviewable_output_and_acceptance_gates(tmp_path: Path):
@@ -266,6 +323,62 @@ def test_mode_renderers_share_one_source_backed_chris_record():
     assert "Speech Score lineage" not in public_page
     assert "No submission, outreach, or form action" in submission_packet
     assert "Object Lessons lineage" in collaboration_packet
+
+
+@pytest.mark.parametrize("record", [ET4L, CHRIS, GENERIC])
+@pytest.mark.parametrize(
+    ("mode", "title"),
+    [
+        ("canon_dossier", "# Canon Dossier"),
+        ("public_presence_draft", "# Public Presence Draft"),
+        ("authority_scorecard", "# Authority Scorecard"),
+    ],
+)
+def test_authority_modes_render_for_first_proofs_and_generic_template(record: Path, mode: str, title: str):
+    doc = load_record(record)
+    text = rs.render_record(doc, mode)
+
+    assert text.startswith(title)
+    assert "## Subject Summary" in text
+    assert "## Source Appendix Summary" in text
+    assert "This packet is review-only." in text
+
+
+def test_public_presence_draft_excludes_private_unapproved_claims_and_local_refs():
+    public_presence = rs.render_record(load_record(CHRIS), "public_presence_draft")
+
+    assert "Public writing record" in public_presence
+    assert "Editorial role" in public_presence
+    assert "Speech Score lineage" not in public_presence
+    assert "Object Lessons lineage" not in public_presence
+    assert "local-relationship-pipeline" not in public_presence
+    assert "/Users/4jp" not in public_presence
+
+
+def test_authority_scorecard_reports_staged_blockers_not_achieved_status():
+    scorecard = rs.render_record(load_record(CHRIS), "authority_scorecard")
+
+    assert "## Authority Scorecard" in scorecard
+    assert "Civilizational gravitas is the program goal, not an achieved public status claim." in scorecard
+    assert "canonical_institution: STAGED" in scorecard
+    assert "mass_readership: STAGED" in scorecard
+    assert "hybrid_presence: STAGED" in scorecard
+    assert "public export approval is not_requested" in scorecard
+
+
+def test_authority_packet_includes_all_artifacts_and_no_outward_action_gate():
+    result = run_tool("authority-packet", "--record", CHRIS)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.startswith("# Authority Packet: Christopher Author-One")
+    assert "## Canon Dossier Artifact" in result.stdout
+    assert "## Public Presence Draft Artifact" in result.stdout
+    assert "## Authority Scorecard Artifact" in result.stdout
+    assert "## Packet Blockers" in result.stdout
+    assert "## Packet Source Appendix" in result.stdout
+    assert "## Packet Approvals Required" in result.stdout
+    assert "## No-Outward-Action Gate" in result.stdout
+    assert "does not submit, publish, upload, contact, mine private material, or act outward" in result.stdout
 
 
 def test_chris_public_page_draft_uses_public_profile_evidence_only():
@@ -551,6 +664,61 @@ def test_literary_no_send_packet_never_claims_outward_action_happened():
     assert "no submission, outreach, upload, publication, contact, or form action is performed" in packet
 
 
+def test_chris_handoff_audit_proves_features_and_reports_gates():
+    result = run_tool(
+        "handoff-audit",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        "chris-public-profile-readiness",
+        "--route",
+        "yale-review-nonfiction-route",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.startswith("# Representation Handoff Audit: Christopher Author-One")
+    assert "Audit status: PROVEN" in result.stdout
+    assert "Broken features: 0" in result.stdout
+    assert "SCAN: Opportunity routes" in result.stdout
+    assert "MATCH: Writer proof" in result.stdout
+    assert "BUILD: Dossiers" in result.stdout
+    assert "APPLY: Outbound submission" in result.stdout
+    assert "FOLLOW_UP: Blockers and approvals" in result.stdout
+    assert "PROVEN: Authority packet" in result.stdout
+    assert "PROVEN: Literary desk packet" in result.stdout
+    assert "GATE: Literary desk readiness" in result.stdout
+    assert "PROVEN: public_page_draft public privacy" in result.stdout
+    assert "PROVEN: Literary export lock" in result.stdout
+    assert "BROKEN:" not in result.stdout
+    assert "N/A" not in result.stdout
+    assert "/Users/4jp" not in result.stdout
+
+
+def test_handoff_audit_fails_closed_for_invalid_writer_record(tmp_path: Path):
+    writer = load_record(CHRIS)
+    writer["authority_program"]["axes"].pop("hybrid_presence")
+    writer_path = tmp_path / "invalid-writer.yaml"
+    writer_path.write_text(yaml.safe_dump(writer, sort_keys=False), encoding="utf-8")
+
+    result = run_tool(
+        "handoff-audit",
+        "--writer",
+        writer_path,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        "chris-public-profile-readiness",
+        "--route",
+        "submittable-discover-route",
+    )
+
+    assert result.returncode == 1
+    assert "Audit status: BROKEN" in result.stdout
+    assert "BROKEN: Writer record validation" in result.stdout
+
+
 @pytest.mark.parametrize(
     ("record", "mode", "needle"),
     [
@@ -667,6 +835,25 @@ def test_public_page_export_uses_copied_approval_fixture_without_private_leak(tm
     assert "Unapproved local context" not in result.stdout
     assert "source reference withheld" in result.stdout
     assert "local-relationship-pipeline" not in result.stdout
+    assert "/Users/4jp" not in result.stdout
+
+
+def test_public_presence_export_uses_copied_approval_fixture_as_dry_run(tmp_path: Path):
+    doc = load_record(CHRIS)
+    for approval in doc["approvals"]:
+        if approval["approval_type"] == "public_export":
+            approval["status"] = "approved"
+            approval["note"] = "Copied fixture approval for authority export-path coverage only."
+
+    path = tmp_path / "approved-public-presence-export.yaml"
+    path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
+
+    result = run_tool("packet", path, "--mode", "public_presence_draft", "--export")
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Export mode: approved dry run only; no publication or delivery occurs." in result.stdout
+    assert "Public writing record" in result.stdout
+    assert "Object Lessons lineage" not in result.stdout
     assert "/Users/4jp" not in result.stdout
 
 

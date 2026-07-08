@@ -40,6 +40,9 @@ APPROVAL_TYPES = {
 }
 APPROVAL_STATUSES = {"not_requested", "pending", "approved", "denied"}
 OUTPUT_MODES = {
+    "canon_dossier",
+    "public_presence_draft",
+    "authority_scorecard",
     "private_dossier",
     "creator_presence_preview",
     "public_page_draft",
@@ -50,6 +53,9 @@ OUTPUT_MODES = {
     "co_branded_page",
 }
 PACKET_MODES = {
+    "canon_dossier",
+    "public_presence_draft",
+    "authority_scorecard",
     "private_dossier",
     "public_page_draft",
     "writer_submission",
@@ -58,17 +64,24 @@ PACKET_MODES = {
     "project_page",
 }
 PUBLIC_RENDER_MODES = {
+    "public_presence_draft",
     "creator_presence_preview",
     "public_page_draft",
     "project_page",
     "co_branded_page",
 }
 PRIVATE_RENDER_MODES = {
+    "canon_dossier",
+    "authority_scorecard",
     "private_dossier",
     "writer_submission",
     "market_fit",
     "collaboration_packet",
 }
+AUTHORITY_GOAL = "civilizational_gravitas"
+AUTHORITY_AXES = ("canonical_institution", "mass_readership", "hybrid_presence")
+AUTHORITY_MODES = {"canon_dossier", "public_presence_draft", "authority_scorecard"}
+AUTHORITY_ARCHETYPE_FUNCTIONS = ("canonical_institution", "mass_readership")
 PUBLIC_APPROVAL_TYPES = {"public_export", "public_claim", "co_branded_page", "project_page"}
 REQUIRED_SOURCE_FIELDS = {
     "id",
@@ -117,6 +130,9 @@ EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECAS
 PHONE_RE = re.compile(r"(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}")
 
 MODE_TITLES = {
+    "canon_dossier": "Canon Dossier",
+    "public_presence_draft": "Public Presence Draft",
+    "authority_scorecard": "Authority Scorecard",
     "private_dossier": "Private Dossier",
     "creator_presence_preview": "Creator Presence Preview",
     "public_page_draft": "Public Page Draft",
@@ -127,6 +143,7 @@ MODE_TITLES = {
     "co_branded_page": "Co-Branded Page Draft",
 }
 EXPORT_APPROVAL_TYPES_BY_MODE = {
+    "public_presence_draft": {"public_export"},
     "creator_presence_preview": {"public_export"},
     "public_page_draft": {"public_export"},
     "writer_submission": {"submission"},
@@ -143,6 +160,38 @@ APPROVAL_LABELS = {
     "outreach": "Outreach",
     "project_page": "Project page",
 }
+HANDOFF_PUBLIC_FORBIDDEN_FRAGMENTS = (
+    "/Users/",
+    "local-relationship-pipeline",
+    "manuscript_text",
+    "raw_text",
+    "private_message",
+    "submission_text",
+    "contact_data",
+    "creative_text",
+)
+HANDOFF_LOOP_STEPS = (
+    (
+        "SCAN",
+        "Opportunity routes, guidelines, fees, deadlines, and AI-policy posture are source-backed records.",
+    ),
+    (
+        "MATCH",
+        "Writer proof, candidate metadata, and venue route fields render into an explicit fit check.",
+    ),
+    (
+        "BUILD",
+        "Dossiers, public drafts, authority scorecards, and literary packets are generated artifacts with validators.",
+    ),
+    (
+        "APPLY",
+        "Outbound submission, publication, upload, or contact is approval-locked and dry-run only inside this substrate.",
+    ),
+    (
+        "FOLLOW_UP",
+        "Blockers and approvals required become the next work surface instead of hidden manual labor.",
+    ),
+)
 
 
 def _load_yaml(path: Path) -> dict[str, Any] | list[str]:
@@ -621,6 +670,171 @@ def _validate_literary_metadata(doc: dict[str, Any], report_label: str) -> list[
     return violations
 
 
+def _contains_placeholder_text(value: Any) -> str | None:
+    lowered = _text(value).lower()
+    for placeholder in PLACEHOLDERS:
+        if placeholder in lowered:
+            return placeholder
+    return None
+
+
+def _subject_representation_modes(doc: dict[str, Any]) -> set[str]:
+    subject = doc.get("subject")
+    if not isinstance(subject, dict):
+        return set()
+    modes = subject.get("representation_modes", [])
+    if not isinstance(modes, list):
+        return set()
+    return {str(mode) for mode in modes if str(mode).strip()}
+
+
+def _validate_authority_program(doc: dict[str, Any], report_label: str) -> list[str]:
+    violations: list[str] = []
+    declares_authority = bool(
+        AUTHORITY_MODES.intersection(_output_modes(doc))
+        or AUTHORITY_MODES.intersection(_subject_representation_modes(doc))
+        or doc.get("authority_program") is not None
+    )
+    if not declares_authority:
+        return violations
+
+    program = doc.get("authority_program")
+    if not isinstance(program, dict):
+        return [f"{report_label}: authority_program must be a mapping"]
+
+    if str(program.get("goal", "")) != AUTHORITY_GOAL:
+        violations.append(
+            f"{report_label}: authority_program.goal must be {AUTHORITY_GOAL!r}"
+        )
+
+    archetypes = program.get("archetype_functions")
+    if not isinstance(archetypes, dict):
+        violations.append(f"{report_label}: authority_program.archetype_functions must be a mapping")
+    else:
+        for archetype in AUTHORITY_ARCHETYPE_FUNCTIONS:
+            value = archetypes.get(archetype)
+            if _missing(value):
+                violations.append(
+                    f"{report_label}: authority_program.archetype_functions.{archetype} is required"
+                )
+            else:
+                placeholder = _contains_placeholder_text(value)
+                if placeholder:
+                    violations.append(
+                        f"{report_label}: authority_program.archetype_functions.{archetype} "
+                        f"contains placeholder text {placeholder!r}"
+                    )
+
+    outputs = _output_modes(doc)
+    missing_outputs = sorted(AUTHORITY_MODES - outputs)
+    if missing_outputs:
+        violations.append(
+            f"{report_label}: authority_program outputs must declare modes: "
+            f"{', '.join(missing_outputs)}"
+        )
+
+    claim_ids = _claim_ids(doc)
+    public_renderable_ids = _public_renderable_claim_ids(doc)
+    axes = program.get("axes")
+    if not isinstance(axes, dict):
+        violations.append(f"{report_label}: authority_program.axes must be a mapping")
+        return violations
+
+    axis_keys = set(str(key) for key in axes)
+    missing_axes = sorted(set(AUTHORITY_AXES) - axis_keys)
+    extra_axes = sorted(axis_keys - set(AUTHORITY_AXES))
+    if missing_axes:
+        violations.append(
+            f"{report_label}: authority_program.axes missing required axis/axes: "
+            f"{', '.join(missing_axes)}"
+        )
+    if extra_axes:
+        violations.append(
+            f"{report_label}: authority_program.axes has unsupported axis/axes: "
+            f"{', '.join(extra_axes)}"
+        )
+
+    for axis_name in AUTHORITY_AXES:
+        axis = axes.get(axis_name)
+        prefix = f"{report_label}: authority_program.axes.{axis_name}"
+        if not isinstance(axis, dict):
+            violations.append(f"{prefix} must be a mapping")
+            continue
+
+        refs = axis.get("claim_ids")
+        if not isinstance(refs, list) or not refs:
+            violations.append(f"{prefix}.claim_ids must be a non-empty list")
+            axis_claim_ids: set[str] = set()
+        else:
+            axis_claim_ids = {str(claim_id) for claim_id in refs}
+            unknown = sorted(claim_id for claim_id in axis_claim_ids if claim_id not in claim_ids)
+            if unknown:
+                violations.append(
+                    f"{prefix}.claim_ids references unknown claim_ids: {', '.join(unknown)}"
+                )
+
+        summary = axis.get("summary")
+        if _missing(summary):
+            violations.append(f"{prefix}.summary must be non-empty")
+        else:
+            placeholder = _contains_placeholder_text(summary)
+            if placeholder:
+                violations.append(f"{prefix}.summary contains placeholder text {placeholder!r}")
+
+        gates = axis.get("output_gates")
+        if not isinstance(gates, list) or not gates:
+            violations.append(f"{prefix}.output_gates must be a non-empty list")
+        else:
+            for gate in gates:
+                if _missing(gate):
+                    violations.append(f"{prefix}.output_gates must not include empty gates")
+                    continue
+                placeholder = _contains_placeholder_text(gate)
+                if placeholder:
+                    violations.append(
+                        f"{prefix}.output_gates contains placeholder text {placeholder!r}"
+                    )
+
+        public_copy = axis.get("public_copy")
+        public_refs = axis.get("public_claim_ids")
+        if _missing(public_copy):
+            violations.append(f"{prefix}.public_copy must be non-empty")
+        else:
+            placeholder = _contains_placeholder_text(public_copy)
+            if placeholder:
+                violations.append(f"{prefix}.public_copy contains placeholder text {placeholder!r}")
+            if not isinstance(public_refs, list) or not public_refs:
+                violations.append(
+                    f"{prefix}.public_claim_ids must be non-empty when public_copy is present"
+                )
+
+        if public_refs is not None:
+            if not isinstance(public_refs, list):
+                violations.append(f"{prefix}.public_claim_ids must be a list when present")
+            else:
+                public_ids = {str(claim_id) for claim_id in public_refs}
+                unknown = sorted(claim_id for claim_id in public_ids if claim_id not in claim_ids)
+                if unknown:
+                    violations.append(
+                        f"{prefix}.public_claim_ids references unknown claim_ids: "
+                        f"{', '.join(unknown)}"
+                    )
+                outside_axis = sorted(public_ids - axis_claim_ids)
+                if outside_axis:
+                    violations.append(
+                        f"{prefix}.public_claim_ids must be a subset of axis claim_ids: "
+                        f"{', '.join(outside_axis)}"
+                    )
+                not_public = sorted(public_ids - public_renderable_ids)
+                if not_public:
+                    violations.append(
+                        f"{prefix}.public_claim_ids must reference public-source or "
+                        f"claim-approved private claims: {', '.join(not_public)}"
+                    )
+
+    return violations
+
+
 def _validate_privacy(doc: dict[str, Any], report_label: str) -> list[str]:
     violations: list[str] = []
     for dotted, value in _walk(doc):
@@ -656,6 +870,7 @@ def validate_doc(doc: dict[str, Any], label: str = "<doc>") -> list[str]:
     violations.extend(_validate_sources(doc, label))
     violations.extend(_validate_approvals(doc, label))
     violations.extend(_validate_literary_metadata(doc, label))
+    violations.extend(_validate_authority_program(doc, label))
     violations.extend(_validate_privacy(doc, label))
     return violations
 
@@ -755,27 +970,39 @@ def _claim_has_public_approval(claim: dict[str, Any], approved_claim_ids: set[st
     return claim_id in approved_claim_ids
 
 
+def _claim_is_public_renderable(
+    claim: dict[str, Any],
+    sources: dict[str, dict[str, Any]],
+    approved_claim_ids: set[str],
+) -> bool:
+    if claim.get("public_ok") is not True:
+        return False
+    source_ids = [str(source_id) for source_id in claim.get("source_ids", [])]
+    if not source_ids or any(source_id not in sources for source_id in source_ids):
+        return False
+    privacies = _claim_source_privacies(claim, sources)
+    source_types = _claim_source_types(claim, sources)
+    all_public = bool(privacies) and all(privacy == "public" for privacy in privacies)
+    public_approved = _claim_has_public_approval(claim, approved_claim_ids)
+    if "messages" in source_types and not public_approved:
+        return False
+    return all_public or public_approved
+
+
 def public_claims(doc: dict[str, Any]) -> list[dict[str, Any]]:
     sources = _source_by_id(doc)
     approved_claim_ids = _approved_public_claim_ids(doc)
     out: list[dict[str, Any]] = []
 
     for claim in _claims(doc):
-        if claim.get("public_ok") is not True:
-            continue
-        source_ids = [str(source_id) for source_id in claim.get("source_ids", [])]
-        if not source_ids or any(source_id not in sources for source_id in source_ids):
-            continue
-        privacies = _claim_source_privacies(claim, sources)
-        source_types = _claim_source_types(claim, sources)
-        all_public = bool(privacies) and all(privacy == "public" for privacy in privacies)
-        public_approved = _claim_has_public_approval(claim, approved_claim_ids)
-        if "messages" in source_types and not public_approved:
-            continue
-        if all_public or public_approved:
+        if _claim_is_public_renderable(claim, sources, approved_claim_ids):
             out.append(claim)
 
     return out
+
+
+def _public_renderable_claim_ids(doc: dict[str, Any]) -> set[str]:
+    return {str(claim.get("id")) for claim in public_claims(doc) if claim.get("id")}
 
 
 def _output_modes(doc: dict[str, Any]) -> set[str]:
@@ -1059,6 +1286,184 @@ def _approval_rows(doc: dict[str, Any], mode: str, claim_ids: set[str]) -> list[
     return rows
 
 
+def _authority_program(doc: dict[str, Any]) -> dict[str, Any]:
+    program = doc.get("authority_program")
+    return program if isinstance(program, dict) else {}
+
+
+def _authority_axes(doc: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    axes = _authority_program(doc).get("axes")
+    if not isinstance(axes, dict):
+        return {}
+    return {str(key): value for key, value in axes.items() if isinstance(value, dict)}
+
+
+def _claim_map(doc: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {str(claim.get("id")): claim for claim in _claims(doc) if claim.get("id")}
+
+
+def _claim_labels(doc: dict[str, Any], claim_ids: set[str]) -> str:
+    claims = _claim_map(doc)
+    labels = [
+        str(claims[claim_id].get("label") or claim_id)
+        for claim_id in sorted(claim_ids)
+        if claim_id in claims
+    ]
+    return ", ".join(labels) if labels else "none"
+
+
+def _axis_claim_ids(axis: dict[str, Any], field: str = "claim_ids") -> set[str]:
+    refs = axis.get(field, [])
+    if not isinstance(refs, list):
+        return set()
+    return {str(claim_id) for claim_id in refs if str(claim_id).strip()}
+
+
+def _approval_status(doc: dict[str, Any], approval_type: str) -> str:
+    statuses = [
+        str(approval.get("status") or "not_recorded")
+        for approval in _approvals(doc)
+        if str(approval.get("approval_type")) == approval_type
+    ]
+    return statuses[0] if statuses else "not_recorded"
+
+
+def authority_axis_evaluations(doc: dict[str, Any]) -> list[dict[str, Any]]:
+    """Score authority axes without claiming that the long-range goal is achieved."""
+    axes = _authority_axes(doc)
+    public_renderable_ids = _public_renderable_claim_ids(doc)
+    public_output = _output_config(doc, "public_presence_draft")
+    public_output_gates = public_output.get("acceptance_gates", [])
+    if not isinstance(public_output_gates, list):
+        public_output_gates = []
+    public_export_status = _approval_status(doc, "public_export")
+
+    rows: list[dict[str, Any]] = []
+    for axis_name in AUTHORITY_AXES:
+        axis = axes.get(axis_name, {})
+        claim_ids = _axis_claim_ids(axis)
+        public_claim_ids = _axis_claim_ids(axis, "public_claim_ids")
+        if not public_claim_ids:
+            public_claim_ids = claim_ids
+        renderable_public_ids = public_claim_ids.intersection(public_renderable_ids)
+        private_or_unapproved_ids = claim_ids - public_renderable_ids
+        blockers: list[str] = []
+        gates: list[str] = []
+
+        if not claim_ids:
+            blockers.append("source-backed claim references are missing")
+        if not renderable_public_ids:
+            blockers.append("public-renderable proof is missing for the axis")
+        if "public_presence_draft" not in _output_modes(doc):
+            blockers.append("public_presence_draft output is not declared")
+        if not public_output_gates:
+            blockers.append("public presence output gates are missing")
+
+        if private_or_unapproved_ids:
+            gates.append(
+                "private or unapproved claims withheld from public copy: "
+                + _claim_labels(doc, private_or_unapproved_ids)
+            )
+        if public_export_status != "approved":
+            gates.append(f"public export approval is {public_export_status}")
+        axis_gates = axis.get("output_gates", [])
+        if isinstance(axis_gates, list) and axis_gates:
+            gates.extend(str(gate) for gate in axis_gates)
+
+        if blockers:
+            status = "BLOCKED"
+        elif public_export_status == "approved":
+            status = "PUBLIC_READY"
+        else:
+            status = "STAGED"
+
+        rows.append(
+            {
+                "axis": axis_name,
+                "status": status,
+                "claim_ids": claim_ids,
+                "public_claim_ids": public_claim_ids,
+                "renderable_public_ids": renderable_public_ids,
+                "private_or_unapproved_ids": private_or_unapproved_ids,
+                "approval_state": public_export_status,
+                "blockers": blockers,
+                "gates": gates,
+                "summary": str(axis.get("summary") or ""),
+                "public_copy": str(axis.get("public_copy") or ""),
+            }
+        )
+
+    return rows
+
+
+def _authority_dossier_rows(doc: dict[str, Any]) -> list[str]:
+    program = _authority_program(doc)
+    if not program:
+        return ["- No authority_program is declared."]
+    rows = [
+        f"- Goal: {program.get('goal', 'not declared')}.",
+        "- Civilizational status: not claimed; this is a long-range apparatus, not an achieved rank.",
+    ]
+    archetypes = program.get("archetype_functions", {})
+    if isinstance(archetypes, dict):
+        for key in AUTHORITY_ARCHETYPE_FUNCTIONS:
+            rows.append(f"- Archetype function {key}: {_sentence(archetypes.get(key))}")
+    for axis_name, axis in _authority_axes(doc).items():
+        claim_ids = _axis_claim_ids(axis)
+        rows.append(
+            f"- Axis {axis_name}: {_sentence(axis.get('summary'))} "
+            f"Claim refs: {_claim_labels(doc, claim_ids)}."
+        )
+    return rows
+
+
+def _authority_public_presence_rows(doc: dict[str, Any]) -> list[str]:
+    rows = [
+        "- Public copy is limited to public-source claims and claim-approved private claims.",
+        "- No equivalence to Stephen King, T. S. Eliot, or any achieved canonical rank is asserted.",
+    ]
+    public_renderable_ids = _public_renderable_claim_ids(doc)
+    for axis_name in AUTHORITY_AXES:
+        axis = _authority_axes(doc).get(axis_name, {})
+        public_claim_ids = _axis_claim_ids(axis, "public_claim_ids").intersection(
+            public_renderable_ids
+        )
+        if not public_claim_ids:
+            rows.append(f"- {axis_name}: public proof is not renderable yet.")
+            continue
+        copy = str(axis.get("public_copy") or "").strip()
+        if not copy:
+            rows.append(f"- {axis_name}: public copy is not staged.")
+            continue
+        rows.append(f"- {axis_name}: {copy} Proof: {_claim_labels(doc, public_claim_ids)}.")
+    return rows
+
+
+def _authority_scorecard_rows(doc: dict[str, Any]) -> list[str]:
+    rows = [
+        "- Civilizational gravitas is the program goal, not an achieved public status claim.",
+        "- Allowed statuses: BLOCKED, STAGED, PUBLIC_READY.",
+    ]
+    for evaluation in authority_axis_evaluations(doc):
+        axis = str(evaluation["axis"])
+        status = str(evaluation["status"])
+        claim_ids = evaluation["claim_ids"]
+        renderable_public_ids = evaluation["renderable_public_ids"]
+        approval_state = str(evaluation["approval_state"])
+        blockers = evaluation["blockers"]
+        gates = evaluation["gates"]
+        rows.append(
+            f"- {axis}: {status}. Source-backed claims: {_claim_labels(doc, claim_ids)}. "
+            f"Public-renderable proof: {_claim_labels(doc, renderable_public_ids)}. "
+            f"Approval state: public_export {approval_state}."
+        )
+        if blockers:
+            rows.append(f"  Blockers: {'; '.join(str(blocker) for blocker in blockers)}.")
+        if gates:
+            rows.append(f"  Gates: {'; '.join(str(gate) for gate in gates)}.")
+    return rows
+
+
 def _source_rows(
     doc: dict[str, Any], rendered_claim_ids: set[str], mode: str
 ) -> list[str]:
@@ -1225,6 +1630,28 @@ def render_record(doc: dict[str, Any], mode: str, export: bool = False) -> str:
     else:
         lines.append("- No approved public claims available.")
 
+    if mode == "canon_dossier":
+        _append_bullet_section(
+            lines,
+            "Authority Program",
+            _authority_dossier_rows(doc),
+            "No authority program rows are available.",
+        )
+    if mode == "public_presence_draft":
+        _append_bullet_section(
+            lines,
+            "Public Presence Draft Copy",
+            _authority_public_presence_rows(doc),
+            "No public presence rows are available.",
+        )
+    if mode == "authority_scorecard":
+        _append_bullet_section(
+            lines,
+            "Authority Scorecard",
+            _authority_scorecard_rows(doc),
+            "No authority scorecard rows are available.",
+        )
+
     subject_type = str(subject.get("type", ""))
     if mode == "writer_submission" and subject_type in {"person", "creator"}:
         _append_bullet_section(
@@ -1280,6 +1707,15 @@ def render_record(doc: dict[str, Any], mode: str, export: bool = False) -> str:
                 "No collaborator-facing page or co-branded surface is published without approval.",
             ]
         )
+    elif mode in AUTHORITY_MODES:
+        lines.extend(
+            [
+                "",
+                "## Authority Gate",
+                "",
+                "No canon, readership, institution, press, publication, upload, or outreach status is claimed or acted on by this renderer.",
+            ]
+        )
 
     lines.extend(
         [
@@ -1297,6 +1733,107 @@ def packet_record(doc: dict[str, Any], mode: str, export: bool = False) -> str:
     if mode not in PACKET_MODES:
         raise ValueError(f"mode does not have a packet command: {mode}")
     return render_record(doc, mode, export=export)
+
+
+def _authority_claim_ids(doc: dict[str, Any]) -> set[str]:
+    claim_ids: set[str] = set()
+    for mode in AUTHORITY_MODES:
+        claim_ids.update(_output_claim_ids(doc, mode))
+    for axis in _authority_axes(doc).values():
+        claim_ids.update(_axis_claim_ids(axis))
+    return claim_ids
+
+
+def _authority_packet_blocker_rows(doc: dict[str, Any]) -> list[str]:
+    rows: list[str] = []
+    for evaluation in authority_axis_evaluations(doc):
+        axis = str(evaluation["axis"])
+        status = str(evaluation["status"])
+        blockers = [str(item) for item in evaluation["blockers"]]
+        gates = [str(item) for item in evaluation["gates"]]
+        if status == "PUBLIC_READY" and not blockers and not gates:
+            continue
+        details = blockers + gates
+        if details:
+            rows.append(f"- {axis}: {status}; {'; '.join(details)}.")
+        else:
+            rows.append(f"- {axis}: {status}.")
+    if not rows:
+        rows.append("- none")
+    rows.append(
+        "- Achieved civilizational status is not claimed; the packet stages authority-building evidence only."
+    )
+    return rows
+
+
+def render_authority_packet(doc: dict[str, Any]) -> str:
+    """Render the combined no-outward-action authority packet."""
+    for mode in ("canon_dossier", "public_presence_draft", "authority_scorecard"):
+        if mode not in _output_modes(doc):
+            raise ValueError(f"record does not declare output mode: {mode}")
+
+    subject = doc.get("subject", {})
+    if not isinstance(subject, dict):
+        subject = {}
+    subject_name = str(subject.get("name") or doc.get("name") or "Unnamed subject")
+    authority_claim_ids = _authority_claim_ids(doc)
+
+    lines = [
+        f"# Authority Packet: {subject_name}",
+        "",
+        "Mode: authority_packet",
+        f"Goal: {AUTHORITY_GOAL}",
+        "Outward action: locked; this packet stages review artifacts only.",
+        "Civilizational status: not claimed or achieved.",
+        "",
+        "## Packet Contents",
+        "",
+        "- Canon dossier artifact",
+        "- Public presence draft artifact",
+        "- Authority scorecard artifact",
+        "- Blockers, source appendix, and approvals required",
+        "",
+        "## Canon Dossier Artifact",
+        "",
+        render_record(doc, "canon_dossier").rstrip(),
+        "",
+        "## Public Presence Draft Artifact",
+        "",
+        render_record(doc, "public_presence_draft").rstrip(),
+        "",
+        "## Authority Scorecard Artifact",
+        "",
+        render_record(doc, "authority_scorecard").rstrip(),
+    ]
+
+    _append_bullet_section(
+        lines,
+        "Packet Blockers",
+        _authority_packet_blocker_rows(doc),
+        "No authority blockers are currently detected.",
+    )
+    _append_bullet_section(
+        lines,
+        "Packet Source Appendix",
+        _source_rows(doc, authority_claim_ids, "canon_dossier"),
+        "No authority sources are renderable for this packet.",
+    )
+    _append_bullet_section(
+        lines,
+        "Packet Approvals Required",
+        _approval_rows(doc, "public_presence_draft", authority_claim_ids),
+        "No authority approval rows are declared.",
+    )
+    lines.extend(
+        [
+            "",
+            "## No-Outward-Action Gate",
+            "",
+            "This authority packet is review-only. It does not submit, publish, upload, contact, mine private material, or act outward.",
+            "It does not store raw manuscript text, private messages, contact data, generated art as source work, or fabricated status claims.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 def _literary_writer_claims(writer_doc: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1529,6 +2066,342 @@ def render_literary_packet(
     return "\n".join(lines) + "\n"
 
 
+def _declared_output_modes(doc: dict[str, Any]) -> list[str]:
+    outputs = doc.get("outputs", [])
+    if not isinstance(outputs, list):
+        return []
+    modes: list[str] = []
+    for output in outputs:
+        if not isinstance(output, dict):
+            continue
+        mode = str(output.get("mode") or "")
+        if mode in OUTPUT_MODES and mode not in modes:
+            modes.append(mode)
+    return modes
+
+
+def _public_handoff_leaks(text: str) -> list[str]:
+    leaks = [fragment for fragment in HANDOFF_PUBLIC_FORBIDDEN_FRAGMENTS if fragment in text]
+    if EMAIL_RE.search(text):
+        leaks.append("contact email")
+    if PHONE_RE.search(text):
+        leaks.append("phone-like contact data")
+    return leaks
+
+
+def _first_matching_line(text: str, prefix: str) -> str:
+    for line in text.splitlines():
+        if line.startswith(prefix):
+            return line
+    return ""
+
+
+def _append_handoff_row(
+    rows: list[tuple[str, str, str]], status: str, name: str, detail: str
+) -> None:
+    rows.append((status, name, _sentence(detail)))
+
+
+def _build_handoff_audit(
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any] | None = None,
+    candidate_id: str | None = None,
+    route_selector: str | None = None,
+) -> tuple[str, int]:
+    rows: list[tuple[str, str, str]] = []
+    writer_subject = writer_doc.get("subject", {})
+    if not isinstance(writer_subject, dict):
+        writer_subject = {}
+    writer_name = str(writer_subject.get("name") or writer_doc.get("name") or "Unnamed writer")
+    writer_label = str(writer_doc.get("id") or writer_name)
+
+    writer_violations = validate_doc(writer_doc, writer_label)
+    if writer_violations:
+        _append_handoff_row(
+            rows,
+            "BROKEN",
+            "Writer record validation",
+            "; ".join(writer_violations[:5]),
+        )
+    else:
+        _append_handoff_row(rows, "PROVEN", "Writer record validation", "record schema passes")
+
+    if opportunity_doc is not None:
+        opportunity_label = str(opportunity_doc.get("id") or "opportunity")
+        opportunity_violations = validate_doc(opportunity_doc, opportunity_label)
+        if opportunity_violations:
+            _append_handoff_row(
+                rows,
+                "BROKEN",
+                "Opportunity record validation",
+                "; ".join(opportunity_violations[:5]),
+            )
+        else:
+            _append_handoff_row(
+                rows,
+                "PROVEN",
+                "Opportunity record validation",
+                "market and route schema passes",
+            )
+    else:
+        _append_handoff_row(
+            rows,
+            "GATE",
+            "Opportunity record validation",
+            "no opportunity record supplied, so scan/match route coverage is not audited",
+        )
+
+    for mode in _declared_output_modes(writer_doc):
+        try:
+            rendered = render_record(writer_doc, mode)
+        except ValueError as exc:
+            _append_handoff_row(rows, "BROKEN", f"{mode} renderer", str(exc))
+            continue
+
+        required_sections = ("## Subject Summary", "## Source Appendix Summary", "## No-Outward-Action Notice")
+        missing_sections = [section for section in required_sections if section not in rendered]
+        if missing_sections:
+            _append_handoff_row(
+                rows,
+                "BROKEN",
+                f"{mode} renderer",
+                "missing required sections: " + ", ".join(missing_sections),
+            )
+        else:
+            _append_handoff_row(rows, "PROVEN", f"{mode} renderer", "renders with evidence and no-outward-action sections")
+
+        if mode in PUBLIC_RENDER_MODES:
+            leaks = _public_handoff_leaks(rendered)
+            if leaks:
+                _append_handoff_row(
+                    rows,
+                    "BROKEN",
+                    f"{mode} public privacy",
+                    "public renderer leaked " + ", ".join(sorted(set(leaks))),
+                )
+            else:
+                _append_handoff_row(
+                    rows,
+                    "PROVEN",
+                    f"{mode} public privacy",
+                    "no local private refs, contact data, or raw-private markers found",
+                )
+
+    writer_modes = _output_modes(writer_doc)
+    if AUTHORITY_MODES.issubset(writer_modes):
+        try:
+            authority_packet = render_authority_packet(writer_doc)
+        except ValueError as exc:
+            _append_handoff_row(rows, "BROKEN", "Authority packet", str(exc))
+        else:
+            if "## No-Outward-Action Gate" in authority_packet and "## Packet Blockers" in authority_packet:
+                _append_handoff_row(
+                    rows,
+                    "PROVEN",
+                    "Authority packet",
+                    "combined dossier, public draft, scorecard, blockers, sources, and approvals render",
+                )
+            else:
+                _append_handoff_row(
+                    rows,
+                    "BROKEN",
+                    "Authority packet",
+                    "packet rendered without required blocker or no-outward-action sections",
+                )
+    else:
+        _append_handoff_row(
+            rows,
+            "GATE",
+            "Authority packet",
+            "record does not declare the complete authority mode set",
+        )
+
+    if opportunity_doc is not None and candidate_id and route_selector:
+        try:
+            literary_packet = render_literary_packet(
+                writer_doc,
+                opportunity_doc,
+                candidate_id=candidate_id,
+                route_selector=route_selector,
+            )
+        except ValueError as exc:
+            _append_handoff_row(rows, "BROKEN", "Literary desk packet", str(exc))
+        else:
+            if "## Fit Check" in literary_packet and "## No-Send Notice" in literary_packet:
+                desk_status = _first_matching_line(literary_packet, "Desk status: ") or "Desk status: unknown"
+                _append_handoff_row(
+                    rows,
+                    "PROVEN",
+                    "Literary desk packet",
+                    f"scan-match-build packet renders; {desk_status}",
+                )
+                if "Desk status: BLOCKED" in literary_packet:
+                    _append_handoff_row(
+                        rows,
+                        "GATE",
+                        "Literary desk readiness",
+                        "packet reports blockers instead of pretending submission is ready",
+                    )
+            else:
+                _append_handoff_row(
+                    rows,
+                    "BROKEN",
+                    "Literary desk packet",
+                    "packet rendered without fit check or no-send notice",
+                )
+    elif opportunity_doc is not None:
+        _append_handoff_row(
+            rows,
+            "GATE",
+            "Literary desk packet",
+            "candidate and route selectors are required to audit scan-match-build behavior",
+        )
+
+    for mode in _declared_output_modes(writer_doc):
+        if mode not in EXPORT_APPROVAL_TYPES_BY_MODE:
+            continue
+        if _approved_export(writer_doc, mode):
+            try:
+                render_record(writer_doc, mode, export=True)
+            except ValueError as exc:
+                _append_handoff_row(rows, "BROKEN", f"{mode} export dry-run", str(exc))
+            else:
+                _append_handoff_row(rows, "PROVEN", f"{mode} export dry-run", "approved dry-run export renders")
+        else:
+            try:
+                render_record(writer_doc, mode, export=True)
+            except ValueError:
+                _append_handoff_row(
+                    rows,
+                    "PROVEN",
+                    f"{mode} export lock",
+                    "export is locked until matching approval is recorded",
+                )
+            else:
+                _append_handoff_row(
+                    rows,
+                    "BROKEN",
+                    f"{mode} export lock",
+                    "export rendered without matching approval",
+                )
+
+    if opportunity_doc is not None and candidate_id and route_selector:
+        literary_approved = _approved_export(writer_doc, "writer_submission") and _approved_export(
+            opportunity_doc, "writer_submission"
+        )
+        if literary_approved:
+            try:
+                render_literary_packet(
+                    writer_doc,
+                    opportunity_doc,
+                    candidate_id=candidate_id,
+                    route_selector=route_selector,
+                    export=True,
+                )
+            except ValueError as exc:
+                _append_handoff_row(rows, "BROKEN", "Literary export dry-run", str(exc))
+            else:
+                _append_handoff_row(rows, "PROVEN", "Literary export dry-run", "approved no-send dry run renders")
+        else:
+            try:
+                render_literary_packet(
+                    writer_doc,
+                    opportunity_doc,
+                    candidate_id=candidate_id,
+                    route_selector=route_selector,
+                    export=True,
+                )
+            except ValueError:
+                _append_handoff_row(
+                    rows,
+                    "PROVEN",
+                    "Literary export lock",
+                    "literary export is locked until writer and opportunity submission approvals exist",
+                )
+            else:
+                _append_handoff_row(
+                    rows,
+                    "BROKEN",
+                    "Literary export lock",
+                    "literary export rendered without both submission approvals",
+                )
+
+    try:
+        sample_candidate = candidate_intake_row(
+            candidate_id="handoff-audit-candidate",
+            title="Handoff audit metadata-only candidate",
+            content_ref="source://handoff-audit/metadata-only",
+            source_ids=["handoff-audit-source"],
+            claim_ids=["handoff-audit-claim"],
+        )
+    except ValueError as exc:
+        _append_handoff_row(rows, "BROKEN", "Candidate intake", str(exc))
+    else:
+        serialized_candidate = yaml.safe_dump({"candidate_works": [sample_candidate]}, sort_keys=False)
+        leaks = _public_handoff_leaks(serialized_candidate)
+        if leaks:
+            _append_handoff_row(rows, "BROKEN", "Candidate intake", "metadata row leaked " + ", ".join(leaks))
+        else:
+            _append_handoff_row(
+                rows,
+                "PROVEN",
+                "Candidate intake",
+                "metadata-only row emits without manuscript text or contact data",
+            )
+
+    mention_config = writer_doc.get("mention_index", {})
+    if isinstance(mention_config, dict) and isinstance(mention_config.get("aliases"), list):
+        sample_text = " ".join(str(alias) for alias in mention_config["aliases"][:2])
+        mention_rows = index_mentions(sample_text, writer_doc)
+        if mention_rows:
+            _append_handoff_row(rows, "PROVEN", "Mention index", "aliases produce deterministic mention rows")
+        else:
+            _append_handoff_row(rows, "BROKEN", "Mention index", "aliases are declared but produced no mention rows")
+    else:
+        _append_handoff_row(rows, "GATE", "Mention index", "record has no mention_index aliases to audit")
+
+    broken_count = sum(1 for status, _, _ in rows if status == "BROKEN")
+    gate_count = sum(1 for status, _, _ in rows if status == "GATE")
+    audit_status = "BROKEN" if broken_count else "PROVEN"
+
+    lines = [
+        f"# Representation Handoff Audit: {writer_name}",
+        "",
+        f"Audit status: {audit_status}",
+        f"Broken features: {broken_count}",
+        f"Open gates: {gate_count}",
+        "Outward action: none; this audit only renders, validates, and proves locks.",
+        "",
+        "## Application Pipeline Loop Translation",
+        "",
+    ]
+    for step, detail in HANDOFF_LOOP_STEPS:
+        lines.append(f"- {step}: {detail}")
+
+    lines.extend(["", "## Feature Checks", ""])
+    lines.extend(f"- {status}: {name}. {detail}" for status, name, detail in rows)
+    lines.extend(
+        [
+            "",
+            "## Chris Handoff Rule",
+            "",
+            "A gate is acceptable only when it names the missing approval, source, candidate metadata, or route evidence. A broken feature is not acceptable for handoff.",
+            "This audit does not submit, publish, upload, contact, scrape private messages, or represent AI-generated text as human work.",
+        ]
+    )
+    return "\n".join(lines) + "\n", broken_count
+
+
+def render_handoff_audit(
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any] | None = None,
+    candidate_id: str | None = None,
+    route_selector: str | None = None,
+) -> str:
+    """Render the no-outward-action feature audit for a representation handoff."""
+    return _build_handoff_audit(writer_doc, opportunity_doc, candidate_id, route_selector)[0]
+
+
 def _write_or_print(output: str, out: Path | None) -> None:
     if out:
         out.write_text(output, encoding="utf-8")
@@ -1595,6 +2468,40 @@ def _literary_packet_command(
     return 0
 
 
+def _authority_packet_command(record: Path, out: Path | None) -> int:
+    try:
+        doc = _load_record(record)
+        output = render_authority_packet(doc)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    _write_or_print(output, out)
+    return 0
+
+
+def _handoff_audit_command(
+    writer: Path,
+    opportunity: Path | None,
+    candidate: str | None,
+    route: str | None,
+    out: Path | None,
+) -> int:
+    try:
+        writer_doc = _load_record(writer)
+        opportunity_doc = _load_record(opportunity) if opportunity else None
+        output, broken_count = _build_handoff_audit(
+            writer_doc,
+            opportunity_doc,
+            candidate_id=candidate,
+            route_selector=route,
+        )
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    _write_or_print(output, out)
+    return 1 if broken_count else 0
+
+
 def _load_record(path: Path) -> dict[str, Any]:
     doc = _load_yaml(path)
     if isinstance(doc, list):
@@ -1623,6 +2530,13 @@ def main(argv: list[str] | None = None) -> int:
     packet.add_argument("--export", action="store_true")
     packet.add_argument("--out", type=Path)
 
+    authority_packet = sub.add_parser(
+        "authority-packet",
+        help="generate a combined no-outward-action authority packet from one record",
+    )
+    authority_packet.add_argument("--record", required=True, type=Path)
+    authority_packet.add_argument("--out", type=Path)
+
     literary_packet = sub.add_parser(
         "literary-packet",
         help="generate a no-send literary desk packet from writer, opportunity, candidate, and route",
@@ -1633,6 +2547,16 @@ def main(argv: list[str] | None = None) -> int:
     literary_packet.add_argument("--route", required=True)
     literary_packet.add_argument("--export", action="store_true")
     literary_packet.add_argument("--out", type=Path)
+
+    handoff_audit = sub.add_parser(
+        "handoff-audit",
+        help="audit a representation handoff without publishing, submitting, or contacting",
+    )
+    handoff_audit.add_argument("--writer", required=True, type=Path)
+    handoff_audit.add_argument("--opportunity", type=Path)
+    handoff_audit.add_argument("--candidate")
+    handoff_audit.add_argument("--route")
+    handoff_audit.add_argument("--out", type=Path)
 
     candidate_intake = sub.add_parser(
         "candidate-intake",
@@ -1686,6 +2610,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "packet":
         return _render_command(args.record, args.mode, args.export, args.out, packet=True)
 
+    if args.cmd == "authority-packet":
+        return _authority_packet_command(args.record, args.out)
+
     if args.cmd == "literary-packet":
         return _literary_packet_command(
             args.writer,
@@ -1693,6 +2620,15 @@ def main(argv: list[str] | None = None) -> int:
             args.candidate,
             args.route,
             args.export,
+            args.out,
+        )
+
+    if args.cmd == "handoff-audit":
+        return _handoff_audit_command(
+            args.writer,
+            args.opportunity,
+            args.candidate,
+            args.route,
             args.out,
         )
 

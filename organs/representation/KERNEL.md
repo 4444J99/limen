@@ -14,9 +14,10 @@ sources, every output names its mode, and every outward surface is locked until
 the represented subject approves it.
 
 The first mode is literary submission support, but that is only one mode. The
-same source-backed record can render a private dossier, a creator presence
-preview, a public page draft, a submission packet, a collaboration packet, a
-market-fit packet, or a co-branded project page.
+same source-backed record can render a canon dossier, public presence draft,
+authority scorecard, private dossier, creator presence preview, public page
+draft, submission packet, collaboration packet, market-fit packet, or
+co-branded project page.
 
 ## Core Schema
 
@@ -32,6 +33,7 @@ Each representation record uses these shared primitives:
 | `sources` | Local repo, remote repo, public web, messages, user assertion, or confirmed subject evidence |
 | `approvals` | Public export, co-branded page, submission, outreach, or project-page gates |
 | `outputs` | Renderable packets or pages produced from the same source-backed record |
+| `authority_program` | Civilizational-gravitas program axes for canon, readership, and hybrid public presence |
 
 ## Source Contract
 
@@ -51,6 +53,9 @@ quotes in tracked files.
 
 Renderers are modes over one schema, not separate products:
 
+- `canon_dossier`
+- `public_presence_draft`
+- `authority_scorecard`
 - `private_dossier`
 - `creator_presence_preview`
 - `public_page_draft`
@@ -64,6 +69,73 @@ Private renderers can include private source notes and private claim summaries.
 Public-facing renderers only include claims supported by public sources or
 claim-level approval. Private message-derived claims require claim-level
 approval before any public renderer may show them.
+
+## Authority Program Contract
+
+Authority work remains inside `organs/representation/` as a canon and public
+presence apparatus joined to the artist, media, positioning, and publication
+policy organs. It is not a new `organs/literary` surface.
+
+Records that declare authority modes must include `authority_program` with
+`goal: civilizational_gravitas` and exactly three axes:
+
+- `canonical_institution`
+- `mass_readership`
+- `hybrid_presence`
+
+The archetype functions are institutional gravity and mass readership: they
+name the apparatus to build over time, not a status equivalence to Stephen King,
+T. S. Eliot, or any other figure. Axis copy can reference only declared
+`claim_ids`. Public-facing axis copy must use public-source claims or
+claim-approved private claims through `public_claim_ids`.
+
+The authority scorecard reports each axis as `BLOCKED`, `STAGED`, or
+`PUBLIC_READY` from source-backed claims, public-renderable proof, output gates,
+and approval state. It must report blockers instead of claiming achieved
+civilizational status.
+
+The combined packet command is review-only:
+
+```bash
+python organs/representation/representation_substrate.py authority-packet \
+  --record organs/representation/records/christopher-author-one.yaml
+```
+
+It renders the canon dossier, public presence draft, authority scorecard,
+blockers, source appendix, and approvals required. It does not publish, submit,
+upload, contact, mine private material, or act outward.
+
+## Handoff Audit Contract
+
+The old application pipeline's useful shape is preserved here as a literary and
+public-presence loop:
+
+- scan: source-backed venue routes, guideline fields, deadlines, fees, pay, and
+  AI-policy posture;
+- match: writer proof, candidate-work metadata, and route constraints rendered
+  as a fit check;
+- build: dossiers, public drafts, authority scorecards, and no-send literary
+  packets;
+- apply: approval-locked dry runs only, with no submission, upload, publication,
+  contact, or impersonation by the substrate;
+- follow up: blockers and approvals required become the next work surface.
+
+Before a record is handed to Chris or used as the basis for outward literary
+work, run the handoff audit:
+
+```bash
+python organs/representation/representation_substrate.py handoff-audit \
+  --writer organs/representation/records/christopher-author-one.yaml \
+  --opportunity organs/representation/opportunities/literary-submission-landscape.yaml \
+  --candidate chris-public-profile-readiness \
+  --route yale-review-nonfiction-route
+```
+
+The audit distinguishes broken features from honest gates. A missing manuscript
+source ref, unresolved approval, or venue-specific blocker is a gate. A schema
+violation, renderer crash, public privacy leak, or unlocked export is broken and
+blocks handoff. The audit does not submit, publish, upload, contact, mine
+private messages, or represent AI-generated text as human work.
 
 ## Literary Intake Contract
 
@@ -121,10 +193,19 @@ Chris remains the first full literary proof. ET4L is the second proof: a
 non-writer artist/project record proving the substrate is not secretly only a
 submission desk.
 
+The authority program applies to all first proofs:
+
+- ET4L: body of work, provenance, exhibition argument, and public project proof.
+- Chris: public writing record, editorial/theatre proof, submission blockers,
+  and private collaboration context withheld from public copy.
+- Generic authority template: reusable axes and output modes for future artists.
+
 ## Validation
 
 ```bash
 python organs/representation/validate-representation.py --fleet
+python organs/representation/representation_substrate.py handoff-audit --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-public-profile-readiness --route yale-review-nonfiction-route
+python organs/representation/representation_substrate.py authority-packet --record organs/representation/records/christopher-author-one.yaml
 python organs/representation/representation_substrate.py packet organs/representation/records/christopher-author-one.yaml --mode writer_submission
 python organs/representation/representation_substrate.py packet organs/representation/records/et4l.yaml --mode project_page
 ```

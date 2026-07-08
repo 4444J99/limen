@@ -10,6 +10,9 @@ subject:
     - creative_series
     - exhibition_project
   representation_modes:
+    - canon_dossier
+    - public_presence_draft
+    - authority_scorecard
     - private_dossier
     - creator_presence_preview
     - project_page
@@ -22,9 +25,49 @@ standing:
   current: RESEARCHING
   next: PROJECT_PACKET_REVIEW
 mandate:
-  description: Represent an artist-owned thematic series as a source-backed project packet and gated public-page draft.
+  description: Represent an artist-owned thematic series as a source-backed canon dossier, public presence draft, and gated project packet.
 artifacts:
-  next_reviewable_output: ET4L private dossier and project page packet generated from one representation record
+  next_reviewable_output: ET4L authority packet, private dossier, and project page packet generated from one representation record
+authority_program:
+  goal: civilizational_gravitas
+  archetype_functions:
+    canonical_institution: Build the museum, archive, provenance, and exhibition apparatus that can accumulate institutional gravity over time without claiming final canon status.
+    mass_readership: Build a discoverable public-project surface that can grow readership over time without claiming a mass audience already exists.
+  axes:
+    canonical_institution:
+      summary: Stages body of work, provenance, exhibition argument, and public project proof as a reviewable canon dossier.
+      claim_ids:
+        - et4l-artist-chamber
+        - et4l-exhibition-logic
+        - et4l-public-proof
+      public_claim_ids:
+        - et4l-public-proof
+      public_copy: ET4L can be introduced as a sourced artist and project record visible through public artist-organ proof.
+      output_gates:
+        - Artist confirms selection and provenance before any institution-facing use.
+        - Dossier remains internal until artist-approved exhibition language exists.
+    mass_readership:
+      summary: Stages discoverable project proof as the first readership surface without asserting audience scale.
+      claim_ids:
+        - et4l-public-proof
+      public_claim_ids:
+        - et4l-public-proof
+      public_copy: ET4L's public presence can point to public project proof while readership remains staged rather than claimed.
+      output_gates:
+        - Public copy uses only public project proof.
+        - Public export remains locked until project-page approval exists.
+    hybrid_presence:
+      summary: Joins artist organ provenance, media/project-page staging, and authority review gates in one record.
+      claim_ids:
+        - et4l-artist-chamber
+        - et4l-exhibition-logic
+        - et4l-public-proof
+      public_claim_ids:
+        - et4l-public-proof
+      public_copy: ET4L can be drafted as a public project-facing proof while private exhibition and provenance work stays review-only.
+      output_gates:
+        - Hybrid project presence remains review-only before artist approval.
+        - No generated image or caption is treated as source work.
 works:
   - id: et4l-series
     type: exhibition_series
@@ -126,6 +169,11 @@ sources:
     confidence: high
     note: Public GitHub web surface exposes the artist organ and chamber files.
 approvals:
+  - id: public-export-not-requested
+    approval_type: public_export
+    status: not_requested
+    claim_ids: []
+    note: Public presence export is locked until the artist approves copy.
   - id: project-page-not-requested
     approval_type: project_page
     status: not_requested
@@ -137,6 +185,37 @@ approvals:
     claim_ids: []
     note: Collaboration packets are review-only until artist-approved outreach exists.
 outputs:
+  - id: et4l-canon-dossier
+    mode: canon_dossier
+    report_grade: true
+    claim_ids:
+      - et4l-artist-chamber
+      - et4l-exhibition-logic
+      - et4l-public-proof
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms the canon dossier summarizes provenance without raw source material.
+      - Reviewer confirms civilizational gravitas is a program goal, not an achieved status claim.
+  - id: et4l-public-presence-draft
+    mode: public_presence_draft
+    report_grade: true
+    claim_ids:
+      - et4l-public-proof
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms public presence copy uses only public-source claims.
+      - Public export approval remains locked before outward use.
+  - id: et4l-authority-scorecard
+    mode: authority_scorecard
+    report_grade: true
+    claim_ids:
+      - et4l-artist-chamber
+      - et4l-exhibition-logic
+      - et4l-public-proof
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms every axis reports BLOCKED, STAGED, or PUBLIC_READY.
+      - Reviewer confirms blockers are reported instead of achieved canon status.
   - id: et4l-private-dossier
     mode: private_dossier
     report_grade: true
