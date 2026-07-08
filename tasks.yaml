@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 172
+      spent: 173
       per_agent:
         jules: 100
         gemini: 3
-        codex: 12
+        codex: 13
         opencode: 25
         agy: 31
         claude: 0
@@ -106238,7 +106238,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106254,7 +106254,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T05:08:32.537613Z'
+  updated: '2026-07-08T06:38:00.850471Z'
   dispatch_log:
   - timestamp: '2026-07-08T04:43:14.393105Z'
     agent: codex
@@ -106271,6 +106271,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-08T06:38:00.850471Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-173
   title: fix failing CI on organvm/domus-genoma#173
   repo: organvm/domus-genoma
@@ -110205,4 +110210,88 @@ tasks:
     [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
+  dispatch_log: []
+- id: GH-organvm-domus-genoma-203
+  title: 'Remove checked-in .git-task Git directory from Limen PR #187'
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/domus-genoma/issues/203
+  context: 'GitHub issue organvm/domus-genoma#203. Affected PR: #187. Evidence: -
+    The PR diff includes an entire `.git-task/` Git directory: `HEAD`, `config`, hooks,
+    refs, logs, object files, `index`, and `packed-refs`. - The same diff also touches
+    broad executable surfaces plus package/workspace files, so the generated Git metadata
+    makes ownership and review boundaries unsafe. - CI is red: `Build, Test, and Lint`
+    failed, and `BATS Tests` failed i'
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T06:35:26.534280Z'
+  dispatch_log: []
+- id: GH-organvm-domus-genoma-202
+  title: Restore audit helper contract and domus-auth formatting on Limen repair PRs
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/domus-genoma/issues/202
+  context: 'GitHub issue organvm/domus-genoma#202. Affected PRs: #183, #184, #185.
+    Evidence: - Each PR is open against `master` and currently has `Build, Test, and
+    Lint`, `Shell Formatting`, and `Python Tests` failing. - The tracked diff is the
+    same narrow surface: `audit.py`, `audit_report.md`, `dot_local/bin/executable_domus-auth`,
+    and `lint_test.sh`. - Python Tests fail because the `audit` module no longer exposes
+    the helper contract used by `t'
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T06:35:26.535669Z'
+  dispatch_log: []
+- id: GH-organvm-mirror-mirror-113
+  title: Regenerate lockfile for failing Limen repair PRs
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/mirror-mirror/issues/113
+  context: 'GitHub issue organvm/mirror-mirror#113. Several open Mirror Mirror repair/value
+    PRs are failing before lint/build/test because `npm ci` detects package.json/package-lock
+    drift. Affected PRs observed on 2026-07-08: - #111: Node 20 and Node 22 jobs both
+    fail `npm ci`; lockfile is missing `@types/node@26.1.0` and `undici-types@8.3.0`.
+    - #109: `npm ci` fails because the lockfile still has Vitest-family packages at
+    4.0.18 while package requi'
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T06:35:26.536413Z'
+  dispatch_log: []
+- id: GH-organvm-universal-mail-automation-150
+  title: Clean generated and merge-residue files from Limen repair PRs
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/universal-mail--automation/issues/150
+  context: 'GitHub issue organvm/universal-mail--automation#150. Several open Limen
+    repair/rebase PRs currently have green CI but carry files that look like generated
+    metadata or merge/resolution residue rather than intentional source changes. Affected
+    PRs observed on 2026-07-08: - #149 adds `api/schemas.py.main`, `pr130.txt`, modifies
+    tracked `universal_mail_automation.egg-info/*`, and adds `uv.lock`. - #148 adds
+    `api/schemas.py.main`, `pr130.txt`, modifies tr'
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T06:35:26.537574Z'
   dispatch_log: []
