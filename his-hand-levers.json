@@ -371,6 +371,15 @@
       "unlocks": "external verdict signal: stars/followers/traffic deltas on the verdict meter; inbound for the recruiter front",
       "source_task": "LAVREA awareness apparatus (session f6fa1984, 2026-07-04)",
       "issue": 657
+    },
+    {
+      "id": "L-MINT-INGRESS",
+      "label": "MONETA IS RUNNING ON OWNED HARDWARE — one ingress decision opens the public storefront. Deployed 2026-07-08: launchd service com.limen.moneta on the Mac (43/43 tests; runtime ~/.moneta outside all repos; stable production signing key 0600; order book persisted on real disk; health {ok:true,configured:false} pooling demand). The public doorway is harness-gated because it exposes a service on the personal Mac — a decision that is genuinely yours, once.",
+      "owner": "yours",
+      "cost": "ONE of two ~2-minute paths: (A) OWNED-HARDWARE INGRESS — say the word (or add a Bash allow rule for 'cloudflared tunnel' + CF DNS writes) and the fleet finishes: named Cloudflare tunnel -> mint.4444j99.dev CNAME -> connector launchd service; Mac stays the host, per the no-kill-switches directive (CF is only the doorway; killchain task adds the fallback mirror). (B) $0 CLOUD HOST — create a free Koyeb (or Render) account and connect the GitHub repo; the fleet supplies work-dir moneta, port 8787, env per moneta/GO-LIVE.md, and the MINT_PRIVATE_JWK secret hand-off happens via the credential organ, never chat.",
+      "unlocks": "public MONETA storefront URL -> exporter Buy-Pro points at it -> demand pools against L-REVENUE-ACCT (the address) and auto-releases the instant that lands. The last two levers between the fleet and the first sovereign dollar are this one and L-REVENUE-ACCT.",
+      "issue": "",
+      "source_task": "EXCAV-0708-EXPORTER-ARM"
     }
   ]
 }
