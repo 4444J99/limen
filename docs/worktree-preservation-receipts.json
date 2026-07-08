@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-08T03:09:26Z",
+  "generated_utc": "2026-07-08T03:26:33Z",
   "receipts": [
     {
       "branch": "pr-110-branch",
@@ -1888,6 +1888,48 @@
       "status": "documented_non_source_residue",
       "total_bytes": 1398,
       "worktree": "/Users/4jp/Workspace/.limen-worktrees/org-health-organ-firstslice-0704-caa4e142"
+    },
+    {
+      "branch": "limen/heal-cifix-organvm-domus-genoma-141-e43baa15",
+      "classification": "unique dirty shell-lint patch preserved locally; owner promotion required",
+      "default_branch": "origin/master",
+      "dirty_paths": [
+        "dot_local/bin/executable_domus-desktop-router",
+        "lint_test.sh"
+      ],
+      "evidence_updated_utc": "2026-07-08T03:26:33Z",
+      "head": "3d9906950212c5be0a7bd02ab04c64b768fa799f",
+      "head_ancestor_of_default": true,
+      "lane": "owner-blocker",
+      "next_action": "Do not delete or reclaim this worktree. Promote the preserved patch through an owner packet: rebase/apply it onto the current PR #141 head or current origin/master, rerun `git diff --check` and `timeout 180 bash lint_test.sh`, then push a narrow branch/PR or explicitly supersede the dirty patch receipt.",
+      "owner_predicates": [
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        },
+        {
+          "command": "timeout 180 bash lint_test.sh",
+          "result": "passed with yamllint warnings only"
+        }
+      ],
+      "patch_bytes": 2694,
+      "patch_sha256": "f679459d1dd13188644f2bc93ba7cc14c1e8fe8a81da2856aa07a983bd87727b",
+      "pr_head_ancestor_of_default": false,
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T032633Z-heal-cifix-organvm-domus-genoma-141-e43baa15/receipt.json",
+      "remote_pr": {
+        "base_ref": "master",
+        "head_ref": "limen/gen-organvm-domus-genoma-security-0627-b9ed",
+        "merge_state": "UNKNOWN",
+        "mergeable": "UNKNOWN",
+        "number": 141,
+        "state": "OPEN",
+        "url": "https://github.com/organvm/domus-genoma/pull/141"
+      },
+      "repo": "organvm/domus-genoma",
+      "root": "heal-cifix-organvm-domus-genoma-141-e43baa15",
+      "score_discount": 35,
+      "status": "private_patch_preserved",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-141-e43baa15"
     }
   ],
   "schema": 1
