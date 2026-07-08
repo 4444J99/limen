@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 167
+      spent: 168
       per_agent:
         jules: 100
         gemini: 3
-        codex: 7
+        codex: 8
         opencode: 25
         agy: 31
         claude: 0
@@ -108802,7 +108802,7 @@ tasks:
   workstream: repo-boil-up
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -108831,7 +108831,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T20:05:46.346014Z'
+  updated: '2026-07-08T05:23:26.035491Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:22:21.721601Z'
     agent: agy
@@ -108863,6 +108863,11 @@ tasks:
     status: open
     output: "recover: jules session 10563773448549561079 is awaiting_user_feedback\
       \ \u2192 reopened"
+  - timestamp: '2026-07-08T05:23:26.035491Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-VALUE-REPOS
   title: Assign revenue/value repo work from existing ledgers
   description: 13 value repos define the funded work lane
