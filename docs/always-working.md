@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-08T05:12:35+00:00`
+Generated: `2026-07-08T05:23:13+00:00`
 Status: `needs-work`
 Required open: `4`
 Blocked: `1`
@@ -31,10 +31,10 @@ Done from receipt: `6`
 | 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | disk/temp pressure needs owner work |
 | 5 | `ESTATE-CUSTODY` | `assigned_from_existing_work` | estate doctrine exists; implementation receipt is not complete |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
-| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 74.1%, PRs 13.3%, issues 12.0%, reviews 0.6% |
+| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 74.1%, PRs 13.2%, issues 12.0%, reviews 0.6% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `assigned_from_existing_work` | credential wall passes current-home check; historical token tombstone audit still needs owner receipt |
 | 20 | `MAIL-ACTIVE-FLAGGED` | `done_from_receipt` | 127 active flagged messages classified into 11 clusters; no body reads or mailbox mutations |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82109 indexed non-deleted messages remain for future batches |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82112 indexed non-deleted messages remain for future batches |
 | 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 48 duplicate remote group(s) recorded |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `done_from_receipt` | top 5 value repos have owner receipts; 14 value repos are sell-ready in the product ledger |
@@ -109,14 +109,6 @@ Done from receipt: `6`
   - `~/Workspace/limen/cli/tests/test_github_contribution_balance.py`
   - `https://github.com/organvm/limen/issues/687`
   - `https://github.com/4444J99`
-- Current beat receipt (`2026-07-08T05:01:28Z`):
-  - Value gate: worth doing now as coordination/owner-routing work. The repo is not a value-tier repo, but the packet is critical, budget cost is 1, and the public proof mix is outside the steering rails: commits 74.1% (target <=60%), PRs 13.3% (target >=15%), issues 12.1% (target >=15%), reviews 0.6% (target >=10%). More direct implementation commits would worsen the visible signal.
-  - Harvest before predicate: read this receipt, `tasks.yaml` entries `AW-PUBLIC-FACE-CONTRIBUTION-BALANCE` and `GH-organvm-limen-687`, `docs/github-contribution-balance.md`, `scripts/github-contribution-balance.py`, and `cli/tests/test_github_contribution_balance.py`; public profile surface `https://github.com/4444J99` is reachable unauthenticated.
-  - Live predicate result: `python3 scripts/github-contribution-balance.py --login 4444J99 --json` exited 2 because `gh api graphql` could not reach `api.github.com`; `gh auth status` also reports the local default token invalid. No secret values were read or recorded.
-  - Issue owner receipt: `https://github.com/organvm/limen/issues/687` owns the contribution-balance criteria before more commit-heavy public work.
-  - Review route: the next public GitHub action must be a substantive review on an existing open PR, selected after `gh pr list --repo organvm/limen --state open --json number,title,reviewDecision,mergeStateStatus,url` succeeds. Record the review URL here or on issue #687 before starting new implementation.
-  - PR packaging route: the next implementation unit must be packaged as a branch + PR linked to issue #687. Direct `main` commits are limited to narrow owner receipts like this one, daemon snapshots, or urgent protocol repair.
-  - Stop rule: commit-only implementation churn is not the next public action; review first, then issue criteria refresh, then PR packaging.
 
 ### CREDENTIAL-WALL-TOKEN-HYGIENE
 
