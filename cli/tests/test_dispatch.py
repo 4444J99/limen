@@ -1115,7 +1115,9 @@ def test_isolated_local_run_updates_same_repo_pr_head(tmp_path: Path, monkeypatc
         str(tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd"),
         "origin/limen/fix-ci-175",
     ]
-    assert pushed_pr_heads == [("limen/fix-ci-175", tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd")]
+    assert pushed_pr_heads == [
+        ("limen/fix-ci-175", tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd")
+    ]
     assert auto_merge_urls == ["https://github.com/organvm/domus-genoma/pull/175"]
     assert cleanups == [("origin/limen/fix-ci-175", True)]
 
