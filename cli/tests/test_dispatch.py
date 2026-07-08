@@ -112,9 +112,7 @@ def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_k
     assert "oz" not in lanes
 
 
-def test_auto_lane_selector_keeps_agy_up_on_weak_proxy_budget_saturation(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_auto_lane_selector_keeps_agy_up_on_weak_proxy_budget_saturation(tmp_path: Path, monkeypatch) -> None:
     agy = tmp_path / "agy"
     agy.write_text("#!/bin/sh\nexit 0\n")
     agy.chmod(0o755)
