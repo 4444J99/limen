@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 164
+      spent: 165
       per_agent:
         jules: 100
         gemini: 3
-        codex: 4
+        codex: 5
         opencode: 25
         agy: 31
         claude: 0
@@ -106554,7 +106554,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106570,7 +106570,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T10:16:39.598462Z'
+  updated: '2026-07-08T10:56:27.906721Z'
   dispatch_log:
   - timestamp: '2026-07-08T09:42:46.634190Z'
     agent: codex
@@ -106587,6 +106587,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-08T10:56:27.906721Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-dot-github--logos-26
   title: rebase/resolve conflicts on organvm/dot-github--logos#26
   repo: organvm/dot-github--logos
@@ -111036,6 +111041,29 @@ tasks:
     the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
     with green CI. Do not open a new PR. PR: https://github.com/organvm/organvm-iii-ergon.github.io/pull/5
     [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-176
+  title: rebase/resolve conflicts on organvm/domus-genoma#176
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/176
+  context: 'PR organvm/domus-genoma#176 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/domus-genoma/pull/176 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
   dispatch_log: []
