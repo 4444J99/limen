@@ -225,9 +225,34 @@ def section_pointers():
 # ── main ────────────────────────────────────────────────────────────────────
 
 
+def section_handoff() -> str:
+    """Inject the seam-survival handoff (scripts/handoff-relay.py) so a resuming session picks up
+    WARM — open lanes, in-flight/stale claims, budget, and the single next action — instead of
+    cold-deriving. Silent if no fresh handoff exists."""
+    data = _read_json(ROOT / "logs" / "handoff.json", {})
+    if not isinstance(data, dict) or not data.get("generated"):
+        return ""
+    lanes = data.get("open_lanes") or {}
+    inflight = data.get("in_flight_claims") or {}
+    blk = data.get("last_blocker") or {}
+    b = data.get("budget_remaining") or {}
+    na = data.get("next_action") or {}
+    line = (
+        f"**Resume (handoff)** — {lanes.get('total_open', 0)} open / "
+        f"{len(lanes.get('by_lane', {}))} lanes · {inflight.get('count', 0)} in-flight "
+        f"({inflight.get('stale', 0)} stale) · needs_human {blk.get('needs_human_count', 0)}"
+    )
+    if b.get("overnight_remaining") is not None:
+        line += f" · beat budget {b.get('overnight_spent')}/{b.get('overnight_cap')}"
+    if na.get("id"):
+        line += f"\n  next → `{na.get('id')}` [{na.get('priority')}] {na.get('title', '')}"
+    return line
+
+
 def main():
     sections = (
         section_north_star,
+        section_handoff,
         section_levers,
         section_organs,
         section_health,
