@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 54
+      spent: 58
       per_agent:
-        jules: 49
+        jules: 52
         gemini: 0
-        codex: 4
+        codex: 5
         opencode: 0
         agy: 0
         claude: 0
@@ -85719,10 +85719,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#31
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -85739,7 +85739,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T16:01:49.115166Z'
+  updated: '2026-07-08T16:13:13.461826Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:35:01.040512Z'
     agent: codex
@@ -85779,6 +85779,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T16:13:13.461826Z'
+    agent: jules
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
 - id: HEAL-cifix-organvm-a-i-chat--exporter-49
   title: fix failing CI on organvm/a-i-chat--exporter#49
   repo: organvm/a-i-chat--exporter
@@ -85975,10 +85980,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#61
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -85995,7 +86000,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T16:01:49.115166Z'
+  updated: '2026-07-08T16:13:13.461826Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:11:02.708379Z'
     agent: codex
@@ -86035,6 +86040,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T16:13:13.461826Z'
+    agent: jules
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
 - id: HEAL-rebase-organvm-a-i-chat--exporter-66
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#66
   repo: organvm/a-i-chat--exporter
@@ -92550,7 +92560,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -92565,7 +92575,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:17:57.832919Z'
+  updated: '2026-07-08T16:13:57.661961Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:05:23.799955Z'
     agent: jules
@@ -92581,6 +92591,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-08T16:13:57.661961Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-83
   title: fix failing CI on organvm/mirror-mirror#83
   repo: organvm/mirror-mirror
@@ -108969,7 +108984,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -108984,7 +108999,7 @@ tasks:
     \ [auto-emitted 2026-07-07 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-08T15:52:11.635580Z'
+  updated: '2026-07-08T16:14:57.956891Z'
   dispatch_log:
   - timestamp: '2026-07-08T15:16:08.948595Z'
     agent: codex
@@ -108995,6 +109010,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/domus-genoma/pull/178
     status: dispatched
+  - timestamp: '2026-07-08T16:14:57.956891Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-limen-670
   title: fix failing CI on organvm/limen#670
   repo: organvm/limen
@@ -109904,7 +109924,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -109919,7 +109939,13 @@ tasks:
     2026-07-07 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-07'
-  dispatch_log: []
+  updated: '2026-07-08T16:13:57.661961Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T16:13:57.661961Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-155
   title: rebase/resolve conflicts on organvm/domus-genoma#155
   repo: organvm/domus-genoma
@@ -111513,13 +111539,17 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T16:01:49.115166Z'
+  updated: '2026-07-08T16:13:13.461826Z'
   dispatch_log:
   - timestamp: '2026-07-08T16:01:49.115166Z'
     agent: jules
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T16:13:13.461826Z'
+    agent: jules
+    session_id: '2945216637410613800'
+    status: dispatched
 - id: HEAL-rebase-organvm-domus-genoma-136
   title: rebase/resolve conflicts on organvm/domus-genoma#136
   repo: organvm/domus-genoma
@@ -112381,7 +112411,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -112396,7 +112426,13 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-08T16:13:57.661961Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T16:13:57.661961Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-160
   title: rebase/resolve conflicts on organvm/domus-genoma#160
   repo: organvm/domus-genoma
@@ -112496,7 +112532,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -112511,7 +112547,13 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-08T16:13:57.661961Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T16:13:57.661961Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-178
   title: rebase/resolve conflicts on organvm/domus-genoma#178
   repo: organvm/domus-genoma
@@ -112639,7 +112681,7 @@ tasks:
   target_agent: codex
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - revenue
   - product
@@ -112649,7 +112691,7 @@ tasks:
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:52:40.977572Z'
+  updated: '2026-07-08T16:14:57.956891Z'
   dispatch_log:
   - timestamp: '2026-07-08T15:24:31.317394Z'
     agent: jules
@@ -112666,6 +112708,15 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T16:13:13.461826Z'
+    agent: codex
+    session_id: https://github.com/organvm/a-i-chat--exporter/pull/112
+    status: dispatched
+  - timestamp: '2026-07-08T16:14:57.956891Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: EXCAV-0708-PORTAL-FRONTDOOR
   title: Build the front-door portal into the 200+ repo estate (VLTA/PORTUS)
   description: 'The repeatedly-asked ''entrance into all of this'': one bounded entry
@@ -113173,4 +113224,403 @@ tasks:
   depends_on: []
   created: '2026-07-08'
   updated: '2026-07-08T15:54:00.963864Z'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-486
+  title: rebase/resolve conflicts on organvm/limen#486
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/486
+  context: 'PR organvm/limen#486 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/486 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-492
+  title: rebase/resolve conflicts on organvm/limen#492
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/492
+  context: 'PR organvm/limen#492 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/492 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-516
+  title: rebase/resolve conflicts on organvm/limen#516
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/516
+  context: 'PR organvm/limen#516 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/516 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-590
+  title: rebase/resolve conflicts on organvm/limen#590
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/590
+  context: 'PR organvm/limen#590 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/590 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-617
+  title: rebase/resolve conflicts on organvm/limen#617
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/617
+  context: 'PR organvm/limen#617 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/617 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-619
+  title: rebase/resolve conflicts on organvm/limen#619
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/619
+  context: 'PR organvm/limen#619 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/619 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-limen-620
+  title: "rebase organvm/limen#620 onto current base \u2014 stale base touches the\
+    \ daemon body"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  - core
+  urls:
+  - https://github.com/organvm/limen/pull/620
+  context: "PR organvm/limen#620 is MERGEABLE + green BUT its base is STALE and its\
+    \ diff touches CORE daemon files (cli/src/limen, scripts/*.py|sh, mcp/src, web/api,\
+    \ container). Merging as-is would silently REVERT newer code on the base \u2014\
+    \ the #111 failure mode. Check out the PR branch and REBASE it onto the CURRENT\
+    \ base (git fetch origin && git rebase origin/<base>). During the rebase, KEEP\
+    \ every change that is genuinely this PR's own work and DROP any hunk that would\
+    \ revert a file the PR did not intend to change (especially core files it only\
+    \ carries because it branched old). Push --force-with-lease to the SAME PR branch;\
+    \ confirm it reports MERGEABLE, current with base, and green. Do NOT open a new\
+    \ PR and do NOT drop any unique work \u2014 absorb the branch toward current ideal\
+    \ form. PR: https://github.com/organvm/limen/pull/620 [auto-emitted 2026-07-08\
+    \ by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-621
+  title: rebase/resolve conflicts on organvm/limen#621
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/621
+  context: 'PR organvm/limen#621 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/621 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-622
+  title: rebase/resolve conflicts on organvm/limen#622
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/622
+  context: 'PR organvm/limen#622 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/622 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-623
+  title: rebase/resolve conflicts on organvm/limen#623
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/623
+  context: 'PR organvm/limen#623 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/623 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-624
+  title: rebase/resolve conflicts on organvm/limen#624
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/624
+  context: 'PR organvm/limen#624 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/624 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-625
+  title: rebase/resolve conflicts on organvm/limen#625
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/625
+  context: 'PR organvm/limen#625 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/625 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-626
+  title: rebase/resolve conflicts on organvm/limen#626
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/626
+  context: 'PR organvm/limen#626 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/626 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-627
+  title: rebase/resolve conflicts on organvm/limen#627
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/627
+  context: 'PR organvm/limen#627 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/627 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-628
+  title: rebase/resolve conflicts on organvm/limen#628
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/628
+  context: 'PR organvm/limen#628 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/628 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-629
+  title: rebase/resolve conflicts on organvm/limen#629
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/629
+  context: 'PR organvm/limen#629 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/629 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-630
+  title: rebase/resolve conflicts on organvm/limen#630
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/630
+  context: 'PR organvm/limen#630 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/limen/pull/630 [auto-emitted 2026-07-08
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
   dispatch_log: []
