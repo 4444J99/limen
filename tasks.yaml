@@ -96196,7 +96196,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -96212,7 +96212,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T12:07:02.518428Z'
+  updated: '2026-07-08T12:34:01.435985Z'
   dispatch_log:
   - timestamp: '2026-07-07T05:32:22.537418Z'
     agent: opencode
@@ -96255,6 +96255,11 @@ tasks:
     agent: jules
     session_id: '17777297454462883331'
     status: dispatched
+  - timestamp: '2026-07-08T12:34:01.435985Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: HEAL-rebase-stale-organvm-limen-368
   title: "rebase organvm/limen#368 onto current base \u2014 branched far behind"
   repo: organvm/limen
@@ -96449,7 +96454,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -96466,7 +96471,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T12:07:02.518428Z'
+  updated: '2026-07-08T12:34:01.435985Z'
   dispatch_log:
   - timestamp: '2026-07-07T06:43:16.172098Z'
     agent: opencode
@@ -96495,6 +96500,11 @@ tasks:
     agent: jules
     session_id: '9640337395230678769'
     status: dispatched
+  - timestamp: '2026-07-08T12:34:01.435985Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: HEAL-rebase-organvm-limen-379
   title: rebase/resolve conflicts on organvm/limen#379
   repo: organvm/limen
