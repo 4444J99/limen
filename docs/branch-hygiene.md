@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (130) — decide each
+## Live-work branches (131) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -31,6 +31,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `capture/main-2026-07-03T18-23-54Z` — b53f0abc capture: off-disk sync 2026-07-03T18:23:54Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-04T18-44-48Z` — bdc71ecb capture: off-disk sync 2026-07-04T18:44:48Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-06T17-09-22Z` — e85f0909 capture: off-disk sync 2026-07-06T17:09:22Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-08T21-07-28Z` — 672c21c1 capture: off-disk sync 2026-07-08T21:07:28Z (main behind origin → side ref, HEAD untouched)
 - `deepen/tao-te-ching-ch6-10` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
 - `discover-carrier-wave-zeitgeist-thesis-value` — fe4f7633 limen: discover corpus-mythicum, promote to ranked tier
 - `discover-limen-value-2026-06-22` — 7ad100f0 capture: autonomic off-disk sync 2026-06-23T13:19:40Z
