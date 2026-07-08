@@ -5,15 +5,6 @@
   "wall": "Everything involving a token/secret/API/login/env-var has two GitHub homes - never a chat or this file's prose. (1) The INFORMATION lives in code at scripts/creds-hydrate.py DEFAULT_MAP (op:// provenance + env-var name + validity probe; values never in-repo, behind _scrub()). (2) The ACTIONS live as the `credential`-labelled issues, indexed by the PINNED Wall issue #320. Verify the whole estate: `python3 scripts/creds-hydrate.py --verify`. Credential-class levers (L-FLEET-CAPACITY #265, L-IANVA-LOCAL #262, L-IANVA-CLOUD #263) are all on the Wall; the mail-credential atoms are owned by the mail organ's own record (see _doc), not a lever here; gh self-heals via keyring-derive (#251, zero hand); cloudflare closed 2026-07-01 (false-negative probe fixed, wrangler wired headless). The MCP-connector consent lane (Lane B — the claude.ai '! Needs authentication' class) is now probed every beat by scripts/mcp-auth-verify.py, the sibling of creds-hydrate --verify: a lapsed connector surfaces in the beat log with its cure (L-IANVA-CLOUD), never recited in chat. Per Anthony 2026-06-25: credential/login/env atoms are NOT a his-hand chat burden - the info is registered in its code home and the work is pinned on GitHub, not recited at him.",
   "levers": [
     {
-      "id": "L-REVENUE-ACCT",
-      "label": "PRO TIER IS FULLY SOVEREIGN, END TO END — no processor anywhere in the path. MONETA (organvm/limen → moneta/) is now a registered first-class organ (limen#566) with its OWN buyer-facing checkout page (limen#567), and the ChatGPT Exporter has been CUT OVER off Lemon Squeezy onto it (organvm/a-i-chat--exporter#107, merged): Buy Pro opens MONETA's storefront, the minted licence verifies OFFLINE on-device against MONETA's public key — no Stripe/LemonSqueezy/Ko-fi/phone-home, confirmed against a keyless public block explorer. The rail POOLS demand until it is live (a checkout with no address reserves the buyer + reports a waiting count — no lost sale), then AUTO-OPENS the instant the valve is set. GO-LIVE = two cheap steps, both reversible: (1) deploy MONETA to a $0/low host (it is Docker-ready); (2) point it at MINT_BTC_ADDRESS — a self-custodied wallet you control, no account/KYC. Then the Exporter build's MINT_CHECKOUT_URL + MINT_PUBLIC_JWK (both PUBLIC, auto-derived from the deploy) light Buy Pro up. The address is yours by design — the key to your own money, not a chore. Ko-fi/GitHub Sponsors remain only as optional $0 lures; they are NOT the rail (a processor holding your balance is control) — MONETA is the rail.",
-      "owner": "yours",
-      "cost": "Two reversible steps: deploy MONETA ($0/low host, Docker-ready) + paste a self-custodied BTC receive address (MINT_BTC_ADDRESS, no KYC). Everything else — the mint, its checkout page, the Exporter cutover, offline verify, the build wiring — is built + merged and pools demand until then.",
-      "unlocks": "first dollar (income before August)",
-      "source_task": "revenue-ladder (whose_hand: yours)",
-      "issue": 253
-    },
-    {
       "id": "L-CONTAINER-CUTOVER",
       "label": "One-container cutover: mount an external backup, run container/migrate.sh S4-S13, confirm symlinks + the COMPLETE marker. ASK-20 extends container/manifest.tsv to relocate ~/.claude, ~/.codex, ~/.gemini. Irreversible and backup-gated — the durability the whole organism stands on.",
       "owner": "yours",
@@ -371,15 +362,6 @@
       "unlocks": "external verdict signal: stars/followers/traffic deltas on the verdict meter; inbound for the recruiter front",
       "source_task": "LAVREA awareness apparatus (session f6fa1984, 2026-07-04)",
       "issue": 657
-    },
-    {
-      "id": "L-GREASYFORK-PUBLISH",
-      "label": "One GitHub-OAuth sign-in at greasyfork.org publishes the mint-armed ChatGPT Exporter to the largest userscript registry — and it self-syncs forever after. No account exists under any owner handle (verified 2026-07-08), and account creation is the one step agents cannot perform. The full listing packet is staged in organvm/a-i-chat--exporter docs/greasyfork-listing.md (sync-from-URL against the tracked mint-armed dist, attribution, description, verification commands). The Pages install page is already live at chatgpt-exporter-e08.pages.dev with Buy Pro reaching mint.4444j99.dev.",
-      "owner": "yours",
-      "cost": "~3 min (1 OAuth click + 1 paste), reversible",
-      "issue": 714,
-      "source_task": "EXCAV-0708-EXPORTER-ARM (session 0146de0a, 2026-07-08)",
-      "unlocks": "the installed-base distribution channel for the sovereign Buy-Pro rail — the widest first-dollar surface; after the one sign-in, master merges propagate to GreasyFork with zero human steps"
     }
   ]
 }
