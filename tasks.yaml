@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 163
+      spent: 164
       per_agent:
         jules: 100
         gemini: 3
-        codex: 3
+        codex: 4
         opencode: 25
         agy: 31
         claude: 0
@@ -106218,7 +106218,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106233,7 +106233,13 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  dispatch_log: []
+  updated: '2026-07-08T04:43:14.393105Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T04:43:14.393105Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-173
   title: fix failing CI on organvm/domus-genoma#173
   repo: organvm/domus-genoma
