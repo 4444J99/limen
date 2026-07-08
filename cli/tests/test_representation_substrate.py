@@ -20,6 +20,9 @@ OPPORTUNITY = ROOT / "organs" / "representation" / "opportunities" / "literary-s
 APPROVAL_TEMPLATE = (
     ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-dry-run.template.yaml"
 )
+REAL_SEND_TEMPLATE = (
+    ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-real-send.template.yaml"
+)
 READY_CANDIDATE = "chris-metadata-only-nonfiction-candidate"
 YALE_ROUTE = "yale-review-nonfiction-route"
 
@@ -73,6 +76,27 @@ def approved_publication_approval_record(tmp_path: Path) -> Path:
             approval["status"] = "approved"
             approval["note"] = "Copied fixture approval for dry-run test coverage only."
     path = tmp_path / "approved-publication-approval-record.yaml"
+    path.write_text(yaml.safe_dump(record, sort_keys=False), encoding="utf-8")
+    return path
+
+
+def approved_real_send_approval_record(tmp_path: Path, *, delivery_adapter: str = "direct_email") -> Path:
+    record = load_record(REAL_SEND_TEMPLATE)
+    record["id"] = f"fixture-approved-author-one-yale-real-send-{delivery_adapter}"
+    for approval in record["approvals"]:
+        if approval["approval_type"] != "real_send":
+            approval["status"] = "approved"
+            approval["note"] = "Copied fixture approval for real-send test coverage."
+            continue
+        approval["status"] = "approved"
+        approval["real_send_approval"] = True
+        approval["operator_approved_at"] = "2026-07-08T00:00:00Z"
+        approval["delivery_adapter"] = delivery_adapter
+        approval["permitted_actions"] = ["send_submission", "write_send_receipt"]
+        if delivery_adapter == "local_outbox":
+            approval["permitted_actions"].append("stage_outbox_message")
+        approval["note"] = "Copied fixture approval for real-send test coverage."
+    path = tmp_path / f"approved-real-send-{delivery_adapter}.yaml"
     path.write_text(yaml.safe_dump(record, sort_keys=False), encoding="utf-8")
     return path
 
@@ -828,29 +852,121 @@ def test_publication_readiness_allows_approved_dry_run_export(tmp_path: Path):
     assert "Export mode: approved dry run only; no publication or delivery occurs." in result.stdout
     assert "Publication readiness: READY_FOR_REVIEW" in result.stdout
     assert "Dry-run export: APPROVED_DRY_RUN" in result.stdout
-    assert "Real submission: LOCKED; this command has no send path." in result.stdout
+    assert "Real submission: LOCKED; execution uses publication-send." in result.stdout
 
 
-def test_approval_template_validates_with_real_send_locked():
+def test_approval_templates_validate():
     result = run_validator(APPROVAL_TEMPLATE)
+    real_send_result = run_validator(REAL_SEND_TEMPLATE)
 
     assert result.returncode == 0, result.stdout + result.stderr
+    assert real_send_result.returncode == 0, real_send_result.stdout + real_send_result.stderr
 
 
-def test_real_send_approval_fails_closed(tmp_path: Path):
-    record = load_record(APPROVAL_TEMPLATE)
+def test_real_send_approval_requires_explicit_send_fields(tmp_path: Path):
+    record = load_record(REAL_SEND_TEMPLATE)
     for approval in record["approvals"]:
         if approval["approval_type"] == "real_send":
             approval["status"] = "approved"
-            approval["permitted_actions"] = ["submit"]
+            approval["real_send_approval"] = True
+            approval["permitted_actions"] = ["send_submission"]
+            approval.pop("payload_ref")
+            approval.pop("operator_approved_at", None)
     path = tmp_path / "bad-real-send-approval.yaml"
     path.write_text(yaml.safe_dump(record, sort_keys=False), encoding="utf-8")
 
     result = run_validator(path)
 
     assert result.returncode == 1
-    assert "real-send approval must remain locked" in result.stdout
-    assert "permitted action 'submit' is an outward action" in result.stdout
+    assert "approved real-send record missing" in result.stdout
+    assert "payload_ref" in result.stdout
+    assert "operator_approved_at" in result.stdout
+
+
+def test_real_send_approval_validates_when_explicitly_approved(tmp_path: Path):
+    approval_record = approved_real_send_approval_record(tmp_path)
+
+    result = run_validator(approval_record)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_publication_send_blocks_without_real_send_approval(tmp_path: Path):
+    approval_record = approved_publication_approval_record(tmp_path)
+
+    result = run_tool(
+        "publication-send",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        YALE_ROUTE,
+        "--approval-record",
+        approval_record,
+    )
+
+    assert result.returncode == 1
+    assert "Dry-run approvals: APPROVED_DRY_RUN" in result.stdout
+    assert "Real send approval: LOCKED" in result.stdout
+    assert "Real send approval is missing; publication-send requires an approved real_send record." in result.stdout
+
+
+def test_publication_send_reaches_external_adapter_blocker_with_real_send_approval(tmp_path: Path):
+    approval_record = approved_real_send_approval_record(tmp_path, delivery_adapter="direct_email")
+
+    result = run_tool(
+        "publication-send",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        YALE_ROUTE,
+        "--approval-record",
+        approval_record,
+        "--execute",
+    )
+
+    assert result.returncode == 1
+    assert "Real send approval: APPROVED_REAL_SEND" in result.stdout
+    assert "Send status: BLOCKED" in result.stdout
+    assert "REAL_SEND_BLOCKED: delivery adapter direct_email requires external delivery integration" in result.stdout
+
+
+def test_publication_send_writes_local_outbox_with_real_send_approval(tmp_path: Path):
+    approval_record = approved_real_send_approval_record(tmp_path, delivery_adapter="local_outbox")
+    outbox_dir = tmp_path / "outbox"
+
+    result = run_tool(
+        "publication-send",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        YALE_ROUTE,
+        "--approval-record",
+        approval_record,
+        "--execute",
+        "--outbox-dir",
+        outbox_dir,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Real send approval: APPROVED_REAL_SEND" in result.stdout
+    assert "Send status: SENT_TO_LOCAL_OUTBOX" in result.stdout
+    outbox_files = list(outbox_dir.iterdir())
+    assert len(outbox_files) == 1
+    outbox_text = outbox_files[0].read_text(encoding="utf-8")
+    assert "Status: SENT_TO_LOCAL_OUTBOX" in outbox_text
+    assert "External email, upload, form submission, publication, and editor contact were not performed" in outbox_text
 
 
 def test_publication_stack_contains_all_required_files(tmp_path: Path):
@@ -906,7 +1022,7 @@ def test_publication_stack_approval_fixture_unlocks_dry_run_only(tmp_path: Path)
     assert "No publication, submission, upload, contact, form action, or public export has happened." in text
     fit_report = (out_dir / "fit-report.md").read_text(encoding="utf-8")
     assert "Dry-run export: APPROVED_DRY_RUN" in fit_report
-    assert "Real submission: LOCKED; this command has no send path." in fit_report
+    assert "Real submission: LOCKED; execution uses publication-send." in fit_report
 
 
 def test_publication_stack_artifacts_are_private_ref_safe(tmp_path: Path):

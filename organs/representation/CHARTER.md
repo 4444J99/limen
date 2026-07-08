@@ -104,7 +104,14 @@ combines one writer, one metadata-only candidate, and one sourced route into a
 fit report, cover-letter readiness row, disclosure note status, rights
 checklist, and submission checklist. It withholds private content refs and local
 paths, treats missing approvals as blockers, allows only approved dry-run
-exports, and has no real submit/upload/publish/contact path.
+exports, and reports whether an explicit `real_send` approval exists.
+
+The `publication-send` command is the execution surface. It refuses implicit
+send authority, requires the writer public-export, writer submission,
+opportunity-route submission, and real-send approvals for the selected candidate
+and route, then attempts the selected delivery adapter. `local_outbox` writes a
+local execution receipt; external adapters stop with a credential/recipient
+blocker unless private delivery integration is supplied outside tracked records.
 
 ## Executable Proof
 
@@ -113,6 +120,7 @@ python organs/representation/validate-representation.py --fleet
 python organs/representation/representation_substrate.py handoff-audit --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-public-profile-readiness --route yale-review-nonfiction-route
 python organs/representation/representation_substrate.py authority-packet --record organs/representation/records/christopher-author-one.yaml
 python organs/representation/representation_substrate.py publication-readiness --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route
+python organs/representation/representation_substrate.py publication-send --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route --approval-record organs/representation/approvals/author-one-yale-review-nonfiction-real-send.template.yaml
 python organs/representation/representation_substrate.py packet organs/representation/records/christopher-author-one.yaml --mode writer_submission
 python organs/representation/representation_substrate.py packet organs/representation/records/et4l.yaml --mode project_page
 python organs/representation/representation_substrate.py candidate-intake --id candidate-with-source-ref --title "Sourced candidate manuscript" --content-ref source://private-manuscripts/chris/candidate-001 --source-id subject-confirmed-candidate-ref --claim-id chris-public-writing
