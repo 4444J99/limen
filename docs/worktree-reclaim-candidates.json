@@ -3,7 +3,7 @@
   "acceptance_ledger_written": false,
   "by_reason": {
     "active(<24h)": 78,
-    "active(<6h)": 5,
+    "active(<6h)": 6,
     "clean+merged+idle": 542,
     "dirty": 96,
     "documented-residue": 2,
@@ -13,7 +13,7 @@
     "remote-merged": 8,
     "remote-pr-open": 21,
     "remote-superseded": 1,
-    "unpushed-commits": 84
+    "unpushed-commits": 83
   },
   "candidates": [
     {
@@ -968,7 +968,7 @@
     }
   ],
   "destructive_cleanup_performed": false,
-  "generated_at": "2026-07-08T05:47:05Z",
+  "generated_at": "2026-07-08T05:53:43Z",
   "governance": {
     "agent_policy": {
       "candidate_packet_lane": "codex-conductor",
@@ -1028,7 +1028,7 @@
     "candidate_limit": 50,
     "candidate_roots": 50,
     "clean_merged_idle_roots": 542,
-    "debt_roots": 292,
+    "debt_roots": 291,
     "measured_candidate_bytes": 8663191552,
     "measured_candidate_size": "8.1 GiB",
     "measured_roots": 50,
