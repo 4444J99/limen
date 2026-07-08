@@ -70,6 +70,15 @@ claims:
       - web-yale-ai-policy
       - web-guardian-granta-ai
     public_ok: true
+  - id: venue-guideline-examples
+    label: Venue guideline examples
+    summary: Venue-specific routes are included only when public guideline pages source the route fields and policy posture.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-yale-submissions
+      - web-masters-review-submissions
+    public_ok: true
 opportunity:
   ai_policy_tracking: true
   no_send_packet_staging: true
@@ -87,6 +96,41 @@ opportunity:
       adapter_kind: submittable
       ai_policy_risk: venue-specific disclosure required
       note: Marketplace route; do not assume all venues use it.
+    - id: yale-review-nonfiction-route
+      route_type: venue
+      platform: direct_email
+      venue: The Yale Review
+      guidelines_url: https://yalereview.org/about/submissions
+      guidelines_source_ids:
+        - web-yale-submissions
+      deadline: nonfiction opens 2026-08-26; poetry opens 2026-09-01; fiction closed until 2027
+      word_limits: pitches up to three paragraphs; prose pieces typically 2000-5000 words
+      fee: poetry Submittable fee $3; nonfiction fee not declared
+      pay: prose $250-$1000; poems $150
+      ai_policy_disclosure_status: human_authorship_required_process_ai_allowed_with_transparency
+      ai_policy_source_ids:
+        - web-yale-submissions
+        - web-yale-ai-policy
+      adapter_kind: venue_guideline_snapshot
+      ai_policy_risk: visible or meaningful AI-generated language or structure requires disclosure
+      note: Sourced from the public TYR submissions page; no submission channel is copied into this record.
+    - id: masters-review-summer-short-story-route
+      route_type: venue
+      platform: submittable
+      venue: The Masters Review
+      guidelines_url: https://mastersreview.com/submissions/
+      guidelines_source_ids:
+        - web-masters-review-submissions
+      deadline: 2026-08-30 23:59 PDT
+      word_limits: fiction or narrative nonfiction under 6000 words
+      fee: $20
+      pay: $3000 first prize; $300/$200 finalists; agency review
+      ai_policy_disclosure_status: ai_generated_or_assisted_submissions_disqualified
+      ai_policy_source_ids:
+        - web-masters-review-submissions
+      adapter_kind: submittable
+      ai_policy_risk: AI-generated or assisted submissions are disqualified by the public guidelines.
+      note: Sourced from the public Masters Review submissions page; route remains no-send.
     - id: journal-email-route
       route_type: direct_email
       platform: journal_email
@@ -179,6 +223,26 @@ sources:
       - submittable-market
     confidence: high
     note: Public Submittable page describes Discover as a searchable opportunity marketplace.
+  - id: web-yale-submissions
+    source_type: web
+    privacy_level: public
+    source_ref: https://yalereview.org/about/submissions
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - venue-guideline-examples
+      - ai-policy-risk
+    confidence: high
+    note: Public Yale Review submissions page lists genre openings, route fields, rates, and AI guidelines.
+  - id: web-masters-review-submissions
+    source_type: web
+    privacy_level: public
+    source_ref: https://mastersreview.com/submissions/
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - venue-guideline-examples
+      - ai-policy-risk
+    confidence: high
+    note: Public Masters Review submissions page lists contest deadline, limits, fee, prizes, and AI disqualification.
   - id: web-duotrope
     source_type: web
     privacy_level: public
@@ -238,6 +302,7 @@ outputs:
       - submittable-market
       - non-submittable-gap
       - ai-policy-risk
+      - venue-guideline-examples
     no_outward_action: true
     acceptance_gates:
       - Reviewer confirms route coverage includes non-Submittable paths.
@@ -249,6 +314,7 @@ outputs:
       - submittable-market
       - non-submittable-gap
       - ai-policy-risk
+      - venue-guideline-examples
     no_outward_action: true
     acceptance_gates:
       - Reviewer confirms the packet is no-send and draft-only.

@@ -84,10 +84,28 @@ Candidate metadata may name genre, form, length, status, rights status, and a
 source/content ref, but it must not store manuscript text, raw excerpts,
 private messages, contact data, or fabricated details.
 
+Use `candidate-intake` to stage a real candidate only after a source/content ref
+exists:
+
+```bash
+python organs/representation/representation_substrate.py candidate-intake \
+  --id candidate-with-source-ref \
+  --title "Sourced candidate manuscript" \
+  --content-ref source://private-manuscripts/chris/candidate-001 \
+  --source-id subject-confirmed-candidate-ref \
+  --claim-id chris-public-writing
+```
+
+The command prints a YAML snippet for reviewer insertion. It does not read or
+copy the manuscript. Chris remains blocked on `Content/source ref` until such a
+metadata-only row is intentionally attached.
+
 Submission routes keep `guidelines_url`, `deadline`, `word_limits`, `fee`,
-`pay`, `ai_policy_disclosure_status`, and `ai_policy_source_ids`. Missing route
-fields remain review gaps. Unsourced or unresolved AI-policy disclosure remains
-a blocker, even when the rest of the venue fit is present.
+`pay`, `ai_policy_disclosure_status`, `guidelines_source_ids`, and
+`ai_policy_source_ids`. Venue-specific routes must cite public guideline
+sources. Missing route fields remain review gaps. Unsourced or unresolved
+AI-policy disclosure remains a blocker, even when the rest of the venue fit is
+present.
 
 ## Organ Bridges
 

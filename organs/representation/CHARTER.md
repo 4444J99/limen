@@ -60,10 +60,18 @@ submission route id. Candidate work metadata and route metadata are the
 canonical inputs; raw manuscript text, private messages, contact data, and
 invented work details are outside the tracked substrate.
 
+The `candidate-intake` command emits a metadata-only `candidate_works` row from
+a source/content ref. It is a staging aid, not a manuscript store: it rejects
+contact data and private-text markers, prints a YAML snippet, and leaves the
+record blocked until a reviewer deliberately attaches the source-backed
+candidate row.
+
 Venue and route records keep the review fields beside the opportunity:
 `guidelines_url`, `deadline`, `word_limits`, `fee`, `pay`, and
-`ai_policy_disclosure_status` with `ai_policy_source_ids`. Unsourced or
-unresolved AI-policy status is a blocker, especially for venue-specific routes.
+`ai_policy_disclosure_status` with `guidelines_source_ids` and
+`ai_policy_source_ids`. Venue-specific route examples must cite public guideline
+sources. Unsourced or unresolved AI-policy status is a blocker, especially for
+venue-specific routes.
 
 ## Executable Proof
 
@@ -71,5 +79,6 @@ unresolved AI-policy status is a blocker, especially for venue-specific routes.
 python organs/representation/validate-representation.py --fleet
 python organs/representation/representation_substrate.py packet organs/representation/records/christopher-author-one.yaml --mode writer_submission
 python organs/representation/representation_substrate.py packet organs/representation/records/et4l.yaml --mode project_page
+python organs/representation/representation_substrate.py candidate-intake --id candidate-with-source-ref --title "Sourced candidate manuscript" --content-ref source://private-manuscripts/chris/candidate-001 --source-id subject-confirmed-candidate-ref --claim-id chris-public-writing
 PYTHONPATH=cli/src python3 -m pytest cli/tests/test_representation_substrate.py -q
 ```

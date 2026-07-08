@@ -246,6 +246,13 @@ def _submission_routes(doc: dict[str, Any]) -> list[dict[str, Any]]:
     return [route for route in routes if isinstance(route, dict)]
 
 
+def _source_is_public_web(source: dict[str, Any]) -> bool:
+    return (
+        str(source.get("source_type")) == "web"
+        and str(source.get("privacy_level")) == "public"
+    )
+
+
 def _approved_public_claim_ids(doc: dict[str, Any]) -> set[str]:
     approved: set[str] = set()
     for approval in _approvals(doc):
@@ -501,7 +508,8 @@ def _validate_approvals(doc: dict[str, Any], report_label: str) -> list[str]:
 def _validate_literary_metadata(doc: dict[str, Any], report_label: str) -> list[str]:
     violations: list[str] = []
     claim_ids = _claim_ids(doc)
-    source_ids = set(_source_by_id(doc))
+    sources_by_id = _source_by_id(doc)
+    source_ids = set(sources_by_id)
     candidate_ids: set[str] = set()
 
     candidates = doc.get("candidate_works", [])
@@ -549,6 +557,53 @@ def _validate_literary_metadata(doc: dict[str, Any], report_label: str) -> list[
         route_ids.add(route_id)
         if not str(route.get("route_type", "")).strip():
             violations.append(f"{prefix} must include route_type")
+
+        guideline_refs = route.get("guidelines_source_ids", [])
+        if guideline_refs is not None:
+            if not isinstance(guideline_refs, list):
+                violations.append(f"{prefix} guidelines_source_ids must be a list when present")
+                guideline_refs = []
+            else:
+                unknown_guideline_refs = [
+                    str(source_id)
+                    for source_id in guideline_refs
+                    if str(source_id) not in source_ids
+                ]
+                if unknown_guideline_refs:
+                    violations.append(
+                        f"{prefix} references unknown guidelines_source_ids: "
+                        f"{', '.join(unknown_guideline_refs)}"
+                    )
+
+        if _route_is_venue_specific(route):
+            if not isinstance(guideline_refs, list) or not guideline_refs:
+                violations.append(
+                    f"{prefix} guidelines_source_ids must list public web sources "
+                    "for venue-specific routes"
+                )
+            else:
+                non_public_web = [
+                    str(source_id)
+                    for source_id in guideline_refs
+                    if str(source_id) in sources_by_id
+                    and not _source_is_public_web(sources_by_id[str(source_id)])
+                ]
+                if non_public_web:
+                    violations.append(
+                        f"{prefix} guidelines_source_ids must reference public web sources: "
+                        f"{', '.join(non_public_web)}"
+                    )
+                guidelines_url = str(route.get("guidelines_url") or "").strip()
+                if guidelines_url:
+                    source_urls = {
+                        str(sources_by_id[str(source_id)].get("source_ref"))
+                        for source_id in guideline_refs
+                        if str(source_id) in sources_by_id
+                    }
+                    if guidelines_url not in source_urls:
+                        violations.append(
+                            f"{prefix} guidelines_url must match a guidelines_source_ids source_ref"
+                        )
 
         ai_refs = route.get("ai_policy_source_ids", [])
         if ai_refs is not None:
@@ -817,6 +872,77 @@ def _display_value(value: Any) -> str:
     return str(value)
 
 
+def _safe_metadata_text(value: Any, field: str, max_len: int = 260) -> str:
+    text = str(value or "").strip()
+    if not text:
+        raise ValueError(f"{field} is required")
+    if "\n" in text or "\r" in text:
+        raise ValueError(f"{field} must be a single metadata line")
+    if len(text) > max_len:
+        raise ValueError(f"{field} must be {max_len} characters or fewer")
+    if EMAIL_RE.search(text) or PHONE_RE.search(text):
+        raise ValueError(f"{field} must not contain contact data")
+    lowered = text.lower()
+    for phrase in ("direct quote", "verbatim", "raw transcript", "manuscript text"):
+        if phrase in lowered:
+            raise ValueError(f"{field} appears to contain private or creative text")
+    return text
+
+
+def _safe_optional_metadata_text(value: Any, field: str, max_len: int = 220) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if not text:
+        return ""
+    return _safe_metadata_text(text, field, max_len=max_len)
+
+
+def candidate_intake_row(
+    *,
+    candidate_id: str,
+    title: str,
+    content_ref: str,
+    source_ids: list[str],
+    claim_ids: list[str],
+    genre: str = "",
+    form: str = "",
+    length: str = "",
+    status: str = "metadata_only_source_ref_supplied",
+    rights_status: str = "",
+    note: str = "Metadata-only candidate intake; no creative text stored.",
+) -> dict[str, Any]:
+    """Build a metadata-only candidate row without storing manuscript content."""
+    cleaned_source_ids = [
+        _safe_metadata_text(source_id, "source-id", max_len=120)
+        for source_id in source_ids
+        if str(source_id).strip()
+    ]
+    cleaned_claim_ids = [
+        _safe_metadata_text(claim_id, "claim-id", max_len=120)
+        for claim_id in claim_ids
+        if str(claim_id).strip()
+    ]
+    if not cleaned_source_ids:
+        raise ValueError("at least one source-id is required")
+    if not cleaned_claim_ids:
+        raise ValueError("at least one claim-id is required")
+
+    return {
+        "id": _safe_metadata_text(candidate_id, "id", max_len=120),
+        "title": _safe_metadata_text(title, "title"),
+        "genre": _safe_optional_metadata_text(genre, "genre", max_len=80),
+        "form": _safe_optional_metadata_text(form, "form", max_len=80),
+        "length": _safe_optional_metadata_text(length, "length", max_len=80),
+        "status": _safe_metadata_text(status, "status", max_len=120),
+        "rights_status": _safe_optional_metadata_text(rights_status, "rights-status"),
+        "content_ref": _safe_metadata_text(content_ref, "content-ref"),
+        "source_ids": cleaned_source_ids,
+        "claim_ids": cleaned_claim_ids,
+        "note": _safe_metadata_text(note, "note", max_len=220),
+    }
+
+
 def _missing_field_labels(row: dict[str, Any], fields: dict[str, str]) -> list[str]:
     return [label for field, label in fields.items() if _missing(row.get(field))]
 
@@ -1051,6 +1177,11 @@ def render_record(doc: dict[str, Any], mode: str, export: bool = False) -> str:
         "",
         f"Mode: {mode}",
         "Outward action: locked; this renderer stages a draft only.",
+    ]
+    if export:
+        lines.append("Export mode: approved dry run only; no publication or delivery occurs.")
+    lines.extend(
+        [
         "",
         "## Subject Summary",
         "",
@@ -1062,7 +1193,8 @@ def render_record(doc: dict[str, Any], mode: str, export: bool = False) -> str:
         "",
         "## Acceptance Gates",
         "",
-    ]
+        ]
+    )
     if acceptance_gates:
         lines.extend(f"- {gate}" for gate in acceptance_gates)
     else:
@@ -1354,6 +1486,7 @@ def render_literary_packet(
             lines.append(f"- {label}: {ai_policy_status}.")
         else:
             lines.append(f"- {label}: {_display_value(route.get(field))}.")
+    lines.append(f"- Guidelines source refs: {_display_value(route.get('guidelines_source_ids', []))}.")
     lines.append(f"- AI policy/disclosure: {ai_policy_status}.")
 
     lines.extend(["", "## Opportunity Context", ""])
@@ -1401,6 +1534,29 @@ def _write_or_print(output: str, out: Path | None) -> None:
         out.write_text(output, encoding="utf-8")
     else:
         print(output, end="")
+
+
+def _candidate_intake_command(args: argparse.Namespace) -> int:
+    try:
+        row = candidate_intake_row(
+            candidate_id=args.id,
+            title=args.title,
+            content_ref=args.content_ref,
+            source_ids=args.source_ids,
+            claim_ids=args.claim_ids,
+            genre=args.genre,
+            form=args.form,
+            length=args.length,
+            status=args.status,
+            rights_status=args.rights_status,
+            note=args.note,
+        )
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    output = yaml.safe_dump({"candidate_works": [row]}, sort_keys=False)
+    _write_or_print(output, args.out)
+    return 0
 
 
 def _render_command(record: Path, mode: str, export: bool, out: Path | None, packet: bool) -> int:
@@ -1478,6 +1634,26 @@ def main(argv: list[str] | None = None) -> int:
     literary_packet.add_argument("--export", action="store_true")
     literary_packet.add_argument("--out", type=Path)
 
+    candidate_intake = sub.add_parser(
+        "candidate-intake",
+        help="emit a metadata-only candidate_works row from a manuscript/source ref",
+    )
+    candidate_intake.add_argument("--id", required=True)
+    candidate_intake.add_argument("--title", required=True)
+    candidate_intake.add_argument("--genre", default="")
+    candidate_intake.add_argument("--form", default="")
+    candidate_intake.add_argument("--length", default="")
+    candidate_intake.add_argument("--status", default="metadata_only_source_ref_supplied")
+    candidate_intake.add_argument("--rights-status", default="")
+    candidate_intake.add_argument("--content-ref", required=True)
+    candidate_intake.add_argument("--source-id", action="append", required=True, dest="source_ids")
+    candidate_intake.add_argument("--claim-id", action="append", required=True, dest="claim_ids")
+    candidate_intake.add_argument(
+        "--note",
+        default="Metadata-only candidate intake; no creative text stored.",
+    )
+    candidate_intake.add_argument("--out", type=Path)
+
     mention = sub.add_parser("index-mentions", help="index mentions from text files")
     mention.add_argument("record", type=Path)
     mention.add_argument("texts", nargs="+", type=Path)
@@ -1519,6 +1695,9 @@ def main(argv: list[str] | None = None) -> int:
             args.export,
             args.out,
         )
+
+    if args.cmd == "candidate-intake":
+        return _candidate_intake_command(args)
 
     if args.cmd == "index-mentions":
         try:

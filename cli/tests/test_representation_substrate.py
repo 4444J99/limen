@@ -291,6 +291,58 @@ def test_chris_writer_submission_has_readiness_blockers_not_invented_manuscript_
     assert "Object Lessons lineage" not in result.stdout
 
 
+def test_candidate_intake_cli_outputs_metadata_only_source_ref():
+    result = run_tool(
+        "candidate-intake",
+        "--id",
+        "candidate-with-source-ref",
+        "--title",
+        "Sourced candidate manuscript",
+        "--genre",
+        "fiction",
+        "--form",
+        "short story",
+        "--length",
+        "4200 words",
+        "--rights-status",
+        "available for first publication",
+        "--content-ref",
+        "source://private-manuscripts/chris/candidate-001",
+        "--source-id",
+        "subject-confirmed-candidate-ref",
+        "--claim-id",
+        "chris-public-writing",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    doc = yaml.safe_load(result.stdout)
+    candidate = doc["candidate_works"][0]
+    assert candidate["content_ref"] == "source://private-manuscripts/chris/candidate-001"
+    assert candidate["source_ids"] == ["subject-confirmed-candidate-ref"]
+    assert "manuscript_text" not in result.stdout
+    assert "raw_text" not in result.stdout
+    assert "private_message" not in result.stdout
+
+
+def test_candidate_intake_rejects_contact_data_in_source_ref():
+    result = run_tool(
+        "candidate-intake",
+        "--id",
+        "candidate-with-contact-ref",
+        "--title",
+        "Bad candidate ref",
+        "--content-ref",
+        "writer@example.com",
+        "--source-id",
+        "subject-confirmed-candidate-ref",
+        "--claim-id",
+        "chris-public-writing",
+    )
+
+    assert result.returncode == 1
+    assert "content-ref must not contain contact data" in result.stderr
+
+
 def test_literary_packet_cli_smoke_for_chris_and_market_record():
     result = run_tool(
         "literary-packet",
@@ -427,6 +479,56 @@ def test_venue_specific_literary_packet_blocks_unresolved_ai_policy_even_with_so
     assert "Venue AI policy/disclosure status is unresolved." in result.stdout
 
 
+def test_sourced_venue_route_examples_have_guideline_source_refs():
+    opportunity = load_record(OPPORTUNITY)
+    routes = {
+        route["id"]: route
+        for route in opportunity["opportunity"]["submission_routes"]
+    }
+
+    yale = routes["yale-review-nonfiction-route"]
+    masters = routes["masters-review-summer-short-story-route"]
+
+    assert yale["guidelines_source_ids"] == ["web-yale-submissions"]
+    assert "web-yale-submissions" in yale["ai_policy_source_ids"]
+    assert masters["guidelines_source_ids"] == ["web-masters-review-submissions"]
+    assert masters["ai_policy_disclosure_status"] == "ai_generated_or_assisted_submissions_disqualified"
+
+
+def test_chris_remains_blocked_for_sourced_venue_without_candidate_source_ref():
+    result = run_tool(
+        "literary-packet",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        "chris-public-profile-readiness",
+        "--route",
+        "yale-review-nonfiction-route",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Desk status: BLOCKED" in result.stdout
+    assert "Candidate Content/source ref" in result.stdout
+    assert "AI policy/disclosure: human_authorship_required_process_ai_allowed_with_transparency." in result.stdout
+    assert "Venue AI policy/disclosure source is unresolved." not in result.stdout
+
+
+def test_validator_requires_public_guideline_sources_for_venue_routes(tmp_path: Path):
+    opportunity = load_record(OPPORTUNITY)
+    for route in opportunity["opportunity"]["submission_routes"]:
+        if route["id"] == "yale-review-nonfiction-route":
+            route["guidelines_source_ids"] = []
+    opportunity_path = tmp_path / "opportunity-unsourced-venue-guidelines.yaml"
+    opportunity_path.write_text(yaml.safe_dump(opportunity, sort_keys=False), encoding="utf-8")
+
+    result = run_validator(opportunity_path)
+
+    assert result.returncode == 1
+    assert "guidelines_source_ids must list public web sources for venue-specific routes" in result.stdout
+
+
 def test_literary_no_send_packet_never_claims_outward_action_happened():
     packet = rs.render_literary_packet(
         load_record(CHRIS),
@@ -560,6 +662,7 @@ def test_public_page_export_uses_copied_approval_fixture_without_private_leak(tm
     result = run_tool("packet", path, "--mode", "public_page_draft", "--export")
 
     assert result.returncode == 0, result.stdout + result.stderr
+    assert "Export mode: approved dry run only; no publication or delivery occurs." in result.stdout
     assert "Approved local context" in result.stdout
     assert "Unapproved local context" not in result.stdout
     assert "source reference withheld" in result.stdout
