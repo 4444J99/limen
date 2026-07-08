@@ -67,6 +67,14 @@ from a real user, never a merged PR, never code-complete, never a filed lever.
    organ: build the organ. The oldest proof: the operator's most intense
    creative period (Jan–May 2025, ~8,900 messages) evaporated because it
    lived in chat, not git. That loss is why this law exists.
+10. **No kill-switches.** No third party may hold stop-power over income,
+    work, or property. Money reaches a self-custodied address with no
+    processor in the path — MONETA is THE rail; Ko-fi/Stripe-class
+    processors are optional lures, NEVER dependencies, never the first
+    dollar. Every platform chokepoint (code host, page host, registrar,
+    distribution, audience) keeps an owned or uncensorable fallback
+    (`sovereignty-audit` is the predicate). Deplatforming must be an
+    inconvenience, never an amputation.
 
 ## Where you resume from (read these to know where you are)
 
