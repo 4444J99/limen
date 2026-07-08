@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 17
+      spent: 20
       per_agent:
-        jules: 7
+        jules: 10
         gemini: 0
         codex: 9
         opencode: 0
@@ -86494,7 +86494,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T13:00:35.285942Z'
+  updated: '2026-07-08T13:07:10.020554Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:40:17.443054Z'
     agent: gemini
@@ -86648,6 +86648,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T13:07:10.020554Z'
+    agent: jules
+    session_id: '9843085346970219604'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-427
   title: fix failing CI on organvm/limen#427
   repo: organvm/limen
@@ -96762,7 +96766,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T13:00:35.285942Z'
+  updated: '2026-07-08T13:07:10.020554Z'
   dispatch_log:
   - timestamp: '2026-07-07T09:46:01.187176Z'
     agent: opencode
@@ -96792,6 +96796,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T13:07:10.020554Z'
+    agent: jules
+    session_id: '6952556947349445210'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-386
   title: fix failing CI on organvm/limen#386
   repo: organvm/limen
@@ -105526,7 +105534,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -105542,7 +105550,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-07T15:50:02.447078Z'
+  updated: '2026-07-08T13:07:36.798727Z'
   dispatch_log:
   - timestamp: '2026-07-05T19:15:30.044716Z'
     agent: github_actions
@@ -105568,6 +105576,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-08T13:07:36.798727Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-448
   title: fix failing CI on organvm/limen#448
   repo: organvm/limen
@@ -110254,13 +110267,17 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T13:00:35.285942Z'
+  updated: '2026-07-08T13:07:10.020554Z'
   dispatch_log:
   - timestamp: '2026-07-08T13:00:35.285942Z'
     agent: jules
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T13:07:10.020554Z'
+    agent: jules
+    session_id: '11392843633352973876'
+    status: dispatched
 - id: HEAL-cifix-organvm-domus-genoma-184
   title: fix failing CI on organvm/domus-genoma#184
   repo: organvm/domus-genoma
@@ -111350,7 +111367,7 @@ tasks:
   workstream: conductor
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - retro-0708
   urls: []
@@ -111358,8 +111375,13 @@ tasks:
     conductor drifts at every seam; relay+ROI graded DROPPED) + evolution 2
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T12:54:03.196269Z'
-  dispatch_log: []
+  updated: '2026-07-08T13:07:36.798727Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T13:07:36.798727Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: RETRO-0708-PII-PREMERGE-GATE
   title: pr-gate PII containment scan for person-adjacent organ paths
   description: Scan staged organs/consulting and person-adjacent files for names/handles/CRM
@@ -111371,7 +111393,7 @@ tasks:
   workstream: governance
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - retro-0708
   urls: []
@@ -111379,8 +111401,13 @@ tasks:
     07-04; redaction 37645802 was itself a side-door commit)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T12:54:03.196568Z'
-  dispatch_log: []
+  updated: '2026-07-08T13:07:36.798727Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T13:07:36.798727Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: RETRO-0708-DOCS-SIDEDOOR-GUARD
   title: 'Make the docs side-door fail: first-parent guard + sanctioned-lane registry'
   description: 'Reject docs-prefixed direct-to-main commits (point to ship-docs.sh);
