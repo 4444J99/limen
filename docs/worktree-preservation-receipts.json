@@ -1,6 +1,42 @@
 {
-  "generated_utc": "2026-07-08T01:37:49Z",
+  "generated_utc": "2026-07-08T03:09:26Z",
   "receipts": [
+    {
+      "branch": "pr-110-branch",
+      "classification": "dirty conftest import-path patch preserved; upstream PR is open but merge-conflicting; owner decision required",
+      "dirty_patch_bytes": 676,
+      "dirty_patch_command": "git diff --binary HEAD -- tests/conftest.py",
+      "dirty_patch_sha256": "25183717263f1b79226662d041dbb4d4582a7313b92530f04d025929014358f9",
+      "dirty_paths": [
+        "tests/conftest.py"
+      ],
+      "evidence_updated_utc": "2026-07-08T03:09:26Z",
+      "focused_predicate": "python3 -m pytest tests/test_registry.py tests/test_dispatch.py -q",
+      "focused_predicate_result": "59 passed in 0.13s",
+      "full_predicate_blocker": "python3 -m pytest tests -q blocked during collection: ModuleNotFoundError: jsonschema",
+      "head": "2648a1f9dda5c1f4fc494ce7ba554d117fe808e2",
+      "lane": "owner-blocker",
+      "merge_state": "CONFLICTING",
+      "next_action": "Do not delete, reclaim, force-push, or auto-port this worktree. The only dirty source change is a tests/conftest.py import-path fix that passes focused registry/dispatch tests, but PR #110 is open and merge-conflicting with a failing CLA Assistant check. Create a narrow owner packet to rebase/resolve PR #110, rerun the full owner predicate with project dependencies available, then decide whether to push, supersede, or retire this preserved patch.",
+      "pr_base_ref": "main",
+      "pr_head_ref": "limen/limen-075-fb65",
+      "pr_number": 110,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/organvm-engine/pull/110",
+      "private_patch_sha256": "25183717263f1b79226662d041dbb4d4582a7313b92530f04d025929014358f9",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T030926Z-heal-cifix-organvm-organvm-engine-110-cf645ef4/receipt.json",
+      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T030926Z-heal-cifix-organvm-organvm-engine-110-cf645ef4/dirty.patch",
+      "remote_tracking_ref": "origin/limen/limen-075-fb65",
+      "repo": "organvm/organvm-engine",
+      "root": "heal-cifix-organvm-organvm-engine-110-cf645ef4",
+      "status": "private_patch_preserved",
+      "untracked_paths": [],
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-organvm-engine-110-cf645ef4",
+      "worktree_status": [
+        "## pr-110-branch",
+        " M tests/conftest.py"
+      ]
+    },
     {
       "branch": "limen/heal-cifix-organvm-limen-424-8db5dab0",
       "classification": "formatting-only tracked diff plus untracked local artifacts preserved; owner decision required",
