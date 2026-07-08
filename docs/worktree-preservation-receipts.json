@@ -2116,6 +2116,38 @@
       "root": "heal-cifix-organvm-domus-genoma-172-2f0a46cb",
       "score_discount": 35,
       "status": "open_pr_preserved"
+    },
+    {
+      "branch": "limen/heal-cifix-organvm-domus-genoma-174-b909207f",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-08T14:03:33Z",
+      "head": "30e2a5d4e7ee950d6dcca248c76cf9ebd1ebe0b6",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #209, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": true,
+      "pr_number": 209,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/domus-genoma/pull/209",
+      "repo": "organvm/domus-genoma",
+      "root": "heal-cifix-organvm-domus-genoma-174-b909207f",
+      "score_discount": 35,
+      "status": "open_pr_preserved"
+    },
+    {
+      "branch": "limen/heal-cifix-organvm-domus-genoma-179-449e5370",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-08T14:03:33Z",
+      "head": "8f2a65613487183ffa073b3defed5fb72032edd2",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #210, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": true,
+      "pr_number": 210,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/domus-genoma/pull/210",
+      "repo": "organvm/domus-genoma",
+      "root": "heal-cifix-organvm-domus-genoma-179-449e5370",
+      "score_discount": 35,
+      "status": "open_pr_preserved"
     }
   ],
   "schema": 1
