@@ -106521,7 +106521,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T10:36:16.197397Z'
+  updated: '2026-07-08T10:50:43.601680Z'
   dispatch_log:
   - timestamp: '2026-07-08T09:18:03.775360Z'
     agent: codex
@@ -106543,11 +106543,15 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T10:50:43.601680Z'
+    agent: codex
+    session_id: https://github.com/organvm/domus-genoma/pull/176
+    status: dispatched
 - id: HEAL-cifix-organvm-domus-genoma-177
   title: fix failing CI on organvm/domus-genoma#177
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -106587,7 +106591,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--logos#26
   repo: organvm/dot-github--logos
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -106610,7 +106614,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#98
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -107646,7 +107650,7 @@ tasks:
   title: Discover the latent value of organvm/hokage-chess--4444j99
   repo: organvm/hokage-chess--4444j99
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107728,7 +107732,7 @@ tasks:
   title: Discover the latent value of organvm/studium-generale--4444j99
   repo: organvm/studium-generale--4444j99
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107786,7 +107790,7 @@ tasks:
   title: Discover the latent value of organvm/micro-tato-play
   repo: organvm/micro-tato-play
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107860,7 +107864,7 @@ tasks:
   title: Discover the latent value of organvm/netmode
   repo: organvm/netmode
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -108008,7 +108012,7 @@ tasks:
   title: Discover the latent value of organvm/collaboratory
   repo: organvm/collaboratory
   type: research
-  target_agent: codex
+  target_agent: agy
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -108082,7 +108086,7 @@ tasks:
   title: Discover the latent value of organvm/laurea
   repo: organvm/laurea
   type: research
-  target_agent: codex
+  target_agent: agy
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -110554,7 +110558,7 @@ tasks:
     \ far behind"
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: normal
   budget_cost: 1
   status: open
@@ -110579,7 +110583,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#94
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110602,7 +110606,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#101
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110625,7 +110629,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#102
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110648,7 +110652,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#103
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110671,7 +110675,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#107
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110694,7 +110698,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#108
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110717,7 +110721,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#114
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110740,7 +110744,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#121
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110763,7 +110767,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#122
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110786,7 +110790,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#136
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
