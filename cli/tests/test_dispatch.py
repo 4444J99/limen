@@ -394,7 +394,8 @@ def test_dispatch_bulk_gates_unmet_deps_but_explicit_task_overrides(tmp_path: Pa
     assert "DRY-RUN: 1 task(s)" in override
 
 
-def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys) -> None:
+def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys, monkeypatch) -> None:
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -481,6 +482,7 @@ def test_dispatch_parallel_skips_generated_buildout_outside_value_tier(tmp_path:
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/limen")
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "no-such-tier.json"))
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -562,6 +564,7 @@ def test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write(
         calls.append(task.id)
         return True
 
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
     monkeypatch.setattr(D, "call_agent_dispatch", fake_dispatch)
 
     dispatch_parallel(stale, tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1, dry_run=False)
@@ -601,6 +604,7 @@ def test_dispatch_parallel_does_not_dispatch_stale_open_task(
     calls: list[str] = []
 
     monkeypatch.setattr(D, "call_agent_dispatch", lambda agent, task, dry_run=False: calls.append(task.id) or True)
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
 
     dispatch_parallel(stale, tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1, dry_run=False)
 
@@ -1082,6 +1086,7 @@ def test_dispatch_parallel_records_blocked_without_counting_failure(tmp_path: Pa
         "call_agent_dispatch",
         lambda agent, task, dry_run=False: D._blocked_result("repo unavailable: organvm/missing"),
     )
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
 
     dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], per_agent_limit=1, max_workers=1)
 
