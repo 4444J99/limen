@@ -35,6 +35,11 @@ kernel that rides every lane). This report is the evidence record behind it.
 
 ## How the ask evolved (what stayed constant, what sharpened)
 
+- **Pre-fleet (2022-12 → 2026-04)** — every invariant present as pressure/myth, none as git organ
+  (evidence: `deep-history-2022-2026.md`). Permission-hatred is the OLDEST thread. Inbound is a
+  SCAR from ~2,000 zero-interview applications, not an axiom. The prosthesis was ART-first (a
+  solo-creator studio) until organvm generalized it in 2026-02. The August-1 deadline has NO
+  pre-fleet analog — do not retroject it.
 - **2026-W24 (Jun 8-14)** — Born as a storage emergency but already carrying the whole thesis: 'I want the computer, upon ejecting the SSD, to be virginal' and 'I'm building a prosthesis for a human's weakness — a portal — our consciousness is ours, the systems we touch are left virginal.' Constant from day one: like-with-like private domains, magic sauce private, public surface separate.
 - **2026-W25 (Jun 15-21)** — The deadline crystallized: a hard personal revenue deadline: August 1 Convergence law sharpened: 'all those things are one thing with different faces — combine them.' Done redefined from 'empty backlog' to 'AUTONOMIC — he walks away and the floor self-heals.'
 - **2026-W26 (Jun 22-28)** — Went explicitly institutional: 'build the AI prosthesis for what anyone with civilizational wealth pays staff for.' 'Find = build the portal that summons context into every place, not a chat that searches and loses.' Escalation shifted from storage to the same-problem-solved-from-scratch-every-session failure, in all caps.
