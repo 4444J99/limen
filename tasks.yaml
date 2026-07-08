@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 44
+      spent: 48
       per_agent:
-        jules: 40
+        jules: 43
         gemini: 0
-        codex: 3
+        codex: 4
         opencode: 0
         agy: 0
         claude: 0
@@ -105831,7 +105831,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -105847,7 +105847,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T14:58:10.229362Z'
+  updated: '2026-07-08T15:52:40.977572Z'
   dispatch_log:
   - timestamp: '2026-07-08T14:39:59.050705Z'
     agent: jules
@@ -105859,6 +105859,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-08T15:52:40.977572Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-451
   title: fix failing CI on organvm/limen#451
   repo: organvm/limen
@@ -108934,13 +108939,17 @@ tasks:
     \ [auto-emitted 2026-07-07 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-08T15:16:08.948595Z'
+  updated: '2026-07-08T15:52:11.635580Z'
   dispatch_log:
   - timestamp: '2026-07-08T15:16:08.948595Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T15:52:11.635580Z'
+    agent: codex
+    session_id: https://github.com/organvm/domus-genoma/pull/178
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-670
   title: fix failing CI on organvm/limen#670
   repo: organvm/limen
@@ -110707,7 +110716,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -110723,7 +110732,7 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:23:57.445677Z'
+  updated: '2026-07-08T15:52:40.977572Z'
   dispatch_log:
   - timestamp: '2026-07-08T13:13:00.316111Z'
     agent: jules
@@ -110765,6 +110774,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-08T15:52:40.977572Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-680
   title: fix failing CI on organvm/limen#680
   repo: organvm/limen
@@ -111801,7 +111815,7 @@ tasks:
   workstream: conductor
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - retro-0708
   - tried:jules
@@ -111810,7 +111824,7 @@ tasks:
     conductor drifts at every seam; relay+ROI graded DROPPED) + evolution 2
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:23:57.445677Z'
+  updated: '2026-07-08T15:52:40.977572Z'
   dispatch_log:
   - timestamp: '2026-07-08T13:07:36.798727Z'
     agent: jules
@@ -111846,6 +111860,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-08T15:52:40.977572Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: RETRO-0708-PII-PREMERGE-GATE
   title: pr-gate PII containment scan for person-adjacent organ paths
   description: Scan staged organs/consulting and person-adjacent files for names/handles/CRM
@@ -112558,7 +112577,7 @@ tasks:
     Surface only the truly irreducible account atom to the lever registry.
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: any
+  target_agent: codex
   priority: critical
   budget_cost: 1
   status: dispatched
@@ -112566,14 +112585,25 @@ tasks:
   - revenue
   - product
   - excav-0708
+  - tried:jules
   urls: []
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:24:31.317394Z'
+  updated: '2026-07-08T15:52:40.977572Z'
   dispatch_log:
   - timestamp: '2026-07-08T15:24:31.317394Z'
     agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T15:52:11.635580Z'
+    agent: jules
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-08T15:52:40.977572Z'
+    agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
@@ -112585,24 +112615,30 @@ tasks:
     outputs; done.sh = the portal URL returns 200 and links resolve.'
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - excav-0708
   - product
+  - tried:jules
   urls: []
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:24:31.317394Z'
+  updated: '2026-07-08T15:52:11.635580Z'
   dispatch_log:
   - timestamp: '2026-07-08T15:24:31.317394Z'
     agent: jules
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T15:52:11.635580Z'
+    agent: jules
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
 - id: EXCAV-0708-TABULARIUS-665
   title: Land the TABULARIUS/VLTIMA single-writer kernel (PR#665)
   description: PR#665 is the architectural fix to agent-memory-rot demanded repeatedly;
@@ -112632,24 +112668,30 @@ tasks:
     them there.'
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - excav-0708
   - lifecycle
+  - tried:jules
   urls: []
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:24:31.317394Z'
+  updated: '2026-07-08T15:52:11.635580Z'
   dispatch_log:
   - timestamp: '2026-07-08T15:24:31.317394Z'
     agent: jules
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T15:52:11.635580Z'
+    agent: jules
+    session_id: cli
+    status: failed->codex
+    output: remote/service lane failed; reopened to healthy fleet cascade
 - id: EXCAV-0708-PROMPT-VISUALIZER
   title: Ask-vs-shipped visual ledger (the 28-ask dropped lineage)
   description: "Build the visualizer over the every-ask organ + prompt-lifecycle private\
@@ -112673,24 +112715,30 @@ tasks:
   updated: '2026-07-08T15:12:04.435630Z'
   dispatch_log: []
 - id: EXCAV-0708-ETCETER4-C3
-  title: "etceter4 revival C3 \u2014 one-predicate publishable render"
-  description: 'Promote the etceter4 (2011 origin + temple + synthesis) revival to
-    a bounded organ task: three chapters render as ONE publishable artifact at a reachable
-    URL (ship-gate class). No mid-session spawns; one done predicate.'
+  title: "etceter4 revival C3 \u2014 Met4morfoses thesis + phonetic chart + ET4L catalog\
+    \ as ONE published artifact"
+  description: 'Promote the etceter4 revival to a bounded organ task, now carrying
+    the origin fold-in: the Met4morfoses MFA thesis + constructed phonetic-language
+    chart (salvage via ORIGIN-0708-SPIKE-SALVAGE) + ET4L catalog (a decade of RELEASED
+    work: ETCETER4 discography, AMP LAB, LOCREANCE) render as ONE publishable studio
+    artifact at a reachable URL (ship-gate class; SPECVLVM close template). This is
+    the invariant''s native art-first register and the public-persona surface 48+
+    asks drifted on.'
   repo: organvm/limen
   type: code
-  target_agent: opencode
-  priority: medium
+  target_agent: any
+  priority: high
   budget_cost: 1
   status: open
   labels:
   - excav-0708
+  - origin-0708
   - product
   urls: []
-  context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
+  context: docs/reviews/deep-history-2022-2026.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:12:04.435990Z'
+  updated: '2026-07-08T15:54:00.964270Z'
   dispatch_log: []
 - id: EXCAV-0708-TRIPTYCH-SHIP
   title: 'Triptych video canon: merge the worktree and SHIP to a reachable surface'
@@ -112713,25 +112761,35 @@ tasks:
   updated: '2026-07-08T15:12:04.436306Z'
   dispatch_log: []
 - id: EXCAV-0708-CHATGPT-BACKFILL
-  title: Backfill the ChatGPT-era archive into session-meta; extend the excavation
-    backward
-  description: The pre-June-8 speech lives in ChatGPT. Run the documented local pull
-    (desktop-session; gizmos/{PID}/conversations; files/download) into session-meta/data/session-transcripts,
-    then re-run the weekly excavation extractor over the extended horizon. Done =
-    pre-W24 weeks appear in the excavation index.
-  repo: organvm/a-i-chat--exporter
+  title: "Close the 2026-04-13\u219206-08 gap: pull post-export ChatGPT via the desktop\
+    \ session"
+  description: "STATE (2026-07-08): the FULL ChatGPT export (2022-12-28\u21922026-04-13,\
+    \ 900+ convs) and the Claude.ai web export (2025-06\u21922026-04) were found on\
+    \ the T7Recovery lifeboat, copied to session-meta/data/session-transcripts/{chatgpt-export-2026-04,claude-web-export-2026-04}\
+    \ (gitignored), era-extracted (15,363 user msgs) and analyzed. REMAINING GAP:\
+    \ 2026-04-13\u219206-08. The chatgpt.app local store EXISTS (~/Library/Application\
+    \ Support/com.openai.chat: 151 conversations-v3 caches incl. post-4/23, gizmos-*,\
+    \ project-g-p-* dirs) but the .data caches are ENCRYPTED \u2014 use the documented\
+    \ desktop-session pull (gizmos/{PID}/conversations; NOT gizmo_id \u2014 no-op)\
+    \ per the chatgpt-project-local-pull method, landing into session-meta/data/session-transcripts/;\
+    \ adapters exist at session-meta/ingest/. Also refresh the Claude.ai web export\
+    \ for the same gap window. Done = the gap era appears in the deep-history extraction\
+    \ index (extract-deep-history pattern) with >0 messages, or a receipt proving\
+    \ the window had none."
+  repo: organvm/limen
   type: code
-  target_agent: codex
+  target_agent: any
   priority: medium
   budget_cost: 1
   status: open
   labels:
   - excav-0708
   urls: []
-  context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
+  context: docs/reviews/deep-history-2022-2026.md (pending) + full-history-excavation
+    report
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:12:04.436646Z'
+  updated: '2026-07-08T15:44:46.321117Z'
   dispatch_log: []
 - id: EXCAV-0708-BURIED-SWEEP
   title: Adversarially verify the 16 unchecked buried-treasure candidates
@@ -112771,4 +112829,278 @@ tasks:
   depends_on: []
   created: '2026-07-08'
   updated: '2026-07-08T15:12:04.437426Z'
+  dispatch_log: []
+- id: REV-organvm-limen-revenue-ship-0708
+  title: Drive PR-Repair Factory to deploy-ready
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-ship
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "In organvm/limen, clear the concrete blockers between the current state\
+    \ and a DEPLOYABLE product: get open PRs green + merged, fix the critical path,\
+    \ confirm the app runs end-to-end. Output: a deploy-ready build + a short DEPLOY.md\
+    \ listing exactly what remains. [revenue-backlog 2026-07-08: rank 7, stage building\
+    \ \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:48:06.991886Z'
+  dispatch_log: []
+- id: REV-organvm-limen-revenue-funding-0708
+  title: Stage the donation funnel for MONETA Mint-as-a-Service
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: critical
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-funding
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "In organvm/limen, add .github/FUNDING.yml (ko_fi + github sponsors entries\
+    \ \u2014 use the owner handle; if the exact Ko-fi slug isn't known yet, leave\
+    \ a single clearly-marked TODO) AND a concise 'Support / Sponsor' section in the\
+    \ README linking both. Goal: the moment the accounts exist the donate path is\
+    \ ALREADY live. Tasteful, no nagware. Open a PR, keep the build green. [revenue-backlog\
+    \ 2026-07-08: rank 8, stage deploy-ready \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:48:06.994820Z'
+  dispatch_log: []
+- id: REV-organvm-limen-revenue-readiness-0708
+  title: First-paying-customer readiness pass on PR-Repair Factory
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-readiness
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "In organvm/limen, find the single highest-leverage gap between the current\
+    \ product and something a stranger would pay for (first-dollar path: GitHub Action\
+    \ / hosted endpoint subscription for multi-repo orgs; the internal 182-repo fleet\
+    \ is the case study) and close it with a real, tested change. One focused PR;\
+    \ keep CI green. [revenue-backlog 2026-07-08: rank 7, stage building \u2014 spend\
+    \ tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:48:06.996016Z'
+  dispatch_log: []
+- id: REV-organvm-limen-revenue-pro-tier-0708
+  title: Make the Pro-tier checkout merge-ready for MONETA Mint-as-a-Service
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: critical
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-pro-tier
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "In organvm/limen, rebase the stacked Pro-tier / LemonSqueezy checkout\
+    \ PRs onto the default branch, resolve conflicts, and get every check green so\
+    \ the ONLY remaining step is pasting LEMONSQUEEZY_STORE_ID. Don't invent product\
+    \ scope \u2014 just unblock what's already built (exporter Pro licences through\
+    \ the own mint \u2014 keyless explorer confirmation, no processor in the path).\
+    \ [revenue-backlog 2026-07-08: rank 8, stage deploy-ready \u2014 spend tokens\
+    \ on income, not busywork]"
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:48:06.997658Z'
+  dispatch_log: []
+- id: REV-organvm-limen-revenue-landing-0708
+  title: Ship a landing page for MONETA Mint-as-a-Service
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-landing
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "Create a single deploy-ready product page for MONETA Mint-as-a-Service\
+    \ in organvm/limen (docs/ or a gh-pages-ready index) explaining the real value\
+    \ and linking install + the donation/Pro options. Real copy derived from what\
+    \ the product ACTUALLY does \u2014 no lorem, no invented features. [revenue-backlog\
+    \ 2026-07-08: rank 8, stage deploy-ready \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:48:06.999570Z'
+  dispatch_log: []
+- id: REV-organvm-limen-revenue-launch-post-0708
+  title: Draft the build-in-public launch post for MONETA Mint-as-a-Service
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-launch-post
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "Write a ready-to-post launch announcement for MONETA Mint-as-a-Service\
+    \ (Show HN + Reddit + X variants), grounded in what it ACTUALLY does and its real\
+    \ users. Save as marketing/launch-post.md in organvm/limen. No hype, no invented\
+    \ metrics. [revenue-backlog 2026-07-08: rank 8, stage deploy-ready \u2014 spend\
+    \ tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:48:07.001030Z'
+  dispatch_log: []
+- id: EXCAV-0708-VENDOR-ARCHIVES
+  title: 'Vendor archive sweep: request+ingest Claude.ai, Gemini/Takeout, Perplexity,
+    Grok exports'
+  description: 'Findings 2026-07-08 (all local stores probed): chatgpt.app is the
+    ONLY desktop app holding local conversation history (handled in EXCAV-0708-CHATGPT-BACKFILL).
+    Claude desktop (~/Library/Application Support/Claude, 414M) = asset cache only,
+    IndexedDB 380K no convo payloads -> refresh the claude.ai account export (Settings->Export,
+    arrives by email; browser-session + Gmail rails exist) to cover 2026-04-21->today.
+    GeminiMacOS = settings-only SQLite -> Google Takeout ''Gemini Apps'' export. Perplexity
+    macv3 dirs = empty shells -> web export from account settings IF usage warrants
+    (verify usage first via browser-state/bookmarks before requesting). Grok: no local
+    app -> grok.com/x.ai data export IF usage warrants. Copilot: container has no
+    chat store and no VS Code copilot-chat globalStorage -> NONE, mark n/a. Each obtained
+    export lands in session-meta/data/session-transcripts/<vendor>-export-<date>/
+    (gitignored), then re-run the deep-history extractor so new eras appear in the
+    index. Done = per-vendor either an ingested export receipt or a verified ''no
+    usage / n/a'' receipt.'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - excav-0708
+  urls: []
+  context: docs/reviews/deep-history-2022-2026.md (pending); complements EXCAV-0708-CHATGPT-BACKFILL
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:48:25.911797Z'
+  dispatch_log: []
+- id: ORIGIN-0708-SPIKE-SALVAGE
+  title: Salvage the 2025-spike artifacts before they are lost (phonetic chart, uid_toolkit,
+    cartridges)
+  description: 'The Jan-May 2025 archive holds complete recoverable artifacts that
+    exist NOWHERE else: the constructed phonetic-language chart (2025-01/02 transcripts),
+    uid_toolkit.py, the memory-cartridge format, ARC4N atomization spec, MVSFED. Extract
+    each from session-meta/data/session-transcripts/chatgpt-export-2026-04 era shards
+    into its durable owner (studio/etceter4 for the chart+art; limen docs or the owning
+    repo for specs). Done = each named artifact exists as a git-tracked file with
+    provenance note.'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - origin-0708
+  - excav-0708
+  urls: []
+  context: docs/reviews/deep-history-2022-2026.md
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:54:00.961197Z'
+  dispatch_log: []
+- id: ORIGIN-0708-INBOUND-PREDICATE
+  title: 'Encode the inbound-scar as a predicate: no outbound lane without an inbound
+    test'
+  description: "Origin evidence proves INBOUND is a scar (~2,000 zero-interview outbound\
+    \ applications), not an axiom \u2014 yet no encoded gate stops outbound-shaped\
+    \ work from being generated. Add a dispatch/generator check: any task whose shape\
+    \ is outbound-ask (apply/pitch/cold-contact) requires either an inbound-lure counterpart\
+    \ or an explicit lever. Wire into the generators + censor."
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - origin-0708
+  urls: []
+  context: docs/reviews/deep-history-2022-2026.md
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:54:00.962856Z'
+  dispatch_log: []
+- id: ORIGIN-0708-ARC4N-CELLULAR
+  title: ARC4N cellular text-atomization as a distinct engine (letters/words/sentences
+    as remix cells)
+  description: ARC4N's CELLULAR atomization (texts decomposed to letter/word/sentence
+    cells for remix) is architecturally distinct from the corpus engine's block-level
+    atomization and is fundable/productizable (generative-art + linguistics lure).
+    Spec exists in the 2025 archive. Build as a bounded engine in the linguistic-atomization-framework
+    lineage; done = one text atomized+remixed via CLI with tests.
+  repo: organvm/linguistic-atomization-framework
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - origin-0708
+  - product
+  urls: []
+  context: docs/reviews/deep-history-2022-2026.md
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:54:00.963230Z'
+  dispatch_log: []
+- id: ORIGIN-0708-MEETING-ASSISTANT
+  title: "AI meeting assistant (Zoom/Teams RAG, dual-surface) \u2014 priced revenue\
+    \ product from the pre-fleet vault"
+  description: 'Adversarially confirmed pre-fleet treasure: a coherent, priced, unbuilt
+    AI meeting assistant concept (RAG over meeting transcripts + dual-surface delivery;
+    was priced 2-for-1 with a partner). RAG+transcription are now commodity inside
+    the fleet (MCP + corpus tooling). Scope the MVP behind ship-gate (reachable demo
+    URL) and add to revenue-ladder.json as a product entry. A concrete Aug-1 revenue
+    path.'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - origin-0708
+  - revenue
+  - product
+  urls: []
+  context: docs/reviews/deep-history-2022-2026.md
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T15:54:00.963864Z'
   dispatch_log: []
