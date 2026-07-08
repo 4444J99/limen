@@ -110993,3 +110993,49 @@ tasks:
   depends_on: []
   created: '2026-07-08'
   dispatch_log: []
+- id: HEAL-cifix-organvm-organvm-engine-165
+  title: fix failing CI on organvm/organvm-engine#165
+  repo: organvm/organvm-engine
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/organvm-engine/pull/165
+  context: "PR organvm/organvm-engine#165 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/organvm-engine/pull/165\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-organvm-iii-ergon.github.io-5
+  title: rebase/resolve conflicts on organvm/organvm-iii-ergon.github.io#5
+  repo: organvm/organvm-iii-ergon.github.io
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/organvm-iii-ergon.github.io/pull/5
+  context: 'PR organvm/organvm-iii-ergon.github.io#5 is CONFLICTING with its base
+    branch and merge-drain correctly refuses to merge it. Check out the PR branch,
+    rebase it onto the current base (or merge base in), resolve every conflict preserving
+    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. Do not open a new PR. PR: https://github.com/organvm/organvm-iii-ergon.github.io/pull/5
+    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
