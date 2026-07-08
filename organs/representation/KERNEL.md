@@ -163,9 +163,10 @@ readiness requires public guideline source refs and sourced, resolved AI-policy
 status. Dry-run export additionally requires writer public-export approval,
 writer submission approval, and opportunity submission approval. Real submission
 uses `publication-send`; it requires the same dry-run approvals plus an approved
-`real_send` record. Local outbox execution writes a receipt, while external
-delivery adapters remain blocked until private credential and recipient
-configuration is supplied outside tracked records.
+`real_send` record. Local outbox execution writes a receipt. Direct email
+execution sends through SMTP using runtime sender/recipient env vars, optional
+private payload path, and SMTP settings supplied at execution time; receipts
+redact those runtime values.
 
 ## Literary Intake Contract
 

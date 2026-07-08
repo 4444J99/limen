@@ -4,9 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import mimetypes
+import os
 import re
+import smtplib
 import sys
 from datetime import UTC, datetime
+from email.message import EmailMessage
 from pathlib import Path
 from typing import Any
 
@@ -112,8 +116,9 @@ REAL_SEND_DELIVERY_ADAPTERS = {
     "submission_form",
     "local_outbox",
 }
+DIRECT_EMAIL_ADAPTER = "direct_email"
+SUBMISSION_FORM_ADAPTER = "submission_form"
 LOCAL_OUTBOX_ADAPTER = "local_outbox"
-EXTERNAL_DELIVERY_ADAPTERS = REAL_SEND_DELIVERY_ADAPTERS - {LOCAL_OUTBOX_ADAPTER}
 REAL_SEND_REQUIRED_FIELDS = {
     "subject_id": "subject_id",
     "opportunity_id": "opportunity_id",
@@ -3023,6 +3028,249 @@ def _slug(value: str) -> str:
     return slug or "publication-send"
 
 
+def _runtime_value(
+    *,
+    send_config: dict[str, Any],
+    approval: dict[str, Any],
+    config_key: str,
+    approval_key: str | None = None,
+) -> str:
+    configured = send_config.get(config_key)
+    if not _missing(configured):
+        return str(configured)
+    return str(approval.get(approval_key or config_key) or "")
+
+
+def _runtime_env_value(env_name: str, label: str, blockers: list[str]) -> str:
+    if _missing(env_name):
+        blockers.append(f"REAL_SEND_BLOCKED: {label} env var name is missing.")
+        return ""
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", env_name):
+        blockers.append(f"REAL_SEND_BLOCKED: {label} env var name is invalid.")
+        return ""
+    value = os.environ.get(env_name)
+    if _missing(value):
+        blockers.append(f"REAL_SEND_BLOCKED: {label} env var {env_name} is not set.")
+        return ""
+    return str(value).strip()
+
+
+def _runtime_email_from_env(env_name: str, label: str, blockers: list[str]) -> str:
+    value = _runtime_env_value(env_name, label, blockers)
+    if value and not EMAIL_RE.fullmatch(value):
+        blockers.append(f"REAL_SEND_BLOCKED: {label} env var does not contain a valid email address.")
+        return ""
+    return value
+
+
+def _runtime_text_from_env(env_name: str, label: str, blockers: list[str]) -> str:
+    value = _runtime_env_value(env_name, label, blockers)
+    if EMAIL_RE.search(value) or PHONE_RE.search(value):
+        blockers.append(f"REAL_SEND_BLOCKED: {label} env var contains contact data.")
+        return ""
+    return value
+
+
+def _direct_email_subject(
+    *,
+    approval: dict[str, Any],
+    send_config: dict[str, Any],
+    writer_name: str,
+    candidate_id: str,
+    route_name: str,
+    blockers: list[str],
+) -> str:
+    subject_env = _runtime_value(
+        send_config=send_config,
+        approval=approval,
+        config_key="message_subject_env",
+    )
+    if subject_env:
+        subject = _runtime_text_from_env(subject_env, "message subject", blockers)
+    else:
+        subject = str(approval.get("message_subject") or f"Submission: {candidate_id} for {route_name}")
+    subject = subject.strip()
+    if not subject:
+        blockers.append("REAL_SEND_BLOCKED: direct_email message subject is empty.")
+    if "\n" in subject or "\r" in subject:
+        blockers.append("REAL_SEND_BLOCKED: direct_email message subject must be one line.")
+    if EMAIL_RE.search(subject) or PHONE_RE.search(subject):
+        blockers.append("REAL_SEND_BLOCKED: direct_email message subject contains contact data.")
+    if len(subject) > 180:
+        blockers.append("REAL_SEND_BLOCKED: direct_email message subject is too long.")
+    return subject or f"Submission from {writer_name}"
+
+
+def _direct_email_body(
+    *,
+    approval: dict[str, Any],
+    send_config: dict[str, Any],
+    writer_name: str,
+    candidate_id: str,
+    route_name: str,
+    blockers: list[str],
+) -> str:
+    body_env = _runtime_value(
+        send_config=send_config,
+        approval=approval,
+        config_key="message_body_env",
+    )
+    if body_env:
+        body = _runtime_text_from_env(body_env, "message body", blockers)
+    else:
+        body = str(
+            approval.get("message_body")
+            or (
+                f"Please consider the referenced submission from {writer_name} for {route_name}.\n\n"
+                f"Candidate: {candidate_id}\n"
+                "Payload ref: recorded and withheld by the Representation substrate.\n"
+            )
+        )
+    body = body.strip()
+    if not body:
+        blockers.append("REAL_SEND_BLOCKED: direct_email message body is empty.")
+    return body
+
+
+def _attach_payload_if_present(message: EmailMessage, payload_path: Path, blockers: list[str]) -> bool:
+    if not payload_path.exists() or not payload_path.is_file():
+        blockers.append("REAL_SEND_BLOCKED: direct_email payload path does not exist or is not a file.")
+        return False
+    content_type, _ = mimetypes.guess_type(str(payload_path))
+    maintype, subtype = (content_type or "application/octet-stream").split("/", 1)
+    try:
+        data = payload_path.read_bytes()
+    except OSError as exc:
+        blockers.append(f"REAL_SEND_BLOCKED: direct_email payload could not be read: {exc}")
+        return False
+    message.add_attachment(data, maintype=maintype, subtype=subtype, filename=payload_path.name)
+    return True
+
+
+def _write_direct_email_outbox_copy(
+    outbox_dir: Path, message: EmailMessage, candidate_id: str, route_selector: str
+) -> Path:
+    outbox_dir.mkdir(parents=True, exist_ok=True)
+    path = outbox_dir / f"{_slug(candidate_id)}-{_slug(route_selector)}-direct-email.eml"
+    path.write_text(message.as_string(), encoding="utf-8")
+    return path
+
+
+def _execute_direct_email(
+    *,
+    writer_name: str,
+    candidate_id: str,
+    route_selector: str,
+    route_name: str,
+    approval: dict[str, Any],
+    send_config: dict[str, Any],
+    outbox_dir: Path | None,
+) -> tuple[str | None, list[str], list[str]]:
+    blockers: list[str] = []
+    rows: list[str] = []
+    smtp_host = _runtime_value(send_config=send_config, approval=approval, config_key="smtp_host")
+    smtp_port_raw = _runtime_value(send_config=send_config, approval=approval, config_key="smtp_port") or "25"
+    smtp_timeout_raw = _runtime_value(send_config=send_config, approval=approval, config_key="smtp_timeout") or "15"
+    if _missing(smtp_host):
+        blockers.append("REAL_SEND_BLOCKED: direct_email delivery adapter requires --smtp-host.")
+    try:
+        smtp_port = int(smtp_port_raw)
+    except ValueError:
+        blockers.append("REAL_SEND_BLOCKED: direct_email smtp port must be an integer.")
+        smtp_port = 25
+    try:
+        smtp_timeout = float(smtp_timeout_raw)
+    except ValueError:
+        blockers.append("REAL_SEND_BLOCKED: direct_email smtp timeout must be numeric.")
+        smtp_timeout = 15.0
+
+    recipient_env = _runtime_value(
+        send_config=send_config,
+        approval=approval,
+        config_key="recipient_env",
+        approval_key="recipient_address_env",
+    )
+    sender_env = _runtime_value(
+        send_config=send_config,
+        approval=approval,
+        config_key="sender_env",
+        approval_key="sender_address_env",
+    )
+    recipient = _runtime_email_from_env(recipient_env, "recipient address", blockers)
+    sender = _runtime_email_from_env(sender_env, "sender address", blockers)
+    subject = _direct_email_subject(
+        approval=approval,
+        send_config=send_config,
+        writer_name=writer_name,
+        candidate_id=candidate_id,
+        route_name=route_name,
+        blockers=blockers,
+    )
+    body = _direct_email_body(
+        approval=approval,
+        send_config=send_config,
+        writer_name=writer_name,
+        candidate_id=candidate_id,
+        route_name=route_name,
+        blockers=blockers,
+    )
+
+    message = EmailMessage()
+    if sender:
+        message["From"] = sender
+    if recipient:
+        message["To"] = recipient
+    message["Subject"] = subject
+    message.set_content(body)
+
+    payload_env = _runtime_value(
+        send_config=send_config,
+        approval=approval,
+        config_key="payload_path_env",
+    )
+    if payload_env:
+        payload_value = _runtime_env_value(payload_env, "payload path", blockers)
+        if payload_value:
+            if _attach_payload_if_present(message, Path(payload_value), blockers):
+                rows.append("Direct email payload attachment: attached from private runtime path.")
+
+    if blockers:
+        return None, rows, blockers
+
+    if outbox_dir is not None:
+        outbox_copy = _write_direct_email_outbox_copy(outbox_dir, message, candidate_id, route_selector)
+        rows.append(f"Direct email outbox copy written: {outbox_copy}")
+
+    use_ssl = bool(send_config.get("smtp_ssl")) or approval.get("smtp_ssl") is True
+    use_starttls = bool(send_config.get("smtp_starttls")) or approval.get("smtp_starttls") is True
+    user_env = _runtime_value(send_config=send_config, approval=approval, config_key="smtp_user_env")
+    password_env = _runtime_value(send_config=send_config, approval=approval, config_key="smtp_password_env")
+    username = _runtime_env_value(user_env, "smtp username", blockers) if user_env else ""
+    password = _runtime_env_value(password_env, "smtp password", blockers) if password_env else ""
+    if bool(username) != bool(password):
+        blockers.append("REAL_SEND_BLOCKED: direct_email smtp username/password envs must be supplied together.")
+    if blockers:
+        return None, rows, blockers
+
+    smtp_cls = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+    try:
+        with smtp_cls(smtp_host, smtp_port, timeout=smtp_timeout) as smtp:
+            if use_starttls:
+                smtp.starttls()
+            if username and password:
+                smtp.login(username, password)
+            smtp.send_message(message)
+    except OSError as exc:
+        blockers.append(f"REAL_SEND_BLOCKED: direct_email SMTP delivery failed: {exc}")
+        return None, rows, blockers
+    except smtplib.SMTPException as exc:
+        blockers.append(f"REAL_SEND_BLOCKED: direct_email SMTP delivery failed: {exc}")
+        return None, rows, blockers
+
+    rows.append("Direct email SMTP delivery completed.")
+    return "SENT_DIRECT_EMAIL", rows, blockers
+
+
 def _write_local_outbox_receipt(
     outbox_dir: Path,
     *,
@@ -3071,6 +3319,7 @@ def render_publication_send_receipt(
     *,
     execute: bool = False,
     outbox_dir: Path | None = None,
+    send_config: dict[str, Any] | None = None,
 ) -> tuple[str, bool]:
     """Render or execute a publication send receipt from explicit real-send approval."""
     if approval_doc is not None:
@@ -3115,8 +3364,10 @@ def render_publication_send_receipt(
 
     adapter = str(real_send_approval.get("delivery_adapter") or "missing") if real_send_approval else "missing"
     executed_path: Path | None = None
+    executed_status: str | None = None
     execution_rows: list[str] = []
     timestamp = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    send_config = send_config or {}
 
     if execute and not blockers:
         if adapter == LOCAL_OUTBOX_ADAPTER:
@@ -3135,10 +3386,22 @@ def render_publication_send_receipt(
                     timestamp=timestamp,
                 )
                 execution_rows.append(f"Local outbox receipt written: {executed_path}")
-        elif adapter in EXTERNAL_DELIVERY_ADAPTERS:
+        elif adapter == DIRECT_EMAIL_ADAPTER:
+            executed_status, direct_email_rows, direct_email_blockers = _execute_direct_email(
+                writer_name=writer_name,
+                candidate_id=candidate_id,
+                route_selector=route_selector,
+                route_name=route_name,
+                approval=real_send_approval,
+                send_config=send_config,
+                outbox_dir=outbox_dir,
+            )
+            execution_rows.extend(direct_email_rows)
+            blockers.extend(direct_email_blockers)
+        elif adapter == SUBMISSION_FORM_ADAPTER:
             blockers.append(
-                f"REAL_SEND_BLOCKED: delivery adapter {adapter} requires external delivery integration, "
-                "private recipient configuration, and credential-wall approval not stored in this repo."
+                "REAL_SEND_BLOCKED: submission_form delivery adapter requires a form automation implementation "
+                "for the selected route."
             )
         else:
             blockers.append(
@@ -3149,6 +3412,9 @@ def render_publication_send_receipt(
     if blockers:
         send_status = "BLOCKED"
         ok = False
+    elif execute and executed_status:
+        send_status = executed_status
+        ok = True
     elif execute and executed_path is not None:
         send_status = "SENT_TO_LOCAL_OUTBOX"
         ok = True
@@ -3196,7 +3462,8 @@ def render_publication_send_receipt(
             "## Boundary",
             "",
             "- This command validates explicit real_send approval and attempts the selected delivery adapter.",
-            "- External adapters require private credentials and recipient configuration outside tracked records.",
+            "- Direct email uses runtime SMTP settings and sender/recipient env vars; receipts redact those values.",
+            "- External credentials and recipient configuration stay outside tracked records.",
             "- This receipt does not claim acceptance, publication, editor interest, or public release.",
         ]
     )
@@ -3710,6 +3977,18 @@ def _publication_send_command(
     approval_record: Path | None,
     execute: bool,
     outbox_dir: Path | None,
+    smtp_host: str | None,
+    smtp_port: int,
+    smtp_timeout: float,
+    smtp_starttls: bool,
+    smtp_ssl: bool,
+    smtp_user_env: str | None,
+    smtp_password_env: str | None,
+    sender_env: str | None,
+    recipient_env: str | None,
+    message_subject_env: str | None,
+    message_body_env: str | None,
+    payload_path_env: str | None,
     out: Path | None,
 ) -> int:
     try:
@@ -3724,6 +4003,20 @@ def _publication_send_command(
             approval_doc=approval_doc,
             execute=execute,
             outbox_dir=outbox_dir,
+            send_config={
+                "smtp_host": smtp_host,
+                "smtp_port": smtp_port,
+                "smtp_timeout": smtp_timeout,
+                "smtp_starttls": smtp_starttls,
+                "smtp_ssl": smtp_ssl,
+                "smtp_user_env": smtp_user_env,
+                "smtp_password_env": smtp_password_env,
+                "sender_env": sender_env,
+                "recipient_env": recipient_env,
+                "message_subject_env": message_subject_env,
+                "message_body_env": message_body_env,
+                "payload_path_env": payload_path_env,
+            },
         )
     except ValueError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -3812,6 +4105,18 @@ def main(argv: list[str] | None = None) -> int:
     publication_send.add_argument("--approval-record", type=Path)
     publication_send.add_argument("--execute", action="store_true")
     publication_send.add_argument("--outbox-dir", type=Path)
+    publication_send.add_argument("--smtp-host")
+    publication_send.add_argument("--smtp-port", type=int, default=25)
+    publication_send.add_argument("--smtp-timeout", type=float, default=15.0)
+    publication_send.add_argument("--smtp-starttls", action="store_true")
+    publication_send.add_argument("--smtp-ssl", action="store_true")
+    publication_send.add_argument("--smtp-user-env")
+    publication_send.add_argument("--smtp-password-env")
+    publication_send.add_argument("--sender-env")
+    publication_send.add_argument("--recipient-env")
+    publication_send.add_argument("--message-subject-env")
+    publication_send.add_argument("--message-body-env")
+    publication_send.add_argument("--payload-path-env")
     publication_send.add_argument("--out", type=Path)
 
     handoff_audit = sub.add_parser(
@@ -3919,6 +4224,18 @@ def main(argv: list[str] | None = None) -> int:
             args.approval_record,
             args.execute,
             args.outbox_dir,
+            args.smtp_host,
+            args.smtp_port,
+            args.smtp_timeout,
+            args.smtp_starttls,
+            args.smtp_ssl,
+            args.smtp_user_env,
+            args.smtp_password_env,
+            args.sender_env,
+            args.recipient_env,
+            args.message_subject_env,
+            args.message_body_env,
+            args.payload_path_env,
             args.out,
         )
 

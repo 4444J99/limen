@@ -110,8 +110,9 @@ The `publication-send` command is the execution surface. It refuses implicit
 send authority, requires the writer public-export, writer submission,
 opportunity-route submission, and real-send approvals for the selected candidate
 and route, then attempts the selected delivery adapter. `local_outbox` writes a
-local execution receipt; external adapters stop with a credential/recipient
-blocker unless private delivery integration is supplied outside tracked records.
+local execution receipt. `direct_email` builds and sends an SMTP message from
+runtime sender/recipient env vars, optional private payload path, and SMTP
+settings supplied at execution time; receipts redact those runtime values.
 
 ## Executable Proof
 

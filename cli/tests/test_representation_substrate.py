@@ -92,6 +92,11 @@ def approved_real_send_approval_record(tmp_path: Path, *, delivery_adapter: str 
         approval["real_send_approval"] = True
         approval["operator_approved_at"] = "2026-07-08T00:00:00Z"
         approval["delivery_adapter"] = delivery_adapter
+        approval["sender_address_env"] = "TEST_SUBMISSION_SENDER_EMAIL"
+        approval["recipient_address_env"] = "TEST_SUBMISSION_RECIPIENT_EMAIL"
+        approval["message_subject_env"] = "TEST_SUBMISSION_SUBJECT"
+        approval["message_body_env"] = "TEST_SUBMISSION_BODY"
+        approval["payload_path_env"] = "TEST_SUBMISSION_PAYLOAD_PATH"
         approval["permitted_actions"] = ["send_submission", "write_send_receipt"]
         if delivery_adapter == "local_outbox":
             approval["permitted_actions"].append("stage_outbox_message")
@@ -914,7 +919,7 @@ def test_publication_send_blocks_without_real_send_approval(tmp_path: Path):
     assert "Real send approval is missing; publication-send requires an approved real_send record." in result.stdout
 
 
-def test_publication_send_reaches_external_adapter_blocker_with_real_send_approval(tmp_path: Path):
+def test_publication_send_direct_email_blocks_missing_runtime_config(tmp_path: Path):
     approval_record = approved_real_send_approval_record(tmp_path, delivery_adapter="direct_email")
 
     result = run_tool(
@@ -935,7 +940,77 @@ def test_publication_send_reaches_external_adapter_blocker_with_real_send_approv
     assert result.returncode == 1
     assert "Real send approval: APPROVED_REAL_SEND" in result.stdout
     assert "Send status: BLOCKED" in result.stdout
-    assert "REAL_SEND_BLOCKED: delivery adapter direct_email requires external delivery integration" in result.stdout
+    assert "REAL_SEND_BLOCKED: direct_email delivery adapter requires --smtp-host." in result.stdout
+    assert "REAL_SEND_BLOCKED: recipient address env var TEST_SUBMISSION_RECIPIENT_EMAIL is not set." in result.stdout
+
+
+def test_publication_send_direct_email_uses_smtp_adapter_with_runtime_env(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    approval_doc = load_record(approved_real_send_approval_record(tmp_path, delivery_adapter="direct_email"))
+    payload_path = tmp_path / "payload.txt"
+    payload_path.write_text("fixture payload, no private manuscript text", encoding="utf-8")
+    monkeypatch.setenv("TEST_SUBMISSION_SENDER_EMAIL", "sender@example.test")
+    monkeypatch.setenv("TEST_SUBMISSION_RECIPIENT_EMAIL", "recipient@example.test")
+    monkeypatch.setenv("TEST_SUBMISSION_SUBJECT", "Fixture submission subject")
+    monkeypatch.setenv("TEST_SUBMISSION_BODY", "Fixture submission body.")
+    monkeypatch.setenv("TEST_SUBMISSION_PAYLOAD_PATH", str(payload_path))
+    sent_messages = []
+
+    class FakeSMTP:
+        def __init__(self, host: str, port: int, timeout: float):
+            self.host = host
+            self.port = port
+            self.timeout = timeout
+            self.started_tls = False
+            self.logged_in = False
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def starttls(self):
+            self.started_tls = True
+
+        def login(self, username: str, password: str):
+            self.logged_in = bool(username and password)
+
+        def send_message(self, message):
+            sent_messages.append((self.host, self.port, self.timeout, message))
+
+    monkeypatch.setattr(rs.smtplib, "SMTP", FakeSMTP)
+
+    output, ok = rs.render_publication_send_receipt(
+        load_record(CHRIS),
+        load_record(OPPORTUNITY),
+        candidate_id=READY_CANDIDATE,
+        route_selector=YALE_ROUTE,
+        approval_doc=approval_doc,
+        execute=True,
+        send_config={
+            "smtp_host": "smtp.example.test",
+            "smtp_port": 2525,
+            "smtp_timeout": 3.0,
+        },
+    )
+
+    assert ok is True
+    assert "Send status: SENT_DIRECT_EMAIL" in output
+    assert "Direct email SMTP delivery completed." in output
+    assert "sender@example.test" not in output
+    assert "recipient@example.test" not in output
+    assert str(payload_path) not in output
+    assert len(sent_messages) == 1
+    host, port, timeout, message = sent_messages[0]
+    assert host == "smtp.example.test"
+    assert port == 2525
+    assert timeout == 3.0
+    assert message["From"] == "sender@example.test"
+    assert message["To"] == "recipient@example.test"
+    assert message["Subject"] == "Fixture submission subject"
 
 
 def test_publication_send_writes_local_outbox_with_real_send_approval(tmp_path: Path):
