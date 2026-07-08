@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-07T22:31:19+00:00`
+Generated: `2026-07-08T04:54:56+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -47,15 +47,6 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - `2026-07-06T03:59:38Z` `organvm-i-theoria`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035938Z-organvm-i-theoria/receipt.json`.
 - `2026-07-06T03:58:40Z` `organvm`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035840Z-organvm/receipt.json`.
 - `2026-07-06T03:57:39Z` `writelens`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260706T035739Z-writelens/receipt.json`.
-
-## Preservation Results
-
-- Requested roots: `3`.
-- Source size receipted: `13.7 GiB`.
-- Statuses: `external_archive_preserved` 3.
-- Preserved `organvm-session-meta` `4.7 GiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223134Z-organvm-session-meta/receipt.json`.
-- Preserved `session-meta-no-prompt` `4.5 GiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223223Z-session-meta-no-prompt/receipt.json`.
-- Preserved `session-meta-2` `4.5 GiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260707T223313Z-session-meta-2/receipt.json`.
 
 ## Repeated Staged-Missing Fingerprints
 
