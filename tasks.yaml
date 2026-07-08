@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 161
+      spent: 162
       per_agent:
         jules: 100
         gemini: 3
-        codex: 1
+        codex: 2
         opencode: 25
         agy: 31
         claude: 0
@@ -91744,7 +91744,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -91760,7 +91760,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T02:43:54.038507Z'
+  updated: '2026-07-08T04:15:38.110026Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:15:36.678636Z'
     agent: jules
@@ -91800,6 +91800,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/domus-genoma/pull/199
     status: dispatched
+  - timestamp: '2026-07-08T04:15:38.110026Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-cifix-organvm-domus-genoma-157
   title: fix failing CI on organvm/domus-genoma#157
   repo: organvm/domus-genoma
@@ -106164,7 +106169,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106180,7 +106185,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T04:10:16.232379Z'
+  updated: '2026-07-08T04:14:36.098321Z'
   dispatch_log:
   - timestamp: '2026-07-08T03:05:48.672321Z'
     agent: codex
@@ -106197,6 +106202,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-08T04:14:36.098321Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-172
   title: fix failing CI on organvm/domus-genoma#172
   repo: organvm/domus-genoma
@@ -109551,7 +109561,7 @@ tasks:
   workstream: estate-custody
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - always-working
   - receipt-first
@@ -109591,7 +109601,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T04:13:32.834518Z'
+  updated: '2026-07-08T04:15:38.110026Z'
   dispatch_log:
   - timestamp: '2026-07-08T03:46:34.078533Z'
     agent: codex
@@ -109602,6 +109612,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/limen/pull/689
     status: dispatched
+  - timestamp: '2026-07-08T04:15:38.110026Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: AW-PUBLIC-FACE-CONTRIBUTION-BALANCE
   title: Rebalance public GitHub activity away from commit-only churn
   description: 'GitHub activity mix needs owner action: commits 74.1%, PRs 13.3%,
@@ -109698,3 +109713,187 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+- id: HEAL-cifix-organvm-domus-genoma-179
+  title: fix failing CI on organvm/domus-genoma#179
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/179
+  context: "PR organvm/domus-genoma#179 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/179\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-domus-genoma-180
+  title: fix failing CI on organvm/domus-genoma#180
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/180
+  context: "PR organvm/domus-genoma#180 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/180\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-domus-genoma-181
+  title: fix failing CI on organvm/domus-genoma#181
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/181
+  context: "PR organvm/domus-genoma#181 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/181\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-domus-genoma-182
+  title: fix failing CI on organvm/domus-genoma#182
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/182
+  context: "PR organvm/domus-genoma#182 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/182\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-domus-genoma-183
+  title: fix failing CI on organvm/domus-genoma#183
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/183
+  context: "PR organvm/domus-genoma#183 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/183\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-domus-genoma-184
+  title: fix failing CI on organvm/domus-genoma#184
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/184
+  context: "PR organvm/domus-genoma#184 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/184\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-domus-genoma-185
+  title: fix failing CI on organvm/domus-genoma#185
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/185
+  context: "PR organvm/domus-genoma#185 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/185\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-domus-genoma-187
+  title: fix failing CI on organvm/domus-genoma#187
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/187
+  context: "PR organvm/domus-genoma#187 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/187\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
