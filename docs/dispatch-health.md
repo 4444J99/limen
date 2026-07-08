@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-07T23:56:06+00:00`
+Generated: `2026-07-08T05:44:54+00:00`
 
 Status: `blocked`
 
@@ -25,18 +25,14 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `1`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-07T23:56:06.787721+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-08T05:44:54.971590+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run lanes: `auto`; max `1`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 0 (cap 1) -> []`.
-- Async skipped down lanes: `claude, gemini, jules`.
-  - `claude`: usage health `rate-limited`; signal `tokens`; remaining `100000000` of `100000000`; headroom `100%`.
-  - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
-  - `jules`: usage health `low`; signal `dispatch-count`; remaining `8` of `100`; headroom `8%`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 1 (cap 1) -> ['HEAL-cifix-organvm-domus-genoma-121']`.
 
 ## Prompt Packet Gate
 
@@ -52,26 +48,25 @@ Status: `blocked`
 
 - Reconciliation index present: `True`.
 - Reconciliation status: `needs-work`.
-- Required open workstreams: `5`.
+- Required open workstreams: `3`.
 - Blocked workstreams: `1`.
-- Done from receipt: `5`.
+- Done from receipt: `7`.
 - Next item: `SUBSTRATE-DISK-TEMP` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
   - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; disk/temp pressure needs owner work.
   - `ESTATE-CUSTODY`: `estate-custody` / `assigned_from_existing_work`; estate doctrine exists; implementation receipt is not complete.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 74.0%, PRs 13.3%, issues 12.1%, reviews 0.6%.
-  - `CREDENTIAL-WALL-TOKEN-HYGIENE`: `credential-wall` / `assigned_from_existing_work`; credential wall passes current-home check; historical token tombstone audit still needs owner receipt.
-  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 128 active flagged non-deleted messages require classification.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 74.1%, PRs 13.2%, issues 12.0%, reviews 0.6%.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `24677477101e1ec719960c615d5b59baa678780b`.
-- origin/main: `24677477101e1ec719960c615d5b59baa678780b`.
+- HEAD: `d99fa67967481600d110b72bc16be33a3b041ba5`.
+- origin/main: `d99fa67967481600d110b72bc16be33a3b041ba5`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `1`.
-  - `docs/tabularius-writer-audit.md`
+- Dirty entries: `0`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/dispatch-health.md`
 
 ## Verified Worktree
 
@@ -81,8 +76,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 1 dirty entries.
-- `always-working-required-work-open`: 5 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
+- `always-working-required-work-open`: 3 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
 
