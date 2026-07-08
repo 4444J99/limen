@@ -218,6 +218,18 @@ Every AI agent reads `tasks.yaml` at session start, finds open tasks matching th
 - **Warp/Oz** — paid service lanes via `LIMEN_WARP_DISPATCH_CMD`, `LIMEN_OZ_DISPATCH_CMD`, or the generic `agent-dispatch` adapter.
 - **GitHub Actions** — runner lane via `gh workflow run` against `LIMEN_GITHUB_ACTIONS_WORKFLOW` (default `limen-agent.yml`).
 
+## Support / Sponsor
+
+Limen and [MONETA](moneta/) — the sovereign Bitcoin licence mint that powers the Pro tiers,
+with no payment processor in the path — are free and open source. If this system or its
+organs help you, you can support the work here:
+
+- **[GitHub Sponsors](https://github.com/sponsors/organvm)**
+- **[Ko-fi](https://ko-fi.com/4444j99)**
+
+Sponsorship funds maintenance of the mint, the task fabric, and the published surfaces;
+nothing here is paywalled.
+
 ## Links
 
 - [Quickstart](QUICKSTART.md)
