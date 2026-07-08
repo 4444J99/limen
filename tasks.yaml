@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 13
+      spent: 17
       per_agent:
-        jules: 4
+        jules: 7
         gemini: 0
-        codex: 8
+        codex: 9
         opencode: 0
         agy: 0
         claude: 0
@@ -79939,7 +79939,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -79956,7 +79956,7 @@ tasks:
     \ [auto-emitted 2026-07-03 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-07T12:54:35.333007Z'
+  updated: '2026-07-08T13:01:17.970784Z'
   dispatch_log:
   - timestamp: '2026-07-04T10:47:12.481099Z'
     agent: claude
@@ -80038,6 +80038,17 @@ tasks:
     agent: jules
     session_id: '11624599573415615470'
     status: dispatched
+  - timestamp: '2026-07-08T12:56:35.363290Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-07-08T13:01:17.970784Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-peer-audited--behavioral-blockchain-752
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#752
   repo: organvm/peer-audited--behavioral-blockchain
@@ -86483,7 +86494,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T12:54:35.333007Z'
+  updated: '2026-07-08T13:00:35.285942Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:40:17.443054Z'
     agent: gemini
@@ -86627,6 +86638,16 @@ tasks:
     agent: jules
     session_id: '2765948175779125256'
     status: dispatched
+  - timestamp: '2026-07-08T12:56:35.363290Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-07-08T13:00:35.285942Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-427
   title: fix failing CI on organvm/limen#427
   repo: organvm/limen
@@ -87649,7 +87670,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T12:27:31.323275Z'
+  updated: '2026-07-08T13:00:09.022726Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:26:42.299113Z'
     agent: codex
@@ -87797,6 +87818,16 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T12:56:57.621140Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 1477791658254346425 is awaiting_user_feedback\
+      \ \u2192 reopened"
+  - timestamp: '2026-07-08T13:00:09.022726Z'
+    agent: jules
+    session_id: '1737874648911590040'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-439
   title: fix failing CI on organvm/limen#439
   repo: organvm/limen
@@ -92833,7 +92864,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -92848,7 +92879,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T12:21:31.555337Z'
+  updated: '2026-07-08T13:01:17.970784Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:05:23.799955Z'
     agent: jules
@@ -92869,6 +92900,15 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T13:00:09.022726Z'
+    agent: codex
+    session_id: https://github.com/organvm/mirror-mirror/pull/92
+    status: dispatched
+  - timestamp: '2026-07-08T13:01:17.970784Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-mirror-mirror-93
   title: fix failing CI on organvm/mirror-mirror#93
   repo: organvm/mirror-mirror
@@ -96722,7 +96762,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T12:46:43.352702Z'
+  updated: '2026-07-08T13:00:35.285942Z'
   dispatch_log:
   - timestamp: '2026-07-07T09:46:01.187176Z'
     agent: opencode
@@ -96742,6 +96782,16 @@ tasks:
     agent: jules
     session_id: '15391906478370528370'
     status: dispatched
+  - timestamp: '2026-07-08T12:56:35.363290Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
+  - timestamp: '2026-07-08T13:00:35.285942Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-386
   title: fix failing CI on organvm/limen#386
   repo: organvm/limen
@@ -104172,7 +104222,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#140
   repo: organvm/session-meta
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -104195,7 +104245,7 @@ tasks:
   title: fix failing CI on organvm/session-meta#142
   repo: organvm/session-meta
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -104218,7 +104268,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#143
   repo: organvm/session-meta
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -104256,7 +104306,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#146
   repo: organvm/session-meta
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -104279,7 +104329,7 @@ tasks:
   title: fix failing CI on organvm/session-meta#148
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -104302,7 +104352,7 @@ tasks:
   title: fix failing CI on organvm/session-meta#149
   repo: organvm/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -104325,7 +104375,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#234
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -104348,7 +104398,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#235
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -104371,7 +104421,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#236
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -104409,7 +104459,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#240
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: agy
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -104432,7 +104482,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#243
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -104455,7 +104505,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#257
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -104478,7 +104528,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#258
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -104501,7 +104551,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#259
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -104539,7 +104589,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#261
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -104562,7 +104612,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#262
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -104585,7 +104635,7 @@ tasks:
   title: fix failing CI on organvm/sovereign-systems--elevate-align#264
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -104608,7 +104658,7 @@ tasks:
   title: fix failing CI on organvm/specvla-ergon--avditor-mvndi#34
   repo: organvm/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -104631,7 +104681,7 @@ tasks:
   title: fix failing CI on organvm/styx-behavioral-art#8
   repo: organvm/styx-behavioral-art
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -104708,7 +104758,7 @@ tasks:
   title: fix failing CI on organvm/system-governance-framework#42
   repo: organvm/system-governance-framework
   type: code
-  target_agent: codex
+  target_agent: claude
   workstream: governance
   priority: high
   budget_cost: 1
@@ -104732,7 +104782,7 @@ tasks:
   title: fix failing CI on organvm/system-governance-framework#43
   repo: organvm/system-governance-framework
   type: code
-  target_agent: opencode
+  target_agent: gemini
   workstream: governance
   priority: high
   budget_cost: 1
@@ -104787,7 +104837,7 @@ tasks:
   title: fix failing CI on organvm/system-governance-framework#45
   repo: organvm/system-governance-framework
   type: code
-  target_agent: jules
+  target_agent: codex
   workstream: governance
   priority: high
   budget_cost: 1
@@ -104811,7 +104861,7 @@ tasks:
   title: fix failing CI on organvm/system-governance-framework#46
   repo: organvm/system-governance-framework
   type: code
-  target_agent: agy
+  target_agent: opencode
   workstream: governance
   priority: high
   budget_cost: 1
@@ -104850,7 +104900,7 @@ tasks:
   title: fix failing CI on organvm/system-governance-framework#47
   repo: organvm/system-governance-framework
   type: code
-  target_agent: claude
+  target_agent: jules
   workstream: governance
   priority: high
   budget_cost: 1
@@ -104874,7 +104924,7 @@ tasks:
   title: fix failing CI on organvm/tab-bookmark-manager#25
   repo: organvm/tab-bookmark-manager
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -104897,7 +104947,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--logos#34
   repo: organvm/dot-github--logos
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -104920,7 +104970,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--logos#37
   repo: organvm/dot-github--logos
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -104960,7 +105010,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#457
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -104983,7 +105033,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#458
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -105021,7 +105071,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#459
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -105044,7 +105094,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#460
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -105067,7 +105117,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--theoria#461
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -105090,7 +105140,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#485
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -105333,7 +105383,7 @@ tasks:
     \ far behind"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: correspondence
   priority: normal
   budget_cost: 1
@@ -105359,7 +105409,7 @@ tasks:
   title: fix failing CI on organvm/universal-mail--automation#125
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: agy
+  target_agent: codex
   workstream: correspondence
   priority: high
   budget_cost: 1
@@ -105395,7 +105445,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/universal-mail--automation#126
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: claude
+  target_agent: opencode
   workstream: correspondence
   priority: high
   budget_cost: 1
@@ -105420,7 +105470,7 @@ tasks:
     \ far behind"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: gemini
+  target_agent: agy
   workstream: correspondence
   priority: normal
   budget_cost: 1
@@ -105447,7 +105497,7 @@ tasks:
     \ far behind"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: jules
+  target_agent: claude
   workstream: correspondence
   priority: normal
   budget_cost: 1
@@ -105473,7 +105523,7 @@ tasks:
   title: fix failing CI on organvm/limen#447
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -105624,7 +105674,7 @@ tasks:
   title: fix failing CI on organvm/limen#452
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -105662,7 +105712,7 @@ tasks:
   title: fix failing CI on organvm/limen#453
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -105729,7 +105779,7 @@ tasks:
   title: fix failing CI on organvm/limen#455
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -105986,7 +106036,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#106
   repo: organvm/session-meta
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -106009,7 +106059,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#112
   repo: organvm/session-meta
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -106116,7 +106166,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#133
   repo: organvm/session-meta
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -106414,7 +106464,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T12:27:31.323275Z'
+  updated: '2026-07-08T13:00:09.022726Z'
   dispatch_log:
   - timestamp: '2026-07-08T07:43:57.978405Z'
     agent: codex
@@ -106454,6 +106504,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T13:00:09.022726Z'
+    agent: jules
+    session_id: '6393893703802497203'
+    status: dispatched
 - id: HEAL-cifix-organvm-domus-genoma-175
   title: fix failing CI on organvm/domus-genoma#175
   repo: organvm/domus-genoma
@@ -106635,7 +106689,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--logos#26
   repo: organvm/dot-github--logos
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -106693,7 +106747,7 @@ tasks:
   title: Make the artist organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: jules
+  target_agent: gemini
   workstream: artist
   priority: high
   budget_cost: 2
@@ -106735,7 +106789,7 @@ tasks:
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: gemini
+  target_agent: opencode
   workstream: consulting
   priority: high
   budget_cost: 2
@@ -106763,7 +106817,7 @@ tasks:
   title: Build the first working vertical slice of the health organ
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: jules
   workstream: health
   priority: high
   budget_cost: 2
@@ -106924,7 +106978,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#489
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -106947,7 +107001,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#490
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -107052,7 +107106,7 @@ tasks:
   title: fix failing CI on organvm/metasystem-master#33
   repo: organvm/metasystem-master
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -107075,7 +107129,7 @@ tasks:
   title: fix failing CI on organvm/tab-bookmark-manager#26
   repo: organvm/tab-bookmark-manager
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -107226,7 +107280,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#495
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -107249,7 +107303,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#496
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -107318,7 +107372,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#499
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -107341,7 +107395,7 @@ tasks:
   title: fix failing CI on organvm/dot-github--theoria#500
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -107364,7 +107418,7 @@ tasks:
   title: fix failing CI on organvm/organvm-ontologia#14
   repo: organvm/organvm-ontologia
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -107502,7 +107556,7 @@ tasks:
   title: Discover the latent value of organvm/pages--theoria-copy--logos
   repo: organvm/pages--theoria-copy--logos
   type: research
-  target_agent: jules
+  target_agent: gemini
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107576,7 +107630,7 @@ tasks:
   title: Discover the latent value of organvm/pages--theoria-copy--kerygma
   repo: organvm/pages--theoria-copy--kerygma
   type: research
-  target_agent: gemini
+  target_agent: jules
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107694,7 +107748,7 @@ tasks:
   title: Discover the latent value of organvm/hokage-chess--4444j99
   repo: organvm/hokage-chess--4444j99
   type: research
-  target_agent: jules
+  target_agent: agy
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107723,7 +107777,7 @@ tasks:
   title: Discover the latent value of organvm/content-engine--asset-amplifier--a-organvm-legacy
   repo: organvm/content-engine--asset-amplifier--a-organvm-legacy
   type: research
-  target_agent: opencode
+  target_agent: jules
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107776,7 +107830,7 @@ tasks:
   title: Discover the latent value of organvm/studium-generale--4444j99
   repo: organvm/studium-generale--4444j99
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107805,7 +107859,7 @@ tasks:
   title: Discover the latent value of organvm/micro-tato
   repo: organvm/micro-tato
   type: research
-  target_agent: jules
+  target_agent: opencode
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107834,7 +107888,7 @@ tasks:
   title: Discover the latent value of organvm/micro-tato-play
   repo: organvm/micro-tato-play
   type: research
-  target_agent: codex
+  target_agent: jules
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107908,7 +107962,7 @@ tasks:
   title: Discover the latent value of organvm/netmode
   repo: organvm/netmode
   type: research
-  target_agent: jules
+  target_agent: agy
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107937,7 +107991,7 @@ tasks:
   title: Discover the latent value of organvm/cind-and-sol-foundation
   repo: organvm/cind-and-sol-foundation
   type: research
-  target_agent: gemini
+  target_agent: jules
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -107982,7 +108036,7 @@ tasks:
   title: Discover the latent value of organvm/quaestor
   repo: organvm/quaestor
   type: research
-  target_agent: agy
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -108011,7 +108065,7 @@ tasks:
   title: Discover the latent value of organvm/palimpsest
   repo: organvm/palimpsest
   type: research
-  target_agent: jules
+  target_agent: gemini
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -108056,7 +108110,7 @@ tasks:
   title: Discover the latent value of organvm/collaboratory
   repo: organvm/collaboratory
   type: research
-  target_agent: codex
+  target_agent: jules
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -108130,7 +108184,7 @@ tasks:
   title: Discover the latent value of organvm/laurea
   repo: organvm/laurea
   type: research
-  target_agent: jules
+  target_agent: agy
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -109320,7 +109374,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#775
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -109343,7 +109397,7 @@ tasks:
   title: Move drain writers out of heartbeat queue-lock starvation path
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -109371,7 +109425,7 @@ tasks:
   title: Make worktree and scratch reclaim fast enough to protect local SSD
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -109400,7 +109454,7 @@ tasks:
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: agy
+  target_agent: codex
   workstream: financial
   priority: high
   budget_cost: 2
@@ -109425,7 +109479,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#152
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -109448,7 +109502,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#153
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -109471,7 +109525,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#155
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -109495,7 +109549,7 @@ tasks:
     \ far behind"
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -109519,7 +109573,7 @@ tasks:
   title: Add historical token tombstone audit to the credential wall
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -109540,7 +109594,7 @@ tasks:
   title: Owner-route contribution balance before more commit-heavy dispatch
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -109583,7 +109637,7 @@ tasks:
   title: Build external estate custody implementation receipt
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -109604,7 +109658,7 @@ tasks:
   title: Discover the latent value of organvm/organvm-iii-ergon.github.io
   repo: organvm/organvm-iii-ergon.github.io
   type: research
-  target_agent: claude
+  target_agent: codex
   workstream: conductor
   priority: medium
   budget_cost: 1
@@ -109633,7 +109687,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-council--coliseum#175
   repo: organvm/a-i-council--coliseum
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -109656,7 +109710,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/bountyscope#8
   repo: organvm/bountyscope
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -109679,7 +109733,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/bountyscope#10
   repo: organvm/bountyscope
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -109702,7 +109756,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/bountyscope#13
   repo: organvm/bountyscope
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -109725,7 +109779,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/bountyscope#15
   repo: organvm/bountyscope
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -109748,7 +109802,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/bountyscope#16
   repo: organvm/bountyscope
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -109772,7 +109826,7 @@ tasks:
     \ daemon body"
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -109802,7 +109856,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#436
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -110138,21 +110192,25 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T12:27:31.323275Z'
+  updated: '2026-07-08T13:00:09.022726Z'
   dispatch_log:
   - timestamp: '2026-07-08T12:27:31.323275Z'
     agent: jules
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T13:00:09.022726Z'
+    agent: jules
+    session_id: '12506040250036889175'
+    status: dispatched
 - id: HEAL-cifix-organvm-domus-genoma-182
   title: fix failing CI on organvm/domus-genoma#182
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -110167,15 +110225,21 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-08T13:00:35.285942Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T13:00:35.285942Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-183
   title: fix failing CI on organvm/domus-genoma#183
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -110190,12 +110254,18 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-08T13:00:35.285942Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T13:00:35.285942Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-184
   title: fix failing CI on organvm/domus-genoma#184
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110256,7 +110326,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#187
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110279,7 +110349,7 @@ tasks:
   title: fix failing CI on organvm/limen#680
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -110302,7 +110372,7 @@ tasks:
   title: fix failing CI on organvm/limen#684
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110348,7 +110418,7 @@ tasks:
   title: "rebase organvm/mirror-mirror#77 onto current base \u2014 branched far behind"
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: normal
   budget_cost: 1
   status: open
@@ -110372,7 +110442,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#79
   repo: organvm/mirror-mirror
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110395,7 +110465,7 @@ tasks:
   title: "rebase organvm/mirror-mirror#86 onto current base \u2014 branched far behind"
   repo: organvm/mirror-mirror
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: normal
   budget_cost: 1
   status: open
@@ -110419,7 +110489,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#93
   repo: organvm/mirror-mirror
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110442,7 +110512,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#95
   repo: organvm/mirror-mirror
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110465,7 +110535,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/the-invisible-ledger#57
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: agy
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -110488,7 +110558,7 @@ tasks:
   title: 'Remove checked-in .git-task Git directory from Limen PR #187'
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -110509,7 +110579,7 @@ tasks:
   title: Restore audit helper contract and domus-auth formatting on Limen repair PRs
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -110530,7 +110600,7 @@ tasks:
   title: Regenerate lockfile for failing Limen repair PRs
   repo: organvm/mirror-mirror
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -110573,7 +110643,7 @@ tasks:
   title: fix failing CI on organvm/growth-auditor#20
   repo: organvm/growth-auditor
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110596,7 +110666,7 @@ tasks:
   title: fix failing CI on organvm/growth-auditor#21
   repo: organvm/growth-auditor
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110619,7 +110689,7 @@ tasks:
   title: fix failing CI on organvm/growth-auditor#22
   repo: organvm/growth-auditor
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110643,7 +110713,7 @@ tasks:
     \ far behind"
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -110668,7 +110738,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#94
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110691,7 +110761,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#101
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -110714,7 +110784,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#102
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110737,7 +110807,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#103
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110760,7 +110830,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#107
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110783,7 +110853,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#108
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -110829,7 +110899,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#121
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -110852,7 +110922,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#122
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110875,7 +110945,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#136
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110898,7 +110968,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#712
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -110921,7 +110991,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#121
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -110944,7 +111014,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#136
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -110967,7 +111037,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#138
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -110990,7 +111060,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#141
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -111013,7 +111083,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#142
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -111036,7 +111106,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#146
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -111059,7 +111129,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#149
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -111082,7 +111152,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#165
   repo: organvm/organvm-engine
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -111105,7 +111175,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/organvm-iii-ergon.github.io#5
   repo: organvm/organvm-iii-ergon.github.io
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -111128,7 +111198,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#176
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -111151,7 +111221,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#177
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -111174,7 +111244,7 @@ tasks:
   title: fix failing CI on organvm/vigiles-aeternae--agon-cosmogonicum#10
   repo: organvm/vigiles-aeternae--agon-cosmogonicum
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -111197,7 +111267,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#185
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -111228,3 +111298,252 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+- id: RETRO-0708-HEAL-GATE
+  title: 'Heal-gate: only open CI-fix PRs that pass the target repo''s required checks'
+  description: heal-dispatch must run the target repo's required CI checks in the
+    worktree and only open a PR when green; if it cannot green them, write a chronic
+    receipt naming the failing check instead of an unmergeable PR.
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: 'docs/reviews/retro-2026-06-24--2026-07-08.md finding 1 (cifix hamster
+    wheel: growth-auditor #16-#22, dot-github--theoria #492+ all open-unmergeable)'
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.194303Z'
+  dispatch_log: []
+- id: RETRO-0708-HEAL-RECEIPT-OUTCOME
+  title: Heal receipts outcome field + beat-wired heal-convergence report
+  description: 'Add {outcome: already_green|fixed|gave_up, failing_checks:[...]} to
+    heal receipts; ship scripts/heal-convergence.py (per-repo stale open-fix PRs,
+    days open, repeated failing check; exit non-zero when >=3 open heal PRs fail the
+    same check >48h); add its count to verify-whole.sh.'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 2 (59% of receipts
+    produce no PR; 855 emitted vs 384 receipts) + evolution 1
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.195900Z'
+  dispatch_log: []
+- id: RETRO-0708-HANDOFF-RELAY
+  title: 'handoff-relay.py: cross-session/cross-vendor warm-resume packet'
+  description: On SessionEnd write handoff.json {open_lanes, in_flight_claims, last_blocker,
+    budget_remaining, next_action}; inject at session-start. done.sh asserts a fresh
+    handoff exists and the next session resumes without cold re-derivation.
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: critical
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 3 (84-ask overnight
+    conductor drifts at every seam; relay+ROI graded DROPPED) + evolution 2
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.196269Z'
+  dispatch_log: []
+- id: RETRO-0708-PII-PREMERGE-GATE
+  title: pr-gate PII containment scan for person-adjacent organ paths
+  description: Scan staged organs/consulting and person-adjacent files for names/handles/CRM
+    patterns and block merge until PROCESS+REDACT is applied. Prevents PR#649-class
+    merges and the direct-to-main redaction that followed.
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: governance
+  priority: critical
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 6 (PR#649 merged PII
+    07-04; redaction 37645802 was itself a side-door commit)
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.196568Z'
+  dispatch_log: []
+- id: RETRO-0708-DOCS-SIDEDOOR-GUARD
+  title: 'Make the docs side-door fail: first-parent guard + sanctioned-lane registry'
+  description: 'Reject docs-prefixed direct-to-main commits (point to ship-docs.sh);
+    register capture:/financial:/contributions:/corpus: prefixes as sanctioned lanes
+    or route them through PRs.'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: 'docs/reviews/retro-2026-06-24--2026-07-08.md finding 7 (ship-docs shipped,
+    zero behavior change: 33 direct docs commits before 07-04, 27 after)'
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.196859Z'
+  dispatch_log: []
+- id: RETRO-0708-SERVICE-DOWN-PROBE
+  title: Service-down lane detection in _down_lanes()/usage.json
+  description: N consecutive async failures with empty output -> health=service-down
+    (TTL) so _usage_dead_lanes skips the lane pre-emptively; scope ORG connector auth
+    via LIMEN_CLAUDE_CONNECTOR_MODE so ANTHROPIC_API_KEY conflict is not global. done.sh
+    simulates 3 failures and asserts the lane is skipped.
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: 'docs/reviews/retro-2026-06-24--2026-07-08.md finding 9 (07-05: 46/46 dead
+    Claude reservations; ORG tasks lost connector fallback) + evolution 7'
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.197228Z'
+  dispatch_log: []
+- id: RETRO-0708-CODEX-BUDGET-RESET
+  title: Codex per-task budget reset + pre-dispatch uncached-token cap
+  description: Reset elapsed/budget counters on task_complete in codex-token-accounting.py
+    so multi-task sessions do not read as single-budget breaches; add a hard pre-dispatch
+    uncached-token cap in model_selection.py.
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: 'docs/reviews/retro-2026-06-24--2026-07-08.md finding 10 (session 019f3f56:
+    3.85M budget tokens over 10.4h, gate blocks continuation-beat only)'
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.197564Z'
+  dispatch_log: []
+- id: RETRO-0708-STRANDED-PR-SWEEP
+  title: Reconcile stranded PRs by mechanism + dispatch-time dedup
+  description: 'Run merge-policy.sh across the open CAPFILL set and the codex drafts
+    (#639 rebase-and-undraft; #493/#494 close as conflicting daemon stubs); add rolling
+    dedup at dispatch to prevent duplicate ORG PRs (e.g. #625+#630, #623+#628).'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 5 (zero codex PRs
+    merged 07-05..08; grant never exercised; duplicates)
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.197888Z'
+  dispatch_log: []
+- id: RETRO-0708-ARMED-VALVE-AUDIT
+  title: 'armed-valve-audit.py: separate parked levers from silently-off valves'
+  description: Enumerate every beat-wired organ whose effect is gated behind an env
+    flag/address/--apply; exit non-zero when a deliverable-IS-the-behavior valve is
+    disarmed (MINT_CHECKOUT_URL, LIMEN_DISPATCH, ...). Beat-wired.
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 8 + PREC-2026-07-08-armed-valve-outcome
+    + evolution 4
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.198255Z'
+  dispatch_log: []
+- id: RETRO-0708-SHIP-GATE
+  title: 'ship-gate.py: product-facing done requires a reachable external artifact'
+  description: "For tasks tagged product-facing, done requires a deployed URL returning\
+    \ 200, a posted link, or a booked event id \u2014 never a merged PR or receipt\
+    \ alone. Fails on curl=000 (MONETA), empty checkout URL, receipt-only PRs."
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: docs/reviews/retro-2026-06-24--2026-07-08.md findings 4+gap-model (101
+    creative asks, nothing reached a user) + evolution 5
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.198550Z'
+  dispatch_log: []
+- id: RETRO-0708-ASK-GATE
+  title: 'ask-gate.py: intake decomposition to one done-predicate per child task'
+  description: At intake, split any ask not reducible to one done.sh predicate into
+    bounded children each with predicate+owner; reject narrative success criteria.
+    Encodes the retro's drift predictors structurally.
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: docs/reviews/retro-2026-06-24--2026-07-08.md gap model (drift predictors)
+    + evolution 3
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.198964Z'
+  dispatch_log: []
+- id: RETRO-0708-RECEIPT-CLASSIFIER
+  title: 'receipt-classifier.py: flag receipt-only diffs behind shipped-X claims'
+  description: Classify merged PRs as enforcement-code / user-facing artifact / receipt-only
+    (plans, ledgers, scope docs); beat metric of the ratio; fail when a shipped claim
+    maps to a receipt-only diff.
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - retro-0708
+  urls: []
+  context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 5 + gap model (receipts-for-results,
+    07-06 surge 56% churn) + evolution 6
+  depends_on: []
+  created: '2026-07-08'
+  updated: '2026-07-08T12:54:03.199315Z'
+  dispatch_log: []
