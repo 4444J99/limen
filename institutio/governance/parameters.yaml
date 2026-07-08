@@ -1057,6 +1057,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Fleet dispatch boundary selector. `auto` derives reachable registered lanes from the capacity registry; explicit comma lists are normalized and filtered for down lanes."
+  LIMEN_PR_CONTEXT_TIMEOUT:
+    default: 20
+    env: LIMEN_PR_CONTEXT_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Seconds allowed for fail-open GitHub PR context lookup before local isolated dispatch falls back to default-branch worktree creation."
   LIMEN_JULES_BATCH_FILL:
     default: "1"
     env: LIMEN_JULES_BATCH_FILL
