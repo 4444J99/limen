@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 171
+      spent: 172
       per_agent:
         jules: 100
         gemini: 3
-        codex: 11
+        codex: 12
         opencode: 25
         agy: 31
         claude: 0
@@ -108846,7 +108846,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-08T06:13:28.457115Z'
+  updated: '2026-07-08T06:30:07.061452Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:22:21.721601Z'
     agent: agy
@@ -108898,6 +108898,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T06:30:07.061452Z'
+    agent: codex
+    session_id: https://github.com/organvm/limen/pull/692
+    status: dispatched
 - id: AW-VALUE-REPOS
   title: Assign revenue/value repo work from existing ledgers
   description: 13 value repos define the funded work lane
@@ -108939,7 +108943,7 @@ tasks:
   description: Step 2.2 still open in the keeper doc
   repo: ~/Workspace/limen
   type: coordination
-  target_agent: opencode
+  target_agent: codex
   workstream: tabularius
   priority: medium
   budget_cost: 1
@@ -109112,7 +109116,7 @@ tasks:
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#775
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -110183,7 +110187,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/the-invisible-ledger#57
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
