@@ -8,7 +8,42 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
+from limen import worktree_debt as wd  # noqa: E402
 from limen.worktree_debt import worktree_debt_report  # noqa: E402
+
+
+def test_reachable_from_remote_uses_single_contains_query(tmp_path: Path, monkeypatch):
+    calls: list[list[str]] = []
+
+    def fake_git(args: list[str], cwd: Path, timeout: int = 30) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        assert cwd == tmp_path
+        assert timeout == 30
+        if args == [
+            "for-each-ref",
+            "--contains=abc123",
+            "--format=%(refname)",
+            "refs/remotes",
+        ]:
+            return subprocess.CompletedProcess(
+                ["git", *args],
+                0,
+                "refs/remotes/origin/main\nrefs/remotes/origin/feature\n",
+                "",
+            )
+        raise AssertionError(f"unexpected git call: {args}")
+
+    monkeypatch.setattr(wd, "_git", fake_git)
+
+    assert wd._reachable_from_remote(tmp_path, "abc123") is True
+    assert calls == [
+        [
+            "for-each-ref",
+            "--contains=abc123",
+            "--format=%(refname)",
+            "refs/remotes",
+        ]
+    ]
 
 
 def test_documented_non_source_residue_is_visible_but_not_debt(tmp_path: Path, monkeypatch):

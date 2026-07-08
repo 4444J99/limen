@@ -148,6 +148,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Public receipt document emitted from the always-working lifecycle index. Contains aggregate statuses and receipt paths, not private raw prompt content."
+  LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH:
+    default: "1"
+    env: LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH
+    self_update: none
+    owner: limen-daemon
+    note: "When enabled, live dispatch runs always-working.py --write --emit-task-tickets before reserving more work, so promise/owner tickets are emitted before the fleet fans out."
+  LIMEN_ALWAYS_WORKING_HARD_GATE:
+    default: "1"
+    env: LIMEN_ALWAYS_WORKING_HARD_GATE
+    self_update: none
+    owner: limen-daemon
+    note: "When true, dispatch refuses to reserve new live work if the pre-dispatch always-working reconciliation fails or times out."
+  LIMEN_ALWAYS_WORKING_TIMEOUT:
+    default: 180
+    env: LIMEN_ALWAYS_WORKING_TIMEOUT
+    self_update: none
+    owner: limen-daemon
+    note: "Timeout in seconds for the pre-dispatch always-working reconciliation gate."
   LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB:
     default: 200
     env: LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB
@@ -364,6 +382,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "When true, async dispatch chooses prompt/revenue/value-first work under pressure instead of generic queue draining."
+  LIMEN_VALUE_GATE:
+    default: "1"
+    env: LIMEN_VALUE_GATE
+    self_update: none
+    owner: limen-daemon
+    note: "When enabled, serial, parallel, and async dispatch reserve only value-tier, lifecycle, blocker-clearing, or explicit owner work from the candidate set."
+  LIMEN_VALUE_GATE_STRICT:
+    default: "0"
+    env: LIMEN_VALUE_GATE_STRICT
+    self_update: none
+    owner: limen-daemon
+    note: "When true, dispatch applies the value gate even if the value-repo list is empty, so empty configuration fails closed instead of draining generic queue work."
   LIMEN_ALWAYS_WORKING_MIN_FREE_GIB:
     default: 60
     env: LIMEN_ALWAYS_WORKING_MIN_FREE_GIB

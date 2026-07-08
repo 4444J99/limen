@@ -76,10 +76,10 @@ def _remote_default_ref(cwd: Path) -> str | None:
 
 
 def _reachable_from_remote(cwd: Path, head: str) -> bool:
-    refs = _git(["for-each-ref", "--format=%(refname)", "refs/remotes"], cwd)
+    refs = _git(["for-each-ref", f"--contains={head}", "--format=%(refname)", "refs/remotes"], cwd)
     if refs.returncode != 0:
         return False
-    return any(_git(["merge-base", "--is-ancestor", head, ref], cwd).returncode == 0 for ref in refs.stdout.split())
+    return bool(refs.stdout.strip())
 
 
 def _merged_into_default(cwd: Path, head: str) -> bool:

@@ -521,6 +521,92 @@ def test_dispatch_parallel_skips_generated_buildout_outside_value_tier(tmp_path:
     assert "GEN-NONVALUE" not in output
 
 
+def test_serial_dispatch_value_gate_withholds_generic_non_value_work(
+    tmp_path: Path, capsys, monkeypatch
+) -> None:
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/value-repo")
+    monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
+    monkeypatch.setenv("LIMEN_DISPATCH_CMD", "agent-stub")
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "GENERIC-WORK",
+                "title": "Generic queue churn",
+                "repo": "organvm/generic-repo",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-07-08",
+                "dispatch_log": [],
+            },
+            {
+                "id": "VALUE-WORK",
+                "title": "Value-tier owner work",
+                "repo": "organvm/value-repo",
+                "target_agent": "codex",
+                "priority": "low",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-07-08",
+                "dispatch_log": [],
+            },
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=True)
+
+    output = capsys.readouterr().out
+    assert "VALUE-WORK" in output
+    assert "GENERIC-WORK" not in output
+
+
+def test_dispatch_parallel_value_gate_withholds_generic_non_value_work(
+    tmp_path: Path, capsys, monkeypatch
+) -> None:
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/value-repo")
+    monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "GENERIC-WORK",
+                "title": "Generic queue churn",
+                "repo": "organvm/generic-repo",
+                "target_agent": "any",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-07-08",
+                "dispatch_log": [],
+            },
+            {
+                "id": "LIFECYCLE-WORK",
+                "title": "Preserve worktree lifecycle receipt",
+                "repo": "organvm/generic-repo",
+                "target_agent": "any",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": ["lifecycle"],
+                "created": "2026-07-08",
+                "dispatch_log": [],
+            },
+        ],
+    )
+
+    dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], dry_run=True)
+
+    output = capsys.readouterr().out
+    assert "LIFECYCLE-WORK" in output
+    assert "GENERIC-WORK" not in output
+
+
 def test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write(
     tmp_path: Path,
     monkeypatch,

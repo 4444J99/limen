@@ -1,6 +1,39 @@
 {
-  "generated_utc": "2026-07-06T13:57:13Z",
+  "generated_utc": "2026-07-08T01:37:49Z",
   "receipts": [
+    {
+      "branch": "limen/heal-cifix-organvm-limen-424-8db5dab0",
+      "classification": "formatting-only tracked diff plus untracked local artifacts preserved; owner decision required",
+      "dirty_patch_bytes": 737,
+      "dirty_patch_command": "git diff --binary HEAD -- cli/tests/test_vltima_prior_excavations.py",
+      "dirty_patch_sha256": "b1905d57cc53c2a19e1db6e034a1cd81f6bc99d71be426613d798c71ac8035f2",
+      "dirty_paths": [
+        "cli/tests/test_vltima_prior_excavations.py"
+      ],
+      "evidence_updated_utc": "2026-07-08T01:37:49Z",
+      "head": "ea3fb9fc13edad56d6e4431265352d9893b3d091",
+      "lane": "owner-blocker",
+      "next_action": "Do not delete, reclaim, or auto-port this worktree. The tracked change is formatting-only in cli/tests/test_vltima_prior_excavations.py, and untracked local artifacts remain for owner review. Create a narrow owner packet to decide whether to drop, port, or retire the preserved patch and artifacts.",
+      "private_patch_sha256": "b1905d57cc53c2a19e1db6e034a1cd81f6bc99d71be426613d798c71ac8035f2",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T013749Z-heal-cifix-organvm-limen-424-8db5dab0/receipt.json",
+      "repo": "organvm/limen",
+      "root": "heal-cifix-organvm-limen-424-8db5dab0",
+      "status": "private_patch_preserved",
+      "untracked_paths": [
+        ".codex-git/index",
+        ".codex-git/objects/02/c3ad75214a2913e475983bf187643a83915de4",
+        ".codex-git/objects/1f/a6765157cc2170e9a8cae96b859f3bab96bdef",
+        ".codex-git/objects/30/20febb6f2ce79997081ad4da533c11f6c615fc",
+        ".codex-git/objects/5d/10a8d2d3599ec714f50ac1c8ef5f8c6541ae36",
+        ".codex-git/objects/5f/bc7078c49e911e9661041b47b52c5916ec2147",
+        ".codex-git/objects/65/85a281eadcdc4cc746724a0ac9b8353c84d072",
+        ".codex-git/objects/73/a42fab2c6e4beb5e0246a793b3484d37f39775",
+        ".codex-git/objects/7c/2e1f346acf64aace53858e76257968f316d35e",
+        ".codex-git/objects/e1/e3c0174d8958c1e60d48638d9cac79261e545a",
+        "docs/lane-checkups/opencode/20260629-12.md"
+      ],
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-limen-424-8db5dab0"
+    },
     {
       "branch": "limen/resolve-a-organvm-organvm-engine-112-c362",
       "classification": "open PR preserves local worktree head",

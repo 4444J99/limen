@@ -6,6 +6,7 @@ import secrets
 import shlex
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -264,6 +265,55 @@ def _run_capture(
     return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
 
 
+def run_always_working_before_dispatch(tasks_path: Path, *, dry_run: bool = False) -> bool:
+    """Emit missing always-working owner tickets before reserving more work.
+
+    The writer is a gate for the canonical live board only. Dry-runs and test/temp boards stay
+    read-only; the heartbeat/dispatch paths still share the same live pre-reservation behavior.
+    """
+    if dry_run or os.environ.get("LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH", "1") != "1":
+        return True
+    root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))).resolve()
+    try:
+        if tasks_path.resolve() != (root / "tasks.yaml").resolve():
+            return True
+    except OSError:
+        return True
+    script = root / "scripts" / "always-working.py"
+    if not script.exists():
+        print(f"Always-working gate skipped: missing {script}")
+        return os.environ.get("LIMEN_ALWAYS_WORKING_HARD_GATE") != "1"
+    try:
+        result = _run_capture(
+            [
+                sys.executable,
+                str(script),
+                "--write",
+                "--emit-task-tickets",
+                "--tasks",
+                str(tasks_path),
+            ],
+            cwd=str(root),
+            timeout=max(1, _env_int("LIMEN_ALWAYS_WORKING_TIMEOUT", 180)),
+            env=os.environ.copy(),
+        )
+    except subprocess.TimeoutExpired:
+        print("Always-working gate timed out before dispatch reservation")
+        return os.environ.get("LIMEN_ALWAYS_WORKING_HARD_GATE", "1") != "1"
+    except OSError as exc:
+        print(f"Always-working gate failed before dispatch reservation: {exc}")
+        return os.environ.get("LIMEN_ALWAYS_WORKING_HARD_GATE", "1") != "1"
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip().splitlines()
+        suffix = f": {detail[-1][:240]}" if detail else ""
+        print(f"Always-working gate failed before dispatch reservation{suffix}")
+        return os.environ.get("LIMEN_ALWAYS_WORKING_HARD_GATE", "1") != "1"
+    output = (result.stdout or "").strip()
+    if output:
+        print(f"Always-working gate: {output.splitlines()[-1][:240]}")
+    return True
+
+
 def _dep_merged(dep_task: Task | None) -> bool:
     """A dependency is satisfied only when its PR is MERGED (in the base branch), not merely built.
     The reconcile (verify-dispatch→heal-dispatch) stamps a 'PR merged → done' dispatch_log entry on
@@ -375,6 +425,60 @@ def _routine_generated_buildout(task: Task) -> bool:
     return "generated" in labels and "build-out" in labels
 
 
+_VALUE_LABELS = {
+    "financial",
+    "low-burn-priority",
+    "product",
+    "revenue",
+    "sell-ready",
+    "value",
+    "value-repo",
+    "value-tier",
+}
+_VALUE_WORKSTREAMS = {"conductor", "financial", "product", "revenue"}
+_LIFECYCLE_TERMS = {
+    "always-working",
+    "agy-scratch",
+    "blocked",
+    "blocker",
+    "closeout",
+    "corpus",
+    "custody",
+    "cvstos",
+    "disk",
+    "keeper",
+    "lifecycle",
+    "owner-blocker",
+    "prompt",
+    "prompt-batch",
+    "prompt-packet",
+    "reclaim",
+    "record-keeper",
+    "recordkeeper",
+    "scratch",
+    "session-lifecycle",
+    "storage",
+    "substrate",
+    "tabularius",
+    "ticket",
+    "worktree",
+    "worktree-lifecycle",
+}
+
+
+def _normalize_repo_slug(repo: object) -> str:
+    value = str(repo or "").strip()
+    if value.startswith("git@github.com:"):
+        value = value.removeprefix("git@github.com:")
+    for prefix in ("https://github.com/", "http://github.com/", "github.com/"):
+        if value.startswith(prefix):
+            value = value.removeprefix(prefix)
+            break
+    if value.endswith(".git"):
+        value = value[:-4]
+    return value.strip("/").lower()
+
+
 def _value_tier_repos() -> set[str]:
     repos: set[str] = {r.strip() for r in os.environ.get("LIMEN_VALUE_REPOS", "").split(",") if r.strip()}
     fpath = os.environ.get(
@@ -388,7 +492,74 @@ def _value_tier_repos() -> set[str]:
     except Exception:
         pass
     repos.discard("")
-    return repos
+    return {_normalize_repo_slug(repo) for repo in repos}
+
+
+def _task_search_text(task: Task) -> str:
+    parts = [
+        task.id,
+        task.title,
+        task.context,
+        task.repo,
+        task.workstream,
+        task.type,
+        " ".join(str(label) for label in (task.labels or [])),
+        " ".join(str(url) for url in (task.urls or [])),
+    ]
+    return " ".join(str(part or "") for part in parts).lower()
+
+
+def _dispatch_focus_bucket(task: Task, value_repos: set[str]) -> int:
+    repo = _normalize_repo_slug(task.repo)
+    labels = {str(label).strip().lower() for label in (task.labels or [])}
+    workstream = str(task.workstream or "").strip().lower()
+    text = _task_search_text(task)
+    if repo and repo in value_repos:
+        return 0
+    if labels & _VALUE_LABELS or workstream in _VALUE_WORKSTREAMS:
+        return 0
+    if str(task.id or "").startswith(("AW-", "REV-")):
+        return 0
+    if any(term in text for term in _LIFECYCLE_TERMS):
+        return 0
+    return 1
+
+
+def _value_gate_configured(value_repos: set[str]) -> bool:
+    if os.environ.get("LIMEN_VALUE_GATE", "1") != "1":
+        return False
+    return bool(value_repos or os.environ.get("LIMEN_VALUE_GATE_STRICT") == "1")
+
+
+def task_passes_value_gate(task: Task, value_repos: set[str] | None = None) -> bool:
+    value_repos = value_repos if value_repos is not None else _value_tier_repos()
+    if not _value_gate_configured(value_repos):
+        return True
+    return _dispatch_focus_bucket(task, value_repos) == 0
+
+
+def sort_value_gate_candidates(
+    candidates: list[Task],
+    value_repos: set[str] | None = None,
+    *,
+    disk_pressure: bool = False,
+) -> list[Task]:
+    value_repos = value_repos if value_repos is not None else _value_tier_repos()
+    gated = [task for task in candidates if task_passes_value_gate(task, value_repos)]
+    if not _value_gate_configured(value_repos):
+        gated = list(candidates)
+    if disk_pressure:
+        focused = [task for task in gated if _dispatch_focus_bucket(task, value_repos) == 0]
+        if focused:
+            gated = focused
+    return sorted(
+        gated,
+        key=lambda task: (
+            _dispatch_focus_bucket(task, value_repos),
+            _PRIORITY_ORDER.get(task.priority, 99),
+            str(task.id),
+        ),
+    )
 
 
 def _routine_generated_buildout_allowed(task: Task) -> bool:
@@ -500,6 +671,7 @@ def _value_gate_discipline(task: Task) -> str:
     except Exception:
         value_repos = set()
     repo = task.repo or ""
+    normalized_repo = _normalize_repo_slug(repo)
     labels = task.labels or []
     urls = task.urls or []
     depends_on = task.depends_on or []
@@ -521,7 +693,7 @@ def _value_gate_discipline(task: Task) -> str:
         "receipt that lets the same fix attract users, leads, or revenue.\n"
         f"Stats: priority={task.priority}; budget_cost={task.budget_cost}; "
         f"workstream={task.workstream or 'none'}; repo={repo or 'none'}; "
-        f"repo_in_value_tier={str(repo in value_repos).lower()}; "
+        f"repo_in_value_tier={str(normalized_repo in value_repos).lower()}; "
         f"value_tier_repo_count={len(value_repos)}; labels={len(labels)}; urls={len(urls)}; "
         f"depends_on={len(depends_on)}.\n"
         "If the stats do not justify the work, record the smallest owner route/blocker and stop "
@@ -1885,6 +2057,9 @@ def dispatch_tasks(
     budget = budget or limen.portal.budget.daily
 
     _load_limen_env()  # hydrate creds into os.environ so agent CLIs inherit them (gemini/codex/opencode/…)
+    if not run_always_working_before_dispatch(tasks_path, dry_run=dry_run):
+        print("Always-working gate blocked dispatch before reservation")
+        return
     if _reset_budget_if_needed(limen, now) and not dry_run:
         # Persist a cadence reset even when this call then dispatches nothing / bails at the
         # down-gate — otherwise a stale-counter lane (jules) stays gated to remaining=0 forever.
@@ -1924,7 +2099,8 @@ def dispatch_tasks(
     # An EXPLICIT single-task dispatch (`limen dispatch --task X`) is a deliberate human override and
     # bypasses the gate; only BULK dispatch respects it.
     id2 = {t.id: t for t in limen.tasks}
-    candidates = [
+    value_repos = _value_tier_repos()
+    raw_candidates = [
         t
         for t in tasks
         if _dispatchable(t)
@@ -1934,13 +2110,14 @@ def dispatch_tasks(
         and not (debt_blocked and _routine_generated_buildout(t))
         and _routine_generated_buildout_allowed(t)
     ]
-    priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4}
-    candidates.sort(key=lambda t: priority_order.get(t.priority, 99))
+    candidates = sort_value_gate_candidates(raw_candidates, value_repos)
 
     if limit is not None:
         candidates = candidates[: max(0, limit)]
 
     if not candidates:
+        if raw_candidates and _value_gate_configured(value_repos):
+            print(f"Value gate: withheld {len(raw_candidates)} non-value candidate(s) for '{agent_filter}'")
         if debt_message:
             print(f"Lifecycle debt gate: {debt_message}")
         print(f"No open tasks for agent '{agent_filter}' within remaining budget ({remaining})")
@@ -2276,13 +2453,14 @@ def _select_parallel_reservations(
     spent_daily = track.spent
     id2 = {t.id: t for t in limen.tasks}
     ledger_lanes = _ledger_lanes()
+    value_repos = _value_tier_repos()
     for agent in agents:
         cap = limen.portal.budget.per_agent.get(agent)
         agent_spent = track.per_agent.get(agent, 0)
         rem = daily - spent_daily if cap is None else max(0, min(daily - spent_daily, cap - agent_spent))
         if rem <= 0:
             continue
-        cands = [
+        raw_cands = [
             t
             for t in limen.tasks
             if _dispatchable(t)
@@ -2292,7 +2470,7 @@ def _select_parallel_reservations(
             and not (debt_blocked and _routine_generated_buildout(t))
             and _routine_generated_buildout_allowed(t)
         ]
-        cands.sort(key=lambda t: _PRIORITY_ORDER.get(t.priority, 99))
+        cands = sort_value_gate_candidates(raw_cands, value_repos)
         # FRONT-LOAD: base picks by priority, then an ACCELERATION TAIL (only when the lane is
         # under-spending toward its reset cliff) drawn ONLY from work-classes the ledger says this
         # lane lands — so expiring budget converts to shipped value, never to junk.
@@ -2340,6 +2518,9 @@ def dispatch_parallel(
     process (serial), the slow agent runs happen concurrently in a thread pool, and a
     lane that hits its real rate-limit is cooled (its remaining reserved tasks re-queued)."""
     now = datetime.now(timezone.utc)
+    if not run_always_working_before_dispatch(tasks_path, dry_run=dry_run):
+        print("Always-working gate blocked parallel dispatch before reservation")
+        return
     debt_blocked, debt_message = _worktree_debt_gate()
     if debt_message:
         print(f"Lifecycle debt gate: {debt_message}")

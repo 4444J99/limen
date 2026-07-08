@@ -1,6 +1,6 @@
 # GitHub Consolidation Gates
 
-Generated: `2026-07-06T13:44:13+00:00`
+Generated: `2026-07-08T01:40:58+00:00`
 
 ## Rule
 
@@ -12,7 +12,7 @@ Generated: `2026-07-06T13:44:13+00:00`
 
 | Gate | Value |
 |---|---|
-| Source repos outside `organvm` | `0` |
+| Source repos outside `organvm` | `1` |
 | Source owners scanned | `10` |
 | Name collision groups | `0` |
 | Collision packet complete | `True` |
@@ -21,13 +21,13 @@ Generated: `2026-07-06T13:44:13+00:00`
 | Rename target conflicts/unknown | `0` / `0` |
 | Transfer apply gate open | `True` |
 | `tasks.yaml` repo refs to rewrite post-transfer | `0` |
-| Local remotes to rewrite post-transfer | `0` |
+| Local remotes to rewrite post-transfer | `10` |
 | Deploy literal to fix post-transfer | `False` |
 | `gh-app-token --which` | `app (limen[bot] installation token)` |
 | `limen[bot]` App installed | `True` |
 | App token wired | `True` |
 | Installed org Apps | `claude`, `google-labs-jules`, `oz-by-warp`, `chatgpt-codex-connector`, `limen-conductor` |
-| Blocking gates | none |
+| Blocking gates | `post-transfer-owner-rewrite-pending` |
 
 ## Collision Examples
 

@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-07T23:56:09+00:00`
+Generated: `2026-07-08T02:09:16+00:00`
 Status: `needs-work`
 Required open: `5`
 Blocked: `1`
@@ -31,10 +31,10 @@ Done from receipt: `5`
 | 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | disk/temp pressure needs owner work |
 | 5 | `ESTATE-CUSTODY` | `assigned_from_existing_work` | estate doctrine exists; implementation receipt is not complete |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
-| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 74.0%, PRs 13.3%, issues 12.1%, reviews 0.6% |
+| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 74.1%, PRs 13.3%, issues 12.1%, reviews 0.6% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `assigned_from_existing_work` | credential wall passes current-home check; historical token tombstone audit still needs owner receipt |
 | 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 128 active flagged non-deleted messages require classification |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82073 indexed non-deleted messages remain for future batches |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82081 indexed non-deleted messages remain for future batches |
 | 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 48 duplicate remote group(s) recorded |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `done_from_receipt` | top 5 value repos have owner receipts; 14 value repos are sell-ready in the product ledger |

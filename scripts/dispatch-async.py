@@ -36,7 +36,6 @@ from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import (  # noqa: E402
     _ASYNC_LANES,
-    _PRIORITY_ORDER,
     _apply_result,
     _deps_met,
     _dispatchable,
@@ -49,6 +48,8 @@ from limen.dispatch import (  # noqa: E402
     _routine_generated_buildout_allowed,
     _value_tier_repos,
     agent_can_run_task,
+    run_always_working_before_dispatch,
+    sort_value_gate_candidates,
 )
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
@@ -58,40 +59,6 @@ RECEIPT_ARCHIVE = ROOT / ".limen-private" / "async-runs" / "archive"
 WORKER = ROOT / "scripts" / "async-run-one.py"
 _TOKEN_RE = re.compile(r"(github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{12,})")
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
-_VALUE_LABELS = {
-    "financial",
-    "low-burn-priority",
-    "product",
-    "revenue",
-    "sell-ready",
-    "value",
-    "value-repo",
-    "value-tier",
-}
-_LIFECYCLE_TERMS = {
-    "always-working",
-    "agy-scratch",
-    "corpus",
-    "custody",
-    "cvstos",
-    "disk",
-    "lifecycle",
-    "prompt",
-    "prompt-batch",
-    "prompt-packet",
-    "reclaim",
-    "record-keeper",
-    "recordkeeper",
-    "scratch",
-    "session-lifecycle",
-    "storage",
-    "substrate",
-    "tabvlarivs",
-    "worktree",
-    "worktree-lifecycle",
-}
-
-
 def _truthy_env(name: str, default: bool = True) -> bool:
     raw = os.environ.get(name)
     if raw is None:
@@ -127,67 +94,6 @@ def _disk_pressure_active() -> bool:
     )
     free = _disk_free_gib()
     return free is not None and free < floor
-
-
-def _normalize_repo_slug(repo: object) -> str:
-    value = str(repo or "").strip()
-    if value.startswith("git@github.com:"):
-        value = value.removeprefix("git@github.com:")
-    for prefix in ("https://github.com/", "http://github.com/", "github.com/"):
-        if value.startswith(prefix):
-            value = value.removeprefix(prefix)
-            break
-    if value.endswith(".git"):
-        value = value[:-4]
-    return value.strip("/").lower()
-
-
-def _task_search_text(task) -> str:
-    parts = [
-        getattr(task, "id", ""),
-        getattr(task, "title", ""),
-        getattr(task, "description", ""),
-        getattr(task, "repo", ""),
-        getattr(task, "workstream", ""),
-        getattr(task, "context", ""),
-        " ".join(str(label) for label in (getattr(task, "labels", None) or [])),
-        " ".join(str(url) for url in (getattr(task, "urls", None) or [])),
-    ]
-    return " ".join(str(part or "") for part in parts).lower()
-
-
-def _dispatch_focus_bucket(task, value_repos: set[str]) -> int:
-    """Rank scarce async slots toward value work and lifecycle relief before generic churn."""
-    repo = _normalize_repo_slug(getattr(task, "repo", ""))
-    labels = {str(label).strip().lower() for label in (getattr(task, "labels", None) or [])}
-    workstream = str(getattr(task, "workstream", "") or "").strip().lower()
-    text = _task_search_text(task)
-    if repo and repo in value_repos:
-        return 0
-    if labels & _VALUE_LABELS or workstream in {"financial", "revenue", "product"}:
-        return 0
-    if str(getattr(task, "id", "") or "").startswith("REV-"):
-        return 0
-    if any(term in text for term in _LIFECYCLE_TERMS):
-        return 0
-    return 1
-
-
-def _sort_async_candidates(cands: list, value_repos: set[str], *, disk_pressure: bool) -> list:
-    if disk_pressure:
-        focused = [task for task in cands if _dispatch_focus_bucket(task, value_repos) == 0]
-        if focused:
-            cands = focused
-    if _truthy_env("LIMEN_LOW_BURN_VALUE_FIRST", True):
-        return sorted(
-            cands,
-            key=lambda t: (
-                _dispatch_focus_bucket(t, value_repos),
-                _PRIORITY_ORDER.get(t.priority, 99),
-                str(t.id),
-            ),
-        )
-    return sorted(cands, key=lambda t: (_PRIORITY_ORDER.get(t.priority, 99), str(t.id)))
 
 
 def _now():
@@ -645,7 +551,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
     reset_changed = _reset_budget_if_needed(lf, now)
     track = lf.portal.budget.track
     daily = lf.portal.budget.daily
-    value_repos = {_normalize_repo_slug(repo) for repo in _value_tier_repos()}
+    value_repos = _value_tier_repos()
     disk_pressure = _disk_pressure_active()
     # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
     # separately below (see _running_local).
@@ -682,7 +588,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
             and _deps_met(t, id2)
             and _routine_generated_buildout_allowed(t)
         ]
-        cands = _sort_async_candidates(cands, value_repos, disk_pressure=disk_pressure)
+        cands = sort_value_gate_candidates(cands, value_repos, disk_pressure=disk_pressure)
         states.append(
             {
                 "agent": agent,
@@ -753,6 +659,9 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
 def reserve_and_launch(agents, per_agent, cap, dry, task_id=None):
     """Reserve open tasks (under lock) up to the concurrency cap + per-agent budget, then spawn
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
+    if not run_always_working_before_dispatch(TASKS, dry_run=dry):
+        print("── async: always-working gate blocked reservation")
+        return []
     now = _now()
     usage = _usage_by_agent()
     usage_remaining = _usage_remaining_by_agent(usage)

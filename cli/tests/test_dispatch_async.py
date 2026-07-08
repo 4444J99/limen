@@ -199,3 +199,44 @@ def test_harvest_archives_malformed_result_receipt_before_unlink(board):
     assert archived["parse_error"] == "result receipt JSON root is not an object"
     got = {t.id: t for t in load_limen_file(tasks_path).tasks}
     assert got["T1"].status == "dispatched"
+
+
+def test_async_reservation_value_gate_withholds_generic_non_value_work(tmp_path, monkeypatch):
+    tasks_path = tmp_path / "tasks.yaml"
+    runs = tmp_path / "logs" / "async-runs"
+    runs.mkdir(parents=True)
+    lf = LimenFile(
+        tasks=[
+            Task(
+                id="GENERIC-WORK",
+                title="Generic queue churn",
+                repo="organvm/generic-repo",
+                target_agent="codex",
+                priority="critical",
+                status="open",
+                created=date(2026, 7, 8),
+            ),
+            Task(
+                id="VALUE-WORK",
+                title="Value-tier owner work",
+                repo="organvm/value-repo",
+                target_agent="codex",
+                priority="low",
+                status="open",
+                created=date(2026, 7, 8),
+            ),
+        ]
+    )
+    lf.portal.budget.daily = 10
+    lf.portal.budget.per_agent = {"codex": 10}
+    lf.portal.budget.track.spent = 0
+    lf.portal.budget.track.per_agent = {}
+    save_limen_file(tasks_path, lf)
+    monkeypatch.setattr(dispatch_async, "TASKS", tasks_path)
+    monkeypatch.setattr(dispatch_async, "RUNS", runs)
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/value-repo")
+    monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
+
+    picked = dispatch_async.reserve_and_launch(["codex"], per_agent=5, cap=5, dry=True)
+
+    assert picked == [("codex", "VALUE-WORK")]

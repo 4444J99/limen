@@ -1,8 +1,8 @@
 # Conductor Tranche
 
-Generated: `2026-07-06T14:02:11+00:00`
+Generated: `2026-07-08T01:45:01+00:00`
 
-Summary: `tranche-no-autonomous-actionable-path` -> `no-autonomous-actionable-path` (`n/a`); stop before: Stop before broad delegation, cleanup, GitHub mutation, credential work, or owner repo edits; resume only when a human opens a gate or a fresh actionable packet appears.
+Summary: `tranche-heal-cifix-organvm-organvm-engine-110-cf645ef4` -> `heal-cifix-organvm-organvm-engine-110-cf645ef4` (`preserve`); stop before: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
 ## Cadence Contract
 
@@ -16,28 +16,28 @@ Summary: `tranche-no-autonomous-actionable-path` -> `no-autonomous-actionable-pa
 
 | Field | Value |
 |---|---|
-| Packet | `tranche-no-autonomous-actionable-path` |
-| Selected path | `no-autonomous-actionable-path` |
-| Kind | `n/a` |
-| Lane | `n/a` |
-| Score | `n/a` |
-| Agent fit | `n/a` |
-| Attack index generated | `2026-07-06T14:00:39+00:00` |
-| Ranked paths read | `119` |
-| Skipped unactionable paths | `session_lifecycle`, `worktree_lifecycle`, `github_review`, `heal-cifix-organvm-organvm-ontologia-11-a86cf99f`, `heal-cifix-organvm-organvm-ontologia-12-2c2c85ba`, `heal-cifix-organvm-organvm-ontologia-13-953633bb`, `heal-rebase-4444j99-hokage-chess-89-0448f70e`, `org-financial-organ-face-0704-5a117787`, `agent_coordination`, `fluttering-twirling-abelson`, `local-lifecycle-disk-pressure`, `technical_debt_ci`, `feat-gcp-sa-organ`, `heal-cifix-organvm-organvm-engine-139-9dbf53bf`, `heal-cifix-organvm-organvm-engine-143-a164221c`, `heal-cifix-organvm-organvm-engine-144-0ef4c596`, `heal-cifix-organvm-organvm-engine-144-e2096564`, `heal-cifix-organvm-organvm-ontologia-10-64603ca7`, `heal-cifix-organvm-organvm-ontologia-11-55899198`, `heal-cifix-organvm-organvm-ontologia-12-c16ea5ad`, `limen_jules-org-health-organ-kernel-0630-0289`, `limen_jules-org-health-organ-kernel-0630-02fb`, `limen_jules-org-health-organ-kernel-0630-f8cb`, `peer-audited--behavioral-blockchain`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `org-health-organ-firstslice-0704-aac2b482`, `org-health-organ-firstslice-0704-caa4e142`, `agent-aefc63d95daa3131b`, `gh-4444j99-hokage-chess-39-25daa3dd`, `gh-4444j99-hokage-chess-39-c15d2ce9`, `heal-cifix-organvm-a-i--skills-26-90acdfa8`, `heal-cifix-organvm-a-i--skills-27-f7577686`, `heal-cifix-organvm-a-i--skills-28-d93d775c`, `heal-cifix-organvm-limen-421-8f14068b`, `heal-cifix-organvm-organvm-engine-139-b438a568`, `heal-cifix-organvm-organvm-engine-144-6ffd7057`, `heal-cifix-organvm-organvm-ontologia-10-0356e4b9`, `heal-cifix-organvm-organvm-ontologia-11-2978d499`, `heal-cifix-organvm-organvm-ontologia-11-f753ad04`, `heal-cifix-organvm-organvm-ontologia-13-517e2cb9`, `heal-cifix-organvm-organvm-ontologia-13-5364f697`, `heal-cifix-organvm-organvm-ontologia-13-c96051e5`, `heal-cifix-organvm-organvm-ontologia-13-ebb63927`, `heal-rebase-4444j99-hokage-chess-103-f5b1e4f4`, `heal-rebase-4444j99-hokage-chess-107-a1b561eb`, `heal-rebase-4444j99-hokage-chess-107-f3a0ded1`, `heal-rebase-4444j99-hokage-chess-108-9266466c`, `heal-rebase-4444j99-hokage-chess-114-fb8e1c94`, `heal-rebase-4444j99-hokage-chess-121-22d63bd9`, `heal-rebase-4444j99-hokage-chess-121-89f977f6`, `heal-rebase-4444j99-hokage-chess-136-1cbf3b75`, `heal-rebase-4444j99-hokage-chess-139-0e6f6d4a`, `heal-rebase-4444j99-hokage-chess-85-aee53ecd`, `heal-rebase-4444j99-hokage-chess-89-3e98bf07`, `heal-rebase-4444j99-hokage-chess-94-13cf83c7`, `heal-rebase-4444j99-hokage-chess-94-b27fb091`, `heal-rebase-organvm-4444j99.github.io-9-db69ae03`, `heal-rebase-organvm-a-i-chat--exporter-31-78a6445b`, `heal-rebase-organvm-payrail-4-91d2e253`, `heal-rebase-organvm-peer-audited--behavioral-blockchain-721-4cf098da`, `heal-rebase-organvm-peer-audited--behavioral-blockchain-721-68871455`, `heal-rebase-organvm-peer-audited--behavioral-blockchain-721-d20ed684`, `heal-rebase-organvm-your-fit-tailored-15-3def5941`, `heal-rebase-organvm-your-fit-tailored-15-5f39fd5e`, `heal-rebase-organvm-your-fit-tailored-15-fa5d798d`, `heal-rebase-organvm-your-fit-tailored-15-fad950e3`, `limen_jules-gh-4444j99-hokage-chess-39-c953`, `limen_jules-heal-cifix-organvm-organvm-engine-139-7f50`, `limen_jules-heal-cifix-organvm-organvm-ontologia-11-b2f0`, `limen_jules-org-health-organ-kernel-0630-02b9`, `limen_jules-org-health-organ-kernel-0630-1481`, `limen_jules-org-health-organ-kernel-0630-274f`, `limen_jules-org-health-organ-kernel-0630-47a3`, `limen_jules-org-health-organ-kernel-0630-5341`, `limen_jules-org-health-organ-kernel-0630-6ef8`, `limen_jules-org-health-organ-kernel-0630-7bbc`, `limen_jules-org-health-organ-kernel-0630-8195`, `limen_jules-org-health-organ-kernel-0630-9d90`, `limen_jules-org-health-organ-kernel-0630-a46c`, `org-financial-organ-face-0704-9855f329`, `org-financial-organ-face-0704-bd436529`, `org-governance-organ-selffeed-0703-00694775`, `org-governance-organ-selffeed-0703-ae95b1bf`, `wf_29a15be5-9f8-2`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `universal-kernel-recordkeeper-20260705`, `photos-universe-20260629-182431`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `gen-a-organvm-a-i-council--coliseum-ci-green-0620-29ec`, `gh-organvm-domus-genoma-170-bbbc`, `heal-cifix-organvm-organvm-engine-124-e0bb2d06`, `heal-cifix-organvm-organvm-engine-130-8a6060e4`, `linear-conjuring-bear`, `pr-669-governance-deepen`, `review-avditor-billing-pr43`, `ticklish-bubbling-robin`, `discover-organvm-kerygma-profiles-6c74`, `resolve-organvm-i-theoria-.github-459-1ade`, `the-invisible-ledger`, `domus-quarantine-retire-20260629`, `maddie-boundary-20260629`, `student-email-d2l-support-20260629`, `triptych-story`, `feat+workstream-channels`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `warp-agent-routing-20260629`, `auth_credentials`, `limen-network-substrate-20260628`, `limen-main-trench-20260628`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde`, `financial-codex-finish-0704`, `heal-cifix-organvm-organvm-engine-130-ec1fdfaf`, `heal-cifix-organvm-organvm-engine-136-c3d543d8`, `heal-cifix-organvm-organvm-engine-139-11d32b27`, `universal-entry-20260629` |
+| Packet | `tranche-heal-cifix-organvm-organvm-engine-110-cf645ef4` |
+| Selected path | `heal-cifix-organvm-organvm-engine-110-cf645ef4` |
+| Kind | `worktree` |
+| Lane | `preserve` |
+| Score | `89` |
+| Agent fit | `codex first; opencode/jules after packetization` |
+| Attack index generated | `2026-07-08T01:44:55+00:00` |
+| Ranked paths read | `957` |
+| Skipped unactionable paths | `worktree_lifecycle`, `session_lifecycle`, `dispatch-heartbeat-substrate-unhealthy`, `github_review`, `github-consolidation-collisions`, `agent_coordination`, `mail-story-mining-20260706`, `technical_debt_ci`, `feat-gcp-sa-organ`, `fluttering-twirling-abelson`, `peer-audited--behavioral-blockchain`, `peer-audited--behavioral-blockchain`, `ticklish-bubbling-robin`, `a-i-chat--exporter`, `a-i-council--coliseum`, `adaptive-personal-syllabus`, `atomic-substrata`, `bountyscope`, `bountyscope-test-coverage`, `conversation-corpus-engine`, `domus-genoma`, `dot-github--theoria`, `edgarflash`, `growth-auditor`, `hokage-chess`, `limen`, `limen_jules-aw-mail-historical-backlog-1516`, `limen_jules-aw-mail-historical-backlog-41f9`, `limen_jules-aw-mail-historical-backlog-560d`, `limen_jules-aw-mail-historical-backlog-5ba6`, `limen_jules-aw-mail-historical-backlog-64a5`, `limen_jules-aw-mail-historical-backlog-6ce8`, `limen_jules-aw-mail-historical-backlog-7853`, `limen_jules-aw-mail-historical-backlog-7ce0`, `limen_jules-aw-mail-historical-backlog-9136`, `limen_jules-aw-mail-historical-backlog-a0cc`, `limen_jules-aw-mail-historical-backlog-a476`, `limen_jules-aw-mail-historical-backlog-bfbb`, `limen_jules-aw-mail-historical-backlog-e139`, `limen_jules-aw-mail-historical-backlog-fea5`, `limen_jules-heal-cifix-organvm-limen-454-0193`, `limen_jules-heal-cifix-organvm-limen-454-0756`, `limen_jules-heal-cifix-organvm-limen-454-0d24`, `limen_jules-heal-cifix-organvm-limen-454-2029`, `limen_jules-heal-cifix-organvm-limen-454-31c1`, `limen_jules-heal-cifix-organvm-limen-454-4142`, `limen_jules-heal-cifix-organvm-limen-454-6e1e`, `limen_jules-heal-cifix-organvm-limen-454-8279`, `limen_jules-heal-cifix-organvm-limen-454-84fe`, `limen_jules-heal-cifix-organvm-limen-454-9dc2`, `limen_jules-heal-cifix-organvm-limen-454-a15d`, `limen_jules-heal-cifix-organvm-limen-454-b3ea`, `limen_jules-heal-cifix-organvm-limen-454-f834`, `mirror-mirror-healing`, `my--father-mother`, `my-domus-genoma`, `organvm-engine`, `organvm-i-theoria-github`, `organvm-i-theoria-mesh`, `organvm-ontologia`, `organvm-rules-system-bound`, `public-record-data-scrapper`, `recursive-engine--generative-entity`, `rules-system-bound`, `schema-definitions`, `sovereign--ground`, `sovereign-systems--elevate-align`, `studium-generale`, `system-governance-framework`, `universal-mail--automation`, `vulnpulse`, `convergence_corpus`, `gen-organvm-universal-mail--automation-test-coverage-0625-151e`, `heal-cifix-organvm-limen-424-8db5dab0`, `agent-aefc63d95daa3131b`, `wf_29a15be5-9f8-2`, `cloud-runtime-endpoint-unconfigured`, `uncategorized`, `org-health-organ-firstslice-0704-aac2b482`, `org-health-organ-firstslice-0704-caa4e142`, `universal-kernel-recordkeeper-20260705`, `cloud-credential-handles-unconfigured`, `credential-codex-auth-sessions`, `gh-organvm-domus-genoma-170-bbbc`, `heal-cifix-organvm-organvm-engine-124-e0bb2d06`, `heal-cifix-organvm-organvm-engine-130-8a6060e4`, `pr-669-governance-deepen`, `review-avditor-billing-pr43`, `discover-organvm-kerygma-profiles-6c74`, `photos-universe-20260629-182431`, `gen-a-organvm-a-i-council--coliseum-ci-green-0620-29ec`, `linear-conjuring-bear`, `resolve-organvm-i-theoria-.github-459-1ade`, `the-invisible-ledger`, `the-invisible-ledger`, `triptych-story`, `feat+workstream-channels`, `domus-quarantine-retire-20260629`, `cifix-organvm-i-theoria-conversation-corpus-engine-f02e`, `auth_credentials`, `maddie-boundary-20260629`, `student-email-d2l-support-20260629`, `limen-network-substrate-20260628`, `limen-main-trench-20260628`, `warp-agent-routing-20260629`, `bld-my--father-mother-harden-44b2`, `bld-promptscope-next-rev-3fde`, `financial-codex-finish-0704`, `heal-cifix-organvm-organvm-engine-130-ec1fdfaf`, `heal-cifix-organvm-organvm-engine-136-c3d543d8`, `heal-cifix-organvm-organvm-engine-139-11d32b27`, `universal-entry-20260629` |
 
 ## Work Packet
 
-Purpose: Record that no ranked path is autonomously actionable after skipping parked, family, human-gated, observe, auth-only, already-preserved PR, owner-blocked, active, and live-checkout paths.
+Purpose: Resolve `heal-cifix-organvm-organvm-engine-110-cf645ef4` to a preservation proof, owner blocker, remote/default proof, or documented non-source residue without deleting unique work.
 
-Repo/worktree: `organvm/limen` conductor checkout.
+Repo/worktree: Owner worktree `heal-cifix-organvm-organvm-engine-110-cf645ef4` under `~/Workspace/.limen-worktrees` plus Limen receipts.
 
 Allowed files:
 
-- `scripts/live-root-gate.py`
+- `docs/worktree-lifecycle-ledger.md`
+- `docs/worktree-preservation-receipts.json`
 - `docs/session-attack-paths.md`
 - `docs/session-lifecycle-blockers.md`
-- `docs/live-root-gate.md`
 - `docs/conductor-tranche.md`
 - `.limen-private/session-corpus/lifecycle/**`
 
@@ -49,20 +49,21 @@ Forbidden:
 - `irreversible GitHub transfer/rename/App install/credential actions`
 - `task-board mutation unless the direct request explicitly requires it`
 
-Stop condition: Stop before broad delegation, cleanup, GitHub mutation, credential work, or owner repo edits; resume only when a human opens a gate or a fresh actionable packet appears.
+Stop condition: Stop before deletion, force-push, merge, or owner-repo source edits unless a narrower owner packet names the repo, branch, predicate, and receipt.
 
-Receipt: docs/live-root-gate.md and docs/conductor-tranche.md record the human-gated stop state.
+Receipt: Update the owning worktree lifecycle receipt and regenerate docs/conductor-tranche.md.
 
 Verification:
 
-- `python3 scripts/live-root-gate.py --write`
+- `python3 scripts/worktree-debt.py --json`
+- `python3 scripts/session-lifecycle-pressure.py --write`
 - `python3 scripts/session-blockers-ledger.py --write`
 - `python3 scripts/session-attack-paths.py --write`
 - `python3 scripts/conductor-tranche.py --write`
 
 ## Source Next Action
 
-Record that no ranked path is autonomously actionable after skipping parked, family, human-gated, observe, auth-only, already-preserved PR, owner-blocked, active, and live-checkout paths.
+Inspect diff, run owner predicate, push branch/open draft PR or record blocker.
 
 ## Refresh
 

@@ -1,6 +1,6 @@
 # Live Root Gate
 
-Generated: `2026-07-07T19:33:34+00:00`
+Generated: `2026-07-08T01:43:15+00:00`
 
 Status: `blocked`
 
@@ -15,22 +15,30 @@ Status: `blocked`
 - Operator gate required: `True`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: `live-root-dirty`.
+- Blocking gates: `live-root-not-at-release`, `live-root-unique-commits`, `live-root-dirty`, `live-root-task-board-dirty`.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `60f0b730213e346f7943d2a08bf2d312c1615a3c`.
-- Release head: `60f0b730213e346f7943d2a08bf2d312c1615a3c`.
-- Matches release: `True`; ahead `0` behind `0`.
-- Unique local commits: `0`; patch-equivalent commits: `0`.
-- Dirty entries: `2`.
+- HEAD: `937814b19452dc5e93e0b6dc35524d6880b19a1d`.
+- Release head: `e30bbf34b41b809ee6a2344d350be1c01d34e357`.
+- Matches release: `False`; ahead `1` behind `0`.
+- Unique local commits: `1`; patch-equivalent commits: `0`.
+- Dirty entries: `6`.
+
+### Local Commits
+
+- `937814b1 limen: preserve async board state`
 
 ### Dirty Paths
 
-- `docs/always-working.md`
-- `docs/prompt-packet-ledger.md`
+- `cli/src/limen/worktree_debt.py`
+- `cli/tests/test_worktree_debt.py`
+- `docs/branch-reap-acceptance.jsonl`
+- `docs/consolidation/GATES.md`
+- `docs/worktree-preservation-receipts.json`
+- `tasks.yaml`
 
 ## Heartbeat
 
@@ -42,7 +50,7 @@ Status: `blocked`
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`.
-- Matches release: `True`.
+- Matches release: `False`.
 
 ## Stop Conditions
 
