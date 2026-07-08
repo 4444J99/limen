@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-08T03:51:47Z",
+  "generated_utc": "2026-07-08T03:58:37Z",
   "receipts": [
     {
       "branch": "pr-110-branch",
@@ -2019,6 +2019,55 @@
         }
       ],
       "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-149-e0f24a23"
+    },
+    {
+      "branch": "limen/heal-cifix-organvm-domus-genoma-157-baceffbf",
+      "classification": "local source head preserved by current default branch; upstream PR is stale/failing and separate; only untracked non-source opencode log residue remains",
+      "default_branch": "origin/master",
+      "default_head": "cbdea01cf004b037c77ac0a9ba5005d062e27c26",
+      "evidence_updated_utc": "2026-07-08T03:58:37Z",
+      "head": "3d9906950212c5be0a7bd02ab04c64b768fa799f",
+      "head_ancestor_of_default": true,
+      "lane": "remote-merged",
+      "next_action": "No local source preservation remains for this worktree: HEAD is an ancestor of current origin/master and `git diff` is empty. Keep the 295-byte opencode log as documented non-source residue. Handle stale failing PR #157 separately through a PR-owner packet; do not treat this local checkout as the PR repair surface. Reclaim only after operator acceptance.",
+      "owner_predicates": [
+        {
+          "command": "git diff --check",
+          "result": "passed"
+        },
+        {
+          "command": "timeout 180 bash lint_test.sh",
+          "result": "passed with existing yamllint warnings and shfmt diagnostic output"
+        }
+      ],
+      "pr_head_ancestor_of_default": "unknown-pr-head-ref-not-local",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T035837Z-heal-cifix-organvm-domus-genoma-157-baceffbf/receipt.json",
+      "remote_pr": {
+        "number": 157,
+        "state": "OPEN",
+        "url": "https://github.com/organvm/domus-genoma/pull/157",
+        "head_ref": "limen/gen-organvm-domus-genoma-simplify-0629-6ae8",
+        "base_ref": "master",
+        "mergeable": "UNKNOWN",
+        "merge_state": "UNKNOWN",
+        "failing_checks": [
+          "Build, Test, and Lint",
+          "YAML Lint",
+          "Shell Formatting"
+        ]
+      },
+      "repo": "organvm/domus-genoma",
+      "root": "heal-cifix-organvm-domus-genoma-157-baceffbf",
+      "score_discount": 35,
+      "status": "default_branch_preserved",
+      "untracked_residue": [
+        {
+          "path": "logs/agents/opencode.json",
+          "bytes": 295,
+          "sha256": "f8760ba97d40288d1bdc5e5409133b2cc020a394e98dd8ccf30031164f6b2a98"
+        }
+      ],
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-157-baceffbf"
     }
   ],
   "schema": 1
