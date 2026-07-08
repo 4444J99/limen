@@ -262,7 +262,7 @@ def harvest() -> int:
                 continue
             t = byid.get(data.get("task_id"))
             if t is not None and data.get("result") != "__notask__":
-                _apply_result(t, data.get("agent"), data.get("result"), now, track)
+                _apply_result(t, data.get("agent"), data.get("result"), now, track, charge_budget=False)
                 applied += 1
             if data.get("task_id"):
                 _clear_running_markers(str(data.get("task_id")))

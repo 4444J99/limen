@@ -349,6 +349,20 @@ def test_async_numeric_env_knobs_fail_open_when_malformed(tmp_path, monkeypatch)
 
 def test_harvest_applies_pr_result_and_cleans(tmp_path):
     da = _load(tmp_path, n_open=2)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.track.spent = 1
+    lf.portal.budget.track.per_agent["codex"] = 1
+    lf.tasks[0].status = "dispatched"
+    lf.tasks[0].dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            agent="codex",
+            session_id="async-reserve",
+            status="dispatched",
+            output="dispatch-async: reserved before detached worker launch",
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
     (da.RUNS / "T0__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
     (da.RUNS / "T0.result.json").write_text(
         json.dumps(
@@ -360,6 +374,9 @@ def test_harvest_applies_pr_result_and_cleans(tmp_path):
     assert any("pull/9" in str(e.session_id) for e in t0.dispatch_log)
     assert not (da.RUNS / "T0.result.json").exists()
     assert not (da.RUNS / "T0__codex.running").exists()
+    track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
+    assert track.spent == 1
+    assert track.per_agent["codex"] == 1
 
 
 def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):

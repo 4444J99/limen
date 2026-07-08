@@ -2312,7 +2312,15 @@ def dispatch_tasks(
     print(f"── {mode}: {dispatched} task(s)")
 
 
-def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, track: BudgetTrack) -> None:
+def _apply_result(
+    task: Task,
+    agent: str,
+    result: bool | str,
+    now: datetime,
+    track: BudgetTrack,
+    *,
+    charge_budget: bool = True,
+) -> None:
     """Apply one dispatch result to a task (same semantics as the serial path):
     success → dispatched + spend; no-op/fail → recoverable failed; rate-limit → cascade."""
     if task.status in {"done", "archived"} and _has_done_transition(task):
@@ -2362,8 +2370,9 @@ def _apply_result(task: Task, agent: str, result: bool | str, now: datetime, tra
         if isinstance(result, str):
             entry.session_id = result
         task.status = "dispatched"
-        track.spent += task.budget_cost
-        track.per_agent[agent] = track.per_agent.get(agent, 0) + task.budget_cost
+        if charge_budget:
+            track.spent += task.budget_cost
+            track.per_agent[agent] = track.per_agent.get(agent, 0) + task.budget_cost
     else:
         tried = f"tried:{agent}"
         if tried not in task.labels:
