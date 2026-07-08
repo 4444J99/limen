@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-08T06:10:34+00:00`
+Generated: `2026-07-08T06:33:21+00:00`
 
 Status: `blocked`
 
@@ -25,14 +25,14 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `1`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-08T06:10:34.404113+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-08T06:33:21.399386+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run lanes: `auto`; max `1`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 1 still running ; would launch 0 (cap 1) -> []`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 1 (cap 1) -> ['HEAL-cifix-organvm-domus-genoma-172']`.
 
 ## Prompt Packet Gate
 
@@ -55,16 +55,18 @@ Status: `blocked`
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
   - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; disk/temp pressure needs owner work.
   - `ESTATE-CUSTODY`: `estate-custody` / `assigned_from_existing_work`; estate doctrine exists; implementation receipt is not complete.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 74.1%, PRs 13.2%, issues 12.0%, reviews 0.7%.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 74.0%, PRs 13.2%, issues 12.0%, reviews 0.8%.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `fd1c8897793953c13c91c5d26be84c427dabbbbb`.
-- origin/main: `fd1c8897793953c13c91c5d26be84c427dabbbbb`.
+- HEAD: `4de2ec9681dbc96f840f51ccfd6227e21623a2b4`.
+- origin/main: `4de2ec9681dbc96f840f51ccfd6227e21623a2b4`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/dispatch-health.md`
 
 ## Verified Worktree
 
