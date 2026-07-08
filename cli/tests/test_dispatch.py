@@ -992,6 +992,116 @@ def test_dispatch_numeric_env_knobs_fail_open_when_malformed(tmp_path: Path, mon
     assert D._accel_limit(limen, "jules", 2, datetime.datetime.now(datetime.timezone.utc)) >= 2
 
 
+def test_same_repo_pr_head_for_task_resolves_open_pr(monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run_capture(cmd, cwd=None, timeout=600, env=None):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(
+            cmd,
+            0,
+            json.dumps(
+                {
+                    "baseRefName": "master",
+                    "headRefName": "limen/fix-ci-175",
+                    "headRepositoryOwner": {"login": "organvm"},
+                    "state": "OPEN",
+                }
+            ),
+            "",
+        )
+
+    monkeypatch.setattr(D, "_run_capture", fake_run_capture)
+    task = Task(
+        id="HEAL-175",
+        title="fix failing CI on organvm/domus-genoma#175",
+        repo="organvm/domus-genoma",
+        target_agent="codex",
+        created=date(2026, 6, 27),
+    )
+
+    assert D._task_github_pr_ref(task) == ("organvm/domus-genoma", 175)
+    assert D._same_repo_pr_head_for_task(task) == {
+        "repo": "organvm/domus-genoma",
+        "number": "175",
+        "head_ref": "limen/fix-ci-175",
+        "base_ref": "master",
+    }
+    assert calls[0][:4] == ["gh", "pr", "view", "175"]
+
+
+def test_isolated_local_run_uses_same_repo_pr_head_as_base(tmp_path: Path, monkeypatch) -> None:
+    git_calls: list[list[str]] = []
+    created_prs: list[tuple[str, str, Path]] = []
+    cleanups: list[tuple[str, bool]] = []
+
+    def fake_git_plumbing(args, cwd, timeout=120):
+        git_calls.append(args)
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda _task: tmp_path)
+    monkeypatch.setattr(D, "_default_branch", lambda _repo: "master")
+    monkeypatch.setattr(
+        D,
+        "_same_repo_pr_head_for_task",
+        lambda _task: {
+            "repo": "organvm/domus-genoma",
+            "number": "175",
+            "head_ref": "limen/fix-ci-175",
+            "base_ref": "master",
+        },
+    )
+    monkeypatch.setattr(D, "_git_plumbing", fake_git_plumbing)
+    monkeypatch.setattr(D, "_run_isolated_agent", lambda *args: True)
+    monkeypatch.setattr(D, "_commit_isolated_changes", lambda *args: True)
+    monkeypatch.setattr(D, "_push_isolated_branch", lambda *args: True)
+    monkeypatch.setattr(
+        D,
+        "_create_isolated_pr",
+        lambda task, wt, base, branch: created_prs.append((base, branch, wt)) or "https://github.com/x/y/pull/9",
+    )
+    monkeypatch.setattr(
+        D,
+        "_cleanup_isolated_worktree",
+        lambda repo_dir, wt, branch, base_ref, pushed, task=None: cleanups.append((base_ref, pushed)),
+    )
+    monkeypatch.setattr(D.secrets, "token_hex", lambda _n: "abcd")
+    monkeypatch.setattr(D, "_ISOLATION_ROOT", tmp_path / "worktrees")
+    task = Task(
+        id="HEAL-cifix-organvm-domus-genoma-175",
+        title="fix failing CI on organvm/domus-genoma#175",
+        repo="organvm/domus-genoma",
+        target_agent="codex",
+        created=date(2026, 6, 27),
+    )
+
+    result = D._isolated_local_run("codex", task, dry_run=False)
+
+    assert result == "https://github.com/x/y/pull/9"
+    assert git_calls[0] == [
+        "fetch",
+        "origin",
+        "+refs/heads/limen/fix-ci-175:refs/remotes/origin/limen/fix-ci-175",
+    ]
+    assert git_calls[1] == [
+        "worktree",
+        "add",
+        "-b",
+        "limen/heal-cifix-organvm-domus-genoma-175-abcd",
+        str(tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd"),
+        "origin/limen/fix-ci-175",
+    ]
+    assert created_prs == [
+        (
+            "limen/fix-ci-175",
+            "limen/heal-cifix-organvm-domus-genoma-175-abcd",
+            tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd",
+        )
+    ]
+    assert cleanups == [("origin/limen/fix-ci-175", True)]
+
+
 def test_git_plumbing_retries_transient_config_lock(tmp_path: Path, monkeypatch) -> None:
     calls: list[list[str]] = []
 

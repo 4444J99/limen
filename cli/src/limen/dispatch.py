@@ -709,6 +709,13 @@ def _build_prompt(task: Task, task_first: bool = False) -> str:
         parts.append(f"\nContext: {task.context}")
     if task.urls:
         parts.append(f"\nReferences: {', '.join(task.urls)}")
+    pr_ref = _task_github_pr_ref(task)
+    if pr_ref:
+        parts.append(
+            f"\nGitHub PR context: this task names {pr_ref[0]}#{pr_ref[1]}. "
+            "For PR-fix/rebase tasks, inspect that PR before editing; when available, dispatch "
+            "bases this isolated branch on the PR head and targets the repair PR back to that head."
+        )
     body = f"{''.join(parts)}\n\n{_value_gate_discipline(task)}\n\n{_verification_discipline()}"
     flame = _flame_preamble()
     if not flame:
@@ -1431,6 +1438,83 @@ def _default_branch(repo_dir: Path) -> str:
     return "main"
 
 
+_GITHUB_PR_URL_RE = re.compile(
+    r"github\.com[:/](?P<repo>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/(?:pull|pulls)/(?P<num>\d+)",
+    re.IGNORECASE,
+)
+_GITHUB_REPO_PR_RE = re.compile(
+    r"(?<![A-Za-z0-9_.-])(?P<repo>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#(?P<num>\d+)\b",
+    re.IGNORECASE,
+)
+
+
+def _task_github_pr_ref(task: Task) -> tuple[str, int] | None:
+    """Return the GitHub ``owner/repo#number`` a task clearly names, if it matches task.repo."""
+    task_repo = _normalize_repo_slug(task.repo)
+    if task_repo and "/" not in task_repo:
+        task_repo = ""
+    texts: list[str] = []
+    texts.extend(str(url or "") for url in (task.urls or []))
+    texts.extend([str(task.title or ""), str(task.context or "")])
+    for text in texts:
+        for regex in (_GITHUB_PR_URL_RE, _GITHUB_REPO_PR_RE):
+            for match in regex.finditer(text):
+                repo = _normalize_repo_slug(match.group("repo"))
+                if task_repo and repo != task_repo:
+                    continue
+                try:
+                    return repo, int(match.group("num"))
+                except ValueError:
+                    continue
+    return None
+
+
+def _same_repo_pr_head_for_task(task: Task) -> dict[str, str] | None:
+    """Resolve same-repo PR tasks to their head branch, else fail open to default branch."""
+    ref = _task_github_pr_ref(task)
+    if not ref:
+        return None
+    repo, number = ref
+    try:
+        run = _run_capture(
+            [
+                "gh",
+                "pr",
+                "view",
+                str(number),
+                "--repo",
+                repo,
+                "--json",
+                "headRefName,headRepositoryOwner,baseRefName,state",
+            ],
+            timeout=max(1, _env_int("LIMEN_PR_CONTEXT_TIMEOUT", 20)),
+        )
+    except Exception:
+        return None
+    if run.returncode != 0:
+        return None
+    try:
+        data = json.loads(run.stdout or "{}")
+    except ValueError:
+        return None
+    if str(data.get("state") or "").upper() != "OPEN":
+        return None
+    head_ref = str(data.get("headRefName") or "").strip()
+    if not head_ref:
+        return None
+    owner_raw = data.get("headRepositoryOwner") or {}
+    head_owner = owner_raw.get("login") if isinstance(owner_raw, dict) else str(owner_raw or "")
+    repo_owner = repo.split("/", 1)[0]
+    if head_owner and head_owner.lower() != repo_owner.lower():
+        return None
+    return {
+        "repo": repo,
+        "number": str(number),
+        "head_ref": head_ref,
+        "base_ref": str(data.get("baseRefName") or ""),
+    }
+
+
 def _pr_body(task: Task) -> str:
     lines = [f"Autonomous **limen** dispatch of task `{task.id}`.", ""]
     if task.context:
@@ -1851,6 +1935,15 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         return False
 
     base = _default_branch(repo_dir)
+    pr_head = _same_repo_pr_head_for_task(task)
+    checkout_ref = f"origin/{base}"
+    pr_base = base
+    fetch_refspec: str | None = base
+    if pr_head:
+        head_ref = pr_head["head_ref"]
+        checkout_ref = f"origin/{head_ref}"
+        pr_base = head_ref
+        fetch_refspec = f"+refs/heads/{head_ref}:refs/remotes/origin/{head_ref}"
     slug = re.sub(r"[^a-zA-Z0-9._/-]+", "-", task.id.lower())
     # Unique suffix: retries should not collide with stale local/remote refs. The add path still
     # retries because old no-op runs left many empty local branches behind.
@@ -1875,8 +1968,9 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     lane_timeout = max(1, _env_int("LIMEN_LANE_TIMEOUT", 1800))
 
     if dry_run:
+        pr_note = f"; PR base {pr_base}" if pr_head else ""
         print(
-            f"  would isolate {task.id}: worktree {wt} off origin/{base} "
+            f"  would isolate {task.id}: worktree {wt} off {checkout_ref}{pr_note} "
             f"→ branch {branch} → {binary} {' '.join(agent_args)} "
             f"→ commit → push → PR  (live checkout untouched)"
         )
@@ -1893,14 +1987,15 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
             wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
         with _GIT_PLUMBING_LOCK:
             if attempt == 0:
-                _git_plumbing(["fetch", "origin", base], repo_dir, timeout=300)
+                if fetch_refspec:
+                    _git_plumbing(["fetch", "origin", fetch_refspec], repo_dir, timeout=300)
             _ISOLATION_ROOT.mkdir(parents=True, exist_ok=True)
             if wt.exists():  # leftover from a prior clean/no-op run
-                _cleanup_isolated_worktree(repo_dir, wt, branch, f"origin/{base}", pushed=False, task=task)
+                _cleanup_isolated_worktree(repo_dir, wt, branch, checkout_ref, pushed=False, task=task)
                 if wt.exists():
                     print(f"  retrying worktree add {task.id}: preserved existing worktree at {wt}")
                     continue
-            add = _git_plumbing(["worktree", "add", "-b", branch, str(wt), f"origin/{base}"], repo_dir, timeout=120)
+            add = _git_plumbing(["worktree", "add", "-b", branch, str(wt), checkout_ref], repo_dir, timeout=120)
         if add.returncode == 0:
             break
         if re.search(r"branch .* already exists|is already checked out", add.stderr or "", re.IGNORECASE):
@@ -1924,13 +2019,13 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         if not _push_isolated_branch(task, wt, branch):
             return False
         pushed = True
-        return _create_isolated_pr(task, wt, base, branch)
+        return _create_isolated_pr(task, wt, pr_base, branch)
     finally:
         # leave the user's checkout pristine: drop the worktree, and the local
         # branch too once its commits are safely on the remote, or when the attempt
         # produced no local work. Keep dirty/ahead failed worktrees for preservation.
         with _GIT_PLUMBING_LOCK:
-            _cleanup_isolated_worktree(repo_dir, wt, branch, f"origin/{base}", pushed=pushed, task=task)
+            _cleanup_isolated_worktree(repo_dir, wt, branch, checkout_ref, pushed=pushed, task=task)
 
 
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
