@@ -1,21 +1,40 @@
 {
-  "acceptance_ledger": "/Volumes/Scratch/limen-worktrees/aw-estate-custody-1bf70c8a/docs/worktree-reclaim-acceptance.jsonl",
+  "acceptance_ledger": "/Users/4jp/Workspace/limen/docs/worktree-reclaim-acceptance.jsonl",
   "acceptance_ledger_written": false,
   "by_reason": {
-    "active(<24h)": 48,
-    "active(<6h)": 225,
-    "clean+merged+idle": 467,
-    "dirty": 58,
+    "active(<24h)": 78,
+    "active(<6h)": 5,
+    "clean+merged+idle": 542,
+    "dirty": 96,
     "documented-residue": 2,
     "not-a-git-dir": 6,
-    "not-merged-to-default": 52,
-    "owner-blocker": 10,
-    "remote-merged": 5,
+    "not-merged-to-default": 106,
+    "owner-blocker": 13,
+    "remote-merged": 8,
     "remote-pr-open": 21,
     "remote-superseded": 1,
-    "unpushed-commits": 32
+    "unpushed-commits": 84
   },
   "candidates": [
+    {
+      "acceptance_event_template": {
+        "accepted": true,
+        "accepted_at": "<ISO-8601-UTC>",
+        "action": "remove-worktree",
+        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
+        "archive_status": "not_required_clean_merged_remote",
+        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-universal-mail--automation-118-9f686157",
+        "reason": "clean+merged+idle",
+        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
+        "redaction_review": "not_required_remote_only",
+        "root": "heal-cifix-organvm-universal-mail--automation-118-9f686157"
+      },
+      "action": "remove-worktree",
+      "name": "heal-cifix-organvm-universal-mail--automation-118-9f686157",
+      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-universal-mail--automation-118-9f686157",
+      "reason": "clean+merged+idle",
+      "size_bytes": 555036672
+    },
     {
       "acceptance_event_template": {
         "accepted": true,
@@ -555,6 +574,63 @@
         "action": "remove-worktree",
         "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
         "archive_status": "not_required_clean_merged_remote",
+        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-132-9e2ce2a0",
+        "reason": "clean+merged+idle",
+        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
+        "redaction_review": "not_required_remote_only",
+        "root": "heal-cifix-organvm-domus-genoma-132-9e2ce2a0"
+      },
+      "action": "remove-worktree",
+      "name": "heal-cifix-organvm-domus-genoma-132-9e2ce2a0",
+      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-132-9e2ce2a0",
+      "reason": "clean+merged+idle",
+      "size_bytes": 134213632
+    },
+    {
+      "acceptance_event_template": {
+        "accepted": true,
+        "accepted_at": "<ISO-8601-UTC>",
+        "action": "remove-worktree",
+        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
+        "archive_status": "not_required_clean_merged_remote",
+        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-120-f5bb6297",
+        "reason": "clean+merged+idle",
+        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
+        "redaction_review": "not_required_remote_only",
+        "root": "heal-cifix-organvm-domus-genoma-120-f5bb6297"
+      },
+      "action": "remove-worktree",
+      "name": "heal-cifix-organvm-domus-genoma-120-f5bb6297",
+      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-120-f5bb6297",
+      "reason": "clean+merged+idle",
+      "size_bytes": 133582848
+    },
+    {
+      "acceptance_event_template": {
+        "accepted": true,
+        "accepted_at": "<ISO-8601-UTC>",
+        "action": "remove-worktree",
+        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
+        "archive_status": "not_required_clean_merged_remote",
+        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-109-83be4de7",
+        "reason": "clean+merged+idle",
+        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
+        "redaction_review": "not_required_remote_only",
+        "root": "heal-cifix-organvm-domus-genoma-109-83be4de7"
+      },
+      "action": "remove-worktree",
+      "name": "heal-cifix-organvm-domus-genoma-109-83be4de7",
+      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-109-83be4de7",
+      "reason": "clean+merged+idle",
+      "size_bytes": 133582848
+    },
+    {
+      "acceptance_event_template": {
+        "accepted": true,
+        "accepted_at": "<ISO-8601-UTC>",
+        "action": "remove-worktree",
+        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
+        "archive_status": "not_required_clean_merged_remote",
         "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-136-e500adaf",
         "reason": "clean+merged+idle",
         "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
@@ -564,6 +640,25 @@
       "action": "remove-worktree",
       "name": "heal-cifix-organvm-domus-genoma-136-e500adaf",
       "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-136-e500adaf",
+      "reason": "clean+merged+idle",
+      "size_bytes": 133562368
+    },
+    {
+      "acceptance_event_template": {
+        "accepted": true,
+        "accepted_at": "<ISO-8601-UTC>",
+        "action": "remove-worktree",
+        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
+        "archive_status": "not_required_clean_merged_remote",
+        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-118-46a5ada9",
+        "reason": "clean+merged+idle",
+        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
+        "redaction_review": "not_required_remote_only",
+        "root": "heal-cifix-organvm-domus-genoma-118-46a5ada9"
+      },
+      "action": "remove-worktree",
+      "name": "heal-cifix-organvm-domus-genoma-118-46a5ada9",
+      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-118-46a5ada9",
       "reason": "clean+merged+idle",
       "size_bytes": 133562368
     },
@@ -707,6 +802,44 @@
         "action": "remove-worktree",
         "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
         "archive_status": "not_required_clean_merged_remote",
+        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-153-eb2b9ba6",
+        "reason": "clean+merged+idle",
+        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
+        "redaction_review": "not_required_remote_only",
+        "root": "heal-cifix-organvm-domus-genoma-153-eb2b9ba6"
+      },
+      "action": "remove-worktree",
+      "name": "heal-cifix-organvm-domus-genoma-153-eb2b9ba6",
+      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-153-eb2b9ba6",
+      "reason": "clean+merged+idle",
+      "size_bytes": 133558272
+    },
+    {
+      "acceptance_event_template": {
+        "accepted": true,
+        "accepted_at": "<ISO-8601-UTC>",
+        "action": "remove-worktree",
+        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
+        "archive_status": "not_required_clean_merged_remote",
+        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-153-451788bb",
+        "reason": "clean+merged+idle",
+        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
+        "redaction_review": "not_required_remote_only",
+        "root": "heal-cifix-organvm-domus-genoma-153-451788bb"
+      },
+      "action": "remove-worktree",
+      "name": "heal-cifix-organvm-domus-genoma-153-451788bb",
+      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-153-451788bb",
+      "reason": "clean+merged+idle",
+      "size_bytes": 133558272
+    },
+    {
+      "acceptance_event_template": {
+        "accepted": true,
+        "accepted_at": "<ISO-8601-UTC>",
+        "action": "remove-worktree",
+        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
+        "archive_status": "not_required_clean_merged_remote",
         "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-152-d3af5bd7",
         "reason": "clean+merged+idle",
         "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
@@ -832,143 +965,10 @@
       "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-149-762c5b71",
       "reason": "clean+merged+idle",
       "size_bytes": 133558272
-    },
-    {
-      "acceptance_event_template": {
-        "accepted": true,
-        "accepted_at": "<ISO-8601-UTC>",
-        "action": "remove-worktree",
-        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
-        "archive_status": "not_required_clean_merged_remote",
-        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-149-3de37146",
-        "reason": "clean+merged+idle",
-        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
-        "redaction_review": "not_required_remote_only",
-        "root": "heal-cifix-organvm-domus-genoma-149-3de37146"
-      },
-      "action": "remove-worktree",
-      "name": "heal-cifix-organvm-domus-genoma-149-3de37146",
-      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-149-3de37146",
-      "reason": "clean+merged+idle",
-      "size_bytes": 133558272
-    },
-    {
-      "acceptance_event_template": {
-        "accepted": true,
-        "accepted_at": "<ISO-8601-UTC>",
-        "action": "remove-worktree",
-        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
-        "archive_status": "not_required_clean_merged_remote",
-        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-149-33f68e30",
-        "reason": "clean+merged+idle",
-        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
-        "redaction_review": "not_required_remote_only",
-        "root": "heal-cifix-organvm-domus-genoma-149-33f68e30"
-      },
-      "action": "remove-worktree",
-      "name": "heal-cifix-organvm-domus-genoma-149-33f68e30",
-      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-149-33f68e30",
-      "reason": "clean+merged+idle",
-      "size_bytes": 133558272
-    },
-    {
-      "acceptance_event_template": {
-        "accepted": true,
-        "accepted_at": "<ISO-8601-UTC>",
-        "action": "remove-worktree",
-        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
-        "archive_status": "not_required_clean_merged_remote",
-        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-146-9dc2db2e",
-        "reason": "clean+merged+idle",
-        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
-        "redaction_review": "not_required_remote_only",
-        "root": "heal-cifix-organvm-domus-genoma-146-9dc2db2e"
-      },
-      "action": "remove-worktree",
-      "name": "heal-cifix-organvm-domus-genoma-146-9dc2db2e",
-      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-146-9dc2db2e",
-      "reason": "clean+merged+idle",
-      "size_bytes": 133558272
-    },
-    {
-      "acceptance_event_template": {
-        "accepted": true,
-        "accepted_at": "<ISO-8601-UTC>",
-        "action": "remove-worktree",
-        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
-        "archive_status": "not_required_clean_merged_remote",
-        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-146-49a1e04b",
-        "reason": "clean+merged+idle",
-        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
-        "redaction_review": "not_required_remote_only",
-        "root": "heal-cifix-organvm-domus-genoma-146-49a1e04b"
-      },
-      "action": "remove-worktree",
-      "name": "heal-cifix-organvm-domus-genoma-146-49a1e04b",
-      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-146-49a1e04b",
-      "reason": "clean+merged+idle",
-      "size_bytes": 133558272
-    },
-    {
-      "acceptance_event_template": {
-        "accepted": true,
-        "accepted_at": "<ISO-8601-UTC>",
-        "action": "remove-worktree",
-        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
-        "archive_status": "not_required_clean_merged_remote",
-        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-142-9acd5d5c",
-        "reason": "clean+merged+idle",
-        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
-        "redaction_review": "not_required_remote_only",
-        "root": "heal-cifix-organvm-domus-genoma-142-9acd5d5c"
-      },
-      "action": "remove-worktree",
-      "name": "heal-cifix-organvm-domus-genoma-142-9acd5d5c",
-      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-142-9acd5d5c",
-      "reason": "clean+merged+idle",
-      "size_bytes": 133558272
-    },
-    {
-      "acceptance_event_template": {
-        "accepted": true,
-        "accepted_at": "<ISO-8601-UTC>",
-        "action": "remove-worktree",
-        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
-        "archive_status": "not_required_clean_merged_remote",
-        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-141-ef984af5",
-        "reason": "clean+merged+idle",
-        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
-        "redaction_review": "not_required_remote_only",
-        "root": "heal-cifix-organvm-domus-genoma-141-ef984af5"
-      },
-      "action": "remove-worktree",
-      "name": "heal-cifix-organvm-domus-genoma-141-ef984af5",
-      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-141-ef984af5",
-      "reason": "clean+merged+idle",
-      "size_bytes": 133558272
-    },
-    {
-      "acceptance_event_template": {
-        "accepted": true,
-        "accepted_at": "<ISO-8601-UTC>",
-        "action": "remove-worktree",
-        "archive_proof": "worktree debt classified this root clean+merged+idle; HEAD/content is already merged into the remote/default lifecycle",
-        "archive_status": "not_required_clean_merged_remote",
-        "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-141-71678e3e",
-        "reason": "clean+merged+idle",
-        "redaction_proof": "local removal deletes only a clean merged root; no dirty, untracked, private-only, or generated payload remains outside the documented remote/default lifecycle",
-        "redaction_review": "not_required_remote_only",
-        "root": "heal-cifix-organvm-domus-genoma-141-71678e3e"
-      },
-      "action": "remove-worktree",
-      "name": "heal-cifix-organvm-domus-genoma-141-71678e3e",
-      "path": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-141-71678e3e",
-      "reason": "clean+merged+idle",
-      "size_bytes": 133558272
     }
   ],
   "destructive_cleanup_performed": false,
-  "generated_at": "2026-07-08T04:08:18Z",
+  "generated_at": "2026-07-08T05:47:05Z",
   "governance": {
     "agent_policy": {
       "candidate_packet_lane": "codex-conductor",
@@ -1011,10 +1011,10 @@
       "by_grade": {
         "marginal": 240,
         "wasted": 721,
-        "worth_it": 1018
+        "worth_it": 1022
       },
       "ledger_present": true,
-      "records_sampled": 1979,
+      "records_sampled": 1983,
       "sunk": 1393
     },
     "value_repo_count": 14,
@@ -1027,12 +1027,12 @@
   "summary": {
     "candidate_limit": 50,
     "candidate_roots": 50,
-    "clean_merged_idle_roots": 467,
-    "debt_roots": 148,
-    "measured_candidate_bytes": 8241004544,
-    "measured_candidate_size": "7.7 GiB",
+    "clean_merged_idle_roots": 542,
+    "debt_roots": 292,
+    "measured_candidate_bytes": 8663191552,
+    "measured_candidate_size": "8.1 GiB",
     "measured_roots": 50,
-    "scanned_roots": 927,
+    "scanned_roots": 962,
     "size_budget_sec": 60,
     "size_measured": true,
     "size_scan_limit": 500,
