@@ -73,13 +73,13 @@ def assess(rn):
         d = json.loads(r.stdout)
         if d.get("state") != "OPEN" or d.get("isDraft"):
             return (repo, num, "SKIP")
+        if d.get("mergeable") == "CONFLICTING":
+            return (repo, num, "CONFLICT")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
         if any(s in ("FAILURE","ERROR","CANCELLED","TIMED_OUT","ACTION_REQUIRED") for s in states):
             return (repo, num, "CI-RED")
         if any(s in ("PENDING","IN_PROGRESS","QUEUED","EXPECTED","") for s in states):
             return (repo, num, "CI-PENDING")
-        if d.get("mergeable") == "CONFLICTING":
-            return (repo, num, "CONFLICT")
         if d.get("mergeable") == "MERGEABLE":
             # STALE-BASE GATE (kept identical to self-heal.assess — one verdict): a green+mergeable
             # PR off an OLD base can silently revert work it never meant to touch (#111). Refuse it

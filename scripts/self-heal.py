@@ -137,13 +137,13 @@ def assess(pr):
         d = json.loads(r.stdout)
         if d.get("state") != "OPEN" or d.get("isDraft"):
             return (repo, num, url, "SKIP")
+        if d.get("mergeable") == "CONFLICTING":
+            return (repo, num, url, "CONFLICT")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
         if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
             return (repo, num, url, "CI-RED")
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
             return (repo, num, url, "CI-PENDING")
-        if d.get("mergeable") == "CONFLICTING":
-            return (repo, num, url, "CONFLICT")
         if d.get("mergeable") == "MERGEABLE":
             # STALE-BASE GATE (identical to merge-drain.assess — one verdict): refuse a green+mergeable
             # PR off an old base that would silently revert work, and emit a rebase-to-current heal task.
