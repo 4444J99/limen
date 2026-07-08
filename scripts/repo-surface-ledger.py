@@ -25,6 +25,18 @@ PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "repo-surface-ledger.json"
 DOC_PATH = ROOT / "docs" / "repo-surface-ledger.md"
 
 SCAN_ENV_VARS = ("LIMEN_REPO_ROOTS", "LIMEN_WORKSPACE_ROOT", "LIMEN_WORKTREE_ROOT")
+CONSOLIDATION_SOURCE_OWNERS = {
+    "4444J99",
+    "a-organvm",
+    "meta-organvm",
+    "organvm-i-theoria",
+    "organvm-ii-poiesis",
+    "organvm-iii-ergon",
+    "organvm-iv-taxis",
+    "organvm-v-logos",
+    "organvm-vi-koinonia",
+    "organvm-vii-kerygma",
+}
 SKIP_DIRS = {
     ".cache",
     ".firebase",
@@ -42,6 +54,19 @@ SKIP_DIRS = {
     "node_modules",
     "out",
 }
+
+DISPOSITIONS = {
+    "build",
+    "verify",
+    "consolidate",
+    "private-sauce",
+    "publish-stage",
+    "blocked-human",
+    "retire",
+}
+LOCATION_CLASSES = ("archive", "nested", "workspace", "worktree")
+REMOTE_CLASSES = ("github-organvm", "github-other", "github-source-owner", "local-only", "remote-other")
+GATE_CLASSES = ("none", "post-transfer-owner-rewrite-pending")
 
 
 def now_iso() -> str:
@@ -266,6 +291,241 @@ def repo_record(repo: Path) -> dict[str, Any]:
     }
 
 
+def github_owner(normalized_remote: str) -> str:
+    parts = normalized_remote.split("/")
+    if len(parts) >= 3 and parts[0] == "github.com":
+        return parts[1]
+    return ""
+
+
+def remote_class(normalized_remote: str) -> str:
+    if not normalized_remote:
+        return "local-only"
+    owner = github_owner(normalized_remote)
+    if owner == "organvm":
+        return "github-organvm"
+    if owner in {name.lower() for name in CONSOLIDATION_SOURCE_OWNERS}:
+        return "github-source-owner"
+    if normalized_remote.startswith("github.com/"):
+        return "github-other"
+    return "remote-other"
+
+
+def path_has_archive_part(path: Path) -> bool:
+    return any(part.lower() in {"archive", "archives", "archive4t"} for part in path.parts)
+
+
+def path_has_worktree_part(path: Path) -> bool:
+    parts = set(path.parts)
+    return bool({".worktrees", ".limen-worktrees", "worktrees"} & parts)
+
+
+def nested_parent(path: Path, repo_paths: list[Path]) -> Path | None:
+    for candidate in sorted(repo_paths, key=lambda item: len(item.parts), reverse=True):
+        if candidate == path:
+            continue
+        try:
+            path.relative_to(candidate)
+        except ValueError:
+            continue
+        return candidate
+    return None
+
+
+def location_class(path: Path, parent: Path | None) -> str:
+    if path_has_archive_part(path):
+        return "archive"
+    if path_has_worktree_part(path):
+        return "worktree"
+    if parent is not None:
+        return "nested"
+    return "workspace"
+
+
+def product_surface_hashes(repo: dict[str, Any]) -> list[str]:
+    return [
+        str(surface.get("hash"))
+        for surface in repo.get("product_surfaces") or []
+        if isinstance(surface, dict) and surface.get("hash")
+    ]
+
+
+def disposition_for_repo(
+    repo: dict[str, Any],
+    *,
+    duplicate_remote_hashes: set[str],
+    duplicate_product_hashes: set[str],
+) -> str:
+    remote_hash = str(repo.get("remote_hash") or "")
+    if remote_hash and remote_hash in duplicate_remote_hashes:
+        return "consolidate"
+    if duplicate_product_hashes.intersection(product_surface_hashes(repo)):
+        return "consolidate"
+    if not repo.get("remote_hash"):
+        return "private-sauce"
+    if repo.get("classification", {}).get("remote") == "github-source-owner":
+        return "blocked-human"
+    if repo.get("dirty"):
+        return "verify"
+    if repo.get("deploy_surfaces"):
+        return "publish-stage"
+    if repo.get("test_surfaces"):
+        return "build"
+    return "verify"
+
+
+def classify_repos(repos: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    repo_paths = [Path(str(repo["path"])) for repo in repos]
+    remote_counts: dict[str, int] = {}
+    product_counts: dict[str, int] = {}
+    for repo in repos:
+        remote_hash = repo.get("remote_hash")
+        if remote_hash:
+            remote_counts[str(remote_hash)] = remote_counts.get(str(remote_hash), 0) + 1
+        for surface_hash in product_surface_hashes(repo):
+            product_counts[surface_hash] = product_counts.get(surface_hash, 0) + 1
+    duplicate_remote_hashes = {key for key, count in remote_counts.items() if count > 1}
+    duplicate_product_hashes = {key for key, count in product_counts.items() if count > 1}
+
+    classified: list[dict[str, Any]] = []
+    for repo in repos:
+        path = Path(str(repo["path"]))
+        parent = nested_parent(path, repo_paths)
+        remote = remote_class(str(repo.get("normalized_remote") or ""))
+        gate = "post-transfer-owner-rewrite-pending" if remote == "github-source-owner" else "none"
+        row = {
+            **repo,
+            "classification": {
+                "location": location_class(path, parent),
+                "nested": parent is not None,
+                "remote": remote,
+                "gate": gate,
+                "blocker": "none",
+            },
+        }
+        row["classification"]["disposition"] = disposition_for_repo(
+            row,
+            duplicate_remote_hashes=duplicate_remote_hashes,
+            duplicate_product_hashes=duplicate_product_hashes,
+        )
+        classified.append(row)
+    return classified
+
+
+def count_values(repos: list[dict[str, Any]], field: str, allowed: tuple[str, ...] = ()) -> dict[str, int]:
+    counts: dict[str, int] = {name: 0 for name in allowed}
+    for repo in repos:
+        value = str((repo.get("classification") or {}).get(field) or "unclassified")
+        counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def classification_summary(repos: list[dict[str, Any]]) -> dict[str, Any]:
+    unclassified = [
+        repo
+        for repo in repos
+        if not repo.get("classification")
+        or not (repo.get("classification") or {}).get("location")
+        or not (repo.get("classification") or {}).get("remote")
+        or not (repo.get("classification") or {}).get("disposition")
+    ]
+    return {
+        "location_counts": count_values(repos, "location", LOCATION_CLASSES),
+        "remote_counts": count_values(repos, "remote", REMOTE_CLASSES),
+        "disposition_counts": count_values(repos, "disposition", tuple(sorted(DISPOSITIONS))),
+        "gate_counts": count_values(repos, "gate", GATE_CLASSES),
+        "nested_repo_count": sum(1 for repo in repos if (repo.get("classification") or {}).get("nested")),
+        "unclassified_count": len(unclassified),
+        "valid_dispositions": sorted(DISPOSITIONS),
+    }
+
+
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
+def markdown_field(text: str, field: str) -> str:
+    match = re.search(rf"(?m)^\|\s*{re.escape(field)}\s*\|\s*`?([^`|\n]+)`?\s*\|", text)
+    return match.group(1).strip() if match else ""
+
+
+def markdown_backtick_value(text: str, field: str) -> str:
+    match = re.search(rf"(?m)^\s*(?:\*\*)?{re.escape(field)}(?:\*\*)?:\s*`([^`]+)`", text)
+    return match.group(1).strip() if match else ""
+
+
+def harvested_receipts() -> list[dict[str, Any]]:
+    previous = read_text(DOC_PATH)
+    gates = read_text(ROOT / "docs" / "consolidation" / "GATES.md")
+    manifest = read_text(ROOT / "docs" / "consolidation" / "EXECUTION-MANIFEST.md")
+    plan = read_json(ROOT / "docs" / "current-session-fanout" / "repo-salvage-consolidation-plan-04.json")
+
+    receipts: list[dict[str, Any]] = []
+    receipts.append(
+        {
+            "receipt": relpath(DOC_PATH),
+            "status": "existing" if previous else "missing",
+            "evidence": {
+                "generated_at": markdown_backtick_value(previous, "Generated"),
+                "repos_scanned": markdown_backtick_value(previous, "Repos scanned"),
+            },
+        }
+    )
+    receipts.append(
+        {
+            "receipt": relpath(ROOT / "docs" / "consolidation" / "GATES.md"),
+            "status": "current" if gates else "missing",
+            "evidence": {
+                "generated_at": markdown_backtick_value(gates, "Generated"),
+                "blocking_gates": markdown_field(gates, "Blocking gates"),
+                "source_repos_outside_organvm": markdown_field(gates, "Source repos outside `organvm`"),
+                "transfer_apply_gate_open": markdown_field(gates, "Transfer apply gate open"),
+                "local_remotes_to_rewrite": markdown_field(gates, "Local remotes to rewrite post-transfer"),
+                "app_token_wired": markdown_field(gates, "App token wired"),
+            },
+        }
+    )
+    manifest_gate = re.search(r"(?m)^\*\*Gate:\*\*\s*(.+)$", manifest)
+    manifest_status = re.search(r"(?m)^\*\*Status:\*\*\s*(.+?)(?:\s{2,})?$", manifest)
+    receipts.append(
+        {
+            "receipt": relpath(ROOT / "docs" / "consolidation" / "EXECUTION-MANIFEST.md"),
+            "status": "stale-transfer-stage"
+            if manifest and markdown_field(gates, "Transfer apply gate open") == "True"
+            else ("existing" if manifest else "missing"),
+            "evidence": {
+                "status": manifest_status.group(1).strip().rstrip(".") if manifest_status else "",
+                "gate": manifest_gate.group(1).strip() if manifest_gate else "",
+            },
+        }
+    )
+    receipts.append(
+        {
+            "receipt": relpath(ROOT / "docs" / "current-session-fanout" / "repo-salvage-consolidation-plan-04.json"),
+            "status": str(plan.get("status") or "missing"),
+            "evidence": {
+                "packet_id": plan.get("packet_id"),
+                "blocked_local_work": len(plan.get("blocked_local_work") or []),
+                "unconsolidated_plan_hashes": len(
+                    ((plan.get("plan_source_proof") or {}).get("unconsolidated_plan_hashes") or [])
+                ),
+            },
+        }
+    )
+    return receipts
+
+
+def read_json(path: Path) -> dict[str, Any]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def duplicate_remote_groups(repos: list[dict[str, Any]]) -> list[dict[str, Any]]:
     groups: dict[str, list[dict[str, Any]]] = {}
     for repo in repos:
@@ -291,13 +551,15 @@ def build_snapshot(
 ) -> dict[str, Any]:
     roots = configured_scan_roots(scan_roots)
     depth = max_depth if max_depth is not None else int(os.environ.get("LIMEN_REPO_SCAN_DEPTH", "6"))
-    repos = [repo_record(path) for path in repo_roots_under(roots, max_depth=depth, limit=limit)]
+    repos = classify_repos([repo_record(path) for path in repo_roots_under(roots, max_depth=depth, limit=limit)])
     return {
         "generated_at": now_iso(),
         "scan_roots": [relpath(path) for path in roots],
         "repo_count": len(repos),
         "repos": repos,
         "duplicate_remotes": duplicate_remote_groups(repos),
+        "classification_summary": classification_summary(repos),
+        "harvested_receipts": harvested_receipts(),
         "privacy": {
             "public_remote_mode": "hash-only",
             "public_product_surface_mode": "hash-only",
@@ -324,6 +586,7 @@ def public_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 def render_markdown(snapshot: dict[str, Any]) -> str:
     public = public_snapshot(snapshot)
+    summary = public.get("classification_summary") or {}
     lines = [
         "# Repo Surface Ledger",
         "",
@@ -334,6 +597,73 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
     ]
     lines.extend(f"- `{root}`" for root in public["scan_roots"])
+    lines += [
+        "",
+        "## Harvested Receipts",
+        "",
+        "| Receipt | Status | Evidence |",
+        "|---|---|---|",
+    ]
+    for receipt in public.get("harvested_receipts") or []:
+        evidence = ", ".join(
+            f"{key}={value}"
+            for key, value in (receipt.get("evidence") or {}).items()
+            if value not in {None, ""}
+        )
+        lines.append(
+            f"| `{receipt.get('receipt')}` | `{receipt.get('status')}` | {evidence or "`none`"} |"
+        )
+    if not public.get("harvested_receipts"):
+        lines.append("| none | `missing` | `none` |")
+    lines += [
+        "",
+        "## Classification Summary",
+        "",
+        f"- Unclassified roots: `{summary.get('unclassified_count', 0)}`.",
+        f"- Nested repos: `{summary.get('nested_repo_count', 0)}`.",
+        "",
+        "### Locations",
+        "",
+        "| Location | Count |",
+        "|---|---:|",
+    ]
+    for name, count in (summary.get("location_counts") or {}).items():
+        lines.append(f"| `{name}` | {count} |")
+    if not (summary.get("location_counts") or {}):
+        lines.append("| none | 0 |")
+    lines += [
+        "",
+        "### Remote Classes",
+        "",
+        "| Remote class | Count |",
+        "|---|---:|",
+    ]
+    for name, count in (summary.get("remote_counts") or {}).items():
+        lines.append(f"| `{name}` | {count} |")
+    if not (summary.get("remote_counts") or {}):
+        lines.append("| none | 0 |")
+    lines += [
+        "",
+        "### Dispositions",
+        "",
+        "| Disposition | Count |",
+        "|---|---:|",
+    ]
+    for name, count in (summary.get("disposition_counts") or {}).items():
+        lines.append(f"| `{name}` | {count} |")
+    if not (summary.get("disposition_counts") or {}):
+        lines.append("| none | 0 |")
+    lines += [
+        "",
+        "### Gates",
+        "",
+        "| Gate | Count |",
+        "|---|---:|",
+    ]
+    for name, count in (summary.get("gate_counts") or {}).items():
+        lines.append(f"| `{name}` | {count} |")
+    if not (summary.get("gate_counts") or {}):
+        lines.append("| none | 0 |")
     lines += [
         "",
         "## Duplicate Remote Groups",
@@ -349,16 +679,20 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "## Repo Surfaces",
         "",
-        "| Repo | Branch | Dirty | Remote | Products | Tests | Deploys | Visibility |",
-        "|---|---|---:|---|---:|---:|---:|---|",
+        "| Repo | Branch | Dirty | Remote | Products | Tests | Deploys | Visibility | Location | Remote class | Disposition | Gate |",
+        "|---|---|---:|---|---:|---:|---:|---|---|---|---|---|",
     ]
     for repo in public["repos"]:
         products = repo.get("product_surfaces") or []
+        classification = repo.get("classification") or {}
         lines.append(
             f"| `{repo['path_label']}` | `{repo['branch']}` | {repo['dirty_count']} | "
             f"`{repo.get('remote_hash') or 'none'}` | {len(products)} | "
             f"{len(repo.get('test_surfaces') or [])} | {len(repo.get('deploy_surfaces') or [])} | "
-            f"`{repo['visibility_state']}` |"
+            f"`{repo['visibility_state']}` | `{classification.get('location', 'unclassified')}` | "
+            f"`{classification.get('remote', 'unclassified')}` | "
+            f"`{classification.get('disposition', 'unclassified')}` | "
+            f"`{classification.get('gate', 'unclassified')}` |"
         )
     lines += [
         "",
@@ -366,6 +700,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "- Public receipts use hashes for remotes and product surfaces.",
         "- Exact local paths, remote URLs, and product names stay in the ignored private index.",
+        "- Every discovered root carries a location class, remote class, disposition, and gate field.",
         "- Discovery roots are derived from `LIMEN_REPO_ROOTS`, `LIMEN_WORKSPACE_ROOT`, `LIMEN_WORKTREE_ROOT`, or the current Limen root.",
     ]
     return "\n".join(lines) + "\n"

@@ -58,6 +58,8 @@ def test_repo_surface_ledger_discovers_nested_repos_and_duplicate_remotes(tmp_pa
         _git("remote", "add", "origin", "git@example.invalid:owner/shared.git", cwd=repo)
         (repo / "package.json").write_text('{"scripts":{"test":"true"}}\n', encoding="utf-8")
 
+    for env_name in ("LIMEN_REPO_ROOTS", "LIMEN_WORKSPACE_ROOT", "LIMEN_WORKTREE_ROOT"):
+        monkeypatch.delenv(env_name, raising=False)
     monkeypatch.setenv("LIMEN_REPO_ROOTS", str(root))
     mod = _load("repo-surface-ledger.py", "repo_surface_ledger_under_test")
 
@@ -66,6 +68,11 @@ def test_repo_surface_ledger_discovers_nested_repos_and_duplicate_remotes(tmp_pa
     assert snap["repo_count"] == 2
     assert any(group["repo_count"] == 2 for group in snap["duplicate_remotes"])
     assert all("package:test" in row["test_surfaces"] for row in snap["repos"])
+    assert snap["classification_summary"]["unclassified_count"] == 0
+    assert snap["classification_summary"]["nested_repo_count"] == 1
+    assert snap["classification_summary"]["disposition_counts"]["consolidate"] == 2
+    assert {row["classification"]["location"] for row in snap["repos"]} == {"nested", "workspace"}
+    assert {row["classification"]["remote"] for row in snap["repos"]} == {"remote-other"}
 
     public = json.dumps(mod.public_snapshot(snap), sort_keys=True)
     assert "git@example.invalid" not in public
