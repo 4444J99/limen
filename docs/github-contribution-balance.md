@@ -48,6 +48,23 @@ python3 scripts/github-contribution-balance.py --login 4444j99 --from 2025-06-29
 
 The script is read-only. It uses GitHub through `gh api graphql` when available, or `--from-json` for a saved GraphQL response/report. It never opens issues, submits PRs, posts comments, or sends reviews.
 
+## Live Receipt
+
+Generated: `2026-07-08T05:57:20Z`
+
+`python3 scripts/github-contribution-balance.py --login 4444J99 --json`:
+
+| Category | Count | Share | Target |
+|---|---:|---:|---:|
+| Commits | `12,987` | `74.14%` | `<=60%` |
+| Issues | `2,103` | `12.01%` | `>=15%` |
+| Pull requests | `2,320` | `13.24%` | `>=15%` |
+| Reviews | `107` | `0.61%` | `>=10%` |
+
+Public review receipt: requested changes on `organvm/linguistic-atomization-framework#16` after inspecting failed Python CI. The PR is blocked because `numpy>=2.5.1` requires Python `>=3.12` while the repo still runs Python `3.11`; the failed requirements install led to test collection failing with `ModuleNotFoundError: No module named yaml`.
+
+Owner issue receipt: `https://github.com/organvm/limen/issues/687#issuecomment-4911810750`.
+
 ## ELI5
 
 Each real job gets a sticky note, a box, and a checkmark.
