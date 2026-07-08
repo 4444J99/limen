@@ -31,6 +31,16 @@ def load_route_module():
     return module
 
 
+@pytest.fixture(autouse=True)
+def _hermetic_dispatch_env(tmp_path: Path, monkeypatch) -> None:
+    """Dispatch selection consults LIMEN_ROOT-relative registries (value-repos.json, worktree
+    receipts), so ambient fleet state on the host silently changes selection semantics. Pin the
+    root to an empty per-test dir; tests that need a real root re-set LIMEN_ROOT themselves."""
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "hermetic-root"))
+    for var in ("LIMEN_VALUE_REPOS", "LIMEN_VALUE_REPOS_FILE", "LIMEN_VALUE_GATE_STRICT"):
+        monkeypatch.delenv(var, raising=False)
+
+
 def write_board(path: Path, tasks: list[dict]) -> None:
     path.write_text(
         yaml.safe_dump(
@@ -357,7 +367,8 @@ def test_dispatch_bulk_gates_unmet_deps_but_explicit_task_overrides(tmp_path: Pa
             {
                 "id": "DEP",
                 "title": "Predecessor — PR not yet merged",
-                "repo": "organvm/limen",
+                # neutral slug: agent_can_run_task bars codex/claude from organvm/limen
+                "repo": "someorg/dispatch-lab",
                 "target_agent": "external",  # keep DEP out of the codex candidate set
                 "priority": "high",
                 "budget_cost": 1,
@@ -368,7 +379,7 @@ def test_dispatch_bulk_gates_unmet_deps_but_explicit_task_overrides(tmp_path: Pa
             {
                 "id": "DEPENDENT",
                 "title": "Waits on DEP",
-                "repo": "organvm/limen",
+                "repo": "someorg/dispatch-lab",
                 "target_agent": "codex",
                 "priority": "critical",
                 "budget_cost": 1,
@@ -401,7 +412,7 @@ def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys, monke
             {
                 "id": "HUMAN-GATE",
                 "title": "Needs human",
-                "repo": "organvm/limen",
+                "repo": "someorg/dispatch-lab",
                 "target_agent": "any",
                 "priority": "critical",
                 "budget_cost": 1,
@@ -413,7 +424,7 @@ def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys, monke
             {
                 "id": "MACHINE-WORK",
                 "title": "Machine work",
-                "repo": "organvm/limen",
+                "repo": "someorg/dispatch-lab",
                 "target_agent": "any",
                 "priority": "critical",
                 "budget_cost": 1,
@@ -444,7 +455,7 @@ def test_dispatch_parallel_debt_gate_skips_routine_generated_buildout(tmp_path: 
             {
                 "id": "GEN-BUILDOUT",
                 "title": "Generated build-out",
-                "repo": "organvm/limen",
+                "repo": "someorg/dispatch-lab",
                 "target_agent": "any",
                 "priority": "critical",
                 "budget_cost": 1,
@@ -456,7 +467,7 @@ def test_dispatch_parallel_debt_gate_skips_routine_generated_buildout(tmp_path: 
             {
                 "id": "RECOVERY",
                 "title": "Recover lifecycle debt",
-                "repo": "organvm/limen",
+                "repo": "someorg/dispatch-lab",
                 "target_agent": "any",
                 "priority": "critical",
                 "budget_cost": 1,
@@ -478,7 +489,7 @@ def test_dispatch_parallel_debt_gate_skips_routine_generated_buildout(tmp_path: 
 
 def test_dispatch_parallel_skips_generated_buildout_outside_value_tier(tmp_path: Path, capsys, monkeypatch) -> None:
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/limen")
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "someorg/value-lab")
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "no-such-tier.json"))
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
     tasks_path = tmp_path / "tasks.yaml"
@@ -500,7 +511,7 @@ def test_dispatch_parallel_skips_generated_buildout_outside_value_tier(tmp_path:
             {
                 "id": "VALUE-WORK",
                 "title": "Value-tier work",
-                "repo": "organvm/limen",
+                "repo": "someorg/value-lab",
                 "target_agent": "any",
                 "priority": "critical",
                 "budget_cost": 1,
@@ -612,7 +623,7 @@ def test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write(
             {
                 "id": "DISPATCH-ME",
                 "title": "Dispatch me",
-                "repo": "organvm/limen",
+                "repo": "someorg/dispatch-lab",
                 "target_agent": "codex",
                 "priority": "critical",
                 "budget_cost": 1,
@@ -628,7 +639,7 @@ def test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write(
         {
             "id": "CONCURRENT",
             "title": "Concurrent task",
-            "repo": "organvm/limen",
+            "repo": "someorg/dispatch-lab",
             "target_agent": "agy",
             "priority": "critical",
             "budget_cost": 1,
@@ -728,7 +739,7 @@ def test_dispatch_serial_commit_survives_concurrent_board_write(
             {
                 "id": "DISPATCH-ME",
                 "title": "Dispatch me",
-                "repo": "organvm/limen",
+                "repo": "someorg/dispatch-lab",
                 "target_agent": "codex",
                 "priority": "critical",
                 "budget_cost": 1,
@@ -1115,7 +1126,9 @@ def test_isolated_local_run_updates_same_repo_pr_head(tmp_path: Path, monkeypatc
         str(tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd"),
         "origin/limen/fix-ci-175",
     ]
-    assert pushed_pr_heads == [("limen/fix-ci-175", tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd")]
+    assert pushed_pr_heads == [
+        ("limen/fix-ci-175", tmp_path / "worktrees" / "heal-cifix-organvm-domus-genoma-175-abcd")
+    ]
     assert auto_merge_urls == ["https://github.com/organvm/domus-genoma/pull/175"]
     assert cleanups == [("origin/limen/fix-ci-175", True)]
 
