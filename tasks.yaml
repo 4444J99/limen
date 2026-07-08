@@ -110796,7 +110796,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -110812,7 +110812,7 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:57:09.281170Z'
+  updated: '2026-07-08T16:53:38.678943Z'
   dispatch_log:
   - timestamp: '2026-07-08T13:13:00.316111Z'
     agent: jules
@@ -110863,6 +110863,11 @@ tasks:
     agent: jules
     session_id: '16764979528911690753'
     status: dispatched
+  - timestamp: '2026-07-08T16:53:38.678943Z'
+    agent: jules
+    session_id: https://github.com/organvm/domus-genoma/pull/214
+    status: done
+    output: 'jules-land: landed session 16764979528911690753 as PR'
 - id: HEAL-cifix-organvm-limen-680
   title: fix failing CI on organvm/limen#680
   repo: organvm/limen
@@ -111914,7 +111919,7 @@ tasks:
   workstream: conductor
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - retro-0708
   - tried:jules
@@ -111923,7 +111928,7 @@ tasks:
     conductor drifts at every seam; relay+ROI graded DROPPED) + evolution 2
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:57:09.281170Z'
+  updated: '2026-07-08T16:53:38.678943Z'
   dispatch_log:
   - timestamp: '2026-07-08T13:07:36.798727Z'
     agent: jules
@@ -111968,6 +111973,11 @@ tasks:
     agent: jules
     session_id: '11773028154489061192'
     status: dispatched
+  - timestamp: '2026-07-08T16:53:38.678943Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/703
+    status: done
+    output: 'jules-land: landed session 11773028154489061192 as PR'
 - id: RETRO-0708-PII-PREMERGE-GATE
   title: pr-gate PII containment scan for person-adjacent organ paths
   description: Scan staged organs/consulting and person-adjacent files for names/handles/CRM
