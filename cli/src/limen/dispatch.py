@@ -1178,8 +1178,7 @@ def _organvm_engine_task(task: Task) -> bool:
 
 def _agent_timed_out_on_task(agent: str, task: Task) -> bool:
     return any(
-        canonical_agent(str(entry.agent or "")) == agent
-        and str(entry.status or "").startswith("timeout->")
+        canonical_agent(str(entry.agent or "")) == agent and str(entry.status or "").startswith("timeout->")
         for entry in (task.dispatch_log or [])
     )
 
