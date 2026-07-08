@@ -104,9 +104,19 @@ Done from receipt: `6`
 - Receipt target: `~/Workspace/limen/docs/always-working.md`
 - Stop condition: reviews/issues/PRs have owner receipts and commit-only churn is no longer the next public action
 - Existing receipts:
+  - `~/Workspace/limen/docs/github-contribution-balance.md`
   - `~/Workspace/limen/scripts/github-contribution-balance.py`
   - `~/Workspace/limen/cli/tests/test_github_contribution_balance.py`
+  - `https://github.com/organvm/limen/issues/687`
   - `https://github.com/4444J99`
+- Current beat receipt (`2026-07-08T05:01:28Z`):
+  - Value gate: worth doing now as coordination/owner-routing work. The repo is not a value-tier repo, but the packet is critical, budget cost is 1, and the public proof mix is outside the steering rails: commits 74.1% (target <=60%), PRs 13.3% (target >=15%), issues 12.1% (target >=15%), reviews 0.6% (target >=10%). More direct implementation commits would worsen the visible signal.
+  - Harvest before predicate: read this receipt, `tasks.yaml` entries `AW-PUBLIC-FACE-CONTRIBUTION-BALANCE` and `GH-organvm-limen-687`, `docs/github-contribution-balance.md`, `scripts/github-contribution-balance.py`, and `cli/tests/test_github_contribution_balance.py`; public profile surface `https://github.com/4444J99` is reachable unauthenticated.
+  - Live predicate result: `python3 scripts/github-contribution-balance.py --login 4444J99 --json` exited 2 because `gh api graphql` could not reach `api.github.com`; `gh auth status` also reports the local default token invalid. No secret values were read or recorded.
+  - Issue owner receipt: `https://github.com/organvm/limen/issues/687` owns the contribution-balance criteria before more commit-heavy public work.
+  - Review route: the next public GitHub action must be a substantive review on an existing open PR, selected after `gh pr list --repo organvm/limen --state open --json number,title,reviewDecision,mergeStateStatus,url` succeeds. Record the review URL here or on issue #687 before starting new implementation.
+  - PR packaging route: the next implementation unit must be packaged as a branch + PR linked to issue #687. Direct `main` commits are limited to narrow owner receipts like this one, daemon snapshots, or urgent protocol repair.
+  - Stop rule: commit-only implementation churn is not the next public action; review first, then issue criteria refresh, then PR packaging.
 
 ### CREDENTIAL-WALL-TOKEN-HYGIENE
 

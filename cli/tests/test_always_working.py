@@ -304,6 +304,8 @@ def test_contribution_balance_receipt_assigns_review_first(monkeypatch):
     assert receipt["id"] == "PUBLIC-FACE-CONTRIBUTION-BALANCE"
     assert receipt["evidence"]["shares"]["reviews"] == 0.0061
     assert "substantive PR review" in receipt["assignment_packet"]["task"]
+    assert "~/Workspace/limen/docs/github-contribution-balance.md" in receipt["existing_receipts"]
+    assert "https://github.com/organvm/limen/issues/687" in receipt["existing_receipts"]
 
 
 def test_credential_wall_receipt_requires_historical_tombstone(monkeypatch, tmp_path):

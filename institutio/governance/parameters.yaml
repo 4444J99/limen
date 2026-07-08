@@ -226,6 +226,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "GitHub login used by contribution-balance gates to keep public activity from becoming commit-only churn."
+  LIMEN_CONTRIBUTION_BALANCE_PUBLIC_ROOT:
+    default: "~/Workspace/limen"
+    env: LIMEN_CONTRIBUTION_BALANCE_PUBLIC_ROOT
+    self_update: none
+    owner: continuity
+    note: "Stable operator-facing Limen root used in public contribution-balance receipts, so CI checkout paths do not leak into durable owner packets."
   LIMEN_ARCHIVE4T_ROOT:
     default: "/Volumes/Archive4T"
     env: LIMEN_ARCHIVE4T_ROOT

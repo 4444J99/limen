@@ -51,6 +51,9 @@ PRODUCT_LEDGER_INDEX = PRIVATE_ROOT / "lifecycle" / "product-ledger.json"
 VALUE_REPOS = ROOT / "value-repos.json"
 CONTRIBUTION_BALANCE_SCRIPT = ROOT / "scripts" / "github-contribution-balance.py"
 CONTRIBUTION_BALANCE_LOGIN = os.environ.get("LIMEN_CONTRIBUTION_BALANCE_LOGIN", "4444J99")
+CONTRIBUTION_BALANCE_POLICY = ROOT / "docs" / "github-contribution-balance.md"
+CONTRIBUTION_BALANCE_OWNER_ISSUE = "https://github.com/organvm/limen/issues/687"
+CONTRIBUTION_BALANCE_PUBLIC_ROOT = os.environ.get("LIMEN_CONTRIBUTION_BALANCE_PUBLIC_ROOT", "~/Workspace/limen")
 CREDENTIAL_TOMBSTONE_DOC = ROOT / "docs" / "credential-token-tombstone-audit.md"
 ARCHIVE4T_ROOT = Path(os.environ.get("LIMEN_ARCHIVE4T_ROOT", "/Volumes/Archive4T"))
 INGRESS_ROOT = Path(os.environ.get("LIMEN_INGRESS_ROOT", "/Volumes/Ingress"))
@@ -115,6 +118,17 @@ def relpath(path: Path) -> str:
             return str(path.resolve().relative_to(ROOT))
         except (OSError, ValueError):
             return str(path)
+
+
+def contribution_balance_public_path(path: Path) -> str:
+    try:
+        rel = path.expanduser().resolve().relative_to(ROOT.resolve())
+    except (OSError, ValueError):
+        return relpath(path)
+    root = CONTRIBUTION_BALANCE_PUBLIC_ROOT.rstrip("/")
+    if str(rel) == ".":
+        return root
+    return f"{root}/{rel.as_posix()}"
 
 
 def load_json(path: Path, default: Any) -> Any:
@@ -862,20 +876,22 @@ def contribution_balance_receipt() -> dict[str, Any]:
             "error": error,
         },
         "existing_receipts": [
-            relpath(CONTRIBUTION_BALANCE_SCRIPT),
-            relpath(ROOT / "cli" / "tests" / "test_github_contribution_balance.py"),
+            contribution_balance_public_path(CONTRIBUTION_BALANCE_POLICY),
+            contribution_balance_public_path(CONTRIBUTION_BALANCE_SCRIPT),
+            contribution_balance_public_path(ROOT / "cli" / "tests" / "test_github_contribution_balance.py"),
+            CONTRIBUTION_BALANCE_OWNER_ISSUE,
             "https://github.com/4444J99",
         ],
         "assignment_packet": {
             "lane_fit": "codex-conductor",
-            "repo": relpath(ROOT),
+            "repo": contribution_balance_public_path(ROOT),
             "task": (
                 "Use the live contribution balance as a value gate: route the next public work to "
                 "substantive PR review first, then real issue criteria and PR packaging, before more "
                 "commit-heavy implementation churn."
             ),
             "predicate": f"python3 scripts/github-contribution-balance.py --login {CONTRIBUTION_BALANCE_LOGIN} --json",
-            "receipt_target": relpath(ROOT / "docs" / "always-working.md"),
+            "receipt_target": contribution_balance_public_path(ROOT / "docs" / "always-working.md"),
             "stop_condition": "reviews/issues/PRs have owner receipts and commit-only churn is no longer the next public action",
         },
     }
