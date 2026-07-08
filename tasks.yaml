@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-08'
-      spent: 164
+      spent: 165
       per_agent:
         jules: 100
         gemini: 3
-        codex: 4
+        codex: 5
         opencode: 25
         agy: 31
         claude: 0
@@ -109643,7 +109643,7 @@ tasks:
   workstream: contribution-balance
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -109670,8 +109670,13 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T01:55:44.978456Z'
-  dispatch_log: []
+  updated: '2026-07-08T04:58:34.010072Z'
+  dispatch_log:
+  - timestamp: '2026-07-08T04:58:34.010072Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-CREDENTIAL-WALL-TOKEN-HYGIENE
   title: Own every token, secret, scope, and credential pain point in the credential
     wall
