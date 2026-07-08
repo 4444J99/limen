@@ -109707,7 +109707,7 @@ tasks:
   workstream: credential-wall
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - always-working
   - receipt-first
@@ -109736,7 +109736,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T05:12:49.936660Z'
+  updated: '2026-07-08T05:18:07.874974Z'
   dispatch_log:
   - timestamp: '2026-07-08T02:00:55.567018Z'
     agent: codex
@@ -109758,6 +109758,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-08T05:18:07.874974Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-domus-genoma-179
   title: fix failing CI on organvm/domus-genoma#179
   repo: organvm/domus-genoma
@@ -109939,6 +109944,192 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/187\
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-680
+  title: fix failing CI on organvm/limen#680
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/680
+  context: "PR organvm/limen#680 has FAILING CI checks and merge-drain correctly refuses\
+    \ to merge it. Check out the PR branch, find the root cause of the red checks\
+    \ (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/680 [auto-emitted\
+    \ 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-684
+  title: fix failing CI on organvm/limen#684
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/684
+  context: "PR organvm/limen#684 has FAILING CI checks and merge-drain correctly refuses\
+    \ to merge it. Check out the PR branch, find the root cause of the red checks\
+    \ (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
+    \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/684 [auto-emitted\
+    \ 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-mirror-mirror-70
+  title: rebase/resolve conflicts on organvm/mirror-mirror#70
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/mirror-mirror/pull/70
+  context: 'PR organvm/mirror-mirror#70 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/mirror-mirror/pull/70 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-mirror-mirror-77
+  title: "rebase organvm/mirror-mirror#77 onto current base \u2014 branched far behind"
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  urls:
+  - https://github.com/organvm/mirror-mirror/pull/77
+  context: "PR organvm/mirror-mirror#77 is MERGEABLE + green but branched well behind\
+    \ its current base \u2014 the structural condition for a stale-base silent revert.\
+    \ Check out the branch, REBASE it onto the current base, KEEP all of the PR's\
+    \ genuine changes and DROP any hunk that merely reverts base files it didn't mean\
+    \ to touch, push --force-with-lease to the SAME branch, and confirm MERGEABLE\
+    \ + current + green. Do NOT open a new PR; preserve all unique work. PR: https://github.com/organvm/mirror-mirror/pull/77\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-mirror-mirror-79
+  title: rebase/resolve conflicts on organvm/mirror-mirror#79
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/mirror-mirror/pull/79
+  context: 'PR organvm/mirror-mirror#79 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/mirror-mirror/pull/79 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-mirror-mirror-86
+  title: "rebase organvm/mirror-mirror#86 onto current base \u2014 branched far behind"
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  urls:
+  - https://github.com/organvm/mirror-mirror/pull/86
+  context: "PR organvm/mirror-mirror#86 is MERGEABLE + green but branched well behind\
+    \ its current base \u2014 the structural condition for a stale-base silent revert.\
+    \ Check out the branch, REBASE it onto the current base, KEEP all of the PR's\
+    \ genuine changes and DROP any hunk that merely reverts base files it didn't mean\
+    \ to touch, push --force-with-lease to the SAME branch, and confirm MERGEABLE\
+    \ + current + green. Do NOT open a new PR; preserve all unique work. PR: https://github.com/organvm/mirror-mirror/pull/86\
+    \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-mirror-mirror-93
+  title: rebase/resolve conflicts on organvm/mirror-mirror#93
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/mirror-mirror/pull/93
+  context: 'PR organvm/mirror-mirror#93 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/mirror-mirror/pull/93 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-08'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-mirror-mirror-95
+  title: rebase/resolve conflicts on organvm/mirror-mirror#95
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/mirror-mirror/pull/95
+  context: 'PR organvm/mirror-mirror#95 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
+    base (or merge base in), resolve every conflict preserving the PR''s intent, push
+    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
+    open a new PR. PR: https://github.com/organvm/mirror-mirror/pull/95 [auto-emitted
+    2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
   dispatch_log: []
