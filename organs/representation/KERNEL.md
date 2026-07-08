@@ -137,6 +137,32 @@ violation, renderer crash, public privacy leak, or unlocked export is broken and
 blocks handoff. The audit does not submit, publish, upload, contact, mine
 private messages, or represent AI-generated text as human work.
 
+## Publication Readiness Contract
+
+`publication-readiness` is the no-drudgery publication packet. It renders the
+current state for one writer, one `candidate_works` id, and one route:
+
+```bash
+python organs/representation/representation_substrate.py publication-readiness \
+  --writer organs/representation/records/christopher-author-one.yaml \
+  --opportunity organs/representation/opportunities/literary-submission-landscape.yaml \
+  --candidate chris-metadata-only-nonfiction-candidate \
+  --route yale-review-nonfiction-route
+```
+
+The report is Chris-facing: it states what the packet is, what works now, what
+is still gated, and how private refs, voice, approval, and real sends are
+controlled. It may say a private content ref is recorded, but it must not print
+the private ref, local paths, contact data, raw manuscript text, or private
+message refs.
+
+A candidate may use `status: READY_FOR_REVIEW` only when genre, form, length,
+rights status, content ref, source IDs, and claim IDs are all present. Route
+readiness requires public guideline source refs and sourced, resolved AI-policy
+status. Dry-run export additionally requires writer public-export approval,
+writer submission approval, and opportunity submission approval. Real submission
+remains outside the command.
+
 ## Literary Intake Contract
 
 Literary intake remains inside `organs/representation/`. The canonical no-send
@@ -206,6 +232,7 @@ The authority program applies to all first proofs:
 python organs/representation/validate-representation.py --fleet
 python organs/representation/representation_substrate.py handoff-audit --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-public-profile-readiness --route yale-review-nonfiction-route
 python organs/representation/representation_substrate.py authority-packet --record organs/representation/records/christopher-author-one.yaml
+python organs/representation/representation_substrate.py publication-readiness --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route
 python organs/representation/representation_substrate.py packet organs/representation/records/christopher-author-one.yaml --mode writer_submission
 python organs/representation/representation_substrate.py packet organs/representation/records/et4l.yaml --mode project_page
 ```

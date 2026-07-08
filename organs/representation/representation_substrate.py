@@ -112,6 +112,14 @@ ROUTE_REVIEW_FIELDS = {
     "pay": "Pay",
     "ai_policy_disclosure_status": "AI policy/disclosure status",
 }
+CANDIDATE_READY_STATUS = "READY_FOR_REVIEW"
+CANDIDATE_READY_REQUIRED_FIELDS = {
+    "genre": "Genre",
+    "form": "Form",
+    "length": "Length",
+    "rights_status": "Rights status",
+    "content_ref": "Content/source ref",
+}
 FORBIDDEN_PRIVATE_KEYS = {
     "excerpt",
     "raw_excerpt",
@@ -594,6 +602,18 @@ def _validate_literary_metadata(doc: dict[str, Any], report_label: str) -> list[
                     violations.append(
                         f"{prefix} references unknown claim_ids: {', '.join(unknown_claims)}"
                     )
+
+        if _ready_for_review_status(candidate.get("status")):
+            missing_ready = _missing_field_labels(candidate, CANDIDATE_READY_REQUIRED_FIELDS)
+            if not isinstance(refs, list) or not refs:
+                missing_ready.append("Source refs")
+            if not isinstance(claim_refs, list) or not claim_refs:
+                missing_ready.append("Claim refs")
+            if missing_ready:
+                violations.append(
+                    f"{prefix} status {CANDIDATE_READY_STATUS} requires metadata: "
+                    f"{', '.join(missing_ready)}"
+                )
 
     route_ids: set[str] = set()
     for idx, route in enumerate(_submission_routes(doc)):
@@ -1086,6 +1106,11 @@ def _missing(value: Any) -> bool:
     if isinstance(value, dict):
         return not value
     return False
+
+
+def _ready_for_review_status(value: Any) -> bool:
+    normalized = str(value or "").strip().upper().replace("-", "_").replace(" ", "_")
+    return normalized == CANDIDATE_READY_STATUS
 
 
 def _display_value(value: Any) -> str:
@@ -2066,6 +2091,325 @@ def render_literary_packet(
     return "\n".join(lines) + "\n"
 
 
+def _candidate_publication_status(
+    writer_doc: dict[str, Any], candidate: dict[str, Any] | None, candidate_id: str
+) -> tuple[str, list[str], list[str]]:
+    matched: list[str] = []
+    blockers: list[str] = []
+    if candidate is None:
+        blockers.append(f"Candidate work metadata is missing for {candidate_id!r}.")
+        for label in CANDIDATE_READY_REQUIRED_FIELDS.values():
+            blockers.append(f"Candidate {label} is missing.")
+        blockers.append("Candidate Source refs are missing.")
+        blockers.append("Candidate Claim refs are missing.")
+        return "BLOCKED", matched, blockers
+
+    missing = _missing_field_labels(candidate, CANDIDATE_READY_REQUIRED_FIELDS)
+    for label in missing:
+        blockers.append(f"Candidate {label} is missing.")
+
+    source_ids = candidate.get("source_ids", [])
+    if not isinstance(source_ids, list) or not source_ids:
+        blockers.append("Candidate Source refs are missing.")
+    else:
+        sources = _source_by_id(writer_doc)
+        unknown_sources = [str(source_id) for source_id in source_ids if str(source_id) not in sources]
+        if unknown_sources:
+            blockers.append(
+                "Candidate Source refs are unknown: " + ", ".join(unknown_sources) + "."
+            )
+        else:
+            matched.append("Candidate source refs are recorded and withheld from public copy.")
+
+    claim_ids = candidate.get("claim_ids", [])
+    if not isinstance(claim_ids, list) or not claim_ids:
+        blockers.append("Candidate Claim refs are missing.")
+    else:
+        known_claim_ids = _claim_ids(writer_doc)
+        unknown_claims = [str(claim_id) for claim_id in claim_ids if str(claim_id) not in known_claim_ids]
+        if unknown_claims:
+            blockers.append("Candidate Claim refs are unknown: " + ", ".join(unknown_claims) + ".")
+
+    if blockers:
+        return "BLOCKED", matched, blockers
+
+    if not _ready_for_review_status(candidate.get("status")):
+        blockers.append(
+            f"Candidate status is {_display_value(candidate.get('status'))}, not {CANDIDATE_READY_STATUS}."
+        )
+        return "BLOCKED", matched, blockers
+
+    matched.append("Candidate metadata is complete enough for venue fit review.")
+    return CANDIDATE_READY_STATUS, matched, blockers
+
+
+def _route_guideline_blockers(route: dict[str, Any], opportunity_doc: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    sources = _source_by_id(opportunity_doc)
+    guideline_refs = route.get("guidelines_source_ids", [])
+    guidelines_url = str(route.get("guidelines_url") or "").strip()
+    if not guidelines_url:
+        blockers.append("Route Guidelines URL is missing.")
+    if not isinstance(guideline_refs, list) or not guideline_refs:
+        blockers.append("Route guideline source is missing for the selected route.")
+        return blockers
+
+    unknown = [str(source_id) for source_id in guideline_refs if str(source_id) not in sources]
+    if unknown:
+        blockers.append("Route guideline source refs are unknown: " + ", ".join(unknown) + ".")
+
+    non_public = [
+        str(source_id)
+        for source_id in guideline_refs
+        if str(source_id) in sources and not _source_is_public_web(sources[str(source_id)])
+    ]
+    if non_public:
+        blockers.append(
+            "Route guideline source refs must be public web sources: "
+            + ", ".join(non_public)
+            + "."
+        )
+
+    if guidelines_url:
+        source_urls = {
+            str(sources[str(source_id)].get("source_ref"))
+            for source_id in guideline_refs
+            if str(source_id) in sources
+        }
+        if guidelines_url not in source_urls:
+            blockers.append("Route Guidelines URL does not match the recorded guideline source.")
+
+    return blockers
+
+
+def _route_publication_status(
+    opportunity_doc: dict[str, Any], route: dict[str, Any] | None, route_selector: str
+) -> tuple[str, list[str], list[str]]:
+    matched: list[str] = []
+    blockers: list[str] = []
+    if route is None:
+        blockers.append(f"Selected venue/route metadata is missing for {route_selector!r}.")
+        for label in ROUTE_REVIEW_FIELDS.values():
+            blockers.append(f"Route {label} is missing.")
+        return "BLOCKED", matched, blockers
+
+    missing = _missing_field_labels(route, ROUTE_REVIEW_FIELDS)
+    for label in missing:
+        blockers.append(f"Route {label} is missing.")
+
+    guideline_blockers = _route_guideline_blockers(route, opportunity_doc)
+    blockers.extend(guideline_blockers)
+    if not guideline_blockers:
+        matched.append("Route guideline source is public, recorded, and matched to the guidelines URL.")
+
+    ai_policy_sourced = _route_ai_policy_sourced(route, opportunity_doc)
+    ai_policy_unresolved = _ai_policy_status_unresolved(route.get("ai_policy_disclosure_status"))
+    if not ai_policy_sourced:
+        blockers.append("Route AI policy/disclosure source is unresolved.")
+    elif ai_policy_unresolved:
+        blockers.append("Route AI policy/disclosure status is unresolved.")
+    else:
+        matched.append("Route AI policy/disclosure status is sourced and resolved.")
+
+    return ("BLOCKED" if blockers else CANDIDATE_READY_STATUS), matched, blockers
+
+
+def _publication_approval_status(
+    writer_doc: dict[str, Any], opportunity_doc: dict[str, Any]
+) -> tuple[bool, list[str], list[str]]:
+    matched: list[str] = []
+    blockers: list[str] = []
+    requirements = (
+        ("Writer public export", writer_doc, "public_export"),
+        ("Writer submission", writer_doc, "submission"),
+        ("Opportunity submission", opportunity_doc, "submission"),
+    )
+    for label, doc, approval_type in requirements:
+        status = _approval_status(doc, approval_type)
+        if status == "approved":
+            matched.append(f"{label} approval is approved for an internal dry run.")
+        else:
+            blockers.append(f"{label} approval is {status}.")
+    return not blockers, matched, blockers
+
+
+def _readiness_value_recorded(value: Any) -> str:
+    return "recorded and withheld" if not _missing(value) else "missing"
+
+
+def _publication_output_rows(
+    *,
+    candidate_ready: bool,
+    route_ready: bool,
+    ai_ready: bool,
+    approvals_ready: bool,
+    rights_ready: bool,
+) -> list[str]:
+    fit_status = CANDIDATE_READY_STATUS if candidate_ready and route_ready else "BLOCKED"
+    disclosure_status = CANDIDATE_READY_STATUS if ai_ready else "BLOCKED"
+    rights_status = CANDIDATE_READY_STATUS if rights_ready else "BLOCKED"
+    submission_status = "APPROVED_DRY_RUN" if approvals_ready else "LOCKED"
+    return [
+        f"- Fit report: {fit_status}.",
+        "- Cover letter options: GATED until Chris reviews voice and purpose.",
+        f"- AI-process disclosure note: {disclosure_status}.",
+        f"- Rights checklist: {rights_status}.",
+        f"- Submission checklist: {submission_status}.",
+    ]
+
+
+def render_publication_readiness(
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+    export: bool = False,
+) -> str:
+    """Render a Chris-facing publication readiness report without exposing private refs."""
+    writer_subject = writer_doc.get("subject", {})
+    if not isinstance(writer_subject, dict):
+        writer_subject = {}
+    writer_name = str(writer_subject.get("name") or writer_doc.get("name") or "Unnamed writer")
+    candidate = _candidate_by_id(writer_doc, candidate_id)
+    route = _route_by_selector(opportunity_doc, route_selector)
+
+    candidate_status, candidate_matched, candidate_blockers = _candidate_publication_status(
+        writer_doc, candidate, candidate_id
+    )
+    route_status, route_matched, route_blockers = _route_publication_status(
+        opportunity_doc, route, route_selector
+    )
+    approvals_ready, approval_matched, approval_blockers = _publication_approval_status(
+        writer_doc, opportunity_doc
+    )
+    if export and not approvals_ready:
+        raise ValueError(
+            "publication readiness export is locked until writer public_export, "
+            "writer submission, and opportunity submission approvals are approved"
+        )
+
+    blockers = candidate_blockers + route_blockers + approval_blockers
+    matched = candidate_matched + route_matched + approval_matched
+    publication_status = "BLOCKED" if blockers else CANDIDATE_READY_STATUS
+    route_ready = route_status == CANDIDATE_READY_STATUS
+    candidate_ready = candidate_status == CANDIDATE_READY_STATUS
+    ai_ready = bool(
+        route is not None
+        and _route_ai_policy_sourced(route, opportunity_doc)
+        and not _ai_policy_status_unresolved(route.get("ai_policy_disclosure_status"))
+    )
+    rights_ready = bool(candidate is not None and not _missing(candidate.get("rights_status")))
+
+    route_name = "missing"
+    if route is not None:
+        route_name = str(route.get("venue") or route.get("platform") or route.get("id") or route_selector)
+    candidate_title = "missing"
+    if candidate is not None:
+        candidate_title = str(candidate.get("title") or candidate.get("id") or candidate_id)
+
+    lines = [
+        f"# Publication Readiness Packet: {writer_name}",
+        "",
+        "Mode: publication_readiness",
+        f"Writer record: {writer_doc.get('id', 'unknown-writer')}",
+        f"Opportunity record: {opportunity_doc.get('id', 'unknown-opportunity')}",
+        f"Candidate: {candidate_id}",
+        f"Selected venue/route: {route_selector}",
+        "Outward action: locked; this report does not submit, upload, publish, contact, or impersonate.",
+    ]
+    if export:
+        lines.append("Export mode: approved dry run only; no publication or delivery occurs.")
+    lines.extend(
+        [
+            f"Publication readiness: {publication_status}",
+            f"Candidate status: {candidate_status}",
+            f"Route status: {route_status}",
+            f"Dry-run export: {'APPROVED_DRY_RUN' if approvals_ready else 'LOCKED'}",
+            "Real submission: LOCKED; this command has no send path.",
+            "",
+            "## What This Is",
+            "",
+            "- A source-backed readiness packet for matching one metadata-only candidate work to one venue route.",
+            "- It renders fit, cover-letter, disclosure, rights, and submission-checklist readiness without sending anything.",
+            "- It is not a public announcement, submission receipt, publication claim, or editor contact.",
+            "",
+            "## What Works Now",
+            "",
+        ]
+    )
+    if matched:
+        lines.extend(f"- {row}" for row in matched)
+    else:
+        lines.append("- No ready publication workstream fields are proven yet.")
+
+    lines.extend(["", "## Still Gated", ""])
+    if blockers:
+        lines.extend(f"- {row}" for row in blockers)
+    else:
+        lines.append("- No readiness blockers remain for an approved dry-run packet.")
+    lines.append("- Real submission remains locked outside this command even when dry-run approvals exist.")
+
+    lines.extend(["", "## Candidate Metadata", ""])
+    lines.append(f"- Title/profile: {_display_value(candidate_title)}.")
+    if candidate is None:
+        for label in CANDIDATE_READY_REQUIRED_FIELDS.values():
+            lines.append(f"- {label}: missing.")
+        lines.append("- Source refs: missing.")
+        lines.append("- Claim refs: missing.")
+    else:
+        for field, label in CANDIDATE_READY_REQUIRED_FIELDS.items():
+            if field == "content_ref":
+                lines.append(f"- {label}: {_readiness_value_recorded(candidate.get(field))}.")
+            else:
+                lines.append(f"- {label}: {_display_value(candidate.get(field))}.")
+        lines.append(f"- Source refs: {_readiness_value_recorded(candidate.get('source_ids'))}.")
+        lines.append(f"- Claim refs: {_readiness_value_recorded(candidate.get('claim_ids'))}.")
+
+    lines.extend(["", "## Venue Route Facts", ""])
+    lines.append(f"- Route name: {_display_value(route_name)}.")
+    if route is None:
+        for label in ROUTE_REVIEW_FIELDS.values():
+            lines.append(f"- {label}: missing.")
+        lines.append("- Guidelines source refs: missing.")
+    else:
+        for field, label in ROUTE_REVIEW_FIELDS.items():
+            if field == "ai_policy_disclosure_status" and not ai_ready:
+                lines.append(f"- {label}: unresolved.")
+            else:
+                lines.append(f"- {label}: {_display_value(route.get(field))}.")
+        lines.append(f"- Guidelines source refs: {_readiness_value_recorded(route.get('guidelines_source_ids'))}.")
+        lines.append(f"- AI policy source refs: {_readiness_value_recorded(route.get('ai_policy_source_ids'))}.")
+
+    _append_bullet_section(
+        lines,
+        "Generated Packet Outputs",
+        _publication_output_rows(
+            candidate_ready=candidate_ready,
+            route_ready=route_ready,
+            ai_ready=ai_ready,
+            approvals_ready=approvals_ready,
+            rights_ready=rights_ready,
+        ),
+        "No packet output rows are available.",
+    )
+    lines.extend(
+        [
+            "",
+            "## Privacy, Voice, And Control",
+            "",
+            "- Manuscript content is not stored or rendered; only metadata and the presence of a private content ref are checked.",
+            "- Private source refs, local paths, message refs, and contact data are withheld from this packet.",
+            "- Chris controls voice review, public export, submission approval, outreach approval, and any actual send.",
+            "- The packet does not claim acceptance, publication, editor interest, or achieved literary status.",
+            "",
+            "## No-Outward-Action Notice",
+            "",
+            "No submission, outreach, upload, publication, contact, form action, or public-presence export is performed by this command.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def _declared_output_modes(doc: dict[str, Any]) -> list[str]:
     outputs = doc.get("outputs", [])
     if not isinstance(outputs, list):
@@ -2502,6 +2846,31 @@ def _handoff_audit_command(
     return 1 if broken_count else 0
 
 
+def _publication_readiness_command(
+    writer: Path,
+    opportunity: Path,
+    candidate: str,
+    route: str,
+    export: bool,
+    out: Path | None,
+) -> int:
+    try:
+        writer_doc = _load_record(writer)
+        opportunity_doc = _load_record(opportunity)
+        output = render_publication_readiness(
+            writer_doc,
+            opportunity_doc,
+            candidate_id=candidate,
+            route_selector=route,
+            export=export,
+        )
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    _write_or_print(output, out)
+    return 0
+
+
 def _load_record(path: Path) -> dict[str, Any]:
     doc = _load_yaml(path)
     if isinstance(doc, list):
@@ -2547,6 +2916,17 @@ def main(argv: list[str] | None = None) -> int:
     literary_packet.add_argument("--route", required=True)
     literary_packet.add_argument("--export", action="store_true")
     literary_packet.add_argument("--out", type=Path)
+
+    publication_readiness = sub.add_parser(
+        "publication-readiness",
+        help="generate a privacy-safe publication readiness packet for a writer, candidate, and route",
+    )
+    publication_readiness.add_argument("--writer", required=True, type=Path)
+    publication_readiness.add_argument("--opportunity", required=True, type=Path)
+    publication_readiness.add_argument("--candidate", required=True)
+    publication_readiness.add_argument("--route", required=True)
+    publication_readiness.add_argument("--export", action="store_true")
+    publication_readiness.add_argument("--out", type=Path)
 
     handoff_audit = sub.add_parser(
         "handoff-audit",
@@ -2615,6 +2995,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "literary-packet":
         return _literary_packet_command(
+            args.writer,
+            args.opportunity,
+            args.candidate,
+            args.route,
+            args.export,
+            args.out,
+        )
+
+    if args.cmd == "publication-readiness":
+        return _publication_readiness_command(
             args.writer,
             args.opportunity,
             args.candidate,

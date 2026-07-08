@@ -17,6 +17,7 @@ CHRIS = ROOT / "organs" / "representation" / "records" / "christopher-author-one
 ET4L = ROOT / "organs" / "representation" / "records" / "et4l.yaml"
 GENERIC = ROOT / "organs" / "representation" / "records" / "generic-authority-template.yaml"
 OPPORTUNITY = ROOT / "organs" / "representation" / "opportunities" / "literary-submission-landscape.yaml"
+READY_CANDIDATE = "chris-metadata-only-nonfiction-candidate"
 
 spec = importlib.util.spec_from_file_location("representation_substrate", MODULE)
 rs = importlib.util.module_from_spec(spec)
@@ -626,6 +627,230 @@ def test_chris_remains_blocked_for_sourced_venue_without_candidate_source_ref():
     assert "Candidate Content/source ref" in result.stdout
     assert "AI policy/disclosure: human_authorship_required_process_ai_allowed_with_transparency." in result.stdout
     assert "Venue AI policy/disclosure source is unresolved." not in result.stdout
+
+
+def test_validator_rejects_ready_candidate_without_required_publication_metadata(tmp_path: Path):
+    doc = load_record(CHRIS)
+    candidate = next(
+        candidate
+        for candidate in doc["candidate_works"]
+        if candidate["id"] == READY_CANDIDATE
+    )
+    candidate["content_ref"] = ""
+    candidate["source_ids"] = []
+    candidate["claim_ids"] = []
+    path = tmp_path / "ready-candidate-missing-metadata.yaml"
+    path.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
+
+    result = run_validator(path)
+
+    assert result.returncode == 1
+    assert "status READY_FOR_REVIEW requires metadata" in result.stdout
+    assert "Content/source ref" in result.stdout
+    assert "Source refs" in result.stdout
+    assert "Claim refs" in result.stdout
+
+
+def test_publication_readiness_blocks_placeholder_candidate():
+    result = run_tool(
+        "publication-readiness",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        "chris-public-profile-readiness",
+        "--route",
+        "yale-review-nonfiction-route",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.startswith("# Publication Readiness Packet: Christopher Author-One")
+    assert "Publication readiness: BLOCKED" in result.stdout
+    assert "Candidate status: BLOCKED" in result.stdout
+    assert "Candidate Content/source ref is missing." in result.stdout
+    assert "Route status: READY_FOR_REVIEW" in result.stdout
+
+
+def test_publication_readiness_reports_ready_metadata_candidate_and_sourced_route():
+    result = run_tool(
+        "publication-readiness",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        "yale-review-nonfiction-route",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Publication readiness: BLOCKED" in result.stdout
+    assert "Candidate status: READY_FOR_REVIEW" in result.stdout
+    assert "Route status: READY_FOR_REVIEW" in result.stdout
+    assert "Route guideline source is public, recorded, and matched to the guidelines URL." in result.stdout
+    assert "Route AI policy/disclosure status is sourced and resolved." in result.stdout
+    assert "Writer submission approval is not_requested." in result.stdout
+    assert "Opportunity submission approval is not_requested." in result.stdout
+
+
+def test_publication_readiness_blocks_unsourced_route_guidelines(tmp_path: Path):
+    opportunity = load_record(OPPORTUNITY)
+    for route in opportunity["opportunity"]["submission_routes"]:
+        if route["id"] == "yale-review-nonfiction-route":
+            route["guidelines_source_ids"] = []
+    opportunity_path = tmp_path / "opportunity-missing-route-guidelines.yaml"
+    opportunity_path.write_text(yaml.safe_dump(opportunity, sort_keys=False), encoding="utf-8")
+
+    result = run_tool(
+        "publication-readiness",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        opportunity_path,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        "yale-review-nonfiction-route",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Publication readiness: BLOCKED" in result.stdout
+    assert "Route status: BLOCKED" in result.stdout
+    assert "Route guideline source is missing for the selected route." in result.stdout
+
+
+def test_publication_readiness_blocks_unsourced_ai_policy(tmp_path: Path):
+    opportunity = load_record(OPPORTUNITY)
+    for route in opportunity["opportunity"]["submission_routes"]:
+        if route["id"] == "yale-review-nonfiction-route":
+            route["ai_policy_source_ids"] = []
+    opportunity_path = tmp_path / "opportunity-missing-ai-source.yaml"
+    opportunity_path.write_text(yaml.safe_dump(opportunity, sort_keys=False), encoding="utf-8")
+
+    result = run_tool(
+        "publication-readiness",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        opportunity_path,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        "yale-review-nonfiction-route",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Publication readiness: BLOCKED" in result.stdout
+    assert "Route status: BLOCKED" in result.stdout
+    assert "Route AI policy/disclosure source is unresolved." in result.stdout
+
+
+def test_publication_readiness_blocks_unresolved_ai_policy(tmp_path: Path):
+    opportunity = load_record(OPPORTUNITY)
+    for route in opportunity["opportunity"]["submission_routes"]:
+        if route["id"] == "yale-review-nonfiction-route":
+            route["ai_policy_disclosure_status"] = "venue_specific_unresolved"
+    opportunity_path = tmp_path / "opportunity-unresolved-ai-policy.yaml"
+    opportunity_path.write_text(yaml.safe_dump(opportunity, sort_keys=False), encoding="utf-8")
+
+    result = run_tool(
+        "publication-readiness",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        opportunity_path,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        "yale-review-nonfiction-route",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Publication readiness: BLOCKED" in result.stdout
+    assert "Route status: BLOCKED" in result.stdout
+    assert "Route AI policy/disclosure status is unresolved." in result.stdout
+
+
+def test_publication_readiness_export_requires_approvals():
+    result = run_tool(
+        "publication-readiness",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        "yale-review-nonfiction-route",
+        "--export",
+    )
+
+    assert result.returncode == 1
+    assert "publication readiness export is locked" in result.stderr
+
+
+def test_publication_readiness_allows_approved_dry_run_export(tmp_path: Path):
+    writer = load_record(CHRIS)
+    for approval in writer["approvals"]:
+        if approval["approval_type"] in {"public_export", "submission"}:
+            approval["status"] = "approved"
+            approval["note"] = "Copied fixture approval for dry-run readiness coverage only."
+    writer_path = tmp_path / "writer-approved-publication-dry-run.yaml"
+    writer_path.write_text(yaml.safe_dump(writer, sort_keys=False), encoding="utf-8")
+
+    opportunity = load_record(OPPORTUNITY)
+    for approval in opportunity["approvals"]:
+        if approval["approval_type"] == "submission":
+            approval["status"] = "approved"
+            approval["note"] = "Copied fixture approval for dry-run readiness coverage only."
+    opportunity_path = tmp_path / "opportunity-approved-publication-dry-run.yaml"
+    opportunity_path.write_text(yaml.safe_dump(opportunity, sort_keys=False), encoding="utf-8")
+
+    result = run_tool(
+        "publication-readiness",
+        "--writer",
+        writer_path,
+        "--opportunity",
+        opportunity_path,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        "yale-review-nonfiction-route",
+        "--export",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Export mode: approved dry run only; no publication or delivery occurs." in result.stdout
+    assert "Publication readiness: READY_FOR_REVIEW" in result.stdout
+    assert "Dry-run export: APPROVED_DRY_RUN" in result.stdout
+    assert "Real submission: LOCKED; this command has no send path." in result.stdout
+
+
+def test_publication_readiness_packet_is_chris_facing_and_private_ref_safe():
+    result = run_tool(
+        "publication-readiness",
+        "--writer",
+        CHRIS,
+        "--opportunity",
+        OPPORTUNITY,
+        "--candidate",
+        READY_CANDIDATE,
+        "--route",
+        "yale-review-nonfiction-route",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "## What This Is" in result.stdout
+    assert "## What Works Now" in result.stdout
+    assert "## Still Gated" in result.stdout
+    assert "## Privacy, Voice, And Control" in result.stdout
+    assert "source://private-manuscripts" not in result.stdout
+    assert "local-relationship-pipeline" not in result.stdout
+    assert "/Users/4jp" not in result.stdout
+    assert "has been submitted" not in result.stdout.lower()
+    assert "accepted for publication" not in result.stdout.lower()
 
 
 def test_validator_requires_public_guideline_sources_for_venue_routes(tmp_path: Path):
