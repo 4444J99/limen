@@ -1,0 +1,178 @@
+schema_version: representation.v3
+kind: representation_record
+id: et4l
+name: ET4L artist/project representation record
+report_grade: true
+subject:
+  type: project
+  name: ET4L
+  roles:
+    - creative_series
+    - exhibition_project
+  representation_modes:
+    - private_dossier
+    - creator_presence_preview
+    - project_page
+    - collaboration_packet
+  organ_bridges:
+    - artist
+    - media
+    - publication_policy
+standing:
+  current: RESEARCHING
+  next: PROJECT_PACKET_REVIEW
+mandate:
+  description: Represent an artist-owned thematic series as a source-backed project packet and gated public-page draft.
+artifacts:
+  next_reviewable_output: ET4L private dossier and project page packet generated from one representation record
+works:
+  - id: et4l-series
+    type: exhibition_series
+    title: ET4L thematic series
+    relation: artist_owned
+    claim_ids:
+      - et4l-artist-chamber
+      - et4l-public-proof
+  - id: et4l-statement-and-captions
+    type: draft_packet
+    title: ET4L statement and caption set
+    relation: staged_for_artist_rewrite
+    claim_ids:
+      - et4l-exhibition-logic
+relations:
+  - id: artist-organ-provenance
+    relation_type: provenance_bridge
+    posture_source: artist_organ
+    claim_ids:
+      - et4l-artist-chamber
+      - et4l-exhibition-logic
+    consent_constraints:
+      - Artist approves selection before staging.
+      - Artist rewrites and signs exhibition language.
+      - No public release without event-level approval.
+claims:
+  - id: et4l-artist-chamber
+    label: Artist organ chamber
+    summary: The artist organ records ET4L as a curated thematic series extracted from the photo archive.
+    visibility: private
+    report_grade: true
+    source_ids:
+      - local-et4l-chamber
+      - remote-et4l-chamber
+    public_ok: false
+  - id: et4l-exhibition-logic
+    label: Exhibition logic
+    summary: ET4L is governed as an exhibition argument with statement, caption set, sequencing, and staged-package gates.
+    visibility: private
+    report_grade: true
+    source_ids:
+      - local-artist-kernel
+      - local-et4l-chamber
+      - remote-artist-kernel
+    public_ok: false
+  - id: et4l-public-proof
+    label: Public project proof
+    summary: The public Limen repository surfaces ET4L as part of the artist organ chamber fleet.
+    visibility: public
+    report_grade: true
+    source_ids:
+      - web-limen-artist-organ
+    public_ok: true
+sources:
+  - id: local-et4l-chamber
+    source_type: local_repo
+    privacy_level: private
+    source_ref: organs/artist/chambers/et4l.yaml
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - et4l-artist-chamber
+      - et4l-exhibition-logic
+    confidence: high
+    note: Local artist chamber records ET4L standing, mandate, gates, and next output.
+  - id: local-artist-kernel
+    source_type: local_repo
+    privacy_level: private
+    source_ref: organs/artist/KERNEL.md
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - et4l-exhibition-logic
+    confidence: high
+    note: Local artist kernel defines provenance, exhibition, and artist-gate logic.
+  - id: remote-et4l-chamber
+    source_type: remote_repo
+    privacy_level: public
+    source_ref: https://github.com/organvm/limen/blob/main/organs/artist/chambers/et4l.yaml
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - et4l-artist-chamber
+    confidence: high
+    note: Remote Limen repo is the canonical public repository source for the ET4L chamber record.
+  - id: remote-artist-kernel
+    source_type: remote_repo
+    privacy_level: public
+    source_ref: https://github.com/organvm/limen/blob/main/organs/artist/KERNEL.md
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - et4l-exhibition-logic
+    confidence: high
+    note: Remote artist kernel records the reusable provenance and exhibition contract.
+  - id: web-limen-artist-organ
+    source_type: web
+    privacy_level: public
+    source_ref: https://github.com/organvm/limen/tree/main/organs/artist
+    captured_at: "2026-07-08T00:00:00Z"
+    claim_ids:
+      - et4l-public-proof
+    confidence: high
+    note: Public GitHub web surface exposes the artist organ and chamber files.
+approvals:
+  - id: project-page-not-requested
+    approval_type: project_page
+    status: not_requested
+    claim_ids: []
+    note: Project page export is locked until the artist approves copy and release context.
+  - id: collaboration-outreach-not-requested
+    approval_type: outreach
+    status: not_requested
+    claim_ids: []
+    note: Collaboration packets are review-only until artist-approved outreach exists.
+outputs:
+  - id: et4l-private-dossier
+    mode: private_dossier
+    report_grade: true
+    claim_ids:
+      - et4l-artist-chamber
+      - et4l-exhibition-logic
+      - et4l-public-proof
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms artist-organ provenance is source-backed.
+      - Reviewer confirms no exhibition language is final or outward-facing.
+  - id: et4l-creator-presence-preview
+    mode: creator_presence_preview
+    report_grade: true
+    claim_ids:
+      - et4l-public-proof
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms the preview uses only public repository proof.
+      - Artist approval remains required before public export.
+  - id: et4l-project-page
+    mode: project_page
+    report_grade: true
+    claim_ids:
+      - et4l-public-proof
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms the page draft uses only public project proof.
+      - Project page approval is recorded before export.
+  - id: et4l-collaboration-packet
+    mode: collaboration_packet
+    report_grade: true
+    claim_ids:
+      - et4l-artist-chamber
+      - et4l-exhibition-logic
+    no_outward_action: true
+    acceptance_gates:
+      - Reviewer confirms collaborator-facing language remains internal.
+      - Outreach approval is recorded before any collaborator-facing send.
