@@ -109777,7 +109777,8 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/limen/pull/691
     status: done
-    output: 'merged f0f19e32; predicate passed: python3 scripts/credential-wall.py --check && test -f docs/credential-token-tombstone-audit.md'
+    output: 'merged f0f19e32; predicate passed: python3 scripts/credential-wall.py
+      --check && test -f docs/credential-token-tombstone-audit.md'
 - id: HEAL-cifix-organvm-domus-genoma-179
   title: fix failing CI on organvm/domus-genoma#179
   repo: organvm/domus-genoma
