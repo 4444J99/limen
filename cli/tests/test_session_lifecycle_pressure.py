@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 
@@ -312,6 +313,30 @@ def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp
     assert "remote branches present/missing 1/1" in rendered
     assert pressure.OUT_JSON.exists()
     assert pressure.OUT_MD.exists()
+
+
+def test_session_lifecycle_pressure_records_worktree_debt_timeout(monkeypatch, tmp_path: Path):
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_timeout")
+    pressure.ROOT = tmp_path
+    pressure.WORKTREE_ROOT = tmp_path / ".limen-worktrees"
+    pressure.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    pressure.PROMPT_INDEX = pressure.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    pressure.CORPUS_INVENTORY = pressure.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    pressure.WORKTREE_DEBT_TIMEOUT = 2
+
+    def timeout_run(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=kwargs.get("args") or args[0], timeout=2)
+
+    monkeypatch.setattr(pressure.subprocess, "run", timeout_run)
+
+    snapshot = pressure.build_snapshot()
+    rendered = pressure.render(snapshot)
+
+    assert snapshot["worktrees"]["error"] == "worktree-debt timed out after 2s"
+    assert "worktree debt scan unavailable" in snapshot["pressure"]
+    assert rendered.endswith("state: runtime unconfigured, worktree debt scan unavailable")
 
 
 def test_session_lifecycle_pressure_closes_raw_remote_missing_with_live_scanner_receipt(tmp_path: Path):
@@ -651,7 +676,7 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
 
     dispatch.git_snapshot = fake_git_snapshot
     dispatch.watchdog_snapshot = lambda: {"healthy": True, "first_line": "[watchdog] HEALTHY"}
-    dispatch.async_probe_snapshot = lambda enabled: {
+    dispatch.async_probe_snapshot = lambda enabled, **kwargs: {
         "requested": enabled,
         "ok": True,
         "timed_out": False,

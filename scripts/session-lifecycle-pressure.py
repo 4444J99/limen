@@ -27,6 +27,7 @@ CORPUS_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 OUT_JSON = ROOT / "logs" / "session-lifecycle-pressure.json"
 OUT_MD = ROOT / "logs" / "session-lifecycle-pressure.md"
 PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
+WORKTREE_DEBT_TIMEOUT = int(os.environ.get("LIMEN_WORKTREE_DEBT_TIMEOUT", "120"))
 REMOTE_MISSING_CLOSED_REASONS = {
     "clean+merged+idle",
     "documented-residue",
@@ -102,14 +103,23 @@ def count_files(path: Path) -> int:
 
 
 def run_worktree_debt() -> dict[str, Any]:
-    proc = subprocess.run(
-        ["python3", str(ROOT / "scripts" / "worktree-debt.py"), "--json"],
-        cwd=ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
+    try:
+        proc = subprocess.run(
+            ["python3", str(ROOT / "scripts" / "worktree-debt.py"), "--json"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=WORKTREE_DEBT_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "total": 0,
+            "debt": 0,
+            "limit": 0,
+            "by_reason": {},
+            "error": f"worktree-debt timed out after {WORKTREE_DEBT_TIMEOUT}s",
+        }
     if proc.returncode != 0:
         return {"total": 0, "debt": 0, "limit": 0, "by_reason": {}, "error": proc.stderr.strip()}
     try:
@@ -236,6 +246,8 @@ def build_snapshot() -> dict[str, Any]:
         pressure.append("PR receipt errors")
     if not cloud.get("runtime_url_configured"):
         pressure.append("runtime unconfigured")
+    if wt_report.get("error"):
+        pressure.append("worktree debt scan unavailable")
 
     return {
         "worktrees": {
@@ -246,6 +258,7 @@ def build_snapshot() -> dict[str, Any]:
             "limit": limit,
             "over_cap": over_cap,
             "by_reason": wt_report.get("by_reason") or {},
+            "error": wt_report.get("error") or "",
         },
         "private_corpus": {
             "root": str(PRIVATE_ROOT),
