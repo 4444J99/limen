@@ -252,6 +252,18 @@ def _short_output(proc: subprocess.CompletedProcess[str]) -> str:
     return (proc.stderr or proc.stdout or "").strip().replace("\n", " ")[:220]
 
 
+def _commit_identity_env(repo: Path, env: dict[str, str]) -> dict[str, str]:
+    """Provide commit-tree identity defaults without mutating repo git config."""
+    identity = dict(env)
+    name = _git(repo, ["config", "user.name"], env=env).stdout.strip() or "Limen Tabularius"
+    email = _git(repo, ["config", "user.email"], env=env).stdout.strip() or "tabularius@limen.local"
+    identity.setdefault("GIT_AUTHOR_NAME", os.environ.get("GIT_AUTHOR_NAME", name))
+    identity.setdefault("GIT_AUTHOR_EMAIL", os.environ.get("GIT_AUTHOR_EMAIL", email))
+    identity.setdefault("GIT_COMMITTER_NAME", os.environ.get("GIT_COMMITTER_NAME", name))
+    identity.setdefault("GIT_COMMITTER_EMAIL", os.environ.get("GIT_COMMITTER_EMAIL", email))
+    return identity
+
+
 def preserve_board_projection(
     board_path: Path,
     *,
@@ -317,8 +329,15 @@ def preserve_board_projection(
             stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             commit = _git(
                 repo,
-                ["commit-tree", tree.stdout.strip(), "-p", head, "-m", f"tabularius: preserve board projection {stamp}"],
-                env=env,
+                [
+                    "commit-tree",
+                    tree.stdout.strip(),
+                    "-p",
+                    head,
+                    "-m",
+                    f"tabularius: preserve board projection {stamp}",
+                ],
+                env=_commit_identity_env(repo, env),
             )
             if commit.returncode != 0 or not commit.stdout.strip():
                 return PreserveResult(changed=True, skipped=True, reason=f"commit-tree-failed:{_short_output(commit)}")

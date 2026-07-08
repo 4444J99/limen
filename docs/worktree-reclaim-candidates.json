@@ -1,5 +1,5 @@
 {
-  "acceptance_ledger": "/Users/4jp/Workspace/limen/docs/worktree-reclaim-acceptance.jsonl",
+  "acceptance_ledger": "/Volumes/Scratch/limen-worktrees/aw-estate-custody-1bf70c8a/docs/worktree-reclaim-acceptance.jsonl",
   "acceptance_ledger_written": false,
   "by_reason": {
     "active(<24h)": 48,
@@ -968,7 +968,7 @@
     }
   ],
   "destructive_cleanup_performed": false,
-  "generated_at": "2026-07-07T22:52:49Z",
+  "generated_at": "2026-07-08T04:08:18Z",
   "governance": {
     "agent_policy": {
       "candidate_packet_lane": "codex-conductor",
@@ -1010,12 +1010,12 @@
     "spend_score": {
       "by_grade": {
         "marginal": 240,
-        "wasted": 717,
-        "worth_it": 1016
+        "wasted": 721,
+        "worth_it": 1018
       },
       "ledger_present": true,
-      "records_sampled": 1973,
-      "sunk": 1377
+      "records_sampled": 1979,
+      "sunk": 1393
     },
     "value_repo_count": 14,
     "why_allowed": "Limen is value-tier and worktree_lifecycle is the top prompt attack-path family; the action is non-destructive packetization, not local deletion.",
@@ -1031,7 +1031,11 @@
     "debt_roots": 148,
     "measured_candidate_bytes": 8241004544,
     "measured_candidate_size": "7.7 GiB",
+    "measured_roots": 50,
     "scanned_roots": 927,
-    "size_measured": true
+    "size_budget_sec": 60,
+    "size_measured": true,
+    "size_scan_limit": 500,
+    "size_timeout_sec": 10
   }
 }

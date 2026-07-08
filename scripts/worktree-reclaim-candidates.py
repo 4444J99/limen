@@ -10,25 +10,44 @@ It never writes `docs/worktree-reclaim-acceptance.jsonl`.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import datetime as dt
 import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).resolve()
-sys.path.insert(0, str(ROOT / "cli" / "src"))
+CODE_ROOT = Path(__file__).resolve().parents[1]
+STATE_ROOT = Path(os.environ.get("LIMEN_STATE_ROOT", os.environ.get("LIMEN_ROOT", CODE_ROOT))).expanduser().resolve()
+
+
+def writable_output_root() -> Path:
+    explicit = os.environ.get("LIMEN_OUTPUT_ROOT")
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    env_root = os.environ.get("LIMEN_ROOT")
+    if env_root:
+        candidate = Path(env_root).expanduser()
+        docs = candidate / "docs"
+        if os.access(candidate, os.W_OK) and (docs.exists() or os.access(candidate, os.W_OK)):
+            return candidate.resolve()
+    return CODE_ROOT
+
+
+OUTPUT_ROOT = writable_output_root()
+sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 from limen.worktree_debt import WorktreeDebtReport, worktree_debt_report  # noqa: E402
 from limen.capacity import PAID_AGENT_ORDER  # noqa: E402
 
-DOC_PATH = ROOT / "docs" / "worktree-reclaim-candidates.md"
-JSON_PATH = ROOT / "docs" / "worktree-reclaim-candidates.json"
-VALUE_REPOS = ROOT / "value-repos.json"
-SCORE_LEDGER = ROOT / "logs" / "ledger.jsonl"
-ACCEPTANCE_LEDGER = ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
+DOC_PATH = OUTPUT_ROOT / "docs" / "worktree-reclaim-candidates.md"
+JSON_PATH = OUTPUT_ROOT / "docs" / "worktree-reclaim-candidates.json"
+VALUE_REPOS = STATE_ROOT / "value-repos.json"
+SCORE_LEDGER = STATE_ROOT / "logs" / "ledger.jsonl"
+ACCEPTANCE_LEDGER = OUTPUT_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
 SAFE_REASONS = {"clean+merged+idle"}
 WORKTREE_LIFECYCLE_SCORE = 32
 
@@ -61,7 +80,11 @@ def measure_size(path: str, timeout: int = 90) -> int | None:
 
 def load_report(path: Path | None) -> WorktreeDebtReport:
     if path is None:
-        return worktree_debt_report(ROOT)
+        cached = load_cached_candidate_packet()
+        if cached is not None:
+            return cached
+        with estate_scan_env():
+            return worktree_debt_report(STATE_ROOT)
     data = json.loads(path.read_text(encoding="utf-8"))
     return {
         "total": int(data.get("total", 0)),
@@ -69,6 +92,65 @@ def load_report(path: Path | None) -> WorktreeDebtReport:
         "by_reason": dict(data.get("by_reason") or {}),
         "items": list(data.get("items") or []),
     }
+
+
+def load_cached_candidate_packet() -> WorktreeDebtReport | None:
+    if STATE_ROOT == OUTPUT_ROOT:
+        return None
+    path = STATE_ROOT / "docs" / "worktree-reclaim-candidates.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if data.get("schema") != "limen.worktree_reclaim_candidates.v1":
+        return None
+    candidates = data.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        return None
+    summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
+    items = [
+        {
+            "name": str(row.get("name") or Path(str(row.get("path") or "")).name),
+            "path": str(row.get("path") or ""),
+            "reason": str(row.get("reason") or "clean+merged+idle"),
+            "debt": False,
+            "size_bytes": row.get("size_bytes"),
+        }
+        for row in candidates
+        if isinstance(row, dict) and row.get("path")
+    ]
+    if not items:
+        return None
+    return {
+        "total": int(summary.get("scanned_roots") or len(items)),
+        "debt": int(summary.get("debt_roots") or 0),
+        "by_reason": dict(data.get("by_reason") or {"clean+merged+idle": len(items)}),
+        "items": items,
+    }
+
+
+def path_contains(parent: Path, child: Path) -> bool:
+    try:
+        child.expanduser().resolve().relative_to(parent.expanduser().resolve())
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+@contextmanager
+def estate_scan_env():
+    """Ignore a dispatch-lane worktree root when scanning the durable estate."""
+    key = "LIMEN_WORKTREE_ROOT"
+    current = os.environ.get(key)
+    should_unset = bool(current and path_contains(Path(current), OUTPUT_ROOT) and STATE_ROOT != OUTPUT_ROOT)
+    if not should_unset:
+        yield
+        return
+    try:
+        del os.environ[key]
+        yield
+    finally:
+        os.environ[key] = current
 
 
 def load_value_repos(path: Path = VALUE_REPOS) -> list[str]:
@@ -178,6 +260,8 @@ def candidate_rows(
     limit: int,
     measure: bool,
     size_scan_limit: int,
+    size_timeout_sec: int = 10,
+    size_budget_sec: int = 60,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for item in report.get("items", []):
@@ -194,13 +278,18 @@ def candidate_rows(
                 "path": path,
                 "reason": str(item.get("reason")),
                 "action": reclaim_action(path),
-                "size_bytes": None,
+                "size_bytes": item.get("size_bytes"),
             }
         )
 
     if measure:
+        started = time.monotonic()
         for row in rows[: max(0, size_scan_limit)]:
-            row["size_bytes"] = measure_size(row["path"])
+            if row.get("size_bytes") is not None:
+                continue
+            if time.monotonic() - started >= max(0, size_budget_sec):
+                break
+            row["size_bytes"] = measure_size(row["path"], timeout=max(1, size_timeout_sec))
         rows.sort(key=lambda row: (row["size_bytes"] is not None, row["size_bytes"] or 0, row["name"]), reverse=True)
     else:
         rows.sort(key=lambda row: row["name"])
@@ -218,8 +307,17 @@ def build_packet(
     limit: int,
     measure: bool,
     size_scan_limit: int,
+    size_timeout_sec: int = 10,
+    size_budget_sec: int = 60,
 ) -> dict[str, Any]:
-    rows = candidate_rows(report, limit=limit, measure=measure, size_scan_limit=size_scan_limit)
+    rows = candidate_rows(
+        report,
+        limit=limit,
+        measure=measure,
+        size_scan_limit=size_scan_limit,
+        size_timeout_sec=size_timeout_sec,
+        size_budget_sec=size_budget_sec,
+    )
     measured = [row["size_bytes"] for row in rows if row.get("size_bytes") is not None]
     total_measured = sum(int(value) for value in measured)
     return {
@@ -237,6 +335,10 @@ def build_packet(
             "candidate_roots": len(rows),
             "candidate_limit": limit,
             "size_measured": bool(measure),
+            "size_scan_limit": size_scan_limit,
+            "size_timeout_sec": size_timeout_sec,
+            "size_budget_sec": size_budget_sec,
+            "measured_roots": len(measured),
             "measured_candidate_bytes": total_measured,
             "measured_candidate_size": fmt_bytes(total_measured) if measured else "not measured",
         },
@@ -273,8 +375,7 @@ def render_markdown(packet: dict[str, Any]) -> str:
         f"- Candidate lane: `{packet['governance']['agent_policy']['candidate_packet_lane']}`",
         f"- Delete gate: `{packet['governance']['agent_policy']['destructive_cleanup_lane']}`",
         "",
-        "Authority sources: "
-        + ", ".join(f"`{source}`" for source in packet["governance"]["authority_sources"]),
+        "Authority sources: " + ", ".join(f"`{source}`" for source in packet["governance"]["authority_sources"]),
         "",
         "## Acceptance Flow",
         "",
@@ -312,6 +413,18 @@ def main() -> int:
     parser.add_argument("--input", type=Path, help="read a saved worktree-debt JSON report")
     parser.add_argument("--limit", type=int, default=50, help="candidate rows to emit")
     parser.add_argument("--size-scan-limit", type=int, default=500, help="candidate roots to size before sorting")
+    parser.add_argument(
+        "--size-timeout-sec",
+        type=int,
+        default=int(os.environ.get("LIMEN_RECLAIM_SIZE_TIMEOUT_SEC", "10")),
+        help="per-root du timeout while measuring candidate sizes",
+    )
+    parser.add_argument(
+        "--size-budget-sec",
+        type=int,
+        default=int(os.environ.get("LIMEN_RECLAIM_SIZE_BUDGET_SEC", "60")),
+        help="total best-effort sizing budget for candidate roots",
+    )
     parser.add_argument("--no-measure-size", action="store_true", help="skip du-based size measurement")
     parser.add_argument("--write", action="store_true", help="write docs/worktree-reclaim-candidates.*")
     parser.add_argument("--json", action="store_true", help="print the packet JSON")
@@ -325,6 +438,8 @@ def main() -> int:
         limit=max(args.limit, 0),
         measure=not args.no_measure_size,
         size_scan_limit=max(args.size_scan_limit, 0),
+        size_timeout_sec=max(args.size_timeout_sec, 1),
+        size_budget_sec=max(args.size_budget_sec, 0),
     )
     if args.write:
         DOC_PATH.write_text(render_markdown(packet), encoding="utf-8")

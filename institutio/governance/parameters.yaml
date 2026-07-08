@@ -136,6 +136,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local raw/private session cartridge. Stores manifests and optional content-addressed object copies; never committed."
+  LIMEN_STATE_ROOT:
+    default: "$LIMEN_ROOT"
+    env: LIMEN_STATE_ROOT
+    self_update: none
+    owner: continuity
+    note: "Canonical read-side Limen state root for estate and lifecycle ledgers. Lets tests or isolated worktrees read from one root while writing redacted receipts elsewhere."
+  LIMEN_OUTPUT_ROOT:
+    default: "$LIMEN_ROOT"
+    env: LIMEN_OUTPUT_ROOT
+    self_update: none
+    owner: continuity
+    note: "Writable output root for redacted public receipts emitted by estate and lifecycle scripts."
+  LIMEN_OUTPUT_PRIVATE_SESSION_CORPUS:
+    default: "$LIMEN_OUTPUT_ROOT/.limen-private/session-corpus"
+    env: LIMEN_OUTPUT_PRIVATE_SESSION_CORPUS
+    self_update: none
+    owner: continuity
+    note: "Ignored private receipt root paired with LIMEN_OUTPUT_ROOT when scripts separate read-side state from write-side outputs."
   LIMEN_ALWAYS_WORKING_INDEX:
     default: "$LIMEN_PRIVATE_SESSION_CORPUS/lifecycle/always-working.json"
     env: LIMEN_ALWAYS_WORKING_INDEX
@@ -1320,6 +1338,18 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Maximum directory depth for repo-local .worktrees discovery under LIMEN_RECLAIM_WORKSPACE_ROOTS."
+  LIMEN_RECLAIM_SIZE_TIMEOUT_SEC:
+    default: 10
+    env: LIMEN_RECLAIM_SIZE_TIMEOUT_SEC
+    self_update: none
+    owner: limen-daemon
+    note: "Per-root du timeout for non-destructive worktree reclaim candidate size measurement."
+  LIMEN_RECLAIM_SIZE_BUDGET_SEC:
+    default: 60
+    env: LIMEN_RECLAIM_SIZE_BUDGET_SEC
+    self_update: none
+    owner: limen-daemon
+    note: "Total best-effort time budget for worktree reclaim candidate size measurement."
   LIMEN_DISK_HIGH_WATER:
     default: 85
     env: LIMEN_DISK_HIGH_WATER

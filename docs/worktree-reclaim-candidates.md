@@ -1,6 +1,6 @@
 # Worktree Reclaim Candidates
 
-Generated: `2026-07-07T22:52:49Z`
+Generated: `2026-07-08T04:08:18Z`
 
 This is a candidate packet, not acceptance. It does not write
 `docs/worktree-reclaim-acceptance.jsonl` and it does not delete roots.

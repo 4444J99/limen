@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import os
 import sys
 from pathlib import Path
 
@@ -9,10 +11,10 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "worktree-reclaim-candidates.py"
 
 
-def load_candidates():
-    spec = importlib.util.spec_from_file_location("worktree_reclaim_candidates_under_test", SCRIPT)
+def load_candidates(name: str = "worktree_reclaim_candidates_under_test"):
+    spec = importlib.util.spec_from_file_location(name, SCRIPT)
     module = importlib.util.module_from_spec(spec)
-    sys.modules["worktree_reclaim_candidates_under_test"] = module
+    sys.modules[name] = module
     assert spec and spec.loader
     spec.loader.exec_module(module)
     return module
@@ -88,3 +90,62 @@ def test_render_markdown_makes_non_destructive_gate_explicit(tmp_path: Path) -> 
     assert "Authority Gate" in text
     assert "docs/worktree-reclaim-acceptance.jsonl" in text
     assert "scripts/session-attack-paths.py" in text
+
+
+def test_load_report_ignores_dispatch_worktree_root_for_estate_scan(tmp_path: Path, monkeypatch) -> None:
+    mod = load_candidates("worktree_reclaim_candidates_env_guard")
+    dispatch_root = tmp_path / "scratch-worktrees"
+    output_root = dispatch_root / "aw-estate-custody"
+    state_root = tmp_path / "limen-live"
+    output_root.mkdir(parents=True)
+    state_root.mkdir()
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch_root))
+    monkeypatch.setattr(mod, "OUTPUT_ROOT", output_root)
+    monkeypatch.setattr(mod, "STATE_ROOT", state_root)
+
+    seen: dict[str, str | None] = {}
+
+    def fake_report(root: Path):
+        seen["root"] = str(root)
+        seen["worktree_root"] = os.environ.get("LIMEN_WORKTREE_ROOT")
+        return {"total": 0, "debt": 0, "by_reason": {}, "items": []}
+
+    monkeypatch.setattr(mod, "worktree_debt_report", fake_report)
+
+    report = mod.load_report(None)
+
+    assert report["total"] == 0
+    assert seen == {"root": str(state_root), "worktree_root": None}
+    assert os.environ["LIMEN_WORKTREE_ROOT"] == str(dispatch_root)
+
+
+def test_load_report_reuses_state_root_candidate_packet(tmp_path: Path, monkeypatch) -> None:
+    mod = load_candidates("worktree_reclaim_candidates_cached_packet")
+    state_root = tmp_path / "live"
+    output_root = tmp_path / "isolated"
+    (state_root / "docs").mkdir(parents=True)
+    output_root.mkdir()
+    packet = {
+        "schema": "limen.worktree_reclaim_candidates.v1",
+        "summary": {"scanned_roots": 99, "debt_roots": 3},
+        "by_reason": {"clean+merged+idle": 12, "dirty": 3},
+        "candidates": [
+            {
+                "name": "root-a",
+                "path": str(tmp_path / "root-a"),
+                "reason": "clean+merged+idle",
+                "size_bytes": 1234,
+            }
+        ],
+    }
+    (state_root / "docs" / "worktree-reclaim-candidates.json").write_text(json.dumps(packet), encoding="utf-8")
+    monkeypatch.setattr(mod, "STATE_ROOT", state_root)
+    monkeypatch.setattr(mod, "OUTPUT_ROOT", output_root)
+
+    report = mod.load_report(None)
+    rows = mod.candidate_rows(report, limit=10, measure=True, size_scan_limit=10)
+
+    assert report["total"] == 99
+    assert report["debt"] == 3
+    assert rows[0]["name"] == "root-a"
+    assert rows[0]["size_bytes"] == 1234

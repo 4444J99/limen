@@ -11,6 +11,7 @@ It intentionally does not read raw prompt bodies, private object-store text,
 skill bodies, or plugin manifest contents. Private JSON is summarized by keys,
 collection counts, and timestamps only.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,16 +20,36 @@ import json
 import os
 import re
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser().resolve()
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
+CODE_ROOT = Path(__file__).resolve().parents[1]
+STATE_ROOT = Path(os.environ.get("LIMEN_STATE_ROOT", os.environ.get("LIMEN_ROOT", CODE_ROOT))).expanduser().resolve()
+
+
+def writable_output_root() -> Path:
+    explicit = os.environ.get("LIMEN_OUTPUT_ROOT")
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    env_root = os.environ.get("LIMEN_ROOT")
+    if env_root:
+        candidate = Path(env_root).expanduser()
+        docs = candidate / "docs"
+        if os.access(candidate, os.W_OK) and (docs.exists() or os.access(candidate, os.W_OK)):
+            return candidate.resolve()
+    return CODE_ROOT
+
+
+OUTPUT_ROOT = writable_output_root()
+STATE_PRIVATE_ROOT = Path(
+    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", STATE_ROOT / ".limen-private" / "session-corpus")
 ).expanduser()
-DOC_PATH = ROOT / "docs" / "vltima-prior-excavations.md"
-PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "vltima-prior-excavations.json"
+OUTPUT_PRIVATE_ROOT = Path(
+    os.environ.get("LIMEN_OUTPUT_PRIVATE_SESSION_CORPUS", OUTPUT_ROOT / ".limen-private" / "session-corpus")
+).expanduser()
+DOC_PATH = OUTPUT_ROOT / "docs" / "vltima-prior-excavations.md"
+PRIVATE_INDEX = OUTPUT_PRIVATE_ROOT / "lifecycle" / "vltima-prior-excavations.json"
 
 GENERATED_RE = re.compile(r"^Generated:\s*`?([^`\n]+)`?", re.MULTILINE)
 PRIVATE_OBJECT_MARKERS = (
@@ -309,7 +330,7 @@ def now_iso() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 
-def repo_rel(path: Path, *, root: Path = ROOT) -> str:
+def repo_rel(path: Path, *, root: Path = STATE_ROOT) -> str:
     try:
         return str(path.expanduser().resolve().relative_to(root))
     except (OSError, ValueError):
@@ -319,7 +340,7 @@ def repo_rel(path: Path, *, root: Path = ROOT) -> str:
             return str(path.expanduser())
 
 
-def path_from_label(label: str, *, root: Path = ROOT, private_root: Path = PRIVATE_ROOT) -> Path:
+def path_from_label(label: str, *, root: Path = STATE_ROOT, private_root: Path = STATE_PRIVATE_ROOT) -> Path:
     if label.startswith(".limen-private/session-corpus/"):
         return private_root / label.removeprefix(".limen-private/session-corpus/")
     return (root / label).expanduser()
@@ -364,11 +385,7 @@ def json_summary(path: Path) -> dict[str, Any] | None:
     except (OSError, ValueError):
         return {"kind": "json", "readable": False}
     if isinstance(data, dict):
-        counts = {
-            key: len(value)
-            for key, value in data.items()
-            if isinstance(value, (list, dict))
-        }
+        counts = {key: len(value) for key, value in data.items() if isinstance(value, (list, dict))}
         return {
             "kind": "json",
             "top_level": "dict",
@@ -601,9 +618,17 @@ def refresh_order(surfaces: list[dict[str, Any]]) -> list[str]:
     return ordered
 
 
-def build_snapshot(*, root: Path = ROOT, private_root: Path = PRIVATE_ROOT) -> dict[str, Any]:
+def build_snapshot(
+    *,
+    root: Path = STATE_ROOT,
+    private_root: Path = STATE_PRIVATE_ROOT,
+    output_root: Path = OUTPUT_ROOT,
+    output_private_root: Path = OUTPUT_PRIVATE_ROOT,
+) -> dict[str, Any]:
     root = root.expanduser().resolve()
     private_root = private_root.expanduser()
+    output_root = output_root.expanduser().resolve()
+    output_private_root = output_private_root.expanduser()
     surfaces = [build_surface(spec, root=root, private_root=private_root) for spec in SURFACES]
     known_labels: set[str] = set()
     for surface in surfaces:
@@ -640,8 +665,8 @@ def build_snapshot(*, root: Path = ROOT, private_root: Path = PRIVATE_ROOT) -> d
         "generated_at": now_iso(),
         "decision": "prior-excavation metadata register; raw private bodies are not read",
         "privacy": {
-            "tracked_output": repo_rel(DOC_PATH, root=root),
-            "private_index": str(private_root / "lifecycle" / "vltima-prior-excavations.json"),
+            "tracked_output": repo_rel(output_root / "docs" / "vltima-prior-excavations.md", root=output_root),
+            "private_index": str(output_private_root / "lifecycle" / "vltima-prior-excavations.json"),
             "raw_bodies_read": False,
         },
         "coverage": coverage,
@@ -656,9 +681,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     coverage = snapshot["coverage"]
     lane_bits = ", ".join(f"`{key}` {value}" for key, value in coverage["lane_counts"].items())
     status_bits = ", ".join(f"`{key}` {value}" for key, value in coverage["status_counts"].items())
-    refresh_bits = ", ".join(
-        f"`{key}` {value}" for key, value in coverage["refresh_mode_counts"].items()
-    )
+    refresh_bits = ", ".join(f"`{key}` {value}" for key, value in coverage["refresh_mode_counts"].items())
     lines = [
         "# VLTIMA Prior Excavations",
         "",
@@ -709,9 +732,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     if snapshot["mismatches"]:
         lines += ["| Surface | Lane | Status | Reason |", "|---|---|---|---|"]
         for item in snapshot["mismatches"]:
-            lines.append(
-                f"| `{item['surface']}` | `{item['lane']}` | `{item['status']}` | {item['reason']} |"
-            )
+            lines.append(f"| `{item['surface']}` | `{item['lane']}` | `{item['status']}` | {item['reason']} |")
     else:
         lines.append("- No prior-excavation mismatches detected.")
     lines += [
@@ -743,7 +764,9 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write_outputs(snapshot: dict[str, Any], markdown: str, *, doc_path: Path = DOC_PATH, private_index: Path = PRIVATE_INDEX) -> None:
+def write_outputs(
+    snapshot: dict[str, Any], markdown: str, *, doc_path: Path = DOC_PATH, private_index: Path = PRIVATE_INDEX
+) -> None:
     doc_path.parent.mkdir(parents=True, exist_ok=True)
     private_index.parent.mkdir(parents=True, exist_ok=True)
     doc_path.write_text(markdown, encoding="utf-8")
