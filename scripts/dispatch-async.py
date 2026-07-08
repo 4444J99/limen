@@ -46,6 +46,7 @@ from limen.dispatch import (  # noqa: E402
     _restore_done_status,
     _restore_pr_open_status,
     _routine_generated_buildout_allowed,
+    _superseded_by_rebase_task,
     _value_tier_repos,
     agent_can_run_task,
     run_always_working_before_dispatch,
@@ -588,6 +589,7 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
             and agent_can_run_task(agent, t)
             and t.budget_cost <= rem
             and _deps_met(t, id2)
+            and (task_id is not None or not _superseded_by_rebase_task(t, id2))
             and _routine_generated_buildout_allowed(t)
         ]
         cands = sort_value_gate_candidates(cands, value_repos, disk_pressure=disk_pressure)

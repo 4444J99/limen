@@ -420,6 +420,28 @@ def _dispatchable(task: Task) -> bool:
     return "needs-human" not in (task.labels or [])
 
 
+_ACTIVE_SUPERSEDER_STATUSES = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
+
+
+def _superseded_by_rebase_task(task: Task, tasks_by_id: dict[str, Task]) -> bool:
+    """A live conflict/rebase task is the correct route before an older CI-fix sibling.
+
+    Self-heal task IDs are stable by kind: HEAL-cifix-<repo-slug>-<pr> and
+    HEAL-rebase[-stale]-<repo-slug>-<pr>. If a PR changes from CI-red to conflicting,
+    the corrected rebase ticket must win instead of the stale CI-fix ticket looping.
+    """
+    task_id = str(task.id or "")
+    prefix = "HEAL-cifix-"
+    if not task_id.startswith(prefix):
+        return False
+    suffix = task_id[len(prefix):]
+    for sibling_id in (f"HEAL-rebase-{suffix}", f"HEAL-rebase-stale-{suffix}"):
+        sibling = tasks_by_id.get(sibling_id)
+        if sibling is not None and str(sibling.status or "") in _ACTIVE_SUPERSEDER_STATUSES:
+            return True
+    return False
+
+
 def _routine_generated_buildout(task: Task) -> bool:
     labels = set(task.labels or [])
     return "generated" in labels and "build-out" in labels
@@ -2264,6 +2286,7 @@ def dispatch_tasks(
         and agent_can_run_task(agent_filter, t)
         and t.budget_cost <= remaining
         and (task_id is not None or _deps_met(t, id2))
+        and (task_id is not None or not _superseded_by_rebase_task(t, id2))
         and not (debt_blocked and _routine_generated_buildout(t))
         and _routine_generated_buildout_allowed(t)
     ]
@@ -2634,6 +2657,7 @@ def _select_parallel_reservations(
             and agent_can_run_task(agent, t)
             and t.budget_cost <= rem
             and _deps_met(t, id2)
+            and not _superseded_by_rebase_task(t, id2)
             and not (debt_blocked and _routine_generated_buildout(t))
             and _routine_generated_buildout_allowed(t)
         ]
