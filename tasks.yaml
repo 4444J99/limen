@@ -109594,7 +109594,7 @@ tasks:
     issues 12.1%, reviews 0.6%'
   repo: ~/Workspace/limen
   type: coordination
-  target_agent: opencode
+  target_agent: codex
   workstream: contribution-balance
   priority: critical
   budget_cost: 1
