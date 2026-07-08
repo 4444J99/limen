@@ -1650,3 +1650,9 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Per-description character cap the Codex slimmer distills to. Lower it if Codex still warns that descriptions were shortened; raise it to preserve more of each description. The knob, not a hardcode."
+  LIMEN_ARCA:
+    default: "1"               # ON — seal the private estate every beat
+    env: LIMEN_ARCA
+    self_update: none
+    owner: limen-daemon
+    note: "Beat gate for ARCA (scripts/arca.sh backup, step 5c): every ~/Workspace/_*-private store, AES-256-encrypted with a key that lives only in the macOS Keychain, roundtrip-verified, pushed as ciphertext to the private organvm/arca repo. 1=seal each beat (no-op in seconds when unchanged); 0=off. Fails soft (locked Keychain / offline). Script-level knobs are ARCA_WORKSPACE / ARCA_REPO / ARCA_VAULT_DIR / ARCA_KEY_SERVICE / ARCA_MAX_MB."

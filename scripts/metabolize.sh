@@ -182,6 +182,16 @@ if [ "${LIMEN_INSIGHT_CADENCE:-1}" = "1" ]; then
     $([ "${LIMEN_CENSOR_ISSUES_APPLY:-0}" = "1" ] && echo --apply) | tail -3 || echo "  (censor-issues skipped)"
 fi
 
+echo "── 5c. arca (encrypted private-estate vault) ──"
+# ARCA — off-machine durability for the private estate: every ~/Workspace/_*-private store,
+# AES-256-encrypted (key ONLY in the macOS Keychain, never in any repo or env file) and pushed
+# as ciphertext to a private GitHub repo (organvm/arca). The containment inverse of the public
+# lanes: GitHub never sees a plaintext byte. Change-detected + roundtrip-verified; no-ops in
+# seconds when nothing changed. Fails soft (headless Keychain / offline). LIMEN_ARCA=0 disables.
+if [ "${LIMEN_ARCA:-1}" = "1" ]; then
+  bash "$LIMEN_ROOT/scripts/arca.sh" backup || echo "  (arca skipped — keychain locked, offline, or vault unconfigured)"
+fi
+
 # ── 6. self-improve (LOW cadence) — the last rung of the self-* ladder ──
 # Reads the loop's own dispatch_log track record and emits a re-plan PROPOSAL to
 # logs/self-improve-proposal.json (down-weight 0%-lanes, retire chronic-fail
