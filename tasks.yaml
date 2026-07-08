@@ -94151,7 +94151,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -94168,7 +94168,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T13:19:10.331810Z'
+  updated: '2026-07-08T13:35:18.488895Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:13:38.567460Z'
     agent: codex
@@ -94305,6 +94305,11 @@ tasks:
     agent: jules
     session_id: '1957479118607578044'
     status: dispatched
+  - timestamp: '2026-07-08T13:35:18.488895Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: HEAL-cifix-organvm-the-invisible-ledger-42
   title: fix failing CI on organvm/the-invisible-ledger#42
   repo: organvm/the-invisible-ledger
@@ -96407,7 +96412,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -96423,7 +96428,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T13:08:49.777461Z'
+  updated: '2026-07-08T13:35:18.488895Z'
   dispatch_log:
   - timestamp: '2026-07-07T11:51:16.792799Z'
     agent: opencode
@@ -96453,6 +96458,11 @@ tasks:
     agent: jules
     session_id: '9370180396643616673'
     status: dispatched
+  - timestamp: '2026-07-08T13:35:18.488895Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: HEAL-cifix-organvm-limen-376
   title: fix failing CI on organvm/limen#376
   repo: organvm/limen
@@ -108911,7 +108921,7 @@ tasks:
   workstream: public-face
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - always-working
   - receipt-first
@@ -108940,7 +108950,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T13:08:49.777461Z'
+  updated: '2026-07-08T13:35:18.488895Z'
   dispatch_log:
   - timestamp: '2026-07-07T12:46:53.859778Z'
     agent: agy
@@ -108960,6 +108970,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-07-08T13:35:18.488895Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: AW-MAIL-ACTIVE-FLAGGED
   title: Reconcile active flagged mail before historical sweep
   description: 111 active flagged non-deleted messages require classification
@@ -108969,7 +108984,7 @@ tasks:
   workstream: mail-active
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - always-working
   - receipt-first
@@ -108999,7 +109014,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T13:19:10.331810Z'
+  updated: '2026-07-08T13:35:18.488895Z'
   dispatch_log:
   - timestamp: '2026-07-07T12:46:53.859778Z'
     agent: opencode
@@ -109028,6 +109043,11 @@ tasks:
     agent: jules
     session_id: cli
     status: dispatched
+  - timestamp: '2026-07-08T13:35:18.488895Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: AW-MAIL-HISTORICAL-BACKLOG
   title: Continue historical mail backlog in resumable batches
   description: 81976 indexed non-deleted messages exist; process in batches, not one
@@ -110268,7 +110288,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -110283,7 +110303,7 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T13:07:10.020554Z'
+  updated: '2026-07-08T13:32:43.052243Z'
   dispatch_log:
   - timestamp: '2026-07-08T13:00:35.285942Z'
     agent: jules
@@ -110294,6 +110314,11 @@ tasks:
     agent: jules
     session_id: '11392843633352973876'
     status: dispatched
+  - timestamp: '2026-07-08T13:32:43.052243Z'
+    agent: jules
+    session_id: https://github.com/organvm/domus-genoma/pull/208
+    status: done
+    output: 'jules-land: landed session 11392843633352973876 as PR'
 - id: HEAL-cifix-organvm-domus-genoma-184
   title: fix failing CI on organvm/domus-genoma#184
   repo: organvm/domus-genoma
