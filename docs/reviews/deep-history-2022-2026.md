@@ -421,16 +421,21 @@ Rank 5 — LINGUI_MACHINA [project 7]
 - Covered: ChatGPT 2022-12→2026-04-13; Claude.ai web 2025-06→2026-04-21; CLI fleet 2026-06-08→today.
 - Remaining gap: 2026-04-13→06-08 — `EXCAV-0708-CHATGPT-BACKFILL` (chatgpt.app desktop-session pull;
   store confirmed present, caches encrypted) + `EXCAV-0708-VENDOR-ARCHIVES`.
-- **Archive sweep (4 volumes, 4 parallel scanners, packets merged):** additionally FOUND and
-  secured to the private cartridge: a Gemini single-conversation export (2025-10), 29 Copilot
-  SingleFile conversation captures (2026-03, 40M), a Grok shared-conversation PDF, and a
-  DuckDuckGo-AI text export. A November-2025 **all-vendor export collection** (earlier
-  ChatGPT/Claude snapshots + two Google Takeouts) survives as a hollow path-mirror on
-  Archive4T — its bytes are on the unmounted `4444J99` SSD (one physical mount recovers it;
-  routed via the estate registry, never nagged). Inside it: `cognitive-archaelogy-tribunal`,
-  a Nov-2025 predecessor of this very excavation engine whose tool code survives (2,526 files) —
-  the evaporation pattern, again. Not found on any mounted volume: Perplexity, dedicated
-  Grok/xAI export, Twitter/X archive, full Gemini Takeout.
+- **Archive sweep — CORRECTED after the content-first hunt (operator was right: everything
+  exported IS archived).** The name-based sweep found shells; the content-signature hunt
+  (run `wf_7e4506db-745`) found the real store: the operator's own **canonical vault** at
+  `my-knowledge-base/intake/canonical/sources/curated-sources/` on T7Recovery — copilot **1.1G**
+  (28 CLI session JSONLs Jan–Apr 2026 + web-export captures + 2 manual session MDs), grok
+  **460M** (xAI export 2026-04-22 + drive-export), chatgpt 482M, claude 102M, gemini 9.6M,
+  plus apple-notes/icloud-docs/manual-notes/pieces — now secured to the private cartridge
+  (2.7G). Also found: distinct ChatGPT snapshots (2025-12, 2026-01) and Claude snapshots
+  (2026-01/02/03), enabling a **deleted-conversation diff** against the April exports — which
+  supersedes the hollow Nov-2025 shells entirely (the `4444J99` source drive is absent, but
+  exports are cumulative; only its deleted-in-window residue mattered, and the snapshot diff
+  recovers that). `cognitive-archaelogy-tribunal` — a Nov-2025 predecessor of this very
+  excavation engine — survives with tool code (2,526 files): the evaporation pattern, again.
+  Verified absent on every volume: Twitter/X archive and any Perplexity export (its local app
+  stores are empty shells; consistent with minimal usage).
 - 26 treasure candidates were never adversarially checked (cap); 10 of 14 checked were REFUTED —
   era analysts over-claim; treat unchecked items as candidates only.
 - Workflow run `wf_3c330bab-a7c` (37 agents, 1.83M subagent tokens) + 1 projects analyst.
