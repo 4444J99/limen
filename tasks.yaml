@@ -108808,7 +108808,7 @@ tasks:
   workstream: repo-boil-up
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - always-working
   - receipt-first
@@ -108837,7 +108837,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-08T05:42:37.084338Z'
+  updated: '2026-07-08T06:08:18.958928Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:22:21.721601Z'
     agent: agy
@@ -108879,6 +108879,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-08T06:08:18.958928Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: AW-VALUE-REPOS
   title: Assign revenue/value repo work from existing ledgers
   description: 13 value repos define the funded work lane
