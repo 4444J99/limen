@@ -27,8 +27,8 @@ ensure_web_app_deps() {
 
 step "Compile Python modules and validate shell syntax"
 cd "$ROOT"
-python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py scripts/worktree-debt.py scripts/worktree-pr-receipts.py scripts/continuation-beat.py scripts/codex-token-accounting.py scripts/overnight-watch.py scripts/session-corpus-ledger.py scripts/corpus-feed.py scripts/prompt-lifecycle-ledger.py scripts/prompt-priority-map.py scripts/prompt-batch-review-ledger.py scripts/prompt-packet-ledger.py scripts/current-session-fanout-plan.py scripts/corpus-command-center.py scripts/capability-substrate-ledger.py scripts/consolidation-gates.py scripts/network-health.py scripts/dispatch-health.py scripts/always-working.py scripts/live-root-gate.py scripts/session-blockers-ledger.py scripts/session-lifecycle-pressure.py scripts/session-attack-paths.py scripts/conductor-tranche.py scripts/session-value-review.py scripts/enactment-audit.py scripts/antigravity-scratch-bridge.py scripts/reap_acceptance.py scripts/check-removal-acceptance.py scripts/cvstos-organ.py scripts/armed-valve-audit.py scripts/ship-gate.py scripts/heal-convergence.py scripts/async-run-one.py
-bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/probe-local-worker.sh scripts/heartbeat-loop.sh scripts/verify-whole.sh scripts/merge-policy.sh scripts/tests/merge-policy.test.sh scripts/tests/enactment-audit.test.sh scripts/tests/armed-valve-audit.test.sh scripts/tests/ship-gate.test.sh scripts/tests/heal-convergence.test.sh scripts/hooks/session-lifecycle-pressure.sh scripts/netmode.sh
+python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py scripts/worktree-debt.py scripts/worktree-pr-receipts.py scripts/continuation-beat.py scripts/codex-token-accounting.py scripts/overnight-watch.py scripts/session-corpus-ledger.py scripts/corpus-feed.py scripts/prompt-lifecycle-ledger.py scripts/prompt-priority-map.py scripts/prompt-batch-review-ledger.py scripts/prompt-packet-ledger.py scripts/current-session-fanout-plan.py scripts/corpus-command-center.py scripts/capability-substrate-ledger.py scripts/consolidation-gates.py scripts/network-health.py scripts/dispatch-health.py scripts/always-working.py scripts/live-root-gate.py scripts/session-blockers-ledger.py scripts/session-lifecycle-pressure.py scripts/session-attack-paths.py scripts/conductor-tranche.py scripts/session-value-review.py scripts/enactment-audit.py scripts/antigravity-scratch-bridge.py scripts/reap_acceptance.py scripts/check-removal-acceptance.py scripts/cvstos-organ.py scripts/armed-valve-audit.py scripts/ship-gate.py scripts/heal-convergence.py scripts/async-run-one.py scripts/ask-gate.py
+bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/probe-local-worker.sh scripts/heartbeat-loop.sh scripts/verify-whole.sh scripts/merge-policy.sh scripts/tests/merge-policy.test.sh scripts/tests/enactment-audit.test.sh scripts/tests/armed-valve-audit.test.sh scripts/tests/ship-gate.test.sh scripts/tests/heal-convergence.test.sh scripts/tests/ask-gate.test.sh scripts/hooks/session-lifecycle-pressure.sh scripts/netmode.sh
 if command -v plutil >/dev/null; then
   plutil -lint container/launchd/com.user.netmeter.plist
   plutil -lint container/launchd/com.limen.overnight-watch.plist
@@ -70,6 +70,11 @@ step "Verify the heal-convergence predicate (chronic heal stalls trip; receipts 
 bash scripts/tests/heal-convergence.test.sh
 # Fixture rungs only here (fixture PRs + fixture clock + fixture receipts — deterministic);
 # the live open-heal-PR count and chronic gate run in the beat via metabolize.sh step 0g.
+
+step "Verify the ask-gate predicate (intake asks are predicate-shaped, bounded, owned)"
+bash scripts/tests/ask-gate.test.sh
+# Fixture rung only (--task-file cases — deterministic); the live intake-window audit
+# runs report-only in the beat via metabolize.sh step 0h.
 # The wiring rung is the code contract (CI-safe, deterministic); the liveness rung reads live-host
 # daemon state and is surfaced in the beat log by metabolize.sh, so it is not a hard gate here.
 python3 scripts/enactment-audit.py --check --wiring-only

@@ -108,6 +108,17 @@ if [ "${LIMEN_HEAL_CONVERGENCE:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/heal-convergence.py" --check || echo "  ↑ CHRONIC heal non-convergence above — fix the named check at its root or park the repo with a chronic receipt"
 fi
 
+echo "── 0h. ask gate — every intake-window ask carries one done-predicate, or gets split ──"
+# The gap this closes (retro 06-24→07-08 gap model): asks converge iff they are
+# predicate-shaped, bounded, and owned; the five most-escalated themes were exactly the
+# narrative/multi-goal ones. Report-only for now (observable-before-autonomous — the
+# LIMEN_CENSOR_APPLY constitutional pattern): counts land in logs/ask-gate.json; keeper-seam
+# enforcement (--task-file --check on every incoming ticket) arms once the log proves the
+# predicate. Fail-open, never fatal.
+if [ "${LIMEN_ASK_GATE:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/ask-gate.py" --audit --since 7 --top 8 || echo "  (ask-gate report failed — non-fatal)"
+fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 
