@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-08T04:14:22+00:00`
+Generated: `2026-07-08T04:18:16+00:00`
 Status: `needs-work`
-Required open: `5`
+Required open: `4`
 Blocked: `1`
-Done from receipt: `5`
+Done from receipt: `6`
 
 ## Contract
 
@@ -33,7 +33,7 @@ Done from receipt: `5`
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
 | 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 74.1%, PRs 13.3%, issues 12.0%, reviews 0.6% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `assigned_from_existing_work` | credential wall passes current-home check; historical token tombstone audit still needs owner receipt |
-| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 112 active flagged non-deleted messages require classification |
+| 20 | `MAIL-ACTIVE-FLAGGED` | `done_from_receipt` | 127 active flagged messages classified into 11 clusters; no body reads or mailbox mutations |
 | 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82093 indexed non-deleted messages remain for future batches |
 | 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 48 duplicate remote group(s) recorded |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
@@ -121,19 +121,4 @@ Done from receipt: `5`
   - `~/Workspace/limen/scripts/creds-hydrate.py`
   - `https://github.com/organvm/limen/issues/320`
   - `https://github.com/organvm/limen/labels/credential`
-
-### MAIL-ACTIVE-FLAGGED
-
-- Lane fit: `local-codex-or-opencode`
-- Repo/root: `~/Workspace/limen`
-- Task: Use existing mail-story atoms and UMA obligations to classify the active flagged set; draft/park, never send.
-- Predicate: `python3 scripts/mail-story-ledger.py --scope flagged --write`
-- Receipt target: `~/Workspace/limen/docs/mail-story-ledger.md`
-- Stop condition: flagged set has classified atoms, obligations, and needs-human buckets
-- Existing receipts:
-  - `~/Workspace/limen/docs/mail-story-ledger.md`
-  - `~/Workspace/limen/docs/his-hand-registry-mail-a290329e.md`
-  - `~/Workspace/limen/obligations-ledger.json`
-  - `~/Workspace/limen/scripts/mail-story-ledger.py`
-  - `~/Workspace/limen/scripts/mail-beat.sh`
 
