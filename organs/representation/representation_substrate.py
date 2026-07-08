@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -88,16 +88,41 @@ APPROVAL_RECORD_KIND = "representation_approval_record"
 DRY_RUN_APPROVAL_SCOPE = "dry_run"
 DRY_RUN_APPROVAL_TYPES = {"public_export", "submission"}
 REAL_SEND_APPROVAL_TYPE = "real_send"
+REAL_SEND_APPROVAL_SCOPE = "real_send"
+REAL_SEND_APPROVAL_TARGET = "real_submission"
 PUBLICATION_APPROVAL_TARGETS = {
     "writer_public_export",
     "writer_submission",
     "opportunity_route_submission",
 }
+REAL_SEND_APPROVAL_TARGETS = {REAL_SEND_APPROVAL_TARGET}
 SAFE_DRY_RUN_ACTIONS = {
     "render_review_files",
     "write_review_files",
     "dry_run_export",
     "review_packet",
+}
+SAFE_REAL_SEND_ACTIONS = {
+    "send_submission",
+    "stage_outbox_message",
+    "write_send_receipt",
+}
+REAL_SEND_DELIVERY_ADAPTERS = {
+    "direct_email",
+    "submission_form",
+    "local_outbox",
+}
+LOCAL_OUTBOX_ADAPTER = "local_outbox"
+EXTERNAL_DELIVERY_ADAPTERS = REAL_SEND_DELIVERY_ADAPTERS - {LOCAL_OUTBOX_ADAPTER}
+REAL_SEND_REQUIRED_FIELDS = {
+    "subject_id": "subject_id",
+    "opportunity_id": "opportunity_id",
+    "candidate_id": "candidate_id",
+    "route_id": "route_id",
+    "delivery_adapter": "delivery_adapter",
+    "recipient_ref": "recipient_ref",
+    "payload_ref": "payload_ref",
+    "operator_approved_at": "operator_approved_at",
 }
 FORBIDDEN_APPROVAL_ACTIONS = {
     "contact",
@@ -247,7 +272,7 @@ HANDOFF_LOOP_STEPS = (
     ),
     (
         "APPLY",
-        "Outbound submission, publication, upload, or contact is approval-locked and dry-run only inside this substrate.",
+        "Outbound submission is approval-gated: dry-run packets render first, and real sends require explicit real_send approval.",
     ),
     (
         "FOLLOW_UP",
@@ -566,7 +591,8 @@ def _validate_sources(doc: dict[str, Any], report_label: str) -> list[str]:
 
 def _approval_action_violations(approval: dict[str, Any], prefix: str) -> list[str]:
     violations: list[str] = []
-    if approval.get("creates_send_path") is True:
+    real_send_approved = _approval_is_real_send_approval(approval)
+    if approval.get("creates_send_path") is True and not real_send_approved:
         violations.append(f"{prefix} must not create a send path")
 
     for key in SEND_PATH_FIELDS:
@@ -584,11 +610,24 @@ def _approval_action_violations(approval: dict[str, Any], prefix: str) -> list[s
         normalized = str(action).strip().lower().replace("-", "_").replace(" ", "_")
         if not normalized:
             continue
-        if normalized in FORBIDDEN_APPROVAL_ACTIONS:
+        if real_send_approved:
+            if normalized in FORBIDDEN_APPROVAL_ACTIONS:
+                violations.append(f"{prefix} permitted action {normalized!r} is ambiguous; use send_submission")
+            elif normalized not in SAFE_REAL_SEND_ACTIONS:
+                violations.append(f"{prefix} permitted action {normalized!r} is not an allowed real-send action")
+        elif normalized in FORBIDDEN_APPROVAL_ACTIONS:
             violations.append(f"{prefix} permitted action {normalized!r} is an outward action")
         elif normalized not in SAFE_DRY_RUN_ACTIONS:
             violations.append(f"{prefix} permitted action {normalized!r} is not an allowed dry-run action")
     return violations
+
+
+def _approval_is_real_send_approval(approval: dict[str, Any]) -> bool:
+    return (
+        str(approval.get("approval_type")) == REAL_SEND_APPROVAL_TYPE
+        and str(approval.get("status")) == "approved"
+        and str(approval.get("approval_scope")) == REAL_SEND_APPROVAL_SCOPE
+    )
 
 
 def _approval_is_dry_run(approval: dict[str, Any]) -> bool:
@@ -630,12 +669,69 @@ def _validate_approval_common(
     violations.extend(_approval_action_violations(approval, prefix))
 
     if approval_type == REAL_SEND_APPROVAL_TYPE:
-        if status != "locked":
-            violations.append(f"{prefix} real-send approval must remain locked")
-        if approval.get("real_send_lock") is not True:
-            violations.append(f"{prefix} real-send approval must set real_send_lock: true")
-        if approval.get("no_outward_action") is not True:
-            violations.append(f"{prefix} real-send lock must set no_outward_action: true")
+        if str(approval.get("approval_scope")) != REAL_SEND_APPROVAL_SCOPE:
+            violations.append(f"{prefix} approval_scope must be {REAL_SEND_APPROVAL_SCOPE!r}")
+        if approval_record:
+            target = str(approval.get("approval_target") or REAL_SEND_APPROVAL_TARGET)
+            if target not in REAL_SEND_APPROVAL_TARGETS:
+                violations.append(
+                    f"{prefix} approval_target must be one of: {', '.join(sorted(REAL_SEND_APPROVAL_TARGETS))}"
+                )
+            if _missing(approval.get("subject_id")):
+                violations.append(f"{prefix} must include subject_id")
+            if _missing(approval.get("opportunity_id")):
+                violations.append(f"{prefix} must include opportunity_id")
+            if _missing(approval.get("candidate_id")):
+                violations.append(f"{prefix} must include candidate_id")
+            if _missing(approval.get("route_id")):
+                violations.append(f"{prefix} must include route_id")
+
+        if status == "locked":
+            if approval.get("real_send_lock") is not True:
+                violations.append(f"{prefix} real-send lock must set real_send_lock: true")
+            if approval.get("no_outward_action") is not True:
+                violations.append(f"{prefix} real-send lock must set no_outward_action: true")
+            return violations
+
+        if status == "approved":
+            if approval.get("real_send_lock") is True:
+                violations.append(f"{prefix} approved real-send record must not set real_send_lock: true")
+            if approval.get("real_send_approval") is not True:
+                violations.append(f"{prefix} approved real-send record must set real_send_approval: true")
+            if approval.get("dry_run_only") is True:
+                violations.append(f"{prefix} approved real-send record must not set dry_run_only: true")
+            if approval.get("no_outward_action") is True:
+                violations.append(f"{prefix} approved real-send record must not set no_outward_action: true")
+            missing_fields = [
+                label for field, label in REAL_SEND_REQUIRED_FIELDS.items() if _missing(approval.get(field))
+            ]
+            if missing_fields:
+                violations.append(f"{prefix} approved real-send record missing: {', '.join(missing_fields)}")
+            adapter = str(approval.get("delivery_adapter") or "")
+            if adapter and adapter not in REAL_SEND_DELIVERY_ADAPTERS:
+                violations.append(
+                    f"{prefix} delivery_adapter must be one of: {', '.join(sorted(REAL_SEND_DELIVERY_ADAPTERS))}"
+                )
+            if not _missing(approval.get("operator_approved_at")) and not _parse_time(
+                approval.get("operator_approved_at")
+            ):
+                violations.append(f"{prefix} operator_approved_at must be ISO-8601")
+            actions = approval.get("permitted_actions", [])
+            normalized_actions = (
+                {
+                    str(action).strip().lower().replace("-", "_").replace(" ", "_")
+                    for action in actions
+                    if str(action).strip()
+                }
+                if isinstance(actions, list)
+                else set()
+            )
+            if "send_submission" not in normalized_actions:
+                violations.append(f"{prefix} approved real-send record must permit send_submission")
+            return violations
+
+        if approval.get("real_send_lock") is True:
+            violations.append(f"{prefix} real_send_lock is only valid when status is locked")
         return violations
 
     if status == "approved" and approval_type in DRY_RUN_APPROVAL_TYPES:
@@ -693,10 +789,21 @@ def _validate_approval_record(doc: dict[str, Any], report_label: str) -> list[st
         violations.append(f"{report_label}: kind must be {APPROVAL_RECORD_KIND}")
     if _missing(doc.get("id")):
         violations.append(f"{report_label}: id is required")
-    if doc.get("dry_run_only") is not True:
-        violations.append(f"{report_label}: dry_run_only must be true")
-    if doc.get("no_outward_action") is not True:
-        violations.append(f"{report_label}: no_outward_action must be true")
+    approval_mode = str(doc.get("approval_mode") or DRY_RUN_APPROVAL_SCOPE)
+    if approval_mode not in {DRY_RUN_APPROVAL_SCOPE, REAL_SEND_APPROVAL_SCOPE}:
+        violations.append(
+            f"{report_label}: approval_mode must be one of: {DRY_RUN_APPROVAL_SCOPE}, {REAL_SEND_APPROVAL_SCOPE}"
+        )
+    if approval_mode == DRY_RUN_APPROVAL_SCOPE:
+        if doc.get("dry_run_only") is not True:
+            violations.append(f"{report_label}: dry_run_only must be true")
+        if doc.get("no_outward_action") is not True:
+            violations.append(f"{report_label}: no_outward_action must be true")
+    if approval_mode == REAL_SEND_APPROVAL_SCOPE:
+        if doc.get("dry_run_only") is True:
+            violations.append(f"{report_label}: real-send approval records must not set dry_run_only: true")
+        if doc.get("no_outward_action") is True:
+            violations.append(f"{report_label}: real-send approval records must not set no_outward_action: true")
 
     approvals = _approvals(doc)
     if not approvals:
@@ -704,6 +811,7 @@ def _validate_approval_record(doc: dict[str, Any], report_label: str) -> list[st
 
     seen_ids: set[str] = set()
     has_real_send_lock = False
+    has_real_send_record = False
     for idx, approval in enumerate(approvals):
         prefix = f"{report_label}: approvals[{idx}]"
         approval_id = str(approval.get("id", ""))
@@ -712,7 +820,9 @@ def _validate_approval_record(doc: dict[str, Any], report_label: str) -> list[st
         seen_ids.add(approval_id)
         approval_type = str(approval.get("approval_type", ""))
         if approval_type == REAL_SEND_APPROVAL_TYPE:
-            has_real_send_lock = True
+            has_real_send_record = True
+            if str(approval.get("status")) == "locked":
+                has_real_send_lock = True
         violations.extend(
             _validate_approval_common(
                 approval,
@@ -722,8 +832,10 @@ def _validate_approval_record(doc: dict[str, Any], report_label: str) -> list[st
             )
         )
 
-    if not has_real_send_lock:
+    if approval_mode == DRY_RUN_APPROVAL_SCOPE and not has_real_send_lock:
         violations.append(f"{report_label}: approvals must include a real-send lock record")
+    if approval_mode == REAL_SEND_APPROVAL_SCOPE and not has_real_send_record:
+        violations.append(f"{report_label}: approvals must include a real-send approval record")
 
     violations.extend(_validate_privacy(doc, report_label))
     return violations
@@ -2387,6 +2499,77 @@ def _publication_approval_status(
     return not blockers, matched, blockers
 
 
+def _approval_matches_real_send_requirement(
+    approval: dict[str, Any],
+    *,
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+) -> bool:
+    if not _approval_is_real_send_approval(approval):
+        return False
+    if approval.get("real_send_approval") is not True:
+        return False
+    subject_id = str(writer_doc.get("id") or "")
+    opportunity_id = str(opportunity_doc.get("id") or "")
+    if str(approval.get("subject_id") or "") != subject_id:
+        return False
+    if str(approval.get("opportunity_id") or "") != opportunity_id:
+        return False
+    if str(approval.get("candidate_id") or "") != candidate_id:
+        return False
+    if str(approval.get("route_id") or "") != route_selector:
+        return False
+    return True
+
+
+def _matching_real_send_approval(
+    approvals: list[dict[str, Any]],
+    *,
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+) -> dict[str, Any] | None:
+    for approval in approvals:
+        if _approval_matches_real_send_requirement(
+            approval,
+            writer_doc=writer_doc,
+            opportunity_doc=opportunity_doc,
+            candidate_id=candidate_id,
+            route_selector=route_selector,
+        ):
+            return approval
+    return None
+
+
+def _real_send_status(
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+    approval_doc: dict[str, Any] | None,
+) -> tuple[str, dict[str, Any] | None, list[str]]:
+    approvals = [*_approvals(writer_doc), *_approvals(opportunity_doc)]
+    if approval_doc:
+        approvals.extend(_approvals(approval_doc))
+    approval = _matching_real_send_approval(
+        approvals,
+        writer_doc=writer_doc,
+        opportunity_doc=opportunity_doc,
+        candidate_id=candidate_id,
+        route_selector=route_selector,
+    )
+    if approval:
+        return (
+            "APPROVED_REAL_SEND",
+            approval,
+            [f"Real send approval is APPROVED_REAL_SEND via {approval.get('id', 'approval-record')}."],
+        )
+    return "LOCKED", None, []
+
+
 def _readiness_value_recorded(value: Any) -> str:
     return "recorded and withheld" if not _missing(value) else "missing"
 
@@ -2445,6 +2628,13 @@ def render_publication_readiness(
         route_selector,
         approval_doc=approval_doc,
     )
+    real_send_state, _, real_send_matched = _real_send_status(
+        writer_doc,
+        opportunity_doc,
+        candidate_id,
+        route_selector,
+        approval_doc,
+    )
     if export and not approvals_ready:
         raise ValueError(
             "publication readiness export is locked until writer public_export, "
@@ -2452,7 +2642,7 @@ def render_publication_readiness(
         )
 
     blockers = candidate_blockers + route_blockers + approval_blockers
-    matched = candidate_matched + route_matched + approval_matched
+    matched = candidate_matched + route_matched + approval_matched + real_send_matched
     publication_status = "BLOCKED" if blockers else CANDIDATE_READY_STATUS
     route_ready = route_status == CANDIDATE_READY_STATUS
     candidate_ready = candidate_status == CANDIDATE_READY_STATUS
@@ -2479,7 +2669,7 @@ def render_publication_readiness(
         f"Approval record: {approval_doc.get('id', 'not supplied') if approval_doc else 'not supplied'}",
         f"Candidate: {candidate_id}",
         f"Selected venue/route: {route_selector}",
-        "Outward action: locked; this report does not submit, upload, publish, contact, or impersonate.",
+        "Outward action: staged; this readiness command does not submit, upload, publish, contact, or impersonate.",
     ]
     if export:
         lines.append("Export mode: approved dry run only; no publication or delivery occurs.")
@@ -2489,7 +2679,7 @@ def render_publication_readiness(
             f"Candidate status: {candidate_status}",
             f"Route status: {route_status}",
             f"Dry-run export: {'APPROVED_DRY_RUN' if approvals_ready else 'LOCKED'}",
-            "Real submission: LOCKED; this command has no send path.",
+            f"Real submission: {real_send_state}; execution uses publication-send.",
             "",
             "## What This Is",
             "",
@@ -2511,7 +2701,14 @@ def render_publication_readiness(
         lines.extend(f"- {row}" for row in blockers)
     else:
         lines.append("- No readiness blockers remain for an approved dry-run packet.")
-    lines.append("- Real submission remains locked outside this command even when dry-run approvals exist.")
+    if real_send_state == "APPROVED_REAL_SEND":
+        lines.append(
+            "- Real submission approval is recorded; publication-send must still produce the execution receipt."
+        )
+    else:
+        lines.append(
+            "- Real submission requires an approved real_send approval record before publication-send can execute."
+        )
 
     lines.extend(["", "## Candidate Metadata", ""])
     lines.append(f"- Title/profile: {_display_value(candidate_title)}.")
@@ -2566,9 +2763,9 @@ def render_publication_readiness(
             "- Chris controls voice review, public export, submission approval, outreach approval, and any actual send.",
             "- The packet does not claim acceptance, publication, editor interest, or achieved literary status.",
             "",
-            "## No-Outward-Action Notice",
+            "## Readiness Command Boundary",
             "",
-            "No submission, outreach, upload, publication, contact, form action, or public-presence export is performed by this command.",
+            "This readiness command performs no submission, outreach, upload, publication, contact, form action, or public-presence export.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -2594,15 +2791,22 @@ def _publication_stack_status_rows(
         route_selector,
         approval_doc=approval_doc,
     )
+    real_send_state, _, real_send_matched = _real_send_status(
+        writer_doc,
+        opportunity_doc,
+        candidate_id,
+        route_selector,
+        approval_doc,
+    )
     status = {
         "candidate": candidate_status,
         "route": route_status,
         "dry_run": "APPROVED_DRY_RUN" if approvals_ready else "LOCKED",
-        "real_send": "LOCKED",
+        "real_send": real_send_state,
     }
     return (
         status,
-        candidate_matched + route_matched + approval_matched,
+        candidate_matched + route_matched + approval_matched + real_send_matched,
         (candidate_blockers + route_blockers + approval_blockers),
     )
 
@@ -2627,7 +2831,7 @@ def render_publication_stack_files(
     route_selector: str,
     approval_doc: dict[str, Any] | None = None,
 ) -> dict[str, str]:
-    """Build review-only publication stack files without any outward action path."""
+    """Build publication stack files; real sends execute through publication-send."""
     if approval_doc is not None:
         approval_label = str(approval_doc.get("id") or "approval-record")
         approval_violations = validate_doc(approval_doc, approval_label)
@@ -2665,11 +2869,11 @@ def render_publication_stack_files(
     header = [
         f"# {writer_name} / {route_name} Review Packet",
         "",
-        "Outward action: locked. These files are review drafts only.",
+        "Outward action: staged. These files are review drafts; real send uses publication-send.",
         f"Candidate metadata: {status['candidate']}.",
         f"Route metadata: {status['route']}.",
         f"Dry-run approval: {status['dry_run']}.",
-        "Real send: LOCKED.",
+        f"Real send: {status['real_send']}.",
         "No publication, submission, upload, contact, form action, or public export has happened.",
         "",
     ]
@@ -2691,7 +2895,7 @@ def render_publication_stack_files(
             "- Chris public export approval remains locked until explicit approval is supplied.",
             "- Chris submission approval remains locked until explicit approval is supplied.",
             "- Opportunity/route submission approval remains locked until explicit approval is supplied.",
-            "- Real-send approval remains locked and cannot be approved by this substrate.",
+            "- Real-send approval requires an approved real_send record before publication-send can execute.",
             "",
         ]
     )
@@ -2782,13 +2986,13 @@ def render_publication_stack_files(
             "- Chris public export approval: LOCKED unless a matching dry-run approval record is supplied.",
             "- Chris submission approval: LOCKED unless a matching dry-run approval record is supplied.",
             "- Opportunity/route submission approval: LOCKED unless a matching dry-run approval record is supplied.",
-            "- Real send: LOCKED; approving real send is invalid in this substrate.",
+            "- Real send: LOCKED unless a matching real_send approval record is supplied.",
             "",
-            "## Before Any Human Send Outside This Tool",
+            "## Before Publication Send",
             "",
             "- Chris reviews candidate, cover letter, disclosure, rights, and venue fit.",
-            "- Human separately approves public export and submission route.",
-            "- Any send happens outside this command after explicit approval; this command has no send path.",
+            "- Public export, writer submission, route submission, and real_send approvals are recorded.",
+            "- Run publication-send with the approval record and preserve its execution receipt.",
             "",
         ]
     )
@@ -2812,6 +3016,191 @@ def render_publication_stack_files(
         "submission-checklist.md": submission_checklist,
         "public-presence-copy-preview.md": public_preview,
     }
+
+
+def _slug(value: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip()).strip("-")
+    return slug or "publication-send"
+
+
+def _write_local_outbox_receipt(
+    outbox_dir: Path,
+    *,
+    writer_name: str,
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+    route_name: str,
+    approval: dict[str, Any],
+    timestamp: str,
+) -> Path:
+    outbox_dir.mkdir(parents=True, exist_ok=True)
+    path = outbox_dir / f"{_slug(candidate_id)}-{_slug(route_selector)}-submission-envelope.md"
+    path.write_text(
+        "\n".join(
+            [
+                f"# Local Outbox Submission Envelope: {writer_name} / {route_name}",
+                "",
+                f"Created: {timestamp}",
+                f"Writer record: {writer_doc.get('id', 'unknown-writer')}",
+                f"Opportunity record: {opportunity_doc.get('id', 'unknown-opportunity')}",
+                f"Candidate: {candidate_id}",
+                f"Selected venue/route: {route_selector}",
+                f"Real-send approval: {approval.get('id', 'approval-record')}",
+                f"Delivery adapter: {approval.get('delivery_adapter')}",
+                f"Recipient ref: {approval.get('recipient_ref')}",
+                "Payload ref: recorded and withheld.",
+                "",
+                "Status: SENT_TO_LOCAL_OUTBOX",
+                "External email, upload, form submission, publication, and editor contact were not performed by the local_outbox adapter.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def render_publication_send_receipt(
+    writer_doc: dict[str, Any],
+    opportunity_doc: dict[str, Any],
+    candidate_id: str,
+    route_selector: str,
+    approval_doc: dict[str, Any] | None,
+    *,
+    execute: bool = False,
+    outbox_dir: Path | None = None,
+) -> tuple[str, bool]:
+    """Render or execute a publication send receipt from explicit real-send approval."""
+    if approval_doc is not None:
+        approval_label = str(approval_doc.get("id") or "approval-record")
+        approval_violations = validate_doc(approval_doc, approval_label)
+        if approval_violations:
+            raise ValueError("approval record invalid: " + "; ".join(approval_violations[:6]))
+
+    writer_subject = writer_doc.get("subject", {})
+    if not isinstance(writer_subject, dict):
+        writer_subject = {}
+    writer_name = str(writer_subject.get("name") or writer_doc.get("name") or "Unnamed writer")
+    candidate = _candidate_by_id(writer_doc, candidate_id)
+    route = _route_by_selector(opportunity_doc, route_selector)
+    route_name = _route_display_name(route, route_selector)
+
+    candidate_status, candidate_matched, candidate_blockers = _candidate_publication_status(
+        writer_doc, candidate, candidate_id
+    )
+    route_status, route_matched, route_blockers = _route_publication_status(opportunity_doc, route, route_selector)
+    approvals_ready, approval_matched, approval_blockers = _publication_approval_status(
+        writer_doc,
+        opportunity_doc,
+        candidate_id,
+        route_selector,
+        approval_doc=approval_doc,
+    )
+    real_send_state, real_send_approval, real_send_matched = _real_send_status(
+        writer_doc,
+        opportunity_doc,
+        candidate_id,
+        route_selector,
+        approval_doc,
+    )
+
+    blockers = candidate_blockers + route_blockers + approval_blockers
+    matched = candidate_matched + route_matched + approval_matched + real_send_matched
+    if approval_doc is None:
+        blockers.append("Real send approval record is missing.")
+    if real_send_approval is None:
+        blockers.append("Real send approval is missing; publication-send requires an approved real_send record.")
+
+    adapter = str(real_send_approval.get("delivery_adapter") or "missing") if real_send_approval else "missing"
+    executed_path: Path | None = None
+    execution_rows: list[str] = []
+    timestamp = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+    if execute and not blockers:
+        if adapter == LOCAL_OUTBOX_ADAPTER:
+            if outbox_dir is None:
+                blockers.append("REAL_SEND_BLOCKED: local_outbox delivery adapter requires --outbox-dir.")
+            else:
+                executed_path = _write_local_outbox_receipt(
+                    outbox_dir,
+                    writer_name=writer_name,
+                    writer_doc=writer_doc,
+                    opportunity_doc=opportunity_doc,
+                    candidate_id=candidate_id,
+                    route_selector=route_selector,
+                    route_name=route_name,
+                    approval=real_send_approval,
+                    timestamp=timestamp,
+                )
+                execution_rows.append(f"Local outbox receipt written: {executed_path}")
+        elif adapter in EXTERNAL_DELIVERY_ADAPTERS:
+            blockers.append(
+                f"REAL_SEND_BLOCKED: delivery adapter {adapter} requires external delivery integration, "
+                "private recipient configuration, and credential-wall approval not stored in this repo."
+            )
+        else:
+            blockers.append(
+                f"REAL_SEND_BLOCKED: delivery adapter {adapter} is unsupported; "
+                f"supported adapters are {', '.join(sorted(REAL_SEND_DELIVERY_ADAPTERS))}."
+            )
+
+    if blockers:
+        send_status = "BLOCKED"
+        ok = False
+    elif execute and executed_path is not None:
+        send_status = "SENT_TO_LOCAL_OUTBOX"
+        ok = True
+    elif execute:
+        send_status = "BLOCKED"
+        ok = False
+    else:
+        send_status = "READY_TO_SEND"
+        ok = True
+
+    lines = [
+        f"# Publication Send Receipt: {writer_name}",
+        "",
+        "Mode: publication_send",
+        f"Generated: {timestamp}",
+        f"Writer record: {writer_doc.get('id', 'unknown-writer')}",
+        f"Opportunity record: {opportunity_doc.get('id', 'unknown-opportunity')}",
+        f"Approval record: {approval_doc.get('id', 'not supplied') if approval_doc else 'not supplied'}",
+        f"Candidate: {candidate_id}",
+        f"Selected venue/route: {route_selector}",
+        f"Candidate status: {candidate_status}",
+        f"Route status: {route_status}",
+        f"Dry-run approvals: {'APPROVED_DRY_RUN' if approvals_ready else 'LOCKED'}",
+        f"Real send approval: {real_send_state}",
+        f"Delivery adapter: {adapter}",
+        f"Execution requested: {'true' if execute else 'false'}",
+        f"Send status: {send_status}",
+        "",
+        "## Matched",
+        "",
+    ]
+    lines.extend(f"- {row}" for row in matched) if matched else lines.append("- none")
+    lines.extend(["", "## Blockers", ""])
+    lines.extend(f"- {row}" for row in blockers) if blockers else lines.append("- none")
+    lines.extend(["", "## Execution", ""])
+    if execution_rows:
+        lines.extend(f"- {row}" for row in execution_rows)
+    elif not execute:
+        lines.append("- No execution requested; pass --execute to use the selected delivery adapter.")
+    else:
+        lines.append("- No execution completed.")
+    lines.extend(
+        [
+            "",
+            "## Boundary",
+            "",
+            "- This command validates explicit real_send approval and attempts the selected delivery adapter.",
+            "- External adapters require private credentials and recipient configuration outside tracked records.",
+            "- This receipt does not claim acceptance, publication, editor interest, or public release.",
+        ]
+    )
+    return "\n".join(lines) + "\n", ok
 
 
 def _declared_output_modes(doc: dict[str, Any]) -> list[str]:
@@ -3313,6 +3702,36 @@ def _publication_stack_command(
     return 0
 
 
+def _publication_send_command(
+    writer: Path,
+    opportunity: Path,
+    candidate: str,
+    route: str,
+    approval_record: Path | None,
+    execute: bool,
+    outbox_dir: Path | None,
+    out: Path | None,
+) -> int:
+    try:
+        writer_doc = _load_record(writer)
+        opportunity_doc = _load_record(opportunity)
+        approval_doc = _load_record(approval_record) if approval_record else None
+        output, ok = render_publication_send_receipt(
+            writer_doc,
+            opportunity_doc,
+            candidate_id=candidate,
+            route_selector=route,
+            approval_doc=approval_doc,
+            execute=execute,
+            outbox_dir=outbox_dir,
+        )
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    _write_or_print(output, out)
+    return 0 if ok else 1
+
+
 def _load_record(path: Path) -> dict[str, Any]:
     doc = _load_yaml(path)
     if isinstance(doc, list):
@@ -3381,6 +3800,19 @@ def main(argv: list[str] | None = None) -> int:
     publication_stack.add_argument("--route", required=True)
     publication_stack.add_argument("--out-dir", required=True, type=Path)
     publication_stack.add_argument("--approval-record", type=Path)
+
+    publication_send = sub.add_parser(
+        "publication-send",
+        help="validate and execute an approved publication send adapter for a writer, candidate, and route",
+    )
+    publication_send.add_argument("--writer", required=True, type=Path)
+    publication_send.add_argument("--opportunity", required=True, type=Path)
+    publication_send.add_argument("--candidate", required=True)
+    publication_send.add_argument("--route", required=True)
+    publication_send.add_argument("--approval-record", type=Path)
+    publication_send.add_argument("--execute", action="store_true")
+    publication_send.add_argument("--outbox-dir", type=Path)
+    publication_send.add_argument("--out", type=Path)
 
     handoff_audit = sub.add_parser(
         "handoff-audit",
@@ -3476,6 +3908,18 @@ def main(argv: list[str] | None = None) -> int:
             args.route,
             args.out_dir,
             args.approval_record,
+        )
+
+    if args.cmd == "publication-send":
+        return _publication_send_command(
+            args.writer,
+            args.opportunity,
+            args.candidate,
+            args.route,
+            args.approval_record,
+            args.execute,
+            args.outbox_dir,
+            args.out,
         )
 
     if args.cmd == "handoff-audit":

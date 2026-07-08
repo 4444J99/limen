@@ -116,8 +116,9 @@ public-presence loop:
   as a fit check;
 - build: dossiers, public drafts, authority scorecards, and no-send literary
   packets;
-- apply: approval-locked dry runs only, with no submission, upload, publication,
-  contact, or impersonation by the substrate;
+- apply: approval-gated dry runs first, then `publication-send` only when an
+  explicit `real_send` approval names the selected writer, opportunity,
+  candidate, route, adapter, recipient ref, and payload ref;
 - follow up: blockers and approvals required become the next work surface.
 
 Before a record is handed to Chris or used as the basis for outward literary
@@ -161,7 +162,10 @@ rights status, content ref, source IDs, and claim IDs are all present. Route
 readiness requires public guideline source refs and sourced, resolved AI-policy
 status. Dry-run export additionally requires writer public-export approval,
 writer submission approval, and opportunity submission approval. Real submission
-remains outside the command.
+uses `publication-send`; it requires the same dry-run approvals plus an approved
+`real_send` record. Local outbox execution writes a receipt, while external
+delivery adapters remain blocked until private credential and recipient
+configuration is supplied outside tracked records.
 
 ## Literary Intake Contract
 
@@ -233,6 +237,7 @@ python organs/representation/validate-representation.py --fleet
 python organs/representation/representation_substrate.py handoff-audit --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-public-profile-readiness --route yale-review-nonfiction-route
 python organs/representation/representation_substrate.py authority-packet --record organs/representation/records/christopher-author-one.yaml
 python organs/representation/representation_substrate.py publication-readiness --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route
+python organs/representation/representation_substrate.py publication-send --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route --approval-record organs/representation/approvals/author-one-yale-review-nonfiction-real-send.template.yaml
 python organs/representation/representation_substrate.py packet organs/representation/records/christopher-author-one.yaml --mode writer_submission
 python organs/representation/representation_substrate.py packet organs/representation/records/et4l.yaml --mode project_page
 ```
