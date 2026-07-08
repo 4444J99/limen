@@ -167,6 +167,8 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
     tp = tmp_path / "tasks.yaml"
     picked: list[tuple[str, str]] = []
     monkeypatch.setattr(D, "_deps_met", lambda t, by: True)
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+    monkeypatch.setattr(D, "call_agent_dispatch", lambda agent, task, dry_run=False: True)
     # dry-run prints picks; capture by monkeypatching print is noisy — instead call and inspect status.
     D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=True)
     # The accelerated tail beyond the 3 base picks must be REVENUE (win) tasks, never COVERAGE (waste).
