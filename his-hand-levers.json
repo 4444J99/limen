@@ -371,6 +371,15 @@
       "unlocks": "external verdict signal: stars/followers/traffic deltas on the verdict meter; inbound for the recruiter front",
       "source_task": "LAVREA awareness apparatus (session f6fa1984, 2026-07-04)",
       "issue": 657
+    },
+    {
+      "id": "L-GREASYFORK-PUBLISH",
+      "label": "One GitHub-OAuth sign-in at greasyfork.org publishes the mint-armed ChatGPT Exporter to the largest userscript registry — and it self-syncs forever after. No account exists under any owner handle (verified 2026-07-08), and account creation is the one step agents cannot perform. The full listing packet is staged in organvm/a-i-chat--exporter docs/greasyfork-listing.md (sync-from-URL against the tracked mint-armed dist, attribution, description, verification commands). The Pages install page is already live at chatgpt-exporter-e08.pages.dev with Buy Pro reaching mint.4444j99.dev.",
+      "owner": "yours",
+      "cost": "~3 min (1 OAuth click + 1 paste), reversible",
+      "issue": 714,
+      "source_task": "EXCAV-0708-EXPORTER-ARM (session 0146de0a, 2026-07-08)",
+      "unlocks": "the installed-base distribution channel for the sovereign Buy-Pro rail — the widest first-dollar surface; after the one sign-in, master merges propagate to GreasyFork with zero human steps"
     }
   ]
 }
