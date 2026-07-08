@@ -109188,3 +109188,31 @@ tasks:
   created: '2026-07-07'
   updated: '2026-07-07T22:24:02.057061Z'
   dispatch_log: []
+- id: DISCOVER-organvm-organvm-iii-ergon.github.io
+  title: Discover the latent value of organvm/organvm-iii-ergon.github.io
+  repo: organvm/organvm-iii-ergon.github.io
+  type: research
+  target_agent: codex
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-discovery
+  urls: []
+  context: "DISCOVER the latent value of organvm/organvm-iii-ergon.github.io. This\
+    \ repo currently has NO ranked value \u2014 your job is to find it (value is discovered,\
+    \ never assumed absent). Steps: (1) Read the repo \u2014 what it is, its real\
+    \ entrypoints/exports, what it already does. (2) Identify its highest latent value:\
+    \ a concrete product, revenue path, reusable asset, or capability the rest of\
+    \ the estate could use \u2014 be specific and honest. (3) DECIDE: if there is\
+    \ real value, write a one-paragraph value thesis to DISCOVERY.md AND open a PR\
+    \ that ALSO appends \"organvm/organvm-iii-ergon.github.io\" to value-repos.json\
+    \ (promote it into the ranked tier so build-out can follow) AND name the single\
+    \ best concrete first task; if it is genuinely archival, write the thesis saying\
+    \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
+    \ Output the thesis. [auto-discovery 2026-07-07; no repo stays dark]"
+  depends_on: []
+  created: '2026-07-07'
+  updated: '2026-07-08T00:18:59.151397Z'
+  dispatch_log: []
