@@ -1,0 +1,47 @@
+{
+  "_doc": "Classification registry for armed-valve-audit.py (RETRO-0708-ARMED-VALVE-AUDIT; PREC-2026-07-08-armed-valve-outcome). The AUDIT DERIVES the valve list from the beat sources (metabolize.sh / heartbeat-loop.sh ${LIMEN_*:-default} gates) — this file only holds what derivation cannot: WHICH disarmed-by-default valves are 'deliverable-IS-the-behavior' (a dry-run there is an UNMET ask) vs 'safety' (off-by-default is the design), plus external non-env probes (a URL that must serve, an artifact that must carry the rail). A discovered gate classified nowhere surfaces as UNCLASSIFIED — new valves self-surface, the registry never silently lags the code.",
+  "deliverable": [
+    {
+      "id": "LIMEN_DISPATCH",
+      "kind": "env",
+      "expected": "1",
+      "what": "outward dispatch of queued tasks to vendor lanes — the queue's entire purpose; permanently off means the board pools work nothing executes",
+      "lever": "L-FLEET-CAPACITY"
+    },
+    {
+      "id": "LIMEN_CENSOR_ISSUES_APPLY",
+      "kind": "env",
+      "expected": "1",
+      "what": "censor residuals mirrored to public GitHub issues (retro finding 8: ran every beat in permanent dry-run; 4 residuals never mirrored)"
+    },
+    {
+      "id": "MONETA_MINT_LIVE",
+      "kind": "url",
+      "url": "https://mint.4444j99.dev/pubkey",
+      "expect_status": 200,
+      "what": "the sovereign mint reachable and serving its licence pubkey — the Buy-Pro rail's origin (retro finding 4: deployed URL returned nothing)"
+    },
+    {
+      "id": "EXPORTER_MINT_WIRED",
+      "kind": "url_contains",
+      "url": "https://chatgpt-exporter-e08.pages.dev/chatgpt.user.js",
+      "needle": "mint.4444j99.dev",
+      "what": "the public exporter install artifact carries the mint checkout — the user-reachable half of the rail (EXCAV-0708-EXPORTER-ARM ship-gate)"
+    }
+  ],
+  "safety": [
+    "LIMEN_SI_RETIRE",
+    "LIMEN_LIB_APPLY",
+    "LIMEN_CORPUS_CONVERGE",
+    "LIMEN_NOMENCLATOR",
+    "LIMEN_POSITIONING",
+    "LIMEN_AVTOPOIESIS",
+    "LIMEN_ALLOW_HIGH_LOCAL_LIMIT",
+    "LIMEN_CENSOR_APPLY",
+    "LIMEN_DISPATCH_ASYNC",
+    "LIMEN_MEDIA_ATOMIZE",
+    "LIMEN_QUICKEN_BREATHE",
+    "LIMEN_STUDIUM"
+  ],
+  "_safety_note": "LIMEN_DISPATCH_ASYNC / LIMEN_CENSOR_APPLY / LIMEN_MEDIA_ATOMIZE are armed in the DAEMON'S environment (launchd plist), which this audit cannot read from a shell — promoting one to 'deliverable' requires a probe of daemon truth (a runtime stamp), not an env read; enactment-audit.py owns declared-vs-live for fleet flags. LIMEN_ALLOW_HIGH_LOCAL_LIMIT is a budget-cap override: off IS the design."
+}

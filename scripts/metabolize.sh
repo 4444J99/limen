@@ -79,6 +79,16 @@ if [ "${LIMEN_ENACTMENT_CHECK:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/enactment-audit.py" --check || echo "  ↑ un-enacted fleet flag above — wire it in heartbeat-loop.sh, or kickstart the daemon (launchctl kickstart -k gui/\$(id -u)/com.limen.heartbeat)"
 fi
 
+echo "── 0e. armed-valve audit — parked levers vs silently-off valves ──"
+# The gap this closes (retro 06-24→07-08 finding 8; PREC-2026-07-08-armed-valve-outcome):
+# a deliverable-IS-the-behavior valve left disarmed (MONETA's empty checkout, the censor
+# mirror's permanent dry-run, LIMEN_DISPATCH unset) satisfies every closeout predicate while
+# drifting the OUTCOME. This separates ARMED / PARKED (lever cites it — owned, fine) /
+# SILENT-OFF (the failure class) every beat. Fail-open, never fatal to the beat.
+if [ "${LIMEN_VALVE_AUDIT:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/armed-valve-audit.py" --check || echo "  ↑ SILENTLY-OFF deliverable valve above — arm it, or file its lever in his-hand-levers.json"
+fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 
