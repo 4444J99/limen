@@ -23,9 +23,9 @@
       "pr_number": 110,
       "pr_state": "OPEN",
       "pr_url": "https://github.com/organvm/organvm-engine/pull/110",
+      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T030926Z-heal-cifix-organvm-organvm-engine-110-cf645ef4/dirty.patch",
       "private_patch_sha256": "25183717263f1b79226662d041dbb4d4582a7313b92530f04d025929014358f9",
       "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T030926Z-heal-cifix-organvm-organvm-engine-110-cf645ef4/receipt.json",
-      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T030926Z-heal-cifix-organvm-organvm-engine-110-cf645ef4/dirty.patch",
       "remote_tracking_ref": "origin/limen/limen-075-fb65",
       "repo": "organvm/organvm-engine",
       "root": "heal-cifix-organvm-organvm-engine-110-cf645ef4",
@@ -1954,13 +1954,13 @@
       "pr_head_ancestor_of_default": false,
       "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T033403Z-heal-cifix-organvm-domus-genoma-146-22877d48/receipt.json",
       "remote_pr": {
+        "base_ref": "master",
+        "head_ref": "fix/security-hardening-0628",
+        "merge_state": "UNKNOWN",
+        "mergeable": "UNKNOWN",
         "number": 146,
         "state": "OPEN",
-        "url": "https://github.com/organvm/domus-genoma/pull/146",
-        "head_ref": "fix/security-hardening-0628",
-        "base_ref": "master",
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN"
+        "url": "https://github.com/organvm/domus-genoma/pull/146"
       },
       "repo": "organvm/domus-genoma",
       "root": "heal-cifix-organvm-domus-genoma-146-22877d48",
@@ -1968,8 +1968,8 @@
       "status": "default_branch_preserved",
       "untracked_residue": [
         {
-          "path": "logs/agents/opencode.json",
           "bytes": 295,
+          "path": "logs/agents/opencode.json",
           "sha256": "bd0882d51e9f060389b823de188a74e962e17a4c7c50bc1e482e9e3489c869c9"
         }
       ],
@@ -1998,14 +1998,14 @@
       "pr_head_ancestor_of_default": false,
       "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T035147Z-heal-cifix-organvm-domus-genoma-149-e0f24a23/receipt.json",
       "remote_pr": {
+        "base_ref": "master",
+        "checks": "all reported checks successful at 2026-07-07T02:41:54Z",
+        "head_ref": "fix/security-hardening-domus-genoma",
+        "merge_state": "UNKNOWN",
+        "mergeable": "UNKNOWN",
         "number": 149,
         "state": "OPEN",
-        "url": "https://github.com/organvm/domus-genoma/pull/149",
-        "head_ref": "fix/security-hardening-domus-genoma",
-        "base_ref": "master",
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
-        "checks": "all reported checks successful at 2026-07-07T02:41:54Z"
+        "url": "https://github.com/organvm/domus-genoma/pull/149"
       },
       "repo": "organvm/domus-genoma",
       "root": "heal-cifix-organvm-domus-genoma-149-e0f24a23",
@@ -2013,8 +2013,8 @@
       "status": "default_branch_preserved",
       "untracked_residue": [
         {
-          "path": "logs/agents/opencode.json",
           "bytes": 295,
+          "path": "logs/agents/opencode.json",
           "sha256": "8000a516642cc72be1c1fbcce592b93ed4c41b0eb47f8dcd91deeb733213398f"
         }
       ],
@@ -2043,18 +2043,18 @@
       "pr_head_ancestor_of_default": "unknown-pr-head-ref-not-local",
       "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/2026-07-08T035837Z-heal-cifix-organvm-domus-genoma-157-baceffbf/receipt.json",
       "remote_pr": {
-        "number": 157,
-        "state": "OPEN",
-        "url": "https://github.com/organvm/domus-genoma/pull/157",
-        "head_ref": "limen/gen-organvm-domus-genoma-simplify-0629-6ae8",
         "base_ref": "master",
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
         "failing_checks": [
           "Build, Test, and Lint",
           "YAML Lint",
           "Shell Formatting"
-        ]
+        ],
+        "head_ref": "limen/gen-organvm-domus-genoma-simplify-0629-6ae8",
+        "merge_state": "UNKNOWN",
+        "mergeable": "UNKNOWN",
+        "number": 157,
+        "state": "OPEN",
+        "url": "https://github.com/organvm/domus-genoma/pull/157"
       },
       "repo": "organvm/domus-genoma",
       "root": "heal-cifix-organvm-domus-genoma-157-baceffbf",
@@ -2062,12 +2062,60 @@
       "status": "default_branch_preserved",
       "untracked_residue": [
         {
-          "path": "logs/agents/opencode.json",
           "bytes": 295,
+          "path": "logs/agents/opencode.json",
           "sha256": "f8760ba97d40288d1bdc5e5409133b2cc020a394e98dd8ccf30031164f6b2a98"
         }
       ],
       "worktree": "/Users/4jp/Workspace/.limen-worktrees/heal-cifix-organvm-domus-genoma-157-baceffbf"
+    },
+    {
+      "branch": "limen/heal-cifix-organvm-domus-genoma-121-e0b66200",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-08T13:03:10Z",
+      "head": "585d28fe3f50fe51932d7408e8394074cb08a0aa",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #205, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": true,
+      "pr_number": 205,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/domus-genoma/pull/205",
+      "repo": "organvm/domus-genoma",
+      "root": "heal-cifix-organvm-domus-genoma-121-e0b66200",
+      "score_discount": 35,
+      "status": "open_pr_preserved"
+    },
+    {
+      "branch": "limen/heal-cifix-organvm-domus-genoma-163-73ffb6db",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-08T13:03:10Z",
+      "head": "39dc25957bc0a382c1ef0d61c68cffee4df3b7d3",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #206, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": true,
+      "pr_number": 206,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/domus-genoma/pull/206",
+      "repo": "organvm/domus-genoma",
+      "root": "heal-cifix-organvm-domus-genoma-163-73ffb6db",
+      "score_discount": 35,
+      "status": "open_pr_preserved"
+    },
+    {
+      "branch": "limen/heal-cifix-organvm-domus-genoma-172-2f0a46cb",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-08T13:03:10Z",
+      "head": "63c8f5bcd0b039b4e3afec5cbed3297b1f935931",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #207, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": true,
+      "pr_number": 207,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/domus-genoma/pull/207",
+      "repo": "organvm/domus-genoma",
+      "root": "heal-cifix-organvm-domus-genoma-172-2f0a46cb",
+      "score_discount": 35,
+      "status": "open_pr_preserved"
     }
   ],
   "schema": 1
