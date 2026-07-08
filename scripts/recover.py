@@ -14,6 +14,7 @@ never dispatches. Bounded by --limit. Run by the daemon's heal voice AND by supe
 import argparse
 import datetime
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -24,6 +25,27 @@ from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import _has_done_transition, _restore_done_status  # noqa: E402
 
 CASCADE_TOP = "codex"
+NOOP_RECOVERY_ESCALATION_THRESHOLD = 2
+NOOP_FAILURE_RE = re.compile(
+    r"\b(?:no[- ]?op|noop|made no changes|no changes|no pr opened|clean-noop)\b",
+    re.IGNORECASE,
+)
+
+
+def _noop_failure_count(task) -> int:
+    return sum(
+        1
+        for entry in task.dispatch_log or []
+        if str(entry.status or "") == "failed"
+        and NOOP_FAILURE_RE.search(str(entry.output or ""))
+    )
+
+
+def _repeated_noop_failure_count(task) -> int:
+    count = _noop_failure_count(task)
+    if count >= NOOP_RECOVERY_ESCALATION_THRESHOLD:
+        return count
+    return 0
 
 
 def live_jules_sessions() -> dict[str, str]:
@@ -69,12 +91,18 @@ def main() -> int:
     selected_ids = set(args.task_ids or [])
 
     live = None  # lazily fetched only if we have orphan candidates
-    reopened_failed, reopened_orphan, reopened_remote_failed = [], [], []
+    reopened_failed, reopened_orphan, reopened_remote_failed, escalated_noop = [], [], [], []
 
     for t in lf.tasks:
         if selected_ids and t.id not in selected_ids:
             continue
-        if len(reopened_failed) + len(reopened_orphan) + len(reopened_remote_failed) >= args.limit:
+        if (
+            len(reopened_failed)
+            + len(reopened_orphan)
+            + len(reopened_remote_failed)
+            + len(escalated_noop)
+            >= args.limit
+        ):
             break
         if _has_done_transition(t):
             _restore_done_status(
@@ -85,6 +113,19 @@ def main() -> int:
             )
             continue
         if t.status == "failed":
+            repeated_noop_count = _repeated_noop_failure_count(t)
+            if repeated_noop_count:
+                t.status = "needs_human"
+                t.updated = now
+                t.dispatch_log.append(DispatchLogEntry(
+                    timestamp=now, agent="limen", session_id="heal",
+                    status="needs_human",
+                    output=(
+                        f"recover: repeated no-op failures ({repeated_noop_count}) "
+                        "-> needs_human; stop fresh cascade"
+                    )))
+                escalated_noop.append(t.id)
+                continue
             t.status = "open"
             t.target_agent = CASCADE_TOP
             t.labels = [x for x in t.labels if not x.startswith("tried:")]
@@ -122,7 +163,8 @@ def main() -> int:
     print(
         f"recover: {len(reopened_failed)} failed reopened, "
         f"{len(reopened_orphan)} orphaned reopened, "
-        f"{len(reopened_remote_failed)} remote-failed reopened"
+        f"{len(reopened_remote_failed)} remote-failed reopened, "
+        f"{len(escalated_noop)} repeated-noop escalated"
     )
     if args.apply:
         save_limen_file(path, lf)

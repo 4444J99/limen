@@ -223,3 +223,101 @@ def test_recover_defaults_to_local_tasks_yaml(tmp_path, monkeypatch):
     task = load_limen_file(tmp_path / "tasks.yaml").tasks[0]
     assert task.status == "open"
     assert task.target_agent == "codex"
+
+
+def test_recover_reopens_first_noop_failure(tmp_path, monkeypatch):
+    tasks_path = tmp_path / "tasks.yaml"
+    now = dt.datetime.now(dt.timezone.utc)
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
+        tasks=[
+            Task(
+                id="HEAL-cifix-organvm-domus-genoma-172",
+                title="fix domus CI",
+                repo="organvm/domus-genoma",
+                target_agent="codex",
+                status="failed",
+                labels=["noop", "tried:codex"],
+                created=now.date(),
+                dispatch_log=[
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="codex",
+                        session_id="result-lifecycle-guard",
+                        status="failed",
+                        output="No-op result; failed for recovery instead of archived",
+                    )
+                ],
+            )
+        ],
+    )
+    save_limen_file(tasks_path, lf)
+
+    spec = importlib.util.spec_from_file_location("recover_uut_first_noop", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
+
+    assert module.main() == 0
+    task = load_limen_file(tasks_path).tasks[0]
+    assert task.status == "open"
+    assert task.target_agent == "codex"
+    assert task.labels == ["noop"]
+    assert task.dispatch_log[-1].status == "open"
+
+
+def test_recover_escalates_repeated_noop_failures(tmp_path, monkeypatch):
+    tasks_path = tmp_path / "tasks.yaml"
+    now = dt.datetime.now(dt.timezone.utc)
+    lf = LimenFile(
+        portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
+        tasks=[
+            Task(
+                id="HEAL-cifix-organvm-domus-genoma-172",
+                title="fix domus CI",
+                repo="organvm/domus-genoma",
+                target_agent="codex",
+                status="failed",
+                labels=["noop", "tried:codex"],
+                created=now.date(),
+                dispatch_log=[
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="codex",
+                        session_id="result-lifecycle-guard",
+                        status="failed",
+                        output="No-op result; failed for recovery instead of archived",
+                    ),
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id="heal",
+                        status="open",
+                        output="recover: reopened failed -> fresh cascade",
+                    ),
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="codex",
+                        session_id="result-lifecycle-guard",
+                        status="failed",
+                        output="no-op HEAL-cifix-organvm-domus-genoma-172: agent made no changes -- no PR opened",
+                    ),
+                ],
+            )
+        ],
+    )
+    save_limen_file(tasks_path, lf)
+
+    spec = importlib.util.spec_from_file_location("recover_uut_repeated_noop", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
+
+    assert module.main() == 0
+    task = load_limen_file(tasks_path).tasks[0]
+    assert task.status == "needs_human"
+    assert task.target_agent == "codex"
+    assert task.labels == ["noop", "tried:codex"]
+    assert task.dispatch_log[-1].status == "needs_human"
+    assert "repeated no-op failures (2)" in task.dispatch_log[-1].output
+    assert "stop fresh cascade" in task.dispatch_log[-1].output
