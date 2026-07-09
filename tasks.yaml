@@ -106472,16 +106472,17 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#146
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - noop
   - slow
+  - tried:claude
   urls:
   - https://github.com/organvm/session-meta/pull/146
   context: 'PR organvm/session-meta#146 is CONFLICTING with its base branch and merge-drain
@@ -106492,7 +106493,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T22:20:01.158025Z'
+  updated: '2026-07-09T22:23:28.417740Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:47:33.477954Z'
     agent: agy
@@ -106529,6 +106530,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:23:28.417740Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-cifix-organvm-session-meta-148
   title: fix failing CI on organvm/session-meta#148
   repo: organvm/session-meta
@@ -108962,15 +108967,16 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#106
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:claude
   urls:
   - https://github.com/organvm/session-meta/pull/106
   context: 'PR organvm/session-meta#106 is CONFLICTING with its base branch and merge-drain
@@ -108981,7 +108987,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T22:17:58.918891Z'
+  updated: '2026-07-09T22:23:28.417740Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -109003,6 +109009,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:23:28.417740Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-rebase-organvm-session-meta-112
   title: rebase/resolve conflicts on organvm/session-meta#112
   repo: organvm/session-meta
