@@ -6,8 +6,10 @@ This is the hand that was missing at the 08:47 kernel panic: the diagnosis
 ("treat 16 GB as a budget, not a floor") existed; the reaction did not.
 
 macOS ``kern.memorystatus_vm_pressure_level``: 1 = normal, 2 = warn, 4 = critical.
-  * >= warn      -> idle beat (don't open new dispatch lanes; mirrors the #224 offline gate)
-  * >= critical  -> also shed running discretionary load (ollama)
+  * >= warn      -> throttle (dispatch continues at a reduced cap — a 16 GB host lives
+                    at warn under normal load; a full idle beat here starved the fleet
+                    for a night, 2026-07-08: 273 skipped beats with budget unused)
+  * >= critical  -> idle beat + shed running discretionary load (ollama)
 
 Fail-OPEN everywhere: a sensor fault reads as 'normal' and never blocks the beat.
 """
@@ -19,7 +21,8 @@ import subprocess
 from . import params
 
 OK = "ok"
-SHED = "shed"  # >= warn: the heartbeat should make this an idle beat
+THROTTLE = "throttle"  # >= warn: dispatch continues, cap divided by VITALS_THROTTLE_DIVISOR
+SHED = "shed"  # >= critical: the heartbeat should make this an idle beat
 
 # kernel level for "normal" — the fail-open value when the gauge can't be read.
 _NORMAL = 1
@@ -44,9 +47,14 @@ def read_pressure() -> int:
 
 
 def assess(level: int) -> str:
-    """Map a pressure level to an action ('ok' | 'shed')."""
+    """Map a pressure level to an action ('ok' | 'throttle' | 'shed')."""
     warn = params.get("VITALS_PRESSURE_WARN", 2, cast=int)
-    return SHED if level >= warn else OK
+    crit = params.get("VITALS_PRESSURE_CRITICAL", 4, cast=int)
+    if level >= crit:
+        return SHED
+    if level >= warn:
+        return THROTTLE
+    return OK
 
 
 def shed_ollama() -> list[str]:

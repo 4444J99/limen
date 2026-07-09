@@ -63,13 +63,19 @@ parameters:
     env: LIMEN_VITALS_WARN
     self_update: none
     owner: vitals
-    note: "At >=warn (2): stop opening new dispatch lanes (idle beat, mirror #224 offline gate). Seed said 1, but 1 IS normal — that would idle every beat; corrected to the kernel's warn level."
+    note: "At >=warn (2): THROTTLE — dispatch continues with the async cap divided by VITALS_THROTTLE_DIVISOR. A 16GB host lives at warn under normal load; the old skip-at-warn idle beat starved the fleet for a night (2026-07-08: 273 skipped beats, budget unused)."
   VITALS_PRESSURE_CRITICAL:
     default: 4
     env: LIMEN_VITALS_CRIT
     self_update: none
     owner: vitals
-    note: "At >=critical (4): also shed running discretionary load (e.g. ollama) before jetsam escalates."
+    note: "At >=critical (4): idle beat (skip dispatch-heavy work) AND shed running discretionary load (e.g. ollama) before jetsam escalates."
+  VITALS_THROTTLE_DIVISOR:
+    default: 2
+    env: LIMEN_VITALS_THROTTLE_DIVISOR
+    self_update: none
+    owner: vitals
+    note: "Divisor applied to LIMEN_ASYNC_MAX while memory pressure is at warn (floor 1). Graduated backpressure: throttle at warn, idle+shed only at critical."
   VITALS_HEAVY_SURFACE_LIMIT:
     default: 1
     env: LIMEN_VITALS_HEAVY_LIMIT

@@ -256,6 +256,7 @@ while true; do
   c=$(( c + 1 ))
   worked=0
   VITALS_PRESSURE=0
+  VITALS_THROTTLE=0
   echo "──── beat $c $(date '+%F %T') ────"
   MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo paused)"
   if [ "$MODE" = "paused" ]; then
@@ -280,15 +281,19 @@ while true; do
     sleep "$beat"
     continue
   fi
-  # VITALS GATE (VIGILIA build #1) — memory pressure is a NORMAL idle beat, not a crash.
-  # The autonomic CFO: under kernel memory pressure, stop opening new dispatch lanes (and shed
-  # ollama under critical), mirroring the offline gate one scale up. This is the hand that was
-  # missing at the 08:47 kernel panic. Fail-OPEN: any fault → 'ok' → the beat proceeds.
+  # VITALS GATE (VIGILIA build #1) — memory pressure is a NORMAL condition, not a crash.
+  # The autonomic CFO, graduated: at >= warn dispatch CONTINUES at a reduced cap (a 16 GB host
+  # lives at warn under normal load — a full idle beat here starved the fleet for a night,
+  # 2026-07-08: 273 skipped beats with budget unused); only >= critical idles the beat and
+  # sheds ollama. Fail-OPEN: any fault → 'ok' → the beat proceeds.
   if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
     _vitals="$(python3 -m limen.vigilia vitals-gate 2>/dev/null || echo ok)"
     if [ "$_vitals" = "shed" ]; then
-      echo "  vitals: memory pressure ≥ warn — skip dispatch-heavy work; light organs still fire"
+      echo "  vitals: memory pressure ≥ critical — skip dispatch-heavy work; light organs still fire"
       VITALS_PRESSURE=1
+    elif [ "$_vitals" = "throttle" ]; then
+      echo "  vitals: memory pressure ≥ warn — dispatch throttled (cap ÷ ${LIMEN_VITALS_THROTTLE_DIVISOR:-2})"
+      VITALS_THROTTLE=1
     fi
   fi
   EFFECTIVE_LANES="$LANES"
@@ -409,9 +414,14 @@ while true; do
         echo "── vitals-pressure: dispatch skipped; merge/heal/status organs already ran ──"
       else
         _dt0=$SECONDS
+        _async_max="${LIMEN_ASYNC_MAX:-12}"
+        if [ "$VITALS_THROTTLE" = "1" ]; then
+          _async_max=$(( _async_max / ${LIMEN_VITALS_THROTTLE_DIVISOR:-2} ))
+          [ "$_async_max" -lt 1 ] && _async_max=1
+        fi
         if [ "${LIMEN_DISPATCH_ASYNC:-0}" = "1" ]; then
           out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-async.py" --lanes "$DISPATCH_LANES" \
-                  --per-lane "$LOCAL_LIMIT" --max "${LIMEN_ASYNC_MAX:-12}" 2>&1)"; _drc=$?
+                  --per-lane "$LOCAL_LIMIT" --max "$_async_max" 2>&1)"; _drc=$?
         else
           out="$(dispatch_bounded python3 "$LIMEN_ROOT/scripts/dispatch-parallel.py" --lanes "$DISPATCH_LANES" \
                   --per-lane "$LOCAL_LIMIT" --workers "${LIMEN_WORKERS:-8}" 2>&1)"; _drc=$?

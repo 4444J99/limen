@@ -34,9 +34,16 @@ def test_params_caller_default_for_unknown_key():
 
 
 # ---------------------------------------------------------------- vitals
-@pytest.mark.parametrize("level,expected", [(1, vitals.OK), (2, vitals.SHED), (4, vitals.SHED)])
+@pytest.mark.parametrize(
+    "level,expected",
+    [(1, vitals.OK), (2, vitals.THROTTLE), (3, vitals.THROTTLE), (4, vitals.SHED), (5, vitals.SHED)],
+)
 def test_vitals_assess(level, expected, monkeypatch):
-    monkeypatch.setattr(params, "_load_panel", lambda: {"VITALS_PRESSURE_WARN": {"default": 2}})
+    monkeypatch.setattr(
+        params,
+        "_load_panel",
+        lambda: {"VITALS_PRESSURE_WARN": {"default": 2}, "VITALS_PRESSURE_CRITICAL": {"default": 4}},
+    )
     assert vitals.assess(level) == expected
 
 
@@ -64,6 +71,10 @@ def test_vitals_beat_gate_sheds_only_at_critical(monkeypatch):
     monkeypatch.setattr(vitals, "read_pressure", lambda: 1)
     g = vitals.beat_gate(shed=True)
     assert g["action"] == "ok" and g["shed_ollama"] == [] and not shed_calls
+
+    monkeypatch.setattr(vitals, "read_pressure", lambda: 2)
+    g = vitals.beat_gate(shed=True)
+    assert g["action"] == "throttle" and g["shed_ollama"] == [] and not shed_calls
 
     monkeypatch.setattr(vitals, "read_pressure", lambda: 4)
     g = vitals.beat_gate(shed=True)
