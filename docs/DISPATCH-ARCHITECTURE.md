@@ -20,14 +20,18 @@ the throughput ceiling ("900s gates every beat"). Safe + simple; one process own
 
 ### ASYNC (opt-in, `LIMEN_DISPATCH_ASYNC=1`) — `scripts/dispatch-async.py` + `scripts/async-run-one.py`
 Decouples agent runtime from the beat. Each beat: **reap** dead workers → **harvest** finished
-results → **reserve + launch** detached workers up to a global cap, then **return immediately**.
+results → **reserve + launch** detached workers up to a local host slot cap, then **return
+immediately**.
 - `async-run-one.py` (detached worker): runs ONE task's `call_agent_dispatch` and writes
   `logs/async-runs/<id>.result.json`; never touches tasks.yaml.
 - `dispatch-async.py` (orchestrator): harvest applies results under the queue-lock; reserve marks
   dispatched + writes a `<id>__<agent>.running` marker + `Popen(start_new_session)` the worker.
-- Concurrency = `LIMEN_ASYNC_MAX` (12); per-agent in-flight counted from `__<agent>.running`
-  markers so budgets hold between reserve & harvest; `reap_stale` (LIMEN_ASYNC_MAX_AGE=1200s)
-  reopens tasks whose worker died without a result (no leaked slots).
+- Local concurrency = `LIMEN_ASYNC_MAX` (12); local fan-out per lane =
+  `LIMEN_ASYNC_LOCAL_PER_LANE` / `--local-per-lane`. Remote lanes such as Jules are not local CPU
+  workers: their burst size comes from `--per-lane` plus live provider runway in `logs/usage.json`,
+  and they do not consume the local host slot cap. Per-agent in-flight is counted from
+  `__<agent>.running` markers so reservations hold between reserve & harvest; `reap_stale`
+  (LIMEN_ASYNC_MAX_AGE=1200s) reopens tasks whose worker died without a result (no leaked slots).
 - Beats stay fast; a slow/stuck agent can't gate the beat. CI-tested in `cli/tests/test_async_dispatch.py`.
 - TO ACTIVATE: set `LIMEN_DISPATCH_ASYNC=1` in the plist + restart **between beats** (no in-flight
   dispatch, else reserved tasks strand as phantoms). Left OFF until a focused, monitored switch.

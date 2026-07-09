@@ -305,6 +305,42 @@ def test_async_remote_lane_is_bounded_by_live_usage_remaining(tmp_path):
     assert [task_id for _, task_id in picked] == [f"JT{i}" for i in range(6)]
 
 
+def test_remote_burst_does_not_expand_local_lane_room(tmp_path):
+    """A Jules burst is provider-runway work, not local CPU work. When remote and local lanes share
+    one command, the remote --per-lane value must not become the OpenCode/Agy local fan-out size."""
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"jules": 100, "opencode": 100}
+    lf.tasks = [
+        *[
+            Task(id=f"JT{i}", title="remote", repo="x/y", target_agent="jules", status="open", created=today)
+            for i in range(10)
+        ],
+        *[
+            Task(id=f"OT{i}", title="local", repo="x/y", target_agent="opencode", status="open", created=today)
+            for i in range(10)
+        ],
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir(exist_ok=True)
+    (tmp_path / "logs" / "usage.json").write_text(
+        json.dumps({"vendors": {"jules": {"remaining": 10, "possible": 100, "health": "ok"}}}),
+        encoding="utf-8",
+    )
+
+    picked = da.reserve_and_launch(
+        ["jules", "opencode"],
+        per_agent=10,
+        cap=4,
+        dry=True,
+        local_per_agent=2,
+    )
+
+    assert [task_id for agent, task_id in picked if agent == "jules"] == [f"JT{i}" for i in range(10)]
+    assert [task_id for agent, task_id in picked if agent == "opencode"] == ["OT0", "OT1"]
+
+
 def test_local_lane_still_bounded_by_cap_after_async_carveout(tmp_path):
     """The carve-out is remote-only: a jules run in flight must NOT free a slot for local lanes, and a
     local lane is still hard-capped by the concurrency budget (no over-dispatch of the host)."""
@@ -317,6 +353,23 @@ def test_local_lane_still_bounded_by_cap_after_async_carveout(tmp_path):
     picked = da.reserve_and_launch(["codex"], per_agent=8, cap=4, dry=True)
 
     assert picked == [], f"local lane over-dispatched past the cap: {picked}"
+
+
+def test_remote_lane_can_launch_when_local_cap_is_zero(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"jules": 100}
+    lf.tasks = [Task(id="JT", title="remote", repo="x/y", target_agent="jules", status="open", created=today)]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    (tmp_path / "logs").mkdir(exist_ok=True)
+    (tmp_path / "logs" / "usage.json").write_text(
+        json.dumps({"vendors": {"jules": {"remaining": 1, "possible": 100, "health": "ok"}}}),
+        encoding="utf-8",
+    )
+
+    assert da.should_reserve(per_agent=1, cap=0)
+    assert da.reserve_and_launch(["jules"], per_agent=1, cap=0, dry=True) == [("jules", "JT")]
 
 
 def test_default_max_age_exceeds_lane_timeout(tmp_path, monkeypatch):
@@ -923,9 +976,9 @@ def test_reaper_restores_markerless_prior_pr_open_instead_of_reopening(tmp_path)
     assert task.dispatch_log[-1].session_id == "async-reap-stale"
 
 
-def test_async_reserve_counts_inflight_against_budget(tmp_path):
-    """In-flight .running markers count toward a lane's per-agent budget, so a lane already at its
-    cap via in-flight runs reserves nothing more (prevents over-dispatch between reserve & harvest)."""
+def test_async_reserve_counts_inflight_against_launch_room(tmp_path):
+    """In-flight .running markers count toward the invocation's lane launch room, so a lane already
+    at that room reserves nothing more."""
     import datetime
 
     da = _load(tmp_path, n_open=6, agent="codex")
@@ -936,22 +989,22 @@ def test_async_reserve_counts_inflight_against_budget(tmp_path):
     # 2 codex runs already in-flight (markers) → at cap
     for i in range(2):
         (da.RUNS / f"INF{i}__codex.running").write_text(datetime.datetime.now(datetime.timezone.utc).isoformat())
-    picked = da.reserve_and_launch(["codex"], per_agent=8, cap=20, dry=True)
-    assert picked == [], f"over-dispatched past in-flight budget: {picked}"
+    picked = da.reserve_and_launch(["codex"], per_agent=2, cap=20, dry=True)
+    assert picked == [], f"over-dispatched past in-flight launch room: {picked}"
 
 
-def test_async_reserve_accumulates_picked_cost_against_agent_budget(tmp_path):
+def test_async_reserve_accumulates_picks_against_launch_room(tmp_path):
     da = _load(tmp_path, n_open=6, agent="codex")
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.portal.budget.per_agent = {"codex": 2}
     save_limen_file(tmp_path / "tasks.yaml", lf)
 
-    picked = da.reserve_and_launch(["codex"], per_agent=8, cap=20, dry=True)
+    picked = da.reserve_and_launch(["codex"], per_agent=2, cap=20, dry=True)
 
     assert picked == [("codex", "T0"), ("codex", "T1")]
 
 
-def test_async_reserve_accumulates_picked_cost_against_daily_budget(tmp_path):
+def test_async_reserve_does_not_use_stale_daily_board_cap(tmp_path):
     da = _load(tmp_path, n_open=0)
     today = datetime.date.today()
     lf = load_limen_file(tmp_path / "tasks.yaml")
@@ -966,7 +1019,7 @@ def test_async_reserve_accumulates_picked_cost_against_daily_budget(tmp_path):
 
     picked = da.reserve_and_launch(["codex", "agy"], per_agent=8, cap=20, dry=True)
 
-    assert picked == [("codex", "C0"), ("agy", "A0")]
+    assert picked == [("codex", "C0"), ("agy", "A0"), ("codex", "C1")]
 
 
 def test_async_reserve_round_robins_local_slots_across_lanes(tmp_path):

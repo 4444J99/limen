@@ -5,17 +5,18 @@ for "the slowest of N agents gates the whole beat / 900s gates every beat").
 Each beat this does TWO fast, non-blocking things:
   (1) HARVEST — apply any finished background runs (logs/async-runs/*.result.json) to tasks.yaml
       under the queue-lock (reload-fresh + _apply_result, same as the sync commit).
-  (2) RESERVE + LAUNCH — pick open tasks per lane within budget + a GLOBAL CONCURRENCY CAP, mark
+  (2) RESERVE + LAUNCH — pick open tasks per lane within live runway + a LOCAL host slot cap, mark
       them dispatched, then SPAWN detached async-run-one workers and RETURN IMMEDIATELY.
 
 Agents run in the background; their results land on a later beat. Beats stay fast regardless of how
 slow any single agent is. Opt-in: the heartbeat calls this instead of dispatch-parallel.py when
 LIMEN_DISPATCH_ASYNC=1. The synchronous dispatch-parallel.py is left completely unchanged.
 
-Concurrency: at most LIMEN_ASYNC_MAX (default 12) background runs at once; per-agent in-flight count
-is tracked via <task-id>__<agent>.running markers so budgets aren't blown between reserve & harvest.
+Concurrency: at most LIMEN_ASYNC_MAX (default 12) LOCAL background runs at once; remote lanes such as
+Jules are bounded by provider runway, not host slots. Per-agent in-flight count is tracked via
+<task-id>__<agent>.running markers so budgets aren't blown between reserve & harvest.
 
-Usage: dispatch-async.py --lanes auto --per-lane 8 --max 12 [--task-id TASK] [--dry-run]
+Usage: dispatch-async.py --lanes auto --per-lane 8 --local-per-lane 3 --max 12 [--task-id TASK] [--dry-run]
 """
 
 import argparse
@@ -584,6 +585,9 @@ def _usage_remaining_by_agent(usage: dict[str, dict[str, object]]) -> dict[str, 
     """
     remaining: dict[str, int] = {}
     for agent, info in usage.items():
+        if info.get("health") == "rate-limited" or info.get("recent_rate_limit"):
+            remaining[str(agent)] = 0
+            continue
         if "remaining" not in info:
             continue
         try:
@@ -598,36 +602,54 @@ def _weak_proxy_agents(usage: dict[str, dict[str, object]]) -> set[str]:
     return {agent for agent, info in usage.items() if _weak_proxy_exhaustion(agent, info)}
 
 
-def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents, task_id=None):
+def _effectively_unbounded_remaining(lf) -> int:
+    """Enough budget units to let scheduler knobs, not the stale board cap, bound this beat."""
+    total = 0
+    for task in getattr(lf, "tasks", []) or []:
+        if _dispatchable(task):
+            total += int(getattr(task, "budget_cost", 1) or 1)
+    return max(total, 1)
+
+
+def _pick_reservations(
+    lf,
+    agents,
+    per_agent,
+    cap,
+    dry,
+    now,
+    usage_remaining,
+    weak_proxy_agents,
+    task_id=None,
+    local_per_agent=None,
+):
     picked = []
     picked_ids = set(_claimed_task_ids())
     reset_changed = _reset_budget_if_needed(lf, now)
     track = lf.portal.budget.track
-    daily = lf.portal.budget.daily
+    unbounded_remaining = _effectively_unbounded_remaining(lf)
     value_repos = _value_tier_repos()
     disk_pressure = _disk_pressure_active()
     # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
     # separately below (see _running_local).
     slots = max(0, cap - _running_local())
-    spent = track.spent
     id2 = {t.id: t for t in lf.tasks}  # for dependency resolution
     states = []
     for agent in agents:
         is_async = agent in _ASYNC_LANES  # remote lane (jules, ...) — off-box, not gated by the local cap
         running_for_agent = _running_for(agent)
-        launch_room = max(0, per_agent - running_for_agent)
+        lane_per_agent = per_agent if is_async else min(per_agent, local_per_agent or per_agent)
+        launch_room = max(0, lane_per_agent - running_for_agent)
         if launch_room <= 0:
             continue
-        capa = lf.portal.budget.per_agent.get(agent)
-        aspent = track.per_agent.get(agent, 0) + running_for_agent  # count in-flight vs budget
+        # Board counters are a reservation ledger, not the physical provider ceiling. The only hard
+        # launch ceiling here is live usage headroom when a real meter exists. Weak proxy rows such
+        # as Agy's dispatch-count estimate are pacing signals only, so they must not cap work.
         if agent in weak_proxy_agents:
             agent_rem = None
         else:
-            agent_rem = None if capa is None else max(0, capa - aspent)
-        live_rem = usage_remaining.get(agent) if is_async else None
-        if live_rem is not None:
-            agent_rem = live_rem if agent_rem is None else min(agent_rem, live_rem)
-        rem = daily - spent if agent_rem is None else max(0, min(daily - spent, agent_rem))
+            agent_rem = usage_remaining.get(agent)
+        rem = unbounded_remaining if agent_rem is None else max(0, agent_rem)
         if rem <= 0:
             continue
         cands = [
@@ -659,13 +681,11 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
         for state in states:
             if state["taken"] >= state["launch_room"]:
                 continue
-            if daily - spent <= 0:
-                continue
             if not state["is_async"] and slots <= 0:
                 continue  # local slot budget spent — but a later async lane may still launch off-box
 
             agent_rem = state["agent_rem"]
-            rem = daily - spent if agent_rem is None else max(0, min(daily - spent, agent_rem))
+            rem = unbounded_remaining if agent_rem is None else max(0, agent_rem)
             if rem <= 0:
                 continue
 
@@ -688,9 +708,8 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
             picked_ids.add(t.id)
             if agent_rem is not None:
                 state["agent_rem"] = max(0, agent_rem - t.budget_cost)
-            spent += t.budget_cost
             if not dry:
-                track.spent = spent
+                track.spent += t.budget_cost
                 track.per_agent[agent] = track.per_agent.get(agent, 0) + t.budget_cost
                 t.status = "dispatched"
                 t.updated = now
@@ -712,7 +731,16 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
     return picked, reset_changed
 
 
-def reserve_and_launch(agents, per_agent, cap, dry, task_id=None, *, admission_checked: bool = False):
+def reserve_and_launch(
+    agents,
+    per_agent,
+    cap,
+    dry,
+    task_id=None,
+    *,
+    admission_checked: bool = False,
+    local_per_agent=None,
+):
     """Reserve open tasks (under lock) up to the concurrency cap + per-agent budget, then spawn
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
     if should_reserve(per_agent, cap) and not admission_checked:
@@ -730,7 +758,16 @@ def reserve_and_launch(agents, per_agent, cap, dry, task_id=None, *, admission_c
     if dry:
         lf = load_limen_file(TASKS)
         picked, _reset_changed = _pick_reservations(
-            lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents, task_id=task_id
+            lf,
+            agents,
+            per_agent,
+            cap,
+            dry,
+            now,
+            usage_remaining,
+            weak_proxy_agents,
+            task_id=task_id,
+            local_per_agent=local_per_agent,
         )
         return picked
     with _queue_lock(TASKS) as got:
@@ -741,7 +778,16 @@ def reserve_and_launch(agents, per_agent, cap, dry, task_id=None, *, admission_c
             return []
         lf = load_limen_file(TASKS)
         picked, reset_changed = _pick_reservations(
-            lf, agents, per_agent, cap, dry, now, usage_remaining, weak_proxy_agents, task_id=task_id
+            lf,
+            agents,
+            per_agent,
+            cap,
+            dry,
+            now,
+            usage_remaining,
+            weak_proxy_agents,
+            task_id=task_id,
+            local_per_agent=local_per_agent,
         )
         if not dry and (picked or reset_changed):
             save_limen_file(TASKS, lf)
@@ -767,9 +813,10 @@ def should_reserve(per_agent: int, cap: int) -> bool:
 
     Closeout and harvest-only probes deliberately call ``--per-lane 0 --max 0``. Those passes must
     not run pre-dispatch writers such as always-working; otherwise a read-mostly harvest check
-    dirties the live root without launching anything.
+    dirties the live root without launching anything. ``--max 0`` alone means "no local host slots";
+    it must not suppress remote-only lanes such as Jules.
     """
-    return per_agent > 0 and cap > 0
+    return per_agent > 0
 
 
 def resolve_lanes(selector: str, down: set[str]) -> list[str]:
@@ -790,7 +837,20 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--lanes", default="auto")
     ap.add_argument("--per-lane", type=int, default=max(1, _env_int("LIMEN_LOCAL_LIMIT", 8)))
-    ap.add_argument("--max", type=int, default=max(1, _env_int("LIMEN_ASYNC_MAX", 12)))
+    ap.add_argument(
+        "--local-per-lane",
+        type=int,
+        default=max(0, _env_int("LIMEN_ASYNC_LOCAL_PER_LANE", _env_int("LIMEN_LOCAL_LIMIT", 8))),
+        help="Per-lane launch room for local host lanes; remote lanes use --per-lane.",
+    )
+    ap.add_argument(
+        "--max",
+        "--local-max",
+        dest="max",
+        type=int,
+        default=max(0, _env_int("LIMEN_ASYNC_MAX", 12)),
+        help="Local host slot ceiling. Remote lanes such as Jules do not consume it.",
+    )
     ap.add_argument("--task-id", help="Reserve and launch only this task id")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
@@ -815,7 +875,15 @@ def main() -> int:
             print_dispatch_admission_block("async", admission)
     if should_reserve(a.per_lane, a.max) and reserve_allowed:
         launched = (
-            reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run, task_id=a.task_id, admission_checked=True)
+            reserve_and_launch(
+                lanes,
+                a.per_lane,
+                a.max,
+                a.dry_run,
+                task_id=a.task_id,
+                admission_checked=True,
+                local_per_agent=a.local_per_lane,
+            )
             if should_reserve(a.per_lane, a.max)
             else []
         )
@@ -824,7 +892,8 @@ def main() -> int:
     verb = "would launch" if a.dry_run else "launched"
     print(
         f"── async: reaped {len(reaped)} dead · harvested {applied} · {running} still running · "
-        f"{verb} {len(launched)} (cap {a.max}) → {[t for _, t in launched]}"
+        f"{verb} {len(launched)} (local cap {a.max}, local per-lane {a.local_per_lane}) → "
+        f"{[t for _, t in launched]}"
     )
     return 0
 
