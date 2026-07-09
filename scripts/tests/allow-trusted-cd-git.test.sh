@@ -11,7 +11,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 HOOK="$ROOT/scripts/hooks/allow-trusted-cd-git.sh"
 
 # ── Hermetic scaffold ─────────────────────────────────────────────────────────
-export HOME="$(mktemp -d)"
+# Root the fake $HOME under the REAL home, never bare `mktemp -d`: GNU/Linux mktemp
+# defaults to /tmp, which the hook (correctly) treats as disposable — so a primary-
+# checkout fixture at /tmp/.../Workspace/limen would inherit /tmp trust and every
+# "destructive op must fall through" case would wrongly be allowed (green on macOS,
+# whose mktemp uses /var/folders; red in CI). A non-/tmp base keeps the matrix honest.
+export HOME="$(mktemp -d "${HOME%/}/.hooktest.XXXXXX")"
 export TMPDIR="/tmp/hooktest.$$"
 unset CLAUDE_JOB_DIR CLAUDE_PROJECT_DIR UNSET_VAR 2>/dev/null || true
 
