@@ -65,8 +65,10 @@ KINDS = {
             "PR {repo}#{num} has FAILING CI checks and merge-drain correctly refuses to merge "
             "it. Check out the PR branch, find the root cause of the red checks (lint / types / "
             "failing test / config), fix it, push to the SAME PR branch, and confirm every check "
-            "goes green. Do not open a new PR — repair the existing one so merge-drain lands it. "
-            "PR: {url}"
+            "goes green. If the branch ALSO rolls back base content its title/body never declared "
+            "(a poisoned/stale generated tree), restore base's side of those paths rather than "
+            "repairing on top of a rollback. Do not open a new PR — repair the existing one so "
+            "merge-drain lands it. PR: {url}"
         ),
     },
     "CONFLICT": {
@@ -76,10 +78,16 @@ KINDS = {
         "title": "rebase/resolve conflicts on {repo}#{num}",
         "context": (
             "PR {repo}#{num} is CONFLICTING with its base branch and merge-drain correctly "
-            "refuses to merge it. Check out the PR branch, rebase it onto the current base (or "
-            "merge base in), resolve every conflict preserving the PR's intent, push to the SAME "
-            "PR branch, and confirm it reports MERGEABLE with green CI. Do not open a new PR. "
-            "PR: {url}"
+            "refuses to merge it. FIRST check the PR's ORIGINAL diff (merge-base..head) against "
+            "its declared title/body intent: a branch generated from a broken tree can carry mass "
+            "deletions it never declared, and branch-side deletions the declaration does not name "
+            "are POISON to restore from base, never intent to preserve (session-meta#148 ate "
+            "ingest/ + 3 test suites this way). Then check out the PR branch, rebase it onto the "
+            "current base (or merge base in), resolve every conflict preserving the PR's declared "
+            "intent, push to the SAME PR branch, and confirm it reports MERGEABLE with green CI. "
+            "After resolving, verify diff-vs-base matches the declared intent; if nothing genuine "
+            "survives (all absorbed or superseded on base), close the PR as superseded instead of "
+            "pushing. Do not open a new PR. PR: {url}"
         ),
     },
     # STALE-BASE family — the #111 guard. A mergeable+green PR off an OLD base would silently REVERT
