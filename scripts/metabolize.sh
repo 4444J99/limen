@@ -181,6 +181,16 @@ if [ "${LIMEN_ROUTINE_FRESHNESS:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/routine-freshness-audit.py" --throttle 21600 || echo "  (routine freshness skipped)"
 fi
 
+echo "── 0j. session walk — full-horizon census of BOTH vendor session estates ──"
+# QUICKEN breathes the recent stalled tail (3-day horizon); this organ answers the whole
+# question "has EVERY session been walked from first prompt to implementation?" across
+# ~/.claude/projects AND ~/.codex/sessions, all projects, all time. Unwalked user sessions
+# land in logs/session-walk-residue.md with resume pointers, and --walk drains a bounded
+# few per beat (journaled; 2-strike give-up). Fail-open, never fatal.
+if [ "${LIMEN_SESSION_WALK:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/session-walk-census.py" --walk "${LIMEN_SESSION_WALK_CAP:-2}" || echo "  (session walk skipped)"
+fi
+
 echo "── 1. drain (close completed Jules) ──"
 bash "$LIMEN_ROOT/scripts/drain.sh" || echo "  (drain skipped/failed — continuing)"
 

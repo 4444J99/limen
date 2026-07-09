@@ -1907,3 +1907,35 @@ parameters:
     self_update: none
     owner: continuity
     note: "overnight-watch.py: lookback window in hours for its value-gate check on overnight sessions — the overnight sibling of LIMEN_VALUE_GATE_HOURS."
+
+  # --- session-walk organ (full-horizon walk census, both vendors) --------------
+  LIMEN_SESSION_WALK:
+    default: "1"               # ON — census + bounded residue walk each beat
+    env: LIMEN_SESSION_WALK
+    self_update: none
+    owner: continuity
+    note: "Beat gate for the session-walk organ (scripts/session-walk-census.py, metabolize step 0j): full-horizon census of BOTH vendor session estates (~/.claude/projects and ~/.codex/sessions), classifying every session walked/needs_input/mid_flight/dispatch/empty and self-draining the unwalked user residue a bounded few per beat via headless resume with the QUICKEN guardrail prompt. QUICKEN owns the recent stalled tail (3-day horizon); this organ owns the whole-estate completeness question. 1=census+walk each beat; 0=off."
+  LIMEN_SESSION_WALK_CAP:
+    default: 2
+    env: LIMEN_SESSION_WALK_CAP
+    self_update: none
+    owner: continuity
+    note: "How many residue sessions the beat resumes per cycle (--walk N). Small by design: each walk is a full headless agent run; 2/beat drains a 100-session backlog in under a day without starving the beat."
+  LIMEN_SESSION_WALK_GIVE_UP:
+    default: 2
+    env: LIMEN_SESSION_WALK_GIVE_UP
+    self_update: none
+    owner: continuity
+    note: "Walk attempts per session before the organ stops resuming it (the QUICKEN escalate-after-2 precedent: an identical re-walk of a session parked on a gated lever is waste). A given-up session stays visible in logs/session-walk-residue.md."
+  LIMEN_SESSION_WALK_TIMEOUT:
+    default: 900
+    env: LIMEN_SESSION_WALK_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Seconds each headless walk (claude --resume / codex exec resume) may run before the organ moves on. Mirrors LIMEN_QUICKEN_BREATHE_TIMEOUT."
+  LIMEN_WALK_RESIDUE_CAP:
+    default: 500
+    env: LIMEN_WALK_RESIDUE_CAP
+    self_update: none
+    owner: continuity
+    note: "Maximum residue rows retained in the census artifact and ledger (newest first). A cap, not a filter — raise it if the estate ever carries more unwalked sessions than this."

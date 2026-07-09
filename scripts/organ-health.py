@@ -317,6 +317,12 @@ def _registry():
              gate="LIMEN_ROUTINE_FRESHNESS", gate_default="1",
              what="cloud-routine delivery freshness (13 routines; firing must equal delivering)",
              probe=lambda: _json_field_ts(LOGS / "routine-freshness.json", "generated")),
+        # no cadence_key: session-walk-census runs inside metabolize.sh step 0j; green when its
+        # per-beat census stamp is fresh.
+        dict(key="session-walk", voice="session-walk",
+             gate="LIMEN_SESSION_WALK", gate_default="1",
+             what="full-horizon walk census of BOTH vendor session estates (residue self-drains)",
+             probe=lambda: _json_field_ts(LOGS / "session-walk-census.json", "generated")),
     ]
 
 
