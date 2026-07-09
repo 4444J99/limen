@@ -370,6 +370,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Timeout in seconds for the opt-in lifecycle pytest tranche in closeout-fast."
+  LIMEN_VERIFY_LOCK_FILE:
+    default: "${TMPDIR:-/tmp}/limen-verify-whole.lock"
+    env: LIMEN_VERIFY_LOCK_FILE
+    self_update: none
+    owner: continuity
+    note: "Machine-wide lock file serializing verify-whole.sh runs so parallel sessions queue instead of stampeding the host with concurrent npm installs, workerd boots, and production builds."
+  LIMEN_VERIFY_NO_LOCK:
+    default: "0"
+    env: LIMEN_VERIFY_NO_LOCK
+    self_update: none
+    owner: continuity
+    note: "Opt-out of the verify-whole.sh machine-wide lock for single-purpose runners (CI), where serialization is already guaranteed by the runner itself."
   LIMEN_RECLAIM_GENERATED:
     default: "1"
     env: LIMEN_RECLAIM_GENERATED

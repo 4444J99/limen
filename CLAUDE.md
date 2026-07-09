@@ -81,7 +81,7 @@ When asked to define "done" or a "goal", deliver an **executable predicate** —
 - **Write the predicate first.** Before doing the work, author a `done.sh` (or a test) that checks every concrete completion criterion: tests pass, build green, no dangling items, each owner records its own remaining work. Commit it (durable predicates only — not one-off throwaways; see [Edits Policy](#edits-policy)).
 - **It must be self-verifying, runnable, and idempotent.** Exit `0` ⟺ done.
 - **Do not claim completion — or write any closeout — until it exits 0.** Run it and summarize the output as proof. If it fails, keep iterating until it passes. If a higher-priority harness rule prevents running it, report the blocker rather than claiming verified completion.
-- For whole-system "done" in this repo, the predicate is already shipped: **`scripts/verify-whole.sh`** (lint → compile → contracts → `pytest web/api/tests cli/tests -q` → runtime/worker probes → dashboard build → `git diff --check`; prints `Whole-system verification passed`). A task-level `done.sh` should call it or a scoped subset — don't reinvent it.
+- For whole-system "done" in this repo, the predicate is already shipped: **`scripts/verify-whole.sh`** (lint → compile → contracts → `pytest web/api/tests cli/tests -q` → runtime/worker probes → dashboard build → `git diff --check`; prints `Whole-system verification passed`). A task-level `done.sh` should call it or a scoped subset — `scripts/verify-scoped.sh` is the shipped scoped subset; don't reinvent either.
 
 ## Engage the Real Problem First
 
@@ -144,7 +144,13 @@ For any search or recon whose scope spans multiple domains, **fan out parallel r
 
 ## Worktree Isolation & CI Gate Matrix
 
-Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.md` for the swarm protocol). Then run the **full local gate matrix** before pushing:
+Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.md` for the swarm protocol). Then verify before pushing — **scoped to the diff, never the whole world by default**:
+
+- **`scripts/verify-scoped.sh` is the default push gate.** It maps the changed paths (branch diff vs `origin/main` plus uncommitted/untracked work) to only the gates they implicate, runs those, and names every gate it skipped. A docs append must never pay for a Next.js build, a wrangler boot, and 1,200+ tests.
+- **The full matrix below is a pre-merge event, not a per-session tax.** Run it — or let CI run it — only when the diff touches deploy-trigger paths (the website guardrail `merge-policy.sh` enforces at merge time), when scoping cannot attribute the change, or on explicit request.
+- **`verify-whole.sh` is machine-serialized** via a lock file (`LIMEN_VERIFY_LOCK_FILE`; opt-out `LIMEN_VERIFY_NO_LOCK=1` for single-purpose CI runners): concurrent runs from parallel sessions wait instead of stampeding the host with simultaneous npm installs, workerd boots, and production builds.
+
+The full matrix, for when it *is* implicated:
 
 | Gate | Command |
 |------|---------|
@@ -158,9 +164,9 @@ Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.m
 | Build | `npm run build` (in `web/app`) |
 | Whole-system | `scripts/verify-whole.sh` |
 
-- For each failure, **fix root-to-leaf and re-run the full matrix** — loop until every gate passes end-to-end. Do not chase one gate green while another regresses.
+- For each failure, **fix root-to-leaf and re-run the implicated gates** — loop until they pass end-to-end (the full matrix only when the diff implicates it). Do not chase one gate green while another regresses.
 - **Surface masked failures from dependency bumps** — a green that only passes because a check was skipped or a dependency silently changed behavior.
-- **Only after every gate is green locally**, push and open the PR, pasting the full green run as proof. **Then merge it yourself** the moment `scripts/merge-policy.sh <PR#>` exits `0` (CLEARED) — that predicate enforces the website guardrail; never merge on a HOLD/BLOCKED. See [Merge & Branch Protocol](#merge--branch-protocol).
+- **Only after the implicated gates are green locally**, push and open the PR, pasting the green run as proof. **Then merge it yourself** the moment `scripts/merge-policy.sh <PR#>` exits `0` (CLEARED) — that predicate enforces the website guardrail; never merge on a HOLD/BLOCKED. See [Merge & Branch Protocol](#merge--branch-protocol).
 
 ## Standing Autonomy & Compliant Gate Reroute
 

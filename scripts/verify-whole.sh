@@ -6,6 +6,22 @@ AMBIENT_PYTHONPATH="${PYTHONPATH:-}"
 PYTHONPATH_VALUE="$ROOT/cli/src${AMBIENT_PYTHONPATH:+:$AMBIENT_PYTHONPATH}"
 export PYTHONPATH="$PYTHONPATH_VALUE"
 
+# Machine-wide serialization. One run boots uvicorn AND wrangler-dev (workerd), runs npm
+# installs, the full pytest suite, a MONETA vitest+tsc pass, and a Next.js production
+# build — N concurrent runs from parallel sessions/worktrees exhaust the host. Waiting on
+# the lock is strictly cheaper than thrashing. LIMEN_VERIFY_NO_LOCK=1 opts out (CI runners
+# are single-purpose and already serialized).
+if [[ "${LIMEN_VERIFY_NO_LOCK:-0}" != "1" ]]; then
+  VERIFY_LOCK_FILE="${LIMEN_VERIFY_LOCK_FILE:-${TMPDIR:-/tmp}/limen-verify-whole.lock}"
+  exec 9>"$VERIFY_LOCK_FILE"
+  # flock(2) on fd 9: the lock lives on the open file description this shell holds, so it
+  # is held for the life of the script and released on any exit, crash included.
+  if ! python3 -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)' 2>/dev/null; then
+    printf 'Another verify-whole run holds %s — waiting for it to finish…\n' "$VERIFY_LOCK_FILE"
+    python3 -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX)'
+  fi
+fi
+
 step() {
   printf '\n==> %s\n' "$*"
 }
