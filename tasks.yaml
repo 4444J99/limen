@@ -117646,3 +117646,84 @@ tasks:
   created: '2026-07-09'
   updated: '2026-07-09T13:00:48.200209Z'
   dispatch_log: []
+- id: GH-organvm-limen-817
+  title: Fable = plan-only + runtime cap + utilization vendor verdict
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/817
+  context: "GitHub issue organvm/limen#817. ## Problem The weekly **Fable** allotment\
+    \ (reserved top tier, ~111\xD7 Opus/token) burned to **100% in ~1 day** (~\\$1,964,\
+    \ 1.1B tokens week-to-date) with **no runtime gate**. Root causes: - Interactive\
+    \ Claude Code sessions bypass the fleet model shim and used the account default\
+    \ (Fable); subagent fan-out inherits the session model. - The 40%/50% caps in\
+    \ `docs/fable-allotment.md` were checked only aga"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:41:49.790055Z'
+  dispatch_log: []
+- id: ORG-sovereignty-organ-deepen-0709
+  title: Deepen the sovereignty organ toward a usable institution
+  repo: organvm/manumissio
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-deepen
+  - pillar:sovereignty
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/manumissio organs/sovereignty/ (and reference its product repo\
+    \ where relevant), close the single highest-leverage gap between the current scaffold\
+    \ and something a real person could RELY ON for sovereignty. Ship weights/MANIFEST.json\
+    \ with the first digest-verified holding + the parity gate passing 8/8 on mechanical\
+    \ classes (both shipped 2026-07-09) if not yet done, else the next gap. One focused\
+    \ PR. CONSTRAINT: FIRST standalone-repo organ (organvm/manumissio, 3 PRs + 13\
+    \ seeded issues + founding discussion at birth). limen keeps the operator's private\
+    \ data (organs/financial/*); the repo publishes the engine. Private pending explicit\
+    \ public flip (operator's call).. [organ-backlog 2026-07-09: rank 13, maturity\
+    \ 35% stage building \u2014 convert idle fleet capacity into institutional weight\
+    \ (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:43:05.656824Z'
+  dispatch_log: []
+- id: ORG-sovereignty-organ-selffeed-0709
+  title: Wire the sovereignty organ to advance autonomously
+  repo: organvm/manumissio
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-selffeed
+  - pillar:sovereignty
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "Make the sovereignty organ self-feeding like the revenue/studium voices:\
+    \ bump its maturity in organ-ladder.json as slices land, and add/extend a beat\
+    \ or generator hook so the conductor keeps driving it without a human in the loop.\
+    \ Keep it lockless + idempotent. CONSTRAINT: FIRST standalone-repo organ (organvm/manumissio,\
+    \ 3 PRs + 13 seeded issues + founding discussion at birth). limen keeps the operator's\
+    \ private data (organs/financial/*); the repo publishes the engine. Private pending\
+    \ explicit public flip (operator's call).. [organ-backlog 2026-07-09: rank 13,\
+    \ maturity 35% stage building \u2014 convert idle fleet capacity into institutional\
+    \ weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:43:05.661563Z'
+  dispatch_log: []
