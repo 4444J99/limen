@@ -82,6 +82,9 @@ bash scripts/tests/verify-resolver.test.sh
 step "Verify the enactment predicate (declared-ON fleet flags are actually wired live, not just merged)"
 bash scripts/tests/enactment-audit.test.sh
 
+step "Verify the sync-release unpark valve preserves parked dirt to origin before resting on release"
+bash scripts/tests/sync-release.test.sh
+
 step "Verify the armed-valve predicate (parked levers vs silently-off valves)"
 bash scripts/tests/armed-valve-audit.test.sh
 # The registry-completeness rung is the code contract (repo-deterministic — no env or

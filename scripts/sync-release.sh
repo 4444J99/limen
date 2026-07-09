@@ -111,24 +111,36 @@ REMOTE="$(git rev-parse "origin/$BRANCH" 2>/dev/null || echo)"
 # ── UNPARK valve — the live checkout must REST ON THE RELEASE BRANCH. A session that leaves HEAD
 # parked on a work branch strands the daemon on stale code with no way home (observed
 # 2026-06-29 → 07-04: five days pinned to a jules-capfill branch, 65 behind release, every
-# autonomic capture entangling runtime state into that branch). Unparking is loss-free ⟺ BOTH:
-#   • every committed local commit is already safe on origin's copy of the branch
-#     (tip == origin/<cur> after a freshen), AND
-#   • no tracked modification beyond the daemon-owned live queue (tasks.yaml — preserved across
-#     the switch; capture.sh commits+pushes any other dirt onto the branch on its own beat, after
-#     which THIS valve fires — so a parked-dirty checkout self-heals within two beats).
-# Anything less provable fails open LOUDLY with the cheapest path. Detached HEAD is left alone.
+# autonomic capture entangling runtime state into that branch — because the valve fail-opened on
+# dirt and merely HOPED capture.sh would land it "next beat"; for five days nothing did).
+# PRESERVE-THEN-UNPARK (the operator's standing rule: nothing is abandoned that is not first safe on
+# origin): the valve no longer depends on capture.sh's ordering — it lands the parked branch's own
+# work to origin ITSELF (commits tracked dirt onto the branch, pushes the tip), THEN rests HEAD on
+# the release. tasks.yaml (the daemon-owned live queue) is preserved across the switch, never
+# committed here. The ONLY fail-open is a push that genuinely fails (offline/auth) — because then the
+# work is not yet preserved and switching away would lose it. Detached HEAD is left alone.
 CUR="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo)"
 if [ -n "$CUR" ] && [ "$CUR" != "$BRANCH" ]; then
   git fetch --quiet origin "$CUR" 2>/dev/null || true
-  RCUR="$(git rev-parse "origin/$CUR" 2>/dev/null || echo)"
   dirt="$( { git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; } | grep -vxF 'tasks.yaml' | sort -u)"
-  if [ -z "$RCUR" ] || [ "$RCUR" != "$LOCAL" ]; then
-    echo "sync-release: parked on '$CUR' with commit(s) not safe on origin/$CUR — fail open (cheapest path: push the branch; the valve unparks next beat)"
-    exit 0
-  fi
   if [ -n "$dirt" ]; then
-    echo "sync-release: parked on '$CUR' with tracked dirt beyond tasks.yaml — fail open (capture.sh lands it next beat, then the valve unparks)"
+    # Stage ONLY tracked modifications (never untracked — no new secret can ride in; untracked
+    # release-collisions are handled by the backup sweep below) and preserve them onto the branch.
+    printf '%s\n' "$dirt" | while IFS= read -r f; do [ -n "$f" ] && git add -- "$f" 2>/dev/null || true; done
+    git commit --quiet -m "capture(sync-release): preserve parked dirt before unpark [skip ci]" 2>/dev/null || true
+    LOCAL="$(git rev-parse HEAD 2>/dev/null || echo)"
+  fi
+  # Push the branch tip to origin if it is not already there — the valve preserves it itself rather
+  # than waiting a beat. Only when the tip is provably safe on origin do we proceed to switch.
+  RCUR="$(git rev-parse "origin/$CUR" 2>/dev/null || echo)"
+  if [ "$RCUR" != "$LOCAL" ]; then
+    if git push --quiet origin "$CUR" 2>/dev/null; then
+      git fetch --quiet origin "$CUR" 2>/dev/null || true
+      RCUR="$(git rev-parse "origin/$CUR" 2>/dev/null || echo)"
+    fi
+  fi
+  if [ -z "$RCUR" ] || [ "$RCUR" != "$LOCAL" ]; then
+    echo "sync-release: parked on '$CUR' — could not preserve tip to origin (offline/auth?) — fail open (work kept local, valve retries next beat)"
     exit 0
   fi
   TMP="$(mktemp 2>/dev/null || echo "$ROOT/logs/.tasks.unpark.$$")"

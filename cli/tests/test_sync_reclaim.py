@@ -160,8 +160,11 @@ def test_parked_on_pushed_branch_unparks(checkout, tmp_path):
     assert _git("rev-parse", "work", cwd=clone).stdout.strip() == work_sha  # branch ref survives
 
 
-def test_parked_with_unpushed_commit_fails_open(checkout, tmp_path):
-    """A parked branch carrying a commit origin does not have must NEVER be auto-switched away."""
+def test_parked_with_unpushed_commit_preserves_then_unparks(checkout, tmp_path):
+    """PRESERVE-THEN-UNPARK (2026-07-09): a parked branch carrying an unpushed commit is not
+    abandoned and not left stuck — the valve PUSHES the commit to origin (his push-first rule),
+    then rests HEAD on the release. The old fail-open ('not safe on origin/work') stranded the
+    daemon for 5 days."""
     clone, bare = checkout
     _git("switch", "-q", "-c", "work", cwd=clone)
     _git("push", "-q", "-u", "origin", "work", cwd=clone)
@@ -169,14 +172,15 @@ def test_parked_with_unpushed_commit_fails_open(checkout, tmp_path):
     _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
     r = _run_sync(clone)
     assert r.returncode == 0
-    assert "not safe on origin/work" in r.stdout, r.stdout + r.stderr
-    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "work"
-    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == local_sha
+    assert "UNPARKED" in r.stdout, r.stdout + r.stderr
+    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "main"
+    _git("fetch", "-q", "origin", "work", cwd=clone)
+    assert _git("rev-parse", "origin/work", cwd=clone).stdout.strip() == local_sha  # pushed, preserved
 
 
-def test_parked_with_tracked_dirt_fails_open(checkout, tmp_path):
-    """Tracked dirt beyond tasks.yaml is potential session work -> capture.sh owns landing it;
-    the valve must not carry or drop it."""
+def test_parked_with_tracked_dirt_preserves_then_unparks(checkout, tmp_path):
+    """Tracked dirt beyond tasks.yaml is session work — the valve COMMITS it onto the branch and
+    pushes (preserve), then rests HEAD on the release. It is neither carried onto main nor dropped."""
     clone, bare = checkout
     _git("switch", "-q", "-c", "work", cwd=clone)
     _git("push", "-q", "-u", "origin", "work", cwd=clone)
@@ -184,9 +188,11 @@ def test_parked_with_tracked_dirt_fails_open(checkout, tmp_path):
     (clone / "base.txt").write_text("uncommitted session work\n")  # tracked file, dirty
     r = _run_sync(clone)
     assert r.returncode == 0
-    assert "tracked dirt beyond tasks.yaml" in r.stdout, r.stdout + r.stderr
-    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "work"
-    assert (clone / "base.txt").read_text() == "uncommitted session work\n"  # dirt untouched
+    assert "UNPARKED" in r.stdout, r.stdout + r.stderr
+    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "main"
+    _git("fetch", "-q", "origin", "work", cwd=clone)
+    preserved = _git("show", "origin/work:base.txt", cwd=clone).stdout
+    assert "uncommitted session work" in preserved  # dirt committed + pushed, not dropped
 
 
 def test_parked_unpark_preserves_live_tasks_yaml(checkout, tmp_path):
