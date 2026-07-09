@@ -39,6 +39,10 @@ Checks (exit 0 iff all pass):
 
   J. Deployment operations stay in docs/deployment.md, not in AGENTS.md.
 
+  K. The 2026-07-09 insights standing corrections stay encoded: the closeout terminal
+     statement, the BLOCKED-once protocol, and the registry-owns-the-answer rule are present
+     in their owning CLAUDE.md sections and mirrored into the closeout skill.
+
 Run directly (``scripts/check-agent-docs.py``) or via ``scripts/verify-whole.sh``.
 """
 from __future__ import annotations
@@ -81,6 +85,7 @@ REQUIRED_SECTIONS = {
         "Architecture & Orientation",
         "Closeout Definition",
         "Definition of Done",
+        "Engage the Real Problem First",
         "Credentials Are Organ-Owned (Never Recited in Chat)",
         "Standing Autonomy & Compliant Gate Reroute",
         "Merge & Branch Protocol",
@@ -229,6 +234,30 @@ def main() -> int:
         errors.append("CLAUDE.md should use role-based wording, not the operator's personal name")
     if re.search(r"\broute around\b", claude_text, re.I):
         errors.append("CLAUDE.md should describe compliant reroutes, not 'route around' safety gates")
+
+    # 2026-07-09 insights standing corrections: terminal statement, BLOCKED-once, and
+    # registry-owns-the-answer are phrase-checked in their owning sections and mirrored
+    # into the closeout skill (censor precedents PREC-2026-07-09-*).
+    terminal = "CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items"
+    for heading, phrase, label in [
+        ("Closeout Definition", terminal, f"the terminal-statement rule ('{terminal}')"),
+        ("Standing Autonomy & Compliant Gate Reroute", "BLOCKED: <atom>",
+         "the BLOCKED-once protocol ('BLOCKED: <atom>' stated once, filed, never looped on)"),
+        ("Engage the Real Problem First", "The registry owns the answer",
+         "the registry-owns-the-answer rule"),
+    ]:
+        try:
+            if phrase not in section(claude_text, heading):
+                errors.append(f"CLAUDE.md '{heading}' lacks {label}")
+        except ValueError as exc:
+            errors.append(str(exc))
+    closeout_skill = ROOT / ".claude" / "skills" / "closeout" / "SKILL.md"
+    if closeout_skill.exists():
+        skill_text = closeout_skill.read_text(encoding="utf-8")
+        if terminal not in skill_text:
+            errors.append(".claude/skills/closeout/SKILL.md lacks the closeout terminal statement")
+        if "BLOCKED: <atom>" not in skill_text:
+            errors.append(".claude/skills/closeout/SKILL.md lacks the BLOCKED-once protocol")
 
     standard_text = STANDARD.read_text(encoding="utf-8")
     try:

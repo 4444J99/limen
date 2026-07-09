@@ -70,7 +70,7 @@ A *closeout* means **ZERO open or dangling items introduced by this task/session
 2. **An idempotent fixed point is reached** — re-running the full verification produces **no changes** (see [Definition of Done](#definition-of-done)). If a re-run still mutates state, you are not done.
 3. **All loose work you introduced or touched is committed across every affected repo** — no uncommitted diffs, no stranded branches; `git status` is clean wherever you touched.
 
-If gaps remain, **close them first**, then archive and hand off. A genuinely human-gated item is **filed in its own git-tracked owner** — a lever in `his-hand-levers.json`, or (for any token/secret/login/env atom) the credential organ + Wall #320 — **never recited back to the operator in a closeout, and never appended as a "but also this" tail.** The relay cites the registry and the green predicate; it does **not** enumerate his atoms. He reads owed work in the registry on his own cadence — **a closeout that hands him a list has failed, even when every item is technically homed.** If an atom is *already* filed, that is DONE: do not re-surface it. Run `/closeout` to execute this discipline.
+If gaps remain, **close them first**, then archive and hand off. A genuinely human-gated item is **filed in its own git-tracked owner** — a lever in `his-hand-levers.json`, or (for any token/secret/login/env atom) the credential organ + Wall #320 — **never recited back to the operator in a closeout, and never appended as a "but also this" tail.** The relay cites the registry and the green predicate; it does **not** enumerate his atoms. He reads owed work in the registry on his own cadence — **a closeout that hands him a list has failed, even when every item is technically homed.** If an atom is *already* filed, that is DONE: do not re-surface it. When the predicates are green at the fixed point, end with the terminal statement — **"CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items"** — and **stop**: nothing follows it. A closeout that keeps talking past the terminal statement — any caveat tail — has failed. Run `/closeout` to execute this discipline.
 
 Point 1 has a shipped predicate — **`scripts/no-tasks-on-me.sh`** (exit `0` ⟺ nothing hangs on the ephemeral session). It proves every human-gated item lives in the git-tracked registry with a real owner (recall-only memory at `~/.claude/…` is **not** a durable home), that no preserved work is stranded on a local-only `*-staged-*` ref (each must be merged or cited by a lever), and that the registry stays PII-clean (it publishes). Credential/secret atoms live in a **separate** git-tracked home (the credential organ), so the closeout gate is **both** `scripts/no-tasks-on-me.sh` **and** `scripts/credential-wall.py --check` (exit `0` ⟺ every secret in use is homed). Both green ⟺ nothing hangs, and the relay then names the registry, never the atoms. Run them instead of re-auditing ownership by hand each session; a chat audit you have to repeat next session — or a "here's what's still open" list handed to the operator — *is* leaving the discipline hanging on him.
 
@@ -99,6 +99,10 @@ correction (censor precedent `PREC-2026-07-04-friction-shallow-first`):
 - **Options are a decision, not a deliverable.** Pick the reversible best by the cascade
   (protocol → precedent → exploration → ideal-form) and proceed; present alternatives only when a
   genuine human-gated lever forces the choice.
+- **The registry owns the answer.** Never ask the operator — or guess — about a fact or framing a
+  registry already owns (`his-hand-levers.json`, `organ-ladder.json`, `pillars.yaml`, `tasks.yaml`,
+  `censor/precedents.jsonl`): query it and proceed. (Precedent: the "8 vs 10 organs" question was
+  asked while `organ-ladder.json` held the count.)
 
 ## Never Over-Claim Completion
 
@@ -197,6 +201,10 @@ Concretely, from precedent:
   job that cannot pair with the extension does not fight it — fall back to headless Playwright
   (token/magic-link URLs carry their own identity), dry-run → screenshot → act, verify via the
   server's observed effect (never the acting session's optimistic DOM), and abort on any captcha.
+- **A genuinely human-gated gate is hit** → state **`BLOCKED: <atom>`** exactly **once**, file the
+  atom in its registry owner (a lever in `his-hand-levers.json`; credential atoms → the credential
+  organ + Wall #320), then leave it — **never loop on, poll, or re-surface a filed gate** — and
+  keep driving every other reversible lane to its verified end in the same session.
 
 Never present a reroutable gate as human work. Reduce every blocker to its single irreducible atom
 (if any), clear the rest through compliant mechanisms, and report what was done. The
