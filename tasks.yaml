@@ -97113,7 +97113,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -97129,7 +97129,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T14:32:53.695355Z'
+  updated: '2026-07-09T14:55:50.410393Z'
   dispatch_log:
   - timestamp: '2026-07-07T09:46:01.187176Z'
     agent: opencode
@@ -97177,6 +97177,11 @@ tasks:
     agent: jules
     session_id: '13326121475087045529'
     status: dispatched
+  - timestamp: '2026-07-09T14:55:50.410393Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: HEAL-cifix-organvm-limen-386
   title: fix failing CI on organvm/limen#386
   repo: organvm/limen
@@ -104949,7 +104954,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -104964,7 +104969,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-08T14:38:47.467134Z'
+  updated: '2026-07-09T14:55:50.410393Z'
   dispatch_log:
   - timestamp: '2026-07-08T14:33:35.453071Z'
     agent: jules
@@ -104975,6 +104980,11 @@ tasks:
     agent: jules
     session_id: '1652664886186875056'
     status: dispatched
+  - timestamp: '2026-07-09T14:55:50.410393Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h
 - id: HEAL-cifix-organvm-sovereign-systems--elevate-align-234
   title: fix failing CI on organvm/sovereign-systems--elevate-align#234
   repo: organvm/sovereign-systems--elevate-align
@@ -117752,4 +117762,25 @@ tasks:
   depends_on: []
   created: '2026-07-09'
   updated: '2026-07-09T14:14:16.874408Z'
+  dispatch_log: []
+- id: GH-organvm-limen-827
+  title: '[his-hand] Arm the Fable interactive-guard settings snippet'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/827
+  context: 'GitHub issue organvm/limen#827. One-time self-modification-boundary paste
+    (agents cannot arm settings.json). Apply `docs/keys/fable-guard-settings-snippet.json`
+    into `~/.claude/settings.json`: sets `"model":"opus"` (default off Fable) and
+    appends the SessionStart `fable-session-guard.py` hook. Makes the interactive-Fable
+    bypass closure durable (dispatch-side cap already live on main via #818). Verify:
+    `scripts/verify-fable-gate.'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T14:56:34.390008Z'
   dispatch_log: []
