@@ -55,7 +55,7 @@ jobs:
           node web/app/scripts/validate-exported-pages.mjs
           node web/app/scripts/validate-surface-contracts.mjs
 
-      - uses: w9jds/firebase-action@v15.22.0
+      - uses: w9jds/firebase-action@v15.22.4
         if: env.GCP_SA_KEY_SET == 'true'
         with:
           args: deploy --only hosting --project device-streaming-067d747a
