@@ -1546,12 +1546,26 @@ parameters:
     owner: tabularius
     note: "Beat gate for the heal-convergence report (scripts/heal-convergence.py --check) run each beat by metabolize.sh section 0g (RETRO-0708-HEAL-RECEIPT-OUTCOME; retro findings 1-2). CHRONIC rung: open heal PRs (title-prefixed '[limen HEAL-') grouped by (repo, failing check); >=3 PRs older than 48h on the SAME check = the healer is re-spending capacity on a wall (growth-auditor #16-#22 / theoria #492-#500 class) -> exit 1. COVERAGE rung: archived heal receipts must carry the {outcome: already_green|fixed|gave_up, failing_checks} field derived MECHANICALLY post-run by async-run-one.py (gh pr view of the target PR - never agent prose), reported as a ratio so the 855-emitted-vs-384-receipts gap class is a number. verify-whole runs the fixture test (fixture PRs + fixture clock - deterministic); live counts stay beat-side. Set 0 to silence."
 
+  LIMEN_CONTINUITY_CHECK:
+    default: "1"               # ON — detect silent dispatch lanes while queue + budget exist each beat
+    env: LIMEN_CONTINUITY_CHECK
+    self_update: none
+    owner: continuity
+    note: "Beat gate for the dispatch-continuity check (scripts/dispatch-continuity-check.py) run each beat by metabolize.sh section 0h (Jul 3–5 starvation precedent). Classifies each known lane as flowing / idle-ok / starved / unknown every beat. Two consecutive starved readings hang an idempotent ASK-lane-starved-<lane> needs_human atom. Fail-open — missing data yields 'unknown', never an alarm. Set 0 to silence."
+
+  LIMEN_CONTINUITY_WINDOW_H:
+    default: "24"              # hours of dispatch silence before a lane is considered potentially starved
+    env: LIMEN_CONTINUITY_WINDOW_H
+    self_update: none
+    owner: continuity
+    note: "Starvation window in hours for dispatch-continuity-check.py. A lane silent for longer than this value while holding open targeted tasks and a healthy budget is classified as 'starved'. Two consecutive starved beats hang a needs_human atom. Default 24h; lower for tighter detection, raise for noisy queues."
+
   LIMEN_ASK_GATE:
     default: "1"               # ON — report-only intake audit (observable-before-autonomous; keeper-seam enforcement arms later)
     env: LIMEN_ASK_GATE
     self_update: none
     owner: tabularius
-    note: "Beat gate for the intake ask audit (scripts/ask-gate.py --audit --since 7) run each beat by metabolize.sh section 0h (RETRO-0708-ASK-GATE; retro gap model + evolution 3). Encodes the measured drift predictors STRUCTURALLY: a task converges iff it names one executable done-predicate, is a single bounded objective (no (1)..(n) bundles), and is owned (repo + agent); narrative-success vocabulary and ungated armed-behavior deliverables surface as ADVISE findings. Verdicts: PASS / SPLIT (decompose into predicate-shaped children; --task-file offers the skeleton) / ADVISE. Report-only in the beat for now — the LIMEN_CENSOR_APPLY observable-before-autonomous pattern; the enforcement seam is ask-gate --task-file --check on every keeper ticket, to be armed once logs/ask-gate.json proves the predicate. Set 0 to silence."
+    note: "Beat gate for the intake ask audit (scripts/ask-gate.py --audit --since 7) run each beat by metabolize.sh section 0i (RETRO-0708-ASK-GATE; retro gap model + evolution 3). Encodes the measured drift predictors STRUCTURALLY: a task converges iff it names one executable done-predicate, is a single bounded objective (no (1)..(n) bundles), and is owned (repo + agent); narrative-success vocabulary and ungated armed-behavior deliverables surface as ADVISE findings. Verdicts: PASS / SPLIT (decompose into predicate-shaped children; --task-file offers the skeleton) / ADVISE. Report-only in the beat for now — the LIMEN_CENSOR_APPLY observable-before-autonomous pattern; the enforcement seam is ask-gate --task-file --check on every keeper ticket, to be armed once logs/ask-gate.json proves the predicate. Set 0 to silence."
 
   LIMEN_CENSOR_ISSUES_APPLY:
     default: "0"               # SAFE CODE DEFAULT — dry-run; ships observable-before-autonomous (the LIMEN_CENSOR_APPLY constitutional pattern). NO fleet_runtime yet: arming is deliberately a human act.

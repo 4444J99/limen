@@ -6,6 +6,15 @@ Required open: `4`
 Blocked: `1`
 Done from receipt: `6`
 
+## DISPATCH-CONTINUITY
+
+| Field | Value |
+|---|---|
+| ID | `DISPATCH-CONTINUITY` |
+| What | Detect a vendor lane silent while queue + budget exist (Jul 3–5 starvation precedent) |
+| Predicate | `python3 scripts/dispatch-continuity-check.py --check` |
+| Artifact | `logs/dispatch-continuity.json` |
+
 ## Contract
 
 - Start by harvesting existing receipts, not by doing a first run.

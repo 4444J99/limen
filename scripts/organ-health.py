@@ -304,6 +304,12 @@ def _registry():
              gate="LIMEN_TABVLARIVS", gate_default="1",
              what="the record-keeper — sole writer of the board: drain the lock-free ticket inbox → fold onto tasks.yaml → seal (single-writer principle over the SSOT)",
              probe=lambda: _mtime(LOGS / "tabularius-organ-state.json")),
+        # no cadence_key: runs as a metabolize.sh pre-beat check (section 0h), not a
+        # timed heartbeat voice — so it claims no cadence and never trips the absent-
+        # from-heartbeat drift check; green when its per-beat artifact is fresh.
+        dict(key="continuity", voice="continuity",
+             what="per-lane dispatch continuity (no silent lane while queue+budget exist)",
+             probe=lambda: _json_field_ts(LOGS / "dispatch-continuity.json", "generated")),
     ]
 
 

@@ -108,7 +108,18 @@ if [ "${LIMEN_HEAL_CONVERGENCE:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/heal-convergence.py" --check || echo "  ↑ CHRONIC heal non-convergence above — fix the named check at its root or park the repo with a chronic receipt"
 fi
 
-echo "── 0h. ask gate — every intake-window ask carries one done-predicate, or gets split ──"
+echo "── 0h. dispatch continuity — detect a silent lane while queue + budget exist ──"
+# The gap this closes (Jul 3–5 starvation precedent): Jules accepted zero tasks for 72h
+# while ~40 open tasks sat in the queue and the budget showed headroom. Daemon alive,
+# queue full, meter green — but the lane was dark. Nothing surfaced this until a human
+# noticed. This check runs every beat and classifies each lane as flowing / idle-ok /
+# starved. Two consecutive starved readings hang an idempotent ASK-lane-starved-<lane>
+# needs_human atom. Fail-open — missing data → "unknown", never an alarm.
+if [ "${LIMEN_CONTINUITY_CHECK:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/dispatch-continuity-check.py" || echo "  (continuity skipped)"
+fi
+
+echo "── 0i. ask gate — every intake-window ask carries one done-predicate, or gets split ──"
 # The gap this closes (retro 06-24→07-08 gap model): asks converge iff they are
 # predicate-shaped, bounded, and owned; the five most-escalated themes were exactly the
 # narrative/multi-goal ones. Report-only for now (observable-before-autonomous — the
