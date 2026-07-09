@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (131) — decide each
+## Live-work branches (132) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -154,6 +154,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `studium-film-canterbury-tales` — d7fcab07 feat(studium): add Canterbury Tales film companion
 - `task-conference-of-birds-batch-1` — e1facc15 feat(studium): author Conference of the Birds arcs 2-4
 - `work/workstream-agent-launcher-20260629` — a66424e0 chore: execute dynamic-substrate fanout executor packet
+- `worktree-fluttering-twirling-abelson` — c2c54884 Redact circle-personal business intel from public consulting organ
 - `worktree-jolly-knitting-lovelace` — 1e239934 feat(hooks): arm the session-orientation organ in committed project settings
 - `worktree-parsed-finding-fern` — 6f171f83 docs(hishand): register L-STUDIO-GOLIVE — clip studio go-live atoms to the durable registry (#538)
 
