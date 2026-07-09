@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 107
+      spent: 101
       per_agent:
         jules: 100
         gemini: 0
-        codex: 6
+        codex: 0
         opencode: 0
         agy: 0
         claude: 0
@@ -27,10 +27,10 @@ portal:
       per_agent_reset:
         jules: '2026-07-08T12:21:31.555337+00:00'
         gemini: '2026-07-08T12:21:31.555337+00:00'
-        codex: '2026-07-09T06:56:34.910868+00:00'
+        codex: '2026-07-09T12:07:58.663297+00:00'
         opencode: '2026-07-08T12:21:31.555337+00:00'
         agy: '2026-07-08T12:21:31.555337+00:00'
-        claude: '2026-07-09T06:56:34.910868+00:00'
+        claude: '2026-07-09T12:07:58.663297+00:00'
   agents:
     opencode:
       status: idle
@@ -115216,6 +115216,7 @@ tasks:
   repo: organvm/limen
   type: code
   target_agent: opencode
+  workstream: sovereignty
   priority: high
   budget_cost: 1
   status: open
@@ -117091,7 +117092,7 @@ tasks:
     \ deadlock heal (PR #771)."
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: opencode
   workstream: estate-custody
   priority: high
   budget_cost: 1
@@ -117116,7 +117117,7 @@ tasks:
     \ deadlock heal (PR #771)."
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: gemini
   workstream: estate-custody
   priority: medium
   budget_cost: 1
@@ -117129,4 +117130,149 @@ tasks:
   depends_on: []
   created: '2026-07-09'
   updated: '2026-07-09T11:32:14.533100Z'
+  dispatch_log: []
+- id: ASK-lane-starved-agy
+  title: 'Lane ''agy'' starved: silent >42.5h with open queue + ok budget'
+  type: ops
+  target_agent: human
+  priority: high
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - dispatch-continuity
+  - needs-human
+  urls: []
+  context: "Lane 'agy' has been silent for 42.5h while 79 open task(s) await it and\
+    \ its budget is ok. This matches the Jul 3\u20135 starvation signature: daemon\
+    \ alive, queue non-empty, budget available, zero dispatches for an extended period\
+    \ (window: 24h). Likely cause: routing bypass, gate mis-config, or lane not being\
+    \ selected. See scripts/route.py for routing logic. Auto-hung by dispatch-continuity-check.py."
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:53:48.574540Z'
+  dispatch_log: []
+- id: ASK-lane-starved-gemini
+  title: 'Lane ''gemini'' starved: silent >47.8h with open queue + ok budget'
+  type: ops
+  target_agent: human
+  priority: high
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - dispatch-continuity
+  - needs-human
+  urls: []
+  context: "Lane 'gemini' has been silent for 47.8h while 122 open task(s) await it\
+    \ and its budget is ok. This matches the Jul 3\u20135 starvation signature: daemon\
+    \ alive, queue non-empty, budget available, zero dispatches for an extended period\
+    \ (window: 24h). Likely cause: routing bypass, gate mis-config, or lane not being\
+    \ selected. See scripts/route.py for routing logic. Auto-hung by dispatch-continuity-check.py."
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:53:53.102305Z'
+  dispatch_log: []
+- id: ASK-lane-starved-opencode
+  title: 'Lane ''opencode'' starved: silent >42.4h with open queue + ok budget'
+  type: ops
+  target_agent: human
+  priority: high
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - dispatch-continuity
+  - needs-human
+  urls: []
+  context: "Lane 'opencode' has been silent for 42.4h while 137 open task(s) await\
+    \ it and its budget is ok. This matches the Jul 3\u20135 starvation signature:\
+    \ daemon alive, queue non-empty, budget available, zero dispatches for an extended\
+    \ period (window: 24h). Likely cause: routing bypass, gate mis-config, or lane\
+    \ not being selected. See scripts/route.py for routing logic. Auto-hung by dispatch-continuity-check.py."
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:53:57.061166Z'
+  dispatch_log: []
+- id: GH-organvm-limen-784
+  title: 'reap acceptance: pending queue isn''t durable; gh 800-PR window flickers
+    proof-2 coverage'
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/784
+  context: 'GitHub issue organvm/limen#784. Evidence from the 2026-07-09 closeout
+    (vltima-0146de0a): 178 landed branches were accepted+reaped across THREE in-session
+    rounds (172 + 4 + 2) because the candidate set kept shifting under the sweep.
+    Two defects, one organ (scripts/reap-branches.py): 1. **Pending-acceptance branches
+    have no durable home.** A branch classified `reap` but lacking a ledger entry
+    exists only in `--check` stdout. `writ'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:46:05.625709Z'
+  dispatch_log: []
+- id: GH-organvm-limen-775
+  title: MOUNT the 4444J99 SSD to recover the Nov-2025 deep-history archives
+  repo: organvm/limen
+  type: code
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/775
+  context: "GitHub issue organvm/limen#775. Human-gated lever (owner: anthony, physical\
+    \ action) \u2014 registered in `his-hand-levers.json`. Mount the 4444J99 SSD so\
+    \ the fleet can extract the Nov-2025 deep-history archives; the copies found at\
+    \ `.../cognitive-archaelogy-tribunal/chat-exports-all-112125/` are hollow shells\
+    \ needing recovery. Route via the CVSTOS estate registry. Blocker for: EXCAV-0708-VENDOR-ARCHIVES.\
+    \ This issue replaces the place"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:46:05.690047Z'
+  dispatch_log: []
+- id: GH-organvm-limen-774
+  title: Land the dispatch-admission lane preserved on heal/live-main-snapshot-60edc0d2
+  repo: organvm/limen
+  type: code
+  target_agent: opencode
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/774
+  context: "GitHub issue organvm/limen#774. During the 2026-07-09 live-checkout divergence\
+    \ heal (the YOUR-MOVE notification storm, fixed in #769), local `main` carried\
+    \ one genuinely-unique commit that is NOT yet upstream: - `60edc0d2` **limen:\
+    \ gate dispatch admission** \u2014 1,602 insertions: `scripts/dispatch-admission.py`,\
+    \ `scripts/check-dispatch-admission.py`, `cli/src/limen/dispatch.py` admission\
+    \ gating, `scripts/handoff-relay.py` delta bey"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:46:05.691005Z'
+  dispatch_log: []
+- id: GH-organvm-universal-mail-automation-154
+  title: Make UMA the single mail-triage owner with daily proof receipts
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: agy
+  workstream: correspondence
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/universal-mail--automation/issues/154
+  context: 'GitHub issue organvm/universal-mail--automation#154. ## Problem Mail triage
+    is not operationally obvious because ownership is split across `organvm/universal-mail--automation`,
+    Limen wrappers, Domus/cartridge templates, scratch clones, and local LaunchAgent/report
+    surfaces. The result is repeated archaeology whenever the operator asks whether
+    mail was triaged. ## Evidence checked on 2026-07-09 - Canonical repo: `organvm/universal-mail--automation`,'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:46:05.693154Z'
   dispatch_log: []
