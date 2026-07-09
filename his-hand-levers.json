@@ -368,7 +368,7 @@
       "label": "Post the MONETA Mint-as-a-Service launch kit under your own name — the drafts are DONE and merged: marketing/launch-post.md (Show HN + ready first-comment methodology, Reddit r/selfhosted variant, X/LinkedIn thread; zero invented metrics), landing page docs/moneta/index.html, donation funnel .github/FUNDING.yml already rendering the Sponsor button. Both live artifacts the posts link to are beat-probed green by ship-gate (mint.4444j99.dev + chatgpt-exporter-e08.pages.dev). Publishing under your identity is the one atom the fleet cannot do (same boundary as L-LAVREA-LAUNCH). Post window: Show HN Tue-Thu 8-10am ET; record the post URLs onto the launch-post task — ship-gate accepts a posted link as the artifact.",
       "owner": "yours",
       "cost": "~15 min (3 pastes), reversible",
-      "issue": 730,
+      "issue": 789,
       "source_task": "REV-organvm-limen-revenue-launch-post-0708 (session vltima-0146de0a, 2026-07-08)",
       "unlocks": "inbound demand for the second product surface of the sovereign rail (MONETA as a service to other sellers) — the pain-point-is-a-product north star made public"
     },
@@ -388,7 +388,23 @@
       "cost": "physical action",
       "unlocks": "EXCAV-0708-VENDOR-ARCHIVES completion",
       "source_task": "EXCAV-0708-VENDOR-ARCHIVES",
-      "issue": 775
+      "issue": 790
+    },
+    {
+      "id": "L-DAILY-ENGINE-PHONE-SETUP",
+      "name": "L-DAILY-ENGINE-PHONE-SETUP",
+      "category": "life",
+      "priority": "medium",
+      "status": "needs_human",
+      "desc": "Phone-side one-time setup for the daily engine (~5 min, device-only actions the fleet cannot perform): (1) paste the staged LaunchAgent bootstrap from the engine README so the phone app wakes on tap (socket activation); (2) create the two iOS Shortcuts ('Plate' = camera -> iCloud DailyEngine/plates; 'Log It' = dictate -> /say) from the exact recipes in the engine README; (3) open the printed URL once and Add to Home Screen.",
+      "added": "2026-07-09",
+      "blocker_for": [],
+      "cost": "~5 min, reversible",
+      "unlocks": "zero-tap food capture + one-sentence logging + on-demand phone app — the ambient-capture lanes run without any hand after this",
+      "label": "Daily-engine phone setup: LaunchAgent paste + 2 iOS Shortcuts (recipes in the private engine README)",
+      "owner": "yours",
+      "source_task": "daily-engine wave-2 (ambient capture)",
+      "issue": 791
     }
   ]
 }
