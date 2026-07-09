@@ -96,6 +96,7 @@ JSON_OUT = "--json" in sys.argv
 APPLY = "--apply" in sys.argv and not CHECK
 FORCE = "--force" in sys.argv  # ignore the throttle
 GENERATED_ONLY = "--generated-only" in sys.argv
+HELP = "--help" in sys.argv or "-h" in sys.argv
 REMOTE_MERGED_LANES = {"remote-merged"}
 REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
 ACCEPTED_ARCHIVE_STATUSES = {
@@ -220,13 +221,10 @@ def reclaim_generated_payloads(targets) -> dict[str, object]:
 
 
 def reachable_from_remote(cwd, head) -> bool:
-    r = git(["for-each-ref", "--format=%(refname)", "refs/remotes"], cwd)
+    r = git(["for-each-ref", f"--contains={head}", "--format=%(refname)", "refs/remotes"], cwd)
     if r.returncode != 0:
         return False
-    for ref in r.stdout.split():
-        if git(["merge-base", "--is-ancestor", head, ref], cwd).returncode == 0:
-            return True
-    return False
+    return bool(r.stdout.strip())
 
 
 def remote_default_ref(cwd) -> str | None:
@@ -397,6 +395,13 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None):
 
 
 def main():
+    if HELP:
+        print(
+            "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] [--generated-only]\n\n"
+            "Dry-run by default. Use --check --json for structured inspection and --apply to remove "
+            "accepted clean, idle, remote-preserved worktrees."
+        )
+        return 0
     # Every known creation site, each with its own idle gate. Missing roots simply disappear
     # from the target list; discovery must never block the heartbeat.
     targets = iter_worktree_targets(LIMEN_ROOT)

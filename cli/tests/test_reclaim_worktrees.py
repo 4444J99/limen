@@ -45,6 +45,54 @@ def test_reclaim_standing_grant_accepts_loss_free_class_without_ledger(tmp_path:
     assert reason == "standing-grant-2026-07-09"
 
 
+def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    calls: list[list[str]] = []
+
+    def fake_git(args: list[str], cwd: Path, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        assert cwd == tmp_path
+        assert timeout == 20
+        if args == [
+            "for-each-ref",
+            "--contains=abc123",
+            "--format=%(refname)",
+            "refs/remotes",
+        ]:
+            return subprocess.CompletedProcess(
+                ["git", *args],
+                0,
+                "refs/remotes/origin/main\nrefs/remotes/origin/feature\n",
+                "",
+            )
+        raise AssertionError(f"unexpected git call: {args}")
+
+    monkeypatch.setattr(reclaim, "git", fake_git)
+
+    assert reclaim.reachable_from_remote(tmp_path, "abc123") is True
+    assert calls == [
+        [
+            "for-each-ref",
+            "--contains=abc123",
+            "--format=%(refname)",
+            "refs/remotes",
+        ]
+    ]
+
+
+def test_reclaim_help_does_not_discover_targets(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(sys, "argv", ["reclaim-worktrees.py", "--help"])
+    reclaim = load_reclaim_worktrees()
+
+    def fail_discovery(_root):
+        raise AssertionError("help should not discover worktree targets")
+
+    monkeypatch.setattr(reclaim, "iter_worktree_targets", fail_discovery)
+
+    assert reclaim.main() == 0
+    assert "usage: reclaim-worktrees.py" in capsys.readouterr().out
+
+
 def test_reclaim_acceptance_matches_clean_merged_worktree(tmp_path: Path) -> None:
     reclaim = load_reclaim_worktrees()
     reclaim.STANDING_ACCEPTANCE = False  # pin ledger-matching semantics
