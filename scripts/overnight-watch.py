@@ -15,6 +15,8 @@ import datetime as dt
 import json
 import os
 import re
+import shutil
+import statistics
 import subprocess
 import sys
 import time
@@ -41,6 +43,20 @@ MAX_LOG_AGE_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", "1
 MAX_STALE_TICKS = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS", "6") or "6")
 HEAL_ENABLED = (os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL", "1") or "1") != "0"
 HEAL_COOLDOWN_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC", "1200") or "1200")
+
+# Throughput floor (2026-07-08 incident: the fleet idled a full night at ~5% of baseline while
+# every liveness alert stayed green — liveness is not velocity). The floor is DERIVED from the
+# trailing per-window completion history, never pinned.
+TICKS_PATH = LOGS / "ticks.jsonl"
+COMMITTED_PLIST = ROOT / "container" / "launchd" / f"{LABEL}.plist"
+THROUGHPUT_WINDOW_MIN = int(os.environ.get("LIMEN_THROUGHPUT_WINDOW_MIN", "60") or "60")
+THROUGHPUT_WINDOWS = int(os.environ.get("LIMEN_THROUGHPUT_WINDOWS", "3") or "3")
+THROUGHPUT_FLOOR_FRACTION = float(os.environ.get("LIMEN_THROUGHPUT_FLOOR_FRACTION", "0.25") or "0.25")
+THROUGHPUT_BASELINE_DAYS = int(os.environ.get("LIMEN_THROUGHPUT_BASELINE_DAYS", "7") or "7")
+ISSUE_ESCALATE = (os.environ.get("LIMEN_THROUGHPUT_ISSUE_ESCALATE", "1") or "1") != "0"
+ESCALATE_REPO = os.environ.get("LIMEN_CENSOR_ISSUES_REPO", "organvm/limen")
+PLIST_DRIFT_KEYS = ("LIMEN_ASYNC_MAX", "LIMEN_DISPATCH_ASYNC", "LIMEN_DISPATCH_LANES", "LIMEN_ROOT")
+VITALS_SKIP_MARKER = "vitals-pressure: dispatch skipped"
 TAIL_BYTES = 192 * 1024
 
 EXPECT_DISPATCH_ASYNC = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC", "")
@@ -351,6 +367,125 @@ def dispatch_control(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {"allow_dispatch": True, "exit_code": 0, "reason": "dispatch allowed", "next_command": next_command}
 
 
+def load_ticks() -> list[tuple[dt.datetime, dict[str, Any]]]:
+    cutoff = utc_now() - dt.timedelta(days=THROUGHPUT_BASELINE_DAYS)
+    out: list[tuple[dt.datetime, dict[str, Any]]] = []
+    try:
+        lines = TICKS_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return out
+    for line in lines:
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(rec, dict):
+            continue
+        ts = parse_iso(rec.get("ts"))
+        if ts and ts >= cutoff:
+            out.append((ts, rec))
+    return out
+
+
+def _completed(rec: dict[str, Any]) -> int | None:
+    try:
+        return int(rec.get("done", 0)) + int(rec.get("archived", 0))
+    except (TypeError, ValueError):
+        return None
+
+
+def throughput_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Windowed completion velocity vs a floor derived from trailing history.
+
+    below_floor is True only when the recent windows are all under the floor AND open work
+    exists AND no sanctioned suppression explains the quiet (governor pause, vitals shed,
+    budget exhaustion, dispatch gate). Sanctioned quiet is surfaced as `suppressed`, never
+    hidden.
+    """
+    result: dict[str, Any] = {
+        "window_min": THROUGHPUT_WINDOW_MIN,
+        "windows_required": THROUGHPUT_WINDOWS,
+        "floor_fraction": THROUGHPUT_FLOOR_FRACTION,
+        "evaluable": False,
+        "below_floor": False,
+        "suppressed": None,
+    }
+    ticks = load_ticks()
+    window_sec = max(60, THROUGHPUT_WINDOW_MIN * 60)
+    buckets: dict[int, int] = {}
+    for ts, rec in ticks:
+        completed = _completed(rec)
+        if completed is None:
+            continue
+        bucket = int(ts.timestamp() // window_sec)
+        buckets[bucket] = max(buckets.get(bucket, 0), completed)
+    keys = sorted(buckets)
+    if len(keys) < THROUGHPUT_WINDOWS + 2:
+        result["reason"] = f"insufficient tick windows ({len(keys)})"
+        return result
+    deltas = [max(0, buckets[keys[i]] - buckets[keys[i - 1]]) for i in range(1, len(keys))]
+    baseline = statistics.median(deltas)
+    floor = baseline * THROUGHPUT_FLOOR_FRACTION
+    recent = deltas[-THROUGHPUT_WINDOWS:]
+    result.update(
+        {
+            "evaluable": True,
+            "baseline_median": baseline,
+            "floor": round(floor, 2),
+            "recent_deltas": recent,
+        }
+    )
+    if floor <= 0:
+        result["reason"] = "no meaningful baseline (median 0)"
+        return result
+    if not all(delta < floor for delta in recent):
+        return result
+    last_rec = ticks[-1][1]
+    try:
+        open_count = int(last_rec.get("open") or 0)
+    except (TypeError, ValueError):
+        open_count = 0
+    if open_count <= 0:
+        result["suppressed"] = "no-open-work"
+        return result
+    dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
+    try:
+        spent = float(last_rec.get("daily_spent") or 0)
+        cap = float(last_rec.get("daily_cap") or 0)
+    except (TypeError, ValueError):
+        spent, cap = 0.0, 0.0
+    if dispatch and not dispatch.get("allow_dispatch", True):
+        result["suppressed"] = "dispatch-gated"
+    elif cap and spent >= cap:
+        result["suppressed"] = "daily-budget-exhausted"
+    elif VITALS_SKIP_MARKER in tail_text(HEARTBEAT_LOG):
+        result["suppressed"] = "vitals-critical-shed"
+    elif governor_mode() == "paused":
+        result["suppressed"] = "governor-paused"
+    else:
+        result["below_floor"] = True
+    return result
+
+
+def _plist_env(text: str) -> dict[str, str]:
+    return dict(re.findall(r"<key>([A-Z_]+)</key><string>([^<]*)</string>", text))
+
+
+def plist_drift() -> list[dict[str, str]]:
+    """Live launchd plist vs the committed copy — the Jul-7 failure class (a hand-edited
+    live plist silently starving the fleet) becomes an alert with a remediation."""
+    try:
+        live = _plist_env((LAUNCH_AGENTS / f"{LABEL}.plist").read_text(encoding="utf-8"))
+        committed = _plist_env(COMMITTED_PLIST.read_text(encoding="utf-8"))
+    except OSError:
+        return []
+    return [
+        {"key": key, "live": live.get(key, ""), "committed": committed[key]}
+        for key in PLIST_DRIFT_KEYS
+        if key in committed and live.get(key) != committed[key]
+    ]
+
+
 def next_stale_count(previous: dict[str, Any], tick: dict[str, Any] | None) -> int:
     current = tick.get("timestamp") if tick else None
     if current and current != previous.get("latest_tick"):
@@ -388,12 +523,14 @@ def build_snapshot(*, refresh_handoff: bool = True, record_gate: bool = True) ->
     snapshot["value_gate"] = session_value_gate_snapshot(record_gate=record_gate)
     snapshot["dispatch_control"] = dispatch_control(snapshot)
     snapshot["overnight_counts"] = overnight_counts(snapshot)
+    snapshot["plist_drift"] = plist_drift()
+    snapshot["throughput"] = throughput_snapshot(snapshot)
     snapshot["status"], snapshot["alerts"] = evaluate(snapshot)
     return snapshot
 
 
 def overnight_counts(snapshot: dict[str, Any]) -> dict[str, Any]:
-    async_line = ((snapshot.get("heartbeat") or {}).get("latest_async") or {})
+    async_line = (snapshot.get("heartbeat") or {}).get("latest_async") or {}
     value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
     dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
     handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
@@ -495,6 +632,31 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
             }
         )
 
+    drift = snapshot.get("plist_drift") or []
+    if drift:
+        alerts.append(
+            {
+                "id": "plist-drift",
+                "evidence": "; ".join(f"{d['key']}: live={d['live']!r} committed={d['committed']!r}" for d in drift)[
+                    :500
+                ],
+            }
+        )
+
+    throughput = snapshot.get("throughput") if isinstance(snapshot.get("throughput"), dict) else {}
+    if throughput.get("below_floor"):
+        alerts.append(
+            {
+                "id": "throughput-collapse",
+                "evidence": (
+                    f"recent per-{throughput.get('window_min')}min completions "
+                    f"{throughput.get('recent_deltas')} all below derived floor {throughput.get('floor')} "
+                    f"({THROUGHPUT_BASELINE_DAYS}d median {throughput.get('baseline_median')}) "
+                    "with open work and no sanctioned suppression"
+                ),
+            }
+        )
+
     if alerts:
         return "alert", alerts
     if dispatch and not dispatch.get("allow_dispatch", True):
@@ -530,18 +692,94 @@ def bootstrap_service(label: str) -> dict[str, Any]:
     }
 
 
-def heal(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
-    """Bootstrap a booted-out daemon back into launchd.
+def reinstall_plist() -> dict[str, Any]:
+    """Re-install the committed plist over a drifted live copy, then bootout+bootstrap."""
+    if not COMMITTED_PLIST.exists():
+        return {"action": "skip", "reason": f"committed plist missing: {COMMITTED_PLIST}"}
+    dest = LAUNCH_AGENTS / f"{LABEL}.plist"
+    try:
+        shutil.copyfile(COMMITTED_PLIST, dest)
+    except OSError as exc:
+        return {"action": "reinstall-plist", "ok": False, "error": str(exc)}
+    run(["launchctl", "bootout", f"gui/{os.getuid()}/{LABEL}"], timeout=30)
+    time.sleep(2)
+    proc = run(["launchctl", "bootstrap", f"gui/{os.getuid()}", str(dest)], timeout=30)
+    return {
+        "action": "reinstall-plist",
+        "ok": proc.returncode == 0,
+        "error": (proc.stderr or "").strip() if proc.returncode else "",
+    }
 
-    Only the service-missing case is handled here; a loaded-but-wedged daemon
-    stays in watchdog.py's kickstart lane so the two healers never race.
+
+def kickstart_service(label: str) -> dict[str, Any]:
+    proc = run(["launchctl", "kickstart", "-k", f"gui/{os.getuid()}/{label}"], timeout=30)
+    return {
+        "action": "kickstart",
+        "label": label,
+        "ok": proc.returncode == 0,
+        "error": (proc.stderr or "").strip() if proc.returncode else "",
+    }
+
+
+def escalate_issue(evidence: str) -> dict[str, Any]:
+    """A collapse that survives remediation escalates to the censor issues mirror — never chat."""
+    if not ISSUE_ESCALATE:
+        return {"action": "skip", "reason": "issue escalation disabled"}
+    title = "throughput-collapse survives remediation"
+    listing = run(
+        [
+            "gh",
+            "issue",
+            "list",
+            "--repo",
+            ESCALATE_REPO,
+            "--state",
+            "open",
+            "--search",
+            f"{title} in:title",
+            "--json",
+            "number",
+        ],
+        timeout=30,
+    )
+    if listing.returncode == 0:
+        try:
+            if json.loads(listing.stdout or "[]"):
+                return {"action": "escalate-issue", "ok": True, "deduped": True}
+        except ValueError:
+            pass
+    body = (
+        f"The overnight monitor's throughput-collapse alert survived self-remediation.\n\n"
+        f"Evidence: {evidence}\n\nReceipts: logs/overnight-watch.md, logs/ticks.jsonl."
+    )
+    proc = run(
+        ["gh", "issue", "create", "--repo", ESCALATE_REPO, "--title", title, "--label", "censor", "--body", body],
+        timeout=30,
+    )
+    return {
+        "action": "escalate-issue",
+        "ok": proc.returncode == 0,
+        "url": (proc.stdout or "").strip() if proc.returncode == 0 else "",
+        "error": (proc.stderr or "").strip() if proc.returncode else "",
+    }
+
+
+def heal(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    """Every alert this monitor owns names its effector (PREC-2026-07-09-sensor-without-effector).
+
+    Lanes, disjoint from watchdog.py's stale-daemon kickstart:
+      * heartbeat-launchd-not-running + service absent  -> bootstrap from the plist
+      * plist-drift                                     -> reinstall committed plist + reload
+      * throughput-collapse (no drift)                  -> kickstart; if it survives a prior
+        remediation, escalate to the censor issues mirror — never to the operator in chat
     """
     if not HEAL_ENABLED:
         return []
     alert_ids = {alert["id"] for alert in snapshot.get("alerts") or []}
-    if "heartbeat-launchd-not-running" not in alert_ids:
-        return []
-    if (snapshot.get("launchd") or {}).get("ok"):
+    launchd_missing = "heartbeat-launchd-not-running" in alert_ids and not (snapshot.get("launchd") or {}).get("ok")
+    drift = "plist-drift" in alert_ids
+    collapse = "throughput-collapse" in alert_ids
+    if not (launchd_missing or drift or collapse):
         return []
     previous = load_json(STATE_PATH)
     last_heal = parse_iso(previous.get("last_heal_at"))
@@ -549,10 +787,27 @@ def heal(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
         return [{"action": "skip", "reason": f"heal cooldown ({HEAL_COOLDOWN_SEC}s) active"}]
     if governor_mode() == "paused":
         return [{"action": "skip", "reason": "autonomy governor paused"}]
-    actions = [bootstrap_service(LABEL)]
-    if service_missing(WATCHDOG_LABEL):
-        actions.append(bootstrap_service(WATCHDOG_LABEL))
-    if any(action.get("action") == "bootstrap" for action in actions):
+
+    actions: list[dict[str, Any]] = []
+    if launchd_missing:
+        actions.append(bootstrap_service(LABEL))
+        if service_missing(WATCHDOG_LABEL):
+            actions.append(bootstrap_service(WATCHDOG_LABEL))
+    elif drift:
+        actions.append(reinstall_plist())
+    elif collapse:
+        actions.append(kickstart_service(LABEL))
+
+    if collapse:
+        attempts = int(previous.get("collapse_heal_attempts") or 0) + 1
+        snapshot["collapse_heal_attempts"] = attempts
+        if attempts >= 2:
+            evidence = next(
+                (a["evidence"] for a in snapshot.get("alerts") or [] if a["id"] == "throughput-collapse"), ""
+            )
+            actions.append(escalate_issue(evidence))
+
+    if any(a.get("action") in ("bootstrap", "reinstall-plist", "kickstart") for a in actions):
         snapshot["heal_at"] = snapshot.get("timestamp")
     return actions
 
@@ -569,6 +824,15 @@ def update_state(snapshot: dict[str, Any]) -> None:
                 "stale_tick_count": snapshot.get("stale_tick_count", 0),
                 "status": snapshot.get("status"),
                 "last_heal_at": snapshot.get("heal_at") or previous.get("last_heal_at"),
+                "collapse_heal_attempts": (
+                    snapshot.get("collapse_heal_attempts")
+                    if snapshot.get("collapse_heal_attempts") is not None
+                    else (
+                        int(previous.get("collapse_heal_attempts") or 0)
+                        if any(a.get("id") == "throughput-collapse" for a in snapshot.get("alerts") or [])
+                        else 0
+                    )
+                ),
             },
             indent=2,
             sort_keys=True,
@@ -601,6 +865,8 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
         f"- Updated: `{snapshot.get('timestamp')}`",
         f"- Log age: `{snapshot.get('log_age_sec')}` seconds",
         f"- Launchd: `{launchd.get('state')}`",
+        f"- Latest tick: `{tick.get('raw')}`",
+        f"- Latest async: `{async_line.get('raw')}`",
         f"- Stale tick samples: `{snapshot.get('stale_tick_count')}`",
         f"- Active workers: `{len(workers)}`",
         f"- Heartbeat child processes: `{len(children)}`",
@@ -620,6 +886,19 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
         f"- Value gate: `{value_gate.get('returncode')}`; action: `{value_gate.get('action')}`.",
         f"- Dispatch control: {dispatch.get('reason', 'dispatch allowed')}.",
     ]
+    throughput = snapshot.get("throughput") if isinstance(snapshot.get("throughput"), dict) else {}
+    if throughput:
+        lines.extend(
+            [
+                "",
+                "## Throughput",
+                "",
+                f"- Recent per-{throughput.get('window_min')}min completions: `{throughput.get('recent_deltas')}`"
+                f" (derived floor `{throughput.get('floor')}`, median `{throughput.get('baseline_median')}`).",
+                f"- Below floor: `{str(throughput.get('below_floor', False)).lower()}`;"
+                f" suppressed: `{throughput.get('suppressed') or 'no'}`.",
+            ]
+        )
     for worker in workers[:10]:
         lines.append(f"  - `{worker.get('name')}` age `{worker.get('age_sec')}` seconds")
     for child in children[:10]:

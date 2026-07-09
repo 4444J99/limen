@@ -793,6 +793,42 @@ parameters:
     self_update: none
     owner: continuity
     note: "Minimum seconds between overnight monitor bootstrap heal attempts, so the healer never fights an operator cycling daemons."
+  LIMEN_THROUGHPUT_WINDOW_MIN:
+    default: 60
+    env: LIMEN_THROUGHPUT_WINDOW_MIN
+    self_update: none
+    owner: continuity
+    note: "Bucket width (minutes) for the overnight monitor's throughput-collapse windows; completions are counted per window from logs/ticks.jsonl."
+  LIMEN_THROUGHPUT_WINDOWS:
+    default: 3
+    env: LIMEN_THROUGHPUT_WINDOWS
+    self_update: none
+    owner: continuity
+    note: "Consecutive windows that must all fall below the derived floor before throughput-collapse fires (debounces a single quiet hour)."
+  LIMEN_THROUGHPUT_FLOOR_FRACTION:
+    default: 0.25
+    env: LIMEN_THROUGHPUT_FLOOR_FRACTION
+    self_update: none
+    owner: continuity
+    note: "Fraction of the trailing per-window median completions that defines the throughput floor. Derived, never pinned — sidesteps the contested absolute-count perception. 2026-07-08: the fleet idled at ~5% of baseline while all liveness stayed green (liveness is not velocity)."
+  LIMEN_THROUGHPUT_BASELINE_DAYS:
+    default: 7
+    env: LIMEN_THROUGHPUT_BASELINE_DAYS
+    self_update: none
+    owner: continuity
+    note: "Trailing window (days) of ticks.jsonl history the throughput floor's median is computed over."
+  LIMEN_THROUGHPUT_ISSUE_ESCALATE:
+    default: 1
+    env: LIMEN_THROUGHPUT_ISSUE_ESCALATE
+    self_update: none
+    owner: continuity
+    note: "Set 0 to disable escalating a remediation-surviving throughput-collapse to the censor GitHub issues mirror (an alert whose only consumer is the operator is a defect — remediate or issue-mirror, never chat)."
+  LIMEN_CENSOR_ISSUES_REPO:
+    default: organvm/limen
+    env: LIMEN_CENSOR_ISSUES_REPO
+    self_update: none
+    owner: continuity
+    note: "Repo the censor/throughput escalations open issues against (the process-organ mirror)."
   LIMEN_WATCHDOG_LABEL:
     default: com.limen.watchdog
     env: LIMEN_WATCHDOG_LABEL
