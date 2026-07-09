@@ -37,42 +37,22 @@ repo_args=(); [ -n "$REPO" ] && repo_args=(--repo "$REPO")
 # array-plus idiom at each call site below, which expands to nothing for an empty array and to
 # the elements otherwise — safe in bash 3.2 and 4+.
 
-# Deploy-trigger paths — kept in lockstep with .github/workflows/deploy*.yml `on.push.paths`.
-# A push/merge to `main` that touches one of these auto-deploys the live public site/API.
-DASHBOARD_RE='^web/app/|^firebase\.json$|^tasks\.yaml$|^\.github/workflows/deploy\.yml$'
-API_RE='^web/api/|^cli/|^scripts/preflight-cloud-run\.sh$|^\.github/workflows/deploy-api\.yml$'
-DEPLOY_RE="(${DASHBOARD_RE}|${API_RE})"
-
-# --- staleness guard: never let this hardcoded list silently rot away from the workflows. ---
-# Re-read each deploy workflow's `paths:` globs; if one isn't covered by DEPLOY_RE, warn AND
-# fail toward caution (force website-sensitive) — a bad live deploy is the irreversible risk.
+# Deploy-trigger classification — DERIVED from the GATES registry (institutio/governance/
+# gates.yaml). check-gates.py holds the registry in exact set-parity with the deploy*.yml
+# `on.push.paths` on every PR, so the old hardcoded regexes and their awk staleness guard
+# are gone: one source of truth, one drift predicate. A push/merge to `main` touching a
+# derived path auto-deploys the live public site/API.
+#
+# Fail toward caution: if derivation fails (missing python3/PyYAML/registry), STALE=1
+# forces website-sensitive — a broken environment can only HOLD, never blind-deploy.
 STALE=0
-_check_workflow_paths() {
-  local wf="$1"
-  [ -f "$wf" ] || return 0
-  local globs g sample
-  globs=$(awk '
-    /^[[:space:]]*paths:[[:space:]]*$/ {f=1; next}
-    f && /^[[:space:]]*-[[:space:]]*/ {gsub(/["'\'' ]/,""); sub(/^-/,""); print; next}
-    f && /^[[:space:]]*[A-Za-z_]+:/ {f=0}
-  ' "$wf")
-  while IFS= read -r g; do
-    [ -z "$g" ] && continue
-    case "$g" in
-      *'/**') sample="${g%/**}/_probe" ;;
-      *'**')  sample="${g%\**}_probe" ;;
-      *)      sample="$g" ;;
-    esac
-    if ! printf '%s\n' "$sample" | grep -qE "$DEPLOY_RE"; then
-      echo "merge-policy: STALE GUARD — $wf lists deploy path '$g' not covered by DEPLOY_RE; update both together." >&2
-      STALE=1
-    fi
-  done <<< "$globs"
-}
-# Resolve workflow dir relative to this script so it works from any CWD.
-_wf_dir="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)/.github/workflows"
-_check_workflow_paths "$_wf_dir/deploy.yml"
-_check_workflow_paths "$_wf_dir/deploy-api.yml"
+_root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
+DEPLOY_RE="$(python3 "$_root/scripts/verify.py" --deploy-regex 2>/dev/null || true)"
+if [ -z "$DEPLOY_RE" ]; then
+  echo "merge-policy: cannot derive the deploy regex from the GATES registry — treating the PR as website-sensitive (fail toward caution)." >&2
+  STALE=1
+  DEPLOY_RE='^$'
+fi
 
 # Resolve the PR for the current branch when not given.
 if [ -z "$PR" ]; then
@@ -123,7 +103,7 @@ if [ "$sensitive" = 1 ]; then
     echo "  WEBSITE-SENSITIVE — diff touches deploy-trigger paths:"
     printf '%s\n' "$deploy_hits" | sed 's/^/      /'
   else
-    echo "  WEBSITE-SENSITIVE — forced by staleness guard (deploy path list may have drifted)"
+    echo "  WEBSITE-SENSITIVE — forced: deploy classification could not be derived from the GATES registry"
   fi
 else
   echo "  non-deploy — merging will NOT trigger a live website/API deploy"

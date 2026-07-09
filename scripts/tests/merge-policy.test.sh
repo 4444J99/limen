@@ -79,6 +79,17 @@ mkjson OPEN false CLEAN    "$WEB_FILES" "$NONE";    check "website-sensitive + 0
 mkjson OPEN false UNSTABLE "$DOC_FILES" "$PENDING"; check "non-deploy + pending"        2
 mkjson OPEN false WEIRDNEW "$DOC_FILES" "$GREEN";   check "unrecognized state (fail-safe)" 2
 
+# Resolver unavailable ⇒ website-sensitive (fail toward caution). With a broken python3 the
+# deploy regex cannot derive from the GATES registry, so a docs-only PR with zero checks —
+# normally CLEARED — must HOLD instead of risking an unclassified live deploy.
+cat > "$stubdir/python3" <<'STUB'
+#!/usr/bin/env bash
+exit 1
+STUB
+chmod +x "$stubdir/python3"
+mkjson OPEN false CLEAN "$DOC_FILES" "$NONE"; check "resolver unavailable (forced sensitive)" 2
+rm -f "$stubdir/python3"
+
 echo
 echo "passed=$pass failed=$fail"
 if [ "$fail" -eq 0 ]; then

@@ -26,7 +26,7 @@ schema_version: 0.1
 # enforces the armed ones; unarmed ones are recorded intent, like the check-params baseline).
 ratchets:
   verify_scoped_wrapper: true    # ARMED (PR2): verify-scoped.sh is a thin exec of verify.py --changed
-  merge_policy_derives: false    # PR3: merge-policy.sh has no literal deploy regex
+  merge_policy_derives: true     # ARMED (PR3): merge-policy.sh has no literal deploy regex
   verify_whole_derives: false    # PR4: verify-whole.sh has no literal py_compile/bash -n lists
   claude_md_pointer: false       # PR4: CLAUDE.md carries the pointer, not the path lists
 
