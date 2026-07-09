@@ -41,12 +41,16 @@ out in a worktree (git refuses + it is in active use). Offline / no `gh` → pro
 squash-merged branches are conservatively KEPT until an online beat — never wrongly deleted.
 
 Dry-run by default; --apply deletes (git branch -D — safe: proven landed, reflog-recoverable).
---check exits 1 iff any provably-landed branch still lingers (the fixed-point predicate wired into
-scripts/no-tasks-on-me.sh). Bounded (--max), fails OPEN per-branch, self-throttles to once per
-LIMEN_BRANCH_REAP_EVERY_MIN minutes, logs logs/reap-branches.jsonl + stamps
-logs/reap-branches-state.json.
+--check exits 1 iff any provably-landed branch still LINGERS — spent for longer than the digestion
+grace window (the fixed-point predicate wired into scripts/no-tasks-on-me.sh). A branch whose PR
+merged seconds ago is mid-beat housekeeping, not hanging debt; without the grace, a continuously
+merging fleet makes the closeout gate unsatisfiable at every instant. Bounded (--max), fails OPEN
+per-branch, self-throttles to once per LIMEN_BRANCH_REAP_EVERY_MIN minutes, logs
+logs/reap-branches.jsonl + stamps logs/reap-branches-state.json.
 
 Env: LIMEN_ROOT, LIMEN_BRANCH_REAP_MAX (100), LIMEN_BRANCH_REAP_EVERY_MIN (30),
+     LIMEN_BRANCH_REAP_GRACE_MIN (60; --check only: a landed branch younger than this many minutes
+     is digesting, not lingering — --apply eligibility is unaffected),
      LIMEN_BRANCH_REAP_PROTECT (extra protected branch names, space-separated), LIMEN_OFFLINE.
 """
 
@@ -333,6 +337,30 @@ def gather_facts(
     )
 
 
+def _landed_age_s(branch: str, merged: dict[str, float | None], now: float) -> float:
+    """Seconds since the branch's work LANDED (how long it has been spent).
+
+    Best signal: the PR's mergedAt (gh). Fallback: the tip's commit time — the tip predates the
+    landing, so the fallback can only OVERESTIMATE the age; a young branch with an old tip fails
+    toward RED (surfaced), never toward hidden. Unknown both ways → +inf (stale)."""
+    merged_at = merged.get(branch)
+    if merged_at is not None:
+        return now - merged_at
+    r = _git(["log", "-1", "--format=%ct", f"refs/heads/{branch}"])
+    try:
+        tip_ct = int(r.stdout.strip()) if r.returncode == 0 else None
+    except ValueError:
+        tip_ct = None
+    return float("inf") if tip_ct is None else now - tip_ct
+
+
+def _lingering(
+    reap_list: list[tuple[str, str]], merged: dict[str, float | None], now: float, grace_s: float
+) -> list[tuple[str, str]]:
+    """--check's aging filter: a landed branch LINGERS only once older than the grace window."""
+    return [(b, why) for b, why in reap_list if _landed_age_s(b, merged, now) > grace_s]
+
+
 def _branch_tip_desc(branch: str) -> str:
     """A STABLE one-line descriptor of the branch tip (idempotent — no volatile timestamp)."""
     r = _git(["log", "-1", "--format=%h %s", f"refs/heads/{branch}"])
@@ -422,22 +450,30 @@ def main() -> int:
             elif v.reason == "livework":
                 livework.append(b)
 
-    # ── --check: pure predicate. Exit 1 iff any landed branch lingers (the fixed point). ──────────
+    # ── --check: pure predicate. Exit 1 iff any landed branch LINGERS past the digestion grace
+    # window (the fixed point). A branch spent for seconds is the beat mid-digestion, not hanging
+    # debt — without the grace a continuously-merging fleet reddens every closeout (2026-07-09:
+    # 176 branches accepted+reaped and fresh ones landed during the apply itself). --apply
+    # eligibility is deliberately NOT graced: an accepted young branch reaps immediately.
     if args.check:
-        if reap:
+        grace_s = _float_env("LIMEN_BRANCH_REAP_GRACE_MIN", 60.0, minimum=0.0) * 60.0
+        lingering = _lingering(reap, merged, time.time(), grace_s)
+        young = len(reap) - len(lingering)
+        young_note = f" ({young} younger than the grace window — digesting, not lingering)" if young else ""
+        if lingering:
             print(
-                f"[reap-branches] FAIL — {len(reap)} landed branch(es) still lingering "
+                f"[reap-branches] FAIL — {len(lingering)} landed branch(es) still lingering{young_note} "
                 f"(review docs/branch-reap-acceptance.md, write docs/branch-reap-acceptance.jsonl, "
                 "then scripts/reap-branches.py --apply):"
             )
-            for b, why in sorted(reap)[:20]:
+            for b, why in sorted(lingering)[:20]:
                 print(f"  landed  {b}  ({why})")
-            if len(reap) > 20:
-                print(f"  … and {len(reap) - 20} more (see scripts/reap-branches.py dry-run)")
+            if len(lingering) > 20:
+                print(f"  … and {len(lingering) - 20} more (see scripts/reap-branches.py dry-run)")
             return 1
         note = "" if online else " (offline — gh proof-2 skipped; ancestor-only)"
         print(
-            f"[reap-branches] ok — no provably-landed branch lingers{note}. "
+            f"[reap-branches] ok — no provably-landed branch lingers{young_note}{note}. "
             f"{len(inflight)} in-flight, {len(advanced)} merged-advanced, {len(livework)} live-work kept."
         )
         return 0

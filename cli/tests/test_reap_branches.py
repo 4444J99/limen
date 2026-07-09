@@ -232,3 +232,30 @@ def test_default_branch_is_protected(repo):
     f = reap.gather_facts("main", "main", set(), {}, set(), "main")
     assert f.protected is True
     assert reap.classify(f).action == "keep"
+
+
+# ----------------------------------------------------------------- --check grace window
+def test_landed_age_uses_merged_at():
+    now = time.time()
+    assert reap._landed_age_s("b", {"b": now - 120.0}, now) == pytest.approx(120.0, abs=1.0)
+
+
+def test_landed_age_unknown_is_stale():
+    # No gh mergedAt and no such ref → +inf: an unknowable age NEVER hides a branch.
+    assert reap._landed_age_s("zz-no-such-branch-grace-test", {}, time.time()) == float("inf")
+
+
+def test_lingering_excludes_young_landed_branches():
+    # A branch merged 1min ago is digesting; one merged 2h ago lingers. --apply is ungraced —
+    # only the --check assertion ages, so a live fleet can't redden every closeout.
+    now = time.time()
+    merged = {"young": now - 60.0, "old": now - 7200.0}
+    rows = [("young", "landed-pr-merged"), ("old", "landed-pr-merged")]
+    assert reap._lingering(rows, merged, now, grace_s=3600.0) == [("old", "landed-pr-merged")]
+
+
+def test_lingering_zero_grace_keeps_strict_semantics():
+    # grace=0 restores the original zero-at-any-instant assertion (age > 0 for any real branch).
+    now = time.time()
+    rows = [("young", "landed-pr-merged")]
+    assert reap._lingering(rows, {"young": now - 60.0}, now, grace_s=0.0) == rows

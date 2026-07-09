@@ -1521,6 +1521,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Self-throttle for a real --apply beat of reap-branches.py — it deletes at most once per this many minutes (a --check gate always runs). Mirrors the reclaim-worktrees throttle."
+  LIMEN_BRANCH_REAP_GRACE_MIN:
+    default: 60
+    env: LIMEN_BRANCH_REAP_GRACE_MIN
+    self_update: none
+    owner: limen-daemon
+    note: "--check only: a landed branch younger than this many minutes is the beat mid-digestion, not lingering — keeps the closeout gate satisfiable beside a continuously-merging fleet. --apply eligibility is ungraced."
   LIMEN_BRANCH_REAP_PROTECT:
     default: ""
     env: LIMEN_BRANCH_REAP_PROTECT

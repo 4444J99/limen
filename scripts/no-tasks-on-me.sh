@@ -188,7 +188,9 @@ PY
 #    LOCAL head ref behind, so squash-merged branches pile up as the "1 ahead /
 #    N behind housekeeping" that used to get hand-waved each session. The
 #    branch-reap organ (scripts/reap-branches.py) proves the fixed point — exit
-#    0 <=> no provably-landed branch lingers. Reaping is loss-free
+#    0 <=> no provably-landed branch lingers PAST the digestion grace window
+#    (LIMEN_BRANCH_REAP_GRACE_MIN; a branch spent seconds ago is the beat
+#    mid-digestion, not hanging debt). Reaping is loss-free
 #    (reflog-recoverable) so the organ self-heals it on the hygiene beat; here we
 #    only ASSERT it, so a closeout cannot pass with spent branches hanging.
 #    Fails safe offline (ancestor-only). Genuinely-unfinished branches live in
