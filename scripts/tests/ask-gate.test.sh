@@ -76,4 +76,32 @@ JSON
 out="$(run "$work/unowned.json")" || true
 grep -q "OWNED" <<<"$out" || { echo "FAIL: expected OWNED findings, got: $out" >&2; exit 1; }
 
+# ── DERIVE: an ask already owned by a registry is derived, not surfaced ──────────
+# (PREC-2026-07-08-ask-already-decided). Deterministic via a FIXTURE registry: point LIMEN_ROOT at
+# $work so _already_decided reads our fixture his-hand-levers.json, not the live one.
+mkdir -p "$work/censor"
+cat > "$work/his-hand-levers.json" <<'JSON'
+{"levers": [{"id": "L-FIXTURE-DECIDED", "label": "an already-owned decision"}]}
+JSON
+echo '{"id":"PREC-2099-01-01-fixture","subject":"x"}' > "$work/censor/precedents.jsonl"
+echo '[]' > "$work/organ-ladder.json"
+run_root() { LIMEN_ROOT="$work" python3 "$gate" --check --task-file "$1"; }
+
+echo "case 7: ask referencing an owned lever (decision-shaped) → DERIVE, exit 0 (no surface)"
+cat > "$work/decided.json" <<'JSON'
+{"id": "T-DECIDED", "title": "should we flip L-FIXTURE-DECIDED or wait",
+ "description": "decide the cutover"}
+JSON
+out="$(run_root "$work/decided.json")" || { echo "FAIL: DERIVE must not hard-trip --check: $out" >&2; exit 1; }
+grep -q '"verdict": "DERIVE"' <<<"$out" || { echo "FAIL: expected DERIVE, got: $out" >&2; exit 1; }
+grep -q "L-FIXTURE-DECIDED" <<<"$out" || { echo "FAIL: expected the owning lever cited, got: $out" >&2; exit 1; }
+
+echo "case 8: a lever-LOOKALIKE not in the registry must NOT DERIVE (membership-checked)"
+cat > "$work/lookalike.json" <<'JSON'
+{"id": "T-LOOKALIKE", "title": "handle the L-NOT-REAL bracket, which one",
+ "description": "no predicate here"}
+JSON
+out="$(run_root "$work/lookalike.json" 2>&1)" || true
+grep -q '"verdict": "DERIVE"' <<<"$out" && { echo "FAIL: false-fired DERIVE on a non-registry token: $out" >&2; exit 1; }
+
 echo "ask-gate.test: all cases pass"

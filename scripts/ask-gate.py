@@ -89,8 +89,90 @@ def _text(task: dict) -> str:
     return " ".join(str(task.get(k) or "") for k in ("title", "description", "context"))
 
 
+# An ask already owned by a registry must be DERIVED from that owner, never re-asked
+# (PREC-2026-07-08-ask-already-decided; [[decisions-owned-by-organ-not-chat]],
+# [[never-need-him-to-speak-again]]). Detection is high-precision so a benign build task is never
+# suppressed: explicit lever/precedent IDs match anywhere (membership-checked against the real
+# registry); organ/pillar names match only when the ask is phrased as a decision-to-be-made.
+_LEVER_ID_RE = re.compile(r"\bL-[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+\b")
+_PREC_ID_RE = re.compile(r"\bPREC-\d{4}-\d{2}-\d{2}-[a-z0-9-]+\b", re.IGNORECASE)
+DECISION_SHAPE_RE = re.compile(
+    r"(?i)(\?|\b(should|which|whether|decide|choose|pick|either)\b|\bvs\.?\b|\b\w+\s+or\s+\w+\b)"
+)
+_REGISTRY_CACHE = None
+
+
+def _registry_decisions():
+    """(cached, fail-open) the tokens that mark an already-owned decision: lever ids
+    (his-hand-levers.json), precedent ids (censor/precedents.jsonl), and organ/pillar names
+    (organ-ladder.json). A missing/torn registry contributes nothing — never crashes the gate."""
+    global _REGISTRY_CACHE
+    if _REGISTRY_CACHE is not None:
+        return _REGISTRY_CACHE
+    ids: set[str] = set()
+    names: set[str] = set()
+    try:
+        d = json.loads((ROOT / "his-hand-levers.json").read_text())
+        for lev in (d.get("levers") or []) if isinstance(d, dict) else []:
+            if isinstance(lev, dict) and lev.get("id"):
+                ids.add(str(lev["id"]))
+    except Exception:
+        pass
+    try:
+        for line in (ROOT / "censor" / "precedents.jsonl").read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                pid = json.loads(line).get("id")
+            except Exception:
+                pid = None
+            if pid:
+                ids.add(str(pid))
+    except Exception:
+        pass
+    try:
+        ol = json.loads((ROOT / "organ-ladder.json").read_text())
+        organs = ol.get("organs") if isinstance(ol, dict) else ol
+        for o in organs or []:
+            if isinstance(o, dict):
+                for key in ("pillar", "organ"):
+                    v = str(o.get(key) or "").strip()
+                    if len(v) >= 4:
+                        names.add(v.lower())
+    except Exception:
+        pass
+    _REGISTRY_CACHE = (ids, names)
+    return _REGISTRY_CACHE
+
+
+def _already_decided(task: dict):
+    """(source, ref) if this ask is already owned by a registry → verdict DERIVE (derive from the
+    owner, don't surface). Membership-checked so a stray 'L-…'-looking string can't false-fire."""
+    text = _text(task)
+    ids, names = _registry_decisions()
+    for m in _LEVER_ID_RE.finditer(text):
+        if m.group(0) in ids:
+            return ("his-hand-lever", m.group(0))
+    for m in _PREC_ID_RE.finditer(text):
+        if m.group(0) in ids:
+            return ("precedent", m.group(0))
+    if DECISION_SHAPE_RE.search(text):
+        low = text.lower()
+        for nm in names:
+            if re.search(rf"\b{re.escape(nm)}\b", low):
+                return ("organ-ladder", nm)
+    return None
+
+
 def assess(task: dict) -> dict:
     """Mechanical drift-predictor findings for one task dict (keeper patch shape)."""
+    decided = _already_decided(task)
+    if decided:
+        src, ref = decided
+        return dict(id=task.get("id", "?"), verdict="DERIVE",
+                    findings=[f"DERIVE: already owned by {src}:{ref} — derive from the registry, "
+                              "don't re-ask (PREC-2026-07-08-ask-already-decided)"])
     text = _text(task)
     findings = []
 
@@ -160,6 +242,7 @@ def stamp(rows, path):
         timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         split=[r["id"] for r in rows if r["verdict"] == "SPLIT"],
         advise=[r["id"] for r in rows if r["verdict"] == "ADVISE"],
+        derive=[r["id"] for r in rows if r["verdict"] == "DERIVE"],
         passed=sum(1 for r in rows if r["verdict"] == "PASS"),
         rows=rows,
     )
