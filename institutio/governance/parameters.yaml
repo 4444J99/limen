@@ -941,6 +941,18 @@ parameters:
     self_update: none
     owner: mail
     note: "Apple Mail Envelope Index used by the private mail story ledger for read-only clustering."
+  LIMEN_MAIL_STATUS_OUT:
+    default: "$LIMEN_ROOT/logs/uma-mail-status.json"
+    env: LIMEN_MAIL_STATUS_OUT
+    self_update: none
+    owner: mail
+    note: "UMA mail status receipt path consumed by Limen mail wrappers."
+  LIMEN_MAIL_STATUS_MAX_AGE_HOURS:
+    default: 24
+    env: LIMEN_MAIL_STATUS_MAX_AGE_HOURS
+    self_update: none
+    owner: mail
+    note: "Maximum accepted age for UMA mail status receipts before wrappers refresh."
   LIMEN_PRIVATE_MAIL_STORY:
     default: "$LIMEN_ROOT/.limen-private/mail-story"
     env: LIMEN_PRIVATE_MAIL_STORY

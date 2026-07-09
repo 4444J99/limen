@@ -1,10 +1,7 @@
 import importlib.util
 import json
-import sqlite3
-from datetime import datetime, timezone
+import subprocess
 from pathlib import Path
-
-import pytest
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "mail-story-ledger.py"
@@ -18,155 +15,74 @@ def _load_module():
     return module
 
 
-def _ts(year: int, month: int, day: int) -> int:
-    return int(datetime(year, month, day, 12, 0, tzinfo=timezone.utc).timestamp())
-
-
-def _mail_index(tmp_path: Path) -> Path:
-    db = tmp_path / "Envelope Index"
-    conn = sqlite3.connect(db)
-    conn.executescript(
-        """
-        CREATE TABLE messages (
-            ROWID INTEGER PRIMARY KEY,
-            global_message_id INTEGER NOT NULL,
-            conversation_id INTEGER NOT NULL,
-            date_received INTEGER,
-            flagged INTEGER NOT NULL DEFAULT 0,
-            flag_color INTEGER,
-            read INTEGER NOT NULL DEFAULT 0,
-            deleted INTEGER NOT NULL DEFAULT 0,
-            sender INTEGER,
-            subject INTEGER,
-            summary INTEGER,
-            mailbox INTEGER
-        );
-        CREATE TABLE addresses (
-            ROWID INTEGER PRIMARY KEY,
-            address TEXT NOT NULL,
-            comment TEXT NOT NULL
-        );
-        CREATE TABLE subjects (
-            ROWID INTEGER PRIMARY KEY,
-            subject TEXT NOT NULL
-        );
-        CREATE TABLE summaries (
-            ROWID INTEGER PRIMARY KEY,
-            summary TEXT NOT NULL
-        );
-        CREATE TABLE mailboxes (
-            ROWID INTEGER PRIMARY KEY,
-            url TEXT NOT NULL
-        );
-        CREATE TABLE message_global_data (
-            ROWID INTEGER PRIMARY KEY,
-            message_id_header TEXT
-        );
-        """
-    )
-    conn.executemany(
-        "INSERT INTO addresses VALUES (?, ?, ?)",
-        [
-            (1, "notifications@stripe.example.test", "Stripe Private"),
-            (2, "no_reply@email.apple.com", "Apple"),
-            (3, "alerts@nelnet.studentaid.gov", "Nelnet"),
-            (4, "friend@gmail.com", "Private Friend"),
+def _status_payload():
+    return {
+        "schema": "uma.mail.status.v1",
+        "status": "open",
+        "mode": {"read_only": True, "mailbox_mutations": False, "sends": False},
+        "privacy": {"redacted": True, "public_safe": True},
+        "current_ops": {"available": True, "kpis": {"inbox_total": 12, "changed_count": 0}},
+        "historical_crosswalk": {
+            "available": True,
+            "kpis": {"source_messages": 41415, "reconciled": True},
+            "terminal_status_counts": {
+                "resolved": 40000,
+                "represented_in_ops": 1000,
+                "stale_noop": 300,
+                "open": 100,
+                "blocked": 10,
+                "needs_human": 5,
+            },
+        },
+        "answers": {
+            "what_ran": "daily UMA status",
+            "what_changed": "no mailbox changes",
+            "what_remains_open": "100 redacted items",
+            "what_is_blocked": "10 redacted blockers",
+            "historical_backlog_accounted_for": "yes",
+        },
+        "next_queue": [
+            {
+                "id": "redacted-action-1",
+                "terminal_status": "open",
+                "processing_state": "queued",
+                "surface": "current_ops",
+                "reason_code": "needs_reply",
+                "subject": "private subject must not leak",
+                "email": "secret@example.com",
+            }
         ],
-    )
-    conn.executemany(
-        "INSERT INTO subjects VALUES (?, ?)",
-        [
-            (1, "Action required private client subject should not leak"),
-            (2, "Billing Problem"),
-            (3, "Student Loan Default Notice"),
-            (4, "Security alert should not be processed in flagged scope"),
-            (5, "Deleted flagged notice should not count"),
-        ],
-    )
-    conn.executemany(
-        "INSERT INTO summaries VALUES (?, ?)",
-        [
-            (1, "private body-ish summary should stay private"),
-            (2, "Your payment method needs attention."),
-            (3, "Your student loan needs review."),
-        ],
-    )
-    conn.executemany(
-        "INSERT INTO mailboxes VALUES (?, ?)",
-        [
-            (1, "imap://fixture/%5BGmail%5D/All%20Mail"),
-            (2, "imap://fixture/INBOX"),
-        ],
-    )
-    conn.executemany(
-        "INSERT INTO message_global_data VALUES (?, ?)",
-        [
-            (101, "<stripe-private@example.test>"),
-            (102, "<apple-billing@example.test>"),
-            (103, "<nelnet-default@example.test>"),
-            (104, "<friend-security@example.test>"),
-            (105, "<deleted@example.test>"),
-        ],
-    )
-    conn.executemany(
-        """
-        INSERT INTO messages (
-            ROWID, global_message_id, conversation_id, date_received, flagged,
-            flag_color, read, deleted, sender, subject, summary, mailbox
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        [
-            (1, 101, 1001, _ts(2026, 7, 6), 1, 1, 1, 0, 1, 1, 1, 1),
-            (2, 102, 1002, _ts(2026, 7, 5), 1, 1, 0, 0, 2, 2, 2, 2),
-            (3, 103, 1003, _ts(2025, 6, 1), 1, 1, 1, 0, 3, 3, 3, 1),
-            (4, 104, 1004, _ts(2024, 3, 1), 0, None, 1, 0, 4, 4, None, 1),
-            (5, 105, 1005, _ts(2023, 1, 1), 1, 1, 1, 1, 4, 5, None, 1),
-        ],
-    )
-    conn.commit()
-    conn.close()
-    return db
-
-
-def test_build_snapshot_uses_unix_dates_and_classifies_flagged_atoms(tmp_path):
-    module = _load_module()
-    db = _mail_index(tmp_path)
-
-    snapshot, atoms = module.build_snapshot(db)
-
-    assert snapshot["stats"]["total_messages"] == 5
-    assert snapshot["stats"]["not_deleted_messages"] == 4
-    assert snapshot["stats"]["flagged_non_deleted"] == 3
-    assert snapshot["stats"]["last_received_at"].startswith("2026-07-06")
-    assert not snapshot["stats"]["last_received_at"].startswith("2057")
-    assert snapshot["atom_count"] == 3
-    assert {atom["cluster_id"] for atom in atoms} == {
-        "identity-compliance",
-        "billing-continuity",
-        "debt-default-navigation",
+        "blockers": [{"surface": "history", "status": "blocked"}],
     }
-    assert all(atom["evidence_scope"] in {"metadata", "metadata_summary"} for atom in atoms)
 
 
-def test_connect_readonly_rejects_sqlite_writes(tmp_path):
+def test_wrapper_snapshot_and_markdown_are_redacted():
     module = _load_module()
-    db = _mail_index(tmp_path)
 
-    with module.connect_readonly(db) as conn:
-        with pytest.raises(sqlite3.OperationalError):
-            conn.execute("CREATE TABLE should_fail (id INTEGER)")
+    snapshot, atoms = module.build_snapshot(_status_payload())
+    markdown = module.render_markdown(snapshot)
+
+    assert snapshot["schema"] == "limen.mail_story.wrapper.v1"
+    assert snapshot["classification_owner"] == "organvm/universal-mail--automation"
+    assert snapshot["mode"]["mailbox_mutations"] is False
+    assert snapshot["mode"]["sends"] is False
+    assert snapshot["source_receipt"]["schema"] == "uma.mail.status.v1"
+    assert snapshot["stats"]["historical_messages"] == 41415
+    assert snapshot["stats"]["historical_reconciled"] is True
+    assert atoms[0]["classification_owner"] == "organvm/universal-mail--automation"
+    assert "UMA wrapper" in markdown
+    assert "private subject" not in json.dumps(snapshot)
+    assert "secret@example.com" not in json.dumps(atoms)
 
 
-def test_markdown_is_redacted_while_private_atoms_keep_source(tmp_path):
+def test_wrapper_writes_existing_limen_surfaces_without_raw_mail(tmp_path):
     module = _load_module()
-    db = _mail_index(tmp_path)
     doc = tmp_path / "docs" / "mail-story-ledger.md"
     log = tmp_path / "logs" / "mail-story-ledger.json"
     private_atoms = tmp_path / ".limen-private" / "mail-story" / "inventory" / "atoms.jsonl"
     private_snapshot = tmp_path / ".limen-private" / "mail-story" / "inventory" / "snapshot.json"
 
-    snapshot, atoms = module.build_snapshot(db)
+    snapshot, atoms = module.build_snapshot(_status_payload())
     markdown = module.render_markdown(snapshot)
     module.write_outputs(
         snapshot,
@@ -185,20 +101,43 @@ def test_markdown_is_redacted_while_private_atoms_keep_source(tmp_path):
     scoped_atoms = private_atoms.with_name("atoms-flagged.jsonl")
     scoped_snapshot = private_snapshot.with_name("snapshot-flagged.json")
 
-    for forbidden in (
-        "notifications@stripe.example.test",
-        "Stripe Private",
-        "private client subject should not leak",
-        "private body-ish summary",
-        "friend@gmail.com",
-    ):
-        assert forbidden not in markdown
-        assert forbidden not in public_text
-
-    assert "stripe.example.test" in public_text
-    assert "notifications@stripe.example.test" in private_text
-    assert "private body-ish summary should stay private" in private_text
+    assert "private subject" not in public_text
+    assert "secret@example.com" not in public_text
+    assert "secret@example.com" not in private_text
     assert log_payload["privacy"]["raw_mail_in_git"] is False
     assert json.loads(scoped_log.read_text(encoding="utf-8"))["mode"]["scope"] == "flagged"
     assert scoped_atoms.read_text(encoding="utf-8") == private_text
     assert json.loads(scoped_snapshot.read_text(encoding="utf-8"))["mode"]["scope"] == "flagged"
+
+
+def test_wrapper_cli_can_render_from_status_fixture(tmp_path):
+    status = tmp_path / "uma-status.json"
+    doc = tmp_path / "doc.md"
+    log = tmp_path / "log.json"
+    atoms = tmp_path / "atoms.jsonl"
+    snapshot = tmp_path / "snapshot.json"
+    status.write_text(json.dumps(_status_payload()), encoding="utf-8")
+
+    proc = subprocess.run(
+        [
+            "python3",
+            str(SCRIPT),
+            "--status",
+            str(status),
+            "--write",
+            "--doc",
+            str(doc),
+            "--log",
+            str(log),
+            "--private-atoms",
+            str(atoms),
+            "--private-snapshot",
+            str(snapshot),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert "UMA wrapper wrote" in proc.stdout
+    assert json.loads(log.read_text(encoding="utf-8"))["source_receipt"]["schema"] == "uma.mail.status.v1"
