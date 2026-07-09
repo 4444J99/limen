@@ -1503,6 +1503,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "The expected cartridge repo (owner/repo) whose remote chezmoi's source must match for cartridge-connected to pass. DERIVED default, not pinned per host — another person's prosthesis overrides this to their own fork; a same-repo-name fork under a different owner still validates. See derive-never-pin-hardcodes."
+  LIMEN_CHEZMOI_DRIFT_CHECK:
+    default: "1"               # ON — surface a wedged pipeline / stale cartridge / .claude orphan in the beat log (0c'), never in chat
+    env: LIMEN_CHEZMOI_DRIFT_CHECK
+    self_update: none
+    owner: limen-daemon
+    note: "Gate for the metabolize 0c' step (scripts/chezmoi-drift.py). cartridge-connected proves the right REMOTE is wired but reads green through three states that silently disable config hydration: a strict-missingkey template error that aborts the whole `chezmoi status`/apply run; the source checkout parked on a stale branch serving old config; a managed target edited on disk but never re-added (the auto-capture hook only fires on the Edit tool). Any lets a local orphan look durable — the failure that made a subagent's ~/.claude statusline write survive as a local file (2026-07-09). =0 skips it. Fail-open only when chezmoi is absent; wedge/stale/.claude-orphan is the actionable non-zero. See host-is-factory-system-is-cartridge."
 
   # --- WORKTREE LIFECYCLE / parallel CELLS (scripts/cells.sh + scripts/reclaim-worktrees.py) ---
   LIMEN_RECLAIM_CLAUDE_WT:

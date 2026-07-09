@@ -78,6 +78,18 @@ if [ "${LIMEN_CARTRIDGE_CHECK:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/cartridge-connected.py" || echo "  ↑ cartridge UNPLUGGED (above) — bring domus-genoma current, then re-point chezmoi at it"
 fi
 
+echo "── 0c'. verify config hydrates from the CURRENT cartridge (no wedge / no stale / no orphan) ──"
+# cartridge-connected proves the right REMOTE is wired; it cannot see three states that still read
+# green there but silently disable hydration: (1) a strict-missingkey template error aborts the whole
+# `chezmoi status`/apply run (the wedge that let a subagent's ~/.claude statusline write become a
+# durable-looking local orphan, 2026-07-09); (2) the source checkout parked on a stale branch serves
+# old config so a master-fixed template is still broken locally; (3) a managed target edited on disk
+# but never re-added (the auto-capture hook only fires on the Edit tool). Fail-open only for an absent
+# chezmoi; a wedged pipeline / stale cartridge / .claude orphan is the actionable non-zero.
+if [ "${LIMEN_CHEZMOI_DRIFT_CHECK:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/chezmoi-drift.py" || echo "  ↑ config is NOT hydrating from the current cartridge (above) — nothing is local; reconcile per the hint"
+fi
+
 echo "── 0d. verify enactment — every declared-ON fleet flag is actually LIVE (not just merged) ──"
 # The gap this closes (memory: enacted-not-declared): a flag can be declared ON in parameters.yaml
 # and merged, yet be dark in the RUNNING beat — either wired nowhere (TABVLARIVS #576 shipped its
