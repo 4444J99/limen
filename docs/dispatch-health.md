@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-09T23:16:34+00:00`
+Generated: `2026-07-09T23:22:11+00:00`
 
 Status: `blocked`
 
@@ -34,7 +34,7 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `10`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T23:16:34.490430+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T23:22:11.391824+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -67,7 +67,7 @@ Status: `blocked`
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
   - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; disk/temp pressure needs owner work.
   - `ESTATE-CUSTODY`: `estate-custody` / `assigned_from_existing_work`; estate doctrine exists; implementation receipt is not complete.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.8%, reviews 0.8%.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.8%, reviews 0.8%.
   - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 131 active flagged non-deleted messages require classification.
   - `REPO-BOIL-UP`: `repo-boil-up` / `assigned_from_existing_work`; broad repo surface ledger exists, but it is stale for current boil-up work.
 
@@ -75,8 +75,8 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `b19e41aaea38460b11b46491470486f23ff37819`.
-- origin/main: `b19e41aaea38460b11b46491470486f23ff37819`.
+- HEAD: `2b365892917815c205adde49c1dc8a24521664a9`.
+- origin/main: `2b365892917815c205adde49c1dc8a24521664a9`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 

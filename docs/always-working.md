@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-09T23:08:32+00:00`
+Generated: `2026-07-09T23:22:14+00:00`
 Status: `needs-work`
 Required open: `6`
 Blocked: `1`
@@ -31,7 +31,7 @@ Done from receipt: `4`
 | 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | disk/temp pressure needs owner work |
 | 5 | `ESTATE-CUSTODY` | `assigned_from_existing_work` | estate doctrine exists; implementation receipt is not complete |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
-| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.8%, reviews 0.8% |
+| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.8%, reviews 0.8% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `done_from_receipt` | credential wall and historical token tombstone receipt are present |
 | 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 131 active flagged non-deleted messages require classification |
 | 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 83150 indexed non-deleted messages remain for future batches |
