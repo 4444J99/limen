@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (132) — decide each
+## Live-work branches (133) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -40,6 +40,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `docs/quicken-residue` — 1890688b docs: QUICKEN residue — irreducible human atoms (daemon capture)
 - `feat/bhagavad-gita-arcs-5-8` — 13a810c3 feat(studium): author metamorphoses books 2 and 3 arcs
 - `feat/censor-monthly-tier` — a89dd048 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
+- `feat/local-floor-routing` — aee83275 feat(routing): local-floor lane — mechanical classes to ollama, shipped DARK, armed by parity gate
 - `feat/studium-deepen-bhagavad-gita` — b79d0fae studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
 - `feat/studium-deepen-mahabharata-books-5-8` — fd8dbae6 studium: deepen mahabharata — parvas 5-8 (Udyoga, Bhishma, Drona, Karna)
 - `feat/studium-deepen-metamorphoses-batch-1` — 2bf80117 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
