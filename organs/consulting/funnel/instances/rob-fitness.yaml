@@ -7,6 +7,7 @@ instance: "rob-fitness"
 engagement: "organs/consulting/engagements/rob.yaml"
 niche: "fitness"
 operating_floor: "organs/consulting/funnel/ROB-BODI-OPERATING-FLOOR.md"
+plan_generator: "organvm/daily-engine (private) — instances/rob-fitness/INTEGRATION.md: intake -> state seed -> predicate-checked free-plan card set (L2), open/log/review check-in loop (L3), gate-proposed coach-disposed progressions (VIP)"
 
 channels:
   content:
@@ -114,3 +115,11 @@ human_gates:
 # here and must correspond to an owed atom in the engagement record.
 owed_slots:
   - "ROB_AFFILIATE_LINK"
+  - "CRM_PLATFORM"
+  - "HANDLE_CONFIRMATION_TICKET"
+  - "NEWSLETTER_NAME"
+  - "NEWSLETTER_PLATFORM_1"
+  - "NEWSLETTER_PLATFORM_2"
+  - "PRIMARY_SOCIAL_CHANNEL"
+  - "SECONDARY_SOCIAL_CHANNEL"
+  - "VIDEO_SHORTS_CHANNEL"
