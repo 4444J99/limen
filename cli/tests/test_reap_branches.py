@@ -259,3 +259,50 @@ def test_lingering_zero_grace_keeps_strict_semantics():
     now = time.time()
     rows = [("young", "landed-pr-merged")]
     assert reap._lingering(rows, {"young": now - 60.0}, now, grace_s=0.0) == rows
+
+
+def test_standing_grant_covers_landed_classes(repo):
+    events = [
+        {
+            "standing": True,
+            "branch": "*",
+            "accepted": True,
+            "accepted_at": "2026-07-09T13:00:00Z",
+            "archive_status": "not_required_landed_ref",
+            "archive_proof": "standing grant: covers only classifier-proven landed branches",
+            "redaction_review": "not_required_landed_ref",
+            "redaction_proof": "local ref deletion removes only a branch pointer; landed objects stay on default",
+        }
+    ]
+
+    for landed_reason in ("landed-ancestor", "landed-pr-merged"):
+        ok, reason = reap.branch_reap_accepted("spent", landed_reason, events)
+        assert ok is True
+        assert reason == "branch-reap-accepted"
+
+
+def test_standing_grant_never_covers_non_landed_classes(repo):
+    events = [
+        {
+            "standing": True,
+            "branch": "*",
+            "accepted": True,
+            "accepted_at": "2026-07-09T13:00:00Z",
+            "archive_status": "not_required_landed_ref",
+            "archive_proof": "standing grant: covers only classifier-proven landed branches",
+            "redaction_review": "not_required_landed_ref",
+            "redaction_proof": "local ref deletion removes only a branch pointer; landed objects stay on default",
+        }
+    ]
+
+    ok, reason = reap.branch_reap_accepted("spent", "livework", events)
+    assert ok is False
+    assert reason == "missing-branch-reap-acceptance"
+
+
+def test_standing_grant_requires_proof_fields(repo):
+    events = [{"standing": True, "branch": "*", "accepted": True, "accepted_at": "2026-07-09T13:00:00Z"}]
+
+    ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", events)
+    assert ok is False
+    assert reason == "incomplete-branch-reap-acceptance"

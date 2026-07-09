@@ -35,3 +35,14 @@ ref carries no additional unpublished content.
 This file documents the acceptance shape only. The active acceptance ledger is
 `docs/branch-reap-acceptance.jsonl`, which should be written only when a human
 has reviewed the branch, archive/storage proof, and redaction proof.
+
+## Standing grant (landed classes only)
+
+A single ledger event with `"standing": true` and `"branch": "*"` covers every branch the
+classifier itself proves landed — reason `landed-pr-merged` (PR MERGED per `gh` AND tip not
+advanced past mergedAt) or `landed-ancestor` (tip reachable from the default ref). The machine
+proof is the archive proof; the grant delegates the per-branch human key for exactly those two
+classes and nothing else. Any other deletion class still requires a per-branch, tip-matched
+acceptance event. Granted by Anthony in-session 2026-07-09 after repeated per-branch acceptance
+rounds (178 reaps in one closeout) made the ask itself the friction; precedent: the merge
+standing grant (#207).

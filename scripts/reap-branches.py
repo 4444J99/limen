@@ -107,6 +107,11 @@ ACCEPTED_REDACTION_REVIEWS = {
     "not_required_remote_only",
 }
 REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
+# A standing ledger grant may cover ONLY these machine-provable classes: the classifier assigns
+# them strictly after the ancestor / merged-PR-with-unadvanced-tip proof already held, so the
+# per-branch human key is delegated to that proof. Every other deletion class still requires a
+# per-branch, tip-matched acceptance event (Anthony, in-session 2026-07-09).
+STANDING_GRANT_REASONS = {"landed-pr-merged", "landed-ancestor"}
 
 
 def _int_env(name: str, default: int, *, minimum: int | None = None) -> int:
@@ -175,14 +180,21 @@ def branch_reap_accepted(branch: str, reason: str, acceptance_events: list[dict]
     tip = _branch_tip_sha(branch)
     matched_candidate = False
     for event in reversed(acceptance_events):
-        if event.get("branch") != branch:
-            continue
-        if event.get("accepted") is not True:
-            continue
-        if event.get("reason") and event.get("reason") != reason:
-            continue
-        if event.get("tip") and event.get("tip") != tip:
-            continue
+        standing = event.get("standing") is True and event.get("branch") in (None, "*")
+        if standing:
+            if reason not in STANDING_GRANT_REASONS:
+                continue
+            if event.get("accepted") is not True:
+                continue
+        else:
+            if event.get("branch") != branch:
+                continue
+            if event.get("accepted") is not True:
+                continue
+            if event.get("reason") and event.get("reason") != reason:
+                continue
+            if event.get("tip") and event.get("tip") != tip:
+                continue
         matched_candidate = True
         archive_ok = event.get("archive_verified") is True or event.get("archive_status") in ACCEPTED_ARCHIVE_STATUSES
         if not archive_ok:
