@@ -116943,7 +116943,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#132
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -116966,7 +116966,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#134
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -116989,7 +116989,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#135
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -117012,7 +117012,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#139
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -117035,7 +117035,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#140
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -117058,7 +117058,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#145
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -117076,4 +117076,57 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
+  dispatch_log: []
+- id: aw-agy-scratch-preserve-0709
+  title: Archive-first preservation of Antigravity scratch roots (22 GiB prompt-corpus
+    material)
+  description: "~/.gemini/antigravity-cli/scratch holds 55 roots / 22.1 GiB. Bridge\
+    \ audit: 34 bridge_required, 3 container_review_required, 2 preserve_required,\
+    \ 13 safe_reap_candidate (396 MiB). The bulk is three session-meta clones (~13.7\
+    \ GiB) with thousands of staged-but-uncommitted deletions \u2014 prompt/session\
+    \ corpus material, NEVER blind-delete. Lane: scripts/antigravity-scratch-bridge.py\
+    \ --preserve-root per root (rsync copy+verify to private archive, redacted receipts),\
+    \ then acceptance events in docs/antigravity-scratch-reap-acceptance.jsonl, then\
+    \ reap. Covenant: docs/removal-acceptance-covenant.md. Origin: 2026-07-09 storage-lifecycle\
+    \ deadlock heal (PR #771)."
+  repo: organvm/limen
+  type: code
+  target_agent: claude
+  workstream: estate-custody
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - storage-lifecycle
+  - preservation
+  - prompt-corpus
+  urls: []
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:32:14.531302Z'
+  dispatch_log: []
+- id: aw-opencode-db-corpus-intake-0709
+  title: Route opencode.db (8.3 GB packed session history) into the prompt-corpus
+    intake
+  description: "~/.local/share/opencode/opencode.db is 8.3 GB, SQLite freelist 0 (fully\
+    \ packed session/prompt history). Operator directive: every prompt is corpus.\
+    \ Extract/export sessions into the session-meta/estuary corpus intake lane with\
+    \ receipts, then decide retention of the source DB with the vendor tool's own\
+    \ lifecycle \u2014 never delete the DB outright. Origin: 2026-07-09 storage-lifecycle\
+    \ deadlock heal (PR #771)."
+  repo: organvm/limen
+  type: code
+  target_agent: claude
+  workstream: estate-custody
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - storage-lifecycle
+  - prompt-corpus
+  - ingest
+  urls: []
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T11:32:14.533100Z'
   dispatch_log: []
