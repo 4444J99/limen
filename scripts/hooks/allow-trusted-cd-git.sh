@@ -86,6 +86,24 @@ fi
 
 # ── Path trust helpers ───────────────────────────────────────────────────────
 
+under_home() {  # is $1 a descendant of $HOME or $PHYS_HOME (or one of them itself)?
+  # PORTABILITY: on Linux CI (and any config where $HOME sits under /tmp, e.g.
+  # a mktemp-d hermetic test), a path inside the home tree must be governed
+  # ONLY by the strict HOME-tree rules below — never by the generic /tmp
+  # fallback (which would wrongly treat the whole primary checkout as
+  # disposable/trusted). $TMPDIR is a SIBLING of $HOME, so it is unaffected.
+  local p="$1"
+  case "$p" in
+    "$HOME"|"$HOME/"*) return 0 ;;
+  esac
+  if [ "$PHYS_HOME" != "$HOME" ]; then
+    case "$p" in
+      "$PHYS_HOME"|"$PHYS_HOME/"*) return 0 ;;
+    esac
+  fi
+  return 1
+}
+
 expand_prefix() {  # expand a leading ~ / $HOME / $TMPDIR / $CLAUDE_* in $1; echo result ("" = refuse)
   local p="$1"
   case "$p" in
@@ -116,13 +134,19 @@ trusted_dir() {  # is $1 (a directory path) inside a user-owned tree?
   case "$p" in
     "$HOME"|"$HOME/Workspace"|"$HOME/Workspace/"*|"$HOME/Code"|"$HOME/Code/"*|"$HOME/.claude"|"$HOME/.claude/"*) return 0 ;;
     *.claude/worktrees/*) return 0 ;;
-    /tmp|/tmp/*|/private/tmp|/private/tmp/*) return 0 ;;
   esac
   if [ "$PHYS_HOME" != "$HOME" ]; then
     case "$p" in
       "$PHYS_HOME"|"$PHYS_HOME/Workspace"|"$PHYS_HOME/Workspace/"*|"$PHYS_HOME/Code"|"$PHYS_HOME/Code/"*|"$PHYS_HOME/.claude"|"$PHYS_HOME/.claude/"*) return 0 ;;
     esac
   fi
+  # Generic /tmp trust — NEVER for a path inside the home tree (portability:
+  # when $HOME itself sits under /tmp, home paths are governed only by the
+  # strict clauses above).
+  under_home "$p" && return 1
+  case "$p" in
+    /tmp|/tmp/*|/private/tmp|/private/tmp/*) return 0 ;;
+  esac
   return 1
 }
 
@@ -131,9 +155,9 @@ is_disposable() {  # proper descendant of a disposable container (lexical)
   case "$p" in
     "$HOME/.claude/worktrees/"?*|"$HOME/.claude/jobs/"?*) return 0 ;;
     "$PHYS_HOME/.claude/worktrees/"?*|"$PHYS_HOME/.claude/jobs/"?*) return 0 ;;
-    /tmp/?*|/private/tmp/?*) return 0 ;;
     */.claude/worktrees/?*) return 0 ;;
   esac
+  # $TMPDIR (a sibling of $HOME) stays disposable even when $HOME is under /tmp.
   if [ -n "${TMPDIR:-}" ]; then
     case "$TMPDIR" in
       /var/folders/*|/private/var/folders/*|/tmp|/tmp/*)
@@ -141,15 +165,24 @@ is_disposable() {  # proper descendant of a disposable container (lexical)
         case "$p" in "$td"/?*) return 0 ;; esac ;;
     esac
   fi
+  # Generic /tmp disposability — NEVER for a path inside the home tree.
+  under_home "$p" && return 1
+  case "$p" in
+    /tmp/?*|/private/tmp/?*) return 0 ;;
+  esac
   return 1
 }
 
 disposable_container_or_within() {  # a disposable container itself, or a proper descendant
   local p="$1" td
   case "$p" in
-    "$HOME/.claude/worktrees"|"$HOME/.claude/jobs"|"$PHYS_HOME/.claude/worktrees"|"$PHYS_HOME/.claude/jobs"|/tmp|/private/tmp) return 0 ;;
+    "$HOME/.claude/worktrees"|"$HOME/.claude/jobs"|"$PHYS_HOME/.claude/worktrees"|"$PHYS_HOME/.claude/jobs") return 0 ;;
     */.claude/worktrees) return 0 ;;
   esac
+  # Bare /tmp|/private/tmp container — NEVER when it is (part of) the home tree.
+  if ! under_home "$p"; then
+    case "$p" in /tmp|/private/tmp) return 0 ;; esac
+  fi
   if [ -n "${TMPDIR:-}" ]; then
     td="${TMPDIR%/}"
     if [ "$p" = "$td" ]; then
@@ -169,11 +202,15 @@ phys_ok() {  # deepest EXISTING ancestor of $1 must physically resolve into a tr
   case "$phys" in
     "$HOME/.claude"|"$HOME/.claude/"*|"$HOME/Workspace"|"$HOME/Workspace/"*|"$HOME/Code"|"$HOME/Code/"*) return 0 ;;
     "$PHYS_HOME/.claude"|"$PHYS_HOME/.claude/"*|"$PHYS_HOME/Workspace"|"$PHYS_HOME/Workspace/"*|"$PHYS_HOME/Code"|"$PHYS_HOME/Code/"*) return 0 ;;
-    /tmp|/tmp/*|/private/tmp|/private/tmp/*) return 0 ;;
   esac
   if [ -n "$PHYS_TMPDIR" ]; then
     case "$phys" in "$PHYS_TMPDIR"|"$PHYS_TMPDIR"/*) return 0 ;; esac
   fi
+  # Generic /tmp physical trust — NEVER for a resolved path inside the home tree.
+  under_home "$phys" && return 1
+  case "$phys" in
+    /tmp|/tmp/*|/private/tmp|/private/tmp/*) return 0 ;;
+  esac
   return 1
 }
 
