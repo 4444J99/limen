@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Callable, Optional, TypeVar, overload, Union, Any
 
 import yaml
 
 _PANEL_REL = ("institutio", "governance", "parameters.yaml")
+
+T = TypeVar("T")
 
 
 def _repo_root() -> Optional[Path]:
@@ -42,19 +44,33 @@ def panel_path() -> Optional[Path]:
     return root.joinpath(*_PANEL_REL) if root else None
 
 
-def _load_panel() -> dict[str, Any]:
+def _load_panel() -> dict[str, object]:
     path = panel_path()
     if not path or not path.exists():
         return {}
     try:
-        data = yaml.safe_load(path.read_text()) or {}
+        data = yaml.safe_load(path.read_text())
+        if not isinstance(data, dict):
+            return {}
         params = data.get("parameters", {})
         return params if isinstance(params, dict) else {}
     except Exception:
         return {}
 
 
-def get(key: str, default: Any = None, cast: Optional[Callable[[Any], Any]] = None) -> Any:
+@overload
+def get(key: str, default: T, cast: None = None) -> Union[T, str]: ...
+
+
+@overload
+def get(key: str, default: T, cast: Callable[[Any], T]) -> T: ...
+
+
+@overload
+def get(key: str, default: None = None, cast: None = None) -> Optional[object]: ...
+
+
+def get(key: str, default: object = None, cast: Optional[Callable[[Any], object]] = None) -> object:
     """Resolve a parameter.
 
     Precedence: env override (the param's declared ``env``, falling back to the
@@ -62,12 +78,12 @@ def get(key: str, default: Any = None, cast: Optional[Callable[[Any], Any]] = No
     """
     spec = _load_panel().get(key)
     env_name = key
-    panel_default: Any = None
+    panel_default: object = None
     if isinstance(spec, dict):
-        env_name = spec.get("env") or key
+        env_name = str(spec.get("env") or key)
         panel_default = spec.get("default")
 
-    raw = os.environ.get(env_name)
+    raw: object = os.environ.get(env_name)
     if raw is None:
         raw = panel_default
     if raw is None:
