@@ -371,6 +371,24 @@
       "issue": 730,
       "source_task": "REV-organvm-limen-revenue-launch-post-0708 (session vltima-0146de0a, 2026-07-08)",
       "unlocks": "inbound demand for the second product surface of the sovereign rail (MONETA as a service to other sellers) — the pain-point-is-a-product north star made public"
+    },
+    {
+      "id": "L-ESTATE-MOUNT-4444J99",
+      "name": "L-ESTATE-MOUNT-4444J99",
+      "category": "estate",
+      "priority": "medium",
+      "status": "needs_human",
+      "desc": "Physical action: MOUNT the 4444J99 SSD so the fleet can extract the Nov-2025 deep-history archives. (Found hollow shells at .../cognitive-archaelogy-tribunal/chat-exports-all-112125/ which need to be recovered). Route via CVSTOS estate registry.",
+      "added": "2026-07-08",
+      "blocker_for": [
+        "EXCAV-0708-VENDOR-ARCHIVES"
+      ],
+      "label": "MOUNT the 4444J99 SSD to recover archives",
+      "owner": "anthony",
+      "cost": "physical action",
+      "unlocks": "EXCAV-0708-VENDOR-ARCHIVES completion",
+      "source_task": "EXCAV-0708-VENDOR-ARCHIVES",
+      "issue": 9999
     }
   ]
 }
