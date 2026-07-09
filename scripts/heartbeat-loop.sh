@@ -55,6 +55,11 @@ export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
 export GEMINI_CLI_TRUST_WORKSPACE="${GEMINI_CLI_TRUST_WORKSPACE:-true}"
 export PYTHONPATH="$LIMEN_ROOT/cli/src"
+# macOS 26.6 fork-safety mitigation — defuse Apple's Network.framework atfork child
+# handler that SIGSEGVs in os_log on the child side of fork()+exec() (any subprocess with
+# cwd=/preexec_fn). Must precede every python in the daemon loop; see metabolize.sh for the
+# full note and fork-oslog crash report 2026-07-09. Mechanism-cure = posix_spawn (no cwd=).
+export OS_ACTIVITY_MODE="${OS_ACTIVITY_MODE:-disable}"
 cd "$LIMEN_ROOT" || exit 1
 
 [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }

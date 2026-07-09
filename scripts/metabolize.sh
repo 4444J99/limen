@@ -20,6 +20,16 @@ export LIMEN_TASKS="${LIMEN_TASKS:-$LIMEN_ROOT/tasks.yaml}"
 export LIMEN_WORKDIR="${LIMEN_WORKDIR:-$HOME/Workspace}"
 export LIMEN_ISOLATION="${LIMEN_ISOLATION:-worktree}"
 export PYTHONPATH="$LIMEN_ROOT/cli/src"
+# macOS 26.6 fork-safety mitigation. Apple's Network.framework (loaded at startup into
+# EVERY python here — 3.14/3.13/3.9 alike) registers a pthread_atfork child handler
+# (nw_settings_child_has_forked) that SIGSEGVs in os_log on the child side of a
+# fork()+exec() — i.e. any subprocess call that passes cwd=/preexec_fn (~32 fleet files).
+# It's a timing race, so it kills a fraction of the thousands of fork+exec/beat. Quieting
+# os_activity defuses the os_log path the handler crashes in. Must be set BEFORE any python
+# launches (the framework loads before user code runs), so it lives here, above the first
+# python invocation. Mechanism-certain cure = keep subprocess on posix_spawn (no cwd=);
+# this env var is the zero-blast-radius mitigation. See fork-oslog crash report 2026-07-09.
+export OS_ACTIVITY_MODE="${OS_ACTIVITY_MODE:-disable}"
 cd "$LIMEN_ROOT" || exit 1
 if [ -z "${LIMEN_WORKTREES:-}" ]; then
   if [ -d /Volumes/Scratch ] && [ -w /Volumes/Scratch ]; then
