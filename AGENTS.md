@@ -112,6 +112,27 @@ library and processing substrate, not random leftovers from a recovery event.
 - Do not move, delete, dedupe, or purge personal data without the relevant two-copy/restore gate and
   an owner receipt.
 
+## Autonomy Continuation
+
+When the human explicitly says to keep working until usage is spent or everything is done, that is an
+operating order, not motivation text.
+
+- Do not leave `logs/AUTONOMY_PAUSED` in place unless a higher-priority safety gate requires it. If
+  the policy already permits dispatch, remove the stale pause marker, verify the heartbeat LaunchAgent
+  is loaded, and record any remaining blocker in the owning receipt.
+- Fan out all healthy remote lanes according to live usage telemetry. Jules is a remote lane; do not
+  count Jules against local CPU or disk concurrency. If Jules is exhausted or rate-limited, record that
+  from `logs/usage.json` and use the remaining healthy lanes.
+- Keep local lanes bounded by host pressure and local concurrency (`LIMEN_LOCAL_LIMIT`,
+  `--local-per-lane`, and `--max`), but do not convert a local cap into a global fleet cap.
+- If disk pressure is part of the correction, dry-run proof is not enough. Run the accepted reclaim
+  path until it reaches a fixed point, deleting only roots the reclaim script classifies as clean,
+  merged or patch-equivalent, idle, and remote-preserved. Anything left must be owner-routed by its
+  concrete reason (`dirty`, `unpushed`, `not-merged-to-default`, `active`, `not-a-git-dir`), not
+  explained away in chat.
+- A zero-launch dispatch command is not progress. If a lane filter launches nothing, inspect the board
+  and usage telemetry, then dispatch the actual eligible lanes or record the exact blocker.
+
 ## Pain Point Ownership
 
 Every repeated pain point needs an owner. Missing scopes, stale profile metadata, disk pressure,
