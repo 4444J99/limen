@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 311
+      spent: 314
       per_agent:
         jules: 40
         gemini: 9
-        codex: 16
+        codex: 18
         opencode: 121
         agy: 100
-        claude: 24
+        claude: 25
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-09T12:38:52.573549+00:00'
@@ -109213,15 +109213,16 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#133
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:claude
   urls:
   - https://github.com/organvm/session-meta/pull/133
   context: 'PR organvm/session-meta#133 is CONFLICTING with its base branch and merge-drain
@@ -109232,7 +109233,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T22:20:01.158025Z'
+  updated: '2026-07-09T22:25:55.016333Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -109248,6 +109249,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:25:55.016333Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: HEAL-cifix-organvm-domus-genoma-162
   title: fix failing CI on organvm/domus-genoma#162
   repo: organvm/domus-genoma
@@ -112849,7 +112854,7 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: claude
+  target_agent: ollama
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
@@ -112858,6 +112863,7 @@ tasks:
   - always-working
   - receipt-first
   - revenue-value-repos
+  - tried:claude
   urls:
   - ~/Workspace/limen/value-repos.json
   - ~/Workspace/limen/docs/product-ledger.md
@@ -112878,8 +112884,17 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T12:41:14.217518Z'
-  dispatch_log: []
+  updated: '2026-07-09T22:26:45.097943Z'
+  dispatch_log:
+  - timestamp: '2026-07-09T22:26:18.412400Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:26:45.097943Z'
+    agent: claude
+    session_id: cli
+    status: failed->ollama
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -116991,7 +117006,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -116999,6 +117014,7 @@ tasks:
   - tried:jules
   - slow
   - tried:claude
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/163
   context: 'PR organvm/domus-genoma#163 is CONFLICTING with its base branch and merge-drain
@@ -117009,7 +117025,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T22:08:51.491276Z'
+  updated: '2026-07-09T22:26:45.097943Z'
   dispatch_log:
   - timestamp: '2026-07-09T03:21:52.666387Z'
     agent: jules
@@ -117059,6 +117075,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:26:45.097943Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-domus-genoma-172
   title: rebase/resolve conflicts on organvm/domus-genoma#172
   repo: organvm/domus-genoma
@@ -122578,7 +122599,7 @@ tasks:
   workstream: sovereignty
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-deepen
   - pillar:sovereignty
@@ -122601,7 +122622,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T19:53:57.020939Z'
+  updated: '2026-07-09T22:26:18.412400Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -122613,6 +122634,11 @@ tasks:
     status: open
     output: 'board repair: latest jules failed->ollama came from unarmed/noncanonical
       ollama fallback; retargeted ollama->claude; code-side guard in https://github.com/organvm/limen/pull/839'
+  - timestamp: '2026-07-09T22:26:18.412400Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-sovereignty-organ-selffeed-0709
   title: Wire the sovereignty organ to advance autonomously
   repo: organvm/manumissio
