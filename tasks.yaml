@@ -117276,3 +117276,369 @@ tasks:
   created: '2026-07-09'
   updated: '2026-07-09T11:46:05.693154Z'
   dispatch_log: []
+- id: GH-organvm-limen-793
+  title: 'ops: activate mat-organ on the beat (kickstart heartbeat after live checkout
+    syncs)'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/793
+  context: 'GitHub issue organvm/limen#793. mat-organ v1 (#746) + v2 living lane (#772)
+    are merged; the live checkout is behind main and the heartbeat daemon still runs
+    the pre-C_MAT loop body. Once sync-release reconciles the live checkout: `launchctl
+    kickstart -k gui/$(id -u)/com.limen.heartbeat`, then verify `logs/.voice/mat`
+    stamps within a beat cycle. Any session can execute this; it needs no human hand.'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.186181Z'
+  dispatch_log: []
+- id: GH-organvm-limen-791
+  title: 'needs-human (L-DAILY-ENGINE-PHONE-SETUP): Daily-engine phone setup'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/791
+  context: "GitHub issue organvm/limen#791. **Owner:** Anthony (human-gated lever\
+    \ `L-DAILY-ENGINE-PHONE-SETUP`). Surfaced once, never nagged, never auto-pulled.\
+    \ This issue is the lever's permanent, individually-closeable home in the graph\
+    \ \u2014 the registry `his-hand-levers.json` is its source of truth. Daily-engine\
+    \ phone setup: LaunchAgent paste + 2 iOS Shortcuts (recipes in the private engine\
+    \ README) ### What it unlocks zero-tap food capture"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.187662Z'
+  dispatch_log: []
+- id: GH-organvm-limen-790
+  title: 'needs-human (L-ESTATE-MOUNT-4444J99): MOUNT the 4444J99 SSD to recover archives'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/790
+  context: "GitHub issue organvm/limen#790. **Owner:** Anthony (human-gated lever\
+    \ `L-ESTATE-MOUNT-4444J99`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. MOUNT the 4444J99\
+    \ SSD to recover archives ### What it unlocks EXCAV-0708-VENDOR-ARCHIVES completion\
+    \ ### Cost physical action ### Source `EXCAV-0708"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.188767Z'
+  dispatch_log: []
+- id: GH-organvm-limen-789
+  title: "needs-human (L-MONETA-LAUNCH): Post the MONETA Mint-as-a-Service launch\
+    \ kit under your own name \u2014 th\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/789
+  context: "GitHub issue organvm/limen#789. **Owner:** Anthony (human-gated lever\
+    \ `L-MONETA-LAUNCH`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Post the MONETA Mint-as-a-Service\
+    \ launch kit under your own name \u2014 the drafts are DONE and merged: marketing/launch-post.md\
+    \ (Show HN + ready first-comment"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.189928Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-13
+  title: 'Meta: harden the toolkit for other operators (docs, config, CI)'
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - engine
+  - meta
+  urls:
+  - https://github.com/organvm/manumissio/issues/13
+  context: "GitHub issue organvm/manumissio#13. This repo is also a product: every\
+    \ $500/mo AI bill is the same pain. Keep the gauge config fully generic (no operator\
+    \ constants in code), keep docs/plan-template.md forkable, and keep CI green so\
+    \ a stranger can clone \u2192 measure \u2192 decide in under an hour. Friction\
+    \ found by new users lands here. <!-- manumissio:generalize-and-document -->"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.191180Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-12
+  title: "Phase 4: the exit predicate \u2014 the last subscription dies by exit code"
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - evals
+  - phase-4
+  urls:
+  - https://github.com/organvm/manumissio/issues/12
+  context: "GitHub issue organvm/manumissio#12. Definition of done for liberation:\
+    \ `parity gate` exit 0 at threshold on EVERY reserved job class against an owned/open\
+    \ model. When that predicate passes, the frontier subscription is either cancelled\
+    \ or consciously retained as a small burst tier \u2014 a decision made by a measured\
+    \ number in this issue, not a feeling. Until then the subscription is farmed (reference\
+    \ deployment: >100x arbitrage), not me"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.191676Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-11
+  title: 'Phase 4: implement the llm_judge grader seam'
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - evals
+  - phase-4
+  urls:
+  - https://github.com/organvm/manumissio/issues/11
+  context: 'GitHub issue organvm/manumissio#11. GRADERS["llm_judge"] is a designed
+    seam (raises NotImplementedError). Implement: a strong model scores candidate
+    output against a rubric; majority-of-3 for stability; judge model configurable.
+    Needed for the reserved classes where mechanical checks can''t grade quality.
+    <!-- manumissio:llm-judge-grader -->'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.192456Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-10
+  title: 'Phase 4: grow parity cases until every fleet job class is covered'
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - evals
+  - phase-4
+  urls:
+  - https://github.com/organvm/manumissio/issues/10
+  context: 'GitHub issue organvm/manumissio#10. `parity harvest` drafts cases from
+    real transcripts per class; humans promote drafts (draft: false + real checks).
+    Coverage target: every job class the host fleet dispatches, including the reserved
+    set (synthesis/canon/kernel-grade), each with enough cases that the gate is meaningful
+    (>= 10 non-draft). Fail-closed semantics already enforce that an empty class can
+    never green-light a model. <!-- ma'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.193443Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-9
+  title: "Phase 3: hardware sizing dossier (gauge-gated \u2014 do not buy early)"
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - blocked-on-spend
+  - hardware
+  - phase-3
+  urls:
+  - https://github.com/organvm/manumissio/issues/9
+  context: 'GitHub issue organvm/manumissio#9. When the gauge trigger fires (>= $200/mo
+    absorbable, 2 consecutive months): a one-page dossier comparing 128 GB-class vs
+    512 GB-class unified-memory machines at the then-current prices, with payback
+    computed from the gauge''s absorbable number, model classes each tier unlocks
+    (from the weights-library ledger), and a recommendation. Capex is derived, never
+    vibed. Reference numbers at filing: absorba'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.193925Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-8
+  title: 'Phase 2: ollama serve as an OpenAI-compatible endpoint adapter'
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - phase-2
+  - routing
+  urls:
+  - https://github.com/organvm/manumissio/issues/8
+  context: 'GitHub issue organvm/manumissio#8. Today the floor is invoked via the
+    ollama CLI. `ollama serve` exposes an OpenAI-compatible HTTP endpoint; pointing
+    OpenAIChatRunner (and any fleet adapter) at localhost makes local and hosted open-weight
+    models interchangeable behind one protocol. Done: parity runs green against the
+    HTTP endpoint with identical results to the CLI runner. <!-- manumissio:ollama-openai-endpoint
+    -->'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.195011Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-7
+  title: 'Phase 2: monthly gauge cadence + hardware-trigger watch'
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - gauge
+  - phase-2
+  urls:
+  - https://github.com/organvm/manumissio/issues/7
+  context: 'GitHub issue organvm/manumissio#7. Run `gauge/token_value_gauge.py` monthly
+    (or wire it to the host fleet''s beat). Watch decision_parameters.local_absorbable_open_usd_month:
+    two consecutive months >= $200 reopens the Phase 3 hardware question with real
+    numbers. Done: cadence automated + first two stamps recorded. <!-- manumissio:gauge-monthly-cadence
+    -->'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.196216Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-6
+  title: 'Phase 2: open-weight API rail (OpenRouter/DeepSeek key + routing)'
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - blocked-on-spend
+  - phase-2
+  - routing
+  urls:
+  - https://github.com/organvm/manumissio/issues/6
+  context: 'GitHub issue organvm/manumissio#6. Route mid-tier bulk work to open-weight
+    hosted APIs. BLOCKED ON SPEND CAPACITY: requires a working payment card and a
+    deliberate budget line; until then this issue pools the design (which classes,
+    which models, which aggregator) so the rail opens the day the block lifts. $0
+    until armed. The OpenAIChatRunner in src/parity already speaks the endpoint''s
+    protocol. <!-- manumissio:openrouter-rail -->'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.196955Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-5
+  title: 'Phase 1: arm the first floor classes when the parity gate passes'
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - evals
+  - phase-1
+  - routing
+  urls:
+  - https://github.com/organvm/manumissio/issues/5
+  context: "GitHub issue organvm/manumissio#5. For each candidate floor class, run\
+    \ `parity gate --model qwen3:8b --class <c> --threshold 0.9`. Exit 0 \u2192 arm\
+    \ that class in the host fleet (the arm switch + class env). Exit 1 \u2192 grow/improve\
+    \ cases or leave the class on its current lane. Record per-class verdicts here.\
+    \ This issue IS the switchover decision record \u2014 the math must math in public.\
+    \ <!-- manumissio:arm-floor-classes -->"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.197531Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-4
+  title: "Phase 1-2: candidate weights worth owning \u2014 the acquisition ledger"
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - phase-1
+  - phase-2
+  - weights
+  urls:
+  - https://github.com/organvm/manumissio/issues/4
+  context: "GitHub issue organvm/manumissio#4. A table of open-weight models worth\
+    \ holding as assets (DeepSeek-V3-class, Qwen3 30B/235B, GLM, Kimi), each with:\
+    \ licence, artifact size, minimum hardware to run, capability class. Weights are\
+    \ durable assets \u2014 it is rational to archive models bigger than current hardware\
+    \ can run; they wait for the Phase 3 machine. Acquisition is gated on archive\
+    \ disk, never on the working machine. Done: ledger comm"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.198453Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-3
+  title: "Phase 1: park owned weights on cold storage (copy \u2192 verify \u2192 stamp)"
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - phase-1
+  - weights
+  urls:
+  - https://github.com/organvm/manumissio/issues/3
+  context: "GitHub issue organvm/manumissio#3. Use `acquire.py park --model <m> --dest\
+    \ <cold-storage>` to place verified copies of every holding on archive media.\
+    \ Include disk math: parking must never squeeze the working disk (reference machine\
+    \ has ~35 GB free \u2014 the archive tier is where the library grows). Done: every\
+    \ MANIFEST holding shows >=1 parked copy and `verify` exit 0 covers it. <!-- manumissio:cold-storage-parking\
+    \ -->"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.198944Z'
+  dispatch_log: []
+- id: GH-organvm-manumissio-1
+  title: 'Phase 1: wire local-floor routing in the host fleet (ships dark, armed by
+    parity gate)'
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - phase-1
+  - routing
+  urls:
+  - https://github.com/organvm/manumissio/issues/1
+  context: 'GitHub issue organvm/manumissio#1. Route grunt-work job classes (scan/verify/link-check/classify/summarize)
+    onto the local ollama floor in the host fleet''s router, shipped DARK (default
+    off) behind an arm switch. Done predicate: routing code merged with tests proving
+    (a) default-off = byte-identical routing to before, (b) reserved classes never
+    route local, (c) per-class rollback when the lane''s graded ledger marks a class
+    wasted.'
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T13:00:48.200209Z'
+  dispatch_log: []
