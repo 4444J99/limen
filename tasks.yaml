@@ -76482,11 +76482,11 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 approve the irreversible delete/clear (archived reversibly;\
-    \ purge is yours). Unblocks: cleanup stale worktrees. Auto-hung by QUICKEN (finish-not-park);\
-    \ refreshes each beat until you act."
+    \ purge is yours). Unblocks: Design movement ontology and workout composition.\
+    \ Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act."
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-03T03:54:38.477929Z'
+  updated: '2026-07-09T14:13:20.901412Z'
   dispatch_log: []
 - id: GEN-organvm-session-meta-test-coverage-0702
   title: Raise test coverage in organvm/session-meta
@@ -117650,7 +117650,7 @@ tasks:
   title: Fable = plan-only + runtime cap + utilization vendor verdict
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -117671,7 +117671,8 @@ tasks:
   title: Deepen the sovereignty organ toward a usable institution
   repo: organvm/manumissio
   type: content
-  target_agent: any
+  target_agent: jules
+  workstream: sovereignty
   priority: high
   budget_cost: 2
   status: open
@@ -117702,7 +117703,8 @@ tasks:
   title: Wire the sovereignty organ to advance autonomously
   repo: organvm/manumissio
   type: content
-  target_agent: any
+  target_agent: codex
+  workstream: sovereignty
   priority: high
   budget_cost: 2
   status: open
@@ -117726,4 +117728,28 @@ tasks:
   depends_on: []
   created: '2026-07-09'
   updated: '2026-07-09T13:43:05.661563Z'
+  dispatch_log: []
+- id: ASK-quicken-escalate-6a48ce1d
+  title: finish stalled session 'Design movement ontology and workout composi' (breathed
+    24x, still stalling)
+  type: ops
+  target_agent: human
+  priority: high
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - quicken-residue
+  - quicken-escalate
+  - needs-human
+  urls: []
+  context: "Session 6a48ce1d-1de5-4b35-858d-7b485280737d ('Design movement ontology\
+    \ and workout composition system') re-stalled after 24 guardrailed breathes \u2014\
+    \ the identical continuation will not move it. Parked purpose (last prompt): \"\
+    You motherfucker, that doesn't mean cancel the plan. It didn't mean cancel the\
+    \ plan. Can't even open it on my phone anyw\". Resume by hand or with a NEW instruction:\
+    \ claude --resume 6a48ce1d-1de5-4b35-858d-7b485280737d   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson).\
+    \ Auto-escalated by QUICKEN."
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T14:14:16.874408Z'
   dispatch_log: []
