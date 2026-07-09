@@ -1,6 +1,6 @@
 # Live Root Gate
 
-Generated: `2026-07-08T01:43:15+00:00`
+Generated: `2026-07-09T20:52:43+00:00`
 
 Status: `blocked`
 
@@ -15,42 +15,36 @@ Status: `blocked`
 - Operator gate required: `True`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: `live-root-not-at-release`, `live-root-unique-commits`, `live-root-dirty`, `live-root-task-board-dirty`.
+- Blocking gates: `live-root-dirty`, `live-root-task-board-dirty`.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `937814b19452dc5e93e0b6dc35524d6880b19a1d`.
-- Release head: `e30bbf34b41b809ee6a2344d350be1c01d34e357`.
-- Matches release: `False`; ahead `1` behind `0`.
-- Unique local commits: `1`; patch-equivalent commits: `0`.
-- Dirty entries: `6`.
-
-### Local Commits
-
-- `937814b1 limen: preserve async board state`
+- HEAD: `ae630686438d88cb7635a9e43241191964a53f90`.
+- Release head: `ae630686438d88cb7635a9e43241191964a53f90`.
+- Matches release: `True`; ahead `0` behind `0`.
+- Unique local commits: `0`; patch-equivalent commits: `0`.
+- Dirty entries: `1`.
+- Ignored generated receipt dirty entries: `2`.
+  - `docs/dispatch-health.md`
+  - `docs/live-root-gate.md`
 
 ### Dirty Paths
 
-- `cli/src/limen/worktree_debt.py`
-- `cli/tests/test_worktree_debt.py`
-- `docs/branch-reap-acceptance.jsonl`
-- `docs/consolidation/GATES.md`
-- `docs/worktree-preservation-receipts.json`
 - `tasks.yaml`
 
 ## Heartbeat
 
-- Plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `True`.
-- Loaded launchd state: `running` pid `30310`.
+- Plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `False`.
+- Loaded launchd state: `missing` pid `None`.
 - Loaded env matches plist for tracked LIMEN_* keys.
 
 ## Verified Worktree
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`.
-- Matches release: `False`.
+- Matches release: `True`.
 
 ## Stop Conditions
 
