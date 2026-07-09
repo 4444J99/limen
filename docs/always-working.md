@@ -1,19 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-08T11:28:21+00:00`
+Generated: `2026-07-09T19:07:22+00:00`
 Status: `needs-work`
-Required open: `4`
+Required open: `6`
 Blocked: `1`
-Done from receipt: `6`
-
-## DISPATCH-CONTINUITY
-
-| Field | Value |
-|---|---|
-| ID | `DISPATCH-CONTINUITY` |
-| What | Detect a vendor lane silent while queue + budget exist (Jul 3–5 starvation precedent) |
-| Predicate | `python3 scripts/dispatch-continuity-check.py --check` |
-| Artifact | `logs/dispatch-continuity.json` |
+Done from receipt: `4`
 
 ## Contract
 
@@ -40,13 +31,13 @@ Done from receipt: `6`
 | 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | disk/temp pressure needs owner work |
 | 5 | `ESTATE-CUSTODY` | `assigned_from_existing_work` | estate doctrine exists; implementation receipt is not complete |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
-| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 74.1%, PRs 13.2%, issues 11.9%, reviews 0.8% |
+| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.8%, reviews 0.8% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `done_from_receipt` | credential wall and historical token tombstone receipt are present |
-| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 128 active flagged non-deleted messages require classification |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 82235 indexed non-deleted messages remain for future batches |
-| 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 48 duplicate remote group(s) recorded |
+| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 131 active flagged non-deleted messages require classification |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 83105 indexed non-deleted messages remain for future batches |
+| 40 | `REPO-BOIL-UP` | `assigned_from_existing_work` | broad repo surface ledger exists, but it is stale for current boil-up work |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
-| 60 | `VALUE-REPOS` | `done_from_receipt` | top 5 value repos have owner receipts; 14 value repos are sell-ready in the product ledger |
+| 60 | `VALUE-REPOS` | `assigned_from_existing_work` | value repo product ledger exists, but it is stale for current funded-lane steering |
 | 70 | `TABVLARIVS-STATUS-WRITERS` | `done_from_receipt` | status-mutator tier is recorded closed |
 
 ## Assignment Packets
@@ -119,19 +110,6 @@ Done from receipt: `6`
   - `https://github.com/organvm/limen/issues/687`
   - `https://github.com/4444J99`
 
-### ROUTINE-FRESHNESS
-
-- Lane fit: `codex-local`
-- Repo/root: `~/Workspace/limen`
-- Task: Audit cloud-routine delivery freshness — detect routines that fire but stop writing to their rolling GitHub issues.
-- Predicate: `python3 scripts/routine-freshness-audit.py --check`
-- Receipt target: `~/Workspace/limen/logs/routine-freshness.json`
-- Stop condition: all enabled routines are green or unmonitored; any down routine has a needs_human atom in the permanent queue
-- Existing receipts:
-  - `~/Workspace/limen/cloud-routines.json`
-  - `~/Workspace/limen/scripts/routine-freshness-audit.py`
-  - `~/Workspace/limen/cli/tests/test_routine_freshness.py`
-
 ### MAIL-ACTIVE-FLAGGED
 
 - Lane fit: `local-codex-or-opencode`
@@ -146,4 +124,32 @@ Done from receipt: `6`
   - `~/Workspace/limen/obligations-ledger.json`
   - `~/Workspace/limen/scripts/mail-story-ledger.py`
   - `~/Workspace/limen/scripts/mail-beat.sh`
+
+### REPO-BOIL-UP
+
+- Lane fit: `agy-or-opencode-readonly`
+- Repo/root: `~/Workspace/limen`
+- Task: Harvest existing repo-surface and consolidation receipts, then assign only missing classifications.
+- Predicate: `python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write`
+- Receipt target: `~/Workspace/limen/docs/repo-surface-ledger.md`
+- Stop condition: all discovered roots are classified or recorded with blocker/gate
+- Existing receipts:
+  - `~/Workspace/limen/docs/repo-surface-ledger.md`
+  - `~/Workspace/limen/docs/consolidation/GATES.md`
+  - `~/Workspace/limen/docs/consolidation/EXECUTION-MANIFEST.md`
+  - `~/Workspace/limen/scripts/repo-surface-ledger.py`
+  - `~/Workspace/limen/scripts/salvage-yard-map.py`
+
+### VALUE-REPOS
+
+- Lane fit: `jules-or-opencode-repo-specific`
+- Repo/root: `organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/peer-audited--behavioral-blockchain,organvm/mirror-mirror`
+- Task: Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.
+- Predicate: `python3 scripts/product-ledger.py --write`
+- Receipt target: `~/Workspace/limen/docs/product-ledger.md`
+- Stop condition: top value repo has shipped PR, open PR with predicate, owner task, or blocker
+- Existing receipts:
+  - `~/Workspace/limen/value-repos.json`
+  - `~/Workspace/limen/docs/product-ledger.md`
+  - `~/Workspace/limen/docs/positioning/_frontdoor.md`
 

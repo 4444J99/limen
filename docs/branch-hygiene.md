@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (133) — decide each
+## Live-work branches (138) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -40,7 +40,9 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `docs/quicken-residue` — 1890688b docs: QUICKEN residue — irreducible human atoms (daemon capture)
 - `feat/bhagavad-gita-arcs-5-8` — 13a810c3 feat(studium): author metamorphoses books 2 and 3 arcs
 - `feat/censor-monthly-tier` — a89dd048 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
-- `feat/local-floor-routing` — aee83275 feat(routing): local-floor lane — mechanical classes to ollama, shipped DARK, armed by parity gate
+- `feat/depends-on-sequencer` — b83a5d0b feat: seq-depends.py — append depends_on edges via the keeper (concern 11)
+- `feat/outbound-valve-registry` — c281b297 feat: tiered outbound valve registry (concern 4) — all tiers coexist, configurable
+- `feat/receipt-classifier` — 45672027 feat: receipt-classifier.py — flag receipt-only diffs behind shipped-X claims (concern 9)
 - `feat/studium-deepen-bhagavad-gita` — b79d0fae studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
 - `feat/studium-deepen-mahabharata-books-5-8` — fd8dbae6 studium: deepen mahabharata — parvas 5-8 (Udyoga, Bhishma, Drona, Karna)
 - `feat/studium-deepen-metamorphoses-batch-1` — 2bf80117 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
@@ -55,11 +57,14 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `feature/ORG-education-organ-face-0630` — 9d174794 feat(education): author polished macro and micro face for education organ
 - `feature/tale-of-genji-chapters-2-5` — 50a31de4 studium: author Tale of Genji chapters 2-5
 - `fix/616-format` — e020757c style: ruff format test_corpus_command_center.py (CI format-check gate)
+- `fix/dispatch-admission-ci-768` — 96f6c10b Merge remote-tracking branch 'origin/main' into fix/dispatch-admission-ci-768
 - `fix/heartbeat-refresh-web-wedge` — 0a512024 fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
 - `heal/608-declare-param` — a63e6db7 chore(governance): declare LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC for preserve_workspace()
 - `heal/ci-ruff-semicolons` — 04b05097 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
+- `heal/dispatch-admission` — 0681e396 limen: gate dispatch admission
 - `heal/health-office-staged-0625` — ff43850e health office — the executive health office (autopoietic; PII strictly off-repo)
 - `heal/marker-and-tcc-registry-2026-06-24` — e6248bdd heal: swallow Claude Code's benign install_failed update marker (false ⚠ on /doctor)
+- `limen/aw-credential-wall-token-hygiene-e729c093` — 5552f173 docs(credentials): add token tombstone audit receipt
 - `limen/capfill-claude-20260629-13-2b0f` — 69e10c5a fix: add CapacityFill TypedDicts and correct mypy type annotations
 - `limen/csf-caeb31d8-plan-10-b131e64c-38bd` — 705fcee4 limen: record current-session private boundary packet
 - `limen/gen-organvm-limen-docs-0624-0129` — e454a603 Real usage docs for organvm/limen
