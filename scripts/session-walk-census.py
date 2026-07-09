@@ -27,8 +27,9 @@ QUICKEN guardrail prompt (reversible only — no push/send/delete/settings; edit
 to an isolated worktree, never the live checkout). Each attempt is journaled in
 logs/session-walk.jsonl; a session attempted LIMEN_SESSION_WALK_GIVE_UP (default 2) times
 without leaving residue is skipped thereafter (it stays visible in the residue ledger for
-the human). Wired into the beat via metabolize.sh (LIMEN_SESSION_WALK gate), the whole
-estate self-drains a few sessions per beat.
+the human). Codex resumes are current-local-day only unless this run carries an explicit
+old-Codex override. Wired into the beat via metabolize.sh (LIMEN_SESSION_WALK gate), the
+whole estate self-drains a few sessions per beat.
 """
 
 from __future__ import annotations
@@ -146,7 +147,7 @@ def classify_codex(path: Path) -> dict:
     head, tail = _read_edges(path)
     meta = next((e for e in (_jloads(x) for x in head) if e and e.get("type") == "session_meta"), None)
     payload = (meta or {}).get("payload") or {}
-    sid = payload.get("session_id") or path.stem
+    sid = payload.get("id") or payload.get("session_id") or path.stem
     cwd = payload.get("cwd") or ""
     originator = payload.get("originator") or ""
     first_prompt = ""
@@ -264,14 +265,44 @@ def _walk_counts() -> dict[str, int]:
     return counts
 
 
-def walk(residue: list[dict], cap: int, dry: bool) -> None:
+def local_day_start_ts(now: float | None = None) -> int:
+    local = time.localtime(time.time() if now is None else now)
+    return int(time.mktime((local.tm_year, local.tm_mon, local.tm_mday, 0, 0, 0, local.tm_wday, local.tm_yday, local.tm_isdst)))
+
+
+def stale_codex_resume_blocked(row: dict, *, allow_old_codex_resume: bool = False, now: float | None = None) -> bool:
+    if allow_old_codex_resume:
+        return False
+    if row.get("vendor") != "codex":
+        return False
+    return int(row.get("mtime") or 0) < local_day_start_ts(now)
+
+
+def resume_display(row: dict, *, allow_old_codex_resume: bool = False, now: float | None = None) -> str:
+    if stale_codex_resume_blocked(row, allow_old_codex_resume=allow_old_codex_resume, now=now):
+        return "BLOCKED: stale Codex session; create a fresh bounded packet instead of resuming this session."
+    return str(row.get("resume") or "")
+
+
+def walk(residue: list[dict], cap: int, dry: bool, *, allow_old_codex_resume: bool = False) -> None:
     import subprocess
 
     give_up = int(os.environ.get("LIMEN_SESSION_WALK_GIVE_UP", "2"))
     timeout_s = int(os.environ.get("LIMEN_SESSION_WALK_TIMEOUT", "900"))
     counts = _walk_counts()
-    targets = [r for r in residue if counts.get(r["sid"], 0) < give_up][:cap]
+    eligible = []
+    blocked = []
+    for row in residue:
+        if counts.get(row["sid"], 0) >= give_up:
+            continue
+        if stale_codex_resume_blocked(row, allow_old_codex_resume=allow_old_codex_resume):
+            blocked.append(row)
+            continue
+        eligible.append(row)
+    targets = eligible[:cap]
     print(f"[walk] {len(targets)} session(s) within cap={cap} (give_up={give_up})")
+    for row in blocked:
+        print(f"  SKIP stale codex {row['sid'][:8]}: fresh bounded packet required")
     for r in targets:
         cwd = r["cwd"] if r["cwd"] and Path(r["cwd"]).is_dir() else str(HOME)
         if r["vendor"] == "claude":
@@ -299,6 +330,11 @@ def main() -> int:
     ap.add_argument("--residue-cap", type=int, default=int(os.environ.get("LIMEN_WALK_RESIDUE_CAP", "500")))
     ap.add_argument("--walk", type=int, default=0, metavar="N", help="resume the N newest residue sessions")
     ap.add_argument("--dry-walk", action="store_true", help="preview the walk without resuming")
+    ap.add_argument(
+        "--allow-old-codex-resume",
+        action="store_true",
+        help="explicit bounded-packet override for resuming Codex sessions older than the current local day",
+    )
     args = ap.parse_args()
 
     rows = sweep()
@@ -332,13 +368,14 @@ def main() -> int:
     for r in residue:
         ts = time.strftime("%Y-%m-%d", time.localtime(r["mtime"]))
         md.append(f"- **{r['vendor']}** {ts} `{r['verdict']}` — {r['purpose'] or '(no title)'}")
-        md.append(f"    `{r['resume']}`   (cwd {r['cwd'] or '?'})")
+        resume = resume_display(r, allow_old_codex_resume=args.allow_old_codex_resume)
+        md.append(f"    `{resume}`   (cwd {r['cwd'] or '?'})")
     (LOGS / "session-walk-residue.md").write_text("\n".join(md) + "\n")
 
     print(json.dumps(counts, indent=1))
     print(f"residue: {len(residue)} unwalked user sessions -> logs/session-walk-residue.md")
     if args.walk:
-        walk(residue, args.walk, dry=args.dry_walk)
+        walk(residue, args.walk, dry=args.dry_walk, allow_old_codex_resume=args.allow_old_codex_resume)
     if args.check and residue:
         return 1
     return 0

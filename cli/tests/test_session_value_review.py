@@ -275,6 +275,43 @@ def test_session_value_gate_switches_after_repeated_high_motion_without_receipts
     ]
 
 
+def test_session_value_gate_routes_hash_review_to_hash_resolver():
+    review = _load()
+    snapshot = {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "batch_resolution_receipts": {"present": True},
+            "batch_review_index": {"present": True},
+        },
+        "metrics": {
+            "commits": 2,
+            "batch_receipts": 0,
+            "prompt_events_recorded": 0,
+            "followup_roots": 0,
+            "merged_roots": 0,
+            "owner_absent_roots": 0,
+        },
+        "findings": {"commit_kinds": {"direct_engineering": 2}},
+        "current_queue": {
+            "coverage": {"open_review_batches": 3},
+            "next": [
+                {
+                    "id": "prompt-batch-critical-hash-review-001",
+                    "lane": "hash-review",
+                }
+            ],
+        },
+    }
+    history = [{"gate": {"pressures": {"motion_without_receipts": True}}}]
+
+    gate = review.decide_gate(snapshot, history=history)
+
+    assert gate["action"] == "switch_to_packetization"
+    assert gate["next_commands"] == [
+        "python3 scripts/resolve-codex-hash-batch.py prompt-batch-critical-hash-review-001 --write"
+    ]
+
+
 def test_session_value_gate_blocks_receipt_only_custody_motion(tmp_path):
     review = _load()
     review.PRODUCT_LEDGER_INDEX = tmp_path / "product-ledger.json"

@@ -625,6 +625,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Gate continuation on the Codex token accounting budget report. 1=stop continuation on over-budget sessions."
+  LIMEN_CONTINUATION_VALUE_GATE:
+    default: "1"
+    env: LIMEN_CONTINUATION_VALUE_GATE
+    self_update: none
+    owner: continuity
+    note: "Gate generic continuation on session-value-review before doing beat work. 1=stop on lane-switch or missing-value receipts; 0=skip this guard for a bounded debug run."
+  LIMEN_CONTINUATION_VALUE_GATE_HOURS:
+    default: "1.5"
+    env: LIMEN_CONTINUATION_VALUE_GATE_HOURS
+    self_update: none
+    owner: continuity
+    note: "Cadence window, in hours, passed to session-value-review by continuation-beat."
+  LIMEN_CONTINUATION_VALUE_GATE_TIMEOUT:
+    default: 90
+    env: LIMEN_CONTINUATION_VALUE_GATE_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Wall-clock ceiling in seconds for the continuation session-value gate."
   LIMEN_PHOTOS_LIBRARY:
     default: "$HOME/Pictures/Photos Library.photoslibrary"
     env: LIMEN_PHOTOS_LIBRARY
@@ -709,6 +727,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "When 1, a Codex direct-session audit excludes CODEX_THREAD_ID from active_failures while still reporting its total/historical spend. Prevents closeout probes from self-blocking on the measuring chat; daemon runs without CODEX_THREAD_ID are unchanged."
+  LIMEN_CODEX_TOKEN_GATE_REQUIRE_LIVE_PROCESS:
+    default: "1"
+    env: LIMEN_CODEX_TOKEN_GATE_REQUIRE_LIVE_PROCESS
+    self_update: none
+    owner: continuity
+    note: "When 1, default ~/.codex session scans require a live codex exec resume process before non-current transcripts count as active budget failures. Explicit path audits remain transcript-only unless overridden."
   LIMEN_CODEX_WARN_UNCACHED_INPUT_TOKENS:
     default: 300000
     env: LIMEN_CODEX_WARN_UNCACHED_INPUT_TOKENS

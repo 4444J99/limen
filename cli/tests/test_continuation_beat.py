@@ -86,3 +86,38 @@ def test_advance_photos_treats_nothing_to_prove_as_skip(tmp_path, monkeypatch):
 
     assert result["ok"] is True
     assert result["skipped"] == "no duplicate candidates to prove"
+
+
+def test_session_value_gate_blocks_continuation_lane_switch(tmp_path, monkeypatch):
+    root = tmp_path / "limen"
+    photos = tmp_path / "photos"
+    portvs = tmp_path / "portvs"
+    root.mkdir()
+    photos.mkdir()
+    portvs.mkdir()
+    module = _load(monkeypatch, root, photos, portvs)
+
+    def fake_run(args, cwd, timeout=120):
+        assert args[:3] == ["python3", "scripts/session-value-review.py", "--gate"]
+        return subprocess.CompletedProcess(
+            args,
+            10,
+            json.dumps(
+                {
+                    "action": "switch_to_packetization",
+                    "reason": "lane switch required",
+                    "next_commands": ["python3 scripts/prompt-packet-ledger.py --write"],
+                }
+            ),
+            "",
+        )
+
+    monkeypatch.setattr(module, "run", fake_run)
+
+    result = module.session_value_gate()
+
+    assert result["ok"] is False
+    assert result["returncode"] == 10
+    assert result["lane_switch"] is True
+    assert result["action"] == "switch_to_packetization"
+    assert result["next_command"] == "python3 scripts/prompt-packet-ledger.py --write"

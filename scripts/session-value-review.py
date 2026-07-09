@@ -259,6 +259,8 @@ def command_for_batch(batch: dict[str, Any]) -> str:
         return "python3 scripts/prompt-batch-review-ledger.py --write"
     if lane in {"family", "historical-worktree-review"}:
         return f"python3 scripts/resolve-codex-family-batch.py {batch_id} --write"
+    if lane == "hash-review":
+        return f"python3 scripts/resolve-codex-hash-batch.py {batch_id} --write"
     if lane == "legacy-session-review":
         return f"python3 scripts/resolve-legacy-session-batch.py {batch_id} --write"
     if lane == "stalled-review":

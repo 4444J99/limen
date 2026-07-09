@@ -10,7 +10,8 @@ This is the direct-session loop turned into a daemon-safe organ:
 - refresh Limen's PR preservation receipts and re-run worktree debt.
 
 Every step is fail-open and receipt-backed. A dirty lane checkout is skipped
-rather than overwritten.
+rather than overwritten. The session-value gate runs before generic beat work:
+exit 10 is a hard lane switch, not another continuation pass.
 """
 
 from __future__ import annotations
@@ -38,6 +39,7 @@ LOG_PATH = ROOT / "logs" / "continuation-beat.json"
 LOCK_DIR = ROOT / "logs" / ".continuation-beat.lock.d"
 PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
 TOKEN_REPORT = ROOT / "logs" / "codex-token-report.json"
+VALUE_GATE_HOURS = os.environ.get("LIMEN_CONTINUATION_VALUE_GATE_HOURS", "1.5")
 
 
 def utc_now() -> str:
@@ -73,11 +75,29 @@ def load_json_output(proc: subprocess.CompletedProcess[str]) -> dict[str, Any] |
         return None
 
 
+def parse_json_stdout(proc: subprocess.CompletedProcess[str]) -> dict[str, Any]:
+    try:
+        data = json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def load_json_file(path: Path) -> dict[str, Any] | None:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
+
+
+def first_command(gate: dict[str, Any]) -> str:
+    commands = gate.get("next_commands")
+    if isinstance(commands, list):
+        for command in commands:
+            if isinstance(command, str) and command.strip():
+                return command.strip()
+    command = gate.get("next_command")
+    return str(command).strip() if command else ""
 
 
 def repo_clean(repo: Path) -> bool:
@@ -244,6 +264,45 @@ def token_budget_gate() -> dict[str, Any]:
             "active_failures": (report.get("active_failures") or [])[:5],
             "historical_failures": (report.get("historical_failures") or [])[:5],
         },
+    }
+
+
+def session_value_gate() -> dict[str, Any]:
+    """Stop generic continuation when the value gate requests a bounded lane switch."""
+    if os.environ.get("LIMEN_CONTINUATION_VALUE_GATE", "1") != "1":
+        return {"ok": True, "skipped": "disabled"}
+    command = [
+        "python3",
+        "scripts/session-value-review.py",
+        "--gate",
+        "--hours",
+        VALUE_GATE_HOURS,
+        "--no-record-gate",
+    ]
+    proc = run(
+        command,
+        ROOT,
+        timeout=int(os.environ.get("LIMEN_CONTINUATION_VALUE_GATE_TIMEOUT", "90")),
+    )
+    gate = parse_json_stdout(proc)
+    next_command = first_command(gate)
+    action = str(gate.get("action") or "")
+    if proc.returncode == 0:
+        return {
+            "ok": True,
+            "returncode": proc.returncode,
+            "action": action or "allowed",
+            "reason": gate.get("reason"),
+            "next_command": next_command,
+        }
+    return {
+        "ok": False,
+        "returncode": proc.returncode,
+        "action": action or "session_value_gate",
+        "lane_switch": proc.returncode == 10,
+        "reason": gate.get("reason") or short_output(proc, 500) or "session value gate blocked continuation",
+        "next_command": next_command,
+        "tail": short_output(proc, 800),
     }
 
 
@@ -446,6 +505,15 @@ def main() -> int:
             "apply": args.apply,
             "steps": {},
         }
+        payload["steps"]["session_value_gate"] = session_value_gate()
+        if not payload["steps"]["session_value_gate"].get("ok"):
+            payload["ok"] = False
+            payload["skipped"] = "session value gate"
+            write_log(payload)
+            gate = payload["steps"]["session_value_gate"]
+            suffix = f"; next: {gate['next_command']}" if gate.get("next_command") else ""
+            print(f"continuation-beat: skipped by session value gate{suffix}")
+            return 10 if gate.get("lane_switch") else 1
         payload["steps"]["token_budget_gate"] = token_budget_gate()
         if not payload["steps"]["token_budget_gate"].get("ok"):
             payload["ok"] = False

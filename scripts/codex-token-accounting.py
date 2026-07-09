@@ -48,6 +48,8 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
+import subprocess
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -56,6 +58,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 HOME = Path(os.environ.get("HOME", str(Path.home())))
 DEFAULT_SESSIONS_ROOT = HOME / ".codex" / "sessions"
 DEFAULT_OUTPUT = ROOT / "logs" / "codex-token-report.json"
+CODEX_RESUME_RE = re.compile(r"\bcodex\s+exec\s+resume\s+([0-9a-f][0-9a-f-]{20,})\b")
 
 
 def utc_now() -> str:
@@ -325,6 +328,48 @@ def is_active_session(session: dict[str, Any], now: dt.datetime, active_seconds:
     return age is not None and age <= active_seconds
 
 
+def truthy_env(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def live_codex_resume_session_ids() -> set[str]:
+    """Return session ids visible in live `codex exec resume <sid>` commands.
+
+    Default-session scans use this as a process-backed liveness proof for non-current
+    sessions. The current interactive thread is still keyed by CODEX_THREAD_ID; old
+    transcripts without a matching live resume process are historical even if their
+    JSONL mtime is fresh from recent probing.
+    """
+    try:
+        proc = subprocess.run(
+            ["ps", "-axo", "command="],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except Exception:
+        return set()
+    if proc.returncode != 0:
+        return set()
+    return {match.group(1) for match in CODEX_RESUME_RE.finditer(proc.stdout or "")}
+
+
+def require_live_process_gate(args: argparse.Namespace) -> bool:
+    raw = os.environ.get("LIMEN_CODEX_TOKEN_GATE_REQUIRE_LIVE_PROCESS")
+    if raw is not None:
+        return truthy_env("LIMEN_CODEX_TOKEN_GATE_REQUIRE_LIVE_PROCESS", True)
+    if args.paths:
+        return False
+    try:
+        return Path(args.sessions_root).resolve() == DEFAULT_SESSIONS_ROOT.resolve()
+    except OSError:
+        return False
+
+
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     sessions_root = args.sessions_root
     files = filter_recent(expand_paths([Path(p) for p in args.paths], sessions_root), args.since_hours, args.limit_sessions)
@@ -338,6 +383,8 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         and not args.include_current_thread
         and os.environ.get("LIMEN_CODEX_TOKEN_GATE_IGNORE_CURRENT_THREAD", "1") == "1"
     )
+    require_live_process = require_live_process_gate(args)
+    live_resume_session_ids = live_codex_resume_session_ids() if require_live_process else set()
 
     warnings: list[str] = []
     failures: list[str] = []
@@ -348,6 +395,14 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         age = session_age_seconds(session, now)
         active = is_active_session(session, now, active_seconds)
         current_thread = ignore_current_thread and session.get("session_id") == current_thread_id
+        if (
+            active
+            and require_live_process
+            and not current_thread
+            and str(session.get("session_id") or "") not in live_resume_session_ids
+        ):
+            active = False
+            session["active_gate_exclusion"] = "no-live-codex-resume-process"
         session["active_age_seconds"] = age
         session["mtime_age_seconds"] = session_age_seconds({"mtime": session.get("mtime")}, now)
         session["active"] = active
@@ -383,6 +438,8 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "thresholds": thresholds,
         "active_session_seconds": active_seconds,
         "current_thread_id": current_thread_id if ignore_current_thread else None,
+        "require_live_process_gate": require_live_process,
+        "live_resume_session_ids": sorted(live_resume_session_ids),
         "status": status,
         "active_status": active_status,
         "aggregate_totals": aggregate,

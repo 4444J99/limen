@@ -5,7 +5,7 @@
 > `scripts/contributions-organ.py` from hub-ledger outputs only (PLAN-06 owner packet 04 —
 > limen is the owner surface). **Nothing here sends** — every outbound act is the human's hand.
 
-_Source: committed cache (as of 2026-07-04) · 24 tracked contribution(s)_
+_Source: committed cache (as of 2026-07-09) · 24 tracked contribution(s)_
 
 ## Proof
 
@@ -42,7 +42,7 @@ _Source: committed cache (as of 2026-07-04) · 24 tracked contribution(s)_
 
 ## Lifecycle (the audit of `LIFECYCLE.md`)
 
-Staleness rule: an open PR untouched since before 2026-06-20 (14d before the source stamp) renders protocol-due — a bump is owed, staged,
+Staleness rule: an open PR untouched since before 2026-06-25 (14d before the source stamp) renders protocol-due — a bump is owed, staged,
 and fired one-at-a-time by the human hand (never batch-bumped).
 
 **Lifecycle debt — 7 workspace(s) reap-owed** (terminal PR, no recorded closeout:

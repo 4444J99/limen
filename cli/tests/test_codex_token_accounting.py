@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 
@@ -428,3 +429,38 @@ def test_active_helpers_fail_open_and_window() -> None:
         "last_task_complete_at": (now - dt.timedelta(seconds=60)).isoformat(timespec="seconds"),
     }
     assert mod.is_active_session(restarted_after_completion, now, 900) is True
+
+
+def test_default_scan_requires_live_resume_process_for_non_current_session(tmp_path: Path, monkeypatch) -> None:
+    mod = _load_accounting_module()
+    sessions_root = tmp_path / "sessions"
+    sessions_root.mkdir()
+    fixture = sessions_root / "rollout-2026-07-09T09-10-15-019f4700-156d-73c3-9b07-d4b37711e2ec.jsonl"
+    write_fixture(fixture, sid="019f4700-156d-73c3-9b07-d4b37711e2ec")
+    monkeypatch.setattr(mod, "DEFAULT_SESSIONS_ROOT", sessions_root)
+    monkeypatch.setattr(mod, "live_codex_resume_session_ids", lambda: set())
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.delenv("LIMEN_CODEX_TOKEN_GATE_REQUIRE_LIVE_PROCESS", raising=False)
+
+    args = SimpleNamespace(
+        paths=[],
+        sessions_root=sessions_root,
+        since_hours=0,
+        limit_sessions=25,
+        max_phases=0,
+        warn_uncached_input=0,
+        max_uncached_input=0,
+        max_budget_tokens=900,
+        max_elapsed_seconds=0,
+        active_session_seconds=3600,
+        include_current_thread=False,
+    )
+
+    report = mod.build_report(args)
+
+    assert report["require_live_process_gate"] is True
+    assert report["active_status"] == "ok"
+    assert report["active_failures"] == []
+    assert report["historical_failures"] == ["019f4700-156d-73c3-9b07-d4b37711e2ec: budget_tokens=920"]
+    assert report["sessions"][0]["active"] is False
+    assert report["sessions"][0]["active_gate_exclusion"] == "no-live-codex-resume-process"
