@@ -26,8 +26,11 @@ resolve() {
   printf '%s' "$p"
 }
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="${LIMEN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"        # repo root = parent of scripts/
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# repo root = parent of scripts/. Canonicalize (resolve symlinks, physical pwd) so a session
+# that reached the repo via a symlink (e.g. ~/limen -> ~/Workspace/limen) cannot render a
+# plist whose paths drift from the committed copy.
+ROOT="$(cd "$(resolve "${LIMEN_ROOT:-$SCRIPT_DIR/..}")" && pwd -P)"
 HOME_DIR="${HOME:?HOME is unset}"
 WORKDIR="${LIMEN_WORKDIR:-$(cd "$ROOT/.." && pwd)}"        # parent of the repo
 if [ -n "${LIMEN_WORKTREES:-}" ]; then
@@ -52,8 +55,14 @@ PATH_VAL="$PYDIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 LANES="${LIMEN_LANES:-codex,opencode,agy,claude,gemini}"
 DISPATCH_LANES="${LIMEN_DISPATCH_LANES:-auto}"
 LOCAL_LIMIT="${LIMEN_LOCAL_LIMIT:-3}"
-DISPATCH_ASYNC="${LIMEN_DISPATCH_ASYNC:-0}"
-ASYNC_MAX="${LIMEN_ASYNC_MAX:-12}"
+DISPATCH_ASYNC="${LIMEN_DISPATCH_ASYNC:-1}"
+# ASYNC_MAX derives from host capacity: clamp(ncpu, 4, 12). Workers are network-bound agent
+# CLIs, so ncpu is a soft bound and the vitals-pressure gate remains the runtime backpressure.
+# 2026-07-08 incident: a manually pinned 1 starved every local lane for a night while budget
+# sat unused — the cap is decided by this derivation, never by hand.
+NCPU="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 8)"
+ASYNC_MAX_DERIVED="$(( NCPU < 4 ? 4 : (NCPU > 12 ? 12 : NCPU) ))"
+ASYNC_MAX="${LIMEN_ASYNC_MAX:-$ASYNC_MAX_DERIVED}"
 VIGILIA="${LIMEN_VIGILIA:-1}"
 NOMENCLATOR="${LIMEN_NOMENCLATOR:-1}"
 

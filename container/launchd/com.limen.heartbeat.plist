@@ -26,7 +26,7 @@
         <key>LIMEN_DISPATCH_LANES</key><string>auto</string>
         <key>LIMEN_LOCAL_LIMIT</key><string>3</string>
         <key>LIMEN_DISPATCH_ASYNC</key><string>1</string>
-        <key>LIMEN_ASYNC_MAX</key><string>12</string>
+        <key>LIMEN_ASYNC_MAX</key><string>10</string>
         <key>LIMEN_VIGILIA</key><string>1</string>
         <key>PATH</key><string>/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>

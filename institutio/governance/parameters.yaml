@@ -36,6 +36,19 @@ parameters:
     owner: the-seat
     note: "Repo home is a decision, not a constant. Extracting later is a clean git subtree."
 
+  LIMEN_ASYNC_MAX:
+    default: "clamp(hw.ncpu, 4, 12) — derived at plist generation, override only via env"
+    env: LIMEN_ASYNC_MAX
+    self_update: none
+    owner: dispatch
+    note: "Global concurrency ceiling for local async dispatch workers. 2026-07-08 incident: a manually pinned 1 in the live plist starved every local lane for a night (12 PRs vs 23-40/day baseline) while budget sat 493/600 unused. The cap is decided by gen-launchd-plist.sh's derivation, never by hand; the vitals-pressure gate is the runtime backpressure."
+  LIMEN_DISPATCH_ASYNC:
+    default: 1
+    env: LIMEN_DISPATCH_ASYNC
+    self_update: none
+    owner: dispatch
+    note: "Async dispatch is the enacted fleet mode (overnight-watch expects 1). Generator default was 0 until 2026-07-09, when a regen under a bare session env silently rendered async OFF — the default now matches the enacted state."
+
   # --- VITALS: the missing executive's thresholds (build order #1) --------------
   # These are the published 'reaction function' the heartbeat will enact. Seeds —
   # tune against _diagnostics FIND-005 ('treat 16GB as a budget, not a floor').
