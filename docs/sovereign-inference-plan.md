@@ -3,6 +3,14 @@
 *Filed 2026-07-08. Owner: the model-selection organ (`cli/src/limen/model_selection.py`) — this doc
 is the plan of record; the routing ladder and its env pins are the executable surface.*
 
+> **Built out 2026-07-09 → the MANVMISSIO organ, [`organvm/manumissio`](https://github.com/organvm/manumissio)**
+> (rank-13 on the organ ladder; limen anchor at [`organs/sovereignty/`](../organs/sovereignty/CHARTER.md)).
+> The engine — generalized token-value gauge, owned-weights deed book (qwen3:8b registered,
+> digest-verified), and the `parity` gate that arms every switchover — lives there, with the phase
+> backlog as 13 seeded issues across 4 milestones. Operator-private numbers stay in
+> [`organs/financial/`](../organs/financial/ai-vendor-spend.md). Hard rule: $0 execution; nothing
+> switches over until the math maths (parity gate exit 0 per class; hardware gauge-gated).
+
 **The ask:** stop paying ~$500+/mo across Anthropic, OpenAI, and other AI vendors; run our own
 models. **The honest answer:** liberation is a ladder you climb tier-by-tier as open weights close
 the capability gap — not a switch you flip. Flipping it today trades away exactly the frontier-class

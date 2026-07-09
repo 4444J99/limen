@@ -13,6 +13,7 @@ candidate:    # canon forms derived from the roll — RESERVED-IN-NAME-ONLY, not
   - {domain: stvdivm.com,  label: stvdivm,  for: STVDIVM,  note: "derive via nomenclator --check"}
   - {domain: vltima.com,   label: vltima,   for: VLTIMA}
   - {domain: limen.com,    label: limen,    for: LIMEN}
+  - {domain: manvmissio.com, label: manvmissio, for: MANVMISSIO}
 
 rule: >
   A domain label is a name under the canon. Before registering any domain, derive its label with

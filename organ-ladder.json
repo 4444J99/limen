@@ -1,11 +1,11 @@
 {
   "_comment": "VLTIMA MATERIA institutional census, made executable. The rich win because civilization's pillars (a legal org, a family office, a PR machine) stand behind them; this ranks those same pillars rebuilt as AI-run ORGANS so the idle fleet can build them continuously. Mirror of revenue-ladder.json: generate-organ-backlog.py reads this and emits bounded, lockless organ-build tasks toward each organ's next maturity band. Identity/levers are DERIVED here, never pinned in code. Each organ is a FRACTAL: macro (a platform anyone can hold) + micro (Anthony's own instance). Build stages: scaffold(<30%) -> building(30-60%) -> maturing(60-90%) -> mature(>=90, no build tasks). Organ artifacts are authored into the limen repo under organs/<pillar>/ (same proven home as the Studium) so dispatch never hits a dead clone; repo-specific product code is handled by the revenue/coverage generators.",
-  "spine": "Institutional weight for one person, then anyone \u2014 the prosthesis for human weakness. Not tips; institutions.",
+  "spine": "Institutional weight for one person, then anyone — the prosthesis for human weakness. Not tips; institutions.",
   "maturity_stages": {
-    "scaffold": "0-29% \u2014 kernel + charter + first vertical slice",
-    "building": "30-59% \u2014 close the gap to a usable institution; wire it self-feeding",
-    "maturing": "60-89% \u2014 excellent macro+micro face; operationalize governance",
-    "mature": ">=90% \u2014 self-running; no generated build work"
+    "scaffold": "0-29% — kernel + charter + first vertical slice",
+    "building": "30-59% — close the gap to a usable institution; wire it self-feeding",
+    "maturing": "60-89% — excellent macro+micro face; operationalize governance",
+    "mature": ">=90% — self-running; no generated build work"
   },
   "organs": [
     {
@@ -38,7 +38,7 @@
       "macro": "a family-office-in-a-box anyone can deploy",
       "micro": "Anthony's own disbursement (product revenue -> personal + institutional via the MONETA sovereign cash rail at moneta/, NOT a rented processor) + wealth/portfolio + tax automation",
       "first_artifact": "a personal balance-sheet + cashflow + payrail disbursement map run on his real numbers",
-      "note": "scale the-invisible-ledger from a B2B CPA tool into a personal family office; intake is owned by MONETA (moneta/), the sovereign cash organ \u2014 this census tracks the institution, MONETA is its rail. Deepened 2026-07-03: entity registry (entities.yaml), balance-sheet/cashflow/payrail STATUS dashboard, seed.yaml, consolidate.py generator. Maturity 30%\u219240% auto-advanced by financial-organ.py beat (2026-07-03). Maturity 40%->70% auto-advanced by financial-organ.py beat (2026-07-03)."
+      "note": "scale the-invisible-ledger from a B2B CPA tool into a personal family office; intake is owned by MONETA (moneta/), the sovereign cash organ — this census tracks the institution, MONETA is its rail. Deepened 2026-07-03: entity registry (entities.yaml), balance-sheet/cashflow/payrail STATUS dashboard, seed.yaml, consolidate.py generator. Maturity 30%→40% auto-advanced by financial-organ.py beat (2026-07-03). Maturity 40%->70% auto-advanced by financial-organ.py beat (2026-07-03)."
     },
     {
       "rank": 3,
@@ -131,8 +131,8 @@
       "whose_hand": "mine",
       "rival": "a living museum / studio (the 9-chamber Pantheon)",
       "domain_map": "Member=work; Mandate=exhibition; Standing=archive state; Standard=aesthetic rubric; Governance=curation",
-      "macro": "a studio/temple platform any artist can hold \u2014 9-chamber toolkit with Curatorial Voice and Provenance Contract frameworks",
-      "micro": "Anthony's a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE) \u2014 all 3/3 validated",
+      "macro": "a studio/temple platform any artist can hold — 9-chamber toolkit with Curatorial Voice and Provenance Contract frameworks",
+      "micro": "Anthony's a-mavs-olevm chambers (444-file photo archive, ET4L, LOCREANCE) — all 3/3 validated",
       "first_artifact": "fill the most under-populated chambers with real captioned work",
       "note": "temple built (70%) chambers filling; Curatorial Voice + Provenance Contract frameworks formalized; macro + micro faces polished; 3/3 chambers validated; no longer subordinate to education"
     },
@@ -166,7 +166,7 @@
       "macro": "a health/recovery + disability-access institution anyone can hold",
       "micro": "the principal's unnamed post-injury recovery + disability access (ties directly to the legal ADA matter)",
       "first_artifact": "charter the health organ + a personal recovery/access protocol (informational, not medical advice)",
-      "note": "unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart, leverage math, platform + instance faces. PROTOCOL-recovery-access.md + posture.md generated for 01-post-injury case. Maturity 18%\u219220% by agy beat 2026-07-05."
+      "note": "unnamed; post-injury (4th-story fall ~2024); ties to the legal ADA accommodation matter. KERNEL.md + CHARTER.md + MACRO-FACE.md + MICRO-FACE.md authored: full 5-primitive map, institutional prosthesis framing, rival institution, legal organ link, hard guardrails, 6-workflow orchestration, AI role org-chart, leverage math, platform + instance faces. PROTOCOL-recovery-access.md + posture.md generated for 01-post-injury case. Maturity 18%→20% by agy beat 2026-07-05."
     },
     {
       "rank": 11,
@@ -192,13 +192,29 @@
       "home": "organs/contributions/",
       "maturity": 60,
       "stage": "maturing",
-      "whose_hand": "mine (every outbound send \u2014 PR, comment, bump, post \u2014 and any visibility flip is his, permanently)",
+      "whose_hand": "mine (every outbound send — PR, comment, bump, post — and any visibility flip is his, permanently)",
       "rival": "a big-tech Open Source Program Office (the Google/Microsoft OSPO) + a guild's journeyman practice",
       "domain_map": "Member=upstream relationship (project+maintainers); Mandate=contribution campaign (what wiring to study there); Standing=lifecycle scouted->workspace->PR open->merged/closed->backflow absorbed; Standard=the upstream's own CONTRIBUTING/CI bar + our outreach protocol (staggered bumps, no spam, genuine value only); Governance=human-gated outbound + the PLAN-06 dispatch gate",
       "macro": "an OSPO-in-a-box: the scout->workspace->campaign->monitor->backflow machinery plus the mirror, holdable by any solo operator or small org",
       "micro": "the live ORGANVM practice: hub organvm/contrib (generated LEDGER) + engine A (organvm_engine.contrib) + engine B (contrib_engine/) + 22+ contrib--* workspaces + ~19 upstream PRs (3 merged: fastmcp, dbt-mcp, github-stars) + the backflow manifest in organvm-corpvs-testamentvm",
-      "first_artifact": "the mirror rendered from real hub-ledger data \u2014 organs/contributions/MIRROR.md + logs/contributions.json on the C_CONTRIB beat \u2014 resolving PLAN-06 owner packet 04 (limen is the named public-proof owner surface)",
-      "note": "a CONVERGENCE, not a build (docs/current-session-fanout/PLAN-06-contrib-mirror.md, #459): the estate already existed in pieces. Doctrine: outward to learn inward \u2014 the upstream project is the lens, not the subject; community + name recognition are byproducts of genuine value. Path to maturing = PLAN-06 packets 01-03 (hub seed-root repair, engine-A ledger backend, engine-B parity map). Working name SPECVLVM pending an INDEX-NOMINVM pass. AUTOPOIETIC CLOSE 2026-07-05: LIFECYCLE.md (full state machine + git/repo processes + reap policy, executable via the mirror audit \u2014 7 workspaces reap-owed at first audit), ESTATE.yaml (certified 40-artifact register: scripts/protocols/rules/memories/logs/sessions/plans, beat-verified, drift 0), and the scout limb (inward dependency gaze -> outward opportunity pool, opportunities.json). Maturity 50%->60% (maturing): the organ now makes its own next work"
+      "first_artifact": "the mirror rendered from real hub-ledger data — organs/contributions/MIRROR.md + logs/contributions.json on the C_CONTRIB beat — resolving PLAN-06 owner packet 04 (limen is the named public-proof owner surface)",
+      "note": "a CONVERGENCE, not a build (docs/current-session-fanout/PLAN-06-contrib-mirror.md, #459): the estate already existed in pieces. Doctrine: outward to learn inward — the upstream project is the lens, not the subject; community + name recognition are byproducts of genuine value. Path to maturing = PLAN-06 packets 01-03 (hub seed-root repair, engine-A ledger backend, engine-B parity map). Working name SPECVLVM pending an INDEX-NOMINVM pass. AUTOPOIETIC CLOSE 2026-07-05: LIFECYCLE.md (full state machine + git/repo processes + reap policy, executable via the mirror audit — 7 workspaces reap-owed at first audit), ESTATE.yaml (certified 40-artifact register: scripts/protocols/rules/memories/logs/sessions/plans, beat-verified, drift 0), and the scout limb (inward dependency gaze -> outward opportunity pool, opportunities.json). Maturity 50%->60% (maturing): the organ now makes its own next work"
+    },
+    {
+      "rank": 13,
+      "pillar": "sovereignty",
+      "organ": "MANVMISSIO / Sovereign Inference",
+      "repo": "organvm/manumissio",
+      "home": "organs/sovereignty/",
+      "maturity": 35,
+      "stage": "building",
+      "whose_hand": "mine (any paid key/hardware buy is his, gauge-gated; arming a routing class is the parity gate's)",
+      "rival": "a cloud FinOps consultancy + an ML-infra platform team",
+      "domain_map": "Member=model holding; Mandate=job class to absorb; Standing=parity pass-rate + gauge numbers; Standard=the math-maths predicate (parity gate exit 0, payback math); Governance=ships-dark default-off arming + weights deed book",
+      "macro": "a sovereignty ladder any AI-heavy operator can hold: measure spend, own weights, gate every switchover on parity",
+      "micro": "Anthony's exit from ~$500/mo provider rent: qwen3:8b registered property, 122x measured Claude arbitrage, floor routing shipped dark until the gate arms it",
+      "first_artifact": "weights/MANIFEST.json with the first digest-verified holding + the parity gate passing 8/8 on mechanical classes (both shipped 2026-07-09)",
+      "note": "FIRST standalone-repo organ (organvm/manumissio, 3 PRs + 13 seeded issues + founding discussion at birth). limen keeps the operator's private data (organs/financial/*); the repo publishes the engine. Private pending explicit public flip (operator's call)."
     }
   ],
   "power_snapshot": {
@@ -210,13 +226,13 @@
       "codex (87% efficiency, the best earner)",
       "jules (94% idle)"
     ],
-    "binding_constraint": "SUPPLY of high-value work, not capacity \u2014 these organs ARE the supply",
+    "binding_constraint": "SUPPLY of high-value work, not capacity — these organs ARE the supply",
     "source": "logs/usage-limits.json, logs/usage.json, logs/ledger.json (assessed 2026-06-23)"
   },
   "your_levers": [
-    "card-0186 Santander fraud hold \u2014 keystone: the whole stack's billing rides on it (one call clears it; also frees Anthropic/GitHub autopay)",
-    "financial identity \u2014 receiving real money (bank/KYC for a payout rail or a signed deal) is genuinely yours",
-    "the send / the signature \u2014 outbound emails and any contract: I draft, you send/sign (reversible-only invariant)",
-    "institutional logins \u2014 D2L (education), and privileged/filing acts with Counsel (legal)"
+    "card-0186 Santander fraud hold — keystone: the whole stack's billing rides on it (one call clears it; also frees Anthropic/GitHub autopay)",
+    "financial identity — receiving real money (bank/KYC for a payout rail or a signed deal) is genuinely yours",
+    "the send / the signature — outbound emails and any contract: I draft, you send/sign (reversible-only invariant)",
+    "institutional logins — D2L (education), and privileged/filing acts with Counsel (legal)"
   ]
 }
