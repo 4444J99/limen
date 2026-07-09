@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 255
+      spent: 260
       per_agent:
         jules: 40
         gemini: 5
         codex: 9
         opencode: 121
-        agy: 69
-        claude: 10
+        agy: 73
+        claude: 11
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-09T12:38:52.573549+00:00'
@@ -114279,7 +114279,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -114295,7 +114295,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:50:53.394389Z'
+  updated: '2026-07-09T21:52:08.133441Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -114312,6 +114312,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:52:08.133441Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-organvm-mirror-mirror-86
   title: "rebase organvm/mirror-mirror#86 onto current base \u2014 branched far behind"
   repo: organvm/mirror-mirror
@@ -114358,7 +114363,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -114373,7 +114378,13 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-09T21:52:08.133441Z'
+  dispatch_log:
+  - timestamp: '2026-07-09T21:52:08.133441Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-mirror-mirror-95
   title: rebase/resolve conflicts on organvm/mirror-mirror#95
   repo: organvm/mirror-mirror
@@ -116561,7 +116572,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -116578,7 +116589,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:51:21.504367Z'
+  updated: '2026-07-09T21:52:08.133441Z'
   dispatch_log:
   - timestamp: '2026-07-09T03:21:52.666387Z'
     agent: jules
@@ -116614,6 +116625,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:52:08.133441Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-172
   title: rebase/resolve conflicts on organvm/domus-genoma#172
   repo: organvm/domus-genoma
@@ -119778,7 +119794,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -119793,7 +119809,13 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-09T21:52:08.133441Z'
+  dispatch_log:
+  - timestamp: '2026-07-09T21:52:08.133441Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ASK-quicken-escalate-4a4c2aa8
   title: finish stalled session 'Build alchemical synthesizer for audio sampl' (breathed
     49x, still stalling)
@@ -120371,7 +120393,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -120387,7 +120409,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T21:52:08.133441Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -120398,6 +120420,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-09T21:52:08.133441Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-organvm-universal-mail--automation-125
   title: "rebase organvm/universal-mail--automation#125 onto current base \u2014 branched\
     \ far behind"
