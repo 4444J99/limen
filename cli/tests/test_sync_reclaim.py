@@ -374,7 +374,9 @@ def test_reclaim_keeps_dirty_unpushed_and_active(tmp_path):
     assert "dirty" in r.stdout and "unpushed-commits" in r.stdout and "active" in r.stdout
 
 
-def test_reclaim_keeps_clean_pushed_unmerged_branch(tmp_path):
+def test_reclaim_removes_clean_pushed_unmerged_branch(tmp_path):
+    # push-first rule (2026-07-09, LIMEN_RECLAIM_PUSHED_OK default on): the commits are on origin, so
+    # removing the local checkout loses nothing — the branch stays resumable. Reaped as clean+pushed+idle.
     main, bare, wtroot = _wt_root_with(tmp_path)
     (main / "logs").mkdir(exist_ok=True)
 
@@ -385,6 +387,25 @@ def test_reclaim_keeps_clean_pushed_unmerged_branch(tmp_path):
     _age(branch, 5)
 
     r = _run_reclaim(wtroot, main, apply=True)
+
+    assert r.returncode == 0, r.stderr
+    assert not branch.exists(), r.stdout
+    assert "clean+pushed+idle" in r.stdout
+
+
+def test_reclaim_keeps_pushed_unmerged_when_pushed_gate_disabled(tmp_path):
+    # LIMEN_RECLAIM_PUSHED_OK=0 restores the conservative merged-only gate: a pushed-but-unmerged
+    # worktree is kept as not-merged-to-default (the reversible off switch for the push-first rule).
+    main, bare, wtroot = _wt_root_with(tmp_path)
+    (main / "logs").mkdir(exist_ok=True)
+
+    branch = _add_wt(main, wtroot, "pushed-unmerged-off")
+    _git("checkout", "-q", "-b", "feature-off", cwd=branch)
+    _commit(branch, "feature.txt", "unique work\n", "feature")
+    _git("push", "-q", "origin", "HEAD:feature-off", cwd=branch)
+    _age(branch, 5)
+
+    r = _run_reclaim(wtroot, main, apply=True, extra_env={"LIMEN_RECLAIM_PUSHED_OK": "0"})
 
     assert r.returncode == 0, r.stderr
     assert branch.exists(), r.stdout

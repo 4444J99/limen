@@ -27,9 +27,19 @@ whose HEAD is merged into the remote default branch, and which is idle past
 its min-age. `scripts/reclaim-worktrees.py` honors this as
 `standing-grant-2026-07-09` (disable with
 `LIMEN_RECLAIM_STANDING_ACCEPTANCE=0`). The classifier's own checks (dirty,
-unpushed, not-merged, active) remain the guardrails, and every removal is
+unpushed, active) remain the guardrails, and every removal is
 still receipted in `logs/reclaim-worktrees.jsonl`. All other classes on every
 surface still require a per-root human acceptance event.
+
+**Pushed-is-enough (2026-07-09).** The operator's standing rule is "nothing is
+deleted without being pushed to remote first" — so preservation, not merge, is
+the bar. A root that is clean and idle and whose commits are already on origin
+(`reachable_from_remote`) but is **not** merged is `clean+pushed+idle`: removing
+the local checkout loses zero work (the branch remains on origin, resumable by
+fetch+checkout), so it is pre-accepted under the same standing grant. Gated by
+`LIMEN_RECLAIM_PUSHED_OK` (default on; set 0 for the conservative merged-only
+gate). The `unpushed-commits` and `dirty` guardrails are unchanged — a root
+whose work is not yet on origin is **never** reaped.
 
 ## Checked Surfaces
 

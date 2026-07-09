@@ -8,8 +8,10 @@ those:
 
   • clean working tree (no uncommitted or untracked changes), AND
   • HEAD is reachable from some remote ref, or every local patch is equivalent to default, AND
-  • HEAD/content is already merged into the remote default branch (the work finished its PR/base lifecycle), AND
-    OR a clean+idle preservation receipt proves the PR is merged with no private patch marker, AND
+  • EITHER the work is preserved on origin (pushed — the branch stays resumable, so removing the
+    local checkout loses nothing; the operator's push-first rule, gate LIMEN_RECLAIM_PUSHED_OK),
+    OR HEAD/content is already merged into the remote default branch, OR a clean+idle preservation
+    receipt proves the PR is merged with no private patch marker, AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
   • --apply also requires a matching human acceptance/redaction/archive event in
     docs/worktree-reclaim-acceptance.jsonl immediately before physical removal.
@@ -287,10 +289,18 @@ def load_reclaim_acceptance():
 
 
 STANDING_ACCEPTANCE = os.environ.get("LIMEN_RECLAIM_STANDING_ACCEPTANCE", "1") != "0"
+# PUSHED-is-enough: the operator's standing rule (2026-07-09) — "nothing is deleted without being
+# pushed to remote first." A worktree whose commits are already on origin (reachable_from_remote)
+# loses ZERO work when its local checkout is removed: the branch remains on origin, fully resumable
+# by fetch+checkout. Merge is NOT required — only PRESERVATION is. Default ON; set 0 to restore the
+# conservative merged-only gate. This is what drains the pushed-but-unmerged worktree backlog that
+# otherwise pins hundreds of roots (each also pinning its branch from the branch-reaper).
+PUSHED_REAP_OK = os.environ.get("LIMEN_RECLAIM_PUSHED_OK", "1") != "0"
 # Operator standing grant (2026-07-09, docs/removal-acceptance-covenant.md §Standing grant):
-# the loss-free class — clean tree, merged into the remote default, idle past min-age —
-# is pre-accepted for removal. Every other class still requires a per-root ledger event.
-STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle"}
+# the loss-free classes — clean tree + idle past min-age, and EITHER merged into the remote default
+# OR merely pushed to origin (the commits are safe on the remote) — are pre-accepted for removal.
+# Every other class still requires a per-root ledger event.
+STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "clean+pushed+idle"}
 
 
 def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) -> tuple[bool, str]:
@@ -372,6 +382,12 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None):
     if not head or (not reachable_from_remote(d, head) and not patch_equivalent):
         return "skip", "unpushed-commits"
     if not (merged_into_default(d, head) or patch_equivalent):
+        # Pushed to origin but not merged. Removing the local checkout is loss-free (the commits are
+        # on origin — reachable_from_remote just proved it — so the branch is fully resumable), so
+        # under the operator's push-first rule this is reapable; only merge, not preservation, is
+        # missing. Gated by LIMEN_RECLAIM_PUSHED_OK so the merged-only default is one env away.
+        if PUSHED_REAP_OK:
+            return ("remove-worktree" if is_wt else "remove-clone"), "clean+pushed+idle"
         return "skip", "not-merged-to-default"
     return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"
 
@@ -389,7 +405,9 @@ def main():
             print(f"reclaim: ran < {EVERY_MIN}min ago — skip (set --force to override)")
             return 0
     now = time.time()
-    generated_reclaim = reclaim_generated_payloads(targets) if APPLY else {"enabled": False, "cleaned": [], "failed": []}
+    generated_reclaim = (
+        reclaim_generated_payloads(targets) if APPLY else {"enabled": False, "cleaned": [], "failed": []}
+    )
     if GENERATED_ONLY:
         cleaned = generated_reclaim.get("cleaned") or []
         gen_failed = generated_reclaim.get("failed") or []
