@@ -8,10 +8,12 @@ export LIMEN_ROOT="${LIMEN_ROOT:-$ROOT}"
 export PYTHONPATH="$PYTHONPATH_VALUE"
 
 TMP_FILES=()
+QUEUE_LOCK_HELD=0
 cleanup() {
   if ((${#TMP_FILES[@]})); then
     rm -f "${TMP_FILES[@]}"
   fi
+  release_queue_lock
 }
 trap cleanup EXIT
 
@@ -32,9 +34,37 @@ run_and_require_ready() {
   fi
 }
 
+acquire_queue_lock() {
+  local lockd="$ROOT/logs/.queue.lock.d"
+  local waited
+  for waited in $(seq 1 "${LIMEN_CLOSEOUT_QUEUE_LOCK_TIMEOUT:-30}"); do
+    if mkdir "$lockd" 2>/dev/null; then
+      printf '%s\n' "$$" > "$lockd/pid" 2>/dev/null || true
+      date -u '+%Y-%m-%dT%H:%M:%SZ' > "$lockd/created_at" 2>/dev/null || true
+      QUEUE_LOCK_HELD=1
+      return 0
+    fi
+    sleep 1
+  done
+  printf 'closeout-fast: queue lock unavailable after %ss\n' "${LIMEN_CLOSEOUT_QUEUE_LOCK_TIMEOUT:-30}" >&2
+  return 1
+}
+
+release_queue_lock() {
+  local lockd="$ROOT/logs/.queue.lock.d"
+  if [[ "$QUEUE_LOCK_HELD" == "1" ]]; then
+    if [[ "$(cat "$lockd/pid" 2>/dev/null || true)" == "$$" ]]; then
+      rm -f "$lockd/pid" "$lockd/created_at" 2>/dev/null || true
+      rmdir "$lockd" 2>/dev/null || true
+    fi
+    QUEUE_LOCK_HELD=0
+  fi
+}
+
 cd "$ROOT"
 
 step "Validate task board"
+acquire_queue_lock
 python3 scripts/validate-task-board.py --tasks tasks.yaml
 
 step "Check TABVLARIVS ticket inbox"
@@ -42,6 +72,7 @@ python3 scripts/tabularius-organ.py --check
 
 step "Check live-root gate"
 run_and_require_ready "live-root-gate" python3 scripts/live-root-gate.py
+release_queue_lock
 
 step "Probe dispatch health"
 python3 scripts/dispatch-health.py --probe-async
