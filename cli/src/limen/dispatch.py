@@ -2193,6 +2193,15 @@ def _run_isolated_agent(
         return _failed_agent_result(agent, task, run)
     if agent in ("agy", "antigravity"):
         _bridge_agy_scratch(task, wt)
+    if agent == "ollama":
+        # `ollama run` answers on stdout and cannot edit files — without an artifact the run
+        # hits the no-changes trap in _commit_isolated_changes and false-fails as _NOOP.
+        # Persist the report so the commit -> PR -> ledger-grading path sees the real work.
+        out = (run.stdout or "").strip()
+        if out:
+            reports = wt / "reports"
+            reports.mkdir(exist_ok=True)
+            (reports / f"{task.id}.md").write_text(out + "\n")
     return True
 
 

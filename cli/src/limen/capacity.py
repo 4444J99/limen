@@ -171,6 +171,26 @@ def ollama_model() -> str | None:
     return None
 
 
+_LOCAL_FLOOR_CLASSES_DEFAULT = ("scan", "verify", "link-check", "classify", "summarize")
+
+
+def local_floor_classes() -> set[str]:
+    """Job classes the local ollama floor may absorb — env-pinned (LIMEN_LOCAL_FLOOR_CLASSES,
+    comma-separated) with a conservative mechanical-grade default; mirrors the
+    LIMEN_CLAUDE_OPUS_CLASSES pattern in model_selection."""
+    raw = os.environ.get("LIMEN_LOCAL_FLOOR_CLASSES", "")
+    if raw.strip():
+        return {c.strip() for c in raw.split(",") if c.strip()}
+    return set(_LOCAL_FLOOR_CLASSES_DEFAULT)
+
+
+def local_floor_enabled() -> bool:
+    """The local-floor arm switch — DARK by default (operator rule 2026-07-09: nothing switches
+    over until the math maths). Arm with LIMEN_LOCAL_FLOOR=1 only after the parity gate passes
+    each class (`parity gate --model <floor> --class <c> --threshold 0.9`, organvm/manumissio)."""
+    return os.environ.get("LIMEN_LOCAL_FLOOR", "0").strip() == "1"
+
+
 def _truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 

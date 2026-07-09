@@ -49,6 +49,20 @@ parameters:
     owner: dispatch
     note: "Async dispatch is the enacted fleet mode (overnight-watch expects 1). Generator default was 0 until 2026-07-09, when a regen under a bare session env silently rendered async OFF — the default now matches the enacted state."
 
+  LIMEN_LOCAL_FLOOR:
+    default: 0
+    env: LIMEN_LOCAL_FLOOR
+    self_update: none
+    owner: dispatch
+    note: "MANVMISSIO local-floor arm switch — DARK by default (operator rule 2026-07-09: nothing switches over until the math maths). Arm to 1 only when the parity gate (organvm/manumissio) passes each floor class at threshold."
+
+  LIMEN_LOCAL_FLOOR_CLASSES:
+    default: "scan,verify,link-check,classify,summarize"
+    env: LIMEN_LOCAL_FLOOR_CLASSES
+    self_update: "per-class: add only on parity-gate pass; ledger waste_classes auto-rolls a class back at runtime"
+    owner: dispatch
+    note: "Job classes the unmetered ollama floor may absorb (capacity.local_floor_classes). Reserved opus/fable classes are excluded in code regardless of this list."
+
   # --- VITALS: the missing executive's thresholds (build order #1) --------------
   # These are the published 'reaction function' the heartbeat will enact. Seeds —
   # tune against _diagnostics FIND-005 ('treat 16GB as a budget, not a floor').

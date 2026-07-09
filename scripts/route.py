@@ -57,9 +57,13 @@ from limen.capacity import (  # noqa: E402
     capacity_census,
     derived_floor_from_budget,
     format_capacity_census,
+    local_floor_classes,
+    local_floor_enabled,
+    ollama_model,
     select_lanes,
     task_has_github_issue,
 )
+from limen.model_selection import _claude_fable_classes, _claude_opus_classes  # noqa: E402
 from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
 from limen.dispatch import _down_lanes, _reset_budget_if_needed  # noqa: E402
 from limen.workstream import UNASSIGNED, assign_channel  # noqa: E402
@@ -477,6 +481,38 @@ def _capable_agents(
     return agents, reasons
 
 
+def _local_floor_lane(task: dict, health: dict[str, bool]) -> str | None:
+    """Route a cheap mechanical-class task to the unmetered local ollama floor — DARK by default.
+
+    Only fires when LIMEN_LOCAL_FLOOR=1 (the arm is the parity gate's decision — see
+    organvm/manumissio; operator rule 2026-07-09: nothing switches over until the math maths)
+    AND the floor is actually lit (ollama healthy + a model pulled). Reserved opus/fable classes
+    never route local. A class the value ledger has graded wasted on the ollama lane falls back
+    automatically (self-correcting rollback, same source as _ledger_bias). Fail-soft: any error
+    -> None, i.e. today's routing byte-identical."""
+    try:
+        if not local_floor_enabled():
+            return None
+        if not task.get("repo") or not health.get("ollama"):
+            return None  # the isolated run needs a worktree; the lane must be up
+        classes = _task_classes(task)
+        if not classes & local_floor_classes():
+            return None
+        if classes & (set(_claude_opus_classes()) | set(_claude_fable_classes())):
+            return None  # reserved tiers never drop to the floor
+        try:
+            lanes = json.loads((ROOT / "logs" / "ledger.json").read_text()).get("lanes", {})
+            if classes & set((lanes.get("ollama") or {}).get("waste_classes") or []):
+                return None
+        except Exception:
+            pass  # no ledger yet -> no rollback signal
+        if ollama_model() is None:
+            return None
+        return "ollama"
+    except Exception:
+        return None
+
+
 def route_task(
     task: dict,
     health: dict[str, bool],
@@ -504,6 +540,9 @@ def route_task(
     # if jules is down (never strand — [[no-never-happens-again]]).
     if repo and "slow" in set(task.get("labels") or []) and health.get("jules"):
         return "jules", "slow (timed out on a sync local lane) -> jules async remote (no wall-clock cap)"
+    floor = _local_floor_lane(task, health)
+    if floor:
+        return floor, "local floor class -> ollama (unmetered; armed by parity gate)"
     if repo:
         lane = _pick_repo_worker(task, health, assigned, budget, runway)
         if lane:
