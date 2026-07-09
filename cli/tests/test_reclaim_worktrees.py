@@ -33,8 +33,21 @@ def acceptance_event(root: Path, action: str = "remove-worktree", reason: str = 
     }
 
 
+def test_reclaim_standing_grant_accepts_loss_free_class_without_ledger(tmp_path: Path) -> None:
+    # covenant standing grant 2026-07-09: clean+merged+idle needs no per-root ledger event
+    reclaim = load_reclaim_worktrees()
+    worktree = tmp_path / "example-worktree"
+    worktree.mkdir()
+
+    ok, reason = reclaim.reclaim_accepted(worktree, "remove-worktree", "clean+merged+idle", [])
+
+    assert ok is True
+    assert reason == "standing-grant-2026-07-09"
+
+
 def test_reclaim_acceptance_matches_clean_merged_worktree(tmp_path: Path) -> None:
     reclaim = load_reclaim_worktrees()
+    reclaim.STANDING_ACCEPTANCE = False  # pin ledger-matching semantics
     worktree = tmp_path / "example-worktree"
     worktree.mkdir()
 
@@ -51,6 +64,7 @@ def test_reclaim_acceptance_matches_clean_merged_worktree(tmp_path: Path) -> Non
 
 def test_reclaim_acceptance_requires_archive_and_redaction_proofs(tmp_path: Path) -> None:
     reclaim = load_reclaim_worktrees()
+    reclaim.STANDING_ACCEPTANCE = False  # pin ledger-matching semantics
     worktree = tmp_path / "proof-required"
     worktree.mkdir()
 

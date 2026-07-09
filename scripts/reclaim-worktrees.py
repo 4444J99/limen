@@ -286,7 +286,16 @@ def load_reclaim_acceptance():
     return events
 
 
+STANDING_ACCEPTANCE = os.environ.get("LIMEN_RECLAIM_STANDING_ACCEPTANCE", "1") != "0"
+# Operator standing grant (2026-07-09, docs/removal-acceptance-covenant.md §Standing grant):
+# the loss-free class — clean tree, merged into the remote default, idle past min-age —
+# is pre-accepted for removal. Every other class still requires a per-root ledger event.
+STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle"}
+
+
 def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) -> tuple[bool, str]:
+    if STANDING_ACCEPTANCE and reason in STANDING_ACCEPTANCE_REASONS:
+        return True, "standing-grant-2026-07-09"
     try:
         resolved = str(path.resolve())
     except OSError:

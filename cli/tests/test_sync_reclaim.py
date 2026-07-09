@@ -316,12 +316,24 @@ def _write_reclaim_acceptance(
     path.write_text(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
 
 
-def test_reclaim_requires_acceptance_for_clean_pushed_idle(tmp_path):
+def test_reclaim_standing_grant_removes_clean_pushed_idle(tmp_path):
+    # covenant standing grant 2026-07-09: the loss-free class needs no ledger event
     main, bare, wtroot = _wt_root_with(tmp_path)
     dead = _add_wt(main, wtroot, "dead-task")  # clean, on origin/main, will be aged
     _age(dead, 5)
     (main / "logs").mkdir(exist_ok=True)
     r = _run_reclaim(wtroot, main, apply=True)
+    assert r.returncode == 0, r.stderr
+    assert not dead.exists(), r.stdout
+    assert "reclaimed" in r.stdout
+
+
+def test_reclaim_requires_acceptance_when_standing_grant_disabled(tmp_path):
+    main, bare, wtroot = _wt_root_with(tmp_path)
+    dead = _add_wt(main, wtroot, "dead-task")  # clean, on origin/main, will be aged
+    _age(dead, 5)
+    (main / "logs").mkdir(exist_ok=True)
+    r = _run_reclaim(wtroot, main, apply=True, extra_env={"LIMEN_RECLAIM_STANDING_ACCEPTANCE": "0"})
     assert r.returncode == 0, r.stderr
     assert dead.exists(), r.stdout
     assert "missing-reclaim-acceptance" in r.stdout

@@ -18,6 +18,19 @@ Do not create acceptance JSONL events as a cleanup shortcut. The JSONL ledgers
 are evidence that a human accepted the exact storage, archival, redaction, and
 ownership proof for a proposed removal.
 
+## Standing grant — loss-free worktree class (2026-07-09)
+
+The operator directed (2026-07-09, after the acceptance loop deadlocked at 646
+pooled roots / ~38 GiB with `removed: []` on every beat) that the loss-free
+worktree class is **pre-accepted for removal**: a root whose tree is clean,
+whose HEAD is merged into the remote default branch, and which is idle past
+its min-age. `scripts/reclaim-worktrees.py` honors this as
+`standing-grant-2026-07-09` (disable with
+`LIMEN_RECLAIM_STANDING_ACCEPTANCE=0`). The classifier's own checks (dirty,
+unpushed, not-merged, active) remain the guardrails, and every removal is
+still receipted in `logs/reclaim-worktrees.jsonl`. All other classes on every
+surface still require a per-root human acceptance event.
+
 ## Checked Surfaces
 
 | Surface | Tool | Acceptance doc | Acceptance ledger | Terminal action |

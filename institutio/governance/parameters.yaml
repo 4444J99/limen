@@ -419,6 +419,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Heartbeat timeout in seconds for the broader reclaim-worktrees pass."
+  LIMEN_RECLAIM_STANDING_ACCEPTANCE:
+    default: "1"
+    env: LIMEN_RECLAIM_STANDING_ACCEPTANCE
+    self_update: none
+    owner: continuity
+    note: "Honor the covenant standing grant (2026-07-09): clean+merged+idle worktree roots are pre-accepted for removal without a per-root ledger event. Set 0 to restore per-root human acceptance for that class (docs/removal-acceptance-covenant.md)."
   LIMEN_DISK_PRESSURE_PATH:
     default: "$LIMEN_ROOT"
     env: LIMEN_DISK_PRESSURE_PATH
