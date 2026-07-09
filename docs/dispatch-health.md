@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-09T20:52:50+00:00`
+Generated: `2026-07-09T20:56:13+00:00`
 
 Status: `blocked`
 
@@ -34,7 +34,7 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `None`.
 - Loaded LIMEN_ASYNC_MAX: `None`.
 - Loaded LIMEN_LANES: `None`.
-- Watchdog dry-run healthy: `False`; `[watchdog] 2026-07-09T20:52:50.927270+00:00 UNHEALTHY sig=beating+daemon-up`.
+- Watchdog dry-run healthy: `False`; `[watchdog] 2026-07-09T20:56:13.932781+00:00 UNHEALTHY sig=beating+daemon-up`.
 
 ## Async Dispatch
 
@@ -74,14 +74,10 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `ae630686438d88cb7635a9e43241191964a53f90`.
-- origin/main: `ae630686438d88cb7635a9e43241191964a53f90`.
+- HEAD: `f58924239c3246bb51d5d086b33ef0299f00e2d6`.
+- origin/main: `f58924239c3246bb51d5d086b33ef0299f00e2d6`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `1`.
-- Ignored generated receipt dirty entries: `2`.
-  - `docs/dispatch-health.md`
-  - `docs/live-root-gate.md`
-  - `tasks.yaml`
+- Dirty entries: `0`.
 
 ## Verified Worktree
 
@@ -94,7 +90,6 @@ Status: `blocked`
 - `heartbeat-plist-missing`: LaunchAgent plist was not found.
 - `heartbeat-launchd-not-running`: launchd state is missing.
 - `heartbeat-watchdog-unhealthy`:   ok  not-wedged: {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": 3}
-- `live-root-dirty`: live root has 1 dirty entries.
 - `always-working-required-work-open`: 6 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
