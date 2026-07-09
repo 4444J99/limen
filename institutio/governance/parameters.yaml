@@ -1021,6 +1021,19 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  # --- LANE FLOORS (route proactive fill): ensure every healthy lane gets a daily minimum ---
+  LIMEN_LANE_FLOORS:
+    default: "1"                 # 1=enabled (under-floor lanes get a 0.5× load boost in _pick_local); 0=disabled
+    env: LIMEN_LANE_FLOORS
+    self_update: none
+    owner: route
+    note: "When 1, route.py's _pick_local halves the effective load of any lane below its derived daily floor so under-filled healthy lanes sort before above-floor lanes. Fixes the Jul 3-5 starvation (Jules 0 tasks, Codex 5/100 daily) where the raw budget-ratio ordering never prioritized empty lanes over partially-filled ones. Set 0 to restore prior budget-ratio-only ordering."
+  LIMEN_LANE_FLOOR_FRAC:
+    default: 0.25                # fraction of per-agent budget cap used as the daily floor (clamp to (0,1])
+    env: LIMEN_LANE_FLOOR_FRAC
+    self_update: none
+    owner: route
+    note: "Fraction of a lane's per-agent daily budget cap that becomes its daily task floor for the under-floor boost in route.py and capacity_fill reporting. E.g. codex budget=100 → floor=25. Parsed defensively; clamped to (0,1]; result floored at 1 when the lane has any budget. LIMEN_<AGENT>_DAILY_TASKS overrides per-agent. Derive-not-pin."
   # --- SELF-IMPROVE (route SI-weighting): clamp per-lane weight so no lane starves or swamps the fleet ---
   LIMEN_SI_WEIGHT_FLOOR:
     default: 0.25               # lower clamp: a down-weighted lane is still picked sometimes (never starved)

@@ -515,17 +515,66 @@ def _progress_from_usage(agent: str, usage: dict[str, object], reset_at: datetim
     return max(0.0, min(1.0, elapsed / hours))
 
 
-def _daily_task_target(agent: str, board: object) -> int:
+def derived_floor_from_budget(agent: str, per_agent: dict[str, object]) -> int:
+    """Derive a daily task floor for *agent* from its per-agent budget cap.
+
+    Precedence (mirrors derived_daily_floor but accepts the budget map directly so
+    callers that already hold it — e.g. route.py — avoid re-reading the board):
+      (a) env ``LIMEN_<AGENT>_DAILY_TASKS`` (same convention as _daily_task_target)
+      (b) ``DEFAULT_DAILY_TASK_TARGETS[agent]``
+      (c) ``ceil(per_agent[agent] × frac)`` where frac = env LIMEN_LANE_FLOOR_FRAC
+          (default 0.25, clamped to (0, 1]; result floored at 1 when a budget exists)
+      (d) 0 (agent has no budget entry)
+    """
+    import math
+
     env_name = f"LIMEN_{agent.upper()}_DAILY_TASKS"
-    if os.environ.get(env_name):
-        return _int(os.environ.get(env_name), 0)
+    env_val = os.environ.get(env_name)
+    if env_val:
+        return _int(env_val, 0)
     if agent in DEFAULT_DAILY_TASK_TARGETS:
         return DEFAULT_DAILY_TASK_TARGETS[agent]
+    if not isinstance(per_agent, dict) or agent not in per_agent:
+        return 0
+    cap = _int(per_agent.get(agent), 0)
+    if cap <= 0:
+        return 0
+    raw_frac = os.environ.get("LIMEN_LANE_FLOOR_FRAC", "0.25")
+    try:
+        frac = float(raw_frac)
+    except (TypeError, ValueError):
+        frac = 0.25
+    frac = max(1e-9, min(1.0, frac))  # clamp to (0, 1]
+    return max(1, math.ceil(cap * frac))
+
+
+def derived_daily_floor(agent: str, board: object) -> int:
+    """Derive a daily task floor for *agent* from its budget config on *board*.
+
+    Precedence:
+      (a) env ``LIMEN_<AGENT>_DAILY_TASKS``
+      (b) ``DEFAULT_DAILY_TASK_TARGETS[agent]``
+      (c) ``ceil(per_agent[agent] × frac)`` where frac = LIMEN_LANE_FLOOR_FRAC (default 0.25)
+      (d) 0 (no budget entry for agent)
+    """
     budget = _budget_from_board(board)
     per_agent = _get(budget, "per_agent", {}) or {}
-    if isinstance(per_agent, dict) and agent in per_agent:
-        return _int(per_agent.get(agent), 0)
-    return 0
+    if not isinstance(per_agent, dict):
+        per_agent = {}
+    return derived_floor_from_budget(agent, per_agent)
+
+
+def _daily_task_target(agent: str, board: object) -> int:
+    """Return the daily task target for *agent*.
+
+    Delegates to ``derived_daily_floor`` so that agents without an explicit
+    DEFAULT_DAILY_TASK_TARGETS entry (e.g. codex, jules) get a meaningful floor
+    derived from their per-agent budget cap rather than the raw cap itself.
+    This fixes the capacity-fill reporter: codex with a 100-task budget and
+    LIMEN_LANE_FLOOR_FRAC=0.25 targets 25/day instead of 100, so the
+    "underfilled" signal is honest when the lane has only processed 5.
+    """
+    return derived_daily_floor(agent, board)
 
 
 def _task_agent(task: Task | dict[str, object]) -> str:

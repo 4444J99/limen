@@ -127,3 +127,73 @@ def test_routing_snapshot_projects_stale_budget_resets(tmp_path, monkeypatch):
     assert track["per_agent"]["jules"] == 0
     assert track["spent"] == 0
     assert track["per_agent_reset"]["jules"] == now.isoformat()
+
+
+# ---------------------------------------------------------------------------
+# Lane-floor boost tests (LIMEN_LANE_FLOORS feature, Jul 2026)
+# Motivation: Jul 3–5 starvation — Jules had 0 tasks for 3 days; codex sat at
+# 5/100 daily budget. The raw budget-ratio ordering already preferred lighter
+# lanes, but when loads were close a slightly-above-floor lane could edge out
+# an under-floor lane via tiebreaker (cliff, runway, budget, name). The 0.5×
+# boost on under-floor lanes ensures they sort first even in those tie cases.
+# ---------------------------------------------------------------------------
+
+
+def test_under_floor_lane_beats_above_floor_lane_at_same_budget(monkeypatch):
+    """A lane below its daily floor is picked over a lane above its floor when
+    both have the same budget. Floor = ceil(budget × 0.25) = 25 for budget=100.
+
+    codex assigned=20 (below floor=25): boosted effective load = 0.20×0.5 = 0.10
+    claude assigned=26 (above floor=25): no boost, effective load = 0.26
+    → codex sorts first (0.10 < 0.26).
+    """
+    monkeypatch.setenv("LIMEN_LANE_FLOORS", "1")
+    monkeypatch.delenv("LIMEN_LANE_FLOOR_FRAC", raising=False)
+    monkeypatch.delenv("LIMEN_CODEX_DAILY_TASKS", raising=False)
+    monkeypatch.delenv("LIMEN_CLAUDE_DAILY_TASKS", raising=False)
+    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    monkeypatch.setattr(route, "_ledger_bias", lambda task: {})
+    monkeypatch.setattr(route, "_vendor_cliff_urgency", lambda: {})
+
+    health = {"codex": True, "claude": True, "agy": False, "opencode": False}
+    budget = {"codex": 100, "claude": 100}
+    # codex below floor=25 (assigned 20); claude above floor=25 (assigned 26).
+    assigned = {"codex": 20, "claude": 26}
+    task = {"title": "ordinary task", "type": "code"}
+    pick = route._pick_local(task, health, assigned, budget)
+    assert pick == "codex", f"under-floor codex should beat above-floor claude, got {pick}"
+
+
+def test_under_floor_boost_disabled_by_env(monkeypatch):
+    """LIMEN_LANE_FLOORS=0 restores pure raw budget-ratio ordering without the floor boost."""
+    monkeypatch.setenv("LIMEN_LANE_FLOORS", "0")
+    monkeypatch.delenv("LIMEN_LANE_FLOOR_FRAC", raising=False)
+    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    monkeypatch.setattr(route, "_ledger_bias", lambda task: {})
+    monkeypatch.setattr(route, "_vendor_cliff_urgency", lambda: {})
+
+    health = {"codex": True, "claude": True, "agy": False, "opencode": False}
+    budget = {"codex": 100, "claude": 100}
+    # With floors OFF: pure raw ordering. codex=10/100=0.10, claude=5/100=0.05 → claude wins.
+    assigned = {"codex": 10, "claude": 5}
+    task = {"title": "ordinary task", "type": "code"}
+    pick = route._pick_local(task, health, assigned, budget)
+    assert pick == "claude", f"lower raw load (claude) should win with floors=0, got {pick}"
+
+
+def test_floor_boost_starvation_case_runs_cleanly(monkeypatch):
+    """The Jul 3–5 starvation scenario (codex 5/100): floor boost code path runs without error."""
+    monkeypatch.setenv("LIMEN_LANE_FLOORS", "1")
+    monkeypatch.delenv("LIMEN_LANE_FLOOR_FRAC", raising=False)
+    monkeypatch.delenv("LIMEN_CODEX_DAILY_TASKS", raising=False)
+    monkeypatch.setattr(route, "_learned_weights", lambda: {})
+    monkeypatch.setattr(route, "_ledger_bias", lambda task: {})
+    monkeypatch.setattr(route, "_vendor_cliff_urgency", lambda: {})
+
+    health = {"codex": True, "claude": False, "agy": False, "opencode": False}
+    budget = {"codex": 100}
+    assigned = {"codex": 5}  # starvation: only 5 of 100 daily budget used
+    task = {"title": "ordinary task", "type": "code"}
+    pick = route._pick_local(task, health, assigned, budget)
+    # Single candidate → always returns codex. Validates boost path runs without exception.
+    assert pick == "codex"

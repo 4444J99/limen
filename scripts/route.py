@@ -55,6 +55,7 @@ from limen.capacity import (  # noqa: E402
     LOCAL_CHECKOUT_AGENTS,
     PAID_AGENT_ORDER,
     capacity_census,
+    derived_floor_from_budget,
     format_capacity_census,
     select_lanes,
     task_has_github_issue,
@@ -323,6 +324,9 @@ def _pick_local(
     and, among lanes at the same load, STEER toward the one with the most refresh runway — so when
     loads are even (early/idle) work flows to the freshest rolling window, and a lane pacing toward
     its reserve sheds new work before it trips the gate. Both signals are live + derived, not pinned.
+    When LIMEN_LANE_FLOORS=1 (default), a lane that is below its derived daily floor gets its
+    effective load halved so it sorts before above-floor lanes at similar raw load — preventing
+    healthy lanes (e.g. codex at 5/100, jules at 0/100) from idling while others overfill.
     """
     runway = runway or {}
     text = f"{task.get('type', '')} {task.get('title', '')} {task.get('context', '')}".lower()
@@ -338,13 +342,26 @@ def _pick_local(
     # work-classes it wastes on (opencode off code/build-out here; it still won deploy above). Bias wins.
     weights = {**_learned_weights(), **_ledger_bias(task)}
 
+    # Derive floors once per call (not per comparison): each lane's daily floor from its budget cap.
+    # LIMEN_LANE_FLOORS=1 (default on) enables the under-floor boost; =0 restores prior ordering.
+    floors_enabled = os.environ.get("LIMEN_LANE_FLOORS", "1") == "1"
+    floors: dict[str, int] = {}
+    if floors_enabled:
+        for v in candidates:
+            floors[v] = derived_floor_from_budget(v, budget)
+
     def load(v: str) -> float:
         b = budget.get(v, 0) or 1
         # round so near-equal loads tie and let the refresh-runway signal break the tie.
         base = assigned.get(v, 0) / b
         # self-improve nudge: a down-weighted (historically less-shipping) lane carries a higher
         # effective load so it's picked less; floored weight means never fully starved.
-        return round(base / weights.get(v, 1.0), 3)
+        effective = round(base / weights.get(v, 1.0), 3)
+        # under-floor boost: a lane below its daily floor gets half the effective load so it sorts
+        # before above-floor lanes — pulling starved healthy lanes into rotation proactively.
+        if floors_enabled and floors.get(v, 0) > 0 and assigned.get(v, 0) < floors[v]:
+            effective *= 0.5
+        return effective
 
     def runway_of(v: str) -> float:
         return runway.get(v, float("inf"))
