@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 346
+      spent: 347
       per_agent:
         jules: 40
         gemini: 9
         codex: 21
         opencode: 121
         agy: 116
-        claude: 35
+        claude: 36
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -115032,7 +115032,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - tried:agy
   urls:
@@ -115045,7 +115045,7 @@ tasks:
     failed, and `BATS Tests` failed i'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T22:41:20.740107Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -115062,6 +115062,11 @@ tasks:
     agent: agy
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-07-09T22:41:20.740107Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-domus-genoma-202
   title: Restore audit helper contract and domus-auth formatting on Limen repair PRs
   repo: organvm/domus-genoma
