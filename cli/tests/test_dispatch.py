@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -37,6 +37,7 @@ def _hermetic_dispatch_env(tmp_path: Path, monkeypatch) -> None:
     receipts), so ambient fleet state on the host silently changes selection semantics. Pin the
     root to an empty per-test dir; tests that need a real root re-set LIMEN_ROOT themselves."""
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "hermetic-root"))
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
     for var in ("LIMEN_VALUE_REPOS", "LIMEN_VALUE_REPOS_FILE", "LIMEN_VALUE_GATE_STRICT"):
         monkeypatch.delenv(var, raising=False)
 
@@ -64,6 +65,130 @@ def write_board(path: Path, tasks: list[dict]) -> None:
 
 def read_board(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
+
+
+def _blocked_admission(*_args, **_kwargs):
+    return {
+        "allow": False,
+        "status": "blocked",
+        "exit_code": 10,
+        "reason": "session value gate requested packetization",
+        "next_command": "python3 scripts/prompt-packet-ledger.py --write",
+        "value_gate": {"action": "switch_to_packetization"},
+    }
+
+
+def test_serial_dispatch_admission_blocks_before_worker_and_budget(tmp_path: Path, monkeypatch, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "T1",
+                "title": "work",
+                "repo": "x/y",
+                "target_agent": "codex",
+                "status": "open",
+                "priority": "critical",
+                "created": str(date.today()),
+            }
+        ],
+    )
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "1")
+    monkeypatch.setattr(D, "dispatch_admission_check", _blocked_admission)
+    monkeypatch.setattr(D, "call_agent_dispatch", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError()))
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=False)
+
+    out = capsys.readouterr().out
+    board = read_board(tasks_path)
+    assert "dispatch admission blocked" in out
+    assert "python3 scripts/prompt-packet-ledger.py --write" in out
+    assert board["tasks"][0]["status"] == "open"
+    assert board["portal"]["budget"]["track"]["spent"] == 0
+
+
+def test_parallel_dispatch_admission_blocks_before_reservation(tmp_path: Path, monkeypatch, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "T1",
+                "title": "work",
+                "repo": "x/y",
+                "target_agent": "codex",
+                "status": "open",
+                "priority": "critical",
+                "created": str(date.today()),
+            }
+        ],
+    )
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "1")
+    monkeypatch.setattr(D, "dispatch_admission_check", _blocked_admission)
+    monkeypatch.setattr(D, "call_agent_dispatch", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError()))
+
+    dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], dry_run=False)
+
+    out = capsys.readouterr().out
+    board = read_board(tasks_path)
+    assert "dispatch admission blocked" in out
+    assert board["tasks"][0]["status"] == "open"
+    assert board["tasks"][0].get("dispatch_log") in (None, [])
+    assert board["portal"]["budget"]["track"]["spent"] == 0
+
+
+def test_parallel_selection_suppresses_chronic_push_rejection(tmp_path: Path, monkeypatch, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    now = datetime.now(timezone.utc)
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "CHRONIC",
+                "title": "loop",
+                "repo": "x/y",
+                "target_agent": "codex",
+                "status": "open",
+                "priority": "critical",
+                "created": str(date.today()),
+                "dispatch_log": [
+                    {
+                        "timestamp": now.isoformat(),
+                        "agent": "codex",
+                        "session_id": "a",
+                        "status": "failed",
+                        "output": "push rejected by remote",
+                    },
+                    {
+                        "timestamp": now.isoformat(),
+                        "agent": "codex",
+                        "session_id": "b",
+                        "status": "failed",
+                        "output": "non-fast-forward push rejected",
+                    },
+                ],
+            },
+            {
+                "id": "FRESH",
+                "title": "fresh",
+                "repo": "x/y",
+                "target_agent": "codex",
+                "status": "open",
+                "priority": "low",
+                "created": str(date.today()),
+            },
+        ],
+    )
+
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+
+    dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], per_agent_limit=2, dry_run=True)
+
+    out = capsys.readouterr().out
+    assert D.chronic_dispatch_reason(load_limen_file(tasks_path).tasks[0]) == "push-rejection-loop"
+    assert "codex: FRESH" in out
+    assert "codex: CHRONIC" not in out
 
 
 def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> None:

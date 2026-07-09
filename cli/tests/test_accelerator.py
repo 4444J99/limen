@@ -127,6 +127,7 @@ def test_accel_allows_is_ledger_gated():
 
 # ── dispatch_parallel integration: the tail is win-class only ───────────────────────────────────
 def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
     monkeypatch.delenv("LIMEN_ACCEL", raising=False)
     # jules near its cliff with budget to burn; ledger: jules WINS revenue, WASTES coverage.

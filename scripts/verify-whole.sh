@@ -43,7 +43,7 @@ ensure_web_app_deps() {
 
 step "Compile Python modules and validate shell syntax"
 cd "$ROOT"
-python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py scripts/worktree-debt.py scripts/worktree-pr-receipts.py scripts/continuation-beat.py scripts/codex-token-accounting.py scripts/overnight-watch.py scripts/session-corpus-ledger.py scripts/corpus-feed.py scripts/prompt-lifecycle-ledger.py scripts/prompt-priority-map.py scripts/prompt-batch-review-ledger.py scripts/prompt-packet-ledger.py scripts/current-session-fanout-plan.py scripts/corpus-command-center.py scripts/capability-substrate-ledger.py scripts/consolidation-gates.py scripts/network-health.py scripts/dispatch-health.py scripts/always-working.py scripts/live-root-gate.py scripts/session-blockers-ledger.py scripts/session-lifecycle-pressure.py scripts/session-attack-paths.py scripts/conductor-tranche.py scripts/session-value-review.py scripts/enactment-audit.py scripts/antigravity-scratch-bridge.py scripts/reap_acceptance.py scripts/check-removal-acceptance.py scripts/cvstos-organ.py scripts/armed-valve-audit.py scripts/ship-gate.py scripts/heal-convergence.py scripts/async-run-one.py scripts/ask-gate.py
+python3 -m py_compile web/api/main.py cli/src/limen/*.py scripts/probe-runtime-adapter.py scripts/validate-lifecycle-adapters.py scripts/validate-task-board.py scripts/worktree-debt.py scripts/worktree-pr-receipts.py scripts/continuation-beat.py scripts/codex-token-accounting.py scripts/overnight-watch.py scripts/handoff-relay.py scripts/session-corpus-ledger.py scripts/corpus-feed.py scripts/prompt-lifecycle-ledger.py scripts/prompt-priority-map.py scripts/prompt-batch-review-ledger.py scripts/prompt-packet-ledger.py scripts/current-session-fanout-plan.py scripts/corpus-command-center.py scripts/capability-substrate-ledger.py scripts/consolidation-gates.py scripts/network-health.py scripts/dispatch-health.py scripts/dispatch-admission.py scripts/check-dispatch-admission.py scripts/always-working.py scripts/live-root-gate.py scripts/session-blockers-ledger.py scripts/session-lifecycle-pressure.py scripts/session-attack-paths.py scripts/conductor-tranche.py scripts/session-value-review.py scripts/enactment-audit.py scripts/antigravity-scratch-bridge.py scripts/reap_acceptance.py scripts/check-removal-acceptance.py scripts/cvstos-organ.py scripts/armed-valve-audit.py scripts/ship-gate.py scripts/heal-convergence.py scripts/async-run-one.py scripts/ask-gate.py
 bash -n scripts/preflight-cloud-run.sh scripts/probe-local-runtime.sh scripts/probe-local-worker.sh scripts/heartbeat-loop.sh scripts/verify-whole.sh scripts/merge-policy.sh scripts/omega.sh scripts/tests/merge-policy.test.sh scripts/tests/enactment-audit.test.sh scripts/tests/armed-valve-audit.test.sh scripts/tests/ship-gate.test.sh scripts/tests/heal-convergence.test.sh scripts/tests/ask-gate.test.sh scripts/tests/omega.test.sh scripts/hooks/session-lifecycle-pressure.sh scripts/hooks/worktree-commit-guard.sh scripts/tests/worktree-commit-guard.test.sh scripts/netmode.sh
 if command -v plutil >/dev/null; then
   plutil -lint container/launchd/com.user.netmeter.plist
@@ -111,6 +111,9 @@ bash scripts/done-session-orient.sh
 
 step "Verify agent-instruction docs match the canonical task-state vocabulary"
 python3 scripts/check-agent-docs.py
+
+step "Verify dispatch admission cannot be bypassed by overnight launch paths"
+python3 scripts/check-dispatch-admission.py
 
 step "Verify the gate registry matches the workflows and consumers (GATES drift predicate)"
 python3 scripts/check-gates.py

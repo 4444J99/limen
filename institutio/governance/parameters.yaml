@@ -1795,3 +1795,89 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Beat gate for ARCA (scripts/arca.sh backup, step 5c): every ~/Workspace/_*-private store, AES-256-encrypted with a key that lives only in the macOS Keychain, roundtrip-verified, pushed as ciphertext to the private organvm/arca repo. 1=seal each beat (no-op in seconds when unchanged); 0=off. Fails soft (locked Keychain / offline). Script-level knobs are ARCA_WORKSPACE / ARCA_REPO / ARCA_VAULT_DIR / ARCA_KEY_SERVICE / ARCA_MAX_MB."
+
+  # --- dispatch admission gate (closeout/dispatch-admission-20260709) -----------
+  LIMEN_DISPATCH_ADMISSION:
+    default: "1"               # ON — gate dispatch on session-value admission evidence
+    env: LIMEN_DISPATCH_ADMISSION
+    self_update: none
+    owner: dispatch
+    note: "Master gate for the dispatch admission check (cli/src/limen/dispatch.py): before a task is dispatched, admission requires fresh evidence that dispatching produces value (handoff recency + session-value review + a sourced next_action). 1=enforce; 0=admit everything (prior behavior). Verified by scripts/check-dispatch-admission.py."
+  LIMEN_REQUIRE_HANDOFF:
+    default: "1"               # ON — admission requires a fresh handoff relay record
+    env: LIMEN_REQUIRE_HANDOFF
+    self_update: none
+    owner: dispatch
+    note: "Admission source: require a handoff relay record younger than LIMEN_HANDOFF_MAX_AGE_MIN before dispatching. 1=require; 0=skip the handoff source (the other admission sources still apply)."
+  LIMEN_HANDOFF_MAX_AGE_MIN:
+    default: 90
+    env: LIMEN_HANDOFF_MAX_AGE_MIN
+    self_update: none
+    owner: dispatch
+    note: "Maximum age in minutes of the handoff relay record accepted as fresh dispatch-admission evidence. Older records force a re-relay before admission."
+  LIMEN_HANDOFF_RELAY_TIMEOUT:
+    default: 30
+    env: LIMEN_HANDOFF_RELAY_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Timeout in seconds for each handoff relay subprocess (scripts/handoff-relay.py) the admission check invokes. Clamped to >=1."
+  LIMEN_SESSION_VALUE_GATE:
+    default: "1"               # ON — admission consults the session-value review
+    env: LIMEN_SESSION_VALUE_GATE
+    self_update: none
+    owner: dispatch
+    note: "Admission source: run scripts/session-value-review.py and require its verdict as dispatch evidence. 1=consult; 0=skip the value-review source."
+  LIMEN_VALUE_GATE_HOURS:
+    default: "1.5"
+    env: LIMEN_VALUE_GATE_HOURS
+    self_update: none
+    owner: dispatch
+    note: "Lookback window in hours the session-value review covers when consulted for dispatch admission. Falls back to LIMEN_ASYNC_VALUE_GATE_HOURS, then the 1.5h code default."
+  LIMEN_VALUE_GATE_TIMEOUT:
+    default: 90
+    env: LIMEN_VALUE_GATE_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Timeout in seconds for the session-value-review subprocess run by the dispatch admission gate. Falls back to LIMEN_ASYNC_VALUE_GATE_TIMEOUT, then 90. Clamped to >=1."
+  LIMEN_ASYNC_VALUE_GATE_HOURS:
+    default: "1.5"
+    env: LIMEN_ASYNC_VALUE_GATE_HOURS
+    self_update: none
+    owner: dispatch
+    note: "Async-dispatch variant of the value-gate lookback window (hours); also the fallback for LIMEN_VALUE_GATE_HOURS so both dispatch paths share one tuning knob."
+  LIMEN_ASYNC_VALUE_GATE_TIMEOUT:
+    default: 90
+    env: LIMEN_ASYNC_VALUE_GATE_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Async-dispatch variant of the value-gate subprocess timeout (seconds); also the fallback for LIMEN_VALUE_GATE_TIMEOUT."
+  LIMEN_REQUIRE_NEXT_ACTION_SOURCE:
+    default: "1"               # ON — admission requires a sourced next_action
+    env: LIMEN_REQUIRE_NEXT_ACTION_SOURCE
+    self_update: none
+    owner: dispatch
+    note: "Admission source: the dispatched task must carry a next_action traceable to a real source (board/report/receipt), not an invented one. 1=require; 0=skip this source."
+  LIMEN_DISPATCH_TASK_OVERRIDE_PREDICATE:
+    default: ""
+    env: LIMEN_DISPATCH_TASK_OVERRIDE_PREDICATE
+    self_update: none
+    owner: dispatch
+    note: "Escape hatch (paired with LIMEN_DISPATCH_TASK_OVERRIDE_REASON): a command whose exit-0 run authorizes admitting a specific dispatch despite gate evidence. Both must be set; empty=no override. Every override is logged with its reason."
+  LIMEN_DISPATCH_TASK_OVERRIDE_REASON:
+    default: ""
+    env: LIMEN_DISPATCH_TASK_OVERRIDE_REASON
+    self_update: none
+    owner: dispatch
+    note: "Human-readable reason recorded when the dispatch-admission override predicate is used. Required together with LIMEN_DISPATCH_TASK_OVERRIDE_PREDICATE; empty=no override."
+  LIMEN_HIGH_MOTION_COMMIT_THRESHOLD:
+    default: 20
+    env: LIMEN_HIGH_MOTION_COMMIT_THRESHOLD
+    self_update: none
+    owner: continuity
+    note: "session-value-review.py: commit count at/above which motion WITHOUT receipts is flagged high-motion-no-receipts (churn that produces no durable value). The knob for how much receiptless motion is tolerated before the review flags it."
+  LIMEN_OVERNIGHT_VALUE_GATE_HOURS:
+    default: "1.5"
+    env: LIMEN_OVERNIGHT_VALUE_GATE_HOURS
+    self_update: none
+    owner: continuity
+    note: "overnight-watch.py: lookback window in hours for its value-gate check on overnight sessions — the overnight sibling of LIMEN_VALUE_GATE_HOURS."

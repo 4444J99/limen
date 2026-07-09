@@ -146,8 +146,38 @@ def test_commit_kind_classifies_operating_work():
 
     assert review.commit_kind("limen: resolve ninth medium family prompt batch") == "prompt_corpus"
     assert review.commit_kind("limen: update task board states") == "task_board"
+    assert review.commit_kind("tabularius: preserve board projection 2026-07-09T09:09:17Z") == "task_board"
+    assert review.commit_kind("limen: refresh autonomous PR receipts") == "receipt_refresh"
     assert review.commit_kind("docs: derive accurate usage section") == "direct_engineering"
     assert review.commit_kind("capture: autonomic off-disk sync") == "capture"
+
+
+def test_session_value_review_critiques_high_motion_without_receipts():
+    review = _load()
+    commits = [
+        {
+            "kind": "receipt_refresh",
+            "files": 2,
+            "insertions": 10,
+            "deletions": 1,
+        }
+        for _ in range(21)
+    ]
+    queue = {
+        "coverage": {
+            "recorded_batches": 91,
+            "open_review_batches": 201,
+            "parked_secret_batches": 17,
+        }
+    }
+
+    findings = review.build_findings(commits, [], queue, hours=48)
+    critique = "\n".join(findings["critique_points"])
+
+    assert findings["commit_kinds"] == {"receipt_refresh": 21}
+    assert "zero prompt-batch receipts moved" in critique
+    assert "High-motion/no-receipt window" in critique
+    assert "Most commits were PR-receipt refreshes" in critique
 
 
 def test_session_value_gate_switches_after_repeated_followup_pressure():
@@ -192,6 +222,106 @@ def test_session_value_gate_switches_after_repeated_followup_pressure():
     assert gate["exit_code"] == 10
     assert gate["pressures"]["consecutive_followup_pressure_reports"] == 2
     assert gate["next_commands"][0] == "python3 scripts/prompt-packet-ledger.py --write"
+
+
+def test_session_value_gate_switches_after_repeated_high_motion_without_receipts():
+    review = _load()
+    snapshot = {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "batch_resolution_receipts": {"present": True},
+            "batch_review_index": {"present": True},
+        },
+        "metrics": {
+            "commits": 22,
+            "batch_receipts": 0,
+            "prompt_events_recorded": 0,
+            "followup_roots": 0,
+            "merged_roots": 0,
+            "owner_absent_roots": 0,
+        },
+        "findings": {"commit_kinds": {"direct_engineering": 22}},
+        "current_queue": {
+            "coverage": {"open_review_batches": 3},
+            "next": [
+                {
+                    "id": "prompt-batch-medium-family-015",
+                    "lane": "family",
+                }
+            ],
+        },
+    }
+    history = [
+        {
+            "gate": {
+                "pressures": {
+                    "motion_without_receipts": True,
+                    "high_motion_no_receipts": True,
+                }
+            }
+        }
+    ]
+
+    gate = review.decide_gate(snapshot, history=history)
+
+    assert gate["action"] == "switch_to_packetization"
+    assert gate["exit_code"] == 10
+    assert gate["pressures"]["motion_without_receipts"] is True
+    assert gate["pressures"]["high_motion_no_receipts"] is True
+    assert gate["pressures"]["consecutive_motion_without_receipts"] == 2
+    assert gate["pressures"]["consecutive_high_motion_no_receipts"] == 2
+    assert gate["next_commands"] == [
+        "python3 scripts/resolve-codex-family-batch.py prompt-batch-medium-family-015 --write"
+    ]
+
+
+def test_session_value_gate_blocks_receipt_only_custody_motion(tmp_path):
+    review = _load()
+    review.PRODUCT_LEDGER_INDEX = tmp_path / "product-ledger.json"
+    review.PRODUCT_LEDGER_INDEX.write_text(
+        json.dumps(
+            {
+                "next_unblocked": [
+                    {
+                        "id": "PROD-repo-test",
+                        "owner": "organvm/value-repo",
+                        "state": "ship",
+                        "disposition": "sell-ready",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    snapshot = {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "batch_resolution_receipts": {"present": True},
+            "batch_review_index": {"present": True},
+        },
+        "metrics": {
+            "commits": 5,
+            "batch_receipts": 0,
+            "prompt_events_recorded": 0,
+            "followup_roots": 0,
+            "merged_roots": 0,
+            "owner_absent_roots": 0,
+        },
+        "findings": {"commit_kinds": {"receipt_refresh": 4, "task_board": 1}},
+        "current_queue": {
+            "coverage": {"open_review_batches": 3},
+            "next": [],
+        },
+    }
+
+    gate = review.decide_gate(snapshot, history=[])
+
+    assert gate["action"] == "switch_to_direct_product_work"
+    assert gate["exit_code"] == 10
+    assert gate["pressures"]["receipt_only_motion"] is True
+    assert gate["evidence"]["next_product"] == "PROD-repo-test"
+    assert gate["evidence"]["next_product_owner"] == "organvm/value-repo"
+    assert gate["next_commands"] == ["python3 scripts/product-ledger.py --refresh --redacted-summary"]
 
 
 def test_session_value_gate_stops_without_durable_progress():

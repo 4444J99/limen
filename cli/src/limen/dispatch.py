@@ -12,7 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from limen import census
 from limen.capacity import (
@@ -71,6 +71,13 @@ def _env_int(name: str, default: int) -> int:
 
 def _env_float(name: str, default: float) -> float:
     return _float_or_default(os.environ.get(name), default)
+
+
+def _truthy_env(name: str, default: bool = True) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
 
 
 def _load_limen_env() -> int:
@@ -314,6 +321,379 @@ def run_always_working_before_dispatch(tasks_path: Path, *, dry_run: bool = Fals
     return True
 
 
+_DISPATCH_ADMISSION_POLICY = "dispatch-admission-v1"
+_DISPATCH_ADMISSION_GATE_HOURS = "1.5"
+_CHRONIC_EXEMPT_LABELS = {"chronic-ok", "allow-repeat-dispatch", "fresh-evidence"}
+_NOOP_PATTERNS = ("no-op", "noop")
+_AWAITING_PATTERNS = ("awaiting_user_feedback", "awaiting user feedback", "awaiting-user-feedback")
+_MISSING_SESSION_PATTERNS = ("missing session id", "missing session_id", "without session id", "no session id")
+_DUPLICATE_BRANCH_PATTERNS = (
+    "duplicate branch",
+    "branch already exists",
+    "head ref already exists",
+    "duplicate head",
+)
+_PUSH_REJECTION_PATTERNS = ("push rejected", "failed to push", "non-fast-forward", "remote rejected")
+
+
+def _root_for_dispatch(tasks_path: Path | None = None) -> Path:
+    if os.environ.get("LIMEN_ROOT"):
+        return Path(os.environ["LIMEN_ROOT"]).expanduser().resolve()
+    if tasks_path is not None:
+        try:
+            path = tasks_path.expanduser().resolve()
+        except OSError:
+            path = tasks_path.expanduser()
+        return path.parent if path.name == "tasks.yaml" else path
+    return Path.cwd()
+
+
+def _load_json_file(path: Path) -> dict[str, Any]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _parse_iso_timestamp(raw: object) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _parse_json_stdout(stdout: str) -> dict[str, Any]:
+    try:
+        data = json.loads(stdout or "{}")
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _short_proc_output(proc: subprocess.CompletedProcess[str] | None, limit: int = 500) -> str:
+    if proc is None:
+        return ""
+    text = (proc.stdout or proc.stderr or "").strip()
+    return f"{text[:limit]}...[truncated]" if len(text) > limit else text
+
+
+def _first_command(payload: dict[str, Any]) -> str:
+    commands = payload.get("next_commands") if isinstance(payload.get("next_commands"), list) else []
+    return str(commands[0]) if commands else ""
+
+
+def _run_handoff_relay(root: Path, *, refresh: bool) -> dict[str, Any]:
+    script = root / "scripts" / "handoff-relay.py"
+    result: dict[str, Any] = {
+        "path": str(root / "logs" / "handoff.json"),
+        "refreshed": False,
+        "refresh_returncode": None,
+        "refresh_output": "",
+        "check_returncode": 1,
+        "check_output": "",
+        "ok": False,
+    }
+    if not script.exists():
+        result["check_output"] = f"missing {script}"
+        return result
+    refresh_proc: subprocess.CompletedProcess[str] | None = None
+    if refresh:
+        try:
+            refresh_proc = subprocess.run(
+                [sys.executable, str(script)],
+                cwd=str(root),
+                capture_output=True,
+                text=True,
+                timeout=max(1, _env_int("LIMEN_HANDOFF_RELAY_TIMEOUT", 30)),
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            result.update(
+                {
+                    "refreshed": True,
+                    "refresh_returncode": 1,
+                    "refresh_output": str(exc),
+                    "check_output": str(exc),
+                }
+            )
+            return result
+    try:
+        check_proc = subprocess.run(
+            [sys.executable, str(script), "--check"],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=max(1, _env_int("LIMEN_HANDOFF_RELAY_TIMEOUT", 30)),
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        result.update(
+            {
+                "refreshed": bool(refresh),
+                "refresh_returncode": refresh_proc.returncode if refresh_proc else None,
+                "refresh_output": _short_proc_output(refresh_proc),
+                "check_returncode": 1,
+                "check_output": str(exc),
+            }
+        )
+        return result
+    result.update(
+        {
+            "refreshed": bool(refresh),
+            "refresh_returncode": refresh_proc.returncode if refresh_proc else None,
+            "refresh_output": _short_proc_output(refresh_proc),
+            "check_returncode": check_proc.returncode,
+            "check_output": _short_proc_output(check_proc),
+            "ok": check_proc.returncode == 0,
+        }
+    )
+    return result
+
+
+def _handoff_next_action_source(root: Path) -> bool:
+    handoff = _load_json_file(root / "logs" / "handoff.json")
+    generated = _parse_iso_timestamp(handoff.get("generated"))
+    if generated is None:
+        return False
+    max_age_min = _env_int("LIMEN_HANDOFF_MAX_AGE_MIN", 90)
+    if (datetime.now(timezone.utc) - generated).total_seconds() > max(1, max_age_min) * 60:
+        return False
+    return isinstance(handoff.get("next_action"), dict)
+
+
+def _prompt_batch_source(root: Path) -> bool:
+    lifecycle = root / ".limen-private" / "session-corpus" / "lifecycle"
+    index = _load_json_file(lifecycle / "prompt-batch-review-ledger.json")
+    raw_coverage = index.get("coverage")
+    coverage = raw_coverage if isinstance(raw_coverage, dict) else {}
+    queue = index.get("review_queue") if isinstance(index.get("review_queue"), list) else []
+    try:
+        open_batches = int(coverage.get("open_review_batches") or 0)
+    except (TypeError, ValueError):
+        open_batches = 0
+    return open_batches > 0 or bool(queue)
+
+
+def _product_ledger_source(root: Path) -> bool:
+    lifecycle = root / ".limen-private" / "session-corpus" / "lifecycle"
+    ledger = _load_json_file(lifecycle / "product-ledger.json")
+    return bool(ledger.get("next_unblocked")) if isinstance(ledger.get("next_unblocked"), list) else False
+
+
+def _always_working_source(root: Path, tasks_path: Path | None) -> bool:
+    lifecycle = root / ".limen-private" / "session-corpus" / "lifecycle"
+    index = _load_json_file(lifecycle / "always-working.json")
+    raw_items = index.get("items")
+    items = raw_items if isinstance(raw_items, list) else []
+    if any(isinstance(item, dict) and item.get("assignment_packet") for item in items):
+        return True
+    if tasks_path is None:
+        return False
+    try:
+        board = load_limen_file(tasks_path)
+    except Exception:
+        return False
+    return any(task.status == "open" and str(task.id or "").startswith("AW-") for task in board.tasks)
+
+
+def _explicit_task_source(tasks_path: Path | None, task_id: str | None) -> bool:
+    if not task_id or tasks_path is None:
+        return False
+    try:
+        board = load_limen_file(tasks_path)
+    except Exception:
+        return False
+    task = next((candidate for candidate in board.tasks if candidate.id == task_id), None)
+    if task is None:
+        return False
+    text = _task_search_text(task)
+    has_owner = bool(task.repo or task.urls or "owner" in text)
+    has_predicate = any(term in text for term in ("predicate", "verify", "test ", "pytest", "check ", "receipt target"))
+    has_receipt = any(term in text for term in ("receipt", "pull/", " pr ", "github.com", "output", "owner"))
+    if has_owner and has_predicate and has_receipt:
+        return True
+    return bool(
+        os.environ.get("LIMEN_DISPATCH_TASK_OVERRIDE_REASON")
+        and os.environ.get("LIMEN_DISPATCH_TASK_OVERRIDE_PREDICATE")
+    )
+
+
+def _next_action_sources(root: Path, tasks_path: Path | None, task_id: str | None) -> list[str]:
+    if not _truthy_env("LIMEN_REQUIRE_NEXT_ACTION_SOURCE", True):
+        return ["disabled"]
+    sources: list[str] = []
+    if _handoff_next_action_source(root):
+        sources.append("handoff_relay")
+    if _prompt_batch_source(root):
+        sources.append("prompt_batch_queue")
+    if _product_ledger_source(root):
+        sources.append("product_ledger")
+    if _always_working_source(root, tasks_path):
+        sources.append("always_working_packet")
+    if _explicit_task_source(tasks_path, task_id):
+        sources.append("explicit_task_id")
+    return sources
+
+
+def _session_value_admission_gate(
+    root: Path,
+    *,
+    tasks_path: Path | None = None,
+    task_id: str | None = None,
+) -> dict[str, Any]:
+    explicit_source = _explicit_task_source(
+        tasks_path or Path(os.environ.get("LIMEN_TASKS", root / "tasks.yaml")), task_id
+    )
+    if explicit_source:
+        return {"allow": True, "exit_code": 0, "action": "explicit_task_id", "skipped": True}
+    if not _truthy_env("LIMEN_SESSION_VALUE_GATE", True):
+        return {"allow": True, "exit_code": 0, "action": "disabled", "skipped": True}
+    script = root / "scripts" / "session-value-review.py"
+    hours = os.environ.get(
+        "LIMEN_VALUE_GATE_HOURS",
+        os.environ.get("LIMEN_ASYNC_VALUE_GATE_HOURS", _DISPATCH_ADMISSION_GATE_HOURS),
+    )
+    command = f"python3 scripts/session-value-review.py --gate --hours {hours} --no-record-gate"
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(script), "--gate", "--hours", hours, "--no-record-gate"],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=max(1, _env_int("LIMEN_VALUE_GATE_TIMEOUT", _env_int("LIMEN_ASYNC_VALUE_GATE_TIMEOUT", 90))),
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {
+            "allow": False,
+            "exit_code": 20,
+            "action": "session_value_unavailable",
+            "reason": f"session value gate unavailable: {exc}",
+            "next_command": command,
+            "output": str(exc),
+        }
+    gate = _parse_json_stdout(proc.stdout)
+    gate["returncode"] = proc.returncode
+    gate["output"] = _short_proc_output(proc)
+    gate["next_command"] = _first_command(gate)
+    if proc.returncode == 0:
+        gate["allow"] = True
+        return gate
+    gate["allow"] = False
+    if not gate.get("reason"):
+        gate["reason"] = (proc.stderr or proc.stdout or "session value gate blocked dispatch").strip()
+    if not gate.get("next_command"):
+        gate["next_command"] = command
+    return gate
+
+
+def dispatch_admission_check(
+    tasks_path: Path | None = None,
+    *,
+    task_id: str | None = None,
+    refresh_handoff: bool = True,
+) -> dict[str, Any]:
+    """Fail-closed dispatch admission shared by every worker launch path."""
+    root = _root_for_dispatch(tasks_path)
+    tasks_path = tasks_path or Path(os.environ.get("LIMEN_TASKS", root / "tasks.yaml"))
+    result: dict[str, Any] = {
+        "policy": _DISPATCH_ADMISSION_POLICY,
+        "allow": True,
+        "dispatch_allowed": True,
+        "status": "allowed",
+        "exit_code": 0,
+        "reason": "dispatch admission allowed",
+        "next_command": "",
+        "sources": [],
+    }
+    if not _truthy_env("LIMEN_DISPATCH_ADMISSION", True):
+        result.update({"reason": "dispatch admission disabled by LIMEN_DISPATCH_ADMISSION", "sources": ["disabled"]})
+        return result
+
+    if _truthy_env("LIMEN_REQUIRE_HANDOFF", True):
+        handoff = _run_handoff_relay(root, refresh=refresh_handoff)
+        result["handoff"] = handoff
+        if not handoff.get("ok"):
+            result.update(
+                {
+                    "allow": False,
+                    "dispatch_allowed": False,
+                    "status": "alert",
+                    "exit_code": 20,
+                    "reason": "handoff relay check failed; refresh handoff before launching workers",
+                    "next_command": "python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check",
+                }
+            )
+            return result
+
+    value_gate = _session_value_admission_gate(root, tasks_path=tasks_path, task_id=task_id)
+    result["value_gate"] = value_gate
+    gate_rc = int(value_gate.get("returncode", value_gate.get("exit_code", 0)) or 0)
+    if not value_gate.get("allow", gate_rc == 0):
+        status = "blocked" if gate_rc == 10 else "alert"
+        result.update(
+            {
+                "allow": False,
+                "dispatch_allowed": False,
+                "status": status,
+                "exit_code": 10 if gate_rc == 10 else 20,
+                "reason": str(
+                    value_gate.get("reason")
+                    or (
+                        "session value gate requested a lane switch before generic dispatch"
+                        if gate_rc == 10
+                        else "session value gate stopped dispatch"
+                    )
+                ),
+                "next_command": str(value_gate.get("next_command") or ""),
+            }
+        )
+        return result
+
+    sources = _next_action_sources(root, tasks_path, task_id)
+    result["sources"] = sources
+    if not sources:
+        result.update(
+            {
+                "allow": False,
+                "dispatch_allowed": False,
+                "status": "blocked",
+                "exit_code": 10,
+                "reason": (
+                    "no concrete next-action source "
+                    "(handoff relay, prompt batch, product ledger, always-working packet, or explicit task id)"
+                ),
+                "next_command": "python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check",
+            }
+        )
+        return result
+
+    result["reason"] = f"dispatch admission allowed via {', '.join(sources)}"
+    result["next_command"] = str(value_gate.get("next_command") or "")
+    return result
+
+
+def print_dispatch_admission_block(prefix: str, admission: dict[str, Any]) -> None:
+    action = ""
+    value_gate = admission.get("value_gate")
+    if isinstance(value_gate, dict):
+        action = str(value_gate.get("action") or "")
+    label = action or str(admission.get("status") or admission.get("exit_code") or "blocked")
+    print(f"{prefix}: dispatch admission blocked ({label})")
+    reason = str(admission.get("reason") or "").strip()
+    if reason:
+        print(f"{prefix}: reason: {reason[:500]}")
+    next_command = str(admission.get("next_command") or "").strip()
+    if next_command:
+        print(f"{prefix}: next command: {next_command}")
+
+
 def _dep_merged(dep_task: Task | None) -> bool:
     """A dependency is satisfied only when its PR is MERGED (in the base branch), not merely built.
     The reconcile (verify-dispatch→heal-dispatch) stamps a 'PR merged → done' dispatch_log entry on
@@ -418,6 +798,68 @@ def _dispatchable(task: Task) -> bool:
     if _has_done_transition(task) or _has_pr_open_transition(task):
         return False
     return "needs-human" not in (task.labels or [])
+
+
+def _entry_text(entry: DispatchLogEntry) -> str:
+    return " ".join(
+        str(part or "")
+        for part in (
+            entry.status,
+            entry.session_id,
+            entry.output,
+            entry.agent,
+        )
+    ).lower()
+
+
+def _entry_matches(entry: DispatchLogEntry, patterns: tuple[str, ...]) -> bool:
+    text = _entry_text(entry)
+    return any(pattern in text for pattern in patterns)
+
+
+def _outcome_entries(task: Task) -> list[DispatchLogEntry]:
+    skip = {"dispatched", "in_progress", "open"}
+    return [entry for entry in (task.dispatch_log or []) if str(entry.status or "") not in skip]
+
+
+def _has_fresh_owner_state(task: Task) -> bool:
+    for entry in (task.dispatch_log or [])[-4:]:
+        text = _entry_text(entry)
+        if str(entry.status or "") in {"done", "pr_open"}:
+            return True
+        if "pull/" in text or "new head" in text or "checks green" in text or "check passed" in text:
+            return True
+    return False
+
+
+def chronic_dispatch_reason(task: Task) -> str | None:
+    """Classify reopened tasks that have already shown repeated non-progress."""
+    labels = {str(label).strip().lower() for label in (task.labels or [])}
+    if labels & _CHRONIC_EXEMPT_LABELS or _has_fresh_owner_state(task):
+        return None
+    outcomes = _outcome_entries(task)
+    last_two = outcomes[-2:]
+    if len(last_two) < 2:
+        return None
+    if all(_entry_matches(entry, _NOOP_PATTERNS) for entry in last_two):
+        return "repeated-no-op"
+    if all(_entry_matches(entry, _AWAITING_PATTERNS) for entry in last_two):
+        return "awaiting-user-feedback-loop"
+    if all(_entry_matches(entry, _MISSING_SESSION_PATTERNS) for entry in last_two):
+        return "missing-session-id-loop"
+    if all(_entry_matches(entry, _DUPLICATE_BRANCH_PATTERNS) for entry in last_two):
+        return "duplicate-branch-loop"
+    if all(_entry_matches(entry, _PUSH_REJECTION_PATTERNS) for entry in last_two):
+        return "push-rejection-loop"
+    missing_session_entries = [
+        entry
+        for entry in last_two
+        if not str(entry.session_id or "").strip()
+        or str(entry.session_id or "").strip().lower() in {"none", "null", "undefined", "undefined#undefined"}
+    ]
+    if len(missing_session_entries) == 2:
+        return "missing-session-id-loop"
+    return None
 
 
 _ACTIVE_SUPERSEDER_STATUSES = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
@@ -2233,6 +2675,11 @@ def dispatch_tasks(
     now = datetime.now(timezone.utc)
     budget = budget or limen.portal.budget.daily
 
+    admission = dispatch_admission_check(tasks_path, task_id=task_id)
+    if not admission.get("allow", False):
+        print_dispatch_admission_block("dispatch", admission)
+        return
+
     _load_limen_env()  # hydrate creds into os.environ so agent CLIs inherit them (gemini/codex/opencode/…)
     if not run_always_working_before_dispatch(tasks_path, dry_run=dry_run):
         print("Always-working gate blocked dispatch before reservation")
@@ -2286,6 +2733,7 @@ def dispatch_tasks(
         and t.budget_cost <= remaining
         and (task_id is not None or _deps_met(t, id2))
         and (task_id is not None or not _superseded_by_rebase_task(t, id2))
+        and (task_id is not None or chronic_dispatch_reason(t) is None)
         and not (debt_blocked and _routine_generated_buildout(t))
         and _routine_generated_buildout_allowed(t)
     ]
@@ -2657,6 +3105,7 @@ def _select_parallel_reservations(
             and t.budget_cost <= rem
             and _deps_met(t, id2)
             and not _superseded_by_rebase_task(t, id2)
+            and chronic_dispatch_reason(t) is None
             and not (debt_blocked and _routine_generated_buildout(t))
             and _routine_generated_buildout_allowed(t)
         ]
@@ -2708,6 +3157,10 @@ def dispatch_parallel(
     process (serial), the slow agent runs happen concurrently in a thread pool, and a
     lane that hits its real rate-limit is cooled (its remaining reserved tasks re-queued)."""
     now = datetime.now(timezone.utc)
+    admission = dispatch_admission_check(tasks_path)
+    if not admission.get("allow", False):
+        print_dispatch_admission_block("dispatch-parallel", admission)
+        return
     if not run_always_working_before_dispatch(tasks_path, dry_run=dry_run):
         print("Always-working gate blocked parallel dispatch before reservation")
         return

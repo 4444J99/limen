@@ -31,6 +31,7 @@ _spec.loader.exec_module(dispatch_async)
 @pytest.fixture
 def board(tmp_path, monkeypatch):
     """A tmp tasks.yaml + async-runs dir wired into the module's module-level path constants."""
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
     tasks_path = tmp_path / "tasks.yaml"
     runs = tmp_path / "logs" / "async-runs"
     runs.mkdir(parents=True)

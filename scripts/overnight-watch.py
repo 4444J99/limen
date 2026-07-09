@@ -31,6 +31,8 @@ RECEIPT_JSONL = Path(os.environ.get("LIMEN_OVERNIGHT_WATCH_RECEIPT", LOGS / "ove
 RECEIPT_MD = LOGS / "overnight-watch.md"
 ALERT_PATH = Path(os.environ.get("LIMEN_OVERNIGHT_WATCH_ALERT", LOGS / "overnight-watch-alert.json"))
 TOKEN_REPORT = Path(os.environ.get("LIMEN_CODEX_TOKEN_REPORT", LOGS / "codex-token-report.json"))
+HANDOFF_SCRIPT = ROOT / "scripts" / "handoff-relay.py"
+SESSION_VALUE_SCRIPT = ROOT / "scripts" / "session-value-review.py"
 LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", os.environ.get("LIMEN_LAUNCHD_LABEL", "com.limen.heartbeat"))
 WATCHDOG_LABEL = os.environ.get("LIMEN_WATCHDOG_LABEL", "com.limen.watchdog")
 LAUNCH_AGENTS = Path.home() / "Library" / "LaunchAgents"
@@ -43,6 +45,10 @@ TAIL_BYTES = 192 * 1024
 
 EXPECT_DISPATCH_ASYNC = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC", "")
 EXPECT_DISPATCH_LANES = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES", "")
+try:
+    VALUE_GATE_HOURS = float(os.environ.get("LIMEN_OVERNIGHT_VALUE_GATE_HOURS", "1.5") or "1.5")
+except ValueError:
+    VALUE_GATE_HOURS = 1.5
 
 TICK_RE = re.compile(
     r"tick emitted:\s*(?P<ts>\S+).*?\btotal=(?P<total>\d+)\s+open=(?P<open>\d+)\s+spent=(?P<spent>\S+)"
@@ -252,6 +258,99 @@ def token_snapshot() -> dict[str, Any]:
     }
 
 
+def short_output(proc: subprocess.CompletedProcess[str], limit: int = 500) -> str:
+    text = (proc.stdout or proc.stderr or "").strip()
+    if len(text) > limit:
+        return f"{text[:limit]}...[truncated]"
+    return text
+
+
+def parse_json_stdout(stdout: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(stdout or "{}")
+    except ValueError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def handoff_relay_snapshot(*, refresh: bool) -> dict[str, Any]:
+    refresh_proc: subprocess.CompletedProcess[str] | None = None
+    if refresh:
+        refresh_proc = run([sys.executable, str(HANDOFF_SCRIPT)], timeout=20)
+    check_proc = run([sys.executable, str(HANDOFF_SCRIPT), "--check"], timeout=20)
+    return {
+        "refreshed": bool(refresh),
+        "refresh_returncode": refresh_proc.returncode if refresh_proc else None,
+        "refresh_output": short_output(refresh_proc) if refresh_proc else "",
+        "check_returncode": check_proc.returncode,
+        "check_output": short_output(check_proc),
+        "ok": check_proc.returncode == 0,
+    }
+
+
+def session_value_gate_snapshot(*, record_gate: bool) -> dict[str, Any]:
+    args = [
+        sys.executable,
+        str(SESSION_VALUE_SCRIPT),
+        "--gate",
+        "--hours",
+        str(VALUE_GATE_HOURS),
+    ]
+    if not record_gate:
+        args.append("--no-record-gate")
+    proc = run(args, timeout=90)
+    gate = parse_json_stdout(proc.stdout)
+    return {
+        "returncode": proc.returncode,
+        "output": short_output(proc),
+        "gate": gate,
+        "action": gate.get("action"),
+        "exit_code": gate.get("exit_code", proc.returncode),
+        "next_commands": gate.get("next_commands") if isinstance(gate.get("next_commands"), list) else [],
+    }
+
+
+def first_next_command(value_gate: dict[str, Any]) -> str:
+    commands = value_gate.get("next_commands") if isinstance(value_gate.get("next_commands"), list) else []
+    return str(commands[0]) if commands else ""
+
+
+def dispatch_control(snapshot: dict[str, Any]) -> dict[str, Any]:
+    handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
+    value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
+    gate_rc = int(value_gate.get("returncode") or 0)
+    next_command = first_next_command(value_gate)
+    if handoff and not handoff.get("ok"):
+        return {
+            "allow_dispatch": False,
+            "exit_code": 1,
+            "reason": "handoff relay check failed; refresh handoff before launching workers",
+            "next_command": "python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check",
+        }
+    if gate_rc == 10:
+        return {
+            "allow_dispatch": False,
+            "exit_code": 10,
+            "reason": "session value gate requested a lane switch before generic dispatch",
+            "next_command": next_command,
+        }
+    if gate_rc >= 20:
+        return {
+            "allow_dispatch": False,
+            "exit_code": 20,
+            "reason": "session value gate stopped overnight dispatch",
+            "next_command": next_command,
+        }
+    if gate_rc not in {0, 10, 20}:
+        return {
+            "allow_dispatch": False,
+            "exit_code": 1,
+            "reason": "session value gate failed to produce a valid dispatch decision",
+            "next_command": "python3 scripts/session-value-review.py --gate --hours 1.5 --no-record-gate",
+        }
+    return {"allow_dispatch": True, "exit_code": 0, "reason": "dispatch allowed", "next_command": next_command}
+
+
 def next_stale_count(previous: dict[str, Any], tick: dict[str, Any] | None) -> int:
     current = tick.get("timestamp") if tick else None
     if current and current != previous.get("latest_tick"):
@@ -259,7 +358,7 @@ def next_stale_count(previous: dict[str, Any], tick: dict[str, Any] | None) -> i
     return int(previous.get("stale_tick_count") or 0) + 1
 
 
-def build_snapshot() -> dict[str, Any]:
+def build_snapshot(*, refresh_handoff: bool = True, record_gate: bool = True) -> dict[str, Any]:
     text = tail_text(HEARTBEAT_LOG)
     heartbeat = parse_heartbeat(text)
     previous = load_json(STATE_PATH)
@@ -285,14 +384,42 @@ def build_snapshot() -> dict[str, Any]:
         },
         "token_report": token_snapshot(),
     }
+    snapshot["handoff_relay"] = handoff_relay_snapshot(refresh=refresh_handoff)
+    snapshot["value_gate"] = session_value_gate_snapshot(record_gate=record_gate)
+    snapshot["dispatch_control"] = dispatch_control(snapshot)
+    snapshot["overnight_counts"] = overnight_counts(snapshot)
     snapshot["status"], snapshot["alerts"] = evaluate(snapshot)
     return snapshot
+
+
+def overnight_counts(snapshot: dict[str, Any]) -> dict[str, Any]:
+    async_line = ((snapshot.get("heartbeat") or {}).get("latest_async") or {})
+    value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
+    dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
+    handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
+    return {
+        "launched": int(async_line.get("launched") or 0),
+        "harvested": int(async_line.get("harvested") or 0),
+        "reaped": int(async_line.get("reaped") or 0),
+        "done": 0,
+        "failed": 0,
+        "no_op": 0,
+        "timed_out": 0,
+        "stale_handoff": not bool(handoff.get("ok", False)),
+        "gate_action": value_gate.get("action") or "unknown",
+        "gate_exit": int(value_gate.get("returncode") or 0),
+        "dispatch_allowed": bool(dispatch.get("allow_dispatch", True)),
+        "next_command": dispatch.get("next_command") or "",
+    }
 
 
 def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     alerts: list[dict[str, str]] = []
     launchd = snapshot.get("launchd") or {}
     env = launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
+    handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
+    value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
+    dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
 
     if not launchd.get("ok") or launchd.get("state") not in (None, "active", "running"):
         alerts.append(
@@ -345,7 +472,34 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
             }
         )
 
-    return ("alert" if alerts else "ok"), alerts
+    if handoff and not handoff.get("ok"):
+        alerts.append(
+            {
+                "id": "handoff-relay-stale",
+                "evidence": str(handoff.get("check_output") or "handoff-relay --check failed")[:500],
+            }
+        )
+    gate_rc = int(value_gate.get("returncode") or 0)
+    if gate_rc >= 20:
+        alerts.append(
+            {
+                "id": "session-value-gate-stop",
+                "evidence": str(value_gate.get("output") or dispatch.get("reason") or "gate stopped")[:500],
+            }
+        )
+    elif gate_rc not in {0, 10, 20}:
+        alerts.append(
+            {
+                "id": "session-value-gate-error",
+                "evidence": str(value_gate.get("output") or "session-value-review gate failed")[:500],
+            }
+        )
+
+    if alerts:
+        return "alert", alerts
+    if dispatch and not dispatch.get("allow_dispatch", True):
+        return "blocked", alerts
+    return "ok", alerts
 
 
 def governor_mode() -> str:
@@ -436,19 +590,35 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
     launchd = snapshot.get("launchd") or {}
     workers = snapshot.get("workers") or []
     children = snapshot.get("heartbeat_children") or []
+    counts = snapshot.get("overnight_counts") or {}
+    handoff = snapshot.get("handoff_relay") or {}
+    value_gate = snapshot.get("value_gate") or {}
+    dispatch = snapshot.get("dispatch_control") or {}
     lines = [
         "# Overnight Watch",
         "",
         f"- Status: `{snapshot.get('status')}`",
         f"- Updated: `{snapshot.get('timestamp')}`",
         f"- Log age: `{snapshot.get('log_age_sec')}` seconds",
-        f"- Launchd: `{launchd.get('state')}` pid `{launchd.get('pid')}`",
-        f"- Latest beat: `{heartbeat.get('latest_beat')}`",
-        f"- Latest tick: `{tick.get('raw')}`",
-        f"- Latest async: `{async_line.get('raw')}`",
+        f"- Launchd: `{launchd.get('state')}`",
         f"- Stale tick samples: `{snapshot.get('stale_tick_count')}`",
         f"- Active workers: `{len(workers)}`",
         f"- Heartbeat child processes: `{len(children)}`",
+        "",
+        "## Overnight Summary",
+        "",
+        f"- Launched: `{counts.get('launched', 0)}`; harvested: `{counts.get('harvested', 0)}`; reaped: `{counts.get('reaped', 0)}`.",
+        f"- Done: `{counts.get('done', 0)}`; failed: `{counts.get('failed', 0)}`; no-op: `{counts.get('no_op', 0)}`; timed out: `{counts.get('timed_out', 0)}`.",
+        f"- Stale handoff: `{str(counts.get('stale_handoff', False)).lower()}`.",
+        f"- Gate action: `{counts.get('gate_action', 'unknown')}` (exit `{counts.get('gate_exit', 'n/a')}`).",
+        f"- Dispatch allowed: `{str(counts.get('dispatch_allowed', True)).lower()}`.",
+        f"- Next command: `{counts.get('next_command') or 'none'}`.",
+        "",
+        "## Gate Checks",
+        "",
+        f"- Handoff refresh: `{handoff.get('refresh_returncode')}`; check: `{handoff.get('check_returncode')}`.",
+        f"- Value gate: `{value_gate.get('returncode')}`; action: `{value_gate.get('action')}`.",
+        f"- Dispatch control: {dispatch.get('reason', 'dispatch allowed')}.",
     ]
     for worker in workers[:10]:
         lines.append(f"  - `{worker.get('name')}` age `{worker.get('age_sec')}` seconds")
@@ -507,6 +677,7 @@ def print_summary(snapshot: dict[str, Any]) -> None:
     heartbeat = snapshot.get("heartbeat") or {}
     async_line = (heartbeat.get("latest_async") or {}).get("raw")
     tick_line = (heartbeat.get("latest_tick") or {}).get("raw")
+    dispatch = snapshot.get("dispatch_control") or {}
     print(
         "overnight-watch: "
         f"{snapshot.get('status')} log_age={snapshot.get('log_age_sec')} "
@@ -517,6 +688,10 @@ def print_summary(snapshot: dict[str, Any]) -> None:
         print(f"  tick: {tick_line}")
     if async_line:
         print(f"  async: {async_line}")
+    if not dispatch.get("allow_dispatch", True):
+        print(f"  dispatch blocked: {dispatch.get('reason')}")
+        if dispatch.get("next_command"):
+            print(f"  next: {dispatch.get('next_command')}")
     for alert in snapshot.get("alerts") or []:
         print(f"  WATCH_ALERT {alert['id']}: {alert['evidence']}")
     for action in snapshot.get("heal") or []:
@@ -524,7 +699,7 @@ def print_summary(snapshot: dict[str, Any]) -> None:
 
 
 def run_once(*, dry_run: bool, json_output: bool) -> int:
-    snapshot = build_snapshot()
+    snapshot = build_snapshot(refresh_handoff=not dry_run, record_gate=not dry_run)
     if not dry_run:
         heal_actions = heal(snapshot)
         if heal_actions:
@@ -534,7 +709,11 @@ def run_once(*, dry_run: bool, json_output: bool) -> int:
         print(json.dumps(snapshot, indent=2, sort_keys=True))
     else:
         print_summary(snapshot)
-    return 1 if snapshot.get("status") == "alert" else 0
+    if snapshot.get("status") == "alert":
+        return 1
+    if snapshot.get("status") == "blocked":
+        return int((snapshot.get("dispatch_control") or {}).get("exit_code") or 10)
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

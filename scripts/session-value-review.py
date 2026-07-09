@@ -26,6 +26,7 @@ BATCH_REVIEW_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.js
 DOC_PATH = ROOT / "docs" / "session-value-review.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "session-value-review.json"
 GATE_HISTORY = PRIVATE_ROOT / "lifecycle" / "session-value-gate-history.jsonl"
+PRODUCT_LEDGER_INDEX = PRIVATE_ROOT / "lifecycle" / "product-ledger.json"
 
 RECORDED_STATUSES = {"owner-recorded", "non-source-recorded", "superseded-recorded"}
 FOLLOWUP_ROOT_STATUSES = {
@@ -44,6 +45,7 @@ GATE_EXIT_CODES = {
     "stop_missing_inputs": 20,
     "stop_no_durable_progress": 20,
 }
+HIGH_MOTION_COMMIT_THRESHOLD = 20
 
 
 def utc_now() -> dt.datetime:
@@ -101,8 +103,12 @@ def commit_kind(subject: str) -> str:
     lowered = subject.lower()
     if "prompt" in lowered and re.search(r"\blimen: (record|resolve|add|route|packetize)", lowered):
         return "prompt_corpus"
+    if lowered.startswith("tabularius: preserve board projection"):
+        return "task_board"
     if "task board" in lowered or "task states" in lowered or "stale task" in lowered or "jules" in lowered:
         return "task_board"
+    if lowered.startswith("limen: refresh") and "pr receipt" in lowered:
+        return "receipt_refresh"
     if lowered.startswith(("ci:", "chore:", "docs:", "fix:", "feat:")):
         return "direct_engineering"
     if lowered.startswith("capture:"):
@@ -239,6 +245,13 @@ def sum_field(items: list[dict[str, Any]], field: str) -> int:
     return sum(int(item.get(field) or 0) for item in items)
 
 
+def env_int(name: str, default: int) -> int:
+    try:
+        return int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
 def command_for_batch(batch: dict[str, Any]) -> str:
     batch_id = str(batch.get("id") or "")
     lane = str(batch.get("lane") or "")
@@ -257,29 +270,68 @@ def gate_history() -> list[dict[str, Any]]:
     return load_jsonl(GATE_HISTORY)
 
 
-def consecutive_followup_pressure(current_pressure: bool, history: list[dict[str, Any]]) -> int:
+def consecutive_pressure(name: str, current_pressure: bool, history: list[dict[str, Any]]) -> int:
     count = 1 if current_pressure else 0
     if not current_pressure:
         return count
     for row in reversed(history):
         gate = row.get("gate") if isinstance(row.get("gate"), dict) else {}
         pressures = gate.get("pressures") if isinstance(gate.get("pressures"), dict) else {}
-        if pressures.get("followup_over_done_or_routed"):
+        if pressures.get(name):
             count += 1
             continue
         break
     return count
 
 
+def consecutive_followup_pressure(current_pressure: bool, history: list[dict[str, Any]]) -> int:
+    return consecutive_pressure("followup_over_done_or_routed", current_pressure, history)
+
+
+def direct_product_action() -> dict[str, Any]:
+    rows = load_json(PRODUCT_LEDGER_INDEX).get("next_unblocked") or []
+    row = rows[0] if rows and isinstance(rows[0], dict) else {}
+    action = {
+        "source": "product_ledger",
+        "command": "python3 scripts/product-ledger.py --refresh --redacted-summary",
+    }
+    if row:
+        action.update(
+            {
+                "product": row.get("id"),
+                "owner": row.get("owner"),
+                "state": row.get("state"),
+                "disposition": row.get("disposition"),
+            }
+        )
+    return action
+
+
+def prompt_queue_action(next_batch: dict[str, Any]) -> dict[str, Any]:
+    command = command_for_batch(next_batch)
+    lane = str(next_batch.get("lane") or "")
+    source = "prompt_packet_queue" if lane == "stalled-review" else "prompt_batch_queue"
+    return {
+        "source": source,
+        "batch": next_batch.get("id"),
+        "lane": next_batch.get("lane"),
+        "command": command,
+    }
+
+
 def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     metrics = snapshot["metrics"]
     queue = snapshot.get("current_queue") or {}
     coverage = queue.get("coverage") if isinstance(queue.get("coverage"), dict) else {}
+    findings = snapshot.get("findings") if isinstance(snapshot.get("findings"), dict) else {}
+    commit_kinds = findings.get("commit_kinds") if isinstance(findings.get("commit_kinds"), dict) else {}
     inputs = snapshot.get("inputs") or {}
     missing_inputs = sorted(
         name
         for name, item in inputs.items()
-        if isinstance(item, dict) and item.get("present") is False and name != "git"
+        if isinstance(item, dict)
+        and item.get("present") is False
+        and name not in {"git", "product_ledger_index"}
     )
     done_or_routed = int(metrics.get("merged_roots") or 0) + int(metrics.get("owner_absent_roots") or 0)
     followups = int(metrics.get("followup_roots") or 0)
@@ -289,10 +341,26 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
     commits = int(metrics.get("commits") or 0)
     receipts = int(metrics.get("batch_receipts") or 0)
     open_batches = int(coverage.get("open_review_batches") or 0)
-    has_durable_progress = commits > 0 or receipts > 0
+    maintenance_commits = int(commit_kinds.get("task_board") or 0) + int(commit_kinds.get("receipt_refresh") or 0)
+    value_commits = max(0, commits - maintenance_commits)
+    has_durable_progress = receipts > 0 or value_commits > 0
+    motion_without_receipts = commits > 0 and receipts == 0 and open_batches > 0
+    high_motion_no_receipts = motion_without_receipts and commits >= env_int(
+        "LIMEN_HIGH_MOTION_COMMIT_THRESHOLD",
+        HIGH_MOTION_COMMIT_THRESHOLD,
+    )
+    receipt_only_motion = (
+        receipts == 0
+        and commits > 0
+        and int(commit_kinds.get("receipt_refresh") or 0) > max(1, commits // 2)
+    )
+    no_receipt_run = consecutive_pressure("motion_without_receipts", motion_without_receipts, history_rows)
+    high_motion_run = consecutive_pressure("high_motion_no_receipts", high_motion_no_receipts, history_rows)
     queue_next = [item for item in queue.get("next") or [] if isinstance(item, dict)]
     next_batch = queue_next[0] if queue_next else {}
-    next_sweep_command = command_for_batch(next_batch)
+    prompt_action = prompt_queue_action(next_batch)
+    product_action = direct_product_action()
+    next_action: dict[str, Any] = {}
 
     if missing_inputs:
         action = "stop_missing_inputs"
@@ -301,20 +369,51 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
             "python3 scripts/prompt-priority-map.py --write",
             "python3 scripts/prompt-batch-review-ledger.py --write",
         ]
+    elif receipt_only_motion:
+        action = "switch_to_direct_product_work"
+        owner = product_action.get("owner") or "the top unblocked product owner"
+        product = product_action.get("product") or "the next unblocked product"
+        reason = (
+            f"Most landed commits were receipt refreshes and zero prompt-batch receipts moved; "
+            f"classify this as custody-only and switch to product work on {product} ({owner})."
+        )
+        next_action = product_action
+        next_commands = [str(product_action["command"])]
     elif not has_durable_progress:
         action = "stop_no_durable_progress"
-        reason = "No landed commits or prompt-batch receipts were detected in this cadence window."
+        reason = "No landed value commits or prompt-batch receipts were detected in this cadence window."
         next_commands = [
             "python3 scripts/session-value-review.py --write --hours 12",
             "python3 scripts/validate-task-board.py",
         ]
+    elif motion_without_receipts and no_receipt_run >= 2:
+        if next_batch:
+            action = "switch_to_packetization"
+            reason = (
+                "Commits landed while zero prompt-batch receipts moved for two consecutive cadence windows; "
+                "stop generic dispatch and resolve or packetize the next prompt batch."
+            )
+            next_action = prompt_action
+            next_commands = [str(prompt_action["command"])]
+        else:
+            action = "switch_to_direct_product_work"
+            owner = product_action.get("owner") or "the top unblocked product owner"
+            product = product_action.get("product") or "the next unblocked product"
+            reason = (
+                "Commits landed while zero prompt-batch receipts moved for two consecutive cadence windows, "
+                f"and no prompt queue slice is available; switch to product work on {product} ({owner})."
+            )
+            next_action = product_action
+            next_commands = [str(product_action["command"])]
     elif open_batches <= 0:
         action = "switch_to_packetization"
         reason = "No open prompt-review batches remain; the next useful lifecycle move is packetization or direct product work."
-        next_commands = ["python3 scripts/prompt-packet-ledger.py --write"]
+        next_action = {"source": "prompt_packet_queue", "command": "python3 scripts/prompt-packet-ledger.py --write"}
+        next_commands = [str(next_action["command"])]
     elif pressure_run >= 2:
         action = "switch_to_packetization"
         reason = "Follow-up roots outnumbered merged/routed roots for two consecutive cadence reports."
+        next_action = {"source": "prompt_packet_queue", "command": "python3 scripts/prompt-packet-ledger.py --write"}
         next_commands = [
             "python3 scripts/prompt-packet-ledger.py --write",
             "python3 scripts/validate-task-board.py",
@@ -322,14 +421,19 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
     elif followup_pressure:
         action = "continue_prompt_sweep_watch_followups"
         reason = "Durable progress exists, but follow-up roots outnumber merged/routed roots in this cadence window."
-        next_commands = [next_sweep_command, "python3 scripts/session-value-review.py --gate --hours 1.5"]
+        next_action = prompt_action
+        next_commands = [str(prompt_action["command"]), "python3 scripts/session-value-review.py --gate --hours 1.5"]
     elif receipts > 0:
         action = "continue_prompt_sweep"
         reason = "Prompt-batch receipt movement is still producing durable lifecycle evidence."
-        next_commands = [next_sweep_command]
+        next_action = prompt_action
+        next_commands = [str(prompt_action["command"])]
     else:
         action = "continue_current_work"
-        reason = "Commits landed, but no prompt-batch receipt moved; keep the current non-sweep work bounded by this gate."
+        reason = (
+            "Commits landed, but no prompt-batch receipt moved; this is the grace window before "
+            "the gate requires prompt-batch resolution, packetization, or direct product work."
+        )
         next_commands = ["python3 scripts/session-value-review.py --gate --hours 1.5"]
 
     return {
@@ -343,15 +447,26 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
             "followup_roots": followups,
             "done_or_routed_roots": done_or_routed,
             "no_durable_progress": not has_durable_progress,
+            "motion_without_receipts": motion_without_receipts,
+            "consecutive_motion_without_receipts": no_receipt_run,
+            "high_motion_no_receipts": high_motion_no_receipts,
+            "consecutive_high_motion_no_receipts": high_motion_run,
+            "receipt_only_motion": receipt_only_motion,
+            "maintenance_commits": maintenance_commits,
+            "value_commits": value_commits,
             "open_review_batches": open_batches,
         },
         "evidence": {
             "commits": commits,
             "batch_receipts": receipts,
             "prompt_events_recorded": int(metrics.get("prompt_events_recorded") or 0),
+            "commit_kinds": commit_kinds,
             "next_batch": next_batch.get("id"),
             "next_lane": next_batch.get("lane"),
+            "next_product": product_action.get("product"),
+            "next_product_owner": product_action.get("owner"),
         },
+        "next_action": next_action,
         "next_commands": next_commands,
     }
 
@@ -396,6 +511,18 @@ def build_findings(
             f"Landed {len(commits)} commits with {sum_field(commits, 'files')} file touches and {sum_field(commits, 'insertions')} insertions."
         )
 
+    if commits and not batch_count and open_batches:
+        critique_points.append(
+            f"{len(commits)} commits landed while zero prompt-batch receipts moved and {open_batches} review batches remain open; this is current-work motion, not proven ask-corpus closure."
+        )
+    if len(commits) >= 20 and not batch_count:
+        critique_points.append(
+            f"High-motion/no-receipt window: {sum_field(commits, 'files')} file touches and no prompt-event recording. Run the explicit prompt batch command or switch to bounded product/owner work instead of letting receipt-free activity masquerade as lifecycle progress."
+        )
+    if commit_kinds.get("receipt_refresh", 0) > max(1, len(commits) // 2):
+        critique_points.append(
+            "Most commits were PR-receipt refreshes; useful for custody, but weak evidence of shipped product, resolved prompts, or reduced open review pressure."
+        )
     if commit_kinds.get("prompt_corpus", 0) > max(1, len(commits) // 2):
         critique_points.append(
             "Most commits were prompt-corpus accounting, so the session was valuable as inventory reduction but weak as direct product/revenue delivery."
@@ -463,6 +590,7 @@ def build_snapshot(since: dt.datetime, until: dt.datetime) -> dict[str, Any]:
                 "present": BATCH_RESOLUTION_RECEIPTS.exists(),
             },
             "batch_review_index": {"path": str(BATCH_REVIEW_INDEX), "present": BATCH_REVIEW_INDEX.exists()},
+            "product_ledger_index": {"path": str(PRODUCT_LEDGER_INDEX), "present": PRODUCT_LEDGER_INDEX.exists()},
         },
         "metrics": {
             "commits": len(commits),
@@ -514,6 +642,8 @@ def render_markdown(snapshot: dict[str, Any], *, limit: int) -> str:
         f"- Action: `{gate.get('action', 'unknown')}` (exit `{gate.get('exit_code', 'n/a')}`).",
         f"- Reason: {gate.get('reason', 'No gate decision available.')}",
         f"- Follow-up pressure: `{pressures.get('followup_roots', 0)}` follow-up roots vs `{pressures.get('done_or_routed_roots', 0)}` merged/routed roots; consecutive pressure reports `{pressures.get('consecutive_followup_pressure_reports', 0)}`.",
+        f"- No-receipt pressure: `{str(pressures.get('motion_without_receipts', False)).lower()}`; consecutive reports `{pressures.get('consecutive_motion_without_receipts', 0)}`; high-motion `{str(pressures.get('high_motion_no_receipts', False)).lower()}`.",
+        f"- Maintenance commits: `{pressures.get('maintenance_commits', 0)}`; value commits: `{pressures.get('value_commits', 0)}`; custody-only: `{str(pressures.get('receipt_only_motion', False)).lower()}`.",
         f"- Open review batches: `{pressures.get('open_review_batches', 0)}`; no durable progress: `{str(pressures.get('no_durable_progress', False)).lower()}`.",
         f"- Next commands: {'; '.join(f'`{command}`' for command in gate.get('next_commands') or ['none'])}.",
         "",

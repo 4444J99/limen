@@ -25,6 +25,7 @@ def _load(tmp_path, n_open=6, agent="codex"):
     module-level ROOT/TASKS/RUNS pick up this env."""
     os.environ["LIMEN_ROOT"] = str(tmp_path)
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
+    os.environ["LIMEN_DISPATCH_ADMISSION"] = "0"
     today = datetime.date.today()
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={agent: 50}, track=BudgetTrack(date=today.isoformat()))),
@@ -347,6 +348,34 @@ def test_async_numeric_env_knobs_fail_open_when_malformed(tmp_path, monkeypatch)
     assert da.main() == 0
 
 
+def test_async_main_value_gate_blocks_reservation(tmp_path, monkeypatch, capsys):
+    da = _load(tmp_path, n_open=2)
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "1")
+    monkeypatch.setattr(
+        da,
+        "dispatch_admission_check",
+        lambda *args, **kwargs: {
+            "allow": False,
+            "status": "blocked",
+            "exit_code": 10,
+            "action": "switch_to_direct_product_work",
+            "reason": "switch to direct product work",
+            "next_command": "python3 scripts/product-ledger.py --refresh --redacted-summary",
+        },
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["dispatch-async.py", "--lanes", "codex", "--per-lane", "2", "--max", "2", "--dry-run"],
+    )
+
+    assert da.main() == 0
+
+    output = capsys.readouterr().out
+    assert "dispatch admission blocked" in output
+    assert "would launch 0" in output
+
+
 def test_harvest_applies_pr_result_and_cleans(tmp_path):
     da = _load(tmp_path, n_open=2)
     lf = load_limen_file(tmp_path / "tasks.yaml")
@@ -565,6 +594,60 @@ def test_async_reserve_skips_lane_that_already_timed_out_task(tmp_path, monkeypa
     picked = da.reserve_and_launch(["codex"], per_agent=5, cap=5, dry=True)
 
     assert picked == []
+
+
+def test_async_reserve_suppresses_chronic_noop_task(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/value-repo")
+    monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
+    da = _load(tmp_path, n_open=0, agent="codex")
+    today = datetime.date.today()
+    now = datetime.datetime.now(datetime.timezone.utc)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"codex": 50}
+    lf.tasks = [
+        Task(
+            id="CHRONIC-NOOP",
+            title="reopened no-op",
+            repo="organvm/value-repo",
+            target_agent="codex",
+            priority="critical",
+            status="open",
+            labels=["noop"],
+            created=today,
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent="codex",
+                    session_id="prior-a",
+                    status="failed",
+                    output="No-op result; failed for recovery instead of archived.",
+                ),
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent="codex",
+                    session_id="prior-b",
+                    status="failed",
+                    output="No-op result; failed for recovery instead of archived.",
+                ),
+            ],
+        ),
+        Task(
+            id="FRESH-WORK",
+            title="fresh bounded product work",
+            repo="organvm/value-repo",
+            target_agent="codex",
+            priority="low",
+            status="open",
+            created=today,
+        ),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=5, cap=5, dry=True)
+
+    chronic = load_limen_file(tmp_path / "tasks.yaml").tasks[0]
+    assert da.chronic_dispatch_reason(chronic) == "repeated-no-op"
+    assert picked == [("codex", "FRESH-WORK")]
 
 
 def test_async_reserve_skips_cifix_superseded_by_active_rebase_task(tmp_path, monkeypatch):

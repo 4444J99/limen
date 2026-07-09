@@ -49,6 +49,9 @@ from limen.dispatch import (  # noqa: E402
     _superseded_by_rebase_task,
     _value_tier_repos,
     agent_can_run_task,
+    chronic_dispatch_reason,
+    dispatch_admission_check,
+    print_dispatch_admission_block,
     run_always_working_before_dispatch,
     sort_value_gate_candidates,
 )
@@ -626,6 +629,8 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
                 state["index"] += 1
                 if cand.id in picked_ids or cand.budget_cost > rem:
                     continue
+                if task_id is None and chronic_dispatch_reason(cand):
+                    continue
                 t = cand
                 break
             if t is None:
@@ -660,9 +665,14 @@ def _pick_reservations(lf, agents, per_agent, cap, dry, now, usage_remaining, we
     return picked, reset_changed
 
 
-def reserve_and_launch(agents, per_agent, cap, dry, task_id=None):
+def reserve_and_launch(agents, per_agent, cap, dry, task_id=None, *, admission_checked: bool = False):
     """Reserve open tasks (under lock) up to the concurrency cap + per-agent budget, then spawn
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
+    if should_reserve(per_agent, cap) and not admission_checked:
+        admission = dispatch_admission_check(TASKS, task_id=task_id)
+        if not admission.get("allow", False):
+            print_dispatch_admission_block("async", admission)
+            return []
     if not run_always_working_before_dispatch(TASKS, dry_run=dry):
         print("── async: always-working gate blocked reservation")
         return []
@@ -749,11 +759,21 @@ def main() -> int:
         reaped = reap_stale(max_age)
         applied = harvest()
     running = _running_total()
-    launched = (
-        reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run, task_id=a.task_id)
-        if should_reserve(a.per_lane, a.max)
-        else []
-    )
+    reserve_allowed = True
+    admission = {"allow": True}
+    if should_reserve(a.per_lane, a.max):
+        admission = dispatch_admission_check(TASKS, task_id=a.task_id)
+        if not admission.get("allow", False):
+            reserve_allowed = False
+            print_dispatch_admission_block("async", admission)
+    if should_reserve(a.per_lane, a.max) and reserve_allowed:
+        launched = (
+            reserve_and_launch(lanes, a.per_lane, a.max, a.dry_run, task_id=a.task_id, admission_checked=True)
+            if should_reserve(a.per_lane, a.max)
+            else []
+        )
+    else:
+        launched = []
     verb = "would launch" if a.dry_run else "launched"
     print(
         f"── async: reaped {len(reaped)} dead · harvested {applied} · {running} still running · "

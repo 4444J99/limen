@@ -424,7 +424,7 @@ while true; do
           echo "── ⚠ DISPATCH CEILING HIT after ${LIMEN_DISPATCH_CEILING}s (beat dispatch took $((SECONDS-_dt0))s) — a lane run exceeded its bound and was SIGKILLed; beat unblocked. Per-lane timeout failed to fire → investigate dispatch.py _run_capture. ──"
         fi
         echo "$out" | tail -8
-        echo "$out" | grep -qE "→ PR|dispatched/PR|  dispatched:|launched|harvested" && worked=1
+        echo "$out" | grep -qE "→ PR|dispatched/PR|  dispatched:|launched [1-9][0-9]*" && worked=1
         stamp dispatch
       fi
     else
