@@ -808,7 +808,7 @@ def qa_status(data: dict[str, Any], agent: str = "jules") -> dict[str, Any]:
 def surface_manifest(data: dict[str, Any], persona: str = "owner") -> dict[str, Any]:
     raw = summary(data)
     stale_count = len(release_stale_candidates(data, 24))
-    manifest = {
+    manifest: dict[str, Any] = {
         "status": "ok",
         "persona": persona,
         "generated_at": now_iso(),
