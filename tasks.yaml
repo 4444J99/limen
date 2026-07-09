@@ -15,16 +15,16 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 316
+      spent: 320
       per_agent:
         jules: 40
         gemini: 9
         codex: 18
         opencode: 121
         agy: 100
-        claude: 26
+        claude: 28
         github_actions: 1
-        ollama: 1
+        ollama: 3
       per_agent_reset:
         jules: '2026-07-09T12:38:52.573549+00:00'
         gemini: '2026-07-09T12:38:52.573549+00:00'
@@ -110833,7 +110833,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -110854,7 +110854,7 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T22:29:34.488308Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:01:16.600855Z'
     agent: agy
@@ -110886,6 +110886,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-09T22:29:34.488308Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-pages--theoria-copy--koinonia
   title: Discover the latent value of organvm/pages--theoria-copy--koinonia
   repo: organvm/pages--theoria-copy--koinonia
@@ -111113,7 +111118,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -111134,7 +111139,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-09T22:28:36.549498Z'
+  updated: '2026-07-09T22:29:34.488308Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:03:38.283216Z'
     agent: agy
@@ -111168,6 +111173,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->ollama
+  - timestamp: '2026-07-09T22:29:34.488308Z'
+    agent: ollama
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-studium-generale--4444j99
   title: Discover the latent value of organvm/studium-generale--4444j99
   repo: organvm/studium-generale--4444j99
@@ -113625,7 +113635,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -113645,7 +113655,7 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-07; no repo stays dark]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T22:29:34.488308Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -113662,6 +113672,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-09T22:29:34.488308Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-a-i-council--coliseum-175
   title: rebase/resolve conflicts on organvm/a-i-council--coliseum#175
   repo: organvm/a-i-council--coliseum
@@ -119199,7 +119214,7 @@ tasks:
   target_agent: ollama
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -119216,7 +119231,7 @@ tasks:
     [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T22:28:36.549498Z'
+  updated: '2026-07-09T22:29:34.488308Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -119236,6 +119251,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->ollama
+  - timestamp: '2026-07-09T22:29:34.488308Z'
+    agent: ollama
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-the-invisible-ledger-53
   title: rebase/resolve conflicts on organvm/the-invisible-ledger#53
   repo: organvm/the-invisible-ledger
