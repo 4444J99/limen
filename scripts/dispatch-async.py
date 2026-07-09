@@ -46,8 +46,10 @@ from limen.dispatch import (  # noqa: E402
     _reset_budget_if_needed,
     _restore_done_status,
     _restore_pr_open_status,
+    _routine_generated_buildout,
     _routine_generated_buildout_allowed,
     _superseded_by_rebase_task,
+    _worktree_debt_gate,
     _value_tier_repos,
     agent_can_run_task,
     chronic_dispatch_reason,
@@ -630,6 +632,9 @@ def _pick_reservations(
     unbounded_remaining = _effectively_unbounded_remaining(lf)
     value_repos = _value_tier_repos()
     disk_pressure = _disk_pressure_active()
+    debt_blocked, debt_message = (False, "") if task_id else _worktree_debt_gate()
+    if debt_message and not dry:
+        print(f"── async: {debt_message}")
     # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
     # separately below (see _running_local).
     slots = max(0, cap - _running_local())
@@ -662,6 +667,7 @@ def _pick_reservations(
             and t.budget_cost <= rem
             and _deps_met(t, id2)
             and (task_id is not None or not _superseded_by_rebase_task(t, id2))
+            and not (debt_blocked and _routine_generated_buildout(t))
             and _routine_generated_buildout_allowed(t)
         ]
         cands = sort_value_gate_candidates(cands, value_repos, disk_pressure=disk_pressure)

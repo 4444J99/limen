@@ -26,6 +26,7 @@ def _load(tmp_path, n_open=6, agent="codex"):
     os.environ["LIMEN_ROOT"] = str(tmp_path)
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
     os.environ["LIMEN_DISPATCH_ADMISSION"] = "0"
+    os.environ["LIMEN_WORKTREE_DEBT_GATE"] = "0"
     today = datetime.date.today()
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={agent: 50}, track=BudgetTrack(date=today.isoformat()))),
@@ -772,6 +773,43 @@ def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, 
     picked = da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True)
 
     assert picked == [("codex", "PROMPT-LIFECYCLE-MEDIUM")]
+
+
+def test_worktree_debt_gate_suppresses_async_routine_buildout(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/generated")
+    monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
+    da = _load(tmp_path, n_open=0, agent="codex")
+    monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
+    monkeypatch.setattr(da, "_worktree_debt_gate", lambda: (True, "91 preserved worktree roots exceed cap 12"))
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks = [
+        Task(
+            id="GEN-BUILDOUT-HIGH",
+            title="generated build-out for value repo",
+            repo="organvm/generated",
+            target_agent="codex",
+            priority="high",
+            status="open",
+            labels=["generated", "build-out"],
+            created=today,
+        ),
+        Task(
+            id="SUBSTRATE-RECLAIM-MEDIUM",
+            title="recover worktree lifecycle debt",
+            repo="organvm/session-meta",
+            target_agent="codex",
+            workstream="substrate",
+            priority="medium",
+            status="open",
+            created=today,
+        ),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True)
+
+    assert picked == [("codex", "SUBSTRATE-RECLAIM-MEDIUM")]
 
 
 def test_reaper_frees_dead_workers_not_live(tmp_path):
