@@ -1664,6 +1664,13 @@ def _agy_live_root_registry_task(task: Task) -> bool:
     return str(task.id or "").startswith("DISCOVER-") and ("value-repos.json" in text or "discovery.md" in text)
 
 
+def _limen_registry_promotion_task(task: Task) -> bool:
+    """Registry promotion edits Limen-owned files, so local checkout lanes need a bridge first."""
+    fields = [task.id or "", task.title or "", task.context or "", *(task.urls or [])]
+    text = "\n".join(str(field) for field in fields).lower()
+    return str(task.id or "").startswith("DISCOVER-") and "value-repos.json" in text
+
+
 def _limen_repo_task(task: Task) -> bool:
     """Limen-root PR repair has repeatedly triggered prohibited broad local checks."""
     return str(task.repo or "").lower() == "organvm/limen"
@@ -1686,6 +1693,8 @@ def agent_can_run_task(agent: str, task: Task) -> bool:
     if _agent_timed_out_on_task(agent, task):
         return False
     if agent == "ollama" and not _local_floor_allowed_for_task(task):
+        return False
+    if agent in _LOCAL_AGENTS and _limen_registry_promotion_task(task):
         return False
     if agent in {"agy", "antigravity"} and (_agy_live_root_registry_task(task) or _limen_repo_task(task)):
         return False

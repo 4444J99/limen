@@ -1655,6 +1655,23 @@ def test_agent_can_run_task_allows_armed_ollama_floor_class(monkeypatch) -> None
     assert D.agent_can_run_task("ollama", task)
 
 
+def test_local_lanes_do_not_run_value_registry_promotion_tasks() -> None:
+    task = Task(
+        id="DISCOVER-organvm-example",
+        title="Discover latent value",
+        repo="organvm/example",
+        type="research",
+        target_agent="any",
+        status="open",
+        created=date(2026, 7, 9),
+        context='append "organvm/example" to value-repos.json after writing DISCOVERY.md',
+    )
+
+    assert not D.agent_can_run_task("claude", task)
+    assert not D.agent_can_run_task("codex", task)
+    assert D.agent_can_run_task("jules", task)
+
+
 def test_default_cascade_uses_reachable_auto_lanes(monkeypatch) -> None:
     import datetime
 
