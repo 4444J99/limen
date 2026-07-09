@@ -1358,6 +1358,30 @@ def test_cleanup_isolated_worktree_retains_clean_noop_branch_for_reclaim(tmp_pat
     assert branch in _git_ok(repo, "branch", "--list", branch)
 
 
+def test_worktree_birth_receipt_is_written_to_private_gitdir(tmp_path: Path, monkeypatch) -> None:
+    repo, wt, branch = _make_cleanup_repo(tmp_path)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "limen"))
+    task = Task(
+        id="BIRTH-1",
+        title="birth receipt",
+        repo="organvm/limen",
+        target_agent="codex",
+        created=date(2026, 7, 9),
+    )
+
+    D._record_worktree_birth(task, wt, branch, "origin/main", "main", existing_pr=False)
+
+    gitdir = Path(_git_ok(wt, "rev-parse", "--git-dir").strip())
+    if not gitdir.is_absolute():
+        gitdir = wt / gitdir
+    receipt = gitdir / "limen-worktree-birth.json"
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    assert payload["task_id"] == "BIRTH-1"
+    assert payload["remote_branch"] == branch
+    assert not (wt / "limen-worktree-birth.json").exists()
+    assert "limen-worktree-birth.json" not in _git_ok(wt, "status", "--porcelain")
+
+
 def test_cleanup_isolated_worktree_preserves_dirty_failed_work(tmp_path: Path) -> None:
     repo, wt, branch = _make_cleanup_repo(tmp_path)
     (wt / "local.txt").write_text("local-only\n", encoding="utf-8")

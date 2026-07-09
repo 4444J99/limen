@@ -274,7 +274,7 @@ def _add_wt(main: Path, wtroot: Path, name: str, branch_from="origin/main"):
     return path
 
 
-def _run_reclaim(wtroot: Path, limen_root: Path, apply=True, extra_env=None):
+def _run_reclaim(wtroot: Path, limen_root: Path, apply=True, extra_env=None, extra_args=None):
     env = {
         **os.environ,
         "LIMEN_WORKTREE_ROOT": str(wtroot),
@@ -289,6 +289,8 @@ def _run_reclaim(wtroot: Path, limen_root: Path, apply=True, extra_env=None):
     args = ["python3", str(RECLAIM)]
     if apply:
         args += ["--apply", "--force"]
+    if extra_args:
+        args += list(extra_args)
     return subprocess.run(args, capture_output=True, text=True, env=env)
 
 
@@ -523,6 +525,23 @@ def test_reclaim_dry_run_removes_nothing(tmp_path):
     assert r.returncode == 0
     assert dead.exists()  # dry-run never deletes
     assert "dry-run" in r.stdout
+
+
+def test_reclaim_check_json_reports_reapable_candidates_without_deleting(tmp_path):
+    main, bare, wtroot = _wt_root_with(tmp_path)
+    dead = _add_wt(main, wtroot, "dead")
+    _age(dead, 5)
+    (main / "logs").mkdir(exist_ok=True)
+
+    r = _run_reclaim(wtroot, main, apply=False, extra_args=["--check", "--json"])
+
+    assert r.returncode == 0, r.stderr
+    payload = json.loads(r.stdout)
+    assert dead.exists()
+    assert payload["mode"] == "check"
+    assert payload["reapable_count"] == 1
+    assert payload["would_reclaim"][0]["root"] == "dead"
+    assert payload["would_reclaim"][0]["reason"] == "clean+merged+idle"
 
 
 def test_reclaim_removes_generated_log_shell(tmp_path):

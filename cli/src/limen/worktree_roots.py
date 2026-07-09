@@ -61,6 +61,29 @@ def _path_list(name: str, default: Iterable[Path]) -> list[Path]:
     return [Path(part).expanduser() for part in raw.split(os.pathsep) if part.strip()]
 
 
+def default_worktrees_root() -> Path:
+    """Scratch-first default for disposable lane checkouts.
+
+    The live heartbeat and launchd generator already derive this root. Keep the Python callers on
+    the same rule so an unset shell env cannot silently fall back to the laptop workspace.
+    """
+    explicit = os.environ.get("LIMEN_WORKTREES")
+    if explicit:
+        return Path(explicit).expanduser()
+    scratch = Path("/Volumes/Scratch")
+    if scratch.is_dir() and os.access(scratch, os.W_OK):
+        return scratch / "limen-worktrees"
+    workdir = Path(os.environ.get("LIMEN_WORKDIR", str(Path.home() / "Workspace"))).expanduser()
+    return workdir / ".limen-worktrees"
+
+
+def effective_worktree_root() -> Path:
+    explicit = os.environ.get("LIMEN_WORKTREE_ROOT")
+    if explicit:
+        return Path(explicit).expanduser()
+    return default_worktrees_root()
+
+
 def _dedupe_targets(targets: Iterable[WorktreeTarget]) -> list[WorktreeTarget]:
     seen: set[str] = set()
     out: list[WorktreeTarget] = []
@@ -183,7 +206,7 @@ def iter_worktree_targets(limen_root: Path | None = None) -> list[WorktreeTarget
     root = limen_root or Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 
     targets: list[WorktreeTarget] = []
-    dispatch_root = Path(os.environ.get("LIMEN_WORKTREE_ROOT", Path.home() / "Workspace" / ".limen-worktrees"))
+    dispatch_root = effective_worktree_root()
     targets.extend(_children(dispatch_root, _float_env("LIMEN_RECLAIM_MIN_AGE_H", 6), "dispatch-root"))
     broad_default = "LIMEN_WORKTREE_ROOT" not in os.environ
 

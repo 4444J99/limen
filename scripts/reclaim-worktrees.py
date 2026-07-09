@@ -17,7 +17,8 @@ those:
     docs/worktree-reclaim-acceptance.jsonl immediately before physical removal.
 
 It scans every known creation site (the historical blind spot — see worktree-lifecycle-blind-spot):
-  • LIMEN_WORKTREE_ROOT (~/Workspace/.limen-worktrees) — dispatch throwaway, min-age 6h.
+  • LIMEN_WORKTREE_ROOT (Scratch-first, or $LIMEN_WORKDIR/.limen-worktrees fallback) — dispatch
+    throwaway, min-age 6h.
   • LIMEN_ROOT/.claude/worktrees — EnterWorktree / bg-job / interactive cells, min-age 24h.
   • LIMEN_AGY_SCRATCH_ROOT (~/.gemini/antigravity-cli/scratch) — Antigravity/Agy scratch clones,
     min-age LIMEN_AGY_SCRATCH_MIN_IDLE_H.
@@ -31,7 +32,8 @@ checkout (LIMEN_ROOT) nor the worktree it is itself running from. It removes reg
 worktrees via `git worktree remove` (never rm) and standalone clones via rmtree. Bounded per
 run (LIMEN_RECLAIM_MAX); if it hits the cap it LOGS the remainder rather than silently dropping.
 
-Dry-run by default; pass --apply to execute. Self-throttles to once per
+Dry-run by default; pass --apply to execute. Use --check --json for a structured non-mutating
+candidate receipt. Self-throttles to once per
 LIMEN_RECLAIM_EVERY_MIN minutes so it is cheap to call every beat.
 
 Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (1),
@@ -89,7 +91,9 @@ LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
 RECLAIM_ACCEPTANCE = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
 RECLAIM_ACCEPTANCE_DOC = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.md"
-APPLY = "--apply" in sys.argv
+CHECK = "--check" in sys.argv
+JSON_OUT = "--json" in sys.argv
+APPLY = "--apply" in sys.argv and not CHECK
 FORCE = "--force" in sys.argv  # ignore the throttle
 GENERATED_ONLY = "--generated-only" in sys.argv
 REMOTE_MERGED_LANES = {"remote-merged"}
@@ -411,6 +415,18 @@ def main():
     if GENERATED_ONLY:
         cleaned = generated_reclaim.get("cleaned") or []
         gen_failed = generated_reclaim.get("failed") or []
+        if JSON_OUT:
+            print(
+                json.dumps(
+                    {
+                        "mode": "generated-only-apply" if APPLY else "generated-only-check",
+                        "generated_reclaim": generated_reclaim,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 0
         print(f"reclaim [generated-only]: {len(cleaned)} cleaned, {len(gen_failed)} failed")
         for row in cleaned[:20]:
             print(f"  generated-clean {row['detail']:14} {row['root']}")
@@ -419,6 +435,7 @@ def main():
     reclaim_acceptance = load_reclaim_acceptance()
     dirs = [(target.path, target.min_age_h) for target in targets]
     removed, skipped, failed, deferred = [], [], [], []
+    would_reclaim = []
     for d, min_age_h in dirs:
         action, reason = classify(d, now, min_age_h, preservation_receipts)
         if action == "skip":
@@ -429,6 +446,7 @@ def main():
             continue  # bounded — but NOT silent (logged below)
         if not APPLY:
             removed.append((d.name, f"would-{action}:{reason}"))
+            would_reclaim.append({"root": d.name, "path": str(d), "action": action, "reason": reason})
             continue
         accepted, accept_reason = reclaim_accepted(d, action, reason, reclaim_acceptance)
         if not accepted:
@@ -471,7 +489,28 @@ def main():
         except Exception:
             pass  # logging must never break the beat
 
-    mode = "APPLY" if APPLY else "dry-run"
+    mode = "APPLY" if APPLY else "check" if CHECK else "dry-run"
+    if JSON_OUT:
+        print(
+            json.dumps(
+                {
+                    "mode": mode,
+                    "apply": APPLY,
+                    "scanned": len(dirs),
+                    "reclaimed": [{"root": root, "detail": detail} for root, detail in removed] if APPLY else [],
+                    "would_reclaim": would_reclaim,
+                    "kept_safe": [{"root": root, "reason": reason} for root, reason in skipped],
+                    "failed": [{"root": root, "reason": reason} for root, reason in failed],
+                    "deferred_over_cap": deferred,
+                    "generated_reclaim": generated_reclaim,
+                    "reapable_count": len(removed) if not APPLY else 0,
+                    "reclaimed_count": len(removed) if APPLY else 0,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
     print(
         f"reclaim [{mode}]: {len(removed)} reclaimed, {len(skipped)} kept-safe, "
         f"{len(failed)} failed, {len(deferred)} deferred-over-cap (of {len(dirs)})"

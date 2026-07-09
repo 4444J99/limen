@@ -38,6 +38,7 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _resolve_claude_model,
 )
 from limen.worktree_debt import worktree_debt_exceeded
+from limen.worktree_roots import default_worktrees_root
 
 
 def _int_or_default(raw: object, default: int) -> int:
@@ -1879,7 +1880,7 @@ def _clone_repo(task: Task) -> Path | None:
 # local branch are removed; the only surviving artifacts are the remote branch +
 # PR. This is the universal default for ALL local lanes (codex/opencode/agy/
 # claude/gemini) — set LIMEN_ISOLATION=off only for a deliberate in-place run.
-_ISOLATION_ROOT = Path(os.environ.get("LIMEN_WORKTREES", Path.home() / "Workspace" / ".limen-worktrees"))
+_ISOLATION_ROOT = default_worktrees_root()
 _GENERATED_CLEAN_PATHS = (
     "node_modules",
     ".venv",
@@ -2254,6 +2255,44 @@ def _push_existing_pr_head(task: Task, wt: Path, pr_head: dict[str, str]) -> boo
     return True
 
 
+def _record_worktree_birth(
+    task: Task,
+    wt: Path,
+    branch: str,
+    checkout_ref: str,
+    pr_base: str,
+    *,
+    existing_pr: bool,
+) -> None:
+    """Record the remote owner contract for a new disposable checkout outside the work tree."""
+    gitdir = _git(["rev-parse", "--git-dir"], wt)
+    if gitdir.returncode != 0 or not gitdir.stdout.strip():
+        return
+    gitdir_path = Path(gitdir.stdout.strip())
+    if not gitdir_path.is_absolute():
+        gitdir_path = wt / gitdir_path
+    payload = {
+        "schema": "limen.worktree_birth.v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "task_id": task.id,
+        "repo": task.repo,
+        "root": str(wt),
+        "checkout_ref": checkout_ref,
+        "local_branch": branch,
+        "remote_branch": branch,
+        "pr_base": pr_base,
+        "existing_pr": existing_pr,
+        "done_predicate": "remote branch pushed and PR/open-PR receipt recorded",
+        "cleanup_owner": "scripts/reclaim-worktrees.py + docs/worktree-reclaim-acceptance.jsonl",
+    }
+    try:
+        gitdir_path.mkdir(parents=True, exist_ok=True)
+        (gitdir_path / "limen-worktree-birth.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
+    except OSError:
+        return
+    _record_worktree_lifecycle(task, wt, branch, "created", "remote-receipt-required", "not-run", False)
+
+
 def _unpreserved_work_reason(wt: Path, base_ref: str) -> str:
     """Return why reclaiming an isolated worktree needs preservation first.
 
@@ -2522,6 +2561,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     if add.returncode != 0:
         print(f"  FAILED worktree add {task.id}: {add.stderr.strip()[:300]}")
         return False
+    _record_worktree_birth(task, wt, branch, checkout_ref, pr_base, existing_pr=bool(pr_head))
 
     pushed = False
     try:

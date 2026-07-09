@@ -38,7 +38,13 @@ done
 
 git -C "$root" fetch origin main --quiet
 br="docs/${slug}-$(date -u +%Y%m%d%H%M%S)"
-wt_root="${LIMEN_WORKTREES:-$HOME/Workspace/.limen-worktrees}"
+if [ -n "${LIMEN_WORKTREES:-}" ]; then
+  wt_root="$LIMEN_WORKTREES"
+elif [ -d /Volumes/Scratch ] && [ -w /Volumes/Scratch ]; then
+  wt_root="/Volumes/Scratch/limen-worktrees"
+else
+  wt_root="${LIMEN_WORKDIR:-$HOME/Workspace}/.limen-worktrees"
+fi
 mkdir -p "$wt_root"
 tmp="$wt_root/ship-docs-${slug}-$(date -u +%Y%m%d%H%M%S)-$$"
 cleanup() {

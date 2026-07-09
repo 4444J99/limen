@@ -1715,6 +1715,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Maximum preserved dirty/unique-unpushed/not-Git worktree roots tolerated before routine generated build-out pauses. Keeps prompt-started work visible and prevents the conductor from outrunning its own closeout lifecycle."
+  LIMEN_WORKTREE_REAPABLE_MAX:
+    default: 0
+    env: LIMEN_WORKTREE_REAPABLE_MAX
+    self_update: none
+    owner: limen-daemon
+    note: "Maximum clean remote-preserved local worktree roots allowed to linger after the reaper should be able to remove them. Default 0 makes clean+merged+idle and clean+pushed+idle residue fail focused lifecycle gates until reclaim applies or an owner blocker is recorded."
   LIMEN_BRANCH_PREFIX:
     default: null              # DERIVED per scope — cells.sh sets cell-<slug>- for a cell's own conductor
     env: LIMEN_BRANCH_PREFIX

@@ -46,6 +46,16 @@ IGNORED_GENERATED_RECEIPTS = {
     "docs/session-corpus-ledger.md",
     "docs/session-lifecycle-blockers.md",
 }
+HEARTBEAT_ENV_KEYS = (
+    "LIMEN_ROOT",
+    "LIMEN_WORKTREES",
+    "LIMEN_WORKTREE_ROOT",
+    "LIMEN_DISPATCH_ASYNC",
+    "LIMEN_DISPATCH_LANES",
+    "LIMEN_LOCAL_LIMIT",
+    "LIMEN_ASYNC_MAX",
+    "LIMEN_LANES",
+)
 
 
 def run_command(
@@ -227,14 +237,32 @@ def read_plist(path: Path) -> dict[str, Any]:
         "keep_alive": data.get("KeepAlive"),
         "run_at_load": data.get("RunAtLoad"),
         "program_arguments": data.get("ProgramArguments") or [],
-        "env": {
-            "LIMEN_ROOT": env.get("LIMEN_ROOT"),
-            "LIMEN_DISPATCH_ASYNC": env.get("LIMEN_DISPATCH_ASYNC"),
-            "LIMEN_LANES": env.get("LIMEN_LANES"),
-            "LIMEN_DISPATCH_LANES": env.get("LIMEN_DISPATCH_LANES"),
-            "LIMEN_LOCAL_LIMIT": env.get("LIMEN_LOCAL_LIMIT"),
-            "LIMEN_ASYNC_MAX": env.get("LIMEN_ASYNC_MAX"),
-        },
+        "env": {key: env.get(key) for key in HEARTBEAT_ENV_KEYS},
+    }
+
+
+def generated_plist_snapshot() -> dict[str, Any]:
+    script = ROOT / "scripts" / "gen-launchd-plist.sh"
+    if not script.exists():
+        return {"present": False, "path": str(script), "env": {}, "probe": {"returncode": None}}
+    env = dict(os.environ)
+    env["LIMEN_ROOT"] = str(LIVE_ROOT)
+    result = run_command(["bash", str(script), "--stdout"], cwd=ROOT, env=env, timeout=12)
+    summary = command_summary(result)
+    if result.get("returncode") != 0:
+        return {"present": False, "path": str(script), "env": {}, "probe": summary}
+    try:
+        data = plistlib.loads(str(result.get("stdout") or "").encode("utf-8"))
+    except (plistlib.InvalidFileException, ValueError):
+        return {"present": False, "path": str(script), "env": {}, "probe": summary}
+    raw_env = data.get("EnvironmentVariables") or {}
+    return {
+        "present": True,
+        "path": str(script),
+        "label": data.get("Label"),
+        "program_arguments": data.get("ProgramArguments") or [],
+        "env": {key: raw_env.get(key) for key in HEARTBEAT_ENV_KEYS},
+        "probe": summary,
     }
 
 
@@ -464,9 +492,7 @@ def always_working_snapshot() -> dict[str, Any]:
 
     items = [item for item in index.get("items") or [] if isinstance(item, dict)]
     required = [
-        item
-        for item in items
-        if str(item.get("status") or "") in {"assigned_from_existing_work", "needs_assignment"}
+        item for item in items if str(item.get("status") or "") in {"assigned_from_existing_work", "needs_assignment"}
     ]
     return {
         "present": True,
@@ -493,6 +519,7 @@ def always_working_snapshot() -> dict[str, Any]:
 
 def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
     blockers: list[dict[str, str]] = []
+    generated = snapshot.get("generated_heartbeat_plist") or {"present": False, "env": {}}
     plist = snapshot["heartbeat_plist"]
     loaded = snapshot["launchd"]
     git = snapshot["live_root_git"]
@@ -508,6 +535,22 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
 
     if not loaded.get("running"):
         blockers.append({"id": "heartbeat-launchd-not-running", "evidence": f"launchd state is {loaded.get('state')}."})
+
+    if generated.get("present") and plist.get("present"):
+        generated_env = generated.get("env") or {}
+        plist_env = plist.get("env") or {}
+        drift = [
+            key
+            for key in HEARTBEAT_ENV_KEYS
+            if generated_env.get(key) is not None and generated_env.get(key) != plist_env.get(key)
+        ]
+        if drift:
+            evidence = ", ".join(
+                f"{key}: generated={generated_env.get(key)!r} installed={plist_env.get(key)!r}" for key in drift[:4]
+            )
+            if len(drift) > 4:
+                evidence += f", +{len(drift) - 4} more"
+            blockers.append({"id": "heartbeat-generated-plist-env-drift", "evidence": evidence})
 
     if not watchdog.get("healthy"):
         blockers.append(
@@ -555,6 +598,17 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
             }
         )
 
+    for key in ("LIMEN_WORKTREES", "LIMEN_WORKTREE_ROOT", "LIMEN_ASYNC_MAX"):
+        plist_value = (plist.get("env") or {}).get(key)
+        loaded_value = (loaded.get("env") or {}).get(key)
+        if plist_value != loaded_value:
+            blockers.append(
+                {
+                    "id": "heartbeat-loaded-env-drift",
+                    "evidence": f"plist {key}={plist_value!r}, loaded={loaded_value!r}.",
+                }
+            )
+
     if async_probe.get("requested") and not async_probe.get("ok"):
         blockers.append(
             {
@@ -600,6 +654,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     launchd = launchd_snapshot()
     snapshot: dict[str, Any] = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "generated_heartbeat_plist": generated_plist_snapshot(),
         "heartbeat_plist": plist,
         "launchd": launchd,
         "live_root_git": git_snapshot(LIVE_ROOT),
@@ -616,6 +671,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def render_markdown(snapshot: dict[str, Any]) -> str:
+    generated = snapshot["generated_heartbeat_plist"]
     plist = snapshot["heartbeat_plist"]
     loaded = snapshot["launchd"]
     live = snapshot["live_root_git"]
@@ -640,15 +696,24 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "## Heartbeat",
         "",
+        f"- Generated plist probe: `{generated.get('present')}` from `{relpath(Path(generated.get('path') or ''))}`.",
+        f"- Generated LIMEN_WORKTREES: `{(generated.get('env') or {}).get('LIMEN_WORKTREES')}`.",
+        f"- Generated LIMEN_WORKTREE_ROOT: `{(generated.get('env') or {}).get('LIMEN_WORKTREE_ROOT')}`.",
+        f"- Generated LIMEN_DISPATCH_ASYNC: `{(generated.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
+        f"- Generated LIMEN_ASYNC_MAX: `{(generated.get('env') or {}).get('LIMEN_ASYNC_MAX')}`.",
         f"- LaunchAgent plist: `{relpath(Path(plist.get('path') or HEARTBEAT_PLIST))}` present `{plist.get('present')}`.",
         f"- Plist KeepAlive: `{plist.get('keep_alive')}`; RunAtLoad: `{plist.get('run_at_load')}`.",
         f"- Plist LIMEN_ROOT: `{(plist.get('env') or {}).get('LIMEN_ROOT')}`.",
+        f"- Plist LIMEN_WORKTREES: `{(plist.get('env') or {}).get('LIMEN_WORKTREES')}`.",
+        f"- Plist LIMEN_WORKTREE_ROOT: `{(plist.get('env') or {}).get('LIMEN_WORKTREE_ROOT')}`.",
         f"- Plist LIMEN_DISPATCH_ASYNC: `{(plist.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
         f"- Plist LIMEN_DISPATCH_LANES: `{(plist.get('env') or {}).get('LIMEN_DISPATCH_LANES')}`.",
         f"- Plist LIMEN_ASYNC_MAX: `{(plist.get('env') or {}).get('LIMEN_ASYNC_MAX')}`.",
         f"- Plist LIMEN_LANES: `{(plist.get('env') or {}).get('LIMEN_LANES')}`.",
         f"- Loaded launchd state: `{loaded.get('state')}` pid `{loaded.get('pid')}`.",
         f"- Loaded LIMEN_ROOT: `{(loaded.get('env') or {}).get('LIMEN_ROOT')}`.",
+        f"- Loaded LIMEN_WORKTREES: `{(loaded.get('env') or {}).get('LIMEN_WORKTREES')}`.",
+        f"- Loaded LIMEN_WORKTREE_ROOT: `{(loaded.get('env') or {}).get('LIMEN_WORKTREE_ROOT')}`.",
         f"- Loaded LIMEN_DISPATCH_ASYNC: `{(loaded.get('env') or {}).get('LIMEN_DISPATCH_ASYNC')}`.",
         f"- Loaded LIMEN_DISPATCH_LANES: `{(loaded.get('env') or {}).get('LIMEN_DISPATCH_LANES')}`.",
         f"- Loaded LIMEN_ASYNC_MAX: `{(loaded.get('env') or {}).get('LIMEN_ASYNC_MAX')}`.",

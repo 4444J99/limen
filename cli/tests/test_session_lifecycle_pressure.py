@@ -717,6 +717,68 @@ def test_dispatch_health_records_live_root_and_async_drift(tmp_path: Path):
     assert dispatch.PRIVATE_INDEX.exists()
 
 
+def test_dispatch_health_blocks_when_generated_plist_drifts_from_installed(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_generated_plist_drift")
+    live_root = tmp_path / "live-limen"
+    scratch = tmp_path / "Scratch" / "limen-worktrees"
+    local = tmp_path / "Workspace" / ".limen-worktrees"
+    snapshot = {
+        "generated_heartbeat_plist": {
+            "present": True,
+            "env": {
+                "LIMEN_ROOT": str(live_root),
+                "LIMEN_WORKTREES": str(scratch),
+                "LIMEN_WORKTREE_ROOT": str(scratch),
+                "LIMEN_DISPATCH_ASYNC": "1",
+                "LIMEN_DISPATCH_LANES": "auto",
+                "LIMEN_ASYNC_MAX": "8",
+            },
+        },
+        "heartbeat_plist": {
+            "present": True,
+            "keep_alive": True,
+            "env": {
+                "LIMEN_ROOT": str(live_root),
+                "LIMEN_WORKTREES": str(local),
+                "LIMEN_WORKTREE_ROOT": str(local),
+                "LIMEN_DISPATCH_ASYNC": "1",
+                "LIMEN_DISPATCH_LANES": "auto",
+                "LIMEN_ASYNC_MAX": "1",
+            },
+        },
+        "launchd": {
+            "running": True,
+            "state": "running",
+            "env": {
+                "LIMEN_WORKTREES": str(local),
+                "LIMEN_WORKTREE_ROOT": str(local),
+                "LIMEN_DISPATCH_ASYNC": "1",
+                "LIMEN_DISPATCH_LANES": "auto",
+                "LIMEN_ASYNC_MAX": "1",
+            },
+        },
+        "live_root_git": {
+            "present": True,
+            "branch": "main",
+            "head": "abc",
+            "origin_main": "abc",
+            "matches_origin_main": True,
+            "dirty_entries": 0,
+        },
+        "watchdog": {"healthy": True},
+        "async_probe": {"requested": False},
+        "prompt_packets": {"conductor_required_packets": 0},
+        "always_working": {"present": True, "required_open_count": 0},
+    }
+
+    blockers = dispatch.derive_blockers(snapshot)
+
+    drift = [item for item in blockers if item["id"] == "heartbeat-generated-plist-env-drift"]
+    assert drift
+    assert "LIMEN_WORKTREES" in drift[0]["evidence"]
+    assert "LIMEN_ASYNC_MAX" in drift[0]["evidence"]
+
+
 def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
     dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_prompt_gate")
     dispatch.ROOT = tmp_path
