@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-09T23:16:03+00:00`
+Generated: `2026-07-09T23:16:34+00:00`
 
 Status: `blocked`
 
@@ -34,7 +34,7 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `10`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T23:16:03.359406+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T23:16:34.490430+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -75,13 +75,10 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `c54a2111ca0eee0cde81e93076ed5ac1d096ff0a`.
-- origin/main: `c54a2111ca0eee0cde81e93076ed5ac1d096ff0a`.
+- HEAD: `b19e41aaea38460b11b46491470486f23ff37819`.
+- origin/main: `b19e41aaea38460b11b46491470486f23ff37819`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `1`.
-- Ignored generated receipt dirty entries: `1`.
-  - `docs/dispatch-health.md`
-  - `tasks.yaml`
+- Dirty entries: `0`.
 
 ## Verified Worktree
 
@@ -91,7 +88,6 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 1 dirty entries.
 - `always-working-required-work-open`: 6 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
