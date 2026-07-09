@@ -210,6 +210,19 @@ def is_generated_log_shell(path: Path) -> bool:
     return bool(files) and files <= GENERATED_LOG_SHELL_FILES
 
 
+def _agy_scratch_root() -> Path:
+    home = os.environ.get("HOME", "/Users/4jp")
+    return Path(os.environ.get("LIMEN_AGY_SCRATCH_ROOT", f"{home}/.gemini/antigravity-cli/scratch")).expanduser()
+
+
+def _inside_agy_scratch_root(path: Path) -> bool:
+    try:
+        path.resolve().relative_to(_agy_scratch_root().resolve())
+        return True
+    except (OSError, ValueError):
+        return False
+
+
 def _classify(
     path: Path,
     now: float,
@@ -223,6 +236,8 @@ def _classify(
         return "unresolved"
     if resolved in self_guard:
         return "self/live-checkout"
+    if _inside_agy_scratch_root(path):
+        return "antigravity-scratch-managed"
     if _is_documented_residue(path, preservation_receipts):
         return "documented-residue"
     if _is_remote_superseded(path, preservation_receipts):

@@ -90,6 +90,13 @@ AGY_SCRATCH_ROOT = Path(
     os.environ.get("LIMEN_AGY_SCRATCH_ROOT", HOME / ".gemini" / "antigravity-cli" / "scratch")
 )
 AGY_SCRATCH_MIN_IDLE_H = _env_positive_float("LIMEN_AGY_SCRATCH_MIN_IDLE_H", 24)
+AGY_SCRATCH_PRESERVATION_LEDGER = ROOT / "docs" / "antigravity-scratch-preservation.jsonl"
+AGY_UNSAFE_DISPOSITIONS = {
+    "bridge_required",
+    "preserve_required",
+    "container_review_required",
+    "non_git_review_required",
+}
 
 # Chromium/Electron subdirectories that regenerate on next launch — safe eviction candidates.
 _REGEN_SUBDIRS = {
@@ -422,6 +429,63 @@ def _worktree_over_cap() -> bool | None:
     return rc != 0
 
 
+def _load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    events = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+    return events
+
+
+def _matching_preservation(row: dict, history: list[dict]) -> dict | None:
+    name = str(row.get("name") or "")
+    head = row.get("head")
+    disposition = row.get("disposition")
+    size_bytes = row.get("size_bytes")
+    for event in reversed(history):
+        if event.get("root") != name:
+            continue
+        if not event.get("archive_verified"):
+            continue
+        if not event.get("archive_path"):
+            continue
+        if not event.get("private_receipt") or not event.get("private_receipt_sha256"):
+            continue
+        if head and event.get("head") and event.get("head") != head:
+            continue
+        if disposition and event.get("disposition") and event.get("disposition") != disposition:
+            continue
+        if size_bytes is not None and event.get("size_bytes") is not None:
+            try:
+                if int(event["size_bytes"]) != int(size_bytes):
+                    continue
+            except (TypeError, ValueError):
+                continue
+        return event
+    return None
+
+
+def _count_by_disposition(rows: list[dict]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        key = str(row.get("disposition") or "unknown")
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
+
+
 def antigravity_scratch() -> dict:
     script = ROOT / "scripts" / "antigravity-scratch-bridge.py"
     if not script.exists():
@@ -446,11 +510,15 @@ def antigravity_scratch() -> dict:
         return {"measured": False, "reason": "invalid-json"}
     summary = report.get("summary") or {}
     by_disp = summary.get("by_disposition") or {}
-    unsafe = {
-        key: count
-        for key, count in by_disp.items()
-        if key in {"bridge_required", "preserve_required", "container_review_required", "non_git_review_required"}
-    }
+    unsafe_rows = [row for row in report.get("roots", []) if row.get("disposition") in AGY_UNSAFE_DISPOSITIONS]
+    preservation_history = _load_jsonl(AGY_SCRATCH_PRESERVATION_LEDGER)
+    preserved_unsafe = []
+    unpreserved_unsafe = []
+    for row in unsafe_rows:
+        if _matching_preservation(row, preservation_history):
+            preserved_unsafe.append(row)
+        else:
+            unpreserved_unsafe.append(row)
     return {
         "measured": True,
         "root": str(AGY_SCRATCH_ROOT),
@@ -460,7 +528,10 @@ def antigravity_scratch() -> dict:
         "safe_reap_bytes": int(summary.get("safe_reap_bytes") or 0),
         "safe_reap_gb": round(int(summary.get("safe_reap_bytes") or 0) / GB, 2),
         "by_disposition": by_disp,
-        "unsafe_dispositions": unsafe,
+        "unsafe_dispositions": _count_by_disposition(unsafe_rows),
+        "unsafe_preserved_dispositions": _count_by_disposition(preserved_unsafe),
+        "unsafe_unpreserved_dispositions": _count_by_disposition(unpreserved_unsafe),
+        "unsafe_unpreserved_roots": [row.get("name") for row in unpreserved_unsafe if row.get("name")],
     }
 
 
@@ -494,8 +565,11 @@ def failures(a: dict) -> list[str]:
             "(eviction stage has not fired — run --apply or arm the reclaimer)"
         )
     agy = a.get("antigravity_scratch") or {}
-    if agy.get("measured") and agy.get("unsafe_dispositions"):
-        unsafe = ", ".join(f"{key}={count}" for key, count in sorted(agy["unsafe_dispositions"].items()))
+    unpreserved_unsafe = agy.get("unsafe_unpreserved_dispositions")
+    if unpreserved_unsafe is None:
+        unpreserved_unsafe = agy.get("unsafe_dispositions")
+    if agy.get("measured") and unpreserved_unsafe:
+        unsafe = ", ".join(f"{key}={count}" for key, count in sorted(unpreserved_unsafe.items()))
         out.append(f"Antigravity scratch roots need bridge/preserve/review before local deletion ({unsafe})")
     return out
 
@@ -525,6 +599,8 @@ def write_stamp(a: dict, reclaimed: int | None = None) -> None:
             "total_gb": a["antigravity_scratch"].get("total_gb"),
             "safe_reap_gb": a["antigravity_scratch"].get("safe_reap_gb"),
             "by_disposition": a["antigravity_scratch"].get("by_disposition"),
+            "unsafe_preserved_dispositions": a["antigravity_scratch"].get("unsafe_preserved_dispositions"),
+            "unsafe_unpreserved_dispositions": a["antigravity_scratch"].get("unsafe_unpreserved_dispositions"),
         },
         "at_factory": not failures(a),
         "open_invariants": failures(a),

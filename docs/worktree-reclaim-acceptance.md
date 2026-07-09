@@ -11,6 +11,11 @@ a matching line in `docs/worktree-reclaim-acceptance.jsonl`. Do not create that
 JSONL as a cleanup shortcut. It is the human acceptance ledger for irreversible
 local worktree/root removal outside the standing-grant class.
 
+Antigravity/Agy scratch roots are not covered by this worktree standing grant.
+Even when a scratch clone is clean, merged, and idle, physical scratch-root
+removal belongs to `scripts/antigravity-scratch-bridge.py` plus
+`docs/antigravity-scratch-reap-acceptance.jsonl`.
+
 Each JSONL event must be one object with:
 
 ```json

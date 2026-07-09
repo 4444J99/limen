@@ -12,6 +12,7 @@ This is intentionally conservative:
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import re
 import subprocess
@@ -21,6 +22,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
+PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
 
 from limen.worktree_debt import worktree_debt_report  # noqa: E402
 
@@ -98,6 +100,32 @@ def existing_pr(cwd: Path, repo: str, branch: str) -> dict[str, Any] | None:
     return rows[0] if rows else None
 
 
+def pr_number_from_url(url: str) -> int | None:
+    match = re.search(r"/pull/(\d+)(?:\D*)$", url or "")
+    return int(match.group(1)) if match else None
+
+
+def pr_view(cwd: Path, repo: str, number_or_url: int | str) -> dict[str, Any]:
+    proc = gh(
+        cwd,
+        "pr",
+        "view",
+        str(number_or_url),
+        "--repo",
+        repo,
+        "--json",
+        "number,state,isDraft,headRefName,headRefOid,url",
+        timeout=120,
+    )
+    if proc.returncode != 0:
+        return {}
+    try:
+        data = json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def patch_equivalent_or_merged(cwd: Path, base: str) -> bool:
     base_ref = f"origin/{base}"
     if git(cwd, "merge-base", "--is-ancestor", "HEAD", base_ref).returncode == 0:
@@ -143,15 +171,76 @@ def create_pr(cwd: Path, repo: str, base: str, branch: str, title: str) -> str:
     return proc.stdout.strip()
 
 
+def update_preservation_receipts(rows: list[dict[str, Any]], apply: bool) -> dict[str, Any]:
+    eligible = [
+        row
+        for row in rows
+        if row.get("action") in {"pr_created", "pr_exists"} and row.get("repo") and row.get("branch")
+    ]
+    if not eligible:
+        return {"updated": 0}
+    try:
+        data = json.loads(PRESERVATION_RECEIPTS.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"error": f"could not load preservation receipts: {exc}"}
+    receipts = data.setdefault("receipts", [])
+    by_root = {str(row.get("root")): row for row in receipts if isinstance(row, dict)}
+    now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    updated = 0
+    for row in eligible:
+        path = Path(str(row.get("path") or ""))
+        root = str(row.get("name") or path.name)
+        repo = str(row.get("repo"))
+        branch = str(row.get("branch"))
+        url = str(row.get("url") or (row.get("pr") or {}).get("url") or "")
+        number = pr_number_from_url(url)
+        view = pr_view(path if path.is_dir() else ROOT, repo, number or url) if (number or url) else {}
+        head = str(view.get("headRefOid") or (git(path, "rev-parse", "HEAD").stdout.strip() if path.is_dir() else ""))
+        if not url:
+            url = str(view.get("url") or "")
+        receipt = by_root.get(root)
+        if receipt is None:
+            receipt = {"root": root}
+            receipts.append(receipt)
+            by_root[root] = receipt
+        pr_number = int(view.get("number") or number or 0)
+        new_values = {
+            "branch": str(view.get("headRefName") or branch),
+            "classification": "open draft PR preserves local worktree head",
+            "evidence_updated_utc": now,
+            "head": head,
+            "lane": "remote-pr-open",
+            "next_action": (
+                f"Review draft PR #{pr_number}, then merge, supersede, or archive this lane. "
+                "Local checkout is no longer the only review surface."
+            ),
+            "pr_draft": bool(view.get("isDraft", row.get("action") == "pr_created")),
+            "pr_number": pr_number,
+            "pr_state": str(view.get("state") or (row.get("pr") or {}).get("state") or "OPEN"),
+            "pr_url": url,
+            "repo": repo,
+            "score_discount": 35,
+            "status": "open_pr_preserved",
+            "worktree": str(path) if path else "",
+        }
+        if any(receipt.get(key) != value for key, value in new_values.items()):
+            receipt.update(new_values)
+            updated += 1
+    if updated and apply:
+        PRESERVATION_RECEIPTS.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"updated": updated, "dry_run": bool(updated and not apply)}
+
+
 def process_item(item: dict[str, Any], apply: bool) -> dict[str, Any]:
     path = Path(item["path"])
+    reason = str(item.get("reason") or "")
     out: dict[str, Any] = {
         "name": item.get("name"),
         "path": str(path),
-        "reason": item.get("reason"),
+        "reason": reason,
         "action": "skip",
     }
-    if item.get("reason") != "not-merged-to-default":
+    if reason not in {"not-merged-to-default", "unpushed-commits"}:
         out["detail"] = "not a PR-receipt candidate"
         return out
     if not path.is_dir():
@@ -188,6 +277,19 @@ def process_item(item: dict[str, Any], apply: bool) -> dict[str, Any]:
         out["detail"] = f"HEAD is merged or patch-equivalent to origin/{base}"
         return out
 
+    needs_push = reason == "unpushed-commits" or not remote_head_exists(path, branch)
+    if needs_push:
+        if not apply:
+            out["action"] = "would_push"
+            out["detail"] = "local HEAD is not preserved on a remote branch"
+            return out
+        push = git(path, "push", "-u", "origin", branch, timeout=120)
+        if push.returncode != 0:
+            out["action"] = "error"
+            out["detail"] = f"push failed: {(push.stderr or push.stdout).strip()}"
+            return out
+        out["pushed"] = True
+
     try:
         pr = existing_pr(path, repo, branch)
     except RuntimeError as exc:
@@ -198,18 +300,6 @@ def process_item(item: dict[str, Any], apply: bool) -> dict[str, Any]:
         out["action"] = "pr_exists"
         out["pr"] = pr
         return out
-
-    if not remote_head_exists(path, branch):
-        if not apply:
-            out["action"] = "would_push_and_open_pr"
-            out["detail"] = "remote head missing"
-            return out
-        push = git(path, "push", "-u", "origin", branch, timeout=120)
-        if push.returncode != 0:
-            out["action"] = "error"
-            out["detail"] = f"push failed: {(push.stderr or push.stdout).strip()}"
-            return out
-        out["pushed"] = True
 
     if not apply:
         out["action"] = "would_open_pr"
@@ -236,7 +326,13 @@ def main() -> int:
     for row in results:
         action = str(row.get("action") or "unknown")
         summary[action] = summary.get(action, 0) + 1
-    payload = {"apply": bool(args.apply), "summary": dict(sorted(summary.items())), "results": results}
+    receipt_update = update_preservation_receipts(results, apply=args.apply)
+    payload = {
+        "apply": bool(args.apply),
+        "summary": dict(sorted(summary.items())),
+        "receipt_update": receipt_update,
+        "results": results,
+    }
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:

@@ -1,6 +1,6 @@
 # Antigravity Scratch Bridge
 
-Generated: `2026-07-09T23:20:01+00:00`
+Generated: `2026-07-09T23:32:08+00:00`
 Scratch root: `~/.gemini/antigravity-cli/scratch`
 
 ## Decision
@@ -22,25 +22,6 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 - Total scratch size: `4.2 GiB`.
 - Safe-reap candidate size: `262.4 MiB`.
 - Dispositions: `bridge_required` 29, `container_review_required` 3, `non_git_review_required` 3, `preserve_required` 1, `safe_reap_candidate` 12.
-- Post-reap scratch size: `4.2 GiB` across `48` roots.
-
-## Reap Results
-
-- Applied at: `2026-07-09T23:20:20+00:00`.
-- Reaped: `0` roots, `0 B`.
-- Skipped: `12`; failed: `0`.
-- Skipped `schema-definitions`: missing-human-reap-acceptance.
-- Skipped `hokage-chess`: missing-human-reap-acceptance.
-- Skipped `organvm-rules-system-bound`: missing-human-reap-acceptance.
-- Skipped `organvm-engine`: missing-human-reap-acceptance.
-- Skipped `the-invisible-ledger`: missing-human-reap-acceptance.
-- Skipped `a-i-chat--exporter`: missing-human-reap-acceptance.
-- Skipped `growth-auditor`: missing-human-reap-acceptance.
-- Skipped `brainstorm-20260423`: missing-human-reap-acceptance.
-- Skipped `organvm-ontologia`: missing-human-reap-acceptance.
-- Skipped `my--father-mother`: missing-human-reap-acceptance.
-- Skipped `system-governance-framework`: missing-human-reap-acceptance.
-- Skipped `4444J99-clone`: missing-human-reap-acceptance.
 
 ## Reap History
 
@@ -54,20 +35,62 @@ inside a scratch clone. It is a preservation blocker, not authorization to delet
 
 ## Preservation History
 
-- Preservation receipts: `60`.
-- External archives verified: `59`.
-- Verified external archive source size: `37.7 GiB`.
-- Event source size total: `42.4 GiB` (includes retries).
-- `2026-07-09T23:19:51Z` `4444J99-clone`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231951Z-4444J99-clone/receipt.json`.
-- `2026-07-09T23:19:51Z` `system-governance-framework`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231951Z-system-governance-framework/receipt.json`.
-- `2026-07-09T23:19:50Z` `my--father-mother`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231950Z-my--father-mother/receipt.json`.
-- `2026-07-09T23:19:50Z` `organvm-ontologia`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231950Z-organvm-ontologia/receipt.json`.
-- `2026-07-09T23:19:50Z` `brainstorm-20260423`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231950Z-brainstorm-20260423/receipt.json`.
-- `2026-07-09T23:19:49Z` `growth-auditor`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231949Z-growth-auditor/receipt.json`.
-- `2026-07-09T23:19:49Z` `a-i-chat--exporter`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231949Z-a-i-chat--exporter/receipt.json`.
-- `2026-07-09T23:19:47Z` `the-invisible-ledger`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231947Z-the-invisible-ledger/receipt.json`.
-- `2026-07-09T23:19:46Z` `organvm-engine`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231946Z-organvm-engine/receipt.json`.
-- `2026-07-09T23:19:45Z` `organvm-rules-system-bound`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T231945Z-organvm-rules-system-bound/receipt.json`.
+- Preservation receipts: `96`.
+- External archives verified: `95`.
+- Verified external archive source size: `41.6 GiB`.
+- Event source size total: `46.3 GiB` (includes retries).
+- `2026-07-09T23:33:58Z` `hello_workspace`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-hello_workspace/receipt.json`.
+- `2026-07-09T23:33:58Z` `hello_project`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-hello_project/receipt.json`.
+- `2026-07-09T23:33:58Z` `my-project`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-my-project/receipt.json`.
+- `2026-07-09T23:33:58Z` `writelens`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-writelens/receipt.json`.
+- `2026-07-09T23:33:58Z` `.github`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-github/receipt.json`.
+- `2026-07-09T23:33:58Z` `edgarflash`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-edgarflash/receipt.json`.
+- `2026-07-09T23:33:58Z` `bountyscope-test-coverage`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-bountyscope-test-coverage/receipt.json`.
+- `2026-07-09T23:33:58Z` `organvm-vi-koinonia`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-organvm-vi-koinonia/receipt.json`.
+- `2026-07-09T23:33:58Z` `vulnpulse`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-vulnpulse/receipt.json`.
+- `2026-07-09T23:33:57Z` `sovereign--ground`: `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233357Z-sovereign--ground/receipt.json`.
+
+## Preservation Results
+
+- Requested roots: `36`.
+- Source size receipted: `3.9 GiB`.
+- Statuses: `external_archive_preserved` 36.
+- Preserved `organvm` `632.4 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233220Z-organvm/receipt.json`.
+- Preserved `sovereign-systems--elevate-align` `584.3 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233245Z-sovereign-systems--elevate-align/receipt.json`.
+- Preserved `limen` `497.4 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233251Z-limen/receipt.json`.
+- Preserved `organvm-i-theoria-github` `412.9 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233303Z-organvm-i-theoria-github/receipt.json`.
+- Preserved `dot-github--theoria` `369.0 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233313Z-dot-github--theoria/receipt.json`.
+- Preserved `universal-mail--automation` `330.3 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233322Z-universal-mail--automation/receipt.json`.
+- Preserved `organvm-i-theoria` `295.4 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233330Z-organvm-i-theoria/receipt.json`.
+- Preserved `domus-genoma` `229.3 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233337Z-domus-genoma/receipt.json`.
+- Preserved `my-domus-genoma` `168.7 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233341Z-my-domus-genoma/receipt.json`.
+- Preserved `public-record-data-scrapper` `87.8 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233344Z-public-record-data-scrapper/receipt.json`.
+- Preserved `4444J99` `81.6 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233346Z-4444J99/receipt.json`.
+- Preserved `anon-hookup-now` `69.6 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233347Z-anon-hookup-now/receipt.json`.
+- Preserved `public-process` `54.1 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233348Z-public-process/receipt.json`.
+- Preserved `session-meta-4` `44.3 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233350Z-session-meta-4/receipt.json`.
+- Preserved `atomic-substrata` `40.1 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233351Z-atomic-substrata/receipt.json`.
+- Preserved `adaptive-personal-syllabus` `31.9 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233352Z-adaptive-personal-syllabus/receipt.json`.
+- Preserved `studium-generale` `28.6 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233353Z-studium-generale/receipt.json`.
+- Preserved `recursive-engine--generative-entity` `28.5 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233354Z-recursive-engine--generative-entity/receipt.json`.
+- Preserved `conversation-corpus-engine` `5.1 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233356Z-conversation-corpus-engine/receipt.json`.
+- Preserved `mirror-mirror` `4.3 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233356Z-mirror-mirror/receipt.json`.
+- Preserved `mirror-mirror-healing` `4.1 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233356Z-mirror-mirror-healing/receipt.json`.
+- Preserved `system-system--system--monad` `2.8 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233357Z-system-system--system--monad/receipt.json`.
+- Preserved `organvm-i-theoria-mesh` `2.5 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233357Z-organvm-i-theoria-mesh/receipt.json`.
+- Preserved `vigiles-aeternae--corpus-mythicum` `2.2 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233357Z-vigiles-aeternae--corpus-mythicum/receipt.json`.
+- Preserved `media-ark-33` `1.3 MiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233357Z-media-ark-33/receipt.json`.
+- Preserved `bountyscope` `848.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233357Z-bountyscope/receipt.json`.
+- Preserved `sovereign--ground` `732.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233357Z-sovereign--ground/receipt.json`.
+- Preserved `vulnpulse` `572.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-vulnpulse/receipt.json`.
+- Preserved `organvm-vi-koinonia` `508.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-organvm-vi-koinonia/receipt.json`.
+- Preserved `bountyscope-test-coverage` `484.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-bountyscope-test-coverage/receipt.json`.
+- Preserved `edgarflash` `440.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-edgarflash/receipt.json`.
+- Preserved `.github` `312.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-github/receipt.json`.
+- Preserved `writelens` `208.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-writelens/receipt.json`.
+- Preserved `my-project` `8.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-my-project/receipt.json`.
+- Preserved `hello_project` `4.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-hello_project/receipt.json`.
+- Preserved `hello_workspace` `4.0 KiB` as `external_archive_preserved`; archive `verified`; private receipt `.limen-private/session-corpus/lifecycle/agy-scratch-preserve/20260709T233358Z-hello_workspace/receipt.json`.
 
 ## Repeated Dirty Fingerprints
 
@@ -78,7 +101,7 @@ before any local root can be removed.
 |---:|---|---:|---:|---|
 | `2` | `anon-hookup-now`, `system-system--system--monad` | `0` | `1` | `(root):1` |
 
-## Largest Roots Before Reap
+## Largest Roots
 
 | Root | Size | Kind | Disposition | Reason | Remote / nested proof |
 |---|---:|---|---|---|---|

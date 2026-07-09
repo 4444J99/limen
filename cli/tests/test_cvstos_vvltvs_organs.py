@@ -53,6 +53,28 @@ def test_cvstos_reports_unsafe_antigravity_scratch_roots():
     ]
 
 
+def test_cvstos_allows_preserved_antigravity_scratch_roots():
+    mod = _load("cvstos_organ_scratch_preserved_test", CVSTOS)
+
+    assessment = {
+        "debt": {"over_cap": False},
+        "factory": {
+            "cartridge_connected": True,
+            "bin_orphans": {"measured": True, "count": 0},
+        },
+        "reapers": {"stale": 0},
+        "worktree_over_cap": False,
+        "antigravity_scratch": {
+            "measured": True,
+            "unsafe_dispositions": {"bridge_required": 2, "preserve_required": 1},
+            "unsafe_preserved_dispositions": {"bridge_required": 2, "preserve_required": 1},
+            "unsafe_unpreserved_dispositions": {},
+        },
+    }
+
+    assert mod.failures(assessment) == []
+
+
 def test_vvltvs_malformed_env_knobs_fail_open(monkeypatch, tmp_path):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "root"))
     monkeypatch.setenv("LIMEN_WORKSPACE_ROOT", str(tmp_path))

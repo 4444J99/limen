@@ -40,6 +40,11 @@ cannot merge must be solved, before any local checkout is removed. The
 `unpushed-commits` and `dirty` guardrails are unchanged — a root whose work is
 not yet on origin is **never** reaped.
 
+This standing grant does not apply to Antigravity/Agy scratch roots. Those roots
+must use the `antigravity_scratch` surface and its archive/redaction acceptance
+ledger, even when a generic worktree classifier can prove the clone is clean,
+merged, and idle.
+
 ## Checked Surfaces
 
 | Surface | Tool | Acceptance doc | Acceptance ledger | Terminal action |

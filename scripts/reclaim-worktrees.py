@@ -85,6 +85,9 @@ MAX_REMOVE = _int_env("LIMEN_RECLAIM_MAX", 50)
 EVERY_MIN = _float_env("LIMEN_RECLAIM_EVERY_MIN", 30)
 GENERATED_RECLAIM_MAX = _int_env("LIMEN_RECLAIM_GENERATED_MAX", 80)
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
+AGY_SCRATCH_ROOT = Path(
+    os.environ.get("LIMEN_AGY_SCRATCH_ROOT", f"{HOME}/.gemini/antigravity-cli/scratch")
+)
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
 MARKER = LIMEN_ROOT / "logs" / ".reclaim-last"
 RECLAIM_ACCEPTANCE = LIMEN_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
@@ -253,6 +256,14 @@ def patch_equivalent_to_default(cwd) -> bool:
     return bool(lines) and all(line.startswith("-") for line in lines)
 
 
+def inside_agy_scratch_root(path: Path) -> bool:
+    try:
+        path.resolve().relative_to(AGY_SCRATCH_ROOT.expanduser().resolve())
+        return True
+    except (OSError, ValueError):
+        return False
+
+
 def load_preservation_receipts():
     path = LIMEN_ROOT / "docs" / "worktree-preservation-receipts.json"
     try:
@@ -359,6 +370,8 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None):
             return "skip", "self/live-checkout"
     except Exception:
         return "skip", "unresolved"
+    if inside_agy_scratch_root(d):
+        return "skip", "antigravity-scratch-uses-bridge-acceptance"
     if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
         if is_generated_log_shell(d):
             return "remove-residue", "generated-log-shell"

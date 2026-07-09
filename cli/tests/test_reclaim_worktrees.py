@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -60,6 +61,19 @@ def test_reclaim_standing_grant_accepts_remote_receipt_loss_free_class_without_l
 
     assert ok is True
     assert reason == "standing-grant-2026-07-09"
+
+
+def test_reclaim_skips_antigravity_scratch_root_removal(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    scratch = tmp_path / "agy-scratch"
+    root = scratch / "clean-merged-root"
+    root.mkdir(parents=True)
+    reclaim.AGY_SCRATCH_ROOT = scratch
+
+    action, reason = reclaim.classify(root, time.time(), 0)
+
+    assert action == "skip"
+    assert reason == "antigravity-scratch-uses-bridge-acceptance"
 
 
 def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, monkeypatch) -> None:
