@@ -59,5 +59,8 @@ jobs:
       - name: No-hardcode gate (VIGILIA parameter panel ratchet)
         run: python scripts/check-params.py
 
+      - name: Gate-registry drift (GATES — registry vs workflows vs consumers)
+        run: python scripts/check-gates.py
+
       - name: Run API and CLI tests
         run: python -m pytest web/api/tests cli/tests -q

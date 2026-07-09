@@ -1,0 +1,364 @@
+# GATES — the verification-gate registry (the parameter-panel pattern, one domain over).
+#
+# One declaration per gate: what runs, which paths implicate it, how expensive it is,
+# whether it must serialize machine-wide. Consumers DERIVE from this file instead of
+# hardcoding their own copies: scripts/verify.py (selection + execution — PR2),
+# scripts/merge-policy.sh (deploy regex — PR3), scripts/verify-whole.sh (file lists — PR4),
+# CLAUDE.md (points here — PR4). scripts/check-gates.py is the drift predicate; the
+# `ratchets:` block below arms each consumers-derive check as that consumer converts.
+#
+# Deliberate non-consumers: .github/workflows/* (GitHub requires job definitions in-tree —
+# the registry only CHECKS them, never generates), scripts/closeout-fast.sh (a receipt-flow,
+# not a gate list), and verify-whole.sh's LIMEN_VERIFY_LIVE tail (env-gated live probes that
+# need tokens/URLs — they live only in verify-whole.sh by design).
+#
+# Path semantics: GitHub Actions path-filter globs (`**` crosses slashes, `*` does not),
+# so deploy_triggers can be set-compared byte-for-byte against deploy*.yml `on.push.paths`.
+#
+# Field defaults: tier: cheap · serialize: false · scoped: true. `owner` and `note` are
+# required on every gate (parameters.yaml discipline). `ci_job` is set only where the CI
+# mirror is GUARANTEED per-change (the job runs whenever the gate's paths change); gates
+# whose CI coverage is incidental carry none — that absence is information, not an omission.
+
+schema_version: 0.1
+
+# Consumers-derive ratchets — armed per-PR as each consumer converts (check-gates.py
+# enforces the armed ones; unarmed ones are recorded intent, like the check-params baseline).
+ratchets:
+  verify_scoped_wrapper: false   # PR2: verify-scoped.sh is a thin exec of verify.py --changed
+  merge_policy_derives: false    # PR3: merge-policy.sh has no literal deploy regex
+  verify_whole_derives: false    # PR4: verify-whole.sh has no literal py_compile/bash -n lists
+  claude_md_pointer: false       # PR4: CLAUDE.md carries the pointer, not the path lists
+
+# 1:1 mirror of deploy*.yml `on.push.paths` — check-gates.py enforces exact set equality.
+# A merge to main touching one of these IS a live deploy. Deploy sensitivity is a property
+# of PATHS, not gates: a docs PR touching tasks.yaml is website-sensitive even though it
+# implicates only cheap gates.
+deploy_triggers:
+  dashboard:
+    workflow: .github/workflows/deploy.yml
+    paths:
+      - "web/app/**"
+      - "firebase.json"
+      - "tasks.yaml"
+      - ".github/workflows/deploy.yml"
+  api:
+    workflow: .github/workflows/deploy-api.yml
+    paths:
+      - "web/api/**"
+      - "cli/**"
+      - "scripts/preflight-cloud-run.sh"
+      - ".github/workflows/deploy-api.yml"
+
+# Derived file sets — what verify-whole.sh's hardcoded py_compile and bash -n argv lines
+# become (PR4). PR1 transcribes today's curated lists EXACTLY; widening py-syntax to all of
+# scripts/*.py is a deliberate later ratchet-tighten, pre-flighted before landing. Every
+# exclude entry must carry a note or check-gates.py fails it.
+file_sets:
+  py-syntax:
+    include:
+      - "web/api/main.py"
+      - "cli/src/limen/*.py"
+      - "scripts/probe-runtime-adapter.py"
+      - "scripts/validate-lifecycle-adapters.py"
+      - "scripts/validate-task-board.py"
+      - "scripts/worktree-debt.py"
+      - "scripts/worktree-pr-receipts.py"
+      - "scripts/continuation-beat.py"
+      - "scripts/codex-token-accounting.py"
+      - "scripts/overnight-watch.py"
+      - "scripts/session-corpus-ledger.py"
+      - "scripts/corpus-feed.py"
+      - "scripts/prompt-lifecycle-ledger.py"
+      - "scripts/prompt-priority-map.py"
+      - "scripts/prompt-batch-review-ledger.py"
+      - "scripts/prompt-packet-ledger.py"
+      - "scripts/current-session-fanout-plan.py"
+      - "scripts/corpus-command-center.py"
+      - "scripts/capability-substrate-ledger.py"
+      - "scripts/consolidation-gates.py"
+      - "scripts/network-health.py"
+      - "scripts/dispatch-health.py"
+      - "scripts/always-working.py"
+      - "scripts/live-root-gate.py"
+      - "scripts/session-blockers-ledger.py"
+      - "scripts/session-lifecycle-pressure.py"
+      - "scripts/session-attack-paths.py"
+      - "scripts/conductor-tranche.py"
+      - "scripts/session-value-review.py"
+      - "scripts/enactment-audit.py"
+      - "scripts/antigravity-scratch-bridge.py"
+      - "scripts/reap_acceptance.py"
+      - "scripts/check-removal-acceptance.py"
+      - "scripts/cvstos-organ.py"
+      - "scripts/armed-valve-audit.py"
+      - "scripts/ship-gate.py"
+      - "scripts/heal-convergence.py"
+      - "scripts/async-run-one.py"
+      - "scripts/ask-gate.py"
+    exclude: []
+  bash-syntax:
+    include:
+      - "scripts/preflight-cloud-run.sh"
+      - "scripts/probe-local-runtime.sh"
+      - "scripts/probe-local-worker.sh"
+      - "scripts/heartbeat-loop.sh"
+      - "scripts/verify-whole.sh"
+      - "scripts/merge-policy.sh"
+      - "scripts/omega.sh"
+      - "scripts/tests/merge-policy.test.sh"
+      - "scripts/tests/enactment-audit.test.sh"
+      - "scripts/tests/armed-valve-audit.test.sh"
+      - "scripts/tests/ship-gate.test.sh"
+      - "scripts/tests/heal-convergence.test.sh"
+      - "scripts/tests/ask-gate.test.sh"
+      - "scripts/tests/omega.test.sh"
+      - "scripts/hooks/session-lifecycle-pressure.sh"
+      - "scripts/netmode.sh"
+    exclude: []
+
+gates:
+  # ── the always-on floor ─────────────────────────────────────────────────────
+  syntax-changed:
+    kind: per_file
+    per_file:
+      ".py": "python3 -m py_compile {file}"
+      ".sh": "bash -n {file}"
+    paths: ["**"]
+    owner: verify
+    note: "Syntax on exactly the files touched — the floor under every push; the resolver's built-in."
+  diff-hygiene:
+    command: "git diff --check"
+    paths: ["**"]
+    owner: verify
+    note: "Whitespace/conflict-marker hygiene; closes every run, scoped and whole."
+
+  # ── whole-matrix file-set syntax (derived from file_sets above in PR4) ──────
+  py-syntax-set:
+    kind: file_set
+    file_set: py-syntax
+    command_template: "python3 -m py_compile {files}"
+    scoped: false
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: verify
+    note: "Whole-matrix compile of the registered Python estate (pr-gate compiles the package subset of it on every PR)."
+  bash-syntax-set:
+    kind: file_set
+    file_set: bash-syntax
+    command_template: "bash -n {files}"
+    scoped: false
+    owner: verify
+    note: "Whole-matrix syntax pass over the operational shell fleet."
+  plist-lint:
+    command: "plutil -lint container/launchd/com.user.netmeter.plist container/launchd/com.limen.overnight-watch.plist"
+    paths: ["container/launchd/**"]
+    scoped: false
+    owner: verify
+    note: "macOS-only; the whole matrix guards it behind `command -v plutil`."
+
+  # ── organ record validators (no guaranteed CI mirror: organs/** is outside ci.yml filters) ──
+  cvrsvs-seed:
+    command: "python3 organs/governance/validate-seed.py --strict-graph --quiet"
+    paths: ["organs/governance/**"]
+    scoped: false
+    owner: governance
+    note: "Validates the external cvrsvs-honorvm seed when present; verify-whole passes the resolved seed path and no-ops if absent."
+  consulting-records:
+    command: "python3 organs/consulting/validate-consulting.py --fleet --quiet"
+    paths: ["organs/consulting/**"]
+    scoped: false
+    owner: consulting
+    note: "Sovereign Systems engagement records stay schema-clean."
+  artist-records:
+    command: "python3 organs/artist/validate-artist.py --fleet --quiet"
+    paths: ["organs/artist/**"]
+    scoped: false
+    owner: artist
+    note: "A-MAVS-OLEVM chamber governance records stay schema-clean."
+  social-records:
+    command: "python3 organs/social/validate-social.py --fleet --quiet"
+    paths: ["organs/social/**"]
+    scoped: false
+    owner: social
+    note: "Koinonia relationship-posture briefs stay schema-clean."
+
+  # ── predicate regression tests (scoped where verify-scoped.sh runs them today) ──
+  merge-policy-test:
+    command: "bash scripts/tests/merge-policy.test.sh"
+    paths: ["scripts/merge-policy.sh", "scripts/tests/merge-policy.test.sh", "institutio/governance/gates.yaml"]
+    owner: merge-policy
+    note: "Verdict-matrix regression for the self-merge predicate; gates.yaml is implicated because deploy_triggers feed the verdict (PR3)."
+  enactment-test:
+    command: "bash scripts/tests/enactment-audit.test.sh"
+    paths: ["scripts/enactment-audit.py", "scripts/tests/enactment-audit.test.sh"]
+    owner: enactment
+    note: "Declared-ON fleet flags are actually wired live, not just merged."
+  enactment-wiring:
+    command: "python3 scripts/enactment-audit.py --check --wiring-only"
+    paths: ["scripts/enactment-audit.py"]
+    scoped: false
+    owner: enactment
+    note: "The wiring rung (deterministic); the liveness rung reads live-host daemon state in the beat."
+  armed-valve-test:
+    command: "bash scripts/tests/armed-valve-audit.test.sh"
+    paths: ["scripts/armed-valve-audit.py", "scripts/tests/armed-valve-audit.test.sh"]
+    scoped: false
+    owner: valves
+    note: "Parked levers vs silently-off valves."
+  armed-valve-contract:
+    command: "python3 scripts/armed-valve-audit.py --check --contract --offline --stamp /dev/null"
+    paths: ["scripts/armed-valve-audit.py", "spec/armed-valves.json"]
+    scoped: false
+    owner: valves
+    note: "Registry-completeness rung (repo-deterministic); env/url liveness runs in the beat."
+  ship-gate-test:
+    command: "bash scripts/tests/ship-gate.test.sh"
+    paths: ["scripts/ship-gate.py", "scripts/tests/ship-gate.test.sh"]
+    scoped: false
+    owner: ship-gate
+    note: "Product-facing done requires a reachable artifact (fixture rung; live probes in the beat)."
+  heal-convergence-test:
+    command: "bash scripts/tests/heal-convergence.test.sh"
+    paths: ["scripts/heal-convergence.py", "scripts/tests/heal-convergence.test.sh"]
+    scoped: false
+    owner: heal
+    note: "Chronic heal stalls trip; receipts carry outcomes (fixture rung)."
+  ask-gate-test:
+    command: "bash scripts/tests/ask-gate.test.sh"
+    paths: ["scripts/ask-gate.py", "scripts/tests/ask-gate.test.sh"]
+    scoped: false
+    owner: intake
+    note: "Intake asks are predicate-shaped, bounded, owned (fixture rung)."
+  omega-test:
+    command: "bash scripts/tests/omega.test.sh"
+    paths: ["scripts/omega.sh", "scripts/tests/omega.test.sh"]
+    scoped: false
+    owner: omega
+    note: "The fixed-point composer's tally/exit/stamp contract; SKIP is never a silent PASS."
+
+  # ── session/docs/board predicates ───────────────────────────────────────────
+  session-orient:
+    command: "bash scripts/done-session-orient.sh"
+    paths: ["scripts/session-orient.py", "scripts/hooks/session-orient.sh", "scripts/session-lifecycle-pressure.py", "scripts/hooks/session-lifecycle-pressure.sh", "scripts/done-session-orient.sh"]
+    scoped: false
+    owner: continuity
+    note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
+  agent-docs:
+    command: "python3 scripts/check-agent-docs.py"
+    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "scripts/check-agent-docs.py"]
+    owner: docs
+    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist."
+  removal-acceptance:
+    command: "python3 scripts/check-removal-acceptance.py"
+    paths: ["scripts/check-removal-acceptance.py", "scripts/reap_acceptance.py"]
+    scoped: false
+    owner: lifecycle
+    note: "Local removal acceptance contracts require archive and redaction proof."
+  task-board:
+    command: "python3 scripts/validate-task-board.py"
+    paths: ["tasks.yaml", "scripts/validate-task-board.py"]
+    owner: board
+    note: "Task-board statuses match the canonical vocabulary (pr-gate separately guards parse/load)."
+  worktree-debt:
+    command: "python3 scripts/worktree-debt.py"
+    paths: ["scripts/worktree-debt.py"]
+    scoped: false
+    owner: lifecycle
+    note: "Report-only lifecycle-debt census in the whole matrix."
+  workflow-yaml:
+    command: "python3 -c \"import pathlib, yaml; [yaml.safe_load(p.read_text()) for p in sorted(pathlib.Path('.github/workflows').glob('*.y*ml'))]\""
+    paths: [".github/workflows/**"]
+    owner: ci
+    note: "Every workflow file parses as YAML before it can brick CI."
+
+  # ── governance ratchets ─────────────────────────────────────────────────────
+  check-params:
+    command: "python3 scripts/check-params.py"
+    paths: ["institutio/governance/parameters.yaml", "scripts/check-params.py", "scripts/**", "cli/**", "web/**"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "No-hardcode ratchet: new LIMEN_* vars must be declared in the parameter panel."
+  check-gates:
+    command: "python3 scripts/check-gates.py"
+    paths: ["institutio/governance/gates.yaml", "scripts/check-gates.py", ".github/workflows/**", "scripts/verify-scoped.sh", "scripts/verify-whole.sh", "scripts/merge-policy.sh", "CLAUDE.md"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "This registry's own drift predicate: schema, command existence, deploy-trigger parity, CI mirrors, consumer ratchets."
+
+  # ── python estate ───────────────────────────────────────────────────────────
+  ruff-lint:
+    command: "python3 -m ruff check cli/src cli/tests web/api mcp ianva"
+    paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: verify
+    note: "Lint the whole Python estate whenever any Python surface changes."
+  pytest-cli:
+    command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest cli/tests -q"
+    paths: ["cli/**"]
+    tier: heavy
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: verify
+    note: "Env-scrubbed: ambient persona tokens must not leak into test behavior."
+  pytest-api:
+    command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest web/api/tests -q"
+    paths: ["web/api/**", "cli/**"]
+    tier: heavy
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: verify
+    note: "web/api imports limen — a cli change implicates the API suite too."
+
+  # ── node/web estate (the host-exhausting gates; serialized machine-wide) ────
+  web-build:
+    command: "bash -c 'cd web/app && npm run generate:data && npm run build' && node scripts/validate-contract-schemas.mjs"
+    paths: ["web/app/**", "spec/**"]
+    tier: heavy
+    serialize: true
+    ci_job: "ci.yml:web"
+    owner: surfaces
+    note: "Surface generation, contract schemas, dashboard production build — one at a time per host."
+  lifecycle-adapters:
+    command: "scripts/validate-lifecycle-adapters.py"
+    paths: ["web/app/**", "web/api/**", "web/worker/**"]
+    scoped: false
+    owner: surfaces
+    note: "Adapter parity; requires generated surface data, so it runs after generation in the whole matrix."
+  contract-schemas:
+    command: "node scripts/validate-contract-schemas.mjs"
+    paths: ["spec/**", "web/app/**"]
+    scoped: false
+    ci_job: "ci.yml:web"
+    owner: surfaces
+    note: "Standalone schema validation in the whole matrix; scoped runs cover it inside web-build."
+  worker-check:
+    command: "bash -c 'cd web/worker && npm run check'"
+    paths: ["web/worker/**"]
+    tier: heavy
+    ci_job: "ci.yml:worker"
+    owner: worker
+    note: "Worker lint/typecheck; the live runtime deploys on-demand via wrangler, not on merge."
+  moneta-tests:
+    command: "bash -c 'cd moneta && npm test'"
+    paths: ["moneta/**"]
+    tier: heavy
+    serialize: true
+    ci_job: "moneta.yml:moneta"
+    owner: moneta
+    note: "vitest + tsc for the sovereign mint; npm install makes it a serialized heavy gate."
+
+  # ── local server probes (whole-matrix only: they boot servers) ──────────────
+  probe-runtime:
+    command: "scripts/probe-local-runtime.sh"
+    paths: ["web/api/**", "cli/**"]
+    tier: heavy
+    serialize: true
+    scoped: false
+    owner: runtime
+    note: "Boots uvicorn and probes the FastAPI adapter contract over HTTP."
+  probe-worker:
+    command: "scripts/probe-local-worker.sh"
+    paths: ["web/worker/**"]
+    tier: heavy
+    serialize: true
+    scoped: false
+    owner: runtime
+    note: "Boots wrangler-dev (workerd) and probes the Worker contract over HTTP; CI=1 guards against interactive login."

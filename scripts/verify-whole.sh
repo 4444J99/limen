@@ -109,6 +109,9 @@ bash scripts/done-session-orient.sh
 step "Verify agent-instruction docs match the canonical task-state vocabulary"
 python3 scripts/check-agent-docs.py
 
+step "Verify the gate registry matches the workflows and consumers (GATES drift predicate)"
+python3 scripts/check-gates.py
+
 step "Verify local removal acceptance contracts require archive and redaction proof"
 python3 scripts/check-removal-acceptance.py
 
