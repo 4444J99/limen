@@ -29,7 +29,7 @@ bio link, and Track 2 of the talk tracks. One destination, so
 ## Routing (submission → funnel motion)
 
 1. **Email** → the owned list (Kit/Beehiiv), tagged `fitness-free-plan`.
-2. **Record** → Teamzy: new row in the opt-in column; `Source_Content_ID`
+2. **Record** → {{CRM_PLATFORM}}: new row in the opt-in column; `Source_Content_ID`
    from field 3; `Wearable_User` from field 8; `Owned_Media_Subscriber = yes`.
 3. **Rob** builds and sends the plan (Track 3) within ~48h — the SLA that
    makes the free tier feel paid.

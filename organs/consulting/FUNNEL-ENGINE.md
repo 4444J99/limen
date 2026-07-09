@@ -39,7 +39,7 @@ into the BODi funnel). The engine generalizes that design to every niche.
 | L0 | Discovery content | shorts/reels/videos in the niche's idiom | per-instance content pipeline + `organvm/social-automation` (POSSE: scheduling, Mastodon, Discord, RSS — extend with IG/YT export bundles) | client fires every publish |
 | L1 | Audience capture | follows, community entry | platform profiles + a "Village"-pattern community (Discord role tiers) | client owns the community |
 | L2 | Opt-in | lead magnet + capture form → email list | a "Scroll"-pattern newsletter (Kit/Beehiiv) + capture form | client sends every issue |
-| L3 | Conversion | offer ladder + CRM cadence | per-instance offer config (Rob's: $0 → $300/mo cohort → $500 physical+app) + the client's CRM (Rob: Teamzy) | client makes every offer and close |
+| L3 | Conversion | offer ladder + CRM cadence | per-instance offer config (Rob's: $0 → $300/mo cohort → $500 physical+app) + the client's CRM (Rob: {{CRM_PLATFORM}}) | client makes every offer and close |
 | L4 | Expansion | referrals, ambassadors, community leadership | community roles + the client's own referral links | client invites personally; no recruiting automation |
 
 ## The instance register

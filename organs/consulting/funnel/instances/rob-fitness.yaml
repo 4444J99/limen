@@ -42,7 +42,7 @@ offers:
     - tier: "vip"
       name: "VIP coaching group"
       price: "monthly, set by Rob"
-      delivery: "Private group chat + priority check-ins in Teamzy"
+      delivery: "Private group chat + priority check-ins in {{CRM_PLATFORM}}"
 
 funnel:
   - level: "L0"
@@ -62,7 +62,7 @@ funnel:
   - level: "L2"
     name: "Opt-in"
     entry: "Lead asks about training or accepts the free-plan invite"
-    exit: "Form submitted; email captured; Teamzy record created"
+    exit: "Form submitted; email captured; {{CRM_PLATFORM}} record created"
     method: "Capture form gated by the personalized free plan (the real deliverable)"
     artifact: "templates/capture-form-fitness.md + tracks 2-3 (invite, plan delivery)"
     human_gate: "Rob sends the invite and delivers every plan himself"
@@ -70,7 +70,7 @@ funnel:
     name: "Conversion"
     entry: "Lead completes 2+ weekly check-ins or raises the buying question"
     exit: "Purchase through the disclosed affiliate link, or a graceful no"
-    method: "Teamzy warm-column cadence; one personal offer conversation, then respect the answer"
+    method: "{{CRM_PLATFORM}} warm-column cadence; one personal offer conversation, then respect the answer"
     artifact: "tracks 4-5 (check-in cadence, offer conversation) + offers.ladder"
     human_gate: "Rob makes every offer and close personally; one ask per lead"
   - level: "L4"
@@ -82,12 +82,12 @@ funnel:
     human_gate: "Rob invites personally; no recruiting automation, ever"
 
 cadence:
-  daily: "Power half-hour: read signal sheet -> 5-10 personal replies/check-ins from staged drafts -> record outcomes in Teamzy"
-  weekly: "Fire content batch; send one Scroll-pattern email; review Teamzy warm column for offer-ready leads"
+  daily: "Power half-hour: read signal sheet -> 5-10 personal replies/check-ins from staged drafts -> record outcomes in {{CRM_PLATFORM}}"
+  weekly: "Fire content batch; send one Scroll-pattern email; review {{CRM_PLATFORM}} warm column for offer-ready leads"
   monthly: "KPI review; graceful-exit note to dead leads; ambassador check-in"
 
 crm:
-  tool: "Teamzy"
+  tool: "{{CRM_PLATFORM}}"
   warm_rule: "Engagers from content outrank any legacy cold lead (the hunting->farming routing rule from the gap map)"
   proposed_fields:
     note: "Blocked awaiting Rob's current field schema (owed atom) — add without collision"

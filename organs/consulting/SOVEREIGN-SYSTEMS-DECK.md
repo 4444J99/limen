@@ -102,7 +102,7 @@ When it passes, the engagement is structurally sound. When it fails, the output 
 ### Rob — cadence stability across recurring work + funnel engineering
 
 - **File:** `engagements/rob.yaml`
-- **Domain:** fitness + chess (HokageChess + BODi)
+- **Domain:** fitness + chess ({{CHESS_CHANNEL}} + BODi)
 - **Standing:** EXECUTION — milestone checkpoint in progress, funnel instance published
 - **Scope changes:** 2 logged, attributed, approved (2026-06-15, 2026-07-04)
 - **Next gate:** Anthony confirms milestone checkpoint → REVIEW

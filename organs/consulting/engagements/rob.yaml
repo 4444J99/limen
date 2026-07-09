@@ -55,7 +55,7 @@ funnel:
     - "L0 discovery content: shorts/reels/videos replace manual Instagram hashtag prospecting"
     - "L1 cold-audience capture: follows and community entry"
     - "L2 opt-in: lead magnet + form -> email list (The Scroll)"
-    - "L3 conversion: offer ladder $0 -> $300/mo cohort -> $500 physical+app; Teamzy CRM cadence"
+    - "L3 conversion: offer ladder $0 -> $300/mo cohort -> $500 physical+app; {{CRM_PLATFORM}} CRM cadence"
     - "L4 expansion: ambassadors, referrals, community leadership (The Village)"
 
 human_gates:

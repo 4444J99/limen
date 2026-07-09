@@ -15,7 +15,7 @@
 | Engagement | Domain | Standing | Next | Scope changes | Validated |
 |------------|--------|----------|------|---------------|-----------|
 | Maddie | Wellness (Elevate Align) | EXECUTION | REVIEW | 0 (unchanged since acceptance) | PASS |
-| Rob | Fitness + chess (HokageChess + BODi) | EXECUTION | REVIEW | 2 (logged & approved) | PASS |
+| Rob | Fitness + chess ({{CHESS_CHANNEL}} + BODi) | EXECUTION | REVIEW | 2 (logged & approved) | PASS |
 | Derek | Education + narrative (cross-program) | EXECUTION | REVIEW | 0 (original brief structure held) | PASS |
 | Jessica | Human resources + Styx | DISCOVERY | PROPOSAL | 1 (record creation) | PASS |
 | John F. | Finance | DISCOVERY | PROPOSAL | 1 (record creation) | PASS |
@@ -126,14 +126,14 @@ Five engagements, 30 checks, zero violations. The three at EXECUTION each show a
 
 ## Deployment 2: Rob
 
-**File:** `engagements/rob.yaml` · **Domain:** fitness + chess (HokageChess + BODi) · **Standing:** EXECUTION
+**File:** `engagements/rob.yaml` · **Domain:** fitness + chess ({{CHESS_CHANNEL}} + BODi) · **Standing:** EXECUTION
 
-**The relationship:** Rob is an NYC-based dual-discipline creator — chess content (HokageChess, 322+ videos, Road to 1500 arc) and fitness coaching built on 3+ years operating a BODi affiliate funnel. The engagement began as recurring execution support and expanded on 2026-07-04 into the niche-funnel program: packaging Rob's proven L0-L4 funnel as repeatable processes that any niche can instantiate.
+**The relationship:** Rob is an NYC-based dual-discipline creator — chess content ({{CHESS_CHANNEL}}, 322+ videos, Road to 1500 arc) and fitness coaching built on 3+ years operating a BODi affiliate funnel. The engagement began as recurring execution support and expanded on 2026-07-04 into the niche-funnel program: packaging Rob's proven L0-L4 funnel as repeatable processes that any niche can instantiate.
 
 **What this proves:** execution rhythm stays stable across recurring work packet adjustments. Also: this is the niche-funnel engine's flagship instance — Rob's 3+ year BODi funnel discipline has been recovered, documented, and generalized in [`FUNNEL-ENGINE.md`](FUNNEL-ENGINE.md) and [`funnel/ROB-BODI-OPERATING-FLOOR.md`](funnel/ROB-BODI-OPERATING-FLOOR.md).
 
 **Primitives recorded:**
-- **Member:** "Rob" — NYC-based dual-discipline creator: chess content (HokageChess, 322+ videos) + fitness coaching (BODi affiliate, proven L0-L4 funnel)
+- **Member:** "Rob" — NYC-based dual-discipline creator: chess content ({{CHESS_CHANNEL}}, 322+ videos) + fitness coaching (BODi affiliate, proven L0-L4 funnel)
 - **Mandate:** recurring execution support with staged deadlines and clear decision checkpoints; expanded 2026-07-04 to the niche-funnel program (package Rob's proven funnel as repeatable processes, sequences, staged drafts)
 - **Standing:** EXECUTION (path: DISCOVERY → PROPOSAL → ACCEPTANCE → EXECUTION)
 - **Standard:** every milestone has a named owner and a human gate; every funnel stage names its artifact
@@ -162,12 +162,12 @@ Five engagements, 30 checks, zero violations. The three at EXECUTION each show a
 | L0 | Discovery content | Content inventory + weekly draft batch (3-5 posts) | Rob fires every publish |
 | L1 | Signal response | Daily signal sheet via talk-track drafts | Rob sends every reply |
 | L2 | Opt-in | Capture form → email list (The Scroll) | Rob sends every invite |
-| L3 | Conversion | Offer ladder + Teamzy warm-column cadence | Rob makes every offer |
+| L3 | Conversion | Offer ladder + {{CRM_PLATFORM}} warm-column cadence | Rob makes every offer |
 | L4 | Expansion | Ambassador invite (invitation only) | Rob invites personally |
 
 **Exclusions (explicit to prevent overreach):** no financial commitments, no contract changes, no third-party agreements, no outbound sends in Rob's name — he fires every send
 
-**Owed by Rob (blockers surfaced, not hidden):** personal BODi affiliate link (never recorded), canonical handle confirmation (RB-8), Teamzy field schema, existing reel/short links
+**Owed by Rob (blockers surfaced, not hidden):** personal BODi affiliate link (never recorded), canonical handle confirmation (RB-8), {{CRM_PLATFORM}} field schema, existing reel/short links
 
 **Next move:** Anthony confirms the milestone checkpoint → handoff package is staged → standing advances to REVIEW.
 

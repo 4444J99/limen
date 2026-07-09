@@ -59,7 +59,7 @@ makes Track 4 warm instead of pushy.
 
 ## Track 4 — Check-in cadence (the warm loop)
 
-**When:** weekly, per the Teamzy column. Celebrate first, troubleshoot
+**When:** weekly, per the {{CRM_PLATFORM}} column. Celebrate first, troubleshoot
 second, never pitch inside a check-in.
 
 > Week [n] — how'd it go? [If they reported progress:] That's the compound
