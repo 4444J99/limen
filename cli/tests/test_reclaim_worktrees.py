@@ -45,6 +45,23 @@ def test_reclaim_standing_grant_accepts_loss_free_class_without_ledger(tmp_path:
     assert reason == "standing-grant-2026-07-09"
 
 
+def test_reclaim_standing_grant_accepts_remote_receipt_loss_free_class_without_ledger(tmp_path: Path) -> None:
+    # covenant standing grant 2026-07-09: receipt-backed merged PRs are also loss-free
+    reclaim = load_reclaim_worktrees()
+    worktree = tmp_path / "receipt-backed-worktree"
+    worktree.mkdir()
+
+    ok, reason = reclaim.reclaim_accepted(
+        worktree,
+        "remove-worktree",
+        "receipt-remote-merged+clean+idle",
+        [],
+    )
+
+    assert ok is True
+    assert reason == "standing-grant-2026-07-09"
+
+
 def test_reclaim_remote_reachability_uses_single_contains_query(tmp_path: Path, monkeypatch) -> None:
     reclaim = load_reclaim_worktrees()
     calls: list[list[str]] = []

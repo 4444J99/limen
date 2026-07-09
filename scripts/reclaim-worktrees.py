@@ -290,10 +290,11 @@ def load_reclaim_acceptance():
 
 STANDING_ACCEPTANCE = os.environ.get("LIMEN_RECLAIM_STANDING_ACCEPTANCE", "1") != "0"
 # Operator standing grant (2026-07-09, docs/removal-acceptance-covenant.md §Standing grant):
-# the loss-free class — clean tree + idle past min-age + merged into the remote default or
-# patch-equivalent to it — is pre-accepted for removal. Pushed-but-unmerged work is not eligible;
-# it must be merged first, or the unmergeable reason must be solved in its owner PR/task.
-STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle"}
+# the loss-free class — clean tree + idle past min-age + merged into the remote default,
+# patch-equivalent to it, or preserved by a merged remote PR receipt — is pre-accepted for
+# removal. Pushed-but-unmerged work is not eligible; it must be merged first, or the
+# unmergeable reason must be solved in its owner PR/task.
+STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "receipt-remote-merged+clean+idle"}
 
 
 def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) -> tuple[bool, str]:

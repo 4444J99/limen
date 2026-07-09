@@ -23,8 +23,9 @@ ownership proof for a proposed removal.
 The operator directed (2026-07-09, after the acceptance loop deadlocked at 646
 pooled roots / ~38 GiB with `removed: []` on every beat) that the loss-free
 worktree class is **pre-accepted for removal**: a root whose tree is clean,
-whose HEAD is merged into the remote default branch, and which is idle past
-its min-age. `scripts/reclaim-worktrees.py` honors this as
+whose HEAD is merged into the remote default branch or whose preservation
+receipt proves a merged remote PR, and which is idle past its min-age.
+`scripts/reclaim-worktrees.py` honors this as
 `standing-grant-2026-07-09` (disable with
 `LIMEN_RECLAIM_STANDING_ACCEPTANCE=0`). The classifier's own checks (dirty,
 unpushed, active) remain the guardrails, and every removal is

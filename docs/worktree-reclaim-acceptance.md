@@ -2,8 +2,9 @@
 
 `scripts/reclaim-worktrees.py --apply` removes registered worktrees, standalone
 worktree-like clones, or generated residue only after the loss-free reclaim gate
-passes. The merged loss-free class (`clean+merged+idle`) is pre-accepted under the
-operator standing grant `standing-grant-2026-07-09`
+passes. The merged loss-free classes (`clean+merged+idle` and
+`receipt-remote-merged+clean+idle`) are pre-accepted under the operator standing grant
+`standing-grant-2026-07-09`
 (`docs/removal-acceptance-covenant.md` §Standing grant; disable with
 `LIMEN_RECLAIM_STANDING_ACCEPTANCE=0`). Every other class additionally requires
 a matching line in `docs/worktree-reclaim-acceptance.jsonl`. Do not create that

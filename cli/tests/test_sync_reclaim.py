@@ -419,7 +419,7 @@ def test_reclaim_keeps_pushed_unmerged_without_escape_hatch(tmp_path):
     assert "not-merged-to-default" in r.stdout
 
 
-def test_reclaim_removes_clean_idle_remote_merged_receipt(tmp_path):
+def test_reclaim_removes_clean_idle_remote_merged_receipt_under_standing_grant(tmp_path):
     main, bare, wtroot = _wt_root_with(tmp_path)
     (main / "logs").mkdir(exist_ok=True)
     receipts = main / "docs" / "worktree-preservation-receipts.json"
@@ -446,8 +446,6 @@ def test_reclaim_removes_clean_idle_remote_merged_receipt(tmp_path):
         ),
         encoding="utf-8",
     )
-    _write_reclaim_acceptance(main, "receipt-merged", reason="receipt-remote-merged+clean+idle")
-
     r = _run_reclaim(wtroot, main, apply=True)
 
     assert r.returncode == 0, r.stderr
