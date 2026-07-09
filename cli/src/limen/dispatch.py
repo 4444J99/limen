@@ -1685,6 +1685,8 @@ def agent_can_run_task(agent: str, task: Task) -> bool:
     agent = canonical_agent(agent)
     if _agent_timed_out_on_task(agent, task):
         return False
+    if agent == "ollama" and not _local_floor_allowed_for_task(task):
+        return False
     if agent in {"agy", "antigravity"} and (_agy_live_root_registry_task(task) or _limen_repo_task(task)):
         return False
     if agent in {"codex", "claude"} and _limen_repo_task(task):

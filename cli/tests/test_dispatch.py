@@ -1621,6 +1621,40 @@ def test_remote_service_failure_can_use_armed_matching_ollama_floor(monkeypatch)
     assert "tried:jules" in task.labels
 
 
+def test_agent_can_run_task_blocks_unarmed_ollama_code(monkeypatch) -> None:
+    monkeypatch.setattr(D, "local_floor_enabled", lambda: False)
+
+    task = Task(
+        id="HEAL-rebase-org-repo-1",
+        title="rebase/resolve conflicts",
+        repo="organvm/example",
+        type="code",
+        target_agent="ollama",
+        status="open",
+        created=date(2026, 7, 9),
+    )
+
+    assert not D.agent_can_run_task("ollama", task)
+
+
+def test_agent_can_run_task_allows_armed_ollama_floor_class(monkeypatch) -> None:
+    monkeypatch.setattr(D, "local_floor_enabled", lambda: True)
+    monkeypatch.setattr(D, "local_floor_classes", lambda: {"scan"})
+    monkeypatch.setattr(D, "ollama_model", lambda: "qwen3:8b")
+
+    task = Task(
+        id="SCAN-org-repo-1",
+        title="scan repository links",
+        repo="organvm/example",
+        type="scan",
+        target_agent="ollama",
+        status="open",
+        created=date(2026, 7, 9),
+    )
+
+    assert D.agent_can_run_task("ollama", task)
+
+
 def test_default_cascade_uses_reachable_auto_lanes(monkeypatch) -> None:
     import datetime
 
