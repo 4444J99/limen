@@ -173,7 +173,7 @@ film:
   first_pass:
     note: "one companion per first-pass work; Metamorphoses and Journey to the West remain. Reuse the work's force_arc from its arcs."
     tasks:
-      # - {id: studium-film-odyssey,            title: "Odyssey film companion (return/exile/recognition)",        class: content} # DONE
+# - {id: studium-film-odyssey,            title: "Odyssey film companion (return/exile/recognition)",        class: content} # DONE
       # - {id: studium-film-aeneid,             title: "Aeneid film companion (empire/fate/sacrifice)",            class: content} # DONE
       - {id: studium-film-metamorphoses,      title: "Metamorphoses film companion (metamorphosis)",             class: content}
       # - {id: studium-film-divine-comedy,      title: "Divine Comedy film companion (descent/ascent/beatitude)",  class: content} # DONE
