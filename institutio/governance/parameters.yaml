@@ -1150,6 +1150,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Break-glass for scripts/hooks/worktree-commit-guard.sh: 1 disables the PreToolUse deny of git commit in the live checkout on main. Mirrors the LIMEN_ALLOW_OPUS_FANOUT escape-hatch precedent; leave 0 — the deny is the charter's no-direct-main-commit rule made mechanical."
+  LIMEN_INSIGHTS_ARCHIVE:
+    default: "~/Workspace/organvm/claude-runtime-state/usage-data/snapshots"
+    env: LIMEN_INSIGHTS_ARCHIVE
+    self_update: none
+    owner: censor
+    note: "Archived /insights snapshot directory scanned by insight-cadence.py's suggestion-coverage gatherer: every snapshot must appear in a `reports` list in censor/insights-suggestions.jsonl or it is surfaced as an unaudited report each due tier. Fails open when absent (CI / other hosts)."
   LIMEN_HEARTBEAT_PLIST:
     default: "~/Library/LaunchAgents/com.limen.heartbeat.plist"
     env: LIMEN_HEARTBEAT_PLIST

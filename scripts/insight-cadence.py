@@ -253,6 +253,46 @@ def _gather_insights():
             "healable": True,
         })
 
+    # 8. insights suggestion coverage — every archived /insights snapshot must be
+    # dispositioned in censor/insights-suggestions.jsonl (the suggestion ledger).
+    # Frictions have the drift lineage above; suggestions have this ledger. A
+    # snapshot missing from every `reports` list is an unaudited report and is
+    # surfaced every due tier until its suggestions are dispositioned. Fails open
+    # when the archive is absent (other hosts / CI).
+    try:
+        archive = Path(os.environ.get(
+            "LIMEN_INSIGHTS_ARCHIVE",
+            str(Path.home() / "Workspace" / "organvm" / "claude-runtime-state" / "usage-data" / "snapshots"),
+        )).expanduser()
+        ledger_path = LIMEN_ROOT / "censor" / "insights-suggestions.jsonl"
+        if archive.is_dir():
+            covered = set()
+            if ledger_path.exists():
+                for line in ledger_path.read_text().splitlines():
+                    if not line.strip():
+                        continue
+                    try:
+                        covered.update(json.loads(line).get("reports") or [])
+                    except json.JSONDecodeError:
+                        continue
+            for snap in sorted(p.name for p in archive.iterdir() if p.is_dir()):
+                if snap not in covered:
+                    insights.append({
+                        "id": _gen_id("insights-suggestions", snap),
+                        "severity": "warning",
+                        "title": f"Insights report {snap} has no suggestion disposition",
+                        "detail": (
+                            f"Snapshot {snap} exists in the archive but appears in no `reports` list in "
+                            "censor/insights-suggestions.jsonl — its suggestions were never dispositioned."
+                        ),
+                        "owner": "censor",
+                        "source": "insights-suggestions.jsonl",
+                        "suggested_action": "Sweep the report's suggestions and append disposition rows to the ledger",
+                        "healable": False,
+                    })
+    except OSError:
+        pass
+
     # ensure at least one insight for tests if none found
     if not insights:
         insights.append({
