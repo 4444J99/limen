@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 239
+      spent: 250
       per_agent:
         jules: 40
-        gemini: 3
-        codex: 6
+        gemini: 4
+        codex: 9
         opencode: 121
-        agy: 61
-        claude: 7
+        agy: 65
+        claude: 10
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-09T12:38:52.573549+00:00'
@@ -85966,7 +85966,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -85983,7 +85983,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:35:01.040512Z'
     agent: codex
@@ -86108,6 +86108,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-a-i-chat--exporter-49
   title: fix failing CI on organvm/a-i-chat--exporter#49
   repo: organvm/a-i-chat--exporter
@@ -86304,10 +86309,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#61
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -86325,7 +86330,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:33:56.281660Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:11:02.708379Z'
     agent: codex
@@ -86459,6 +86464,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-a-i-chat--exporter-66
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#66
   repo: organvm/a-i-chat--exporter
@@ -94138,7 +94148,7 @@ tasks:
   title: fix failing CI on organvm/narratological-algorithmic-lenses#35
   repo: organvm/narratological-algorithmic-lenses
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -94276,7 +94286,7 @@ tasks:
   title: fix failing CI on organvm/nexus--babel-alexandria#121
   repo: organvm/nexus--babel-alexandria
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -94604,7 +94614,7 @@ tasks:
   title: fix failing CI on organvm/the-invisible-ledger#38
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -95419,7 +95429,7 @@ tasks:
   title: fix failing CI on organvm/the-invisible-ledger#53
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -95457,7 +95467,7 @@ tasks:
   title: fix failing CI on organvm/the-invisible-ledger#55
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -95875,7 +95885,7 @@ tasks:
   title: fix failing CI on organvm/trendpulse#5
   repo: organvm/trendpulse
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -96206,11 +96216,11 @@ tasks:
   title: fix failing CI on organvm/universal-mail--automation#123
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: gemini
+  target_agent: claude
   workstream: correspondence
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -96226,7 +96236,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:14:28.011476Z'
     agent: jules
@@ -96258,11 +96268,16 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-growth-auditor-9
   title: fix failing CI on organvm/growth-auditor#9
   repo: organvm/growth-auditor
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -96607,7 +96622,7 @@ tasks:
   title: fix failing CI on organvm/growth-auditor#15
   repo: organvm/growth-auditor
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -97064,7 +97079,7 @@ tasks:
   title: "rebase organvm/limen#368 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: normal
   budget_cost: 1
   status: open
@@ -97088,7 +97103,7 @@ tasks:
   title: "rebase organvm/limen#369 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: normal
   budget_cost: 1
   status: open
@@ -97119,7 +97134,7 @@ tasks:
   title: "rebase organvm/limen#371 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: normal
   budget_cost: 1
   status: open
@@ -97143,7 +97158,7 @@ tasks:
   title: "rebase organvm/limen#372 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: normal
   budget_cost: 1
   status: open
@@ -97478,7 +97493,7 @@ tasks:
   title: "rebase organvm/limen#381 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: normal
   budget_cost: 1
   status: open
@@ -97599,10 +97614,10 @@ tasks:
   title: fix failing CI on organvm/limen#384
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -97617,7 +97632,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:50:02.447078Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -97633,6 +97648,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-385
   title: fix failing CI on organvm/limen#385
   repo: organvm/limen
@@ -97928,7 +97948,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#394
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -98015,7 +98035,7 @@ tasks:
     \ \u2014 branched far behind"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: normal
   budget_cost: 1
   status: open
@@ -98192,7 +98212,7 @@ tasks:
     \ \u2014 branched far behind"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -98272,7 +98292,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#717
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: agy
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -98328,7 +98348,7 @@ tasks:
     \ \u2014 branched far behind"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: normal
   budget_cost: 1
   status: open
@@ -98354,7 +98374,7 @@ tasks:
     \ \u2014 branched far behind"
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: gemini
+  target_agent: opencode
   priority: normal
   budget_cost: 1
   status: open
@@ -99064,7 +99084,7 @@ tasks:
   title: fix failing CI on organvm/bountyscope#7
   repo: organvm/bountyscope
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -99843,7 +99863,7 @@ tasks:
   title: fix failing CI on organvm/call-function--ontological#10
   repo: organvm/call-function--ontological
   type: code
-  target_agent: opencode
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -100887,7 +100907,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#100
   repo: organvm/organvm-engine
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -102370,7 +102390,7 @@ tasks:
   title: fix failing CI on organvm/vox--architectura-gubernatio#31
   repo: organvm/vox--architectura-gubernatio
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -103072,7 +103092,7 @@ tasks:
   title: fix failing CI on organvm/limen#407
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -103292,7 +103312,7 @@ tasks:
   title: fix failing CI on organvm/limen#412
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -104141,7 +104161,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/portfolio#157
   repo: organvm/portfolio
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -104175,7 +104195,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/portfolio#169
   repo: organvm/portfolio
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -104348,7 +104368,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/promptscope#7
   repo: organvm/promptscope
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -104371,7 +104391,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/promptscope#13
   repo: organvm/promptscope
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -104401,7 +104421,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/promptscope#14
   repo: organvm/promptscope
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -104482,7 +104502,7 @@ tasks:
   title: fix failing CI on organvm/call-function--ontological#16
   repo: organvm/call-function--ontological
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -104608,7 +104628,7 @@ tasks:
   title: fix failing CI on organvm/community-hub#10
   repo: organvm/community-hub
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -104631,7 +104651,7 @@ tasks:
   title: fix failing CI on organvm/conversation-corpus-engine#42
   repo: organvm/conversation-corpus-engine
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -106105,7 +106125,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#140
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -111773,7 +111793,7 @@ tasks:
   title: fix failing CI on organvm/universal-node-network#11
   repo: organvm/universal-node-network
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -112004,7 +112024,7 @@ tasks:
   title: fix failing CI on organvm/limen#678
   repo: organvm/limen
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -112580,7 +112600,7 @@ tasks:
   description: Step 2.2 still open in the keeper doc
   repo: ~/Workspace/limen
   type: coordination
-  target_agent: codex
+  target_agent: agy
   workstream: tabularius
   priority: medium
   budget_cost: 1
@@ -112900,7 +112920,7 @@ tasks:
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: agy
   workstream: financial
   priority: high
   budget_cost: 2
@@ -112991,7 +113011,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -113006,7 +113026,7 @@ tasks:
     2026-07-07 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-09T03:41:09.656101Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-08T16:13:57.661961Z'
     agent: jules
@@ -113038,6 +113058,11 @@ tasks:
     status: open
     output: "recover: jules session 17719289208412390875 is awaiting_plan_approval\
       \ \u2192 reopened"
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-155
   title: rebase/resolve conflicts on organvm/domus-genoma#155
   repo: organvm/domus-genoma
@@ -113136,7 +113161,7 @@ tasks:
   title: Add historical token tombstone audit to the credential wall
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -113216,7 +113241,7 @@ tasks:
   title: Build external estate custody implementation receipt
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -114225,7 +114250,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#79
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -114609,7 +114634,7 @@ tasks:
     \ far behind"
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -114634,7 +114659,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#94
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -114657,7 +114682,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#101
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -114680,7 +114705,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#102
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -114703,7 +114728,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#103
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -114733,7 +114758,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#107
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -114756,7 +114781,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#108
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -114779,7 +114804,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#114
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -114802,7 +114827,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#121
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -114825,7 +114850,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#122
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -114855,7 +114880,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#136
   repo: organvm/hokage-chess--4444j99
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -114904,7 +114929,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -114919,7 +114944,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:19:52.995801Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-08T16:01:49.115166Z'
     agent: jules
@@ -114945,6 +114970,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 12272793791666539612 is failed \u2192 reopened"
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-136
   title: rebase/resolve conflicts on organvm/domus-genoma#136
   repo: organvm/domus-genoma
@@ -115155,10 +115185,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#142
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -115175,7 +115205,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:50:53.394389Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-09T05:14:14.367849Z'
     agent: jules
@@ -115210,14 +115240,19 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-146
   title: rebase/resolve conflicts on organvm/domus-genoma#146
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -115234,7 +115269,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:45:37.318555Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-09T03:29:07.385138Z'
     agent: jules
@@ -115269,6 +115304,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-149
   title: rebase/resolve conflicts on organvm/domus-genoma#149
   repo: organvm/domus-genoma
@@ -115379,7 +115419,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#176
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -115428,7 +115468,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#177
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -115496,7 +115536,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#185
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -116148,7 +116188,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/public-record-data-scrapper#337
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -116396,12 +116436,13 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/160
   context: 'PR organvm/domus-genoma#160 is CONFLICTING with its base branch and merge-drain
@@ -116412,7 +116453,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:38:50.605572Z'
+  updated: '2026-07-09T21:48:27.192032Z'
   dispatch_log:
   - timestamp: '2026-07-09T04:28:26.790563Z'
     agent: jules
@@ -116443,11 +116484,16 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:48:27.192032Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-domus-genoma-163
   title: rebase/resolve conflicts on organvm/domus-genoma#163
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -116507,10 +116553,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#172
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -116527,7 +116573,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:45:37.318555Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -116547,6 +116593,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-174
   title: rebase/resolve conflicts on organvm/domus-genoma#174
   repo: organvm/domus-genoma
@@ -116751,7 +116802,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -116767,7 +116818,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:51:21.504367Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-09T04:28:26.790563Z'
     agent: jules
@@ -116793,6 +116844,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-182
   title: rebase/resolve conflicts on organvm/domus-genoma#182
   repo: organvm/domus-genoma
@@ -120888,10 +120944,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#139
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -120908,7 +120964,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T21:45:37.318555Z'
+  updated: '2026-07-09T21:48:47.500972Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -120928,6 +120984,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-09T21:48:47.500972Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-140
   title: rebase/resolve conflicts on organvm/domus-genoma#140
   repo: organvm/domus-genoma
@@ -122036,7 +122097,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--theoria#459
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -122067,7 +122128,7 @@ tasks:
     \ on the host"
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -122089,7 +122150,7 @@ tasks:
     needs_human drain)'
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open

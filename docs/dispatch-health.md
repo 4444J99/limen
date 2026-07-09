@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-09T21:25:22+00:00`
+Generated: `2026-07-09T21:47:44+00:00`
 
 Status: `blocked`
 
@@ -34,14 +34,14 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `10`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T21:25:22.282989+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T21:47:44.988476+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run lanes: `auto`; max `10`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 3 still running ; would launch 8 (local cap 10, local per-lane 8) -> ['HEAL-cifix-organvm-domus-genoma-151', 'HEAL-cifix-organvm-domus-genoma-230', 'HEAL-cifix-organvm-domus-genoma-231', 'HEAL-cifix-organvm-domus-genoma-233', 'HEAL-cifix-organvm-domus-genoma-235', 'HEAL-cifix-organvm-portfolio-175', 'HEAL-rebase-organvm-domus-genoma-153', 'HEAL-cifix-organvm-mirror-mirror-73']`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 6 still running ; would launch 4 (local cap 10, local per-lane 8) -> ['HEAL-rebase-organvm-domus-genoma-177', 'HEAL-rebase-organvm-domus-genoma-176', 'HEAL-rebase-organvm-a-i-chat--exporter-31', 'GH-organvm-limen-829']`.
 - Async skipped down lanes: `jules`.
   - `jules`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `100`; headroom `0%`.
 
@@ -74,20 +74,10 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `470a23ce23bd4fe709b619e2df08084a61794f7b`.
-- origin/main: `470a23ce23bd4fe709b619e2df08084a61794f7b`.
+- HEAD: `c934586c1cd407f751cf2e715018b80cdcdaab71`.
+- origin/main: `c934586c1cd407f751cf2e715018b80cdcdaab71`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `8`.
-- Ignored generated receipt dirty entries: `1`.
-  - `docs/dispatch-health.md`
-  - `docs/always-working.md`
-  - `docs/branch-hygiene.md`
-  - `docs/prompt-batch-resolution-receipts.json`
-  - `organs/contributions/MIRROR.md`
-  - `organs/contributions/opportunities.json`
-  - `organs/financial/STATUS.md`
-  - `organs/financial/cashflow.md`
-  - `tasks.yaml`
+- Dirty entries: `0`.
 
 ## Verified Worktree
 
@@ -97,7 +87,6 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 8 dirty entries.
 - `always-working-required-work-open`: 6 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
