@@ -85963,16 +85963,15 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#31
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
-  - tried:jules
   - noop
   urls:
   - https://github.com/organvm/a-i-chat--exporter/pull/31
@@ -85984,7 +85983,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:49:25.308588Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:35:01.040512Z'
     agent: codex
@@ -86119,6 +86118,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-a-i-chat--exporter-49
   title: fix failing CI on organvm/a-i-chat--exporter#49
   repo: organvm/a-i-chat--exporter
@@ -92764,10 +92768,10 @@ tasks:
   title: fix failing CI on organvm/mirror-mirror#73
   repo: organvm/mirror-mirror
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -92783,7 +92787,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:40:42.933934Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:15:36.678636Z'
     agent: jules
@@ -92809,6 +92813,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-mirror-mirror-77
   title: fix failing CI on organvm/mirror-mirror#77
   repo: organvm/mirror-mirror
@@ -104263,7 +104272,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -104280,7 +104289,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:45:37.318555Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:40:52.239532Z'
     agent: agy
@@ -104323,6 +104332,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-cifix-organvm-portfolio-178
   title: fix failing CI on organvm/portfolio#178
   repo: organvm/portfolio
@@ -113032,10 +113046,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#153
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -113051,7 +113065,7 @@ tasks:
     2026-07-07 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-09T21:49:25.308588Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-08T16:13:57.661961Z'
     agent: jules
@@ -113093,6 +113107,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-domus-genoma-155
   title: rebase/resolve conflicts on organvm/domus-genoma#155
   repo: organvm/domus-genoma
@@ -114280,10 +114299,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#79
   repo: organvm/mirror-mirror
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -114300,7 +114319,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:56:53.747010Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -114327,6 +114346,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-stale-organvm-mirror-mirror-86
   title: "rebase organvm/mirror-mirror#86 onto current base \u2014 branched far behind"
   repo: organvm/mirror-mirror
@@ -115243,13 +115267,14 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:jules
   - slow
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/142
   context: 'PR organvm/domus-genoma#142 is CONFLICTING with its base branch and merge-drain
@@ -115260,7 +115285,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:48:47.500972Z'
+  updated: '2026-07-09T22:05:50.662227Z'
   dispatch_log:
   - timestamp: '2026-07-09T05:14:14.367849Z'
     agent: jules
@@ -115300,6 +115325,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:05:50.662227Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-domus-genoma-146
   title: rebase/resolve conflicts on organvm/domus-genoma#146
   repo: organvm/domus-genoma
@@ -115478,10 +115508,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#176
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -115498,7 +115528,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:51:31.137192Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-09T03:21:52.666387Z'
     agent: jules
@@ -115534,6 +115564,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-domus-genoma-177
   title: rebase/resolve conflicts on organvm/domus-genoma#177
   repo: organvm/domus-genoma
@@ -115606,15 +115641,14 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#185
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
-  - tried:jules
   - slow
   - noop
   urls:
@@ -115627,7 +115661,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:51:31.137192Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-08T12:21:31.555337Z'
     agent: jules
@@ -115679,6 +115713,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: RETRO-0708-HEAL-GATE
   title: 'Heal-gate: only open CI-fix PRs that pass the target repo''s required checks'
   description: heal-dispatch must run the target repo's required CI checks in the
@@ -116526,7 +116565,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -116543,7 +116582,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:48:27.192032Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-09T04:28:26.790563Z'
     agent: jules
@@ -116579,6 +116618,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-domus-genoma-163
   title: rebase/resolve conflicts on organvm/domus-genoma#163
   repo: organvm/domus-genoma
@@ -116656,13 +116700,14 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
   - tried:claude
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/172
   context: 'PR organvm/domus-genoma#172 is CONFLICTING with its base branch and merge-drain
@@ -116673,7 +116718,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:48:47.500972Z'
+  updated: '2026-07-09T22:07:03.075231Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -116698,6 +116743,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:07:03.075231Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-domus-genoma-174
   title: rebase/resolve conflicts on organvm/domus-genoma#174
   repo: organvm/domus-genoma
@@ -116721,7 +116771,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:42:16.345922Z'
+  updated: '2026-07-09T22:05:50.662227Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -116743,6 +116793,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:05:50.662227Z'
+    agent: codex
+    session_id: https://github.com/organvm/domus-genoma/pull/174
+    status: dispatched
 - id: HEAL-rebase-organvm-domus-genoma-175
   title: rebase/resolve conflicts on organvm/domus-genoma#175
   repo: organvm/domus-genoma
@@ -116953,10 +117007,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#182
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -116973,7 +117027,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:51:31.137192Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -117000,6 +117054,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-domus-genoma-183
   title: rebase/resolve conflicts on organvm/domus-genoma#183
   repo: organvm/domus-genoma
@@ -121158,7 +121217,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -121175,7 +121234,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T21:45:37.318555Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -121196,6 +121255,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: aw-agy-scratch-preserve-0709
   title: Archive-first preservation of Antigravity scratch roots (22 GiB prompt-corpus
     material)
@@ -122125,10 +122189,10 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#231
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
@@ -122146,7 +122210,7 @@ tasks:
     \ [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T21:33:56.281660Z'
+  updated: '2026-07-09T22:05:58.556168Z'
   dispatch_log:
   - timestamp: '2026-07-09T21:29:53.501621Z'
     agent: agy
@@ -122158,6 +122222,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-09T22:05:58.556168Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-cifix-organvm-domus-genoma-233
   title: fix failing CI on organvm/domus-genoma#233
   repo: organvm/domus-genoma
@@ -122203,14 +122272,15 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#235
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/domus-genoma/pull/235
   context: "PR organvm/domus-genoma#235 has FAILING CI checks and merge-drain correctly\
@@ -122223,13 +122293,17 @@ tasks:
     \ [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T21:29:53.501621Z'
+  updated: '2026-07-09T22:05:50.662227Z'
   dispatch_log:
   - timestamp: '2026-07-09T21:29:53.501621Z'
     agent: gemini
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:05:50.662227Z'
+    agent: gemini
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-rebase-organvm-dot-github--theoria-459
   title: rebase/resolve conflicts on organvm/dot-github--theoria#459
   repo: organvm/dot-github--theoria
