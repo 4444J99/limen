@@ -164,6 +164,7 @@ C_POSITIONING="${LIMEN_BEAT_POSITIONING:-12}"  # POSITIONING (refresh inbound-ma
 C_AVTOPOIESIS="${LIMEN_BEAT_AVTOPOIESIS:-12}"  # AVTOPOIESIS (is each door alive? past/present/future — distance-from-ideal; gated OFF)
 C_EVOCATOR="${LIMEN_BEAT_EVOCATOR:-6}"   # EVOCATOR (the summoner — keep canonical truths present in every channel: FLAME/beat, corpus, memory)
 C_HEALTH="${LIMEN_BEAT_HEALTH:-6}"       # CARE (refresh the personal health office: chart digest + visit-prep + clinical-loop chase; PII off-repo)
+C_MAT="${LIMEN_BEAT_MAT:-8}"             # MAT (daily-engine keeper: session pull + card pre-compose + roadblocks; ~20h self-throttle in-organ; counts-only off-repo)
 C_LIFE="${LIMEN_BEAT_LIFE:-6}"           # STEWARD (refresh the digital-life office: accounts/assets/subscription purge clock; PII off-repo)
 C_GOVERNANCE="${LIMEN_BEAT_GOVERNANCE:-8}" # GOVERN (run the cursus honorum seed validator + governance standing report)
 C_FINANCIAL="${LIMEN_BEAT_FINANCIAL:-8}"   # FINANCE (run the financial-office consolidator + advance maturity)
@@ -516,6 +517,9 @@ while true; do
   # HEALTH — the personal health office (chart digest + visit-prep + clinical-loop chase; PII stays
   # local, off-repo; lockless, read-only). Refreshes the office every C_HEALTH beats. Fail-open.
   due_voice health "$C_HEALTH"  && { python3 "$LIMEN_ROOT/scripts/health-organ.py" 2>&1 | tail -1 || true; stamp health; }
+  # MAT — the daily-engine keeper (private-tree session pull + day-card pre-compose + roadblocks
+  # queue; organ self-throttles to ~1 fire/day; counts-only state, PII stays off-repo). Fail-open.
+  due_voice mat "$C_MAT"        && { python3 "$LIMEN_ROOT/scripts/mat-organ.py" 2>&1 | tail -1 || true; stamp mat; }
   # LIFE — the digital-life office (accounts/assets/subscriptions; PII stays local, off-repo;
   # lockless, read-only). Refreshes the life briefing + open-actions + derives the subscription
   # purge clock every C_LIFE beats. Fail-open.

@@ -28,6 +28,13 @@ organs:
     role: "Naming institution (U>V…). CI gate already fails on bad names."
     residual: []
 
+  - name: mat
+    layer: somatic
+    home: "limen/scripts/mat-organ.py (beat C_MAT) -> private daily-engine tree (mode-700, off-repo)"
+    status: built
+    role: "Daily-engine keeper: idempotent ChatGPT-session pull, day-card pre-compose (iCloud mirror freshness), roadblocks-queue refresh. Counts-only state in logs/mat-organ-state.json; ~20h self-throttle."
+    residual: []
+
   - name: the-seat
     layer: spine
     home: limen/institutio/registry/organs.yaml

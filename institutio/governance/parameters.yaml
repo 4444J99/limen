@@ -780,6 +780,25 @@ parameters:
     self_update: none
     owner: health
     note: "Off-repo home of the medical chart (chart.json). Structurally uncommittable; the organ reads it and never mutates it. No PII reaches logs/, web/, or stdout."
+  # --- MAT: the daily-engine keeper (private training/day-spine engine) ---
+  LIMEN_BEAT_MAT:
+    default: 8                  # cadence: offer the mat organ a fire every 8 beats (it self-throttles to ~1/day)
+    env: LIMEN_BEAT_MAT
+    self_update: none
+    owner: mat
+    note: "Beat cadence for the daily-engine keeper. The organ's own ~20h throttle makes real fires ~daily regardless of tempo. Fail-open."
+  LIMEN_MAT_DIR:
+    default: "~/Workspace/_health-private/daily-mat-strength-brainstorms"
+    env: LIMEN_MAT_DIR
+    self_update: none
+    owner: mat
+    note: "Off-repo home of the private daily engine (mode-700). The organ invokes the tree's own tools (pull, compose, roadblocks); counts-only state reaches logs/. No content, titles, or PII leaves the tree."
+  LIMEN_MAT_THROTTLE_HOURS:
+    default: 20                 # organ-internal throttle between real fires
+    env: LIMEN_MAT_THROTTLE_HOURS
+    self_update: none
+    owner: mat
+    note: "Self-throttle window so beat-cadence offers collapse to ~one real fire per day."
   LIMEN_HEALTH_OVERDUE_DAYS:
     default: 14                 # a clinical follow-up is overdue 14 days past its due date
     env: LIMEN_HEALTH_OVERDUE_DAYS
