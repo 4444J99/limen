@@ -1566,6 +1566,61 @@ def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkey
     assert "tried:claude" in task.labels
 
 
+def test_remote_service_failure_skips_unarmed_ollama_floor(monkeypatch) -> None:
+    import datetime
+
+    monkeypatch.setattr(D, "_lane_cascade", lambda: ["jules", "ollama", "opencode"])
+    monkeypatch.setattr(D, "local_floor_enabled", lambda: False)
+
+    task = Task(
+        id="REMOTE-FAIL",
+        title="remote service failure",
+        repo="organvm/limen",
+        type="code",
+        target_agent="jules",
+        status="open",
+        created=date(2026, 7, 9),
+        labels=[],
+    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    D._apply_result(task, "jules", False, now, BudgetTrack(date="2026-07-09"))
+
+    assert task.status == "open"
+    assert task.target_agent == "opencode"
+    assert task.dispatch_log[-1].status == "failed->opencode"
+    assert task.dispatch_log[-1].output == "remote/service lane failed; reopened to healthy fleet cascade"
+    assert "tried:jules" in task.labels
+
+
+def test_remote_service_failure_can_use_armed_matching_ollama_floor(monkeypatch) -> None:
+    import datetime
+
+    monkeypatch.setattr(D, "_lane_cascade", lambda: ["jules", "ollama", "opencode"])
+    monkeypatch.setattr(D, "local_floor_enabled", lambda: True)
+    monkeypatch.setattr(D, "local_floor_classes", lambda: {"scan"})
+    monkeypatch.setattr(D, "ollama_model", lambda: "qwen3:8b")
+
+    task = Task(
+        id="REMOTE-FLOOR",
+        title="remote service floor fallback",
+        repo="organvm/limen",
+        type="scan",
+        target_agent="jules",
+        status="open",
+        created=date(2026, 7, 9),
+        labels=[],
+    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    D._apply_result(task, "jules", False, now, BudgetTrack(date="2026-07-09"))
+
+    assert task.status == "open"
+    assert task.target_agent == "ollama"
+    assert task.dispatch_log[-1].status == "failed->ollama"
+    assert "tried:jules" in task.labels
+
+
 def test_default_cascade_uses_reachable_auto_lanes(monkeypatch) -> None:
     import datetime
 

@@ -13,8 +13,10 @@ Usage (spawned detached by dispatch-async.py; rarely run by hand):
 """
 import argparse
 import datetime
+import hashlib
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -25,6 +27,23 @@ from limen.dispatch import call_agent_dispatch  # noqa: E402
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 RUNS = ROOT / "logs" / "async-runs"
+_SAFE_STEM_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def _run_stem(task_id: str) -> str:
+    if _SAFE_STEM_RE.fullmatch(task_id):
+        return task_id
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "_", task_id).strip("._-") or "task"
+    digest = hashlib.sha1(task_id.encode("utf-8")).hexdigest()[:12]
+    return f"{slug[:80]}--{digest}"
+
+
+def _result_path(task_id: str) -> Path:
+    return RUNS / f"{_run_stem(task_id)}.result.json"
+
+
+def _running_marker_path(task_id: str, agent: str) -> Path:
+    return RUNS / f"{_run_stem(task_id)}__{agent}.running"
 
 
 def heal_outcome(task, result):
@@ -93,11 +112,11 @@ def main() -> int:
         derived = heal_outcome(task, result)
         if derived:
             out.update(derived)
-    tmp = RUNS / f"{a.task_id}.result.tmp"
+    tmp = _result_path(a.task_id).with_suffix(".tmp")
     tmp.write_text(json.dumps(out))
-    tmp.replace(RUNS / f"{a.task_id}.result.json")  # atomic publish
+    tmp.replace(_result_path(a.task_id))  # atomic publish
     try:
-        (RUNS / f"{a.task_id}__{a.agent}.running").unlink()
+        _running_marker_path(a.task_id, a.agent).unlink()
     except OSError:
         pass
     return 0

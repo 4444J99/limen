@@ -20,6 +20,8 @@ from limen.capacity import (
     capacity_census,
     format_capacity_census,
     github_issue_ref,
+    local_floor_classes,
+    local_floor_enabled,
     ollama_model,
     select_lanes,
 )
@@ -1606,12 +1608,16 @@ def _next_lane(current: str) -> str | None:
     return cascade[i + 1] if i + 1 < len(cascade) else None
 
 
-def _fallback_dispatch_lane() -> str | None:
+def _fallback_dispatch_lane(*, exclude: set[str] | None = None) -> str | None:
+    excluded = exclude or set()
     cascade = _lane_cascade()
     for agent in cascade:
-        if agent in _LOCAL_AGENTS:
+        if agent not in excluded and agent in _LOCAL_AGENTS:
             return agent
-    return cascade[0] if cascade else "any"
+    for agent in cascade:
+        if agent not in excluded:
+            return agent
+    return "any"
 
 
 _REMOTE_SERVICE_LANES = {"jules", "copilot", "github_actions", "warp", "oz"}
@@ -1619,6 +1625,31 @@ _REMOTE_SERVICE_LANES = {"jules", "copilot", "github_actions", "warp", "oz"}
 
 def _cascade_or_requeue(agent: str) -> str:
     return _next_lane(agent) or _fallback_dispatch_lane() or "any"
+
+
+def _local_floor_allowed_for_task(task: Task) -> bool:
+    try:
+        if not local_floor_enabled():
+            return False
+        if not task.repo:
+            return False
+        classes = _task_classes(task)
+        if not classes & local_floor_classes():
+            return False
+        if classes & (_claude_opus_classes() | _claude_fable_classes()):
+            return False
+        return ollama_model() is not None
+    except Exception:
+        return False
+
+
+def _remote_service_failure_lane(task: Task, agent: str) -> str:
+    floor_allowed = _local_floor_allowed_for_task(task)
+    next_lane = _next_lane(agent)
+    if next_lane and (next_lane != "ollama" or floor_allowed):
+        return next_lane
+    fallback = _fallback_dispatch_lane(exclude=set() if floor_allowed else {"ollama"})
+    return fallback or ("ollama" if floor_allowed else "any")
 
 
 def _agy_live_root_registry_task(task: Task) -> bool:
@@ -2898,16 +2929,15 @@ def _apply_result(
         tried = f"tried:{agent}"
         if tried not in task.labels:
             task.labels.append(tried)
-        next_lane = _next_lane(agent)
-        if next_lane:
-            entry.status = f"failed->{next_lane}"
-            task.target_agent = next_lane
-            task.status = "open"
-        elif agent in _REMOTE_SERVICE_LANES:
-            fallback = _fallback_dispatch_lane() or "any"
+        if agent in _REMOTE_SERVICE_LANES:
+            fallback = _remote_service_failure_lane(task, agent)
             entry.status = f"failed->{fallback}"
             entry.output = "remote/service lane failed; reopened to healthy fleet cascade"
             task.target_agent = fallback
+            task.status = "open"
+        elif next_lane := _next_lane(agent):
+            entry.status = f"failed->{next_lane}"
+            task.target_agent = next_lane
             task.status = "open"
         else:
             entry.status = "failed"

@@ -63,6 +63,7 @@ RECEIPT_ARCHIVE = ROOT / ".limen-private" / "async-runs" / "archive"
 WORKER = ROOT / "scripts" / "async-run-one.py"
 _TOKEN_RE = re.compile(r"(github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{12,})")
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
+_SAFE_STEM_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
 def _truthy_env(name: str, default: bool = True) -> bool:
@@ -106,10 +107,58 @@ def _now():
     return datetime.datetime.now(datetime.timezone.utc)
 
 
+def _run_stem(task_id: str) -> str:
+    """Return a filename-safe stem while leaving legacy safe task ids unchanged."""
+    if _SAFE_STEM_RE.fullmatch(task_id):
+        return task_id
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "_", task_id).strip("._-") or "task"
+    digest = hashlib.sha1(task_id.encode("utf-8")).hexdigest()[:12]
+    return f"{slug[:80]}--{digest}"
+
+
+def _run_log_path(task_id: str) -> Path:
+    return RUNS / f"{_run_stem(task_id)}.log"
+
+
+def _result_path(task_id: str) -> Path:
+    return RUNS / f"{_run_stem(task_id)}.result.json"
+
+
+def _running_marker_path(task_id: str, agent: str) -> Path:
+    return RUNS / f"{_run_stem(task_id)}__{agent}.running"
+
+
+def _marker_task_agent(marker: Path) -> tuple[str, str]:
+    try:
+        data = json.loads(marker.read_text(encoding="utf-8"))
+        task_id = str(data.get("task_id") or "")
+        agent = str(data.get("agent") or "")
+        if task_id and agent:
+            return task_id, agent
+    except (OSError, ValueError):
+        pass
+    return marker.name[: -len(".running")].rsplit("__", 1)
+
+
+def _result_task_id(result_file: Path) -> str:
+    try:
+        data = json.loads(result_file.read_text(encoding="utf-8"))
+        task_id = str(data.get("task_id") or "")
+        if task_id:
+            return task_id
+    except (OSError, ValueError):
+        pass
+    return result_file.name[: -len(".result.json")]
+
+
 def _clear_running_markers(task_id: str) -> None:
     prefix = f"{task_id}__"
     for marker in RUNS.glob("*.running"):
-        if marker.name.startswith(prefix):
+        try:
+            marker_task_id, _agent = _marker_task_agent(marker)
+        except ValueError:
+            marker_task_id = ""
+        if marker_task_id == task_id or marker.name.startswith(prefix):
             marker.unlink(missing_ok=True)
 
 
@@ -296,9 +345,9 @@ def reap_stale(max_age_s: int):
     defunct_grace_s = max(1, _env_int("LIMEN_ASYNC_DEFUNCT_GRACE", 120))
     reaped = []
     marker_task_ids = set()
-    result_task_ids = {rf.name[: -len(".result.json")] for rf in RUNS.glob("*.result.json")}
+    result_task_ids = {_result_task_id(rf) for rf in RUNS.glob("*.result.json")}
     for m in RUNS.glob("*__*.running"):
-        tid, agent = m.name[: -len(".running")].rsplit("__", 1)
+        tid, agent = _marker_task_agent(m)
         marker_task_ids.add(tid)
         try:
             info = _running_marker_info(m)
@@ -311,12 +360,12 @@ def reap_stale(max_age_s: int):
         zombie_stuck = isinstance(pid, int) and age > defunct_grace_s and _worker_has_defunct_child(pid)
         if age > max_age_s:
             # if the worker DID finish (result file present), let harvest handle it; don't reap
-            if not (RUNS / f"{tid}.result.json").exists():
+            if not _result_path(tid).exists():
                 # Defer the marker unlink until the reopen is committed under the lock (below), so a
                 # lock timeout can't leave the slot leaked (marker gone, task still 'dispatched').
                 reaped.append((tid, agent, m, pid if isinstance(pid, int) else None))
         elif dead_pid or zombie_stuck:
-            if not (RUNS / f"{tid}.result.json").exists():
+            if not _result_path(tid).exists():
                 reaped.append((tid, agent, m, pid if isinstance(pid, int) else None))
     markerless = []
     try:
@@ -382,10 +431,8 @@ def reap_stale(max_age_s: int):
                         )
                         changed = True
             if markerless:
-                fresh_marker_task_ids = {
-                    m.name[: -len(".running")].rsplit("__", 1)[0] for m in RUNS.glob("*__*.running")
-                }
-                fresh_result_task_ids = {rf.name[: -len(".result.json")] for rf in RUNS.glob("*.result.json")}
+                fresh_marker_task_ids = {_marker_task_agent(m)[0] for m in RUNS.glob("*__*.running")}
+                fresh_result_task_ids = {_result_task_id(rf) for rf in RUNS.glob("*.result.json")}
                 for tid, agent in markerless:
                     t = byid.get(tid)
                     if (
@@ -461,8 +508,8 @@ def inspect_stale(max_age_s: int) -> list[str]:
         except Exception:
             age = max_age_s + 1
         if age > max_age_s:
-            tid, _agent = m.name[: -len(".running")].rsplit("__", 1)
-            if not (RUNS / f"{tid}.result.json").exists():
+            tid, _agent = _marker_task_agent(m)
+            if not _result_path(tid).exists():
                 stale.append(tid)
     return stale
 
@@ -489,27 +536,27 @@ def _running_local() -> int:
     budget, not this local cap."""
     total = 0
     for m in RUNS.glob("*__*.running"):
-        agent = m.name[: -len(".running")].rsplit("__", 1)[1]
+        _task_id, agent = _marker_task_agent(m)
         if agent not in _ASYNC_LANES:
             total += 1
     return total
 
 
 def _running_for(agent: str) -> int:
-    return len(list(RUNS.glob(f"*__{agent}.running")))
+    return sum(1 for marker in RUNS.glob("*__*.running") if _marker_task_agent(marker)[1] == agent)
 
 
 def _running_task_ids() -> set[str]:
     ids: set[str] = set()
     for marker in RUNS.glob("*__*.running"):
-        task_part = marker.name[: -len(".running")].rsplit("__", 1)[0]
+        task_part = _marker_task_agent(marker)[0]
         if task_part:
             ids.add(task_part)
     return ids
 
 
 def _result_task_ids() -> set[str]:
-    return {rf.name[: -len(".result.json")] for rf in RUNS.glob("*.result.json")}
+    return {_result_task_id(rf) for rf in RUNS.glob("*.result.json")}
 
 
 def _claimed_task_ids() -> set[str]:
@@ -700,7 +747,7 @@ def reserve_and_launch(agents, per_agent, cap, dry, task_id=None, *, admission_c
             save_limen_file(TASKS, lf)
     # outside the lock: write markers + spawn detached workers (fast; we never wait on them)
     for agent, tid in picked:
-        logf = open(RUNS / f"{tid}.log", "a")
+        logf = open(_run_log_path(tid), "a")
         proc = subprocess.Popen(
             [sys.executable, str(WORKER), "--agent", agent, "--task-id", tid],
             stdout=logf,
@@ -709,7 +756,7 @@ def reserve_and_launch(agents, per_agent, cap, dry, task_id=None, *, admission_c
             start_new_session=True,
             env={**os.environ, "PYTHONPATH": str(ROOT / "cli" / "src")},
         )
-        (RUNS / f"{tid}__{agent}.running").write_text(
+        _running_marker_path(tid, agent).write_text(
             json.dumps({"started_at": now.isoformat(), "agent": agent, "task_id": tid, "pid": proc.pid})
         )
     return picked
