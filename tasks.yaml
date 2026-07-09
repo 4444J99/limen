@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 279
+      spent: 286
       per_agent:
         jules: 40
         gemini: 7
         codex: 13
         opencode: 121
-        agy: 81
-        claude: 16
+        agy: 85
+        claude: 19
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-09T12:38:52.573549+00:00'
@@ -98359,12 +98359,13 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:jules
+  - noop
   urls:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/717
   context: 'PR organvm/peer-audited--behavioral-blockchain#717 is CONFLICTING with
@@ -98375,7 +98376,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T22:14:54.969305Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -98407,6 +98408,16 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-09T22:14:29.119069Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:14:54.969305Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-stale-organvm-peer-audited--behavioral-blockchain-718
   title: "rebase organvm/peer-audited--behavioral-blockchain#718 onto current base\
     \ \u2014 branched far behind"
@@ -103769,7 +103780,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -103786,7 +103797,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T22:14:54.969305Z'
   dispatch_log:
   - timestamp: '2026-07-04T21:19:41.793939Z'
     agent: github_actions
@@ -103829,6 +103840,16 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-09T22:14:29.119069Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:14:54.969305Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-peer-audited--behavioral-blockchain-767
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#767
   repo: organvm/peer-audited--behavioral-blockchain
@@ -104259,12 +104280,13 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - noop
   urls:
   - https://github.com/organvm/portfolio/pull/157
   context: 'PR organvm/portfolio#157 is CONFLICTING with its base branch and merge-drain
@@ -104275,7 +104297,7 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:50:53.394389Z'
+  updated: '2026-07-09T22:14:54.969305Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -104286,6 +104308,16 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T22:14:29.119069Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:14:54.969305Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-portfolio-169
   title: rebase/resolve conflicts on organvm/portfolio#169
   repo: organvm/portfolio
@@ -114380,7 +114412,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -114397,7 +114429,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T22:05:58.556168Z'
+  updated: '2026-07-09T22:14:29.119069Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -114429,6 +114461,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-09T22:14:29.119069Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-organvm-mirror-mirror-86
   title: "rebase organvm/mirror-mirror#86 onto current base \u2014 branched far behind"
   repo: organvm/mirror-mirror
@@ -116703,16 +116740,17 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#160
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
   - noop
+  - tried:claude
   urls:
   - https://github.com/organvm/domus-genoma/pull/160
   context: 'PR organvm/domus-genoma#160 is CONFLICTING with its base branch and merge-drain
@@ -116723,7 +116761,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T22:08:51.491276Z'
+  updated: '2026-07-09T22:14:12.746570Z'
   dispatch_log:
   - timestamp: '2026-07-09T04:28:26.790563Z'
     agent: jules
@@ -116769,6 +116807,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:14:12.746570Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-rebase-organvm-domus-genoma-163
   title: rebase/resolve conflicts on organvm/domus-genoma#163
   repo: organvm/domus-genoma
@@ -117212,7 +117254,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T22:08:51.491276Z'
+  updated: '2026-07-09T22:14:54.969305Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -117249,6 +117291,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:14:54.969305Z'
+    agent: claude
+    session_id: https://github.com/organvm/domus-genoma/pull/182
+    status: dispatched
 - id: HEAL-rebase-organvm-domus-genoma-183
   title: rebase/resolve conflicts on organvm/domus-genoma#183
   repo: organvm/domus-genoma
@@ -121029,12 +121075,13 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:opencode
+  - noop
   urls:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/733
   context: 'PR organvm/peer-audited--behavioral-blockchain#733 is CONFLICTING with
@@ -121045,7 +121092,7 @@ tasks:
     [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T22:14:54.969305Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -121062,6 +121109,16 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-09T22:14:29.119069Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:14:54.969305Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-752
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#752
   repo: organvm/peer-audited--behavioral-blockchain
@@ -121130,7 +121187,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -121145,7 +121202,13 @@ tasks:
     [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  dispatch_log: []
+  updated: '2026-07-09T22:14:29.119069Z'
+  dispatch_log:
+  - timestamp: '2026-07-09T22:14:29.119069Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-775
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#775
   repo: organvm/peer-audited--behavioral-blockchain
@@ -121153,7 +121216,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -121170,7 +121233,7 @@ tasks:
     [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T20:50:53.394389Z'
+  updated: '2026-07-09T22:14:29.119069Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -121191,6 +121254,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T22:14:29.119069Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-766
   title: 'censor: Recurring friction across 3 insights reports: Closeout stall loops
     and premature completion claims'
@@ -121313,11 +121381,12 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/135
   context: 'PR organvm/domus-genoma#135 is CONFLICTING with its base branch and merge-drain
@@ -121328,7 +121397,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T22:12:50.624227Z'
+  updated: '2026-07-09T22:14:12.746570Z'
   dispatch_log:
   - timestamp: '2026-07-09T21:20:20.353186Z'
     agent: claude
@@ -121349,6 +121418,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:14:12.746570Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-domus-genoma-139
   title: rebase/resolve conflicts on organvm/domus-genoma#139
   repo: organvm/domus-genoma
