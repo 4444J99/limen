@@ -154,19 +154,7 @@ Isolate work in a **git worktree so the live fleet is untouched** (see `GEMINI.m
 - **The full matrix below is a pre-merge event, not a per-session tax.** Run it — or let CI run it — only when the diff touches deploy-trigger paths (the website guardrail `merge-policy.sh` enforces at merge time), when scoping cannot attribute the change, or on explicit request.
 - **`verify-whole.sh` is machine-serialized** via a lock file (`LIMEN_VERIFY_LOCK_FILE`; opt-out `LIMEN_VERIFY_NO_LOCK=1` for single-purpose CI runners): concurrent runs from parallel sessions wait instead of stampeding the host with simultaneous npm installs, workerd boots, and production builds.
 
-The full matrix, for when it *is* implicated:
-
-| Gate | Command |
-|------|---------|
-| Lint | `python -m ruff check cli/src cli/tests web/api mcp ianva` |
-| Format | `python -m ruff format --check cli/src cli/tests web/api mcp ianva` |
-| Type-check | `python -m mypy src/limen/` (from `cli/`) and `python -m mypy --ignore-missing-imports mcp/src/limen_mcp/ ianva/src/ianva/` |
-| Compile | `python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py` |
-| Tests | `python -m pytest web/api/tests cli/tests -q` |
-| Contracts / surfaces | `node scripts/validate-contract-schemas.mjs` |
-| Worker | `npm run check` (in `web/worker`) |
-| Build | `npm run build` (in `web/app`) |
-| Whole-system | `scripts/verify-whole.sh` |
+**The gate estate is declared data, not a hand-maintained table.** Every gate — command, implicating paths, cost tier, machine-serialization — lives in [`institutio/governance/gates.yaml`](institutio/governance/gates.yaml) (the GATES registry, the parameter-panel pattern one domain over). `scripts/verify.py --list` prints the live matrix; `scripts/verify.py --changed` is what the scoped wrapper runs; `scripts/verify-whole.sh` remains the whole-system predicate and derives its file lists from the same registry. `scripts/check-gates.py` (wired into pr-gate on every PR) holds the registry to the workflows and consumers — adding a gate = adding **one registry entry**, and a drifted copy anywhere is a red check, not a memory chore.
 
 - For each failure, **fix root-to-leaf and re-run the implicated gates** — loop until they pass end-to-end (the full matrix only when the diff implicates it). Do not chase one gate green while another regresses.
 - **Surface masked failures from dependency bumps** — a green that only passes because a check was skipped or a dependency silently changed behavior.
@@ -248,10 +236,7 @@ that reason.
 
 **Merge authority (standing grant).** Claude merges its own PRs into `main` *without asking*, the moment they are green and mergeable. Do not defer routine merges to the human operator. The grant has exactly one guardrail.
 
-**The website guardrail.** A merge to `main` **auto-deploys** the live public site/API — but *only* when the diff touches a deploy-trigger path:
-
-- **Dashboard** (`deploy.yml` → Cloudflare Pages; Firebase step dormant pending a credential that exists nowhere): `web/app/**`, `firebase.json`, `tasks.yaml`, `.github/workflows/deploy.yml`
-- **API** (`deploy-api.yml` → Cloud Run / Worker): `web/api/**`, `cli/**`, `scripts/preflight-cloud-run.sh`, `.github/workflows/deploy-api.yml`
+**The website guardrail.** A merge to `main` **auto-deploys** the live public site/API — but *only* when the diff touches a deploy-trigger path. The trigger paths are **declared once** in the `deploy_triggers` block of [`institutio/governance/gates.yaml`](institutio/governance/gates.yaml) (dashboard → `deploy.yml` → Cloudflare Pages, Firebase step dormant; API → `deploy-api.yml` → Cloud Run / Worker); `merge-policy.sh` derives its classification from that registry, and `check-gates.py` holds the registry in exact parity with the workflows on every PR — do not restate the path list here or anywhere else.
 
 For a **website-sensitive** PR, merging *is* the deploy — so it requires **green CI first** (plus a local `web/app` build for dashboard changes). Never blind-merge a live deploy. For every **other** PR (docs, corpus, mcp, ianva, memory, `web/worker`, most of `scripts/**`), merge freely once CLEAN. (`web/worker` is the live runtime but deploys on-demand via wrangler, not on merge — so its merges don't auto-deploy.)
 
@@ -262,6 +247,6 @@ For a **website-sensitive** PR, merging *is* the deploy — so it requires **gre
 - exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or non-deploy checks still running. Wait for green, then merge.
 - exit **3 BLOCKED** → GitHub itself refuses the merge: conflicts (DIRTY), stale base (BEHIND), or a branch-protection gate unsatisfied (BLOCKED — e.g. the required `pr-gate` check never ran on a PR opened before that check existed). Rebase onto current `main` first (the PR#111 silent-revert guard; a rebase also retriggers the required checks), then re-run. If BLOCKED persists after a clean green rebase, a required review or admin merge is needed — surface it, don't force it.
 
-The script carries a **staleness guard**: if the deploy-trigger paths in `deploy*.yml` ever drift from its hardcoded list, it warns and fails *toward caution* (treats the PR as website-sensitive). Keep the path list in the script and in this section in lockstep with the workflows.
+The script **derives** its deploy classification from the GATES registry at run time and fails *toward caution*: if derivation is impossible (broken python/PyYAML/registry), it forces website-sensitive, so a broken environment can only HOLD, never blind-deploy. There is no path list to keep in lockstep — `check-gates.py` enforces registry↔workflow parity on every PR.
 
 **Still human-gated levers** (unchanged): mass cross-org/fleet merges, anything that **sends** (email) or **wipes/deletes**, and **large spends**. Those stay human-gated; routine code merges do not.
