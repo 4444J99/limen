@@ -172,7 +172,7 @@
       "label": "Clear the card-0186 Santander fraud hold — one phone call. This hold is the ROOT of the billing locks: clearing it frees the Stripe/subscription path AND Anthropic + GitHub autopay, and likely unsticks the gemini Google-project suspension (403 CONSUMER_SUSPENDED) behind L-FLEET-CAPACITY. Not required for dollar #1 — the individual MoR rails (Ko-fi/PayPal/Lemon Squeezy on a-i-chat--exporter) are already unblocked — but it is the single upstream cause of the most downstream locks.",
       "owner": "yours",
       "cost": "one Santander call",
-      "unlocks": "Stripe/subscription path + Anthropic & GitHub autopay; likely clears the gemini project suspension behind L-FLEET-CAPACITY",
+      "unlocks": "Stripe/subscription path + Anthropic & GitHub autopay; likely clears the gemini project suspension behind L-FLEET-CAPACITY; NEW blast radius observed 2026-07-09: (a) organvm PRIVATE-repo Actions CI is billing-blocked (\"recent account payments have failed\") — the heal lane cannot reach green CI on mirror-mirror / session-meta / the-invisible-ledger (4 heals parked failed_blocked on this); (b) the Anthropic monthly spend limit is hit and cannot re-arm on a frozen card — subagent fan-out died mid-cycle. Each new symptom raises what this one phone call unlocks.",
       "source_task": "billing-lock root (life-os-mandate: card-0186 fraud-hold)",
       "gate": "a phone call only you can place to your bank — never automatable",
       "issue": 182
