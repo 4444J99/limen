@@ -1696,6 +1696,18 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Per-description character cap the Codex slimmer distills to. Lower it if Codex still warns that descriptions were shortened; raise it to preserve more of each description. The knob, not a hardcode."
+  LIMEN_ROUTINE_FRESHNESS:
+    default: "1"               # ON — audit cloud-routine delivery freshness each beat
+    env: LIMEN_ROUTINE_FRESHNESS
+    self_update: none
+    owner: continuity
+    note: "Beat gate for the cloud-routine delivery freshness audit (scripts/routine-freshness-audit.py --throttle 21600) run by metabolize.sh step 0e. Closes the firing!=delivering gap (atom-backlog-triage 25-day silence precedent): probes rolling-issue comment timestamps via gh for the 13 routines in cloud-routines.json; any routine silent beyond 2x its max_silent_days gets a needs_human atom hung in the permanent queue. Self-throttled to ~6h. Fail-open, never fatal. 1=enabled; 0=skip."
+  LIMEN_ROUTINE_FRESHNESS_THROTTLE:
+    default: 21600
+    env: LIMEN_ROUTINE_FRESHNESS_THROTTLE
+    self_update: none
+    owner: continuity
+    note: "Throttle window in seconds for the cloud-routine delivery freshness audit. Skip the run if logs/routine-freshness.json is younger than this. Default 21600 (6h) so the organ does not flood the GitHub API each beat. Override with 0 (or pass --force) to force a run."
   LIMEN_ARCA:
     default: "1"               # ON — seal the private estate every beat
     env: LIMEN_ARCA

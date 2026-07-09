@@ -1,0 +1,124 @@
+{
+  "_doc": "SSOT manifest of claude.ai scheduled cloud routines. The RemoteTrigger API is in-session-only so beat scripts audit the DELIVERY side (rolling-issue comments) via gh; any session that edits routines in claude.ai must update this manifest.",
+  "generated_at": "2026-07-08",
+  "routines": [
+    {
+      "name": "stale-pr-sweep",
+      "issue_repo": "4444J99/session-meta",
+      "issue": 36,
+      "cadence": "weekdays",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "irf-p0-surface",
+      "issue_repo": "a-organvm/organvm-corpvs-testamentvm",
+      "issue": 489,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "fleet-audit",
+      "issue_repo": "4444J99/session-meta",
+      "issue": 34,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "jules-backlog-curation",
+      "issue_repo": "4444J99/session-meta",
+      "issue": 29,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "uv-dep-refresh",
+      "issue_repo": null,
+      "issue": null,
+      "cadence": "weekly",
+      "class": "pr-delivery",
+      "max_silent_days": 14,
+      "enabled": true
+    },
+    {
+      "name": "plans-orphan-audit",
+      "issue_repo": "4444J99/session-meta",
+      "issue": 32,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "atom-backlog-triage",
+      "issue_repo": "a-organvm/organvm-corpvs-testamentvm",
+      "issue": null,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true,
+      "note": "2026-07-08 contract fix: source+delivery repointed to corpvs (old session-meta#33 superseded; source file never existed); issue number pending first delivered run"
+    },
+    {
+      "name": "limen-disposition-triage",
+      "issue_repo": "4444J99/session-meta",
+      "issue": 79,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "friction-federation",
+      "issue_repo": "4444J99/session-meta",
+      "issue": 28,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "docs-stranger-test",
+      "issue_repo": "4444J99/session-meta",
+      "issue": 30,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "omega-scorecard",
+      "issue_repo": "a-organvm/organvm-corpvs-testamentvm",
+      "issue": 490,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "memory-index-audit",
+      "issue_repo": "4444J99/domus-genoma",
+      "issue": 96,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    },
+    {
+      "name": "daily-cloud-digest",
+      "issue_repo": "4444J99/session-meta",
+      "issue": 31,
+      "cadence": "daily",
+      "class": "delta-gated",
+      "max_silent_days": 7,
+      "enabled": true
+    }
+  ]
+}

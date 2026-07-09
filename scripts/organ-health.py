@@ -310,6 +310,13 @@ def _registry():
         dict(key="continuity", voice="continuity",
              what="per-lane dispatch continuity (no silent lane while queue+budget exist)",
              probe=lambda: _json_field_ts(LOGS / "dispatch-continuity.json", "generated")),
+        # no cadence_key: routine-freshness-audit runs inside metabolize.sh step 0e (not a standalone
+        # heartbeat voice), so it claims no cadence and never trips the absent-from-heartbeat drift
+        # check; green when its per-beat state stamp (logs/routine-freshness.json) is fresh.
+        dict(key="routines", rung="ROUTINES", voice="routines",
+             gate="LIMEN_ROUTINE_FRESHNESS", gate_default="1",
+             what="cloud-routine delivery freshness (13 routines; firing must equal delivering)",
+             probe=lambda: _json_field_ts(LOGS / "routine-freshness.json", "generated")),
     ]
 
 

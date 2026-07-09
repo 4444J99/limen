@@ -119,6 +119,19 @@ Done from receipt: `6`
   - `https://github.com/organvm/limen/issues/687`
   - `https://github.com/4444J99`
 
+### ROUTINE-FRESHNESS
+
+- Lane fit: `codex-local`
+- Repo/root: `~/Workspace/limen`
+- Task: Audit cloud-routine delivery freshness — detect routines that fire but stop writing to their rolling GitHub issues.
+- Predicate: `python3 scripts/routine-freshness-audit.py --check`
+- Receipt target: `~/Workspace/limen/logs/routine-freshness.json`
+- Stop condition: all enabled routines are green or unmonitored; any down routine has a needs_human atom in the permanent queue
+- Existing receipts:
+  - `~/Workspace/limen/cloud-routines.json`
+  - `~/Workspace/limen/scripts/routine-freshness-audit.py`
+  - `~/Workspace/limen/cli/tests/test_routine_freshness.py`
+
 ### MAIL-ACTIVE-FLAGGED
 
 - Lane fit: `local-codex-or-opencode`

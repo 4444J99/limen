@@ -159,6 +159,17 @@ if [ "${LIMEN_CODEX_SLIM:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/codex-skill-slim.py" --apply --quiet || echo "  (codex-skill-slim skipped — no codex config/cache)"
 fi
 
+echo "── 0i. routine freshness — detect cloud routines that fire but stop delivering ──"
+# The gap this closes (atom-backlog-triage 25-day silence precedent): a cloud routine can FIRE
+# (its scheduler triggers it in claude.ai) without DELIVERING (writing a comment to its rolling
+# GitHub issue). This organ proves firing == delivering on every beat by querying rolling-issue
+# comment timestamps via gh; any routine silent beyond 2x its max_silent_days gets a needs_human
+# atom hung in the permanent queue. Self-throttled to ~6h so the beat never floods the network.
+# Fail-open, never fatal.
+if [ "${LIMEN_ROUTINE_FRESHNESS:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/routine-freshness-audit.py" --throttle 21600 || echo "  (routine freshness skipped)"
+fi
+
 echo "── 1. drain (close completed Jules) ──"
 bash "$LIMEN_ROOT/scripts/drain.sh" || echo "  (drain skipped/failed — continuing)"
 
