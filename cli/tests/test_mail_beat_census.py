@@ -7,26 +7,35 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_mail_beat_census_is_counts_only(tmp_path):
+def test_mail_beat_census_reads_uma_status_only(tmp_path):
     limen = tmp_path / "limen"
     uma = tmp_path / "universal-mail--automation"
     home = tmp_path / "home"
-    ledger = limen / "obligations-ledger.json"
-    (limen / "logs" / ".voice").mkdir(parents=True)
-    (limen / "web" / "app" / "public").mkdir(parents=True)
+    status_path = limen / "logs" / "uma-mail-status.json"
+    ops_report = home / "System" / "Reports" / "mail-triage" / "latest.json"
+    history_report = home / "System" / "Reports" / "mail-history" / "latest.json"
+
+    (limen / "logs").mkdir(parents=True)
     uma.mkdir()
     home.mkdir()
-    for name in ("inbox_sweep.py", "obligations_build.py", "draft_writer.py"):
-        (uma / name).write_text("# placeholder\n", encoding="utf-8")
-    (limen / "logs" / ".voice" / "mail").write_text("2026-07-06T00:00:00Z\n", encoding="utf-8")
-    (limen / "web" / "app" / "public" / "obligations.html").write_text("private face\n", encoding="utf-8")
-    ledger.write_text(
+    ops_report.parent.mkdir(parents=True)
+    history_report.parent.mkdir(parents=True)
+    (uma / "cli.py").write_text("# placeholder\n", encoding="utf-8")
+    ops_report.write_text("{}", encoding="utf-8")
+    history_report.write_text("{}", encoding="utf-8")
+    status_path.write_text(
         json.dumps(
             {
-                "obligations": [{"title": "Reply to private student", "account": "secret@example.com"}],
-                "accounts": [{"account": "secret@example.com", "fires": 1}],
-                "noise_killers": [{"name": "Confidential Vendor", "domain": "private.example"}],
-                "levers": [{"id": "L-PRIVATE-MAIL", "label": "private mail gate"}],
+                "schema": "uma.mail.status.v1",
+                "status": "open",
+                "mode": {"read_only": True, "mailbox_mutations": False, "sends": False},
+                "current_ops": {"available": True, "kpis": {"inbox_total": 3}},
+                "historical_crosswalk": {
+                    "available": True,
+                    "kpis": {"reconciled": True, "source_messages": 41415},
+                },
+                "next_queue": [{"id": "redacted"}],
+                "blockers": [{"surface": "history", "status": "blocked"}],
             }
         ),
         encoding="utf-8",
@@ -41,28 +50,25 @@ def test_mail_beat_census_is_counts_only(tmp_path):
             "HOME": str(home),
             "LIMEN_ROOT": str(limen),
             "UMA_ROOT": str(uma),
-            "LIMEN_OBLIGATIONS_LEDGER": str(ledger),
-            "LIMEN_MAIL_SWEEP": "0",
-            "LIMEN_MAIL_DRAFTS": "1",
+            "LIMEN_MAIL_STATUS_OUT": str(status_path),
+            "UMA_OPS_REPORT_PATH": str(ops_report),
+            "UMA_HISTORICAL_MAIL_PATH": str(history_report),
         },
         check=True,
     )
     census = json.loads(proc.stdout)
     encoded = json.dumps(census, sort_keys=True)
 
-    assert census["ledger_present"] is True
-    assert census["ledger_readable"] is True
-    assert census["obligation_count"] == 1
-    assert census["account_count"] == 1
-    assert census["noise_killer_count"] == 1
-    assert census["lever_count"] == 1
-    assert census["uma_present_script_count"] == 3
-    assert census["voice_stamp_present"] is True
-    assert census["web_face_count"] == 1
-    assert census["sweep_enabled"] is False
-    assert census["draft_persistence_enabled"] is True
-    assert "Reply to private student" not in encoded
-    assert "secret@example.com" not in encoded
-    assert "Confidential Vendor" not in encoded
-    assert "private.example" not in encoded
-    assert "L-PRIVATE-MAIL" not in encoded
+    assert census["status_receipt_present"] is True
+    assert census["status_schema"] == "uma.mail.status.v1"
+    assert census["status_value"] == "open"
+    assert census["current_ops_available"] is True
+    assert census["historical_crosswalk_available"] is True
+    assert census["historical_reconciled"] is True
+    assert census["historical_source_messages"] == 41415
+    assert census["next_queue_count"] == 1
+    assert census["blocker_count"] == 1
+    assert census["mailbox_mutations_allowed"] is False
+    assert census["sends_allowed"] is False
+    assert census["wrapper"] is True
+    assert "private" not in encoded.lower()
