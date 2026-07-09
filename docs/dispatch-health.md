@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-09T21:47:44+00:00`
+Generated: `2026-07-09T23:16:03+00:00`
 
 Status: `blocked`
 
@@ -34,15 +34,16 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `10`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T21:47:44.988476+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T23:16:03.359406+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run lanes: `auto`; max `10`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 6 still running ; would launch 4 (local cap 10, local per-lane 8) -> ['HEAL-rebase-organvm-domus-genoma-177', 'HEAL-rebase-organvm-domus-genoma-176', 'HEAL-rebase-organvm-a-i-chat--exporter-31', 'GH-organvm-limen-829']`.
-- Async skipped down lanes: `jules`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 0 (local cap 10, local per-lane 8) -> []`.
+- Async skipped down lanes: `gemini, jules`.
+  - `gemini`: usage health `low`; signal `dispatch-count`; remaining `1` of `10`; headroom `10%`.
   - `jules`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `100`; headroom `0%`.
 
 ## Prompt Packet Gate
@@ -74,10 +75,13 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `c934586c1cd407f751cf2e715018b80cdcdaab71`.
-- origin/main: `c934586c1cd407f751cf2e715018b80cdcdaab71`.
+- HEAD: `c54a2111ca0eee0cde81e93076ed5ac1d096ff0a`.
+- origin/main: `c54a2111ca0eee0cde81e93076ed5ac1d096ff0a`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `0`.
+- Dirty entries: `1`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/dispatch-health.md`
+  - `tasks.yaml`
 
 ## Verified Worktree
 
@@ -87,6 +91,7 @@ Status: `blocked`
 
 ## Blockers
 
+- `live-root-dirty`: live root has 1 dirty entries.
 - `always-working-required-work-open`: 6 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
