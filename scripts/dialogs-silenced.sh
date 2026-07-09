@@ -43,6 +43,73 @@ else
   note "acceptEdits is NOT enough — it still prompts for Bash. bypassPermissions = truly zero prompts."
   note "Surgical alternative, already homed as L-AGENT-BASH-PROMPT (#183): generalize the trust hook instead of full bypass."
 fi
+
+# ── 1b. Live-hook drift — deployed hooks must match the repo canonical sources. ──
+# The PreToolUse trust hook is THE mechanism that silences fleet/auto-mode prompts
+# (`--permission-mode auto` overrides bypassPermissions; no settings allow rule can
+# suppress the compound-cd guard, and only a hook `allow` preempts the destructive
+# ask rules for path-gated reap work — docs/never-hang-permission-spec.md). A stale
+# live copy silently reintroduces the prompt flood, so parity is a checked class.
+ROOT="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
+for hf in allow-trusted-cd-git.sh insights-capture.sh; do
+  canon="$ROOT/scripts/hooks/$hf"; live="$HOME/.claude/hooks/$hf"
+  [ -f "$canon" ] || continue
+  if [ ! -f "$live" ]; then
+    red "Hook drift: $live is MISSING (repo canonical exists)"
+    cure "install -m 755 $canon $live"
+  elif [ "$(shasum -a 256 < "$canon" | cut -d' ' -f1)" != "$(shasum -a 256 < "$live" | cut -d' ' -f1)" ]; then
+    red "Hook drift: $live differs from repo canonical scripts/hooks/$hf"
+    cure "install -m 755 $canon $live"
+    note "Run from the MAIN checkout — comparing against a stale worktree copy will false-red."
+  else
+    green "Hook parity: $hf live == repo canonical"
+  fi
+done
+
+# ── 1c. Ask-list policy — the five destructive ask rules are the fail-safe backstop. ──
+# If the trust hook ever breaks, behavior must degrade to PROMPTING on rm/force-push,
+# never to silent approval (Bash(*) is in allow, so removing an ask rule = silent allow).
+askdelta="$(python3 - "$SETTINGS" <<'PY' 2>/dev/null
+import json, sys
+want = sorted(["Bash(git push* --force*)", "Bash(git push* -f*)", "Bash(rm:*)", "Bash(rmdir:*)", "Bash(shred:*)"])
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
+    print("settings unreadable"); raise SystemExit
+got = sorted((d.get("permissions") or {}).get("ask") or [])
+if got != want:
+    missing = [r for r in want if r not in got]
+    extra = [r for r in got if r not in want]
+    print(f"missing={missing} extra={extra}")
+PY
+)"
+if [ -z "$askdelta" ]; then
+  green "Ask-list policy: the five destructive ask rules are exactly in place (fail-safe backstop)"
+else
+  red "Ask-list policy drift: $askdelta"
+  cure "Restore permissions.ask in $SETTINGS to exactly the five rules: Bash(git push* --force*), Bash(git push* -f*), Bash(rm:*), Bash(rmdir:*), Bash(shred:*)."
+fi
+
+# ── 1d. Hook wiring — settings must actually run the trust hook on Bash PreToolUse. ──
+wired="$(python3 - "$SETTINGS" <<'PY' 2>/dev/null
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
+    print("no"); raise SystemExit
+for m in (d.get("hooks") or {}).get("PreToolUse") or []:
+    for h in m.get("hooks") or []:
+        if str(h.get("command", "")).endswith("/.claude/hooks/allow-trusted-cd-git.sh"):
+            print("yes"); raise SystemExit
+print("no")
+PY
+)"
+if [ "$wired" = "yes" ]; then
+  green "Hook wired: hooks.PreToolUse runs ~/.claude/hooks/allow-trusted-cd-git.sh"
+else
+  red "Trust hook NOT wired in $SETTINGS hooks.PreToolUse — the compound-cd guard floods every fleet job"
+  cure "Add hooks.PreToolUse matcher \"Bash\" -> command \$HOME/.claude/hooks/allow-trusted-cd-git.sh to $SETTINGS (one paste; agent self-edit of permission files is classifier-blocked)."
+fi
 echo
 
 # ── 2. 1Password / Touch-ID — the fingerprint dialogs. ──

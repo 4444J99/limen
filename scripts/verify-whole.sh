@@ -73,6 +73,9 @@ python3 organs/social/validate-social.py --fleet --quiet
 step "Verify the merge-policy predicate (verdict matrix regression test)"
 bash scripts/tests/merge-policy.test.sh
 
+step "Verify the trusted-Bash hook decision matrix (permission-hang killer, hermetic)"
+bash scripts/tests/allow-trusted-cd-git.test.sh
+
 step "Verify the resolver selection fixtures (verify.py implicates exactly the registered gates)"
 bash scripts/tests/verify-resolver.test.sh
 

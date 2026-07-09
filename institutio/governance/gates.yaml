@@ -191,6 +191,12 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Live-main commit deny matrix (hermetic fixture); transcribed when the hook landed on main in parallel with PR1."
+  trusted-bash-hook-test:
+    command: "bash scripts/tests/allow-trusted-cd-git.test.sh"
+    paths: ["scripts/hooks/allow-trusted-cd-git.sh", "scripts/tests/allow-trusted-cd-git.test.sh"]
+    scoped: false
+    owner: lifecycle
+    note: "Path-aware trusted-Bash decision matrix (hermetic fixture) — the permission-hang killer; destructive verbs auto-approved only on disposable/in-repo paths, force-push/shred never."
   dispatch-admission:
     command: "python3 scripts/check-dispatch-admission.py"
     paths: ["scripts/dispatch-admission.py", "scripts/check-dispatch-admission.py"]
