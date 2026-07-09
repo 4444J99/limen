@@ -730,6 +730,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Maximum consecutive one-shot monitor samples with the same latest tick and no active workers before WATCH_ALERT heartbeat-progress-stale."
+  LIMEN_OVERNIGHT_WATCH_HEAL:
+    default: 1
+    env: LIMEN_OVERNIGHT_WATCH_HEAL
+    self_update: none
+    owner: continuity
+    note: "Set 0 to disable the overnight monitor's bootstrap fallback that restores a booted-out heartbeat/watchdog launchd service (governor-pause and cooldown gated)."
+  LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC:
+    default: 1200
+    env: LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC
+    self_update: none
+    owner: continuity
+    note: "Minimum seconds between overnight monitor bootstrap heal attempts, so the healer never fights an operator cycling daemons."
+  LIMEN_WATCHDOG_LABEL:
+    default: com.limen.watchdog
+    env: LIMEN_WATCHDOG_LABEL
+    self_update: none
+    owner: continuity
+    note: "launchd label for the watchdog service the overnight monitor restores when it is booted out."
   LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC:
     default: ""
     env: LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC

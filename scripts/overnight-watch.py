@@ -32,15 +32,21 @@ RECEIPT_MD = LOGS / "overnight-watch.md"
 ALERT_PATH = Path(os.environ.get("LIMEN_OVERNIGHT_WATCH_ALERT", LOGS / "overnight-watch-alert.json"))
 TOKEN_REPORT = Path(os.environ.get("LIMEN_CODEX_TOKEN_REPORT", LOGS / "codex-token-report.json"))
 LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", os.environ.get("LIMEN_LAUNCHD_LABEL", "com.limen.heartbeat"))
+WATCHDOG_LABEL = os.environ.get("LIMEN_WATCHDOG_LABEL", "com.limen.watchdog")
+LAUNCH_AGENTS = Path.home() / "Library" / "LaunchAgents"
 
 MAX_LOG_AGE_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", "1200") or "1200")
 MAX_STALE_TICKS = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS", "6") or "6")
+HEAL_ENABLED = (os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL", "1") or "1") != "0"
+HEAL_COOLDOWN_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC", "1200") or "1200")
 TAIL_BYTES = 192 * 1024
 
 EXPECT_DISPATCH_ASYNC = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_ASYNC", "")
 EXPECT_DISPATCH_LANES = os.environ.get("LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES", "")
 
-TICK_RE = re.compile(r"tick emitted:\s*(?P<ts>\S+).*?\btotal=(?P<total>\d+)\s+open=(?P<open>\d+)\s+spent=(?P<spent>\S+)")
+TICK_RE = re.compile(
+    r"tick emitted:\s*(?P<ts>\S+).*?\btotal=(?P<total>\d+)\s+open=(?P<open>\d+)\s+spent=(?P<spent>\S+)"
+)
 BEAT_RE = re.compile(r"^\s*(?P<line>.*beat\s+\d+.*)$", re.MULTILINE)
 DISPATCH_LANES_RE = re.compile(r"dispatch lanes:\s*(?P<lanes>.+)")
 ASYNC_RE = re.compile(
@@ -289,17 +295,26 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     env = launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
 
     if not launchd.get("ok") or launchd.get("state") not in (None, "active", "running"):
-        alerts.append({"id": "heartbeat-launchd-not-running", "evidence": f"state={launchd.get('state')} error={launchd.get('error')}"})
+        alerts.append(
+            {
+                "id": "heartbeat-launchd-not-running",
+                "evidence": f"state={launchd.get('state')} error={launchd.get('error')}",
+            }
+        )
 
     log_age_sec = snapshot.get("log_age_sec")
     if log_age_sec is None:
         alerts.append({"id": "heartbeat-log-missing", "evidence": str(HEARTBEAT_LOG)})
     elif int(log_age_sec) > MAX_LOG_AGE_SEC:
-        alerts.append({"id": "heartbeat-log-stale", "evidence": f"log_age_sec={log_age_sec} threshold={MAX_LOG_AGE_SEC}"})
+        alerts.append(
+            {"id": "heartbeat-log-stale", "evidence": f"log_age_sec={log_age_sec} threshold={MAX_LOG_AGE_SEC}"}
+        )
 
     latest_tick = (snapshot.get("heartbeat") or {}).get("latest_tick")
     if not latest_tick:
-        alerts.append({"id": "heartbeat-tick-missing", "evidence": "no tick emitted line found in recent heartbeat log"})
+        alerts.append(
+            {"id": "heartbeat-tick-missing", "evidence": "no tick emitted line found in recent heartbeat log"}
+        )
     elif (
         snapshot.get("stale_tick_count", 0) >= MAX_STALE_TICKS
         and snapshot.get("worker_count", 0) == 0
@@ -333,8 +348,64 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     return ("alert" if alerts else "ok"), alerts
 
 
+def governor_mode() -> str:
+    """Fail toward 'paused' (no heal) like heartbeat-loop.sh does when the governor is unreachable."""
+    script = ROOT / "scripts" / "autonomy-governor.py"
+    if not script.exists():
+        return "paused"
+    proc = run([sys.executable, str(script), "mode"], timeout=15)
+    if proc.returncode != 0:
+        return "paused"
+    return (proc.stdout or "").strip() or "paused"
+
+
+def service_missing(label: str) -> bool:
+    return run(["launchctl", "print", f"gui/{os.getuid()}/{label}"]).returncode != 0
+
+
+def bootstrap_service(label: str) -> dict[str, Any]:
+    plist = LAUNCH_AGENTS / f"{label}.plist"
+    if not plist.exists():
+        return {"label": label, "action": "skip", "reason": f"plist missing: {plist}"}
+    proc = run(["launchctl", "bootstrap", f"gui/{os.getuid()}", str(plist)], timeout=30)
+    return {
+        "label": label,
+        "action": "bootstrap",
+        "ok": proc.returncode == 0,
+        "error": (proc.stderr or "").strip() if proc.returncode else "",
+    }
+
+
+def heal(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    """Bootstrap a booted-out daemon back into launchd.
+
+    Only the service-missing case is handled here; a loaded-but-wedged daemon
+    stays in watchdog.py's kickstart lane so the two healers never race.
+    """
+    if not HEAL_ENABLED:
+        return []
+    alert_ids = {alert["id"] for alert in snapshot.get("alerts") or []}
+    if "heartbeat-launchd-not-running" not in alert_ids:
+        return []
+    if (snapshot.get("launchd") or {}).get("ok"):
+        return []
+    previous = load_json(STATE_PATH)
+    last_heal = parse_iso(previous.get("last_heal_at"))
+    if last_heal and (utc_now() - last_heal).total_seconds() < HEAL_COOLDOWN_SEC:
+        return [{"action": "skip", "reason": f"heal cooldown ({HEAL_COOLDOWN_SEC}s) active"}]
+    if governor_mode() == "paused":
+        return [{"action": "skip", "reason": "autonomy governor paused"}]
+    actions = [bootstrap_service(LABEL)]
+    if service_missing(WATCHDOG_LABEL):
+        actions.append(bootstrap_service(WATCHDOG_LABEL))
+    if any(action.get("action") == "bootstrap" for action in actions):
+        snapshot["heal_at"] = snapshot.get("timestamp")
+    return actions
+
+
 def update_state(snapshot: dict[str, Any]) -> None:
     tick = (snapshot.get("heartbeat") or {}).get("latest_tick") or {}
+    previous = load_json(STATE_PATH)
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(
         json.dumps(
@@ -343,6 +414,7 @@ def update_state(snapshot: dict[str, Any]) -> None:
                 "latest_tick": tick.get("timestamp"),
                 "stale_tick_count": snapshot.get("stale_tick_count", 0),
                 "status": snapshot.get("status"),
+                "last_heal_at": snapshot.get("heal_at") or previous.get("last_heal_at"),
             },
             indent=2,
             sort_keys=True,
@@ -382,13 +454,16 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
         lines.append(f"  - `{worker.get('name')}` age `{worker.get('age_sec')}` seconds")
     for child in children[:10]:
         lines.append(
-            f"  - child `{child.get('pid')}` `{child.get('stat')}` "
-            f"`{child.get('etime')}` `{child.get('command')}`"
+            f"  - child `{child.get('pid')}` `{child.get('stat')}` `{child.get('etime')}` `{child.get('command')}`"
         )
     if snapshot.get("alerts"):
         lines.extend(["", "## WATCH_ALERT"])
         for alert in snapshot["alerts"]:
             lines.append(f"- `{alert['id']}`: {alert['evidence']}")
+    if snapshot.get("heal"):
+        lines.extend(["", "## HEAL"])
+        for action in snapshot["heal"]:
+            lines.append(f"- {json.dumps(action, sort_keys=True)}")
     RECEIPT_MD.write_text("\n".join(lines) + "\n")
 
 
@@ -444,11 +519,16 @@ def print_summary(snapshot: dict[str, Any]) -> None:
         print(f"  async: {async_line}")
     for alert in snapshot.get("alerts") or []:
         print(f"  WATCH_ALERT {alert['id']}: {alert['evidence']}")
+    for action in snapshot.get("heal") or []:
+        print(f"  HEAL {json.dumps(action, sort_keys=True)}")
 
 
 def run_once(*, dry_run: bool, json_output: bool) -> int:
     snapshot = build_snapshot()
     if not dry_run:
+        heal_actions = heal(snapshot)
+        if heal_actions:
+            snapshot["heal"] = heal_actions
         write_receipts(snapshot)
     if json_output:
         print(json.dumps(snapshot, indent=2, sort_keys=True))
@@ -461,8 +541,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="inspect without writing receipts")
     parser.add_argument("--json", action="store_true", help="print the full snapshot")
-    parser.add_argument("--watch", action="store_true", help="run an attached loop; launchd should prefer one-shot mode")
-    parser.add_argument("--interval", type=int, default=int(os.environ.get("LIMEN_OVERNIGHT_WATCH_INTERVAL_SEC", "300")))
+    parser.add_argument(
+        "--watch", action="store_true", help="run an attached loop; launchd should prefer one-shot mode"
+    )
+    parser.add_argument(
+        "--interval", type=int, default=int(os.environ.get("LIMEN_OVERNIGHT_WATCH_INTERVAL_SEC", "300"))
+    )
     parser.add_argument("--max-samples", type=int, default=0, help="watch-loop sample cap; 0 means forever")
     args = parser.parse_args(argv)
 
