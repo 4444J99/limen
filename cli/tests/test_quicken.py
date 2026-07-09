@@ -145,3 +145,101 @@ def test_reap_done_apply_delegates_without_removing_worktree(tmp_path, monkeypat
     assert worktree.exists()
     assert ("worktree", "remove", str(worktree)) not in calls
     assert ("branch", "-D", "spent-branch") not in calls
+
+
+def _stalled_row(sid: str, cwd: str, title: str = "repeat offender session") -> dict:
+    return {
+        "sessionId": sid,
+        "title": title,
+        "last_prompt": "Resume and FINISH your original purpose",
+        "cwd": cwd,
+        "moved": 0.0,
+        "state": "STALLED",
+        "is_self": False,
+        "decision": {"residue": None, "layer": "ideal-form", "n_done": 0, "n_pending": 0},
+    }
+
+
+def _journal_with_breathes(tmp_path, sid: str, n: int):
+    journal = tmp_path / "session-lifecycle.jsonl"
+    lines = [f'{{"ts": 1, "breathed": "{sid}", "ok": true}}' for _ in range(n)]
+    lines.append("not json at all {{{")  # malformed lines must be ignored (fail-open)
+    journal.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return journal
+
+
+def test_breathe_counts_ignores_malformed_lines(tmp_path, monkeypatch):
+    quicken = _load()
+    sid = "aaaabbbb-1111-2222-3333-444455556666"
+    monkeypatch.setattr(quicken, "JOURNAL", _journal_with_breathes(tmp_path, sid, 2))
+
+    assert quicken._breathe_counts() == {sid: 2}
+
+
+def test_breathe_escalates_repeat_offender_idempotently(tmp_path, monkeypatch, capsys):
+    quicken = _load()
+    sid = "aaaabbbb-1111-2222-3333-444455556666"
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text("version: '1.0'\ntasks: []\n", encoding="utf-8")
+    monkeypatch.setattr(quicken, "JOURNAL", _journal_with_breathes(tmp_path, sid, 2))
+    monkeypatch.setattr(quicken, "LEDGER", tasks)
+    row = _stalled_row(sid, str(tmp_path))
+
+    quicken.breathe([row], "all", dry=False)
+
+    out = capsys.readouterr().out
+    assert f"ESCALATE {sid[:8]}" in out
+    assert "0 session(s) within cap" in out  # removed from the breathe list, cap freed
+    body = tasks.read_text(encoding="utf-8")
+    assert f"ASK-quicken-escalate-{sid[:8]}" in body
+    assert "quicken-escalate" in body
+    assert f"claude --resume {sid}" in body
+    # journal recorded the escalation
+    assert any(e.get("escalated") == sid for e in quicken._read_jsonl(quicken.JOURNAL))
+
+    # second run: already homed — no duplicate task, no crash
+    before = tasks.read_text(encoding="utf-8")
+    quicken.breathe([row], "all", dry=False)
+    assert tasks.read_text(encoding="utf-8").count(f"ASK-quicken-escalate-{sid[:8]}") == before.count(
+        f"ASK-quicken-escalate-{sid[:8]}"
+    )
+
+
+def test_breathe_under_threshold_still_breathes(tmp_path, monkeypatch, capsys):
+    quicken = _load()
+    sid = "ccccdddd-1111-2222-3333-444455556666"
+    monkeypatch.setattr(quicken, "JOURNAL", _journal_with_breathes(tmp_path, sid, 1))
+    row = _stalled_row(sid, str(tmp_path))
+
+    quicken.breathe([row], "all", dry=True)
+
+    out = capsys.readouterr().out
+    assert f"DRY would breathe {sid}" in out
+    assert "ESCALATE" not in out
+
+
+def test_breathe_escalate_after_env_respected(tmp_path, monkeypatch, capsys):
+    quicken = _load()
+    sid = "eeeeffff-1111-2222-3333-444455556666"
+    monkeypatch.setenv("LIMEN_QUICKEN_ESCALATE_AFTER", "5")
+    monkeypatch.setattr(quicken, "JOURNAL", _journal_with_breathes(tmp_path, sid, 3))
+    row = _stalled_row(sid, str(tmp_path))
+
+    quicken.breathe([row], "all", dry=True)
+
+    out = capsys.readouterr().out
+    assert f"DRY would breathe {sid}" in out
+    assert "ESCALATE" not in out
+
+
+def test_breathe_named_sid_honored_over_escalation(tmp_path, monkeypatch, capsys):
+    quicken = _load()
+    sid = "abcdabcd-1111-2222-3333-444455556666"
+    monkeypatch.setattr(quicken, "JOURNAL", _journal_with_breathes(tmp_path, sid, 4))
+    row = _stalled_row(sid, str(tmp_path))
+
+    quicken.breathe([row], sid, dry=True)
+
+    out = capsys.readouterr().out
+    assert f"DRY would breathe {sid}" in out
+    assert "ESCALATE" not in out

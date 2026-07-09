@@ -350,6 +350,8 @@ def fmt_report(rows: list[dict]) -> str:
     states = {}
     for r in rows:
         states.setdefault(r["state"], []).append(r)
+    counts = _breathe_counts()
+    escalate_after = positive_int_env("LIMEN_QUICKEN_ESCALATE_AFTER", 2)
     out = [f"# QUICKEN — session lifecycle  ({len(rows)} sessions, stale>{STALE_MIN}m, horizon {HORIZON_DAYS}d)", ""]
     for st in ("STALLED", "ALIVE", "DONE", "CLOSED"):
         bucket = states.get(st, [])
@@ -358,8 +360,14 @@ def fmt_report(rows: list[dict]) -> str:
             idle = (time.time() - r["moved"]) / 60.0 if r["moved"] else -1
             mark = " (self)" if r["is_self"] else ""
             sup = f" +{r['superseded']} superseded" if r.get("superseded") else ""
+            n = counts.get(r["sessionId"], 0)
+            br = ""
+            if st == "STALLED" and n:
+                br = f"  ·  breathed {n}x" + ("  ·  ESCALATES" if n >= escalate_after else "")
             d = r["decision"]
-            out.append(f"- **{r['title'][:54]}**{mark}  ·  idle {idle:.0f}m  ·  {d['n_done']}✓/{d['n_pending']}⏳{sup}")
+            out.append(
+                f"- **{r['title'][:54]}**{mark}  ·  idle {idle:.0f}m  ·  {d['n_done']}✓/{d['n_pending']}⏳{sup}{br}"
+            )
             if st == "STALLED":
                 out.append(f"    cascade[{d['layer']}]: {d['action']}")
                 if d["residue"]:
@@ -413,22 +421,15 @@ def _queue_residue_atoms() -> dict[str, list[str]]:
     return atoms
 
 
-def hang_residue(rows: list[dict]) -> dict:
-    """Hang each irreducible human atom in the PERMANENT needs_human queue — the running system of
-    record (obligations-view / organ-health / reclassify all read it), capture-pushed off-disk — so
-    no obligation ever lives only in a disposable worktree doc. Idempotent within QUICKEN's own
-    `ASK-quicken-<key>` namespace; written under the shared queue-lock via the atomic primitive so a
-    concurrent heartbeat can never see a torn queue. Posture atoms (gate-hold) are already homed once
-    and are never multiplied. Fail-open: a lock miss skips this beat and self-corrects next."""
-    by_key: dict[str, dict] = {}
-    for r in rows:
-        if r["state"] != "STALLED" or not r["decision"]["residue"]:
-            continue
-        atom = r["decision"]["residue"]
-        k = _atom_key(atom)
-        by_key.setdefault(k, {"atom": atom, "unblocks": set()})["unblocks"].add(r["title"][:48])
+def _hang_asks(entries: list[dict]) -> dict:
+    """Upsert `ASK-*` needs_human tasks in the PERMANENT queue — the running system of record
+    (obligations-view / organ-health / reclassify all read it), capture-pushed off-disk — so no
+    obligation ever lives only in a disposable worktree doc. Each entry: {tid, title, context,
+    labels}. Idempotent per tid; written under the shared queue-lock via the atomic primitive so a
+    concurrent heartbeat can never see a torn queue. Fail-open: a lock miss skips this beat and
+    self-corrects next."""
     res = {"created": [], "refreshed": [], "homed": [], "ledger": str(LEDGER)}
-    if not by_key:
+    if not entries:
         return res
     try:
         sys.path.insert(0, str(ROOT / "cli" / "src"))
@@ -449,23 +450,16 @@ def hang_residue(rows: list[dict]) -> dict:
         index = {t.id: t for t in lf.tasks}
         now = datetime.now(timezone.utc)
         changed = False
-        for k, info in sorted(by_key.items()):
-            if k in _POSTURE:
-                res["homed"].append(f"{info['atom']} → {_POSTURE[k]}")
-                continue
-            tid = f"ASK-quicken-{k}"
-            ctx = (
-                f"Cheapest path → {info['atom']}. Unblocks: {', '.join(sorted(info['unblocks']))}. "
-                f"Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act."
-            )
+        for entry in entries:
+            tid = entry["tid"]
             ex = index.get(tid)
             if ex and ex.status != "done":
                 refreshed = False
                 if ex.status != "needs_human":
                     ex.status = "needs_human"
                     refreshed = True
-                if ex.context != ctx:
-                    ex.context = ctx
+                if ex.context != entry["context"]:
+                    ex.context = entry["context"]
                     refreshed = True
                 if "quicken-residue" not in (ex.labels or []):
                     ex.labels = list(ex.labels or []) + ["quicken-residue"]
@@ -475,18 +469,18 @@ def hang_residue(rows: list[dict]) -> dict:
                     changed = True
                     res["refreshed"].append(tid)
                 else:
-                    res["homed"].append(f"{info['atom']} → {tid}")
+                    res["homed"].append(f"{entry['title']} → {tid}")
             elif ex is None:
                 lf.tasks.append(
                     Task(
                         id=tid,
-                        title=info["atom"],
+                        title=entry["title"],
                         type="ops",
                         target_agent="human",
                         priority="high",
                         status="needs_human",
-                        labels=["user-ask", "quicken-residue", "needs-human"],
-                        context=ctx,
+                        labels=entry["labels"],
+                        context=entry["context"],
                         created=date.today(),
                         updated=now,
                     )
@@ -495,6 +489,38 @@ def hang_residue(rows: list[dict]) -> dict:
                 res["created"].append(tid)
         if changed:
             save_limen_file(LEDGER, lf)
+    return res
+
+
+def hang_residue(rows: list[dict]) -> dict:
+    """Hang each irreducible human atom as `ASK-quicken-<key>` via _hang_asks. Posture atoms
+    (gate-hold) are already homed once and are never multiplied."""
+    by_key: dict[str, dict] = {}
+    for r in rows:
+        if r["state"] != "STALLED" or not r["decision"]["residue"]:
+            continue
+        atom = r["decision"]["residue"]
+        k = _atom_key(atom)
+        by_key.setdefault(k, {"atom": atom, "unblocks": set()})["unblocks"].add(r["title"][:48])
+    entries = []
+    homed_postures = []
+    for k, info in sorted(by_key.items()):
+        if k in _POSTURE:
+            homed_postures.append(f"{info['atom']} → {_POSTURE[k]}")
+            continue
+        entries.append(
+            {
+                "tid": f"ASK-quicken-{k}",
+                "title": info["atom"],
+                "labels": ["user-ask", "quicken-residue", "needs-human"],
+                "context": (
+                    f"Cheapest path → {info['atom']}. Unblocks: {', '.join(sorted(info['unblocks']))}. "
+                    f"Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act."
+                ),
+            }
+        )
+    res = _hang_asks(entries)
+    res["homed"] = homed_postures + res["homed"]
     return res
 
 
@@ -715,11 +741,68 @@ def _contended(cwd: str, alive_cwds: set[str]) -> bool:
     return False
 
 
+def _breathe_counts() -> dict[str, int]:
+    """Per-SID breathe history from this organ's own journal. Fail-open: unreadable → {}."""
+    counts: dict[str, int] = {}
+    for e in _read_jsonl(JOURNAL):
+        sid = e.get("breathed")
+        if isinstance(sid, str) and sid:
+            counts[sid] = counts.get(sid, 0) + 1
+    return counts
+
+
+def escalate(rows: list[dict], counts: dict[str, int], dry: bool) -> None:
+    """A session breathed >= N times that stalls AGAIN never receives the identical breath a third
+    time — identical input, identical stall. It escalates to its OWN needs_human atom carrying the
+    parked purpose and the exact resume command, so the census stays finish-not-park instead of an
+    infinite re-breathe loop."""
+    if not rows:
+        return
+    entries = []
+    for r in rows:
+        sid = r["sessionId"]
+        n = counts.get(sid, 0)
+        entries.append(
+            {
+                "tid": f"ASK-quicken-escalate-{sid[:8]}",
+                "title": f"finish stalled session '{r['title'][:44]}' (breathed {n}x, still stalling)",
+                "labels": ["quicken-residue", "quicken-escalate", "needs-human"],
+                "context": (
+                    f"Session {sid} ('{r['title'][:60]}') re-stalled after {n} guardrailed breathes — "
+                    f"the identical continuation will not move it. Parked purpose (last prompt): "
+                    f'"{r["last_prompt"][:120]}". Resume by hand or with a NEW instruction: '
+                    f"claude --resume {sid}   (cwd {r['cwd']}). Auto-escalated by QUICKEN."
+                ),
+            }
+        )
+        print(f"  ESCALATE {sid[:8]} ({r['title'][:38]}) — breathed {n}x, hanging its own atom")
+    if dry:
+        print(f"  DRY would escalate {len(entries)} session(s); no atom hung, no journal write")
+        return
+    h = _hang_asks(entries)
+    bits = [f"created {', '.join(h['created'])}" if h["created"] else "", h.get("error") or ""]
+    print(f"  [escalate] {'; '.join(b for b in bits if b) or 'already homed'}")
+    with JOURNAL.open("a") as fh:
+        for r in rows:
+            fh.write(
+                json.dumps(
+                    {
+                        "ts": int(time.time()),
+                        "escalated": r["sessionId"],
+                        "title": r["title"][:60],
+                        "breathes": counts.get(r["sessionId"], 0),
+                    }
+                )
+                + "\n"
+            )
+
+
 def breathe(rows: list[dict], sel: str, dry: bool) -> None:
     import subprocess
 
     cap = positive_int_env("LIMEN_QUICKEN_BREATHE_CAP", 1)  # bounded-work contract: small
     to = positive_int_env("LIMEN_QUICKEN_BREATHE_TIMEOUT", 900)
+    escalate_after = positive_int_env("LIMEN_QUICKEN_ESCALATE_AFTER", 2)
     # `all` breathes only STALLED (never auto-touch a moving session); a NAMED sid is an explicit
     # choice — honor it regardless of the flickery ALIVE/STALLED label (still skip contended trees).
     targets = [
@@ -732,6 +815,13 @@ def breathe(rows: list[dict], sel: str, dry: bool) -> None:
 
     targets = [r for r in targets if not _contended(r["cwd"], _others(r["sessionId"]))]
     targets.sort(key=lambda r: r["moved"])  # oldest-stalled first
+    # a repeat offender (breathed >= N and stalled again) escalates instead of re-breathing —
+    # only in `all` mode: an explicitly NAMED sid is a deliberate choice, honor it.
+    counts = _breathe_counts()
+    if sel == "all":
+        repeat = [r for r in targets if counts.get(r["sessionId"], 0) >= escalate_after]
+        targets = [r for r in targets if counts.get(r["sessionId"], 0) < escalate_after]
+        escalate(repeat, counts, dry=dry)
     targets = targets[:cap]
     print(f"\n[breathe] {len(targets)} session(s) within cap={cap}; contended/ALIVE worktrees skipped.")
     for r in targets:

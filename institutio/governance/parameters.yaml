@@ -532,6 +532,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Idle minutes before codex-quicken treats a Codex session as no longer alive. Classifier-only; it never resumes or mutates sessions."
+  LIMEN_QUICKEN_ESCALATE_AFTER:
+    default: 2
+    env: LIMEN_QUICKEN_ESCALATE_AFTER
+    self_update: none
+    owner: continuity
+    note: "Breathe attempts before a re-stalled session escalates to its own ASK-quicken-escalate-<sid8> needs_human atom instead of receiving the identical continuation again (`all` mode only; an explicitly named SID is always honored)."
   LIMEN_BEAT_CONTINUATION:
     default: 6
     env: LIMEN_BEAT_CONTINUATION
