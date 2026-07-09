@@ -77,8 +77,11 @@ def main():
     cur_stages = {}
     for p in view.get("products", []):
         repo, stage = p.get("repo", ""), p.get("stage", "")
-        cur_stages[repo] = stage
-        before = prev_stages.get(repo)
+        # keyed by repo::product — several products share a repo, and a bare-repo key
+        # made them overwrite each other's state, re-firing the same "transition" every beat
+        key = f"{repo}::{p.get('product', '')}"
+        cur_stages[key] = stage
+        before = prev_stages.get(key)
         if before is not None and before != stage and stage in _LOUD:
             if p.get("whose_hand") == "yours":
                 events.append(("⟶ YOUR MOVE",
