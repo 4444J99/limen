@@ -111,10 +111,12 @@ fi
 # (cannot race tasks.yaml); bounded (limit 10) + idempotent (same id = no dup). ON by default — this
 # is what closes the HEAL rung (the dispatcher is already authorized to open PRs); set
 # LIMEN_SELF_HEAL=0 to disable, or run self-heal.py --dry-run to preview without writing.
-if [ "${LIMEN_SELF_HEAL:-1}" = "1" ]; then
+if [ "${LIMEN_SELF_HEAL:-1}" = "1" ] && [ "${LIMEN_QUEUE_LOCK_HELD:-0}" != "1" ]; then
   echo "[drain] emitting heal tasks for stuck PRs (scan ${LIMEN_HEAL_SCAN:-30}, limit ${LIMEN_HEAL_LIMIT:-10})…"
   PYTHONPATH="$PY" python3 "$LIMEN_ROOT/scripts/self-heal.py" \
       --scan "${LIMEN_HEAL_SCAN:-30}" --limit "${LIMEN_HEAL_LIMIT:-10}" 2>&1 | tail -3 || true
+elif [ "${LIMEN_SELF_HEAL:-1}" = "1" ]; then
+  echo "[drain] self-heal skipped under queue lock; heartbeat runs it after release"
 fi
 
 # CONVERGE — the alchemical rung that completes the self-* ladder. Finds "multiverses" (one idea a
