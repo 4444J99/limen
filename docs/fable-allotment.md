@@ -1,5 +1,21 @@
 # Fable 5 Allotment
 
+## Primary control: Fable plans, cheaper tiers build
+
+**Fable is PLAN-ONLY.** Its role is planning + handoff: it does the deep analysis, emits a build
+packet into an isolated worktree, and hands off to a cheaper tier (Opus/Sonnet/Haiku) that builds.
+**Building on Fable is prohibited** — no coding grind, no coverage sweeps, no PR babysitting, no
+detached async dispatch on the Fable rung. A Fable session's deliverable is a *plan a non-Fable
+builder can execute*, not the implementation itself.
+
+This role separation is the root control (Fable at ~111× Opus per-token cost cannot be an
+implementation tier). The weekly runtime cap below is the **backstop / safety net**, not the primary
+mechanism: it exists so that even a mis-scoped Fable run cannot silently drain the week's allotment.
+The cap is enforced live at model-selection time against actual weekly tokens burned
+(`scripts/fable-allotment.py balance` → `logs/fable-allotment.json`, read by
+`cli/src/limen/model_selection.py` / `dispatch._claude_tier_for`), and surfaced to interactive
+sessions by `scripts/fable-session-guard.py` (a SessionStart hook).
+
 Fable is a reserved Claude tier above Opus. It is for the small set of jobs where the cost and
 retention tradeoff is justified by long-horizon reasoning, huge-context synthesis, ambiguous
 root-cause work, or final canonical decisions. It is not a Claude/Opus replacement, an async

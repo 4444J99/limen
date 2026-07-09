@@ -5,6 +5,16 @@ receipt sweep, 90–120 days ending 2026-07-08. Amounts are receipt-verified unl
 `-` = no receipt found (the `balance_known: false` pattern — principal fills in what email doesn't
 show). Card refs use the established last-4 shorthand.*
 
+> **The cancel/keep verdict is a PREDICATE, not this prose.** Run
+> `python3 scripts/vendor-cancel-advisor.py` (add `--json`). It decides KEEP / CANCEL-CANDIDATE per
+> vendor from UTILIZATION ONLY (rate-limit health + headroom across resets in `logs/usage.json`) —
+> never sticker cost — so a pool that hits its caps is always KEEP (the relief valve), an idle pool
+> is a candidate, and **codex = KEEP**. It reads `logs/fable-allotment.json` and names **Fable-at-cap
+> as the real overspend** (a runtime tier, capped via [`docs/fable-allotment.md`](../../docs/fable-allotment.md)),
+> so "save money" routes to capping Fable, not to cancelling a capacity pool. The advisor exits
+> non-zero if it ever contradicts that doctrine. This ledger below is the human receipt trail; the
+> advisor is the source of truth for the decision.
+
 ## Summary
 
 - **Known recurring total: $495.26/mo** (+ Cloudflare variable $0–24/mo) — matches the estimated "$500+".

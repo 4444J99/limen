@@ -84,6 +84,99 @@ def _claude_fable_acceptance_present() -> bool:
         return False
 
 
+def _fable_balance() -> dict | None:
+    """Read the live weekly Fable balance written by ``scripts/fable-allotment.py balance``
+    (``$LIMEN_ROOT/logs/fable-allotment.json``). Returns the parsed dict for the CURRENT ISO-week,
+    or None when absent / stale / unreadable (fail-open → the acceptance receipt remains the only
+    gate). Env override ``LIMEN_FABLE_BALANCE_PATH`` points at an alternate file (tests)."""
+    raw = os.environ.get("LIMEN_FABLE_BALANCE_PATH")
+    if raw:
+        path = raw
+    else:
+        root = os.environ.get("LIMEN_ROOT")
+        base = root if root else os.path.join(os.path.expanduser("~"), "Workspace", "limen")
+        path = os.path.join(base, "logs", "fable-allotment.json")
+    try:
+        with open(path) as fh:
+            data = json.load(fh)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    now = dt.datetime.now(dt.timezone.utc)
+    monday = (now - dt.timedelta(days=now.weekday())).date().isoformat()
+    if str(data.get("week")) != monday:
+        return None  # stale week — do not trust a prior week's balance
+    return data
+
+
+def _fable_capped_tier(reserve_ok: bool) -> str | None:
+    """The live-cap decision for a would-be Fable selection whose acceptance receipt already
+    passed. Returns None when Fable is still allowed, else the fallback tier to use instead:
+
+      * spent_pct < deliberate_cap (40)         → None (Fable allowed).
+      * deliberate_cap ≤ spent_pct < hard_cap   → only a current-week ``reserve`` receipt passes;
+                                                   every other Fable route → Opus.
+      * spent_pct ≥ hard_cap (50)               → hard downgrade to Opus, NO exception.
+
+    ``reserve_ok`` marks that the caller's authorization is a fresh ``reserve``-category receipt.
+    Fail-open (no balance file / malformed) → None so the meter can never block on a hiccup; the
+    acceptance receipt organ stays the authorization of record. HARD_CAP is a hard cap. The cap
+    downgrade lands on Opus (an over-cap Fable job was legitimately high-value; Opus is the nearest
+    tier down), distinct from the acceptance-ABSENT fallback which stays at ``_fable_fallback_tier``.
+    """
+    bal = _fable_balance()
+    if bal is None:
+        return None
+    try:
+        spent = float(bal.get("spent_pct"))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    deliberate_cap = float(bal.get("deliberate_cap", 40) or 40)
+    hard_cap = float(bal.get("hard_cap", 50) or 50)
+    if spent >= hard_cap:
+        return _fable_cap_downgrade_tier()
+    if spent >= deliberate_cap:
+        return None if reserve_ok else _fable_cap_downgrade_tier()
+    return None
+
+
+def _fable_cap_downgrade_tier() -> str:
+    """Where an OVER-CAP (but acceptance-valid) Fable selection lands: Opus by default, capped to
+    the ladder, env-overridable via ``LIMEN_CLAUDE_FABLE_CAP_TIER``."""
+    return _cap_tier(os.environ.get("LIMEN_CLAUDE_FABLE_CAP_TIER", "opus"), "opus")
+
+
+def _fable_reserve_receipt_present() -> bool:
+    """True only when the current acceptance receipt is a fresh (current-ISO-week) ``reserve``
+    category receipt — the single exception that passes the 40–50% band. Reuses the same receipt
+    file the acceptance gate reads; a test ``LIMEN_FABLE_ACCEPTANCE=1`` is NOT a reserve receipt."""
+    raw = os.environ.get("LIMEN_FABLE_ACCEPTANCE", "").strip()
+    if not raw or raw == "1":
+        return False
+    try:
+        with open(os.path.expanduser(raw)) as fh:
+            receipt = json.load(fh)
+        now = dt.datetime.now(dt.timezone.utc)
+        monday = (now - dt.timedelta(days=now.weekday())).date().isoformat()
+        return (
+            receipt.get("schema") == "limen.fable_acceptance.v1"
+            and receipt.get("week") == monday
+            and receipt.get("category") == "reserve"
+        )
+    except Exception:
+        return False
+
+
+def _fable_or_downgrade(fable_tier: str = "fable") -> str:
+    """Resolve a Fable-authorized selection against the LIVE weekly cap. Precondition: the caller
+    has already confirmed a valid acceptance receipt is present. Returns ``fable_tier`` when the
+    cap still allows Fable, else the fallback tier (Opus). This is the runtime backstop layered on
+    top of the accept-time receipt gate."""
+    downgrade = _fable_capped_tier(_fable_reserve_receipt_present())
+    return downgrade if downgrade is not None else fable_tier
+
+
 def _claude_model_is_fable(model: str | None) -> bool:
     return bool(model and "fable" in str(model).lower())
 
@@ -142,6 +235,13 @@ def _resolve_claude_model(tier: str) -> str:
     model = os.environ.get(f"LIMEN_CLAUDE_{tier.upper()}_MODEL") or tier
     if _claude_model_is_fable(model) and not _claude_fable_acceptance_present():
         return _resolve_claude_model(_fable_fallback_tier()) if tier == "fable" else tier
+    # Live weekly-cap backstop: a valid receipt is necessary-not-sufficient. When the week's Fable
+    # spend is at/over cap, downgrade to Opus even for an accepted Fable selection (reserve receipts
+    # pass only in the 40–50% band). Fail-open when no balance meter is present.
+    if _claude_model_is_fable(model):
+        capped = _fable_capped_tier(_fable_reserve_receipt_present())
+        if capped is not None:
+            return _resolve_claude_model(capped)
     if _claude_model_uses_large_context(model) and not _large_context_allowed():
         return tier if tier in _CLAUDE_TIER_ORDER else _max_inherited_tier()
     return model

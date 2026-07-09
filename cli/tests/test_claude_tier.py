@@ -75,10 +75,51 @@ def _clear(monkeypatch):
         "LIMEN_CLAUDE_FABLE_MODEL",
         "LIMEN_CLAUDE_RETRY_BUMP_TO_FABLE",
         "LIMEN_FABLE_ACCEPTANCE",
+        "LIMEN_FABLE_BALANCE_PATH",
         "LIMEN_ALLOW_EXPENSIVE_CLAUDE_MODEL_PIN",
         "LIMEN_ALLOW_CLAUDE_1M_CONTEXT",
     ):
         monkeypatch.delenv(k, raising=False)
+
+
+def _this_monday() -> str:
+    now = datetime.now(timezone.utc)
+    return (now - timedelta(days=now.weekday())).date().isoformat()
+
+
+def _write_balance(root: Path, spent_pct: float, week: str | None = None) -> Path:
+    (root / "logs").mkdir(parents=True, exist_ok=True)
+    path = root / "logs" / "fable-allotment.json"
+    path.write_text(
+        json.dumps(
+            {
+                "week": week if week is not None else _this_monday(),
+                "spent_tokens": 0,
+                "spent_pct": spent_pct,
+                "deliberate_cap": 40,
+                "hard_cap": 50,
+                "over_cap": spent_pct >= 50,
+            }
+        )
+    )
+    return path
+
+
+def _write_reserve_acceptance(root: Path) -> Path:
+    path = root / "fable-reserve.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema": "limen.fable_acceptance.v1",
+                "week": _this_monday(),
+                "category": "reserve",
+                "percent": 5,
+                "sources": ["docs/fable-allotment.md"],
+                "verification": ["python3 scripts/fable-allotment.py audit"],
+            }
+        )
+    )
+    return path
 
 
 def test_haiku_default_for_verifiable_class(tmp_path, monkeypatch):
@@ -286,6 +327,76 @@ def test_agent_type_pins_match_the_earned_tier_ladder(tmp_path, monkeypatch):
             f"{type_name}.md pins model={pinned!r} but the earned-tier ladder maps job class "
             f"{job_class!r} → {expected!r}; the agent-type floor drifted from the brain"
         )
+
+
+# ── Live weekly Fable cap: the runtime backstop layered on the accept-time receipt gate ────────
+# A valid acceptance receipt is necessary-not-sufficient. Once the week's Fable spend crosses the
+# caps in logs/fable-allotment.json, even an accepted Fable selection downgrades to Opus.
+
+
+def test_fable_over_hard_cap_downgrades_even_with_receipt(tmp_path, monkeypatch):
+    """spent_pct ≥ 50 → hard downgrade to opus, no exception (even a valid receipt)."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    task = _task(type_="final-canonical-decision")
+    # Under cap → fable.
+    _write_balance(tmp_path, 10.0)
+    assert D._claude_tier_for(task) == "fable"
+    assert D._claude_model(task) == "fable"
+    # Over the hard cap → opus, receipt notwithstanding.
+    _write_balance(tmp_path, 60.0)
+    assert D._claude_tier_for(task) == "opus"
+    assert D._claude_model(task) == "opus"
+
+
+def test_fable_reserve_band_passes_only_reserve_receipt(tmp_path, monkeypatch):
+    """40 ≤ spent_pct < 50 → only a current-week reserve receipt passes; else opus."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
+    task = _task(type_="final-canonical-decision")
+    _write_balance(tmp_path, 45.0)
+    # A non-reserve receipt is valid for acceptance but does not pass the 40–50% band.
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    assert D._claude_tier_for(task) == "opus"
+    # A reserve receipt passes the band.
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_reserve_acceptance(tmp_path)))
+    assert D._claude_tier_for(task) == "fable"
+    # …but not at/over the hard cap.
+    _write_balance(tmp_path, 55.0)
+    assert D._claude_tier_for(task) == "opus"
+
+
+def test_fable_cap_fails_open_when_no_balance_or_stale(tmp_path, monkeypatch):
+    """No balance file, or a stale (prior-week) one → the receipt gate alone decides (fail-open)."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    task = _task(type_="final-canonical-decision")
+    # No balance file at all → fable (receipt gate only).
+    assert D._claude_tier_for(task) == "fable"
+    # A stale prior-week balance is ignored, even if over cap.
+    _write_balance(tmp_path, 99.0, week="2020-01-06")
+    assert D._claude_tier_for(task) == "fable"
+
+
+def test_fable_per_task_pin_is_also_capped(tmp_path, monkeypatch):
+    """A per-task claude_tier='fable' pin is subject to the same live cap."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_ledger(tmp_path, {"waste_classes": []})
+    monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
+    task = _task(type_="code", claude_tier="fable")
+    _write_balance(tmp_path, 10.0)
+    assert D._claude_tier_for(task) == "fable"
+    _write_balance(tmp_path, 70.0)
+    assert D._claude_tier_for(task) == "opus"
 
 
 def test_all_agent_type_models_are_valid_tier_aliases():

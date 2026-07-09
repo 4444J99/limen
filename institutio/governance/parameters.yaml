@@ -1375,6 +1375,48 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Emergency override for claude-workflow-guard's written-acceptance check when transcript evidence is incomplete. Default 0 blocks Fable runs that lack a visible acceptance command or receipt reference."
+  LIMEN_FABLE_WEEKLY_TOKENS:
+    default: "1000000000"
+    env: LIMEN_FABLE_WEEKLY_TOKENS
+    self_update: none
+    owner: arms-agents
+    note: "Weekly Fable token budget the balance meter (scripts/fable-allotment.py balance) divides actual weekly Fable tokens by when Anthropic's weekly ratelimit-header percent is not captured. Default ~1B ≈ the observed weekly allotment ceiling; used only for the transcript-token-sum fallback source."
+  LIMEN_FABLE_BALANCE:
+    default: "1"
+    env: LIMEN_FABLE_BALANCE
+    self_update: none
+    owner: arms-agents
+    note: "Beat toggle for metabolize.sh step 0e: refresh logs/fable-allotment.json and surface an over-cap/unaccepted interactive Fable run in the beat log. Default 1; set 0 to skip the meter refresh."
+  LIMEN_FABLE_BALANCE_PATH:
+    default: ""
+    env: LIMEN_FABLE_BALANCE_PATH
+    self_update: none
+    owner: arms-agents
+    note: "Override path to the live weekly Fable balance file (default $LIMEN_ROOT/logs/fable-allotment.json). Read by the model_selection cap gate, the session guard, and the vendor advisor; used by tests to seed a mock balance. Empty means the default location."
+  LIMEN_CLAUDE_FABLE_CAP_TIER:
+    default: "opus"
+    env: LIMEN_CLAUDE_FABLE_CAP_TIER
+    self_update: none
+    owner: arms-agents
+    note: "Tier an OVER-CAP but acceptance-valid Fable selection lands on (the live weekly-cap downgrade in model_selection). Default Opus (the nearest tier below Fable for legitimately high-value work), capped to the ladder; distinct from the acceptance-absent LIMEN_CLAUDE_FABLE_FALLBACK_TIER."
+  LIMEN_LATEST_SESSION_JSONL:
+    default: ""
+    env: LIMEN_LATEST_SESSION_JSONL
+    self_update: none
+    owner: arms-agents
+    note: "Optional path to the latest interactive session transcript for metabolize.sh step 0e's per-beat Fable audit (claude-workflow-guard audit-transcript). Empty or absent means the per-beat transcript audit is skipped; the balance meter still refreshes."
+  LIMEN_SESSION_MODEL:
+    default: ""
+    env: LIMEN_SESSION_MODEL
+    self_update: none
+    owner: arms-agents
+    note: "Fallback source for the interactive session model in scripts/fable-session-guard.py when the SessionStart hook payload and ANTHROPIC_MODEL/CLAUDE_MODEL are absent. Empty means the guard resolves the model only from the payload/other env; a `fable`-bearing value triggers the interactive Fable guard."
+  LIMEN_VENDOR_IDLE_HEADROOM_PCT:
+    default: "90"
+    env: LIMEN_VENDOR_IDLE_HEADROOM_PCT
+    self_update: none
+    owner: arms-agents
+    note: "Headroom percent at/above which a metered vendor with no rate-limit health is judged persistently idle (CANCEL-CANDIDATE) by scripts/vendor-cancel-advisor.py. Default 90 is conservative: only a nearly-untouched pool is ever a cancel candidate; a pool that hits its caps is always KEEP."
   LIMEN_REAL_CLAUDE:
     default: null              # DERIVED: heartbeat-loop.sh captures `command -v claude` BEFORE prepending the shim dir
     env: LIMEN_REAL_CLAUDE

@@ -79,6 +79,20 @@ if [ "${LIMEN_ENACTMENT_CHECK:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/enactment-audit.py" --check || echo "  ↑ un-enacted fleet flag above — wire it in heartbeat-loop.sh, or kickstart the daemon (launchctl kickstart -k gui/\$(id -u)/com.limen.heartbeat)"
 fi
 
+echo "── 0e. refresh the weekly Fable balance meter + surface an over-cap / unaccepted Fable run ──"
+# The Fable runtime backstop (docs/fable-allotment.md): Fable is PLAN-ONLY and ~111x Opus cost. The
+# receipt organ gates INTENDED spend at accept-time; this refreshes the LIVE weekly meter
+# (logs/fable-allotment.json, read by model_selection's cap gate) and surfaces an over-cap or
+# unaccepted Fable session HERE in the beat log — like creds-hydrate --verify — instead of only on a
+# manual audit. Fail-open, never fatal: a measurement hiccup can't break the beat.
+if [ "${LIMEN_FABLE_BALANCE:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/fable-allotment.py" balance >/dev/null 2>&1 || echo "  (fable balance meter skipped — see logs)"
+  if [ -n "${LIMEN_LATEST_SESSION_JSONL:-}" ] && [ -f "${LIMEN_LATEST_SESSION_JSONL}" ]; then
+    python3 "$LIMEN_ROOT/scripts/claude-workflow-guard.py" audit-transcript "${LIMEN_LATEST_SESSION_JSONL}" >/dev/null \
+      || echo "  ↑ unaccepted / over-budget Fable run above — accept it (scripts/fable-allotment.py accept …) or drop off Fable (docs/fable-allotment.md)"
+  fi
+fi
+
 echo "── 0e. armed-valve audit — parked levers vs silently-off valves ──"
 # The gap this closes (retro 06-24→07-08 finding 8; PREC-2026-07-08-armed-valve-outcome):
 # a deliverable-IS-the-behavior valve left disarmed (MONETA's empty checkout, the censor

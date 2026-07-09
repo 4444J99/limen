@@ -31,7 +31,9 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _claude_fable_acceptance_present,
     _claude_fable_classes,
     _claude_opus_classes,
+    _fable_capped_tier,
     _fable_fallback_tier,
+    _fable_reserve_receipt_present,
     _guard_fable_model_pin,
     _resolve_claude_model,
 )
@@ -3016,6 +3018,15 @@ def _claude_tier_overrides() -> dict[str, list[str]]:
         return {}
 
 
+def _earned_fable_tier() -> str:
+    """A Fable selection that already cleared the acceptance receipt, resolved against the LIVE
+    weekly cap (`logs/fable-allotment.json`): 'fable' when the cap still allows it, else the
+    fallback tier (Opus). This is the runtime backstop the receipt gate alone cannot provide —
+    it enforces the 40% deliberate / 50% hard ladder against actual tokens burned this week."""
+    capped = _fable_capped_tier(_fable_reserve_receipt_present())
+    return capped if capped is not None else "fable"
+
+
 def _claude_tier_for(task: Task | None) -> str:
     """DERIVE the Claude tier for a task. Default = haiku (verifiable → escalate via the existing
     cascade). Pre-assign a higher tier ONLY where failure is undetectable:
@@ -3024,18 +3035,21 @@ def _claude_tier_for(task: Task | None) -> str:
       • sonnet— classes the ledger has DISCOVERED this lane wastes on (waste_classes): work that
                 shipped low-value yet passed whatever gate exists ⇒ failure not caught cheaply here.
     A per-task `claude_tier` pin and an optional logs/model-tiers.json override layer on top.
-    Fail-open → haiku, never block."""
+    Fable is additionally gated by the LIVE weekly cap (`_earned_fable_tier`): a valid receipt is
+    necessary-not-sufficient once the week's Fable spend is at/over cap. Fail-open → haiku."""
     if task is None:
         return "haiku"
     pin = task.claude_tier
     if pin in _CLAUDE_TIER_ORDER:
         if pin == "fable" and not _claude_fable_acceptance_present():
             return _fable_fallback_tier()
+        if pin == "fable":
+            return _earned_fable_tier()
         return str(pin)
     classes = _task_classes(task)
     override = _claude_tier_overrides()
     if classes & (_claude_fable_classes() | set(override.get("fable") or [])):
-        return "fable" if _claude_fable_acceptance_present() else _fable_fallback_tier()
+        return _earned_fable_tier() if _claude_fable_acceptance_present() else _fable_fallback_tier()
     if classes & (_claude_opus_classes() | set(override.get("opus") or [])):
         return "opus"
     lane_data = _ledger_lanes().get("claude") or {}
