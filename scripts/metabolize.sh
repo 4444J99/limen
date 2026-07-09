@@ -130,6 +130,17 @@ if [ "${LIMEN_ASK_GATE:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/ask-gate.py" --audit --since 7 --top 8 || echo "  (ask-gate report failed — non-fatal)"
 fi
 
+echo "── 0i. omega — the autonomic fixed point (conjunction of every gate's --check) ──"
+# The gap this closes (retro 06-24→07-08, omega definition): each gate proves its own slice, but
+# nothing asserted the WHOLE — that the system runs unattended, products are reachable, healing
+# converges, nothing hangs on the session. omega.sh composes them; a rung it cannot check is SKIP,
+# never a silent PASS (the MONETA curl-000 lesson). --offline runs the det subset (no network in the
+# cheap beat rungs); the verdict + PASS/FAIL/SKIP lands in logs/omega.json for session-orient.
+# Fail-open, never fatal to the beat.
+if [ "${LIMEN_OMEGA:-1}" = "1" ]; then
+  bash "$LIMEN_ROOT/scripts/omega.sh" --offline --quiet || echo "  ↑ OMEGA not holding above — a gate rung failed; the system is off its fixed point (see logs/omega.json)"
+fi
+
 echo "── 0. refresh usage telemetry / lane health ──"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || echo "  (usage telemetry skipped)"
 

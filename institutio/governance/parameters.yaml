@@ -1623,6 +1623,13 @@ parameters:
     owner: tabularius
     note: "Beat gate for the intake ask audit (scripts/ask-gate.py --audit --since 7) run each beat by metabolize.sh section 0i (RETRO-0708-ASK-GATE; retro gap model + evolution 3). Encodes the measured drift predictors STRUCTURALLY: a task converges iff it names one executable done-predicate, is a single bounded objective (no (1)..(n) bundles), and is owned (repo + agent); narrative-success vocabulary and ungated armed-behavior deliverables surface as ADVISE findings. Verdicts: PASS / SPLIT (decompose into predicate-shaped children; --task-file offers the skeleton) / ADVISE. Report-only in the beat for now — the LIMEN_CENSOR_APPLY observable-before-autonomous pattern; the enforcement seam is ask-gate --task-file --check on every keeper ticket, to be armed once logs/ask-gate.json proves the predicate. Set 0 to silence."
 
+  LIMEN_OMEGA:
+    default: "1"               # ON — compute the autonomic fixed-point verdict each beat
+    env: LIMEN_OMEGA
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the omega fixed-point predicate (scripts/omega.sh --offline --quiet) run each beat by metabolize.sh section 0i. omega.sh is the CONJUNCTION of every gate's --check (enactment-audit, armed-valve-audit, ship-gate, heal-convergence, ask-gate, handoff-relay, no-tasks-on-me, credential-wall): the retro (06-24→07-08) defined 'omega' — runs nights unattended, products reachable, healing converges, nothing hangs on the session — but no script asserted the WHOLE. A rung it cannot verify here is SKIP, never a silent PASS (the MONETA curl-000 lesson); rungs are tagged det (repo-deterministic) or live (host/network); --offline runs det only, --full adds verify-whole.sh for authoritative main-green. Exit 0 ⟺ zero FAIL. Stamps logs/omega.json (verdict + PASS/FAIL/SKIP) for session-orient section_omega. verify-whole.sh runs the deterministic stub test (scripts/tests/omega.test.sh); the live fixed-point verdict stays beat-side. Set 0 to silence."
+
   LIMEN_CENSOR_ISSUES_APPLY:
     default: "0"               # SAFE CODE DEFAULT — dry-run; ships observable-before-autonomous (the LIMEN_CENSOR_APPLY constitutional pattern). NO fleet_runtime yet: arming is deliberately a human act.
     env: LIMEN_CENSOR_ISSUES_APPLY

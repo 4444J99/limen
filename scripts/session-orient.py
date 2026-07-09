@@ -249,9 +249,30 @@ def section_handoff() -> str:
     return line
 
 
+def section_omega() -> str:
+    """Inject the autonomic fixed-point verdict (scripts/omega.sh → logs/omega.json) so a resuming
+    session sees at a glance whether the WHOLE holds — not just that individual gates are green. A
+    SKIP count is honest unverified-rungs, not failure. Silent if no stamp exists."""
+    data = _read_json(ROOT / "logs" / "omega.json", {})
+    if not isinstance(data, dict) or not data.get("verdict"):
+        return ""
+    verdict = data.get("verdict")
+    line = (
+        f"**Omega** — {verdict} · {data.get('pass', 0)} PASS / "
+        f"{data.get('fail', 0)} FAIL / {data.get('skip', 0)} SKIP"
+        f"{' (offline subset)' if data.get('offline') else ''}"
+    )
+    if data.get("fail"):
+        broken = [r.get("rung") for r in data.get("rungs", []) if isinstance(r, dict) and r.get("status") == "FAIL"]
+        if broken:
+            line += f"\n  off fixed-point: {', '.join(filter(None, broken))[:160]}"
+    return line
+
+
 def main():
     sections = (
         section_north_star,
+        section_omega,
         section_handoff,
         section_levers,
         section_organs,
