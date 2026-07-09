@@ -48,7 +48,7 @@ JSON_PATH = OUTPUT_ROOT / "docs" / "worktree-reclaim-candidates.json"
 VALUE_REPOS = STATE_ROOT / "value-repos.json"
 SCORE_LEDGER = STATE_ROOT / "logs" / "ledger.jsonl"
 ACCEPTANCE_LEDGER = OUTPUT_ROOT / "docs" / "worktree-reclaim-acceptance.jsonl"
-SAFE_REASONS = {"clean+merged+idle", "clean+pushed+idle"}
+SAFE_REASONS = {"clean+merged+idle"}
 WORKTREE_LIFECYCLE_SCORE = 32
 
 
@@ -202,8 +202,8 @@ def governance_context(
             "the action is non-destructive packetization, not local deletion."
         ),
         "why_not_auto_delete": (
-            "scripts/reclaim-worktrees.py --apply removes the loss-free classes "
-            "(clean+merged+idle and clean+pushed+idle) under "
+            "scripts/reclaim-worktrees.py --apply removes only the merged loss-free class "
+            "(clean+merged+idle) under "
             "the operator standing grant standing-grant-2026-07-09 (docs/removal-acceptance-covenant.md "
             "§Standing grant; disable with LIMEN_RECLAIM_STANDING_ACCEPTANCE=0); every other class still "
             "requires a matching human acceptance/redaction/archive proof event in "
@@ -253,7 +253,7 @@ def acceptance_event(row: dict[str, Any], accepted_at: str = "<ISO-8601-UTC>") -
         "reason": row["reason"],
         "archive_status": "not_required_clean_merged_remote",
         "archive_proof": (
-            "worktree debt classified this root clean+merged+idle or clean+pushed+idle; "
+            "worktree debt classified this root clean+merged+idle; "
             "HEAD/content is already preserved on the remote lifecycle"
         ),
         "redaction_review": "not_required_remote_only",
@@ -339,7 +339,7 @@ def build_packet(
             "scanned_roots": report["total"],
             "debt_roots": report["debt"],
             "clean_merged_idle_roots": int(report.get("by_reason", {}).get("clean+merged+idle", 0)),
-            "clean_pushed_idle_roots": int(report.get("by_reason", {}).get("clean+pushed+idle", 0)),
+            "pushed_unmerged_roots": int(report.get("by_reason", {}).get("not-merged-to-default", 0)),
             "candidate_roots": len(rows),
             "candidate_limit": limit,
             "size_measured": bool(measure),
@@ -371,7 +371,7 @@ def render_markdown(packet: dict[str, Any]) -> str:
         f"- Scanned roots: `{summary['scanned_roots']}`",
         f"- Debt roots: `{summary['debt_roots']}`",
         f"- Clean merged idle roots available: `{summary['clean_merged_idle_roots']}`",
-        f"- Clean pushed idle roots available: `{summary['clean_pushed_idle_roots']}`",
+        f"- Pushed but unmerged roots retained: `{summary['pushed_unmerged_roots']}`",
         f"- Candidate roots in this packet: `{summary['candidate_roots']}`",
         f"- Measured candidate size: `{summary['measured_candidate_size']}`",
         "",

@@ -19,7 +19,6 @@ DEBT_REASONS = {
 }
 REAPABLE_REASONS = {
     "clean+merged+idle",
-    "clean+pushed+idle",
 }
 
 DOCUMENTED_RESIDUE_LANES = {"documented-residue"}
@@ -247,8 +246,6 @@ def _classify(
     if not head or (not _reachable_from_remote(path, head) and not patch_equivalent):
         return "unpushed-commits"
     if not (_merged_into_default(path, head) or patch_equivalent):
-        if _flag("LIMEN_RECLAIM_PUSHED_OK", True):
-            return "clean+pushed+idle"
         return "not-merged-to-default"
     return "clean+merged+idle"
 

@@ -289,7 +289,7 @@ def test_default_worktree_root_uses_limen_worktrees_env(tmp_path: Path, monkeypa
     assert wr.effective_worktree_root() == scratch
 
 
-def test_clean_pushed_unmerged_root_is_reapable_not_debt(tmp_path: Path, monkeypatch):
+def test_clean_pushed_unmerged_root_is_debt(tmp_path: Path, monkeypatch):
     source = tmp_path / "source"
     source.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=source, check=True)
@@ -323,14 +323,14 @@ def test_clean_pushed_unmerged_root_is_reapable_not_debt(tmp_path: Path, monkeyp
 
     report = worktree_debt_report(tmp_path)
 
-    assert report["debt"] == 0
-    assert report["reapable"] == 1
-    assert report["items"][0]["reason"] == "clean+pushed+idle"
-    assert report["items"][0]["debt"] is False
-    assert report["items"][0]["reapable"] is True
+    assert report["debt"] == 1
+    assert report["reapable"] == 0
+    assert report["items"][0]["reason"] == "not-merged-to-default"
+    assert report["items"][0]["debt"] is True
+    assert report["items"][0]["reapable"] is False
 
 
-def test_clean_pushed_unmerged_root_is_debt_when_push_reap_disabled(tmp_path: Path, monkeypatch):
+def test_clean_pushed_unmerged_root_is_debt_without_escape_hatch(tmp_path: Path, monkeypatch):
     source = tmp_path / "source"
     source.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main"], cwd=source, check=True)
@@ -361,8 +361,6 @@ def test_clean_pushed_unmerged_root_is_debt_when_push_reap_disabled(tmp_path: Pa
     monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
     monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
     monkeypatch.setenv("LIMEN_RECLAIM_MIN_AGE_H", "0")
-    monkeypatch.setenv("LIMEN_RECLAIM_PUSHED_OK", "0")
-
     report = worktree_debt_report(tmp_path)
 
     assert report["debt"] == 1

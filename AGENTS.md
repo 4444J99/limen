@@ -92,6 +92,8 @@ source of truth. A local checkout is a disposable cache or staging area; it is n
   receipt before trusting a local clone.
 - If local work is required, create it in an isolated worktree or scratch lane, push/open the remote
   receipt, then reap the local cache once lifecycle custody is proven.
+- Reaping local caches requires merged or patch-equivalent remote custody. A pushed branch or open PR
+  is not enough to delete the local checkout; merge it first, or solve the reason it cannot merge.
 - Do not fall back to local files when the canonical object is remote and queryable.
 - Do not let local clone presence, local profile copies, or stale generated artifacts define public
   truth. If a remote cannot be updated, record the owner repo, missing gate, and next command.
@@ -139,8 +141,9 @@ Valid closure forms are:
 - explicit blocker naming the external gate and next command.
 
 Do not delete, reap, archive-away, or mark closed merely because a lane timed out, produced no diff,
-lost context, or looked stale. If a worktree produced no usable code, emit the plan/owner task that
-captures the prompt's intent, then close the worktree only after remote/archive custody is proven.
+lost context, looked stale, or was merely pushed to a remote branch. If a worktree produced no usable
+code, emit the plan/owner task that captures the prompt's intent, then close the worktree only after
+the work is merged or proven patch-equivalent to the remote default branch.
 
 ## Task States
 

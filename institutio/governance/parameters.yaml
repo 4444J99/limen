@@ -445,12 +445,6 @@ parameters:
     self_update: none
     owner: continuity
     note: "Honor the covenant standing grant (2026-07-09): clean+merged+idle worktree roots are pre-accepted for removal without a per-root ledger event. Set 0 to restore per-root human acceptance for that class (docs/removal-acceptance-covenant.md)."
-  LIMEN_RECLAIM_PUSHED_OK:
-    default: "1"               # ON — pushed-to-origin is sufficient to reap a local worktree (preservation, not merge, is the bar)
-    env: LIMEN_RECLAIM_PUSHED_OK
-    self_update: none
-    owner: continuity
-    note: "The operator's push-first rule (2026-07-09): a clean, idle worktree whose commits are already on origin (reachable_from_remote) but is NOT merged is reapable — removing the local checkout loses zero work, the branch stays on origin resumable. This drains the pushed-but-unmerged worktree backlog that otherwise pins hundreds of roots (each also pinning its branch from the branch-reaper). Classified clean+pushed+idle, covered by the same standing grant. Set 0 to restore the conservative merged-only gate. The unpushed/dirty guardrails are unchanged — unpreserved work is NEVER reaped."
   LIMEN_DISK_PRESSURE_PATH:
     default: "$LIMEN_ROOT"
     env: LIMEN_DISK_PRESSURE_PATH
@@ -1720,7 +1714,7 @@ parameters:
     env: LIMEN_WORKTREE_REAPABLE_MAX
     self_update: none
     owner: limen-daemon
-    note: "Maximum clean remote-preserved local worktree roots allowed to linger after the reaper should be able to remove them. Default 0 makes clean+merged+idle and clean+pushed+idle residue fail focused lifecycle gates until reclaim applies or an owner blocker is recorded."
+    note: "Maximum clean merged local worktree roots allowed to linger after the reaper should be able to remove them. Default 0 makes clean+merged+idle residue fail focused lifecycle gates until reclaim applies or an owner blocker is recorded. Pushed-but-unmerged roots are not reapable; they remain not-merged-to-default until merged or patch-equivalent."
   LIMEN_BRANCH_PREFIX:
     default: null              # DERIVED per scope — cells.sh sets cell-<slug>- for a cell's own conductor
     env: LIMEN_BRANCH_PREFIX

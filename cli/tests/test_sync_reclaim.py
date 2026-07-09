@@ -374,7 +374,7 @@ def test_reclaim_keeps_dirty_unpushed_and_active(tmp_path):
     _git("commit", "-q", "-m", "unpushed", cwd=unpushed)
     _age(unpushed, 5)
 
-    active = _add_wt(main, wtroot, "active")  # clean+pushed but freshly touched (recent mtime)
+    active = _add_wt(main, wtroot, "active")  # clean but freshly touched (recent mtime)
 
     r = _run_reclaim(wtroot, main, apply=True)
     assert r.returncode == 0, r.stderr
@@ -382,9 +382,9 @@ def test_reclaim_keeps_dirty_unpushed_and_active(tmp_path):
     assert "dirty" in r.stdout and "unpushed-commits" in r.stdout and "active" in r.stdout
 
 
-def test_reclaim_removes_clean_pushed_unmerged_branch(tmp_path):
-    # push-first rule (2026-07-09, LIMEN_RECLAIM_PUSHED_OK default on): the commits are on origin, so
-    # removing the local checkout loses nothing — the branch stays resumable. Reaped as clean+pushed+idle.
+def test_reclaim_keeps_clean_pushed_unmerged_branch(tmp_path):
+    # Merge-before-reap rule (2026-07-09): pushed preservation is not closure. The branch must
+    # merge before the local checkout is eligible for removal.
     main, bare, wtroot = _wt_root_with(tmp_path)
     (main / "logs").mkdir(exist_ok=True)
 
@@ -397,13 +397,12 @@ def test_reclaim_removes_clean_pushed_unmerged_branch(tmp_path):
     r = _run_reclaim(wtroot, main, apply=True)
 
     assert r.returncode == 0, r.stderr
-    assert not branch.exists(), r.stdout
-    assert "clean+pushed+idle" in r.stdout
+    assert branch.exists(), r.stdout
+    assert "not-merged-to-default" in r.stdout
 
 
-def test_reclaim_keeps_pushed_unmerged_when_pushed_gate_disabled(tmp_path):
-    # LIMEN_RECLAIM_PUSHED_OK=0 restores the conservative merged-only gate: a pushed-but-unmerged
-    # worktree is kept as not-merged-to-default (the reversible off switch for the push-first rule).
+def test_reclaim_keeps_pushed_unmerged_without_escape_hatch(tmp_path):
+    # Pushed-but-unmerged worktrees are kept as not-merged-to-default.
     main, bare, wtroot = _wt_root_with(tmp_path)
     (main / "logs").mkdir(exist_ok=True)
 
@@ -413,7 +412,7 @@ def test_reclaim_keeps_pushed_unmerged_when_pushed_gate_disabled(tmp_path):
     _git("push", "-q", "origin", "HEAD:feature-off", cwd=branch)
     _age(branch, 5)
 
-    r = _run_reclaim(wtroot, main, apply=True, extra_env={"LIMEN_RECLAIM_PUSHED_OK": "0"})
+    r = _run_reclaim(wtroot, main, apply=True)
 
     assert r.returncode == 0, r.stderr
     assert branch.exists(), r.stdout

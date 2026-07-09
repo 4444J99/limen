@@ -2,7 +2,7 @@
 
 `scripts/reclaim-worktrees.py --apply` removes registered worktrees, standalone
 worktree-like clones, or generated residue only after the loss-free reclaim gate
-passes. The loss-free class (`clean+merged+idle`) is pre-accepted under the
+passes. The merged loss-free class (`clean+merged+idle`) is pre-accepted under the
 operator standing grant `standing-grant-2026-07-09`
 (`docs/removal-acceptance-covenant.md` §Standing grant; disable with
 `LIMEN_RECLAIM_STANDING_ACCEPTANCE=0`). Every other class additionally requires
@@ -34,3 +34,7 @@ Accepted archive statuses and redaction reviews are code-defined in
 `scripts/reclaim-worktrees.py`. Use `not_required_clean_merged_remote` and
 `not_required_remote_only` only when the worktree/root is clean, idle, and
 already preserved by its merged remote/default lifecycle.
+
+Pushed-but-unmerged branches and open PRs are not a removal class. They stay as
+`not-merged-to-default` until the PR is merged or the local patch is proven
+patch-equivalent to the remote default branch.

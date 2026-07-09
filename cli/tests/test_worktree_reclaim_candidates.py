@@ -24,7 +24,7 @@ def test_candidate_rows_include_only_remote_preserved_loss_free_classes(tmp_path
     mod = load_candidates()
     worktree = tmp_path / "accepted-worktree"
     clone = tmp_path / "accepted-clone"
-    pushed = tmp_path / "accepted-pushed"
+    pushed = tmp_path / "retained-pushed"
     dirty = tmp_path / "dirty-root"
     for path in (worktree, clone, pushed, dirty):
         path.mkdir()
@@ -35,11 +35,11 @@ def test_candidate_rows_include_only_remote_preserved_loss_free_classes(tmp_path
     report = {
         "total": 4,
         "debt": 1,
-        "by_reason": {"clean+merged+idle": 2, "clean+pushed+idle": 1, "dirty": 1},
+        "by_reason": {"clean+merged+idle": 2, "not-merged-to-default": 1, "dirty": 1},
         "items": [
             {"name": worktree.name, "path": str(worktree), "reason": "clean+merged+idle", "debt": False},
             {"name": clone.name, "path": str(clone), "reason": "clean+merged+idle", "debt": False},
-            {"name": pushed.name, "path": str(pushed), "reason": "clean+pushed+idle", "debt": False},
+            {"name": pushed.name, "path": str(pushed), "reason": "not-merged-to-default", "debt": True},
             {"name": dirty.name, "path": str(dirty), "reason": "dirty", "debt": True},
         ],
     }
@@ -47,10 +47,9 @@ def test_candidate_rows_include_only_remote_preserved_loss_free_classes(tmp_path
     rows = mod.candidate_rows(report, limit=10, measure=False, size_scan_limit=0)
     by_name = {row["name"]: row for row in rows}
 
-    assert sorted(by_name) == ["accepted-clone", "accepted-pushed", "accepted-worktree"]
+    assert sorted(by_name) == ["accepted-clone", "accepted-worktree"]
     assert by_name["accepted-worktree"]["action"] == "remove-worktree"
     assert by_name["accepted-clone"]["action"] == "remove-clone"
-    assert by_name["accepted-pushed"]["reason"] == "clean+pushed+idle"
     assert by_name["accepted-worktree"]["acceptance_event_template"]["redaction_review"] == "not_required_remote_only"
 
 
@@ -94,7 +93,7 @@ def test_render_markdown_makes_non_destructive_gate_explicit(tmp_path: Path) -> 
 
     assert "candidate packet, not acceptance" in text
     assert "Authority Gate" in text
-    assert "Clean pushed idle roots available" in text
+    assert "Pushed but unmerged roots retained" in text
     assert "docs/worktree-reclaim-acceptance.jsonl" in text
     assert "scripts/session-attack-paths.py" in text
 
