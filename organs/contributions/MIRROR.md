@@ -64,7 +64,7 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 
 | dependency | used across our repos |
 |---|---|
-| pytest | 30 |
+| pytest | 32 |
 | typescript | 29 |
 | vitest | 23 |
 | ruff | 21 |

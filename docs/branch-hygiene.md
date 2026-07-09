@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (172) — decide each
+## Live-work branches (176) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -108,7 +108,11 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-cifix-organvm-limen-443-4e67ed4e` — ad12cd64 fix(ci): repair PR 443 gate failures
 - `limen/heal-cifix-organvm-limen-447-c5187efb` — d7caf8ff Gemini daily capacity-fill packet 10
 - `limen/heal-cifix-organvm-limen-447-cef5ffb6` — d7caf8ff Gemini daily capacity-fill packet 10
+- `limen/heal-cifix-organvm-limen-452-1091876d` — 793e4afe Make organvm/limen CI green
 - `limen/heal-cifix-organvm-limen-490-8e65bdf4` — f70008a7 Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane
+- `limen/heal-rebase-organvm-limen-516-a8f9be47` — a0a46938 Raise test coverage in organvm/limen
+- `limen/heal-rebase-organvm-limen-617-244af5eb` — 0c796729 Build the first working vertical slice of the social organ
+- `limen/heal-rebase-organvm-limen-621-92b25510` — af456827 Build the first working vertical slice of the health organ
 - `limen/jules-aw-mail-historical-backlog-083a` — 539cb717 Continue historical mail backlog in resumable batches
 - `limen/jules-aw-mail-historical-backlog-1f7d` — 2525ea4e Continue historical mail backlog in resumable batches
 - `limen/jules-aw-mail-historical-backlog-3a0b` — 78e1083a Continue historical mail backlog in resumable batches

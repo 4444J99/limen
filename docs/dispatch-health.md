@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-09T20:56:13+00:00`
+Generated: `2026-07-09T21:25:22+00:00`
 
 Status: `blocked`
 
@@ -17,31 +17,31 @@ Status: `blocked`
 - Generated LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Generated LIMEN_DISPATCH_ASYNC: `1`.
 - Generated LIMEN_ASYNC_MAX: `10`.
-- LaunchAgent plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `False`.
-- Plist KeepAlive: `None`; RunAtLoad: `None`.
-- Plist LIMEN_ROOT: `None`.
-- Plist LIMEN_WORKTREES: `None`.
-- Plist LIMEN_WORKTREE_ROOT: `None`.
-- Plist LIMEN_DISPATCH_ASYNC: `None`.
-- Plist LIMEN_DISPATCH_LANES: `None`.
-- Plist LIMEN_ASYNC_MAX: `None`.
-- Plist LIMEN_LANES: `None`.
-- Loaded launchd state: `missing` pid `None`.
-- Loaded LIMEN_ROOT: `None`.
-- Loaded LIMEN_WORKTREES: `None`.
-- Loaded LIMEN_WORKTREE_ROOT: `None`.
-- Loaded LIMEN_DISPATCH_ASYNC: `None`.
-- Loaded LIMEN_DISPATCH_LANES: `None`.
-- Loaded LIMEN_ASYNC_MAX: `None`.
-- Loaded LIMEN_LANES: `None`.
-- Watchdog dry-run healthy: `False`; `[watchdog] 2026-07-09T20:56:13.932781+00:00 UNHEALTHY sig=beating+daemon-up`.
+- LaunchAgent plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `True`.
+- Plist KeepAlive: `True`; RunAtLoad: `True`.
+- Plist LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
+- Plist LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
+- Plist LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
+- Plist LIMEN_DISPATCH_ASYNC: `1`.
+- Plist LIMEN_DISPATCH_LANES: `auto`.
+- Plist LIMEN_ASYNC_MAX: `10`.
+- Plist LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
+- Loaded launchd state: `running` pid `12898`.
+- Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
+- Loaded LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
+- Loaded LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
+- Loaded LIMEN_DISPATCH_ASYNC: `1`.
+- Loaded LIMEN_DISPATCH_LANES: `auto`.
+- Loaded LIMEN_ASYNC_MAX: `10`.
+- Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-09T21:25:22.282989+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
-- Async dry-run lanes: `auto`; max `12`.
+- Async dry-run lanes: `auto`; max `10`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 0 (local cap 12, local per-lane 8) -> []`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 3 still running ; would launch 8 (local cap 10, local per-lane 8) -> ['HEAL-cifix-organvm-domus-genoma-151', 'HEAL-cifix-organvm-domus-genoma-230', 'HEAL-cifix-organvm-domus-genoma-231', 'HEAL-cifix-organvm-domus-genoma-233', 'HEAL-cifix-organvm-domus-genoma-235', 'HEAL-cifix-organvm-portfolio-175', 'HEAL-rebase-organvm-domus-genoma-153', 'HEAL-cifix-organvm-mirror-mirror-73']`.
 - Async skipped down lanes: `jules`.
   - `jules`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `100`; headroom `0%`.
 
@@ -74,10 +74,20 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `f58924239c3246bb51d5d086b33ef0299f00e2d6`.
-- origin/main: `f58924239c3246bb51d5d086b33ef0299f00e2d6`.
+- HEAD: `470a23ce23bd4fe709b619e2df08084a61794f7b`.
+- origin/main: `470a23ce23bd4fe709b619e2df08084a61794f7b`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `0`.
+- Dirty entries: `8`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/dispatch-health.md`
+  - `docs/always-working.md`
+  - `docs/branch-hygiene.md`
+  - `docs/prompt-batch-resolution-receipts.json`
+  - `organs/contributions/MIRROR.md`
+  - `organs/contributions/opportunities.json`
+  - `organs/financial/STATUS.md`
+  - `organs/financial/cashflow.md`
+  - `tasks.yaml`
 
 ## Verified Worktree
 
@@ -87,9 +97,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `heartbeat-plist-missing`: LaunchAgent plist was not found.
-- `heartbeat-launchd-not-running`: launchd state is missing.
-- `heartbeat-watchdog-unhealthy`:   ok  not-wedged: {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": 3}
+- `live-root-dirty`: live root has 8 dirty entries.
 - `always-working-required-work-open`: 6 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
@@ -100,4 +108,4 @@ Status: `blocked`
 - Refresh always-working reconciliation: `python3 scripts/always-working.py --write`
 - Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`
 - Probe heartbeat: `python3 scripts/watchdog.py --dry-run`
-- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run`
+- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 10 --dry-run`

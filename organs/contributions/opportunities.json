@@ -4,7 +4,7 @@
   "pool": [
     {
       "dependency": "pytest",
-      "used_in_repos": 30
+      "used_in_repos": 32
     },
     {
       "dependency": "typescript",

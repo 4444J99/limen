@@ -1,14 +1,14 @@
 # Financial Office — STATUS Dashboard
 
-**Generated:** 2026-07-08T11:15:25Z  **Maturity:** maturing (70%)
+**Generated:** 2026-07-09T21:24:16Z  **Maturity:** maturing (70%)
 
 ---
 
 ## At a glance
 
 - **Entities tracked:** 6
-- **Revenue products:** 6 (1 deploy-ready or live)
-- **Open obligations:** 25
+- **Revenue products:** 10 (2 deploy-ready or live)
+- **Open obligations:** 22
 - **Net worth:** unknown
 - **Balance snapshots:** 1
 - **First dollar path:** ChatGPT Exporter → MONETA/Ko-fi (deploy-ready, principal-gated)
