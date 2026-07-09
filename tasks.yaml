@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 335
+      spent: 340
       per_agent:
         jules: 40
         gemini: 9
         codex: 21
         opencode: 121
-        agy: 108
-        claude: 32
+        agy: 112
+        claude: 33
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -80494,7 +80494,7 @@ tasks:
   workstream: financial
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - noop
   urls: []
@@ -80505,7 +80505,7 @@ tasks:
     Severity: medium'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-09T21:19:52.995801Z'
+  updated: '2026-07-09T22:37:01.838915Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -80528,6 +80528,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-09T22:37:01.838915Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: TASK-LED-rev-organvm/universal-ma
   title: 'Heal insight: waste on revenue repo: organvm/universal-mail--automation'
   description: Product 'Universal Mail Automation' spent 36 with 18 wasted (23 shipped).
@@ -98139,7 +98144,7 @@ tasks:
   target_agent: agy
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -98156,7 +98161,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:10:27.583194Z'
+  updated: '2026-07-09T22:37:01.838915Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -98164,6 +98169,11 @@ tasks:
     status: open
     output: 'fleet fill: retargeted codex->jules to use Jules async capacity before
       local OpenCode/Agy slots'
+  - timestamp: '2026-07-09T22:37:01.838915Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-713
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#713
   repo: organvm/peer-audited--behavioral-blockchain
@@ -111486,7 +111496,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - discover
   - value-discovery
@@ -111506,7 +111516,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T21:22:49.733430Z'
+  updated: '2026-07-09T22:37:01.838915Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:05:05.340391Z'
     agent: agy
@@ -111523,6 +111533,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-09T22:37:01.838915Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-quaestor
   title: Discover the latent value of organvm/quaestor
   repo: organvm/quaestor
@@ -122359,7 +122374,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - engine
   - meta
@@ -122373,7 +122388,7 @@ tasks:
     \ found by new users lands here. <!-- manumissio:generalize-and-document -->"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T19:53:57.020939Z'
+  updated: '2026-07-09T22:37:01.838915Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -122385,6 +122400,11 @@ tasks:
     status: open
     output: 'board repair: latest jules failed->ollama came from unarmed/noncanonical
       ollama fallback; retargeted ollama->opencode; code-side guard in https://github.com/organvm/limen/pull/839'
+  - timestamp: '2026-07-09T22:37:01.838915Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-manumissio-12
   title: "Phase 4: the exit predicate \u2014 the last subscription dies by exit code"
   repo: organvm/manumissio
@@ -122632,7 +122652,7 @@ tasks:
   workstream: prompt-parity
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - evals
   - phase-1
@@ -122647,8 +122667,13 @@ tasks:
     \ <!-- manumissio:arm-floor-classes -->"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T13:00:48.197531Z'
-  dispatch_log: []
+  updated: '2026-07-09T22:37:01.838915Z'
+  dispatch_log:
+  - timestamp: '2026-07-09T22:37:01.838915Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-manumissio-4
   title: "Phase 1-2: candidate weights worth owning \u2014 the acquisition ledger"
   repo: organvm/manumissio
