@@ -68,6 +68,9 @@ python3 organs/social/validate-social.py --fleet --quiet
 step "Verify the merge-policy predicate (verdict matrix regression test)"
 bash scripts/tests/merge-policy.test.sh
 
+step "Verify the resolver selection fixtures (verify.py implicates exactly the registered gates)"
+bash scripts/tests/verify-resolver.test.sh
+
 step "Verify the enactment predicate (declared-ON fleet flags are actually wired live, not just merged)"
 bash scripts/tests/enactment-audit.test.sh
 

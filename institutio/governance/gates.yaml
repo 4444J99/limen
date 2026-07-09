@@ -25,7 +25,7 @@ schema_version: 0.1
 # Consumers-derive ratchets — armed per-PR as each consumer converts (check-gates.py
 # enforces the armed ones; unarmed ones are recorded intent, like the check-params baseline).
 ratchets:
-  verify_scoped_wrapper: false   # PR2: verify-scoped.sh is a thin exec of verify.py --changed
+  verify_scoped_wrapper: true    # ARMED (PR2): verify-scoped.sh is a thin exec of verify.py --changed
   merge_policy_derives: false    # PR3: merge-policy.sh has no literal deploy regex
   verify_whole_derives: false    # PR4: verify-whole.sh has no literal py_compile/bash -n lists
   claude_md_pointer: false       # PR4: CLAUDE.md carries the pointer, not the path lists
@@ -96,6 +96,8 @@ file_sets:
       - "scripts/heal-convergence.py"
       - "scripts/async-run-one.py"
       - "scripts/ask-gate.py"
+      - "scripts/verify.py"
+      - "scripts/check-gates.py"
     exclude: []
   bash-syntax:
     include:
@@ -114,6 +116,10 @@ file_sets:
       - "scripts/tests/ask-gate.test.sh"
       - "scripts/tests/omega.test.sh"
       - "scripts/hooks/session-lifecycle-pressure.sh"
+      - "scripts/hooks/worktree-commit-guard.sh"
+      - "scripts/tests/worktree-commit-guard.test.sh"
+      - "scripts/tests/verify-resolver.test.sh"
+      - "scripts/verify-scoped.sh"
       - "scripts/netmode.sh"
     exclude: []
 
@@ -188,6 +194,11 @@ gates:
     paths: ["scripts/merge-policy.sh", "scripts/tests/merge-policy.test.sh", "institutio/governance/gates.yaml"]
     owner: merge-policy
     note: "Verdict-matrix regression for the self-merge predicate; gates.yaml is implicated because deploy_triggers feed the verdict (PR3)."
+  verify-resolver-test:
+    command: "bash scripts/tests/verify-resolver.test.sh"
+    paths: ["scripts/verify.py", "scripts/tests/verify-resolver.test.sh", "institutio/governance/gates.yaml"]
+    owner: verify
+    note: "Selection-equivalence fixtures — the resolver must implicate exactly the registered gates."
   enactment-test:
     command: "bash scripts/tests/enactment-audit.test.sh"
     paths: ["scripts/enactment-audit.py", "scripts/tests/enactment-audit.test.sh"]
@@ -229,6 +240,12 @@ gates:
     scoped: false
     owner: intake
     note: "Intake asks are predicate-shaped, bounded, owned (fixture rung)."
+  worktree-guard-test:
+    command: "bash scripts/tests/worktree-commit-guard.test.sh"
+    paths: ["scripts/hooks/worktree-commit-guard.sh", "scripts/tests/worktree-commit-guard.test.sh"]
+    scoped: false
+    owner: lifecycle
+    note: "Live-main commit deny matrix (hermetic fixture); transcribed when the hook landed on main in parallel with PR1."
   omega-test:
     command: "bash scripts/tests/omega.test.sh"
     paths: ["scripts/omega.sh", "scripts/tests/omega.test.sh"]
@@ -280,7 +297,7 @@ gates:
     note: "No-hardcode ratchet: new LIMEN_* vars must be declared in the parameter panel."
   check-gates:
     command: "python3 scripts/check-gates.py"
-    paths: ["institutio/governance/gates.yaml", "scripts/check-gates.py", ".github/workflows/**", "scripts/verify-scoped.sh", "scripts/verify-whole.sh", "scripts/merge-policy.sh", "CLAUDE.md"]
+    paths: ["institutio/governance/gates.yaml", "scripts/check-gates.py", "scripts/verify.py", ".github/workflows/**", "scripts/verify-scoped.sh", "scripts/verify-whole.sh", "scripts/merge-policy.sh", "CLAUDE.md"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "This registry's own drift predicate: schema, command existence, deploy-trigger parity, CI mirrors, consumer ratchets."
