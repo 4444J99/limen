@@ -1125,6 +1125,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Live checkout that launchd is expected to run. dispatch-health.py compares this root to the verified conductor worktree before async/heartbeat receipts are trusted."
+  LIMEN_ALLOW_LIVE_COMMIT:
+    default: "0"
+    env: LIMEN_ALLOW_LIVE_COMMIT
+    self_update: none
+    owner: limen-daemon
+    note: "Break-glass for scripts/hooks/worktree-commit-guard.sh: 1 disables the PreToolUse deny of git commit in the live checkout on main. Mirrors the LIMEN_ALLOW_OPUS_FANOUT escape-hatch precedent; leave 0 — the deny is the charter's no-direct-main-commit rule made mechanical."
   LIMEN_HEARTBEAT_PLIST:
     default: "~/Library/LaunchAgents/com.limen.heartbeat.plist"
     env: LIMEN_HEARTBEAT_PLIST
