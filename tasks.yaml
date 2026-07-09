@@ -91980,7 +91980,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:26:23.667808Z'
+  updated: '2026-07-09T21:45:37.318555Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:15:36.678636Z'
     agent: jules
@@ -92001,6 +92001,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:45:37.318555Z'
+    agent: codex
+    session_id: https://github.com/organvm/domus-genoma/pull/151
+    status: dispatched
 - id: HEAL-cifix-organvm-domus-genoma-152
   title: fix failing CI on organvm/domus-genoma#152
   repo: organvm/domus-genoma
@@ -104215,7 +104219,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -104232,7 +104236,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:42:16.345922Z'
+  updated: '2026-07-09T21:45:37.318555Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:40:52.239532Z'
     agent: agy
@@ -104270,6 +104274,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:45:37.318555Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-portfolio-178
   title: fix failing CI on organvm/portfolio#178
   repo: organvm/portfolio
@@ -115205,15 +115214,16 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#146
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:claude
   urls:
   - https://github.com/organvm/domus-genoma/pull/146
   context: 'PR organvm/domus-genoma#146 is CONFLICTING with its base branch and merge-drain
@@ -115224,7 +115234,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:38:50.605572Z'
+  updated: '2026-07-09T21:45:37.318555Z'
   dispatch_log:
   - timestamp: '2026-07-09T03:29:07.385138Z'
     agent: jules
@@ -115255,6 +115265,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:45:37.318555Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-rebase-organvm-domus-genoma-149
   title: rebase/resolve conflicts on organvm/domus-genoma#149
   repo: organvm/domus-genoma
@@ -116493,15 +116507,16 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#172
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:claude
   urls:
   - https://github.com/organvm/domus-genoma/pull/172
   context: 'PR organvm/domus-genoma#172 is CONFLICTING with its base branch and merge-drain
@@ -116512,7 +116527,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T21:42:16.345922Z'
+  updated: '2026-07-09T21:45:37.318555Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -116528,6 +116543,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:45:37.318555Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-rebase-organvm-domus-genoma-174
   title: rebase/resolve conflicts on organvm/domus-genoma#174
   repo: organvm/domus-genoma
@@ -120869,15 +120888,16 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#139
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:claude
   urls:
   - https://github.com/organvm/domus-genoma/pull/139
   context: 'PR organvm/domus-genoma#139 is CONFLICTING with its base branch and merge-drain
@@ -120888,7 +120908,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T21:38:50.605572Z'
+  updated: '2026-07-09T21:45:37.318555Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -120904,6 +120924,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:45:37.318555Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-rebase-organvm-domus-genoma-140
   title: rebase/resolve conflicts on organvm/domus-genoma#140
   repo: organvm/domus-genoma
@@ -120939,12 +120963,13 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/145
   context: 'PR organvm/domus-genoma#145 is CONFLICTING with its base branch and merge-drain
@@ -120955,7 +120980,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T21:38:50.605572Z'
+  updated: '2026-07-09T21:45:37.318555Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -120971,6 +120996,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:45:37.318555Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: aw-agy-scratch-preserve-0709
   title: Archive-first preservation of Antigravity scratch roots (22 GiB prompt-corpus
     material)
@@ -122031,4 +122061,48 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
+  dispatch_log: []
+- id: GH-organvm-limen-833
+  title: "chezmoi cartridge (domus-genoma) parked stale \u2014 wedges config hydration\
+    \ on the host"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/833
+  context: "GitHub issue organvm/limen#833. ## What The chezmoi source checkout at\
+    \ `/Users/4jp/Workspace/domus-genoma` is parked on a **non-default branch ~23\
+    \ commits behind `master`**. It serves an old `dot_config/git/allowed_signers.tmpl`\
+    \ (`{{ if .ssh_signing_key_literal }}` \u2014 errors under strict `missingkey`;\
+    \ already fixed on `master` via the `index . \"\u2026\"` guard). That single template\
+    \ error **aborts the entire `chezmoi status`/`diff`/`ap"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T21:38:26.201176Z'
+  dispatch_log: []
+- id: GH-organvm-limen-829
+  title: 'Convergence campaign: remaining closing-engine levers (throughput, resume-not-respawn,
+    needs_human drain)'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/829
+  context: "GitHub issue organvm/limen#829. Follow-ons from the 2026-07-09 convergence\
+    \ diagnosis (session 544e1a06). Root causes 1 (merged code not running) and the\
+    \ biggest debt sink (pushed-but-unmerged worktrees) are FIXED and merged: - #816\
+    \ heal(sync-release): preserve-then-unpark \u2014 merged code always runs within\
+    \ one beat - #826 feat(reclaim): pushed-to-origin is enough to reap a local worktree\
+    \ \u2014 drains the 62 GiB / 571-root debt - #806"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-09T21:38:26.202499Z'
   dispatch_log: []
