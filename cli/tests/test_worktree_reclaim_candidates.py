@@ -63,7 +63,9 @@ def test_packet_governance_cites_agent_score_authorities() -> None:
     assert gate["prompt_attack_path"]["score"] == 32
     assert "scripts/score-dispatch.py" in gate["authority_sources"]
     assert "cli/src/limen/capacity.py" in gate["authority_sources"]
-    assert gate["agent_policy"]["destructive_cleanup_lane"] == "human-acceptance-then-reclaim-worktrees"
+    assert (
+        gate["agent_policy"]["destructive_cleanup_lane"] == "standing-grant-or-human-acceptance-then-reclaim-worktrees"
+    )
 
 
 def test_render_markdown_makes_non_destructive_gate_explicit(tmp_path: Path) -> None:

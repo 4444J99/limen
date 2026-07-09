@@ -2,9 +2,13 @@
 
 `scripts/reclaim-worktrees.py --apply` removes registered worktrees, standalone
 worktree-like clones, or generated residue only after the loss-free reclaim gate
-passes and a matching line exists in `docs/worktree-reclaim-acceptance.jsonl`.
-Do not create that JSONL as a cleanup shortcut. It is the human acceptance
-ledger for irreversible local worktree/root removal.
+passes. The loss-free class (`clean+merged+idle`) is pre-accepted under the
+operator standing grant `standing-grant-2026-07-09`
+(`docs/removal-acceptance-covenant.md` §Standing grant; disable with
+`LIMEN_RECLAIM_STANDING_ACCEPTANCE=0`). Every other class additionally requires
+a matching line in `docs/worktree-reclaim-acceptance.jsonl`. Do not create that
+JSONL as a cleanup shortcut. It is the human acceptance ledger for irreversible
+local worktree/root removal outside the standing-grant class.
 
 Each JSONL event must be one object with:
 

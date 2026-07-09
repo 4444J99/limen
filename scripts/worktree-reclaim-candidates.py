@@ -202,8 +202,11 @@ def governance_context(
             "the action is non-destructive packetization, not local deletion."
         ),
         "why_not_auto_delete": (
-            "scripts/reclaim-worktrees.py --apply requires matching human acceptance/redaction/archive "
-            "proof in docs/worktree-reclaim-acceptance.jsonl."
+            "scripts/reclaim-worktrees.py --apply removes the loss-free class (clean+merged+idle) under "
+            "the operator standing grant standing-grant-2026-07-09 (docs/removal-acceptance-covenant.md "
+            "§Standing grant; disable with LIMEN_RECLAIM_STANDING_ACCEPTANCE=0); every other class still "
+            "requires a matching human acceptance/redaction/archive proof event in "
+            "docs/worktree-reclaim-acceptance.jsonl."
         ),
         "repo": "organvm/limen",
         "repo_in_value_tier": "organvm/limen" in set(repos),
@@ -216,7 +219,7 @@ def governance_context(
         },
         "agent_policy": {
             "candidate_packet_lane": "codex-conductor",
-            "destructive_cleanup_lane": "human-acceptance-then-reclaim-worktrees",
+            "destructive_cleanup_lane": "standing-grant-or-human-acceptance-then-reclaim-worktrees",
             "canonical_vendor_order": list(PAID_AGENT_ORDER),
             "single_writer_boundary": "do not write tasks.yaml or acceptance ledgers as a shortcut from this script",
         },
