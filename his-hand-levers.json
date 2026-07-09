@@ -405,6 +405,15 @@
       "owner": "yours",
       "source_task": "daily-engine wave-2 (ambient capture)",
       "issue": 791
+    },
+    {
+      "id": "L-FABLE-GUARD-ARM",
+      "label": "Arm the Fable interactive-guard settings snippet: paste docs/keys/fable-guard-settings-snippet.json into ~/.claude/settings.json (sets \"model\":\"opus\" off Fable + appends the SessionStart fable-session-guard.py hook). Dispatch-side Fable cap already live on main (#818); this makes the interactive-bypass closure durable + arms the guard.",
+      "owner": "yours",
+      "cost": "~2 min, one paste, reversible",
+      "unlocks": "durable interactive Fable guard (no session silently defaults to Fable)",
+      "source_task": "closeout 2026-07-09 (fable runtime cap)",
+      "issue": 827
     }
   ]
 }
