@@ -77,6 +77,7 @@ PY
 
 echo "═══ heartbeat $(date '+%F %T') lanes=$LANES dispatch_lanes=$DISPATCH_LANES ═══"
 python3 "$LIMEN_ROOT/scripts/usage-telemetry.py"                    2>&1 | tail -2 || true
+python3 "$LIMEN_ROOT/scripts/token-value-gauge.py"                 2>&1 | tail -2 || true
 if [ "$MODE" != "dispatch" ]; then
   echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
