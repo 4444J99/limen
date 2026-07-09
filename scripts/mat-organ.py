@@ -40,10 +40,13 @@ def _now() -> datetime:
 
 
 def _due() -> bool:
+    """The daily lane (pull/compose) keys on its OWN last-run stamp — the
+    living lane (autoday/meal-watch) stamps every fire and must not reset it."""
     if not STATE_PATH.exists():
         return True
     try:
-        ran_at = json.loads(STATE_PATH.read_text()).get("ran_at", "")
+        state = json.loads(STATE_PATH.read_text())
+        ran_at = state.get("full_ran_at") or state.get("ran_at", "")
         last = datetime.fromisoformat(ran_at)
     except (ValueError, OSError, json.JSONDecodeError):
         return True
@@ -92,14 +95,50 @@ def main() -> int:
         _stamp({"ran_at": _now().isoformat(timespec="seconds"), "tree_present": False})
         print("mat-organ: engine tree absent — stamped, no-op")
         return 0
-    if not _due():
-        print("mat-organ: within throttle window — no-op")
-        return 0
-
     record: dict = {
         "ran_at": _now().isoformat(timespec="seconds"),
         "tree_present": True,
     }
+
+    # EVERY-FIRE lane (v2, zero-tap living): the day opens/closes itself and
+    # freshly-synced plate photos become logged meals within a beat or two.
+    auto_exit, out = _run(["python3", "engine/mat.py", "autoday", "--json"], timeout=180)
+    record["autoday_ok"] = auto_exit == 0
+    if auto_exit == 0:
+        try:
+            data = json.loads(out).get("data", {})
+            record["auto_closed"] = len(data.get("auto_closed", []))
+            record["auto_opened"] = bool(data.get("auto_opened_today"))
+        except ValueError:
+            pass
+    watch_exit, out = _run(["python3", "tools/meal_watch.py", "--json"], timeout=900)
+    record["meal_watch_ok"] = watch_exit == 0
+    if watch_exit == 0:
+        try:
+            record["meals_logged"] = json.loads(out).get("meals", 0)
+        except ValueError:
+            pass
+
+    prior_full = None
+    try:
+        prior_full = json.loads(STATE_PATH.read_text()).get("full_ran_at")
+    except (OSError, ValueError):
+        pass
+
+    def _prior_ran_at() -> str | None:
+        try:
+            return json.loads(STATE_PATH.read_text()).get("ran_at")
+        except (OSError, ValueError):
+            return None
+    if not _due():
+        record["throttled"] = True
+        # preserve the daily lane's clock (v1-state migration: seed from ran_at)
+        record["full_ran_at"] = prior_full or _prior_ran_at()
+        _stamp(record)
+        print(f"mat-organ: living lane ok (meals={record.get('meals_logged', '?')}"
+              f" auto_closed={record.get('auto_closed', '?')}) — pull/compose throttled")
+        return 0
+    record["full_ran_at"] = record["ran_at"]
 
     pull_exit, _ = _run(["python3", "tools/pull_fresh.py"], timeout=600)
     record["pull_exit"] = pull_exit
@@ -125,6 +164,7 @@ def main() -> int:
     print(
         f"mat-organ: pull={'ok' if record['pull_ok'] else pull_exit}"
         f" new={record.get('chats_new', '?')} card={'ok' if record.get('card_ok') else 'FAIL'}"
+        f" meals={record.get('meals_logged', '?')}"
         f" roadblocks={record.get('roadblocks_open', '?')}"
     )
     return 0
