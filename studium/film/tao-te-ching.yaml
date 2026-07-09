@@ -32,6 +32,7 @@ films:
       The text speaks of the mystery that cannot be named (Chapter 1) and the highest good being like water,
       benefiting all without striving (Chapter 8). Stalker is the supreme cinematic embodiment of a space
       where human striving is useless and only profound humility allows passage.
+    content_note: "philosophical density, extreme slow tempo"
 
   - title: "Spring, Summer, Fall, Winter... and Spring"
     director: "Kim Ki-duk"
@@ -50,6 +51,7 @@ films:
       "Empty yourself of everything. Let the mind become still. The ten thousand things rise and fall while
       the Self watches their return" (Chapter 16). The film's circular structure mirrors the Daoist
       understanding of time and change.
+    content_note: "animal cruelty (depicted), violence, sexual situations"
 
   - title: "Paterson"
     director: "Jim Jarmusch"
@@ -68,6 +70,7 @@ films:
       The text praises the leader who goes unnoticed (Chapter 17) and the small, contented state
       (Chapter 80). Paterson is a film devoid of manufactured conflict; it finds its meaning entirely
       in the quiet rhythms of the unforced life.
+    content_note: "absence of conflict"
 
   - title: "Perfect Days"
     director: "Wim Wenders"
@@ -86,5 +89,42 @@ films:
       "Yield and overcome; Bend and be straight; Empty and be full" (Chapter 22). Wenders films
       a life that has achieved the state of wu wei, where the lowest task is performed with the
       highest grace.
+    content_note: "meditative pace"
+
+  - title: "The Tree of Life"
+    director: "Terrence Malick"
+    year: 2011
+    force: ascent
+    divisions: [42, 51]
+    objects: []
+    letterboxd: the-tree-of-life
+    scene_or_theme: "The way of nature vs. the way of grace; the generation of the ten thousand things"
+    object_lesson: >
+      Malick visualizes Chapter 42—'The Tao produced One; One produced Two; Two produced Three; Three produced
+      All things'—as a cosmic symphony. The creation sequence is the Dao at work on a universal scale,
+      unfolding without conscious effort or interference.
+    why: >
+      The conflict between the father (imposing rigid will, 'the way of nature' in Malick's terms, akin to forced
+      action) and the mother ('the way of grace', yielding and open) maps cleanly onto Daoist distinctions between
+      contention and wu wei. The mother's grace is the water that sustains everything.
+    content_note: "non-linear narrative, cosmic digressions"
+
+  - title: "Late Spring"
+    director: "Yasujirō Ozu"
+    year: 1949
+    force: return
+    divisions: [16, 25]
+    objects: []
+    letterboxd: late-spring
+    scene_or_theme: "The emptying out of the self, yielding to the natural order"
+    object_lesson: >
+      Ozu's camera does not force movement; it waits. The famous 'pillow shots'—an empty room, a vase, a train
+      passing—are the cinematic embodiment of the Daoist 'wu wei' (action through non-action). By emptying the
+      frame of drama, the deep structure of the world reveals itself.
+    why: >
+      Late Spring perfectly embodies the Daoist aesthetic of yielding. The father's quiet resignation to his
+      daughter's marriage is not defeat, but a supreme act of returning to the uncarved block—letting the world
+      take its course without imposing will.
+    content_note: "slow pacing, minimal plot"
 
 adaptations: []
