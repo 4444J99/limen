@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-09'
-      spent: 230
+      spent: 239
       per_agent:
         jules: 40
-        gemini: 2
-        codex: 3
+        gemini: 3
+        codex: 6
         opencode: 121
-        agy: 59
-        claude: 4
+        agy: 61
+        claude: 7
         github_actions: 1
       per_agent_reset:
         jules: '2026-07-09T12:38:52.573549+00:00'
@@ -86304,16 +86304,17 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#61
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
   - tried:jules
+  - tried:claude
   urls:
   - https://github.com/organvm/a-i-chat--exporter/pull/61
   context: 'PR organvm/a-i-chat--exporter#61 is CONFLICTING with its base branch and
@@ -86324,7 +86325,7 @@ tasks:
     [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:29:53.501621Z'
+  updated: '2026-07-09T21:33:56.281660Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:11:02.708379Z'
     agent: codex
@@ -86454,6 +86455,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:33:56.281660Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-rebase-organvm-a-i-chat--exporter-66
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#66
   repo: organvm/a-i-chat--exporter
@@ -92738,11 +92743,12 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/mirror-mirror/pull/73
   context: "PR organvm/mirror-mirror#73 has FAILING CI checks and merge-drain correctly\
@@ -92753,7 +92759,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:17:57.832919Z'
+  updated: '2026-07-09T21:40:42.933934Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:15:36.678636Z'
     agent: jules
@@ -92769,6 +92775,16 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-09T21:38:50.605572Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:40:42.933934Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-mirror-mirror-77
   title: fix failing CI on organvm/mirror-mirror#77
   repo: organvm/mirror-mirror
@@ -103728,7 +103744,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:20:20.353186Z'
+  updated: '2026-07-09T21:38:17.538898Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:40:52.239532Z'
     agent: agy
@@ -103766,6 +103782,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:38:17.538898Z'
+    agent: codex
+    session_id: https://github.com/organvm/peer-audited--behavioral-blockchain/pull/767
+    status: dispatched
 - id: HEAL-cifix-organvm-peer-audited--behavioral-blockchain-771
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#771
   repo: organvm/peer-audited--behavioral-blockchain
@@ -103937,7 +103957,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:29:53.501621Z'
+  updated: '2026-07-09T21:40:42.933934Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:08:05.909628Z'
     agent: jules
@@ -103953,6 +103973,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:40:42.933934Z'
+    agent: codex
+    session_id: https://github.com/organvm/portfolio/pull/145
+    status: dispatched
 - id: HEAL-cifix-organvm-portfolio-146
   title: fix failing CI on organvm/portfolio#146
   repo: organvm/portfolio
@@ -104191,7 +104215,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104208,7 +104232,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-09T21:42:16.345922Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:40:52.239532Z'
     agent: agy
@@ -104241,6 +104265,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-09T21:42:16.345922Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-portfolio-178
   title: fix failing CI on organvm/portfolio#178
   repo: organvm/portfolio
@@ -111631,7 +111660,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-09T21:29:53.501621Z'
+  updated: '2026-07-09T21:33:56.281660Z'
   dispatch_log:
   - timestamp: '2026-07-09T04:03:33.663620Z'
     agent: codex
@@ -111681,6 +111710,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:33:56.281660Z'
+    agent: agy
+    session_id: https://github.com/organvm/mirror-mirror/pull/107
+    status: dispatched
 - id: HEAL-rebase-organvm-my--father-mother-21
   title: rebase/resolve conflicts on organvm/my--father-mother#21
   repo: organvm/my--father-mother
@@ -115175,7 +115208,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -115191,7 +115224,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:51:21.504367Z'
+  updated: '2026-07-09T21:38:50.605572Z'
   dispatch_log:
   - timestamp: '2026-07-09T03:29:07.385138Z'
     agent: jules
@@ -115217,6 +115250,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:38:50.605572Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-149
   title: rebase/resolve conflicts on organvm/domus-genoma#149
   repo: organvm/domus-genoma
@@ -116344,7 +116382,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -116360,7 +116398,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:50:53.394389Z'
+  updated: '2026-07-09T21:38:50.605572Z'
   dispatch_log:
   - timestamp: '2026-07-09T04:28:26.790563Z'
     agent: jules
@@ -116386,6 +116424,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:38:50.605572Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-163
   title: rebase/resolve conflicts on organvm/domus-genoma#163
   repo: organvm/domus-genoma
@@ -116453,7 +116496,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -116469,7 +116512,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:50:53.394389Z'
+  updated: '2026-07-09T21:42:16.345922Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -116480,6 +116523,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:42:16.345922Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-174
   title: rebase/resolve conflicts on organvm/domus-genoma#174
   repo: organvm/domus-genoma
@@ -116487,7 +116535,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -116503,7 +116551,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:51:21.504367Z'
+  updated: '2026-07-09T21:42:16.345922Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -116520,6 +116568,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:42:16.345922Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-175
   title: rebase/resolve conflicts on organvm/domus-genoma#175
   repo: organvm/domus-genoma
@@ -120819,7 +120872,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -120835,7 +120888,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T20:51:21.504367Z'
+  updated: '2026-07-09T21:38:50.605572Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -120846,6 +120899,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:38:50.605572Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-140
   title: rebase/resolve conflicts on organvm/domus-genoma#140
   repo: organvm/domus-genoma
@@ -120881,7 +120939,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -120897,7 +120955,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T20:51:21.504367Z'
+  updated: '2026-07-09T21:38:50.605572Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -120908,6 +120966,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-09T21:38:50.605572Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: aw-agy-scratch-preserve-0709
   title: Archive-first preservation of Antigravity scratch roots (22 GiB prompt-corpus
     material)
@@ -121837,11 +121900,12 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/231
   context: "PR organvm/domus-genoma#231 has FAILING CI checks and merge-drain correctly\
@@ -121854,18 +121918,23 @@ tasks:
     \ [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T21:29:53.501621Z'
+  updated: '2026-07-09T21:33:56.281660Z'
   dispatch_log:
   - timestamp: '2026-07-09T21:29:53.501621Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:33:56.281660Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-domus-genoma-233
   title: fix failing CI on organvm/domus-genoma#233
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: dispatched
@@ -121873,6 +121942,7 @@ tasks:
   - cifix
   - self-heal
   - ci-red
+  - tried:claude
   urls:
   - https://github.com/organvm/domus-genoma/pull/233
   context: "PR organvm/domus-genoma#233 has FAILING CI checks and merge-drain correctly\
@@ -121885,10 +121955,19 @@ tasks:
     \ [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T21:29:53.501621Z'
+  updated: '2026-07-09T21:38:50.605572Z'
   dispatch_log:
   - timestamp: '2026-07-09T21:29:53.501621Z'
     agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T21:33:56.281660Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
+  - timestamp: '2026-07-09T21:38:50.605572Z'
+    agent: gemini
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
