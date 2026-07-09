@@ -409,6 +409,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Timeout in seconds for the opt-in lifecycle pytest tranche in closeout-fast."
+  LIMEN_CLOSEOUT_QUEUE_LOCK_TIMEOUT:
+    default: 30
+    env: LIMEN_CLOSEOUT_QUEUE_LOCK_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Seconds closeout-fast waits for the shared queue lock while it validates tasks.yaml and live-root-gate against a stable board snapshot."
   LIMEN_VERIFY_LOCK_FILE:
     default: "${TMPDIR:-/tmp}/limen-verify-whole.lock"
     env: LIMEN_VERIFY_LOCK_FILE
