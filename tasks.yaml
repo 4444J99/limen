@@ -79389,9 +79389,10 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - slow
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/issues/170
   context: "GitHub issue organvm/domus-genoma#170. Every `chezmoi apply` (any target)\
@@ -79402,7 +79403,7 @@ tasks:
     \ the data"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-09T22:17:58.918891Z'
+  updated: '2026-07-09T22:19:05.860872Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -79424,6 +79425,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:19:05.860872Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-peer-audited--behavioral-blockchain-714
   title: fix failing CI on organvm/peer-audited--behavioral-blockchain#714
   repo: organvm/peer-audited--behavioral-blockchain
@@ -97692,14 +97698,15 @@ tasks:
   title: fix failing CI on organvm/limen#384
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/384
   context: "PR organvm/limen#384 has FAILING CI checks and merge-drain correctly refuses\
@@ -97710,7 +97717,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T21:48:47.500972Z'
+  updated: '2026-07-09T22:19:05.860872Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -97731,6 +97738,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:19:05.860872Z'
+    agent: gemini
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-limen-385
   title: fix failing CI on organvm/limen#385
   repo: organvm/limen
@@ -106240,7 +106251,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -106256,7 +106267,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T22:17:58.918891Z'
+  updated: '2026-07-09T22:19:05.860872Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -106283,6 +106294,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:19:05.860872Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-session-meta-140
   title: rebase/resolve conflicts on organvm/session-meta#140
   repo: organvm/session-meta
@@ -109933,12 +109949,13 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:github_actions
+  - noop
   urls:
   - https://github.com/organvm/session-meta/pull/164
   context: 'PR organvm/session-meta#164 is CONFLICTING with its base branch and merge-drain
@@ -109949,7 +109966,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T22:17:58.918891Z'
+  updated: '2026-07-09T22:19:05.860872Z'
   dispatch_log:
   - timestamp: '2026-07-06T03:22:51.414075Z'
     agent: github_actions
@@ -109966,6 +109983,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:19:05.860872Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-dot-github--theoria-468
   title: rebase/resolve conflicts on organvm/dot-github--theoria#468
   repo: organvm/dot-github--theoria
@@ -114460,16 +114482,17 @@ tasks:
   title: rebase/resolve conflicts on organvm/mirror-mirror#79
   repo: organvm/mirror-mirror
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
   - noop
+  - tried:claude
   urls:
   - https://github.com/organvm/mirror-mirror/pull/79
   context: 'PR organvm/mirror-mirror#79 is CONFLICTING with its base branch and merge-drain
@@ -114480,7 +114503,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T22:14:29.119069Z'
+  updated: '2026-07-09T22:19:05.860872Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -114517,6 +114540,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:19:05.860872Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: HEAL-rebase-stale-organvm-mirror-mirror-86
   title: "rebase organvm/mirror-mirror#86 onto current base \u2014 branched far behind"
   repo: organvm/mirror-mirror
@@ -115163,11 +115190,12 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
+  - noop
   urls:
   - https://github.com/organvm/peer-audited--behavioral-blockchain/pull/712
   context: 'PR organvm/peer-audited--behavioral-blockchain#712 is CONFLICTING with
@@ -115178,13 +115206,18 @@ tasks:
     [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T22:08:51.491276Z'
+  updated: '2026-07-09T22:19:05.860872Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:08:51.491276Z'
     agent: codex
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:19:05.860872Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-domus-genoma-121
   title: rebase/resolve conflicts on organvm/domus-genoma#121
   repo: organvm/domus-genoma
@@ -122457,7 +122490,7 @@ tasks:
   workstream: sovereignty
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: failed
   labels:
   - organ-selffeed
   - pillar:sovereignty
@@ -122466,6 +122499,7 @@ tasks:
   - vltima
   - generated
   - slow
+  - noop
   urls: []
   context: "Make the sovereignty organ self-feeding like the revenue/studium voices:\
     \ bump its maturity in organ-ladder.json as slices land, and add/extend a beat\
@@ -122478,7 +122512,7 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T22:17:58.918891Z'
+  updated: '2026-07-09T22:19:05.860872Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -122500,6 +122534,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-09T22:19:05.860872Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: ASK-quicken-escalate-6a48ce1d
   title: finish stalled session 'Design movement ontology and workout composi' (breathed
     24x, still stalling)
