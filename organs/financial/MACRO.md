@@ -16,7 +16,7 @@ buys with a $500K+/year staff, delivered as a directory of structured files and 
 generator that keeps them current. It is built from the-invisible-ledger's accounting
 core, scaled from B2B CPA tool into a personal financial operating system.
 
-The old shape was organize books for a business and its accountant. The scaled shape:
+The old shape was organizing books for a business and its accountant. The scaled shape:
 one deployable financial office for a person, family, or small institution that needs
 institutional weight without hiring a staff.
 
