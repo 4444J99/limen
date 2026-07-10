@@ -145,7 +145,7 @@ VENDORS: tuple[Vendor, ...] = (
         meter="dispatch_count",
         tiering="dispatch_adhoc",  # _opencode_model
         budget=Budget(100, "runs", "today", "operator board cap until live vendor meter", "calibrated"),
-        status=Status(True, "live", "free-model lane; deploy/cloudflare specialty"),
+        status=Status(True, "live", "free+subscription (opencode Zen) lane; deploy/cloudflare specialty"),
     ),
     Vendor(
         name="agy",

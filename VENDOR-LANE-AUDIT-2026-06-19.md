@@ -1,5 +1,13 @@
 # Vendor Lane Audit — 2026-06-19 (read-only)
 
+> **Correction 2026-07-10 (opencode):** the "opencode = free-model lane / free model fallback"
+> characterization below is superseded. opencode is multi-model — a free floor **and** the opencode
+> Zen subscription. Under dynamic provider routing (#921) its model is selected LIVE from
+> `opencode models --verbose` with **no free fallback and no name heuristic**; an unauthed /
+> capability-poor catalog yields `failed_blocked`, not a silent downgrade. The subscription becomes
+> reachable via `opencode auth login` (lever **L-OPENCODE-SUB-AUTH #928**). Live truth is the census
+> record + provider routing, not this dated snapshot.
+
 Mandate: use ALL 6 vendors, never serialize. Audit found the fleet is effectively
 serialized onto **codex** (now exhausted), with agy/gemini/claude/jules idle.
 

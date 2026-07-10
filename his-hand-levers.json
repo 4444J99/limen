@@ -451,6 +451,15 @@
       "unlocks": "required-check protection on the governed repos; the GITVS branch_protection resource (class A/G) goes green",
       "source_task": "GITVS estate (institutio/github/estate.yaml branch_protection) + #257",
       "issue": 257
+    },
+    {
+      "id": "L-OPENCODE-SUB-AUTH",
+      "label": "Log opencode into the Zen SUBSCRIPTION once on this host: run `opencode auth login` (interactive OAuth) so `opencode models --verbose` enumerates the subscription models. Under dynamic provider routing (#921) the opencode adapter selects from the LIVE catalog with NO free fallback and NO name heuristic — an unauthed/capability-poor catalog makes a capability-demanding task `failed_blocked` rather than silently downgrading to a free model. So this auth mint is the prerequisite that turns `failed_blocked` into a reachable subscription catalog. Runtime routing DISCOVERS reachability but cannot MINT it, and no fleet code can perform an interactive vendor OAuth — the one irreducible atom. Durability follow-on (NOT blocking): once auth.json exists, capture it into op:// + a creds-hydrate `file` sink so it survives a host rebuild.",
+      "owner": "yours",
+      "cost": "~2 min, interactive OAuth (a vendor mint the organ cannot perform); REVERSIBLE via `opencode auth logout`",
+      "unlocks": "the opencode Zen subscription models become reachable to dynamic provider routing (#921); without it, capability-demanding opencode tasks failed_blocked instead of running",
+      "source_task": "opencode lane closeout 2026-07-10 (tier-ladder mechanism superseded by #921; preservation receipt #931)",
+      "issue": 928
     }
   ]
 }
