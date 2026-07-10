@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "_comment": "Renovate config for organvm/limen (the GITVS conductor). Governed by institutio/github/estate.yaml -> integrations.renovate (status: active); free tier. This is the conductor's live config AND the template scripts/sync-marketplace-config.py fans out. Renovate is already authorized on organvm-i-theoria; extending the install to organvm is L-INTEGRATION-RENOVATE. NOTE: adopting Renovate means retiring .github/dependabot.yml's version-updates to avoid duplicate PRs (keep Dependabot for security alerts only, or remove the config) — that trim is part of the lever.",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":prConcurrentLimit10"
+  ],
+  "labels": ["deps"],
+  "prConcurrentLimit": 3,
+  "prHourlyLimit": 2,
+  "rangeStrategy": "bump",
+  "rebaseWhen": "conflicted",
+  "lockFileMaintenance": { "enabled": true },
+  "packageRules": [
+    { "matchManagers": ["github-actions"], "groupName": "github-actions", "schedule": ["before 6am on monday"] },
+    { "matchManagers": ["pip_requirements", "pep621", "pip-compile"], "groupName": "python deps" },
+    { "matchManagers": ["npm"], "groupName": "npm deps" },
+    { "matchUpdateTypes": ["minor", "patch"], "matchCurrentVersion": "!/^0/", "automerge": false }
+  ]
+}

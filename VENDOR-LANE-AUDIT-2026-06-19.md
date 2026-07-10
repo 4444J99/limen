@@ -1,5 +1,13 @@
 # Vendor Lane Audit — 2026-06-19 (read-only)
 
+> **Correction 2026-07-10 (OpenCode):** the fixed free-model/fallback characterization below is
+> superseded. Limen discovers currently reachable capabilities and pricing from
+> `opencode models --verbose` at dispatch time; interactive authentication may change that catalog.
+> No catalog class, subscription product, model name, price class, or routing outcome is promised.
+> An empty, unreachable, or incapable catalog produces `failed_blocked`; optional authentication is
+> tracked by **L-OPENCODE-AUTH #928**. Live truth is the census plus provider routing, not this dated
+> snapshot.
+
 Mandate: use ALL 6 vendors, never serialize. Audit found the fleet is effectively
 serialized onto **codex** (now exhausted), with agy/gemini/claude/jules idle.
 
@@ -62,7 +70,7 @@ serialized onto **codex** (now exhausted), with agy/gemini/claude/jules idle.
    do the one-time Google sign-in to create `~/.gemini/oauth_creds.json` then set
    `LIMEN_GEMINI_OAUTH=1` (dispatch.py:477 drops the API key for gemini's subprocess to
    use the higher-limit OAuth/Code-Assist tier). Free-tier key alone rate-limits.
-4. **opencode**: run `opencode auth login` to write `~/.local/share/opencode/auth.json`
-   so it uses a real model instead of the free fallback.
+4. **opencode**: optionally run `opencode auth login`, then re-read `opencode models --verbose`.
+   Authentication may expand the live catalog; it promises no particular model or capability.
 5. **agy / claude / jules**: no fix needed — route work to them (fixing #1 unblocks all
    three). jules also has 8 stale claims: `limen release-stale --agent jules --hours 24 --apply`.

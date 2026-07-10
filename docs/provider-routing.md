@@ -51,3 +51,6 @@ test that depends on a real model name is itself a regression. The implementatio
 5. Warp defaults to provider Auto with no model ID; and
 6. arbitrary `tier:*` text cannot change routing behavior; and
 7. selection receipts contain no credential values.
+
+Legacy production paths outside this dispatch integration are inventoried under owner issue #940;
+they are not precedent for adding another named default.

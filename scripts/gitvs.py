@@ -250,6 +250,31 @@ def _owner_open_pr_counts(owner: str, token: str | None) -> dict[str, int] | Non
     return None
 
 
+def _org_app_estate(token: str | None, online: bool) -> dict:
+    """The FULL cross-org app-installation inventory — the 'what is on ALL my orgs/accounts' portal.
+    Enumerates the authed user's orgs (/user/orgs) and each org's installed app_slugs
+    (/orgs/{o}/installations), so app-estate drift (a new app on one org, a removed one on another) is a
+    governed living fact, never a manual re-discovery. Wider than the governed `owners` — pure
+    observability across every org. Read-only, fail-open (offline → nulls); deterministic (sorted)."""
+    out: dict = {"orgs": None, "by_org": {}, "all_apps": None}
+    if not online:
+        return out
+    r = _gh(["api", "/user/orgs", "--paginate", "--jq", ".[].login"], token, timeout=45)
+    orgs = [o.strip() for o in (r.stdout or "").splitlines() if o.strip()] if r.returncode == 0 else []
+    by_org: dict[str, list[str]] = {}
+    all_apps: set[str] = set()
+    for o in orgs:
+        ri = _gh(["api", f"/orgs/{o}/installations", "--jq", ".installations[].app_slug"], token, timeout=30)
+        if ri.returncode == 0:
+            slugs = sorted({s.strip() for s in (ri.stdout or "").splitlines() if s.strip()})
+            by_org[o] = slugs
+            all_apps.update(slugs)
+    out["orgs"] = len(orgs)
+    out["by_org"] = dict(sorted(by_org.items()))
+    out["all_apps"] = sorted(all_apps)
+    return out
+
+
 def observe(estate: dict) -> dict:
     """Build the actual-state ledger. Every block is fail-open: a gh/parse failure degrades to null,
     never raises; `online` records whether the live rungs ran. Counts + names only (the _scrub firewall —
@@ -344,6 +369,9 @@ def observe(estate: dict) -> dict:
 
     # Ecosystem integrations (the §3 harness) — config presence (offline) + installed slugs (online).
     led["integrations"] = _integration_observe(estate, token, online)
+
+    # Cross-org app estate — the full 'what apps are on ALL my orgs' inventory (governed living fact).
+    led["app_estate"] = _org_app_estate(token, online)
     return led
 
 

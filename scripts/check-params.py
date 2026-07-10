@@ -174,7 +174,8 @@ def main(argv: list[str] | None = None) -> int:
     declared = declared_envs(panel)
     referenced = referenced_tokens()
     undeclared = compute_undeclared(referenced, declared)
-    # Orphan direction: scan wider (CI + container + ianva) so CI/launchd-read params aren't false orphans.
+    # Orphan direction: scan wider (CI + container + ianva) so CI/launchd-read params aren't false
+    # orphans. sensors.yaml is already a generic executable-registry reader in SCAN_DIRS.
     referenced_wide = referenced | referenced_tokens(dirs=ORPHAN_SCAN_DIRS)
     orphans = compute_orphans(panel, referenced_wide)
 

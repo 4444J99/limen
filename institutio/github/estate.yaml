@@ -207,9 +207,9 @@ resource_types:
     effector:
       - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
       - {kind: file-atom, target: "L-INTEGRATION-<APP>"}
-    status: envisioned                     # ACTIVATES when sync-marketplace-config.py + the L-INTEGRATION-* levers land (§3 D2)
+    status: active                         # sync-marketplace-config.py landed (§3 D2) → wiring-integrity holds it
     owner: gitvs
-    note: "The free third-party ecosystem (CodeRabbit/Trunk/Renovate/...) harnessed as $0 labor. The concrete apps are the `integrations:` registry below (what `classes:` is for repos). Effector SPLITS: the config half is machine-pushed via the ship-docs primitive; the OAuth-install half is a one-time file-atom lever. Envisioned until the config-push effector lands."
+    note: "The free third-party ecosystem (CodeRabbit/Trunk/Renovate/...) harnessed as $0 labor. The concrete apps are the `integrations:` registry below (what `classes:` is for repos). Effector SPLITS: the config half is machine-pushed by sync-marketplace-config.py (double-dark); the OAuth-install half is the per-app file-atom lever (L-INTEGRATION-<APP>), cited by doctor class I, never by this resource type."
 
 # ── per-repo-CLASS governance posture ────────────────────────────────────────────────────────
 # The desired-state of the `repo` / `branch_protection` types, bucketed by owner/repo glob. `required_checks`
@@ -276,13 +276,13 @@ integrations:
     app_slug: "coderabbitai[bot]"
     config_file: ".coderabbit.yaml"
     free_scope: public
-    install_scope: ["conductor", "governed_public"]
+    install_scope: ["conductor"]           # ADOPTED on the conductor first (D2); fan-out to governed_public later
     effector:
       - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
       - {kind: file-atom, target: L-INTEGRATION-CODERABBIT}
-    status: envisioned
+    status: active                         # config lives at the repo root; sync-marketplace-config.py exists → wiring-integrity holds
     owner: gitvs
-    note: "AI PR review, free for public repos. Config half machine-pushable (.coderabbit.yaml); the org OAuth install is the one-time human lever."
+    note: "AI PR review, free for public repos. Config .coderabbit.yaml is present at the conductor root (its live config + the fan-out template). Already OAuth-installed on organvm-i-theoria; extending the install to organvm is L-INTEGRATION-CODERABBIT (the one human atom)."
   trunk:
     category: quality
     app_slug: "trunk-io[bot]"
@@ -300,13 +300,13 @@ integrations:
     app_slug: "renovate[bot]"
     config_file: "renovate.json"
     free_scope: all
-    install_scope: ["governed_public"]
+    install_scope: ["conductor"]           # ADOPTED on the conductor first (D2); fan-out to governed_public later
     effector:
       - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
       - {kind: file-atom, target: L-INTEGRATION-RENOVATE}
-    status: envisioned
+    status: active                         # config lives at the repo root; sync-marketplace-config.py exists → wiring-integrity holds
     owner: gitvs
-    note: "More-flexible dependency automation than Dependabot; config-file driven, so the machine half is fully ownable."
+    note: "Dependency automation; config renovate.json is present at the conductor root. Already OAuth-installed on organvm-i-theoria; extending to organvm is L-INTEGRATION-RENOVATE. NOTE: adopting Renovate means trimming .github/dependabot.yml's version-updates to avoid duplicate PRs (part of the lever)."
   semgrep:
     category: security
     app_slug: "semgrep-app[bot]"

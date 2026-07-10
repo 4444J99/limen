@@ -91,7 +91,7 @@ def test_vendor_tiering_is_derived():
     """
     t = census.tiering()
     assert t["claude"] == "model_selection"
-    assert t["codex"] == "dispatch_adhoc"
+    assert t["codex"] == "provider_auto"
     assert t["opencode"] == "provider_selection"
     assert t["warp"] == "provider_auto"
     assert t["oz"] == "provider_auto"
@@ -102,7 +102,6 @@ def test_vendor_tiering_is_derived():
     # closed sentinel set — no unmodeled tier value may leak in.
     assert set(t.values()) == {
         "model_selection",
-        "dispatch_adhoc",
         "provider_selection",
         "provider_auto",
         "none",
