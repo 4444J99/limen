@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 433
+      spent: 439
       per_agent:
         jules: 116
         gemini: 12
-        codex: 17
+        codex: 19
         opencode: 121
-        agy: 145
-        claude: 18
+        agy: 148
+        claude: 19
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -98629,7 +98629,7 @@ tasks:
   target_agent: agy
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -98648,7 +98648,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T03:05:45.884137Z'
+  updated: '2026-07-10T03:41:33.549969Z'
   dispatch_log:
   - timestamp: '2026-07-09T19:04:11.112505Z'
     agent: agy
@@ -98683,6 +98683,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-10T03:41:33.549969Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-716
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#716
   repo: organvm/peer-audited--behavioral-blockchain
@@ -110124,7 +110129,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -110141,7 +110146,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T03:33:35.415832Z'
+  updated: '2026-07-10T03:41:33.549969Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -110195,6 +110200,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T03:41:33.549969Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-domus-genoma-162
   title: fix failing CI on organvm/domus-genoma#162
   repo: organvm/domus-genoma
@@ -114005,7 +114015,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -114032,7 +114042,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T03:04:25.848413Z'
+  updated: '2026-07-10T03:41:33.549969Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114093,6 +114103,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-10T03:41:33.549969Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -116370,7 +116385,7 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - noop
   urls:
@@ -116383,7 +116398,7 @@ tasks:
     `api/schemas.py.main`, `pr130.txt`, modifies tr'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T03:33:35.415832Z'
+  updated: '2026-07-10T03:41:33.549969Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -116420,6 +116435,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T03:41:33.549969Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-growth-auditor-20
   title: fix failing CI on organvm/growth-auditor#20
   repo: organvm/growth-auditor
@@ -124457,7 +124477,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - evals
   - phase-4
@@ -124473,7 +124493,7 @@ tasks:
     \ deployment: >100x arbitrage), not me"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T03:33:35.415832Z'
+  updated: '2026-07-10T03:41:33.549969Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:43:38.013257Z'
     agent: claude
@@ -124509,6 +124529,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T03:41:33.549969Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-manumissio-11
   title: 'Phase 4: implement the llm_judge grader seam'
   repo: organvm/manumissio
@@ -124699,7 +124724,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - gauge
   - phase-2
@@ -124713,7 +124738,7 @@ tasks:
     -->'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T03:33:35.415832Z'
+  updated: '2026-07-10T03:41:33.549969Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -124736,6 +124761,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T03:41:33.549969Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-manumissio-6
   title: 'Phase 2: open-weight API rail (OpenRouter/DeepSeek key + routing)'
   repo: organvm/manumissio
