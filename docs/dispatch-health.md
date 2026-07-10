@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-10T13:50:12+00:00`
+Generated: `2026-07-10T14:02:38+00:00`
 
 Status: `blocked`
 
@@ -34,7 +34,7 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `10`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-10T13:50:13.012542+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-10T14:02:39.008815+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -73,10 +73,13 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `c74ff59951fd40bd1ed189f2f4f736c478e5a757`.
-- origin/main: `c74ff59951fd40bd1ed189f2f4f736c478e5a757`.
+- HEAD: `377000e1347ff10844f72d5779942fe7cb480fff`.
+- origin/main: `377000e1347ff10844f72d5779942fe7cb480fff`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
+- Ignored generated receipt dirty entries: `2`.
+  - `docs/dispatch-health.md`
+  - `docs/live-root-gate.md`
 
 ## Verified Worktree
 

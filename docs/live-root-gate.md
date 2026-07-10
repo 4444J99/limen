@@ -1,6 +1,6 @@
 # Live Root Gate
 
-Generated: `2026-07-10T13:50:12+00:00`
+Generated: `2026-07-10T14:02:38+00:00`
 
 Status: `ready`
 
@@ -21,11 +21,14 @@ Status: `ready`
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `c74ff59951fd40bd1ed189f2f4f736c478e5a757`.
-- Release head: `c74ff59951fd40bd1ed189f2f4f736c478e5a757`.
+- HEAD: `377000e1347ff10844f72d5779942fe7cb480fff`.
+- Release head: `377000e1347ff10844f72d5779942fe7cb480fff`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
 - Dirty entries: `0`.
+- Ignored generated receipt dirty entries: `2`.
+  - `docs/dispatch-health.md`
+  - `docs/live-root-gate.md`
 
 ## Heartbeat
 
