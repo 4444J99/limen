@@ -114097,11 +114097,11 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: codex
+  target_agent: opencode
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - always-working
   - receipt-first
@@ -114129,7 +114129,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T07:07:52.232247Z'
+  updated: '2026-07-10T07:09:23.535251Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114240,6 +114240,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T07:09:23.535251Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -125785,11 +125789,11 @@ tasks:
   title: 'Waste triage 2026-07-09: closed 6 stale PRs, 3 green PRs ready to merge'
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: agy
+  target_agent: claude
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - noop
   urls:
@@ -125800,7 +125804,7 @@ tasks:
     #133 (CI matrix). See dispatch log for full details.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T07:07:52.232247Z'
+  updated: '2026-07-10T07:09:23.535251Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -125850,6 +125854,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T07:09:23.535251Z'
+    agent: agy
+    session_id: cli
+    status: ratelimited->claude
 - id: DISCOVER-organvm-arca
   title: Discover the latent value of organvm/arca
   repo: organvm/arca
@@ -127003,10 +127011,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#173
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -127027,13 +127035,17 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T07:07:52.232247Z'
+  updated: '2026-07-10T07:09:23.535251Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:07:52.232247Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T07:09:23.535251Z'
+    agent: agy
+    session_id: cli
+    status: ratelimited->claude
 - id: HEAL-rebase-organvm-domus-genoma-184
   title: rebase/resolve conflicts on organvm/domus-genoma#184
   repo: organvm/domus-genoma
