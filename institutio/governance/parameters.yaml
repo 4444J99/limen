@@ -445,6 +445,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Heartbeat timeout in seconds for generated-only reclaim."
+  LIMEN_RECLAIM_GENERATED_STATE_LIMIT:
+    default: 500
+    env: LIMEN_RECLAIM_GENERATED_STATE_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum git roots scanned by reclaim-generated-state.py per run when cleaning ignored generated dependency/build/cache directories."
+  LIMEN_RECLAIM_GENERATED_STATE_TIMEOUT:
+    default: 180
+    env: LIMEN_RECLAIM_GENERATED_STATE_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Per-root timeout in seconds for reclaim-generated-state.py git/size checks."
   LIMEN_RECLAIM_TIMEOUT:
     default: 300
     env: LIMEN_RECLAIM_TIMEOUT
