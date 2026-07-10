@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 496
+      spent: 498
       per_agent:
         jules: 133
         gemini: 20
         codex: 9
-        opencode: 158
+        opencode: 160
         agy: 159
         claude: 13
         github_actions: 1
@@ -100860,7 +100860,7 @@ tasks:
   workstream: hr
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-firstslice
   - pillar:hr
@@ -100882,7 +100882,7 @@ tasks:
     \ idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:10:27.583194Z'
+  updated: '2026-07-10T09:55:00.328837Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -100904,6 +100904,11 @@ tasks:
     status: open
     output: 'fleet fill: retargeted codex->jules to use Jules async capacity before
       local OpenCode/Agy slots'
+  - timestamp: '2026-07-10T09:55:00.328837Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-organvm-corpvs-testamentvm-491
   title: rebase/resolve conflicts on organvm/organvm-corpvs-testamentvm#491
   repo: organvm/organvm-corpvs-testamentvm
