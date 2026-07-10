@@ -172,18 +172,23 @@ def _release_ordinal(value: object) -> int:
         return 0
 
 
+def _dict_value(payload: dict[str, Any], key: str) -> dict[str, Any]:
+    value = payload.get(key)
+    return value if isinstance(value, dict) else {}
+
+
 def _capability_from_payload(payload: dict[str, Any], reported_id: str = "") -> ModelCapability | None:
     provider = str(payload.get("providerID") or "").strip()
     local_id = str(payload.get("id") or "").strip()
     model_id = reported_id.strip() or (f"{provider}/{local_id}" if provider and local_id else local_id)
     if not model_id:
         return None
-    capabilities = payload.get("capabilities") if isinstance(payload.get("capabilities"), dict) else {}
-    input_caps = capabilities.get("input") if isinstance(capabilities.get("input"), dict) else {}
-    output_caps = capabilities.get("output") if isinstance(capabilities.get("output"), dict) else {}
-    limits = payload.get("limit") if isinstance(payload.get("limit"), dict) else {}
-    costs = payload.get("cost") if isinstance(payload.get("cost"), dict) else {}
-    variants = payload.get("variants") if isinstance(payload.get("variants"), dict) else {}
+    capabilities = _dict_value(payload, "capabilities")
+    input_caps = _dict_value(capabilities, "input")
+    output_caps = _dict_value(capabilities, "output")
+    limits = _dict_value(payload, "limit")
+    costs = _dict_value(payload, "cost")
+    variants = _dict_value(payload, "variants")
     status = str(payload.get("status") or "active").strip().lower()
     return ModelCapability(
         model_id=model_id,
