@@ -1,7 +1,7 @@
 # Session Value Review
 
-Generated: `2026-07-10T06:42:13+00:00`
-Window: `2026-07-09T18:42:08+00:00` to `2026-07-10T06:42:08+00:00` (12.0h)
+Generated: `2026-07-10T06:43:10+00:00`
+Window: `2026-07-09T18:43:05+00:00` to `2026-07-10T06:43:05+00:00` (12.0h)
 
 ## Verdict
 
@@ -13,17 +13,17 @@ Window: `2026-07-09T18:42:08+00:00` to `2026-07-10T06:42:08+00:00` (12.0h)
 - Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
 - Follow-up pressure: `25` follow-up roots vs `416` merged/routed roots; consecutive pressure reports `0`.
 - No-receipt pressure: `false`; consecutive reports `0`; high-motion `false`.
-- Maintenance commits: `26`; value commits: `353`; custody-only: `false`.
+- Maintenance commits: `26`; value commits: `355`; custody-only: `false`.
 - Open review batches: `18`; no durable progress: `false`.
 - Next commands: `python3 scripts/prompt-batch-review-ledger.py --write`.
 
 ## Measured Output
 
-- Commits landed: `379`; files touched: `899`; insertions/deletions: `102259` / `20120`.
+- Commits landed: `381`; files touched: `903`; insertions/deletions: `102782` / `20175`.
 - Prompt batch receipts: `182`; batches/hour: `15.17`.
 - Sessions recorded: `4464`; prompt events recorded: `25211`; prompt events/hour: `2100.92`.
 - Merged-root evidence: `99`; follow-up roots: `25`; absent owner routes: `317`.
-- Commit mix: `other` 353, `task_board` 22, `receipt_refresh` 4.
+- Commit mix: `other` 355, `task_board` 22, `receipt_refresh` 4.
 - Receipt lane mix: `hash-review` 79, `legacy-session-review` 71, `historical-worktree-review` 30, `family` 2.
 - Current corpus queue: `274` recorded, `18` open, `17` parked secret.
 - Current queue status mix: `needs-owner-route` 12, `needs-remote-proof` 6, `owner-recorded` 271, `parked-secret` 17, `superseded-recorded` 3.
@@ -33,7 +33,7 @@ Window: `2026-07-09T18:42:08+00:00` to `2026-07-10T06:42:08+00:00` (12.0h)
 - Resolved 182 prompt-corpus batches covering 4464 sessions and 25211 prompt events into durable metadata receipts.
 - Linked 99 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
 - Left the current redacted queue measurable: 274 recorded batches and 18 open review batches.
-- Landed 379 commits with 899 file touches and 102259 insertions.
+- Landed 381 commits with 903 file touches and 102782 insertions.
 
 ## Critique
 
@@ -50,8 +50,6 @@ Window: `2026-07-09T18:42:08+00:00` to `2026-07-10T06:42:08+00:00` (12.0h)
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-07-10T06:36:08+00:00` | `c97efe4` | `other` | limen: resolve low hash batch 058 |
-| `2026-07-10T06:36:17+00:00` | `53b9861` | `other` | limen: resolve low hash batch 059 |
 | `2026-07-10T06:36:27+00:00` | `ebf4025` | `other` | limen: resolve low hash batch 060 |
 | `2026-07-10T06:36:36+00:00` | `d1fc7aa` | `other` | limen: resolve low hash batch 061 |
 | `2026-07-10T06:36:46+00:00` | `3aa2809` | `other` | limen: resolve low hash batch 062 |
@@ -70,6 +68,8 @@ Window: `2026-07-09T18:42:08+00:00` to `2026-07-10T06:42:08+00:00` (12.0h)
 | `2026-07-10T06:40:51+00:00` | `b56fc43` | `other` | limen: resolve low hash batch 075 |
 | `2026-07-10T06:41:01+00:00` | `55ffed5` | `other` | limen: resolve low hash batch 076 |
 | `2026-07-10T06:41:11+00:00` | `0498e43` | `other` | limen: resolve low hash batch 077 |
+| `2026-07-10T06:42:15+00:00` | `23c524e` | `other` | limen: resolve low hash batch 078 |
+| `2026-07-10T06:42:45+00:00` | `79e6853` | `other` | limen: mark repeated no-op recoveries needs human |
 
 ## Batch Receipts
 
