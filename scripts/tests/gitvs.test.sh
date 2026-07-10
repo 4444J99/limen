@@ -128,6 +128,61 @@ else
   pass=$((pass+1))
 fi
 
+# ── Case 7: an ACTIVE ecosystem integration whose config-push script is missing → red ──
+#    (the wiring-integrity law extended to the App plane — §3 integrations registry).
+FIX="$work/badintegration.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["integrations"] = {"coderabbit": {
+    "category": "review", "app_slug": "coderabbitai[bot]", "config_file": ".coderabbit.yaml",
+    "install_scope": ["governed_public"],
+    "effector": [{"kind": "delegate", "argv": ["python3", "scripts/does-not-exist.py"]}],
+    "status": "active", "owner": "gitvs", "note": "active but effector script absent",
+}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "does not exist" "case7 active integration missing effector reddens"
+
+# ── Case 8: a structurally valid ENVISIONED integration passes (owed, may be unreachable) ──
+FIX="$work/okintegration.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["integrations"] = {"coderabbit": {
+    "category": "review", "app_slug": "coderabbitai[bot]", "config_file": ".coderabbit.yaml",
+    "install_scope": ["governed_public"],
+    "effector": [{"kind": "delegate", "argv": ["python3", "scripts/future-adapter.py"]}],
+    "status": "envisioned", "owner": "gitvs", "note": "owed — envisioned",
+}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 0 "drift == ∅" "case8 envisioned integration passes"
+
+# ── Case 9: an integration missing a required field → red (schema discipline) ──
+FIX="$work/incompleteintegration.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["integrations"] = {"coderabbit": {"category": "review", "status": "envisioned", "owner": "gitvs"}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "missing" "case9 incomplete integration reddens"
+
+# ── Case 10: integrations cannot retain the old scalar mini-language either ──
+FIX="$work/scalarintegration.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["integrations"] = {"coderabbit": {
+    "category": "review", "app_slug": "coderabbitai[bot]", "config_file": ".coderabbit.yaml",
+    "install_scope": ["governed_public"], "effector": "delegate:scripts/future-adapter.py",
+    "status": "envisioned", "owner": "gitvs", "note": "bad scalar",
+}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "must be a list" "case10 scalar integration effector reddens"
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "gitvs.test.sh: PASS ($pass checks)"

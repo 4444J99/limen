@@ -8,20 +8,20 @@ Outputs:
 * stdout: one compact Markdown line for SessionStart orientation.
 * --write: ignored JSON/Markdown snapshots under logs/.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PROMPT_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 CORPUS_INVENTORY = PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
 OUT_JSON = ROOT / "logs" / "session-lifecycle-pressure.json"
@@ -193,9 +193,8 @@ def remote_missing_counts(worktree_remote: dict[str, Any], wt_report: dict[str, 
         item = by_name.get(root)
         reason = str((item or {}).get("reason") or "")
         if (
-            (item and not item.get("debt") and live_scanner_defers_remote_missing(reason))
-            or receipt_closes_remote_missing(receipts_by_root.get(root))
-        ):
+            item and not item.get("debt") and live_scanner_defers_remote_missing(reason)
+        ) or receipt_closes_remote_missing(receipts_by_root.get(root)):
             closed_roots.append(root)
         else:
             unresolved_roots.append(root)
@@ -314,7 +313,28 @@ def write_outputs(snapshot: dict[str, Any], markdown: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Summarize local/remote lifecycle pressure.")
     parser.add_argument("--write", action="store_true", help="write ignored logs snapshots")
+    parser.add_argument(
+        "--throttle",
+        type=int,
+        default=int(os.environ.get("LIMEN_LIFECYCLE_PRESSURE_THROTTLE", "1800")),
+        help=(
+            "skip the (expensive) worktree/branch census if the JSON snapshot is younger than N "
+            "seconds; 0 = always run. Env: LIMEN_LIFECYCLE_PRESSURE_THROTTLE (default 1800). The census "
+            "shells out to many git commands per worktree, so on a large estate it grinds the CPU each "
+            "session-end; the snapshot changes slowly, so a stale-within-window read is fine."
+        ),
+    )
     args = parser.parse_args()
+
+    # Throttle: if a recent snapshot exists, skip the O(worktrees × git) crawl entirely. On --write
+    # (the SessionEnd hook) this just leaves the fresh-enough snapshot in place; otherwise we echo the
+    # cached Markdown line so the SessionStart orientation still gets its pressure summary.
+    if args.throttle > 0 and OUT_JSON.exists():
+        age = time.time() - OUT_JSON.stat().st_mtime
+        if age < args.throttle:
+            if not args.write and OUT_MD.exists():
+                print(OUT_MD.read_text(encoding="utf-8").rstrip("\n"))
+            return 0
 
     snapshot = build_snapshot()
     markdown = render(snapshot)

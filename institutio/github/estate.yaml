@@ -199,7 +199,17 @@ resource_types:
     effector: []
     status: envisioned
     owner: gitvs
-    note: "Dependabot/Renovate posture — owed."
+    note: "Dependabot/Renovate posture — owed; now the native instance of the `integrations` registry below (its config .github/dependabot.yml is already present)."
+  marketplace_app:
+    identity: derived
+    desired: ["installed_on_scope_classes", "config_present"]
+    observe: "gh api /orgs/{owner}/installations (app_slug) + config_file presence"
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+      - {kind: file-atom, target: "L-INTEGRATION-<APP>"}
+    status: envisioned                     # ACTIVATES when sync-marketplace-config.py + the L-INTEGRATION-* levers land (§3 D2)
+    owner: gitvs
+    note: "The free third-party ecosystem (CodeRabbit/Trunk/Renovate/...) harnessed as $0 labor. The concrete apps are the `integrations:` registry below (what `classes:` is for repos). Effector SPLITS: the config half is machine-pushed via the ship-docs primitive; the OAuth-install half is a one-time file-atom lever. Envisioned until the config-push effector lands."
 
 # ── per-repo-CLASS governance posture ────────────────────────────────────────────────────────
 # The desired-state of the `repo` / `branch_protection` types, bucketed by owner/repo glob. `required_checks`
@@ -239,6 +249,112 @@ classes:
     archive_policy: frozen
     owner: gitvs
     note: "Read-only tail: no protection expected, but a leaked secret is STILL a red predicate."
+
+# ── ecosystem integrations — the free third-party Apps GITVS harnesses as $0 labor (§3) ─────────
+# "Everything GitHub" is not only the resources we OWN; it is the ecosystem of free/OSS-tier Apps we
+# RENT across the governed repos. Each row is one App: its `category`, the `app_slug` the census
+# observes on the org installations, the `config_file` the effector pushes (the machine-ownable half),
+# the `install_scope` class globs it should cover, and its `effector` (the same three total sinks).
+# The effector SPLITS: config half → machine-pushed via the ship-docs primitive; OAuth-install half →
+# a one-time file-atom lever (Dependabot is native, so it needs none). `status: envisioned` until the
+# config-push effector (scripts/sync-marketplace-config.py) + the L-INTEGRATION-* levers land (§3 D2) —
+# the wiring-integrity law then holds an active integration. Adding an App = ONE row + one template.
+integrations:
+  dependabot:
+    category: deps
+    app_slug: "dependabot[bot]"
+    config_file: ".github/dependabot.yml"
+    free_scope: all
+    install_scope: ["conductor", "governed_public"]
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+    status: envisioned
+    owner: gitvs
+    note: "The one ALREADY-SATISFIED integration (config present on the conductor). Native GitHub — no Marketplace OAuth, so no L-INTEGRATION lever. Unifies the envisioned `dependabot` resource_type."
+  coderabbit:
+    category: review
+    app_slug: "coderabbitai[bot]"
+    config_file: ".coderabbit.yaml"
+    free_scope: public
+    install_scope: ["conductor", "governed_public"]
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+      - {kind: file-atom, target: L-INTEGRATION-CODERABBIT}
+    status: envisioned
+    owner: gitvs
+    note: "AI PR review, free for public repos. Config half machine-pushable (.coderabbit.yaml); the org OAuth install is the one-time human lever."
+  trunk:
+    category: quality
+    app_slug: "trunk-io[bot]"
+    config_file: ".trunk/trunk.yaml"
+    free_scope: public
+    install_scope: ["conductor"]
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+      - {kind: file-atom, target: L-INTEGRATION-TRUNK}
+    status: envisioned
+    owner: gitvs
+    note: "Meta-linter + merge-queue, free tier. Start on the conductor (strictest posture) before fanning out."
+  renovate:
+    category: deps
+    app_slug: "renovate[bot]"
+    config_file: "renovate.json"
+    free_scope: all
+    install_scope: ["governed_public"]
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+      - {kind: file-atom, target: L-INTEGRATION-RENOVATE}
+    status: envisioned
+    owner: gitvs
+    note: "More-flexible dependency automation than Dependabot; config-file driven, so the machine half is fully ownable."
+  semgrep:
+    category: security
+    app_slug: "semgrep-app[bot]"
+    config_file: ".semgrep.yml"
+    free_scope: public
+    install_scope: ["conductor", "governed_public"]
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+      - {kind: file-atom, target: L-INTEGRATION-SEMGREP}
+    status: envisioned
+    owner: gitvs
+    note: "SAST, free for OSS. Complements native CodeQL (also free-for-public)."
+  codecov:
+    category: coverage
+    app_slug: "codecov[bot]"
+    config_file: "codecov.yml"
+    free_scope: public
+    install_scope: ["conductor"]
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+      - {kind: file-atom, target: L-INTEGRATION-CODECOV}
+    status: envisioned
+    owner: gitvs
+    note: "Coverage reporting, free for OSS. Config-file driven."
+  sonarcloud:
+    category: quality
+    app_slug: "sonarcloud[bot]"
+    config_file: "sonar-project.properties"
+    free_scope: public
+    install_scope: ["conductor"]
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+      - {kind: file-atom, target: L-INTEGRATION-SONARCLOUD}
+    status: envisioned
+    owner: gitvs
+    note: "Code-quality/SAST, free for OSS."
+  mergify:
+    category: merge
+    app_slug: "mergify[bot]"
+    config_file: ".mergify.yml"
+    free_scope: public
+    install_scope: []
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
+      - {kind: file-atom, target: L-INTEGRATION-MERGIFY}
+    status: envisioned
+    owner: gitvs
+    note: "Merge automation/queue. install_scope empty — merge-drain.py + merge-policy.sh already own the merge lane; declared here for completeness, not to be adopted until it beats the native organ."
 
 # ── usage budgets ─────────────────────────────────────────────────────────────────────────────
 budgets:
