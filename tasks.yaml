@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 487
+      spent: 488
       per_agent:
         jules: 133
         gemini: 20
         codex: 0
-        opencode: 171
+        opencode: 172
         agy: 159
         claude: 0
         github_actions: 1
@@ -120176,15 +120176,20 @@ tasks:
   workstream: prompt-parity
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - excav-0708
   urls: []
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:12:04.435630Z'
-  dispatch_log: []
+  updated: '2026-07-10T10:36:22.955089Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T10:36:22.955089Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: EXCAV-0708-ETCETER4-C3
   title: "etceter4 revival C3 \u2014 Met4morfoses thesis + phonetic chart + ET4L catalog\
     \ as ONE published artifact"
