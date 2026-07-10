@@ -63,6 +63,7 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 REQUIRED_RESOURCE_FIELDS = ("identity", "desired", "observe", "effector", "status", "owner", "note")
 VALID_STATUS = {"active", "envisioned"}
 REQUIRED_CLASS_FIELDS = ("match", "visibility", "branch_protection", "required_checks", "owner", "note")
+REQUIRED_INTEGRATION_FIELDS = ("category", "app_slug", "config_file", "install_scope", "effector", "status", "owner", "note")
 # The effector's three total sinks — the closure that makes the form complete.
 EFFECTOR_KINDS = {"delegate", "file-atom", "reap"}
 # Literal effector tokens that carry no script/lever (a human-obvious manual act).
@@ -170,6 +171,27 @@ def _local_branch_reasons() -> dict[str, int]:
         return {}
 
 
+def _integration_observe(estate: dict, token: str | None, online: bool) -> dict:
+    """Observe the ecosystem integrations: config-file presence in the conductor tree (git-derivable,
+    offline-safe) + the set of installed app_slugs on the governed orgs (online). Read-only; the doctor's
+    class I diffs desired − this. Deterministic (sorted) so the ledger stays an idempotent fixed point."""
+    integrations = estate.get("integrations") or {}
+    out: dict = {"declared": len(integrations), "config_present": {}, "installed_slugs": None}
+    for iname, ig in integrations.items():
+        cf = (ig or {}).get("config_file")
+        if cf:
+            out["config_present"][iname] = (ROOT / cf).exists()
+    out["config_present"] = dict(sorted(out["config_present"].items()))
+    if online:
+        slugs: list[str] = []
+        for owner in owners(estate):
+            r = _gh(["api", f"/orgs/{owner}/installations", "--jq", ".installations[].app_slug"], token, timeout=30)
+            if r.returncode == 0:
+                slugs += [s.strip() for s in (r.stdout or "").splitlines() if s.strip()]
+        out["installed_slugs"] = sorted(set(slugs))
+    return out
+
+
 def observe(estate: dict) -> dict:
     """Build the actual-state ledger. Every block is fail-open: a gh/parse failure degrades to null,
     never raises; `online` records whether the live rungs ran. Counts + names only (the _scrub firewall —
@@ -233,6 +255,9 @@ def observe(estate: dict) -> dict:
 
     # Secret homing — delegate to the existing offline-safe predicate (class B).
     led["secrets"]["homed"] = _delegate_ok(["credential-wall.py", "--check"])
+
+    # Ecosystem integrations (the §3 harness) — config presence (offline) + installed slugs (online).
+    led["integrations"] = _integration_observe(estate, token, online)
     return led
 
 
@@ -348,6 +373,26 @@ def parity(estate: dict) -> list[str]:
                 if chk not in job_ids:
                     fails.append(f"class '{name}': required_check '{chk}' names no .github/workflows job")
 
+    # integrations (the ecosystem registry) — the same field discipline; an `active` integration must
+    # carry a config-push effector script that exists (the wiring-integrity law extended to the App plane).
+    integrations = estate.get("integrations")
+    if integrations is not None:
+        if not isinstance(integrations, dict):
+            fails.append("estate: integrations must be a mapping")
+        else:
+            for iname, ig in integrations.items():
+                if not isinstance(ig, dict):
+                    fails.append(f"integration '{iname}': not a mapping")
+                    continue
+                for field in REQUIRED_INTEGRATION_FIELDS:
+                    if field not in ig:
+                        fails.append(f"integration '{iname}': missing '{field}'")
+                st = ig.get("status")
+                if st not in VALID_STATUS:
+                    fails.append(f"integration '{iname}': status '{st}' not in {sorted(VALID_STATUS)}")
+                if st == "active":
+                    fails.extend(_effector_defects(iname, ig.get("effector") or ""))
+
     # owner/note discipline on budgets (parity with the gates.yaml/parameters.yaml rule).
     for bname, budget in (estate.get("budgets") or {}).items():
         if isinstance(budget, dict):
@@ -426,6 +471,24 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
         skips.append("[E rate-limit] could not read /rate_limit")
     elif hp < floor:
         fails.append(f"[E rate-limit] core headroom {hp}% < floor {floor}%")
+
+    # I — ecosystem integration gap (the §3 harness): declared in the estate vs installed/configured on
+    # the org. Envisioned integrations are OWED (cited as a summary, never failed — GITVS cannot yet enact
+    # them); a config-present or installed one is already satisfied. Detail lives in the census ledger.
+    integ = led.get("integrations") or {}
+    if integ.get("installed_slugs") is None:
+        skips.append("[I integration-gap] could not read /orgs/*/installations")
+    elif integ.get("declared"):
+        slugs = set(integ.get("installed_slugs") or [])
+        cfg = integ.get("config_present") or {}
+        satisfied = sum(
+            1 for n, ig in (estate.get("integrations") or {}).items()
+            if ig.get("app_slug") in slugs or cfg.get(n)
+        )
+        owed = integ["declared"] - satisfied
+        if owed:
+            cites.append(f"[I integration-gap] {satisfied}/{integ['declared']} ecosystem integrations present; "
+                         f"{owed} owed (envisioned — detail in the census ledger; $0-labor harness pending §3 D2)")
 
     # A/D/G are per-repo posture rungs — the census surfaces the inputs; the full per-301-repo
     # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.

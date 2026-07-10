@@ -100,6 +100,45 @@ open(sys.argv[1], "w").write(yaml.safe_dump(d))
 PY
 expect 1 "does not exist" "case4 missing effector script reddens"
 
+# ── Case 5: an ACTIVE ecosystem integration whose config-push effector script is missing → red ──
+#    (the wiring-integrity law extended to the App plane — §3 integrations registry).
+FIX="$work/badintegration.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["integrations"] = {"coderabbit": {
+    "category": "review", "app_slug": "coderabbitai[bot]", "config_file": ".coderabbit.yaml",
+    "install_scope": ["governed_public"], "effector": "delegate:scripts/does-not-exist.py",
+    "status": "active", "owner": "gitvs", "note": "active but effector script absent",
+}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "does not exist" "case5 active integration missing effector reddens"
+
+# ── Case 6: a valid ENVISIONED integration passes (owed, may be unwired) ──
+FIX="$work/okintegration.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["integrations"] = {"coderabbit": {
+    "category": "review", "app_slug": "coderabbitai[bot]", "config_file": ".coderabbit.yaml",
+    "install_scope": ["governed_public"], "effector": "delegate:scripts/sync-marketplace-config.py",
+    "status": "envisioned", "owner": "gitvs", "note": "owed — envisioned",
+}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 0 "drift == ∅" "case6 envisioned integration passes"
+
+# ── Case 7: an integration missing a required field → red (schema discipline) ──
+FIX="$work/incompleteintegration.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["integrations"] = {"coderabbit": {"category": "review", "status": "envisioned", "owner": "gitvs"}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "missing" "case7 incomplete integration reddens"
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "gitvs.test.sh: PASS ($pass checks)"
