@@ -98634,7 +98634,7 @@ tasks:
   target_agent: agy
   priority: normal
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -98653,7 +98653,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T03:41:33.549969Z'
+  updated: '2026-07-10T03:45:23.964248Z'
   dispatch_log:
   - timestamp: '2026-07-09T19:04:11.112505Z'
     agent: agy
@@ -98693,6 +98693,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T03:45:23.964248Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-716
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#716
   repo: organvm/peer-audited--behavioral-blockchain
@@ -110139,7 +110144,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -110156,7 +110161,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T03:41:33.549969Z'
+  updated: '2026-07-10T03:45:23.964248Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -110215,6 +110220,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T03:45:23.964248Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-domus-genoma-162
   title: fix failing CI on organvm/domus-genoma#162
   repo: organvm/domus-genoma
@@ -114021,11 +114031,11 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: claude
+  target_agent: gemini
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - always-working
   - receipt-first
@@ -114052,7 +114062,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T03:41:33.549969Z'
+  updated: '2026-07-10T03:45:23.964248Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114118,6 +114128,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T03:45:23.964248Z'
+    agent: claude
+    session_id: cli
+    status: failed->gemini
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -116400,7 +116414,7 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - noop
   urls:
@@ -116413,7 +116427,7 @@ tasks:
     `api/schemas.py.main`, `pr130.txt`, modifies tr'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T03:41:33.549969Z'
+  updated: '2026-07-10T03:45:23.964248Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -116455,6 +116469,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T03:45:23.964248Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-cifix-organvm-growth-auditor-20
   title: fix failing CI on organvm/growth-auditor#20
   repo: organvm/growth-auditor
