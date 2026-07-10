@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-10T01:28:21+00:00`
+Generated: `2026-07-10T01:47:54+00:00`
 Status: `needs-work`
 Required open: `2`
 Blocked: `2`
@@ -19,7 +19,7 @@ Done from receipt: `7`
 - ID: `PUBLIC-FACE-CONTRIBUTION-BALANCE`
 - Workstream: `contribution-balance`
 - Status: `assigned_from_existing_work`
-- Verdict: GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.7%, reviews 0.8%
+- Verdict: GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.7%, reviews 0.9%
 - Lane fit: `codex-conductor`
 - Predicate: `python3 scripts/github-contribution-balance.py --login 4444J99 --json`
 - Receipt target: `~/Workspace/limen/docs/always-working.md`
@@ -28,10 +28,10 @@ Done from receipt: `7`
 
 | Priority | ID | Status | Verdict |
 |---:|---|---|---|
-| 0 | `SUBSTRATE-DISK-TEMP` | `blocked` | internal free space is 107.0 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB; remaining bytes require owner gates |
+| 0 | `SUBSTRATE-DISK-TEMP` | `blocked` | internal free space is 108.3 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB; remaining bytes require owner gates |
 | 5 | `ESTATE-CUSTODY` | `done_from_receipt` | run-and-gun laptop cache and external estate custody have implementation receipts |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
-| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.7%, reviews 0.8% |
+| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.7%, reviews 0.9% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `done_from_receipt` | credential wall and historical token tombstone receipt are present |
 | 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 131 active flagged non-deleted messages require classification |
 | 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 83150 indexed non-deleted messages remain for future batches |
