@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 486
+      spent: 487
       per_agent:
         jules: 133
         gemini: 20
         codex: 0
-        opencode: 170
+        opencode: 171
         agy: 159
         claude: 0
         github_actions: 1
@@ -114481,7 +114481,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -114507,7 +114507,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T10:09:05.861012Z'
+  updated: '2026-07-10T10:30:29.543152Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114663,6 +114663,11 @@ tasks:
     agent: codex
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-07-10T10:30:29.543152Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
