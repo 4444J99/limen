@@ -105,6 +105,17 @@ ACCEPTED_REDACTION_REVIEWS = {
 }
 REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
 
+# Operator standing grant (2026-07-09) — round two of the removal-acceptance covenant, now for clones.
+# The worktree sibling (reclaim-worktrees.py STANDING_ACCEPTANCE) pre-accepts its loss-free class; the
+# clone organ was left gated on an unfed ledger AND never beat-wired, so ~/Workspace crept back every
+# time (the recurring "why is local storage full" pain). classify() already proves the loss-free gate
+# adversarially (14 data-loss paths guarded); its True verdict is "pushed-mirror[-under-pressure]" —
+# every local byte is on the live remote, re-cloneable, nothing unpushed/untracked. Pre-accept exactly
+# that class, matching the operator's rule "nothing deleted without being pushed; pushed IS enough."
+# Default ON; set LIMEN_CLONE_REAP_STANDING_ACCEPTANCE=0 to restore the per-clone ledger gate.
+CLONE_REAP_STANDING = os.environ.get("LIMEN_CLONE_REAP_STANDING_ACCEPTANCE", "1") != "0"
+CLONE_REAP_STANDING_REASONS = {"pushed-mirror", "pushed-mirror-under-pressure"}
+
 
 def _run(args: list[str], cwd: Path | None = None) -> str:
     try:
@@ -135,6 +146,8 @@ def load_clone_reap_acceptance() -> list[dict]:
 
 
 def clone_reap_accepted(repo: Path, slug: str, reason: str, acceptance_events: list[dict]) -> tuple[bool, str]:
+    if CLONE_REAP_STANDING and reason in CLONE_REAP_STANDING_REASONS:
+        return True, "standing-grant-2026-07-09"
     try:
         resolved = str(repo.resolve())
     except OSError:

@@ -194,7 +194,10 @@ def test_behind_origin_mirror_is_reaped_end_to_end(tmp_path):
     assert reap.confirm_recloneable(clone) is True
 
 
-def test_clone_reap_requires_acceptance_event(tmp_path):
+def test_clone_reap_requires_acceptance_event(tmp_path, monkeypatch):
+    # pin the standing grant OFF so this exercises the per-clone ledger gate (the grant is covered
+    # by test_clone_reap_standing_grant_accepts_pushed_mirror below).
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", False)
     clone = _init_origin_and_clone(tmp_path, "needsaccept")
     slug = reap.origin_slug(clone)
 
@@ -204,7 +207,23 @@ def test_clone_reap_requires_acceptance_event(tmp_path):
     assert reason == "missing-clone-reap-acceptance"
 
 
-def test_clone_reap_acceptance_matches_remote_mirror(tmp_path):
+def test_clone_reap_standing_grant_accepts_pushed_mirror(tmp_path, monkeypatch):
+    """Standing grant (2026-07-09): the loss-free pushed-mirror class is pre-accepted with no ledger."""
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", True)
+    clone = _init_origin_and_clone(tmp_path, "standingmirror")
+    slug = reap.origin_slug(clone)
+
+    ok, reason = reap.clone_reap_accepted(clone, slug, "pushed-mirror", [])
+    assert ok is True
+    assert reason == "standing-grant-2026-07-09"
+
+    # a non-loss-free reason is NOT covered by the grant → still needs the ledger
+    ok2, reason2 = reap.clone_reap_accepted(clone, slug, "dirty-or-untracked", [])
+    assert ok2 is False
+
+
+def test_clone_reap_acceptance_matches_remote_mirror(tmp_path, monkeypatch):
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", False)
     clone = _init_origin_and_clone(tmp_path, "acceptedmirror")
     slug = reap.origin_slug(clone)
     events = [
@@ -227,7 +246,8 @@ def test_clone_reap_acceptance_matches_remote_mirror(tmp_path):
     assert reason == "clone-reap-accepted"
 
 
-def test_clone_reap_acceptance_requires_archive_and_redaction_proofs(tmp_path):
+def test_clone_reap_acceptance_requires_archive_and_redaction_proofs(tmp_path, monkeypatch):
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", False)
     clone = _init_origin_and_clone(tmp_path, "proofrequired")
     slug = reap.origin_slug(clone)
     base_event = {

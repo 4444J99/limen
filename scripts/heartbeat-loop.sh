@@ -480,6 +480,13 @@ while true; do
     [ -n "$_dfree" ] && [ "$_dfree" -le "${LIMEN_DISK_FREE_FLOOR_GIB:-15}" ] 2>/dev/null && HYG_CAD=1
   fi
   due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
+  # CLONE-REAP — the actual eviction. clone-maintenance.sh only *reports* reapable clones; reap-clones.py
+  # removes the loss-free pushed-mirror class (adversarially-audited gate + standing grant). Beat-wired
+  # 2026-07-09 so the reclaim engine is ALIVE instead of a script that never ran (the round-two storage
+  # deadlock: ~/Workspace crept back because nothing autonomously reaped it). Self-gates on disk pressure
+  # + idle age; inert above the free-floor. Disarm --apply with LIMEN_REAP_CLONES_APPLY=0.
+  REAP_CLONES_ARG=""; [ "${LIMEN_REAP_CLONES_APPLY:-1}" = "1" ] && REAP_CLONES_ARG="--apply"
+  due_voice hygiene "$HYG_CAD" && timeout "${LIMEN_REAP_CLONES_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reap-clones.py" $REAP_CLONES_ARG 2>&1 | tail -3 || true
   due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true
   due_voice hygiene "$HYG_CAD" && stamp hygiene
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat

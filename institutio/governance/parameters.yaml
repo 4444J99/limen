@@ -493,6 +493,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Pushed-reap escape hatch — DEFAULT OFF. The standing policy is merge-before-reap (pushed preservation is not closure), so a clean, idle, pushed-but-unmerged worktree is KEPT as not-merged-to-default (enacted by test_reclaim_keeps_clean_pushed_unmerged_branch). Set 1 to flip that class to reapable: reachable_from_remote ⇒ every byte is on origin and re-cloneable, so removing the local checkout loses zero work and the branch + its PR/babysitting lifecycle continue on origin. This is the opt-in lever that drains the pushed-but-unmerged backlog (the dominant boot-disk pin — hundreds of roots) toward the free-space target; classified clean+pushed+idle under the standing grant. Enabling it is an operator policy decision (it overrides merge-before-reap), homed as a lever, not defaulted on. The unpushed/dirty/active guardrails are unchanged — unpreserved work is NEVER reaped."
+  LIMEN_CLONE_REAP_STANDING_ACCEPTANCE:
+    default: "1"
+    env: LIMEN_CLONE_REAP_STANDING_ACCEPTANCE
+    self_update: none
+    owner: continuity
+    note: "Round-two covenant standing grant (2026-07-09): a local clone whose loss-free verdict is 'pushed-mirror' (classify() proves every local byte is on the live remote, re-cloneable, nothing unpushed/untracked — adversarially audited against 14 data-loss paths) is pre-accepted for reap without a per-clone ledger event. Matches the worktree sibling (LIMEN_RECLAIM_STANDING_ACCEPTANCE). Set 0 to restore the docs/clone-reap-acceptance.jsonl per-clone gate."
+  LIMEN_REAP_CLONES_APPLY:
+    default: "1"
+    env: LIMEN_REAP_CLONES_APPLY
+    self_update: none
+    owner: continuity
+    note: "Beat-wire clone-reap in --apply mode (2026-07-09): the hygiene voice runs scripts/reap-clones.py so the reclaim engine is ALIVE, not a script that never ran. reap-clones self-gates on disk pressure + idle age + the loss-free pushed-mirror gate, so it is inert above the free-floor and only removes the pushed-mirror class. Set 0 to run it in dry-run/report mode only."
+  LIMEN_REAP_CLONES_TIMEOUT:
+    default: "300"
+    env: LIMEN_REAP_CLONES_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Seconds budget for the beat-wired clone-reap voice (scripts/reap-clones.py) before the hygiene voice times it out. Bounded + fail-open like the sibling reclaim timeouts."
   LIMEN_DISK_PRESSURE_PATH:
     default: "$LIMEN_ROOT"
     env: LIMEN_DISK_PRESSURE_PATH
