@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 506
+      spent: 508
       per_agent:
         jules: 133
         gemini: 20
-        codex: 0
-        opencode: 189
+        codex: 1
+        opencode: 190
         agy: 159
         claude: 1
         github_actions: 1
@@ -125323,7 +125323,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/limen/issues/784
@@ -125335,8 +125335,13 @@ tasks:
     exists only in `--check` stdout. `writ'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T11:46:05.625709Z'
-  dispatch_log: []
+  updated: '2026-07-10T11:34:00.181684Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T11:34:00.181684Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-775
   title: MOUNT the 4444J99 SSD to recover the Nov-2025 deep-history archives
   repo: organvm/limen
@@ -128259,7 +128264,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -128282,7 +128287,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T11:31:19.624862Z'
+  updated: '2026-07-10T11:34:00.181684Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: claude
@@ -128317,6 +128322,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T11:34:00.181684Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-dot-github--theoria-471
   title: rebase/resolve conflicts on organvm/dot-github--theoria#471
   repo: organvm/dot-github--theoria
