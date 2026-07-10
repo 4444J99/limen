@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 13
+      spent: 14
       per_agent:
         jules: 0
         gemini: 0
         codex: 2
         opencode: 5
-        agy: 0
+        agy: 1
         claude: 2
         github_actions: 1
         ollama: 3
@@ -114655,7 +114655,7 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: agy
+  target_agent: claude
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
@@ -114666,6 +114666,7 @@ tasks:
   - revenue-value-repos
   - tried:codex
   - tried:opencode
+  - tried:agy
   urls:
   - ~/Workspace/limen/value-repos.json
   - ~/Workspace/limen/docs/product-ledger.md
@@ -114686,7 +114687,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T14:16:33.126294Z'
+  updated: '2026-07-10T14:20:01.672793Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114906,6 +114907,15 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-10T14:19:13.077823Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T14:20:01.672793Z'
+    agent: agy
+    session_id: cli
+    status: failed->claude
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -128743,6 +128753,31 @@ tasks:
     on base), close the PR as superseded instead of pushing. Do not open a new PR.
     PR: https://github.com/organvm/dot-github--theoria/pull/483 [auto-emitted 2026-07-10
     by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-growth-auditor-18
+  title: fix failing CI on organvm/growth-auditor#18
+  repo: organvm/growth-auditor
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/growth-auditor/pull/18
+  context: "PR organvm/growth-auditor#18 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/growth-auditor/pull/18\
+    \ [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-10'
   dispatch_log: []
