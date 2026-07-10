@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
 import time
@@ -208,3 +209,30 @@ def test_reclaim_generated_payloads_skips_non_idle_roots(tmp_path: Path, monkeyp
 
     assert result["cleaned"] == []
     assert (repo / "node_modules").exists()
+
+
+def test_reclaim_generated_log_shell_dry_run_requires_acceptance(tmp_path: Path, monkeypatch, capsys) -> None:
+    reclaim = load_reclaim_worktrees()
+    limen_root = tmp_path / "limen"
+    (limen_root / "logs").mkdir(parents=True)
+    wtroot = tmp_path / ".limen-worktrees"
+    shell = wtroot / "generated-log-shell"
+    (shell / "logs").mkdir(parents=True)
+    (shell / "logs" / "session-lifecycle-pressure.md").write_text("generated\n", encoding="utf-8")
+    (shell / "logs" / "session-lifecycle-pressure.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(reclaim, "LIMEN_ROOT", limen_root)
+    monkeypatch.setattr(reclaim, "JSON_OUT", True)
+    monkeypatch.setattr(reclaim, "APPLY", False)
+    monkeypatch.setattr(reclaim, "CHECK", False)
+    monkeypatch.setattr(
+        reclaim,
+        "iter_worktree_targets",
+        lambda _root: [type("Target", (), {"path": shell, "min_age_h": 0, "source": "test"})()],
+    )
+
+    assert reclaim.main() == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["reapable_count"] == 0
+    assert payload["would_reclaim"] == []
+    assert payload["kept_safe"] == [{"reason": "missing-reclaim-acceptance", "root": "generated-log-shell"}]

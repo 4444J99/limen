@@ -453,6 +453,10 @@ def main():
             deferred.append(d.name)
             continue  # bounded — but NOT silent (logged below)
         if not APPLY:
+            accepted, accept_reason = reclaim_accepted(d, action, reason, reclaim_acceptance)
+            if not accepted:
+                skipped.append((d.name, accept_reason))
+                continue
             removed.append((d.name, f"would-{action}:{reason}"))
             would_reclaim.append({"root": d.name, "path": str(d), "action": action, "reason": reason})
             continue
