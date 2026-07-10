@@ -127259,12 +127259,13 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:claude
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/173
   context: 'PR organvm/domus-genoma#173 is CONFLICTING with its base branch and merge-drain
@@ -127281,7 +127282,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T07:30:57.347916Z'
+  updated: '2026-07-10T07:44:10.644768Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:07:52.232247Z'
     agent: agy
@@ -127306,6 +127307,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T07:44:10.644768Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-domus-genoma-184
   title: rebase/resolve conflicts on organvm/domus-genoma#184
   repo: organvm/domus-genoma
