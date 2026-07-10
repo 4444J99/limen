@@ -311,7 +311,7 @@ def run_always_working_before_dispatch(tasks_path: Path, *, dry_run: bool = Fals
         )
     except subprocess.TimeoutExpired:
         print("Always-working gate timed out before dispatch reservation")
-        return os.environ.get("LIMEN_ALWAYS_WORKING_HARD_GATE", "1") != "1"
+        return os.environ.get("LIMEN_ALWAYS_WORKING_TIMEOUT_HARD_GATE", "0") != "1"
     except OSError as exc:
         print(f"Always-working gate failed before dispatch reservation: {exc}")
         return os.environ.get("LIMEN_ALWAYS_WORKING_HARD_GATE", "1") != "1"

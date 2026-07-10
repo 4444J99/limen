@@ -67,6 +67,43 @@ def read_board(path: Path) -> dict:
     return yaml.safe_load(path.read_text())
 
 
+def test_always_working_timeout_fails_open_by_default(tmp_path: Path, monkeypatch, capsys) -> None:
+    root = tmp_path / "root"
+    script = root / "scripts" / "always-working.py"
+    tasks_path = root / "tasks.yaml"
+    script.parent.mkdir(parents=True)
+    script.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    tasks_path.write_text("version: '1.0'\ntasks: []\n", encoding="utf-8")
+    monkeypatch.setenv("LIMEN_ROOT", str(root))
+    monkeypatch.delenv("LIMEN_ALWAYS_WORKING_TIMEOUT_HARD_GATE", raising=False)
+
+    def timeout_capture(*_args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd="always-working", timeout=kwargs.get("timeout", 1))
+
+    monkeypatch.setattr(D, "_run_capture", timeout_capture)
+
+    assert D.run_always_working_before_dispatch(tasks_path) is True
+    assert "Always-working gate timed out before dispatch reservation" in capsys.readouterr().out
+
+
+def test_always_working_timeout_can_be_hard_gated(tmp_path: Path, monkeypatch) -> None:
+    root = tmp_path / "root"
+    script = root / "scripts" / "always-working.py"
+    tasks_path = root / "tasks.yaml"
+    script.parent.mkdir(parents=True)
+    script.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    tasks_path.write_text("version: '1.0'\ntasks: []\n", encoding="utf-8")
+    monkeypatch.setenv("LIMEN_ROOT", str(root))
+    monkeypatch.setenv("LIMEN_ALWAYS_WORKING_TIMEOUT_HARD_GATE", "1")
+
+    def timeout_capture(*_args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd="always-working", timeout=kwargs.get("timeout", 1))
+
+    monkeypatch.setattr(D, "_run_capture", timeout_capture)
+
+    assert D.run_always_working_before_dispatch(tasks_path) is False
+
+
 def _blocked_admission(*_args, **_kwargs):
     return {
         "allow": False,
