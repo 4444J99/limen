@@ -231,7 +231,11 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
     )
 
     monkeypatch.setattr(mod, "ROOT", root)
-    monkeypatch.setattr(mod, "SUBSTRATE_STORAGE_INDEX", root / ".limen-private" / "session-corpus" / "lifecycle" / "substrate-storage-pressure.json")
+    monkeypatch.setattr(
+        mod,
+        "SUBSTRATE_STORAGE_INDEX",
+        root / ".limen-private" / "session-corpus" / "lifecycle" / "substrate-storage-pressure.json",
+    )
     monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
     monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
     monkeypatch.setattr(mod, "OLLAMA_MODEL_RECLAIM_LOG", root / "logs" / "reclaim-ollama-models.jsonl")
