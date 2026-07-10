@@ -55,6 +55,21 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 - **Status:** OPEN.
 - **Owner:** Claude (worktree allocation / harness convention).
 
+### IF-SENSOR-REGISTRY — the beat sensors are declared data, all consumers derive
+- **Ideal form:** the beat's continuous-runtime sensors live in one registry
+  (`institutio/governance/sensors.yaml`, VIGILIA's third axis beside GATES + PARAMETERS); the beat
+  loop, `omega.sh`, and `armed-valve-audit.py` all **derive** from it; `check-sensors.py` holds it in
+  parity. Adding a sensor is one registry entry, never a hand-wired shell block in three places.
+- **Distance:** Phase 1 shipped 2026-07-10 (#884) — the registry (19 sensors), `beat-sensors.py`
+  (`--list`/`--run`; dry-run reproduces the shell sequence), and `check-sensors.py` (wired into pr-gate)
+  are live and drift-checked. But the live beat still **duplicates** the sensors: `metabolize.sh` runs
+  the 18 hand-wired `── 0x ──` blocks, `omega.sh` hardcodes its rungs, `armed-valve-audit.py` greps the
+  shell.
+- **Status:** PARTIAL — declared + drift-checked (Phase 1). Phase 2 flips `metabolize.sh`/`omega.sh`/
+  `armed-valve-audit.py` to derive from the registry — the high-blast-radius change on the live daemon,
+  landed after equivalence is proven.
+- **Owner:** Claude + tabularius.
+
 ### IF-LEDGER-OF-IDEALS — this ledger (self)
 - **Ideal form:** every Claude-originated ideal is a tracked named param here; the ledger is
   linked from memory and the autopoiesis heartbeat references it (closing the self-loop).
