@@ -106844,14 +106844,15 @@ tasks:
   title: fix failing CI on organvm/limen#516
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/516
   context: "PR organvm/limen#516 has FAILING CI checks and merge-drain correctly refuses\
@@ -106862,13 +106863,17 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T08:54:59.620608Z'
+  updated: '2026-07-10T09:25:43.023152Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:54:59.620608Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T09:25:43.023152Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-limen-590
   title: fix failing CI on organvm/limen#590
   repo: organvm/limen
@@ -107144,15 +107149,16 @@ tasks:
   title: fix failing CI on organvm/limen#630
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
   - tried:jules
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/630
   context: "PR organvm/limen#630 has FAILING CI checks and merge-drain correctly refuses\
@@ -107163,7 +107169,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T08:54:59.620608Z'
+  updated: '2026-07-10T09:25:43.023152Z'
   dispatch_log:
   - timestamp: '2026-07-08T14:39:59.050705Z'
     agent: jules
@@ -107180,6 +107186,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T09:25:43.023152Z'
+    agent: gemini
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-media-ark-34
   title: fix failing CI on organvm/media-ark#34
   repo: organvm/media-ark
@@ -114418,7 +114428,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - always-working
   - receipt-first
@@ -114446,7 +114456,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T09:24:34.835256Z'
+  updated: '2026-07-10T09:25:43.023152Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114584,6 +114594,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T09:25:43.023152Z'
+    agent: claude
+    session_id: cli
+    status: failed
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -115635,10 +115649,10 @@ tasks:
     \ daemon body"
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -115646,6 +115660,7 @@ tasks:
   - core
   - tried:opencode
   - tried:jules
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/434
   context: "PR organvm/limen#434 is MERGEABLE + green BUT its base is STALE and its\
@@ -115662,7 +115677,7 @@ tasks:
     \ by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T08:54:59.620608Z'
+  updated: '2026-07-10T09:25:43.023152Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -115694,6 +115709,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T09:25:43.023152Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-rebase-organvm-limen-436
   title: rebase/resolve conflicts on organvm/limen#436
   repo: organvm/limen
@@ -127518,10 +127537,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#124
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -127544,7 +127563,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T08:54:59.620608Z'
+  updated: '2026-07-10T09:25:43.023152Z'
   dispatch_log:
   - timestamp: '2026-07-10T05:15:20.404324Z'
     agent: jules
@@ -127597,6 +127616,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T09:25:43.023152Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-rebase-organvm-domus-genoma-173
   title: rebase/resolve conflicts on organvm/domus-genoma#173
   repo: organvm/domus-genoma
