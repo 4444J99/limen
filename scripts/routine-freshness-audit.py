@@ -15,11 +15,24 @@ Verdicts (per routine):
   green       — last comment age <= max_silent_days
   stale       — age > max_silent_days but <= 2x (degraded, watch it)
   down        — age > 2x max_silent_days (operator action needed)
+  quiet       — a `may_be_silent` routine past its silence window: silence is legitimately healthy
+                here (posts only on a state change / when there is something to say), so it is NOT
+                a defect and hangs NO operator atom. Informational only.
   unknown     — gh probe failed (network / auth / missing issue); not "down" on a probe failure
   unmonitored — class is pr-delivery or issue is null; never classified down by this organ
 
 Never-delivered (issue has comments=[] but gh succeeded):
   -> "down" only if the issue itself is older than 2x max_silent_days, else "stale"
+     (a `may_be_silent` routine collapses stale/down to "quiet" — see below).
+
+`may_be_silent` (opt-in per-routine flag, NOT derivable from `class`): a delta-gated routine whose
+silence is genuinely healthy — it delivers ONLY when its subject state changes, so a long quiet
+stretch means "nothing to report", not "fired-but-failed-to-deliver". Comment-age cannot tell a
+healthy-quiet routine from a truly-dead one, so a flagged routine caps at the non-atom `quiet`
+verdict instead of manufacturing a false `down`. Detecting a genuinely dead `may_be_silent` routine
+needs an independent run-liveness probe (did the cloud session fire at all?) — a separate concern,
+tracked in limen#894. Set this flag deliberately per routine; do not blanket-apply it, or the organ
+goes blind to the fired-but-not-delivering gap it exists to catch.
 """
 
 from __future__ import annotations
@@ -124,6 +137,8 @@ def classify(
     green       — age_days <= max_silent_days
     stale       — max_silent_days < age_days <= 2x
     down        — age_days > 2x
+    quiet       — a `may_be_silent` routine past its silence window (stale/down collapse to quiet):
+                  silence is healthy here, so no operator atom is hung.
     For never-delivered (no comments, gh OK): "down" only if issue itself is older than 2x, else "stale".
     """
     if row.get("class") == "pr-delivery" or row.get("issue") is None:
@@ -133,6 +148,10 @@ def classify(
         return "unknown", None
 
     max_days = row.get("max_silent_days", 7)
+    # A `may_be_silent` routine (opt-in, deliberate per row) delivers only on a state change, so any
+    # silence beyond its window is healthy-quiet, never a defect. Cap it at "quiet" instead of
+    # stale/down so no false operator atom is hung. green (recently posted) still reads green.
+    may_be_silent = bool(row.get("may_be_silent", False))
 
     if verdict_source == "no-comments":
         # never delivered: age relative to when the routine was first expected to deliver
@@ -158,10 +177,10 @@ def classify(
                 pass
         if issue_age_days is None:
             # can't determine issue age; treat as stale rather than assuming down
-            return "stale", None
+            return ("quiet" if may_be_silent else "stale"), None
         if issue_age_days > 2 * max_days:
-            return "down", issue_age_days
-        return "stale", issue_age_days
+            return ("quiet" if may_be_silent else "down"), issue_age_days
+        return ("quiet" if may_be_silent else "stale"), issue_age_days
 
     if last_ts is None:
         return "unknown", None
@@ -170,6 +189,9 @@ def classify(
 
     if age_days <= max_days:
         return "green", age_days
+    if may_be_silent:
+        # beyond the freshness window but silence is healthy for this routine — no defect, no atom
+        return "quiet", age_days
     if age_days <= 2 * max_days:
         return "stale", age_days
     return "down", age_days
@@ -270,6 +292,67 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
     return res
 
 
+def retire_recovered_atoms(down_names: set[str], all_names: list[str]) -> dict:
+    """Retire (→done) any organ-owned ASK-routine-<name> atom whose routine is no longer 'down'.
+
+    The symmetric half of hang_down_atoms: that opens an atom when a routine goes down; this closes
+    it when the routine recovers (back to green) OR is reclassified healthy-quiet (may_be_silent,
+    limen#894). Without this, a resolved false-positive lingers in the operator's needs_human queue
+    forever — a sensor that fires an effector but never retracts it. Only atoms this organ created
+    (labelled "routine-freshness") and not already done/archived are touched. Same queue_lock path;
+    fail-open (any error skips, never crashes the beat).
+    """
+    res: dict = {"retired": [], "ledger": str(LEDGER)}
+    recovered = sorted(n for n in all_names if n not in down_names)
+    if not recovered:
+        return res
+
+    try:
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from datetime import datetime as _datetime
+        from datetime import timezone as _tz
+
+        from limen.io import load_limen_file, queue_lock, save_limen_file
+    except Exception as e:
+        res["error"] = f"ledger unavailable ({e}); atoms not retired"
+        return res
+
+    if not LEDGER.exists():
+        return res
+
+    with queue_lock(LEDGER) as got:
+        if not got:
+            res["error"] = "queue busy; skipped this beat (self-corrects)"
+            return res
+
+        lf = load_limen_file(LEDGER)
+        index = {t.id: t for t in lf.tasks}
+        now_dt = _datetime.now(_tz.utc)
+        changed = False
+
+        for name in recovered:
+            tid = f"ASK-routine-{name}"
+            ex = index.get(tid)
+            if (
+                ex is not None
+                and ex.status not in ("done", "archived")
+                and "routine-freshness" in (ex.labels or [])
+            ):
+                ex.status = "done"
+                ex.updated = now_dt
+                ex.context = (
+                    f"Auto-retired by routine-freshness-audit: routine '{name}' recovered / "
+                    f"reclassified healthy (green or may_be_silent quiet) — no operator action needed."
+                )
+                changed = True
+                res["retired"].append(tid)
+
+        if changed:
+            save_limen_file(LEDGER, lf)
+
+    return res
+
+
 def _write_voice_stamp(ts_iso: str) -> None:
     """Stamp logs/.voice/routines with iso timestamp (mtime-based signal for organ-health.py)."""
     try:
@@ -321,7 +404,7 @@ def main() -> int:
         return 0
 
     results = []
-    summary: dict[str, int] = {"green": 0, "stale": 0, "down": 0, "unknown": 0, "unmonitored": 0}
+    summary: dict[str, int] = {"green": 0, "stale": 0, "down": 0, "quiet": 0, "unknown": 0, "unmonitored": 0}
     down_rows: list[dict] = []
 
     for row in rows:
@@ -371,6 +454,16 @@ def main() -> int:
             bits.append(h["error"])
         print(f"[routine-freshness] ledger: {'; '.join(bits) or 'no change'}")
 
+    # Symmetric half: retire any lingering ASK-routine atom whose routine is no longer down
+    # (recovered to green, or reclassified healthy-quiet under may_be_silent — limen#894).
+    down_names = {r["name"] for r in down_rows}
+    all_names = [r["name"] for r in rows]
+    rr = retire_recovered_atoms(down_names, all_names)
+    if rr.get("retired"):
+        print(f"[routine-freshness] retired stale atoms: {', '.join(rr['retired'])}")
+    elif rr.get("error"):
+        print(f"[routine-freshness] retire: {rr['error']}")
+
     # Write output artifact
     out_obj = {
         "generated": now_iso,
@@ -388,6 +481,7 @@ def main() -> int:
     print(
         f"[routine-freshness] summary: {summary.get('green', 0)} green, "
         f"{summary.get('stale', 0)} stale, {n_down} down, "
+        f"{summary.get('quiet', 0)} quiet, "
         f"{summary.get('unknown', 0)} unknown, {summary.get('unmonitored', 0)} unmonitored"
     )
 

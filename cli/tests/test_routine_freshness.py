@@ -28,8 +28,8 @@ def _utc(*args) -> datetime.datetime:
     return datetime.datetime(*args, tzinfo=datetime.timezone.utc)
 
 
-def _row(name="test-routine", cls="delta-gated", max_days=7, issue=42, repo="owner/repo"):
-    return {
+def _row(name="test-routine", cls="delta-gated", max_days=7, issue=42, repo="owner/repo", may_be_silent=False):
+    row = {
         "name": name,
         "class": cls,
         "max_silent_days": max_days,
@@ -37,6 +37,9 @@ def _row(name="test-routine", cls="delta-gated", max_days=7, issue=42, repo="own
         "issue_repo": repo,
         "enabled": True,
     }
+    if may_be_silent:
+        row["may_be_silent"] = True
+    return row
 
 
 # ── classify tests ────────────────────────────────────────────────────────────
@@ -112,6 +115,56 @@ def test_gh_failure_gives_unknown_not_down(monkeypatch):
     assert age is None
 
 
+# ── may_be_silent → quiet tests (limen#894: healthy-silent must not read as "down") ───────────
+
+
+def test_classify_quiet_when_may_be_silent_and_would_be_down():
+    """A may_be_silent routine silent past 2x max reads 'quiet', NOT 'down' — no operator atom."""
+    mod = _load()
+    now = _utc(2026, 7, 8, 12, 0, 0)
+    last = _utc(2026, 6, 13, 12, 0, 0)  # 25 days ago; max=7; 2x=14 → would be down for a normal row
+    verdict, age = mod.classify(_row(may_be_silent=True), last, "comment", now)
+    assert verdict == "quiet"
+    assert age is not None and age > 14
+
+
+def test_classify_quiet_when_may_be_silent_and_would_be_stale():
+    """may_be_silent collapses the stale tier to quiet too — silence at any age is not a defect."""
+    mod = _load()
+    now = _utc(2026, 7, 8, 12, 0, 0)
+    last = _utc(2026, 6, 28, 12, 0, 0)  # 10 days ago; max=7; would be stale for a normal row
+    verdict, _ = mod.classify(_row(may_be_silent=True), last, "comment", now)
+    assert verdict == "quiet"
+
+
+def test_classify_may_be_silent_recent_still_green():
+    """A may_be_silent routine that DID post recently still reads green — the flag only caps silence."""
+    mod = _load()
+    now = _utc(2026, 7, 8, 12, 0, 0)
+    last = _utc(2026, 7, 6, 12, 0, 0)  # 2 days ago, max=7
+    verdict, _ = mod.classify(_row(may_be_silent=True), last, "comment", now)
+    assert verdict == "green"
+
+
+def test_classify_may_be_silent_never_delivered_is_quiet():
+    """Never-delivered (no comments) on a may_be_silent routine is quiet, not down/stale."""
+    mod = _load()
+    now = _utc(2026, 7, 8, 12, 0, 0)
+    # no-comments path with unresolvable issue age → quiet (not stale) for a may_be_silent routine
+    verdict, _ = mod.classify(_row(may_be_silent=True, repo=None), None, "no-comments", now)
+    assert verdict == "quiet"
+
+
+def test_classify_without_flag_still_down():
+    """Regression guard: a routine WITHOUT may_be_silent keeps today's 'down' behavior (organ still
+    catches genuinely-dead routines — the flag does not leak to un-flagged rows)."""
+    mod = _load()
+    now = _utc(2026, 7, 8, 12, 0, 0)
+    last = _utc(2026, 6, 13, 12, 0, 0)  # 25 days ago; max=7 → down
+    verdict, _ = mod.classify(_row(may_be_silent=False), last, "comment", now)
+    assert verdict == "down"
+
+
 # ── hang_down_atoms tests ────────────────────────────────────────────────────
 
 _TASK_YAML_TEMPLATE = """\
@@ -170,6 +223,84 @@ def test_hang_down_atoms_gh_failure_no_atom(tmp_path, monkeypatch):
     assert result["created"] == []
 
 
+# ── retire_recovered_atoms tests (the symmetric half: condition clears → atom retracts) ────────
+
+
+def test_retire_recovered_atom_and_idempotent(tmp_path, monkeypatch):
+    """A routine that was down and is now healthy has its ASK-routine atom retired (→done), once."""
+    mod = _load()
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(_TASK_YAML_TEMPLATE, encoding="utf-8")
+    monkeypatch.setattr(mod, "LEDGER", tasks)
+
+    r = _row(name="omega-scorecard")
+    r["_days_silent"] = 25.0
+    mod.hang_down_atoms([r])  # opens the atom
+    assert "ASK-routine-omega-scorecard" in tasks.read_text(encoding="utf-8")
+
+    # routine no longer down → retire
+    res1 = mod.retire_recovered_atoms(set(), ["omega-scorecard"])
+    assert res1["retired"] == ["ASK-routine-omega-scorecard"]
+
+    # second run: already done → not retired again (idempotent)
+    res2 = mod.retire_recovered_atoms(set(), ["omega-scorecard"])
+    assert res2["retired"] == []
+
+
+def test_retire_skips_still_down_routine(tmp_path, monkeypatch):
+    """A routine still in the down set keeps its atom — retirement must not race the alert."""
+    mod = _load()
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(_TASK_YAML_TEMPLATE, encoding="utf-8")
+    monkeypatch.setattr(mod, "LEDGER", tasks)
+
+    r = _row(name="omega-scorecard")
+    r["_days_silent"] = 25.0
+    mod.hang_down_atoms([r])
+
+    res = mod.retire_recovered_atoms({"omega-scorecard"}, ["omega-scorecard"])
+    assert res["retired"] == []
+
+
+def test_retire_ignores_non_organ_task(tmp_path, monkeypatch):
+    """Only atoms this organ created (labelled 'routine-freshness') are retired — never a human's."""
+    mod = _load()
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(_TASK_YAML_TEMPLATE, encoding="utf-8")
+    monkeypatch.setattr(mod, "LEDGER", tasks)
+
+    import sys as _sys
+
+    _sys.path.insert(0, str(ROOT / "cli" / "src"))
+    from datetime import date, datetime, timezone
+
+    from limen.io import load_limen_file, save_limen_file
+    from limen.models import Task
+
+    lf = load_limen_file(tasks)
+    lf.tasks.append(
+        Task(
+            id="ASK-routine-foreign",
+            title="human-made, not the organ's",
+            type="ops",
+            target_agent="human",
+            priority="high",
+            status="needs_human",
+            labels=["user-ask"],  # NOT routine-freshness
+            context="mine",
+            created=date.today(),
+            updated=datetime.now(timezone.utc),
+        )
+    )
+    save_limen_file(tasks, lf)
+
+    res = mod.retire_recovered_atoms(set(), ["foreign"])
+    assert res["retired"] == []
+
+    reread = {t.id: t for t in load_limen_file(tasks).tasks}
+    assert reread["ASK-routine-foreign"].status == "needs_human"  # untouched
+
+
 # ── throttle short-circuit test ───────────────────────────────────────────────
 
 
@@ -209,3 +340,20 @@ def test_manifest_has_13_enabled_rows_with_required_keys():
     for row in rows:
         missing = required - set(row.keys())
         assert not missing, f"row {row.get('name')} missing keys: {missing}"
+
+
+def test_omega_scorecard_is_may_be_silent_and_flag_is_opt_in():
+    """limen#894: omega-scorecard (posts only on fixed-point change) carries may_be_silent so it stops
+    manufacturing false 'down' atoms. The flag must be OPT-IN — NOT blanket-applied to every
+    delta-gated row, or the organ goes blind to genuinely-dead routines. Guard both facts."""
+    data = json.loads(MANIFEST.read_text())
+    rows = data.get("routines", [])
+    by_name = {r["name"]: r for r in rows}
+    assert by_name["omega-scorecard"].get("may_be_silent") is True
+
+    delta_gated = [r for r in rows if r.get("class") == "delta-gated"]
+    flagged = [r for r in delta_gated if r.get("may_be_silent")]
+    # opt-in, deliberate: only the proven case carries it, not the whole class
+    assert 0 < len(flagged) < len(delta_gated), (
+        "may_be_silent must be a deliberate per-routine opt-in, not applied to every delta-gated row"
+    )

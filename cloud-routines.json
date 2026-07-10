@@ -100,7 +100,9 @@
       "cadence": "daily",
       "class": "delta-gated",
       "max_silent_days": 7,
-      "enabled": true
+      "enabled": true,
+      "may_be_silent": true,
+      "note": "2026-07-10 (limen#894): posts ONLY when the omega fixed-point verdict changes; a long holding-green stretch is healthy silence, not fired-but-failed. may_be_silent caps it at the non-atom 'quiet' verdict so it stops manufacturing false ASK-routine-omega-scorecard atoms. Set this flag deliberately per routine — do NOT blanket-apply to delta-gated rows or the organ goes blind to genuinely-dead routines."
     },
     {
       "name": "memory-index-audit",
