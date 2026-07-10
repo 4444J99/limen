@@ -45,6 +45,19 @@ mkdir -p "$LIMEN_WORKTREES" "$LIMEN_WORKTREE_ROOT" 2>/dev/null || true
 
 echo "═══ metabolize $(date '+%F %T') — dispatch=${LIMEN_DISPATCH:-0} isolation=$LIMEN_ISOLATION ═══"
 
+# ── beat sensors (continuous-runtime axis of the VIGILIA spine) ────────────────────────────────
+# The sensors below (0a … 0j) are declared data in institutio/governance/sensors.yaml. With
+# LIMEN_BEAT_DERIVE=1 the beat DERIVES the whole loop from that registry via one call to
+# scripts/beat-sensors.py — adding a sensor becomes one registry entry, not a shell edit. Default-off
+# keeps the hand-wired blocks live until the derive path is proven on a real beat; Branch-1b then flips
+# the default and deletes the legacy blocks. Parity is held by scripts/check-sensors.py (D-check).
+# See docs/IDEAL-FORMS-LEDGER.md → IF-SENSOR-REGISTRY.
+if [ "${LIMEN_BEAT_DERIVE:-0}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source metabolize
+  # beat-sensors ran creds-hydrate + its declared reload_env internally; the PARENT shell still needs
+  # the cred cache sourced for the NON-sensor dispatch stages below (route.py, the agent CLIs).
+  if [ -f "$HOME/.limen.env" ]; then set -a; . "$HOME/.limen.env"; set +a; fi
+else
 echo "── 0a. hydrate credentials (1Password → ~/.limen.env → every lane; never re-login) ──"
 # Refresh fleet creds from the ONE source of truth so a one-time login never has to be repeated
 # (lapsed tokens / fresh worktrees self-heal). Fail-open: skips silently if op is locked/absent.
@@ -261,6 +274,7 @@ echo "── 0j. session walk — full-horizon census of BOTH vendor session est
 if [ "${LIMEN_SESSION_WALK:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/session-walk-census.py" --walk "${LIMEN_SESSION_WALK_CAP:-2}" || echo "  (session walk skipped)"
 fi
+fi  # ── end beat sensors (LIMEN_BEAT_DERIVE selects derive-runner vs hand-wired blocks) ──
 
 echo "── 1. drain (close completed Jules) ──"
 bash "$LIMEN_ROOT/scripts/drain.sh" || echo "  (drain skipped/failed — continuing)"

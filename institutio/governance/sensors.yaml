@@ -28,6 +28,11 @@ sensors:
     default: "1"
     source: [metabolize]
     owner: tabularius
+    # This sensor WRITES ~/.limen.env (creds-hydrate --apply). reload_env re-sources it into the
+    # runner's environment after this sensor's steps so every downstream sensor inherits the fresh
+    # keys — the ordering metabolize.sh hard-codes as `set -a; . ~/.limen.env` right after block 0a,
+    # now declared data instead of shell tribal knowledge.
+    reload_env: "~/.limen.env"
     steps:
       - command: "python3 scripts/creds-hydrate.py --apply"
         severity: silent
