@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 491
+      spent: 496
       per_agent:
         jules: 133
         gemini: 20
         codex: 9
-        opencode: 153
+        opencode: 158
         agy: 159
         claude: 13
         github_actions: 1
@@ -103407,7 +103407,7 @@ tasks:
   workstream: contributions
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-selffeed
   - pillar:contributions
@@ -103429,7 +103429,7 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:10:27.583194Z'
+  updated: '2026-07-10T09:34:01.799687Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -103451,6 +103451,11 @@ tasks:
     status: open
     output: 'fleet fill: retargeted codex->jules to use Jules async capacity before
       local OpenCode/Agy slots'
+  - timestamp: '2026-07-10T09:34:01.799687Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ASK-quicken-send
   title: send the drafted message (never auto-send)
   type: ops
@@ -106705,7 +106710,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106721,7 +106726,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T08:45:41.064424Z'
+  updated: '2026-07-10T09:34:01.799687Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -106751,6 +106756,11 @@ tasks:
     agent: gemini
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T09:34:01.799687Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-486
   title: fix failing CI on organvm/limen#486
   repo: organvm/limen
@@ -111279,7 +111289,7 @@ tasks:
   workstream: consulting
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-face
   - pillar:consulting
@@ -111298,7 +111308,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-10T09:34:01.799687Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -111309,6 +111319,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-10T09:34:01.799687Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-health-organ-firstslice-0705
   title: Build the first working vertical slice of the health organ
   repo: organvm/limen
