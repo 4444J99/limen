@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 25
+      spent: 29
       per_agent:
         jules: 0
         gemini: 0
         codex: 0
-        opencode: 15
+        opencode: 18
         agy: 6
-        claude: 0
+        claude: 1
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -98262,7 +98262,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -98277,7 +98277,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T20:39:48.538331Z'
+  updated: '2026-07-10T21:04:25.609429Z'
   dispatch_log:
   - timestamp: '2026-07-07T11:51:16.792799Z'
     agent: opencode
@@ -98332,6 +98332,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-10T21:04:25.609429Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-387
   title: rebase/resolve conflicts on organvm/limen#387
   repo: organvm/limen
@@ -104091,7 +104096,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104107,7 +104112,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T20:39:48.538331Z'
+  updated: '2026-07-10T21:04:25.609429Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -104158,6 +104163,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-10T21:04:25.609429Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-409
   title: fix failing CI on organvm/limen#409
   repo: organvm/limen
@@ -104274,7 +104284,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104289,7 +104299,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T20:39:48.538331Z'
+  updated: '2026-07-10T21:04:25.609429Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -104310,6 +104320,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-10T21:04:25.609429Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-412
   title: fix failing CI on organvm/limen#412
   repo: organvm/limen
@@ -114751,7 +114766,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -114777,7 +114792,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T20:25:38.658485Z'
+  updated: '2026-07-10T21:04:25.609429Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -115111,6 +115126,11 @@ tasks:
     agent: codex
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-07-10T21:04:25.609429Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
