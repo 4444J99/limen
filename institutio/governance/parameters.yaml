@@ -1787,6 +1787,18 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Space-separated CORE repos reap-clones.py never removes even when they are a clean pushed mirror (the operator lives in them / the conductor needs them local)."
+  LIMEN_GITVS_OWNERS:
+    default: ""
+    env: LIMEN_GITVS_OWNERS
+    self_update: none
+    owner: gitvs
+    note: "Comma-separated GitHub owners GITVS (scripts/gitvs.py) enumerates when observing the estate. Empty ⇒ DERIVED from the estate.yaml class-match globs ('names are outputs' — never pin a repo list), falling back to the conductor owner organvm."
+  LIMEN_GITVS_ESTATE:
+    default: "institutio/github/estate.yaml"
+    env: LIMEN_GITVS_ESTATE
+    self_update: none
+    owner: gitvs
+    note: "Path to the GITVS estate registry (the desired-state resource graph). Overridable so scripts/tests/gitvs.test.sh can point the parity predicate at drift fixtures; production reads the committed institutio/github/estate.yaml."
   LIMEN_REAP_VERIFY_REMOTE:
     default: "1"
     env: LIMEN_REAP_VERIFY_REMOTE

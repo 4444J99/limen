@@ -1,0 +1,255 @@
+# ESTATE — the GitHub-governance registry (the parameter-panel pattern, one estate over).
+#
+# Declarative desired-state for the whole ~301-repo organvm GitHub estate, and the single owner of
+# "GitHub" as a domain. The ideal form: GitHub is ONE declarative resource graph under ONE closed
+# loop — observe → diff → reconcile, invariant drift = ∅ (control-theory / GitOps, applied to
+# GitHub-as-the-cloud). This file is the desired-state; the loop is scripts/gitvs.py.
+#
+#   scripts/gitvs.py census    → observe() : the live estate → docs/github-estate-ledger.json (the Lens)
+#   scripts/gitvs.py doctor     → diff()   : desired − observed, exit 0 ⟺ drift == ∅ (the Predicate)
+#   scripts/gitvs.py reconcile  → apply()  : drive drift → policy through the three total effector sinks
+#
+# Consumers DERIVE from this file instead of hardcoding (the gates.yaml discipline): gitvs.py buckets
+# every enumerated repo into a `classes` row by glob; setup-rulesets.py reads `classes[].required_checks`
+# once the ratchet arms; session-lifecycle-pressure.py reads the census ledger's branches block.
+#
+# Identity is ALWAYS derived at run-time from the git remote owner/repo ("names are outputs"); NO
+# individual repo, branch, or PR is enumerated here. Classes are GLOBS (`**` crosses slashes, `*`
+# does not — the check-gates.py glob semantics). First-match-wins, most-specific first.
+#
+# Field discipline (parameters.yaml / gates.yaml): `owner` and `note` are REQUIRED on every class,
+# budget, and resource type. scripts/gitvs.py doctor --parity-only is this registry's OWN drift
+# predicate — the check-gates.py analogue for the GitHub plane.
+
+schema_version: 0.1
+
+# ── the machine identity contract ────────────────────────────────────────────────────────────
+# The App is the estate's actor. `expected_permissions` is the least-privilege posture the doctor
+# holds the live App installation to — it fails on an OVER-grant (drift toward more-than-declared),
+# never on an unused-scope under-grant. Install owners are DERIVED (do not pin an install list).
+app:
+  slug: "limen[bot]"                       # working handle — final name via nomenclator (see naming note)
+  token_source: "scripts/gh-app-token.sh"  # the executable identity (App → PAT → gh cascade)
+  bootstrap: "scripts/bootstrap-github-app.py"
+  architecture_doc: "docs/github-app-architecture.md"
+  expected_permissions:
+    contents: write
+    pull_requests: write
+    actions: read
+    metadata: read
+  posture: least_privilege
+  install_owners_derived: true
+  owner: gitvs
+  note: "The one human atom (App creation + install) is his-hand (L-LIMENBOT-INSTALL); the token cascade already ships in gh-app-token.sh, so the fleet runs on the PAT fallback until the App is born."
+
+# ── the resource graph ───────────────────────────────────────────────────────────────────────
+# Every GitHub thing is a Resource: an addressable node with a derived identity, a declared desired
+# state, an observed actual state. Each descriptor declares `identity`, `desired` (the desired-state
+# field keys), an `observe` adapter (the Lens), an `effector` (the sink), and `status`.
+#
+# THE WIRING-INTEGRITY LAW (sensor-without-effector = defect; #881/#883): a `status: active` type MUST
+# carry a wired observe + effector + identity, or gitvs.py doctor --parity-only turns RED — GITVS cannot
+# declare governance it can't enact. A `status: envisioned` type is desired-but-not-yet-enacted: it is
+# surfaced as OWED work in the ledger and does NOT gate — the registry OWNING the answer to "what about
+# webhooks/releases/teams?" rather than prose scoping them out. "Owns all" is then literal: extending
+# GITVS to a new surface is a row here, never new engine code.
+#
+# The effector's THREE TOTAL SINKS (there is no fourth way to change GitHub):
+#   delegate:<script>   hand to an existing compliant organ (inherits its safety gate free)
+#   file-atom:<lever>   a sanctioned HUMAN act → a lever / the credential wall (cited, never recited)
+#   reap:<script>       a native mutator GITVS owns (behind the reclaim-worktrees safety-gate model)
+resource_types:
+  repo:
+    identity: derived
+    desired: ["visibility", "archived", "default_branch", "app_installed", "topics"]
+    observe: "gh api /repos/{owner}/{repo}"
+    effector: "file-atom:L-REPO-SETTINGS | manual"    # visibility/archive flips are human decisions
+    status: active
+    owner: gitvs
+    note: "The 301-repo body; desired-state bucketed by the `classes` globs below."
+  branch_protection:
+    identity: derived
+    desired: ["required_checks", "enforce_admins", "required_pull_request_reviews"]
+    observe: "gh api /repos/{owner}/{repo}/branches/{branch}/protection"
+    effector: "delegate:scripts/setup-rulesets.py | file-atom:L-BRANCH-PROTECTION"
+    status: active
+    owner: gitvs
+    note: "Read predicate is the doctor (class A/G); applying rulesets is human-gated (#257) — GITVS never auto-runs setup-rulesets.py."
+  pull_request:
+    identity: derived
+    desired: ["mergeable_when_green", "current_base"]
+    observe: "scripts/_pr_scan.py::enumerate_open_prs"
+    effector: "delegate:scripts/merge-drain.py | delegate:scripts/self-heal.py"
+    status: active
+    owner: gitvs
+    note: "Mergeable → merge-drain (inherits merge-policy.sh guardrail + stale-base gate free); red/stale → self-heal emits a HEAL/rebase task."
+  remote_branch:
+    identity: derived
+    desired: ["reaped_when_landed_past_grace"]
+    observe: "scripts/reap-branches.py::classify (remote refs)"
+    effector: "reap:scripts/reap-remote-branches.py"
+    status: envisioned                     # ACTIVATES when the reaper lands (next chunk) — the wiring-integrity law
+    owner: gitvs
+    note: "The ~730 unresolved orphaned remote branches; reaper (reap-remote-branches.py) not yet built, so this stays envisioned — parity would red-flag an active type whose effector script is absent. Ships DOUBLE-DARK (--apply AND LIMEN_REMOTE_REAP_APPLY=1) when it lands; remote deletes are not reflog-recoverable."
+  local_branch:
+    identity: derived
+    desired: ["reaped_when_landed"]
+    observe: "scripts/reap-branches.py::classify"
+    effector: "reap:scripts/reap-branches.py"
+    status: active
+    owner: gitvs
+    note: "The orphaned BRANCH-REAP organ, finally beat-wired via the GITVS reconcile loop."
+  secret:
+    identity: derived
+    desired: ["homed", "present_in_actions"]
+    observe: "gh secret list (names only — the _scrub firewall; never a value)"
+    effector: "delegate:scripts/creds-hydrate.py | file-atom:credential-wall#320"
+    status: active
+    owner: gitvs
+    note: "Class-B delegates home-checking to credential-wall.py --check; values never touch GITVS."
+  issue:
+    identity: derived
+    desired: ["mirrors_live_residuals", "levers_homed"]
+    observe: "gh issue list --label"
+    effector: "delegate:scripts/sync-censor-issues.py | delegate:scripts/sync-hishand-issues.py"
+    status: active
+    owner: gitvs
+    note: "Censor findings and his-hand levers mirror to labelled issues; each organ keeps its own apply arming."
+  app_installation:
+    identity: derived
+    desired: ["installed_on_governed_owners", "permissions_least_privilege"]
+    observe: "gh api /app/installations"
+    effector: "file-atom:L-LIMENBOT-INSTALL"
+    status: active
+    owner: gitvs
+    note: "App creation/install is irreducibly human (GitHub App ownership); the doctor cites the lever, never recites a token."
+  actions_usage:
+    identity: derived
+    desired: ["rate_limit_headroom_ok", "actions_budget_ok"]
+    observe: "gh api /rate_limit"
+    effector: "file-atom:L-CARD-FRAUD-HOLD"
+    status: active
+    owner: gitvs
+    note: "Public repos = free unlimited Actions; the keystone was account-level billing (#182), not per-repo minutes."
+
+  # ── envisioned — declared (owed), surfaced in the ledger, not yet gating ──────────────────────
+  # These are the surfaces the ask ("everything GitHub") names but GITVS does not yet enact. They are
+  # OWNED here as owed work, not scoped out in prose. Activating one = wire an observe + effector and
+  # flip status: active; the wiring-integrity law then holds it. NO new engine code.
+  release:
+    identity: derived
+    desired: ["tagged_from_policy"]
+    observe: ""
+    effector: ""
+    status: envisioned
+    owner: gitvs
+    note: "Release/tag governance — owed; activate by wiring gh release + a policy source."
+  webhook:
+    identity: derived
+    desired: ["declared_endpoints_only"]
+    observe: ""
+    effector: ""
+    status: envisioned
+    owner: gitvs
+    note: "Webhook governance — owed; drift = an undeclared endpoint."
+  team:
+    identity: derived
+    desired: ["declared_membership"]
+    observe: ""
+    effector: ""
+    status: envisioned
+    owner: gitvs
+    note: "Org team/role governance — owed."
+  org_member:
+    identity: derived
+    desired: ["declared_roster"]
+    observe: ""
+    effector: ""
+    status: envisioned
+    owner: gitvs
+    note: "Org membership governance — owed; drift = an unexpected collaborator."
+  environment:
+    identity: derived
+    desired: ["declared_protection_rules"]
+    observe: ""
+    effector: ""
+    status: envisioned
+    owner: gitvs
+    note: "Deployment-environment governance — owed."
+  dependabot:
+    identity: derived
+    desired: ["security_updates_on"]
+    observe: ""
+    effector: ""
+    status: envisioned
+    owner: gitvs
+    note: "Dependabot/Renovate posture — owed."
+
+# ── per-repo-CLASS governance posture ────────────────────────────────────────────────────────
+# The desired-state of the `repo` / `branch_protection` types, bucketed by owner/repo glob. `required_checks`
+# names real .github/workflows job ids (the parity predicate asserts each names a real job — a dead
+# reference is a red check, not a silent typo). First-match-wins; put the most specific class first.
+classes:
+  conductor:
+    match: ["organvm/limen"]
+    visibility: public                     # CI repos stay public → free unlimited Actions
+    branch_protection: required
+    required_checks: ["pr-gate", "python", "web", "worker"]
+    app_installed: required
+    secret_hygiene: enforced
+    stale_branch_grace_min: 60             # reuses the reap-branches grace default
+    archive_policy: never
+    owner: gitvs
+    note: "The live daemon body: strictest posture. required_checks mirror the ci.yml / pr-gate.yml job ids."
+  governed_public:
+    match: ["organvm/**"]
+    visibility: public
+    branch_protection: required
+    required_checks: ["pr-gate"]           # the always-on floor; empty-CI repos are exempt (setup-rulesets detects)
+    app_installed: required
+    secret_hygiene: enforced
+    stale_branch_grace_min: 1440
+    archive_policy: reap_after_stale
+    owner: gitvs
+    note: "The 301-repo body: App installed; default branch protected on CI, not on human review (blanket review is lever #257)."
+  archived:
+    match: ["**"]                          # catch-all floor
+    visibility: any
+    branch_protection: exempt
+    required_checks: []
+    app_installed: optional
+    secret_hygiene: enforced
+    stale_branch_grace_min: null
+    archive_policy: frozen
+    owner: gitvs
+    note: "Read-only tail: no protection expected, but a leaked secret is STILL a red predicate."
+
+# ── usage budgets ─────────────────────────────────────────────────────────────────────────────
+budgets:
+  api_rate_limit:
+    headroom_pct_min: 15                   # symmetric with _pr_scan.avg_headroom_pct / the accelerator reserve
+    expected_limit_per_hr: 15000           # App installation-token limit (vs 5k PAT) per the architecture doc
+    owner: gitvs
+    note: "Doctor reads gh api /rate_limit; below headroom_pct_min is exhaustion → red (class E)."
+  actions_minutes:
+    budget: unlimited_public
+    owner: gitvs
+    note: "Public repos = free unlimited; the durable fix was account-level billing (#182/#265)."
+  token_cascade:
+    expected: "app > pat > gh"             # gh-app-token.sh --which should resolve to `app` once the App is born
+    owner: gitvs
+    note: "Currently resolves to `pat` (GITHUB_TOKEN fallback); the App path is the pending human atom (L-LIMENBOT-INSTALL)."
+
+# ── human atoms — cited, never recited ─────────────────────────────────────────────────────────
+# The irreducible human acts live in their registries (his-hand-levers.json / the credential wall),
+# NOT in this prose. The doctor resolves id → object → issue and cites it; it never prints a value.
+human_atoms:
+  app_creation:            {lever: "L-LIMENBOT-INSTALL", doc: "docs/github-app-architecture.md", hand: "his — generates a private key, installs the App"}
+  branch_protection:       {lever: "L-BRANCH-PROTECTION", issue: "#257", hand: "his — org-lever to arm protection fleet-wide"}
+  billing_keystone:        {issue: "#182", hand: "his — card 0186 fraud hold (root of billing-gated private-repo CI)"}
+  gemini_billing_downstream: {issue: "#265"}
+
+# ── consumers-derive ratchets (armed per-PR as each consumer converts — the gates.yaml discipline) ──
+ratchets:
+  setup_rulesets_derives_checks: false     # ARM when setup-rulesets.py reads classes[].required_checks
+  session_pressure_derives_remote: false   # ARM when session-lifecycle-pressure.py delegates remote-branch counts to the census ledger
