@@ -26,12 +26,16 @@ Four limbs, one render:
 Offline on the beat: reads the local hub checkout (LIMEN_CONTRIB_LEDGER) or the committed cache;
 a `gh api` cache refresh runs ONLY with --refresh or LIMEN_CONTRIB_REFRESH=1. When every source is
 absent it renders its own staleness receipt instead of pretending — an honest mirror shows its
-dust — and still exits 0 (fail-open, never gates the beat). The organ NEVER sends: no comments,
-bumps, PRs, or posts; outbound stays the human's hand.
+dust — and still exits 0 (fail-open, never gates the beat). By DEFAULT the organ sends nothing: no
+comments, bumps, PRs, or posts. Its one outward EFFECTOR (--bump) is DARK unless deliberately armed
+(LIMEN_CONTRIB_BUMP=1 or --arm); armed, it fires exactly ONE reversible bump comment at a time on
+the oldest protocol-due PR — never a batch. Arming an outward send stays the human's decision.
 
   python3 scripts/contributions-organ.py            # render MIRROR.md + opportunities.json + logs/contributions.json
   python3 scripts/contributions-organ.py --refresh  # also refresh the ledger cache from GitHub (read-only API)
   python3 scripts/contributions-organ.py --check    # predicate: committed mirror matches a fresh render (exit 0 <=> current)
+  python3 scripts/contributions-organ.py --bump     # DARK preview: the one oldest protocol-due bump it WOULD fire
+  python3 scripts/contributions-organ.py --bump --arm  # fire that one reversible bump comment (or LIMEN_CONTRIB_BUMP=1)
 
 The mirror body is deterministic (stamped from source metadata, not the clock), so re-runs against
 unchanged sources are byte-identical — the idempotent fixed point the closeout discipline demands.
@@ -442,10 +446,94 @@ def render(
     return "\n".join(lines)
 
 
+BUMP_RECEIPTS = ORGAN_HOME / "bump-receipts.jsonl"
+BUMP_COOLDOWN_DAYS = int(os.environ.get("LIMEN_CONTRIB_BUMP_COOLDOWN", "14"))
+# A genuine, low-pressure nudge — value first, never a nag (the doctrine: standing accrues from
+# genuine value, community recognition is a byproduct). {repo} is filled from the ledger item.
+BUMP_TEXT = (
+    "Hi — a friendly check-in on this PR. No pressure at all: I'm happy to rebase onto the latest "
+    "default branch or address any feedback whenever you have a chance. Thanks for maintaining "
+    "{repo} and for taking a look."
+)
+
+
+def _recent_bumps() -> dict[str, str]:
+    """Map PR url -> last-fired ISO date from the receipts log, so a PR is never re-bumped inside the
+    cooldown. Malformed/absent lines are skipped (fail-open — a missing log just means no cooldown)."""
+    out: dict[str, str] = {}
+    if not BUMP_RECEIPTS.exists():
+        return out
+    for line in BUMP_RECEIPTS.read_text().splitlines():
+        try:
+            rec = json.loads(line)
+        except Exception:
+            continue
+        if rec.get("fired") and rec.get("url"):
+            out[rec["url"]] = str(rec.get("ts", ""))[:10]
+    return out
+
+
+def bump_one(items: list[dict[str, Any]], as_of: str, *, armed: bool) -> int:
+    """The single outward EFFECTOR (dark by default). Fires exactly ONE reversible `gh pr comment`
+    on the OLDEST protocol-due PR — never a batch (the 2026-04-21 batch-bump is a codified LIFECYCLE
+    violation; one-at-a-time is the rule). Without an arm (LIMEN_CONTRIB_BUMP=1 or --arm) it only
+    PREVIEWS and sends nothing, preserving the organ's 'never sends' invariant as the default. Armed,
+    it posts one comment and appends a reversible receipt, honoring a per-PR cooldown so no upstream
+    is ever re-nagged. A PR comment is deletable — reversible — but it is still an OUTWARD send, so
+    arming is a deliberate human decision, not the beat's default."""
+    stale_before = _stale_before(as_of)
+    recent = _recent_bumps()
+    cutoff = ""
+    try:
+        cutoff = (dt.date.fromisoformat(as_of[:10]) - dt.timedelta(days=BUMP_COOLDOWN_DAYS)).isoformat()
+    except ValueError:
+        pass
+    due: list[tuple[str, str, str, str]] = []
+    for item in items:
+        repo, title, url, cat = _normalize(item, stale_before)
+        if cat != "protocol-due" or not url:
+            continue
+        last = recent.get(url, "")
+        if last and cutoff and last >= cutoff:
+            continue  # already nudged inside the cooldown window — never re-nag
+        updated = str(item.get("pr_updated") or "")[:10]
+        due.append((updated, repo, title, url))
+    if not due:
+        print("bump: no protocol-due PR eligible (all fresh or within cooldown)")
+        return 0
+    due.sort()  # oldest-updated first — the most-owed nudge
+    _updated, repo, title, url = due[0]
+    body = BUMP_TEXT.format(repo=repo or "this project")
+    if not armed:
+        print(
+            f"bump [DARK] would post 1 of {len(due)} eligible bump(s): {url}\n"
+            f"  PR: {title or '(untitled)'}\n"
+            f"  arm with LIMEN_CONTRIB_BUMP=1 (or --arm) to fire this one reversible comment"
+        )
+        return 0
+    cp = subprocess.run(["gh", "pr", "comment", url, "--body", body], capture_output=True, text=True)
+    fired = cp.returncode == 0
+    ts = dt.datetime.now(dt.UTC).isoformat()
+    ORGAN_HOME.mkdir(parents=True, exist_ok=True)
+    with BUMP_RECEIPTS.open("a") as fh:
+        fh.write(json.dumps({"ts": ts, "repo": repo, "url": url, "title": title, "fired": fired}) + "\n")
+    if fired:
+        print(f"bump: posted 1 reversible comment on {url} (receipt journaled)")
+        return 0
+    print(f"bump: FAILED on {url}: {cp.stderr.strip()[:200]}")
+    return 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="SPECVLVM — render the contributions mirror")
     ap.add_argument("--refresh", action="store_true", help="refresh the ledger cache from GitHub first (read-only)")
     ap.add_argument("--check", action="store_true", help="exit 0 iff the committed mirror matches a fresh render")
+    ap.add_argument(
+        "--bump",
+        action="store_true",
+        help="EFFECTOR: fire one reversible bump on the oldest protocol-due PR (DARK unless armed)",
+    )
+    ap.add_argument("--arm", action="store_true", help="with --bump, actually post (else preview only)")
     args = ap.parse_args()
 
     if args.refresh or os.environ.get("LIMEN_CONTRIB_REFRESH") == "1":
@@ -456,6 +544,10 @@ def main() -> int:
     pool = scout(items)
     estate = verify_estate()
     body = render(items, source, as_of, backflow_tally(), pool, estate)
+
+    if args.bump:
+        armed = args.arm or os.environ.get("LIMEN_CONTRIB_BUMP") == "1"
+        return bump_one(items, as_of, armed=armed)
 
     if args.check:
         current = MIRROR.read_text() if MIRROR.exists() else ""

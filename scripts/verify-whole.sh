@@ -248,6 +248,10 @@ PY
 fi
 
 step "Check diff hygiene"
-git diff --check
+# Exclude daemon-OWNED live state (canonical list: scripts/capture.sh:46 RUNTIME_GLOBS). The heartbeat
+# rewrites tasks.yaml every beat under queue_lock, so an unrelated session's whole-system predicate must
+# not fail — or loop re-polling toward an unreachable "clean tree" fixed point — on churn it does not own.
+# Pinned to exact names (NOT a broad '*.lock', which would wrongly drop tracked lockfiles).
+git diff --check -- ':(exclude)tasks.yaml' ':(exclude)tasks.yaml.lock'
 
 printf '\nWhole-system verification passed\n'

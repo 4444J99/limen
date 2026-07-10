@@ -814,6 +814,14 @@ def breathe(rows: list[dict], sel: str, dry: bool) -> None:
         return {r["cwd"] for r in rows if r["state"] == "ALIVE" and r["sessionId"] != sid}
 
     targets = [r for r in targets if not _contended(r["cwd"], _others(r["sessionId"]))]
+    # TERMINAL BLOCKED discipline: a session whose cascade landed on a reserved human lever
+    # (decision.residue set => PROTOCOL layer) already has its ONE irreducible atom filed by
+    # hang_residue(). Re-breathing it cannot help — the atom waits on a human, not on another breath —
+    # and re-breathing a filed-blocked session IS the endless-loop failure the charter's
+    # "BLOCKED once, then stop" rule forbids. Drop it from `all`-mode targets so it is filed once and
+    # left silent; an explicitly NAMED sid still honors the operator's deliberate choice (debugging).
+    if sel == "all":
+        targets = [r for r in targets if not (r["decision"] and r["decision"].get("residue"))]
     targets.sort(key=lambda r: r["moved"])  # oldest-stalled first
     # a repeat offender (breathed >= N and stalled again) escalates instead of re-breathing —
     # only in `all` mode: an explicitly NAMED sid is a deliberate choice, honor it.
