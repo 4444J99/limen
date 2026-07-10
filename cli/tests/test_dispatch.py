@@ -365,11 +365,7 @@ def test_github_actions_lane_requires_configured_workflow(tmp_path: Path, monkey
 def test_github_actions_lane_defaults_to_operate_workflow(tmp_path: Path, monkeypatch) -> None:
     gh = tmp_path / "gh"
     gh.write_text(
-        "#!/bin/sh\n"
-        'if [ "$1" = workflow ] && [ "$2" = view ] && [ "$3" = operate.yml ]; then\n'
-        "  exit 0\n"
-        "fi\n"
-        "exit 1\n"
+        '#!/bin/sh\nif [ "$1" = workflow ] && [ "$2" = view ] && [ "$3" = operate.yml ]; then\n  exit 0\nfi\nexit 1\n'
     )
     gh.chmod(0o755)
     monkeypatch.setenv("PATH", str(tmp_path))
