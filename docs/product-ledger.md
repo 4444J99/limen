@@ -1,16 +1,16 @@
 # Product Ledger
 
-Generated: `2026-07-07T20:12:41+00:00`
-Products: `17881`
-Blocked local: `244`
+Generated: `2026-07-10T01:11:55+00:00`
+Products: `10960`
+Blocked local: `326`
 Global status: `active`
 
 ## Counts
 
-- states: `alpha` 114, `blocked_local` 244, `build` 358, `idea` 15566, `omega` 439, `ship` 14, `verify` 1146
-- dispositions: `blocked_local` 3, `build` 16000, `consolidate` 36, `human-gated` 241, `publish-stage` 2, `retire` 439, `sell-ready` 14, `verify` 1146
-- source_kinds: `prompt` 15566, `repo` 16, `repo-surface` 112, `task` 2187
-- outward_paths: `not_applicable` 17376, `publish-stage` 4, `revenue-path` 380, `seo-proof` 121
+- states: `alpha` 125, `blocked_local` 326, `build` 406, `idea` 8366, `omega` 439, `ship` 15, `verify` 1283
+- dispositions: `blocked_local` 8, `build` 8849, `consolidate` 46, `human-gated` 318, `publish-stage` 2, `retire` 439, `sell-ready` 15, `verify` 1283
+- source_kinds: `prompt` 8366, `repo` 17, `repo-surface` 123, `task` 2454
+- outward_paths: `not_applicable` 10431, `publish-stage` 5, `revenue-path` 393, `seo-proof` 131
 
 ## Next Unblocked Products
 
@@ -23,6 +23,7 @@ Global status: `active`
 | `PROD-repo-43b5c8851fb483d9` | `ship` | `sell-ready` | `seo-proof` | `organvm/universal-mail--automation` |
 | `PROD-repo-54b9c65ed5cbc9d1` | `ship` | `sell-ready` | `seo-proof` | `organvm/mirror-mirror` |
 | `PROD-repo-72ac1e135d5ddecd` | `ship` | `sell-ready` | `publish-stage` | `4444J99/limen` |
+| `PROD-repo-809d423dc9d8531f` | `ship` | `sell-ready` | `publish-stage` | `organvm/manumissio` |
 | `PROD-repo-81e3c17d9373f280` | `ship` | `sell-ready` | `seo-proof` | `organvm/limen` |
 | `PROD-repo-b48f6bb95f117cd8` | `ship` | `sell-ready` | `seo-proof` | `organvm/public-record-data-scrapper` |
 | `PROD-repo-b94d9f402207e91d` | `ship` | `sell-ready` | `seo-proof` | `organvm/session-meta` |
@@ -40,7 +41,6 @@ Global status: `active`
 | `PROD-task-060e64fb455af9f9` | `verify` | `verify` | `revenue-path` | `organvm/universal-mail--automation` |
 | `PROD-task-06458b03b629865a` | `verify` | `verify` | `revenue-path` | `organvm/the-invisible-ledger` |
 | `PROD-task-06890b85dad170cc` | `verify` | `verify` | `revenue-path` | `organvm/media-ark` |
-| `PROD-task-071111cd15458ec3` | `verify` | `verify` | `revenue-path` | `organvm/universal-mail--automation` |
 
 ## Contract
 
