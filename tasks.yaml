@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 429
+      spent: 431
       per_agent:
         jules: 116
         gemini: 12
         codex: 15
         opencode: 121
-        agy: 144
-        claude: 17
+        agy: 145
+        claude: 18
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -108618,7 +108618,7 @@ tasks:
   workstream: correspondence
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -108637,7 +108637,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T02:28:21.024454Z'
+  updated: '2026-07-10T03:07:48.299887Z'
   dispatch_log:
   - timestamp: '2026-07-09T23:04:55.876418Z'
     agent: codex
@@ -108663,6 +108663,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-10T03:07:48.299887Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-447
   title: fix failing CI on organvm/limen#447
   repo: organvm/limen
@@ -120870,7 +120875,7 @@ tasks:
   target_agent: agy
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -120887,7 +120892,7 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:57:04.837559Z'
+  updated: '2026-07-10T03:07:48.299887Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: claude
@@ -120898,6 +120903,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-10T03:07:48.299887Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-the-invisible-ledger-42
   title: rebase/resolve conflicts on organvm/the-invisible-ledger#42
   repo: organvm/the-invisible-ledger
