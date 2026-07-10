@@ -1,7 +1,7 @@
 # Session Value Review
 
-Generated: `2026-07-10T06:41:09+00:00`
-Window: `2026-07-09T18:41:04+00:00` to `2026-07-10T06:41:04+00:00` (12.0h)
+Generated: `2026-07-10T06:42:13+00:00`
+Window: `2026-07-09T18:42:08+00:00` to `2026-07-10T06:42:08+00:00` (12.0h)
 
 ## Verdict
 
@@ -13,27 +13,27 @@ Window: `2026-07-09T18:41:04+00:00` to `2026-07-10T06:41:04+00:00` (12.0h)
 - Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
 - Follow-up pressure: `25` follow-up roots vs `416` merged/routed roots; consecutive pressure reports `0`.
 - No-receipt pressure: `false`; consecutive reports `0`; high-motion `false`.
-- Maintenance commits: `26`; value commits: `352`; custody-only: `false`.
-- Open review batches: `19`; no durable progress: `false`.
-- Next commands: `python3 scripts/resolve-codex-hash-batch.py prompt-batch-low-hash-review-078 --write`.
+- Maintenance commits: `26`; value commits: `353`; custody-only: `false`.
+- Open review batches: `18`; no durable progress: `false`.
+- Next commands: `python3 scripts/prompt-batch-review-ledger.py --write`.
 
 ## Measured Output
 
-- Commits landed: `378`; files touched: `896`; insertions/deletions: `101779` / `20076`.
-- Prompt batch receipts: `181`; batches/hour: `15.08`.
-- Sessions recorded: `4439`; prompt events recorded: `25186`; prompt events/hour: `2098.83`.
+- Commits landed: `379`; files touched: `899`; insertions/deletions: `102259` / `20120`.
+- Prompt batch receipts: `182`; batches/hour: `15.17`.
+- Sessions recorded: `4464`; prompt events recorded: `25211`; prompt events/hour: `2100.92`.
 - Merged-root evidence: `99`; follow-up roots: `25`; absent owner routes: `317`.
-- Commit mix: `other` 352, `task_board` 22, `receipt_refresh` 4.
-- Receipt lane mix: `hash-review` 78, `legacy-session-review` 71, `historical-worktree-review` 30, `family` 2.
-- Current corpus queue: `273` recorded, `19` open, `17` parked secret.
-- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 1, `needs-remote-proof` 6, `owner-recorded` 270, `parked-secret` 17, `superseded-recorded` 3.
+- Commit mix: `other` 353, `task_board` 22, `receipt_refresh` 4.
+- Receipt lane mix: `hash-review` 79, `legacy-session-review` 71, `historical-worktree-review` 30, `family` 2.
+- Current corpus queue: `274` recorded, `18` open, `17` parked secret.
+- Current queue status mix: `needs-owner-route` 12, `needs-remote-proof` 6, `owner-recorded` 271, `parked-secret` 17, `superseded-recorded` 3.
 
 ## Value
 
-- Resolved 181 prompt-corpus batches covering 4439 sessions and 25186 prompt events into durable metadata receipts.
+- Resolved 182 prompt-corpus batches covering 4464 sessions and 25211 prompt events into durable metadata receipts.
 - Linked 99 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
-- Left the current redacted queue measurable: 273 recorded batches and 19 open review batches.
-- Landed 378 commits with 896 file touches and 101779 insertions.
+- Left the current redacted queue measurable: 274 recorded batches and 18 open review batches.
+- Landed 379 commits with 899 file touches and 102259 insertions.
 
 ## Critique
 
@@ -50,7 +50,6 @@ Window: `2026-07-09T18:41:04+00:00` to `2026-07-10T06:41:04+00:00` (12.0h)
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-07-10T06:35:42+00:00` | `ff600b6` | `other` | limen: refresh always-working receipt |
 | `2026-07-10T06:36:08+00:00` | `c97efe4` | `other` | limen: resolve low hash batch 058 |
 | `2026-07-10T06:36:17+00:00` | `53b9861` | `other` | limen: resolve low hash batch 059 |
 | `2026-07-10T06:36:27+00:00` | `ebf4025` | `other` | limen: resolve low hash batch 060 |
@@ -70,12 +69,12 @@ Window: `2026-07-09T18:41:04+00:00` to `2026-07-10T06:41:04+00:00` (12.0h)
 | `2026-07-10T06:40:41+00:00` | `db2d7af` | `other` | limen: resolve low hash batch 074 |
 | `2026-07-10T06:40:51+00:00` | `b56fc43` | `other` | limen: resolve low hash batch 075 |
 | `2026-07-10T06:41:01+00:00` | `55ffed5` | `other` | limen: resolve low hash batch 076 |
+| `2026-07-10T06:41:11+00:00` | `0498e43` | `other` | limen: resolve low hash batch 077 |
 
 ## Batch Receipts
 
 | Time | Batch | Lane | Sessions | Events | Root Statuses |
 |---|---|---|---:|---:|---|
-| `2026-07-10T06:36:01+00:00` | `prompt-batch-low-hash-review-058` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T06:36:10+00:00` | `prompt-batch-low-hash-review-059` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T06:36:19+00:00` | `prompt-batch-low-hash-review-060` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T06:36:29+00:00` | `prompt-batch-low-hash-review-061` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
@@ -95,16 +94,17 @@ Window: `2026-07-09T18:41:04+00:00` to `2026-07-10T06:41:04+00:00` (12.0h)
 | `2026-07-10T06:40:44+00:00` | `prompt-batch-low-hash-review-075` | `hash-review` | 25 | 26 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T06:40:54+00:00` | `prompt-batch-low-hash-review-076` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T06:41:04+00:00` | `prompt-batch-low-hash-review-077` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
+| `2026-07-10T06:42:08+00:00` | `prompt-batch-low-hash-review-078` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
 
 ## Next Queue Slice
 
 | Batch | Status | Lane | Sessions | Events |
 |---|---|---|---:|---:|
-| `prompt-batch-low-hash-review-078` | `needs-private-review` | `hash-review` | 25 | 25 |
 | `prompt-batch-critical-remote-proof-001` | `needs-remote-proof` | `remote-proof` | 3 | 264 |
 | `prompt-batch-high-remote-proof-001` | `needs-remote-proof` | `remote-proof` | 25 | 108 |
 | `prompt-batch-high-remote-proof-002` | `needs-remote-proof` | `remote-proof` | 25 | 90 |
 | `prompt-batch-high-remote-proof-003` | `needs-remote-proof` | `remote-proof` | 25 | 51 |
+| `prompt-batch-high-remote-close-001` | `needs-remote-proof` | `remote-close` | 5 | 20 |
 
 ## Commands
 

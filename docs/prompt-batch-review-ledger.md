@@ -1,6 +1,6 @@
 # Prompt Batch Review Ledger
 
-Generated: `2026-07-10T06:41:04+00:00`
+Generated: `2026-07-10T06:42:08+00:00`
 
 ## Canonical Decision
 
@@ -13,14 +13,14 @@ Generated: `2026-07-10T06:41:04+00:00`
 
 - Priority batches read: `309`.
 - Review batches recorded: `309`.
-- Batches with durable owner/non-source/supersession evidence: `273`.
-- Open review batches: `19`.
+- Batches with durable owner/non-source/supersession evidence: `274`.
+- Open review batches: `18`.
 - Parked secret batches: `17`.
 - Prompt events represented: `136694`.
 - Preservation receipts available: `179`.
 - Packet resolution receipts available: `9`.
-- Batch resolution receipts available: `255`.
-- Status mix: `owner-recorded` 270, `parked-secret` 17, `needs-owner-route` 12, `needs-remote-proof` 6, `superseded-recorded` 3, `needs-private-review` 1.
+- Batch resolution receipts available: `256`.
+- Status mix: `owner-recorded` 271, `parked-secret` 17, `needs-owner-route` 12, `needs-remote-proof` 6, `superseded-recorded` 3.
 - Lane mix: `legacy-session-review` 91, `hash-review` 82, `historical-worktree-review` 62, `family` 17, `parked-secret` 17, `observe` 11, `remote-pr-open` 8, `owner-blocker` 6, `human-gate` 5, `remote-proof` 5, `stalled-review` 3, `remote-close` 1, `preserve` 1.
 
 ## Recorded Batches
@@ -62,25 +62,24 @@ Generated: `2026-07-10T06:41:04+00:00`
 
 | Rank | Batch | Status | Band | Lane | Sessions | Events | Dominant Mix | Next Action |
 |---:|---|---|---|---|---:|---:|---|---|
-| 1 | `prompt-batch-low-hash-review-078` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 2 | `prompt-batch-critical-remote-proof-001` | `needs-remote-proof` | `critical` | `remote-proof` | 3 | 264 | sources claude-projects 2, codex-sessions 1; families uncategorized 3 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 3 | `prompt-batch-high-remote-proof-001` | `needs-remote-proof` | `high` | `remote-proof` | 25 | 108 | sources claude-projects 1, codex-sessions 24; families uncategorized 25 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 4 | `prompt-batch-high-remote-proof-002` | `needs-remote-proof` | `high` | `remote-proof` | 25 | 90 | sources claude-projects 16, codex-sessions 9; families uncategorized 25 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 5 | `prompt-batch-high-remote-proof-003` | `needs-remote-proof` | `high` | `remote-proof` | 25 | 51 | sources claude-projects 13, opencode-db 12; families uncategorized 25 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 6 | `prompt-batch-high-remote-close-001` | `needs-remote-proof` | `high` | `remote-close` | 5 | 20 | sources codex-sessions 5; families uncategorized 5 | Review PR state/checks, then merge or name supersession before local reclaim. |
-| 7 | `prompt-batch-high-remote-proof-004` | `needs-remote-proof` | `high` | `remote-proof` | 6 | 23 | sources claude-projects 1, codex-sessions 5; families uncategorized 6 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
-| 8 | `prompt-batch-critical-observe-001` | `needs-owner-route` | `critical` | `observe` | 25 | 2337 | sources claude-projects 25; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 9 | `prompt-batch-critical-preserve-001` | `needs-owner-route` | `critical` | `preserve` | 11 | 44 | sources codex-sessions 11; families uncategorized 11 | Inspect diff, run owner predicate, push branch/open draft PR or record blocker. |
-| 10 | `prompt-batch-high-observe-001` | `needs-owner-route` | `high` | `observe` | 25 | 1327 | sources claude-projects 25; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 11 | `prompt-batch-high-observe-002` | `needs-owner-route` | `high` | `observe` | 4 | 149 | sources claude-projects 4; families uncategorized 4 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 12 | `prompt-batch-medium-observe-001` | `needs-owner-route` | `medium` | `observe` | 25 | 229 | sources claude-projects 4, codex-sessions 21; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 13 | `prompt-batch-medium-observe-002` | `needs-owner-route` | `medium` | `observe` | 25 | 98 | sources claude-projects 1, codex-sessions 24; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 14 | `prompt-batch-medium-observe-003` | `needs-owner-route` | `medium` | `observe` | 25 | 94 | sources codex-sessions 25; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 15 | `prompt-batch-medium-observe-004` | `needs-owner-route` | `medium` | `observe` | 25 | 77 | sources claude-projects 19, codex-sessions 6; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 16 | `prompt-batch-medium-observe-005` | `needs-owner-route` | `medium` | `observe` | 25 | 67 | sources claude-projects 3, codex-sessions 6, opencode-db 16; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 17 | `prompt-batch-medium-observe-006` | `needs-owner-route` | `medium` | `observe` | 25 | 65 | sources claude-projects 2, codex-sessions 1, opencode-db 22; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 18 | `prompt-batch-medium-observe-007` | `needs-owner-route` | `medium` | `observe` | 4 | 14 | sources codex-sessions 4; families uncategorized 4 | Keep active work visible; do not interrupt unless it becomes stale. |
-| 19 | `prompt-batch-low-observe-001` | `needs-owner-route` | `low` | `observe` | 1 | 1 | sources opencode-db 1; families uncategorized 1 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 1 | `prompt-batch-critical-remote-proof-001` | `needs-remote-proof` | `critical` | `remote-proof` | 3 | 264 | sources claude-projects 2, codex-sessions 1; families uncategorized 3 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 2 | `prompt-batch-high-remote-proof-001` | `needs-remote-proof` | `high` | `remote-proof` | 25 | 108 | sources claude-projects 1, codex-sessions 24; families uncategorized 25 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 3 | `prompt-batch-high-remote-proof-002` | `needs-remote-proof` | `high` | `remote-proof` | 25 | 90 | sources claude-projects 16, codex-sessions 9; families uncategorized 25 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 4 | `prompt-batch-high-remote-proof-003` | `needs-remote-proof` | `high` | `remote-proof` | 25 | 51 | sources claude-projects 13, opencode-db 12; families uncategorized 25 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 5 | `prompt-batch-high-remote-close-001` | `needs-remote-proof` | `high` | `remote-close` | 5 | 20 | sources codex-sessions 5; families uncategorized 5 | Review PR state/checks, then merge or name supersession before local reclaim. |
+| 6 | `prompt-batch-high-remote-proof-004` | `needs-remote-proof` | `high` | `remote-proof` | 6 | 23 | sources claude-projects 1, codex-sessions 5; families uncategorized 6 | Verify remote/default preservation; reclaim local checkout only after exact proof. |
+| 7 | `prompt-batch-critical-observe-001` | `needs-owner-route` | `critical` | `observe` | 25 | 2337 | sources claude-projects 25; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 8 | `prompt-batch-critical-preserve-001` | `needs-owner-route` | `critical` | `preserve` | 11 | 44 | sources codex-sessions 11; families uncategorized 11 | Inspect diff, run owner predicate, push branch/open draft PR or record blocker. |
+| 9 | `prompt-batch-high-observe-001` | `needs-owner-route` | `high` | `observe` | 25 | 1327 | sources claude-projects 25; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 10 | `prompt-batch-high-observe-002` | `needs-owner-route` | `high` | `observe` | 4 | 149 | sources claude-projects 4; families uncategorized 4 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 11 | `prompt-batch-medium-observe-001` | `needs-owner-route` | `medium` | `observe` | 25 | 229 | sources claude-projects 4, codex-sessions 21; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 12 | `prompt-batch-medium-observe-002` | `needs-owner-route` | `medium` | `observe` | 25 | 98 | sources claude-projects 1, codex-sessions 24; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 13 | `prompt-batch-medium-observe-003` | `needs-owner-route` | `medium` | `observe` | 25 | 94 | sources codex-sessions 25; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 14 | `prompt-batch-medium-observe-004` | `needs-owner-route` | `medium` | `observe` | 25 | 77 | sources claude-projects 19, codex-sessions 6; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 15 | `prompt-batch-medium-observe-005` | `needs-owner-route` | `medium` | `observe` | 25 | 67 | sources claude-projects 3, codex-sessions 6, opencode-db 16; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 16 | `prompt-batch-medium-observe-006` | `needs-owner-route` | `medium` | `observe` | 25 | 65 | sources claude-projects 2, codex-sessions 1, opencode-db 22; families uncategorized 25 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 17 | `prompt-batch-medium-observe-007` | `needs-owner-route` | `medium` | `observe` | 4 | 14 | sources codex-sessions 4; families uncategorized 4 | Keep active work visible; do not interrupt unless it becomes stale. |
+| 18 | `prompt-batch-low-observe-001` | `needs-owner-route` | `low` | `observe` | 1 | 1 | sources opencode-db 1; families uncategorized 1 | Keep active work visible; do not interrupt unless it becomes stale. |
 
 ## Private Output
 
