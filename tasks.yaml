@@ -125421,3 +125421,175 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+- id: GEN-organvm-my-knowledge-base-test-coverage-0709
+  title: Raise test coverage in organvm/my-knowledge-base
+  repo: organvm/my-knowledge-base
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm/my-knowledge-base with little
+    or no test coverage and add a focused, PASSING test suite for it. Run the repo's
+    own test command and confirm green. No placeholder tests. [auto-generated 2026-07-09
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T01:55:24.127907Z'
+  dispatch_log: []
+- id: GEN-organvm-manumissio-test-coverage-0709
+  title: Raise test coverage in organvm/manumissio
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm/manumissio with little or no
+    test coverage and add a focused, PASSING test suite for it. Run the repo's own
+    test command and confirm green. No placeholder tests. [auto-generated 2026-07-09
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T01:55:24.229415Z'
+  dispatch_log: []
+- id: GEN-organvm-session-meta-test-coverage-0709
+  title: Raise test coverage in organvm/session-meta
+  repo: organvm/session-meta
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm/session-meta with little or no
+    test coverage and add a focused, PASSING test suite for it. Run the repo's own
+    test command and confirm green. No placeholder tests. [auto-generated 2026-07-09
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T01:55:24.231897Z'
+  dispatch_log: []
+- id: GEN-organvm-peer-audited--behavioral-blockchain-test-coverage-0709
+  title: Raise test coverage in organvm/peer-audited--behavioral-blockchain
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - test-coverage
+  - generated
+  - build-out
+  urls: []
+  context: Find the largest source module in organvm/peer-audited--behavioral-blockchain
+    with little or no test coverage and add a focused, PASSING test suite for it.
+    Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
+    2026-07-09 to keep the stream endless]
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T01:55:24.233499Z'
+  dispatch_log: []
+- id: GEN-organvm-manumissio-ci-green-0709
+  title: Make organvm/manumissio CI green
+  repo: organvm/manumissio
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/manumissio's default branch,
+    fix the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-07-09 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T01:55:24.234474Z'
+  dispatch_log: []
+- id: GEN-organvm-portfolio-ci-green-0709
+  title: Make organvm/portfolio CI green
+  repo: organvm/portfolio
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/portfolio's default branch,
+    fix the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-07-09 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T01:55:24.235223Z'
+  dispatch_log: []
+- id: GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709
+  title: Make organvm/peer-audited--behavioral-blockchain CI green
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/peer-audited--behavioral-blockchain's
+    default branch, fix the root cause (lint / types / failing test / config), and
+    confirm the checks pass. If CI is already green, add the single most valuable
+    missing check (e.g. typecheck or test-matrix) instead. [auto-generated 2026-07-09
+    to keep the stream endless]
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T01:55:24.237005Z'
+  dispatch_log: []
+- id: GEN-organvm-limen-ci-green-0709
+  title: Make organvm/limen CI green
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - ci-green
+  - generated
+  - build-out
+  urls: []
+  context: Inspect the latest FAILING checks on organvm/limen's default branch, fix
+    the root cause (lint / types / failing test / config), and confirm the checks
+    pass. If CI is already green, add the single most valuable missing check (e.g.
+    typecheck or test-matrix) instead. [auto-generated 2026-07-09 to keep the stream
+    endless]
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T01:55:24.239509Z'
+  dispatch_log: []
