@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 414
+      spent: 416
       per_agent:
         jules: 116
         gemini: 12
         codex: 11
         opencode: 121
-        agy: 138
+        agy: 140
         claude: 12
         github_actions: 1
         ollama: 3
@@ -102547,7 +102547,7 @@ tasks:
   workstream: correspondence
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -102565,7 +102565,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T23:35:24.867313Z'
+  updated: '2026-07-10T02:53:11.889534Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:58.136246Z'
     agent: codex
@@ -102588,6 +102588,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T02:53:11.889534Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-universal-mail--automation-138
   title: fix failing CI on organvm/universal-mail--automation#138
   repo: organvm/universal-mail--automation
@@ -122862,7 +122867,7 @@ tasks:
   workstream: correspondence
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -122879,7 +122884,13 @@ tasks:
     \ 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  dispatch_log: []
+  updated: '2026-07-10T02:53:11.889534Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T02:53:11.889534Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-universal-node-network-9
   title: rebase/resolve conflicts on organvm/universal-node-network#9
   repo: organvm/universal-node-network
