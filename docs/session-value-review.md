@@ -1,7 +1,7 @@
 # Session Value Review
 
-Generated: `2026-07-10T05:40:47+00:00`
-Window: `2026-07-09T17:40:43+00:00` to `2026-07-10T05:40:43+00:00` (12.0h)
+Generated: `2026-07-10T05:41:06+00:00`
+Window: `2026-07-09T17:41:03+00:00` to `2026-07-10T05:41:03+00:00` (12.0h)
 
 ## Verdict
 
@@ -13,27 +13,27 @@ Window: `2026-07-09T17:40:43+00:00` to `2026-07-10T05:40:43+00:00` (12.0h)
 - Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
 - Follow-up pressure: `25` follow-up roots vs `416` merged/routed roots; consecutive pressure reports `0`.
 - No-receipt pressure: `false`; consecutive reports `0`; high-motion `false`.
-- Maintenance commits: `26`; value commits: `259`; custody-only: `false`.
-- Open review batches: `107`; no durable progress: `false`.
-- Next commands: `python3 scripts/resolve-codex-hash-batch.py prompt-batch-low-hash-review-018 --write`.
+- Maintenance commits: `26`; value commits: `260`; custody-only: `false`.
+- Open review batches: `106`; no durable progress: `false`.
+- Next commands: `python3 scripts/resolve-codex-hash-batch.py prompt-batch-low-hash-review-019 --write`.
 
 ## Measured Output
 
-- Commits landed: `285`; files touched: `625`; insertions/deletions: `61767` / `15228`.
-- Prompt batch receipts: `93`; batches/hour: `7.75`.
-- Sessions recorded: `2252`; prompt events recorded: `21306`; prompt events/hour: `1775.5`.
+- Commits landed: `286`; files touched: `628`; insertions/deletions: `62269` / `15282`.
+- Prompt batch receipts: `94`; batches/hour: `7.83`.
+- Sessions recorded: `2277`; prompt events recorded: `21332`; prompt events/hour: `1777.67`.
 - Merged-root evidence: `99`; follow-up roots: `25`; absent owner routes: `317`.
-- Commit mix: `other` 259, `task_board` 22, `receipt_refresh` 4.
-- Receipt lane mix: `legacy-session-review` 43, `historical-worktree-review` 30, `hash-review` 18, `family` 2.
-- Current corpus queue: `185` recorded, `107` open, `17` parked secret.
-- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 89, `needs-remote-proof` 6, `owner-recorded` 182, `parked-secret` 17, `superseded-recorded` 3.
+- Commit mix: `other` 260, `task_board` 22, `receipt_refresh` 4.
+- Receipt lane mix: `legacy-session-review` 43, `historical-worktree-review` 30, `hash-review` 19, `family` 2.
+- Current corpus queue: `186` recorded, `106` open, `17` parked secret.
+- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 88, `needs-remote-proof` 6, `owner-recorded` 183, `parked-secret` 17, `superseded-recorded` 3.
 
 ## Value
 
-- Resolved 93 prompt-corpus batches covering 2252 sessions and 21306 prompt events into durable metadata receipts.
+- Resolved 94 prompt-corpus batches covering 2277 sessions and 21332 prompt events into durable metadata receipts.
 - Linked 99 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
-- Left the current redacted queue measurable: 185 recorded batches and 107 open review batches.
-- Landed 285 commits with 625 file touches and 61767 insertions.
+- Left the current redacted queue measurable: 186 recorded batches and 106 open review batches.
+- Landed 286 commits with 628 file touches and 62269 insertions.
 
 ## Critique
 
@@ -50,7 +50,6 @@ Window: `2026-07-09T17:40:43+00:00` to `2026-07-10T05:40:43+00:00` (12.0h)
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-07-10T05:23:04+00:00` | `8bb7914` | `other` | limen: resolve low legacy session batch 031 |
 | `2026-07-10T05:23:32+00:00` | `e8bb2a6` | `other` | limen: resolve low legacy session batch 032 |
 | `2026-07-10T05:25:39+00:00` | `1272e0d` | `other` | limen: resolve low legacy session batch 033 |
 | `2026-07-10T05:26:06+00:00` | `742fbe0` | `other` | limen: resolve low legacy session batch 034 |
@@ -70,12 +69,12 @@ Window: `2026-07-09T17:40:43+00:00` to `2026-07-10T05:40:43+00:00` (12.0h)
 | `2026-07-10T05:38:59+00:00` | `38f6559` | `other` | limen: resolve low hash batch 014 |
 | `2026-07-10T05:39:21+00:00` | `7d8ca54` | `other` | limen: resolve low hash batch 015 |
 | `2026-07-10T05:40:29+00:00` | `ea04323` | `other` | limen: resolve low hash batch 016 |
+| `2026-07-10T05:40:50+00:00` | `b81917b` | `other` | limen: resolve low hash batch 017 |
 
 ## Batch Receipts
 
 | Time | Batch | Lane | Sessions | Events | Root Statuses |
 |---|---|---|---:|---:|---|
-| `2026-07-10T05:22:50+00:00` | `prompt-batch-low-legacy-session-review-031` | `legacy-session-review` | 25 | 266 | `legacy_session_owner_lane_routed` 13, `legacy_session_external_context_recorded` 10, `legacy_session_closed_pr_recorded` 2 |
 | `2026-07-10T05:23:17+00:00` | `prompt-batch-low-legacy-session-review-032` | `legacy-session-review` | 25 | 234 | `legacy_session_owner_lane_routed` 14, `legacy_session_external_context_recorded` 10, `legacy_session_closed_pr_recorded` 1 |
 | `2026-07-10T05:25:23+00:00` | `prompt-batch-low-legacy-session-review-033` | `legacy-session-review` | 25 | 248 | `legacy_session_owner_lane_routed` 22, `legacy_session_external_context_recorded` 1, `legacy_session_pr_routed` 1, `legacy_session_closed_pr_recorded` 1 |
 | `2026-07-10T05:25:52+00:00` | `prompt-batch-low-legacy-session-review-034` | `legacy-session-review` | 25 | 266 | `legacy_session_owner_lane_routed` 21, `legacy_session_pr_routed` 3, `legacy_session_closed_pr_recorded` 1 |
@@ -95,16 +94,17 @@ Window: `2026-07-09T17:40:43+00:00` to `2026-07-10T05:40:43+00:00` (12.0h)
 | `2026-07-10T05:39:06+00:00` | `prompt-batch-low-hash-review-015` | `hash-review` | 25 | 26 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T05:40:16+00:00` | `prompt-batch-low-hash-review-016` | `hash-review` | 25 | 26 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T05:40:37+00:00` | `prompt-batch-low-hash-review-017` | `hash-review` | 25 | 26 | `codex_session_sensitive_context_recorded` 25 |
+| `2026-07-10T05:40:58+00:00` | `prompt-batch-low-hash-review-018` | `hash-review` | 25 | 26 | `codex_session_sensitive_context_recorded` 25 |
 
 ## Next Queue Slice
 
 | Batch | Status | Lane | Sessions | Events |
 |---|---|---|---:|---:|
-| `prompt-batch-low-hash-review-018` | `needs-private-review` | `hash-review` | 25 | 26 |
 | `prompt-batch-low-hash-review-019` | `needs-private-review` | `hash-review` | 25 | 25 |
 | `prompt-batch-low-hash-review-020` | `needs-private-review` | `hash-review` | 25 | 25 |
 | `prompt-batch-low-hash-review-021` | `needs-private-review` | `hash-review` | 25 | 25 |
 | `prompt-batch-low-hash-review-022` | `needs-private-review` | `hash-review` | 25 | 26 |
+| `prompt-batch-low-hash-review-023` | `needs-private-review` | `hash-review` | 25 | 25 |
 
 ## Commands
 
