@@ -487,6 +487,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Honor the covenant standing grant (2026-07-09): clean+merged+idle worktree roots are pre-accepted for removal without a per-root ledger event. Set 0 to restore per-root human acceptance for that class (docs/removal-acceptance-covenant.md)."
+  LIMEN_RECLAIM_PUSHED_OK:
+    default: "0"
+    env: LIMEN_RECLAIM_PUSHED_OK
+    self_update: none
+    owner: continuity
+    note: "Pushed-reap escape hatch — DEFAULT OFF. The standing policy is merge-before-reap (pushed preservation is not closure), so a clean, idle, pushed-but-unmerged worktree is KEPT as not-merged-to-default (enacted by test_reclaim_keeps_clean_pushed_unmerged_branch). Set 1 to flip that class to reapable: reachable_from_remote ⇒ every byte is on origin and re-cloneable, so removing the local checkout loses zero work and the branch + its PR/babysitting lifecycle continue on origin. This is the opt-in lever that drains the pushed-but-unmerged backlog (the dominant boot-disk pin — hundreds of roots) toward the free-space target; classified clean+pushed+idle under the standing grant. Enabling it is an operator policy decision (it overrides merge-before-reap), homed as a lever, not defaulted on. The unpushed/dirty/active guardrails are unchanged — unpreserved work is NEVER reaped."
   LIMEN_DISK_PRESSURE_PATH:
     default: "$LIMEN_ROOT"
     env: LIMEN_DISK_PRESSURE_PATH

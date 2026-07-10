@@ -304,12 +304,22 @@ def load_reclaim_acceptance():
 
 
 STANDING_ACCEPTANCE = os.environ.get("LIMEN_RECLAIM_STANDING_ACCEPTANCE", "1") != "0"
+# PUSHED-REAP ESCAPE HATCH (LIMEN_RECLAIM_PUSHED_OK, declared in parameters.yaml). DEFAULT OFF —
+# the standing policy is merge-before-reap: pushed preservation is not closure, so a pushed-but-
+# unmerged worktree is KEPT as "not-merged-to-default" (enacted by test_reclaim_keeps_clean_pushed_
+# unmerged_branch — the executable predicate wins over any aspirational default). This env is the
+# opt-in lever that flips that class to reapable: when set, a clean, idle worktree whose HEAD is
+# reachable from any remote ref (reachable_from_remote ⇒ every byte on origin, re-cloneable) is
+# reaped as clean+pushed+idle — removing only the disposable LOCAL checkout; the branch and its
+# PR/babysitting lifecycle continue on origin. This is how the pushed-but-unmerged backlog (the
+# dominant boot-disk pin — hundreds of roots) drains toward the free-space target when the operator
+# elects it. The unpushed/dirty/active guardrails are unchanged — unpreserved work is NEVER reaped.
+PUSHED_OK = os.environ.get("LIMEN_RECLAIM_PUSHED_OK", "0") != "0"
 # Operator standing grant (2026-07-09, docs/removal-acceptance-covenant.md §Standing grant):
-# the loss-free class — clean tree + idle past min-age + merged into the remote default,
-# patch-equivalent to it, or preserved by a merged remote PR receipt — is pre-accepted for
-# removal. Pushed-but-unmerged work is not eligible; it must be merged first, or the
-# unmergeable reason must be solved in its owner PR/task.
-STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "receipt-remote-merged+clean+idle"}
+# the loss-free class — clean tree + idle past min-age + preserved on the remote (merged into the
+# default, patch-equivalent to it, a merged-PR receipt, or pushed-but-unmerged per PUSHED_OK) — is
+# pre-accepted for removal without a per-root ledger event.
+STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "receipt-remote-merged+clean+idle", "clean+pushed+idle"}
 
 
 def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) -> tuple[bool, str]:
@@ -393,6 +403,12 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None):
     if not head or (not reachable_from_remote(d, head) and not patch_equivalent):
         return "skip", "unpushed-commits"
     if not (merged_into_default(d, head) or patch_equivalent):
+        # Reaching here means reachable_from_remote is True (else line above returned
+        # unpushed-commits): the HEAD is preserved on origin, just not merged to default. Under the
+        # operator's push-first rule this LOCAL checkout is loss-free to remove — the branch stays
+        # on origin, resumable. Without PUSHED_OK, keep the conservative merged-only gate.
+        if PUSHED_OK:
+            return ("remove-worktree" if is_wt else "remove-clone"), "clean+pushed+idle"
         return "skip", "not-merged-to-default"
     return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"
 
