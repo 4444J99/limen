@@ -1,10 +1,10 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T13:44:45Z`
+Generated: `2026-07-10T14:01:35Z`
 Status: `needs-owner-gates`
-Internal free: `115.9 GiB`
+Internal free: `115.8 GiB`
 Target free: `200.0 GiB`
-Shortfall: `84.1 GiB`
+Shortfall: `84.2 GiB`
 
 ## Safe Reclaim Already Run
 
@@ -14,13 +14,13 @@ Shortfall: `84.1 GiB`
 
 ## Scratch / Worktree Lifecycle
 
-- Summary: `387 debt roots / 702 scanned; 0 reapable roots`.
+- Summary: `389 debt roots / 702 scanned; 0 reapable roots`.
 - Debt cap: `12`; reapable cap: `0`.
 
 | Reason | Roots |
 |---|---:|
-| `not-merged-to-default` | `197` |
-| `active(<6h)` | `122` |
+| `not-merged-to-default` | `199` |
+| `active(<6h)` | `120` |
 | `dirty` | `106` |
 | `unpushed-commits` | `84` |
 | `remote-pr-open` | `77` |
