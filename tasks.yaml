@@ -128839,12 +128839,13 @@ tasks:
     \ pipeline jammed"
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - bug
+  - slow
   urls:
   - https://github.com/organvm/limen/issues/872
   context: "GitHub issue organvm/limen#872. ## Root cause (confirmed 2026-07-10) `main`'s\
@@ -128855,10 +128856,14 @@ tasks:
     \ main history is almost entirely `limen: \u2026` / `tabularius"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T17:13:43.412727Z'
+  updated: '2026-07-10T17:58:52.616607Z'
   dispatch_log:
   - timestamp: '2026-07-10T17:13:43.412727Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T17:58:52.616607Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
