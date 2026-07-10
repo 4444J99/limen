@@ -243,3 +243,28 @@ def test_breathe_named_sid_honored_over_escalation(tmp_path, monkeypatch, capsys
     out = capsys.readouterr().out
     assert f"DRY would breathe {sid}" in out
     assert "ESCALATE" not in out
+
+
+def test_breathe_drops_lever_blocked_session(tmp_path, monkeypatch, capsys):
+    """Loop-terminator regression (the 2026-07-10 closeout-loop fix): a STALLED session whose cascade
+    landed on a reserved human lever (decision.residue set) is filed ONCE by hang_residue and must
+    NEVER be re-breathed — re-breathing a filed-blocked session is the endless loop the 'BLOCKED once,
+    then stop' rule forbids. A reversible (residue-free) session still breathes. High cap ensures the
+    FILTER, not the cap, is what drops the blocked one."""
+    monkeypatch.setenv("LIMEN_QUICKEN_BREATHE_CAP", "5")
+    quicken = _load()
+    monkeypatch.setattr(quicken, "JOURNAL", tmp_path / "journal.jsonl")
+
+    clean_cwd = tmp_path / "clean"
+    blocked_cwd = tmp_path / "blocked"
+    clean_cwd.mkdir()  # _contended() drops any cwd that is not a real present dir
+    blocked_cwd.mkdir()
+    clean = _stalled_row("cleanaaaa-1111-2222-3333-444455556666", str(clean_cwd))
+    blocked = _stalled_row("blockedbb-2222-3333-4444-555566667777", str(blocked_cwd))
+    blocked["decision"] = {"residue": "land the credential (your account)", "layer": "protocol"}
+
+    quicken.breathe([clean, blocked], "all", dry=True)
+    out = capsys.readouterr().out
+
+    assert "cleanaaaa" in out  # reversible session IS breathed
+    assert "blockedbb" not in out  # lever-blocked session is filed-once, never re-breathed (no loop)
