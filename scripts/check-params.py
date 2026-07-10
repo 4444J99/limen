@@ -17,6 +17,7 @@ param missing its ``default`` / ``env`` / ``owner``.
   python3 scripts/check-params.py --update   # rewrite the baseline to current
                                              #   (run after folding vars into the panel)
 """
+
 from __future__ import annotations
 
 import re
@@ -28,8 +29,16 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 PANEL = ROOT / "institutio" / "governance" / "parameters.yaml"
 BASELINE = ROOT / "institutio" / "governance" / "undeclared-params-baseline.txt"
+# Orphan direction (declared-but-unread): a param declared in the panel whose env name is read by no
+# source is an orphan declaration — a knob that does nothing (the LIMEN_RECLAIM_PUSHED_OK defect,
+# 2026-07-10: declared with a note promising a reap the code never implemented). Ratcheted like the
+# undeclared direction so existing orphans grandfather in and only a NEW orphan fails the build.
+ORPHAN_BASELINE = ROOT / "institutio" / "governance" / "orphan-params-baseline.txt"
 SCAN_DIRS = ("cli/src", "scripts", "web/api", "mcp")
-SCAN_SUFFIXES = (".py", ".sh", ".mjs", ".js", ".ts", ".yaml", ".yml", ".json")
+# The orphan check scans wider than the undeclared check: a param read only by CI workflows, the
+# container/launchd plumbing, or the ianva package is legitimately used, not orphaned.
+ORPHAN_SCAN_DIRS = SCAN_DIRS + (".github", "container", "ianva")
+SCAN_SUFFIXES = (".py", ".sh", ".mjs", ".js", ".ts", ".yaml", ".yml", ".json", ".plist", ".toml")
 TOKEN = re.compile(r"LIMEN_[A-Z0-9_]+")
 
 # Env names the body legitimately uses that we do NOT own as LIMEN_ params
@@ -44,9 +53,9 @@ def normalize(token: str) -> str:
     return token.rstrip("_")
 
 
-def referenced_tokens(root: Path = ROOT) -> set[str]:
+def referenced_tokens(root: Path = ROOT, dirs: tuple[str, ...] = SCAN_DIRS) -> set[str]:
     found: set[str] = set()
-    for d in SCAN_DIRS:
+    for d in dirs:
         base = root / d
         if not base.exists():
             continue
@@ -106,28 +115,44 @@ def panel_integrity_errors(text: str) -> list[str]:
     return errors
 
 
-def read_baseline() -> set[str]:
-    if not BASELINE.exists():
+def read_baseline(path: Path = BASELINE) -> set[str]:
+    if not path.exists():
         return set()
-    return {
-        ln.strip()
-        for ln in BASELINE.read_text().splitlines()
-        if ln.strip() and not ln.startswith("#")
-    }
+    return {ln.strip() for ln in path.read_text().splitlines() if ln.strip() and not ln.startswith("#")}
 
 
-def write_baseline(undeclared: set[str]) -> None:
-    header = (
+def write_baseline(undeclared: set[str], path: Path = BASELINE, header: str | None = None) -> None:
+    header = header or (
         "# undeclared-params-baseline — the LIMEN_* vars referenced in code but not yet\n"
         "# declared in parameters.yaml. The no-hardcode gate fails on any NEW entry.\n"
         "# Fold vars into the panel, then run: python3 scripts/check-params.py --update\n"
     )
     body = "\n".join(sorted(undeclared))
-    BASELINE.write_text(header + body + "\n")
+    path.write_text(header + body + "\n")
 
 
 def compute_undeclared(referenced: set[str], declared: set[str]) -> set[str]:
     return {t for t in referenced if t not in declared and t not in EXTERNAL_ALLOW}
+
+
+def compute_orphans(panel: dict, referenced_wide: set[str]) -> set[str]:
+    """Declared params whose key AND env name are read by no source (a knob that does nothing).
+
+    Scoped to LIMEN_-prefixed names: the reference scanner detects LIMEN_* tokens, so only those
+    names can be reliably confirmed present-or-absent. Non-LIMEN panel namespaces (INSTITVTIO_,
+    VITALS_, …) are out of this gate's scope — matching them would be a false-orphan every time.
+    """
+    orphans: set[str] = set()
+    for key, spec in (panel.get("parameters") or {}).items():
+        names = {key}
+        if isinstance(spec, dict) and spec.get("env"):
+            names.add(str(spec["env"]))
+        limen_names = {n for n in names if n.startswith("LIMEN_")}
+        if not limen_names:
+            continue  # non-LIMEN namespace — not detectable by the LIMEN_* scanner
+        if not (limen_names & referenced_wide) and not (limen_names & EXTERNAL_ALLOW):
+            orphans.add(key)
+    return orphans
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -139,15 +164,28 @@ def main(argv: list[str] | None = None) -> int:
     declared = declared_envs(panel)
     referenced = referenced_tokens()
     undeclared = compute_undeclared(referenced, declared)
+    # Orphan direction: scan wider (CI + container + ianva) so CI/launchd-read params aren't false orphans.
+    referenced_wide = referenced | referenced_tokens(dirs=ORPHAN_SCAN_DIRS)
+    orphans = compute_orphans(panel, referenced_wide)
 
+    orphan_header = (
+        "# orphan-params-baseline — params DECLARED in parameters.yaml whose env name is read by no\n"
+        "# source (a knob that does nothing — the LIMEN_RECLAIM_PUSHED_OK class). The wiring-integrity\n"
+        "# gate fails on any NEW orphan. Wire the param to a reader, then: python3 scripts/check-params.py --update\n"
+    )
     if "--update" in argv:
         write_baseline(undeclared)
-        print(f"baseline updated: {len(undeclared)} undeclared LIMEN_* vars recorded")
+        write_baseline(orphans, path=ORPHAN_BASELINE, header=orphan_header)
+        print(f"baseline updated: {len(undeclared)} undeclared + {len(orphans)} orphan LIMEN_* vars recorded")
         return 0
 
     baseline = read_baseline()
     new = sorted(undeclared - baseline)
     stale = sorted(baseline - undeclared)
+
+    orphan_baseline = read_baseline(ORPHAN_BASELINE)
+    new_orphans = sorted(orphans - orphan_baseline)
+    stale_orphans = sorted(orphan_baseline - orphans)
 
     if integrity:
         print("PANEL INTEGRITY FAILURES:")
@@ -160,14 +198,24 @@ def main(argv: list[str] | None = None) -> int:
         for t in new:
             print(f"  ✗ {t}")
 
+    if new_orphans:
+        print(f"\nWIRING-INTEGRITY GATE: {len(new_orphans)} new orphan param(s) — declared in")
+        print(f"  {PANEL.relative_to(ROOT)} but read by NO source (a knob that does nothing).")
+        print("  Wire each to a reader, or prune via --update if intentional:")
+        for t in new_orphans:
+            print(f"  ✗ {t}")
+
     if stale:
         print(f"\nnote: {len(stale)} baseline var(s) now declared/removed — run --update to prune.")
+    if stale_orphans:
+        print(f"note: {len(stale_orphans)} orphan-baseline var(s) now wired/removed — run --update to prune.")
 
-    if integrity or new:
+    if integrity or new or new_orphans:
         return 1
     print(
         f"check-params: OK — {len(declared)} declared, "
-        f"{len(undeclared)} undeclared (baseline {len(baseline)}), no new hardcodes."
+        f"{len(undeclared)} undeclared (baseline {len(baseline)}), "
+        f"{len(orphans)} orphan (baseline {len(orphan_baseline)}), no new hardcodes, no new orphans."
     )
     return 0
 

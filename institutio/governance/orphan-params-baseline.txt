@@ -1,0 +1,13 @@
+# orphan-params-baseline — params DECLARED in parameters.yaml whose env name is read by no
+# source (a knob that does nothing — the LIMEN_RECLAIM_PUSHED_OK class). The wiring-integrity
+# gate fails on any NEW orphan. Wire the param to a reader, then: python3 scripts/check-params.py --update
+CONTINUITY_MIN_SUMMARY_CHARS
+CONTINUITY_TRANSCRIPT_GLOB
+INTEGRITY_AUTOUPDATER
+INTEGRITY_VERIFY_TARGETS
+LIMEN_LOW_BURN_VALUE_FIRST
+VITALS_HEAVY_SURFACE_LIMIT
+VITALS_PRESSURE_CRITICAL
+VITALS_PRESSURE_GAUGE
+VITALS_PRESSURE_WARN
+VITALS_SHED_OLLAMA

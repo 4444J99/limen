@@ -54,7 +54,35 @@ def test_panel_integrity_detects_duplicate_key():
     assert any("duplicate param key: FOO" in e for e in cp.panel_integrity_errors(text))
 
 
+def test_compute_orphans_flags_declared_but_unread_limen_param():
+    # The LIMEN_RECLAIM_PUSHED_OK class: declared in the panel, read by no source → orphan.
+    cp = _load()
+    panel = {"parameters": {"LIMEN_KNOB": {"env": "LIMEN_KNOB", "default": "0", "owner": "x"}}}
+    assert cp.compute_orphans(panel, referenced_wide=set()) == {"LIMEN_KNOB"}
+
+
+def test_compute_orphans_clears_when_param_is_read():
+    cp = _load()
+    panel = {"parameters": {"LIMEN_KNOB": {"env": "LIMEN_KNOB", "default": "0", "owner": "x"}}}
+    assert cp.compute_orphans(panel, referenced_wide={"LIMEN_KNOB"}) == set()
+
+
+def test_compute_orphans_skips_non_limen_namespaces():
+    # A non-LIMEN param (VITALS_/INSTITVTIO_) is out of scope — the LIMEN_* scanner cannot see it.
+    cp = _load()
+    panel = {"parameters": {"VITALS_GAUGE": {"env": "VITALS_GAUGE", "default": "1", "owner": "x"}}}
+    assert cp.compute_orphans(panel, referenced_wide=set()) == set()
+
+
+def test_compute_orphans_respects_external_allow():
+    cp = _load()
+    # a LIMEN_ param whose only name is in EXTERNAL_ALLOW is not an orphan
+    panel = {"parameters": {"K": {"env": "LIMEN_EXT", "default": "0", "owner": "x"}}}
+    cp.EXTERNAL_ALLOW = cp.EXTERNAL_ALLOW | {"LIMEN_EXT"}
+    assert cp.compute_orphans(panel, referenced_wide=set()) == set()
+
+
 def test_gate_passes_on_repo():
-    # the committed baseline must keep the gate green (no new hardcodes vs baseline).
+    # the committed baseline must keep the gate green (no new hardcodes AND no new orphans vs baseline).
     r = subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
