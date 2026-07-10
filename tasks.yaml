@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 408
+      spent: 411
       per_agent:
         jules: 116
         gemini: 12
-        codex: 9
+        codex: 10
         opencode: 121
-        agy: 134
+        agy: 136
         claude: 12
         github_actions: 1
         ollama: 3
@@ -98736,7 +98736,7 @@ tasks:
   target_agent: agy
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -98754,7 +98754,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T23:35:24.867313Z'
+  updated: '2026-07-10T02:42:36.107217Z'
   dispatch_log:
   - timestamp: '2026-07-09T23:02:44.734727Z'
     agent: codex
@@ -98771,6 +98771,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T02:42:36.107217Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-organvm-peer-audited--behavioral-blockchain-720
   title: "rebase organvm/peer-audited--behavioral-blockchain#720 onto current base\
     \ \u2014 branched far behind"
@@ -120884,7 +120889,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -120901,7 +120906,7 @@ tasks:
     [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T02:08:00.480526Z'
+  updated: '2026-07-10T02:42:36.107217Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -120936,6 +120941,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-10T02:42:36.107217Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: SOVEREIGN-0708-KILLCHAIN
   title: 'sovereignty-audit: every third party between work and wallet gets an owned
     fallback'
@@ -125052,7 +125062,7 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - tried:jules
   urls:
@@ -125063,7 +125073,7 @@ tasks:
     #133 (CI matrix). See dispatch log for full details.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T02:42:36.107217Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -125075,6 +125085,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T02:42:36.107217Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-arca
   title: Discover the latent value of organvm/arca
   repo: organvm/arca
