@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 463
+      spent: 471
       per_agent:
         jules: 133
-        gemini: 18
-        codex: 6
-        opencode: 136
-        agy: 157
-        claude: 9
+        gemini: 19
+        codex: 8
+        opencode: 138
+        agy: 158
+        claude: 11
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -103542,7 +103542,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -103559,7 +103559,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T08:26:22.859981Z'
+  updated: '2026-07-10T08:47:48.255717Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -103610,6 +103610,11 @@ tasks:
     status: open
     output: "recover: jules session 10978297065325118340 is awaiting_user_feedback\
       \ \u2192 reopened"
+  - timestamp: '2026-07-10T08:47:48.255717Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-403
   title: fix failing CI on organvm/limen#403
   repo: organvm/limen
@@ -104477,7 +104482,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104493,7 +104498,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T08:26:22.859981Z'
+  updated: '2026-07-10T08:47:48.255717Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
@@ -104529,6 +104534,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T08:47:48.255717Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-419
   title: fix failing CI on organvm/limen#419
   repo: organvm/limen
@@ -106953,7 +106963,7 @@ tasks:
   target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -106968,7 +106978,13 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  dispatch_log: []
+  updated: '2026-07-10T08:47:48.255717Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T08:47:48.255717Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-625
   title: fix failing CI on organvm/limen#625
   repo: organvm/limen
@@ -127509,7 +127525,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -127531,7 +127547,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T08:26:22.859981Z'
+  updated: '2026-07-10T08:47:48.255717Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:07:52.232247Z'
     agent: agy
@@ -127566,6 +127582,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T08:47:48.255717Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-184
   title: rebase/resolve conflicts on organvm/domus-genoma#184
   repo: organvm/domus-genoma
@@ -127573,7 +127594,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -127595,7 +127616,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T08:26:22.859981Z'
+  updated: '2026-07-10T08:47:48.255717Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:07:52.232247Z'
     agent: codex
@@ -127612,6 +127633,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T08:47:48.255717Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-224
   title: rebase/resolve conflicts on organvm/domus-genoma#224
   repo: organvm/domus-genoma
@@ -127619,7 +127645,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -127640,7 +127666,13 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  dispatch_log: []
+  updated: '2026-07-10T08:47:48.255717Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T08:47:48.255717Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-230
   title: rebase/resolve conflicts on organvm/domus-genoma#230
   repo: organvm/domus-genoma
@@ -127648,7 +127680,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -127669,7 +127701,13 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  dispatch_log: []
+  updated: '2026-07-10T08:47:48.255717Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T08:47:48.255717Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-233
   title: rebase/resolve conflicts on organvm/domus-genoma#233
   repo: organvm/domus-genoma
@@ -127677,7 +127715,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -127698,4 +127736,10 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  dispatch_log: []
+  updated: '2026-07-10T08:47:48.255717Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T08:47:48.255717Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
