@@ -84,7 +84,7 @@ resource_types:
   pull_request:
     identity: derived
     desired: ["mergeable_when_green", "current_base"]
-    observe: "scripts/_pr_scan.py::enumerate_open_prs"
+    observe: "GitHub GraphQL repositories.pullRequests(states: OPEN).totalCount"
     effector:
       - {kind: delegate, argv: [python3, scripts/merge-drain.py]}
       - {kind: delegate, argv: [python3, scripts/self-heal.py]}

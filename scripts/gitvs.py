@@ -50,8 +50,6 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from _pr_scan import enumerate_open_prs  # noqa: E402  (shared, dependency-injected, fail-open)
-
 # ROOT is the script's OWN tree (never LIMEN_ROOT) — a registry-drift predicate must validate the tree
 # it lives in, so the parity gate checks THIS checkout's estate.yaml in a worktree/CI, not wherever an
 # ambient LIMEN_ROOT points. The check-gates.py / check-params.py / credential-wall.py invariant. In the
@@ -207,6 +205,51 @@ def _integration_observe(estate: dict, token: str | None, online: bool) -> dict:
     return out
 
 
+def _owner_open_pr_counts(owner: str, token: str | None) -> dict[str, int] | None:
+    """Return exact open-PR counts by repo through the paginated repository graph.
+
+    GitHub search is capped and an App token makes ``--author @me`` mean the App, so neither is an
+    estate census. Repository ``totalCount`` is exact and adding/removing repositories naturally
+    changes the result without a repo list or scan ceiling in Limen.
+    """
+
+    for root_kind in ("organization", "user"):
+        cursor: str | None = None
+        counts: dict[str, int] = {}
+        while True:
+            affiliation = ",ownerAffiliations:OWNER" if root_kind == "user" else ""
+            query = (
+                "query($login:String!,$cursor:String){"
+                f"{root_kind}(login:$login){{repositories(first:100,after:$cursor{affiliation}){{"
+                "nodes{nameWithOwner pullRequests(states:OPEN){totalCount}}"
+                "pageInfo{hasNextPage endCursor}}}}"
+            )
+            args = ["api", "graphql", "-f", f"query={query}", "-F", f"login={owner}"]
+            if cursor:
+                args.extend(["-F", f"cursor={cursor}"])
+            result = _gh(args, token, timeout=60)
+            if result.returncode != 0:
+                return None
+            try:
+                payload = json.loads(result.stdout or "{}")
+                owner_data = (payload.get("data") or {}).get(root_kind)
+                if owner_data is None:
+                    break
+                repositories = owner_data["repositories"]
+                for node in repositories.get("nodes") or []:
+                    repo = str(node["nameWithOwner"])
+                    counts[repo] = int((node.get("pullRequests") or {})["totalCount"])
+                page = repositories["pageInfo"]
+                if not page.get("hasNextPage"):
+                    return counts
+                cursor = str(page.get("endCursor") or "")
+                if not cursor:
+                    return None
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+                return None
+    return None
+
+
 def observe(estate: dict) -> dict:
     """Build the actual-state ledger. Every block is fail-open: a gh/parse failure degrades to null,
     never raises; `online` records whether the live rungs ran. Counts + names only (the _scrub firewall —
@@ -223,7 +266,7 @@ def observe(estate: dict) -> dict:
             "installations": None,
         },
         "repos": {"total": None, "by_class": {}},
-        "prs": {"open_total": 0, "by_repo": {}},
+        "prs": {"open_total": None, "by_repo": {}, "complete": False},
         "branches": {"conductor_by_reason": _local_branch_reasons()},
         "secrets": {"homed": None},
         "usage": {"rate_limit_headroom_pct": None},
@@ -231,12 +274,23 @@ def observe(estate: dict) -> dict:
 
     owner_list = owners(estate)
 
-    # PRs — reuse the shared enumerator (one cheap call, stable order, fail-open []).
-    prs = enumerate_open_prs(owner_list, lambda a: _gh(a, token), want_url=False) if online else []
-    by_repo: dict[str, int] = {}
-    for repo, _num in prs:
-        by_repo[repo] = by_repo.get(repo, 0) + 1
-    led["prs"] = {"open_total": len(prs), "by_repo": dict(sorted(by_repo.items()))}
+    # PRs — exact per-repository totalCount, paginated across the live owner graph. No search cap.
+    if online:
+        by_repo: dict[str, int] = {}
+        complete = True
+        for owner in owner_list:
+            counts = _owner_open_pr_counts(owner, token)
+            if counts is None:
+                complete = False
+                break
+            by_repo.update(counts)
+        if complete:
+            nonzero = {repo: count for repo, count in by_repo.items() if count}
+            led["prs"] = {
+                "open_total": sum(by_repo.values()),
+                "by_repo": dict(sorted(nonzero.items())),
+                "complete": True,
+            }
 
     # App installations (permissions posture; over-grant is class D).
     if online:
@@ -748,7 +802,8 @@ def main(argv: list[str] | None = None) -> int:
         n = led["repos"]["total"]
         print(
             f"[gitvs] census: online={led['online']} token={led['app']['token_path']} "
-            f"repos={n if n is not None else '—'} open_prs={led['prs']['open_total']} "
+            f"repos={n if n is not None else '—'} "
+            f"open_prs={led['prs']['open_total'] if led['prs']['open_total'] is not None else '—'} "
             f"→ {LEDGER.relative_to(ROOT)}"
         )
         if args.print:
