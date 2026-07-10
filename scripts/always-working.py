@@ -846,7 +846,10 @@ def estate_custody_receipt() -> dict[str, Any]:
     reclaim_candidates = load_json(WORKTREE_RECLAIM_CANDIDATES_JSON, {})
     implementation_receipts = receipt.get("receipts") if isinstance(receipt, dict) else []
     implementation_status = str(receipt.get("status") or "") if isinstance(receipt, dict) else ""
-    implementation_complete = implementation_status == "complete" and bool(implementation_receipts)
+    implementation_complete = bool(implementation_receipts) and (
+        receipt.get("complete") is True
+        or implementation_status in {"complete", "owner_receipts_complete"}
+    )
     if missing_volumes or missing_docs or missing_layers:
         status = STATUS_BLOCKED
         verdict = "external estate custody is missing required mounted evidence"

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 
@@ -59,6 +60,22 @@ def test_build_snapshot_classifies_configured_bucket(monkeypatch, tmp_path):
     monkeypatch.setattr(mod, "RECLAIM_LOGS", {})
     monkeypatch.setattr(mod, "disk_free_gib", lambda: 50.0)
     monkeypatch.setattr(mod, "TARGET_FREE_GIB", 200.0)
+    monkeypatch.setattr(
+        mod,
+        "worktree_lifecycle_summary",
+        lambda: {
+            "present": True,
+            "ok": True,
+            "total": 2,
+            "debt": 0,
+            "reapable": 0,
+            "limit": 12,
+            "reapable_limit": 0,
+            "by_reason": {"active(<6h)": 2},
+            "by_reapable_reason": {},
+            "summary": "0 debt roots / 2 scanned; 0 reapable roots",
+        },
+    )
 
     snapshot = mod.build_snapshot()
 
@@ -66,3 +83,67 @@ def test_build_snapshot_classifies_configured_bucket(monkeypatch, tmp_path):
     assert snapshot["shortfall_gib"] == 150.0
     assert snapshot["buckets"][0]["id"] == "bucket"
     assert snapshot["buckets"][0]["exists"] is True
+    assert snapshot["worktree_lifecycle"]["summary"] == "0 debt roots / 2 scanned; 0 reapable roots"
+
+
+def test_worktree_lifecycle_summary_parses_worktree_debt(monkeypatch, tmp_path):
+    mod = _load("substrate_storage_pressure_worktree_uut")
+    root = tmp_path / "limen"
+    script = root / "scripts" / "worktree-debt.py"
+    script.parent.mkdir(parents=True)
+    script.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    monkeypatch.setattr(mod, "ROOT", root)
+
+    def fake_run(*args, **kwargs):
+        return subprocess.CompletedProcess(
+            args[0],
+            0,
+            json.dumps(
+                {
+                    "total": 3,
+                    "debt": 0,
+                    "reapable": 1,
+                    "limit": 12,
+                    "reapable_limit": 0,
+                    "by_reason": {"active(<6h)": 2, "clean+merged+idle": 1},
+                    "by_reapable_reason": {"clean+merged+idle": 1},
+                }
+            ),
+            "",
+        )
+
+    monkeypatch.setattr(mod.subprocess, "run", fake_run)
+
+    summary = mod.worktree_lifecycle_summary()
+
+    assert summary["ok"] is True
+    assert summary["total"] == 3
+    assert summary["reapable"] == 1
+    assert summary["by_reason"]["clean+merged+idle"] == 1
+    assert summary["summary"] == "0 debt roots / 3 scanned; 1 reapable roots"
+
+
+def test_render_includes_worktree_lifecycle(monkeypatch, tmp_path):
+    mod = _load("substrate_storage_pressure_render_uut")
+    snapshot = {
+        "generated_at": "2026-07-10T00:00:00Z",
+        "status": "needs-owner-gates",
+        "internal_free_gib": 90.0,
+        "target_free_gib": 200.0,
+        "shortfall_gib": 110.0,
+        "safe_reclaim": {},
+        "worktree_lifecycle": {
+            "ok": True,
+            "summary": "0 debt roots / 3 scanned; 1 reapable roots",
+            "limit": 12,
+            "reapable_limit": 0,
+            "by_reason": {"active(<6h)": 2, "clean+merged+idle": 1},
+        },
+        "buckets": [],
+    }
+
+    rendered = mod.render(snapshot)
+
+    assert "## Scratch / Worktree Lifecycle" in rendered
+    assert "`0 debt roots / 3 scanned; 1 reapable roots`" in rendered
+    assert "| `clean+merged+idle` | `1` |" in rendered

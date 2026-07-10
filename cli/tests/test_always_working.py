@@ -502,6 +502,67 @@ def test_estate_custody_receipt_requires_implementation_receipts(monkeypatch, tm
     assert "thin hot cache" in receipt["assignment_packet"]["task"]
 
 
+def test_estate_custody_receipt_accepts_owner_receipts_complete(monkeypatch, tmp_path):
+    mod = _load("always_working_estate_complete_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    archive = tmp_path / "Archive4T"
+    ingress = tmp_path / "Ingress"
+    scratch = tmp_path / "Scratch"
+    t7 = tmp_path / "T7Recovery"
+    lifeboat = t7 / "CleanUnique-Lifeboat-2026-06-13"
+
+    for path in (
+        archive / "_OPERATIONS",
+        ingress,
+        scratch,
+        lifeboat / "00_SUBSTRATE",
+        lifeboat / "10_PROFILE",
+        lifeboat / "20_TEXT",
+        lifeboat / "30_CODE",
+        lifeboat / "_MANIFESTS",
+        root / "docs",
+    ):
+        path.mkdir(parents=True, exist_ok=True)
+    storage_manual = archive / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
+    disk_policy = archive / "_OPERATIONS" / "LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md"
+    for path in (
+        storage_manual,
+        disk_policy,
+        root / "docs" / "vltima-absorb-cadence.md",
+        root / "docs" / "vltima-prior-excavations.md",
+        root / "docs" / "photos-universe-recovery-2026-06-29.md",
+        root / "docs" / "estate-custody-primitives.md",
+    ):
+        path.write_text("# receipt\n", encoding="utf-8")
+    (root / "docs" / "estate-custody-implementation-receipts.json").write_text(
+        json.dumps(
+            {
+                "status": "owner_receipts_complete",
+                "complete": True,
+                "receipts": [{"type": "doctrine", "path": "docs/estate-custody-primitives.md"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "ARCHIVE4T_ROOT", archive)
+    monkeypatch.setattr(mod, "INGRESS_ROOT", ingress)
+    monkeypatch.setattr(mod, "SCRATCH_ROOT", scratch)
+    monkeypatch.setattr(mod, "T7RECOVERY_ROOT", t7)
+    monkeypatch.setattr(mod, "T7_LIFEBOAT_ROOT", lifeboat)
+    monkeypatch.setattr(mod, "ESTATE_CUSTODY_DOC", root / "docs" / "estate-custody-primitives.md")
+    monkeypatch.setattr(mod, "ESTATE_CUSTODY_RECEIPT", root / "docs" / "estate-custody-implementation-receipts.json")
+    monkeypatch.setattr(mod, "STORAGE_OPERATING_MANUAL", storage_manual)
+    monkeypatch.setattr(mod, "LOCAL_DISK_EXPULSION_POLICY", disk_policy)
+
+    receipt = mod.estate_custody_receipt()
+
+    assert receipt["status"] == mod.STATUS_DONE
+    assert receipt["evidence"]["implementation_receipt_status"] == "owner_receipts_complete"
+    assert receipt["evidence"]["implementation_receipt_complete"] is True
+
+
 def test_mail_active_flagged_done_when_story_ledger_covers_current_flags(monkeypatch, tmp_path):
     mod = _load("always_working_mail_story_uut", ALWAYS_WORKING)
     root = tmp_path / "limen"

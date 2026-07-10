@@ -167,6 +167,51 @@ def reclaim_summary(path: Path) -> dict[str, Any]:
     }
 
 
+def worktree_lifecycle_summary() -> dict[str, Any]:
+    script = ROOT / "scripts" / "worktree-debt.py"
+    if not script.exists():
+        return {"present": False, "ok": False, "error": "scripts/worktree-debt.py missing"}
+    try:
+        proc = subprocess.run(
+            ["python3", str(script), "--json"],
+            cwd=str(ROOT),
+            text=True,
+            capture_output=True,
+            timeout=90,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {"present": True, "ok": False, "error": str(exc)}
+    if proc.returncode != 0:
+        return {
+            "present": True,
+            "ok": False,
+            "returncode": proc.returncode,
+            "error": (proc.stderr or proc.stdout or "worktree-debt failed").strip()[:500],
+        }
+    try:
+        data = json.loads(proc.stdout)
+    except ValueError:
+        return {"present": True, "ok": False, "returncode": proc.returncode, "error": "invalid JSON"}
+    by_reason = data.get("by_reason") if isinstance(data.get("by_reason"), dict) else {}
+    by_reapable_reason = data.get("by_reapable_reason") if isinstance(data.get("by_reapable_reason"), dict) else {}
+    total = int(data.get("total") or 0)
+    debt = int(data.get("debt") or 0)
+    reapable = int(data.get("reapable") or 0)
+    return {
+        "present": True,
+        "ok": True,
+        "total": total,
+        "debt": debt,
+        "reapable": reapable,
+        "limit": data.get("limit"),
+        "reapable_limit": data.get("reapable_limit"),
+        "by_reason": by_reason,
+        "by_reapable_reason": by_reapable_reason,
+        "summary": f"{debt} debt roots / {total} scanned; {reapable} reapable roots",
+    }
+
+
 def build_snapshot() -> dict[str, Any]:
     free = disk_free_gib()
     shortfall = round(max(TARGET_FREE_GIB - (free or 0), 0), 1) if free is not None else None
@@ -192,6 +237,7 @@ def build_snapshot() -> dict[str, Any]:
         "internal_free_gib": free,
         "shortfall_gib": shortfall,
         "safe_reclaim": reclaim,
+        "worktree_lifecycle": worktree_lifecycle_summary(),
         "buckets": rows,
         "status": "needs-owner-gates" if shortfall else "clear",
     }
@@ -215,6 +261,22 @@ def render(snapshot: dict[str, Any]) -> str:
             f"- `{name}`: `{row['cumulative_reclaimed_size']}` over `{row['apply_events']}` apply event(s); "
             f"latest `{row['latest_generated_at']}`."
         )
+    lifecycle = snapshot.get("worktree_lifecycle") or {}
+    lines += [
+        "",
+        "## Scratch / Worktree Lifecycle",
+        "",
+    ]
+    if lifecycle.get("ok"):
+        lines.append(f"- Summary: `{lifecycle.get('summary')}`.")
+        lines.append(f"- Debt cap: `{lifecycle.get('limit')}`; reapable cap: `{lifecycle.get('reapable_limit')}`.")
+        by_reason = lifecycle.get("by_reason") if isinstance(lifecycle.get("by_reason"), dict) else {}
+        if by_reason:
+            lines += ["", "| Reason | Roots |", "|---|---:|"]
+            for reason, count in sorted(by_reason.items(), key=lambda item: (-int(item[1]), str(item[0]))):
+                lines.append(f"| `{reason}` | `{count}` |")
+    else:
+        lines.append(f"- Worktree lifecycle unavailable: `{lifecycle.get('error', 'unknown')}`.")
     lines += [
         "",
         "## Remaining Large Buckets",

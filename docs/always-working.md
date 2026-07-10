@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-10T00:35:01+00:00`
+Generated: `2026-07-10T00:45:46+00:00`
 Status: `needs-work`
-Required open: `6`
+Required open: `5`
 Blocked: `1`
-Done from receipt: `4`
+Done from receipt: `5`
 
 ## Contract
 
@@ -19,7 +19,7 @@ Done from receipt: `4`
 - ID: `SUBSTRATE-DISK-TEMP`
 - Workstream: `substrate`
 - Status: `assigned_from_existing_work`
-- Verdict: internal free space is 106.6 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB
+- Verdict: internal free space is 106.7 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB
 - Lane fit: `codex-local`
 - Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
 - Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
@@ -28,8 +28,8 @@ Done from receipt: `4`
 
 | Priority | ID | Status | Verdict |
 |---:|---|---|---|
-| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | internal free space is 106.6 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB |
-| 5 | `ESTATE-CUSTODY` | `assigned_from_existing_work` | estate doctrine exists; implementation receipt is not complete |
+| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | internal free space is 106.7 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB |
+| 5 | `ESTATE-CUSTODY` | `done_from_receipt` | run-and-gun laptop cache and external estate custody have implementation receipts |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
 | 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.7%, reviews 0.8% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `done_from_receipt` | credential wall and historical token tombstone receipt are present |
@@ -65,28 +65,6 @@ Done from receipt: `4`
   - `~/Workspace/limen/scripts/reap-clones.py`
   - `~/Workspace/limen/scripts/substrate-storage-pressure.py`
   - `~/Workspace/limen/scripts/worktree-debt.py`
-
-### ESTATE-CUSTODY
-
-- Lane fit: `codex-conductor`
-- Repo/root: `~/Workspace/limen`
-- Task: Build the run-and-gun estate lifecycle: external SSDs hold durable private/raw data, processed/redacted corpora, repo/org mirrors, photos/media packages, and recovery copies; the laptop stays a thin hot cache. Route every pain point to an owner repo and a reusable public shell when private data can be redacted. Use the worktree reclaim candidate packet as the score-gated cleanup input; do not delete local roots without acceptance/redaction proof.
-- Predicate: `test -f docs/estate-custody-primitives.md && python3 scripts/worktree-reclaim-candidates.py --write --limit 50 && python3 scripts/substrate-ledger.py --write && python3 scripts/vltima-prior-excavations.py --write`
-- Receipt target: `~/Workspace/limen/docs/estate-custody-implementation-receipts.json`
-- Stop condition: external estate cleanup, prompt chronology, repo/org custody, photos processing, and pain-point productization each have owner receipts without destructive local-only action
-- Existing receipts:
-  - `/Volumes/Archive4T/_OPERATIONS/STORAGE-OPERATING-MANUAL-2026-06-15.md`
-  - `/Volumes/Archive4T/_OPERATIONS/LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md`
-  - `~/Workspace/limen/docs/vltima-absorb-cadence.md`
-  - `~/Workspace/limen/docs/vltima-prior-excavations.md`
-  - `~/Workspace/limen/docs/photos-universe-recovery-2026-06-29.md`
-  - `~/Workspace/limen/docs/estate-custody-primitives.md`
-  - `~/Workspace/limen/docs/worktree-reclaim-candidates.md`
-  - `~/Workspace/limen/docs/worktree-reclaim-candidates.json`
-  - `https://github.com/organvm/limen/issues/685`
-  - `https://github.com/organvm/limen/issues/688`
-  - `https://github.com/organvm/media-ark/issues/56`
-  - `https://github.com/organvm/portvs/issues/2`
 
 ### PUBLIC-FACE-PROFILE
 

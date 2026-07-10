@@ -1,6 +1,6 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T00:34:12Z`
+Generated: `2026-07-10T00:45:05Z`
 Status: `needs-owner-gates`
 Internal free: `93.3 GiB`
 Target free: `200.0 GiB`
@@ -11,6 +11,21 @@ Shortfall: `106.7 GiB`
 - `generated-state`: `26.6 GiB` over `2` apply event(s); latest `2026-07-10T00:13:43Z`.
 - `tool-cache`: `4.7 GiB` over `1` apply event(s); latest `2026-07-10T00:20:08Z`.
 - `ollama-models`: `9.3 GiB` over `1` apply event(s); latest `2026-07-10T00:27:23Z`.
+
+## Scratch / Worktree Lifecycle
+
+- Summary: `0 debt roots / 473 scanned; 0 reapable roots`.
+- Debt cap: `12`; reapable cap: `0`.
+
+| Reason | Roots |
+|---|---:|
+| `active(<6h)` | `279` |
+| `remote-pr-open` | `71` |
+| `antigravity-scratch-managed` | `48` |
+| `active(<24h)` | `46` |
+| `owner-blocker` | `27` |
+| `remote-merged` | `1` |
+| `remote-superseded` | `1` |
 
 ## Remaining Large Buckets
 
