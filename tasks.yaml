@@ -118275,24 +118275,29 @@ tasks:
     receipt naming the failing check instead of an unmergeable PR.
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - retro-0708
+  - slow
   urls: []
   context: 'docs/reviews/retro-2026-06-24--2026-07-08.md finding 1 (cifix hamster
     wheel: growth-auditor #16-#22, dot-github--theoria #492+ all open-unmergeable)'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:07:55.764360Z'
+  updated: '2026-07-10T10:40:14.945240Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:40:14.945240Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: RETRO-0708-HEAL-RECEIPT-OUTCOME
   title: Heal receipts outcome field + beat-wired heal-convergence report
   description: 'Add {outcome: already_green|fixed|gave_up, failing_checks:[...]} to
@@ -118459,20 +118464,21 @@ tasks:
     \ The sanctioned direct lane is board/receipt DATA only, never code."
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: governance
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - retro-0708
   - tried:jules
+  - slow
   urls: []
   context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 7 + incident PR#694
     (root cause 41e8b28b, direct-main dispatch code edit, no PR/CI)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:07:55.764360Z'
+  updated: '2026-07-10T10:40:14.945240Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -118489,6 +118495,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:40:14.945240Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: RETRO-0708-SERVICE-DOWN-PROBE
   title: Service-down lane detection in _down_lanes()/usage.json
   description: N consecutive async failures with empty output -> health=service-down
@@ -118497,21 +118507,22 @@ tasks:
     simulates 3 failures and asserts the lane is skipped.
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: conductor
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - retro-0708
   - tried:jules
   - tried:opencode
+  - slow
   urls: []
   context: 'docs/reviews/retro-2026-06-24--2026-07-08.md finding 9 (07-05: 46/46 dead
     Claude reservations; ORG tasks lost connector fallback) + evolution 7'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:07:55.764360Z'
+  updated: '2026-07-10T10:40:14.945240Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -118537,6 +118548,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:40:14.945240Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: RETRO-0708-CODEX-BUDGET-RESET
   title: Codex per-task budget reset + pre-dispatch uncached-token cap
   description: Reset elapsed/budget counters on task_complete in codex-token-accounting.py
@@ -118571,24 +118586,29 @@ tasks:
     dedup at dispatch to prevent duplicate ORG PRs (e.g. #625+#630, #623+#628).'
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - retro-0708
+  - slow
   urls: []
   context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 5 (zero codex PRs
     merged 07-05..08; grant never exercised; duplicates)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:07:55.764360Z'
+  updated: '2026-07-10T10:40:14.945240Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:40:14.945240Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: RETRO-0708-ARMED-VALVE-AUDIT
   title: 'armed-valve-audit.py: separate parked levers from silently-off valves'
   description: Enumerate every beat-wired organ whose effect is gated behind an env
@@ -120465,17 +120485,18 @@ tasks:
   title: First-paying-customer readiness pass on PR-Repair Factory
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: financial
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - revenue-readiness
   - revenue
   - product
   - ship-order
   - generated
+  - slow
   urls: []
   context: "In organvm/limen, find the single highest-leverage gap between the current\
     \ product and something a stranger would pay for (first-dollar path: GitHub Action\
@@ -120485,13 +120506,17 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:07:55.764360Z'
+  updated: '2026-07-10T10:40:14.945240Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:40:14.945240Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: REV-organvm-limen-revenue-pro-tier-0708
   title: Make the Pro-tier checkout merge-ready for MONETA Mint-as-a-Service
   repo: organvm/limen
@@ -120807,26 +120832,31 @@ tasks:
     path.'
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: financial
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - origin-0708
   - revenue
   - product
+  - slow
   urls: []
   context: docs/reviews/deep-history-2022-2026.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:07:55.764360Z'
+  updated: '2026-07-10T10:40:14.945240Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:40:14.945240Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-rebase-organvm-limen-486
   title: rebase/resolve conflicts on organvm/limen#486
   repo: organvm/limen
@@ -122155,20 +122185,21 @@ tasks:
     \ each missing fallback it finds becomes its own bounded task."
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: sovereignty
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - sovereign
   - excav-0708
   - tried:opencode
+  - slow
   urls: []
   context: memory sovereign-cash-intake (deplatforming escalation 2026-07-08)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:07:55.764360Z'
+  updated: '2026-07-10T10:40:14.945240Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -122190,6 +122221,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:40:14.945240Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-rebase-organvm-growth-auditor-9
   title: rebase/resolve conflicts on organvm/growth-auditor#9
   repo: organvm/growth-auditor
