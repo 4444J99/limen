@@ -6,14 +6,11 @@ tests never execute the real beat sensors.
 
 import importlib.util
 import os
-import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "beat-sensors.py"
 REAL_REGISTRY = ROOT / "institutio" / "governance" / "sensors.yaml"
-METABOLIZE = ROOT / "scripts" / "metabolize.sh"
-_SCRIPT_RE = re.compile(r"scripts/([\w./-]+\.(?:py|sh))")
 
 FIXTURE = """\
 schema_version: 0.1
@@ -126,55 +123,14 @@ def test_reload_env_missing_file_is_fail_open(tmp_path):
     m._load_env_file(tmp_path / "does-not-exist.env")  # must not raise
 
 
-def _script_of(cmd: str):
-    hit = _SCRIPT_RE.search(cmd)
-    return hit.group(1) if hit else None
-
-
-def _registry_script_sequence():
-    """Ordered sensor scripts the SENSORS registry declares for the metabolize source (all steps)."""
+def test_real_registry_derives_nonempty_metabolize_loop(capsys):
+    """Smoke test on the SHIPPED registry: metabolize.sh now derives its whole sensor loop from
+    sensors.yaml (the hand-wired blocks were deleted once proven equivalent). A dry --run against the
+    real registry must emit the full sensor pass (headers for ~20 sensors) and exit 0. Guards against a
+    registry that becomes empty/unparseable and silently turns the live beat into a no-op sensor pass."""
     m = _mod()
-    sensors = m.load_sensors(REAL_REGISTRY)
-    seq = []
-    for _sid, s in m.iter_source(sensors, "metabolize"):
-        for step in s.get("steps", []):
-            sc = _script_of(step.get("command", ""))
-            if sc:
-                seq.append(sc)
-    return seq
-
-
-def _shell_script_sequence():
-    """Ordered sensor scripts the hand-wired `── 0x ──` blocks (the LIMEN_BEAT_DERIVE else-branch) run."""
-    text = METABOLIZE.read_text(encoding="utf-8")
-    start = text.index("LIMEN_BEAT_DERIVE")
-    else_idx = text.index("\nelse\n", start)
-    end_idx = text.index("fi  # ── end beat sensors")
-    block = text[else_idx:end_idx]
-    seq = []
-    for raw in block.splitlines():
-        line = raw.strip()
-        if line.startswith("#") or "scripts/" not in line:
-            continue
-        if "python3" not in line and "bash " not in line:
-            continue
-        sc = _script_of(line)
-        if sc:
-            seq.append(sc)
-    return seq
-
-
-def test_equivalence_derived_matches_handwired_blocks():
-    """THE FLIP SAFETY PROOF: the sensor-script sequence the registry derives for the metabolize beat
-    is byte-identical (same scripts, same order, same multiplicity) to what the hand-wired `── 0x ──`
-    blocks invoke. If Phase-1's transcription dropped, added, or reordered a sensor, this fails —
-    so LIMEN_BEAT_DERIVE=1 runs exactly what the legacy blocks ran."""
-    derived = _registry_script_sequence()
-    handwired = _shell_script_sequence()
-    assert derived == handwired, (
-        "SENSOR DERIVE-FLIP DIVERGENCE — registry vs metabolize.sh hand-wired blocks:\n"
-        f"  registry-derived: {derived}\n"
-        f"  shell-handwired : {handwired}\n"
-        f"  only in registry: {[s for s in derived if s not in handwired]}\n"
-        f"  only in shell   : {[s for s in handwired if s not in derived]}"
-    )
+    rc = m.run("metabolize", dry_run=True, registry=REAL_REGISTRY)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert out.count("── ") >= 15  # ~20 metabolize sensors each print a `── NN. title ──` header
+    assert "scripts/creds-hydrate.py --apply" in out  # first sensor still derived

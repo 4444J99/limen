@@ -39,6 +39,10 @@ SCAN_DIRS = ("cli/src", "scripts", "web/api", "mcp")
 # container/launchd plumbing, or the ianva package is legitimately used, not orphaned.
 ORPHAN_SCAN_DIRS = SCAN_DIRS + (".github", "container", "ianva")
 SCAN_SUFFIXES = (".py", ".sh", ".mjs", ".js", ".ts", ".yaml", ".yml", ".json", ".plist", ".toml")
+# The SENSORS registry is a reader surface: beat-sensors.py consumes each sensor's `gate` dynamically
+# (os.environ.get(gate)), so once the hand-wired `${LIMEN_*}` beat blocks are derived away, a sensor
+# gate/knob is wired HERE — not a false orphan. Scanned for the orphan direction only (not undeclared).
+SENSORS_REGISTRY = ROOT / "institutio" / "governance" / "sensors.yaml"
 TOKEN = re.compile(r"LIMEN_[A-Z0-9_]+")
 
 # Env names the body legitimately uses that we do NOT own as LIMEN_ params
@@ -71,6 +75,17 @@ def referenced_tokens(root: Path = ROOT, dirs: tuple[str, ...] = SCAN_DIRS) -> s
                 if tok and tok != "LIMEN":
                     found.add(tok)
     return found
+
+
+def registry_referenced_tokens(registry: Path = SENSORS_REGISTRY) -> set[str]:
+    """LIMEN_* tokens the beat-sensors runner consumes via the SENSORS registry — gate values, when_env,
+    and ``${LIMEN_*}`` vars embedded in step commands. Grepping the whole file catches all three, so a
+    sensor gate is recognized as wired once metabolize.sh derives its loop from the registry."""
+    try:
+        text = registry.read_text(errors="ignore")
+    except OSError:
+        return set()
+    return {t for t in (normalize(x) for x in TOKEN.findall(text)) if t and t != "LIMEN"}
 
 
 def load_panel_text() -> str:
@@ -164,8 +179,9 @@ def main(argv: list[str] | None = None) -> int:
     declared = declared_envs(panel)
     referenced = referenced_tokens()
     undeclared = compute_undeclared(referenced, declared)
-    # Orphan direction: scan wider (CI + container + ianva) so CI/launchd-read params aren't false orphans.
-    referenced_wide = referenced | referenced_tokens(dirs=ORPHAN_SCAN_DIRS)
+    # Orphan direction: scan wider (CI + container + ianva) so CI/launchd-read params aren't false orphans;
+    # plus the SENSORS registry, whose gates the beat-sensors runner reads dynamically (not as literals).
+    referenced_wide = referenced | referenced_tokens(dirs=ORPHAN_SCAN_DIRS) | registry_referenced_tokens()
     orphans = compute_orphans(panel, referenced_wide)
 
     orphan_header = (

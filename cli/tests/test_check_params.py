@@ -67,6 +67,40 @@ def test_compute_orphans_clears_when_param_is_read():
     assert cp.compute_orphans(panel, referenced_wide={"LIMEN_KNOB"}) == set()
 
 
+def test_registry_referenced_tokens_recognizes_sensor_gates(tmp_path):
+    """Once metabolize.sh derives its sensor loop from sensors.yaml, the beat-sensors runner reads each
+    gate DYNAMICALLY (os.environ.get(gate)) — the literal is gone from the shell. check-params must
+    recognize the registry as a reader surface (gate values, when_env, and ${LIMEN_*} in commands),
+    else every sensor gate becomes a false orphan."""
+    cp = _load()
+    reg = tmp_path / "sensors.yaml"
+    reg.write_text(
+        "sensors:\n"
+        "  x:\n"
+        "    gate: LIMEN_FORK_SAFETY_CHECK\n"
+        "    source: [metabolize]\n"
+        "    steps:\n"
+        "      - command: 'python3 scripts/s.py --cap \"${LIMEN_SESSION_WALK_CAP:-2}\"'\n"
+        "        when_env: LIMEN_LATEST_SESSION_JSONL\n"
+        "        severity: advisory\n",
+        encoding="utf-8",
+    )
+    toks = cp.registry_referenced_tokens(registry=reg)
+    assert "LIMEN_FORK_SAFETY_CHECK" in toks  # gate field
+    assert "LIMEN_LATEST_SESSION_JSONL" in toks  # when_env field
+    assert "LIMEN_SESSION_WALK_CAP" in toks  # ${LIMEN_*} embedded in a step command
+    # and such a gate is therefore NOT an orphan
+    panel = {
+        "parameters": {"LIMEN_FORK_SAFETY_CHECK": {"env": "LIMEN_FORK_SAFETY_CHECK", "default": "1", "owner": "x"}}
+    }
+    assert cp.compute_orphans(panel, referenced_wide=toks) == set()
+
+
+def test_registry_referenced_tokens_missing_file_is_empty(tmp_path):
+    cp = _load()
+    assert cp.registry_referenced_tokens(registry=tmp_path / "nope.yaml") == set()
+
+
 def test_compute_orphans_skips_non_limen_namespaces():
     # A non-LIMEN param (VITALS_/INSTITVTIO_) is out of scope — the LIMEN_* scanner cannot see it.
     cp = _load()

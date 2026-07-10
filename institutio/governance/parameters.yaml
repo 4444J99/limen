@@ -1992,12 +1992,18 @@ parameters:
     owner: tabularius
     note: "Override for the crash-report scan root used by scripts/check-fork-safety.py (also settable via its --reports-dir flag). Empty (the default) scans the macOS default ~/Library/Logs/DiagnosticReports/ plus its Retired/ rotation subdir. Set to a temp directory in tests to inject fabricated .ips reports deterministically; never set on the live host."
 
+  LIMEN_CREDS_HYDRATE:
+    default: "1"               # ON — hydrate fleet creds from 1Password each beat (sensor 0a)
+    env: LIMEN_CREDS_HYDRATE
+    self_update: none
+    owner: tabularius
+    note: "Gate for the creds-hydrate beat sensor (institutio/governance/sensors.yaml section 0a): refresh ~/.limen.env from the op:// source of truth so a one-time login never repeats, then --verify each materialized cred against its service. Read by the beat-sensors runner via the SENSORS registry (was previously only an undeclared shell hardcode; declared here when the hand-wired blocks were derived away). 0 disables the hydration pass."
   LIMEN_BEAT_DERIVE:
-    default: "0"               # OFF (DARK) — hand-wired beat blocks stay live; 1 = derive from sensors.yaml
+    default: "1"               # ON — beat DERIVES its sensor loop from sensors.yaml; 0 = skip the sensor pass (escape hatch)
     env: LIMEN_BEAT_DERIVE
     self_update: none
     owner: governance
-    note: "Mode selector for the beat's continuous-runtime sensor loop (the IF-SENSOR-REGISTRY ideal form). When 0 (default) metabolize.sh runs the hand-wired `── 0x ──` blocks. When 1 it DERIVES the whole loop from institutio/governance/sensors.yaml via one call to scripts/beat-sensors.py --run --source metabolize — adding a sensor becomes one registry entry, not a shell edit in three places. Dark-first (observable-before-autonomous, the LIMEN_MAIN_GREEN_APPLY pattern): the derive path is proven byte-equivalent on a real beat before Branch-1b flips this default to 1 and deletes the legacy blocks. Parity held by scripts/check-sensors.py (its D-check accepts the derive-runner call in place of the literal gate strings)."
+    note: "Mode gate for the beat's continuous-runtime sensor loop (the IF-SENSOR-REGISTRY ideal form). When 1 (default) metabolize.sh DERIVES the whole loop from institutio/governance/sensors.yaml via one call to scripts/beat-sensors.py --run --source metabolize — adding a sensor is one registry entry, not a shell edit in three places. The 20 hand-wired `── 0x ──` blocks were deleted once the derive path was proven byte-equivalent (23-script equivalence test + an observed real-sensor run). 0 skips the sensor pass entirely — an escape hatch, NOT a fallback to hand-wired blocks (they no longer exist). Parity held by scripts/check-sensors.py (its D-check accepts the derive-runner call in place of the literal gate strings)."
 
   LIMEN_MAIN_GREEN_CHECK:
     default: "1"               # ON — detect a RED main trunk each beat (§0g3)
