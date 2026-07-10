@@ -1,6 +1,6 @@
 # Capacity Fill
 
-Generated: `2026-07-10T12:12:11+00:00`
+Generated: `2026-07-10T12:43:56+00:00`
 Status: `blocked`
 
 ## Capacity Census
@@ -12,12 +12,12 @@ Status: `blocked`
 | `opencode` | local-cli | `up` | 19749889 | 50000000 | /opt/homebrew/bin/opencode; live usage meter: remaining=19749889/50000000, consumed=30250111 |
 | `agy` | local-cli | `up` | 57 | 100 | /opt/homebrew/bin/agy; live usage meter: remaining=57/100, consumed=43 |
 | `gemini` | local-cli | `down` | 0 | 10 | /opt/homebrew/bin/gemini; live usage meter: remaining=0/10, consumed=11; usage health=exhausted; live remaining=0; dispatch down-lane gate |
-| `ollama` | local-cli | `down` | 75 | 600 | /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane |
+| `ollama` | local-cli | `down` | 592 | 600 | /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane |
 | `jules` | cloud-cli | `down` | 0 | 100 | /opt/homebrew/bin/jules; live usage meter: remaining=0/100, consumed=109; usage health=exhausted; live remaining=0; dispatch down-lane gate |
-| `copilot` | github-issue | `down` | 75 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
-| `warp` | paid-service | `down` | 75 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
-| `oz` | paid-service | `down` | 75 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
-| `github_actions` | github-actions | `down` | 75 | 600 | /opt/homebrew/bin/gh; workflow=limen-agent.yml@organvm/limen unavailable: HTTP 404: workflow limen-agent.yml not found on the default branch (https://api.github.com/repos/organvm/limen/actions/workflows/limen-agent.yml) |
+| `copilot` | github-issue | `down` | 592 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
+| `warp` | paid-service | `down` | 592 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
+| `oz` | paid-service | `down` | 592 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
+| `github_actions` | github-actions | `down` | 592 | 600 | /opt/homebrew/bin/gh; workflow=limen-agent.yml@organvm/limen unavailable: HTTP 404: workflow limen-agent.yml not found on the default branch (https://api.github.com/repos/organvm/limen/actions/workflows/limen-agent.yml) |
 
 ## Signal Quality
 
@@ -25,7 +25,7 @@ Status: `blocked`
 |---|---|---|---|---|
 | `codex` | vendor rate-limit meter | measured | usage health=ok; used=31/100 percent; remaining=69; headroom=69%; weekly=26.0%; source=vendor rate_limits; usable for pacing from provider rate_limits; weekly plan headroom is a steering input | Keep harvesting Codex vendor rate_limits into usage telemetry. |
 | `claude` | transcript-token estimate | estimate | usage health=ok; used=1682920/100000000 tokens; remaining=98317080; headroom=98%; source=ESTIMATE - tune to plan (/status); usable for pacing; rate-limit events still dominate stop decisions | Calibrate Claude plan pool cap from a trusted account meter. |
-| `opencode` | db-meter | measured | token clock health=ok; used=60.5%; accepting_tasks=True; updated=2026-07-10T12:08:31.416836+00:00; usage health=ok; used=30250111/50000000 tokens; remaining=19749889; headroom=39%; source=operator board cap until live vendor meter | Keep opencode-clock fresh from the SQLite usage DB. |
+| `opencode` | db-meter | measured | token clock health=ok; used=60.5%; accepting_tasks=True; updated=2026-07-10T12:43:19.937267+00:00; usage health=ok; used=30250111/50000000 tokens; remaining=19749889; headroom=39%; source=operator board cap until live vendor meter | Keep opencode-clock fresh from the SQLite usage DB. |
 | `agy` | usage-telemetry proxy | proxy + recent-rl | usage health=ok; used=43/100 runs; remaining=57; headroom=57%; source=operator board cap until live vendor meter; reachable; no recent heartbeat rate-limit marker; not proof of provider quota | Add a provider-backed Agy meter or recent rate-limit receipt. |
 | `gemini` | usage-telemetry proxy | proxy + recent-rl | usage health=exhausted; used=11/10 runs; remaining=0; headroom=0%; source=operator board cap until live vendor meter; reachable when auth is configured; no recent heartbeat rate-limit marker; daily cap remains board-derived | Add a Gemini quota/rate-limit receipt if available. |
 | `ollama` | local model presence | binary/model | down until a model is pulled | Pull the configured local model to light the floor lane. |
