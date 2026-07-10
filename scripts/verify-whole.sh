@@ -118,6 +118,9 @@ bash scripts/tests/identity-reconcile.test.sh
 step "Verify the signature-artifact fill (homed signature auto-embeds; absent -> hand-sign fallback)"
 bash scripts/tests/fill-phi-signature.test.sh
 
+step "Verify his-hand issue sync never re-mints a stamped lever (the #892/#827 duplicate-storm guard)"
+bash scripts/tests/sync-hishand-dedup.test.sh
+
 step "Verify the omega fixed-point predicate (composes every gate's --check; SKIP is never a silent PASS)"
 bash scripts/tests/omega.test.sh
 # The tally/exit/stamp contract is the deterministic code rung (stubbed children — no live board or
