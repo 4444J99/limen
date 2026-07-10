@@ -18,6 +18,7 @@ from limen.worktree_roots import (
     _float_env,
     _git_worktree_paths,
     _int_env,
+    _legacy_dispatch_roots,
     _path_list,
     _registered_repo_roots,
     iter_worktree_targets,
@@ -287,6 +288,20 @@ def test_registered_repo_roots_none_found(tmp_path, monkeypatch):
     assert _registered_repo_roots(tmp_path) == []
 
 
+# ---------------------------------------------------------------- _legacy_dispatch_roots
+def test_legacy_dispatch_roots_skips_current_dispatch_root(tmp_path, monkeypatch):
+    dispatch = tmp_path / "scratch" / "limen-worktrees"
+    legacy = tmp_path / "Workspace" / ".limen-worktrees"
+    dispatch.mkdir(parents=True)
+    legacy.mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_RECLAIM_LEGACY_WORKTREE_ROOTS", f"{dispatch}:{legacy}")
+
+    roots = _legacy_dispatch_roots(dispatch)
+
+    assert legacy in roots
+    assert dispatch not in roots
+
+
 # ---------------------------------------------------------------- iter_worktree_targets
 def test_iter_worktree_targets_dispatch_root_children(tmp_path, monkeypatch):
     dispatch = tmp_path / ".limen-worktrees"
@@ -300,6 +315,44 @@ def test_iter_worktree_targets_dispatch_root_children(tmp_path, monkeypatch):
     targets = iter_worktree_targets(tmp_path)
     names = {t.path.name for t in targets}
     assert "active-task" in names
+
+
+def test_iter_worktree_targets_scans_legacy_dispatch_root_when_scratch_is_default(tmp_path, monkeypatch):
+    scratch = tmp_path / "Scratch" / "limen-worktrees"
+    legacy = tmp_path / "Workspace" / ".limen-worktrees"
+    (scratch / "new-task").mkdir(parents=True)
+    (legacy / "old-task").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("LIMEN_WORKTREE_ROOT", raising=False)
+    monkeypatch.setenv("LIMEN_WORKTREES", str(scratch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_AGY_SCRATCH", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+
+    targets = iter_worktree_targets(tmp_path)
+    by_name = {target.path.name: target for target in targets}
+
+    assert by_name["new-task"].source == "dispatch-root"
+    assert by_name["old-task"].source.startswith("legacy-dispatch-root:")
+
+
+def test_iter_worktree_targets_explicit_dispatch_root_suppresses_legacy_default(tmp_path, monkeypatch):
+    scratch = tmp_path / "Scratch" / "limen-worktrees"
+    legacy = tmp_path / "Workspace" / ".limen-worktrees"
+    (scratch / "new-task").mkdir(parents=True)
+    (legacy / "old-task").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(scratch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_AGY_SCRATCH", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+
+    names = {target.path.name for target in iter_worktree_targets(tmp_path)}
+
+    assert "new-task" in names
+    assert "old-task" not in names
 
 
 def test_iter_worktree_targets_claude_worktrees(tmp_path, monkeypatch):

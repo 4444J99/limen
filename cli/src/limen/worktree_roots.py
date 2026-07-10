@@ -202,6 +202,26 @@ def _registered_repo_roots(limen_root: Path) -> list[Path]:
     return roots
 
 
+def _legacy_dispatch_roots(dispatch_root: Path) -> list[Path]:
+    """Historical dispatch roots to scan/reap without making them active creation roots."""
+    roots = _path_list("LIMEN_RECLAIM_LEGACY_WORKTREE_ROOTS", [Path.home() / "Workspace" / ".limen-worktrees"])
+    out: list[Path] = []
+    try:
+        dispatch_resolved = dispatch_root.resolve()
+    except OSError:
+        dispatch_resolved = dispatch_root
+    for root in roots:
+        if not root.is_dir():
+            continue
+        try:
+            if root.resolve() == dispatch_resolved:
+                continue
+        except OSError:
+            pass
+        out.append(root)
+    return out
+
+
 def iter_worktree_targets(limen_root: Path | None = None) -> list[WorktreeTarget]:
     root = limen_root or Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 
@@ -209,6 +229,11 @@ def iter_worktree_targets(limen_root: Path | None = None) -> list[WorktreeTarget
     dispatch_root = effective_worktree_root()
     targets.extend(_children(dispatch_root, _float_env("LIMEN_RECLAIM_MIN_AGE_H", 6), "dispatch-root"))
     broad_default = "LIMEN_WORKTREE_ROOT" not in os.environ
+
+    if _flag("LIMEN_RECLAIM_LEGACY_DISPATCH_WT", broad_default):
+        legacy_age = _float_env("LIMEN_RECLAIM_LEGACY_DISPATCH_AGE_H", _float_env("LIMEN_RECLAIM_MIN_AGE_H", 6))
+        for legacy_root in _legacy_dispatch_roots(dispatch_root):
+            targets.extend(_children(legacy_root, legacy_age, f"legacy-dispatch-root:{legacy_root}"))
 
     if _flag("LIMEN_RECLAIM_CLAUDE_WT", True):
         targets.extend(
