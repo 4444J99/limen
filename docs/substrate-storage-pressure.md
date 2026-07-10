@@ -1,10 +1,10 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T02:12:21Z`
+Generated: `2026-07-10T02:29:38Z`
 Status: `needs-owner-gates`
-Internal free: `88.9 GiB`
+Internal free: `88.5 GiB`
 Target free: `200.0 GiB`
-Shortfall: `111.1 GiB`
+Shortfall: `111.5 GiB`
 
 ## Safe Reclaim Already Run
 
@@ -14,16 +14,19 @@ Shortfall: `111.1 GiB`
 
 ## Scratch / Worktree Lifecycle
 
-- Summary: `0 debt roots / 497 scanned; 0 reapable roots`.
+- Summary: `75 debt roots / 466 scanned; 0 reapable roots`.
 - Debt cap: `12`; reapable cap: `0`.
 
 | Reason | Roots |
 |---|---:|
-| `active(<6h)` | `302` |
+| `active(<6h)` | `196` |
 | `remote-pr-open` | `72` |
 | `antigravity-scratch-managed` | `48` |
 | `active(<24h)` | `46` |
+| `dirty` | `39` |
+| `not-merged-to-default` | `33` |
 | `owner-blocker` | `27` |
+| `unpushed-commits` | `3` |
 | `remote-merged` | `1` |
 | `remote-superseded` | `1` |
 
@@ -36,7 +39,7 @@ Shortfall: `111.1 GiB`
 | `~/Pictures/Photos Library.photoslibrary` | `8.6 GiB` | `personal-media` | `media/photos custody` | personal-data human gate plus two-copy restore proof |
 | `~/Workspace/.limen-worktrees` | `8.3 GiB` | `worktree-cache` | `docs/worktree-reclaim-acceptance.md` | clean+merged+idle or explicit acceptance; current worktree-debt gate reports zero reapable |
 | `~/Library/Messages` | `7.3 GiB` | `personal-communications` | `communications custody` | personal-data human gate plus two-copy restore proof |
-| `~/.gemini/antigravity-cli` | `6.7 GiB` | `protected-agent-state` | `agy conductor` | preserve conversations/brain before eviction; scratch handled separately |
+| `~/.gemini/antigravity-cli` | `6.6 GiB` | `protected-agent-state` | `agy conductor` | preserve conversations/brain before eviction; scratch handled separately |
 | `~/Workspace/session-meta` | `5.1 GiB` | `repo-corpus-state` | `organvm/session-meta` | repo/archive custody proof before local cache eviction |
 | `~/.gemini/antigravity-cli/scratch` | `4.2 GiB` | `agy-scratch` | `docs/antigravity-scratch-bridge.md` | antigravity scratch archive/redaction acceptance ledger before removal |
 

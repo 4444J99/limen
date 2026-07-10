@@ -1,9 +1,9 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-10T02:20:09+00:00`
+Generated: `2026-07-10T02:29:42+00:00`
 Status: `needs-work`
-Required open: `2`
-Blocked: `2`
+Required open: `3`
+Blocked: `1`
 Done from receipt: `7`
 
 ## Contract
@@ -16,19 +16,19 @@ Done from receipt: `7`
 
 ## Next Packet
 
-- ID: `PUBLIC-FACE-CONTRIBUTION-BALANCE`
-- Workstream: `contribution-balance`
+- ID: `SUBSTRATE-DISK-TEMP`
+- Workstream: `substrate`
 - Status: `assigned_from_existing_work`
-- Verdict: GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.7%, reviews 0.9%
-- Lane fit: `codex-conductor`
-- Predicate: `python3 scripts/github-contribution-balance.py --login 4444J99 --json`
-- Receipt target: `~/Workspace/limen/docs/always-working.md`
+- Verdict: substrate lifecycle predicate is failing
+- Lane fit: `codex-local`
+- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
+- Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
 
 ## Workstreams
 
 | Priority | ID | Status | Verdict |
 |---:|---|---|---|
-| 0 | `SUBSTRATE-DISK-TEMP` | `blocked` | internal free space is 111.2 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 5.1 GiB, ollama-models 9.3 GiB; remaining bytes require owner gates |
+| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | substrate lifecycle predicate is failing |
 | 5 | `ESTATE-CUSTODY` | `done_from_receipt` | run-and-gun laptop cache and external estate custody have implementation receipts |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
 | 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.7%, reviews 0.9% |
