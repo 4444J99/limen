@@ -103744,7 +103744,7 @@ tasks:
   title: fix failing CI on organvm/limen#407
   repo: organvm/limen
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -103763,7 +103763,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T04:58:12.566684Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:50:23.463748Z'
     agent: opencode
@@ -103804,6 +103804,11 @@ tasks:
     status: open
     output: "recover: jules session 3568230817651916110 is awaiting_plan_approval\
       \ \u2192 reopened"
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: codex->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-408
   title: fix failing CI on organvm/limen#408
   repo: organvm/limen
@@ -103938,7 +103943,7 @@ tasks:
   title: fix failing CI on organvm/limen#410
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -103956,7 +103961,13 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-10T07:17:56.380680Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: gemini->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-411
   title: fix failing CI on organvm/limen#411
   repo: organvm/limen
@@ -104129,7 +104140,7 @@ tasks:
   title: fix failing CI on organvm/limen#414
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -104148,7 +104159,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T02:28:21.024454Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: gemini
@@ -104159,11 +104170,16 @@ tasks:
     agent: gemini
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: claude->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-415
   title: fix failing CI on organvm/limen#415
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -104181,7 +104197,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T15:06:03.051885Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
@@ -104197,6 +104213,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: opencode->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-416
   title: fix failing CI on organvm/limen#416
   repo: organvm/limen
@@ -104295,7 +104316,7 @@ tasks:
   title: fix failing CI on organvm/limen#418
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -104313,7 +104334,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T15:06:03.051885Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
@@ -104329,11 +104350,16 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: gemini->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-419
   title: fix failing CI on organvm/limen#419
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -104351,7 +104377,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:50:02.447078Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -104367,6 +104393,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: opencode->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-420
   title: fix failing CI on organvm/limen#420
   repo: organvm/limen
@@ -106463,7 +106494,7 @@ tasks:
   title: fix failing CI on organvm/limen#485
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -106481,7 +106512,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-07T15:50:02.447078Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -106497,6 +106528,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: opencode->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-486
   title: fix failing CI on organvm/limen#486
   repo: organvm/limen
@@ -109385,7 +109421,7 @@ tasks:
   title: fix failing CI on organvm/limen#456
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -109403,7 +109439,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T21:19:52.995801Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-08T17:15:11.788963Z'
     agent: jules
@@ -109428,6 +109464,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 14165093310654067929 is failed \u2192 reopened"
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: opencode->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-457
   title: fix failing CI on organvm/limen#457
   repo: organvm/limen
@@ -113492,7 +113533,7 @@ tasks:
   title: fix failing CI on organvm/limen#677
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -113510,7 +113551,13 @@ tasks:
     \ 2026-07-07 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  dispatch_log: []
+  updated: '2026-07-10T07:17:56.380680Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: opencode->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-cifix-organvm-limen-678
   title: fix failing CI on organvm/limen#678
   repo: organvm/limen
@@ -126838,7 +126885,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#54
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -126864,7 +126911,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T04:58:12.566684Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-10T03:47:38.976371Z'
     agent: jules
@@ -126891,6 +126938,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: gemini->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-rebase-organvm-a-i-chat--exporter-115
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#115
   repo: organvm/a-i-chat--exporter
@@ -126967,7 +127019,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#124
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -126992,7 +127044,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T07:10:40.952853Z'
+  updated: '2026-07-10T07:17:56.380680Z'
   dispatch_log:
   - timestamp: '2026-07-10T05:15:20.404324Z'
     agent: jules
@@ -127017,6 +127069,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-07-10T07:17:56.380680Z'
+    agent: limen
+    session_id: jules-capacity-fill
+    status: opencode->jules
+    output: retargeted open PR-linked task to consume live Jules remote headroom
 - id: HEAL-rebase-organvm-domus-genoma-173
   title: rebase/resolve conflicts on organvm/domus-genoma#173
   repo: organvm/domus-genoma
