@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 523
+      spent: 525
       per_agent:
         jules: 133
         gemini: 20
         codex: 1
-        opencode: 203
+        opencode: 205
         agy: 160
         claude: 2
         github_actions: 1
@@ -78699,7 +78699,7 @@ tasks:
   workstream: governance
   priority: medium
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-operationalize
   - pillar:governance
@@ -78717,7 +78717,7 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-09T20:10:27.583194Z'
+  updated: '2026-07-10T12:08:02.767489Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -78725,6 +78725,11 @@ tasks:
     status: open
     output: 'fleet fill: retargeted codex->jules to use Jules async capacity before
       local OpenCode/Agy slots'
+  - timestamp: '2026-07-10T12:08:02.767489Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-consulting-organ-operationalize-0703
   title: Operationalize consulting governance (rules as checks)
   repo: organvm/limen
