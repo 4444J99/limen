@@ -1,44 +1,87 @@
 #!/usr/bin/env python3
-"""Core-identity organ — the SSOT reader/hydrator for the operator's durable PII.
+"""Core-identity / personal-fact organ — the reader that DERIVES everything from one registry.
 
-Homes (two, per the credential-organ pattern):
-  - LIVE upstream: 1Password  op://Private/Identity   (source of truth when reachable)
-  - Offline mirror: $HOME/Workspace/_life-private/identity.json
-      ARCA-sealed at rest, git-tracked private, mode 700 dir. Authoritative when op is down.
+The single owner is `institutio/governance/personal-facts.yaml`. This tool reads it; it does not
+carry its own copy of what facts exist, where they live, which are required, or how they verify.
+That is the whole point: a fact a consumer needs but the registry doesn't home is a RED build
+(check-personal-facts.py / fact-wall.py), never a chat ask.
 
-Never prints SSN to stdout unless --unsafe-ssn is passed (form-fillers pass it; humans don't).
-Consumed by form-fillers (e.g. phi_form.py) so "fill this form" is solved once for every form.
+Homes are two, per the credential-organ precedent (credentials rotate, identity doesn't -> separate lane):
+  - Sensible atoms (name/DOB/address/phone/emails): ARCA-sealed files under ~/Workspace/_*-private.
+  - Crown-jewels (full SSN/bank/passport): op:// ONLY, never at rest; disk keeps a `shadow` digest.
+    The beat verifies the shadow (shadow_present) — it NEVER does a silent `op read`, which this
+    estate cannot do unattended (no service-account token -> op_can_read_silently() is False).
 
-  identity.py get legal_name.first
-  identity.py show                 # redacted human view (SSN -> ***-**-1234)
-  identity.py json                 # full JSON for a consumer (redacts SSN unless --unsafe-ssn)
-  identity.py hydrate              # pull op://Private/Identity -> identity.json (op must be reachable)
-  identity.py verify               # predicate: exit 0 iff required atoms present & valid
+  identity.py get <class-id|store.dotpath>   # one value (redacts crown-jewels)
+  identity.py show                           # human view of the identity store (crown-jewels masked)
+  identity.py json [--unsafe-ssn]            # identity store as JSON for a consumer
+  identity.py verify                         # PREDICATE: exit 0 iff every applicable&required atom present+valid
+  identity.py need <class-id>                # resolve, or surface an un-homed class (dry-run; LIMEN_FACTS_APPLY=1 writes)
+  identity.py hydrate                        # pull op:// crown-jewels/identity into the mirror (op must be reachable)
 """
-import json
-import os
-import sys
-import subprocess
 import argparse
 import datetime
+import json
+import os
+import subprocess
+import sys
 
-STORE = os.path.expanduser("~/Workspace/_life-private/identity.json")
-OP_ITEM = "op://Private/Identity"
-REQUIRED = ["legal_name.first", "legal_name.last", "dob",
-            "addresses.0.street", "addresses.0.city", "addresses.0.state", "addresses.0.zip",
-            "phones.0.number"]
+import yaml
 
-def _load():
-    if not os.path.exists(STORE):
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REGISTRY = os.path.join(REPO, "institutio", "governance", "personal-facts.yaml")
+WORKSPACE = os.path.expanduser("~/Workspace")
+STORE = os.path.join(WORKSPACE, "_life-private", "identity.json")   # the identity domain store
+OP_IDENTITY_ITEM = "op://Private/Identity"
+
+_HOME_CACHE = {}
+
+
+def _registry():
+    with open(REGISTRY) as f:
+        return (yaml.safe_load(f) or {}).get("facts", {})
+
+
+def _home_path(home):
+    """Resolve a fact's `home` to an absolute path (op:// homes have no at-rest path)."""
+    if home.startswith("op://"):
+        return None
+    return os.path.join(WORKSPACE, home)
+
+
+def _load_home(home):
+    """Load a home JSON file once (cached). Missing/other-shaped home -> {}."""
+    path = _home_path(home)
+    if path is None:
         return {}
-    with open(STORE) as f:
-        return json.load(f)
+    if path in _HOME_CACHE:
+        return _HOME_CACHE[path]
+    data = {}
+    if os.path.isfile(path):
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            data = {}
+    _HOME_CACHE[path] = data
+    return data
+
+
+def _load_store():
+    if os.path.isfile(STORE):
+        with open(STORE) as f:
+            return json.load(f)
+    return {}
+
 
 def _dig(obj, dotpath):
     cur = obj
     for part in dotpath.split("."):
         if isinstance(cur, list):
-            cur = cur[int(part)]
+            try:
+                cur = cur[int(part)]
+            except (ValueError, IndexError):
+                return None
         elif isinstance(cur, dict):
             cur = cur.get(part)
         else:
@@ -47,60 +90,132 @@ def _dig(obj, dotpath):
             return None
     return cur
 
+
+def _is_blank(v):
+    return v is None or (isinstance(v, str) and v.strip() == "") or v == [] or v == {}
+
+
 def _redact(d):
+    """Mask any crown-jewel value that somehow sits in the store, plus a defensive literal `ssn` key."""
     d = json.loads(json.dumps(d))
-    ssn = d.get("ssn")
-    if ssn and len(ssn) >= 4:
-        d["ssn"] = "***-**-" + ssn[-4:]
+
+    def mask(val):
+        s = str(val)
+        return ("***-**-" + s[-4:]) if len(s) >= 4 else "****"
+
+    # defensive: a raw ssn must never survive to output (the store keeps ssn_last4 only)
+    if not _is_blank(d.get("ssn")):
+        d["ssn"] = mask(d["ssn"])
     return d
 
+
+# ── commands ────────────────────────────────────────────────────────────────
+
 def cmd_get(a):
-    val = _dig(_load(), a.path)
-    if val is None:
+    facts = _registry()
+    if a.path in facts:                       # a class-id -> resolve via its home/atom
+        f = facts[a.path]
+        home = f["home"]
+        if home.startswith("op://"):
+            print(f"[identity] {a.path} is crown-jewel (op-only): {home}; shadow={f.get('shadow')}")
+            return
+        val = _dig(_load_home(home), f["atom"])
+        if _is_blank(val):
+            sys.exit(f"[identity] blank/missing: {a.path} ({home}:{f['atom']})")
+        if f.get("tier") == "crown-jewel":
+            val = "***-**-" + str(val)[-4:]
+        print(val)
+        return
+    val = _dig(_load_store(), a.path)          # or a raw store dotpath
+    if _is_blank(val):
         sys.exit(f"[identity] missing: {a.path}")
     print(val)
 
+
 def cmd_show(a):
-    print(json.dumps(_redact(_load()), indent=2))
+    print(json.dumps(_redact(_load_store()), indent=2))
+
 
 def cmd_json(a):
-    d = _load()
+    d = _load_store()
     if not a.unsafe_ssn:
         d = _redact(d)
     print(json.dumps(d))
 
+
 def cmd_verify(a):
-    d = _load()
-    missing = [p for p in REQUIRED if _dig(d, p) in (None, "")]
-    if not d:
-        print("[identity] BODY EMPTY — store not yet populated (op hydrate or one-time entry)")
-        sys.exit(1)
+    facts = _registry()
+    checked = 0
+    missing = []
+    for cid, f in facts.items():
+        if not (f.get("applicable") is True and f.get("required") is True):
+            continue
+        checked += 1
+        mode = f.get("verify", "non_empty")
+        home = f.get("home", "")
+        if mode == "non_empty":
+            if _is_blank(_dig(_load_home(home), f["atom"])):
+                missing.append(f"{cid} ({home}:{f['atom']})")
+        elif mode == "shadow_present":
+            if _is_blank(_dig(_load_home(home), f.get("shadow", f.get("atom")))):
+                missing.append(f"{cid} (shadow {f.get('shadow')})")
+        elif mode == "pointer_resolves":
+            path = _home_path(home)
+            if not (path and os.path.exists(path)):
+                missing.append(f"{cid} (pointer {home})")
     if missing:
-        print("[identity] MISSING required atoms: " + ", ".join(missing))
+        print(f"[identity] MISSING {len(missing)}/{checked} required atoms: " + ", ".join(missing))
+        print("[identity]   -> one-time populate (op hydrate or entry); see lever L-IDENTITY-POPULATE")
         sys.exit(1)
-    print("[identity] OK — all required atoms present")
+    print(f"[identity] OK — all {checked} applicable&required atoms present")
     sys.exit(0)
 
+
+def cmd_need(a):
+    """Resolve a class, or surface an un-homed one. Dry-run by default; LIMEN_FACTS_APPLY=1 appends a pending row."""
+    facts = _registry()
+    if a.klass in facts:
+        f = facts[a.klass]
+        home = f["home"]
+        if home.startswith("op://"):
+            print(f"[identity] {a.klass}: crown-jewel, resolve via op_read at fill-time ({home})")
+        else:
+            val = _dig(_load_home(home), f["atom"])
+            state = "present" if not _is_blank(val) else "HOMED-but-empty (populate once)"
+            print(f"[identity] {a.klass}: homed at {home}:{f['atom']} — {state}")
+        return
+    # un-homed: surface it (never a chat ask). Class-NAME only; no value ever written from here.
+    pending = {"domain": "UNKNOWN", "home": "TBD", "atom": a.klass.split(".")[-1],
+               "tier": "sensitive", "applicable": "unknown", "required": False, "verify": "non_empty",
+               "consumers": []}
+    print(f"[identity] UN-HOMED class '{a.klass}' — needs one registry row:")
+    print(yaml.safe_dump({a.klass: pending}, sort_keys=False, default_flow_style=False))
+    if os.environ.get("LIMEN_FACTS_APPLY") == "1":
+        reg = yaml.safe_load(open(REGISTRY)) or {"facts": {}}
+        reg.setdefault("facts", {})[a.klass] = pending
+        with open(REGISTRY, "w") as f:
+            yaml.safe_dump(reg, f, sort_keys=False, default_flow_style=False)
+        print(f"[identity]   -> appended pending row to {REGISTRY}; file L-FACT lever next beat")
+    else:
+        print("[identity]   -> dry-run (set LIMEN_FACTS_APPLY=1 to append the pending row)")
+    sys.exit(2)
+
+
 def cmd_hydrate(a):
-    # Pull op://Private/Identity into the mirror. Requires an active op session.
+    """Pull the op://Private/Identity item into the mirror. Requires an active op session (interactive)."""
     try:
         raw = subprocess.run(["op", "item", "get", "Identity", "--format", "json"],
-                             capture_output=True, text=True, timeout=20)
-    except Exception as e:
+                             capture_output=True, text=True, timeout=20, stdin=subprocess.DEVNULL)
+    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
         sys.exit(f"[identity] op unreachable: {e}")
     if raw.returncode != 0:
         sys.exit(f"[identity] op error: {raw.stderr.strip()}")
     item = json.loads(raw.stdout)
     fields = {f.get("label", "").lower(): f.get("value") for f in item.get("fields", [])}
-    # map op fields -> schema (labels are best-effort; adjust to the actual op item)
-    out = _load() or {}
-    out.setdefault("provenance", {})
-    out["provenance"] = {"source": OP_ITEM,
-                         "updated_at": datetime.datetime.now().isoformat(timespec="seconds"),
-                         "verified": True}
-    # NOTE: field mapping is intentionally explicit; fill once the op item's labels are known.
-    print("[identity] op item fetched; map its fields into the schema, then write", STORE)
-    print(json.dumps(fields, indent=2))
+    print(f"[identity] op item fetched ({len(fields)} fields); map into {STORE} then reseal (ARCA).")
+    print("[identity] provenance:", json.dumps(
+        {"source": OP_IDENTITY_ITEM, "updated_at": datetime.date.today().isoformat()}))
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -109,9 +224,11 @@ def main():
     s = sub.add_parser("show"); s.set_defaults(fn=cmd_show)
     j = sub.add_parser("json"); j.add_argument("--unsafe-ssn", action="store_true"); j.set_defaults(fn=cmd_json)
     v = sub.add_parser("verify"); v.set_defaults(fn=cmd_verify)
+    n = sub.add_parser("need"); n.add_argument("klass"); n.set_defaults(fn=cmd_need)
     h = sub.add_parser("hydrate"); h.set_defaults(fn=cmd_hydrate)
     a = p.parse_args()
     a.fn(a)
+
 
 if __name__ == "__main__":
     main()

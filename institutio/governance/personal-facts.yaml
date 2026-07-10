@@ -1,0 +1,340 @@
+# PERSONAL-FACTS — the registry that OWNS every durable personal fact.
+#
+# The parameter-panel / declared-data pattern (sibling of gates.yaml): one row per fact-class,
+# mapping it to {domain, home, atom, tier, applicable, required, verify, consumers}. Consumers
+# DERIVE from this file — they never hardcode their own copies:
+#   scripts/identity.py         — atom-list, redaction, verify-mode, hydrate op-refs
+#   scripts/fill-*.py           — read atoms via identity.py; declare CONSUMES = [...] class-ids
+#   scripts/check-personal-facts.py — registry <-> store-schema <-> consumer parity (drift = RED)
+#   scripts/fact-wall.py        — a consumer reading an atom not declared+homed here = RED
+#   scripts/metabolize.sh       — beat runs `identity.py verify` (missing required atom -> beat log)
+#   scripts/no-tasks-on-me.sh   — closeout green only if every applicable&required class is homed
+#
+# WHY THIS EXISTS: filling phi.pdf needed DOB/address/phone with no store -> a chat ASK (the defect).
+# The registry makes an un-homed fact a RED build, never a chat ask; adding a fact is ONE row.
+#
+# FIELD SEMANTICS
+#   domain      which life-area owns it -> routes to a _*-private store (federation-not-fusion).
+#   home        canonical at-rest file (relative to ~/Workspace), OR an op:// ref for crown-jewels.
+#               op:// homes keep only a `shadow` digest on disk; the raw value never lands at rest.
+#   atom        dotpath of the value inside `home` (for file homes) or the shadow atom (op homes).
+#   tier        public | private | sensitive | crown-jewel. CLASS-INTRINSIC (an SSN is always
+#               crown-jewel) — reference data authored once, never an operator choice.
+#   applicable  true | false | unknown. `unknown` = not yet derivable from estate ground truth
+#               (matters-register domains, health chart, digital-accounts) -> surfaces as a lever
+#               to determine ONCE, never a silent omission. Only `true` classes are ever chased.
+#   required    true = the beat chases it (non_empty) and closeout blocks on it. false = homed but
+#               dormant (declared so no consumer can ever chat-ask it), not nagged.
+#   verify      non_empty (atoms present AND non-blank — the fix for today's dob:'' passing
+#               existence) | shadow_present (crown-jewel digest on disk; NEVER a silent op read on
+#               the beat) | pointer_resolves (federated pointer target exists).
+#   consumers   form-fillers / tools that read this class (their CONSUMES manifest must match).
+#
+# SINGLE-HOME RULE: a fact-class has exactly one `home`. Email lives here (identity.emails is the
+# single owner); _life-private/digital-accounts.json REFERENCES it, never re-owns it.
+# CROWN-JEWEL RULE: tier:crown-jewel => home MUST be an op:// ref, verify MUST be shadow_present,
+# and a `shadow` atom names the only on-disk trace. Enforced by check-personal-facts.py, not discipline.
+
+schema_version: 0.1
+
+facts:
+
+  # ── identity core (life) — what the phi.pdf defect actually needed ──────────
+  identity.legal_name.first:
+    domain: life
+    home: _life-private/identity.json
+    atom: legal_name.first
+    tier: private
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.legal_name.middle:
+    domain: life
+    home: _life-private/identity.json
+    atom: legal_name.middle
+    tier: private
+    applicable: true
+    required: false
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.legal_name.last:
+    domain: life
+    home: _life-private/identity.json
+    atom: legal_name.last
+    tier: private
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.dob:
+    domain: life
+    home: _life-private/identity.json
+    atom: dob
+    tier: sensitive
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.addresses.0.street:
+    domain: life
+    home: _life-private/identity.json
+    atom: addresses.0.street
+    tier: sensitive
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.addresses.0.city:
+    domain: life
+    home: _life-private/identity.json
+    atom: addresses.0.city
+    tier: sensitive
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.addresses.0.state:
+    domain: life
+    home: _life-private/identity.json
+    atom: addresses.0.state
+    tier: sensitive
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.addresses.0.zip:
+    domain: life
+    home: _life-private/identity.json
+    atom: addresses.0.zip
+    tier: sensitive
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.phones.0.number:
+    domain: life
+    home: _life-private/identity.json
+    atom: phones.0.number
+    tier: sensitive
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+  identity.emails:
+    domain: life
+    home: _life-private/identity.json    # SINGLE OWNER; digital-accounts.json references, not re-owns
+    atom: emails.0
+    tier: public
+    applicable: true
+    required: true
+    verify: non_empty
+    consumers: [fill-phi-jewishboard.py]
+
+  # ── crown-jewel: full SSN op-only; disk keeps ssn_last4 shadow ──────────────
+  identity.ssn:
+    domain: life
+    home: op://Private/Identity/ssn      # raw 9 digits ONLY in 1Password, never at rest
+    atom: ssn_last4                       # shadow: the only on-disk trace
+    shadow: ssn_last4
+    tier: crown-jewel
+    applicable: true
+    required: false                       # phi.pdf never asked for SSN; homed, not chased
+    verify: shadow_present
+    consumers: [fill-phi-jewishboard.py]  # resolves full value via op_read behind --unsafe-ssn at fill-time
+
+  # ── signature / consent artifact (life) — so forms auto-complete the sig line ─
+  identity.signature.image:
+    domain: life
+    home: _life-private/identity.json
+    atom: signature.image_path
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+
+  # ── address history (life) — prior/mailing distinct from current ────────────
+  identity.addresses.mailing:
+    domain: life
+    home: _life-private/identity.json
+    atom: addresses.1
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+
+  # ── financial (finance) — crown-jewels op-only, institution shadow on disk ──
+  finance.bank.routing:
+    domain: finance
+    home: op://Private/Financial/routing
+    atom: bank_account_last4
+    shadow: bank_account_last4
+    tier: crown-jewel
+    applicable: unknown
+    required: false
+    verify: shadow_present
+    consumers: []
+  finance.bank.account:
+    domain: finance
+    home: op://Private/Financial/account
+    atom: bank_account_last4
+    shadow: bank_account_last4
+    tier: crown-jewel
+    applicable: unknown
+    required: false
+    verify: shadow_present
+    consumers: []
+  finance.ein_self:
+    domain: finance
+    home: op://Private/Financial/ein
+    atom: ein_last4
+    shadow: ein_last4
+    tier: crown-jewel
+    applicable: unknown
+    required: false
+    verify: shadow_present
+    consumers: []
+
+  # ── tax / IRS identity (finance) ────────────────────────────────────────────
+  tax.ip_pin:
+    domain: finance
+    home: op://Private/Tax/ip_pin        # annual IRS anti-fraud PIN — treat as crown-jewel
+    atom: ip_pin_present
+    shadow: ip_pin_present
+    tier: crown-jewel
+    applicable: unknown
+    required: false
+    verify: shadow_present
+    consumers: []
+  tax.prior_year_agi:
+    domain: finance
+    home: _finance-private/tax.json
+    atom: prior_year_agi
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+
+  # ── government IDs (life) — DL sealed on disk; passport crown-jewel op-only ──
+  gov_id.driver_license.number:
+    domain: life
+    home: _life-private/documents.json
+    atom: driver_license.number
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+  gov_id.driver_license.expiry:
+    domain: life
+    home: _life-private/documents.json
+    atom: driver_license.expiry
+    tier: private
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+  gov_id.passport.number:
+    domain: life
+    home: op://Private/GovID/passport
+    atom: passport_expiry
+    shadow: passport_expiry
+    tier: crown-jewel
+    applicable: unknown
+    required: false
+    verify: shadow_present
+    consumers: []
+
+  # ── clinical identity (health) — beyond insurance IDs ───────────────────────
+  clinical.pcp_npi:
+    domain: health
+    home: _health-private/insurance.json
+    atom: pcp_npi
+    tier: private
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+  clinical.allergies:
+    domain: health
+    home: _health-private/insurance.json
+    atom: allergies
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+  insurance.member_id:
+    domain: health
+    home: _health-private/insurance.json
+    atom: member_id
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+
+  # ── professional / education credentials (life) ─────────────────────────────
+  credential.license.number:
+    domain: life
+    home: _life-private/documents.json
+    atom: professional_license.number
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+
+  # ── vehicle (life) ──────────────────────────────────────────────────────────
+  vehicle.vin:
+    domain: life
+    home: _life-private/vehicles.json
+    atom: primary.vin
+    tier: private
+    applicable: unknown
+    required: false
+    verify: non_empty
+    consumers: []
+
+  # ── immigration / right-to-work (life) ──────────────────────────────────────
+  immigration.work_authorization:
+    domain: life
+    home: _life-private/documents.json
+    atom: work_authorization.status
+    tier: sensitive
+    applicable: unknown         # derivable N/A for a US citizen; left unknown until derived
+    required: false
+    verify: non_empty
+    consumers: []
+
+  # ── pointers (federation-not-fusion): the fact lives in another store ────────
+  employer.name:
+    domain: matters
+    home: _matters-private/stpauls-nursing-ny/matter.json
+    atom: employer.name
+    tier: private
+    applicable: unknown
+    required: false
+    verify: pointer_resolves
+    consumers: []
+  emergency_contact.primary:
+    domain: people
+    home: _people-private/people
+    atom: emergency_contact
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: pointer_resolves
+    consumers: []
+  dependents.household:
+    domain: people
+    home: _people-private/people
+    atom: dependents
+    tier: sensitive
+    applicable: unknown
+    required: false
+    verify: pointer_resolves
+    consumers: []
