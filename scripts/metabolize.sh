@@ -144,6 +144,19 @@ if [ "${LIMEN_HEAL_CONVERGENCE:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/heal-convergence.py" --check || echo "  ↑ CHRONIC heal non-convergence above — fix the named check at its root or park the repo with a chronic receipt"
 fi
 
+echo "── 0g2. fork-safety — the macOS 26.6 atfork/os_log crash must stay fixed, provably ──"
+# The gap this closes: "python keeps crashing" was root-caused to Apple's Network.framework
+# pthread_atfork child handler segfaulting in os_log on the child side of fork()+exec(). The
+# fix (OS_ACTIVITY_MODE=disable, set above) shipped, but the crash is a timing RACE — "no
+# recurrence" was a hope, not a predicate (Definition of Done + sensor-without-effector laws).
+# This asserts, every beat, that the mitigation is still present in the beat scripts AND that no
+# .ips crash report matching the atfork/os_log signature is newer than the mitigation commit. A
+# recurrence exits non-zero here (the effector) and is the documented trigger to arm the dark
+# posix_spawn escalation (LIMEN_FORK_SAFE). macOS-only signal; fail-open on non-darwin / no git.
+if [ "${LIMEN_FORK_SAFETY_CHECK:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/check-fork-safety.py" --check || echo "  ↑ fork/os_log crash RECURRED or mitigation removed above — restore OS_ACTIVITY_MODE=disable, or arm the posix_spawn escalation (LIMEN_FORK_SAFE=1; see scripts/check-fork-safety.py)"
+fi
+
 echo "── 0h. dispatch continuity — detect a silent lane while queue + budget exist ──"
 # The gap this closes (Jul 3–5 starvation precedent): Jules accepted zero tasks for 72h
 # while ~40 open tasks sat in the queue and the budget showed headroom. Daemon alive,
