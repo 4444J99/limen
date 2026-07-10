@@ -197,9 +197,24 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
         + "\n",
         encoding="utf-8",
     )
+    (root / "logs" / "reclaim-tool-caches.jsonl").write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-07-10T00:05:00Z",
+                "apply": True,
+                "existing_paths": 17,
+                "failed_paths": 0,
+                "total_reclaimed_size": "4.7 GiB",
+                "total_reclaimed_kib": 4915200,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     monkeypatch.setattr(mod, "ROOT", root)
     monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
+    monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
     monkeypatch.setattr(
         mod, "disk_receipt", lambda: {"free_gib": 78.0, "used_pct": 82.0, "tmp_ok": True, "tmp_error": ""}
     )
@@ -214,8 +229,9 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
     assert receipt["status"] == mod.STATUS_ASSIGNED
     assert receipt["evidence"]["shortfall_gib"] == 122.0
     assert receipt["evidence"]["lifecycle"]["predicate_ok"] is True
-    assert receipt["evidence"]["lifecycle"]["generated_state_reclaim"]["total_reclaimed_size"] == "26.6 GiB"
-    assert "last generated-state reclaim freed 26.6 GiB" in receipt["verdict"]
+    assert receipt["evidence"]["lifecycle"]["generated_state_reclaim"]["cumulative_reclaimed_size"] == "26.6 GiB"
+    assert receipt["evidence"]["lifecycle"]["tool_cache_reclaim"]["cumulative_reclaimed_size"] == "4.7 GiB"
+    assert "recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB" in receipt["verdict"]
 
 
 def test_substrate_receipt_blocks_when_lifecycle_predicate_fails(monkeypatch, tmp_path):
@@ -223,6 +239,7 @@ def test_substrate_receipt_blocks_when_lifecycle_predicate_fails(monkeypatch, tm
     root = tmp_path / "limen"
     monkeypatch.setattr(mod, "ROOT", root)
     monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
+    monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
     monkeypatch.setattr(
         mod, "disk_receipt", lambda: {"free_gib": 250.0, "used_pct": 40.0, "tmp_ok": True, "tmp_error": ""}
     )
