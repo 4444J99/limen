@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 389
+      spent: 391
       per_agent:
         jules: 116
         gemini: 12
         codex: 6
         opencode: 121
-        agy: 122
-        claude: 8
+        agy: 123
+        claude: 9
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -104788,7 +104788,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -104806,7 +104806,7 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T02:20:12.208204Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -104842,6 +104842,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T02:20:12.208204Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-portfolio-169
   title: rebase/resolve conflicts on organvm/portfolio#169
   repo: organvm/portfolio
@@ -124036,7 +124041,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - blocked-on-spend
   - hardware
@@ -124052,7 +124057,7 @@ tasks:
     vibed. Reference numbers at filing: absorba'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T00:48:51.731187Z'
+  updated: '2026-07-10T02:20:12.208204Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:20:01.158025Z'
     agent: agy
@@ -124069,6 +124074,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T02:20:12.208204Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-manumissio-8
   title: 'Phase 2: ollama serve as an OpenAI-compatible endpoint adapter'
   repo: organvm/manumissio
