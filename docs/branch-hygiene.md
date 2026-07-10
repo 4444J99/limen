@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (190) — decide each
+## Live-work branches (192) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -101,7 +101,9 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-cifix-organvm-limen-412-2e191c19` — 6ceb44ed Gemini daily capacity-fill packet 04
 - `limen/heal-cifix-organvm-limen-415-7db396da` — 20cd1a3f OpenCode daily capacity-fill packet 01
 - `limen/heal-cifix-organvm-limen-416-2dce14dc` — 04f14e28 Agy daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-419-3fb355e2` — 199ec2ac Jules daily capacity-fill packet 02
 - `limen/heal-cifix-organvm-limen-419-68eb0e65` — 199ec2ac Jules daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-419-7595de98` — 199ec2ac Jules daily capacity-fill packet 02
 - `limen/heal-cifix-organvm-limen-428-2ae62246` — e4fa19a8 fix(ci): repair PR 428 gate failures
 - `limen/heal-cifix-organvm-limen-430-955f9dd1` — e752ed9d fix(ci): clear PR gate regressions
 - `limen/heal-cifix-organvm-limen-430-b979134a` — 1a6b2a2e fix(ci): declare new limen parameters
