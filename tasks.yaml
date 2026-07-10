@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 423
+      spent: 425
       per_agent:
         jules: 122
         gemini: 12
         codex: 4
         opencode: 121
         agy: 156
-        claude: 4
+        claude: 6
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -125793,7 +125793,7 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - noop
   urls:
@@ -125804,7 +125804,7 @@ tasks:
     #133 (CI matrix). See dispatch log for full details.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T07:09:23.535251Z'
+  updated: '2026-07-10T07:10:57.922683Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -125858,6 +125858,11 @@ tasks:
     agent: agy
     session_id: cli
     status: ratelimited->claude
+  - timestamp: '2026-07-10T07:10:57.922683Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: DISCOVER-organvm-arca
   title: Discover the latent value of organvm/arca
   repo: organvm/arca
@@ -126962,14 +126967,15 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#124
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
+  - tried:claude
   urls:
   - https://github.com/organvm/domus-genoma/pull/124
   context: 'PR organvm/domus-genoma#124 is CONFLICTING with its base branch and merge-drain
@@ -126986,7 +126992,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T07:07:52.232247Z'
+  updated: '2026-07-10T07:10:40.952853Z'
   dispatch_log:
   - timestamp: '2026-07-10T05:15:20.404324Z'
     agent: jules
@@ -127007,6 +127013,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T07:10:40.952853Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
 - id: HEAL-rebase-organvm-domus-genoma-173
   title: rebase/resolve conflicts on organvm/domus-genoma#173
   repo: organvm/domus-genoma
@@ -127014,7 +127024,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -127035,7 +127045,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T07:09:23.535251Z'
+  updated: '2026-07-10T07:10:57.922683Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:07:52.232247Z'
     agent: agy
@@ -127046,6 +127056,11 @@ tasks:
     agent: agy
     session_id: cli
     status: ratelimited->claude
+  - timestamp: '2026-07-10T07:10:57.922683Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-184
   title: rebase/resolve conflicts on organvm/domus-genoma#184
   repo: organvm/domus-genoma
