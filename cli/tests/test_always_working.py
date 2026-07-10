@@ -84,6 +84,7 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
     (root / "logs").mkdir()
     (root / "logs" / "heartbeat.out.log").write_text("", encoding="utf-8")
     (root / "scripts" / "cvstos-organ.py").write_text("", encoding="utf-8")
+    (root / "scripts" / "worktree-debt.py").write_text("", encoding="utf-8")
     (root / "scripts" / "dispatch-health.py").write_text("", encoding="utf-8")
     _mail_index(mail_index)
 
@@ -174,6 +175,74 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
     assert snapshot["next_item_id"] == "PUBLIC-FACE-PROFILE"
     assert snapshot["contract"]["first_run_forbidden"] is True
     assert mod._task_from_item({"id": "SUBSTRATE", "priority": 0, "workstream": "substrate"})["priority"] == "critical"
+
+
+def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatch, tmp_path):
+    mod = _load("always_working_substrate_shortfall_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    (root / "scripts").mkdir(parents=True)
+    (root / "logs").mkdir()
+    (root / "logs" / "heartbeat.out.log").write_text("", encoding="utf-8")
+    (root / "logs" / "reclaim-generated-state.jsonl").write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-07-10T00:00:00Z",
+                "apply": True,
+                "changed_roots": 113,
+                "failed_roots": 0,
+                "total_reclaimed_size": "26.6 GiB",
+                "total_reclaimed_kib": 27892121,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
+    monkeypatch.setattr(
+        mod, "disk_receipt", lambda: {"free_gib": 78.0, "used_pct": 82.0, "tmp_ok": True, "tmp_error": ""}
+    )
+    monkeypatch.setattr(
+        mod,
+        "run_command",
+        lambda *args, **kwargs: {"returncode": 0, "stdout": "ok", "stderr": "", "timed_out": False},
+    )
+
+    receipt = mod.substrate_receipt()
+
+    assert receipt["status"] == mod.STATUS_ASSIGNED
+    assert receipt["evidence"]["shortfall_gib"] == 122.0
+    assert receipt["evidence"]["lifecycle"]["predicate_ok"] is True
+    assert receipt["evidence"]["lifecycle"]["generated_state_reclaim"]["total_reclaimed_size"] == "26.6 GiB"
+    assert "last generated-state reclaim freed 26.6 GiB" in receipt["verdict"]
+
+
+def test_substrate_receipt_blocks_when_lifecycle_predicate_fails(monkeypatch, tmp_path):
+    mod = _load("always_working_substrate_predicate_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
+    monkeypatch.setattr(
+        mod, "disk_receipt", lambda: {"free_gib": 250.0, "used_pct": 40.0, "tmp_ok": True, "tmp_error": ""}
+    )
+
+    def fake_run(args, **kwargs):
+        script = str(args[1]) if len(args) > 1 else ""
+        return {
+            "returncode": 1 if script.endswith("worktree-debt.py") else 0,
+            "stdout": "",
+            "stderr": "debt over cap" if script.endswith("worktree-debt.py") else "ok",
+            "timed_out": False,
+        }
+
+    monkeypatch.setattr(mod, "run_command", fake_run)
+
+    receipt = mod.substrate_receipt()
+
+    assert receipt["status"] == mod.STATUS_ASSIGNED
+    assert receipt["verdict"] == "substrate lifecycle predicate is failing"
+    assert receipt["evidence"]["lifecycle"]["worktree_debt"]["ok"] is False
 
 
 def test_profile_receipt_accepts_computed_laurel_positioning(monkeypatch, tmp_path):

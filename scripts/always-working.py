@@ -62,6 +62,7 @@ T7RECOVERY_ROOT = Path(os.environ.get("LIMEN_T7RECOVERY_ROOT", "/Volumes/T7Recov
 T7_LIFEBOAT_ROOT = T7RECOVERY_ROOT / "CleanUnique-Lifeboat-2026-06-13"
 ESTATE_CUSTODY_DOC = ROOT / "docs" / "estate-custody-primitives.md"
 ESTATE_CUSTODY_RECEIPT = ROOT / "docs" / "estate-custody-implementation-receipts.json"
+GENERATED_STATE_RECLAIM_LOG = ROOT / "logs" / "reclaim-generated-state.jsonl"
 WORKTREE_RECLAIM_CANDIDATES_DOC = ROOT / "docs" / "worktree-reclaim-candidates.md"
 WORKTREE_RECLAIM_CANDIDATES_JSON = ROOT / "docs" / "worktree-reclaim-candidates.json"
 STORAGE_OPERATING_MANUAL = ARCHIVE4T_ROOT / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
@@ -136,6 +137,24 @@ def load_json(path: Path, default: Any) -> Any:
         return json.loads(path.read_text(encoding="utf-8", errors="replace"))
     except (OSError, ValueError, TypeError):
         return default
+
+
+def load_last_jsonl(path: Path) -> dict[str, Any]:
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return {}
+    for line in reversed(lines):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            data = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(data, dict):
+            return data
+    return {}
 
 
 def iso_age_hours(generated: Any) -> float | None:
@@ -293,6 +312,39 @@ def disk_receipt() -> dict[str, Any]:
         "used_pct": round(usage.used / usage.total * 100, 1) if usage.total else None,
         "tmp_ok": tmp_ok,
         "tmp_error": tmp_error,
+    }
+
+
+def _short_command_receipt(args: list[str], *, timeout: int = 90) -> dict[str, Any]:
+    result = run_command(args, timeout=timeout)
+    text = (result.get("stderr") or result.get("stdout") or "").strip()
+    return {
+        "returncode": result.get("returncode"),
+        "ok": result.get("returncode") == 0,
+        "timed_out": bool(result.get("timed_out")),
+        "summary": text[:500],
+    }
+
+
+def substrate_lifecycle_receipt() -> dict[str, Any]:
+    cvstos = _short_command_receipt([sys.executable, str(ROOT / "scripts" / "cvstos-organ.py"), "--check"])
+    worktree_debt = _short_command_receipt(
+        [sys.executable, str(ROOT / "scripts" / "worktree-debt.py"), "--fail-over-cap"]
+    )
+    last_reclaim = load_last_jsonl(GENERATED_STATE_RECLAIM_LOG)
+    return {
+        "cvstos": cvstos,
+        "worktree_debt": worktree_debt,
+        "predicate_ok": bool(cvstos["ok"] and worktree_debt["ok"]),
+        "generated_state_reclaim": {
+            "present": bool(last_reclaim),
+            "generated_at": last_reclaim.get("generated_at"),
+            "apply": last_reclaim.get("apply"),
+            "changed_roots": last_reclaim.get("changed_roots"),
+            "failed_roots": last_reclaim.get("failed_roots"),
+            "total_reclaimed_size": last_reclaim.get("total_reclaimed_size"),
+            "total_reclaimed_kib": last_reclaim.get("total_reclaimed_kib"),
+        },
     }
 
 
@@ -1017,19 +1069,39 @@ def tabularius_receipt() -> dict[str, Any]:
 def substrate_receipt() -> dict[str, Any]:
     disk = disk_receipt()
     target_free_gib = float(os.environ.get("LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB", "200"))
-    open_substrate = (disk["free_gib"] < target_free_gib) or not disk["tmp_ok"]
+    lifecycle = substrate_lifecycle_receipt()
+    shortfall_gib = round(max(target_free_gib - float(disk["free_gib"]), 0.0), 1)
+    open_substrate = bool(shortfall_gib > 0 or not disk["tmp_ok"] or not lifecycle["predicate_ok"])
+    if not lifecycle["predicate_ok"]:
+        verdict = "substrate lifecycle predicate is failing"
+    elif shortfall_gib > 0:
+        last_reclaim = lifecycle["generated_state_reclaim"]
+        reclaim = last_reclaim.get("total_reclaimed_size") if last_reclaim.get("present") else None
+        suffix = f"; last generated-state reclaim freed {reclaim}" if reclaim else ""
+        verdict = f"internal free space is {shortfall_gib} GiB below target{suffix}"
+    elif not disk["tmp_ok"]:
+        verdict = "temp writes are failing"
+    else:
+        verdict = "disk/temp substrate predicate is green"
     return {
         "id": "SUBSTRATE-DISK-TEMP",
         "workstream": "substrate",
         "priority": PRIORITY["substrate"],
         "status": STATUS_ASSIGNED if open_substrate else STATUS_DONE,
         "title": "Keep disk/temp/voice substrate from starving the swarm",
-        "verdict": "disk/temp pressure needs owner work" if open_substrate else "disk/temp above configured target",
-        "evidence": {**disk, "target_free_gib": target_free_gib},
+        "verdict": verdict,
+        "evidence": {
+            **disk,
+            "target_free_gib": target_free_gib,
+            "shortfall_gib": shortfall_gib,
+            "lifecycle": lifecycle,
+        },
         "existing_receipts": [
             relpath(ROOT / "logs" / "heartbeat.out.log"),
+            relpath(GENERATED_STATE_RECLAIM_LOG),
             relpath(ROOT / "scripts" / "cvstos-organ.py"),
             relpath(ROOT / "scripts" / "dispatch-health.py"),
+            relpath(ROOT / "scripts" / "reclaim-generated-state.py"),
             relpath(ROOT / "scripts" / "reclaim-worktrees.py"),
             relpath(ROOT / "scripts" / "reap-clones.py"),
             relpath(ROOT / "scripts" / "worktree-debt.py"),
@@ -1037,8 +1109,8 @@ def substrate_receipt() -> dict[str, Any]:
         "assignment_packet": {
             "lane_fit": "codex-local",
             "repo": relpath(ROOT),
-            "task": "Audit disk/temp pressure, worktree debt, and disposable local clone lifecycle before spawning more lanes.",
-            "predicate": "python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap",
+            "task": "Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.",
+            "predicate": "python3 scripts/reclaim-generated-state.py --apply && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap",
             "receipt_target": relpath(ROOT / "logs" / "cvstos-organ-state.json"),
             "stop_condition": "free disk is at target, temp writes are usable, and reclaimable worktree debt is owner-routed",
         },
