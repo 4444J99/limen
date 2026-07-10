@@ -1,42 +1,42 @@
 # Session Value Review
 
-Generated: `2026-07-09T18:37:56+00:00`
-Window: `2026-07-09T06:37:56+00:00` to `2026-07-09T18:37:56+00:00` (12.0h)
+Generated: `2026-07-10T03:27:53+00:00`
+Window: `2026-07-09T15:27:52+00:00` to `2026-07-10T03:27:52+00:00` (12.0h)
 
 ## Verdict
 
-- `partly valuable, but not proven as prompt-corpus progress`.
+- `valuable, but mostly as lifecycle debt reduction rather than immediate shipping`.
 
 ## Operating Gate
 
-- Action: `switch_to_packetization` (exit `10`).
-- Reason: Commits landed while zero prompt-batch receipts moved for two consecutive cadence windows; stop generic dispatch and resolve or packetize the next prompt batch.
+- Action: `continue_prompt_sweep` (exit `0`).
+- Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
 - Follow-up pressure: `0` follow-up roots vs `0` merged/routed roots; consecutive pressure reports `0`.
-- No-receipt pressure: `true`; consecutive reports `53`; high-motion `true`.
-- Maintenance commits: `12`; value commits: `42`; custody-only: `false`.
-- Open review batches: `200`; no durable progress: `false`.
-- Next commands: `python3 scripts/resolve-legacy-session-batch.py prompt-batch-high-legacy-session-review-004 --write`.
+- No-receipt pressure: `false`; consecutive reports `0`; high-motion `false`.
+- Maintenance commits: `20`; value commits: `157`; custody-only: `false`.
+- Open review batches: `199`; no durable progress: `false`.
+- Next commands: `python3 scripts/resolve-legacy-session-batch.py prompt-batch-high-legacy-session-review-005 --write`.
 
 ## Measured Output
 
-- Commits landed: `54`; files touched: `171`; insertions/deletions: `15688` / `3943`.
-- Prompt batch receipts: `0`; batches/hour: `0.0`.
-- Sessions recorded: `0`; prompt events recorded: `0`; prompt events/hour: `0.0`.
+- Commits landed: `177`; files touched: `355`; insertions/deletions: `27231` / `9465`.
+- Prompt batch receipts: `2`; batches/hour: `0.17`.
+- Sessions recorded: `27`; prompt events recorded: `2956`; prompt events/hour: `246.33`.
 - Merged-root evidence: `0`; follow-up roots: `0`; absent owner routes: `0`.
-- Commit mix: `other` 23, `direct_engineering` 19, `task_board` 10, `receipt_refresh` 2.
-- Receipt lane mix: none.
-- Current corpus queue: `92` recorded, `200` open, `17` parked secret.
-- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 182, `needs-remote-proof` 6, `owner-recorded` 89, `parked-secret` 17, `superseded-recorded` 3.
+- Commit mix: `other` 156, `task_board` 18, `receipt_refresh` 2, `direct_engineering` 1.
+- Receipt lane mix: `hash-review` 1, `legacy-session-review` 1.
+- Current corpus queue: `93` recorded, `199` open, `17` parked secret.
+- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 181, `needs-remote-proof` 6, `owner-recorded` 90, `parked-secret` 17, `superseded-recorded` 3.
 
 ## Value
 
-- Left the current redacted queue measurable: 92 recorded batches and 200 open review batches.
-- Landed 54 commits with 171 file touches and 15688 insertions.
+- Resolved 2 prompt-corpus batches covering 27 sessions and 2956 prompt events into durable metadata receipts.
+- Left the current redacted queue measurable: 93 recorded batches and 199 open review batches.
+- Landed 177 commits with 355 file touches and 27231 insertions.
 
 ## Critique
 
-- 54 commits landed while zero prompt-batch receipts moved and 200 review batches remain open; this is current-work motion, not proven ask-corpus closure.
-- High-motion/no-receipt window: 171 file touches and no prompt-event recording. Run the explicit prompt batch command or switch to bounded product/owner work instead of letting receipt-free activity masquerade as lifecycle progress.
+- Throughput was modest for a long session; the review loop likely spent meaningful time on route discovery and verification rather than pure batch burn-down.
 
 ## Next-Run Controls
 
@@ -48,42 +48,43 @@ Window: `2026-07-09T06:37:56+00:00` to `2026-07-09T18:37:56+00:00` (12.0h)
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-07-09T12:28:23+00:00` | `3a0a033` | `other` | feat(reap): standing acceptance grant for machine-provably-landed branches (#800) |
-| `2026-07-09T12:35:46+00:00` | `9a9ed47` | `direct_engineering` | feat: throughput-collapse predicate + effector — liveness is not velocity (#811) |
-| `2026-07-09T12:39:46+00:00` | `83270c8` | `other` | mail: declare UMA status parameters |
-| `2026-07-09T12:44:59+00:00` | `7459abc` | `task_board` | tabularius: preserve board projection 2026-07-09T12:44:59Z |
-| `2026-07-09T12:57:09+00:00` | `f7908d7` | `task_board` | tabularius: preserve board projection 2026-07-09T12:57:09Z |
-| `2026-07-09T13:13:06+00:00` | `aa82d9f` | `task_board` | tabularius: preserve board projection 2026-07-09T13:13:05Z |
-| `2026-07-09T13:16:09+00:00` | `73fc311` | `direct_engineering` | fix: permission hangs — path-aware trusted-Bash hook, drift predicate, spec (#813) |
-| `2026-07-09T13:29:14+00:00` | `6cfcf0c` | `task_board` | tabularius: preserve board projection 2026-07-09T13:29:14Z |
-| `2026-07-09T13:33:50+00:00` | `6c96226` | `receipt_refresh` | limen: refresh autonomous PR receipts |
-| `2026-07-09T13:33:55+00:00` | `27ab993` | `receipt_refresh` | limen: refresh triptych PR receipt |
-| `2026-07-09T13:40:23+00:00` | `2546bc8` | `other` | fix(hooks): root the trusted-Bash hook test's fake HOME off /tmp (CI-red on Linux) (#823) |
-| `2026-07-09T13:42:51+00:00` | `b590e9d` | `direct_engineering` | fix: /tmp-rooted $HOME portability in allow-trusted-cd-git hook (#824) |
-| `2026-07-09T13:49:12+00:00` | `72a061d` | `other` | feat(fable): plan-only role + runtime cap + utilization vendor verdict (#818) |
-| `2026-07-09T14:00:42+00:00` | `5371fa4` | `task_board` | tabularius: preserve board projection 2026-07-09T14:00:42Z |
-| `2026-07-09T14:27:06+00:00` | `0f54019` | `task_board` | tabularius: preserve board projection 2026-07-09T14:27:06Z |
-| `2026-07-09T14:50:18+00:00` | `e8c3b98` | `other` | Merge pull request #808 from organvm/codex/uma-mail-wrapper-154 |
-| `2026-07-09T14:55:12+00:00` | `cfe2a01` | `other` | feat(reclaim): pushed-to-origin is enough to reap a local worktree (#826) |
-| `2026-07-09T14:56:25+00:00` | `ba334fc` | `other` | heal(sync-release): preserve-then-unpark so merged code always runs (#816) |
-| `2026-07-09T14:57:11+00:00` | `97312d8` | `other` | chore(levers): home the Fable interactive-guard settings-arming atom (#827) (#828) |
-| `2026-07-09T14:59:24+00:00` | `e876e47` | `task_board` | tabularius: preserve board projection 2026-07-09T14:59:24Z |
+| `2026-07-10T02:53:46+00:00` | `7044486` | `other` | limen: dispatch UMA stale rebase workers |
+| `2026-07-10T02:53:58+00:00` | `beb46db` | `other` | limen: refresh always-working UMA timestamp |
+| `2026-07-10T02:55:13+00:00` | `c4b0d0c` | `other` | limen: harvest UMA worker failures |
+| `2026-07-10T02:57:40+00:00` | `623c0be` | `other` | limen: harvest invisible ledger Codex failure |
+| `2026-07-10T02:58:14+00:00` | `1460b49` | `task_board` | tabularius: preserve board projection 2026-07-10T02:58:14Z |
+| `2026-07-10T02:59:44+00:00` | `cdf64cd` | `other` | limen: dispatch revenue followup workers |
+| `2026-07-10T02:59:52+00:00` | `d0e273f` | `other` | limen: refresh always-working revenue timestamp |
+| `2026-07-10T03:01:25+00:00` | `383a8d1` | `other` | limen: rebalance routing after harvest |
+| `2026-07-10T03:03:35+00:00` | `055d2e6` | `other` | limen: dispatch peer-audited followup workers |
+| `2026-07-10T03:03:47+00:00` | `7993c7b` | `other` | limen: refresh always-working peer-audited timestamp |
+| `2026-07-10T03:04:54+00:00` | `1ce00fa` | `other` | limen: harvest peer-audited worker batch |
+| `2026-07-10T03:06:18+00:00` | `07465a2` | `other` | limen: harvest session-meta worker results |
+| `2026-07-10T03:08:44+00:00` | `6fc6328` | `other` | limen: dispatch stale followup workers |
+| `2026-07-10T03:08:51+00:00` | `ba378a0` | `other` | limen: refresh always-working stale followup timestamp |
+| `2026-07-10T03:09:53+00:00` | `47eb56c` | `other` | limen: harvest stale followup failures |
+| `2026-07-10T03:12:56+00:00` | `cfb67af` | `other` | limen: refresh closeout health receipts |
+| `2026-07-10T03:14:24+00:00` | `eb64f97` | `other` | limen: harvest invisible ledger followup failure |
+| `2026-07-10T03:16:42+00:00` | `c002137` | `other` | limen: harvest final active async result |
+| `2026-07-10T03:20:55+00:00` | `baee545` | `other` | limen: refresh prompt batch receipt |
+| `2026-07-10T03:26:27+00:00` | `e748b14` | `other` | limen: refresh storage pressure receipts |
 
 ## Batch Receipts
 
 | Time | Batch | Lane | Sessions | Events | Root Statuses |
 |---|---|---|---:|---:|---|
-| n/a | n/a | n/a | 0 | 0 | none |
+| `2026-07-09T15:29:55+00:00` | `prompt-batch-critical-hash-review-001` | `hash-review` | 2 | 236 | `codex_session_sensitive_context_recorded` 2 |
+| `2026-07-10T03:27:42+00:00` | `prompt-batch-high-legacy-session-review-004` | `legacy-session-review` | 25 | 2720 | `legacy_session_owner_lane_routed` 11, `legacy_session_external_context_recorded` 7, `legacy_session_pr_routed` 5, `legacy_session_closed_pr_recorded` 2 |
 
 ## Next Queue Slice
 
 | Batch | Status | Lane | Sessions | Events |
 |---|---|---|---:|---:|
-| `prompt-batch-high-legacy-session-review-004` | `needs-private-review` | `legacy-session-review` | 25 | 2720 |
 | `prompt-batch-high-legacy-session-review-005` | `needs-private-review` | `legacy-session-review` | 6 | 514 |
 | `prompt-batch-medium-historical-worktree-review-024` | `needs-private-review` | `historical-worktree-review` | 25 | 96 |
 | `prompt-batch-medium-historical-worktree-review-025` | `needs-private-review` | `historical-worktree-review` | 25 | 116 |
 | `prompt-batch-medium-historical-worktree-review-026` | `needs-private-review` | `historical-worktree-review` | 25 | 95 |
+| `prompt-batch-medium-historical-worktree-review-027` | `needs-private-review` | `historical-worktree-review` | 25 | 141 |
 
 ## Commands
 

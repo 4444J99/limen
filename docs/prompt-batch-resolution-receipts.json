@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-07-10T03:17:30Z",
+  "generated_at": "2026-07-10T03:27:42Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -23518,7 +23518,7 @@
       "last_prompt_hash": "a90cda1e90f32d5ea54ba90b1a22f86d7000442b5b9c5d119894157679a0e9f3"
     },
     {
-      "generated_at": "2026-07-10T03:17:30Z",
+      "generated_at": "2026-07-10T03:27:42Z",
       "batch": "prompt-batch-high-legacy-session-review-004",
       "band": "high",
       "lane": "legacy-session-review",
