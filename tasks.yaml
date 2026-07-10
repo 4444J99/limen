@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 450
+      spent: 453
       per_agent:
         jules: 133
         gemini: 13
         codex: 6
-        opencode: 128
+        opencode: 131
         agy: 157
         claude: 9
         github_actions: 1
@@ -120761,7 +120761,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -120783,7 +120783,13 @@ tasks:
     \ by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-10T07:53:12.634676Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T07:53:12.634676Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-621
   title: rebase/resolve conflicts on organvm/limen#621
   repo: organvm/limen
@@ -120930,7 +120936,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -120945,7 +120951,13 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-10T07:53:12.634676Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T07:53:12.634676Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-625
   title: rebase/resolve conflicts on organvm/limen#625
   repo: organvm/limen
@@ -121150,7 +121162,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -121165,7 +121177,13 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  updated: '2026-07-10T07:53:12.634676Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T07:53:12.634676Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-system-governance-framework-45
   title: rebase/resolve conflicts on organvm/system-governance-framework#45
   repo: organvm/system-governance-framework
