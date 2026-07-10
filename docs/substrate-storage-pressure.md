@@ -1,10 +1,10 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T12:20:42Z`
+Generated: `2026-07-10T12:30:22Z`
 Status: `needs-owner-gates`
-Internal free: `108.8 GiB`
+Internal free: `112.8 GiB`
 Target free: `200.0 GiB`
-Shortfall: `91.2 GiB`
+Shortfall: `87.2 GiB`
 
 ## Safe Reclaim Already Run
 
@@ -14,20 +14,21 @@ Shortfall: `91.2 GiB`
 
 ## Scratch / Worktree Lifecycle
 
-- Summary: `228 debt roots / 544 scanned; 0 reapable roots`.
+- Summary: `374 debt roots / 695 scanned; 0 reapable roots`.
 - Debt cap: `12`; reapable cap: `0`.
 
 | Reason | Roots |
 |---|---:|
-| `not-merged-to-default` | `154` |
+| `not-merged-to-default` | `188` |
 | `active(<6h)` | `125` |
-| `remote-pr-open` | `72` |
+| `dirty` | `106` |
+| `unpushed-commits` | `80` |
+| `remote-pr-open` | `77` |
 | `antigravity-scratch-managed` | `48` |
-| `active(<24h)` | `42` |
-| `dirty` | `40` |
-| `unpushed-commits` | `34` |
-| `owner-blocker` | `27` |
-| `remote-merged` | `1` |
+| `owner-blocker` | `35` |
+| `active(<24h)` | `28` |
+| `remote-merged` | `5` |
+| `documented-residue` | `2` |
 | `remote-superseded` | `1` |
 
 ## Remaining Large Buckets
@@ -37,7 +38,7 @@ Shortfall: `91.2 GiB`
 | `~/.local/share/opencode/opencode.db` | `17.5 GiB` | `protected-agent-state` | `aw-opencode-db-corpus-intake-0709` | external archive and private intake verified; local retention decision remains; never delete outright |
 | `~/Workspace/limen/.limen-private/session-corpus` | `10.2 GiB` | `protected-private-corpus` | `docs/session-corpus-ledger.md` | two-copy/restore archive gate before move or purge |
 | `~/Pictures/Photos Library.photoslibrary` | `8.6 GiB` | `personal-media` | `media/photos custody` | personal-data human gate plus two-copy restore proof |
-| `~/Workspace/.limen-worktrees` | `8.4 GiB` | `worktree-cache` | `docs/worktree-reclaim-acceptance.md` | clean+merged+idle or explicit acceptance; current worktree-debt gate reports zero reapable |
+| `~/Workspace/.limen-worktrees` | `7.4 GiB` | `worktree-cache` | `docs/worktree-reclaim-acceptance.md` | clean+merged+idle or explicit acceptance; current worktree-debt gate reports zero reapable |
 | `~/Library/Messages` | `7.3 GiB` | `personal-communications` | `communications custody` | personal-data human gate plus two-copy restore proof |
 | `~/.gemini/antigravity-cli` | `6.5 GiB` | `protected-agent-state` | `agy conductor` | preserve conversations/brain before eviction; scratch handled separately |
 | `~/Workspace/session-meta` | `5.1 GiB` | `repo-corpus-state` | `organvm/session-meta` | repo/archive custody proof before local cache eviction |
