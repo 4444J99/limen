@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-10T01:12:25+00:00`
+Generated: `2026-07-10T01:22:44+00:00`
 Status: `needs-work`
 Required open: `3`
 Blocked: `1`
@@ -19,7 +19,7 @@ Done from receipt: `7`
 - ID: `SUBSTRATE-DISK-TEMP`
 - Workstream: `substrate`
 - Status: `assigned_from_existing_work`
-- Verdict: internal free space is 106.8 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB
+- Verdict: internal free space is 106.9 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB
 - Lane fit: `codex-local`
 - Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
 - Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
@@ -28,7 +28,7 @@ Done from receipt: `7`
 
 | Priority | ID | Status | Verdict |
 |---:|---|---|---|
-| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | internal free space is 106.8 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB |
+| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | internal free space is 106.9 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB |
 | 5 | `ESTATE-CUSTODY` | `done_from_receipt` | run-and-gun laptop cache and external estate custody have implementation receipts |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
 | 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.7%, reviews 0.8% |
