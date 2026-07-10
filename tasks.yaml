@@ -104278,10 +104278,10 @@ tasks:
   title: fix failing CI on organvm/limen#414
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -104297,7 +104297,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T09:21:04.174905Z'
+  updated: '2026-07-10T09:52:28.098519Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: gemini
@@ -104333,6 +104333,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T09:52:28.098519Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-limen-415
   title: fix failing CI on organvm/limen#415
   repo: organvm/limen
