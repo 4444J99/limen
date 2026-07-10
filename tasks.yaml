@@ -97536,7 +97536,7 @@ tasks:
   title: "rebase organvm/limen#369 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -97577,7 +97577,7 @@ tasks:
   title: "rebase organvm/limen#371 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: normal
   budget_cost: 1
   status: open
@@ -97612,7 +97612,7 @@ tasks:
   title: "rebase organvm/limen#372 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: normal
   budget_cost: 1
   status: open
@@ -97957,7 +97957,7 @@ tasks:
   title: "rebase organvm/limen#381 onto current base \u2014 branched far behind"
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
