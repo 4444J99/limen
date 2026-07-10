@@ -39,7 +39,8 @@ resource_types:
     identity: derived
     desired: ["mergeable_when_green"]
     observe: "scripts/_pr_scan.py::enumerate_open_prs"
-    effector: "delegate:scripts/merge-drain.py"
+    effector:
+      - {kind: delegate, argv: [python3, scripts/merge-drain.py]}
     status: active
     owner: gitvs
     note: "ok"
@@ -47,7 +48,7 @@ resource_types:
     identity: derived
     desired: ["tagged"]
     observe: ""
-    effector: ""
+    effector: []
     status: envisioned
     owner: gitvs
     note: "owed — envisioned, may be unwired"
@@ -95,10 +96,37 @@ FIX="$work/missing.yaml"; valid_estate "$FIX"
 python3 - "$FIX" <<'PY'
 import sys, yaml
 d = yaml.safe_load(open(sys.argv[1]))
-d["resource_types"]["pull_request"]["effector"] = "reap:scripts/does-not-exist.py"
+d["resource_types"]["pull_request"]["effector"] = [
+    {"kind": "reap", "argv": ["python3", "scripts/does-not-exist.py", "--apply"]}
+]
 open(sys.argv[1], "w").write(yaml.safe_dump(d))
 PY
 expect 1 "does not exist" "case4 missing effector script reddens"
+
+# ── Case 5: an old scalar effector cannot smuggle static adapter policy back into the engine ──
+FIX="$work/scalar.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["resource_types"]["pull_request"]["effector"] = "delegate:scripts/merge-drain.py"
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "must be a list" "case5 scalar effector reddens"
+
+# ── Case 6: approval is declared on the adapter and derived at runtime, never by script name ──
+FIX="$work/approval.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["resource_types"]["pull_request"]["effector"][0]["approval"] = {"lever": "L-TEST-APPROVAL"}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+out="$(LIMEN_GITVS_ESTATE="$FIX" python3 "$GITVS" reconcile --check 2>&1)"; rc=$?
+if [ "$rc" != 0 ] || ! echo "$out" | grep -q "gated by L-TEST-APPROVAL"; then
+  echo "  MISMATCH (case6 data-declared approval gates adapter)"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
+else
+  pass=$((pass+1))
+fi
 
 echo
 if [ "$fail" -eq 0 ]; then

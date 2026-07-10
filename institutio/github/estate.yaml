@@ -54,16 +54,18 @@ app:
 # webhooks/releases/teams?" rather than prose scoping them out. "Owns all" is then literal: extending
 # GITVS to a new surface is a row here, never new engine code.
 #
-# The effector's THREE TOTAL SINKS (there is no fourth way to change GitHub):
-#   delegate:<script>   hand to an existing compliant organ (inherits its safety gate free)
-#   file-atom:<lever>   a sanctioned HUMAN act → a lever / the credential wall (cited, never recited)
-#   reap:<script>       a native mutator GITVS owns (behind the reclaim-worktrees safety-gate model)
+# The effector's THREE TOTAL SINKS (there is no fourth way to change GitHub). Each row declares its
+# own adapter argv and optional approval lever; the engine contains no script-name table, interpreter
+# assumption, or target-specific exception. Runtime executable discovery decides whether an adapter is
+# currently reachable.
 resource_types:
   repo:
     identity: derived
     desired: ["visibility", "archived", "default_branch", "app_installed", "topics"]
     observe: "gh api /repos/{owner}/{repo}"
-    effector: "file-atom:L-REPO-SETTINGS | manual"    # visibility/archive flips are human decisions
+    effector:
+      - {kind: file-atom, target: L-REPO-SETTINGS}
+      - {kind: manual}
     status: active
     owner: gitvs
     note: "The 301-repo body; desired-state bucketed by the `classes` globs below."
@@ -71,7 +73,11 @@ resource_types:
     identity: derived
     desired: ["required_checks", "enforce_admins", "required_pull_request_reviews"]
     observe: "gh api /repos/{owner}/{repo}/branches/{branch}/protection"
-    effector: "delegate:scripts/setup-rulesets.py | file-atom:L-BRANCH-PROTECTION"
+    effector:
+      - kind: delegate
+        argv: [python3, scripts/setup-rulesets.py]
+        approval: {lever: L-BRANCH-PROTECTION}
+      - {kind: file-atom, target: L-BRANCH-PROTECTION}
     status: active
     owner: gitvs
     note: "Read predicate is the doctor (class A/G); applying rulesets is human-gated (#257) — GITVS never auto-runs setup-rulesets.py."
@@ -79,7 +85,9 @@ resource_types:
     identity: derived
     desired: ["mergeable_when_green", "current_base"]
     observe: "scripts/_pr_scan.py::enumerate_open_prs"
-    effector: "delegate:scripts/merge-drain.py | delegate:scripts/self-heal.py"
+    effector:
+      - {kind: delegate, argv: [python3, scripts/merge-drain.py]}
+      - {kind: delegate, argv: [python3, scripts/self-heal.py]}
     status: active
     owner: gitvs
     note: "Mergeable → merge-drain (inherits merge-policy.sh guardrail + stale-base gate free); red/stale → self-heal emits a HEAL/rebase task."
@@ -87,7 +95,8 @@ resource_types:
     identity: derived
     desired: ["reaped_when_landed_past_grace"]
     observe: "scripts/reap-branches.py::classify (remote refs)"
-    effector: "reap:scripts/reap-remote-branches.py"
+    effector:
+      - {kind: reap, argv: [python3, scripts/reap-remote-branches.py, --apply]}
     status: active                         # reaper landed (#901) → the wiring-integrity law now holds it
     owner: gitvs
     note: "The ~730 unresolved orphaned remote branches; the reaper (reap-remote-branches.py, #901) is live, so this is now active and the reconcile loop dispatches it. Ships DOUBLE-DARK (--apply AND LIMEN_REMOTE_REAP_APPLY=1) — remote deletes are not reflog-recoverable — so reconcile --apply plans it but the delete still needs its own dark-arming."
@@ -95,7 +104,8 @@ resource_types:
     identity: derived
     desired: ["reaped_when_landed"]
     observe: "scripts/reap-branches.py::classify"
-    effector: "reap:scripts/reap-branches.py"
+    effector:
+      - {kind: reap, argv: [python3, scripts/reap-branches.py, --apply]}
     status: active
     owner: gitvs
     note: "The orphaned BRANCH-REAP organ, finally beat-wired via the GITVS reconcile loop."
@@ -103,7 +113,9 @@ resource_types:
     identity: derived
     desired: ["homed", "present_in_actions"]
     observe: "gh secret list (names only — the _scrub firewall; never a value)"
-    effector: "delegate:scripts/creds-hydrate.py | file-atom:credential-wall#320"
+    effector:
+      - {kind: delegate, argv: [python3, scripts/creds-hydrate.py, --apply]}
+      - {kind: file-atom, target: "credential-wall#320"}
     status: active
     owner: gitvs
     note: "Class-B delegates home-checking to credential-wall.py --check; values never touch GITVS."
@@ -111,7 +123,9 @@ resource_types:
     identity: derived
     desired: ["mirrors_live_residuals", "levers_homed"]
     observe: "gh issue list --label"
-    effector: "delegate:scripts/sync-censor-issues.py | delegate:scripts/sync-hishand-issues.py"
+    effector:
+      - {kind: delegate, argv: [python3, scripts/sync-censor-issues.py, --apply]}
+      - {kind: delegate, argv: [python3, scripts/sync-hishand-issues.py, --apply]}
     status: active
     owner: gitvs
     note: "Censor findings and his-hand levers mirror to labelled issues; each organ keeps its own apply arming."
@@ -119,7 +133,8 @@ resource_types:
     identity: derived
     desired: ["installed_on_governed_owners", "permissions_least_privilege"]
     observe: "gh api /app/installations"
-    effector: "file-atom:L-LIMENBOT-INSTALL"
+    effector:
+      - {kind: file-atom, target: L-LIMENBOT-INSTALL}
     status: active
     owner: gitvs
     note: "App creation/install is irreducibly human (GitHub App ownership); the doctor cites the lever, never recites a token."
@@ -127,7 +142,8 @@ resource_types:
     identity: derived
     desired: ["rate_limit_headroom_ok", "actions_budget_ok"]
     observe: "gh api /rate_limit"
-    effector: "file-atom:L-CARD-FRAUD-HOLD"
+    effector:
+      - {kind: file-atom, target: L-CARD-FRAUD-HOLD}
     status: active
     owner: gitvs
     note: "Public repos = free unlimited Actions; the keystone was account-level billing (#182), not per-repo minutes."
@@ -140,7 +156,7 @@ resource_types:
     identity: derived
     desired: ["tagged_from_policy"]
     observe: ""
-    effector: ""
+    effector: []
     status: envisioned
     owner: gitvs
     note: "Release/tag governance — owed; activate by wiring gh release + a policy source."
@@ -148,7 +164,7 @@ resource_types:
     identity: derived
     desired: ["declared_endpoints_only"]
     observe: ""
-    effector: ""
+    effector: []
     status: envisioned
     owner: gitvs
     note: "Webhook governance — owed; drift = an undeclared endpoint."
@@ -156,7 +172,7 @@ resource_types:
     identity: derived
     desired: ["declared_membership"]
     observe: ""
-    effector: ""
+    effector: []
     status: envisioned
     owner: gitvs
     note: "Org team/role governance — owed."
@@ -164,7 +180,7 @@ resource_types:
     identity: derived
     desired: ["declared_roster"]
     observe: ""
-    effector: ""
+    effector: []
     status: envisioned
     owner: gitvs
     note: "Org membership governance — owed; drift = an unexpected collaborator."
@@ -172,7 +188,7 @@ resource_types:
     identity: derived
     desired: ["declared_protection_rules"]
     observe: ""
-    effector: ""
+    effector: []
     status: envisioned
     owner: gitvs
     note: "Deployment-environment governance — owed."
@@ -180,7 +196,7 @@ resource_types:
     identity: derived
     desired: ["security_updates_on"]
     observe: ""
-    effector: ""
+    effector: []
     status: envisioned
     owner: gitvs
     note: "Dependabot/Renovate posture — owed."
