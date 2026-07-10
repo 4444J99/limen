@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 498
+      spent: 508
       per_agent:
         jules: 133
         gemini: 20
-        codex: 9
-        opencode: 160
+        codex: 11
+        opencode: 168
         agy: 159
         claude: 13
         github_actions: 1
@@ -114476,7 +114476,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -114501,7 +114501,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T10:02:36.173441Z'
+  updated: '2026-07-10T10:07:55.764360Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114648,6 +114648,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -118253,7 +118258,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - retro-0708
   urls: []
@@ -118261,8 +118266,13 @@ tasks:
     wheel: growth-auditor #16-#22, dot-github--theoria #492+ all open-unmergeable)'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T12:54:03.194303Z'
-  dispatch_log: []
+  updated: '2026-07-10T10:07:55.764360Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: RETRO-0708-HEAL-RECEIPT-OUTCOME
   title: Heal receipts outcome field + beat-wired heal-convergence report
   description: 'Add {outcome: already_green|fixed|gave_up, failing_checks:[...]} to
@@ -118433,7 +118443,7 @@ tasks:
   workstream: governance
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - retro-0708
   - tried:jules
@@ -118442,7 +118452,7 @@ tasks:
     (root cause 41e8b28b, direct-main dispatch code edit, no PR/CI)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T10:07:55.764360Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -118454,6 +118464,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: RETRO-0708-SERVICE-DOWN-PROBE
   title: Service-down lane detection in _down_lanes()/usage.json
   description: N consecutive async failures with empty output -> health=service-down
@@ -118466,7 +118481,7 @@ tasks:
   workstream: conductor
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - retro-0708
   - tried:jules
@@ -118476,7 +118491,7 @@ tasks:
     Claude reservations; ORG tasks lost connector fallback) + evolution 7'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-10T10:07:55.764360Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -118497,6 +118512,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: RETRO-0708-CODEX-BUDGET-RESET
   title: Codex per-task budget reset + pre-dispatch uncached-token cap
   description: Reset elapsed/budget counters on task_complete in codex-token-accounting.py
@@ -118534,7 +118554,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - retro-0708
   urls: []
@@ -118542,8 +118562,13 @@ tasks:
     merged 07-05..08; grant never exercised; duplicates)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T12:54:03.197888Z'
-  dispatch_log: []
+  updated: '2026-07-10T10:07:55.764360Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: RETRO-0708-ARMED-VALVE-AUDIT
   title: 'armed-valve-audit.py: separate parked levers from silently-off valves'
   description: Enumerate every beat-wired organ whose effect is gated behind an env
@@ -120419,7 +120444,7 @@ tasks:
   workstream: financial
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - revenue-readiness
   - revenue
@@ -120435,8 +120460,13 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:48:06.996016Z'
-  dispatch_log: []
+  updated: '2026-07-10T10:07:55.764360Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: REV-organvm-limen-revenue-pro-tier-0708
   title: Make the Pro-tier checkout merge-ready for MONETA Mint-as-a-Service
   repo: organvm/limen
@@ -120756,7 +120786,7 @@ tasks:
   workstream: financial
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - origin-0708
   - revenue
@@ -120765,8 +120795,13 @@ tasks:
   context: docs/reviews/deep-history-2022-2026.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:54:00.963864Z'
-  dispatch_log: []
+  updated: '2026-07-10T10:07:55.764360Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-486
   title: rebase/resolve conflicts on organvm/limen#486
   repo: organvm/limen
@@ -122099,7 +122134,7 @@ tasks:
   workstream: sovereignty
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - sovereign
   - excav-0708
@@ -122108,7 +122143,7 @@ tasks:
   context: memory sovereign-cash-intake (deplatforming escalation 2026-07-08)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-10T10:07:55.764360Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -122125,6 +122160,11 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-growth-auditor-9
   title: rebase/resolve conflicts on organvm/growth-auditor#9
   repo: organvm/growth-auditor
@@ -127929,7 +127969,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -127951,7 +127991,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T10:02:36.173441Z'
+  updated: '2026-07-10T10:07:55.764360Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: codex
@@ -127968,6 +128008,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T10:07:55.764360Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-233
   title: rebase/resolve conflicts on organvm/domus-genoma#233
   repo: organvm/domus-genoma
