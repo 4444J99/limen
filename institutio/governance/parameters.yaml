@@ -223,6 +223,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Timeout in seconds for the pre-dispatch always-working reconciliation gate."
+  LIMEN_ALWAYS_WORKING_TIMEOUT_HARD_GATE:
+    default: "0"
+    env: LIMEN_ALWAYS_WORKING_TIMEOUT_HARD_GATE
+    self_update: none
+    owner: limen-daemon
+    note: "Whether an always-working timeout alone blocks dispatch reservation. The broader hard gate still blocks non-timeout failures; default 0 preserves live dispatch if lifecycle reconciliation exceeds its timeout."
   LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB:
     default: 200
     env: LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB
@@ -1565,6 +1571,24 @@ parameters:
     note: "Gate for the metabolize 0c' step (scripts/chezmoi-drift.py). cartridge-connected proves the right REMOTE is wired but reads green through three states that silently disable config hydration: a strict-missingkey template error that aborts the whole `chezmoi status`/apply run; the source checkout parked on a stale branch serving old config; a managed target edited on disk but never re-added (the auto-capture hook only fires on the Edit tool). Any lets a local orphan look durable — the failure that made a subagent's ~/.claude statusline write survive as a local file (2026-07-09). =0 skips it. Fail-open only when chezmoi is absent; wedge/stale/.claude-orphan is the actionable non-zero. See host-is-factory-system-is-cartridge."
 
   # --- WORKTREE LIFECYCLE / parallel CELLS (scripts/cells.sh + scripts/reclaim-worktrees.py) ---
+  LIMEN_RECLAIM_LEGACY_DISPATCH_WT:
+    default: "auto"
+    env: LIMEN_RECLAIM_LEGACY_DISPATCH_WT
+    self_update: none
+    owner: limen-daemon
+    note: "Whether reclaim/debt discovery scans historical dispatch worktree roots after the active Scratch migration. Auto means enabled in live sessions and disabled when a test/probe supplies an explicit LIMEN_WORKTREE_ROOT."
+  LIMEN_RECLAIM_LEGACY_DISPATCH_AGE_H:
+    default: "$LIMEN_RECLAIM_MIN_AGE_H"
+    env: LIMEN_RECLAIM_LEGACY_DISPATCH_AGE_H
+    self_update: none
+    owner: limen-daemon
+    note: "Min idle hours before a legacy dispatch-root child can be reclaimed. Defaults to the dispatch reclaim age so old roots follow the same loss-free lifecycle gates."
+  LIMEN_RECLAIM_LEGACY_WORKTREE_ROOTS:
+    default: "$HOME/Workspace/.limen-worktrees"
+    env: LIMEN_RECLAIM_LEGACY_WORKTREE_ROOTS
+    self_update: none
+    owner: limen-daemon
+    note: "Colon-separated historical dispatch worktree roots scanned for cleanup after migration to LIMEN_WORKTREE_ROOT; the active dispatch root is skipped if listed here."
   LIMEN_RECLAIM_CLAUDE_WT:
     default: "1"               # ON — sweep .claude/worktrees too (the historical ~50GB blind spot)
     env: LIMEN_RECLAIM_CLAUDE_WT
