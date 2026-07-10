@@ -414,6 +414,15 @@
       "unlocks": "durable interactive Fable guard (no session silently defaults to Fable)",
       "source_task": "closeout 2026-07-09 (fable runtime cap)",
       "issue": 827
+    },
+    {
+      "id": "L-STORAGE-DRAIN-PUSHED",
+      "label": "Flip LIMEN_RECLAIM_PUSHED_OK=1 in the beat/launchd environment to DRAIN the pushed-but-unmerged worktree backlog (~293 roots, the dominant boot-disk pin) toward the 200 GiB free target. The escape hatch shipped DEFAULT-OFF in PR #867 (round-three storage-deadlock heal): the code, the standing grant (clean+pushed+idle), and its tests are all live — only the flip is un-pulled. Reaching ~200 GiB free otherwise waits on this OR the container cutover (L-CONTAINER-CUTOVER #255); the beat already drains the merged + clone classes without it.",
+      "owner": "yours",
+      "cost": "~1 min, one env flip, REVERSIBLE and loss-free (pushed roots are on origin, re-cloneable; only the disposable local checkout is freed).",
+      "unlocks": "closes the boot free-space gap toward LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB (200) via reclaim, without the irreversible container cutover.",
+      "gate": "This OVERRIDES your own tested merge-before-reap rule (2026-07-09, test_reclaim_keeps_clean_pushed_unmerged_branch: 'pushed preservation is not closure'). Enabling it reaps the LOCAL checkouts of ~293 in-flight/abandoned pushed-but-unmerged branches — the branches and their PR/babysitting lifecycle stay on origin, unaffected. Loss-free and reversible, but a policy choice only you make: speed-to-200 GiB vs keep-local-until-merged. Not defaulted on for exactly this reason.",
+      "source_task": "round-three storage-deadlock heal, PR #867 (LIMEN_RECLAIM_PUSHED_OK escape hatch, default-off)"
     }
   ]
 }
