@@ -104890,7 +104890,7 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T02:17:38.235606Z'
+  updated: '2026-07-10T02:31:05.010359Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -104928,6 +104928,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T02:31:05.010359Z'
+    agent: codex
+    session_id: https://github.com/organvm/portfolio/pull/169
+    status: dispatched
 - id: HEAL-cifix-organvm-portfolio-175
   title: fix failing CI on organvm/portfolio#175
   repo: organvm/portfolio
@@ -124121,7 +124125,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - blocked-on-spend
   - hardware
@@ -124137,7 +124141,7 @@ tasks:
     vibed. Reference numbers at filing: absorba'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T02:20:12.208204Z'
+  updated: '2026-07-10T02:31:05.010359Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:20:01.158025Z'
     agent: agy
@@ -124159,6 +124163,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T02:31:05.010359Z'
+    agent: claude
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: GH-organvm-manumissio-8
   title: 'Phase 2: ollama serve as an OpenAI-compatible endpoint adapter'
   repo: organvm/manumissio
