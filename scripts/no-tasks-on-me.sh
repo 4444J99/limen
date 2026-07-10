@@ -200,6 +200,23 @@ if ! python3 "$ROOT/scripts/reap-branches.py" --check; then
   bad "spent branches are lingering — review docs/branch-reap-acceptance.md, then write docs/branch-reap-acceptance.jsonl with archive + redaction proof before any scripts/reap-branches.py --apply"
 fi
 
+# ---------------------------------------------------------------------------
+# 10: no un-homed personal fact hangs on the session. The personal-facts
+#     registry (institutio/governance/personal-facts.yaml) owns every durable
+#     PII atom; scripts/identity.py verify is its predicate. Neither §1-9 nor
+#     credential-wall.py covers unpopulated IDENTITY/PII — this is that arm. A
+#     blank applicable&required atom (DOB/address/phone) is fine ONLY if it is
+#     homed as a lever (L-IDENTITY-POPULATE) whose issue the operator owns; then
+#     the relay cites the lever, never the atom. Green iff the atoms are present
+#     OR the populate lever homes the gap — a closeout can no longer pass with a
+#     personal fact silently un-homed (the phi.pdf chat-ask defect).
+# ---------------------------------------------------------------------------
+if ! python3 "$ROOT/scripts/identity.py" verify >/dev/null 2>&1; then
+  if ! grep -q 'L-IDENTITY-POPULATE' "$ROOT/his-hand-levers.json" 2>/dev/null; then
+    bad "personal-fact atoms are unpopulated and no L-IDENTITY-POPULATE lever homes the gap — add the lever to his-hand-levers.json (or populate the store); never leave it as a chat ask"
+  fi
+fi
+
 echo
 if [ "$fail" -ne 0 ]; then
   echo "VERDICT: tasks are hanging — see FAIL lines above. Hang each in its owner's git-tracked record, then re-run."

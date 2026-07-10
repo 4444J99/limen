@@ -58,6 +58,16 @@ fi
 # Source the cred cache so THIS shell + every child (route.py, the agent CLIs) inherit the keys.
 if [ -f "$HOME/.limen.env" ]; then set -a; . "$HOME/.limen.env"; set +a; fi
 
+echo "── 0a2. verify personal-fact atoms present (personal-facts registry; missing → beat log, never chat) ──"
+# The identity/persona organ's presence check, DERIVED from institutio/governance/personal-facts.yaml.
+# A blank applicable&required atom (DOB/address/phone) surfaces HERE — exactly like creds-hydrate --verify —
+# instead of falling through to a chat ask (the phi.pdf defect). Fail-open advisory: never breaks the beat.
+# Crown-jewels (op-only) are shadow-checked, never read on this path. The one-time populate is homed as
+# lever L-IDENTITY-POPULATE (his-hand-levers.json); no-tasks-on-me.sh asserts the gap is homed.
+if [ "${LIMEN_IDENTITY_VERIFY:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/identity.py" verify || echo "  ↑ identity atoms missing/blank above — one-time populate (op hydrate or entry); see lever L-IDENTITY-POPULATE"
+fi
+
 echo "── 0b. verify MCP connector consent (Lane B — surface lapsed claude.ai connectors in the log, never in chat) ──"
 # The op:// lane (0a) has a validity probe; this is the missing one for the OTHER credential lane —
 # the claude.ai hosted MCP connectors whose OAuth lives SERVER-SIDE (no local token to refresh). A

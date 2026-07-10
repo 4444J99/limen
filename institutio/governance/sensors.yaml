@@ -36,6 +36,18 @@ sensors:
         severity: advisory
         escalation: "DEAD credential(s) above — re-mint into the op:// item, then they self-heal next beat"
 
+  identity-verify:
+    section: "0a2"
+    title: "verify personal-fact atoms present (personal-facts registry; sibling of creds — atoms don't rotate)"
+    gate: LIMEN_IDENTITY_VERIFY
+    default: "1"
+    source: [metabolize]
+    owner: identity
+    steps:
+      - command: "python3 scripts/identity.py verify"
+        severity: advisory
+        escalation: "identity atoms missing/blank above — one-time populate (op hydrate or entry); see lever L-IDENTITY-POPULATE"
+
   mcp-auth-verify:
     section: "0b"
     title: "verify MCP connector consent (Lane B — surface lapsed claude.ai connectors in the log)"

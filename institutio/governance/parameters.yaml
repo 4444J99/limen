@@ -54,6 +54,12 @@ parameters:
     self_update: none
     owner: identity
     note: "Arms identity.py `need` to APPEND a pending row to personal-facts.yaml (and file an L-FACT lever) for an un-homed personal-fact class. Dry-run (0) by default — surfaces the pending row without writing. The write path is single-writer/scrubbed: class-NAME only, never a value."
+  LIMEN_IDENTITY_VERIFY:
+    default: 1
+    env: LIMEN_IDENTITY_VERIFY
+    self_update: none
+    owner: identity
+    note: "Toggles the beat's personal-fact presence check (identity.py verify, sensor 0a2 in sensors.yaml). 1=on: a blank applicable&required atom surfaces in the beat log, never chat. Sibling of LIMEN_CREDS_HYDRATE — creds rotate, identity atoms don't."
   LIMEN_DISPATCH_ASYNC:
     default: 1
     env: LIMEN_DISPATCH_ASYNC
