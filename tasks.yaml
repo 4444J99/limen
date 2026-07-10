@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 391
+      spent: 393
       per_agent:
         jules: 116
         gemini: 12
         codex: 6
         opencode: 121
-        agy: 123
-        claude: 9
+        agy: 124
+        claude: 10
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -109571,7 +109571,7 @@ tasks:
   target_agent: claude
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -109588,7 +109588,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T23:35:24.867313Z'
+  updated: '2026-07-10T02:23:05.392819Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:39:20.449890Z'
     agent: agy
@@ -109605,6 +109605,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T02:23:05.392819Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-session-meta-106
   title: rebase/resolve conflicts on organvm/session-meta#106
   repo: organvm/session-meta
@@ -110732,7 +110737,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -110748,7 +110753,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-09T23:35:24.867313Z'
+  updated: '2026-07-10T02:23:05.392819Z'
   dispatch_log:
   - timestamp: '2026-07-06T03:22:51.414075Z'
     agent: github_actions
@@ -110775,6 +110780,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T02:23:05.392819Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-dot-github--theoria-468
   title: rebase/resolve conflicts on organvm/dot-github--theoria#468
   repo: organvm/dot-github--theoria
