@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-09T23:22:14+00:00`
+Generated: `2026-07-10T00:15:47+00:00`
 Status: `needs-work`
 Required open: `6`
 Blocked: `1`
@@ -19,19 +19,19 @@ Done from receipt: `4`
 - ID: `SUBSTRATE-DISK-TEMP`
 - Workstream: `substrate`
 - Status: `assigned_from_existing_work`
-- Verdict: disk/temp pressure needs owner work
+- Verdict: internal free space is 121.3 GiB below target; last generated-state reclaim freed 732.0 KiB
 - Lane fit: `codex-local`
-- Predicate: `python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
+- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
 - Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
 
 ## Workstreams
 
 | Priority | ID | Status | Verdict |
 |---:|---|---|---|
-| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | disk/temp pressure needs owner work |
+| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | internal free space is 121.3 GiB below target; last generated-state reclaim freed 732.0 KiB |
 | 5 | `ESTATE-CUSTODY` | `assigned_from_existing_work` | estate doctrine exists; implementation receipt is not complete |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
-| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.8%, reviews 0.8% |
+| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.7%, reviews 0.8% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `done_from_receipt` | credential wall and historical token tombstone receipt are present |
 | 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 131 active flagged non-deleted messages require classification |
 | 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 83150 indexed non-deleted messages remain for future batches |
@@ -46,14 +46,16 @@ Done from receipt: `4`
 
 - Lane fit: `codex-local`
 - Repo/root: `~/Workspace/limen`
-- Task: Audit disk/temp pressure, worktree debt, and disposable local clone lifecycle before spawning more lanes.
-- Predicate: `python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
+- Task: Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.
+- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
 - Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
 - Stop condition: free disk is at target, temp writes are usable, and reclaimable worktree debt is owner-routed
 - Existing receipts:
   - `~/Workspace/limen/logs/heartbeat.out.log`
+  - `~/Workspace/limen/logs/reclaim-generated-state.jsonl`
   - `~/Workspace/limen/scripts/cvstos-organ.py`
   - `~/Workspace/limen/scripts/dispatch-health.py`
+  - `~/Workspace/limen/scripts/reclaim-generated-state.py`
   - `~/Workspace/limen/scripts/reclaim-worktrees.py`
   - `~/Workspace/limen/scripts/reap-clones.py`
   - `~/Workspace/limen/scripts/worktree-debt.py`
