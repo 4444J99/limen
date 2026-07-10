@@ -392,22 +392,19 @@ def _usage_generated_date(usage: dict[str, object]) -> str:
     return str(generated)[:10]
 
 
-def _live_run_capacity(
+def _live_usage_capacity(
     agent: str,
     info: dict[str, object],
     usage: dict[str, object],
     track_date: str,
 ) -> tuple[int, int, int] | None:
-    """Return (cap, spent, remaining) from a current live run-count meter.
+    """Return (cap, spent, remaining) from a current live meter.
 
-    This is deliberately limited to run-count lanes. Token/percent meters are real usage signals,
-    but a task's ``budget_cost`` is not a token count, so those lanes keep the board task budget.
+    ``capacity_census`` answers whether a lane has provider headroom. Task launch volume is still
+    bounded separately by dispatch's local slot caps and per-lane limits, so token/percent meters are
+    valid reachability gates even though task ``budget_cost`` is not measured in tokens.
     """
     if not track_date or _usage_generated_date(usage) != track_date:
-        return None
-    signal = str(info.get("signal") or "")
-    unit = str(info.get("unit") or "")
-    if signal not in {"dispatch-count", "count", "runs"} and unit != "runs":
         return None
     cap = _usage_int(info.get("possible"))
     remaining = _usage_int(info.get("remaining"))
@@ -439,11 +436,11 @@ def capacity_census(board: object = None, budget_limit: int | None = None) -> li
         cap = _int(per_agent_caps.get(agent), daily)
         spent = _int(per_agent_spent.get(agent), 0)
         usage_info = _usage_vendor(agent, usage)
-        live_run_capacity = _live_run_capacity(agent, usage_info, usage, track_date)
+        live_usage_capacity = _live_usage_capacity(agent, usage_info, usage, track_date)
         weak_proxy = _weak_proxy_exhaustion(agent, usage_info)
         detail = str(status["detail"])
-        if live_run_capacity is not None:
-            cap, spent, remaining = live_run_capacity
+        if live_usage_capacity is not None:
+            cap, spent, remaining = live_usage_capacity
             meter = f"live usage meter: remaining={remaining}/{cap}, consumed={spent}"
             detail = f"{detail}; {meter}" if detail else meter
         elif weak_proxy:

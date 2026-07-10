@@ -494,7 +494,7 @@ def test_capacity_census_agent_cap_overspent_clamps_remaining() -> None:
     assert codex_row["remaining"] == 0
 
 
-def test_capacity_census_uses_current_live_run_meter_over_stale_board_spend(
+def test_capacity_census_uses_current_live_meter_over_stale_board_spend(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     (tmp_path / "logs").mkdir()
@@ -511,6 +511,15 @@ def test_capacity_census_uses_current_live_run_meter_over_stale_board_spend(
                         "remaining": 11,
                         "health": "throttle",
                         "headroom_pct": 11,
+                    },
+                    "opencode": {
+                        "signal": "db-meter",
+                        "unit": "tokens",
+                        "possible": 50_000_000,
+                        "consumed": 30_000_000,
+                        "remaining": 20_000_000,
+                        "health": "ok",
+                        "headroom_pct": 40,
                     }
                 },
             }
@@ -531,11 +540,11 @@ def test_capacity_census_uses_current_live_run_meter_over_stale_board_spend(
         "portal": {
             "budget": {
                 "daily": 600,
-                "per_agent": {"jules": 100},
+                "per_agent": {"jules": 100, "opencode": 100},
                 "track": {
                     "date": "2026-07-10",
-                    "spent": 122,
-                    "per_agent": {"jules": 122},
+                    "spent": 244,
+                    "per_agent": {"jules": 122, "opencode": 122},
                 },
             }
         }
@@ -549,7 +558,14 @@ def test_capacity_census_uses_current_live_run_meter_over_stale_board_spend(
     assert jules_row["remaining"] == 11
     assert jules_row["reachable"] is True
     assert "live usage meter" in jules_row["detail"]
-    assert "jules" in select_lanes("auto", board)
+    opencode_row = next(r for r in rows if r["agent"] == "opencode")
+    assert opencode_row["limit"] == 50_000_000
+    assert opencode_row["spent"] == 30_000_000
+    assert opencode_row["remaining"] == 20_000_000
+    assert opencode_row["reachable"] is True
+    auto = select_lanes("auto", board)
+    assert "jules" in auto
+    assert "opencode" in auto
 
 
 def test_capacity_census_dict_board_shape() -> None:
