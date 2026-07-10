@@ -312,6 +312,98 @@ def test_session_value_gate_routes_hash_review_to_hash_resolver():
     ]
 
 
+def test_session_value_gate_allows_product_dispatch_after_packets_close(tmp_path):
+    review = _load()
+    review.PRODUCT_LEDGER_INDEX = tmp_path / "product-ledger.json"
+    review.PRODUCT_LEDGER_INDEX.write_text(
+        json.dumps(
+            {
+                "next_unblocked": [
+                    {
+                        "id": "PROD-repo-test",
+                        "owner": "organvm/value-repo",
+                        "state": "ship",
+                        "disposition": "sell-ready",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    snapshot = {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "batch_resolution_receipts": {"present": True},
+            "batch_review_index": {"present": True},
+            "prompt_packet_index": {"present": True},
+        },
+        "metrics": {
+            "commits": 1,
+            "batch_receipts": 1,
+            "prompt_events_recorded": 10,
+            "followup_roots": 0,
+            "merged_roots": 0,
+            "owner_absent_roots": 0,
+        },
+        "findings": {"commit_kinds": {"direct_engineering": 1}},
+        "current_queue": {
+            "coverage": {"open_review_batches": 0},
+            "next": [],
+        },
+        "current_packet_queue": {
+            "present": True,
+            "coverage": {"open_packets": 0},
+            "next": [],
+        },
+    }
+
+    gate = review.decide_gate(snapshot, history=[])
+
+    assert gate["action"] == "continue_direct_product_work"
+    assert gate["exit_code"] == 0
+    assert gate["evidence"]["open_prompt_packets"] == 0
+    assert gate["evidence"]["next_product"] == "PROD-repo-test"
+    assert gate["evidence"]["next_product_owner"] == "organvm/value-repo"
+    assert gate["next_commands"] == ["python3 scripts/product-ledger.py --refresh --redacted-summary"]
+
+
+def test_session_value_gate_keeps_packetization_block_when_packets_open():
+    review = _load()
+    snapshot = {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "batch_resolution_receipts": {"present": True},
+            "batch_review_index": {"present": True},
+            "prompt_packet_index": {"present": True},
+        },
+        "metrics": {
+            "commits": 1,
+            "batch_receipts": 1,
+            "prompt_events_recorded": 10,
+            "followup_roots": 0,
+            "merged_roots": 0,
+            "owner_absent_roots": 0,
+        },
+        "findings": {"commit_kinds": {"direct_engineering": 1}},
+        "current_queue": {
+            "coverage": {"open_review_batches": 0},
+            "next": [],
+        },
+        "current_packet_queue": {
+            "present": True,
+            "coverage": {"open_packets": 1},
+            "next": [{"id": "packet-test", "dispatchability": "needs-owner-repo"}],
+        },
+    }
+
+    gate = review.decide_gate(snapshot, history=[])
+
+    assert gate["action"] == "switch_to_packetization"
+    assert gate["exit_code"] == 10
+    assert gate["evidence"]["open_prompt_packets"] == 1
+    assert gate["next_commands"] == ["python3 scripts/prompt-packet-ledger.py --write"]
+
+
 def test_session_value_gate_blocks_receipt_only_custody_motion(tmp_path):
     review = _load()
     review.PRODUCT_LEDGER_INDEX = tmp_path / "product-ledger.json"

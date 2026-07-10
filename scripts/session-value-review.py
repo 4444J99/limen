@@ -27,6 +27,7 @@ DOC_PATH = ROOT / "docs" / "session-value-review.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "session-value-review.json"
 GATE_HISTORY = PRIVATE_ROOT / "lifecycle" / "session-value-gate-history.jsonl"
 PRODUCT_LEDGER_INDEX = PRIVATE_ROOT / "lifecycle" / "product-ledger.json"
+PROMPT_PACKET_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
 
 RECORDED_STATUSES = {"owner-recorded", "non-source-recorded", "superseded-recorded"}
 FOLLOWUP_ROOT_STATUSES = {
@@ -40,6 +41,7 @@ GATE_EXIT_CODES = {
     "continue_prompt_sweep": 0,
     "continue_prompt_sweep_watch_followups": 0,
     "continue_current_work": 0,
+    "continue_direct_product_work": 0,
     "switch_to_packetization": 10,
     "switch_to_direct_product_work": 10,
     "stop_missing_inputs": 20,
@@ -241,6 +243,29 @@ def current_queue() -> dict[str, Any]:
     return {"coverage": coverage, "counts": counts, "next": queue[:5]}
 
 
+def current_packet_queue() -> dict[str, Any]:
+    index = load_json(PROMPT_PACKET_INDEX)
+    coverage = index.get("coverage") if isinstance(index.get("coverage"), dict) else {}
+    open_packets = []
+    for item in index.get("open_packets") or []:
+        if not isinstance(item, dict):
+            continue
+        open_packets.append(
+            {
+                "id": item.get("id"),
+                "family": item.get("family"),
+                "dispatchability": item.get("dispatchability"),
+                "agent_fit": item.get("agent_fit"),
+                "verification": item.get("verification"),
+            }
+        )
+    return {
+        "present": PROMPT_PACKET_INDEX.exists() and bool(index),
+        "coverage": coverage,
+        "next": open_packets[:5],
+    }
+
+
 def sum_field(items: list[dict[str, Any]], field: str) -> int:
     return sum(int(item.get(field) or 0) for item in items)
 
@@ -325,6 +350,10 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
     metrics = snapshot["metrics"]
     queue = snapshot.get("current_queue") or {}
     coverage = queue.get("coverage") if isinstance(queue.get("coverage"), dict) else {}
+    packet_queue = snapshot.get("current_packet_queue") or {}
+    packet_coverage = (
+        packet_queue.get("coverage") if isinstance(packet_queue.get("coverage"), dict) else {}
+    )
     findings = snapshot.get("findings") if isinstance(snapshot.get("findings"), dict) else {}
     commit_kinds = findings.get("commit_kinds") if isinstance(findings.get("commit_kinds"), dict) else {}
     inputs = snapshot.get("inputs") or {}
@@ -343,6 +372,12 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
     commits = int(metrics.get("commits") or 0)
     receipts = int(metrics.get("batch_receipts") or 0)
     open_batches = int(coverage.get("open_review_batches") or 0)
+    packet_index_present = bool(packet_queue.get("present"))
+    packet_next = [item for item in packet_queue.get("next") or [] if isinstance(item, dict)]
+    try:
+        open_packets = int(packet_coverage.get("open_packets") or len(packet_next))
+    except (TypeError, ValueError):
+        open_packets = len(packet_next)
     maintenance_commits = int(commit_kinds.get("task_board") or 0) + int(commit_kinds.get("receipt_refresh") or 0)
     value_commits = max(0, commits - maintenance_commits)
     has_durable_progress = receipts > 0 or value_commits > 0
@@ -408,10 +443,27 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
             next_action = product_action
             next_commands = [str(product_action["command"])]
     elif open_batches <= 0:
-        action = "switch_to_packetization"
-        reason = "No open prompt-review batches remain; the next useful lifecycle move is packetization or direct product work."
-        next_action = {"source": "prompt_packet_queue", "command": "python3 scripts/prompt-packet-ledger.py --write"}
-        next_commands = [str(next_action["command"])]
+        if not packet_index_present or open_packets > 0:
+            action = "switch_to_packetization"
+            reason = (
+                "No open prompt-review batches remain; refresh or resolve prompt packets before "
+                "generic dispatch resumes."
+            )
+            next_action = {
+                "source": "prompt_packet_queue",
+                "command": "python3 scripts/prompt-packet-ledger.py --write",
+            }
+            next_commands = [str(next_action["command"])]
+        else:
+            action = "continue_direct_product_work"
+            owner = product_action.get("owner") or "the top unblocked product owner"
+            product = product_action.get("product") or "the next unblocked product"
+            reason = (
+                "No open prompt-review batches or prompt packets remain; continue value-gated "
+                f"direct product dispatch on {product} ({owner})."
+            )
+            next_action = product_action
+            next_commands = [str(product_action["command"])]
     elif pressure_run >= 2:
         action = "switch_to_packetization"
         reason = "Follow-up roots outnumbered merged/routed roots for two consecutive cadence reports."
@@ -467,6 +519,8 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
             "next_lane": next_batch.get("lane"),
             "next_product": product_action.get("product"),
             "next_product_owner": product_action.get("owner"),
+            "prompt_packet_index_present": packet_index_present,
+            "open_prompt_packets": open_packets,
         },
         "next_action": next_action,
         "next_commands": next_commands,
@@ -592,6 +646,7 @@ def build_snapshot(since: dt.datetime, until: dt.datetime) -> dict[str, Any]:
                 "present": BATCH_RESOLUTION_RECEIPTS.exists(),
             },
             "batch_review_index": {"path": str(BATCH_REVIEW_INDEX), "present": BATCH_REVIEW_INDEX.exists()},
+            "prompt_packet_index": {"path": str(PROMPT_PACKET_INDEX), "present": PROMPT_PACKET_INDEX.exists()},
             "product_ledger_index": {"path": str(PRODUCT_LEDGER_INDEX), "present": PRODUCT_LEDGER_INDEX.exists()},
         },
         "metrics": {
@@ -613,6 +668,7 @@ def build_snapshot(since: dt.datetime, until: dt.datetime) -> dict[str, Any]:
         "commits": commits,
         "batch_receipts": receipts,
         "current_queue": queue,
+        "current_packet_queue": current_packet_queue(),
     }
     snapshot["gate"] = decide_gate(snapshot)
     return snapshot
