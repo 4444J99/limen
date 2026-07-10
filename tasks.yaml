@@ -127935,7 +127935,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -127956,7 +127956,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T08:57:44.284590Z'
+  updated: '2026-07-10T10:14:23.832586Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: codex
@@ -127967,6 +127967,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/domus-genoma/pull/224
     status: dispatched
+  - timestamp: '2026-07-10T10:14:23.832586Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-organvm-domus-genoma-230
   title: rebase/resolve conflicts on organvm/domus-genoma#230
   repo: organvm/domus-genoma
@@ -128073,3 +128078,33 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+- id: HEAL-rebase-organvm-dot-github--theoria-471
+  title: rebase/resolve conflicts on organvm/dot-github--theoria#471
+  repo: organvm/dot-github--theoria
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/dot-github--theoria/pull/471
+  context: 'PR organvm/dot-github--theoria#471 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. FIRST check the PR''s ORIGINAL
+    diff (merge-base..head) against its declared title/body intent: a branch generated
+    from a broken tree can carry mass deletions it never declared, and branch-side
+    deletions the declaration does not name are POISON to restore from base, never
+    intent to preserve (session-meta#148 ate ingest/ + 3 test suites this way). Then
+    check out the PR branch, rebase it onto the current base (or merge base in), resolve
+    every conflict preserving the PR''s declared intent, push to the SAME PR branch,
+    and confirm it reports MERGEABLE with green CI. After resolving, verify diff-vs-base
+    matches the declared intent; if nothing genuine survives (all absorbed or superseded
+    on base), close the PR as superseded instead of pushing. Do not open a new PR.
+    PR: https://github.com/organvm/dot-github--theoria/pull/471 [auto-emitted 2026-07-10
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
