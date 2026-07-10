@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-07-10T05:25:23Z",
+  "generated_at": "2026-07-10T05:25:52Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -51742,6 +51742,338 @@
         {
           "root": "legacy-session-c61fa2a3ac4909331037",
           "session_key": "c61fa2a3ac4909331037",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T05:25:52Z",
+      "batch": "prompt-batch-low-legacy-session-review-034",
+      "band": "low",
+      "lane": "legacy-session-review",
+      "status": "owner-recorded",
+      "classification": "legacy Claude-project sessions routed from private structured metadata to Limen owner lanes, PR receipts, estate/external context, and sensitive operator context",
+      "session_count": 25,
+      "prompt_events": 266,
+      "unique_prompt_hashes": 228,
+      "evidence": [
+        "private redacted batch metadata listed 25 legacy Claude-project session slots with no worktree slug in the priority map",
+        "the batch contained 25 unique session keys and 25 private source rows; 11 source JSONL files existed under ~/.claude/projects at review time",
+        "private structured scan emitted only session keys, source existence, project/worktree cluster names, git branch names, public GitHub URLs, repo anchors, prompt-event counts, hash counts, duplicate counts, top-level event type names, tool names, and sensitive-keyword counts; no prompt body was copied",
+        "the structured scan found no public GitHub URL anchors and no safe allowlisted repo refs in this batch, so public proof came from gitBranch anchors only",
+        "no exact local worktree directory existed for the named Limen subagent clusters under /Users/4jp/Workspace/.limen-worktrees, /Users/4jp/Workspace/limen/.worktrees, or /Users/4jp/Workspace/limen/.claude/worktrees at review time",
+        "gh api branch lookup and gh pr list --head against organvm/limen found merged PR receipts for #205, #209, #322, #358",
+        "closed unmerged PR receipts were recorded but not treated as landed proof for #304",
+        "legacy session status counts: {'legacy_session_owner_lane_routed': 21, 'legacy_session_pr_routed': 3, 'legacy_session_closed_pr_recorded': 1}",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Use merged Limen PR receipts as durable proof. Keep branch-only, closed-PR, main-only, external, Archive4T, and sensitive sessions as private owner-lane context; do not replay legacy transcripts unless a later packet names the missing delta, owner repo, live branch or issue, and narrow predicate.",
+      "roots": [
+        {
+          "root": "legacy-session-cb4a07b2b22fd0259cbc",
+          "session_key": "cb4a07b2b22fd0259cbc",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "limen-subagent-glittery-petting-leaf",
+          "repo": "organvm/limen",
+          "branch": "heal/nomenclator-rename",
+          "branches": [
+            "heal/nomenclator-rename",
+            "feat/index-nominum-convergence"
+          ],
+          "prs": [
+            "https://github.com/organvm/limen/pull/205",
+            "https://github.com/organvm/limen/pull/209"
+          ],
+          "evidence": "Metadata contained branch anchor(s) heal/nomenclator-rename, feat/index-nominum-convergence; no live exact branch remains, and matching PR(s) #205, #209 are MERGED.",
+          "next_action": "Use merged PR(s) #205, #209 and current Limen state; do not replay the legacy transcript."
+        },
+        {
+          "root": "legacy-session-da6c66f97dc5462e8d38",
+          "session_key": "da6c66f97dc5462e8d38",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-da7841e64a4c4f0ed479",
+          "session_key": "da7841e64a4c4f0ed479",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "limen-subagent-tender-sniffing-marshmallow",
+          "repo": "organvm/limen",
+          "branch": "worktree-tender-sniffing-marshmallow",
+          "branches": [
+            "worktree-tender-sniffing-marshmallow"
+          ],
+          "evidence": "Metadata contained branch anchor(s) worktree-tender-sniffing-marshmallow; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-e0a0789510bbe7ba12eb",
+          "session_key": "e0a0789510bbe7ba12eb",
+          "status": "legacy_session_closed_pr_recorded",
+          "owner_lane": "external-local-project",
+          "repo": "organvm/limen",
+          "branch": "insight-cadence-core",
+          "branches": [
+            "insight-cadence-core"
+          ],
+          "prs": [
+            "https://github.com/organvm/limen/pull/304"
+          ],
+          "evidence": "Metadata contained branch anchor(s) insight-cadence-core; matching PR(s) #304 are CLOSED and unmerged, and no live exact branch was found.",
+          "next_action": "Treat as historical closed-PR context unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "legacy-session-e39b615397c12044de25",
+          "session_key": "e39b615397c12044de25",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-e3bfabdd9db807dfbe99",
+          "session_key": "e3bfabdd9db807dfbe99",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-e7860ca59a40b4922c02",
+          "session_key": "e7860ca59a40b4922c02",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "limen-subagent-fluttering-wandering-wilkes",
+          "repo": "organvm/limen",
+          "branch": "worktree-fluttering-wandering-wilkes",
+          "branches": [
+            "worktree-fluttering-wandering-wilkes"
+          ],
+          "evidence": "Metadata contained branch anchor(s) worktree-fluttering-wandering-wilkes; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-f0bf59134298a29382e2",
+          "session_key": "f0bf59134298a29382e2",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-f13b52ed7212866bfda5",
+          "session_key": "f13b52ed7212866bfda5",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-f2aa3167b5e27eeeefda",
+          "session_key": "f2aa3167b5e27eeeefda",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-f4403d97b90be6424f87",
+          "session_key": "f4403d97b90be6424f87",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-f4af8064f74ffae53e51",
+          "session_key": "f4af8064f74ffae53e51",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-fe463489625bad5cdef2",
+          "session_key": "fe463489625bad5cdef2",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-ff2d62d12a2b63f0497b",
+          "session_key": "ff2d62d12a2b63f0497b",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "limen-subagent-giggly-cuddling-quilt",
+          "repo": "organvm/limen",
+          "branch": "worktree-giggly-cuddling-quilt",
+          "branches": [
+            "worktree-giggly-cuddling-quilt"
+          ],
+          "prs": [
+            "https://github.com/organvm/limen/pull/322"
+          ],
+          "evidence": "Metadata contained branch anchor(s) worktree-giggly-cuddling-quilt; no live exact branch remains, and matching PR(s) #322 are MERGED.",
+          "next_action": "Use merged PR(s) #322 and current Limen state; do not replay the legacy transcript."
+        },
+        {
+          "root": "legacy-session-008dd5cf54a7a0ecd4c6",
+          "session_key": "008dd5cf54a7a0ecd4c6",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-0200296929081eb1eb61",
+          "session_key": "0200296929081eb1eb61",
+          "status": "legacy_session_pr_routed",
+          "owner_lane": "limen-subagent-agent-standard-converge",
+          "repo": "organvm/limen",
+          "branch": "worktree-agent-standard-converge",
+          "branches": [
+            "worktree-agent-standard-converge"
+          ],
+          "prs": [
+            "https://github.com/organvm/limen/pull/358"
+          ],
+          "evidence": "Metadata contained branch anchor(s) worktree-agent-standard-converge; no live exact branch remains, and matching PR(s) #358 are MERGED.",
+          "next_action": "Use merged PR(s) #358 and current Limen state; do not replay the legacy transcript."
+        },
+        {
+          "root": "legacy-session-023c3bfa1d785563e38a",
+          "session_key": "023c3bfa1d785563e38a",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-03533a0143c773e005cc",
+          "session_key": "03533a0143c773e005cc",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-04685ed12118731cec08",
+          "session_key": "04685ed12118731cec08",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-066a9fd3b98afc51a310",
+          "session_key": "066a9fd3b98afc51a310",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-073a5ac1f3232e1feb71",
+          "session_key": "073a5ac1f3232e1feb71",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "legacy-session-unknown",
+          "repo": "organvm/limen",
+          "branch": "",
+          "branches": [],
+          "evidence": "Metadata contained branch anchor(s) none; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-073a78cd116a1ee2055f",
+          "session_key": "073a78cd116a1ee2055f",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "limen-subagent-temporal-percolating-token",
+          "repo": "organvm/limen",
+          "branch": "worktree-temporal-percolating-token",
+          "branches": [
+            "worktree-temporal-percolating-token"
+          ],
+          "evidence": "Metadata contained branch anchor(s) worktree-temporal-percolating-token; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-08184e1bf8ed40158d63",
+          "session_key": "08184e1bf8ed40158d63",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "limen-subagent-fluttering-wandering-wilkes",
+          "repo": "organvm/limen",
+          "branch": "worktree-fluttering-wandering-wilkes",
+          "branches": [
+            "worktree-fluttering-wandering-wilkes"
+          ],
+          "evidence": "Metadata contained branch anchor(s) worktree-fluttering-wandering-wilkes; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-08b60d45b1971078dfa2",
+          "session_key": "08b60d45b1971078dfa2",
+          "status": "legacy_session_owner_lane_routed",
+          "owner_lane": "limen-subagent-temporal-percolating-token",
+          "repo": "organvm/limen",
+          "branch": "worktree-temporal-percolating-token",
+          "branches": [
+            "worktree-temporal-percolating-token"
+          ],
+          "evidence": "Metadata contained branch anchor(s) worktree-temporal-percolating-token; no live exact remote branch, exact-head PR, or public URL anchor was found.",
+          "next_action": "Do not rehydrate unless a later packet identifies the missing subagent delta and Limen predicate."
+        },
+        {
+          "root": "legacy-session-08b9169ecb89f90f7c34",
+          "session_key": "08b9169ecb89f90f7c34",
           "status": "legacy_session_owner_lane_routed",
           "owner_lane": "legacy-session-unknown",
           "repo": "organvm/limen",
