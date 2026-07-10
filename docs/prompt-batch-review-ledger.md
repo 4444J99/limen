@@ -1,6 +1,6 @@
 # Prompt Batch Review Ledger
 
-Generated: `2026-07-10T04:42:56+00:00`
+Generated: `2026-07-10T04:47:08+00:00`
 
 ## Canonical Decision
 
@@ -13,14 +13,14 @@ Generated: `2026-07-10T04:42:56+00:00`
 
 - Priority batches read: `309`.
 - Review batches recorded: `309`.
-- Batches with durable owner/non-source/supersession evidence: `137`.
-- Open review batches: `155`.
+- Batches with durable owner/non-source/supersession evidence: `138`.
+- Open review batches: `154`.
 - Parked secret batches: `17`.
 - Prompt events represented: `136694`.
 - Preservation receipts available: `179`.
 - Packet resolution receipts available: `9`.
-- Batch resolution receipts available: `119`.
-- Status mix: `needs-private-review` 137, `owner-recorded` 134, `parked-secret` 17, `needs-owner-route` 12, `needs-remote-proof` 6, `superseded-recorded` 3.
+- Batch resolution receipts available: `120`.
+- Status mix: `needs-private-review` 136, `owner-recorded` 135, `parked-secret` 17, `needs-owner-route` 12, `needs-remote-proof` 6, `superseded-recorded` 3.
 - Lane mix: `legacy-session-review` 91, `hash-review` 82, `historical-worktree-review` 62, `family` 17, `parked-secret` 17, `observe` 11, `remote-pr-open` 8, `owner-blocker` 6, `human-gate` 5, `remote-proof` 5, `stalled-review` 3, `remote-close` 1, `preserve` 1.
 
 ## Recorded Batches
@@ -62,36 +62,36 @@ Generated: `2026-07-10T04:42:56+00:00`
 
 | Rank | Batch | Status | Band | Lane | Sessions | Events | Dominant Mix | Next Action |
 |---:|---|---|---|---|---:|---:|---|---|
-| 1 | `prompt-batch-low-hash-review-002` | `needs-private-review` | `low` | `hash-review` | 25 | 43 | sources agy-cli-conversations 12, codex-sessions 6, opencode-db 7; families uncategorized 25 | Review the redacted `codex-sessions` receipt privately and assign an owner route before delegation. |
-| 2 | `prompt-batch-low-legacy-session-review-013` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 410 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 3 | `prompt-batch-low-legacy-session-review-014` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 315 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 4 | `prompt-batch-low-legacy-session-review-015` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 319 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 5 | `prompt-batch-low-hash-review-003` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 21, opencode-db 4; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 6 | `prompt-batch-low-hash-review-004` | `needs-private-review` | `low` | `hash-review` | 25 | 58 | sources agy-cli-conversations 14, codex-sessions 3, opencode-db 8; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
-| 7 | `prompt-batch-low-hash-review-005` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 16, opencode-db 9; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
-| 8 | `prompt-batch-low-hash-review-006` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 18, opencode-db 7; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
-| 9 | `prompt-batch-low-hash-review-007` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 20, opencode-db 5; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
-| 10 | `prompt-batch-low-hash-review-008` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 18, opencode-db 7; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
-| 11 | `prompt-batch-low-hash-review-009` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 11, opencode-db 14; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
-| 12 | `prompt-batch-low-hash-review-010` | `needs-private-review` | `low` | `hash-review` | 25 | 101 | sources agy-cli-conversations 7, agy-cli-history 1, codex-sessions 7, opencode-db 10; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 13 | `prompt-batch-low-legacy-session-review-016` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 269 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 14 | `prompt-batch-low-legacy-session-review-017` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 317 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 15 | `prompt-batch-low-legacy-session-review-018` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 299 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 16 | `prompt-batch-low-legacy-session-review-019` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 347 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 17 | `prompt-batch-low-legacy-session-review-020` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 305 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 18 | `prompt-batch-low-legacy-session-review-021` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 336 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 19 | `prompt-batch-low-legacy-session-review-022` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 311 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 20 | `prompt-batch-low-legacy-session-review-023` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 346 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 21 | `prompt-batch-low-family-003` | `needs-private-review` | `low` | `family` | 24 | 85 | sources codex-sessions 24; families agent_coordination 4, convergence_corpus 10, technical_debt_ci 10 | Run narrow predicates and preserve failures in owner repos. |
-| 22 | `prompt-batch-low-legacy-session-review-024` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 220 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 23 | `prompt-batch-low-legacy-session-review-025` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 274 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 24 | `prompt-batch-low-legacy-session-review-026` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 262 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 25 | `prompt-batch-low-legacy-session-review-027` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 230 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 26 | `prompt-batch-low-legacy-session-review-028` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 182 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 27 | `prompt-batch-low-legacy-session-review-029` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 253 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 28 | `prompt-batch-low-legacy-session-review-030` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 193 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 29 | `prompt-batch-low-legacy-session-review-031` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 266 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
-| 30 | `prompt-batch-low-legacy-session-review-032` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 234 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 1 | `prompt-batch-low-legacy-session-review-013` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 410 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 2 | `prompt-batch-low-legacy-session-review-014` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 315 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 3 | `prompt-batch-low-legacy-session-review-015` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 319 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 4 | `prompt-batch-low-hash-review-003` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 21, opencode-db 4; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 5 | `prompt-batch-low-hash-review-004` | `needs-private-review` | `low` | `hash-review` | 25 | 58 | sources agy-cli-conversations 14, codex-sessions 3, opencode-db 8; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
+| 6 | `prompt-batch-low-hash-review-005` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 16, opencode-db 9; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
+| 7 | `prompt-batch-low-hash-review-006` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 18, opencode-db 7; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
+| 8 | `prompt-batch-low-hash-review-007` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 20, opencode-db 5; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
+| 9 | `prompt-batch-low-hash-review-008` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 18, opencode-db 7; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
+| 10 | `prompt-batch-low-hash-review-009` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 11, opencode-db 14; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
+| 11 | `prompt-batch-low-hash-review-010` | `needs-private-review` | `low` | `hash-review` | 25 | 101 | sources agy-cli-conversations 7, agy-cli-history 1, codex-sessions 7, opencode-db 10; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 12 | `prompt-batch-low-legacy-session-review-016` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 269 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 13 | `prompt-batch-low-legacy-session-review-017` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 317 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 14 | `prompt-batch-low-legacy-session-review-018` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 299 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 15 | `prompt-batch-low-legacy-session-review-019` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 347 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 16 | `prompt-batch-low-legacy-session-review-020` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 305 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 17 | `prompt-batch-low-legacy-session-review-021` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 336 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 18 | `prompt-batch-low-legacy-session-review-022` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 311 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 19 | `prompt-batch-low-legacy-session-review-023` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 346 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 20 | `prompt-batch-low-family-003` | `needs-private-review` | `low` | `family` | 24 | 85 | sources codex-sessions 24; families agent_coordination 4, convergence_corpus 10, technical_debt_ci 10 | Run narrow predicates and preserve failures in owner repos. |
+| 21 | `prompt-batch-low-legacy-session-review-024` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 220 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 22 | `prompt-batch-low-legacy-session-review-025` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 274 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 23 | `prompt-batch-low-legacy-session-review-026` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 262 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 24 | `prompt-batch-low-legacy-session-review-027` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 230 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 25 | `prompt-batch-low-legacy-session-review-028` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 182 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 26 | `prompt-batch-low-legacy-session-review-029` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 253 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 27 | `prompt-batch-low-legacy-session-review-030` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 193 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 28 | `prompt-batch-low-legacy-session-review-031` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 266 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 29 | `prompt-batch-low-legacy-session-review-032` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 234 | sources claude-projects 25; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
+| 30 | `prompt-batch-low-legacy-session-review-033` | `needs-private-review` | `low` | `legacy-session-review` | 25 | 248 | sources claude-projects 22, claude-tasks 3; families uncategorized 25 | Sample the private source file, extract durable atoms, then route to an owner ledger. |
 
 ## Private Output
 
