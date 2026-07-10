@@ -27,6 +27,8 @@ RECLAIM_LOGS = {
     "tool-cache": ROOT / "logs" / "reclaim-tool-caches.jsonl",
     "ollama-models": ROOT / "logs" / "reclaim-ollama-models.jsonl",
 }
+OPENCODE_INTAKE_DOC = ROOT / "docs" / "opencode-db-corpus-intake.md"
+OPENCODE_INTAKE_LOG = ROOT / "logs" / "opencode-db-corpus-intake.jsonl"
 
 BUCKETS = (
     {
@@ -167,6 +169,31 @@ def reclaim_summary(path: Path) -> dict[str, Any]:
     }
 
 
+def latest_opencode_intake() -> dict[str, Any]:
+    latest: dict[str, Any] = {}
+    try:
+        lines = OPENCODE_INTAKE_LOG.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        lines = []
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict):
+            latest = row
+    return {
+        "present": bool(latest),
+        "doc_present": OPENCODE_INTAKE_DOC.exists(),
+        "status": latest.get("status"),
+        "archive_status": latest.get("archive_status"),
+        "generated_at": latest.get("generated_at"),
+        "run_id": latest.get("run_id"),
+        "private_manifest": latest.get("private_manifest"),
+        "doc": stable(OPENCODE_INTAKE_DOC),
+    }
+
+
 def worktree_lifecycle_summary() -> dict[str, Any]:
     script = ROOT / "scripts" / "worktree-debt.py"
     if not script.exists():
@@ -215,13 +242,21 @@ def worktree_lifecycle_summary() -> dict[str, Any]:
 def build_snapshot() -> dict[str, Any]:
     free = disk_free_gib()
     shortfall = round(max(TARGET_FREE_GIB - (free or 0), 0), 1) if free is not None else None
+    opencode_intake = latest_opencode_intake()
     rows = []
     for bucket in BUCKETS:
         path = expand(str(bucket["path"]))
         size_kib = du_kib(path)
+        gate = str(bucket["gate"])
+        evidence: dict[str, Any] = {}
+        if bucket["id"] == "opencode-db" and opencode_intake.get("archive_status") == "verified":
+            gate = "external archive and private intake verified; local retention decision remains; never delete outright"
+            evidence["opencode_intake"] = opencode_intake
         rows.append(
             {
                 **bucket,
+                "gate": gate,
+                "evidence": evidence,
                 "display_path": stable(path),
                 "exists": path.exists(),
                 "size_kib": size_kib or 0,
@@ -237,6 +272,7 @@ def build_snapshot() -> dict[str, Any]:
         "internal_free_gib": free,
         "shortfall_gib": shortfall,
         "safe_reclaim": reclaim,
+        "opencode_intake": opencode_intake,
         "worktree_lifecycle": worktree_lifecycle_summary(),
         "buckets": rows,
         "status": "needs-owner-gates" if shortfall else "clear",
@@ -288,6 +324,17 @@ def render(snapshot: dict[str, Any]) -> str:
         lines.append(
             f"| `{row['display_path']}` | `{row['size']}` | `{row['class']}` | `{row['owner']}` | {row['gate']} |"
         )
+    opencode_intake = snapshot.get("opencode_intake") if isinstance(snapshot.get("opencode_intake"), dict) else {}
+    if opencode_intake.get("present"):
+        lines += [
+            "",
+            "## OpenCode DB Intake",
+            "",
+            f"- Status: `{opencode_intake.get('status')}`.",
+            f"- Archive status: `{opencode_intake.get('archive_status')}`.",
+            f"- Receipt: `{opencode_intake.get('doc')}`.",
+            f"- Private manifest: `{(opencode_intake.get('private_manifest') or {}).get('path', 'none')}`.",
+        ]
     lines += [
         "",
         "## Contract",

@@ -1,10 +1,10 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T00:45:05Z`
+Generated: `2026-07-10T01:06:00Z`
 Status: `needs-owner-gates`
-Internal free: `93.3 GiB`
+Internal free: `93.2 GiB`
 Target free: `200.0 GiB`
-Shortfall: `106.7 GiB`
+Shortfall: `106.8 GiB`
 
 ## Safe Reclaim Already Run
 
@@ -14,12 +14,12 @@ Shortfall: `106.7 GiB`
 
 ## Scratch / Worktree Lifecycle
 
-- Summary: `0 debt roots / 473 scanned; 0 reapable roots`.
+- Summary: `0 debt roots / 475 scanned; 0 reapable roots`.
 - Debt cap: `12`; reapable cap: `0`.
 
 | Reason | Roots |
 |---|---:|
-| `active(<6h)` | `279` |
+| `active(<6h)` | `281` |
 | `remote-pr-open` | `71` |
 | `antigravity-scratch-managed` | `48` |
 | `active(<24h)` | `46` |
@@ -31,7 +31,7 @@ Shortfall: `106.7 GiB`
 
 | Bucket | Size | Class | Owner | Gate |
 |---|---:|---|---|---|
-| `~/.local/share/opencode/opencode.db` | `10.9 GiB` | `protected-agent-state` | `aw-opencode-db-corpus-intake-0709` | extract/export into prompt-corpus intake before vendor retention decision; never delete outright |
+| `~/.local/share/opencode/opencode.db` | `10.9 GiB` | `protected-agent-state` | `aw-opencode-db-corpus-intake-0709` | external archive and private intake verified; local retention decision remains; never delete outright |
 | `~/Workspace/limen/.limen-private/session-corpus` | `10.2 GiB` | `protected-private-corpus` | `docs/session-corpus-ledger.md` | two-copy/restore archive gate before move or purge |
 | `~/Pictures/Photos Library.photoslibrary` | `8.6 GiB` | `personal-media` | `media/photos custody` | personal-data human gate plus two-copy restore proof |
 | `~/Workspace/.limen-worktrees` | `8.3 GiB` | `worktree-cache` | `docs/worktree-reclaim-acceptance.md` | clean+merged+idle or explicit acceptance; current worktree-debt gate reports zero reapable |
@@ -39,6 +39,13 @@ Shortfall: `106.7 GiB`
 | `~/.gemini/antigravity-cli` | `6.7 GiB` | `protected-agent-state` | `agy conductor` | preserve conversations/brain before eviction; scratch handled separately |
 | `~/Workspace/session-meta` | `5.0 GiB` | `repo-corpus-state` | `organvm/session-meta` | repo/archive custody proof before local cache eviction |
 | `~/.gemini/antigravity-cli/scratch` | `4.2 GiB` | `agy-scratch` | `docs/antigravity-scratch-bridge.md` | antigravity scratch archive/redaction acceptance ledger before removal |
+
+## OpenCode DB Intake
+
+- Status: `archived_private_intake`.
+- Archive status: `verified`.
+- Receipt: `~/Workspace/limen/docs/opencode-db-corpus-intake.md`.
+- Private manifest: `~/Workspace/limen/.limen-private/session-corpus/lifecycle/opencode-db-intake/20260710T010237Z/manifest.json`.
 
 ## Contract
 

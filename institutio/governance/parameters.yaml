@@ -277,6 +277,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "External archive SSD root used for durable custody receipts and run-and-gun substrate checks."
+  LIMEN_OPENCODE_DB:
+    default: "$HOME/.local/share/opencode/opencode.db"
+    env: LIMEN_OPENCODE_DB
+    self_update: none
+    owner: continuity
+    note: "OpenCode SQLite history database used by opencode-db-corpus-intake.py for private prompt-corpus preservation receipts. Protected agent state; never deleted by the intake tool."
+  LIMEN_OPENCODE_DB_ARCHIVE_ROOT:
+    default: "/Volumes/Archive4T/limen-private/opencode-db-intake"
+    env: LIMEN_OPENCODE_DB_ARCHIVE_ROOT
+    self_update: none
+    owner: continuity
+    note: "External archive destination for verified OpenCode DB backups written by opencode-db-corpus-intake.py before any local retention decision."
   LIMEN_INGRESS_ROOT:
     default: "/Volumes/Ingress"
     env: LIMEN_INGRESS_ROOT

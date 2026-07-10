@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-10T00:45:46+00:00`
+Generated: `2026-07-10T01:08:53+00:00`
 Status: `needs-work`
 Required open: `5`
 Blocked: `1`
@@ -19,7 +19,7 @@ Done from receipt: `5`
 - ID: `SUBSTRATE-DISK-TEMP`
 - Workstream: `substrate`
 - Status: `assigned_from_existing_work`
-- Verdict: internal free space is 106.7 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB
+- Verdict: internal free space is 106.8 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB
 - Lane fit: `codex-local`
 - Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
 - Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
@@ -28,7 +28,7 @@ Done from receipt: `5`
 
 | Priority | ID | Status | Verdict |
 |---:|---|---|---|
-| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | internal free space is 106.7 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB |
+| 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | internal free space is 106.8 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB |
 | 5 | `ESTATE-CUSTODY` | `done_from_receipt` | run-and-gun laptop cache and external estate custody have implementation receipts |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
 | 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.7%, reviews 0.8% |
@@ -56,8 +56,10 @@ Done from receipt: `5`
   - `~/Workspace/limen/logs/reclaim-tool-caches.jsonl`
   - `~/Workspace/limen/logs/reclaim-ollama-models.jsonl`
   - `~/Workspace/limen/docs/substrate-storage-pressure.md`
+  - `~/Workspace/limen/docs/opencode-db-corpus-intake.md`
   - `~/Workspace/limen/scripts/cvstos-organ.py`
   - `~/Workspace/limen/scripts/dispatch-health.py`
+  - `~/Workspace/limen/scripts/opencode-db-corpus-intake.py`
   - `~/Workspace/limen/scripts/reclaim-generated-state.py`
   - `~/Workspace/limen/scripts/reclaim-ollama-models.py`
   - `~/Workspace/limen/scripts/reclaim-tool-caches.py`

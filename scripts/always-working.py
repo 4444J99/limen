@@ -65,6 +65,7 @@ ESTATE_CUSTODY_RECEIPT = ROOT / "docs" / "estate-custody-implementation-receipts
 GENERATED_STATE_RECLAIM_LOG = ROOT / "logs" / "reclaim-generated-state.jsonl"
 TOOL_CACHE_RECLAIM_LOG = ROOT / "logs" / "reclaim-tool-caches.jsonl"
 OLLAMA_MODEL_RECLAIM_LOG = ROOT / "logs" / "reclaim-ollama-models.jsonl"
+OPENCODE_DB_INTAKE_DOC = ROOT / "docs" / "opencode-db-corpus-intake.md"
 WORKTREE_RECLAIM_CANDIDATES_DOC = ROOT / "docs" / "worktree-reclaim-candidates.md"
 WORKTREE_RECLAIM_CANDIDATES_JSON = ROOT / "docs" / "worktree-reclaim-candidates.json"
 STORAGE_OPERATING_MANUAL = ARCHIVE4T_ROOT / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
@@ -1162,8 +1163,10 @@ def substrate_receipt() -> dict[str, Any]:
             relpath(TOOL_CACHE_RECLAIM_LOG),
             relpath(OLLAMA_MODEL_RECLAIM_LOG),
             relpath(ROOT / "docs" / "substrate-storage-pressure.md"),
+            relpath(OPENCODE_DB_INTAKE_DOC),
             relpath(ROOT / "scripts" / "cvstos-organ.py"),
             relpath(ROOT / "scripts" / "dispatch-health.py"),
+            relpath(ROOT / "scripts" / "opencode-db-corpus-intake.py"),
             relpath(ROOT / "scripts" / "reclaim-generated-state.py"),
             relpath(ROOT / "scripts" / "reclaim-ollama-models.py"),
             relpath(ROOT / "scripts" / "reclaim-tool-caches.py"),
