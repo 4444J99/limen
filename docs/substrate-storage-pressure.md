@@ -1,10 +1,10 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T10:37:14Z`
+Generated: `2026-07-10T11:23:28Z`
 Status: `needs-owner-gates`
-Internal free: `110.0 GiB`
+Internal free: `112.0 GiB`
 Target free: `200.0 GiB`
-Shortfall: `90.0 GiB`
+Shortfall: `88.0 GiB`
 
 ## Safe Reclaim Already Run
 
@@ -15,18 +15,22 @@ Shortfall: `90.0 GiB`
 
 ## Scratch / Worktree Lifecycle
 
-- Summary: `219 debt roots / 515 scanned; 0 reapable roots`.
+- Summary: `227 debt roots / 528 scanned; 0 reapable roots`.
 - Debt cap: `12`; reapable cap: `0`.
+- Internal worktree/PR families: `~20 GiB` measured across `~/Workspace/.limen-worktrees`,
+  repo-local Limen/Portvs/Domus worktrees, Claude worktrees/jobs, and named Limen checkouts.
+- Scratch worktree family: `/Volumes/Scratch/limen-worktrees` is `36 GiB`; it is not on the
+  internal volume.
 
 | Reason | Roots |
 |---|---:|
-| `not-merged-to-default` | `150` |
-| `active(<6h)` | `101` |
+| `not-merged-to-default` | `154` |
+| `active(<6h)` | `107` |
 | `remote-pr-open` | `72` |
 | `antigravity-scratch-managed` | `48` |
-| `active(<24h)` | `46` |
+| `active(<24h)` | `45` |
 | `dirty` | `40` |
-| `unpushed-commits` | `29` |
+| `unpushed-commits` | `33` |
 | `owner-blocker` | `27` |
 | `remote-merged` | `1` |
 | `remote-superseded` | `1` |
@@ -35,15 +39,20 @@ Shortfall: `90.0 GiB`
 
 | Bucket | Size | Class | Owner | Gate |
 |---|---:|---|---|---|
-| `~/.local/share/opencode/opencode.db` | `17.5 GiB` | `protected-agent-state` | `aw-opencode-db-corpus-intake-0709` | external archive and private intake verified; local retention decision remains; never delete outright |
+| `/System/Volumes/Data/Library/Backblaze.bzpkg` | `48 GiB` | `backup-service-state` | `Backblaze` | do not remove manually; use service policy/tooling if retention needs changing |
+| `~/.local/share/opencode/opencode.db` | `18 GiB` | `protected-agent-state` | `aw-opencode-db-corpus-intake-0709` | external archive and private intake verified; still open by active OpenCode workers; never delete outright |
 | `~/Workspace/limen/.limen-private/session-corpus` | `10.2 GiB` | `protected-private-corpus` | `docs/session-corpus-ledger.md` | two-copy/restore archive gate before move or purge |
 | `~/Pictures/Photos Library.photoslibrary` | `8.6 GiB` | `personal-media` | `media/photos custody` | personal-data human gate plus two-copy restore proof |
 | `~/Workspace/.limen-worktrees` | `8.4 GiB` | `worktree-cache` | `docs/worktree-reclaim-acceptance.md` | clean+merged+idle or explicit acceptance; current worktree-debt gate reports zero reapable |
 | `~/Library/Messages` | `7.3 GiB` | `personal-communications` | `communications custody` | personal-data human gate plus two-copy restore proof |
+| `~/Library/Group Containers` | `6.3 GiB` | `app-container-state` | `macOS app owners` | app-specific review before removal |
 | `~/.gemini/antigravity-cli` | `6.5 GiB` | `protected-agent-state` | `agy conductor` | preserve conversations/brain before eviction; scratch handled separately |
+| `~/Library/Application Support` | `5.4 GiB` | `app-support-state` | `macOS app owners` | app-specific review before removal |
+| `~/Library/Mobile Documents` | `5.3 GiB` | `icloud-documents` | `iCloud` | personal-data human gate before local eviction or cloud policy changes |
+| `~/Library/Containers` | `5.3 GiB` | `app-container-state` | `macOS app owners` | app-specific review before removal |
 | `~/Workspace/session-meta` | `5.1 GiB` | `repo-corpus-state` | `organvm/session-meta` | repo/archive custody proof before local cache eviction |
+| `~/Library/Caches` | `4.5 GiB` | `cache` | `macOS app owners` | candidate for app-aware cache cleanup, not equivalent to Limen worktree debt |
 | `~/.gemini/antigravity-cli/scratch` | `4.2 GiB` | `agy-scratch` | `docs/antigravity-scratch-bridge.md` | antigravity scratch archive/redaction acceptance ledger before removal |
-| `/System/Volumes/Data/Library/Backblaze.bzpkg` | `50 GiB` | `backup-service-state` | `Backblaze` | do not remove manually; use service policy/tooling if retention needs changing |
 
 ## OpenCode DB Intake
 
