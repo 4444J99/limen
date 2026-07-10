@@ -37,6 +37,20 @@ mkdir -p "$LIMEN_ROOT/logs" 2>/dev/null || true
 SECRET_GLOBS=( '*.env' '.env' '.env.*' '*.pem' '*.key' 'id_rsa*' 'id_ed25519*' '*.secret' \
                '*credentials*' '*.p12' '*.pfx' '*token*' )
 
+# DATA_ONLY push guard (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main). When capture would
+# commit to a repo's `main` AND that repo gates PRs (`.github/workflows/pr-gate.yml` exists), it must
+# NEVER stage SOURCE — code/config that belongs behind pr-gate. Otherwise an uncommitted `.py` sitting
+# in the live checkout on main gets `git add -A`'d and pushed straight to protected main, un-CI'd (the
+# primary leak). SOURCE files are unstaged (LEFT ON DISK, never deleted) and the refusal is surfaced.
+# The lane's legitimate cargo — tasks.yaml, receipts, logs, other data — is untouched. Self-configuring:
+# repos without pr-gate.yml, and non-main branches (feature/worktree work correctly preserves source),
+# keep current behavior. Escape hatch: LIMEN_PUSH_GUARD=off disables (default = enforce).
+SOURCE_GLOBS=( '*.py' '*.sh' '*.ts' '*.js' '*.mjs' '*.cjs' '*.tsx' '*.jsx' '*.rs' '*.go' \
+               '*.toml' '*.cfg' '*Makefile' '*Dockerfile' '.github/*' \
+               '.github/*.yml' '.github/*.yaml' 'cli/*.yml' 'cli/*.yaml' \
+               'web/*.yml' 'web/*.yaml' 'institutio/*.yml' 'institutio/*.yaml' \
+               'scripts/*.yml' 'scripts/*.yaml' )
+
 # Daemon-OWNED live state the capture organ must NEVER commit out-of-band. On the live checkout the
 # heartbeat rewrites tasks.yaml every beat UNDER queue_lock; an out-of-band capture commit of a torn /
 # transient queue races the daemon and clobbers its writes — the exact failure logged in
@@ -60,6 +74,29 @@ _unstage_runtime() {  # keep the daemon-owned live queue out of capture commits 
   for pat in "${RUNTIME_GLOBS[@]}"; do
     git reset -q -- "$pat" >/dev/null 2>&1 || true
   done
+}
+
+# DATA_ONLY guard: refuse to stage SOURCE onto a pr-gated repo's main. Honours GIT_INDEX_FILE so it
+# serves both the in-place index and the side-branch temp index (mirrors _unstage_oversized). Only
+# fires when: branch == main AND .github/workflows/pr-gate.yml exists in this repo AND the guard is not
+# disabled. Refused source is unstaged (stays on disk) and named in a REFUSED line — route via PR.
+_unstage_source() {  # $1 = branch being committed
+  local branch="${1:-}"
+  [ "${LIMEN_PUSH_GUARD:-on}" = "off" ] && return 0
+  [ "$branch" = "main" ] || return 0
+  [ -f ".github/workflows/pr-gate.yml" ] || return 0
+  local pat refused
+  # Enumerate staged source BEFORE resetting so we can name it in the warning.
+  refused="$(git diff --cached --name-only -z --diff-filter=AM -- "${SOURCE_GLOBS[@]}" 2>/dev/null | tr '\0' ' ')"
+  for pat in "${SOURCE_GLOBS[@]}"; do
+    git reset -q -- "$pat" >/dev/null 2>&1 || true
+  done
+  refused="$(echo "$refused" | tr -s ' ')"; refused="${refused# }"; refused="${refused% }"
+  if [ -n "$refused" ]; then
+    echo "[capture] ${name:-?}: REFUSED source on main: $refused — route via PR (pr-gate)"
+    printf '{"ts":"%s","repo":"%s","branch":"main","refused_source":"%s"}\n' \
+      "$STAMP" "${name:-?}" "$refused" >> "$LOG" 2>/dev/null || true
+  fi
 }
 
 # GitHub HARD-rejects any non-LFS file over 100MB (pre-receive hook), so staging one guarantees the
@@ -98,6 +135,7 @@ _capture_side_branch() {
   GIT_INDEX_FILE="$tmpidx" git add -A 2>/dev/null || true   # stage the WORKING TREE into the throwaway index
   for pat in "${SECRET_GLOBS[@]}";  do GIT_INDEX_FILE="$tmpidx" git reset -q -- "$pat" >/dev/null 2>&1 || true; done
   for pat in "${RUNTIME_GLOBS[@]}"; do GIT_INDEX_FILE="$tmpidx" git reset -q -- "$pat" >/dev/null 2>&1 || true; done
+  GIT_INDEX_FILE="$tmpidx" _unstage_source "$branch"
   GIT_INDEX_FILE="$tmpidx" _unstage_oversized
   tree="$(GIT_INDEX_FILE="$tmpidx" git write-tree 2>/dev/null)"
   rm -f "$tmpidx" 2>/dev/null || true
@@ -163,6 +201,7 @@ _capture_repo() {
       git add -A >/dev/null 2>&1 || true
       _unstage_secrets
       _unstage_runtime
+      _unstage_source "$branch"
       _unstage_oversized
       if ! git diff --cached --quiet 2>/dev/null; then
         git commit -q -m "capture: autonomic off-disk sync $STAMP" >/dev/null 2>&1 && did_commit=1

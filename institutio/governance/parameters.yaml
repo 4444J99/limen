@@ -451,6 +451,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Opt-out of the verify-whole.sh machine-wide lock for single-purpose runners (CI), where serialization is already guaranteed by the runner itself."
+  LIMEN_PUSH_GUARD:
+    default: "on"
+    env: LIMEN_PUSH_GUARD
+    self_update: none
+    owner: continuity
+    note: "DATA_ONLY push guard (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main). When on (default), the autonomic direct-push lanes (scripts/capture.sh, scripts/continuation-beat.py) refuse to stage SOURCE (code/config that belongs behind pr-gate) onto a repo's `main` when that repo has .github/workflows/pr-gate.yml — so no uncommitted .py in the live checkout ever reaches protected main un-CI'd. Refused source is left on disk (reversible) and surfaced; route it via PR. `off` disables the guard. Non-main branches and ungated repos are unaffected either way."
   LIMEN_RECLAIM_GENERATED:
     default: "1"
     env: LIMEN_RECLAIM_GENERATED

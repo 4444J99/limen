@@ -320,6 +320,16 @@ def preserve_board_projection(
             add = _git(repo, ["add", "-A", "--", rel_board], env=env)
             if add.returncode != 0:
                 return PreserveResult(changed=True, skipped=True, reason=f"add-failed:{_short_output(add)}")
+            # DATA_ONLY invariant (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main): tabularius
+            # pushes the board projection to `main` directly — it must NEVER carry anything but the board
+            # itself. Make that executable: fail LOUD if the temp index ever holds any other path.
+            staged = _git(repo, ["diff", "--cached", "--name-only"], env=env)
+            staged_paths = {line.strip() for line in staged.stdout.splitlines() if line.strip()}
+            if not staged_paths <= {rel_board}:
+                raise AssertionError(
+                    f"tabularius board push would carry non-board paths {sorted(staged_paths - {rel_board})}; "
+                    "the DATA_ONLY invariant (only tasks.yaml may reach main via this lane) was violated"
+                )
             diff = _git(repo, ["diff", "--cached", "--quiet", "--", rel_board], env=env)
             if diff.returncode == 0:
                 return PreserveResult(skipped=True, reason="no-index-diff")

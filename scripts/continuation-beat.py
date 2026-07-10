@@ -100,6 +100,63 @@ def first_command(gate: dict[str, Any]) -> str:
     return str(command).strip() if command else ""
 
 
+# DATA_ONLY push guard (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main). SOURCE = code/config
+# that belongs behind pr-gate; it must never reach a pr-gated repo's `main` via the autonomic direct-push
+# lane un-CI'd. DATA (tasks.yaml, receipts, logs, other data) is the lane's legitimate cargo and passes.
+_SOURCE_SUFFIXES = {
+    ".py", ".sh", ".ts", ".js", ".mjs", ".cjs", ".tsx", ".jsx", ".rs", ".go", ".toml", ".cfg",
+}
+_SOURCE_NAMES = {"Makefile", "Dockerfile"}
+# *.yml/*.yaml are SOURCE only under these trees (workflows/config); data YAML (tasks.yaml) is not.
+_SOURCE_YAML_ROOTS = (".github/", "cli/", "web/", "institutio/", "scripts/")
+
+
+def is_source_path(path: str) -> bool:
+    """True if *path* is SOURCE that must route via PR, not the direct-push lane."""
+    p = path.strip().replace("\\", "/")
+    if not p:
+        return False
+    name = p.rsplit("/", 1)[-1]
+    if name in _SOURCE_NAMES:
+        return True
+    if p.startswith(".github/") or "/.github/" in p:
+        return True
+    lower = p.lower()
+    dot = name.rfind(".")
+    suffix = name[dot:].lower() if dot > 0 else ""
+    if suffix in _SOURCE_SUFFIXES:
+        return True
+    if suffix in {".yml", ".yaml"}:
+        return any(p == root.rstrip("/") or p.startswith(root) for root in _SOURCE_YAML_ROOTS)
+    # tasks.yaml, tasks.yaml.lock, logs/**, docs/*receipt*.json and other *.json data are DATA.
+    if name in {"tasks.yaml", "tasks.yaml.lock"}:
+        return False
+    if lower.endswith(".json") or p.startswith("logs/") or "/logs/" in p:
+        return False
+    # Default-deny for the genuinely ambiguous, but never refuse known data cargo (handled above).
+    return False
+
+
+def _guard_source_on_main(repo: Path, paths: list[str]) -> list[str]:
+    """When the repo's HEAD is `main` and it gates PRs, unstage any staged SOURCE in *paths* (leaving it
+    on disk) and return the refused paths. No-op when the guard is disabled, the branch isn't main, or
+    the repo has no pr-gate.yml — so non-main/ungated behavior is preserved."""
+    if os.environ.get("LIMEN_PUSH_GUARD", "on") == "off":
+        return []
+    branch = git(repo, "symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip()
+    if branch != "main":
+        return []
+    if not (repo / ".github" / "workflows" / "pr-gate.yml").is_file():
+        return []
+    staged = git(repo, "diff", "--cached", "--name-only", "--diff-filter=AM").stdout.splitlines()
+    refused = [s for s in (line.strip() for line in staged) if s and is_source_path(s)]
+    if refused:
+        for s in refused:
+            git(repo, "reset", "-q", "--", s)
+        print(f"[continuation-beat] REFUSED source on main: {' '.join(refused)} — route via PR (pr-gate)")
+    return refused
+
+
 def repo_clean(repo: Path) -> bool:
     return repo.is_dir() and git(repo, "status", "--porcelain").stdout.strip() == ""
 
@@ -117,6 +174,10 @@ def commit_paths(repo: Path, paths: list[str], message: str, apply: bool) -> dic
     add = git(repo, "add", *paths)
     if add.returncode != 0:
         return {"changed": True, "error": f"git add failed: {short_output(add)}"}
+    refused = _guard_source_on_main(repo, paths)
+    if refused and git(repo, "diff", "--cached", "--quiet").returncode == 0:
+        # every staged path was source and got unstaged → nothing left to commit; skip, don't abort.
+        return {"changed": True, "refused_source": refused, "skipped": "all-source-refused-on-main"}
     commit = git(repo, "commit", "-m", message, timeout=180)
     if commit.returncode != 0:
         return {"changed": True, "error": f"git commit failed: {short_output(commit)}"}
@@ -124,7 +185,10 @@ def commit_paths(repo: Path, paths: list[str], message: str, apply: bool) -> dic
     if push.returncode != 0:
         return {"changed": True, "error": f"git push failed: {short_output(push)}"}
     head = git(repo, "rev-parse", "HEAD").stdout.strip()
-    return {"changed": True, "committed": head, "message": message}
+    result = {"changed": True, "committed": head, "message": message}
+    if refused:
+        result["refused_source"] = refused
+    return result
 
 
 def pr_number_from_url(url: str) -> int | None:
