@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 508
+      spent: 509
       per_agent:
         jules: 133
         gemini: 20
-        codex: 11
+        codex: 12
         opencode: 168
         agy: 159
         claude: 13
@@ -128025,7 +128025,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -128048,7 +128048,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T10:02:37.945589Z'
+  updated: '2026-07-10T10:13:39.405918Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: claude
@@ -128068,3 +128068,8 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T10:13:39.405918Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
