@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 471
+      spent: 472
       per_agent:
         jules: 133
         gemini: 19
         codex: 8
         opencode: 138
         agy: 158
-        claude: 11
+        claude: 12
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -127525,7 +127525,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -127547,7 +127547,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T08:48:50.654297Z'
+  updated: '2026-07-10T08:51:23.532177Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:07:52.232247Z'
     agent: agy
@@ -127591,6 +127591,11 @@ tasks:
     agent: agy
     session_id: cli
     status: ratelimited->claude
+  - timestamp: '2026-07-10T08:51:23.532177Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-184
   title: rebase/resolve conflicts on organvm/domus-genoma#184
   repo: organvm/domus-genoma
