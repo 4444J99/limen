@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 525
+      spent: 527
       per_agent:
         jules: 133
         gemini: 20
         codex: 1
-        opencode: 205
+        opencode: 207
         agy: 160
         claude: 2
         github_actions: 1
@@ -120910,14 +120910,14 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - origin-0708
   urls: []
   context: docs/reviews/deep-history-2022-2026.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:14:20.997983Z'
+  updated: '2026-07-10T12:19:18.664940Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -120925,6 +120925,11 @@ tasks:
     status: open
     output: 'fleet fill: retargeted codex->opencode to saturate OpenCode/Agy local
       async slots after Jules live runway'
+  - timestamp: '2026-07-10T12:19:18.664940Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORIGIN-0708-ARC4N-CELLULAR
   title: ARC4N cellular text-atomization as a distinct engine (letters/words/sentences
     as remix cells)
@@ -122900,7 +122905,7 @@ tasks:
   workstream: public-face
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - public-face
   - lane-feed-0708
@@ -122909,8 +122914,13 @@ tasks:
     ship-gate registry + public-face-data-integrity lineage'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T21:15:44.914608Z'
-  dispatch_log: []
+  updated: '2026-07-10T12:19:18.664940Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T12:19:18.664940Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: SUBSTRATE-0708-WORKTREE-DEBT-RECLAIM
   title: 'Substrate: bring worktree debt (333/12 roots, 75 GiB) back under cap via
     the acceptance-tracked reclaim flow'
