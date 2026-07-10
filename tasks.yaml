@@ -125913,3 +125913,27 @@ tasks:
   created: '2026-07-09'
   updated: '2026-07-10T01:55:24.239509Z'
   dispatch_log: []
+- id: REV-organvm-mirror-mirror-revenue-ship-0709
+  title: Drive Mirror Mirror to deploy-ready
+  repo: organvm/mirror-mirror
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - revenue-ship
+  - revenue
+  - product
+  - ship-order
+  - generated
+  urls: []
+  context: "In organvm/mirror-mirror, clear the concrete blockers between the current\
+    \ state and a DEPLOYABLE product: get open PRs green + merged, fix the critical\
+    \ path, confirm the app runs end-to-end. Output: a deploy-ready build + a short\
+    \ DEPLOY.md listing exactly what remains. [revenue-backlog 2026-07-09: rank 5,\
+    \ stage building \u2014 spend tokens on income, not busywork]"
+  depends_on: []
+  created: '2026-07-09'
+  updated: '2026-07-10T02:48:50.818677Z'
+  dispatch_log: []
