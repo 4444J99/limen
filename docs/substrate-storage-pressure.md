@@ -1,16 +1,16 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T02:05:12Z`
+Generated: `2026-07-10T02:12:21Z`
 Status: `needs-owner-gates`
-Internal free: `89.9 GiB`
+Internal free: `88.9 GiB`
 Target free: `200.0 GiB`
-Shortfall: `110.1 GiB`
+Shortfall: `111.1 GiB`
 
 ## Safe Reclaim Already Run
 
-- `generated-state`: `26.6 GiB` over `3` apply event(s); latest `2026-07-10T02:04:10Z`.
-- `tool-cache`: `5.1 GiB` over `2` apply event(s); latest `2026-07-10T02:04:17Z`.
-- `ollama-models`: `9.3 GiB` over `2` apply event(s); latest `2026-07-10T02:04:32Z`.
+- `generated-state`: `26.6 GiB` over `4` apply event(s); latest `2026-07-10T02:11:41Z`.
+- `tool-cache`: `5.1 GiB` over `3` apply event(s); latest `2026-07-10T02:11:27Z`.
+- `ollama-models`: `9.3 GiB` over `3` apply event(s); latest `2026-07-10T02:11:27Z`.
 
 ## Scratch / Worktree Lifecycle
 
