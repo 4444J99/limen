@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 443
+      spent: 446
       per_agent:
         jules: 133
         gemini: 13
         codex: 6
-        opencode: 121
+        opencode: 124
         agy: 157
         claude: 9
         github_actions: 1
@@ -103639,7 +103639,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -103655,7 +103655,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-10T07:43:13.825799Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -103673,6 +103673,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T07:43:13.825799Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-405
   title: fix failing CI on organvm/limen#405
   repo: organvm/limen
@@ -104275,7 +104280,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104290,7 +104295,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T07:17:56.380680Z'
+  updated: '2026-07-10T07:43:13.825799Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
@@ -104311,6 +104316,11 @@ tasks:
     session_id: jules-capacity-fill
     status: opencode->jules
     output: retargeted open PR-linked task to consume live Jules remote headroom
+  - timestamp: '2026-07-10T07:43:13.825799Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-416
   title: fix failing CI on organvm/limen#416
   repo: organvm/limen
@@ -104421,7 +104431,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104436,7 +104446,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T07:17:56.380680Z'
+  updated: '2026-07-10T07:43:13.825799Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
@@ -104457,6 +104467,11 @@ tasks:
     session_id: jules-capacity-fill
     status: gemini->jules
     output: retargeted open PR-linked task to consume live Jules remote headroom
+  - timestamp: '2026-07-10T07:43:13.825799Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-419
   title: fix failing CI on organvm/limen#419
   repo: organvm/limen
