@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 498
+      spent: 499
       per_agent:
         jules: 133
         gemini: 20
         codex: 0
-        opencode: 181
+        opencode: 182
         agy: 159
         claude: 1
         github_actions: 1
@@ -109737,7 +109737,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -109753,7 +109753,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T08:45:41.064424Z'
+  updated: '2026-07-10T11:08:38.596308Z'
   dispatch_log:
   - timestamp: '2026-07-08T17:15:11.788963Z'
     agent: jules
@@ -109792,6 +109792,11 @@ tasks:
     agent: gemini
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T11:08:38.596308Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-457
   title: fix failing CI on organvm/limen#457
   repo: organvm/limen
