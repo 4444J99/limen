@@ -34,6 +34,7 @@ start of every beat — but IDEMPOTENT: a healthy board is a no-op (exit 0, no w
   python3 scripts/heal-board.py --check    # report only; exit 1 if collapsed, never mutate
   python3 scripts/heal-board.py --dry-run  # report what WOULD be restored; make no writes
 """
+
 from __future__ import annotations
 
 import argparse
@@ -88,7 +89,9 @@ def git_head_board() -> str | None:
     try:
         out = subprocess.run(
             ["git", "-C", str(ROOT), "show", f"HEAD:{rel}"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
     except (OSError, subprocess.SubprocessError):
         return None
@@ -215,7 +218,9 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
     reopened, reconciled, mismatched = _apply_lifecycle_repairs(lf.tasks, now)
 
     if not reopened and not reconciled and not mismatched:
-        print(f"heal-board: OK — {BOARD.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})")
+        print(
+            f"heal-board: OK — {BOARD.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})"
+        )
         return 0
 
     if check:
@@ -223,9 +228,14 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
         if reopened:
             parts.append(f"{len(reopened)} reopened completed task(s) need repair: " + ", ".join(reopened[:10]))
         if reconciled:
-            parts.append(f"{len(reconciled)} needs-human task(s) need reconcile to needs_human: " + ", ".join(reconciled[:10]))
+            parts.append(
+                f"{len(reconciled)} needs-human task(s) need reconcile to needs_human: " + ", ".join(reconciled[:10])
+            )
         if mismatched:
-            parts.append(f"{len(mismatched)} task(s) need dispatch_log head reconcile to task.status: " + ", ".join(mismatched[:10]))
+            parts.append(
+                f"{len(mismatched)} task(s) need dispatch_log head reconcile to task.status: "
+                + ", ".join(mismatched[:10])
+            )
         print("heal-board: " + "; ".join(parts))
         return 1
     if dry_run:
@@ -233,9 +243,13 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
         if reopened:
             parts.append(f"WOULD restore {len(reopened)} reopened completed task(s): " + ", ".join(reopened[:10]))
         if reconciled:
-            parts.append(f"WOULD reconcile {len(reconciled)} needs-human task(s) to needs_human: " + ", ".join(reconciled[:10]))
+            parts.append(
+                f"WOULD reconcile {len(reconciled)} needs-human task(s) to needs_human: " + ", ".join(reconciled[:10])
+            )
         if mismatched:
-            parts.append(f"WOULD reconcile {len(mismatched)} log-mismatch task(s) to task.status: " + ", ".join(mismatched[:10]))
+            parts.append(
+                f"WOULD reconcile {len(mismatched)} log-mismatch task(s) to task.status: " + ", ".join(mismatched[:10])
+            )
         print("heal-board: " + "; ".join(parts))
         return 0
 
@@ -291,13 +305,18 @@ def main(argv: list[str] | None = None) -> int:
 
     s_load, s_total, s_active = board_health_from_text(snap, BOARD.parent)
     if not s_load or s_total <= FLOOR or s_total <= total:
-        print(f"heal-board: snapshot not healthier (loadable={s_load} total={s_total}) — refusing to heal", file=sys.stderr)
+        print(
+            f"heal-board: snapshot not healthier (loadable={s_load} total={s_total}) — refusing to heal",
+            file=sys.stderr,
+        )
         return 1
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     if args.dry_run:
-        print(f"heal-board: WOULD restore {BOARD.name} from HEAD ({s_total} tasks, {s_active} active); "
-              f"WOULD preserve the collapsed board to logs/{BOARD.name}.collapsed-{stamp}")
+        print(
+            f"heal-board: WOULD restore {BOARD.name} from HEAD ({s_total} tasks, {s_active} active); "
+            f"WOULD preserve the collapsed board to logs/{BOARD.name}.collapsed-{stamp}"
+        )
         return 0
 
     # preserve the collapsed board (never delete evidence), then atomically restore the snapshot.
@@ -310,8 +329,10 @@ def main(argv: list[str] | None = None) -> int:
     except OSError:
         pass
     atomic_write_text(BOARD, snap)
-    print(f"heal-board: RESTORED {BOARD.name} from HEAD — {s_total} tasks ({s_active} active); "
-          f"collapsed board preserved to {preserved.relative_to(ROOT)}")
+    print(
+        f"heal-board: RESTORED {BOARD.name} from HEAD — {s_total} tasks ({s_active} active); "
+        f"collapsed board preserved to {preserved.relative_to(ROOT)}"
+    )
     return 0
 
 
