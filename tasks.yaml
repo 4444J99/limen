@@ -109775,10 +109775,10 @@ tasks:
   title: "rebase organvm/session-meta#96 onto current base \u2014 branched far behind"
   repo: organvm/session-meta
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: normal
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -109796,7 +109796,7 @@ tasks:
     \ [auto-emitted 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T03:51:15.612680Z'
+  updated: '2026-07-10T03:54:57.399252Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:39:20.449890Z'
     agent: agy
@@ -109836,6 +109836,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T03:54:57.399252Z'
+    agent: agy
+    session_id: cli
+    status: ratelimited->claude
 - id: HEAL-rebase-organvm-session-meta-106
   title: rebase/resolve conflicts on organvm/session-meta#106
   repo: organvm/session-meta
@@ -121086,10 +121090,10 @@ tasks:
     \ far behind"
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: normal
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -121106,7 +121110,7 @@ tasks:
     \ [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T03:51:15.612680Z'
+  updated: '2026-07-10T03:54:57.399252Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: claude
@@ -121137,6 +121141,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T03:54:57.399252Z'
+    agent: agy
+    session_id: cli
+    status: ratelimited->claude
 - id: HEAL-rebase-organvm-the-invisible-ledger-42
   title: rebase/resolve conflicts on organvm/the-invisible-ledger#42
   repo: organvm/the-invisible-ledger
@@ -124796,7 +124804,7 @@ tasks:
     -->'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T03:41:33.549969Z'
+  updated: '2026-07-10T03:54:57.399252Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -124824,6 +124832,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T03:54:57.399252Z'
+    agent: codex
+    session_id: https://github.com/organvm/manumissio/pull/29
+    status: dispatched
 - id: GH-organvm-manumissio-6
   title: 'Phase 2: open-weight API rail (OpenRouter/DeepSeek key + routing)'
   repo: organvm/manumissio
