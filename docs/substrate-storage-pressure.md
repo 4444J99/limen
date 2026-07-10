@@ -1,16 +1,17 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T09:51:32Z`
+Generated: `2026-07-10T10:37:14Z`
 Status: `needs-owner-gates`
-Internal free: `74.5 GiB`
+Internal free: `110.0 GiB`
 Target free: `200.0 GiB`
-Shortfall: `125.5 GiB`
+Shortfall: `90.0 GiB`
 
 ## Safe Reclaim Already Run
 
 - `generated-state`: `26.6 GiB` over `4` apply event(s); latest `2026-07-10T02:11:41Z`.
 - `tool-cache`: `5.1 GiB` over `3` apply event(s); latest `2026-07-10T02:11:27Z`.
 - `ollama-models`: `9.3 GiB` over `3` apply event(s); latest `2026-07-10T02:11:27Z`.
+- `private-tmp-generated-scratch`: `/private/tmp` reduced from `32 GiB` to `98 MiB`; latest `2026-07-10T10:37:14Z`.
 
 ## Scratch / Worktree Lifecycle
 
@@ -42,6 +43,7 @@ Shortfall: `125.5 GiB`
 | `~/.gemini/antigravity-cli` | `6.5 GiB` | `protected-agent-state` | `agy conductor` | preserve conversations/brain before eviction; scratch handled separately |
 | `~/Workspace/session-meta` | `5.1 GiB` | `repo-corpus-state` | `organvm/session-meta` | repo/archive custody proof before local cache eviction |
 | `~/.gemini/antigravity-cli/scratch` | `4.2 GiB` | `agy-scratch` | `docs/antigravity-scratch-bridge.md` | antigravity scratch archive/redaction acceptance ledger before removal |
+| `/System/Volumes/Data/Library/Backblaze.bzpkg` | `50 GiB` | `backup-service-state` | `Backblaze` | do not remove manually; use service policy/tooling if retention needs changing |
 
 ## OpenCode DB Intake
 
