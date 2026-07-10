@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 15
+      spent: 16
       per_agent:
         jules: 0
         gemini: 0
-        codex: 1
+        codex: 2
         opencode: 7
         agy: 2
         claude: 1
@@ -114659,7 +114659,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -114684,7 +114684,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T17:49:49.080946Z'
+  updated: '2026-07-10T18:02:12.241561Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114968,6 +114968,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T18:02:12.241561Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
