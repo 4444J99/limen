@@ -63,7 +63,19 @@ class DispatchLogEntry(BaseModel):
     agent: str
     session_id: str
     status: str
+    route_to: Optional[str] = None
+    execution_profile: Optional[Dict[str, Any]] = None
+    selected_model: Optional[str] = None
+    selection_source: Optional[str] = None
+    catalog_hash: Optional[str] = None
     output: Optional[str] = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_event_status(cls, v: str) -> str:
+        if v in VALID_STATUSES or v in {"noop", "pr_open"} or "->" in v:
+            return v
+        raise ValueError("dispatch event status must be canonical (legacy composite rows are read-only)")
 
 
 class Task(BaseModel):

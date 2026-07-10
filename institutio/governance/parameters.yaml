@@ -2167,6 +2167,30 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Master gate for the dispatch admission check (cli/src/limen/dispatch.py): before a task is dispatched, admission requires fresh evidence that dispatching produces value (handoff recency + session-value review + a sourced next_action). 1=enforce; 0=admit everything (prior behavior). Verified by scripts/check-dispatch-admission.py."
+  LIMEN_OPENCODE_MODEL:
+    default: ""
+    env: LIMEN_OPENCODE_MODEL
+    self_update: none
+    owner: dispatch
+    note: "Optional operator override. It is usable only when the exact value is present and code-capable in the current `opencode models --verbose` catalog; blank derives from live capabilities."
+  LIMEN_OPENCODE_CATALOG_TIMEOUT:
+    default: 30
+    env: LIMEN_OPENCODE_CATALOG_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Seconds allowed for live OpenCode capability discovery before the affected task records failed_blocked. No named fallback is synthesized."
+  LIMEN_WARP_MODEL_OVERRIDE:
+    default: ""
+    env: LIMEN_WARP_MODEL_OVERRIDE
+    self_update: none
+    owner: dispatch
+    note: "Optional Warp model override. Blank delegates to Warp Auto; nonblank must appear in the current `oz model list --output-format json` catalog before dispatch."
+  LIMEN_WARP_CATALOG_TIMEOUT:
+    default: 30
+    env: LIMEN_WARP_CATALOG_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Seconds allowed to validate an explicit Warp override against the current Oz catalog. Normal provider-Auto dispatch does not need catalog enumeration."
   LIMEN_REQUIRE_HANDOFF:
     default: "1"               # ON — admission requires a fresh handoff relay record
     env: LIMEN_REQUIRE_HANDOFF

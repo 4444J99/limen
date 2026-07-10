@@ -35,8 +35,8 @@ head or a chat):
             target, documented).
   * DONE (Increment-1) — per-vendor model choice is homed on ``Vendor.tiering`` and projected by
             :func:`tiering`; ``test_census`` drift-guards it against a closed sentinel set. Remaining
-            Increment-2: make ``dispatch._codex_model``/``_opencode_model`` (the non-Claude analogue of
-            ``model_selection``) CONSUME :func:`tiering` instead of hard-coding who owns each.
+            OpenCode consumes the provider-neutral live capability selector; Warp/Oz delegate the
+            changing underlying catalog to provider Auto.  Model names remain runtime outputs.
 """
 
 from __future__ import annotations
@@ -143,7 +143,7 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="opencode_auth",  # own auth.json / free model
         cred_ref=None,
         meter="dispatch_count",
-        tiering="dispatch_adhoc",  # _opencode_model
+        tiering="provider_selection",  # provider_selection.py + live `opencode models --verbose`
         budget=Budget(100, "runs", "today", "operator board cap until live vendor meter", "calibrated"),
         status=Status(True, "live", "free-model lane; deploy/cloudflare specialty"),
     ),
@@ -252,7 +252,7 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="warp_key",  # WARP_API_KEY
         cred_ref=None,
         meter="none",
-        tiering="none",
+        tiering="provider_auto",
         budget=Budget(None, "runs", "none", "not modeled (paid service)", "unmodeled"),
         status=Status(True, "live", "paid-service lane"),
     ),
@@ -266,7 +266,7 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="warp_key",  # WARP_API_KEY family
         cred_ref=None,
         meter="none",
-        tiering="none",
+        tiering="provider_auto",
         budget=Budget(None, "runs", "none", "not modeled (paid service)", "unmodeled"),
         status=Status(True, "live", "paid-service lane"),
     ),

@@ -137,12 +137,13 @@ def _reconcile_log_mismatch(task: Task, now: datetime) -> bool:
 
     The validator fails the build (`log_mismatches`) when a task's latest *canonical*
     dispatch_log status disagrees with task.status — the exact wedge that turned `verify`
-    red across every PR based on a momentarily-inconsistent board snapshot. task.status is
-    the authoritative projection head, so append one canonical event that restates it; the
-    log then agrees and the invariant holds. Idempotent: once the head matches (or the last
-    entry's status is non-canonical, which the validator ignores), it is a no-op. A task whose
-    own status is non-canonical is a *different* defect (validator: `invalid`) and is left
-    alone. Returns True iff it changed anything.
+    red across every PR based on a momentarily-inconsistent board snapshot. Historical
+    writers also embedded destinations in values such as ``timeout->jules``.  task.status
+    is the authoritative projection head, so append one canonical event that restates it
+    and carry the legacy destination forward as ``route_to``.  The historical row remains
+    byte-for-byte intact.  Idempotent: the new canonical head is a no-op on the next pass.
+    A task whose own status is non-canonical is a different defect and is left alone.
+    Returns True iff it changed anything.
     """
     if task.status not in VALID_STATUSES:
         return False
@@ -150,8 +151,12 @@ def _reconcile_log_mismatch(task: Task, now: datetime) -> bool:
     if not log:
         return False
     last_status = str(getattr(log[-1], "status", "") or "")
-    if last_status not in VALID_STATUSES or last_status == task.status:
+    if last_status in VALID_STATUSES and last_status == task.status:
         return False
+    route_to = str(getattr(log[-1], "route_to", "") or "") or None
+    if route_to is None and "->" in last_status:
+        candidate = last_status.rsplit("->", 1)[1].strip()
+        route_to = candidate if candidate and candidate != "requeue" else None
     task.updated = now
     task.dispatch_log.append(
         DispatchLogEntry(
@@ -159,7 +164,11 @@ def _reconcile_log_mismatch(task: Task, now: datetime) -> bool:
             agent="heal-board",
             session_id="heal-board",
             status=task.status,
-            output=f"heal-board: reconciled dispatch_log head to task.status={task.status} (was {last_status})",
+            route_to=route_to,
+            output=(
+                f"heal-board: appended canonical dispatch_log head for task.status={task.status}; "
+                f"preserved legacy head {last_status[:80]}"
+            ),
         )
     )
     return True

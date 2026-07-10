@@ -24,7 +24,23 @@ class DispatchLogEntry(BaseModel):
     agent: str
     session_id: str
     status: str
+    # A status is lifecycle state; a destination is routing metadata.  Historical
+    # boards contain composite values such as ``failed->jules``.  Readers preserve
+    # those rows, while every new writer emits a canonical status plus route_to and
+    # heal-board appends a corrective head without rewriting history.
+    route_to: str | None = None
+    execution_profile: dict[str, Any] | None = None
+    selected_model: str | None = None
+    selection_source: str | None = None
+    catalog_hash: str | None = None
     output: str | None = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_event_status(cls, value: str) -> str:
+        if value in VALID_STATUSES or value in {"noop", "pr_open"} or "->" in value:
+            return value
+        raise ValueError("dispatch event status must be canonical (legacy composite rows are read-only)")
 
 
 class Task(BaseModel):

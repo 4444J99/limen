@@ -104,6 +104,30 @@ def test_always_working_timeout_can_be_hard_gated(tmp_path: Path, monkeypatch) -
     assert D.run_always_working_before_dispatch(tasks_path) is False
 
 
+def test_dispatch_admission_pause_marker_blocks_even_when_general_gate_is_disabled(
+    tmp_path: Path, monkeypatch
+) -> None:
+    root = tmp_path / "root"
+    logs = root / "logs"
+    logs.mkdir(parents=True)
+    tasks = root / "tasks.yaml"
+    tasks.write_text("version: '1.0'\ntasks: []\n", encoding="utf-8")
+    (logs / "AUTONOMY_PAUSED").write_text(
+        "integration drain\nreason: preserve current workers\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_ROOT", str(root))
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
+    monkeypatch.delenv("LIMEN_FORCE_AUTONOMY", raising=False)
+
+    result = D.dispatch_admission_check(tasks, refresh_handoff=False)
+
+    assert result["allow"] is False
+    assert result["dispatch_allowed"] is False
+    assert result["sources"] == ["autonomy_pause"]
+    assert "integration drain" in result["reason"]
+
+
 def _blocked_admission(*_args, **_kwargs):
     return {
         "allow": False,
@@ -1488,6 +1512,98 @@ def test_noop_result_stays_recoverable_not_cancelled() -> None:
     assert task.dispatch_log[-1].status == "failed"
 
 
+def test_rate_limit_and_timeout_events_are_canonical_routes(monkeypatch) -> None:
+    import datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    monkeypatch.setattr(D, "_cascade_or_requeue", lambda _agent: "opencode")
+    rate_limited = Task(
+        id="RATE",
+        title="rate limited",
+        target_agent="codex",
+        status="open",
+        created=date(2026, 7, 10),
+    )
+    D._apply_result(rate_limited, "codex", D._RATELIMIT, now, BudgetTrack(date="2026-07-10"))
+    assert rate_limited.status == "open"
+    assert rate_limited.dispatch_log[-1].status == "open"
+    assert rate_limited.dispatch_log[-1].route_to == "opencode"
+
+    timed_out = Task(
+        id="TIME",
+        title="timed out",
+        target_agent="codex",
+        status="open",
+        created=date(2026, 7, 10),
+    )
+    D._apply_result(timed_out, "codex", D._TIMEOUT, now, BudgetTrack(date="2026-07-10"))
+    assert timed_out.status == "open"
+    assert timed_out.dispatch_log[-1].status == "open"
+    assert timed_out.dispatch_log[-1].route_to == "jules"
+    assert D.agent_can_run_task("codex", timed_out) is False
+
+
+def test_warp_auto_dispatch_sends_dynamic_profile_without_model_override(monkeypatch) -> None:
+    captured: list[str] = []
+
+    def fake_run(cmd, _task, _dry_run):
+        captured.extend(cmd)
+        return True
+
+    monkeypatch.delenv("LIMEN_WARP_MODEL_OVERRIDE", raising=False)
+    monkeypatch.setattr(D, "_run_cmd", fake_run)
+    monkeypatch.setattr(D, "_claude_fable_acceptance_present", lambda: False)
+    task = Task(
+        id="WARP-AUTO",
+        title="repair parser",
+        repo="organvm/example",
+        target_agent="warp",
+        status="open",
+        created=date(2026, 7, 10),
+    )
+
+    result = D._call_warp_oz("warp", task, False)
+
+    assert result == "warp-oz:organvm/limen:limen-warp-oz.yml"
+    assert any(arg.startswith("execution_profile={") for arg in captured)
+    assert not any(arg.startswith("model=") for arg in captured)
+    receipt = D._MODEL_SELECTION_RECEIPTS.pop(task.id)
+    assert receipt["selection_source"] == "warp_auto"
+    assert receipt["selected_model"] is None
+
+
+def test_dispatch_event_records_dynamic_selection_receipt() -> None:
+    import datetime
+
+    task = Task(
+        id="SELECTED",
+        title="selected dynamically",
+        target_agent="opencode",
+        status="open",
+        created=date(2026, 7, 10),
+    )
+    D._MODEL_SELECTION_RECEIPTS[task.id] = {
+        "execution_profile": {"reasoning_depth": 0.7},
+        "selected_model": "fixture/runtime-output",
+        "selection_source": "opencode_live_catalog",
+        "catalog_hash": "abc123",
+    }
+
+    D._apply_result(
+        task,
+        "opencode",
+        True,
+        datetime.datetime.now(datetime.timezone.utc),
+        BudgetTrack(date="2026-07-10"),
+    )
+
+    event = task.dispatch_log[-1]
+    assert event.status == "dispatched"
+    assert event.selected_model == "fixture/runtime-output"
+    assert event.selection_source == "opencode_live_catalog"
+    assert event.catalog_hash == "abc123"
+
+
 def test_pr_open_receipt_blocks_duplicate_dispatch_and_noop_demotion() -> None:
     import datetime
 
@@ -1517,7 +1633,7 @@ def test_pr_open_receipt_blocks_duplicate_dispatch_and_noop_demotion() -> None:
 
     assert task.status == "dispatched"
     assert "noop" not in task.labels
-    assert task.dispatch_log[-1].status == "pr_open"
+    assert task.dispatch_log[-1].status == "dispatched"
     assert task.dispatch_log[-1].session_id == "result-lifecycle-guard"
 
 
@@ -1620,7 +1736,8 @@ def test_failed_result_skips_down_lane_in_default_cascade(tmp_path: Path, monkey
 
     assert task.status == "open"
     assert task.target_agent == "jules"
-    assert task.dispatch_log[-1].status == "failed->jules"
+    assert task.dispatch_log[-1].status == "open"
+    assert task.dispatch_log[-1].route_to == "jules"
     assert "tried:claude" in task.labels
 
 
@@ -1646,7 +1763,8 @@ def test_remote_service_failure_skips_unarmed_ollama_floor(monkeypatch) -> None:
 
     assert task.status == "open"
     assert task.target_agent == "opencode"
-    assert task.dispatch_log[-1].status == "failed->opencode"
+    assert task.dispatch_log[-1].status == "open"
+    assert task.dispatch_log[-1].route_to == "opencode"
     assert task.dispatch_log[-1].output == "remote/service lane failed; reopened to healthy fleet cascade"
     assert "tried:jules" in task.labels
 
@@ -1675,7 +1793,8 @@ def test_remote_service_failure_can_use_armed_matching_ollama_floor(monkeypatch)
 
     assert task.status == "open"
     assert task.target_agent == "ollama"
-    assert task.dispatch_log[-1].status == "failed->ollama"
+    assert task.dispatch_log[-1].status == "open"
+    assert task.dispatch_log[-1].route_to == "ollama"
     assert "tried:jules" in task.labels
 
 

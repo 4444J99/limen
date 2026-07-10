@@ -29,6 +29,15 @@ from limen.capacity import (
 from limen.io import load_limen_file, save_limen_file, queue_lock as _queue_lock
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
+from limen.provider_selection import (
+    catalog_hash,
+    discover_opencode_models,
+    discover_warp_override,
+    effective_profile,
+    execution_profile_for,
+    paid_service_block_reason,
+    select_opencode_model,
+)
 from limen.model_selection import (  # the shared model vocabulary — also used by the non-bypassable `claude` shim
     _CLAUDE_TIER_ORDER,
     _claude_fable_acceptance_present,
@@ -618,6 +627,26 @@ def dispatch_admission_check(
         "next_command": "",
         "sources": [],
     }
+    pause_marker = root / "logs" / "AUTONOMY_PAUSED"
+    if pause_marker.exists() and os.environ.get("LIMEN_FORCE_AUTONOMY") != "1":
+        try:
+            recorded_reason = " ".join(
+                line.strip() for line in pause_marker.read_text(encoding="utf-8").splitlines() if line.strip()
+            )[:500]
+        except OSError:
+            recorded_reason = "autonomy pause marker is present"
+        result.update(
+            {
+                "allow": False,
+                "dispatch_allowed": False,
+                "status": "blocked",
+                "exit_code": 10,
+                "reason": recorded_reason or "autonomy pause marker is present",
+                "next_command": f"remove {pause_marker} only after its recorded release predicate is satisfied",
+                "sources": ["autonomy_pause"],
+            }
+        )
+        return result
     if not _truthy_env("LIMEN_DISPATCH_ADMISSION", True):
         result.update({"reason": "dispatch admission disabled by LIMEN_DISPATCH_ADMISSION", "sources": ["disabled"]})
         return result
@@ -739,7 +768,14 @@ def _has_pr_open_transition(task: Task) -> bool:
     local no-op result must not demote the task or invite duplicate dispatch against the same
     owner repo.
     """
-    return any(str(entry.status or "") == "pr_open" for entry in (task.dispatch_log or []))
+    return any(
+        str(entry.status or "") == "pr_open"
+        or (
+            str(entry.status or "") == "dispatched"
+            and "/pull/" in str(entry.session_id or "").lower()
+        )
+        for entry in (task.dispatch_log or [])
+    )
 
 
 def _restore_pr_open_status(
@@ -761,7 +797,7 @@ def _restore_pr_open_status(
             timestamp=now,
             agent=agent,
             session_id=session_id,
-            status="pr_open",
+            status="dispatched",
             output=output,
         )
     )
@@ -811,6 +847,7 @@ def _entry_text(entry: DispatchLogEntry) -> str:
         str(part or "")
         for part in (
             entry.status,
+            entry.route_to,
             entry.session_id,
             entry.output,
             entry.agent,
@@ -825,13 +862,21 @@ def _entry_matches(entry: DispatchLogEntry, patterns: tuple[str, ...]) -> bool:
 
 def _outcome_entries(task: Task) -> list[DispatchLogEntry]:
     skip = {"dispatched", "in_progress", "open"}
-    return [entry for entry in (task.dispatch_log or []) if str(entry.status or "") not in skip]
+    return [
+        entry
+        for entry in (task.dispatch_log or [])
+        if str(entry.status or "") not in skip
+        or bool(getattr(entry, "route_to", None))
+        or _entry_matches(entry, ("failed", "no-op", "timeout", "rate limit"))
+    ]
 
 
 def _has_fresh_owner_state(task: Task) -> bool:
     for entry in (task.dispatch_log or [])[-4:]:
         text = _entry_text(entry)
-        if str(entry.status or "") in {"done", "pr_open"}:
+        if str(entry.status or "") in {"done", "pr_open"} or (
+            str(entry.status or "") == "dispatched" and "/pull/" in str(entry.session_id or "").lower()
+        ):
             return True
         if "pull/" in text or "new head" in text or "checks green" in text or "check passed" in text:
             return True
@@ -1077,6 +1122,25 @@ _PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4
 # plumbing across threads so concurrent same-repo dispatches don't collide on index.lock.
 # The slow agent run happens OUTSIDE this lock — that's where the parallelism lives.
 _GIT_PLUMBING_LOCK = threading.Lock()
+_MODEL_SELECTION_RECEIPTS: dict[str, dict[str, Any]] = {}
+
+
+def _record_model_selection(
+    task: Task | None,
+    *,
+    profile: dict[str, object],
+    selected_model: str | None,
+    source: str,
+    fingerprint: str | None = None,
+) -> None:
+    if task is None:
+        return
+    _MODEL_SELECTION_RECEIPTS[task.id] = {
+        "execution_profile": profile,
+        "selected_model": selected_model,
+        "selection_source": source,
+        "catalog_hash": fingerprint,
+    }
 
 
 def resolve_agent() -> str:
@@ -1416,9 +1480,56 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
     if not task.repo:
         print(f"  SKIP {task.id}: {agent} lane needs task.repo")
         return False
+    if reason := paid_service_block_reason(task):
+        if dry_run:
+            print(f"  would BLOCK {task.id}: {reason}")
+            return True
+        print(f"  BLOCKED {task.id}: {reason}")
+        return _blocked_result(reason)
+    requested_profile = execution_profile_for(task)
+    plan_accepted = _claude_fable_acceptance_present()
+    profile = effective_profile(requested_profile, plan_accepted=plan_accepted)
+    router_override = os.environ.get("LIMEN_WARP_MODEL_OVERRIDE")
+    router = None
+    if router_override:
+        oz_vendor = census.by_name("oz")
+        router = discover_warp_override(
+            oz_vendor.binary if oz_vendor is not None else "oz",
+            override=router_override,
+            timeout=max(1, _env_int("LIMEN_WARP_CATALOG_TIMEOUT", 30)),
+        )
+    if router_override and not router:
+        reason = "configured Warp model override is absent from the live Oz catalog"
+        if dry_run:
+            print(f"  would BLOCK {task.id}: {reason}")
+            return True
+        print(f"  BLOCKED {task.id}: {reason}")
+        _record_model_selection(
+            task,
+            profile=profile.as_dict(),
+            selected_model=None,
+            source="warp_override_missing",
+        )
+        return _blocked_result(reason)
+    _record_model_selection(
+        task,
+        profile=profile.as_dict(),
+        selected_model=router,
+        source="warp_override" if router else "warp_auto",
+    )
     gh = os.environ.get("LIMEN_WARP_OZ_BIN", "gh")
     workflow = os.environ.get("LIMEN_WARP_OZ_WORKFLOW", "limen-warp-oz.yml")
     dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "organvm/limen")
+    intent = (
+        "Planning only: return a build packet and do not implement."
+        if requested_profile.planning_only and plan_accepted
+        else "Execute the task and verify the narrow acceptance predicate."
+    )
+    prompt = (
+        f"{_build_prompt(task)}\n\n--- EXECUTION INTENT ---\n"
+        f"profile: {profile.as_json()}\n{intent}\n"
+        "Select capabilities from the live provider catalog; do not assume a named underlying model."
+    )
     cmd = [
         gh,
         "workflow",
@@ -1435,8 +1546,12 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
         "-f",
         f"agent={agent}",
         "-f",
-        f"prompt={_build_prompt(task)}",
+        f"execution_profile={profile.as_json()}",
+        "-f",
+        f"prompt={prompt}",
     ]
+    if router:
+        cmd.extend(["-f", f"model={router}"])
     result = _run_cmd(cmd, task, dry_run)
     if result is True and not dry_run:
         return f"warp-oz:{dispatch_repo}:{workflow}"
@@ -1457,34 +1572,36 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
 #   - opencode/agy: edit by default in run/-p mode (verified READY headless).
 #   - gemini: requires GEMINI_API_KEY / settings.json auth (not configured;
 #     lane is wired but will fail until auth is set).
-def _opencode_model() -> str:
-    """Resolve the opencode lane model by DERIVING it from `opencode models`, never by
-    pinning a model name ("names are outputs, not inputs"). Order:
-      1. explicit LIMEN_OPENCODE_MODEL override (an input only by deliberate choice);
-      2. query the models the account actually exposes → pick a PAID one if authed
-         (opencode auth login wrote a credential), else a free coding model. Self-tunes
-         to whatever exists today and survives any model rename — nothing pinned.
-      3. last-resort ONLY if the query fails: a single env-overridable constant.
-    """
-    env = os.environ.get("LIMEN_OPENCODE_MODEL")
-    if env:
-        return env
-    binv = os.environ.get("LIMEN_OPENCODE_BIN", "opencode")
-    try:
-        r = subprocess.run([binv, "models"], capture_output=True, text=True, timeout=20)
-        models = [ln.strip() for ln in r.stdout.splitlines() if "/" in ln and " " not in ln.strip()]
-        # Prefer a FREE coding model (works with no auth). We deliberately DON'T read
-        # opencode's auth.json from Python — that read trips the macOS TCC "access data from
-        # other apps" prompt on every beat. After `opencode auth login`, set
-        # LIMEN_OPENCODE_MODEL=<paid model> to use the paid tier.
-        free = [m for m in models if "-free" in m]
-        if free:
-            return next((m for m in free if "code" in m), free[0])
-        if models:
-            return models[0]
-    except Exception:
-        pass
-    return os.environ.get("LIMEN_OPENCODE_MODEL_FALLBACK", "opencode/north-mini-code-free")
+def _opencode_model(task: Task | None = None) -> str | None:
+    """Select a reachable OpenCode model by live capabilities, never by name."""
+
+    binary = os.environ.get("LIMEN_OPENCODE_BIN", "opencode")
+    models = discover_opencode_models(
+        binary,
+        timeout=max(1, _env_int("LIMEN_OPENCODE_CATALOG_TIMEOUT", 30)),
+    )
+    requested = execution_profile_for(task)
+    profile = effective_profile(requested, plan_accepted=_claude_fable_acceptance_present())
+    override = os.environ.get("LIMEN_OPENCODE_MODEL")
+    if override:
+        selected = next((model for model in models if model.model_id == override and model.satisfies(profile)), None)
+        _record_model_selection(
+            task,
+            profile=profile.as_dict(),
+            selected_model=selected.model_id if selected else None,
+            source="opencode_override" if selected else "opencode_override_missing",
+            fingerprint=catalog_hash(models),
+        )
+        return selected.model_id if selected else None
+    selected = select_opencode_model(models, profile)
+    _record_model_selection(
+        task,
+        profile=profile.as_dict(),
+        selected_model=selected.model_id if selected else None,
+        source="opencode_live_catalog" if selected else "opencode_no_capable_model",
+        fingerprint=catalog_hash(models),
+    )
+    return selected.model_id if selected else None
 
 
 _LOCAL_AGENTS: dict[str, list[str]] = {
@@ -1540,7 +1657,7 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
     model: str | None = None
     flags = list(_LOCAL_AGENTS[agent])
     if agent == "opencode":
-        model = _opencode_model()
+        model = _opencode_model(task)
         if model:
             flags += ["-m", model]
     elif agent == "codex":
@@ -1684,7 +1801,14 @@ def _organvm_engine_task(task: Task) -> bool:
 
 def _agent_timed_out_on_task(agent: str, task: Task) -> bool:
     return any(
-        canonical_agent(str(entry.agent or "")) == agent and str(entry.status or "").startswith("timeout->")
+        canonical_agent(str(entry.agent or "")) == agent
+        and (
+            str(entry.status or "").startswith("timeout->")
+            or (
+                bool(getattr(entry, "route_to", None))
+                and "timeout" in str(entry.output or "").lower()
+            )
+        )
         for entry in (task.dispatch_log or [])
     )
 
@@ -2650,6 +2774,13 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
     if not agent_can_run_task(agent, task):
         print(f"  SKIP {task.id}: {agent} is gated for Limen registry discovery tasks")
         return False
+    if agent == "opencode" and "-m" not in _agent_argv(agent, task):
+        reason = "no code-capable model is exposed by the live OpenCode catalog"
+        if dry_run:
+            print(f"  would BLOCK {task.id}: {reason}")
+            return True
+        print(f"  BLOCKED {task.id}: {reason}")
+        return _blocked_result(reason)
     if os.environ.get("LIMEN_ISOLATION", "worktree").lower() != "off":
         return _isolated_local_run(agent, task, dry_run)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)
@@ -2914,12 +3045,16 @@ def _apply_result(
             task.labels.append("noop")
     elif result == _RATELIMIT:
         nxt = _cascade_or_requeue(agent)
-        entry.status = f"ratelimited->{nxt or 'requeue'}"
+        entry.status = "open"
+        entry.route_to = nxt
+        entry.output = f"rate limited on {agent}; reopened to live fleet route"
         task.target_agent = nxt
         task.status = "open"
     elif result == _TIMEOUT:
         # too big for a sync local lane → hand to jules (async, no wall-clock cap)
-        entry.status = "timeout->jules"
+        entry.status = "open"
+        entry.route_to = "jules"
+        entry.output = f"timeout on {agent}; reopened to asynchronous lane"
         task.target_agent = "jules"
         task.status = "open"
         if "slow" not in task.labels:
@@ -2943,17 +3078,25 @@ def _apply_result(
             task.labels.append(tried)
         if agent in _REMOTE_SERVICE_LANES:
             fallback = _remote_service_failure_lane(task, agent)
-            entry.status = f"failed->{fallback}"
+            entry.status = "open"
+            entry.route_to = fallback
             entry.output = "remote/service lane failed; reopened to healthy fleet cascade"
             task.target_agent = fallback
             task.status = "open"
         elif next_lane := _next_lane(agent):
-            entry.status = f"failed->{next_lane}"
+            entry.status = "open"
+            entry.route_to = next_lane
+            entry.output = f"{agent} lane failed; reopened to healthy fleet cascade"
             task.target_agent = next_lane
             task.status = "open"
         else:
             entry.status = "failed"
             task.status = "failed"
+    if selection := _MODEL_SELECTION_RECEIPTS.pop(task.id, None):
+        entry.execution_profile = selection.get("execution_profile")
+        entry.selected_model = selection.get("selected_model")
+        entry.selection_source = selection.get("selection_source")
+        entry.catalog_hash = selection.get("catalog_hash")
     task.updated = now
     task.dispatch_log.append(entry)
 
