@@ -1948,6 +1948,18 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Repo (owner/name) whose main-branch CI check-main-green.py watches and, when armed, emits the HEAL-mainred task for. Default organvm/limen. Derived so the sensor survives relocation."
+  LIMEN_MAIN_GREEN_WEDGE_K:
+    default: 5                 # >= K fresh PRs sharing one failing required check = queue-wedge blast radius
+    env: LIMEN_MAIN_GREEN_WEDGE_K
+    self_update: none
+    owner: tabularius
+    note: "Blast-radius threshold (integrated from PR #882): the minimum number of FRESH open PRs that must share a single failing REQUIRED check before check-main-green reports a queue wedge — quantifying the RED alarm's urgency and catching a wedge that persists even when trunk ci.yml is green (a required check diverging from ci.yml)."
+  LIMEN_MAIN_GREEN_FRESH_HOURS:
+    default: 36                # only PRs updated within this window count toward the wedge (excludes chronic backlog)
+    env: LIMEN_MAIN_GREEN_FRESH_HOURS
+    self_update: none
+    owner: tabularius
+    note: "Freshness window (h) for the wedge blast-radius scan: a pile of stale fleet PRs each failing pr-gate on its own stale base is chronic backlog, not an acute trunk break — only recently-updated PRs count toward wedged_prs."
 
   LIMEN_CONTINUITY_CHECK:
     default: "1"               # ON — detect silent dispatch lanes while queue + budget exist each beat
