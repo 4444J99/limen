@@ -120972,7 +120972,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
@@ -120989,7 +120989,7 @@ tasks:
     [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T02:42:36.107217Z'
+  updated: '2026-07-10T02:57:14.832060Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -121029,6 +121029,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T02:57:14.832060Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: SOVEREIGN-0708-KILLCHAIN
   title: 'sovereignty-audit: every third party between work and wallet gets an owned
     fallback'
