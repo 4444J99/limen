@@ -68,7 +68,7 @@ DEFAULT_DAILY_TASK_TARGETS: dict[str, int] = {
     # Human contract: Claude should get a deliberately programmed/check-up batch daily.
     "claude": 15,
 }
-DEFAULT_GITHUB_ACTIONS_WORKFLOW = "operate.yml"
+DEFAULT_GITHUB_ACTIONS_WORKFLOW = "limen-agent.yml"
 BAD_USAGE_HEALTH = {"exhausted", "rate-limited", "low"}
 
 AGENT_ALIASES: dict[str, str] = census.agent_aliases()

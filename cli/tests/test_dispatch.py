@@ -358,27 +358,27 @@ def test_github_actions_lane_requires_configured_workflow(tmp_path: Path, monkey
     lanes = select_lanes("auto", board)
 
     assert status["reachable"] is False
-    assert "workflow=operate.yml@organvm/limen unavailable" in status["detail"]
+    assert "workflow=limen-agent.yml@organvm/limen unavailable" in status["detail"]
     assert "github_actions" not in lanes
 
 
-def test_github_actions_lane_defaults_to_operate_workflow(tmp_path: Path, monkeypatch) -> None:
+def test_github_actions_lane_uses_configured_executor_workflow(tmp_path: Path, monkeypatch) -> None:
     gh = tmp_path / "gh"
     gh.write_text(
         "#!/bin/sh\n"
-        'if [ "$1" = workflow ] && [ "$2" = view ] && [ "$3" = operate.yml ]; then\n'
+        'if [ "$1" = workflow ] && [ "$2" = view ] && [ "$3" = custom-agent.yml ]; then\n'
         "  exit 0\n"
         "fi\n"
         "exit 1\n"
     )
     gh.chmod(0o755)
     monkeypatch.setenv("PATH", str(tmp_path))
-    monkeypatch.delenv("LIMEN_GITHUB_ACTIONS_WORKFLOW", raising=False)
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_WORKFLOW", "custom-agent.yml")
 
     status = agent_status("github_actions")
 
     assert status["reachable"] is True
-    assert "workflow=operate.yml@organvm/limen" in status["detail"]
+    assert "workflow=custom-agent.yml@organvm/limen" in status["detail"]
 
 
 def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path) -> None:
