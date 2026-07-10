@@ -1,6 +1,6 @@
 # Prompt Batch Review Ledger
 
-Generated: `2026-07-10T06:20:45+00:00`
+Generated: `2026-07-10T06:20:54+00:00`
 
 ## Canonical Decision
 
@@ -13,14 +13,14 @@ Generated: `2026-07-10T06:20:45+00:00`
 
 - Priority batches read: `309`.
 - Review batches recorded: `309`.
-- Batches with durable owner/non-source/supersession evidence: `236`.
-- Open review batches: `56`.
+- Batches with durable owner/non-source/supersession evidence: `237`.
+- Open review batches: `55`.
 - Parked secret batches: `17`.
 - Prompt events represented: `136694`.
 - Preservation receipts available: `179`.
 - Packet resolution receipts available: `9`.
-- Batch resolution receipts available: `218`.
-- Status mix: `owner-recorded` 233, `needs-private-review` 38, `parked-secret` 17, `needs-owner-route` 12, `needs-remote-proof` 6, `superseded-recorded` 3.
+- Batch resolution receipts available: `219`.
+- Status mix: `owner-recorded` 234, `needs-private-review` 37, `parked-secret` 17, `needs-owner-route` 12, `needs-remote-proof` 6, `superseded-recorded` 3.
 - Lane mix: `legacy-session-review` 91, `hash-review` 82, `historical-worktree-review` 62, `family` 17, `parked-secret` 17, `observe` 11, `remote-pr-open` 8, `owner-blocker` 6, `human-gate` 5, `remote-proof` 5, `stalled-review` 3, `remote-close` 1, `preserve` 1.
 
 ## Recorded Batches
@@ -62,36 +62,36 @@ Generated: `2026-07-10T06:20:45+00:00`
 
 | Rank | Batch | Status | Band | Lane | Sessions | Events | Dominant Mix | Next Action |
 |---:|---|---|---|---|---:|---:|---|---|
-| 1 | `prompt-batch-low-hash-review-041` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 2 | `prompt-batch-low-hash-review-042` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 3 | `prompt-batch-low-hash-review-043` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources opencode-db 25; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 4 | `prompt-batch-low-hash-review-044` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 8, opencode-db 17; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 5 | `prompt-batch-low-hash-review-045` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 4, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 6 | `prompt-batch-low-hash-review-046` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 7 | `prompt-batch-low-hash-review-047` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 9, opencode-db 16; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 8 | `prompt-batch-low-hash-review-048` | `needs-private-review` | `low` | `hash-review` | 25 | 26 | sources agy-cli-conversations 3, gemini-tmp-agy 1, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 9 | `prompt-batch-low-hash-review-049` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
-| 10 | `prompt-batch-low-hash-review-050` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
-| 11 | `prompt-batch-low-hash-review-051` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 12 | `prompt-batch-low-hash-review-052` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 13 | `prompt-batch-low-hash-review-053` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 4, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 14 | `prompt-batch-low-hash-review-054` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 15 | `prompt-batch-low-hash-review-055` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 16 | `prompt-batch-low-hash-review-056` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 3, opencode-db 22; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 17 | `prompt-batch-low-hash-review-057` | `needs-private-review` | `low` | `hash-review` | 25 | 26 | sources agy-cli-conversations 3, opencode-db 22; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 18 | `prompt-batch-low-hash-review-058` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 1, opencode-db 24; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 19 | `prompt-batch-low-hash-review-059` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 20 | `prompt-batch-low-hash-review-060` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 21 | `prompt-batch-low-hash-review-061` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 22 | `prompt-batch-low-hash-review-062` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 23 | `prompt-batch-low-hash-review-063` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 7, opencode-db 18; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 24 | `prompt-batch-low-hash-review-064` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 4, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 25 | `prompt-batch-low-hash-review-065` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 26 | `prompt-batch-low-hash-review-066` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 1, opencode-db 24; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 27 | `prompt-batch-low-hash-review-067` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 1, opencode-db 24; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 28 | `prompt-batch-low-hash-review-068` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 29 | `prompt-batch-low-hash-review-069` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
-| 30 | `prompt-batch-low-hash-review-070` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources opencode-db 25; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 1 | `prompt-batch-low-hash-review-042` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 2 | `prompt-batch-low-hash-review-043` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources opencode-db 25; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 3 | `prompt-batch-low-hash-review-044` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 8, opencode-db 17; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 4 | `prompt-batch-low-hash-review-045` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 4, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 5 | `prompt-batch-low-hash-review-046` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 6 | `prompt-batch-low-hash-review-047` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 9, opencode-db 16; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 7 | `prompt-batch-low-hash-review-048` | `needs-private-review` | `low` | `hash-review` | 25 | 26 | sources agy-cli-conversations 3, gemini-tmp-agy 1, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 8 | `prompt-batch-low-hash-review-049` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
+| 9 | `prompt-batch-low-hash-review-050` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `agy-cli-conversations` receipt privately and assign an owner route before delegation. |
+| 10 | `prompt-batch-low-hash-review-051` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 11 | `prompt-batch-low-hash-review-052` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 12 | `prompt-batch-low-hash-review-053` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 4, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 13 | `prompt-batch-low-hash-review-054` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 14 | `prompt-batch-low-hash-review-055` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 15 | `prompt-batch-low-hash-review-056` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 3, opencode-db 22; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 16 | `prompt-batch-low-hash-review-057` | `needs-private-review` | `low` | `hash-review` | 25 | 26 | sources agy-cli-conversations 3, opencode-db 22; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 17 | `prompt-batch-low-hash-review-058` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 1, opencode-db 24; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 18 | `prompt-batch-low-hash-review-059` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 2, opencode-db 23; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 19 | `prompt-batch-low-hash-review-060` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 20 | `prompt-batch-low-hash-review-061` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 21 | `prompt-batch-low-hash-review-062` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 22 | `prompt-batch-low-hash-review-063` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 7, opencode-db 18; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 23 | `prompt-batch-low-hash-review-064` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 4, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 24 | `prompt-batch-low-hash-review-065` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 25 | `prompt-batch-low-hash-review-066` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 1, opencode-db 24; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 26 | `prompt-batch-low-hash-review-067` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 1, opencode-db 24; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 27 | `prompt-batch-low-hash-review-068` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 5, opencode-db 20; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 28 | `prompt-batch-low-hash-review-069` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 6, opencode-db 19; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 29 | `prompt-batch-low-hash-review-070` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources opencode-db 25; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
+| 30 | `prompt-batch-low-hash-review-071` | `needs-private-review` | `low` | `hash-review` | 25 | 25 | sources agy-cli-conversations 4, opencode-db 21; families uncategorized 25 | Review the redacted `opencode-db` receipt privately and assign an owner route before delegation. |
 
 ## Private Output
 
