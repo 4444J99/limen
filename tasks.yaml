@@ -100575,12 +100575,13 @@ tasks:
     (weakest review quadrant)'
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: prompt-parity
   priority: medium
   budget_cost: 1
-  status: dispatched
-  labels: []
+  status: open
+  labels:
+  - slow
   urls:
   - https://github.com/organvm/limen/issues/641
   context: 'GitHub issue organvm/limen#641. The full-stack review founding run (Codex
@@ -100591,24 +100592,29 @@ tasks:
     The ledger''s Rem'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T10:42:24.102867Z'
+  updated: '2026-07-10T11:15:20.919719Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:42:24.102867Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T11:15:20.919719Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: GH-organvm-limen-640
   title: 'review-ledger: enforce the entry template with an executable lint (Ideal
     prompt diff / What was fucked up)'
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: prompt-parity
   priority: medium
   budget_cost: 1
-  status: dispatched
-  labels: []
+  status: open
+  labels:
+  - slow
   urls:
   - https://github.com/organvm/limen/issues/640
   context: 'GitHub issue organvm/limen#640. Fable adjudication of Codex session 019f2a04
@@ -100619,7 +100625,7 @@ tasks:
     lenses are the mandate''s signat'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T10:42:24.102867Z'
+  updated: '2026-07-10T11:15:20.919719Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:58.136246Z'
     agent: codex
@@ -100632,6 +100638,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T11:15:20.919719Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: ORG-hr-organ-kernel-0704
   title: Map the VLTIMA 5-primitive kernel to the hr organ
   repo: organvm/limen
@@ -104596,10 +104606,10 @@ tasks:
   title: fix failing CI on organvm/limen#419
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -104615,7 +104625,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T10:42:24.102867Z'
+  updated: '2026-07-10T11:15:20.919719Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -104650,6 +104660,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T11:15:20.919719Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-limen-420
   title: fix failing CI on organvm/limen#420
   repo: organvm/limen
@@ -107038,10 +107052,10 @@ tasks:
   title: fix failing CI on organvm/limen#624
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -107057,7 +107071,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T10:42:24.102867Z'
+  updated: '2026-07-10T11:15:20.919719Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: gemini
@@ -107073,6 +107087,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T11:15:20.919719Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-limen-625
   title: fix failing CI on organvm/limen#625
   repo: organvm/limen
@@ -107207,10 +107225,10 @@ tasks:
   title: fix failing CI on organvm/limen#630
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -107227,7 +107245,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T10:42:24.102867Z'
+  updated: '2026-07-10T11:15:20.919719Z'
   dispatch_log:
   - timestamp: '2026-07-08T14:39:59.050705Z'
     agent: jules
@@ -107253,6 +107271,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T11:15:20.919719Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-media-ark-34
   title: fix failing CI on organvm/media-ark#34
   repo: organvm/media-ark
@@ -120317,24 +120339,29 @@ tasks:
     \ does not satisfy the ask (ship-gate class)."
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - excav-0708
   - product
+  - slow
   urls: []
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:42:24.102867Z'
+  updated: '2026-07-10T11:15:20.919719Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:42:24.102867Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T11:15:20.919719Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: EXCAV-0708-CHATGPT-BACKFILL
   title: "Close the 2026-04-13\u219206-08 gap: pull post-export ChatGPT via the desktop\
     \ session"
