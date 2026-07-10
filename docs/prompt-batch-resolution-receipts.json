@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-07-10T06:50:44Z",
+  "generated_at": "2026-07-10T07:01:21Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -94654,6 +94654,2219 @@
           "repo": "unknown-from-redacted-attack-metadata",
           "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
           "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-critical-observe-001",
+      "band": "critical",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 2337,
+      "unique_prompt_hashes": 1534,
+      "root_statuses": {
+        "current_local_checkout_absent": 25
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 25
+      },
+      "owner_repos": {
+        "organvm/domus-genoma": 8,
+        "organvm/mirror-mirror": 8,
+        "organvm/universal-mail--automation": 2,
+        "organvm/a-i-council--coliseum": 1,
+        "organvm/growth-auditor": 1,
+        "organvm/limen": 1,
+        "organvm/my--father-mother": 1,
+        "organvm/system-governance-framework": 1,
+        "organvm/the-invisible-ledger": 1,
+        "organvm/universal-node-network": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 25 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-a-i-council--coliseum-175-e675406b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/a-i-council--coliseum",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-136-6a8c088f",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-141-70e4ccde",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-146-0bb5970c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-149-8df127df",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-152-aaa842d9",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-154-35479caf",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-155-f2f394b3",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-159-615266b7",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-growth-auditor-12-610fe0a5",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/growth-auditor",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-446-76408b03",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-104-5198c1b2",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-71-d83257ef",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-77-c105b09b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-77-d31a3fdd",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-86-0470da42",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-90-028f12b1",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-93-3e3f59d1",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-95-20f0cd1b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-my--father-mother-21-fd6a0ac5",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/my--father-mother",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-system-governance-framework-43-e369b224",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/system-governance-framework",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-42-07e936e9",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-universal-mail--automation-118-9f686157",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/universal-mail--automation",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-universal-node-network-7-58e7652e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/universal-node-network",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-universal-mail--automation-134-e544ecb8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/universal-mail--automation",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-critical-preserve-001",
+      "band": "critical",
+      "lane": "preserve",
+      "status": "owner-recorded",
+      "classification": "owner-route batch closed with current owner-blocker roots retained and absent roots recorded as non-current local checkouts",
+      "session_count": 11,
+      "prompt_events": 44,
+      "unique_prompt_hashes": 33,
+      "root_statuses": {
+        "owner_blocker_current_worktree": 8,
+        "current_local_checkout_absent": 3
+      },
+      "current_scan_reasons": {
+        "owner-blocker": 8,
+        "absent-from-current-worktree-debt": 3
+      },
+      "owner_repos": {
+        "organvm/limen": 8,
+        "organvm/a-i-chat--exporter": 2,
+        "organvm/public-process": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 8 batch roots and found 3 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Owner-blocker roots remain visible in the internal cache until custody is recorded; absent roots require no local reclaim and must not be recreated without a new owner packet.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-limen-422-6b0c8ca2",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-424-8db5dab0",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-428-4b320e87",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-7c7129d9",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-438-da3b854e",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-444-a00aa985",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-30-59ffa133",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-31-78a6445b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/a-i-chat--exporter",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-61-6eab8b67",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/a-i-chat--exporter",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "org-financial-organ-face-0704-bd436529",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "org-governance-organ-selffeed-0703-00694775",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-high-observe-001",
+      "band": "high",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 1327,
+      "unique_prompt_hashes": 881,
+      "root_statuses": {
+        "current_local_checkout_absent": 25
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 25
+      },
+      "owner_repos": {
+        "organvm/public-process": 5,
+        "organvm/mirror-mirror": 3,
+        "organvm/organvm-engine": 3,
+        "organvm/bountyscope": 2,
+        "organvm/domus-genoma": 2,
+        "organvm/the-invisible-ledger": 2,
+        "organvm/atomic-substrata": 1,
+        "organvm/community-hub": 1,
+        "organvm/growth-auditor": 1,
+        "organvm/limen": 1,
+        "organvm/narratological-algorithmic-lenses": 1,
+        "organvm/organvm-corpvs-testamentvm": 1,
+        "organvm/system-governance-framework": 1,
+        "organvm/rules-system-bound": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 25 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-atomic-substrata-4-41b9ec96",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/atomic-substrata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-bountyscope-13-3199dbf4",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/bountyscope",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-bountyscope-8-2120cf4d",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/bountyscope",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-community-hub-9-48838101",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/community-hub",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-142-2548098e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-153-469ca57e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-growth-auditor-13-1d41d80b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/growth-auditor",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-436-6c1766c9",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-83-29f6eefc",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-86-05676968",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-95-49e2a3f0",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-narratological-algorithmic-lenses-36-faf77525",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/narratological-algorithmic-lenses",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-corpvs-testamentvm-511-cc58b96d",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/organvm-corpvs-testamentvm",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-engine-105-0b8f68ed",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/organvm-engine",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-engine-105-a7fcb622",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/organvm-engine",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-engine-110-cf645ef4",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/organvm-engine",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-30-40a0fb19",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-30-81b7e012",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-31-ccd6cf45",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-33-cb1d50b3",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-34-b0f362dc",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-system-governance-framework-43-92be8b62",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/system-governance-framework",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-31-b0ae2dce",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-47-c07b6c24",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-rules-system-bound-10-eba6fc9e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/rules-system-bound",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-high-observe-002",
+      "band": "high",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 4,
+      "prompt_events": 149,
+      "unique_prompt_hashes": 105,
+      "root_statuses": {
+        "current_local_checkout_absent": 4
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 4
+      },
+      "owner_repos": {
+        "organvm/bountyscope": 1,
+        "organvm/public-process": 1,
+        "organvm/kerygma-profiles": 1,
+        "organvm/rules-system-bound": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 4 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-bountyscope-14-f7b2ff23",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/bountyscope",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-33-f04f03c5",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-kerygma-profiles-7-2b25ce2c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/kerygma-profiles",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-rules-system-bound-6-e5c003c7",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/rules-system-bound",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-medium-observe-001",
+      "band": "medium",
+      "lane": "observe",
+      "status": "owner-recorded",
+      "classification": "owner-route batch closed with current owner-blocker roots retained and absent roots recorded as non-current local checkouts",
+      "session_count": 25,
+      "prompt_events": 229,
+      "unique_prompt_hashes": 159,
+      "root_statuses": {
+        "current_local_checkout_absent": 24,
+        "owner_blocker_current_worktree": 1
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 24,
+        "owner-blocker": 1
+      },
+      "owner_repos": {
+        "organvm/mirror-mirror": 5,
+        "organvm/the-invisible-ledger": 5,
+        "organvm/limen": 3,
+        "organvm/domus-genoma": 2,
+        "organvm/universal-mail--automation": 2,
+        "organvm/a-i-council--coliseum": 1,
+        "organvm/call-function--ontological": 1,
+        "organvm/narratological-algorithmic-lenses": 1,
+        "organvm/nexus--babel-alexandria": 1,
+        "organvm/trendpulse": 1,
+        "organvm/vigiles-aeternae--agon-cosmogonicum": 1,
+        "organvm/a-i-chat--exporter": 1,
+        "organvm/organvm-corpvs-testamentvm": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 1 batch roots and found 24 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Owner-blocker roots remain visible in the internal cache until custody is recorded; absent roots require no local reclaim and must not be recreated without a new owner packet.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-a-i-council--coliseum-177-f2be6be4",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/a-i-council--coliseum",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-call-function--ontological-10-ad14b431",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/call-function--ontological",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-142-47b084ef",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-157-088ea9fb",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-426-d270c2a2",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-a14ed351",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-438-980dae49",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-83-6c728f6b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-93-692692a9",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-94-543799cf",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-94-802b94e1",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-95-47edfa17",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-narratological-algorithmic-lenses-36-b62cbab8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/narratological-algorithmic-lenses",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-nexus--babel-alexandria-125-306fcd79",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/nexus--babel-alexandria",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-39-15c4bcf0",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-39-50be9f89",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-41-92bdce89",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-46-1eecc65a",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-57-fdd43ffc",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-trendpulse-8-90939f40",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/trendpulse",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-vigiles-aeternae--agon-cosmogonicum-7-997907fd",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/vigiles-aeternae--agon-cosmogonicum",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-66-ea484c96",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/a-i-chat--exporter",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-organvm-corpvs-testamentvm-495-ee057f86",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/organvm-corpvs-testamentvm",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-universal-mail--automation-119-ba27962d",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/universal-mail--automation",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-universal-mail--automation-130-17d2410f",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/universal-mail--automation",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-medium-observe-002",
+      "band": "medium",
+      "lane": "observe",
+      "status": "owner-recorded",
+      "classification": "owner-route batch closed with current owner-blocker roots retained and absent roots recorded as non-current local checkouts",
+      "session_count": 25,
+      "prompt_events": 98,
+      "unique_prompt_hashes": 69,
+      "root_statuses": {
+        "current_local_checkout_absent": 24,
+        "owner_blocker_current_worktree": 1
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 24,
+        "owner-blocker": 1
+      },
+      "owner_repos": {
+        "organvm/domus-genoma": 6,
+        "organvm/mirror-mirror": 4,
+        "organvm/limen": 3,
+        "organvm/public-process": 2,
+        "organvm/public-record-data-scrapper": 2,
+        "organvm/the-invisible-ledger": 2,
+        "organvm/growth-auditor": 1,
+        "organvm/my--father-mother": 1,
+        "organvm/schema-definitions": 1,
+        "organvm/universal-mail--automation": 1,
+        "organvm/a-i-chat--exporter": 1,
+        "organvm/peer-audited--behavioral-blockchain": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 1 batch roots and found 24 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Owner-blocker roots remain visible in the internal cache until custody is recorded; absent roots require no local reclaim and must not be recreated without a new owner packet.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-domus-genoma-142-194f0277",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-146-9dc2db2e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-150-c9c434aa",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-153-0c7ac0c8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-153-451788bb",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-153-eb2b9ba6",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-growth-auditor-11-ddbe8b4c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/growth-auditor",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-426-d7a0e516",
+          "status": "owner_blocker_current_worktree",
+          "current_scan_reason": "owner-blocker",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan found this root present with reason owner-blocker; it is not reclaimable by the clean+merged+idle predicate.",
+          "next_action": "Retain this owner-blocker root until an owner receipt, PR/merge proof, or explicit blocker-clearing task records custody; do not delete from cache without that proof."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-428-2ae62246",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-443-5476c544",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-100-34862f7f",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-77-6e70554b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-79-c0509fb7",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-86-68597dae",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-my--father-mother-21-17cd7d29",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/my--father-mother",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-28-623757d1",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-31-cfc2a87e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-record-data-scrapper-315-ac6c61f8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-record-data-scrapper",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-record-data-scrapper-337-cf34b72a",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-record-data-scrapper",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-schema-definitions-7-f11dac25",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/schema-definitions",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-31-ff889566",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-universal-mail--automation-118-26b3e882",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/universal-mail--automation",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-30-ec506add",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/a-i-chat--exporter",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-peer-audited--behavioral-blockchain-713-dd7791ce",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/peer-audited--behavioral-blockchain",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-the-invisible-ledger-52-f4c5a0cd",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-medium-observe-003",
+      "band": "medium",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 94,
+      "unique_prompt_hashes": 67,
+      "root_statuses": {
+        "current_local_checkout_absent": 25
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 25
+      },
+      "owner_repos": {
+        "organvm/domus-genoma": 5,
+        "organvm/mirror-mirror": 5,
+        "organvm/public-process": 3,
+        "organvm/the-invisible-ledger": 3,
+        "organvm/limen": 2,
+        "organvm/public-record-data-scrapper": 2,
+        "organvm/growth-auditor": 1,
+        "organvm/my--father-mother": 1,
+        "organvm/nexus--babel-alexandria": 1,
+        "organvm/kerygma-profiles": 1,
+        "organvm/rules-system-bound": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 25 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-domus-genoma-136-5448713c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-141-e43baa15",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-149-9f9060b8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-154-0d80d55c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-155-ac07fcb1",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-growth-auditor-13-bc0b11cc",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/growth-auditor",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-444-32af06e6",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-445-7282d149",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-104-28912ebe",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-71-6877a3e2",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-93-7dfcb32a",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-94-7890f8b6",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-95-10d60bab",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-my--father-mother-21-5fcb223d",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/my--father-mother",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-nexus--babel-alexandria-125-e175f665",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/nexus--babel-alexandria",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-33-47cc8080",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-33-ac0cc087",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-34-752f6f37",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-record-data-scrapper-315-92684314",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-record-data-scrapper",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-record-data-scrapper-315-d69452a0",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-record-data-scrapper",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-41-682764a8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-57-99c7f8a5",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-kerygma-profiles-7-af89aa48",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/kerygma-profiles",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-rules-system-bound-9-2fa2012d",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/rules-system-bound",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-the-invisible-ledger-64-3ef1b1e0",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-medium-observe-004",
+      "band": "medium",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 77,
+      "unique_prompt_hashes": 29,
+      "root_statuses": {
+        "current_local_checkout_absent": 25
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 25
+      },
+      "owner_repos": {
+        "organvm/domus-genoma": 11,
+        "organvm/the-invisible-ledger": 4,
+        "organvm/mirror-mirror": 3,
+        "organvm/limen": 2,
+        "organvm/public-process": 2,
+        "organvm/growth-auditor": 1,
+        "organvm/my--father-mother": 1,
+        "organvm/kerygma-profiles": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 25 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-domus-genoma-136-12ee50f4",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-136-2c2c192c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-136-32638a2c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-138-422787bb",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-146-89c46870",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-149-b73c4ce9",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-149-d5e7f4d5",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-150-1c22d9db",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-152-d3af5bd7",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-159-97fee589",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-159-da75ada8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-growth-auditor-11-0e5131c4",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/growth-auditor",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-438-fcc35eed",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-442-41ea2f93",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-71-955f0971",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-79-7fbbb01a",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-90-b2321100",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-my--father-mother-19-6a175061",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/my--father-mother",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-31-20476025",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-31-2cb162ea",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-31-46d7cceb",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-46-93aec92b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-47-eb3de1fa",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-kerygma-profiles-7-46a39587",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/kerygma-profiles",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-the-invisible-ledger-64-081af90f",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-medium-observe-005",
+      "band": "medium",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 67,
+      "unique_prompt_hashes": 47,
+      "root_statuses": {
+        "current_local_checkout_absent": 25
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 25
+      },
+      "owner_repos": {
+        "organvm/limen": 12,
+        "organvm/domus-genoma": 4,
+        "organvm/mirror-mirror": 2,
+        "organvm/rules-system-bound": 2,
+        "organvm/growth-auditor": 1,
+        "organvm/my--father-mother": 1,
+        "organvm/public-process": 1,
+        "organvm/tab-bookmark-manager": 1,
+        "organvm/dot-github--logos": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 25 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-domus-genoma-141-d5c1d0f6",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-149-e0f24a23",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-155-2721d52d",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-157-e92cc6f4",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-growth-auditor-17-05e37ea2",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/growth-auditor",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-426-b1a41cda",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-428-e536788e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-0a5c6bc2",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-29605f83",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-431-6ee61f31",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-435-b69ba98c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-439-b17fd83a",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-442-c9d99871",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-443-4e67ed4e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-443-c22de24a",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-443-ee755868",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-444-d3ea6fe8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-71-5bd74193",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-83-8dd8a3bf",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-my--father-mother-19-7988886d",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/my--father-mother",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-33-319b4349",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-tab-bookmark-manager-28-c39923bb",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/tab-bookmark-manager",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-dot-github--logos-37-d981b37b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/dot-github--logos",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-rules-system-bound-10-1ebaf735",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/rules-system-bound",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-rules-system-bound-10-c2d23459",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/rules-system-bound",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-medium-observe-006",
+      "band": "medium",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 65,
+      "unique_prompt_hashes": 42,
+      "root_statuses": {
+        "current_local_checkout_absent": 25
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 25
+      },
+      "owner_repos": {
+        "organvm/limen": 12,
+        "organvm/domus-genoma": 2,
+        "organvm/growth-auditor": 2,
+        "organvm/public-process": 2,
+        "organvm/mirror-mirror": 1,
+        "organvm/public-record-data-scrapper": 1,
+        "organvm/the-invisible-ledger": 1,
+        "organvm/a-i-chat--exporter": 1,
+        "organvm/kerygma-profiles": 1,
+        "organvm/organvm-corpvs-testamentvm": 1,
+        "organvm/rules-system-bound": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 25 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-domus-genoma-146-22877d48",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-157-baceffbf",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-growth-auditor-14-87e185fb",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/growth-auditor",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-growth-auditor-16-aa9e65aa",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/growth-auditor",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-422-94534247",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-426-4aab452b",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-426-71ba33ff",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-426-a93cb119",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-428-0079823c",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-428-ad4f755d",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-61bd3388",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-af02d89e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-436-b9f684dd",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-438-7e4c81d1",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-438-899cbaa9",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-438-f0f9ba29",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-mirror-mirror-79-ae77e382",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/mirror-mirror",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-30-2b47c833",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-34-90c17525",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-process",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-record-data-scrapper-337-9a71dedd",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/public-record-data-scrapper",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-the-invisible-ledger-58-b9160ce8",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/the-invisible-ledger",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-30-74c22c45",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/a-i-chat--exporter",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-kerygma-profiles-6-af889f90",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/kerygma-profiles",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-organvm-corpvs-testamentvm-496-b9da6fb3",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/organvm-corpvs-testamentvm",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-rules-system-bound-9-c3f5163e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/rules-system-bound",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-medium-observe-007",
+      "band": "medium",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 4,
+      "prompt_events": 14,
+      "unique_prompt_hashes": 10,
+      "root_statuses": {
+        "current_local_checkout_absent": 4
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 4
+      },
+      "owner_repos": {
+        "organvm/domus-genoma": 2,
+        "organvm/a-i--skills": 1,
+        "organvm/limen": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 4 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-a-i--skills-27-fff625ac",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/a-i--skills",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-138-6cb82894",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-domus-genoma-150-7af8143e",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/domus-genoma",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-432-19e5f605",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T07:01:21Z",
+      "batch": "prompt-batch-low-observe-001",
+      "band": "low",
+      "lane": "observe",
+      "status": "non-source-recorded",
+      "classification": "observe batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 1,
+      "prompt_events": 1,
+      "unique_prompt_hashes": 1,
+      "root_statuses": {
+        "current_local_checkout_absent": 1
+      },
+      "current_scan_reasons": {
+        "absent-from-current-worktree-debt": 1
+      },
+      "owner_repos": {
+        "organvm/limen": 1
+      },
+      "evidence": [
+        "private prompt batch ledger listed this as an observe/preserve owner-route queue item",
+        "python3 scripts/worktree-debt.py --json scanned 481 roots; matched 0 batch roots and found 1 absent from current local worktree debt",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 481 roots with reapable_count=0",
+        "present roots were retained only when the current debt classifier reported owner-blocker; absent roots were not recreated from historical prompt metadata",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names a repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-limen-428-01f73e57",
+          "status": "current_local_checkout_absent",
+          "current_scan_reason": "absent-from-current-worktree-debt",
+          "repo": "organvm/limen",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
+          "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
         }
       ]
     }
