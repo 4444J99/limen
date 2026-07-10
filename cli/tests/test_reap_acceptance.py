@@ -23,6 +23,7 @@ def test_required_acceptance_proof_fields_are_shared() -> None:
     assert module.removal_acceptance_surface_names() == (
         "branch",
         "clone",
+        "remote_branch",
         "worktree",
         "antigravity_scratch",
     )

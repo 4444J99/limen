@@ -1781,6 +1781,36 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Extra branch names (space-separated) reap-branches.py NEVER deletes, on top of the built-in trunks (main/master/develop/trunk) and the default branch. Empty by default."
+  LIMEN_REMOTE_REAP_APPLY:
+    default: 0
+    env: LIMEN_REMOTE_REAP_APPLY
+    self_update: none
+    owner: gitvs
+    note: "DOUBLE-DARK arming for scripts/reap-remote-branches.py: even with --apply, a remote branch is deleted only when this is 1. Defaults 0 (unlike the local reaper's LIMEN_BRANCH_REAP_APPLY=1) because a remote delete is NOT reflog-recoverable — arm it deliberately."
+  LIMEN_REMOTE_REAP_MAX:
+    default: 100
+    env: LIMEN_REMOTE_REAP_MAX
+    self_update: none
+    owner: gitvs
+    note: "Max remote branches reap-remote-branches.py deletes per run; the remainder is logged and taken next run. Bounds the blast radius of the irreversible remote delete."
+  LIMEN_REMOTE_REAP_EVERY_MIN:
+    default: 30
+    env: LIMEN_REMOTE_REAP_EVERY_MIN
+    self_update: none
+    owner: gitvs
+    note: "Self-throttle: reap-remote-branches.py --apply skips if it ran within this many minutes (--force overrides). Keeps the estate-wide remote sweep off the tight beat."
+  LIMEN_REMOTE_REAP_GRACE_MIN:
+    default: 1440
+    env: LIMEN_REMOTE_REAP_GRACE_MIN
+    self_update: none
+    owner: gitvs
+    note: "--check only: a landed remote branch younger than this many minutes is digesting, not lingering. Default 1440 (24h), WIDER than the local reaper's 60m — a remote delete is not reflog-recoverable and other clones/CI may still hold the ref."
+  LIMEN_REMOTE_REAP_PROTECT:
+    default: ""
+    env: LIMEN_REMOTE_REAP_PROTECT
+    self_update: none
+    owner: gitvs
+    note: "Extra branch names (space-separated) reap-remote-branches.py NEVER deletes, on top of the built-in trunks (main/master/develop/trunk) and the default branch. Empty by default."
   LIMEN_REAP_CORE:
     default: "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
     env: LIMEN_REAP_CORE

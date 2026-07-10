@@ -23,6 +23,7 @@ def test_registered_removal_surfaces_are_canonical() -> None:
     assert module.removal_acceptance_surface_names() == (
         "branch",
         "clone",
+        "remote_branch",
         "worktree",
         "antigravity_scratch",
     )

@@ -24,6 +24,13 @@ REMOVAL_ACCEPTANCE_SURFACES = (
         "destructive_action": "shutil.rmtree clone root",
     },
     {
+        "name": "remote_branch",
+        "script": "scripts/reap-remote-branches.py",
+        "doc": "docs/remote-branch-reap-acceptance.md",
+        "ledger": "docs/remote-branch-reap-acceptance.jsonl",
+        "destructive_action": "git push origin --delete (remote ref — NOT reflog-recoverable)",
+    },
+    {
         "name": "worktree",
         "script": "scripts/reclaim-worktrees.py",
         "doc": "docs/worktree-reclaim-acceptance.md",

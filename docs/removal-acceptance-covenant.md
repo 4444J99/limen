@@ -50,6 +50,7 @@ merged, and idle.
 | Surface | Tool | Acceptance doc | Acceptance ledger | Terminal action |
 |---|---|---|---|---|
 | branch | `scripts/reap-branches.py` | `docs/branch-reap-acceptance.md` | `docs/branch-reap-acceptance.jsonl` | `git branch -D` |
+| remote_branch | `scripts/reap-remote-branches.py` | `docs/remote-branch-reap-acceptance.md` | `docs/remote-branch-reap-acceptance.jsonl` | `git push origin --delete` (remote ref, not reflog-recoverable; double-dark: `LIMEN_REMOTE_REAP_APPLY=1`) |
 | clone | `scripts/reap-clones.py` | `docs/clone-reap-acceptance.md` | `docs/clone-reap-acceptance.jsonl` | remove standalone clone root |
 | worktree | `scripts/reclaim-worktrees.py` | `docs/worktree-reclaim-acceptance.md` | `docs/worktree-reclaim-acceptance.jsonl` | remove worktree or generated residue root |
 | antigravity_scratch | `scripts/antigravity-scratch-bridge.py` | `docs/antigravity-scratch-reap-acceptance.md` | `docs/antigravity-scratch-reap-acceptance.jsonl` | remove Antigravity scratch root |

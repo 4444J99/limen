@@ -228,6 +228,11 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Local removal acceptance contracts require archive and redaction proof."
+  reap-remote-branches-test:
+    command: "bash scripts/tests/reap-remote-branches.test.sh"
+    paths: ["scripts/reap-remote-branches.py", "scripts/tests/reap-remote-branches.test.sh"]
+    owner: gitvs
+    note: "Safety regression for the REMOTE-branch reaper: classify() KEEP-by-default invariants (protected/checked-out/open-PR/not-landed never reap) and the double-dark arming gate (unarmed --apply stays dry-run). A remote delete is not reflog-recoverable, so these must never regress."
   task-board:
     command: "python3 scripts/validate-task-board.py"
     paths: ["tasks.yaml", "scripts/validate-task-board.py"]
