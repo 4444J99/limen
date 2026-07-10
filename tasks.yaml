@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 439
+      spent: 443
       per_agent:
-        jules: 116
+        jules: 120
         gemini: 12
         codex: 19
         opencode: 121
@@ -125969,7 +125969,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -125987,7 +125987,7 @@ tasks:
     \ 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T03:43:14.769023Z'
+  updated: '2026-07-10T03:47:38.976371Z'
   dispatch_log:
   - timestamp: '2026-07-10T02:14:21.156338Z'
     agent: jules
@@ -126003,6 +126003,11 @@ tasks:
     session_id: heal
     status: open
     output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
+  - timestamp: '2026-07-10T03:47:38.976371Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-trendpulse-5
   title: rebase/resolve conflicts on organvm/trendpulse#5
   repo: organvm/trendpulse
@@ -126423,7 +126428,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -126445,7 +126450,13 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  dispatch_log: []
+  updated: '2026-07-10T03:47:38.976371Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T03:47:38.976371Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-a-i-chat--exporter-54
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#54
   repo: organvm/a-i-chat--exporter
@@ -126453,7 +126464,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -126475,7 +126486,13 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  dispatch_log: []
+  updated: '2026-07-10T03:47:38.976371Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T03:47:38.976371Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-a-i-chat--exporter-115
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#115
   repo: organvm/a-i-chat--exporter
@@ -126483,7 +126500,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -126505,4 +126522,10 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  dispatch_log: []
+  updated: '2026-07-10T03:47:38.976371Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T03:47:38.976371Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
