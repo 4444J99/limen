@@ -1902,6 +1902,41 @@ parameters:
     owner: tabularius
     note: "Override for the crash-report scan root used by scripts/check-fork-safety.py (also settable via its --reports-dir flag). Empty (the default) scans the macOS default ~/Library/Logs/DiagnosticReports/ plus its Retired/ rotation subdir. Set to a temp directory in tests to inject fabricated .ips reports deterministically; never set on the live host."
 
+  LIMEN_MAIN_GREEN_CHECK:
+    default: "1"               # ON — detect a RED main trunk each beat (§0g3)
+    env: LIMEN_MAIN_GREEN_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the trunk-green sensor (scripts/check-main-green.py) run each beat by metabolize.sh section 0g3. Closes the 2026-07-10 gap where main's REQUIRED pr-gate silently went red (non-hermetic tests) and no sensor detected it. pr-gate runs on pull_request only; ci.yml runs the same suite on push:[main], so the latest completed CI run on main is the trunk-health proxy. On RED the sensor exits non-zero so the beat surfaces it. Throttled gh (LIMEN_MAIN_GREEN_THROTTLE) + fail-open offline. Set 0 to silence."
+
+  LIMEN_MAIN_GREEN_APPLY:
+    default: "0"               # OFF (DARK) — detection-only until armed; then auto-emits one heal task
+    env: LIMEN_MAIN_GREEN_APPLY
+    self_update: none
+    owner: tabularius
+    note: "Effector arm for the trunk-green sensor (observable-before-autonomous, the LIMEN_CENSOR_APPLY pattern). When 0 (default) a RED main is only detected + surfaced in the beat log. When 1, check-main-green.py also emits ONE idempotent HEAL-mainred-organvm-limen-<sha> task via the daemon's queue-lock (the safe shared-append path self-heal.py uses) so every lane converges on a single canonical heal task instead of duplicating (the #869-vs-#871 gap). Arm after watching the detection log prove out."
+
+  LIMEN_MAIN_GREEN_THROTTLE:
+    default: "1800"            # seconds between live gh queries; cached verdict surfaces every beat
+    env: LIMEN_MAIN_GREEN_THROTTLE
+    self_update: none
+    owner: tabularius
+    note: "Throttle window (seconds) for check-main-green.py's `gh run list` call. Within the window the cached verdict (logs/main-green.json) is reused so a RED trunk still surfaces every beat without re-querying GitHub each tick. Also settable via --throttle. Default 1800 (30 min)."
+
+  LIMEN_MAIN_GREEN_WORKFLOW:
+    default: "ci.yml"          # the workflow that runs on push:[main] and mirrors pr-gate's suite
+    env: LIMEN_MAIN_GREEN_WORKFLOW
+    self_update: none
+    owner: tabularius
+    note: "Which workflow check-main-green.py reads as the main-trunk-health proxy. Default ci.yml (runs the same pytest as pr-gate, on push:[main]); pr-gate.yml itself runs on pull_request only so it never runs on main."
+
+  LIMEN_MAIN_GREEN_REPO:
+    default: "organvm/limen"   # the repo whose main trunk is watched
+    env: LIMEN_MAIN_GREEN_REPO
+    self_update: none
+    owner: tabularius
+    note: "Repo (owner/name) whose main-branch CI check-main-green.py watches and, when armed, emits the HEAL-mainred task for. Default organvm/limen. Derived so the sensor survives relocation."
+
   LIMEN_CONTINUITY_CHECK:
     default: "1"               # ON — detect silent dispatch lanes while queue + budget exist each beat
     env: LIMEN_CONTINUITY_CHECK

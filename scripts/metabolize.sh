@@ -157,6 +157,18 @@ if [ "${LIMEN_FORK_SAFETY_CHECK:-1}" = "1" ]; then
   python3 "$LIMEN_ROOT/scripts/check-fork-safety.py" --check || echo "  ↑ fork/os_log crash RECURRED or mitigation removed above — restore OS_ACTIVITY_MODE=disable, or arm the posix_spawn escalation (LIMEN_FORK_SAFE=1; see scripts/check-fork-safety.py)"
 fi
 
+echo "── 0g3. trunk-green — main's required CI must stay green, or nothing can merge ──"
+# The gap this closes (2026-07-10): main's REQUIRED pr-gate silently went red (non-hermetic tests)
+# and NO sensor detected it — it blocked every PR until a human noticed and a reactive lane fixed it
+# in parallel with a duplicate. pr-gate runs on pull_request only; ci.yml runs the SAME suite on
+# push:[main], so the latest completed CI run on main is the trunk-health proxy. On RED this exits
+# non-zero (the beat surfaces it) and — once armed (LIMEN_MAIN_GREEN_APPLY=1) — emits ONE idempotent
+# HEAL-mainred task so lanes converge instead of duplicating. Detection ships armed; emission dark
+# (observable-before-autonomous). Throttled gh + fail-open offline; never fatal to the beat.
+if [ "${LIMEN_MAIN_GREEN_CHECK:-1}" = "1" ]; then
+  python3 "$LIMEN_ROOT/scripts/check-main-green.py" || echo "  ↑ main trunk RED above — a heal PR is needed (arm LIMEN_MAIN_GREEN_APPLY=1 to auto-emit one canonical HEAL-mainred task); see scripts/check-main-green.py"
+fi
+
 echo "── 0h. dispatch continuity — detect a silent lane while queue + budget exist ──"
 # The gap this closes (Jul 3–5 starvation precedent): Jules accepted zero tasks for 72h
 # while ~40 open tasks sat in the queue and the budget showed headroom. Daemon alive,
