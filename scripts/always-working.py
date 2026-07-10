@@ -64,6 +64,7 @@ ESTATE_CUSTODY_DOC = ROOT / "docs" / "estate-custody-primitives.md"
 ESTATE_CUSTODY_RECEIPT = ROOT / "docs" / "estate-custody-implementation-receipts.json"
 GENERATED_STATE_RECLAIM_LOG = ROOT / "logs" / "reclaim-generated-state.jsonl"
 TOOL_CACHE_RECLAIM_LOG = ROOT / "logs" / "reclaim-tool-caches.jsonl"
+OLLAMA_MODEL_RECLAIM_LOG = ROOT / "logs" / "reclaim-ollama-models.jsonl"
 WORKTREE_RECLAIM_CANDIDATES_DOC = ROOT / "docs" / "worktree-reclaim-candidates.md"
 WORKTREE_RECLAIM_CANDIDATES_JSON = ROOT / "docs" / "worktree-reclaim-candidates.json"
 STORAGE_OPERATING_MANUAL = ARCHIVE4T_ROOT / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
@@ -180,7 +181,7 @@ def reclaim_log_summary(path: Path, extra_fields: tuple[str, ...]) -> dict[str, 
         if data.get("apply") is True:
             apply_events += 1
             try:
-                total_kib += int(data.get("total_reclaimed_kib") or 0)
+                total_kib += int(data.get("total_reclaimed_kib") or data.get("reclaimed_kib") or 0)
             except (TypeError, ValueError):
                 pass
     summary = {
@@ -188,8 +189,8 @@ def reclaim_log_summary(path: Path, extra_fields: tuple[str, ...]) -> dict[str, 
         "generated_at": latest.get("generated_at"),
         "apply": latest.get("apply"),
         "apply_events": apply_events,
-        "latest_reclaimed_size": latest.get("total_reclaimed_size"),
-        "latest_reclaimed_kib": latest.get("total_reclaimed_kib"),
+        "latest_reclaimed_size": latest.get("total_reclaimed_size") or latest.get("reclaimed_size"),
+        "latest_reclaimed_kib": latest.get("total_reclaimed_kib") or latest.get("reclaimed_kib"),
         "cumulative_reclaimed_kib": total_kib,
         "cumulative_reclaimed_size": fmt_kib(total_kib),
     }
@@ -390,6 +391,9 @@ def substrate_lifecycle_receipt() -> dict[str, Any]:
             GENERATED_STATE_RECLAIM_LOG, ("changed_roots", "failed_roots")
         ),
         "tool_cache_reclaim": reclaim_log_summary(TOOL_CACHE_RECLAIM_LOG, ("existing_paths", "failed_paths")),
+        "ollama_model_reclaim": reclaim_log_summary(
+            OLLAMA_MODEL_RECLAIM_LOG, ("model_count", "loaded_models", "blocked_reason", "failed")
+        ),
     }
 
 
@@ -1122,11 +1126,14 @@ def substrate_receipt() -> dict[str, Any]:
     elif shortfall_gib > 0:
         last_reclaim = lifecycle["generated_state_reclaim"]
         last_tool_reclaim = lifecycle["tool_cache_reclaim"]
+        last_ollama_reclaim = lifecycle["ollama_model_reclaim"]
         reclaim_parts = []
         if last_reclaim.get("present") and last_reclaim.get("cumulative_reclaimed_size"):
             reclaim_parts.append(f"generated-state {last_reclaim['cumulative_reclaimed_size']}")
         if last_tool_reclaim.get("present") and last_tool_reclaim.get("cumulative_reclaimed_size"):
             reclaim_parts.append(f"tool-cache {last_tool_reclaim['cumulative_reclaimed_size']}")
+        if last_ollama_reclaim.get("present") and last_ollama_reclaim.get("cumulative_reclaimed_size"):
+            reclaim_parts.append(f"ollama-models {last_ollama_reclaim['cumulative_reclaimed_size']}")
         suffix = f"; recorded reclaim freed {', '.join(reclaim_parts)}" if reclaim_parts else ""
         verdict = f"internal free space is {shortfall_gib} GiB below target{suffix}"
     elif not disk["tmp_ok"]:
@@ -1150,9 +1157,11 @@ def substrate_receipt() -> dict[str, Any]:
             relpath(ROOT / "logs" / "heartbeat.out.log"),
             relpath(GENERATED_STATE_RECLAIM_LOG),
             relpath(TOOL_CACHE_RECLAIM_LOG),
+            relpath(OLLAMA_MODEL_RECLAIM_LOG),
             relpath(ROOT / "scripts" / "cvstos-organ.py"),
             relpath(ROOT / "scripts" / "dispatch-health.py"),
             relpath(ROOT / "scripts" / "reclaim-generated-state.py"),
+            relpath(ROOT / "scripts" / "reclaim-ollama-models.py"),
             relpath(ROOT / "scripts" / "reclaim-tool-caches.py"),
             relpath(ROOT / "scripts" / "reclaim-worktrees.py"),
             relpath(ROOT / "scripts" / "reap-clones.py"),
@@ -1162,7 +1171,7 @@ def substrate_receipt() -> dict[str, Any]:
             "lane_fit": "codex-local",
             "repo": relpath(ROOT),
             "task": "Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.",
-            "predicate": "python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap",
+            "predicate": "python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap",
             "receipt_target": relpath(ROOT / "logs" / "cvstos-organ-state.json"),
             "stop_condition": "free disk is at target, temp writes are usable, and reclaimable worktree debt is owner-routed",
         },
