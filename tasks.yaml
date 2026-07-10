@@ -98634,7 +98634,7 @@ tasks:
   target_agent: agy
   priority: normal
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - rebase
   - self-heal
@@ -98653,7 +98653,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T03:45:23.964248Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-09T19:04:11.112505Z'
     agent: agy
@@ -98698,6 +98698,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-716
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#716
   repo: organvm/peer-audited--behavioral-blockchain
@@ -103739,10 +103744,10 @@ tasks:
   title: fix failing CI on organvm/limen#407
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -103758,7 +103763,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:50:23.463748Z'
     agent: opencode
@@ -103793,6 +103798,12 @@ tasks:
     agent: jules
     session_id: '3568230817651916110'
     status: dispatched
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 3568230817651916110 is awaiting_plan_approval\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-limen-408
   title: fix failing CI on organvm/limen#408
   repo: organvm/limen
@@ -104564,7 +104575,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -104580,7 +104591,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T03:40:51.951762Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-07T13:58:48.378161Z'
     agent: codex
@@ -104626,6 +104637,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-rebase-organvm-petasum-super-petasum-149
   title: rebase/resolve conflicts on organvm/petasum-super-petasum#149
   repo: organvm/petasum-super-petasum
@@ -109289,10 +109305,10 @@ tasks:
   title: fix failing CI on organvm/limen#455
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -109309,7 +109325,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-09T00:09:06.499447Z'
     agent: jules
@@ -109353,6 +109369,12 @@ tasks:
     agent: jules
     session_id: '14330894091729972976'
     status: dispatched
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 14330894091729972976 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: HEAL-cifix-organvm-limen-456
   title: fix failing CI on organvm/limen#456
   repo: organvm/limen
@@ -109856,7 +109878,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - rebase
   - self-heal
@@ -109873,7 +109895,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T03:57:26.427899Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -109939,6 +109961,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-rebase-organvm-session-meta-112
   title: rebase/resolve conflicts on organvm/session-meta#112
   repo: organvm/session-meta
@@ -110167,7 +110194,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - rebase
   - self-heal
@@ -110184,7 +110211,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T03:45:23.964248Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -110248,6 +110275,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-cifix-organvm-domus-genoma-162
   title: fix failing CI on organvm/domus-genoma#162
   repo: organvm/domus-genoma
@@ -116456,7 +116488,7 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - noop
   urls:
@@ -116469,7 +116501,7 @@ tasks:
     `api/schemas.py.main`, `pr130.txt`, modifies tr'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T03:45:23.964248Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -116516,6 +116548,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-cifix-organvm-growth-auditor-20
   title: fix failing CI on organvm/growth-auditor#20
   repo: organvm/growth-auditor
@@ -123257,7 +123294,7 @@ tasks:
   workstream: correspondence
   priority: normal
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - rebase
   - self-heal
@@ -123276,7 +123313,7 @@ tasks:
     \ 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T04:52:25.499854Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-10T02:53:11.889534Z'
     agent: agy
@@ -123330,6 +123367,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-rebase-organvm-universal-node-network-9
   title: rebase/resolve conflicts on organvm/universal-node-network#9
   repo: organvm/universal-node-network
@@ -125679,13 +125721,12 @@ tasks:
   title: 'Waste triage 2026-07-09: closed 6 stale PRs, 3 green PRs ready to merge'
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: agy
+  target_agent: codex
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
-  - tried:jules
   - noop
   urls:
   - https://github.com/organvm/universal-mail--automation/issues/157
@@ -125695,7 +125736,7 @@ tasks:
     #133 (CI matrix). See dispatch log for full details.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T02:46:09.204420Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -125717,6 +125758,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: DISCOVER-organvm-arca
   title: Discover the latent value of organvm/arca
   repo: organvm/arca
@@ -125779,10 +125825,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#149
   repo: organvm/session-meta
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -125804,7 +125850,7 @@ tasks:
     [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: agy
@@ -125816,6 +125862,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-sovereign-systems--elevate-align-258
   title: rebase/resolve conflicts on organvm/sovereign-systems--elevate-align#258
   repo: organvm/sovereign-systems--elevate-align
@@ -126212,12 +126263,11 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
-  - tried:jules
   - noop
   urls:
   - https://github.com/organvm/universal-mail--automation/pull/138
@@ -126236,7 +126286,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T02:41:50.662802Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-10T02:14:21.156338Z'
     agent: jules
@@ -126258,6 +126308,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GEN-organvm-my-knowledge-base-test-coverage-0709
   title: Raise test coverage in organvm/my-knowledge-base
   repo: organvm/my-knowledge-base
@@ -126442,10 +126497,10 @@ tasks:
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 2
-  status: failed
+  status: open
   labels:
   - revenue-ship
   - revenue
@@ -126461,7 +126516,7 @@ tasks:
     \ stage building \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T03:04:25.848413Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-10T02:59:02.317614Z'
     agent: claude
@@ -126473,6 +126528,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-a-i--skills-27
   title: rebase/resolve conflicts on organvm/a-i--skills#27
   repo: organvm/a-i--skills
@@ -126538,12 +126598,11 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
-  - tried:jules
   - noop
   urls:
   - https://github.com/organvm/a-i-chat--exporter/pull/49
@@ -126562,7 +126621,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T04:12:18.760238Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-10T03:47:38.976371Z'
     agent: jules
@@ -126584,6 +126643,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-a-i-chat--exporter-54
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#54
   repo: organvm/a-i-chat--exporter
@@ -126591,12 +126655,11 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
-  - tried:jules
   - noop
   urls:
   - https://github.com/organvm/a-i-chat--exporter/pull/54
@@ -126615,7 +126678,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T04:15:59.058873Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-10T03:47:38.976371Z'
     agent: jules
@@ -126637,6 +126700,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-a-i-chat--exporter-115
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#115
   repo: organvm/a-i-chat--exporter
@@ -126644,12 +126712,11 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
-  - tried:jules
   - noop
   urls:
   - https://github.com/organvm/a-i-chat--exporter/pull/115
@@ -126668,7 +126735,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T04:05:04.404564Z'
+  updated: '2026-07-10T04:58:12.566684Z'
   dispatch_log:
   - timestamp: '2026-07-10T03:47:38.976371Z'
     agent: jules
@@ -126690,3 +126757,8 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T04:58:12.566684Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
