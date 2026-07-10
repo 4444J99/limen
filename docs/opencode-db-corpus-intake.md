@@ -1,39 +1,39 @@
 # OpenCode DB Corpus Intake
 
-Generated: `2026-07-10T01:04:17Z`
+Generated: `2026-07-10T09:50:44Z`
 Status: `archived_private_intake`
-Run ID: `20260710T010237Z`
+Run ID: `20260710T094811Z`
 
 ## Source
 
 - Path: `~/.local/share/opencode/opencode.db`.
-- Size: `10.9 GiB`.
+- Size: `17.5 GiB`.
 - Integrity check: `ok`.
 
 ## Private Intake
 
-- Session index: `~/Workspace/limen/.limen-private/session-corpus/lifecycle/opencode-db-intake/20260710T010237Z/session-index.jsonl.gz`.
-- Session rows indexed: `1627`.
-- Session index SHA-256: `411f13c3ddf3d47432bd860c2b9fae709bd13071d69a5db09f728255a80e87e3`.
+- Session index: `~/Workspace/limen/.limen-private/session-corpus/lifecycle/opencode-db-intake/20260710T094811Z/session-index.jsonl.gz`.
+- Session rows indexed: `1662`.
+- Session index SHA-256: `9ba0585ddf2be9566545d521613e771c9ec3eefbd8332f78bbcc86776f19ace7`.
 
 ## External Archive
 
 - Archive status: `verified`.
-- Archive path: `/Volumes/Archive4T/limen-private/opencode-db-intake/20260710T010237Z/opencode.db`.
-- Archive size: `10.9 GiB`.
+- Archive path: `/Volumes/Archive4T/limen-private/opencode-db-intake/20260710T094811Z/opencode.db`.
+- Archive size: `17.5 GiB`.
 - Archive integrity check: `ok`.
-- Archive SHA-256: `05eb1e65a678a5219bce25733826a02a9c84fead31e14b6930fd990e254f542c`.
+- Archive SHA-256: `e92912d2e29be21df164ad210639312125b2f655ff9b668e39d0e5e3f19899b8`.
 
 ## Table Counts
 
 | Table | Rows |
 |---|---:|
-| `session` | `1627` |
-| `message` | `16714` |
-| `part` | `73796` |
+| `session` | `1662` |
+| `message` | `17345` |
+| `part` | `76448` |
 | `session_message` | `1326` |
 | `session_input` | `0` |
-| `event` | `121416` |
+| `event` | `130656` |
 | `project` | `166` |
 | `workspace` | `0` |
 

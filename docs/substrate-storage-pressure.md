@@ -1,10 +1,10 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T09:46:32Z`
+Generated: `2026-07-10T09:51:32Z`
 Status: `needs-owner-gates`
-Internal free: `76.5 GiB`
+Internal free: `74.5 GiB`
 Target free: `200.0 GiB`
-Shortfall: `123.5 GiB`
+Shortfall: `125.5 GiB`
 
 ## Safe Reclaim Already Run
 
@@ -14,13 +14,13 @@ Shortfall: `123.5 GiB`
 
 ## Scratch / Worktree Lifecycle
 
-- Summary: `217 debt roots / 515 scanned; 0 reapable roots`.
+- Summary: `219 debt roots / 515 scanned; 0 reapable roots`.
 - Debt cap: `12`; reapable cap: `0`.
 
 | Reason | Roots |
 |---|---:|
-| `not-merged-to-default` | `148` |
-| `active(<6h)` | `103` |
+| `not-merged-to-default` | `150` |
+| `active(<6h)` | `101` |
 | `remote-pr-open` | `72` |
 | `antigravity-scratch-managed` | `48` |
 | `active(<24h)` | `46` |
@@ -48,7 +48,7 @@ Shortfall: `123.5 GiB`
 - Status: `archived_private_intake`.
 - Archive status: `verified`.
 - Receipt: `~/Workspace/limen/docs/opencode-db-corpus-intake.md`.
-- Private manifest: `~/Workspace/limen/.limen-private/session-corpus/lifecycle/opencode-db-intake/20260710T010237Z/manifest.json`.
+- Private manifest: `~/Workspace/limen/.limen-private/session-corpus/lifecycle/opencode-db-intake/20260710T094811Z/manifest.json`.
 
 ## Contract
 
