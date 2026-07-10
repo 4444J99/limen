@@ -1,10 +1,10 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T02:29:38Z`
+Generated: `2026-07-10T03:25:56Z`
 Status: `needs-owner-gates`
-Internal free: `88.5 GiB`
+Internal free: `88.2 GiB`
 Target free: `200.0 GiB`
-Shortfall: `111.5 GiB`
+Shortfall: `111.8 GiB`
 
 ## Safe Reclaim Already Run
 
@@ -14,19 +14,19 @@ Shortfall: `111.5 GiB`
 
 ## Scratch / Worktree Lifecycle
 
-- Summary: `75 debt roots / 466 scanned; 0 reapable roots`.
+- Summary: `77 debt roots / 488 scanned; 0 reapable roots`.
 - Debt cap: `12`; reapable cap: `0`.
 
 | Reason | Roots |
 |---|---:|
-| `active(<6h)` | `196` |
+| `active(<6h)` | `216` |
 | `remote-pr-open` | `72` |
 | `antigravity-scratch-managed` | `48` |
 | `active(<24h)` | `46` |
 | `dirty` | `39` |
-| `not-merged-to-default` | `33` |
+| `not-merged-to-default` | `34` |
 | `owner-blocker` | `27` |
-| `unpushed-commits` | `3` |
+| `unpushed-commits` | `4` |
 | `remote-merged` | `1` |
 | `remote-superseded` | `1` |
 
@@ -36,7 +36,7 @@ Shortfall: `111.5 GiB`
 |---|---:|---|---|---|
 | `~/.local/share/opencode/opencode.db` | `10.9 GiB` | `protected-agent-state` | `aw-opencode-db-corpus-intake-0709` | external archive and private intake verified; local retention decision remains; never delete outright |
 | `~/Workspace/limen/.limen-private/session-corpus` | `10.2 GiB` | `protected-private-corpus` | `docs/session-corpus-ledger.md` | two-copy/restore archive gate before move or purge |
-| `~/Pictures/Photos Library.photoslibrary` | `8.6 GiB` | `personal-media` | `media/photos custody` | personal-data human gate plus two-copy restore proof |
+| `~/Pictures/Photos Library.photoslibrary` | `8.7 GiB` | `personal-media` | `media/photos custody` | personal-data human gate plus two-copy restore proof |
 | `~/Workspace/.limen-worktrees` | `8.3 GiB` | `worktree-cache` | `docs/worktree-reclaim-acceptance.md` | clean+merged+idle or explicit acceptance; current worktree-debt gate reports zero reapable |
 | `~/Library/Messages` | `7.3 GiB` | `personal-communications` | `communications custody` | personal-data human gate plus two-copy restore proof |
 | `~/.gemini/antigravity-cli` | `6.6 GiB` | `protected-agent-state` | `agy conductor` | preserve conversations/brain before eviction; scratch handled separately |
