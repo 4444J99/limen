@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 450
+      spent: 452
       per_agent:
         jules: 120
         gemini: 12
-        codex: 21
+        codex: 22
         opencode: 121
         agy: 151
-        claude: 21
+        claude: 22
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -123238,7 +123238,7 @@ tasks:
   workstream: correspondence
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -123256,7 +123256,7 @@ tasks:
     \ 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T04:00:37.835916Z'
+  updated: '2026-07-10T04:05:04.910883Z'
   dispatch_log:
   - timestamp: '2026-07-10T02:53:11.889534Z'
     agent: agy
@@ -123282,6 +123282,11 @@ tasks:
     agent: agy
     session_id: cli
     status: ratelimited->claude
+  - timestamp: '2026-07-10T04:05:04.910883Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-universal-node-network-9
   title: rebase/resolve conflicts on organvm/universal-node-network#9
   repo: organvm/universal-node-network
@@ -126537,7 +126542,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -126560,7 +126565,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T03:50:22.358545Z'
+  updated: '2026-07-10T04:05:04.910883Z'
   dispatch_log:
   - timestamp: '2026-07-10T03:47:38.976371Z'
     agent: jules
@@ -126572,6 +126577,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T04:05:04.910883Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-a-i-chat--exporter-115
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#115
   repo: organvm/a-i-chat--exporter
