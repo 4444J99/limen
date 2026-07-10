@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-07-10T04:41:57Z",
+  "generated_at": "2026-07-10T04:42:46Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -39849,6 +39849,397 @@
           ],
           "evidence": "Metadata contained external local project anchors; no safe public repo or PR anchor was present in the structured scan.",
           "next_action": "Keep as private external-project context unless a later owner packet names the repo/path and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T04:42:46Z",
+      "batch": "prompt-batch-low-family-002",
+      "band": "low",
+      "lane": "family",
+      "status": "owner-recorded",
+      "classification": "Codex session-lifecycle family batch mapped to merged PR receipts, preserved open PRs, live branch receipts, closed PR receipts, and absent owner routes",
+      "session_count": 25,
+      "prompt_events": 86,
+      "unique_prompt_hashes": 60,
+      "evidence": [
+        "private redacted batch metadata listed 25 Codex-session family items across 25 unique roots with family mix agent_coordination 2, technical_debt_ci 23",
+        "1 of 25 private source JSONL files existed under ~/.codex/sessions at review time",
+        "review used only metadata fields: root slug, session key, source existence, owner repo inference, prompt-event counts, hash counts, family label, and public GitHub branch/PR state",
+        "no exact local root directory existed for any root under /Users/4jp/Workspace/.limen-worktrees, /Users/4jp/Workspace/limen/.worktrees, or /Users/4jp/Workspace/limen/.claude/worktrees at review time",
+        "gh repo view resolved owner repositories for 11 of 25 inferred roots after repository redirects",
+        "gh api branch lookup, gh pr list --head limen/<root> --state all, and bounded gh search prs checks found 5 exact merged PR receipts, 4 exact open PR receipts with live branches, 0 closed-unmerged PR receipt(s), 0 live branch receipt(s) without exact PRs, and 2 source-session row(s) without exact branch/PR",
+        "open PRs preserved for owner review: organvm/relationship-pipeline#9 8b2e09a, organvm/essay-pipeline#14 ab86624, organvm/essay-pipeline#19 c1de3cf, organvm/essay-pipeline#21 0e718f6",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Review preserved open PRs or live branches before merge, supersession, or deletion. Rely on merged PR history for landed roots and treat closed PRs as historical. Treat absent roots as lifecycle-closed owner routes; do not rehydrate unless a later packet names the missing delta, live branch or PR, owner repo, and narrow predicate.",
+      "roots": [
+        {
+          "root": "bld2-my--father-mother-dashboard-99b9",
+          "session_key": "e918f75f1370d694182d",
+          "family": "agent_coordination",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/bld2-my--father-mother-dashboard-99b9",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "bld2-bountyscope-dashboard-3eae",
+          "session_key": "ecad16e16ba38ff065a9",
+          "family": "agent_coordination",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/bld2-bountyscope-dashboard-3eae",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "gen-organvm-portfolio-test-coverage-0624-a6bc",
+          "session_key": "07a083b7945b32c40803",
+          "family": "technical_debt_ci",
+          "source_exists": true,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/gen-organvm-portfolio-test-coverage-0624-a6bc",
+          "repo_candidates": [
+            "organvm/portfolio"
+          ],
+          "repo": "organvm/portfolio",
+          "branch_sha": "7841e73",
+          "pr": "https://github.com/organvm/portfolio/pull/149",
+          "status": "remote_pr_merged",
+          "evidence": "No live branch remains; matching PR #149 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "bld-promptscope-tests-ccd8",
+          "session_key": "0b79bc918a1048fb226e",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/bld-promptscope-tests-ccd8",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "gen-organvm-i-theoria-hierarchia-mundi-test-coverage-0620-bdf8",
+          "session_key": "1f4d54977535a816b14b",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/gen-organvm-i-theoria-hierarchia-mundi-test-coverage-0620-bdf8",
+          "repo_candidates": [
+            "organvm-i-theoria/hierarchia-mundi",
+            "organvm/hierarchia-mundi"
+          ],
+          "repo": "organvm/hierarchia-mundi",
+          "pr": "https://github.com/organvm/hierarchia-mundi/pull/9",
+          "branch_sha": "7424f01",
+          "status": "remote_pr_merged",
+          "evidence": "No live branch remains; matching PR #9 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "bld-bountyscope-tests-e035",
+          "session_key": "22f943fcab0a706d0237",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/bld-bountyscope-tests-e035",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "bld-vulnpulse-tests-94d1",
+          "session_key": "2ceeb1c0d3fece89d272",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/bld-vulnpulse-tests-94d1",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "bld-writelens-tests-a267",
+          "session_key": "2cefc88a34c7d3ca5e39",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/bld-writelens-tests-a267",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "gen-organvm-virgil-training-overlay-test-coverage-0620-8f15",
+          "session_key": "2da4e1f98f8984f8ed99",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/gen-organvm-virgil-training-overlay-test-coverage-0620-8f15",
+          "repo_candidates": [
+            "organvm/virgil-training-overlay"
+          ],
+          "repo": "organvm/virgil-training-overlay",
+          "pr": "https://github.com/organvm/virgil-training-overlay/pull/121",
+          "branch_sha": "17a22bd",
+          "status": "remote_pr_merged",
+          "evidence": "No live branch remains; matching PR #121 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-4444j99-edgarflash-test-coverage-0620-c006",
+          "session_key": "387d445d400d727cdb88",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/gen-4444j99-edgarflash-test-coverage-0620-c006",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "bld-edgarflash-tests-6b87",
+          "session_key": "4393d88f27cb59369282",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/bld-edgarflash-tests-6b87",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "bld-trendpulse-tests-08cc",
+          "session_key": "45d28aefe133f70d9656",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/bld-trendpulse-tests-08cc",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "rev-fathermother-pro-embeddings-5cb8",
+          "session_key": "4b2adaf86516787ad6f7",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/rev-fathermother-pro-embeddings-5cb8",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "gen-4444j99-relationship-pipeline-test-coverage-0620-01c6",
+          "session_key": "51763aacad017ea83d60",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/gen-4444j99-relationship-pipeline-test-coverage-0620-01c6",
+          "repo_candidates": [
+            "organvm/relationship-pipeline",
+            "4444J99/relationship-pipeline"
+          ],
+          "repo": "organvm/relationship-pipeline",
+          "branch_sha": "8b2e09a",
+          "pr": "https://github.com/organvm/relationship-pipeline/pull/9",
+          "status": "remote_pr_preserved",
+          "evidence": "Remote branch exists at 8b2e09a; GitHub PR #9 is OPEN with merge state UNSTABLE.",
+          "next_action": "Review PR #9 freshness/checks/conflicts, then merge or supersede by a named PR."
+        },
+        {
+          "root": "bld-essay-pipeline-tests-b6d2",
+          "session_key": "662e15b04013a594c5a3",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/bld-essay-pipeline-tests-b6d2",
+          "repo_candidates": [
+            "organvm/essay-pipeline"
+          ],
+          "repo": "organvm/essay-pipeline",
+          "branch_sha": "ab86624",
+          "pr": "https://github.com/organvm/essay-pipeline/pull/14",
+          "status": "remote_pr_preserved",
+          "evidence": "Remote branch exists at ab86624; GitHub PR #14 is OPEN with merge state DIRTY.",
+          "next_action": "Review PR #14 freshness/checks/conflicts, then merge or supersede by a named PR."
+        },
+        {
+          "root": "bld-essay-pipeline-harden-41e6",
+          "session_key": "67ff2fe5728f359eef79",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/bld-essay-pipeline-harden-41e6",
+          "repo_candidates": [
+            "organvm/essay-pipeline"
+          ],
+          "repo": "organvm/essay-pipeline",
+          "status": "owner_repo_routed_absent_branch",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate."
+        },
+        {
+          "root": "gen-organvm-nexus--babel-alexandria-test-coverage-0620-9130",
+          "session_key": "6acdd3035f7176173581",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/gen-organvm-nexus--babel-alexandria-test-coverage-0620-9130",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "gen-organvm-i-theoria-mesh-test-coverage-0620-bc12",
+          "session_key": "7162b61016847ce7ee0c",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/gen-organvm-i-theoria-mesh-test-coverage-0620-bc12",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "gen-4444j99-vulnpulse-test-coverage-0620-949f",
+          "session_key": "76194c8f7a50851423b3",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/gen-4444j99-vulnpulse-test-coverage-0620-949f",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "gen-organvm-virgil-training-overlay-test-coverage-0620-eab6",
+          "session_key": "792316887dbf9ee5c541",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/gen-organvm-virgil-training-overlay-test-coverage-0620-eab6",
+          "repo_candidates": [
+            "organvm/virgil-training-overlay"
+          ],
+          "repo": "organvm/virgil-training-overlay",
+          "pr": "https://github.com/organvm/virgil-training-overlay/pull/120",
+          "branch_sha": "a9aa142",
+          "status": "remote_pr_merged",
+          "evidence": "No live branch remains; matching PR #120 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "bld2-essay-pipeline-dashboard-cfcb",
+          "session_key": "81305facd0cae8fe65c0",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/bld2-essay-pipeline-dashboard-cfcb",
+          "repo_candidates": [
+            "organvm/essay-pipeline"
+          ],
+          "repo": "organvm/essay-pipeline",
+          "branch_sha": "c1de3cf",
+          "pr": "https://github.com/organvm/essay-pipeline/pull/19",
+          "status": "remote_pr_preserved",
+          "evidence": "Remote branch exists at c1de3cf; GitHub PR #19 is OPEN with merge state BLOCKED.",
+          "next_action": "Review PR #19 freshness/checks/conflicts, then merge or supersede by a named PR."
+        },
+        {
+          "root": "gen-4444j99-domus-genoma-test-coverage-0620-9b43",
+          "session_key": "8c066e6732d3de987fa7",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/gen-4444j99-domus-genoma-test-coverage-0620-9b43",
+          "repo_candidates": [
+            "organvm/domus-genoma",
+            "4444J99/domus-genoma"
+          ],
+          "repo": "organvm/domus-genoma",
+          "pr": "https://github.com/organvm/domus-genoma/pull/122",
+          "branch_sha": "c1bf4dd",
+          "status": "remote_pr_merged",
+          "evidence": "No live branch remains; matching PR #122 is MERGED.",
+          "next_action": "No local root to preserve; rely on merged PR history unless a later owner packet identifies missing value."
+        },
+        {
+          "root": "gen-organvm-a-i--skills-test-coverage-0620-7c04",
+          "session_key": "924119d0bb15655751c5",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/gen-organvm-a-i--skills-test-coverage-0620-7c04",
+          "status": "needs_owner_route",
+          "evidence": "No inferred owner repository resolved through gh repo view.",
+          "next_action": "Add an owner repo route before rehydration or delegation."
+        },
+        {
+          "root": "bld2-essay-pipeline-billing-9159",
+          "session_key": "a94d73c6d8d5d476cb17",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 4,
+          "unique_prompt_hashes": 3,
+          "branch": "limen/bld2-essay-pipeline-billing-9159",
+          "repo_candidates": [
+            "organvm/essay-pipeline"
+          ],
+          "repo": "organvm/essay-pipeline",
+          "branch_sha": "0e718f6",
+          "pr": "https://github.com/organvm/essay-pipeline/pull/21",
+          "status": "remote_pr_preserved",
+          "evidence": "Remote branch exists at 0e718f6; GitHub PR #21 is OPEN with merge state BLOCKED.",
+          "next_action": "Review PR #21 freshness/checks/conflicts, then merge or supersede by a named PR."
+        },
+        {
+          "root": "bld-media-ark-tests-5caf",
+          "session_key": "adcb5961fd406e020938",
+          "family": "technical_debt_ci",
+          "source_exists": false,
+          "prompt_event_count": 3,
+          "unique_prompt_hashes": 2,
+          "branch": "limen/bld-media-ark-tests-5caf",
+          "repo_candidates": [
+            "organvm/media-ark"
+          ],
+          "repo": "organvm/media-ark",
+          "status": "owner_repo_routed_absent_branch",
+          "evidence": "Owner repo resolves; no matching local root, remote branch, exact-head PR, or broader PR-search hit was found.",
+          "predicate": "GitHub issue/PR review predicate after branch rehydration",
+          "next_action": "Do not rehydrate unless a later owner packet identifies the missing delta, live branch or PR, and narrow predicate."
         }
       ]
     }
