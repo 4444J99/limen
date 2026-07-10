@@ -22,3 +22,21 @@ names:
   - {display: STYX,      domain: styx,      register: greek,     note: "Greek root — Y kept by canon"}
   - {display: MONETA,    domain: moneta,    register: classical, note: "Juno Moneta · the mint — the sovereign cash organ (intake), sibling to quaestor (find)"}
   - {display: MANVMISSIO, domain: manvmissio, register: classical, note: "manumissio · the freeing from a master's power — the sovereign-inference organ (organvm/manumissio): own the weights, own the floor, exit providers by predicate"}
+  # --- estate institutions enrolled 2026-07-09 (were in live use across the estate but absent from the roll,
+  #     the gap the operator named as "outdated organ names everywhere"). Canon forms derived via nomenclator --check. ---
+  - {display: VIGILIA,       domain: vigilia,       register: classical, note: "vigilia · the autonomic institution — the watch that keeps the organs alive (#232/#234)"}
+  - {display: CVSTOS,        domain: cvstos,        register: classical, note: "custos · the guardian organ — always-working / liveness gate (#569)"}
+  - {display: VVLTVS,        domain: vvltvs,        register: classical, note: "vultus · the face/countenance organ — public-face integrity (#571)"}
+  - {display: QVAESTOR,      domain: qvaestor,      register: classical, note: "quaestor · the finder of money (sibling to MONETA the mint); qu→qv, u→v"}
+  - {display: SPECVLVM,      domain: specvlvm,      register: classical, note: "speculum · the contributions mirror / OSPO (#655); canon form of the pre-canon 'speculum-*' repos"}
+  - {display: AERARIVM,      domain: aerarivm,      register: classical, note: "aerarium · the treasury — governance/financial organ"}
+  - {display: CVRSVS HONORVM, domain: cvrsvs-honorvm, register: classical, note: "cursus honorum · the governance ladder of offices (organ-ladder rank 5)"}
+  - {display: TABVLARIVS,    domain: tabvlarivs,    register: classical, note: "tabularius · the record-keeper — single-writer of tasks.yaml (#576/#594)"}
+  - {display: CENSOR,        domain: censor,        register: classical, note: "censor · governs conduct (regimen morum) — the sibling magistrate to NOMENCLATOR (names)"}
+  - {display: NOMENCLATOR,   domain: nomenclator,   register: classical, note: "nomenclator · the enforcer of this very roll — announces and holds every name to the canon"}
+  - {display: INDEX NOMINVM, domain: index-nominvm, register: classical, note: "index nominum · the naming institution itself (spec/index-nominum); u→v"}
+  - {display: IANVA,         domain: ianva,         register: classical, note: "ianua · the MCP doorway/aggregator (ianva/); j→i, u→v"}
+  - {display: ADVOCATA,      domain: advocata,      register: classical, note: "advocata · the law-firm OS (organvm/advocata)"}
+  - {display: ARCA,          domain: arca,          register: classical, note: "arca · the encrypted private vault (organvm/arca, PR#720)"}
+  - {display: LAVREA,        domain: lavrea,        register: classical, note: "laurea · the computed-laurels proof organ (4444J99/laurea, #645); u→v"}
+  - {display: A-MAVS-OLEVM,  domain: a-mavs-olevm,  register: classical, note: "the artist/poiesis organ (organ-ladder rank 7) — already in canon form"}
