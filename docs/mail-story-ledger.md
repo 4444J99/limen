@@ -4,7 +4,7 @@ Limen is a UMA wrapper for mail-story evidence. Classification, crosswalk, and r
 
 ## Snapshot
 
-- Generated: `2026-07-09T12:08:39Z`
+- Generated: `2026-07-10T02:00:15Z`
 - Wrapper schema: `limen.mail_story.wrapper.v1`
 - Source receipt schema: `uma.mail.status.v1`
 - Source status: `open`

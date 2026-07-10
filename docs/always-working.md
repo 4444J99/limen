@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-10T01:51:49+00:00`
+Generated: `2026-07-10T02:00:55+00:00`
 Status: `needs-work`
 Required open: `2`
 Blocked: `2`
@@ -28,7 +28,7 @@ Done from receipt: `7`
 
 | Priority | ID | Status | Verdict |
 |---:|---|---|---|
-| 0 | `SUBSTRATE-DISK-TEMP` | `blocked` | internal free space is 108.2 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB; remaining bytes require owner gates |
+| 0 | `SUBSTRATE-DISK-TEMP` | `blocked` | internal free space is 110.5 GiB below target; recorded reclaim freed generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB; remaining bytes require owner gates |
 | 5 | `ESTATE-CUSTODY` | `done_from_receipt` | run-and-gun laptop cache and external estate custody have implementation receipts |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
 | 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.7%, reviews 0.9% |
