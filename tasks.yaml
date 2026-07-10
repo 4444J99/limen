@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 8
+      spent: 10
       per_agent:
         jules: 0
         gemini: 0
         codex: 1
-        opencode: 1
+        opencode: 3
         agy: 0
         claude: 2
         github_actions: 1
@@ -97565,7 +97565,7 @@ tasks:
   target_agent: opencode
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -97581,7 +97581,13 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  updated: '2026-07-10T12:54:14.192182Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T12:54:14.192182Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-organvm-limen-372
   title: "rebase organvm/limen#372 onto current base \u2014 branched far behind"
   repo: organvm/limen
@@ -97589,7 +97595,7 @@ tasks:
   target_agent: opencode
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -97605,7 +97611,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:14:58.136246Z'
+  updated: '2026-07-10T12:54:14.192182Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:58.136246Z'
     agent: codex
@@ -97613,6 +97619,11 @@ tasks:
     status: open
     output: 'fleet fill: retargeted claude->jules to consume live Jules usage runway
       before reset'
+  - timestamp: '2026-07-10T12:54:14.192182Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-375
   title: fix failing CI on organvm/limen#375
   repo: organvm/limen
@@ -120958,17 +120969,18 @@ tasks:
     \ or an explicit lever. Wire into the generators + censor."
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - origin-0708
+  - slow
   urls: []
   context: docs/reviews/deep-history-2022-2026.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T12:19:18.664940Z'
+  updated: '2026-07-10T12:52:02.193528Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -120981,6 +120993,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T12:52:02.193528Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: ORIGIN-0708-ARC4N-CELLULAR
   title: ARC4N cellular text-atomization as a distinct engine (letters/words/sentences
     as remix cells)
@@ -122962,26 +122978,31 @@ tasks:
     \ or a fix task filed per red."
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: public-face
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - public-face
   - lane-feed-0708
+  - slow
   urls: []
   context: 'lane-feed 2026-07-08: public-face lane had 0 open tasks; derived from
     ship-gate registry + public-face-data-integrity lineage'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T12:19:18.664940Z'
+  updated: '2026-07-10T12:52:02.193528Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:19:18.664940Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T12:52:02.193528Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: SUBSTRATE-0708-WORKTREE-DEBT-RECLAIM
   title: 'Substrate: bring worktree debt (333/12 roots, 75 GiB) back under cap via
     the acceptance-tracked reclaim flow'
