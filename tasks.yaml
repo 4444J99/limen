@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 496
+      spent: 498
       per_agent:
         jules: 133
         gemini: 20
         codex: 0
-        opencode: 179
+        opencode: 181
         agy: 159
         claude: 1
         github_actions: 1
@@ -115484,7 +115484,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/limen/issues/687
@@ -115496,8 +115496,13 @@ tasks:
     share 13.31% ta'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T21:57:54.816818Z'
-  dispatch_log: []
+  updated: '2026-07-10T10:55:47.344707Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T10:55:47.344707Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-685
   title: Make disk and worktree lifecycle enforce the 200GiB local-free target
   repo: organvm/limen
@@ -115505,7 +115510,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/limen/issues/685
@@ -115517,8 +115522,13 @@ tasks:
     15G - `/Users/4j'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-07T21:57:54.818400Z'
-  dispatch_log: []
+  updated: '2026-07-10T10:55:47.344707Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T10:55:47.344707Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-688
   title: Build external estate custody implementation receipt
   repo: organvm/limen
