@@ -1,0 +1,264 @@
+# SENSORS registry — the beat's continuous-runtime invariants, as declared data.
+#
+# The third axis of the VIGILIA spine: pre-merge is GATES (gates.yaml), configuration is PARAMETERS
+# (parameters.yaml), and continuous-runtime is SENSORS (here). Before this file the beat sensors were
+# 18 hand-wired `── 0x ──` shell blocks in metabolize.sh — omega.sh hardcoded their rungs and
+# armed-valve-audit.py had to GREP the shell to find their gates. Now they are one entry each: adding a
+# sensor is one registry entry, and a drifted copy is a red check (check-sensors.py), not a memory chore.
+# Same parameter-panel pattern as GATES, one domain over.
+#
+# Each sensor: the beat section it runs as, the gate env that toggles it (declared in parameters.yaml)
+# and its default, which beat source(s) run it, an owner, and one or more steps. Each step is a command
+# plus the exact escalation echoed on non-zero and its severity:
+#   advisory  → `  ↑ <escalation>`  (surfaced with the ↑ marker; never breaks the beat)
+#   silent    → `  (<escalation>)`  (quiet skip note; never breaks the beat)
+#   fatal     → non-zero propagates and breaks the beat  (none today — the beat is fail-open)
+# `when_env` on a step runs it only when that env var is truthy (nested conditionals in the shell).
+#
+# Consumers (Phase 2): scripts/beat-sensors.py --run derives the beat loop from this; omega.sh derives
+# its rungs; armed-valve-audit.py reads these gates instead of grepping. Drift-check: scripts/check-sensors.py.
+
+schema_version: 0.1
+
+sensors:
+  creds-hydrate:
+    section: "0a"
+    title: "hydrate credentials (1Password → ~/.limen.env → every lane; never re-login)"
+    gate: LIMEN_CREDS_HYDRATE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/creds-hydrate.py --apply"
+        severity: silent
+        escalation: "creds-hydrate skipped — op locked/absent"
+      - command: "python3 scripts/creds-hydrate.py --verify"
+        severity: advisory
+        escalation: "DEAD credential(s) above — re-mint into the op:// item, then they self-heal next beat"
+
+  mcp-auth-verify:
+    section: "0b"
+    title: "verify MCP connector consent (Lane B — surface lapsed claude.ai connectors in the log)"
+    gate: LIMEN_MCP_VERIFY
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/mcp-auth-verify.py"
+        severity: advisory
+        escalation: "REQUIRED MCP connector(s) unauthenticated — pull L-IANVA-CLOUD (#263) to end the class"
+
+  cartridge-connected:
+    section: "0c"
+    title: "verify the cartridge is plugged into the real source (host-is-factory invariant)"
+    gate: LIMEN_CARTRIDGE_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/cartridge-connected.py"
+        severity: advisory
+        escalation: "cartridge UNPLUGGED (above) — bring domus-genoma current, then re-point chezmoi at it"
+
+  chezmoi-drift:
+    section: "0c'"
+    title: "verify config hydrates from the CURRENT cartridge (no wedge / no stale / no orphan)"
+    gate: LIMEN_CHEZMOI_DRIFT_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/chezmoi-drift.py"
+        severity: advisory
+        escalation: "config is NOT hydrating from the current cartridge (above) — nothing is local; reconcile per the hint"
+
+  enactment-audit:
+    section: "0d"
+    title: "verify enactment — every declared-ON fleet flag is actually LIVE (not just merged)"
+    gate: LIMEN_ENACTMENT_CHECK
+    default: "1"
+    source: [metabolize, heartbeat]   # heartbeat-loop.sh runs it inline too (the live-loop home)
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/enactment-audit.py --check"
+        severity: advisory
+        escalation: "un-enacted fleet flag above — wire it in heartbeat-loop.sh, or kickstart the daemon (launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat)"
+
+  fable-balance:
+    section: "0e"
+    title: "refresh the weekly Fable balance meter + surface an over-cap / unaccepted Fable run"
+    gate: LIMEN_FABLE_BALANCE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/fable-allotment.py balance"
+        quiet_output: true
+        severity: silent
+        escalation: "fable balance meter skipped — see logs"
+      - command: 'python3 scripts/claude-workflow-guard.py audit-transcript "${LIMEN_LATEST_SESSION_JSONL}"'
+        when_env: LIMEN_LATEST_SESSION_JSONL
+        quiet_output: true
+        severity: advisory
+        escalation: "unaccepted / over-budget Fable run above — accept it (scripts/fable-allotment.py accept …) or drop off Fable (docs/fable-allotment.md)"
+
+  armed-valve-audit:
+    section: "0e2"
+    title: "armed-valve audit — parked levers vs silently-off valves"
+    gate: LIMEN_VALVE_AUDIT
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/armed-valve-audit.py --check"
+        severity: advisory
+        escalation: "SILENTLY-OFF deliverable valve above — arm it, or file its lever in his-hand-levers.json"
+
+  ship-gate:
+    section: "0f"
+    title: "ship gate — product-facing done requires a reachable external artifact"
+    gate: LIMEN_SHIP_GATE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/ship-gate.py --check"
+        severity: advisory
+        escalation: "product-facing done-claim with NO reachable artifact above — deploy it or reopen the task"
+
+  heal-convergence:
+    section: "0g"
+    title: "heal convergence — the healer must converge, not re-spend capacity on a wall"
+    gate: LIMEN_HEAL_CONVERGENCE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/heal-convergence.py --check"
+        severity: advisory
+        escalation: "CHRONIC heal non-convergence above — fix the named check at its root or park the repo with a chronic receipt"
+
+  fork-safety:
+    section: "0g2"
+    title: "fork-safety — the macOS 26.6 atfork/os_log crash must stay fixed, provably"
+    gate: LIMEN_FORK_SAFETY_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/check-fork-safety.py --check"
+        severity: advisory
+        escalation: "fork/os_log crash RECURRED or mitigation removed above — restore OS_ACTIVITY_MODE=disable, or arm the posix_spawn escalation (LIMEN_FORK_SAFE=1; see scripts/check-fork-safety.py)"
+
+  trunk-green:
+    section: "0g3"
+    title: "trunk-green — main's required CI must stay green, or nothing can merge"
+    gate: LIMEN_MAIN_GREEN_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/check-main-green.py"
+        severity: advisory
+        escalation: "main trunk RED above — a heal PR is needed (arm LIMEN_MAIN_GREEN_APPLY=1 to auto-emit one canonical HEAL-mainred task); see scripts/check-main-green.py"
+
+  dispatch-continuity:
+    section: "0h"
+    title: "dispatch continuity — detect a silent lane while queue + budget exist"
+    gate: LIMEN_CONTINUITY_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: continuity
+    steps:
+      - command: "python3 scripts/dispatch-continuity-check.py"
+        severity: silent
+        escalation: "continuity skipped"
+
+  ask-gate:
+    section: "0i"
+    title: "ask gate — every intake-window ask carries one done-predicate, or gets split"
+    gate: LIMEN_ASK_GATE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/ask-gate.py --audit --since 7 --top 8"
+        severity: silent
+        escalation: "ask-gate report failed — non-fatal"
+
+  omega:
+    section: "0i2"
+    title: "omega — the autonomic fixed point (conjunction of every gate's --check)"
+    gate: LIMEN_OMEGA
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "bash scripts/omega.sh --offline --quiet"
+        severity: advisory
+        escalation: "OMEGA not holding above — a gate rung failed; the system is off its fixed point (see logs/omega.json)"
+
+  usage-telemetry:
+    section: "0k"
+    title: "refresh usage telemetry / lane health"
+    gate: null                          # ungated — always runs
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/usage-telemetry.py"
+        severity: silent
+        escalation: "usage telemetry skipped"
+
+  link-health:
+    section: "0l"
+    title: "link health — dead links on public surfaces (+ throttled auto-heal)"
+    gate: LIMEN_LINK_HEALTH
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/link-health.py --verify --throttle 21600"
+        severity: advisory
+        escalation: "DEAD link(s) on a public surface above — fix at the source or add a remap in link-surfaces.json"
+      - command: "python3 scripts/link-health.py --heal --apply --throttle 21600"
+        when_env: LIMEN_LINK_HEAL
+        when_default: "1"
+        severity: silent
+        escalation: "link-health heal skipped/failed — non-fatal"
+
+  codex-skill-slim:
+    section: "0m"
+    title: "codex skill distillation — flagged noise thinned, not disabled"
+    gate: LIMEN_CODEX_SLIM
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/codex-skill-slim.py --apply --quiet"
+        severity: silent
+        escalation: "codex-skill-slim skipped — no codex config/cache"
+
+  routine-freshness:
+    section: "0n"
+    title: "routine freshness — detect cloud routines that fire but stop delivering"
+    gate: LIMEN_ROUTINE_FRESHNESS
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/routine-freshness-audit.py --throttle 21600"
+        severity: silent
+        escalation: "routine freshness skipped"
+
+  session-walk:
+    section: "0j"
+    title: "session walk — full-horizon census of BOTH vendor session estates"
+    gate: LIMEN_SESSION_WALK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: 'python3 scripts/session-walk-census.py --walk "${LIMEN_SESSION_WALK_CAP:-2}"'
+        severity: silent
+        escalation: "session walk skipped"

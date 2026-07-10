@@ -264,6 +264,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "Keeps the suite order-independent so pr-gate can't silently go red: every test root must carry the autouse os.environ-restore conftest, and no NEW direct os.environ writes may appear beyond the baseline (use monkeypatch)."
+  check-sensors:
+    command: "python3 scripts/check-sensors.py"
+    paths: ["institutio/governance/sensors.yaml", "scripts/check-sensors.py", "scripts/beat-sensors.py", "scripts/metabolize.sh", "scripts/heartbeat-loop.sh"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:

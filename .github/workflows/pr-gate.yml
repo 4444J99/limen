@@ -65,5 +65,8 @@ jobs:
       - name: Test-hygiene gate (env-isolation conftest + no new direct os.environ writes)
         run: python scripts/check-test-hygiene.py
 
+      - name: Sensors-registry drift (SENSORS — beat sensors are declared data)
+        run: python scripts/check-sensors.py
+
       - name: Run API and CLI tests
         run: python -m pytest web/api/tests cli/tests -q
