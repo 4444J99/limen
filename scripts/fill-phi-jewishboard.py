@@ -21,6 +21,21 @@ import datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+# The personal-fact classes this form reads. fact-wall.py asserts every entry is a homed row in
+# institutio/governance/personal-facts.yaml — so an un-homed atom is a RED build, never a chat ask.
+CONSUMES = [
+    "identity.legal_name.first",
+    "identity.legal_name.middle",
+    "identity.legal_name.last",
+    "identity.dob",
+    "identity.addresses.0.street",
+    "identity.addresses.0.city",
+    "identity.addresses.0.state",
+    "identity.addresses.0.zip",
+    "identity.phones.0.number",
+    "identity.emails",
+]
+
 def load_identity():
     """Read the identity store via the organ (form-filler is allowed the full record)."""
     out = subprocess.run([sys.executable, os.path.join(HERE, "identity.py"), "json", "--unsafe-ssn"],

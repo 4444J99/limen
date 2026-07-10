@@ -348,3 +348,17 @@ gates:
     scoped: false
     owner: runtime
     note: "Boots wrangler-dev (workerd) and probes the Worker contract over HTTP; CI=1 guards against interactive login."
+
+  # ── personal-facts registry drift nets (PERSONA-FEDERATA) ───────────────────
+  personal-facts-drift:
+    command: "python3 scripts/check-personal-facts.py"
+    paths: ["institutio/governance/personal-facts.yaml", "scripts/identity.py", "scripts/fill-*.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: identity
+    note: "Registry self-coherence: required fields, tier/verify enums, crown-jewel⇒op-only rule, single-home, consumer files exist. A drifted personal-facts.yaml is RED."
+  fact-wall:
+    command: "python3 scripts/fact-wall.py --check"
+    paths: ["scripts/fill-*.py", "institutio/governance/personal-facts.yaml"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: identity
+    note: "A form-filler may only consume personal-fact classes the registry HOMES. An un-homed atom in a CONSUMES manifest is RED before any fill — the phi.pdf chat-ask defect killed at the root."

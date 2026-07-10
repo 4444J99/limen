@@ -62,6 +62,12 @@ jobs:
       - name: Gate-registry drift (GATES — registry vs workflows vs consumers)
         run: python scripts/check-gates.py
 
+      - name: Personal-facts registry drift (PERSONA-FEDERATA — registry self-coherence)
+        run: python scripts/check-personal-facts.py
+
+      - name: Fact-wall (form-fillers may only consume homed personal-fact classes)
+        run: python scripts/fact-wall.py --check
+
       - name: Test-hygiene gate (env-isolation conftest + no new direct os.environ writes)
         run: python scripts/check-test-hygiene.py
 
