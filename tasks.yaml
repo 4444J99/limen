@@ -122757,7 +122757,7 @@ tasks:
   workstream: estate-custody
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - storage-lifecycle
   - prompt-corpus
@@ -122765,8 +122765,13 @@ tasks:
   urls: []
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T11:32:14.533100Z'
-  dispatch_log: []
+  updated: '2026-07-10T01:06:42Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T01:06:42Z'
+    agent: codex
+    session_id: closeout-opencode-db-intake
+    status: done
+    output: 'Archived OpenCode DB to /Volumes/Archive4T/limen-private/opencode-db-intake/20260710T010237Z/opencode.db; integrity ok; SHA-256 05eb1e65a678a5219bce25733826a02a9c84fead31e14b6930fd990e254f542c; indexed 1627 sessions in private corpus; tracked receipt docs/opencode-db-corpus-intake.md; local DB retained for retention decision.'
 - id: ASK-lane-starved-agy
   title: 'Lane ''agy'' starved: silent >42.5h with open queue + ok budget'
   type: ops
