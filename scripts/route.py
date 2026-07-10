@@ -481,6 +481,39 @@ def _capable_agents(
     return agents, reasons
 
 
+def _existing_assignment_usable(task: dict, agent: str | None, health: dict[str, bool], workdir: Path) -> bool:
+    """True when an existing ``target_agent`` can still run this open task.
+
+    Routing uses live usage/runway signals. Recomputing every open row on every beat can otherwise
+    reshuffle hundreds of still-valid assignments as telemetry changes by a few tokens, creating board
+    churn with no new work. Keep a healthy/capable assignment sticky; route only empty, down, or
+    incapable assignments to a new lane.
+    """
+    if not agent or agent in {"any", "unroutable", "human"}:
+        return False
+    if not health.get(agent):
+        return False
+
+    repo = task.get("repo")
+    labels = set(task.get("labels") or [])
+    if repo and "slow" in labels and health.get("jules"):
+        return agent == "jules"
+
+    if agent == "ollama":
+        return _local_floor_lane(task, health) == "ollama"
+    if agent in LOCAL_CHECKOUT_AGENTS:
+        return bool(repo)
+    if agent == "jules":
+        return bool(repo)
+    if agent in ISSUE_ASSIGNMENT_AGENTS:
+        return task_has_github_issue(task)
+    if agent == "github_actions":
+        return bool(repo)
+    if agent in ("warp", "oz"):
+        return bool(repo) or _local_checkout(repo, workdir) is not None
+    return False
+
+
 def _local_floor_lane(task: dict, health: dict[str, bool]) -> str | None:
     """Route a cheap mechanical-class task to the unmetered local ollama floor — DARK by default.
 
@@ -633,7 +666,12 @@ def main() -> int:
     for t in opens:
         # pass the running tally as the assigned-so-far counts so load spreads across lanes,
         # and the live runway so the split steers toward the freshest refresh window.
-        vendor, reason = route_task(t, health, workdir, assigned=tally, budget=budget, runway=runway)
+        current = str(t.get("target_agent") or "")
+        if _existing_assignment_usable(t, current, health, workdir):
+            vendor = current
+            reason = f"existing target_agent {current} is still healthy/capable (sticky route)"
+        else:
+            vendor, reason = route_task(t, health, workdir, assigned=tally, budget=budget, runway=runway)
         tally[vendor] += 1
         print(f"| {t['id']} | {t.get('repo', '-')} | {vendor} | {reason} |")
         if vendor not in ("unroutable",):
@@ -661,7 +699,7 @@ def main() -> int:
             if task.status != "open":
                 continue
             v = assignments.get(task.id)
-            if v:
+            if v and task.target_agent != v:
                 task.target_agent = v
                 applied += 1
             # PURPOSE partition (workstream) — the axis ABOVE target_agent, without which the

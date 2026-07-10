@@ -164,6 +164,31 @@ def test_slow_task_falls_through_to_local_when_jules_down(tmp_path, monkeypatch)
     assert pick in route.LOCAL_CHECKOUT_AGENTS, f"slow task stranded when jules down: {pick}"
 
 
+def test_existing_healthy_assignment_is_sticky(tmp_path, monkeypatch):
+    monkeypatch.setattr(route, "ROOT", tmp_path)
+    task = {"id": "T-STICKY", "repo": "o/r", "type": "code", "target_agent": "opencode"}
+    health = {"opencode": True, "codex": True, "jules": False}
+
+    assert route._existing_assignment_usable(task, "opencode", health, tmp_path)
+
+
+def test_existing_down_assignment_is_not_sticky(tmp_path, monkeypatch):
+    monkeypatch.setattr(route, "ROOT", tmp_path)
+    task = {"id": "T-DOWN", "repo": "o/r", "type": "code", "target_agent": "opencode"}
+    health = {"opencode": False, "codex": True}
+
+    assert not route._existing_assignment_usable(task, "opencode", health, tmp_path)
+
+
+def test_slow_local_assignment_not_sticky_when_jules_healthy(tmp_path, monkeypatch):
+    monkeypatch.setattr(route, "ROOT", tmp_path)
+    task = {"id": "T-SLOW", "repo": "o/r", "type": "code", "labels": ["slow"], "target_agent": "opencode"}
+    health = {"opencode": True, "codex": True, "jules": True}
+
+    assert not route._existing_assignment_usable(task, "opencode", health, tmp_path)
+    assert route._existing_assignment_usable(task, "jules", health, tmp_path)
+
+
 def test_jules_not_stranded_when_sole_capable(tmp_path, monkeypatch):
     monkeypatch.setattr(route, "ROOT", tmp_path)
     _ledger(tmp_path, {"jules": {"waste_classes": ["coverage"], "win_classes": ["revenue"]}})
