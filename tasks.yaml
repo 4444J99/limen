@@ -122771,7 +122771,10 @@ tasks:
     agent: codex
     session_id: closeout-opencode-db-intake
     status: done
-    output: 'Archived OpenCode DB to /Volumes/Archive4T/limen-private/opencode-db-intake/20260710T010237Z/opencode.db; integrity ok; SHA-256 05eb1e65a678a5219bce25733826a02a9c84fead31e14b6930fd990e254f542c; indexed 1627 sessions in private corpus; tracked receipt docs/opencode-db-corpus-intake.md; local DB retained for retention decision.'
+    output: Archived OpenCode DB to /Volumes/Archive4T/limen-private/opencode-db-intake/20260710T010237Z/opencode.db;
+      integrity ok; SHA-256 05eb1e65a678a5219bce25733826a02a9c84fead31e14b6930fd990e254f542c;
+      indexed 1627 sessions in private corpus; tracked receipt docs/opencode-db-corpus-intake.md;
+      local DB retained for retention decision.
 - id: ASK-lane-starved-agy
   title: 'Lane ''agy'' starved: silent >42.5h with open queue + ok budget'
   type: ops
@@ -122837,7 +122840,7 @@ tasks:
     proof-2 coverage'
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -122858,7 +122861,7 @@ tasks:
   title: MOUNT the 4444J99 SSD to recover the Nov-2025 deep-history archives
   repo: organvm/limen
   type: code
-  target_agent: gemini
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -122953,7 +122956,7 @@ tasks:
     syncs)'
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -123040,7 +123043,7 @@ tasks:
   title: 'Meta: harden the toolkit for other operators (docs, config, CI)'
   repo: organvm/manumissio
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -123202,7 +123205,7 @@ tasks:
   title: "Phase 3: hardware sizing dossier (gauge-gated \u2014 do not buy early)"
   repo: organvm/manumissio
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -123290,7 +123293,7 @@ tasks:
   title: 'Phase 2: monthly gauge cadence + hardware-trigger watch'
   repo: organvm/manumissio
   type: code
-  target_agent: gemini
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -123356,7 +123359,7 @@ tasks:
   title: 'Phase 1: arm the first floor classes when the parity gate passes'
   repo: organvm/manumissio
   type: code
-  target_agent: codex
+  target_agent: claude
   workstream: prompt-parity
   priority: medium
   budget_cost: 1
@@ -123397,7 +123400,7 @@ tasks:
   title: "Phase 1-2: candidate weights worth owning \u2014 the acquisition ledger"
   repo: organvm/manumissio
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: medium
   budget_cost: 1
   status: open
@@ -123550,7 +123553,7 @@ tasks:
   title: Deepen the sovereignty organ toward a usable institution
   repo: organvm/manumissio
   type: content
-  target_agent: jules
+  target_agent: codex
   workstream: sovereignty
   priority: high
   budget_cost: 2
@@ -123995,7 +123998,7 @@ tasks:
   title: 'Waste triage 2026-07-09: closed 6 stale PRs, 3 green PRs ready to merge'
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: agy
+  target_agent: jules
   workstream: correspondence
   priority: medium
   budget_cost: 1
@@ -124073,7 +124076,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/session-meta#149
   repo: organvm/session-meta
   type: code
-  target_agent: any
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -124102,7 +124105,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/sovereign-systems--elevate-align#258
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -124132,7 +124135,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/sovereign-systems--elevate-align#259
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -124162,7 +124165,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/sovereign-systems--elevate-align#262
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -124192,7 +124195,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/specvla-ergon--avditor-mvndi#34
   repo: organvm/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -124222,7 +124225,7 @@ tasks:
   title: fix failing CI on organvm/studium-generale#17
   repo: organvm/studium-generale
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -124247,7 +124250,8 @@ tasks:
   title: rebase/resolve conflicts on organvm/system-governance-framework#41
   repo: organvm/system-governance-framework
   type: code
-  target_agent: any
+  target_agent: agy
+  workstream: governance
   priority: high
   budget_cost: 1
   status: open
@@ -124277,7 +124281,8 @@ tasks:
   title: rebase/resolve conflicts on organvm/system-governance-framework#42
   repo: organvm/system-governance-framework
   type: code
-  target_agent: any
+  target_agent: jules
+  workstream: governance
   priority: high
   budget_cost: 1
   status: open
