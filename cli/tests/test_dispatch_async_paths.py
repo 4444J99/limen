@@ -100,7 +100,9 @@ def test_async_reservation_uses_live_usage_not_stale_board_caps(monkeypatch, tmp
         weak_proxy_agents={"agy"},
     )
 
-    counts = {agent: sum(1 for picked_agent, _ in picked if picked_agent == agent) for agent in ("jules", "opencode", "agy")}
+    counts = {
+        agent: sum(1 for picked_agent, _ in picked if picked_agent == agent) for agent in ("jules", "opencode", "agy")
+    }
     assert counts["jules"] == 2
     assert counts["opencode"] > 0
     assert counts["agy"] > 0
