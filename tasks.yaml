@@ -103650,7 +103650,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -103666,7 +103666,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T08:11:32.691218Z'
+  updated: '2026-07-10T08:37:01.350231Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -103693,6 +103693,11 @@ tasks:
     agent: opencode
     session_id: https://github.com/organvm/limen/pull/404
     status: dispatched
+  - timestamp: '2026-07-10T08:37:01.350231Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-limen-405
   title: fix failing CI on organvm/limen#405
   repo: organvm/limen
@@ -120660,7 +120665,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -120677,7 +120682,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T08:03:53.400701Z'
+  updated: '2026-07-10T08:37:01.350231Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -120707,6 +120712,11 @@ tasks:
     agent: opencode
     session_id: https://github.com/organvm/limen/pull/516
     status: dispatched
+  - timestamp: '2026-07-10T08:37:01.350231Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-organvm-limen-590
   title: rebase/resolve conflicts on organvm/limen#590
   repo: organvm/limen
@@ -120844,7 +120854,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -120866,7 +120876,7 @@ tasks:
     \ by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T08:03:53.400701Z'
+  updated: '2026-07-10T08:37:01.350231Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:53:12.634676Z'
     agent: opencode
@@ -120877,6 +120887,11 @@ tasks:
     agent: opencode
     session_id: https://github.com/organvm/limen/pull/620
     status: dispatched
+  - timestamp: '2026-07-10T08:37:01.350231Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-organvm-limen-621
   title: rebase/resolve conflicts on organvm/limen#621
   repo: organvm/limen
@@ -121028,7 +121043,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -121043,7 +121058,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T08:11:32.691218Z'
+  updated: '2026-07-10T08:37:01.350231Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:53:12.634676Z'
     agent: opencode
@@ -121054,6 +121069,11 @@ tasks:
     agent: opencode
     session_id: https://github.com/organvm/limen/pull/624
     status: dispatched
+  - timestamp: '2026-07-10T08:37:01.350231Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-organvm-limen-625
   title: rebase/resolve conflicts on organvm/limen#625
   repo: organvm/limen
@@ -121264,7 +121284,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -121279,7 +121299,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T08:05:22.678711Z'
+  updated: '2026-07-10T08:37:01.350231Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:53:12.634676Z'
     agent: opencode
@@ -121290,6 +121310,11 @@ tasks:
     agent: opencode
     session_id: https://github.com/organvm/limen/pull/630
     status: dispatched
+  - timestamp: '2026-07-10T08:37:01.350231Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-organvm-system-governance-framework-45
   title: rebase/resolve conflicts on organvm/system-governance-framework#45
   repo: organvm/system-governance-framework
@@ -123869,7 +123894,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -123884,7 +123909,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T08:05:22.678711Z'
+  updated: '2026-07-10T08:37:01.350231Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:49:01.806048Z'
     agent: opencode
@@ -123895,6 +123920,11 @@ tasks:
     agent: opencode
     session_id: https://github.com/organvm/limen/pull/375
     status: dispatched
+  - timestamp: '2026-07-10T08:37:01.350231Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-714
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#714
   repo: organvm/peer-audited--behavioral-blockchain
@@ -126594,7 +126624,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -126612,7 +126642,7 @@ tasks:
     \ 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T07:28:00.898242Z'
+  updated: '2026-07-10T08:37:01.350231Z'
   dispatch_log:
   - timestamp: '2026-07-10T02:14:21.156338Z'
     agent: jules
@@ -126665,6 +126695,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/the-invisible-ledger/pull/83
     status: dispatched
+  - timestamp: '2026-07-10T08:37:01.350231Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-rebase-organvm-trendpulse-5
   title: rebase/resolve conflicts on organvm/trendpulse#5
   repo: organvm/trendpulse
@@ -127537,3 +127572,90 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+- id: HEAL-rebase-organvm-domus-genoma-224
+  title: rebase/resolve conflicts on organvm/domus-genoma#224
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/224
+  context: 'PR organvm/domus-genoma#224 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/domus-genoma/pull/224
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-230
+  title: rebase/resolve conflicts on organvm/domus-genoma#230
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/230
+  context: 'PR organvm/domus-genoma#230 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/domus-genoma/pull/230
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-domus-genoma-233
+  title: rebase/resolve conflicts on organvm/domus-genoma#233
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/domus-genoma/pull/233
+  context: 'PR organvm/domus-genoma#233 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/domus-genoma/pull/233
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
