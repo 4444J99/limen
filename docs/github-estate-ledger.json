@@ -5,11 +5,139 @@
     "slug": "limen[bot]",
     "token_path": "app"
   },
+  "app_estate": {
+    "all_apps": [
+      "agentic-search",
+      "chatgpt-codex-connector",
+      "chatgptbot",
+      "claude",
+      "codacy-production",
+      "coderabbitai",
+      "cursor",
+      "docker",
+      "gemini-code-assist",
+      "gitguardian",
+      "google-ai-studio",
+      "google-cloud-build",
+      "google-labs-jules",
+      "ivviiviivvi-semgrep-code-011226",
+      "komment-ai",
+      "labores-crux-semgrep-011226",
+      "limen-conductor",
+      "linear-code",
+      "llamapreview",
+      "meta-organvm-cross-org",
+      "netlify",
+      "omni-dromenon-semgrep-code-011226",
+      "oz-by-warp",
+      "qodo-free-for-open-source-projects",
+      "renovate",
+      "semgrep-app",
+      "semgrep-code-ivviiviivvi",
+      "socket-security",
+      "sourcery-ai",
+      "trunk-io",
+      "vercel"
+    ],
+    "by_org": {
+      "a-organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "oz-by-warp"
+      ],
+      "meta-organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "linear-code",
+        "meta-organvm-cross-org",
+        "oz-by-warp",
+        "vercel"
+      ],
+      "organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "limen-conductor",
+        "oz-by-warp"
+      ],
+      "organvm-i-theoria": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "chatgptbot",
+        "claude",
+        "codacy-production",
+        "coderabbitai",
+        "cursor",
+        "docker",
+        "gemini-code-assist",
+        "gitguardian",
+        "google-ai-studio",
+        "google-cloud-build",
+        "google-labs-jules",
+        "ivviiviivvi-semgrep-code-011226",
+        "komment-ai",
+        "llamapreview",
+        "netlify",
+        "oz-by-warp",
+        "qodo-free-for-open-source-projects",
+        "renovate",
+        "semgrep-app",
+        "semgrep-code-ivviiviivvi",
+        "socket-security",
+        "sourcery-ai",
+        "trunk-io",
+        "vercel"
+      ],
+      "organvm-ii-poiesis": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "omni-dromenon-semgrep-code-011226",
+        "oz-by-warp",
+        "semgrep-app",
+        "sourcery-ai"
+      ],
+      "organvm-iii-ergon": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "labores-crux-semgrep-011226",
+        "oz-by-warp",
+        "semgrep-app",
+        "sourcery-ai"
+      ],
+      "organvm-iv-taxis": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-v-logos": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-vi-koinonia": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-vii-kerygma": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ]
+    },
+    "orgs": 10
+  },
   "branches": {
     "conductor_by_reason": {
       "checked-out": 164,
-      "inflight": 27,
-      "landed-pr-merged": 6,
+      "inflight": 28,
+      "landed-pr-merged": 9,
       "livework": 200,
       "pr-merged-but-advanced": 8,
       "protected": 1
@@ -18,10 +146,10 @@
   "integrations": {
     "config_present": {
       "codecov": false,
-      "coderabbit": false,
+      "coderabbit": true,
       "dependabot": true,
       "mergify": false,
-      "renovate": false,
+      "renovate": true,
       "semgrep": false,
       "sonarcloud": false,
       "trunk": false
@@ -73,11 +201,12 @@
       "organvm/growth-auditor": 14,
       "organvm/hokage-chess": 1,
       "organvm/hokage-chess--4444j99": 10,
+      "organvm/in-my-head": 1,
       "organvm/ivi374ivi027-05": 1,
       "organvm/kerygma-profiles": 2,
       "organvm/knowledge-corpus": 1,
       "organvm/krypto-velamen": 1,
-      "organvm/limen": 143,
+      "organvm/limen": 144,
       "organvm/linguistic-atomization-framework": 1,
       "organvm/manumissio": 10,
       "organvm/materia-collider": 2,
@@ -131,12 +260,12 @@
       "organvm/styx-behavioral-economics-theory": 1,
       "organvm/system-dashboard": 1,
       "organvm/system-governance-framework": 6,
-      "organvm/tab-bookmark-manager": 4,
+      "organvm/tab-bookmark-manager": 5,
       "organvm/the-invisible-ledger": 15,
       "organvm/tool-interaction-design": 4,
       "organvm/trade-perpetual-future": 2,
       "organvm/trendpulse": 3,
-      "organvm/universal-mail--automation": 2,
+      "organvm/universal-mail--automation": 1,
       "organvm/universal-node-network": 4,
       "organvm/universal-waveform-explorer": 1,
       "organvm/vigiles-aeternae--agon-cosmogonicum": 3,
@@ -150,7 +279,7 @@
       "organvm/your-fit-tailored": 3
     },
     "complete": true,
-    "open_total": 1028
+    "open_total": 1030
   },
   "repos": {
     "by_class": {
