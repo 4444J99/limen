@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-10T03:12:18+00:00`
+Generated: `2026-07-10T13:02:23+00:00`
 
 Status: `blocked`
 
@@ -34,14 +34,17 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `10`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-10T03:12:18.996804+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-10T13:02:23.696419+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run lanes: `auto`; max `10`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 2 still running ; would launch 0 (local cap 10, local per-lane 8) -> []`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 10 still running ; would launch 0 (local cap 10, local per-lane 8) -> []`.
+- Async skipped down lanes: `gemini, jules`.
+  - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
+  - `jules`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `100`; headroom `0%`.
 
 ## Prompt Packet Gate
 
@@ -63,15 +66,15 @@ Status: `blocked`
 - Next item: `SUBSTRATE-DISK-TEMP` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
   - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; substrate lifecycle predicate is failing.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.7%, reviews 0.9%.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 74.2%, PRs 13.5%, issues 11.4%, reviews 0.9%.
   - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 131 active flagged non-deleted messages require classification.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `47eb56ce6166a1d84c2d6a6fe267824f8f39e50d`.
-- origin/main: `47eb56ce6166a1d84c2d6a6fe267824f8f39e50d`.
+- HEAD: `e7d27ad314f17ef70179542349e25ad911ada89e`.
+- origin/main: `e7d27ad314f17ef70179542349e25ad911ada89e`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
