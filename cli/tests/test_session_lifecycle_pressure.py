@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -484,6 +485,48 @@ def test_session_lifecycle_pressure_closes_reclaimed_remote_missing_from_receipt
     assert snapshot["remote"]["remote_branches_missing"] == 1
     assert snapshot["remote"]["remote_branches_unresolved_missing"] == 0
     assert snapshot["remote"]["remote_branches_closed_roots"] == ["reclaimed-root"]
+
+
+def test_session_lifecycle_pressure_throttle_skips_census_when_snapshot_fresh(tmp_path: Path, monkeypatch):
+    """The SessionEnd hook runs this every session and its census shells out to git per worktree —
+    on a large estate that grinds the CPU (the machine 'crawls'). With a fresh snapshot and a throttle
+    window, main() must SKIP the expensive build_snapshot() entirely and echo the cached line."""
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_throttle_skip")
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    pressure.OUT_JSON.parent.mkdir(parents=True)
+    pressure.OUT_JSON.write_text('{"cached": true}', encoding="utf-8")  # age ≈ 0 < throttle
+    pressure.OUT_MD.write_text("**Lifecycle pressure** — cached line", encoding="utf-8")
+
+    def boom():
+        raise AssertionError("build_snapshot() must NOT run when the snapshot is fresh within the throttle")
+
+    monkeypatch.setattr(pressure, "build_snapshot", boom)
+    monkeypatch.setattr(sys, "argv", ["session-lifecycle-pressure.py", "--throttle", "3600"])
+
+    assert pressure.main() == 0  # short-circuits; boom never raised
+
+
+def test_session_lifecycle_pressure_throttle_zero_always_runs_census(tmp_path: Path, monkeypatch):
+    """--throttle 0 (or LIMEN_LIFECYCLE_PRESSURE_THROTTLE=0) restores the old always-run behavior."""
+    pressure = _load(PRESSURE_SCRIPT, "session_lifecycle_pressure_throttle_zero")
+    pressure.OUT_JSON = tmp_path / "logs" / "session-lifecycle-pressure.json"
+    pressure.OUT_MD = tmp_path / "logs" / "session-lifecycle-pressure.md"
+    pressure.OUT_JSON.parent.mkdir(parents=True)
+    pressure.OUT_JSON.write_text('{"cached": true}', encoding="utf-8")
+
+    ran = {"build": False}
+
+    def fake_build():
+        ran["build"] = True
+        return {"stub": True}
+
+    monkeypatch.setattr(pressure, "build_snapshot", fake_build)
+    monkeypatch.setattr(pressure, "render", lambda _snap: "rendered")
+    monkeypatch.setattr(sys, "argv", ["session-lifecycle-pressure.py", "--throttle", "0"])
+
+    assert pressure.main() == 0
+    assert ran["build"] is True  # throttle 0 → census always runs
 
 
 def test_capability_substrate_ledger_indexes_names_without_skill_bodies(tmp_path: Path):

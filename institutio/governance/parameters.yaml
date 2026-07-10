@@ -1883,6 +1883,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Maximum clean merged local worktree roots allowed to linger after the reaper should be able to remove them. Default 0 makes clean+merged+idle residue fail focused lifecycle gates until reclaim applies or an owner blocker is recorded. Pushed-but-unmerged roots are not reapable; they remain not-merged-to-default until merged or patch-equivalent."
+  LIMEN_LIFECYCLE_PRESSURE_THROTTLE:
+    default: 1800             # 30 min — skip the session-lifecycle-pressure census if the snapshot is younger
+    env: LIMEN_LIFECYCLE_PRESSURE_THROTTLE
+    self_update: none
+    owner: limen-daemon
+    note: "Throttle window (seconds) for scripts/session-lifecycle-pressure.py. The SessionEnd hook runs it every session, and its census shells out to several git commands PER worktree — on a large estate (hundreds of debt roots) that grinds the CPU for a minute+ each session-end (the machine 'crawls'). The pressure snapshot changes slowly, so the census is skipped when logs/session-lifecycle-pressure.json is younger than this. 0 = always run (old behavior); --throttle overrides per-call. Reversible: set 0 to restore per-event census."
   LIMEN_BRANCH_PREFIX:
     default: null              # DERIVED per scope — cells.sh sets cell-<slug>- for a cell's own conductor
     env: LIMEN_BRANCH_PREFIX
