@@ -1,16 +1,16 @@
 # Product Ledger
 
-Generated: `2026-07-10T01:11:55+00:00`
-Products: `10960`
-Blocked local: `326`
+Generated: `2026-07-10T07:05:42+00:00`
+Products: `10983`
+Blocked local: `369`
 Global status: `active`
 
 ## Counts
 
-- states: `alpha` 125, `blocked_local` 326, `build` 406, `idea` 8366, `omega` 439, `ship` 15, `verify` 1283
-- dispositions: `blocked_local` 8, `build` 8849, `consolidate` 46, `human-gated` 318, `publish-stage` 2, `retire` 439, `sell-ready` 15, `verify` 1283
-- source_kinds: `prompt` 8366, `repo` 17, `repo-surface` 123, `task` 2454
-- outward_paths: `not_applicable` 10431, `publish-stage` 5, `revenue-path` 393, `seo-proof` 131
+- states: `alpha` 125, `blocked_local` 369, `build` 374, `idea` 8366, `omega` 439, `ship` 15, `verify` 1295
+- dispositions: `blocked_local` 8, `build` 8817, `consolidate` 46, `human-gated` 361, `publish-stage` 2, `retire` 439, `sell-ready` 15, `verify` 1295
+- source_kinds: `prompt` 8366, `repo` 17, `repo-surface` 123, `task` 2477
+- outward_paths: `not_applicable` 10453, `publish-stage` 5, `revenue-path` 394, `seo-proof` 131
 
 ## Next Unblocked Products
 
