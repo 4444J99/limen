@@ -104,9 +104,7 @@ def test_always_working_timeout_can_be_hard_gated(tmp_path: Path, monkeypatch) -
     assert D.run_always_working_before_dispatch(tasks_path) is False
 
 
-def test_dispatch_admission_pause_marker_blocks_even_when_general_gate_is_disabled(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_dispatch_admission_pause_marker_blocks_even_when_general_gate_is_disabled(tmp_path: Path, monkeypatch) -> None:
     root = tmp_path / "root"
     logs = root / "logs"
     logs.mkdir(parents=True)

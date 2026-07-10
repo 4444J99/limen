@@ -76,10 +76,7 @@ def execution_profile_for(task: object | None) -> ExecutionProfile:
     priority_weight = {"critical": 1.0, "high": 0.75, "medium": 0.45, "low": 0.2}.get(priority, 0.1)
     budget = max(1, int(getattr(task, "budget_cost", 1) or 1))
     dependencies = len(getattr(task, "depends_on", None) or [])
-    text_size = sum(
-        len(str(getattr(task, field, "") or ""))
-        for field in ("title", "description", "context")
-    )
+    text_size = sum(len(str(getattr(task, field, "") or "")) for field in ("title", "description", "context"))
     attempts = 0
     for entry in getattr(task, "dispatch_log", None) or []:
         status = str(getattr(entry, "status", "") or "")
@@ -259,9 +256,7 @@ def _model_score(model: ModelCapability, profile: ExecutionProfile) -> tuple[flo
     return score, model.model_id
 
 
-def select_opencode_model(
-    models: Iterable[ModelCapability], profile: ExecutionProfile
-) -> ModelCapability | None:
+def select_opencode_model(models: Iterable[ModelCapability], profile: ExecutionProfile) -> ModelCapability | None:
     eligible = [model for model in models if model.satisfies(profile)]
     return max(eligible, key=lambda model: _model_score(model, profile)) if eligible else None
 
@@ -300,9 +295,7 @@ def validate_warp_override(catalog: Iterable[str], override: str | None) -> str 
     return override if override and override in available else None
 
 
-def discover_warp_override(
-    binary: str = "oz", *, override: str | None, timeout: int = 30
-) -> str | None:
+def discover_warp_override(binary: str = "oz", *, override: str | None, timeout: int = 30) -> str | None:
     if not override:
         return None
     try:
@@ -334,8 +327,6 @@ def paid_service_block_reason(task: object) -> str | None:
     labels = [str(item) for item in (getattr(task, "labels", None) or [])]
     if any(label.strip().lower() == "needs-human" for label in labels):
         return "task is human-gated"
-    public_fields = " ".join(
-        [str(getattr(task, "title", "") or ""), str(getattr(task, "type", "") or ""), *labels]
-    )
+    public_fields = " ".join([str(getattr(task, "title", "") or ""), str(getattr(task, "type", "") or ""), *labels])
     match = _PAID_SERVICE_RISK.search(public_fields)
     return f"paid-service safety gate matched {match.group(1).lower()}" if match else None

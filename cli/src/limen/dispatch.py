@@ -770,10 +770,7 @@ def _has_pr_open_transition(task: Task) -> bool:
     """
     return any(
         str(entry.status or "") == "pr_open"
-        or (
-            str(entry.status or "") == "dispatched"
-            and "/pull/" in str(entry.session_id or "").lower()
-        )
+        or (str(entry.status or "") == "dispatched" and "/pull/" in str(entry.session_id or "").lower())
         for entry in (task.dispatch_log or [])
     )
 
@@ -1804,10 +1801,7 @@ def _agent_timed_out_on_task(agent: str, task: Task) -> bool:
         canonical_agent(str(entry.agent or "")) == agent
         and (
             str(entry.status or "").startswith("timeout->")
-            or (
-                bool(getattr(entry, "route_to", None))
-                and "timeout" in str(entry.output or "").lower()
-            )
+            or (bool(getattr(entry, "route_to", None)) and "timeout" in str(entry.output or "").lower())
         )
         for entry in (task.dispatch_log or [])
     )
