@@ -131,7 +131,7 @@ def test_depleted_usage_lane_is_not_reported_as_underfilled(monkeypatch):
         usage={
             "vendors": {
                 "codex": {
-                    "health": "throttle",
+                    "health": "exhausted",
                     "time_left_frac": 0.0,
                     "signal": "tokens",
                     "consumed": 123,

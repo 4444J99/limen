@@ -440,6 +440,7 @@ def capacity_census(board: object = None, budget_limit: int | None = None) -> li
         live_usage_capacity = _live_usage_capacity(agent, usage_info, usage, track_date)
         weak_proxy = _weak_proxy_exhaustion(agent, usage_info)
         detail = str(status["detail"])
+        remaining: int | None  # unified across branches: live meter (int), daily runway, or None
         if live_usage_capacity is not None:
             cap, spent, remaining = live_usage_capacity
             meter = f"live usage meter: remaining={remaining}/{cap}, consumed={spent}"

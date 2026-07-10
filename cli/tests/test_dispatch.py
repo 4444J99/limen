@@ -624,10 +624,12 @@ def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys, monke
 
 
 def test_dispatch_parallel_debt_gate_skips_routine_generated_buildout(tmp_path: Path, capsys, monkeypatch) -> None:
+    # Patch _worktree_debt_gate directly (not worktree_debt_exceeded) so the gate fires even
+    # when LIMEN_WORKTREE_DEBT_GATE=0 leaks in from test_async_dispatch._load().
     monkeypatch.setattr(
         D,
-        "worktree_debt_exceeded",
-        lambda: (True, {"debt": 13, "total": 13, "by_reason": {}, "items": []}, 12),
+        "_worktree_debt_gate",
+        lambda: (True, "13 preserved worktree roots exceed cap 12; skipping routine generated build-out this dispatch"),
     )
     tasks_path = tmp_path / "tasks.yaml"
     write_board(

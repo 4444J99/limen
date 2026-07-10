@@ -176,7 +176,10 @@ def export_session_index(conn: sqlite3.Connection, out_path: Path) -> dict[str, 
         out_path.write_bytes(b"")
         return {"path": relpath(out_path), "rows": 0, "bytes": 0, "sha256": sha256_file(out_path)}
 
-    query = f'SELECT {", ".join(f"""\"{column}\"""" for column in allowed)} FROM "session" ORDER BY time_updated DESC'
+    # NB: build the quoted-column list outside the f-string — a nested f-string containing
+    # backslash escapes is a SyntaxError before Python 3.12 (breaks the python-311 CI job).
+    quoted_columns = ", ".join(f'"{column}"' for column in allowed)
+    query = f'SELECT {quoted_columns} FROM "session" ORDER BY time_updated DESC'
     rows = 0
     with gzip.open(out_path, "wt", encoding="utf-8") as fh:
         for row in conn.execute(query):

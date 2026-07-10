@@ -207,10 +207,10 @@ def test_agy_skips_limen_registry_discovery_tasks(tmp_path):
     ]
     save_limen_file(tmp_path / "tasks.yaml", lf)
 
+    # ac8677b5 broadened the registry-promotion gate to ALL local lanes (_LOCAL_AGENTS),
+    # so codex is now also blocked from running discovery tasks that edit value-repos.json.
     assert da.reserve_and_launch(["agy"], per_agent=4, cap=4, dry=True) == []
-    assert da.reserve_and_launch(["agy", "codex"], per_agent=4, cap=4, dry=True) == [
-        ("codex", "DISCOVER-organvm-browser-state")
-    ]
+    assert da.reserve_and_launch(["agy", "codex"], per_agent=4, cap=4, dry=True) == []
 
 
 def test_agy_codex_and_claude_skip_limen_repo_tasks(tmp_path):

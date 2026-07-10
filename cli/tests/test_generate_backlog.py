@@ -85,6 +85,9 @@ def _run(
             "LIMEN_VALUE_REPOS_FILE": str(path.parent / "no-such-tier.json"),
             "LIMEN_WORKTREE_ROOT": str(worktree_root or path.parent / "empty-worktrees"),
             "LIMEN_WORKTREE_DEBT_MAX": debt_cap,
+            # Pin the gate flag so tests are hermetic against LIMEN_WORKTREE_DEBT_GATE=0
+            # leaking in from test_async_dispatch._load() when the suite runs together.
+            "LIMEN_WORKTREE_DEBT_GATE": "1",
         },
     )
     assert p.returncode == 0, p.stderr

@@ -362,7 +362,7 @@ def decide_gate(snapshot: dict[str, Any], history: list[dict[str, Any]] | None =
         for name, item in inputs.items()
         if isinstance(item, dict)
         and item.get("present") is False
-        and name not in {"git", "product_ledger_index"}
+        and name not in {"git", "product_ledger_index", "prompt_packet_index"}
     )
     done_or_routed = int(metrics.get("merged_roots") or 0) + int(metrics.get("owner_absent_roots") or 0)
     followups = int(metrics.get("followup_roots") or 0)
