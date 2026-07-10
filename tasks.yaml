@@ -114506,13 +114506,14 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - always-working
   - receipt-first
   - revenue-value-repos
   - tried:codex
   - tried:opencode
+  - tried:claude
   urls:
   - ~/Workspace/limen/value-repos.json
   - ~/Workspace/limen/docs/product-ledger.md
@@ -114533,7 +114534,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T10:42:24.102867Z'
+  updated: '2026-07-10T10:43:31.657155Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114703,6 +114704,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:43:31.657155Z'
+    agent: claude
+    session_id: cli
+    status: failed
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
