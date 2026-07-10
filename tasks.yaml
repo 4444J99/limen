@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 495
+      spent: 496
       per_agent:
         jules: 133
         gemini: 20
         codex: 0
-        opencode: 178
+        opencode: 179
         agy: 159
         claude: 1
         github_actions: 1
@@ -100545,7 +100545,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/limen/issues/642
@@ -100557,7 +100557,7 @@ tasks:
     \ 257 open of 287 eligible rows at rev"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-09T20:10:27.583194Z'
+  updated: '2026-07-10T10:45:51.370902Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -100565,6 +100565,11 @@ tasks:
     status: open
     output: 'fleet fill: retargeted codex->jules to use Jules async capacity before
       local OpenCode/Agy slots'
+  - timestamp: '2026-07-10T10:45:51.370902Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-641
   title: 'agy: decode native Antigravity IDE conversations into the prompt corpus
     (weakest review quadrant)'
