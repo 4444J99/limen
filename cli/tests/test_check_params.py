@@ -82,6 +82,16 @@ def test_compute_orphans_respects_external_allow():
     assert cp.compute_orphans(panel, referenced_wide=set()) == set()
 
 
+def test_referenced_tokens_treats_executable_registry_file_as_a_reader(tmp_path):
+    cp = _load()
+    registry = tmp_path / "institutio" / "governance" / "sensors.yaml"
+    registry.parent.mkdir(parents=True)
+    registry.write_text("cadence: {env: LIMEN_RENAMED_SENSOR_CADENCE, default: 4}\n", encoding="utf-8")
+    assert cp.referenced_tokens(tmp_path, dirs=("institutio/governance/sensors.yaml",)) == {
+        "LIMEN_RENAMED_SENSOR_CADENCE"
+    }
+
+
 def test_gate_passes_on_repo():
     # the committed baseline must keep the gate green (no new hardcodes AND no new orphans vs baseline).
     r = subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True)

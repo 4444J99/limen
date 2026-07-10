@@ -8,8 +8,11 @@
 # Same parameter-panel pattern as GATES, one domain over.
 #
 # Each sensor: the beat section it runs as, the gate env that toggles it (declared in parameters.yaml)
-# and its default, which beat source(s) run it, an owner, and one or more steps. Each step is a command
-# plus the exact escalation echoed on non-zero and its severity:
+# and its default, which beat source(s) run it, an owner, and one or more steps. Scheduled sensors may
+# declare cadence/timeout as ``{env, default}``; conditional argv lives in ``args_when``; fixed-point
+# checks live in ``omega_eligible``; and a conditional behavior valve carries ``armed_valve_type``.
+# These are capabilities, not special sensor names: consumers must work unchanged if an id is renamed.
+# Each step is a command plus the exact escalation echoed on non-zero and its severity:
 #   advisory  → `  ↑ <escalation>`  (surfaced with the ↑ marker; never breaks the beat)
 #   silent    → `  (<escalation>)`  (quiet skip note; never breaks the beat)
 #   fatal     → non-zero propagates and breaks the beat  (none today — the beat is fail-open)
@@ -18,7 +21,7 @@
 # Consumers (Phase 2): scripts/beat-sensors.py --run derives the beat loop from this; omega.sh derives
 # its rungs; armed-valve-audit.py reads these gates instead of grepping. Drift-check: scripts/check-sensors.py.
 
-schema_version: 0.1
+schema_version: 0.2
 
 sensors:
   creds-hydrate:
@@ -100,6 +103,37 @@ sensors:
       - command: "python3 scripts/enactment-audit.py --check"
         severity: advisory
         escalation: "un-enacted fleet flag above — wire it in heartbeat-loop.sh, or kickstart the daemon (launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat)"
+
+  github-estate-reconcile:
+    section: "heartbeat"
+    title: "reconcile the declared GitHub estate resource graph"
+    gate: LIMEN_GITVS
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_GITVS
+      default: 8
+    timeout:
+      env: LIMEN_GITVS_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/gitvs.py reconcile"
+        args_when:
+          - env: LIMEN_GITVS_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "GitHub estate reconciliation skipped or exceeded its bound"
+    omega_eligible:
+      - label: "GitHub estate parity"
+        tier: det
+        command: "python3 scripts/gitvs.py doctor --offline --parity-only"
+      - label: "GitHub estate posture"
+        tier: live
+        command: "python3 scripts/gitvs.py doctor"
 
   fable-balance:
     section: "0e"

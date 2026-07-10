@@ -21,12 +21,11 @@ mkdir -p "$work/scripts" "$work/cli/src" "$work/logs"
 cp "$real_omega" "$work/scripts/omega.sh"
 
 # write_stubs <ask_gate_rc> — all det children exit 0 except ask-gate.py, whose rc is the argument.
-# (In --offline the live children — main-green/ship-gate/heal-convergence/overnight/credential/gitvs
-# posture — are SKIPped without running, so only the det children need stubs: enactment, armed-valve,
-# handoff, no-tasks-on-me, ask-gate, and gitvs (the estate-parity det rung).)
+# (In --offline the live children are SKIPped without running. Registry-owned checks are discovered
+# through a generic stub whose sensor id is intentionally unrelated to its command/label.)
 write_stubs() {
   local ask_rc="$1"
-  for py in enactment-audit armed-valve-audit handoff-relay gitvs; do
+  for py in enactment-audit armed-valve-audit handoff-relay; do
     printf '#!/usr/bin/env python3\nimport sys; sys.exit(0)\n' > "$work/scripts/$py.py"
     chmod +x "$work/scripts/$py.py"
   done
@@ -34,6 +33,18 @@ write_stubs() {
   chmod +x "$work/scripts/ask-gate.py"
   printf '#!/usr/bin/env bash\nexit 0\n' > "$work/scripts/no-tasks-on-me.sh"
   chmod +x "$work/scripts/no-tasks-on-me.sh"
+  cat > "$work/scripts/beat-sensors.py" <<'PY'
+#!/usr/bin/env python3
+import sys
+if "--list-omega" in sys.argv:
+    print("arbitrary.future.id\t0\tdet\tarbitrary registry parity")
+    print("arbitrary.future.id\t1\tlive\tarbitrary registry posture")
+    raise SystemExit(0)
+if "--run-omega" in sys.argv:
+    raise SystemExit(0)
+raise SystemExit(2)
+PY
+  chmod +x "$work/scripts/beat-sensors.py"
 }
 
 pass=0; fail=0
@@ -55,6 +66,9 @@ assert all({"rung", "tier", "status"} <= set(r) for r in d["rungs"]), "rung shap
 # every live rung must be SKIP in offline mode (never a silent PASS)
 live = [r for r in d["rungs"] if r["tier"] == "live"]
 assert live and all(r["status"] == "SKIP" for r in live), [r["status"] for r in live]
+rows = {r["rung"]: r for r in d["rungs"]}
+assert rows["arbitrary registry parity"]["status"] == "PASS", rows
+assert rows["arbitrary registry posture"]["status"] == "SKIP", rows
 print("  case1 stamp OK")
 PY
 

@@ -1834,25 +1834,25 @@ parameters:
     env: LIMEN_BEAT_GITVS
     self_update: none
     owner: gitvs
-    note: "Cadence (every N beats) of the GITVS custodian voice C_GITVS in heartbeat-loop.sh — the hygiene tier (network-touching janitor; must not contend with the tight drain cadence)."
+    note: "Cadence (every N beats) of the GitHub estate sensor declared in sensors.yaml. The generic scheduled runner resolves this environment override; heartbeat-loop.sh contains no sensor-specific cadence constant."
   LIMEN_GITVS:
     default: 1
     env: LIMEN_GITVS
     self_update: none
     owner: gitvs
-    note: "Master on/off for the GITVS reconcile voice. 1 (default) runs the DRY reconcile report each cadence (observable-before-autonomous); 0 disables the voice. Mutation is a SEPARATE gate (LIMEN_GITVS_APPLY)."
+    note: "Master on/off for the registry-declared GitHub estate reconciliation sensor. When the derive canary is armed, 1 runs the DRY report on its declared cadence and 0 disables it. Mutation remains a separate registry-classified gate (LIMEN_GITVS_APPLY)."
   LIMEN_GITVS_APPLY:
     default: 0
     env: LIMEN_GITVS_APPLY
     self_update: none
     owner: gitvs
-    note: "Arms the GITVS reconcile effector: 0 (default) reports the plan only; 1 invokes the delegate/reap organs with --apply. Ships DARK — even armed, each reap keeps its OWN dark-arming (e.g. LIMEN_REMOTE_REAP_APPLY), and setup-rulesets is never auto-run (his-hand #257)."
+    note: "Arms the GITVS reconcile effector: 0 (default) reports the plan only; 1 invokes each reachable delegate/reap adapter using the exact argv declared in estate.yaml. Ships DARK — adapters may retain their own dark-arming, and any adapter with a registry-declared approval lever remains human-gated."
   LIMEN_GITVS_TIMEOUT:
     default: 120
     env: LIMEN_GITVS_TIMEOUT
     self_update: none
     owner: gitvs
-    note: "Per-run timeout (seconds) for the GITVS reconcile voice and for each delegate/reap organ it dispatches (scripts/gitvs.py::_run_effector). Fail-open: a delegate that overruns is killed and the loop continues."
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for GitHub estate reconciliation and by each delegate/reap adapter it dispatches. The runner kills the full command group on overrun and the beat continues fail-open."
   LIMEN_REAP_VERIFY_REMOTE:
     default: "1"
     env: LIMEN_REAP_VERIFY_REMOTE
@@ -1987,11 +1987,11 @@ parameters:
     note: "Override for the crash-report scan root used by scripts/check-fork-safety.py (also settable via its --reports-dir flag). Empty (the default) scans the macOS default ~/Library/Logs/DiagnosticReports/ plus its Retired/ rotation subdir. Set to a temp directory in tests to inject fabricated .ips reports deterministically; never set on the live host."
 
   LIMEN_BEAT_DERIVE:
-    default: "0"               # OFF (DARK) — hand-wired beat blocks stay live; 1 = derive from sensors.yaml
+    default: "0"               # OFF (DARK) — legacy metabolize blocks stay live; scheduled registry canary is dormant
     env: LIMEN_BEAT_DERIVE
     self_update: none
     owner: governance
-    note: "Mode selector for the beat's continuous-runtime sensor loop (the IF-SENSOR-REGISTRY ideal form). When 0 (default) metabolize.sh runs the hand-wired `── 0x ──` blocks. When 1 it DERIVES the whole loop from institutio/governance/sensors.yaml via one call to scripts/beat-sensors.py --run --source metabolize — adding a sensor becomes one registry entry, not a shell edit in three places. Dark-first (observable-before-autonomous, the LIMEN_MAIN_GREEN_APPLY pattern): the derive path is proven byte-equivalent on a real beat before Branch-1b flips this default to 1 and deletes the legacy blocks. Parity held by scripts/check-sensors.py (its D-check accepts the derive-runner call in place of the literal gate strings)."
+    note: "Dark-first selector for registry-derived sensors. At 0 (default), metabolize.sh keeps its hand-wired blocks and heartbeat scheduled sensors remain dormant. At 1, metabolize derives its loop and heartbeat invokes the same generic runner in scheduled-only mode; cadence, timeout, conditional argv, voice id, and gate all come from sensors.yaml. Flip only for bounded canaries until parity and one live feature-flagged beat are receipted."
 
   LIMEN_MAIN_GREEN_CHECK:
     default: "1"               # ON — detect a RED main trunk each beat (§0g3)

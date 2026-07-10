@@ -73,6 +73,54 @@ def test_script_name_fallback_does_not_cross_feed_doors():
     assert "corpus-feed.py" not in feed_scripts
 
 
+def test_scheduled_registry_door_and_script_survive_arbitrary_id_rename(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location("avtopoiesis_registry_under_test", GATE)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.delenv("LIMEN_BEAT_DERIVE", raising=False)
+
+    scripts = tmp_path / "scripts"
+    governance = tmp_path / "institutio" / "governance"
+    scripts.mkdir(parents=True)
+    governance.mkdir(parents=True)
+    (scripts / "heartbeat-loop.sh").write_text(
+        'if [ "${LIMEN_BEAT_DERIVE:-0}" = "1" ]; then\n'
+        '  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source heartbeat --scheduled-only\n'
+        "fi\n",
+        encoding="utf-8",
+    )
+    (scripts / "renamed-scan.py").write_text("from pathlib import Path\nPath('.').glob('*')\n", encoding="utf-8")
+    (governance / "sensors.yaml").write_text(
+        """\
+sensors:
+  arbitrary.future.id:
+    section: heartbeat
+    title: arbitrary future sensor
+    source: [heartbeat]
+    cadence: {env: TEST_ARBITRARY_CADENCE, default: 5}
+    steps:
+      - command: "python3 scripts/renamed-scan.py"
+        severity: silent
+        escalation: skipped
+""",
+        encoding="utf-8",
+    )
+    canon = {
+        "discovery": {
+            "source": "scripts/heartbeat-loop.sh",
+            "beat_pattern": r'C_([A-Z][A-Z_]*)="\$\{LIMEN_BEAT_\1:-(\d+)\}"(?:[^#\n]*#\s*([^\n]*))?',
+            "gate_pattern": r'\[\s*"\$\{LIMEN_%s:-0\}"\s*=\s*"1"\s*\]',
+        }
+    }
+
+    doors = {door["key"]: door for door in module.discover_doors(canon)}
+    assert doors["arbitrary.future.id"]["cadence"] == 5
+    assert doors["arbitrary.future.id"]["dormant"] is True  # global derive canary remains dark
+    assert {path.name for path in module._sensor_scripts_for("arbitrary.future.id")} == {"renamed-scan.py"}
+
+
 def test_future_tense_counts_exact_door_tokens_not_substrings(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location("avtopoiesis_future_under_test", GATE)
     module = importlib.util.module_from_spec(spec)

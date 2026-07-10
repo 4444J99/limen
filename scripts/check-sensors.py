@@ -29,6 +29,9 @@ PARAMS = ROOT / "institutio" / "governance" / "parameters.yaml"
 PARAMS_BASELINE = ROOT / "institutio" / "governance" / "undeclared-params-baseline.txt"
 BEAT_SOURCES = (ROOT / "scripts" / "metabolize.sh", ROOT / "scripts" / "heartbeat-loop.sh")
 VALID_SEVERITY = {"advisory", "silent", "fatal"}
+VALID_OMEGA_TIER = {"det", "live"}
+VALID_VALVE_TYPE = {"deliverable", "safety"}
+SENSOR_ID_RX = re.compile(r"^[a-z0-9][a-z0-9_.-]*$")
 SCRIPT_RX = re.compile(r"scripts/[\w./-]+\.(?:py|sh)")
 
 _failures: list[str] = []
@@ -79,7 +82,32 @@ def derived_sources(shell: str) -> set[str]:
     return derived
 
 
+def _script_exists(sid: str, command: str) -> None:
+    for match in SCRIPT_RX.findall(command):
+        if not (ROOT / match).exists():
+            fail("B", f"{sid}: script {match} does not exist")
+
+
+def _numeric_capability(sid: str, name: str, spec, params: set[str]) -> None:
+    if spec is None:
+        return
+    value = spec
+    if isinstance(spec, dict):
+        env = spec.get("env")
+        value = spec.get("default")
+        if not env:
+            fail("A", f"{sid}.{name}: mapping requires env")
+        elif env not in params:
+            fail("C", f"{sid}.{name}: env {env} not declared in parameters.yaml")
+    try:
+        if int(value) <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        fail("A", f"{sid}.{name}: default must be a positive integer")
+
+
 def main(argv=None) -> int:
+    _failures.clear()
     ap = argparse.ArgumentParser(description="SENSORS registry drift-predicate")
     ap.add_argument("--registry", default=None, help="registry path override (for tests)")
     args = ap.parse_args(argv)
@@ -102,6 +130,8 @@ def main(argv=None) -> int:
 
     for sid, s in sensors.items():
         # A schema
+        if not SENSOR_ID_RX.fullmatch(str(sid)):
+            fail("A", f"{sid}: id must match {SENSOR_ID_RX.pattern}")
         if not s.get("section"):
             fail("A", f"{sid}: missing section")
         if not s.get("source"):
@@ -116,9 +146,61 @@ def main(argv=None) -> int:
             if sev not in VALID_SEVERITY:
                 fail("A", f"{sid}.step[{i}]: severity {sev!r} not in {sorted(VALID_SEVERITY)}")
             # B scripts exist
-            for m in SCRIPT_RX.findall(step.get("command", "")):
-                if not (ROOT / m).exists():
-                    fail("B", f"{sid}: script {m} does not exist")
+            _script_exists(sid, step.get("command", ""))
+            _numeric_capability(sid, f"step[{i}].timeout", step.get("timeout"), params)
+            args_when = step.get("args_when") or []
+            if not isinstance(args_when, list):
+                fail("A", f"{sid}.step[{i}].args_when: must be a list")
+                args_when = []
+            for j, condition in enumerate(args_when):
+                if not isinstance(condition, dict) or not condition.get("env"):
+                    fail("A", f"{sid}.step[{i}].args_when[{j}]: mapping requires env")
+                    continue
+                if condition["env"] not in params:
+                    fail(
+                        "C",
+                        f"{sid}.step[{i}].args_when[{j}]: env {condition['env']} not declared in parameters.yaml",
+                    )
+                args_value = condition.get("args")
+                if not isinstance(args_value, (str, list)) or not args_value:
+                    fail("A", f"{sid}.step[{i}].args_when[{j}]: args must be a string or non-empty list")
+                valve_type = condition.get("armed_valve_type")
+                if valve_type is not None and valve_type not in VALID_VALVE_TYPE:
+                    fail(
+                        "A",
+                        f"{sid}.step[{i}].args_when[{j}]: armed_valve_type {valve_type!r} "
+                        f"not in {sorted(VALID_VALVE_TYPE)}",
+                    )
+
+        _numeric_capability(sid, "cadence", s.get("cadence"), params)
+        _numeric_capability(sid, "timeout", s.get("timeout"), params)
+        sensor_valve_type = s.get("armed_valve_type")
+        if sensor_valve_type is not None:
+            if sensor_valve_type not in VALID_VALVE_TYPE:
+                fail(
+                    "A",
+                    f"{sid}: armed_valve_type {sensor_valve_type!r} not in {sorted(VALID_VALVE_TYPE)}",
+                )
+            if not s.get("gate"):
+                fail("A", f"{sid}: armed_valve_type requires a gate")
+
+        omega_checks = s.get("omega_eligible") or []
+        if not isinstance(omega_checks, list):
+            fail("A", f"{sid}.omega_eligible: must be a list")
+            omega_checks = []
+        for i, check in enumerate(omega_checks):
+            if not isinstance(check, dict):
+                fail("A", f"{sid}.omega_eligible[{i}]: must be a mapping")
+                continue
+            if not check.get("label") or not check.get("command"):
+                fail("A", f"{sid}.omega_eligible[{i}]: label and command are required")
+            if check.get("tier") not in VALID_OMEGA_TIER:
+                fail(
+                    "A",
+                    f"{sid}.omega_eligible[{i}]: tier {check.get('tier')!r} not in {sorted(VALID_OMEGA_TIER)}",
+                )
+            _script_exists(sid, check.get("command", ""))
+            _numeric_capability(sid, f"omega_eligible[{i}].timeout", check.get("timeout"), params)
 
         # C gate declared
         gate = s.get("gate")

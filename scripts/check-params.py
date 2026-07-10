@@ -34,7 +34,16 @@ BASELINE = ROOT / "institutio" / "governance" / "undeclared-params-baseline.txt"
 # 2026-07-10: declared with a note promising a reap the code never implemented). Ratcheted like the
 # undeclared direction so existing orphans grandfather in and only a NEW orphan fails the build.
 ORPHAN_BASELINE = ROOT / "institutio" / "governance" / "orphan-params-baseline.txt"
-SCAN_DIRS = ("cli/src", "scripts", "web/api", "mcp")
+SCAN_DIRS = (
+    "cli/src",
+    "scripts",
+    "web/api",
+    "mcp",
+    # sensors.yaml is executable configuration: cadence, timeout, gate, and
+    # conditional-argv env names are real readers even though no consumer pins
+    # their names in code.
+    "institutio/governance/sensors.yaml",
+)
 # The orphan check scans wider than the undeclared check: a param read only by CI workflows, the
 # container/launchd plumbing, or the ianva package is legitimately used, not orphaned.
 ORPHAN_SCAN_DIRS = SCAN_DIRS + (".github", "container", "ianva")
@@ -59,7 +68,8 @@ def referenced_tokens(root: Path = ROOT, dirs: tuple[str, ...] = SCAN_DIRS) -> s
         base = root / d
         if not base.exists():
             continue
-        for path in base.rglob("*"):
+        paths = (base,) if base.is_file() else base.rglob("*")
+        for path in paths:
             if path.suffix not in SCAN_SUFFIXES or not path.is_file():
                 continue
             try:

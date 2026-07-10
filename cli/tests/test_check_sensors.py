@@ -86,11 +86,11 @@ def test_current_real_shell_derives_metabolize():
 
 
 def test_undeclared_and_phantom_gate_fails(tmp_path):
-    # source: [heartbeat] — a NON-derived source, so the [D] phantom-sensor check still applies (the
-    # metabolize source now DERIVES from the registry, which makes [D] vacuous there by construction).
+    # A non-derived source still exercises [D]. Both real beat sources now contain a generic
+    # derive-runner, so their individual gate literals correctly need not appear in shell.
     reg = _write(
         tmp_path,
-        "sensors:\n  x:\n    section: '0x'\n    source: [heartbeat]\n    gate: LIMEN_TOTALLY_FAKE_GATE\n"
+        "sensors:\n  x:\n    section: '0x'\n    source: [manual]\n    gate: LIMEN_TOTALLY_FAKE_GATE\n"
         "    steps:\n      - command: 'python3 scripts/check-fork-safety.py'\n        severity: advisory\n"
         "        escalation: 'e'\n",
     )
@@ -113,3 +113,62 @@ def test_phantom_gate_on_derived_source_still_caught_by_c(tmp_path):
     assert r.returncode == 1
     assert "[C]" in r.stdout  # undeclared gate still fails the build
     assert "[D]" not in r.stdout  # derived source → phantom check is vacuous
+
+
+def test_generic_scheduled_capabilities_accept_an_arbitrarily_renamed_sensor(tmp_path):
+    reg = _write(
+        tmp_path,
+        """\
+sensors:
+  arbitrary.future.id:
+    section: heartbeat
+    title: renamed sensor
+    source: [heartbeat]
+    gate: LIMEN_GITVS
+    default: "1"
+    cadence: {env: LIMEN_BEAT_GITVS, default: 8}
+    timeout: {env: LIMEN_GITVS_TIMEOUT, default: 120}
+    steps:
+      - command: "python3 scripts/gitvs.py reconcile"
+        args_when:
+          - env: LIMEN_GITVS_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: skipped
+    omega_eligible:
+      - label: arbitrary parity
+        tier: det
+        command: "python3 scripts/gitvs.py doctor --offline --parity-only"
+""",
+    )
+    r = run("--registry", str(reg))
+    assert r.returncode == 0, r.stdout
+
+
+def test_invalid_capability_shape_fails_schema(tmp_path):
+    reg = _write(
+        tmp_path,
+        """\
+sensors:
+  arbitrary:
+    section: heartbeat
+    source: [heartbeat]
+    gate: LIMEN_GITVS
+    cadence: {env: LIMEN_BEAT_GITVS, default: 0}
+    steps:
+      - command: "python3 scripts/gitvs.py reconcile"
+        args_when:
+          - env: LIMEN_GITVS_APPLY
+            args: ["--apply"]
+            armed_valve_type: magical
+        severity: silent
+        escalation: skipped
+""",
+    )
+    r = run("--registry", str(reg))
+    assert r.returncode == 1
+    assert "positive integer" in r.stdout
+    assert "armed_valve_type" in r.stdout

@@ -23,6 +23,7 @@ Anti-waste + never-"NO": read-only on the fleet's data; writes only its own logs
 and the self-contained organ-health.html face. Every probe fails OPEN — a missing artifact yields
 "unknown", never a crash, and never blocks the beat.
 """
+
 import json
 import os
 import re
@@ -38,11 +39,12 @@ LOOP_SH = ROOT / "scripts" / "heartbeat-loop.sh"
 ENV_FILE = Path(os.environ.get("LIMEN_ENV_FILE", Path.home() / ".limen.env"))
 OUT_DIRS = [ROOT / "web" / "app" / "out", ROOT / "web" / "app" / "public"]
 CANON = ROOT / "spec" / "avtopoiesis" / "canon.yaml"  # the SINGLE door-discovery contract (shared with AVTOPOIESIS)
+SENSORS = ROOT / "institutio" / "governance" / "sensors.yaml"
 LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-ledger.json"))  # mail capability signal
 
 try:
     import yaml
-except ImportError:        # fail-open: proprioception must never crash on a missing dep
+except ImportError:  # fail-open: proprioception must never crash on a missing dep
     yaml = None
 
 _TS_RE = re.compile(r"(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})")
@@ -69,12 +71,13 @@ def _parse_cadences(text):
 
 def _parse_tempo(text):
     def grab(var, fallback):
-        m = re.search(rf'{var}:-(\d+)', text)
+        m = re.search(rf"{var}:-(\d+)", text)
         val = m.group(1) if m else str(fallback)
         try:
             return int(os.environ.get(var, val))
         except ValueError:
             return fallback
+
     return grab("LIMEN_LOOP_MIN", 120), grab("LIMEN_LOOP_MAX", 1800)
 
 
@@ -93,8 +96,10 @@ def _discovery_contract():
     if yaml is not None:
         try:
             disc = (yaml.safe_load(CANON.read_text()) or {}).get("discovery") or {}
-            return (disc.get("beat_pattern") or _BEAT_PATTERN_FALLBACK,
-                    disc.get("gate_pattern") or _GATE_PATTERN_FALLBACK)
+            return (
+                disc.get("beat_pattern") or _BEAT_PATTERN_FALLBACK,
+                disc.get("gate_pattern") or _GATE_PATTERN_FALLBACK,
+            )
         except OSError:
             pass
     return _BEAT_PATTERN_FALLBACK, _GATE_PATTERN_FALLBACK
@@ -112,8 +117,58 @@ def _discover_doors(text):
             continue
         seen.add(key)
         dormant = bool("%s" in gate_pat and re.search(gate_pat % name, text))
-        out.append({"key": key, "name": name, "cadence": int(cadence),
-                    "role": role.strip(), "dormant": dormant})
+        out.append({"key": key, "name": name, "cadence": int(cadence), "role": role.strip(), "dormant": dormant})
+    # Scheduled sensors are doors too. Membership remains derived from the live loop: registry
+    # entries join only when the loop contains the generic scheduled runner. Sensor identity,
+    # cadence, gate, and title all come from data, so renamed ids require no consumer edit.
+    if re.search(r"beat-sensors\.py[^\n]*--source\s+heartbeat[^\n]*--scheduled-only", text):
+        try:
+            sensors = (yaml.safe_load(SENSORS.read_text()) or {}).get("sensors") or {}
+        except (OSError, ValueError, AttributeError):
+            sensors = {}
+        derive_match = re.search(r"LIMEN_BEAT_DERIVE:-(\d+)", text)
+        derive_default = derive_match.group(1) if derive_match else "0"
+        derive_live = _env_flag("LIMEN_BEAT_DERIVE", derive_default) == "1"
+        for sensor_id, sensor in sensors.items():
+            if sensor_id in seen or "heartbeat" not in (sensor.get("source") or []):
+                continue
+            cadence_spec = sensor.get("cadence")
+            if cadence_spec is None:
+                continue
+            if isinstance(cadence_spec, dict):
+                cadence_value = os.environ.get(str(cadence_spec.get("env") or ""), str(cadence_spec.get("default", "")))
+                cadence_default = cadence_spec.get("default")
+            else:
+                cadence_value = cadence_spec
+                cadence_default = cadence_spec
+            try:
+                cadence = int(cadence_value)
+            except (TypeError, ValueError):
+                try:
+                    cadence = int(cadence_default)
+                except (TypeError, ValueError):
+                    continue
+            if cadence <= 0:
+                continue
+            gate = sensor.get("gate")
+            gate_default = str(sensor.get("default", "1"))
+            sensor_gate_dormant = bool(gate and gate_default == "0")
+            seen.add(sensor_id)
+            out.append(
+                {
+                    "key": sensor_id,
+                    "name": sensor_id.upper().replace("-", "_").replace(".", "_"),
+                    "cadence": cadence,
+                    "role": str(sensor.get("title") or f"{sensor_id} sensor"),
+                    "dormant": (not derive_live) or sensor_gate_dormant,
+                    "registry_sensor": True,
+                    "gate": gate,
+                    "gate_default": gate_default,
+                    "bound_lever": (
+                        "LIMEN_BEAT_DERIVE=1" if not derive_live else (f"{gate}=1" if sensor_gate_dormant else None)
+                    ),
+                }
+            )
     return out
 
 
@@ -223,106 +278,235 @@ def _json_field_ts(path, *fields):
 # a wall-clock producer rather than their own C_ beat — and are carried through as first-class rungs.
 def _registry():
     return [
-        dict(key="sustain", rung="SUSTAIN", voice="tick", cadence_beats=1,
-             what="heartbeat daemon — the base tempo every voice rides on",
-             probe=lambda: _mtime(LOGS / "ticks.jsonl")),
-        dict(key="route", rung="ROUTE", voice="balance", cadence_key="BALANCE",
-             what="capacity-aware routing across the lanes",
-             probe=lambda: _mtime(LOGS / "route-health.json")),  # route.py stamps this every balance beat
-        dict(key="feed", rung="FEED", voice="feed", cadence_key="FEED",
-             what="mine + generate backlog (revenue-first)",
-             probe=lambda: _mtime(LOGS / "feed-health.json")),  # generate-backlog.py stamps this every feed beat
-        dict(key="merge", rung="MERGE", voice="merge", cadence_key="DRAIN",
-             claim_cadence=False,
-             gate_note="merge-drain runs inside the drain voice; merges remain policy-gated",
-             what="merge-ready assessment; CLEAN PRs ship",
-             probe=lambda: _last_log_ts(LOGS / "merge-drain.log")),
-        dict(key="heal", rung="HEAL", voice="heal", cadence_key="HEAL",
-             what="repair CI-red/conflict PRs; reconcile phantom dispatches",
-             probe=lambda: _mtime(LOGS / "dispatch-verify.json")),
-        dict(key="improve", rung="IMPROVE", voice="improve", interval_s=10 * 3600,
-             what="learn lane productivity → routing weights (producer)",
-             probe=lambda: _json_field_ts(LOGS / "self-improve-proposal.json", "generated_at", "timestamp")
-                           or _mtime(LOGS / "self-improve-proposal.json")),
-        dict(key="preserve", rung="PRESERVE", voice="backup", cadence_key="BACKUP",
-             what="copy irreplaceable → Archive4T; reclaim regenerable caches",
-             probe=lambda: _mtime(LOGS / "library-levers.json") or _mtime(LOGS / "capture-log.jsonl")),
-        dict(key="converge", rung="CONVERGE", voice="corpus", cadence_key="CORPUS",
-             gate="LIMEN_CORPUS_CONVERGE", gate_default="0", hold=True, bound_lever="LIMEN_CORPUS_CONVERGE=1",
-             what="distill his words toward THE ONE (the 'back again')",
-             probe=lambda: _mtime(LOGS / "corpus-converge-state.json")),
+        dict(
+            key="sustain",
+            rung="SUSTAIN",
+            voice="tick",
+            cadence_beats=1,
+            what="heartbeat daemon — the base tempo every voice rides on",
+            probe=lambda: _mtime(LOGS / "ticks.jsonl"),
+        ),
+        dict(
+            key="route",
+            rung="ROUTE",
+            voice="balance",
+            cadence_key="BALANCE",
+            what="capacity-aware routing across the lanes",
+            probe=lambda: _mtime(LOGS / "route-health.json"),
+        ),  # route.py stamps this every balance beat
+        dict(
+            key="feed",
+            rung="FEED",
+            voice="feed",
+            cadence_key="FEED",
+            what="mine + generate backlog (revenue-first)",
+            probe=lambda: _mtime(LOGS / "feed-health.json"),
+        ),  # generate-backlog.py stamps this every feed beat
+        dict(
+            key="merge",
+            rung="MERGE",
+            voice="merge",
+            cadence_key="DRAIN",
+            claim_cadence=False,
+            gate_note="merge-drain runs inside the drain voice; merges remain policy-gated",
+            what="merge-ready assessment; CLEAN PRs ship",
+            probe=lambda: _last_log_ts(LOGS / "merge-drain.log"),
+        ),
+        dict(
+            key="heal",
+            rung="HEAL",
+            voice="heal",
+            cadence_key="HEAL",
+            what="repair CI-red/conflict PRs; reconcile phantom dispatches",
+            probe=lambda: _mtime(LOGS / "dispatch-verify.json"),
+        ),
+        dict(
+            key="improve",
+            rung="IMPROVE",
+            voice="improve",
+            interval_s=10 * 3600,
+            what="learn lane productivity → routing weights (producer)",
+            probe=lambda: (
+                _json_field_ts(LOGS / "self-improve-proposal.json", "generated_at", "timestamp")
+                or _mtime(LOGS / "self-improve-proposal.json")
+            ),
+        ),
+        dict(
+            key="preserve",
+            rung="PRESERVE",
+            voice="backup",
+            cadence_key="BACKUP",
+            what="copy irreplaceable → Archive4T; reclaim regenerable caches",
+            probe=lambda: _mtime(LOGS / "library-levers.json") or _mtime(LOGS / "capture-log.jsonl"),
+        ),
+        dict(
+            key="converge",
+            rung="CONVERGE",
+            voice="corpus",
+            cadence_key="CORPUS",
+            gate="LIMEN_CORPUS_CONVERGE",
+            gate_default="0",
+            hold=True,
+            bound_lever="LIMEN_CORPUS_CONVERGE=1",
+            what="distill his words toward THE ONE (the 'back again')",
+            probe=lambda: _mtime(LOGS / "corpus-converge-state.json"),
+        ),
         # MAIL: gate on a REAL capability signal (app-password materialized OR ledger shows a real
         # archive), NOT the superseded GMAIL_OAUTH_OP_REF env ref (nobody set it → could never go
         # green). The organ sweeps + rebuilds the ledger keylessly every beat, so with the capability
         # live it is judged on its (fresh) voice-stamp; without it, the bulk archive is a hand-lever,
         # so it reads 'gated' with that lever (residual, not an intended hold), never forced green.
-        dict(key="mail", rung="MAIL", voice="mail", cadence_key="MAIL",
-             capability=_mail_capability, hold=False,
-             what="sweep inbound (flag/archive) + rebuild obligations ledger",
-             probe=lambda: _mtime(LOGS / "obligations-view.json")),
-        dict(key="vigilia", rung="VIGILIA", voice="vigilia", cadence_beats=1,
-             gate="LIMEN_VIGILIA", gate_default="1",
-             what="autonomic self-keeping: VITALS (don't crash) · CONTINUITY (don't forget) · INTEGRITY (don't corrupt)",
-             probe=lambda: _json_field_ts(LOGS / "vigilia" / "status.json", "ts")),
-        dict(key="nomenclator", rung="NOMENCLATOR", voice="nomenclator", cadence_key="NOMENCLATOR",
-             gate="LIMEN_NOMENCLATOR", gate_default="0", hold=True, bound_lever="LIMEN_NOMENCLATOR=1",
-             what="INDEX·NOMINVM — hold the roll of names to the canon (nota)",
-             probe=lambda: _mtime(LOGS / "nomenclator.json")),
-        dict(key="evocator", rung="EVOCATOR", voice="evocator", cadence_key="EVOCATOR",
-             what="the summoner — keep canonical truths present in every channel (FLAME/corpus/memory)",
-             probe=lambda: _mtime(LOGS / "evocator.json")),
-        dict(key="positioning", rung="POSITIONING", voice="positioning", cadence_key="POSITIONING",
-             gate="LIMEN_POSITIONING", gate_default="0", hold=True, bound_lever="L-POSITIONING-ACTIVATE",
-             what="refresh inbound-magnet surfaces (form/operation pages + front door + discoverability)",
-             probe=lambda: _mtime(ROOT / "docs" / "positioning" / "_frontdoor.md")),
-        dict(key="health", rung="HEALTH", voice="health", cadence_key="HEALTH",
-             what="personal health office — chart digest + visit-prep + chase open clinical loops (PII local)",
-             probe=lambda: _mtime(LOGS / "health-organ-state.json")),
-        dict(key="life", rung="LIFE", voice="life", cadence_key="LIFE",
-             what="digital-life office — accounts/assets + subscription purge clock (PII local)",
-             probe=lambda: _mtime(LOGS / "life-organ-state.json")),
-        dict(key="governance", rung="GOVERNANCE", voice="governance", cadence_key="GOVERNANCE",
-             gate="LIMEN_GOVERNANCE", gate_default="1",
-             what="cursus honorum validator + governance standing; aerarium office",
-             probe=lambda: _mtime(LOGS / "governance-organ-state.json")),
-        dict(key="pubpolicy", rung="PUBPOLICY", voice="pubpolicy", cadence_key="PUBPOLICY",
-             gate="LIMEN_PUBPOLICY", gate_default="1",
-             what="content-disposition engine: (repo visibility x content class) -> one disposition; owner-scoped redactor",
-             probe=lambda: _mtime(LOGS / "publication-policy-state.json")),
-        dict(key="cvstos", rung="CVSTOS", voice="cvstos", cadence_key="CVSTOS",
-             gate="LIMEN_CVSTOS", gate_default="1",
-             what="keeper of the host — chat-app/local debt census + factory invariant (nothing truly on PATH/local) + reaper proprioception",
-             probe=lambda: _mtime(LOGS / "cvstos-organ-state.json")),
-        dict(key="vvltvs", rung="VVLTVS", voice="vvltvs", cadence_key="VVLTVS",
-             gate="LIMEN_VVLTVS", gate_default="1",
-             what="the countenance — verify the public face reflects the live SSOT (profile/portfolio drift) + the contribution-mix radar (the review-% tell)",
-             probe=lambda: _mtime(LOGS / "vvltvs-organ-state.json")),
+        dict(
+            key="mail",
+            rung="MAIL",
+            voice="mail",
+            cadence_key="MAIL",
+            capability=_mail_capability,
+            hold=False,
+            what="sweep inbound (flag/archive) + rebuild obligations ledger",
+            probe=lambda: _mtime(LOGS / "obligations-view.json"),
+        ),
+        dict(
+            key="vigilia",
+            rung="VIGILIA",
+            voice="vigilia",
+            cadence_beats=1,
+            gate="LIMEN_VIGILIA",
+            gate_default="1",
+            what="autonomic self-keeping: VITALS (don't crash) · CONTINUITY (don't forget) · INTEGRITY (don't corrupt)",
+            probe=lambda: _json_field_ts(LOGS / "vigilia" / "status.json", "ts"),
+        ),
+        dict(
+            key="nomenclator",
+            rung="NOMENCLATOR",
+            voice="nomenclator",
+            cadence_key="NOMENCLATOR",
+            gate="LIMEN_NOMENCLATOR",
+            gate_default="0",
+            hold=True,
+            bound_lever="LIMEN_NOMENCLATOR=1",
+            what="INDEX·NOMINVM — hold the roll of names to the canon (nota)",
+            probe=lambda: _mtime(LOGS / "nomenclator.json"),
+        ),
+        dict(
+            key="evocator",
+            rung="EVOCATOR",
+            voice="evocator",
+            cadence_key="EVOCATOR",
+            what="the summoner — keep canonical truths present in every channel (FLAME/corpus/memory)",
+            probe=lambda: _mtime(LOGS / "evocator.json"),
+        ),
+        dict(
+            key="positioning",
+            rung="POSITIONING",
+            voice="positioning",
+            cadence_key="POSITIONING",
+            gate="LIMEN_POSITIONING",
+            gate_default="0",
+            hold=True,
+            bound_lever="L-POSITIONING-ACTIVATE",
+            what="refresh inbound-magnet surfaces (form/operation pages + front door + discoverability)",
+            probe=lambda: _mtime(ROOT / "docs" / "positioning" / "_frontdoor.md"),
+        ),
+        dict(
+            key="health",
+            rung="HEALTH",
+            voice="health",
+            cadence_key="HEALTH",
+            what="personal health office — chart digest + visit-prep + chase open clinical loops (PII local)",
+            probe=lambda: _mtime(LOGS / "health-organ-state.json"),
+        ),
+        dict(
+            key="life",
+            rung="LIFE",
+            voice="life",
+            cadence_key="LIFE",
+            what="digital-life office — accounts/assets + subscription purge clock (PII local)",
+            probe=lambda: _mtime(LOGS / "life-organ-state.json"),
+        ),
+        dict(
+            key="governance",
+            rung="GOVERNANCE",
+            voice="governance",
+            cadence_key="GOVERNANCE",
+            gate="LIMEN_GOVERNANCE",
+            gate_default="1",
+            what="cursus honorum validator + governance standing; aerarium office",
+            probe=lambda: _mtime(LOGS / "governance-organ-state.json"),
+        ),
+        dict(
+            key="pubpolicy",
+            rung="PUBPOLICY",
+            voice="pubpolicy",
+            cadence_key="PUBPOLICY",
+            gate="LIMEN_PUBPOLICY",
+            gate_default="1",
+            what="content-disposition engine: (repo visibility x content class) -> one disposition; owner-scoped redactor",
+            probe=lambda: _mtime(LOGS / "publication-policy-state.json"),
+        ),
+        dict(
+            key="cvstos",
+            rung="CVSTOS",
+            voice="cvstos",
+            cadence_key="CVSTOS",
+            gate="LIMEN_CVSTOS",
+            gate_default="1",
+            what="keeper of the host — chat-app/local debt census + factory invariant (nothing truly on PATH/local) + reaper proprioception",
+            probe=lambda: _mtime(LOGS / "cvstos-organ-state.json"),
+        ),
+        dict(
+            key="vvltvs",
+            rung="VVLTVS",
+            voice="vvltvs",
+            cadence_key="VVLTVS",
+            gate="LIMEN_VVLTVS",
+            gate_default="1",
+            what="the countenance — verify the public face reflects the live SSOT (profile/portfolio drift) + the contribution-mix radar (the review-% tell)",
+            probe=lambda: _mtime(LOGS / "vvltvs-organ-state.json"),
+        ),
         # no cadence_key: an always-on pre-lock preflight (like heal-board), not a due_voice beat —
         # so it claims no cadence and never trips the absent-from-heartbeat drift check; green when
         # its per-beat state stamp is fresh.
-        dict(key="tabularius", rung="TABVLARIVS", voice="tabularius",
-             gate="LIMEN_TABVLARIVS", gate_default="1",
-             what="the record-keeper — sole writer of the board: drain the lock-free ticket inbox → fold onto tasks.yaml → seal (single-writer principle over the SSOT)",
-             probe=lambda: _mtime(LOGS / "tabularius-organ-state.json")),
+        dict(
+            key="tabularius",
+            rung="TABVLARIVS",
+            voice="tabularius",
+            gate="LIMEN_TABVLARIVS",
+            gate_default="1",
+            what="the record-keeper — sole writer of the board: drain the lock-free ticket inbox → fold onto tasks.yaml → seal (single-writer principle over the SSOT)",
+            probe=lambda: _mtime(LOGS / "tabularius-organ-state.json"),
+        ),
         # no cadence_key: runs as a metabolize.sh pre-beat check (section 0h), not a
         # timed heartbeat voice — so it claims no cadence and never trips the absent-
         # from-heartbeat drift check; green when its per-beat artifact is fresh.
-        dict(key="continuity", voice="continuity",
-             what="per-lane dispatch continuity (no silent lane while queue+budget exist)",
-             probe=lambda: _json_field_ts(LOGS / "dispatch-continuity.json", "generated")),
+        dict(
+            key="continuity",
+            voice="continuity",
+            what="per-lane dispatch continuity (no silent lane while queue+budget exist)",
+            probe=lambda: _json_field_ts(LOGS / "dispatch-continuity.json", "generated"),
+        ),
         # no cadence_key: routine-freshness-audit runs inside metabolize.sh step 0e (not a standalone
         # heartbeat voice), so it claims no cadence and never trips the absent-from-heartbeat drift
         # check; green when its per-beat state stamp (logs/routine-freshness.json) is fresh.
-        dict(key="routines", rung="ROUTINES", voice="routines",
-             gate="LIMEN_ROUTINE_FRESHNESS", gate_default="1",
-             what="cloud-routine delivery freshness (13 routines; firing must equal delivering)",
-             probe=lambda: _json_field_ts(LOGS / "routine-freshness.json", "generated")),
+        dict(
+            key="routines",
+            rung="ROUTINES",
+            voice="routines",
+            gate="LIMEN_ROUTINE_FRESHNESS",
+            gate_default="1",
+            what="cloud-routine delivery freshness (13 routines; firing must equal delivering)",
+            probe=lambda: _json_field_ts(LOGS / "routine-freshness.json", "generated"),
+        ),
         # no cadence_key: session-walk-census runs inside metabolize.sh step 0j; green when its
         # per-beat census stamp is fresh.
-        dict(key="session-walk", voice="session-walk",
-             gate="LIMEN_SESSION_WALK", gate_default="1",
-             what="full-horizon walk census of BOTH vendor session estates (residue self-drains)",
-             probe=lambda: _json_field_ts(LOGS / "session-walk-census.json", "generated")),
+        dict(
+            key="session-walk",
+            voice="session-walk",
+            gate="LIMEN_SESSION_WALK",
+            gate_default="1",
+            what="full-horizon walk census of BOTH vendor session estates (residue self-drains)",
+            probe=lambda: _json_field_ts(LOGS / "session-walk-census.json", "generated"),
+        ),
     ]
 
 
@@ -351,15 +535,25 @@ def _doors(text):
     for d in discovered:
         if d["key"] in claimed:
             continue
-        rungs.append(dict(
-            key=d["key"], rung=d["name"], voice=d["key"], cadence_key=d["name"],
-            what=d["role"] or f"{d['key']} beat", probe=lambda: None,
-            _dormant=bool(d.get("dormant")),
-            # a beat the heartbeat gates OFF by default (e.g. AVTOPOIESIS) is an INTENDED hold whose
-            # bound lever is its own knob — surfaced so a deliberate HOLD never reads as a broken probe
-            bound_lever=(f"LIMEN_{d['name']}=1" if d.get("dormant") else None),
-            hold=bool(d.get("dormant")),
-            gate_note="gated OFF by default" if d.get("dormant") else ""))
+        rungs.append(
+            dict(
+                key=d["key"],
+                rung=d["name"],
+                voice=d["key"],
+                cadence_key=None if d.get("registry_sensor") else d["name"],
+                cadence_beats=d["cadence"] if d.get("registry_sensor") else None,
+                what=d["role"] or f"{d['key']} beat",
+                probe=lambda: None,
+                _dormant=bool(d.get("dormant")),
+                gate=d.get("gate"),
+                gate_default=d.get("gate_default"),
+                # a beat the heartbeat gates OFF by default (e.g. AVTOPOIESIS) is an INTENDED hold whose
+                # bound lever is its own knob — surfaced so a deliberate HOLD never reads as a broken probe
+                bound_lever=d.get("bound_lever") or (f"LIMEN_{d['name']}=1" if d.get("dormant") else None),
+                hold=bool(d.get("dormant")),
+                gate_note="gated OFF by default" if d.get("dormant") else "",
+            )
+        )
     return rungs
 
 
@@ -396,7 +590,7 @@ def build():
             gated = (val == "") if o.get("gate_truthy_nonempty") else (val != "1")
         if gated:
             hold_vs_residual = _is_hold(o)
-            if not bound_lever and o.get("gate"):   # default re-enable lever = flip the knob on
+            if not bound_lever and o.get("gate"):  # default re-enable lever = flip the knob on
                 bound_lever = f"{o['gate']}=1"
 
         # SELF-PROTECTING INVARIANT: a gate whose DEPLOYED value disagrees with its declared
@@ -406,11 +600,16 @@ def build():
         if o.get("gate") and gd is not None:
             deployed = _env_flag(o["gate"], gd)
             if deployed != gd:
-                drift.append({
-                    "key": o["key"], "rung": o["rung"], "gate": o["gate"],
-                    "gate_default": gd, "deployed": deployed,
-                    "dark_disabled": (gd == "1" and deployed != "1"),
-                })
+                drift.append(
+                    {
+                        "key": o["key"],
+                        "rung": o["rung"],
+                        "gate": o["gate"],
+                        "gate_default": gd,
+                        "deployed": deployed,
+                        "dark_disabled": (gd == "1" and deployed != "1"),
+                    }
+                )
 
         # best signal: voice-stamp (ground truth) else artifact probe
         src = "voice-stamp"
@@ -434,26 +633,32 @@ def build():
             status = "stale"
         else:
             status = "down"
-        if o.get("_absent"):       # ladder names a beat the heartbeat no longer declares → loud, not silent
+        if o.get("_absent"):  # ladder names a beat the heartbeat no longer declares → loud, not silent
             status = "down"
 
         note = o.get("gate_note", "")
-        if gated:                  # make the tick honest: name the KIND of gate + its bound lever
+        if gated:  # make the tick honest: name the KIND of gate + its bound lever
             kind = "intended HOLD" if hold_vs_residual else "residual (capability)"
             bits = [kind] + ([f"lever {bound_lever}"] if bound_lever else []) + ([note] if note else [])
             note = " · ".join(bits)
 
-        organs.append({
-            "key": o["key"], "rung": o["rung"], "what": o["what"],
-            "voice": o["voice"], "cadence": cadence_desc,
-            "status": status, "source": src,
-            "last_fired": datetime.fromtimestamp(ts).isoformat(timespec="seconds") if ts else None,
-            "age_h": round(age / 3600, 1) if age is not None else None,
-            "expected_h": round(expected / 3600, 1),
-            "note": note,
-            "bound_lever": bound_lever if gated else None,
-            "hold_vs_residual": hold_vs_residual,
-        })
+        organs.append(
+            {
+                "key": o["key"],
+                "rung": o["rung"],
+                "what": o["what"],
+                "voice": o["voice"],
+                "cadence": cadence_desc,
+                "status": status,
+                "source": src,
+                "last_fired": datetime.fromtimestamp(ts).isoformat(timespec="seconds") if ts else None,
+                "age_h": round(age / 3600, 1) if age is not None else None,
+                "expected_h": round(expected / 3600, 1),
+                "note": note,
+                "bound_lever": bound_lever if gated else None,
+                "hold_vs_residual": hold_vs_residual,
+            }
+        )
 
     counts = {}
     for o in organs:
@@ -470,10 +675,8 @@ def build():
     }
 
 
-_DOT = {"green": "#2ecc71", "stale": "#f1c40f", "down": "#e74c3c",
-        "gated": "#8a93a6", "unknown": "#6e7681"}
-_LABEL = {"green": "live", "stale": "stale", "down": "DOWN",
-          "gated": "gated (intentional)", "unknown": "no signal yet"}
+_DOT = {"green": "#2ecc71", "stale": "#f1c40f", "down": "#e74c3c", "gated": "#8a93a6", "unknown": "#6e7681"}
+_LABEL = {"green": "live", "stale": "stale", "down": "DOWN", "gated": "gated (intentional)", "unknown": "no signal yet"}
 
 
 def _esc(s):
@@ -490,11 +693,11 @@ def render_html(v):
         note = f' · <span class="note">{_esc(o["note"])}</span>' if o["note"] else ""
         rows.append(f"""
         <tr>
-          <td><span class="dot" style="background:{color}"></span><b>{_esc(o['rung'])}</b>
-              <div class="what">{_esc(o['what'])}</div></td>
-          <td class="cad">{_esc(o['cadence'])}{note}</td>
+          <td><span class="dot" style="background:{color}"></span><b>{_esc(o["rung"])}</b>
+              <div class="what">{_esc(o["what"])}</div></td>
+          <td class="cad">{_esc(o["cadence"])}{note}</td>
           <td class="age">{_esc(age)}<div class="last">{_esc(last)}{src}</div></td>
-          <td><span class="badge" style="background:{color}">{_esc(_LABEL.get(o['status'], o['status']))}</span></td>
+          <td><span class="badge" style="background:{color}">{_esc(_LABEL.get(o["status"], o["status"]))}</span></td>
         </tr>""")
 
     s = v["summary"]
@@ -519,11 +722,11 @@ def render_html(v):
  .badge{{color:#06140c;font-weight:700;border-radius:5px;padding:2px 8px;font-size:12px}}
 </style></head><body><div class="wrap">
  <h1>LIMEN — organ health</h1>
- <div class="sub">proprioception · does each self-* rung actually fire? · updated {_esc(v['generated_at'])} · auto-refresh 30s</div>
+ <div class="sub">proprioception · does each self-* rung actually fire? · updated {_esc(v["generated_at"])} · auto-refresh 30s</div>
  <div class="card"><div class="big">{_esc(headline)}</div>
-   <div class="sub" style="margin:0 0 8px">{_esc(' · '.join(sub_bits))}</div></div>
- <div class="card"><table><tbody>{''.join(rows)}</tbody></table></div>
- <div class="sub">green/stale/down derived per-organ against its OWN cadence (worst-case beat = {v['tempo']['max_s']}s).
+   <div class="sub" style="margin:0 0 8px">{_esc(" · ".join(sub_bits))}</div></div>
+ <div class="card"><table><tbody>{"".join(rows)}</tbody></table></div>
+ <div class="sub">green/stale/down derived per-organ against its OWN cadence (worst-case beat = {v["tempo"]["max_s"]}s).
    Ground-truth source is logs/.voice/&lt;voice&gt; once heartbeat voice-stamping is live; until then,
    organs fall back to their output artifact's freshness (shown as "(artifact)").</div>
 </div></body></html>"""
@@ -547,12 +750,16 @@ def main(argv=None):
             continue
     s = view["summary"]
     detail = " ".join(f"{o['rung']}:{o['status']}" for o in view["organs"])
-    print(f"organ-health: {s.get('live', 0)}/{s.get('total', 0)} live -> "
-          f"{', '.join(wrote) or 'logs/organ-health.json only'}\n  {detail}")
+    print(
+        f"organ-health: {s.get('live', 0)}/{s.get('total', 0)} live -> "
+        f"{', '.join(wrote) or 'logs/organ-health.json only'}\n  {detail}"
+    )
     dark = view["gate_integrity"]["dark_disabled"]
-    if dark:                       # a default-ON safety organ deployed OFF — never let it pass silently
-        print("  ⚠ GATE-DRIFT (dark-disabled safety organ): "
-              + ", ".join(f"{d['rung']} {d['gate']}={d['deployed']} (default {d['gate_default']})" for d in dark))
+    if dark:  # a default-ON safety organ deployed OFF — never let it pass silently
+        print(
+            "  ⚠ GATE-DRIFT (dark-disabled safety organ): "
+            + ", ".join(f"{d['rung']} {d['gate']}={d['deployed']} (default {d['gate_default']})" for d in dark)
+        )
     return 1 if (strict and dark) else 0
 
 
