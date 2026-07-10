@@ -520,7 +520,7 @@ def test_capacity_census_uses_current_live_meter_over_stale_board_spend(
                         "remaining": 20_000_000,
                         "health": "ok",
                         "headroom_pct": 40,
-                    }
+                    },
                 },
             }
         )
