@@ -74,6 +74,7 @@ LANE_META: dict[str, dict] = {
     "claude": {"issue": "—", "hand": "none — owned by the Rung-0 credential-race self-heal"},
     "codex/opencode (openai)": {"issue": "—", "hand": "none — codex authenticates via ChatGPT OAuth"},
     "opencode (openrouter)": {"issue": "—", "hand": "none — free model / own auth"},
+    "vox (elevenlabs voice clone)": {"issue": "#898", "hand": "his — vendor MINT (create ElevenLabs API key); parked enabled=False until minted (vox mock is default)"},
 }
 
 # CI / runtime secrets — NOT hydration lanes; their home is GitHub Actions / GCP Secret Manager /

@@ -53,6 +53,32 @@ def _format_escalation(step: dict) -> str | None:
     return None  # fatal has no echo — it propagates
 
 
+def _load_env_file(path: Path) -> None:
+    """Load a shell-style env file (``KEY=VALUE`` / ``export KEY=VALUE``) into os.environ, mirroring
+    ``set -a; . <file>``. A sensor (creds-hydrate) may WRITE this file, and later sensors need those
+    values in their environment — the ordering metabolize.sh hard-codes as a ``. ~/.limen.env`` source
+    right after block 0a. Honoring it here (via the registry's ``reload_env`` field) makes that
+    sequencing constraint declared data rather than shell tribal knowledge. Fail-open if absent."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :]
+        if "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        key, val = key.strip(), val.strip()
+        if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
+            val = val[1:-1]
+        if key:
+            os.environ[key] = val
+
+
 def iter_source(sensors: dict, source: str):
     """Sensors that run in the given beat source, in registry (declaration) order."""
     for sid, s in sensors.items():
@@ -87,6 +113,14 @@ def run(source: str, *, dry_run: bool = False, registry: Path = REGISTRY) -> int
                 if step.get("severity") == "fatal":
                     return rc
                 worst = worst or 0  # advisory/silent never fail the beat
+        # reload_env — after this sensor's steps, re-source an env file it may have written so the
+        # REST of the loop inherits it (the creds-hydrate → ~/.limen.env ordering, now registry data).
+        reload = s.get("reload_env")
+        if reload:
+            if dry_run:
+                print(f"    · reload_env {reload}")
+            else:
+                _load_env_file(Path(os.path.expanduser(str(reload))))
     return worst
 
 

@@ -275,6 +275,23 @@ DEFAULT_MAP: list[dict] = [
         "env": ["IANVA_BEARER_TOKEN"],
         "enabled": False,
     },
+    {
+        # VOX program (organvm/vox) — the ElevenLabs API key vox's real clone/synth engine reads as
+        # ELEVEN_API_KEY when VOX_ENGINE != mock. Registered here so the credential's INFORMATION has its
+        # canonical home (env-var name + op:// provenance); VOX-4's deliverable IS this registration, not a
+        # login step. enabled=False by design: vox + in-my-head ship VOX_ENGINE=mock by default, so nothing
+        # in the running fleet needs the key today — parking it keeps --verify from reddening the beat over
+        # an un-minted vendor key (same treatment as the openai/openrouter/claude/ianva parked lanes). The
+        # one remaining atom is a genuine vendor MINT the organ cannot perform (create the ElevenLabs
+        # account + API key) — homed as credential-labelled issue #898 + the Wall index #320, never recited
+        # in chat. Activation: mint the key into `op://Personal/ElevenLabs API Key`, flip enabled=True, and
+        # add a --verify probe against ElevenLabs (GET https://api.elevenlabs.io/v1/user, `xi-api-key`
+        # header — extend the probe auth modes if needed; today's are query/bearer). See spec/vox-program.md.
+        "lane": "vox (elevenlabs voice clone)",
+        "ref": "op://Personal/ElevenLabs API Key/credential",
+        "env": ["ELEVEN_API_KEY"],
+        "enabled": False,
+    },
 ]
 
 

@@ -1962,6 +1962,13 @@ parameters:
     owner: tabularius
     note: "Override for the crash-report scan root used by scripts/check-fork-safety.py (also settable via its --reports-dir flag). Empty (the default) scans the macOS default ~/Library/Logs/DiagnosticReports/ plus its Retired/ rotation subdir. Set to a temp directory in tests to inject fabricated .ips reports deterministically; never set on the live host."
 
+  LIMEN_BEAT_DERIVE:
+    default: "0"               # OFF (DARK) — hand-wired beat blocks stay live; 1 = derive from sensors.yaml
+    env: LIMEN_BEAT_DERIVE
+    self_update: none
+    owner: governance
+    note: "Mode selector for the beat's continuous-runtime sensor loop (the IF-SENSOR-REGISTRY ideal form). When 0 (default) metabolize.sh runs the hand-wired `── 0x ──` blocks. When 1 it DERIVES the whole loop from institutio/governance/sensors.yaml via one call to scripts/beat-sensors.py --run --source metabolize — adding a sensor becomes one registry entry, not a shell edit in three places. Dark-first (observable-before-autonomous, the LIMEN_MAIN_GREEN_APPLY pattern): the derive path is proven byte-equivalent on a real beat before Branch-1b flips this default to 1 and deletes the legacy blocks. Parity held by scripts/check-sensors.py (its D-check accepts the derive-runner call in place of the literal gate strings)."
+
   LIMEN_MAIN_GREEN_CHECK:
     default: "1"               # ON — detect a RED main trunk each beat (§0g3)
     env: LIMEN_MAIN_GREEN_CHECK

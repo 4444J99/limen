@@ -60,6 +60,25 @@ def beat_source_text() -> str:
     return "\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in BEAT_SOURCES if p.exists())
 
 
+def derived_sources(shell: str) -> set[str]:
+    """Beat sources whose sensor loop is DERIVED from the registry — the shell invokes
+    ``beat-sensors.py --run [--source <s>]`` instead of hand-wiring each ``${LIMEN_*}`` gate. Under
+    the derive path the individual gate strings correctly vanish from the shell, so D-parity is
+    satisfied by the runner call instead of a literal gate match. A bare ``--run`` is the metabolize
+    source. This keeps the check green across the migration (dark → default-on) and after the
+    legacy blocks are deleted."""
+    # `["']?` tolerates the closing quote in the real call `"$LIMEN_ROOT/scripts/beat-sensors.py" --run`.
+    derived: set[str] = set()
+    if not re.search(r"""beat-sensors\.py["']?\s+--run""", shell):
+        return derived
+    for src in ("metabolize", "heartbeat"):
+        if re.search(rf"""beat-sensors\.py["']?\s+--run[^\n]*--source\s+{src}""", shell):
+            derived.add(src)
+    if re.search(r"""beat-sensors\.py["']?\s+--run(?![^\n]*--source)""", shell):  # bare --run == metabolize
+        derived.add("metabolize")
+    return derived
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="SENSORS registry drift-predicate")
     ap.add_argument("--registry", default=None, help="registry path override (for tests)")
@@ -79,6 +98,7 @@ def main(argv=None) -> int:
 
     params = declared_params()
     shell = beat_source_text()
+    derived = derived_sources(shell)
 
     for sid, s in sensors.items():
         # A schema
@@ -105,9 +125,12 @@ def main(argv=None) -> int:
         if gate is not None and gate not in params:
             fail("C", f"{sid}: gate {gate} not declared in parameters.yaml")
 
-        # D shell parity — the gate the registry names must exist in a beat source
+        # D shell parity — the registry names no phantom sensor: either the gate literal appears in a
+        # beat source (hand-wired path), OR every source it runs in DERIVES the loop via beat-sensors.py.
         if gate is not None and gate not in shell:
-            fail("D", f"{sid}: gate {gate} not found in any beat source (phantom sensor?)")
+            srcs = s.get("source") or []
+            if not (srcs and all(src in derived for src in srcs)):
+                fail("D", f"{sid}: gate {gate} not found in any beat source (phantom sensor?)")
 
     if _failures:
         print("SENSORS DRIFT — registry does not match code/params/beat:")
