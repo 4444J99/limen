@@ -15,23 +15,23 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 15
+      spent: 10
       per_agent:
         jules: 0
         gemini: 0
-        codex: 2
+        codex: 0
         opencode: 5
         agy: 1
-        claude: 3
+        claude: 0
         github_actions: 1
         ollama: 3
       per_agent_reset:
         jules: '2026-07-10T12:42:49.830676+00:00'
         gemini: '2026-07-10T12:42:49.830676+00:00'
-        codex: '2026-07-10T10:21:04.571425+00:00'
+        codex: '2026-07-10T15:27:09.726648+00:00'
         opencode: '2026-07-10T12:42:49.830676+00:00'
         agy: '2026-07-10T12:42:49.830676+00:00'
-        claude: '2026-07-10T10:21:04.571425+00:00'
+        claude: '2026-07-10T15:27:09.726648+00:00'
   agents:
     opencode:
       status: idle
