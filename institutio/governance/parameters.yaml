@@ -1829,6 +1829,30 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Path to the GITVS estate registry (the desired-state resource graph). Overridable so scripts/tests/gitvs.test.sh can point the parity predicate at drift fixtures; production reads the committed institutio/github/estate.yaml."
+  LIMEN_BEAT_GITVS:
+    default: 8
+    env: LIMEN_BEAT_GITVS
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N beats) of the GITVS custodian voice C_GITVS in heartbeat-loop.sh — the hygiene tier (network-touching janitor; must not contend with the tight drain cadence)."
+  LIMEN_GITVS:
+    default: 1
+    env: LIMEN_GITVS
+    self_update: none
+    owner: gitvs
+    note: "Master on/off for the GITVS reconcile voice. 1 (default) runs the DRY reconcile report each cadence (observable-before-autonomous); 0 disables the voice. Mutation is a SEPARATE gate (LIMEN_GITVS_APPLY)."
+  LIMEN_GITVS_APPLY:
+    default: 0
+    env: LIMEN_GITVS_APPLY
+    self_update: none
+    owner: gitvs
+    note: "Arms the GITVS reconcile effector: 0 (default) reports the plan only; 1 invokes the delegate/reap organs with --apply. Ships DARK — even armed, each reap keeps its OWN dark-arming (e.g. LIMEN_REMOTE_REAP_APPLY), and setup-rulesets is never auto-run (his-hand #257)."
+  LIMEN_GITVS_TIMEOUT:
+    default: 120
+    env: LIMEN_GITVS_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Per-run timeout (seconds) for the GITVS reconcile voice and for each delegate/reap organ it dispatches (scripts/gitvs.py::_run_effector). Fail-open: a delegate that overruns is killed and the loop continues."
   LIMEN_REAP_VERIFY_REMOTE:
     default: "1"
     env: LIMEN_REAP_VERIFY_REMOTE

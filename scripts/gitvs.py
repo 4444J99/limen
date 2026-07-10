@@ -155,6 +155,7 @@ def _local_branch_reasons() -> dict[str, int]:
         import importlib.util
         spec = importlib.util.spec_from_file_location("reap_branches", str(SCRIPT_DIR / "reap-branches.py"))
         rb = importlib.util.module_from_spec(spec)
+        sys.modules["reap_branches"] = rb  # register before exec so @dataclass introspection resolves (py3.14)
         spec.loader.exec_module(rb)
         dref = rb.default_ref()
         dname = rb.default_name(dref)
@@ -449,6 +450,108 @@ def _verdict(fails: list[str], cites: list[str], skips: list[str], mode: str) ->
     return 0
 
 
+# ── the Effector: reconcile() — the third projection of the loop ────────────────────────────────
+# setup-rulesets.py is the ONE delegate GITVS must never auto-run: arming branch protection fleet-wide
+# is his-hand (#257 / L-BRANCH-PROTECTION), and blanket protection would block the machine board writes.
+# Its drift is CITED to the lever, never enacted by the beat. Everything else auto-runs dry-safe.
+HUMAN_GATED_DELEGATES = {"scripts/setup-rulesets.py"}
+
+
+def _lever_index() -> dict[str, dict]:
+    """id → lever object (his-hand-levers.json), so a file-atom is CITED with its issue — never a value."""
+    try:
+        data = json.loads((ROOT / "his-hand-levers.json").read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    levers = data.get("levers", data) if isinstance(data, dict) else data
+    return {
+        str(lv["id"]): lv
+        for lv in (levers if isinstance(levers, list) else [])
+        if isinstance(lv, dict) and lv.get("id")
+    }
+
+
+def _cite(target: str, levers: dict[str, dict]) -> str:
+    """Render a file-atom citation (lever id + issue if homed) — resolves id → object, never a value."""
+    lv = levers.get(target)
+    issue = lv.get("issue") if lv else None
+    if issue:
+        return f"{target} (#{issue}, owned)"
+    return f"{target} (owned)" if lv else f"{target} (cited)"
+
+
+def _run_effector(script: str, *, apply: bool) -> str:
+    """Invoke a delegate/reap organ. Each keeps its OWN arming (merge-policy guardrail, the reapers'
+    double-dark, env-gated issue mirrors) — GITVS only passes the global --apply through, NEVER forces
+    more and NEVER adds a self-merge path. Timeout-bounded, fail-open (a delegate crash never breaks
+    the loop); returns the delegate's last line for the beat log."""
+    path = ROOT / script
+    if not path.exists():
+        return f"MISSING {script}"
+    argv = ["python3", str(path)] + (["--apply"] if apply else [])
+    try:
+        r = subprocess.run(
+            argv, capture_output=True, text=True,
+            timeout=int(os.environ.get("LIMEN_GITVS_TIMEOUT", "120")),
+        )
+        tail = (r.stdout or r.stderr or "").strip().splitlines()
+        return (tail[-1] if tail else f"exit={r.returncode}")[:200]
+    except Exception as e:  # fail open — a delegate must never break the reconcile loop
+        return f"skipped ({str(e)[:80]})"
+
+
+def reconcile(estate: dict, *, apply: bool) -> int:
+    """The Effector — a GENERIC dispatcher (the mapping is DATA in estate.yaml, never a table here).
+    Walk each `status: active` resource type and route its declared effector to one of the three total
+    sinks: delegate (an existing compliant organ), reap (a native mutator behind its own dark-arming),
+    file-atom (CITE a lever — never recite a value). DRY by default (report the plan, mutate nothing) —
+    the observable-before-autonomous contract; --apply invokes the delegate/reap organs, each of which
+    still self-gates. Always exit 0: reconcile is an advisory effector, not the predicate (doctor owns
+    the drift verdict), and it must be fail-open in the beat."""
+    rts = estate.get("resource_types") or {}
+    levers = _lever_index()
+    acted: list[str] = []          # ran (apply) or planned (dry)
+    cited: list[str] = []
+    skipped: list[str] = []
+    for name, rt in rts.items():
+        if not isinstance(rt, dict) or rt.get("status") != "active":
+            continue
+        for tok in [t.strip() for t in str(rt.get("effector") or "").split("|") if t.strip()]:
+            if tok in EFFECTOR_LITERALS:
+                skipped.append(f"{name}: {tok} (human-obvious manual act)")
+                continue
+            if ":" not in tok:
+                skipped.append(f"{name}: malformed effector '{tok}'")
+                continue
+            kind, target = tok.split(":", 1)
+            target = target.strip()
+            if kind == "file-atom":
+                cited.append(f"{name} → {_cite(target, levers)}")
+            elif kind in ("delegate", "reap"):
+                if kind == "delegate" and target in HUMAN_GATED_DELEGATES:
+                    skipped.append(f"{name}: {target} is his-hand (#257) — cited to its lever, never auto-run")
+                    continue
+                if apply:
+                    acted.append(f"{name} {kind}:{target} → {_run_effector(target, apply=True)}")
+                else:
+                    note = "  (reap: still needs its own dark-arming to delete)" if kind == "reap" else ""
+                    acted.append(f"WOULD {kind}:{target} --apply{note}")
+            else:
+                skipped.append(f"{name}: unknown sink '{kind}'")
+
+    mode = "APPLY" if apply else "report (dry)"
+    print(f"[gitvs] reconcile ({mode}): {len(rts)} resource types → "
+          f"{len(acted)} effector(s) {'ran' if apply else 'planned'}, "
+          f"{len(cited)} file-atom(s) cited, {len(skipped)} skipped.")
+    for line in acted:
+        print(f"   {'✓' if apply else '·'} {line}")
+    for c in cited:
+        print(f"   ⚑ owed  {c}")
+    for s in skipped:
+        print(f"   ~ skip  {s}")
+    return 0
+
+
 # ── entry ────────────────────────────────────────────────────────────────────────────────────────
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="GITVS — the GitHub custodian: one resource graph, one loop.")
@@ -458,6 +561,9 @@ def main(argv: list[str] | None = None) -> int:
     pd = sub.add_parser("doctor", help="diff desired − observed; exit 0 ⟺ drift == ∅ (the Predicate)")
     pd.add_argument("--parity-only", action="store_true", help="class H only (deterministic, the PR gate)")
     pd.add_argument("--offline", action="store_true", help="det + offline-safe rungs; live rungs → SKIP")
+    prc = sub.add_parser("reconcile", help="drive drift → policy via the three effector sinks (the Effector)")
+    prc.add_argument("--apply", action="store_true", help="invoke the delegate/reap organs (each self-gates); default is a dry report")
+    prc.add_argument("--check", action="store_true", help="report-only alias (the metabolize sensor idiom); never mutates")
     args = ap.parse_args(argv)
 
     estate = load_estate()
@@ -476,6 +582,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "doctor":
         offline = bool(args.offline) or bool(os.environ.get("LIMEN_OFFLINE"))
         return doctor(estate, parity_only=bool(args.parity_only), offline=offline)
+
+    if args.cmd == "reconcile":
+        # --check is the report-only sensor idiom; --apply mutates. Report wins if both are given (safety).
+        return reconcile(estate, apply=bool(args.apply) and not bool(args.check))
 
     return 2
 

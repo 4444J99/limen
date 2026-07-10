@@ -111,6 +111,13 @@ organs:
     role: "One pane onto the seat — how the operator sees & steers."
     residual: "Renders the C-suite from this registry (officers + organs) + logs/vigilia/status.json, deriving the officer list from the seat (no hardcode). Build order #4 done 2026-06-25. Next: surface in web/app + overlay organ-health.json."
 
+  - name: gitvs
+    layer: governance
+    home: "limen/institutio/github/estate.yaml + scripts/gitvs.py (census/doctor/reconcile) | the GitHub-custodian organ"
+    status: building
+    role: "GitHub as ONE declarative resource graph under ONE closed loop (observe→diff→reconcile, drift=∅) — the single owner of the ~301-repo estate."
+    residual: "Spine shipped 2026-07-10: estate.yaml (the SSOT) + gitvs.py census/doctor (#900) + remote reaper (#901, double-dark). THIS chunk: the reconcile dispatcher (the three total effector sinks, ships dark) + beat voice C_GITVS + rank-14 ladder seat + levers L-LIMENBOT-INSTALL (#910) / L-BRANCH-PROTECTION (#257) + omega det/live rungs; remote_branch flipped active (its reaper landed). Auto-discovered by organ-health.py via the C_GITVS cadence decl. Next: live posture classes A–G in the beat; the §3 integrations pillar (harness CodeRabbit/Trunk/Renovate as $0 labor); the envisioned resource types (release/webhook/team/…) promoted row-by-row."
+
 # ============================ THE C-SUITE (officers) ============================
 # HIERARCHY.md rendered as data: which officer convenes which organs. Federation,
 # not fusion — organs stay themselves; this is the map the face renders from (no

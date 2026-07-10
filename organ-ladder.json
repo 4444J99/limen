@@ -215,6 +215,22 @@
       "micro": "Anthony's exit from ~$500/mo provider rent: qwen3:8b registered property, 122x measured Claude arbitrage, floor routing shipped dark until the gate arms it",
       "first_artifact": "weights/MANIFEST.json with the first digest-verified holding + the parity gate passing 8/8 on mechanical classes (both shipped 2026-07-09)",
       "note": "FIRST standalone-repo organ (organvm/manumissio, 3 PRs + 13 seeded issues + founding discussion at birth). limen keeps the operator's private data (organs/financial/*); the repo publishes the engine. Private pending explicit public flip (operator's call)."
+    },
+    {
+      "rank": 14,
+      "pillar": "governance",
+      "organ": "GITVS / GitHub Custodian",
+      "repo": "organvm/limen",
+      "home": "institutio/github/ + scripts/gitvs.py",
+      "maturity": 30,
+      "stage": "building",
+      "whose_hand": "mine (all ref/PR/issue/branch reconciliation is the organ's, dispatched through the three effector sinks); his only for the two irreducible levers — L-LIMENBOT-INSTALL (App birth, #910) + L-BRANCH-PROTECTION (arm rulesets, #257)",
+      "rival": "a platform-engineering / DevEx org (GitHub-EMU + Backstage + Renovate + a merge-queue bot)",
+      "domain_map": "Member=a GitHub Resource (repo/branch/PR/secret/App/integration); Mandate=a resource type to govern; Standing=doctor drift==∅; Standard=the parity + wiring-integrity predicate (gitvs.py doctor --parity-only exit 0); Governance=the three TOTAL effector sinks (delegate | file-atom | reap), reconcile ships dark",
+      "macro": "GitHub as ONE declarative resource graph under ONE closed loop — observe→diff→reconcile, invariant drift=∅; any operator holds their whole GitHub estate (owned resources + rented ecosystem apps) as DATA, not 115 scattered scripts",
+      "micro": "Anthony's ~301-repo organvm estate: estate.yaml the SSOT, the orphaned reap-branches finally beat-wired, the ~730 unresolved remote branches reapable (double-dark), the free ecosystem (CodeRabbit/Trunk/Renovate) to be harnessed as $0 labor (§3)",
+      "first_artifact": "institutio/github/estate.yaml + scripts/gitvs.py (census/doctor/reconcile): the read-only spine (#900) + remote reaper (#901) shipped 2026-07-10; the reconcile dispatcher + beat wiring this chunk",
+      "note": "Convergence, not rewrite: ~90% orchestration of the existing ~115 GitHub-touching scripts as pluggable effectors behind the reclaim-worktrees safety-gate model. Lives in limen (institutio/github/); the estate publishes the governing form. Naming: GITVS is a working handle — final name via nomenclator (INDEX·NOMINVM)."
     }
   ],
   "power_snapshot": {

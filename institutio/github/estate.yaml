@@ -88,9 +88,9 @@ resource_types:
     desired: ["reaped_when_landed_past_grace"]
     observe: "scripts/reap-branches.py::classify (remote refs)"
     effector: "reap:scripts/reap-remote-branches.py"
-    status: envisioned                     # ACTIVATES when the reaper lands (next chunk) — the wiring-integrity law
+    status: active                         # reaper landed (#901) → the wiring-integrity law now holds it
     owner: gitvs
-    note: "The ~730 unresolved orphaned remote branches; reaper (reap-remote-branches.py) not yet built, so this stays envisioned — parity would red-flag an active type whose effector script is absent. Ships DOUBLE-DARK (--apply AND LIMEN_REMOTE_REAP_APPLY=1) when it lands; remote deletes are not reflog-recoverable."
+    note: "The ~730 unresolved orphaned remote branches; the reaper (reap-remote-branches.py, #901) is live, so this is now active and the reconcile loop dispatches it. Ships DOUBLE-DARK (--apply AND LIMEN_REMOTE_REAP_APPLY=1) — remote deletes are not reflog-recoverable — so reconcile --apply plans it but the delete still needs its own dark-arming."
   local_branch:
     identity: derived
     desired: ["reaped_when_landed"]
