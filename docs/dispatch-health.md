@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-10T13:02:23+00:00`
+Generated: `2026-07-10T13:50:12+00:00`
 
 Status: `blocked`
 
@@ -34,14 +34,14 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `10`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-10T13:02:23.696419+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-10T13:50:13.012542+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
 - Async dry-run requested: `True`.
 - Async dry-run lanes: `auto`; max `10`.
 - Async dry-run ok: `True`; timed out `False`.
-- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 10 still running ; would launch 0 (local cap 10, local per-lane 8) -> []`.
+- Async dry-run summary: `-- async: reaped 0 dead ; harvested 0 ; 0 still running ; would launch 0 (local cap 10, local per-lane 8) -> []`.
 - Async skipped down lanes: `gemini, jules`.
   - `gemini`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `10`; headroom `0%`.
   - `jules`: usage health `exhausted`; signal `dispatch-count`; remaining `0` of `100`; headroom `0%`.
@@ -73,8 +73,8 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `e7d27ad314f17ef70179542349e25ad911ada89e`.
-- origin/main: `e7d27ad314f17ef70179542349e25ad911ada89e`.
+- HEAD: `c74ff59951fd40bd1ed189f2f4f736c478e5a757`.
+- origin/main: `c74ff59951fd40bd1ed189f2f4f736c478e5a757`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
 - Dirty entries: `0`.
 
