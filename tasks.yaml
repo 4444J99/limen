@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 431
+      spent: 433
       per_agent:
         jules: 116
         gemini: 12
-        codex: 15
+        codex: 17
         opencode: 121
         agy: 145
         claude: 18
@@ -104549,7 +104549,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104565,7 +104565,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T03:33:35.415832Z'
+  updated: '2026-07-10T03:36:42.813550Z'
   dispatch_log:
   - timestamp: '2026-07-07T13:58:48.378161Z'
     agent: codex
@@ -104601,6 +104601,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T03:36:42.813550Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-petasum-super-petasum-149
   title: rebase/resolve conflicts on organvm/petasum-super-petasum#149
   repo: organvm/petasum-super-petasum
@@ -109808,7 +109813,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -109825,7 +109830,7 @@ tasks:
     2026-07-05 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T03:33:35.415832Z'
+  updated: '2026-07-10T03:36:42.813550Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -109881,6 +109886,11 @@ tasks:
     status: open
     output: "recover: jules session 732697378538582644 is awaiting_user_feedback \u2192\
       \ reopened"
+  - timestamp: '2026-07-10T03:36:42.813550Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-session-meta-112
   title: rebase/resolve conflicts on organvm/session-meta#112
   repo: organvm/session-meta
