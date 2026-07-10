@@ -103,7 +103,9 @@ def test_opencode_bucket_reflects_verified_intake(monkeypatch, tmp_path):
                 "run_id": "run",
                 "status": "archived_private_intake",
                 "archive_status": "verified",
-                "private_manifest": {"path": ".limen-private/session-corpus/lifecycle/opencode-db-intake/run/manifest.json"},
+                "private_manifest": {
+                    "path": ".limen-private/session-corpus/lifecycle/opencode-db-intake/run/manifest.json"
+                },
             }
         )
         + "\n",
