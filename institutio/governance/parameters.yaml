@@ -1853,6 +1853,18 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Per-run timeout (seconds) for the GITVS reconcile voice and for each delegate/reap organ it dispatches (scripts/gitvs.py::_run_effector). Fail-open: a delegate that overruns is killed and the loop continues."
+  LIMEN_MARKETPLACE_APPLY:
+    default: 0
+    env: LIMEN_MARKETPLACE_APPLY
+    self_update: none
+    owner: gitvs
+    note: "DOUBLE-DARK arming for scripts/sync-marketplace-config.py: even with --apply, it opens a cross-repo config PR only when this is 1. Defaults 0 — a config PR touches OTHER repos (the fan-out), so arm it deliberately. The conductor's own configs live in-repo and need no push."
+  LIMEN_MARKETPLACE_MAX:
+    default: 20
+    env: LIMEN_MARKETPLACE_MAX
+    self_update: none
+    owner: gitvs
+    note: "Max repos scripts/sync-marketplace-config.py pushes a config PR to per run; the rest are taken next run (a bounded rotating fan-out, not a 301-repo stampede)."
   LIMEN_REAP_VERIFY_REMOTE:
     default: "1"
     env: LIMEN_REAP_VERIFY_REMOTE

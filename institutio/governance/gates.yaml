@@ -279,14 +279,19 @@ gates:
   # ── GitHub estate (GITVS — the GitHub custodian) ────────────────────────────
   gitvs-parity:
     command: "python3 scripts/gitvs.py doctor --offline --parity-only"
-    paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "scripts/setup-rulesets.py", "scripts/reap-branches.py"]
+    paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "scripts/setup-rulesets.py", "scripts/reap-branches.py", "scripts/sync-marketplace-config.py"]
     owner: gitvs
-    note: "The GitHub-estate registry's own drift predicate (deterministic class-H rung): schema, wiring-integrity (every status:active resource type is wired + its delegate/reap effector scripts exist — the sensor-without-effector law), required_checks name real .github/workflows jobs. Cheap + deterministic, so scoped: runs whenever its inputs change; the live A–G posture rungs run in the beat, never as a PR gate."
+    note: "The GitHub-estate registry's own drift predicate (deterministic class-H rung): schema, wiring-integrity (every status:active resource type + active integration is wired + its delegate/reap effector scripts exist — the sensor-without-effector law), required_checks name real .github/workflows jobs. Cheap + deterministic, so scoped: runs whenever its inputs change; the live A–G posture rungs run in the beat, never as a PR gate."
   gitvs-test:
     command: "bash scripts/tests/gitvs.test.sh"
     paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "scripts/tests/gitvs.test.sh"]
     owner: gitvs
     note: "Parity + drift fixtures for the GITVS predicate: an unwired active resource type, a bad required_check, and a missing effector script must each red the doctor; a clean estate must pass."
+  sync-marketplace-config-test:
+    command: "bash scripts/tests/sync-marketplace-config.test.sh"
+    paths: ["scripts/sync-marketplace-config.py", "scripts/tests/sync-marketplace-config.test.sh", "institutio/github/estate.yaml"]
+    owner: gitvs
+    note: "Safety regression for the GITVS config-push effector: the DOUBLE-DARK gate holds (--apply without LIMEN_MARKETPLACE_APPLY opens no PR), a missing conductor config source reddens, and the real estate's active integrations are all satisfied at the root."
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:

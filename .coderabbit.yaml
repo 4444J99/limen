@@ -1,0 +1,35 @@
+# .coderabbit.yaml — CodeRabbit AI-review config for organvm/limen (the GITVS conductor).
+#
+# Governed by institutio/github/estate.yaml → integrations.coderabbit (status: active). CodeRabbit is
+# free for public repos. This file is the conductor's live config AND the template scripts/sync-marketplace-
+# config.py fans out to the governed_public class. The app itself is already authorized on
+# organvm-i-theoria; extending the install to organvm is the one human atom (L-INTEGRATION-CODERABBIT).
+language: en-US
+early_access: false
+reviews:
+  profile: chill                 # concise, high-signal — not a nitpick firehose on a large fleet
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  poem: false
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+  path_filters:
+    - "!**/*.lock"
+    - "!**/*.min.*"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/node_modules/**"
+    - "!docs/**/*-ledger.json"    # generated ledgers — noise, not review surface
+  path_instructions:
+    - path: "scripts/**"
+      instructions: "Fleet scripts must be fail-open, idempotent, and offline-safe; flag any that raise on a missing dep, mutate without an --apply gate, or hardcode a token/path that belongs in the parameter panel."
+chat:
+  auto_reply: true
+knowledge_base:
+  learnings:
+    scope: auto

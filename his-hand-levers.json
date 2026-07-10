@@ -460,6 +460,24 @@
       "unlocks": "the opencode Zen subscription models become reachable to dynamic provider routing (#921); without it, capability-demanding opencode tasks failed_blocked instead of running",
       "source_task": "opencode lane closeout 2026-07-10 (tier-ladder mechanism superseded by #921; preservation receipt #931)",
       "issue": 928
+    },
+    {
+      "id": "L-INTEGRATION-CODERABBIT",
+      "label": "Install CodeRabbit (AI PR review) on the organvm org — extend the EXISTING organvm-i-theoria install to organvm (or organvm/limen) at https://github.com/apps/coderabbitai. Free for public repos. The machine half is done: .coderabbit.yaml is committed at the conductor root and scripts/sync-marketplace-config.py fans it out; gitvs.py doctor class I cites this lever until CodeRabbit is observed installed on organvm.",
+      "owner": "yours",
+      "cost": "~2 min one-time (authorize the app on organvm); REVERSIBLE (uninstall)",
+      "unlocks": "AI review on every organvm/limen PR; the GITVS coderabbit integration goes green",
+      "source_task": "GITVS §3 integrations (institutio/github/estate.yaml integrations.coderabbit)",
+      "issue": 933
+    },
+    {
+      "id": "L-INTEGRATION-RENOVATE",
+      "label": "Install Renovate (dependency automation) on the organvm org — extend the EXISTING organvm-i-theoria install to organvm at https://github.com/apps/renovate. Free. The machine half is done: renovate.json is committed at the conductor root. Coexistence: trim .github/dependabot.yml to security-only (or remove) when Renovate goes live to avoid duplicate dependency PRs (noted in renovate.json). gitvs.py doctor class I cites this lever until Renovate is observed installed on organvm.",
+      "owner": "yours",
+      "cost": "~2 min authorize + a 1-line dependabot.yml trim; REVERSIBLE",
+      "unlocks": "grouped, scheduled dependency PRs on organvm/limen; the GITVS renovate integration goes green",
+      "source_task": "GITVS §3 integrations (institutio/github/estate.yaml integrations.renovate)",
+      "issue": 934
     }
   ]
 }
