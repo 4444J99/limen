@@ -103408,11 +103408,11 @@ tasks:
   title: Wire the contributions organ to advance autonomously
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: jules
   workstream: contributions
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-selffeed
   - pillar:contributions
@@ -103420,6 +103420,7 @@ tasks:
   - institution
   - vltima
   - generated
+  - slow
   urls: []
   context: "Make the contributions organ self-feeding like the revenue/studium voices:\
     \ bump its maturity in organ-ladder.json as slices land, and add/extend a beat\
@@ -103434,7 +103435,7 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T09:34:01.799687Z'
+  updated: '2026-07-10T10:05:18.071413Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -103461,6 +103462,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:05:18.071413Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: ASK-quicken-send
   title: send the drafted message (never auto-send)
   type: ops
@@ -106716,10 +106721,10 @@ tasks:
   title: fix failing CI on organvm/limen#485
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -106735,7 +106740,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T09:34:01.799687Z'
+  updated: '2026-07-10T10:05:18.071413Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -106770,6 +106775,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:05:18.071413Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-cifix-organvm-limen-486
   title: fix failing CI on organvm/limen#486
   repo: organvm/limen
@@ -111294,11 +111303,11 @@ tasks:
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
   type: content
-  target_agent: opencode
+  target_agent: jules
   workstream: consulting
   priority: high
   budget_cost: 2
-  status: dispatched
+  status: open
   labels:
   - organ-face
   - pillar:consulting
@@ -111307,6 +111316,7 @@ tasks:
   - vltima
   - generated
   - tried:opencode
+  - slow
   urls: []
   context: "In organvm/limen organs/consulting/, author the polished MACRO face (ORGANVM-as-a-service:\
     \ the institutional toolkit offered to clients \u2014 the platform anyone can\
@@ -111317,7 +111327,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T09:34:01.799687Z'
+  updated: '2026-07-10T10:05:18.071413Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -111333,6 +111343,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:05:18.071413Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: ORG-health-organ-firstslice-0705
   title: Build the first working vertical slice of the health organ
   repo: organvm/limen
