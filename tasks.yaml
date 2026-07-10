@@ -80757,7 +80757,7 @@ tasks:
   workstream: financial
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - noop
   urls: []
@@ -80768,7 +80768,7 @@ tasks:
     Severity: medium'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-10T03:04:25.848413Z'
+  updated: '2026-07-10T03:43:14.769023Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -80800,6 +80800,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/a-i-chat--exporter/pull/121
     status: dispatched
+  - timestamp: '2026-07-10T03:43:14.769023Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: TASK-LED-rev-organvm/the-invisibl
   title: 'Heal insight: waste on revenue repo: organvm/the-invisible-ledger'
   description: Product 'The Invisible Ledger' spent 35 with 16 wasted (29 shipped).
@@ -105007,7 +105012,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -105023,7 +105028,7 @@ tasks:
     2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T02:31:05.010359Z'
+  updated: '2026-07-10T03:43:14.769023Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -105065,6 +105070,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/portfolio/pull/169
     status: dispatched
+  - timestamp: '2026-07-10T03:43:14.769023Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-cifix-organvm-portfolio-175
   title: fix failing CI on organvm/portfolio#175
   repo: organvm/portfolio
@@ -114117,7 +114127,7 @@ tasks:
   workstream: tabularius
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - always-working
   - receipt-first
@@ -114144,7 +114154,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T02:54:24.127925Z'
+  updated: '2026-07-10T03:43:14.769023Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -114189,6 +114199,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/limen/pull/846
     status: dispatched
+  - timestamp: '2026-07-10T03:43:14.769023Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: AW-SUBSTRATE-AGY-SCRATCH-CUSTODY
   title: Bridge or preserve remaining Antigravity scratch custody roots
   description: CVSTOS host-bin debt is cleared; factory state is still blocked by
@@ -119066,7 +119081,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -119084,7 +119099,7 @@ tasks:
     2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T02:08:00.480526Z'
+  updated: '2026-07-10T03:43:14.769023Z'
   dispatch_log:
   - timestamp: '2026-07-09T04:28:26.790563Z'
     agent: jules
@@ -119144,6 +119159,11 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/domus-genoma/pull/181
     status: dispatched
+  - timestamp: '2026-07-10T03:43:14.769023Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: HEAL-rebase-organvm-domus-genoma-182
   title: rebase/resolve conflicts on organvm/domus-genoma#182
   repo: organvm/domus-genoma
@@ -124419,7 +124439,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - engine
   - meta
@@ -124433,7 +124453,7 @@ tasks:
     \ found by new users lands here. <!-- manumissio:generalize-and-document -->"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T03:04:25.848413Z'
+  updated: '2026-07-10T03:43:14.769023Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -124469,6 +124489,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/manumissio/pull/27
     status: dispatched
+  - timestamp: '2026-07-10T03:43:14.769023Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR open (awaiting merge) \u2192 done"
 - id: GH-organvm-manumissio-12
   title: "Phase 4: the exit predicate \u2014 the last subscription dies by exit code"
   repo: organvm/manumissio
@@ -125925,7 +125950,7 @@ tasks:
   target_agent: any
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -125943,7 +125968,7 @@ tasks:
     \ 2026-07-09 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T02:15:43.460271Z'
+  updated: '2026-07-10T03:43:14.769023Z'
   dispatch_log:
   - timestamp: '2026-07-10T02:14:21.156338Z'
     agent: jules
@@ -125954,6 +125979,11 @@ tasks:
     agent: jules
     session_id: '6310954445253274141'
     status: dispatched
+  - timestamp: '2026-07-10T03:43:14.769023Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "heal-dispatch: dispatched but no PR (silent no-op) \u2192 reopened"
 - id: HEAL-rebase-organvm-trendpulse-5
   title: rebase/resolve conflicts on organvm/trendpulse#5
   repo: organvm/trendpulse
@@ -126309,3 +126339,151 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+- id: HEAL-rebase-organvm-a-i--skills-27
+  title: rebase/resolve conflicts on organvm/a-i--skills#27
+  repo: organvm/a-i--skills
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-i--skills/pull/27
+  context: 'PR organvm/a-i--skills#27 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/a-i--skills/pull/27
+    [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-09'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-i--skills-34
+  title: rebase/resolve conflicts on organvm/a-i--skills#34
+  repo: organvm/a-i--skills
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-i--skills/pull/34
+  context: 'PR organvm/a-i--skills#34 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/a-i--skills/pull/34
+    [auto-emitted 2026-07-09 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-09'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-i-chat--exporter-49
+  title: rebase/resolve conflicts on organvm/a-i-chat--exporter#49
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-i-chat--exporter/pull/49
+  context: 'PR organvm/a-i-chat--exporter#49 is CONFLICTING with its base branch and
+    merge-drain correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff
+    (merge-base..head) against its declared title/body intent: a branch generated
+    from a broken tree can carry mass deletions it never declared, and branch-side
+    deletions the declaration does not name are POISON to restore from base, never
+    intent to preserve (session-meta#148 ate ingest/ + 3 test suites this way). Then
+    check out the PR branch, rebase it onto the current base (or merge base in), resolve
+    every conflict preserving the PR''s declared intent, push to the SAME PR branch,
+    and confirm it reports MERGEABLE with green CI. After resolving, verify diff-vs-base
+    matches the declared intent; if nothing genuine survives (all absorbed or superseded
+    on base), close the PR as superseded instead of pushing. Do not open a new PR.
+    PR: https://github.com/organvm/a-i-chat--exporter/pull/49 [auto-emitted 2026-07-09
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-09'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-i-chat--exporter-54
+  title: rebase/resolve conflicts on organvm/a-i-chat--exporter#54
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-i-chat--exporter/pull/54
+  context: 'PR organvm/a-i-chat--exporter#54 is CONFLICTING with its base branch and
+    merge-drain correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff
+    (merge-base..head) against its declared title/body intent: a branch generated
+    from a broken tree can carry mass deletions it never declared, and branch-side
+    deletions the declaration does not name are POISON to restore from base, never
+    intent to preserve (session-meta#148 ate ingest/ + 3 test suites this way). Then
+    check out the PR branch, rebase it onto the current base (or merge base in), resolve
+    every conflict preserving the PR''s declared intent, push to the SAME PR branch,
+    and confirm it reports MERGEABLE with green CI. After resolving, verify diff-vs-base
+    matches the declared intent; if nothing genuine survives (all absorbed or superseded
+    on base), close the PR as superseded instead of pushing. Do not open a new PR.
+    PR: https://github.com/organvm/a-i-chat--exporter/pull/54 [auto-emitted 2026-07-09
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-09'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-a-i-chat--exporter-115
+  title: rebase/resolve conflicts on organvm/a-i-chat--exporter#115
+  repo: organvm/a-i-chat--exporter
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/a-i-chat--exporter/pull/115
+  context: 'PR organvm/a-i-chat--exporter#115 is CONFLICTING with its base branch
+    and merge-drain correctly refuses to merge it. FIRST check the PR''s ORIGINAL
+    diff (merge-base..head) against its declared title/body intent: a branch generated
+    from a broken tree can carry mass deletions it never declared, and branch-side
+    deletions the declaration does not name are POISON to restore from base, never
+    intent to preserve (session-meta#148 ate ingest/ + 3 test suites this way). Then
+    check out the PR branch, rebase it onto the current base (or merge base in), resolve
+    every conflict preserving the PR''s declared intent, push to the SAME PR branch,
+    and confirm it reports MERGEABLE with green CI. After resolving, verify diff-vs-base
+    matches the declared intent; if nothing genuine survives (all absorbed or superseded
+    on base), close the PR as superseded instead of pushing. Do not open a new PR.
+    PR: https://github.com/organvm/a-i-chat--exporter/pull/115 [auto-emitted 2026-07-09
+    by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-09'
+  dispatch_log: []
