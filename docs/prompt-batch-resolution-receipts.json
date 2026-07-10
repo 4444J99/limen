@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-07-10T04:10:02Z",
+  "generated_at": "2026-07-10T04:11:07Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -30685,6 +30685,56 @@
           "next_action": "Add an owner repo route before rehydration or delegation."
         }
       ]
+    },
+    {
+      "generated_at": "2026-07-10T04:11:07Z",
+      "batch": "prompt-batch-medium-hash-review-002",
+      "band": "medium",
+      "lane": "hash-review",
+      "status": "owner-recorded",
+      "classification": "private Codex hash-review aggregate routed to the Limen prompt-corpus index; raw session and history text remains private and is not delegated",
+      "session_count": 1,
+      "session_keys": [
+        "b98ab1c5682790d31035"
+      ],
+      "sources": {
+        "codex-sessions": 1
+      },
+      "prompt_events": 4,
+      "unique_prompt_hashes": 3,
+      "duplicate_prompt_events": 1,
+      "root_statuses": {
+        "codex_session_sensitive_context_recorded": 1
+      },
+      "evidence": [
+        "private redacted batch metadata listed 1 hash-review session(s) with source mix codex-sessions 1",
+        "priority metadata represented 4 prompt events, 3 unique prompt hashes, and 1 duplicate prompt events",
+        "review used only metadata fields: batch id, source, session key, prompt-event counts, hash counts, first/last prompt hash refs, and private corpus owner lane",
+        "recorded 3 batch prompt hash ref(s) privately; tracked receipt keeps only aggregate counts and first/last refs",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "Keep as private aggregate prompt-corpus context. Do not delegate, rehydrate, or paste raw text unless a later owner packet names a repo, path, predicate, and privacy-safe extraction boundary.",
+      "roots": [
+        {
+          "root": "codex-session-b98ab1c5682790d31035",
+          "session_key": "b98ab1c5682790d31035",
+          "status": "codex_session_sensitive_context_recorded",
+          "owner_lane": "private-codex-session-limen-corpus-index",
+          "repo": "organvm/limen",
+          "source": "codex-sessions",
+          "prompt_events": 4,
+          "unique_prompt_hashes": 3,
+          "duplicate_prompt_events": 1,
+          "evidence": "Metadata-only review recorded aggregate prompt counts, prompt hash refs, and private corpus ownership; no prompt body or transcript text was copied.",
+          "next_action": "Retain in the private Limen prompt-corpus index. Require a new explicit owner packet before creating repo work from this hash aggregate.",
+          "first_prompt_hash": "199f118047e9daddf4df8fc763780a1c1b8b3db232cac0256f5f1827ca31c25c",
+          "last_prompt_hash": "e18661ca4ac0f66556043c0945b344acdb7093350ada40e67aed199fa6244ca6",
+          "cwd_owner": "limen"
+        }
+      ],
+      "source": "codex-sessions",
+      "first_prompt_hash": "199f118047e9daddf4df8fc763780a1c1b8b3db232cac0256f5f1827ca31c25c",
+      "last_prompt_hash": "e18661ca4ac0f66556043c0945b344acdb7093350ada40e67aed199fa6244ca6"
     }
   ]
 }
