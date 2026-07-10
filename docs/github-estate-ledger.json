@@ -1,0 +1,185 @@
+{
+  "app": {
+    "installations": null,
+    "installed": null,
+    "slug": "limen[bot]",
+    "token_path": "app"
+  },
+  "app_estate": {
+    "all_apps": [
+      "agentic-search",
+      "chatgpt-codex-connector",
+      "chatgptbot",
+      "claude",
+      "codacy-production",
+      "coderabbitai",
+      "cursor",
+      "docker",
+      "gemini-code-assist",
+      "gitguardian",
+      "google-ai-studio",
+      "google-cloud-build",
+      "google-labs-jules",
+      "ivviiviivvi-semgrep-code-011226",
+      "komment-ai",
+      "labores-crux-semgrep-011226",
+      "limen-conductor",
+      "linear-code",
+      "llamapreview",
+      "meta-organvm-cross-org",
+      "netlify",
+      "omni-dromenon-semgrep-code-011226",
+      "oz-by-warp",
+      "qodo-free-for-open-source-projects",
+      "renovate",
+      "semgrep-app",
+      "semgrep-code-ivviiviivvi",
+      "socket-security",
+      "sourcery-ai",
+      "trunk-io",
+      "vercel"
+    ],
+    "by_org": {
+      "a-organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "oz-by-warp"
+      ],
+      "meta-organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "linear-code",
+        "meta-organvm-cross-org",
+        "oz-by-warp",
+        "vercel"
+      ],
+      "organvm": [
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "limen-conductor",
+        "oz-by-warp"
+      ],
+      "organvm-i-theoria": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "chatgptbot",
+        "claude",
+        "codacy-production",
+        "coderabbitai",
+        "cursor",
+        "docker",
+        "gemini-code-assist",
+        "gitguardian",
+        "google-ai-studio",
+        "google-cloud-build",
+        "google-labs-jules",
+        "ivviiviivvi-semgrep-code-011226",
+        "komment-ai",
+        "llamapreview",
+        "netlify",
+        "oz-by-warp",
+        "qodo-free-for-open-source-projects",
+        "renovate",
+        "semgrep-app",
+        "semgrep-code-ivviiviivvi",
+        "socket-security",
+        "sourcery-ai",
+        "trunk-io",
+        "vercel"
+      ],
+      "organvm-ii-poiesis": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "omni-dromenon-semgrep-code-011226",
+        "oz-by-warp",
+        "semgrep-app",
+        "sourcery-ai"
+      ],
+      "organvm-iii-ergon": [
+        "agentic-search",
+        "chatgpt-codex-connector",
+        "claude",
+        "google-labs-jules",
+        "labores-crux-semgrep-011226",
+        "oz-by-warp",
+        "semgrep-app",
+        "sourcery-ai"
+      ],
+      "organvm-iv-taxis": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-v-logos": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-vi-koinonia": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ],
+      "organvm-vii-kerygma": [
+        "chatgpt-codex-connector",
+        "claude",
+        "oz-by-warp"
+      ]
+    },
+    "orgs": 10
+  },
+  "branches": {
+    "conductor_by_reason": {
+      "checked-out": 164,
+      "inflight": 28,
+      "landed-pr-merged": 9,
+      "livework": 200,
+      "pr-merged-but-advanced": 8,
+      "protected": 1
+    }
+  },
+  "integrations": {
+    "config_present": {
+      "codecov": false,
+      "coderabbit": true,
+      "dependabot": true,
+      "mergify": false,
+      "renovate": true,
+      "semgrep": false,
+      "sonarcloud": false,
+      "trunk": false
+    },
+    "declared": 8,
+    "installed_slugs": [
+      "chatgpt-codex-connector",
+      "claude",
+      "google-labs-jules",
+      "limen-conductor",
+      "oz-by-warp"
+    ]
+  },
+  "online": true,
+  "prs": {
+    "by_repo": {},
+    "open_total": 0
+  },
+  "repos": {
+    "by_class": {
+      "conductor": 1,
+      "governed_public": 202
+    },
+    "total": 203
+  },
+  "schema": "limen.github_estate.v1",
+  "secrets": {
+    "homed": true
+  },
+  "usage": {
+    "rate_limit_headroom_pct": 100
+  }
+}

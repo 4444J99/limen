@@ -102,6 +102,20 @@ def _gh(args: list[str], token: str | None, timeout: int = 60) -> subprocess.Com
         return subprocess.CompletedProcess(args, 1, "", str(e))
 
 
+def _gh_user(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run `gh` with its NATIVE owner auth (the gh keyring PAT), NOT the App installation token. Cross-org
+    reads (/user/orgs, another org's installations) need the OWNER's user scope — the per-org App token is
+    installed on the conductor org only and structurally cannot enumerate the user's other orgs. Strips
+    GH_TOKEN/GITHUB_TOKEN so gh falls back to its keyring. Fails OPEN, never raises."""
+    if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
+        return subprocess.CompletedProcess(args, 1, "", "offline")
+    env = {k: v for k, v in os.environ.items() if k not in ("GH_TOKEN", "GITHUB_TOKEN")}
+    try:
+        return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, env=env)
+    except Exception as e:  # fail open
+        return subprocess.CompletedProcess(args, 1, "", str(e))
+
+
 def _token_path() -> str:
     """Which cascade path resolves (app|pat|gh|none) — prints NO secret."""
     try:
@@ -197,16 +211,19 @@ def _org_app_estate(token: str | None, online: bool) -> dict:
     Enumerates the authed user's orgs (/user/orgs) and each org's installed app_slugs
     (/orgs/{o}/installations), so app-estate drift (a new app on one org, a removed one on another) is a
     governed living fact, never a manual re-discovery. Wider than the governed `owners` — pure
-    observability across every org. Read-only, fail-open (offline → nulls); deterministic (sorted)."""
+    observability across every org. Uses the OWNER's gh-native token (_gh_user), NOT the App installation
+    token: the per-org App is installed on the conductor org only and cannot see the user's other orgs.
+    Read-only, fail-open (offline → nulls); deterministic (sorted). `token` is unused (kept for the
+    observe() call shape) — the cross-org read is deliberately user-scoped."""
     out: dict = {"orgs": None, "by_org": {}, "all_apps": None}
     if not online:
         return out
-    r = _gh(["api", "/user/orgs", "--paginate", "--jq", ".[].login"], token, timeout=45)
+    r = _gh_user(["api", "/user/orgs", "--paginate", "--jq", ".[].login"], timeout=45)
     orgs = [o.strip() for o in (r.stdout or "").splitlines() if o.strip()] if r.returncode == 0 else []
     by_org: dict[str, list[str]] = {}
     all_apps: set[str] = set()
     for o in orgs:
-        ri = _gh(["api", f"/orgs/{o}/installations", "--jq", ".installations[].app_slug"], token, timeout=30)
+        ri = _gh_user(["api", f"/orgs/{o}/installations", "--jq", ".installations[].app_slug"], timeout=30)
         if ri.returncode == 0:
             slugs = sorted({s.strip() for s in (ri.stdout or "").splitlines() if s.strip()})
             by_org[o] = slugs
