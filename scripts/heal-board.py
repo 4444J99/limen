@@ -9,7 +9,7 @@ a future regression), restore it from the last committed-good snapshot (`git sho
 instead of leaving the daemon idling on a dead queue. This is the "fix the handoff so it ain't
 broken" self-heal: the institution recovers ITSELF instead of waiting for a human hand-restore.
 
-On a HEALTHY board it also runs two idempotent lifecycle repairs so the board never drifts out
+On a HEALTHY board it also runs three idempotent lifecycle repairs so the board never drifts out
 of the canonical vocabulary the validator (`validate-task-board.py`) enforces:
   - reopened-done: a task reopened after a terminal `done` log is restored to `done`.
   - needs-human reconcile: a task LABELED `needs-human` that is sitting in a *dispatchable*
@@ -18,6 +18,14 @@ of the canonical vocabulary the validator (`validate-task-board.py`) enforces:
     (needs-human-in-open) — exactly the drift that turned `main` red after mining filed the
     L-* levers as `open`. Root cause is fixed at the source in `mine-backlog.py`; this heals any
     already-mined ones and any future guard-bypassed path.
+  - log-mismatch reconcile: a task whose latest *canonical* dispatch_log status disagrees with
+    task.status (the validator's `log_mismatches` failure) gets one canonical event appended that
+    restates the authoritative task.status head, so the log agrees again. This is the effector for
+    the validator's existing sensor: a momentarily-inconsistent record committed to the fast-churning
+    board (e.g. GH-organvm-limen-872 — status=open after a timeout, but the last canonical log entry
+    was `dispatched`, with no release event ever appended) otherwise fails `verify` on EVERY PR based
+    on that snapshot until an unrelated write happens to mask it. Trusting the status head keeps this
+    a safe, idempotent alignment — once the head matches, it is a no-op.
 
 Wired into the heartbeat as a per-beat preflight, so a collapsed board self-restores at the
 start of every beat — but IDEMPOTENT: a healthy board is a no-op (exit 0, no writes).
@@ -38,7 +46,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.dispatch import _restore_done_status  # noqa: E402
 from limen.io import atomic_write_text, load_limen_file, queue_lock, save_limen_file  # noqa: E402
-from limen.models import DispatchLogEntry, Task  # noqa: E402
+from limen.models import VALID_STATUSES, DispatchLogEntry, Task  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 BOARD = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -124,13 +132,49 @@ def _reconcile_needs_human(task: Task, now: datetime) -> bool:
     return True
 
 
-def _apply_lifecycle_repairs(tasks: list[Task], now: datetime) -> tuple[list[str], list[str]]:
-    """Run both idempotent lifecycle repairs over the tasks in place.
+def _reconcile_log_mismatch(task: Task, now: datetime) -> bool:
+    """Align the dispatch_log head with the authoritative task.status.
 
-    Returns (reopened_done_ids, reconciled_needs_human_ids).
+    The validator fails the build (`log_mismatches`) when a task's latest *canonical*
+    dispatch_log status disagrees with task.status — the exact wedge that turned `verify`
+    red across every PR based on a momentarily-inconsistent board snapshot. task.status is
+    the authoritative projection head, so append one canonical event that restates it; the
+    log then agrees and the invariant holds. Idempotent: once the head matches (or the last
+    entry's status is non-canonical, which the validator ignores), it is a no-op. A task whose
+    own status is non-canonical is a *different* defect (validator: `invalid`) and is left
+    alone. Returns True iff it changed anything.
+    """
+    if task.status not in VALID_STATUSES:
+        return False
+    log = task.dispatch_log or []
+    if not log:
+        return False
+    last_status = str(getattr(log[-1], "status", "") or "")
+    if last_status not in VALID_STATUSES or last_status == task.status:
+        return False
+    task.updated = now
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="heal-board",
+            session_id="heal-board",
+            status=task.status,
+            output=f"heal-board: reconciled dispatch_log head to task.status={task.status} (was {last_status})",
+        )
+    )
+    return True
+
+
+def _apply_lifecycle_repairs(tasks: list[Task], now: datetime) -> tuple[list[str], list[str], list[str]]:
+    """Run the three idempotent lifecycle repairs over the tasks in place.
+
+    Returns (reopened_done_ids, reconciled_needs_human_ids, reconciled_log_mismatch_ids).
+    The log-mismatch pass runs last so the earlier repairs (which set status AND append an
+    aligned event) are already consistent and are not double-touched.
     """
     reopened: list[str] = []
     reconciled: list[str] = []
+    mismatched: list[str] = []
     for task in tasks:
         if _restore_done_status(
             task,
@@ -141,7 +185,9 @@ def _apply_lifecycle_repairs(tasks: list[Task], now: datetime) -> tuple[list[str
             reopened.append(task.id)
         if _reconcile_needs_human(task, now):
             reconciled.append(task.id)
-    return reopened, reconciled
+        if _reconcile_log_mismatch(task, now):
+            mismatched.append(task.id)
+    return reopened, reconciled, mismatched
 
 
 def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
@@ -157,9 +203,9 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
         return 1
 
     now = datetime.now(timezone.utc)
-    reopened, reconciled = _apply_lifecycle_repairs(lf.tasks, now)
+    reopened, reconciled, mismatched = _apply_lifecycle_repairs(lf.tasks, now)
 
-    if not reopened and not reconciled:
+    if not reopened and not reconciled and not mismatched:
         print(f"heal-board: OK — {BOARD.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})")
         return 0
 
@@ -169,6 +215,8 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
             parts.append(f"{len(reopened)} reopened completed task(s) need repair: " + ", ".join(reopened[:10]))
         if reconciled:
             parts.append(f"{len(reconciled)} needs-human task(s) need reconcile to needs_human: " + ", ".join(reconciled[:10]))
+        if mismatched:
+            parts.append(f"{len(mismatched)} task(s) need dispatch_log head reconcile to task.status: " + ", ".join(mismatched[:10]))
         print("heal-board: " + "; ".join(parts))
         return 1
     if dry_run:
@@ -177,6 +225,8 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
             parts.append(f"WOULD restore {len(reopened)} reopened completed task(s): " + ", ".join(reopened[:10]))
         if reconciled:
             parts.append(f"WOULD reconcile {len(reconciled)} needs-human task(s) to needs_human: " + ", ".join(reconciled[:10]))
+        if mismatched:
+            parts.append(f"WOULD reconcile {len(mismatched)} log-mismatch task(s) to task.status: " + ", ".join(mismatched[:10]))
         print("heal-board: " + "; ".join(parts))
         return 0
 
@@ -185,8 +235,8 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
             print("heal-board: queue lock held; lifecycle repair deferred")
             return 1
         fresh = load_limen_file(BOARD)
-        reopened, reconciled = _apply_lifecycle_repairs(fresh.tasks, now)
-        if reopened or reconciled:
+        reopened, reconciled, mismatched = _apply_lifecycle_repairs(fresh.tasks, now)
+        if reopened or reconciled or mismatched:
             save_limen_file(BOARD, fresh)
     cleared = sum(_clear_async_markers(task_id) for task_id in reopened)
     parts = []
@@ -197,6 +247,8 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
         )
     if reconciled:
         parts.append(f"reconciled {len(reconciled)} needs-human task(s) to needs_human")
+    if mismatched:
+        parts.append(f"reconciled {len(mismatched)} log-mismatch task(s) to task.status")
     print("heal-board: " + "; ".join(parts))
     return 0
 

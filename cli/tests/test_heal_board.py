@@ -121,3 +121,72 @@ def test_heal_board_reconciles_needs_human_label(tmp_path: Path) -> None:
     again = run_heal_board(tmp_path)
     assert again.returncode == 0
     assert "OK" in again.stdout
+
+
+def test_heal_board_reconciles_log_mismatch(tmp_path: Path) -> None:
+    # A task returned to `open` after a timeout, but its latest canonical dispatch_log
+    # status is still `dispatched` — the wedge that fails `verify` (validate-task-board's
+    # log_mismatches) on every PR based on the snapshot. GH-organvm-limen-872 in the wild.
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "tasks": [
+                    {
+                        "id": "STALE-DISPATCH",
+                        "title": "released to open after a timeout, log head never reconciled",
+                        "target_agent": "codex",
+                        "status": "open",
+                        "created": "2026-07-01",
+                        "dispatch_log": [
+                            {
+                                "timestamp": "2026-07-01T00:00:00+00:00",
+                                "agent": "codex",
+                                "session_id": "prior",
+                                "status": "dispatched",
+                            }
+                        ],
+                    },
+                    {
+                        "id": "ALIGNED-OPEN",
+                        "title": "open with an aligned open log head — untouched",
+                        "target_agent": "codex",
+                        "status": "open",
+                        "created": "2026-07-01",
+                        "dispatch_log": [
+                            {
+                                "timestamp": "2026-07-01T00:00:00+00:00",
+                                "agent": "codex",
+                                "session_id": "prior",
+                                "status": "open",
+                            }
+                        ],
+                    },
+                ],
+            },
+            sort_keys=False,
+        )
+    )
+
+    check = run_heal_board(tmp_path, "--check")
+    assert check.returncode == 1
+    assert "dispatch_log head" in check.stdout and "STALE-DISPATCH" in check.stdout
+
+    applied = run_heal_board(tmp_path)
+    assert applied.returncode == 0
+    assert "reconciled 1 log-mismatch" in applied.stdout
+
+    data = yaml.safe_load(tasks.read_text())
+    by_id = {t["id"]: t for t in data["tasks"]}
+    # the log head now restates the authoritative open status; the invariant holds
+    assert by_id["STALE-DISPATCH"]["status"] == "open"
+    assert by_id["STALE-DISPATCH"]["dispatch_log"][-1]["status"] == "open"
+    assert by_id["STALE-DISPATCH"]["dispatch_log"][-1]["session_id"] == "heal-board"
+    # an already-aligned open task gains no spurious event
+    assert len(by_id["ALIGNED-OPEN"]["dispatch_log"]) == 1
+
+    # idempotent: a second pass is a clean no-op
+    again = run_heal_board(tmp_path)
+    assert again.returncode == 0
+    assert "OK" in again.stdout
