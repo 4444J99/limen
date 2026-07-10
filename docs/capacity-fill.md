@@ -1,6 +1,6 @@
 # Capacity Fill
 
-Generated: `2026-07-10T12:02:04+00:00`
+Generated: `2026-07-10T12:05:51+00:00`
 Status: `blocked`
 
 ## Capacity Census
@@ -17,7 +17,7 @@ Status: `blocked`
 | `copilot` | github-issue | `down` | 77 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent) |
 | `warp` | paid-service | `down` | 77 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
 | `oz` | paid-service | `down` | 77 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
-| `github_actions` | github-actions | `down` | 77 | 600 | /opt/homebrew/bin/gh; workflow=limen-agent.yml@organvm/limen unavailable: HTTP 404: workflow limen-agent.yml not found on the default branch (https://api.github.com/repos/organvm/limen/actions/workflows/limen-agent.yml) |
+| `github_actions` | github-actions | `up` | 77 | 600 | /opt/homebrew/bin/gh; workflow=operate.yml@organvm/limen |
 
 ## Signal Quality
 
@@ -43,7 +43,6 @@ Status: `blocked`
 - `copilot`: /opt/homebrew/bin/gh; copilot-swe-agent not confirmed assignable (set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent)
 - `warp`: WARP_API_KEY not set (set env var + add as org/repo Actions secret)
 - `oz`: WARP_API_KEY not set (set env var + add as org/repo Actions secret)
-- `github_actions`: /opt/homebrew/bin/gh; workflow=limen-agent.yml@organvm/limen unavailable: HTTP 404: workflow limen-agent.yml not found on the default branch (https://api.github.com/repos/organvm/limen/actions/workflows/limen-agent.yml)
 
 ## Claude
 
