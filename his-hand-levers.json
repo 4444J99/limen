@@ -451,6 +451,16 @@
       "unlocks": "required-check protection on the governed repos; the GITVS branch_protection resource (class A/G) goes green",
       "source_task": "GITVS estate (institutio/github/estate.yaml branch_protection) + #257",
       "issue": 257
+    },
+    {
+      "id": "L-OPENCODE-AUTH",
+      "label": "Optionally run `opencode auth login` on this host, then verify `opencode models --verbose`. Authentication may expand the currently reachable catalog; Limen discovers capabilities and pricing from that live output and promises no tier, model name, or routing outcome.",
+      "owner": "yours",
+      "cost": "~2 min, interactive provider login; REVERSIBLE with `opencode auth logout`",
+      "unlocks": "whatever additional capabilities the provider exposes to this account at runtime",
+      "gate": "Interactive account authorization cannot be performed by the fleet. The lane remains honest without it: an empty or incapable catalog blocks rather than selecting a named fallback.",
+      "source_task": "dynamic OpenCode capability discovery (PR #921)",
+      "issue": 928
     }
   ]
 }

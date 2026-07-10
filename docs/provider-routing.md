@@ -12,12 +12,15 @@ Each dispatch derives an extensible execution profile from live task evidence:
 - tool and attachment requirements;
 - cost and latency pressure;
 - planning-only versus build permission; and
-- an optional free-form compatibility hint from an existing `tier:*` label.
+- optional generic numeric constraints such as `profile:min-context:131072`; and
+- an opaque free-form hint from an existing `tier:*` label.
 
-The profile is not a closed tier enum. Unknown hints remain visible in the receipt without needing a
-code change. Provider adapters filter their current reachable catalog by hard capabilities, rank the
-survivors from metadata and current pressure, and record the profile, catalog hash, selection source,
-and selected model when the provider exposes it.
+The profile is not a closed tier enum. A `tier:*` value is carried into the receipt and prompt but is
+never interpreted by Limen, so `tier:economy`, `tier:plan`, and a future arbitrary value produce the
+same routing profile for the same task evidence. Numeric `profile:<field>:<value>` labels are typed
+from the execution-profile schema instead of a label-name table. Provider adapters filter their
+current reachable catalog by hard capabilities, rank the survivors from metadata and current
+pressure, and record the profile, catalog hash, selection source, and selected model when exposed.
 
 OpenCode is selected from `opencode models --verbose`. Empty, malformed, stale, or capability-poor
 results produce `failed_blocked`; there is no built-in model fallback and no name heuristic such as
@@ -31,9 +34,10 @@ proves the value exists in the current `oz model list --output-format json` resu
 ## Safety and planning
 
 Credentials, secrets, personal data, irreversible deletion, paid overages, public-identity claims,
-and `needs-human` work are rejected before a prompt reaches Warp/Oz. A planning-only profile requires
-the existing current Fable acceptance/cap receipt; without it, the request becomes deep executable
-work. An accepted planning run returns a build packet and may not build.
+and `needs-human` work are rejected before a prompt reaches Warp/Oz. A planning-only profile uses the
+explicit `mode:plan-only` task label and requires the existing current Fable acceptance/cap receipt;
+without it, the request becomes maximally verified executable work. An accepted planning run returns
+a build packet and may not build.
 
 ## Regression predicate
 
@@ -45,4 +49,5 @@ test that depends on a real model name is itself a regression. The implementatio
 3. hard capability gaps block instead of silently downgrading;
 4. explicit overrides are live-validated;
 5. Warp defaults to provider Auto with no model ID; and
-6. selection receipts contain no credential values.
+6. arbitrary `tier:*` text cannot change routing behavior; and
+7. selection receipts contain no credential values.

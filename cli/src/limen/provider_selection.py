@@ -13,7 +13,7 @@ import re
 import subprocess
 from dataclasses import asdict, dataclass, replace
 from datetime import date
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Sequence, get_type_hints
 
 
 _ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
@@ -56,12 +56,37 @@ class ExecutionProfile:
         return json.dumps(self.as_dict(), sort_keys=True, separators=(",", ":"))
 
 
+def _numeric_profile_overrides(labels: Sequence[str]) -> dict[str, float | int]:
+    """Read typed numeric constraints without maintaining a label-name table.
+
+    The dataclass is the schema: adding another numeric profile dimension makes it
+    label-addressable automatically as ``profile:<field>:<value>``. Float profile
+    dimensions are normalized to ``0..1``; integer dimensions are positive minima.
+    """
+
+    hints = get_type_hints(ExecutionProfile)
+    overrides: dict[str, float | int] = {}
+    for label in labels:
+        prefix, separator, raw = label.rpartition(":")
+        if not separator or not prefix.startswith("profile:"):
+            continue
+        field_name = prefix.removeprefix("profile:").replace("-", "_")
+        field_type = hints.get(field_name)
+        if field_type not in {float, int}:
+            continue
+        value = _as_number(raw, math.nan)
+        if not math.isfinite(value):
+            continue
+        overrides[field_name] = max(1, int(value)) if field_type is int else _clamp(value)
+    return overrides
+
+
 def execution_profile_for(task: object | None) -> ExecutionProfile:
     """Derive a request profile from the task's current evidence.
 
-    ``tier:*`` remains a backwards-compatible free-form hint, not an enum. New
-    profiles derive from quantitative task shape and structured capability labels.
-    Unknown hints survive into receipts/prompts without requiring a code change.
+    ``tier:*`` is opaque receipt/prompt context, never a routing instruction. New
+    profiles derive from quantitative task shape and generic numeric constraints.
+    Unknown hints survive without requiring a code change or changing selection.
     """
 
     if task is None:
@@ -69,8 +94,9 @@ def execution_profile_for(task: object | None) -> ExecutionProfile:
 
     labels = [str(item).strip().lower() for item in (getattr(task, "labels", None) or [])]
     requested_hint = next((label.split(":", 1)[1] for label in labels if label.startswith("tier:")), None)
-    planning_only = "mode:plan-only" in labels or requested_hint == "plan"
+    planning_only = "mode:plan-only" in labels
     attachments_required = "capability:attachments" in labels
+    overrides = _numeric_profile_overrides(labels)
 
     priority = str(getattr(task, "priority", "medium") or "medium").lower()
     priority_weight = {"critical": 1.0, "high": 0.75, "medium": 0.45, "low": 0.2}.get(priority, 0.1)
@@ -91,36 +117,35 @@ def execution_profile_for(task: object | None) -> ExecutionProfile:
         + min(1.0, text_size / 8000) * 0.2
         + min(1.0, attempts / 3) * 0.25
     )
-    if requested_hint == "deep":
-        complexity = 1.0
-    elif requested_hint == "economy":
-        complexity = min(complexity, 0.35)
+    complexity = float(overrides.get("reasoning_depth", complexity))
 
     # Estimate prompt room from the actual packet, then round to a power of two.
     required_tokens = max(4096, text_size * 2 + dependencies * 1024)
     min_context = 1 << max(13, (required_tokens - 1).bit_length())
     min_output = max(2048, min(32768, min_context // 4))
-    cost_pressure = _clamp(1.0 / math.sqrt(float(budget)))
-    if requested_hint == "economy":
-        cost_pressure = 1.0
+    min_context = max(min_context, int(overrides.get("min_context", 0)))
+    min_output = max(min_output, int(overrides.get("min_output", 0)))
+    cost_pressure = float(overrides.get("cost_pressure", _clamp(1.0 / math.sqrt(float(budget)))))
+    latency_pressure = float(overrides.get("latency_pressure", priority_weight))
+    verification_strength = float(overrides.get("verification_strength", _clamp(0.4 + complexity * 0.6)))
 
     return ExecutionProfile(
         requested_hint=requested_hint,
         reasoning_depth=complexity,
         cost_pressure=cost_pressure,
-        latency_pressure=priority_weight,
+        latency_pressure=latency_pressure,
         min_context=min_context,
         min_output=min_output,
         tools_required=True,
         attachments_required=attachments_required,
         planning_only=planning_only,
         build_allowed=not planning_only,
-        verification_strength=_clamp(0.4 + complexity * 0.6),
+        verification_strength=verification_strength,
     )
 
 
 def effective_profile(profile: ExecutionProfile, *, plan_accepted: bool) -> ExecutionProfile:
-    """Without a current planning acceptance, request deep executable work instead."""
+    """Without current plan acceptance, request maximally verified executable work."""
 
     if profile.planning_only and not plan_accepted:
         return replace(

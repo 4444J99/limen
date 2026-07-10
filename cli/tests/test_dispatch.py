@@ -1570,6 +1570,26 @@ def test_warp_auto_dispatch_sends_dynamic_profile_without_model_override(monkeyp
     assert receipt["selected_model"] is None
 
 
+def test_agent_argv_threads_task_into_dynamic_opencode_selector(monkeypatch) -> None:
+    observed: list[Task | None] = []
+    task = Task(
+        id="OPENCODE-PROFILE",
+        title="task evidence reaches the selector",
+        target_agent="opencode",
+        created=date(2026, 7, 10),
+    )
+
+    def select(current: Task | None = None) -> str:
+        observed.append(current)
+        return "fixture/runtime-output"
+
+    monkeypatch.setattr(D, "_opencode_model", select)
+    argv = D._agent_argv("opencode", task)
+
+    assert observed == [task]
+    assert argv == ["run", "-m", "fixture/runtime-output"]
+
+
 def test_dispatch_event_records_dynamic_selection_receipt() -> None:
     import datetime
 

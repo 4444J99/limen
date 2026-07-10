@@ -140,12 +140,12 @@ VENDORS: tuple[Vendor, ...] = (
         kind="local-cli",
         local_checkout=True,
         issue_assignment=False,
-        auth_mode="opencode_auth",  # own auth.json / free model
+        auth_mode="opencode_auth",  # own auth.json may expand the live reachable catalog
         cred_ref=None,
         meter="dispatch_count",
         tiering="provider_selection",  # provider_selection.py + live `opencode models --verbose`
         budget=Budget(100, "runs", "today", "operator board cap until live vendor meter", "calibrated"),
-        status=Status(True, "live", "free-model lane; deploy/cloudflare specialty"),
+        status=Status(True, "live", "capabilities and pricing discovered from the live catalog"),
     ),
     Vendor(
         name="agy",

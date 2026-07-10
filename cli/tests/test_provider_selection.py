@@ -76,7 +76,44 @@ def test_profile_derives_from_live_task_shape_and_preserves_unknown_hint() -> No
     assert result.tools_required is True
 
 
-def test_unaccepted_plan_becomes_deep_executable_profile() -> None:
+def test_tier_hint_is_opaque_and_cannot_change_routing_profile() -> None:
+    common = {
+        "id": "OPAQUE",
+        "title": "same task",
+        "description": "same evidence",
+        "target_agent": "opencode",
+        "priority": "medium",
+        "budget_cost": 2,
+        "created": date(2026, 7, 10),
+    }
+    legacy = execution_profile_for(Task(**common, labels=["tier:economy"]))
+    future = execution_profile_for(Task(**common, labels=["tier:any-future-word"]))
+    legacy_shape = legacy.as_dict() | {"requested_hint": None}
+    future_shape = future.as_dict() | {"requested_hint": None}
+    assert legacy_shape == future_shape
+    assert legacy.requested_hint == "economy"
+    assert future.requested_hint == "any-future-word"
+
+
+def test_numeric_profile_constraints_are_schema_driven() -> None:
+    task = Task(
+        id="PROFILE",
+        title="numeric constraints",
+        target_agent="opencode",
+        labels=[
+            "profile:reasoning-depth:0.91",
+            "profile:cost-pressure:0.12",
+            "profile:min-context:131072",
+        ],
+        created=date(2026, 7, 10),
+    )
+    result = execution_profile_for(task)
+    assert result.reasoning_depth == 0.91
+    assert result.cost_pressure == 0.12
+    assert result.min_context == 131072
+
+
+def test_unaccepted_plan_becomes_maximally_verified_executable_profile() -> None:
     requested = profile(planning_only=True, build_allowed=False, reasoning_depth=0.6)
     result = effective_profile(requested, plan_accepted=False)
     assert result.planning_only is False

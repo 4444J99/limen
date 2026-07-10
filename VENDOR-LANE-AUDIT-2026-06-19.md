@@ -9,7 +9,7 @@ serialized onto **codex** (now exhausted), with agy/gemini/claude/jules idle.
 |---|---|---|---|---|
 | codex | /opt/homebrew/bin/codex 0.141.0 | ~/.codex/auth.json (chatgpt) OK | EXHAUSTED | router dumps 209 tasks here; usage.json health=exhausted, 0 tok remaining in 5h window |
 | claude | ~/.local/bin/claude | ~/.claude.json OK | HEALTHY but idle | router routes 0 tasks to claude; open_queue=0; 40% token headroom unused |
-| opencode | /opt/homebrew/bin/opencode 1.17.5 | NO auth.json -> free model fallback | HEALTHY (degraded) | only 10 tasks routed (deploy-only); no API key, runs free `opencode/north-mini-code-free` |
+| opencode | /opt/homebrew/bin/opencode 1.17.5 | no OpenCode auth file observed | HEALTHY (historical probe) | only 10 tasks routed (deploy-only); current capabilities and pricing must be discovered from the live catalog and may change after interactive authentication |
 | agy | /opt/homebrew/bin/agy 1.0.10 | local CLI, scratch bridge healed | HEALTHY but idle | 0 tasks routed; was on lanes-down.txt earlier (now gone); scratch-bridge makes it produce |
 | gemini | /opt/homebrew/bin/gemini 0.46.0 | GEMINI_API_KEY set but NOT exported | DOWN | key is shell var, not exported -> Python os.environ can't see it; free-tier key also rate-limits instantly |
 | jules | /opt/homebrew/bin/jules | ~/.jules OK | HEALTHY but idle | router reserves jules only for repos w/ no local checkout; everything has a checkout -> 0 routed; 8 stale claims |
