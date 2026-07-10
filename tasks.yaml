@@ -114458,18 +114458,15 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: claude
+  target_agent: codex
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - always-working
   - receipt-first
   - revenue-value-repos
-  - tried:agy
-  - tried:claude
-  - tried:codex
   urls:
   - ~/Workspace/limen/value-repos.json
   - ~/Workspace/limen/docs/product-ledger.md
@@ -114490,7 +114487,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T09:25:43.023152Z'
+  updated: '2026-07-10T10:02:36.173441Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114632,6 +114629,11 @@ tasks:
     agent: claude
     session_id: cli
     status: failed
+  - timestamp: '2026-07-10T10:02:36.173441Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -114963,16 +114965,17 @@ tasks:
   title: Make worktree and scratch reclaim fast enough to protect local SSD
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - storage
   - reclaim
   - always-working
   - lifecycle
   - tried:opencode
+  - slow
   urls: []
   context: 'Live storage evidence 2026-07-07: df shows only 37 GiB free; du shows
     /Users/4jp/Workspace/.limen-worktrees=81 GiB, ~/.gemini/antigravity-cli/scratch=30
@@ -114983,7 +114986,7 @@ tasks:
     delete unclassified work.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T09:28:01.497532Z'
+  updated: '2026-07-10T10:02:37.945589Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:49:53.806463Z'
     agent: codex
@@ -115010,6 +115013,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:02:37.945589Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: REV-organvm-mirror-mirror-revenue-ship-0707
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -115756,10 +115763,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#436
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -115775,7 +115782,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T09:28:01.497532Z'
+  updated: '2026-07-10T10:02:37.945589Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:13:04.279954Z'
     agent: gemini
@@ -115791,6 +115798,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:02:37.945589Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: AW-ESTATE-CUSTODY
   title: Make external SSDs the durable estate and the laptop a hot cache
   description: estate doctrine exists; implementation receipt is not complete
@@ -120994,10 +121005,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#619
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -121013,7 +121024,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T09:28:01.497532Z'
+  updated: '2026-07-10T10:02:37.945589Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:21:45.810854Z'
     agent: gemini
@@ -121029,6 +121040,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:02:37.945589Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-rebase-stale-organvm-limen-620
   title: "rebase organvm/limen#620 onto current base \u2014 stale base touches the\
     \ daemon body"
@@ -121266,14 +121281,15 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#625
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/625
   context: 'PR organvm/limen#625 is CONFLICTING with its base branch and merge-drain
@@ -121284,13 +121300,17 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T09:28:01.497532Z'
+  updated: '2026-07-10T10:02:37.945589Z'
   dispatch_log:
   - timestamp: '2026-07-10T09:28:01.497532Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:02:37.945589Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: HEAL-rebase-organvm-limen-626
   title: rebase/resolve conflicts on organvm/limen#626
   repo: organvm/limen
@@ -122720,22 +122740,23 @@ tasks:
     \ framing stays his; the plumbing does not."
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   workstream: legal
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - organ
   - legal
   - lane-feed-0708
   - tried:opencode
+  - slow
   urls: []
   context: 'lane-feed 2026-07-08: legal lane had 0 open tasks; derived from ORG-legal-organ-firstslice-0703
     + litigation-pillar records'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T09:28:01.497532Z'
+  updated: '2026-07-10T10:02:37.945589Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -122757,6 +122778,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:02:37.945589Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
 - id: SUBSTRATE-0708-BEOWULF-STRAYS
   title: Relocate stray Beowulf-Fitts composition files out of the live limen checkout
     root
@@ -127692,7 +127717,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - rebase
   - self-heal
@@ -127714,7 +127739,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T08:57:44.284590Z'
+  updated: '2026-07-10T10:02:36.173441Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:07:52.232247Z'
     agent: agy
@@ -127768,6 +127793,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T10:02:36.173441Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-rebase-organvm-domus-genoma-184
   title: rebase/resolve conflicts on organvm/domus-genoma#184
   repo: organvm/domus-genoma
@@ -127775,7 +127805,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - rebase
   - self-heal
@@ -127798,7 +127828,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T09:26:56.995292Z'
+  updated: '2026-07-10T10:02:36.173441Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:07:52.232247Z'
     agent: codex
@@ -127834,6 +127864,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T10:02:36.173441Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-rebase-organvm-domus-genoma-224
   title: rebase/resolve conflicts on organvm/domus-genoma#224
   repo: organvm/domus-genoma
@@ -127877,10 +127912,10 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#230
   repo: organvm/domus-genoma
   type: code
-  target_agent: any
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
@@ -127902,7 +127937,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T09:01:37.237239Z'
+  updated: '2026-07-10T10:02:36.173441Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: codex
@@ -127914,19 +127949,25 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-10T10:02:36.173441Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: HEAL-rebase-organvm-domus-genoma-233
   title: rebase/resolve conflicts on organvm/domus-genoma#233
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:claude
+  - slow
   urls:
   - https://github.com/organvm/domus-genoma/pull/233
   context: 'PR organvm/domus-genoma#233 is CONFLICTING with its base branch and merge-drain
@@ -127943,7 +127984,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T09:28:01.497532Z'
+  updated: '2026-07-10T10:02:37.945589Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: claude
@@ -127959,3 +128000,7 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T10:02:37.945589Z'
+    agent: opencode
+    session_id: cli
+    status: timeout->jules
