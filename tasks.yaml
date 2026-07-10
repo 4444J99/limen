@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 11
+      spent: 12
       per_agent:
         jules: 0
         gemini: 0
-        codex: 1
+        codex: 2
         opencode: 4
         agy: 0
         claude: 2
@@ -114655,7 +114655,7 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: codex
+  target_agent: opencode
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
@@ -114664,6 +114664,7 @@ tasks:
   - always-working
   - receipt-first
   - revenue-value-repos
+  - tried:codex
   urls:
   - ~/Workspace/limen/value-repos.json
   - ~/Workspace/limen/docs/product-ledger.md
@@ -114684,7 +114685,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T14:05:33.598507Z'
+  updated: '2026-07-10T14:10:15.275945Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -114886,6 +114887,15 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T14:08:54.605928Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T14:10:15.275945Z'
+    agent: codex
+    session_id: cli
+    status: failed->opencode
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
