@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-07-10T06:42:08Z",
+  "generated_at": "2026-07-10T06:50:44Z",
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",
@@ -93685,6 +93685,977 @@
       ],
       "first_prompt_hash": "988aff514968d958eaade077d4245b9c1700e7da51ac817c91fda23e06ac450d",
       "last_prompt_hash": "d2d3d86babd3396b9afebb69ac101e473604548f3120e9ad00d7ceb509468b83"
+    },
+    {
+      "generated_at": "2026-07-10T06:50:44Z",
+      "batch": "prompt-batch-critical-remote-proof-001",
+      "band": "critical",
+      "lane": "remote-proof",
+      "status": "non-source-recorded",
+      "classification": "remote-proof batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 3,
+      "prompt_events": 264,
+      "unique_prompt_hashes": 191,
+      "root_statuses": {
+        "historical_absent_not_merged_source_missing": 1,
+        "historical_absent_unpushed_source_missing": 2
+      },
+      "last_known_reasons": {
+        "not-merged-to-default": 1,
+        "unpushed-commits": 2
+      },
+      "evidence": [
+        "private prompt batch ledger listed these roots as remote-proof/remote-close queue items",
+        "python3 scripts/worktree-debt.py --json scanned 483 roots and found none of the batch roots present",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 483 roots with reapable_count=2",
+        "session-attack-paths metadata supplied only root names, last-known reason buckets, and open-PR counts; no path, repo, branch, head, or prompt body is copied here",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names an archive/remote receipt, repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-limen-423-47a6f9ec",
+          "status": "historical_absent_unpushed_source_missing",
+          "last_known_reason": "unpushed-commits",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-b979134a",
+          "status": "historical_absent_not_merged_source_missing",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-435-47b10f86",
+          "status": "historical_absent_unpushed_source_missing",
+          "last_known_reason": "unpushed-commits",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T06:50:44Z",
+      "batch": "prompt-batch-high-remote-proof-001",
+      "band": "high",
+      "lane": "remote-proof",
+      "status": "non-source-recorded",
+      "classification": "remote-proof batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 108,
+      "unique_prompt_hashes": 75,
+      "root_statuses": {
+        "historical_absent_clean_merged_idle": 23,
+        "historical_absent_not_merged_source_missing": 2
+      },
+      "last_known_reasons": {
+        "clean+merged+idle": 23,
+        "not-merged-to-default": 2
+      },
+      "evidence": [
+        "private prompt batch ledger listed these roots as remote-proof/remote-close queue items",
+        "python3 scripts/worktree-debt.py --json scanned 483 roots and found none of the batch roots present",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 483 roots with reapable_count=2",
+        "session-attack-paths metadata supplied only root names, last-known reason buckets, and open-PR counts; no path, repo, branch, head, or prompt body is copied here",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names an archive/remote receipt, repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-a-i--skills-27-f7577686",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-a-i-chat--exporter-54-3049e7fb",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-422-0a0aae09",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-425-713511d7",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-425-db11388b",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-427-42616f71",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-427-a7bd2bb9",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-429-89a0a2b4",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-432-06bf02c7",
+          "status": "historical_absent_not_merged_source_missing",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-436-3b707e9b",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-437-59c98bd8",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-437-91307a5b",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-437-ae361281",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-439-0851d4aa",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-439-4583ba76",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-439-9e5ed9f8",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-444-d6220f0e",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-445-4f8beb6f",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-10-0356e4b9",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-27-b0270e71",
+          "status": "historical_absent_not_merged_source_missing",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-139-aa978656",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-30-83dc3d03",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-30-ace9199f",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-30-b99de3e7",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-66-f4469c47",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T06:50:44Z",
+      "batch": "prompt-batch-high-remote-proof-002",
+      "band": "high",
+      "lane": "remote-proof",
+      "status": "non-source-recorded",
+      "classification": "remote-proof batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 90,
+      "unique_prompt_hashes": 44,
+      "root_statuses": {
+        "historical_absent_clean_merged_idle": 18,
+        "historical_absent_not_merged_source_missing": 2,
+        "historical_absent_unpushed_source_missing": 5
+      },
+      "last_known_reasons": {
+        "clean+merged+idle": 18,
+        "not-merged-to-default": 2,
+        "unpushed-commits": 5
+      },
+      "evidence": [
+        "private prompt batch ledger listed these roots as remote-proof/remote-close queue items",
+        "python3 scripts/worktree-debt.py --json scanned 483 roots and found none of the batch roots present",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 483 roots with reapable_count=2",
+        "session-attack-paths metadata supplied only root names, last-known reason buckets, and open-PR counts; no path, repo, branch, head, or prompt body is copied here",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names an archive/remote receipt, repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-a-i--skills-27-f0edd746",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-422-be9eb353",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-422-eda116ed",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-425-164d86db",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-1738f072",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-430-955f9dd1",
+          "status": "historical_absent_unpushed_source_missing",
+          "last_known_reason": "unpushed-commits",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-433-aba31b6f",
+          "status": "historical_absent_unpushed_source_missing",
+          "last_known_reason": "unpushed-commits",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-435-fa00a596",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-442-1b11af92",
+          "status": "historical_absent_unpushed_source_missing",
+          "last_known_reason": "unpushed-commits",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-442-3902a00d",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-446-0862daaa",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-10-be8406e3",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-11-a86cf99f",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-13-517e2cb9",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-13-953633bb",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-13-c96051e5",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-28-6f74f785",
+          "status": "historical_absent_unpushed_source_missing",
+          "last_known_reason": "unpushed-commits",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-121-22d63bd9",
+          "status": "historical_absent_unpushed_source_missing",
+          "last_known_reason": "unpushed-commits",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-121-89f977f6",
+          "status": "historical_absent_not_merged_source_missing",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-89-0448f70e",
+          "status": "historical_absent_not_merged_source_missing",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and the last-known source state was not proven merged; treat as historical missing-source context unless an archive or remote owner receipt is later identified."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-94-b27fb091",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-peer-audited--behavioral-blockchain-721-68871455",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-your-fit-tailored-15-3def5941",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-your-fit-tailored-15-fad950e3",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "org-financial-organ-face-0704-5a117787",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T06:50:44Z",
+      "batch": "prompt-batch-high-remote-proof-003",
+      "band": "high",
+      "lane": "remote-proof",
+      "status": "non-source-recorded",
+      "classification": "remote-proof batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 25,
+      "prompt_events": 51,
+      "unique_prompt_hashes": 22,
+      "root_statuses": {
+        "historical_absent_clean_merged_idle": 25
+      },
+      "last_known_reasons": {
+        "clean+merged+idle": 25
+      },
+      "evidence": [
+        "private prompt batch ledger listed these roots as remote-proof/remote-close queue items",
+        "python3 scripts/worktree-debt.py --json scanned 483 roots and found none of the batch roots present",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 483 roots with reapable_count=2",
+        "session-attack-paths metadata supplied only root names, last-known reason buckets, and open-PR counts; no path, repo, branch, head, or prompt body is copied here",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names an archive/remote receipt, repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-a-i--skills-27-d0df3765",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-a-i--skills-28-d93d775c",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-a-i-chat--exporter-49-1992eb0d",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-426-0ff7babe",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-426-71c5627d",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-428-e3e2925e",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-431-749c4e36",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-431-d068660e",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-434-a0692202",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-436-4702c4dc",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-438-260ee687",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-442-4ddd8c37",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-443-9cd88b5e",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-446-acc60adb",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-11-2978d499",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-11-f753ad04",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-12-2c2c85ba",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-organvm-ontologia-13-ebb63927",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-103-f5b1e4f4",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-108-9266466c",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-139-d6ff41fc",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-66-97a71482",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-66-fbdc462f",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-peer-audited--behavioral-blockchain-721-4cf098da",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-your-fit-tailored-15-fa5d798d",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T06:50:44Z",
+      "batch": "prompt-batch-high-remote-close-001",
+      "band": "high",
+      "lane": "remote-close",
+      "status": "non-source-recorded",
+      "classification": "remote-proof batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 5,
+      "prompt_events": 20,
+      "unique_prompt_hashes": 15,
+      "root_statuses": {
+        "historical_absent_open_pr_hint": 5
+      },
+      "last_known_reasons": {
+        "not-merged-to-default": 5
+      },
+      "evidence": [
+        "private prompt batch ledger listed these roots as remote-proof/remote-close queue items",
+        "python3 scripts/worktree-debt.py --json scanned 483 roots and found none of the batch roots present",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 483 roots with reapable_count=2",
+        "session-attack-paths metadata supplied only root names, last-known reason buckets, and open-PR counts; no path, repo, branch, head, or prompt body is copied here",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names an archive/remote receipt, repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-a-i--skills-29-6209335e",
+          "status": "historical_absent_open_pr_hint",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 1,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains; review the owner repo/PR from remote surfaces before any merge, close, or supersession decision."
+        },
+        {
+          "root": "heal-cifix-organvm-a-i-chat--exporter-54-cac20ffd",
+          "status": "historical_absent_open_pr_hint",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 1,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains; review the owner repo/PR from remote surfaces before any merge, close, or supersession decision."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-425-0597e483",
+          "status": "historical_absent_open_pr_hint",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 1,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains; review the owner repo/PR from remote surfaces before any merge, close, or supersession decision."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-434-529e2e6d",
+          "status": "historical_absent_open_pr_hint",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 1,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains; review the owner repo/PR from remote surfaces before any merge, close, or supersession decision."
+        },
+        {
+          "root": "heal-cifix-organvm-public-process-29-14210afa",
+          "status": "historical_absent_open_pr_hint",
+          "last_known_reason": "not-merged-to-default",
+          "last_known_open_prs": 1,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains; review the owner repo/PR from remote surfaces before any merge, close, or supersession decision."
+        }
+      ]
+    },
+    {
+      "generated_at": "2026-07-10T06:50:44Z",
+      "batch": "prompt-batch-high-remote-proof-004",
+      "band": "high",
+      "lane": "remote-proof",
+      "status": "non-source-recorded",
+      "classification": "remote-proof batch closed as absent local checkout metadata; no current local source root remains to reclaim from this machine",
+      "session_count": 6,
+      "prompt_events": 23,
+      "unique_prompt_hashes": 17,
+      "root_statuses": {
+        "historical_absent_clean_merged_idle": 6
+      },
+      "last_known_reasons": {
+        "clean+merged+idle": 6
+      },
+      "evidence": [
+        "private prompt batch ledger listed these roots as remote-proof/remote-close queue items",
+        "python3 scripts/worktree-debt.py --json scanned 483 roots and found none of the batch roots present",
+        "python3 scripts/reclaim-worktrees.py --dry-run --json scanned 483 roots with reapable_count=2",
+        "session-attack-paths metadata supplied only root names, last-known reason buckets, and open-PR counts; no path, repo, branch, head, or prompt body is copied here",
+        "no raw user, assistant, last-prompt, credential, account, billing, financial, health, or secret text was copied into this tracked receipt"
+      ],
+      "next_action": "No current local checkout remains for this batch. Do not recreate or delegate broad cleanup from the historical prompt record; rehydrate only if a later owner packet names an archive/remote receipt, repo, branch or PR, and verification predicate.",
+      "roots": [
+        {
+          "root": "heal-cifix-organvm-limen-421-8f14068b",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-cifix-organvm-limen-441-c60154a0",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-139-54cda4e9",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-4444j99-hokage-chess-94-13cf83c7",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-4444j99.github.io-9-db69ae03",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        },
+        {
+          "root": "heal-rebase-organvm-a-i-chat--exporter-29-13582938",
+          "status": "historical_absent_clean_merged_idle",
+          "last_known_reason": "clean+merged+idle",
+          "last_known_open_prs": 0,
+          "repo": "unknown-from-redacted-attack-metadata",
+          "evidence": "Current worktree-debt scan has no root by this name; only redacted historical attack-path metadata remains for this prompt batch.",
+          "next_action": "No current local checkout remains and last-known classifier was clean+merged+idle; do not rehydrate unless later owner review names a live branch, PR, and predicate."
+        }
+      ]
     }
   ]
 }
