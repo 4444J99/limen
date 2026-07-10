@@ -1,6 +1,6 @@
 # Dispatch Health
 
-Generated: `2026-07-10T01:47:30+00:00`
+Generated: `2026-07-10T01:49:52+00:00`
 
 Status: `blocked`
 
@@ -34,7 +34,7 @@ Status: `blocked`
 - Loaded LIMEN_DISPATCH_LANES: `auto`.
 - Loaded LIMEN_ASYNC_MAX: `10`.
 - Loaded LIMEN_LANES: `codex,opencode,agy,claude,gemini`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-10T01:47:30.449516+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-07-10T01:49:52.425481+00:00 HEALTHY sig=healthy`.
 
 ## Async Dispatch
 
@@ -62,23 +62,17 @@ Status: `blocked`
 - Done from receipt: `7`.
 - Next item: `PUBLIC-FACE-CONTRIBUTION-BALANCE` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 73.8%, PRs 13.7%, issues 11.7%, reviews 0.8%.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 73.7%, PRs 13.7%, issues 11.7%, reviews 0.9%.
   - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 131 active flagged non-deleted messages require classification.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
-- HEAD: `5654195d4bea772715bd9671b2629932bc01f0d2`.
-- origin/main: `5654195d4bea772715bd9671b2629932bc01f0d2`.
+- HEAD: `636cee75368ea78e2e541e13c9bfdf2875f2784d`.
+- origin/main: `636cee75368ea78e2e541e13c9bfdf2875f2784d`.
 - Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `3`.
-- Ignored generated receipt dirty entries: `2`.
-  - `docs/dispatch-health.md`
-  - `docs/live-root-gate.md`
-  - `docs/always-working.md`
-  - `docs/github-contribution-balance.md`
-  - `docs/prompt-batch-resolution-receipts.json`
+- Dirty entries: `0`.
 
 ## Verified Worktree
 
@@ -88,7 +82,6 @@ Status: `blocked`
 
 ## Blockers
 
-- `live-root-dirty`: live root has 3 dirty entries.
 - `always-working-required-work-open`: 2 required promise workstream(s) remain open; next item PUBLIC-FACE-CONTRIBUTION-BALANCE.
 
 ## Commands

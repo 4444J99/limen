@@ -1,8 +1,8 @@
 # Live Root Gate
 
-Generated: `2026-07-10T01:47:30+00:00`
+Generated: `2026-07-10T01:49:52+00:00`
 
-Status: `blocked`
+Status: `ready`
 
 ## Rule
 
@@ -12,29 +12,20 @@ Status: `blocked`
 
 ## Gate State
 
-- Operator gate required: `True`.
+- Operator gate required: `False`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: `live-root-dirty`.
+- Blocking gates: none.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
 - Branch: `main`; release branch `main`.
-- HEAD: `5654195d4bea772715bd9671b2629932bc01f0d2`.
-- Release head: `5654195d4bea772715bd9671b2629932bc01f0d2`.
+- HEAD: `636cee75368ea78e2e541e13c9bfdf2875f2784d`.
+- Release head: `636cee75368ea78e2e541e13c9bfdf2875f2784d`.
 - Matches release: `True`; ahead `0` behind `0`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
-- Dirty entries: `3`.
-- Ignored generated receipt dirty entries: `2`.
-  - `docs/dispatch-health.md`
-  - `docs/live-root-gate.md`
-
-### Dirty Paths
-
-- `docs/always-working.md`
-- `docs/github-contribution-balance.md`
-- `docs/prompt-batch-resolution-receipts.json`
+- Dirty entries: `0`.
 
 ## Heartbeat
 
