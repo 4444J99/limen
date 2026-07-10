@@ -112,6 +112,9 @@ bash scripts/tests/ask-gate.test.sh
 # daemon state and is surfaced in the beat log by metabolize.sh, so it is not a hard gate here.
 python3 scripts/enactment-audit.py --check --wiring-only
 
+step "Verify the single-home reference-integrity predicate (a re-owned email is caught, never left to prose)"
+bash scripts/tests/identity-reconcile.test.sh
+
 step "Verify the omega fixed-point predicate (composes every gate's --check; SKIP is never a silent PASS)"
 bash scripts/tests/omega.test.sh
 # The tally/exit/stamp contract is the deterministic code rung (stubbed children — no live board or

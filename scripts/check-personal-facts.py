@@ -8,6 +8,10 @@ Exit 0 iff institutio/governance/personal-facts.yaml is internally coherent:
   C  single-home: no two classes declare the same (home, atom) pair (no double-owning an atom).
   D  consumer parity: every file named in a `consumers:` list exists under scripts/.
   E  home shape: a non-op home path sits under a _*-private store (federation-not-fusion).
+  F  referenced_by shape: single-home citing stores are declared data — each entry names a
+     _*-private store/collection/field, and a crown-jewel is never cited by a plaintext store.
+     (SHAPE only, store-free so it runs in CI; MEMBERSHIP is enforced by `identity.py reconcile`
+     at the beat, where the ARCA-sealed store actually exists.)
 
 Run directly, via pr-gate, or verify-whole. Fails toward caution: a broken registry is RED.
 """
@@ -86,6 +90,26 @@ def main():
             top = home.split("/", 1)[0]
             if not (top.startswith("_") and top.endswith("-private")):
                 fail("E", f"{cid}: home {home!r} is not under a _*-private store")
+
+        # F: referenced_by shape (single-home citing stores as declared data; membership is a beat check)
+        refs = fct.get("referenced_by")
+        if refs is not None:
+            if fct.get("tier") == "crown-jewel":
+                fail("F", f"{cid}: crown-jewel must never be referenced_by a plaintext store")
+            if not isinstance(refs, list):
+                fail("F", f"{cid}: referenced_by must be a list")
+            else:
+                for i, ref in enumerate(refs):
+                    if not isinstance(ref, dict):
+                        fail("F", f"{cid}: referenced_by[{i}] must be a mapping")
+                        continue
+                    for k in ("store", "collection", "field"):
+                        if not isinstance(ref.get(k), str) or not ref.get(k):
+                            fail("F", f"{cid}: referenced_by[{i}] missing string `{k}`")
+                    store = ref.get("store", "")
+                    stop = store.split("/", 1)[0]
+                    if store and not (stop.startswith("_") and stop.endswith("-private")):
+                        fail("F", f"{cid}: referenced_by[{i}] store {store!r} not under a _*-private store")
 
     if failures:
         print("personal-facts registry: DRIFT")

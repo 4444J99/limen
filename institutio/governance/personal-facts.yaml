@@ -29,9 +29,15 @@
 #               existence) | shadow_present (crown-jewel digest on disk; NEVER a silent op read on
 #               the beat) | pointer_resolves (federated pointer target exists).
 #   consumers   form-fillers / tools that read this class (their CONSUMES manifest must match).
+#   referenced_by  OPTIONAL. stores that may CITE this class's value but never re-own it (single-home).
+#               each entry: {store: _*-private path, collection: array key, field: item key}. Every
+#               cited value MUST be a member of the owned set. Adding a citing store = ONE row here.
 #
 # SINGLE-HOME RULE: a fact-class has exactly one `home`. Email lives here (identity.emails is the
-# single owner); _life-private/digital-accounts.json REFERENCES it, never re-owns it.
+# single owner); _life-private/digital-accounts.json REFERENCES it, never re-owns it. This is a
+# `referenced_by` block (below), not prose: its SHAPE is enforced by check-personal-facts.py (CI,
+# store-free) and its MEMBERSHIP by `identity.py reconcile` at the beat (where the store exists) —
+# a re-owned/divergent email is surfaced, never left to discipline.
 # CROWN-JEWEL RULE: tier:crown-jewel => home MUST be an op:// ref, verify MUST be shadow_present,
 # and a `shadow` atom names the only on-disk trace. Enforced by check-personal-facts.py, not discipline.
 
@@ -130,6 +136,10 @@ facts:
     required: true
     verify: non_empty
     consumers: [fill-phi-jewishboard.py]
+    referenced_by:                       # stores that MAY cite an owned email, never re-own it
+      - store: _life-private/digital-accounts.json
+        collection: accounts             # each accounts[].email must be a member of the owned set
+        field: email
 
   # ── crown-jewel: full SSN op-only; disk keeps ssn_last4 shadow ──────────────
   identity.ssn:

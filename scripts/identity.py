@@ -15,7 +15,8 @@ Homes are two, per the credential-organ precedent (credentials rotate, identity 
   identity.py get <class-id|store.dotpath>   # one value (redacts crown-jewels)
   identity.py show                           # human view of the identity store (crown-jewels masked)
   identity.py json [--unsafe-ssn]            # identity store as JSON for a consumer
-  identity.py verify                         # PREDICATE: exit 0 iff every applicable&required atom present+valid
+  identity.py verify                         # PREDICATE: every applicable&required atom present + single-home intact
+  identity.py reconcile                      # PREDICATE: every referenced_by citation is a member of the owned set
   identity.py need <class-id>                # resolve, or surface an un-homed class (dry-run; LIMEN_FACTS_APPLY=1 writes)
   identity.py hydrate                        # pull op:// crown-jewels/identity into the mirror (op must be reachable)
 """
@@ -30,7 +31,7 @@ import yaml
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REGISTRY = os.path.join(REPO, "institutio", "governance", "personal-facts.yaml")
-WORKSPACE = os.path.expanduser("~/Workspace")
+WORKSPACE = os.environ.get("LIMEN_WORKSPACE", os.path.expanduser("~/Workspace"))  # override for tests
 STORE = os.path.join(WORKSPACE, "_life-private", "identity.json")   # the identity domain store
 OP_IDENTITY_ITEM = "op://Private/Identity"
 
@@ -109,6 +110,54 @@ def _redact(d):
     return d
 
 
+# ── single-home reference-integrity (the SINGLE-HOME rule, made executable) ───
+
+def _owned_set(f):
+    """The full set of values a class owns at its home (the array parent of its atom), lowercased.
+    `emails.0` -> the whole `emails` array. op:// homes have no at-rest set -> None."""
+    home = f.get("home", "")
+    if home.startswith("op://"):
+        return None
+    atom = f.get("atom", "")
+    tail = atom.rsplit(".", 1)[-1]
+    parent = atom.rsplit(".", 1)[0] if (tail.isdigit() and "." in atom) else atom
+    val = _dig(_load_home(home), parent)
+    if isinstance(val, list):
+        return {str(x).strip().lower() for x in val if not _is_blank(x)}
+    if not _is_blank(val):
+        return {str(val).strip().lower()}
+    return set()
+
+
+def _reference_integrity():
+    """SINGLE-HOME membership: every value a `referenced_by` store cites must be in the owned set.
+    Returns redacted strings (class + store + COUNT — never the cited value). Skips a class whose
+    owned set is empty (that is the populate gap, surfaced by verify) and a store not present on disk
+    (CI / a machine without the ARCA store) — so this never false-fails where it cannot see data."""
+    out = []
+    for cid, f in _registry().items():
+        refs = f.get("referenced_by") or []
+        if not refs:
+            continue
+        owned = _owned_set(f)
+        if not owned:                         # nothing to reconcile against -> not this check's job
+            continue
+        for ref in refs:
+            store = ref.get("store", "")
+            items = _dig(_load_home(store), ref.get("collection", ""))
+            if not isinstance(items, list):
+                continue
+            field = ref.get("field", "")
+            strays = sum(
+                1 for it in items
+                if isinstance(it, dict) and not _is_blank(it.get(field))
+                and str(it.get(field)).strip().lower() not in owned
+            )
+            if strays:
+                out.append(f"{cid}: {strays} {field}(s) in {store} not owned by {cid}")
+    return out
+
+
 # ── commands ────────────────────────────────────────────────────────────────
 
 def cmd_get(a):
@@ -163,11 +212,26 @@ def cmd_verify(a):
             path = _home_path(home)
             if not (path and os.path.exists(path)):
                 missing.append(f"{cid} (pointer {home})")
-    if missing:
-        print(f"[identity] MISSING {len(missing)}/{checked} required atoms: " + ", ".join(missing))
-        print("[identity]   -> one-time populate (op hydrate or entry); see lever L-IDENTITY-POPULATE")
+    strays = _reference_integrity()
+    if missing or strays:
+        if missing:
+            print(f"[identity] MISSING {len(missing)}/{checked} required atoms: " + ", ".join(missing))
+            print("[identity]   -> one-time populate (op hydrate or entry); see lever L-IDENTITY-POPULATE")
+        if strays:
+            print("[identity] REFERENCE-INTEGRITY drift (single-home): " + "; ".join(strays))
+            print("[identity]   -> add the cited value to its owner class, or fix the citing store")
         sys.exit(1)
-    print(f"[identity] OK — all {checked} applicable&required atoms present")
+    print(f"[identity] OK — all {checked} applicable&required atoms present; single-home intact")
+    sys.exit(0)
+
+
+def cmd_reconcile(a):
+    strays = _reference_integrity()
+    if strays:
+        print("[identity] REFERENCE-INTEGRITY drift (single-home): " + "; ".join(strays))
+        print("[identity]   -> add the cited value to its owner class (owner is incomplete), or fix the citing store")
+        sys.exit(1)
+    print("[identity] OK — every referenced_by citation is owned (single-home intact)")
     sys.exit(0)
 
 
@@ -224,6 +288,7 @@ def main():
     s = sub.add_parser("show"); s.set_defaults(fn=cmd_show)
     j = sub.add_parser("json"); j.add_argument("--unsafe-ssn", action="store_true"); j.set_defaults(fn=cmd_json)
     v = sub.add_parser("verify"); v.set_defaults(fn=cmd_verify)
+    r = sub.add_parser("reconcile"); r.set_defaults(fn=cmd_reconcile)
     n = sub.add_parser("need"); n.add_argument("klass"); n.set_defaults(fn=cmd_need)
     h = sub.add_parser("hydrate"); h.set_defaults(fn=cmd_hydrate)
     a = p.parse_args()
