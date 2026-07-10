@@ -1,7 +1,7 @@
 # Session Value Review
 
-Generated: `2026-07-10T06:09:33+00:00`
-Window: `2026-07-09T18:09:29+00:00` to `2026-07-10T06:09:29+00:00` (12.0h)
+Generated: `2026-07-10T06:10:07+00:00`
+Window: `2026-07-09T18:10:03+00:00` to `2026-07-10T06:10:03+00:00` (12.0h)
 
 ## Verdict
 
@@ -13,27 +13,27 @@ Window: `2026-07-09T18:09:29+00:00` to `2026-07-10T06:09:29+00:00` (12.0h)
 - Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
 - Follow-up pressure: `25` follow-up roots vs `416` merged/routed roots; consecutive pressure reports `0`.
 - No-receipt pressure: `false`; consecutive reports `0`; high-motion `false`.
-- Maintenance commits: `26`; value commits: `292`; custody-only: `false`.
-- Open review batches: `77`; no durable progress: `false`.
-- Next commands: `python3 scripts/resolve-legacy-session-batch.py prompt-batch-low-legacy-session-review-060 --write`.
+- Maintenance commits: `26`; value commits: `293`; custody-only: `false`.
+- Open review batches: `76`; no durable progress: `false`.
+- Next commands: `python3 scripts/resolve-legacy-session-batch.py prompt-batch-low-legacy-session-review-061 --write`.
 
 ## Measured Output
 
-- Commits landed: `318`; files touched: `719`; insertions/deletions: `75100` / `16975`.
-- Prompt batch receipts: `123`; batches/hour: `10.25`.
-- Sessions recorded: `3002`; prompt events recorded: `23480`; prompt events/hour: `1956.67`.
+- Commits landed: `319`; files touched: `722`; insertions/deletions: `75456` / `17029`.
+- Prompt batch receipts: `124`; batches/hour: `10.33`.
+- Sessions recorded: `3027`; prompt events recorded: `23542`; prompt events/hour: `1961.83`.
 - Merged-root evidence: `99`; follow-up roots: `25`; absent owner routes: `317`.
-- Commit mix: `other` 292, `task_board` 22, `receipt_refresh` 4.
-- Receipt lane mix: `legacy-session-review` 59, `hash-review` 32, `historical-worktree-review` 30, `family` 2.
-- Current corpus queue: `215` recorded, `77` open, `17` parked secret.
-- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 59, `needs-remote-proof` 6, `owner-recorded` 212, `parked-secret` 17, `superseded-recorded` 3.
+- Commit mix: `other` 293, `task_board` 22, `receipt_refresh` 4.
+- Receipt lane mix: `legacy-session-review` 60, `hash-review` 32, `historical-worktree-review` 30, `family` 2.
+- Current corpus queue: `216` recorded, `76` open, `17` parked secret.
+- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 58, `needs-remote-proof` 6, `owner-recorded` 213, `parked-secret` 17, `superseded-recorded` 3.
 
 ## Value
 
-- Resolved 123 prompt-corpus batches covering 3002 sessions and 23480 prompt events into durable metadata receipts.
+- Resolved 124 prompt-corpus batches covering 3027 sessions and 23542 prompt events into durable metadata receipts.
 - Linked 99 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
-- Left the current redacted queue measurable: 215 recorded batches and 77 open review batches.
-- Landed 318 commits with 719 file touches and 75100 insertions.
+- Left the current redacted queue measurable: 216 recorded batches and 76 open review batches.
+- Landed 319 commits with 722 file touches and 75456 insertions.
 
 ## Critique
 
@@ -50,7 +50,6 @@ Window: `2026-07-09T18:09:29+00:00` to `2026-07-10T06:09:29+00:00` (12.0h)
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-07-10T05:47:46+00:00` | `82d79f3` | `other` | limen: resolve low hash batch 030 |
 | `2026-07-10T05:48:13+00:00` | `0ee9c62` | `other` | limen: resolve low hash batch 031 |
 | `2026-07-10T05:49:20+00:00` | `065f306` | `other` | limen: resolve low legacy session batch 044 |
 | `2026-07-10T05:49:48+00:00` | `7c26ac5` | `other` | limen: resolve low legacy session batch 045 |
@@ -70,12 +69,12 @@ Window: `2026-07-09T18:09:29+00:00` to `2026-07-10T06:09:29+00:00` (12.0h)
 | `2026-07-10T06:06:22+00:00` | `7d71898` | `other` | limen: resolve low legacy session batch 056 |
 | `2026-07-10T06:07:57+00:00` | `ec694b5` | `other` | limen: resolve low legacy session batch 057 |
 | `2026-07-10T06:08:34+00:00` | `f79c4e8` | `other` | limen: resolve low legacy session batch 058 |
+| `2026-07-10T06:09:42+00:00` | `9459cd4` | `other` | limen: resolve low legacy session batch 059 |
 
 ## Batch Receipts
 
 | Time | Batch | Lane | Sessions | Events | Root Statuses |
 |---|---|---|---:|---:|---|
-| `2026-07-10T05:46:46+00:00` | `prompt-batch-low-hash-review-028` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T05:47:07+00:00` | `prompt-batch-low-hash-review-029` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T05:47:32+00:00` | `prompt-batch-low-hash-review-030` | `hash-review` | 25 | 26 | `codex_session_sensitive_context_recorded` 25 |
 | `2026-07-10T05:47:55+00:00` | `prompt-batch-low-hash-review-031` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
@@ -95,16 +94,17 @@ Window: `2026-07-09T18:09:29+00:00` to `2026-07-10T06:09:29+00:00` (12.0h)
 | `2026-07-10T06:07:37+00:00` | `prompt-batch-low-legacy-session-review-057` | `legacy-session-review` | 25 | 61 | `legacy_session_owner_lane_routed` 19, `legacy_session_external_context_recorded` 5, `legacy_session_closed_pr_recorded` 1 |
 | `2026-07-10T06:08:15+00:00` | `prompt-batch-low-legacy-session-review-058` | `legacy-session-review` | 25 | 60 | `legacy_session_owner_lane_routed` 23, `legacy_session_external_context_recorded` 1, `legacy_session_closed_pr_recorded` 1 |
 | `2026-07-10T06:09:24+00:00` | `prompt-batch-low-legacy-session-review-059` | `legacy-session-review` | 25 | 66 | `legacy_session_owner_lane_routed` 23, `legacy_session_external_context_recorded` 2 |
+| `2026-07-10T06:10:03+00:00` | `prompt-batch-low-legacy-session-review-060` | `legacy-session-review` | 25 | 62 | `legacy_session_owner_lane_routed` 18, `legacy_session_external_context_recorded` 6, `legacy_session_closed_pr_recorded` 1 |
 
 ## Next Queue Slice
 
 | Batch | Status | Lane | Sessions | Events |
 |---|---|---|---:|---:|
-| `prompt-batch-low-legacy-session-review-060` | `needs-private-review` | `legacy-session-review` | 25 | 62 |
 | `prompt-batch-low-legacy-session-review-061` | `needs-private-review` | `legacy-session-review` | 25 | 70 |
 | `prompt-batch-low-legacy-session-review-062` | `needs-private-review` | `legacy-session-review` | 25 | 71 |
 | `prompt-batch-low-legacy-session-review-063` | `needs-private-review` | `legacy-session-review` | 25 | 74 |
 | `prompt-batch-low-legacy-session-review-064` | `needs-private-review` | `legacy-session-review` | 25 | 64 |
+| `prompt-batch-low-legacy-session-review-065` | `needs-private-review` | `legacy-session-review` | 25 | 68 |
 
 ## Commands
 
