@@ -1,25 +1,25 @@
 # Substrate Storage Pressure
 
-Generated: `2026-07-10T01:25:17Z`
+Generated: `2026-07-10T02:05:12Z`
 Status: `needs-owner-gates`
-Internal free: `93.0 GiB`
+Internal free: `89.9 GiB`
 Target free: `200.0 GiB`
-Shortfall: `107.0 GiB`
+Shortfall: `110.1 GiB`
 
 ## Safe Reclaim Already Run
 
-- `generated-state`: `26.6 GiB` over `2` apply event(s); latest `2026-07-10T00:13:43Z`.
-- `tool-cache`: `4.7 GiB` over `1` apply event(s); latest `2026-07-10T00:20:08Z`.
-- `ollama-models`: `9.3 GiB` over `1` apply event(s); latest `2026-07-10T00:27:23Z`.
+- `generated-state`: `26.6 GiB` over `3` apply event(s); latest `2026-07-10T02:04:10Z`.
+- `tool-cache`: `5.1 GiB` over `2` apply event(s); latest `2026-07-10T02:04:17Z`.
+- `ollama-models`: `9.3 GiB` over `2` apply event(s); latest `2026-07-10T02:04:32Z`.
 
 ## Scratch / Worktree Lifecycle
 
-- Summary: `0 debt roots / 475 scanned; 0 reapable roots`.
+- Summary: `0 debt roots / 497 scanned; 0 reapable roots`.
 - Debt cap: `12`; reapable cap: `0`.
 
 | Reason | Roots |
 |---|---:|
-| `active(<6h)` | `280` |
+| `active(<6h)` | `302` |
 | `remote-pr-open` | `72` |
 | `antigravity-scratch-managed` | `48` |
 | `active(<24h)` | `46` |
@@ -37,7 +37,7 @@ Shortfall: `107.0 GiB`
 | `~/Workspace/.limen-worktrees` | `8.3 GiB` | `worktree-cache` | `docs/worktree-reclaim-acceptance.md` | clean+merged+idle or explicit acceptance; current worktree-debt gate reports zero reapable |
 | `~/Library/Messages` | `7.3 GiB` | `personal-communications` | `communications custody` | personal-data human gate plus two-copy restore proof |
 | `~/.gemini/antigravity-cli` | `6.7 GiB` | `protected-agent-state` | `agy conductor` | preserve conversations/brain before eviction; scratch handled separately |
-| `~/Workspace/session-meta` | `5.0 GiB` | `repo-corpus-state` | `organvm/session-meta` | repo/archive custody proof before local cache eviction |
+| `~/Workspace/session-meta` | `5.1 GiB` | `repo-corpus-state` | `organvm/session-meta` | repo/archive custody proof before local cache eviction |
 | `~/.gemini/antigravity-cli/scratch` | `4.2 GiB` | `agy-scratch` | `docs/antigravity-scratch-bridge.md` | antigravity scratch archive/redaction acceptance ledger before removal |
 
 ## OpenCode DB Intake
