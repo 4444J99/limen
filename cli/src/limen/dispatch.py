@@ -16,6 +16,7 @@ from typing import Any, TypedDict
 
 from limen import census
 from limen.capacity import (
+    DEFAULT_GITHUB_ACTIONS_WORKFLOW,
     canonical_agent,
     capacity_census,
     format_capacity_census,
@@ -1388,7 +1389,7 @@ def _call_github_actions(task: Task, dry_run: bool) -> bool | str:
         print(f"  SKIP {task.id}: github_actions lane needs task.repo")
         return False
     gh = os.environ.get("LIMEN_GITHUB_ACTIONS_BIN", "gh")
-    workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", "limen-agent.yml")
+    workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", DEFAULT_GITHUB_ACTIONS_WORKFLOW)
     cmd = [
         gh,
         "workflow",

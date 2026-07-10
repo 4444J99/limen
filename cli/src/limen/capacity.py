@@ -68,6 +68,7 @@ DEFAULT_DAILY_TASK_TARGETS: dict[str, int] = {
     # Human contract: Claude should get a deliberately programmed/check-up batch daily.
     "claude": 15,
 }
+DEFAULT_GITHUB_ACTIONS_WORKFLOW = "operate.yml"
 BAD_USAGE_HEALTH = {"exhausted", "rate-limited", "low"}
 
 AGENT_ALIASES: dict[str, str] = census.agent_aliases()
@@ -325,7 +326,7 @@ def agent_status(agent: str) -> AgentStatus:
             ok = False
             detail = f"{detail}; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane"
     if agent == "github_actions" and ok:
-        workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", "limen-agent.yml")
+        workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", DEFAULT_GITHUB_ACTIONS_WORKFLOW)
         health_repo = os.environ.get(
             "LIMEN_GITHUB_ACTIONS_HEALTH_REPO",
             os.environ.get("LIMEN_GITHUB_ACTIONS_REPO", "organvm/limen"),

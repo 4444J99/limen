@@ -358,8 +358,27 @@ def test_github_actions_lane_requires_configured_workflow(tmp_path: Path, monkey
     lanes = select_lanes("auto", board)
 
     assert status["reachable"] is False
-    assert "workflow=limen-agent.yml@organvm/limen unavailable" in status["detail"]
+    assert "workflow=operate.yml@organvm/limen unavailable" in status["detail"]
     assert "github_actions" not in lanes
+
+
+def test_github_actions_lane_defaults_to_operate_workflow(tmp_path: Path, monkeypatch) -> None:
+    gh = tmp_path / "gh"
+    gh.write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = workflow ] && [ "$2" = view ] && [ "$3" = operate.yml ]; then\n'
+        "  exit 0\n"
+        "fi\n"
+        "exit 1\n"
+    )
+    gh.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.delenv("LIMEN_GITHUB_ACTIONS_WORKFLOW", raising=False)
+
+    status = agent_status("github_actions")
+
+    assert status["reachable"] is True
+    assert "workflow=operate.yml@organvm/limen" in status["detail"]
 
 
 def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path) -> None:
@@ -1212,7 +1231,7 @@ def test_pr_repair_prompt_forbids_assumed_limen_workflow() -> None:
     assert "statusCheckRollup" in prompt
     assert "workflow list" in prompt
     assert "do not assume" in prompt
-    assert "limen-agent.yml" in prompt
+    assert "Limen-owned workflow file" in prompt
 
 
 def test_isolated_local_run_updates_same_repo_pr_head(tmp_path: Path, monkeypatch) -> None:
