@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (177) — decide each
+## Live-work branches (190) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -61,6 +61,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `fix/616-format` — e020757c style: ruff format test_corpus_command_center.py (CI format-check gate)
 - `fix/dispatch-admission-ci-768` — 96f6c10b Merge remote-tracking branch 'origin/main' into fix/dispatch-admission-ci-768
 - `fix/heartbeat-refresh-web-wedge` — 0a512024 fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
+- `heal-pr-621` — af456827 Build the first working vertical slice of the health organ
 - `heal/608-declare-param` — a63e6db7 chore(governance): declare LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC for preserve_workspace()
 - `heal/ci-ruff-semicolons` — 04b05097 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
 - `heal/dispatch-admission` — 0681e396 limen: gate dispatch admission
@@ -92,12 +93,15 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-cifix-organvm-limen-388-3f07b6de` — aa9b5c1f Make the consulting organ's macro + micro face excellent
 - `limen/heal-cifix-organvm-limen-388-52a7d7fb` — aa9b5c1f Make the consulting organ's macro + micro face excellent
 - `limen/heal-cifix-organvm-limen-403-06ee30f8` — 7436bda2 Tighten types in organvm/limen
+- `limen/heal-cifix-organvm-limen-404-5c945b9f` — 4a09aa67 Tighten types in organvm/limen
 - `limen/heal-cifix-organvm-limen-407-d89f6362` — 9ba34eb0 Claude daily capacity-fill packet 01
 - `limen/heal-cifix-organvm-limen-408-2e00f83a` — a5bb3adc Agy daily capacity-fill packet 13
 - `limen/heal-cifix-organvm-limen-408-49717d79` — a5bb3adc Agy daily capacity-fill packet 13
+- `limen/heal-cifix-organvm-limen-410-a19bea30` — 15b3ab83 Agy daily capacity-fill packet 11
 - `limen/heal-cifix-organvm-limen-412-2e191c19` — 6ceb44ed Gemini daily capacity-fill packet 04
+- `limen/heal-cifix-organvm-limen-415-7db396da` — 20cd1a3f OpenCode daily capacity-fill packet 01
 - `limen/heal-cifix-organvm-limen-416-2dce14dc` — 04f14e28 Agy daily capacity-fill packet 02
-- `limen/heal-cifix-organvm-limen-427-5f8bb97d` — fc744034 fix failing CI on organvm/limen#427
+- `limen/heal-cifix-organvm-limen-419-68eb0e65` — 199ec2ac Jules daily capacity-fill packet 02
 - `limen/heal-cifix-organvm-limen-428-2ae62246` — e4fa19a8 fix(ci): repair PR 428 gate failures
 - `limen/heal-cifix-organvm-limen-430-955f9dd1` — e752ed9d fix(ci): clear PR gate regressions
 - `limen/heal-cifix-organvm-limen-430-b979134a` — 1a6b2a2e fix(ci): declare new limen parameters
@@ -110,9 +114,18 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-cifix-organvm-limen-447-cef5ffb6` — d7caf8ff Gemini daily capacity-fill packet 10
 - `limen/heal-cifix-organvm-limen-452-1091876d` — 793e4afe Make organvm/limen CI green
 - `limen/heal-cifix-organvm-limen-490-8e65bdf4` — f70008a7 Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane
+- `limen/heal-rebase-organvm-limen-375-ccfaf493` — 8ff5af35 Beowulf film companion (wyrd/heroic doom)
+- `limen/heal-rebase-organvm-limen-394-80d251b9` — 05596a46 Deepen the financial organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-492-41c51751` — af3b7d83 limen: record PR #492 URL in dispatch_log
+- `limen/heal-rebase-organvm-limen-492-761f7b2b` — af3b7d83 limen: record PR #492 URL in dispatch_log
+- `limen/heal-rebase-organvm-limen-516-616e9aa4` — a0a46938 Raise test coverage in organvm/limen
 - `limen/heal-rebase-organvm-limen-516-a8f9be47` — a0a46938 Raise test coverage in organvm/limen
 - `limen/heal-rebase-organvm-limen-617-244af5eb` — 0c796729 Build the first working vertical slice of the social organ
+- `limen/heal-rebase-organvm-limen-621-700b2d32` — af456827 Build the first working vertical slice of the health organ
 - `limen/heal-rebase-organvm-limen-621-92b25510` — af456827 Build the first working vertical slice of the health organ
+- `limen/heal-rebase-organvm-limen-630-790853f9` — f124ddd2 Make the financial organ's macro + micro face excellent
+- `limen/heal-rebase-organvm-limen-630-d878401c` — f124ddd2 Make the financial organ's macro + micro face excellent
+- `limen/heal-rebase-stale-organvm-limen-620-913107b3` — b79d6404 Build the first working vertical slice of the legal organ
 - `limen/jules-aw-mail-historical-backlog-083a` — 539cb717 Continue historical mail backlog in resumable batches
 - `limen/jules-aw-mail-historical-backlog-1f7d` — 2525ea4e Continue historical mail backlog in resumable batches
 - `limen/jules-aw-mail-historical-backlog-3a0b` — 78e1083a Continue historical mail backlog in resumable batches
