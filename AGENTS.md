@@ -90,8 +90,8 @@ catalog snapshots, name-based capability guesses, or fixed fallback tables in di
 instructions, tasks, or receipts.
 
 - Derive provider-neutral requirements from the current task and discover reachable capabilities at
-  execution time. Treat `tier:*` text as opaque context unless an owning schema explicitly defines a
-  numeric constraint.
+  execution time. Treat `tier:*` text as opaque context. Express numeric constraints only through the
+  owning execution-profile schema, such as `profile:<field>:<value>`.
 - When the provider exposes sufficient live metadata, filter and rank that catalog by capability,
   availability, cost, and task pressure. When it does not, leave model selection to provider Auto.
 - A human-configured model override is an escape hatch, not a default. Validate it against the live
