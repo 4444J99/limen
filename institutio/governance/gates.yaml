@@ -258,6 +258,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "This registry's own drift predicate: schema, command existence, deploy-trigger parity, CI mirrors, consumer ratchets."
+  check-test-hygiene:
+    command: "python3 scripts/check-test-hygiene.py"
+    paths: ["cli/tests/**", "web/api/tests/**", "scripts/check-test-hygiene.py", "institutio/governance/test-hygiene-baseline.txt"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "Keeps the suite order-independent so pr-gate can't silently go red: every test root must carry the autouse os.environ-restore conftest, and no NEW direct os.environ writes may appear beyond the baseline (use monkeypatch)."
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:
