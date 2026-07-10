@@ -145,6 +145,16 @@ else
   rung "credential-wall (secrets homed)" live python3 "$ROOT/scripts/credential-wall.py" --check
 fi
 
+# 12. gitvs — the GitHub estate matches policy. The deterministic registry + wiring-integrity parity
+#     (also a per-PR gate: no active resource type may declare governance it cannot enact) plus the
+#     live per-repo posture (App install / branch protection / rate-limit; SKIP offline, never faked).
+rung "gitvs estate parity" det python3 "$ROOT/scripts/gitvs.py" doctor --offline --parity-only
+if [[ "$OFFLINE" == "1" ]]; then
+  skip_rung "gitvs estate posture" live "--offline (live App/protection/rate-limit posture needs gh)"
+else
+  rung "gitvs estate posture" live python3 "$ROOT/scripts/gitvs.py" doctor
+fi
+
 # ── verdict ──────────────────────────────────────────────────────────────────
 echo
 echo "── omega rungs ──"

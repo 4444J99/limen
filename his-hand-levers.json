@@ -422,7 +422,8 @@
       "cost": "~1 min, one env flip, REVERSIBLE and loss-free (pushed roots are on origin, re-cloneable; only the disposable local checkout is freed).",
       "unlocks": "closes the boot free-space gap toward LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB (200) via reclaim, without the irreversible container cutover.",
       "gate": "This OVERRIDES your own tested merge-before-reap rule (2026-07-09, test_reclaim_keeps_clean_pushed_unmerged_branch: 'pushed preservation is not closure'). Enabling it reaps the LOCAL checkouts of ~293 in-flight/abandoned pushed-but-unmerged branches — the branches and their PR/babysitting lifecycle stay on origin, unaffected. Loss-free and reversible, but a policy choice only you make: speed-to-200 GiB vs keep-local-until-merged. Not defaulted on for exactly this reason.",
-      "source_task": "round-three storage-deadlock heal, PR #867 (LIMEN_RECLAIM_PUSHED_OK escape hatch, default-off)"
+      "source_task": "round-three storage-deadlock heal, PR #867 (LIMEN_RECLAIM_PUSHED_OK escape hatch, default-off)",
+      "issue": 912
     },
     {
       "id": "L-IDENTITY-POPULATE",
@@ -432,6 +433,24 @@
       "unlocks": "every form auto-fills (starting with the Jewish Board PHI form); the beat presence-check goes green; no future form asks for these in chat",
       "source_task": "PERSONA-FEDERATA identity organ (phi.pdf form-fill, 2026-07-10)",
       "issue": 892
+    },
+    {
+      "id": "L-LIMENBOT-INSTALL",
+      "label": "Create + install the limen[bot] GitHub App: run scripts/bootstrap-github-app.py (manifest flow), generate its private key, and install it on the governed owners at the least-privilege contract (contents:write, pull_requests:write, actions:read, metadata:read — docs/github-app-architecture.md). Forward-looking and NON-BLOCKING: the token cascade (scripts/gh-app-token.sh: App -> PAT -> gh) already ships, so the fleet runs on the PAT fallback until the App is born. gitvs.py doctor CITES this lever when it observes the App un-installed; it never recites a token.",
+      "owner": "yours",
+      "cost": "~15 min one-time (App manifest + key + install); REVERSIBLE (uninstall/delete the App)",
+      "unlocks": "limen[bot] machine identity decoupled from any personal account; the 15k/hr install-token limit (vs 5k PAT); the GITVS app_installation resource goes green",
+      "source_task": "GITVS estate (institutio/github/estate.yaml app / app_installation)",
+      "issue": 910
+    },
+    {
+      "id": "L-BRANCH-PROTECTION",
+      "label": "Arm branch-protection rulesets across the organ repos (the governed_public class). GITVS doctor DETECTS protection drift (class A/G); APPLYING the rulesets is his-hand because blanket protection would block the machine board writes (the tasks.yaml keeper's sanctioned direct-push lane). Run scripts/setup-rulesets.py deliberately, or arm per-repo. GITVS never auto-runs it (HUMAN_GATED_DELEGATES in gitvs.py reconcile).",
+      "owner": "yours",
+      "cost": "~10 min one-time per policy decision; REVERSIBLE",
+      "unlocks": "required-check protection on the governed repos; the GITVS branch_protection resource (class A/G) goes green",
+      "source_task": "GITVS estate (institutio/github/estate.yaml branch_protection) + #257",
+      "issue": 257
     }
   ]
 }

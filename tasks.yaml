@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 29
+      spent: 30
       per_agent:
         jules: 0
         gemini: 0
         codex: 0
         opencode: 18
         agy: 6
-        claude: 1
+        claude: 2
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -28416,7 +28416,7 @@ tasks:
     \ or Docker) + a documented one-command deploy."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T14:37:13.665141Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-19T13:28:54.473276Z'
     agent: opencode
@@ -28426,6 +28426,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head timeout->jules'
 - id: BLD2-promptscope-integration-tests
   title: 'promptscope: integration-tests'
   repo: organvm/promptscope
@@ -28614,12 +28621,19 @@ tasks:
     \ or Docker) + a documented one-command deploy."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T13:28:54.473276Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-19T13:28:54.473276Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head timeout->jules'
 - id: BLD2-writelens-integration-tests
   title: 'writelens: integration-tests'
   repo: organvm/writelens
@@ -28786,12 +28800,19 @@ tasks:
     \ or Docker) + a documented one-command deploy."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T13:28:54.473276Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-19T13:28:54.473276Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head timeout->jules'
 - id: BLD2-edgarflash-integration-tests
   title: 'edgarflash: integration-tests'
   repo: organvm/edgarflash
@@ -28985,12 +29006,19 @@ tasks:
     \ or Docker) + a documented one-command deploy."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T13:28:54.473276Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-19T13:28:54.473276Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head timeout->jules'
 - id: BLD2-trendpulse-integration-tests
   title: 'trendpulse: integration-tests'
   repo: organvm/trendpulse
@@ -29195,12 +29223,19 @@ tasks:
     \ or Docker) + a documented one-command deploy."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T13:28:54.473276Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-19T13:28:54.473276Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head timeout->jules'
 - id: BLD2-essay-pipeline-integration-tests
   title: 'essay-pipeline: integration-tests'
   repo: organvm/essay-pipeline
@@ -29397,12 +29432,19 @@ tasks:
     \ or Docker) + a documented one-command deploy."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T13:28:54.473276Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-19T13:28:54.473276Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head timeout->jules'
 - id: BLD2-tab-bookmark-manager-integration-tests
   title: 'tab-bookmark-manager: integration-tests'
   repo: organvm/tab-bookmark-manager
@@ -29598,12 +29640,19 @@ tasks:
     \ or Docker) + a documented one-command deploy."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T13:28:54.473276Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-19T13:28:54.473276Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head timeout->jules'
 - id: BLD2-narratological-algorithmic-lenses-integration-tests
   title: 'narratological-algorithmic-lenses: integration-tests'
   repo: organvm/narratological-algorithmic-lenses
@@ -29800,12 +29849,19 @@ tasks:
     \ or Docker) + a documented one-command deploy."
   depends_on: []
   created: '2026-06-19'
-  updated: '2026-06-19T13:28:54.473276Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-19T13:28:54.473276Z'
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head timeout->jules'
 - id: BLD2-card-trade-social-integration-tests
   title: 'card-trade-social: integration-tests'
   repo: organvm/card-trade-social
@@ -32651,7 +32707,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-03T07:50:36.607965Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:00:38.750210Z'
     agent: codex
@@ -34236,6 +34292,13 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: done
+    route_to: gemini
+    output: 'heal-board: appended canonical dispatch_log head for task.status=done;
+      preserved legacy head failed->gemini'
 - id: GEN-meta-organvm-meta-organvm.github.io-test-coverage-0620
   title: Raise test coverage in meta-organvm/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
@@ -34262,7 +34325,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-03T07:43:21.136226Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T01:33:31.331859Z'
     agent: opencode
@@ -35145,6 +35208,13 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed->codex
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: needs_human
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=needs_human;
+      preserved legacy head failed->codex'
 - id: GEN-meta-organvm-digital-income-organism-inquiry-test-coverage-0620
   title: Raise test coverage in meta-organvm/digital-income-organism-inquiry
   repo: organvm/digital-income-organism-inquiry
@@ -35260,7 +35330,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-03T07:43:21.136226Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:37:53.707333Z'
     agent: codex
@@ -35976,6 +36046,13 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->gemini
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: gemini
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->gemini'
 - id: GEN-organvm-i-theoria-organvm-v-logos.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/organvm-v-logos.github.io
   repo: organvm/organvm-v-logos.github.io
@@ -36002,7 +36079,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-03T07:43:21.136226Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T21:42:06.299690Z'
     agent: agy
@@ -36068,6 +36145,13 @@ tasks:
     agent: agy
     session_id: cli
     status: failed->claude
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: claude
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->claude'
 - id: GEN-organvm-i-theoria-organvm-vi-koinonia.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/organvm-vi-koinonia.github.io
   repo: organvm/organvm-vi-koinonia.github.io
@@ -36093,7 +36177,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-03T07:43:21.136226Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:20:12.475968Z'
     agent: claude
@@ -36140,6 +36224,13 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed->codex
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-i-theoria-organvm-vii-kerygma.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/organvm-vii-kerygma.github.io
   repo: organvm/organvm-vii-kerygma.github.io
@@ -36166,7 +36257,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-03T07:43:21.136226Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T02:47:29.994774Z'
     agent: codex
@@ -36222,6 +36313,13 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed->codex
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-i-theoria-meta-organvm.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/meta-organvm.github.io
   repo: organvm/meta-organvm.github.io
@@ -36245,7 +36343,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-03T07:50:36.607965Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T22:30:07.443680Z'
     agent: agy
@@ -36274,6 +36372,13 @@ tasks:
     agent: github_actions
     session_id: cli
     status: failed->codex
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-i-theoria-4444j99.github.io-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/4444J99.github.io
   repo: organvm/4444J99.github.io
@@ -36560,7 +36665,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T23:51:06.643009Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T22:33:50.763624Z'
     agent: agy
@@ -36580,6 +36685,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-organvm-i-theoria-conversation-corpus-engine-test-coverage-0620
   title: Raise test coverage in organvm-i-theoria/conversation-corpus-engine
   repo: organvm/conversation-corpus-engine
@@ -36667,7 +36779,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T00:12:41.567174Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-29T04:57:42.247828Z'
     agent: jules
@@ -36714,6 +36826,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-organvm-ii-poiesis-vigiles-aeternae--theatrum-mundi-test-coverage-0620
   title: Raise test coverage in organvm-ii-poiesis/vigiles-aeternae--theatrum-mundi
   repo: organvm/vigiles-aeternae--theatrum-mundi
@@ -36833,7 +36952,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T00:15:52.699966Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T03:11:31.329642Z'
     agent: claude
@@ -36871,6 +36990,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-organvm-iii-ergon-sovereign-systems--layer-above-hokage-test-coverage-0620
   title: Raise test coverage in organvm-iii-ergon/sovereign-systems--layer-above-hokage
   repo: organvm/sovereign-systems--layer-above-hokage
@@ -36927,7 +37053,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T11:02:31.199787Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T10:29:46.662413Z'
     agent: opencode
@@ -36944,6 +37070,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GEN-a-organvm-alchemia-ingestvm-test-coverage-0620
   title: Raise test coverage in a-organvm/alchemia-ingestvm
   repo: organvm/alchemia-ingestvm
@@ -37259,7 +37392,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T07:25:57.485545Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T05:14:48.772429Z'
     agent: codex
@@ -37293,6 +37426,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GEN-limen-test-coverage-0620
   title: Raise test coverage in limen
   repo: organvm/limen
@@ -37892,7 +38032,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T00:24:30.170120Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T06:01:47.652733Z'
     agent: claude
@@ -37930,6 +38070,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-organvm-v-logos-organvm-v-logos--superproject-test-coverage-0620
   title: Raise test coverage in organvm-v-logos/organvm-v-logos--superproject
   repo: organvm/organvm-v-logos--superproject
@@ -37987,7 +38134,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T09:54:34.462889Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-20T08:50:05.874283Z'
     agent: agy
@@ -38011,6 +38158,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-organvm-vi-koinonia-organvm-vi-koinonia--superproject-test-coverage-0620
   title: Raise test coverage in organvm-vi-koinonia/organvm-vi-koinonia--superproject
   repo: organvm/organvm-vi-koinonia--superproject
@@ -38086,7 +38240,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T10:03:29.876833Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-20T08:50:05.874283Z'
     agent: agy
@@ -38137,6 +38291,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-organvm-vii-kerygma-organvm-vii-kerygma.github.io-test-coverage-0620
   title: Raise test coverage in organvm-vii-kerygma/organvm-vii-kerygma.github.io
   repo: organvm/organvm-vii-kerygma.github.io
@@ -38159,7 +38320,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T10:17:33.059392Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T00:16:00.735304Z'
     agent: agy
@@ -38179,6 +38340,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-a-organvm-recursive-engine--generative-entity-test-coverage-0620
   title: Raise test coverage in a-organvm/recursive-engine--generative-entity
   repo: organvm/recursive-engine--generative-entity
@@ -38790,7 +38958,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T10:27:35.247942Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T10:17:43.670168Z'
     agent: gemini
@@ -38801,6 +38969,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-organvm-vii-kerygma-organvm-vii-kerygma--superproject-test-coverage-0620
   title: Raise test coverage in organvm-vii-kerygma/organvm-vii-kerygma--superproject
   repo: organvm/organvm-vii-kerygma--superproject
@@ -41650,7 +41825,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T09:53:21.875145Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T08:14:40.949386Z'
     agent: claude
@@ -41684,6 +41859,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GEN-organvm-system-governance-framework-test-coverage-0620
   title: Raise test coverage in organvm/system-governance-framework
   repo: organvm/system-governance-framework
@@ -41769,7 +41951,7 @@ tasks:
     2026-06-20 to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T11:48:06.844844Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T04:14:30.578162Z'
     agent: codex
@@ -41897,6 +42079,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: failed->github_actions
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: github_actions
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->github_actions'
 - id: GEN-organvm-reverse-engine-recursive-run-test-coverage-0620
   title: Raise test coverage in organvm/reverse-engine-recursive-run
   repo: organvm/reverse-engine-recursive-run
@@ -41999,7 +42188,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-02T07:03:56.024360Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T03:39:58.056479Z'
     agent: agy
@@ -42030,6 +42219,13 @@ tasks:
     agent: codex
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GEN-organvm-auto-revision-epistemic-engine-test-coverage-0620
   title: Raise test coverage in organvm/auto-revision-epistemic-engine
   repo: organvm/auto-revision-epistemic-engine
@@ -42437,7 +42633,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-01T11:23:31.080227Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T10:52:00.106430Z'
     agent: opencode
@@ -42453,6 +42649,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GEN-organvm-dot-github--poiesis-test-coverage-0620
   title: Raise test coverage in organvm/dot-github--poiesis
   repo: organvm/dot-github--poiesis
@@ -71315,7 +71518,7 @@ tasks:
     \ 2026-06-30 to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
     agent: codex
@@ -71359,6 +71562,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-limen-docs-0630
   title: Real usage docs for organvm/limen
   repo: organvm/limen
@@ -71382,7 +71592,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
     agent: codex
@@ -71459,6 +71669,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-session-meta-security-0630
   title: Security hardening pass on organvm/session-meta
   repo: organvm/session-meta
@@ -71843,7 +72060,7 @@ tasks:
     should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: claude
@@ -71896,6 +72113,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-domus-genoma-simplify-0630
   title: Reduce complexity in organvm/domus-genoma
   repo: organvm/domus-genoma
@@ -74563,7 +74787,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-01T16:41:34.150614Z'
     agent: claude
@@ -74636,6 +74860,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: DISCOVER-organvm-metasystem-master
   title: Discover the latent value of organvm/metasystem-master
   repo: organvm/metasystem-master
@@ -76280,7 +76511,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T01:17:15.131366Z'
     agent: claude
@@ -76315,6 +76546,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: ORG-media-organ-selffeed-0701
   title: Wire the media organ to advance autonomously
   repo: organvm/limen
@@ -76729,7 +76967,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T05:33:10.854144Z'
     agent: claude
@@ -76759,6 +76997,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-limen-test-coverage-0702
   title: Raise test coverage in organvm/limen
   repo: organvm/limen
@@ -76782,7 +77027,7 @@ tasks:
     keep the stream endless]
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T06:03:47.426460Z'
     agent: claude
@@ -76826,6 +77071,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-portfolio-ci-green-0702
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
@@ -77245,7 +77497,7 @@ tasks:
     and tests green. [auto-generated 2026-07-02 to keep the stream endless]
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T08:01:33.979564Z'
     agent: codex
@@ -77280,6 +77532,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GEN-organvm-universal-mail--automation-typing-0702
   title: Tighten types in organvm/universal-mail--automation
   repo: organvm/universal-mail--automation
@@ -77412,7 +77671,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-07-02; no repo stays dark]"
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-02T08:30:03.577691Z'
     agent: claude
@@ -77467,6 +77726,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GH-organvm-limen-563
   title: 'needs-human (L-CARTRIDGE-REPOINT): Re-plug the chezmoi cartridge into its
     real source'
@@ -78718,7 +78984,7 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-10T12:40:26.040604Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -78735,6 +79001,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORG-consulting-organ-operationalize-0703
   title: Operationalize consulting governance (rules as checks)
   repo: organvm/limen
@@ -78761,7 +79034,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-10T12:27:02.823294Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -78778,6 +79051,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORG-artist-organ-operationalize-0703
   title: Operationalize artist governance (rules as checks)
   repo: organvm/limen
@@ -78803,7 +79083,7 @@ tasks:
     \ maturing \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-10T12:27:02.823294Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -78820,6 +79100,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORG-social-organ-charter-0703
   title: Charter the social organ as an institution rivaling a civic/community institution
     + relationship support ('relationship gurus')
@@ -79259,7 +79546,7 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-10T12:27:02.823294Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -79276,6 +79563,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORG-social-organ-firstslice-0703
   title: Build the first working vertical slice of the social organ
   repo: organvm/limen
@@ -80666,7 +80960,7 @@ tasks:
     Severity: medium'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-07-10T13:03:57.769532Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:33:13.252713Z'
     agent: opencode
@@ -80677,6 +80971,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: TASK-LED-rev-organvm/public-recor
   title: 'Heal insight: waste on revenue repo: organvm/public-record-data-scrapper'
   description: Product 'Public Record Data Scraper' spent 50 with 20 wasted (20 shipped).
@@ -90773,7 +91074,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:05:42.490985Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:05:58.861134Z'
     agent: jules
@@ -90798,6 +91099,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-relationship-pipeline-6
   title: fix failing CI on organvm/relationship-pipeline#6
   repo: organvm/relationship-pipeline
@@ -91177,7 +91485,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:05:42.490985Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:54:10.420000Z'
     agent: jules
@@ -91202,6 +91510,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-scale-threshold-emergence-6
   title: rebase/resolve conflicts on organvm/scale-threshold-emergence#6
   repo: organvm/scale-threshold-emergence
@@ -97532,7 +97847,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T13:03:57.769532Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:33:13.252713Z'
     agent: opencode
@@ -97543,6 +97858,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-stale-organvm-limen-369
   title: "rebase organvm/limen#369 onto current base \u2014 branched far behind"
   repo: organvm/limen
@@ -97567,7 +97889,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T13:17:33.858559Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -97584,6 +97906,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-stale-organvm-limen-371
   title: "rebase organvm/limen#371 onto current base \u2014 branched far behind"
   repo: organvm/limen
@@ -97608,7 +97937,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T13:25:29.339947Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:54:14.192182Z'
     agent: opencode
@@ -97619,6 +97948,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-stale-organvm-limen-372
   title: "rebase organvm/limen#372 onto current base \u2014 branched far behind"
   repo: organvm/limen
@@ -97643,7 +97979,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T13:25:29.339947Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:58.136246Z'
     agent: codex
@@ -97660,6 +97996,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-375
   title: fix failing CI on organvm/limen#375
   repo: organvm/limen
@@ -97988,7 +98331,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T13:40:38.329879Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -98005,6 +98348,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-stale-organvm-limen-383
   title: "rebase organvm/limen#383 onto current base \u2014 stale base touches the\
     \ daemon body"
@@ -98119,7 +98469,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T07:32:32.334788Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -98164,6 +98514,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-limen-385
   title: fix failing CI on organvm/limen#385
   repo: organvm/limen
@@ -98259,14 +98616,15 @@ tasks:
   title: fix failing CI on organvm/limen#386
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/386
   context: "PR organvm/limen#386 has FAILING CI checks and merge-drain correctly refuses\
@@ -98277,7 +98635,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:04:25.609429Z'
+  updated: '2026-07-10T21:55:55.447902Z'
   dispatch_log:
   - timestamp: '2026-07-07T11:51:16.792799Z'
     agent: opencode
@@ -98337,6 +98695,12 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T21:55:55.447902Z'
+    agent: opencode
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on opencode; reopened to asynchronous lane
 - id: HEAL-rebase-organvm-limen-387
   title: rebase/resolve conflicts on organvm/limen#387
   repo: organvm/limen
@@ -98500,7 +98864,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T08:45:41.064424Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -98534,6 +98898,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-711
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#711
   repo: organvm/peer-audited--behavioral-blockchain
@@ -99755,7 +100126,7 @@ tasks:
   title: fix failing CI on organvm/bountyscope#7
   repo: organvm/bountyscope
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -100534,7 +100905,7 @@ tasks:
   title: fix failing CI on organvm/call-function--ontological#10
   repo: organvm/call-function--ontological
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -100650,7 +101021,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T21:20:20.353186Z'
     agent: gemini
@@ -100671,6 +101042,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GH-organvm-limen-642
   title: 'full-stack review: shard the depth queue across parallel lanes (single-lane
     ~8.5 rows/h vs 1,778-row queue)'
@@ -100692,7 +101070,7 @@ tasks:
     \ 257 open of 287 eligible rows at rev"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T11:17:49.202653Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -100709,6 +101087,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-641
   title: 'agy: decode native Antigravity IDE conversations into the prompt corpus
     (weakest review quadrant)'
@@ -100731,7 +101116,7 @@ tasks:
     The ledger''s Rem'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T11:15:20.919719Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:42:24.102867Z'
     agent: opencode
@@ -100742,6 +101127,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-640
   title: 'review-ledger: enforce the entry template with an executable lint (Ideal
     prompt diff / What was fucked up)'
@@ -100764,7 +101156,7 @@ tasks:
     lenses are the mandate''s signat'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T11:15:20.919719Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:58.136246Z'
     agent: codex
@@ -100781,6 +101173,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORG-hr-organ-kernel-0704
   title: Map the VLTIMA 5-primitive kernel to the hr organ
   repo: organvm/limen
@@ -101047,7 +101446,7 @@ tasks:
     \ idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T10:28:08.941198Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -101078,6 +101477,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-organvm-corpvs-testamentvm-491
   title: rebase/resolve conflicts on organvm/organvm-corpvs-testamentvm#491
   repo: organvm/organvm-corpvs-testamentvm
@@ -101375,7 +101781,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/organvm-corpvs-testamentvm#498
   repo: organvm/organvm-corpvs-testamentvm
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -101596,7 +102002,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#99
   repo: organvm/organvm-engine
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -101768,7 +102174,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#104
   repo: organvm/organvm-engine
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -101890,7 +102296,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#106
   repo: organvm/organvm-engine
   type: code
-  target_agent: codex
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -101928,7 +102334,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#107
   repo: organvm/organvm-engine
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -102258,7 +102664,7 @@ tasks:
   title: fix failing CI on organvm/organvm-engine#112
   repo: organvm/organvm-engine
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -103055,7 +103461,7 @@ tasks:
   title: fix failing CI on organvm/universal-node-network#10
   repo: organvm/universal-node-network
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -103255,7 +103661,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/writelens#5
   repo: organvm/writelens
   type: code
-  target_agent: codex
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -103274,7 +103680,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T08:23:10.119868Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-07T08:01:09.200024Z'
     agent: claude
@@ -103285,11 +103691,18 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->opencode
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: opencode
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->opencode'
 - id: HEAL-cifix-organvm-writelens-6
   title: fix failing CI on organvm/writelens#6
   repo: organvm/writelens
   type: code
-  target_agent: opencode
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -103409,7 +103822,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/writelens#9
   repo: organvm/writelens
   type: code
-  target_agent: agy
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -103604,7 +104017,7 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T10:05:18.071413Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -103635,6 +104048,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ASK-quicken-send
   title: send the drafted message (never auto-send)
   type: ops
@@ -103743,7 +104163,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T09:18:44.764365Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -103803,6 +104223,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-403
   title: fix failing CI on organvm/limen#403
   repo: organvm/limen
@@ -104033,7 +104460,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T07:32:32.334788Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:50:23.463748Z'
     agent: opencode
@@ -104089,19 +104516,27 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-limen-408
   title: fix failing CI on organvm/limen#408
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
   - noop
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/408
   context: "PR organvm/limen#408 has FAILING CI checks and merge-drain correctly refuses\
@@ -104112,7 +104547,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:04:25.609429Z'
+  updated: '2026-07-10T21:55:55.447902Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -104168,6 +104603,12 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T21:55:55.447902Z'
+    agent: opencode
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on opencode; reopened to asynchronous lane
 - id: HEAL-cifix-organvm-limen-409
   title: fix failing CI on organvm/limen#409
   repo: organvm/limen
@@ -104261,7 +104702,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T08:45:41.064424Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:17:56.380680Z'
     agent: limen
@@ -104277,18 +104718,26 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-411
   title: fix failing CI on organvm/limen#411
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/411
   context: "PR organvm/limen#411 has FAILING CI checks and merge-drain correctly refuses\
@@ -104299,7 +104748,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:04:25.609429Z'
+  updated: '2026-07-10T21:55:55.447902Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -104325,6 +104774,12 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T21:55:55.447902Z'
+    agent: opencode
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on opencode; reopened to asynchronous lane
 - id: HEAL-cifix-organvm-limen-412
   title: fix failing CI on organvm/limen#412
   repo: organvm/limen
@@ -104496,7 +104951,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T09:52:28.098519Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: gemini
@@ -104536,6 +104991,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-415
   title: fix failing CI on organvm/limen#415
   repo: organvm/limen
@@ -104559,7 +105021,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T08:14:24.381161Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
@@ -104589,6 +105051,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-416
   title: fix failing CI on organvm/limen#416
   repo: organvm/limen
@@ -104721,7 +105190,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T09:18:44.764365Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
@@ -104766,6 +105235,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-419
   title: fix failing CI on organvm/limen#419
   repo: organvm/limen
@@ -104789,7 +105265,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T11:15:20.919719Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -104828,6 +105304,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-420
   title: fix failing CI on organvm/limen#420
   repo: organvm/limen
@@ -105164,7 +105647,7 @@ tasks:
     \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T10:38:13.563545Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-07T05:56:52.032901Z'
     agent: claude
@@ -105184,6 +105667,13 @@ tasks:
     agent: claude
     session_id: cli
     status: failed->codex
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-petasum-super-petasum-151
   title: fix failing CI on organvm/petasum-super-petasum#151
   repo: organvm/petasum-super-petasum
@@ -105798,7 +106288,7 @@ tasks:
     \ institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -105839,6 +106329,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-call-function--ontological-16
   title: fix failing CI on organvm/call-function--ontological#16
   repo: organvm/call-function--ontological
@@ -106893,7 +107390,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -106920,6 +107417,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-limen-485
   title: fix failing CI on organvm/limen#485
   repo: organvm/limen
@@ -106943,7 +107447,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T10:05:18.071413Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -106982,6 +107486,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-486
   title: fix failing CI on organvm/limen#486
   repo: organvm/limen
@@ -107099,7 +107610,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T09:25:43.023152Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:54:59.620608Z'
     agent: opencode
@@ -107110,6 +107621,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-590
   title: fix failing CI on organvm/limen#590
   repo: organvm/limen
@@ -107240,7 +107758,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T11:15:20.919719Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: gemini
@@ -107260,6 +107778,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-625
   title: fix failing CI on organvm/limen#625
   repo: organvm/limen
@@ -107414,7 +107939,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T11:15:20.919719Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-08T14:39:59.050705Z'
     agent: jules
@@ -107444,6 +107969,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-media-ark-34
   title: fix failing CI on organvm/media-ark#34
   repo: organvm/media-ark
@@ -109424,7 +109956,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T20:25:38.658485Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -109444,6 +109976,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-449
   title: fix failing CI on organvm/limen#449
   repo: organvm/limen
@@ -109557,7 +110096,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T20:25:38.658485Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-08T14:39:59.050705Z'
     agent: jules
@@ -109601,6 +110140,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-451
   title: fix failing CI on organvm/limen#451
   repo: organvm/limen
@@ -109625,7 +110171,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-08T13:45:58.687248Z'
     agent: jules
@@ -109670,6 +110216,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-limen-452
   title: fix failing CI on organvm/limen#452
   repo: organvm/limen
@@ -109766,7 +110319,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -109783,7 +110336,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T20:25:38.658485Z'
+  updated: '2026-07-10T21:28:36.839861Z'
   dispatch_log:
   - timestamp: '2026-07-08T13:13:00.316111Z'
     agent: jules
@@ -109842,6 +110395,12 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:28:36.839861Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-limen-454
   title: fix failing CI on organvm/limen#454
   repo: organvm/limen
@@ -109989,7 +110548,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T11:41:22.602319Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-08T17:15:11.788963Z'
     agent: jules
@@ -110037,6 +110596,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-457
   title: fix failing CI on organvm/limen#457
   repo: organvm/limen
@@ -110159,7 +110725,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -110200,6 +110766,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: ORG-contributions-organ-operationalize-0705
   title: Operationalize contributions governance (rules as checks)
   repo: organvm/limen
@@ -110237,7 +110810,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T12:27:02.823294Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -110258,6 +110831,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-session-meta-82
   title: rebase/resolve conflicts on organvm/session-meta#82
   repo: organvm/session-meta
@@ -111549,7 +112129,7 @@ tasks:
     \ maturing \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T09:31:35.236703Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T01:26:39.018572Z'
     agent: github_actions
@@ -111589,6 +112169,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORG-consulting-organ-face-0705
   title: Make the consulting organ's macro + micro face excellent
   repo: organvm/limen
@@ -111617,7 +112204,7 @@ tasks:
     \ convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T10:05:18.071413Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -111637,6 +112224,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORG-health-organ-firstslice-0705
   title: Build the first working vertical slice of the health organ
   repo: organvm/limen
@@ -111671,7 +112265,7 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T09:31:35.236703Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -111697,6 +112291,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-session-meta-164
   title: rebase/resolve conflicts on organvm/session-meta#164
   repo: organvm/session-meta
@@ -111992,7 +112593,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T10:31:31.915710Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T09:57:15.230830Z'
     agent: github_actions
@@ -112004,6 +112605,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-metasystem-master-33
   title: fix failing CI on organvm/metasystem-master#33
   repo: organvm/metasystem-master
@@ -112126,7 +112734,7 @@ tasks:
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -112147,6 +112755,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-dot-github--theoria-493
   title: fix failing CI on organvm/dot-github--theoria#493
   repo: organvm/dot-github--theoria
@@ -112170,7 +112785,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T11:46:06.443991Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T11:41:52.375322Z'
     agent: github_actions
@@ -112182,6 +112797,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-dot-github--theoria-494
   title: fix failing CI on organvm/dot-github--theoria#494
   repo: organvm/dot-github--theoria
@@ -112395,7 +113017,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:34:42.175576Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:11:40.274076Z'
     agent: github_actions
@@ -112407,6 +113029,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: DISCOVER-organvm-pages--theoria-copy--poiesis
   title: Discover the latent value of organvm/pages--theoria-copy--poiesis
   repo: organvm/pages--theoria-copy--poiesis
@@ -112796,7 +113425,7 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:02:43.208712Z'
     agent: agy
@@ -112827,6 +113456,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: agy
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->agy'
 - id: DISCOVER-organvm-hokage-chess--4444j99
   title: Discover the latent value of organvm/hokage-chess--4444j99
   repo: organvm/hokage-chess--4444j99
@@ -112961,7 +113597,7 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -112988,6 +113624,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: agy
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->agy'
 - id: DISCOVER-organvm-micro-tato
   title: Discover the latent value of organvm/micro-tato
   repo: organvm/micro-tato
@@ -113017,7 +113660,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -113044,6 +113687,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: DISCOVER-organvm-micro-tato-play
   title: Discover the latent value of organvm/micro-tato-play
   repo: organvm/micro-tato-play
@@ -113318,7 +113968,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -113345,6 +113995,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: agy
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->agy'
 - id: DISCOVER-organvm-palimpsest
   title: Discover the latent value of organvm/palimpsest
   repo: organvm/palimpsest
@@ -113374,7 +114031,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-09T20:31:41.786627Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:05:05.340391Z'
     agent: agy
@@ -113406,6 +114063,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: failed->agy
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: agy
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->agy'
 - id: DISCOVER-organvm-collaboratory
   title: Discover the latent value of organvm/collaboratory
   repo: organvm/collaboratory
@@ -113952,7 +114616,7 @@ tasks:
     \ [auto-emitted 2026-07-06 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T00:48:10.341271Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-07T00:17:21.530773Z'
     agent: gemini
@@ -113963,6 +114627,13 @@ tasks:
     agent: gemini
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: DISCOVER-organvm-studium-generale
   title: Discover the latent value of organvm/studium-generale
   repo: organvm/studium-generale
@@ -114160,7 +114831,7 @@ tasks:
     \ 2026-07-07 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T08:20:41.185807Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:17:56.380680Z'
     agent: limen
@@ -114176,6 +114847,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-678
   title: fix failing CI on organvm/limen#678
   repo: organvm/limen
@@ -114200,7 +114878,7 @@ tasks:
     \ 2026-07-07 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:59:56.506897Z'
     agent: opencode
@@ -114231,6 +114909,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-system-governance-framework-49
   title: fix failing CI on organvm/system-governance-framework#49
   repo: organvm/system-governance-framework
@@ -114762,16 +115447,17 @@ tasks:
   description: 13 value repos define the funded work lane
   repo: organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/mirror-mirror,organvm/universal-mail--automation
   type: coordination
-  target_agent: claude
+  target_agent: opencode
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: needs_human
   labels:
   - always-working
   - receipt-first
   - revenue-value-repos
   - tried:codex
+  - tried:claude
   urls:
   - ~/Workspace/limen/value-repos.json
   - ~/Workspace/limen/docs/product-ledger.md
@@ -114792,7 +115478,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T21:04:25.609429Z'
+  updated: '2026-07-10T21:28:36.839861Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:26:18.412400Z'
     agent: claude
@@ -115131,6 +115817,16 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T21:22:19.127063Z'
+    agent: claude
+    session_id: cli
+    status: failed->opencode
+  - timestamp: '2026-07-10T21:28:36.839861Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: AW-TABVLARIVS-STATUS-WRITERS
   title: Finish single-writer status/result mutation conversion
   description: Step 2.2 still open in the keeper doc
@@ -115442,7 +116138,7 @@ tasks:
     can claim while drain runs.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T08:45:41.064424Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:39:33.730812Z'
     agent: codex
@@ -115458,6 +116154,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-storage-reclaim-scale-0707
   title: Make worktree and scratch reclaim fast enough to protect local SSD
   repo: organvm/limen
@@ -115483,7 +116186,7 @@ tasks:
     delete unclassified work.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T10:02:37.945589Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:49:53.806463Z'
     agent: codex
@@ -115514,6 +116217,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: REV-organvm-mirror-mirror-revenue-ship-0707
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -115867,7 +116577,7 @@ tasks:
     credential wall'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -115894,6 +116604,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GH-organvm-limen-687
   title: Owner-route contribution balance before more commit-heavy dispatch
   repo: organvm/limen
@@ -115915,7 +116632,7 @@ tasks:
     share 13.31% ta'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T11:27:44.254178Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:55:47.344707Z'
     agent: opencode
@@ -115926,6 +116643,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-685
   title: Make disk and worktree lifecycle enforce the 200GiB local-free target
   repo: organvm/limen
@@ -115946,7 +116670,7 @@ tasks:
     15G - `/Users/4j'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T11:27:44.254178Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:55:47.344707Z'
     agent: opencode
@@ -115957,6 +116681,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-688
   title: Build external estate custody implementation receipt
   repo: organvm/limen
@@ -115978,7 +116709,7 @@ tasks:
     recovery copy. - Keep private/raw data'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -116009,6 +116740,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: DISCOVER-organvm-organvm-iii-ergon.github.io
   title: Discover the latent value of organvm/organvm-iii-ergon.github.io
   repo: organvm/organvm-iii-ergon.github.io
@@ -116240,7 +116978,7 @@ tasks:
     \ by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T09:25:43.023152Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -116276,6 +117014,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-limen-436
   title: rebase/resolve conflicts on organvm/limen#436
   repo: organvm/limen
@@ -116299,7 +117044,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T10:02:37.945589Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:13:04.279954Z'
     agent: gemini
@@ -116319,6 +117064,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: AW-ESTATE-CUSTODY
   title: Make external SSDs the durable estate and the laptop a hot cache
   description: estate doctrine exists; implementation receipt is not complete
@@ -116964,7 +117716,7 @@ tasks:
     \ 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T20:25:38.658485Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -116984,6 +117736,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-mirror-mirror-70
   title: rebase/resolve conflicts on organvm/mirror-mirror#70
   repo: organvm/mirror-mirror
@@ -118780,7 +119539,7 @@ tasks:
     wheel: growth-auditor #16-#22, dot-github--theoria #492+ all open-unmergeable)'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:40:14.945240Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
@@ -118791,6 +119550,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: RETRO-0708-HEAL-RECEIPT-OUTCOME
   title: Heal receipts outcome field + beat-wired heal-convergence report
   description: 'Add {outcome: already_green|fixed|gave_up, failing_checks:[...]} to
@@ -118971,7 +119737,7 @@ tasks:
     (root cause 41e8b28b, direct-main dispatch code edit, no PR/CI)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:40:14.945240Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -118992,6 +119758,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: RETRO-0708-SERVICE-DOWN-PROBE
   title: Service-down lane detection in _down_lanes()/usage.json
   description: N consecutive async failures with empty output -> health=service-down
@@ -119015,7 +119788,7 @@ tasks:
     Claude reservations; ORG tasks lost connector fallback) + evolution 7'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:40:14.945240Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -119045,6 +119818,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: RETRO-0708-CODEX-BUDGET-RESET
   title: Codex per-task budget reset + pre-dispatch uncached-token cap
   description: Reset elapsed/budget counters on task_complete in codex-token-accounting.py
@@ -119065,7 +119845,7 @@ tasks:
     3.85M budget tokens over 10.4h, gate blocks continuation-beat only)'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T13:03:57.769532Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -119082,6 +119862,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: RETRO-0708-STRANDED-PR-SWEEP
   title: Reconcile stranded PRs by mechanism + dispatch-time dedup
   description: 'Run merge-policy.sh across the open CAPFILL set and the codex drafts
@@ -119101,7 +119888,7 @@ tasks:
     merged 07-05..08; grant never exercised; duplicates)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:40:14.945240Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
@@ -119112,6 +119899,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: RETRO-0708-ARMED-VALVE-AUDIT
   title: 'armed-valve-audit.py: separate parked levers from silently-off valves'
   description: Enumerate every beat-wired organ whose effect is gated behind an env
@@ -119237,7 +120031,7 @@ tasks:
     07-06 surge 56% churn) + evolution 6
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T13:03:57.769532Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -119258,6 +120052,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-petasum-super-petasum-151
   title: rebase/resolve conflicts on organvm/petasum-super-petasum#151
   repo: organvm/petasum-super-petasum
@@ -120717,7 +121518,7 @@ tasks:
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T11:07:37.089264Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:36:22.955089Z'
     agent: opencode
@@ -120728,6 +121529,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: EXCAV-0708-ETCETER4-C3
   title: "etceter4 revival C3 \u2014 Met4morfoses thesis + phonetic chart + ET4L catalog\
     \ as ONE published artifact"
@@ -120787,7 +121595,7 @@ tasks:
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T11:15:20.919719Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:42:24.102867Z'
     agent: opencode
@@ -120798,6 +121606,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: EXCAV-0708-CHATGPT-BACKFILL
   title: "Close the 2026-04-13\u219206-08 gap: pull post-export ChatGPT via the desktop\
     \ session"
@@ -120829,7 +121644,7 @@ tasks:
     report
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -120860,6 +121675,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: EXCAV-0708-BURIED-SWEEP
   title: Adversarially verify the 16 unchecked buried-treasure candidates
   description: "The excavation checked 12 of 28 buried claims (9 refuted \u2014 analysts\
@@ -120880,7 +121702,7 @@ tasks:
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -120907,6 +121729,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: EXCAV-0708-THEONE-REFRAME
   title: Reframe 00-THE-ONE.md as the theory appendix (FLAME is the operating speech)
   description: 'Per the consolidation decision: add a framing header to knowledge-corpus/00-THE-ONE.md
@@ -120951,7 +121780,7 @@ tasks:
     \ \u2014 spend tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -120972,6 +121801,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: REV-organvm-limen-revenue-funding-0708
   title: Stage the donation funnel for MONETA Mint-as-a-Service
   repo: organvm/limen
@@ -121034,7 +121870,7 @@ tasks:
     \ tokens on income, not busywork]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:40:14.945240Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
@@ -121045,6 +121881,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: REV-organvm-limen-revenue-pro-tier-0708
   title: Make the Pro-tier checkout merge-ready for MONETA Mint-as-a-Service
   repo: organvm/limen
@@ -121236,7 +122079,7 @@ tasks:
   context: docs/reviews/deep-history-2022-2026.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -121267,6 +122110,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: ORIGIN-0708-INBOUND-PREDICATE
   title: 'Encode the inbound-scar as a predicate: no outbound lane without an inbound
     test'
@@ -121288,7 +122138,7 @@ tasks:
   context: docs/reviews/deep-history-2022-2026.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T12:52:02.193528Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -121305,6 +122155,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORIGIN-0708-ARC4N-CELLULAR
   title: ARC4N cellular text-atomization as a distinct engine (letters/words/sentences
     as remix cells)
@@ -121384,7 +122241,7 @@ tasks:
   context: docs/reviews/deep-history-2022-2026.md
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:40:14.945240Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
@@ -121395,6 +122252,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-limen-486
   title: rebase/resolve conflicts on organvm/limen#486
   repo: organvm/limen
@@ -121419,7 +122283,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -121440,6 +122304,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-rebase-organvm-limen-492
   title: rebase/resolve conflicts on organvm/limen#492
   repo: organvm/limen
@@ -121464,7 +122335,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T08:20:41.185807Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -121484,6 +122355,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-limen-516
   title: rebase/resolve conflicts on organvm/limen#516
   repo: organvm/limen
@@ -121567,7 +122445,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -121588,6 +122466,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-rebase-organvm-limen-617
   title: rebase/resolve conflicts on organvm/limen#617
   repo: organvm/limen
@@ -121666,7 +122551,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:02:37.945589Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:21:45.810854Z'
     agent: gemini
@@ -121686,6 +122571,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-stale-organvm-limen-620
   title: "rebase organvm/limen#620 onto current base \u2014 stale base touches the\
     \ daemon body"
@@ -121757,7 +122649,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T08:45:41.064424Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -121787,6 +122679,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-limen-622
   title: rebase/resolve conflicts on organvm/limen#622
   repo: organvm/limen
@@ -121811,7 +122710,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -121832,6 +122731,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-rebase-organvm-limen-623
   title: rebase/resolve conflicts on organvm/limen#623
   repo: organvm/limen
@@ -121942,7 +122848,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:02:37.945589Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T09:28:01.497532Z'
     agent: opencode
@@ -121953,6 +122859,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-limen-626
   title: rebase/resolve conflicts on organvm/limen#626
   repo: organvm/limen
@@ -121977,7 +122890,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -122008,6 +122921,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-rebase-organvm-limen-627
   title: rebase/resolve conflicts on organvm/limen#627
   repo: organvm/limen
@@ -122032,7 +122952,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -122053,6 +122973,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-rebase-organvm-limen-628
   title: rebase/resolve conflicts on organvm/limen#628
   repo: organvm/limen
@@ -122077,7 +123004,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -122104,6 +123031,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-rebase-organvm-limen-629
   title: rebase/resolve conflicts on organvm/limen#629
   repo: organvm/limen
@@ -122127,7 +123061,7 @@ tasks:
     by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T08:52:35.570472Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:21:45.810854Z'
     agent: opencode
@@ -122138,6 +123072,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-limen-630
   title: rebase/resolve conflicts on organvm/limen#630
   repo: organvm/limen
@@ -122737,7 +123678,7 @@ tasks:
   context: memory sovereign-cash-intake (deplatforming escalation 2026-07-08)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:40:14.945240Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -122763,6 +123704,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-growth-auditor-9
   title: rebase/resolve conflicts on organvm/growth-auditor#9
   repo: organvm/growth-auditor
@@ -122814,7 +123762,7 @@ tasks:
   context: operator ask 2026-07-08 (encrypted client comms)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T13:03:57.769532Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:33:13.252713Z'
     agent: opencode
@@ -122825,6 +123773,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: SOVEREIGN-0708-MONERO-RAIL
   title: "MONETA v2: add a Monero (XMR) rail \u2014 privacy-max payment, view-key/proof\
     \ verification"
@@ -122857,7 +123812,7 @@ tasks:
   context: memory sovereign-cash-intake + operator ask 2026-07-08 (Monero)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T13:03:57.769532Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -122878,6 +123833,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-nexus--babel-alexandria-125
   title: rebase/resolve conflicts on organvm/nexus--babel-alexandria#125
   repo: organvm/nexus--babel-alexandria
@@ -123049,7 +124011,7 @@ tasks:
   context: operator lanes ask 2026-07-08 (outward contribute / inward heal)
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -123076,6 +124038,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-rebase-organvm-bountyscope-7
   title: rebase/resolve conflicts on organvm/bountyscope#7
   repo: organvm/bountyscope
@@ -123310,7 +124279,7 @@ tasks:
     ship-gate registry + public-face-data-integrity lineage'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T12:52:02.193528Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:19:18.664940Z'
     agent: opencode
@@ -123321,6 +124290,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: SUBSTRATE-0708-WORKTREE-DEBT-RECLAIM
   title: 'Substrate: bring worktree debt (333/12 roots, 75 GiB) back under cap via
     the acceptance-tracked reclaim flow'
@@ -123348,7 +124324,7 @@ tasks:
     blocker decomposed per FLAME directive 1'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:52:01.610196Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:21:04.571425Z'
     agent: opencode
@@ -123359,6 +124335,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEALTH-0708-OPEN-LOOP-CHASE
   title: 'Health organ: regenerate the visit-prep packet and chase the 4 open clinical
     loops (counts-only on the board)'
@@ -123387,7 +124370,7 @@ tasks:
   context: 'lane-feed 2026-07-08: health lane at 1 open; appt in 0d per session orientation'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T09:31:35.236703Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -123417,6 +124400,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: LEGAL-0708-FIRSTSLICE-VALIDATOR
   title: 'Legal organ first slice: beat-run validator + STATUS from the matter register
     (counts only, PII-clean)'
@@ -123448,7 +124438,7 @@ tasks:
     + litigation-pillar records'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T10:02:37.945589Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -123474,6 +124464,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: SUBSTRATE-0708-BEOWULF-STRAYS
   title: Relocate stray Beowulf-Fitts composition files out of the live limen checkout
     root
@@ -123502,7 +124499,7 @@ tasks:
     log+fix)'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T13:03:57.769532Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:33:13.252713Z'
     agent: opencode
@@ -123513,6 +124510,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-730
   title: "L-MONETA-LAUNCH \u2014 post the MONETA launch kit under your own name (Show\
     \ HN / Reddit / X)"
@@ -123535,7 +124539,7 @@ tasks:
     \ artifacts the posts link to** (beat-prob"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -123556,6 +124560,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GH-organvm-limen-719
   title: 'L-ARCA-KEY-ESCROW: escrow the ARCA vault key off-machine (his-hand)'
   repo: organvm/limen
@@ -123576,7 +124587,7 @@ tasks:
     \ and exists nowhere else. **The one atom only Anthony can pull (~2 min):**"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T11:51:20.365322Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:20:30.792444Z'
     agent: opencode
@@ -123587,6 +124598,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-695
   title: fix failing CI on organvm/limen#695
   repo: organvm/limen
@@ -123611,7 +124629,7 @@ tasks:
     \ 2026-07-08 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:55:33.266128Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -123632,6 +124650,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: HEAL-cifix-organvm-limen-696
   title: fix failing CI on organvm/limen#696
   repo: organvm/limen
@@ -124003,7 +125028,7 @@ tasks:
     \ is a veto: respected forever, never reopened. First s"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -124034,6 +125059,13 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: codex
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head failed->codex'
 - id: GH-organvm-limen-763
   title: 'censor: Recurring friction across 2 insights reports: Premature or hollow
     completion claims'
@@ -124057,7 +125089,7 @@ tasks:
     \ is a veto: respected forever, never reopened. First s"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T11:51:20.365322Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -124083,6 +125115,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-762
   title: 'censor: Recurring friction across 3 insights reports: Auth, permission,
     and safety-gate interruptions'
@@ -124105,7 +125144,7 @@ tasks:
     \ is a veto: respected forever, never reopened. First s"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T11:51:20.365322Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:20:30.792444Z'
     agent: opencode
@@ -124116,6 +125155,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-761
   title: 'censor: Recurring friction across 4 insights reports: Shallow first approach
     requiring redirection'
@@ -124138,7 +125184,7 @@ tasks:
     \ is a veto: respected forever, never reopened. First s"
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T11:51:20.365322Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:20:30.792444Z'
     agent: opencode
@@ -124149,6 +125195,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-public-record-data-scrapper-338
   title: rebase/resolve conflicts on organvm/public-record-data-scrapper#338
   repo: organvm/public-record-data-scrapper
@@ -125340,7 +126393,7 @@ tasks:
     \ is a veto: respected forever, never reopened. First s"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T11:51:20.365322Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -125357,6 +126410,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-domus-genoma-132
   title: rebase/resolve conflicts on organvm/domus-genoma#132
   repo: organvm/domus-genoma
@@ -125574,7 +126634,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#140
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: failed
@@ -125582,7 +126642,7 @@ tasks:
   - rebase
   - self-heal
   - conflict
-  - tried:agy
+  - tried:claude
   urls:
   - https://github.com/organvm/domus-genoma/pull/140
   context: 'PR organvm/domus-genoma#140 is CONFLICTING with its base branch and merge-drain
@@ -125593,7 +126653,7 @@ tasks:
     2026-07-09 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T19:41:54.414041Z'
+  updated: '2026-07-10T21:55:55.447902Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -125611,6 +126671,20 @@ tasks:
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-10T19:41:54.414041Z'
     agent: agy
+    session_id: cli
+    status: failed
+  - timestamp: '2026-07-10T21:13:16.144710Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T21:25:51.095301Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-10T21:55:55.447902Z'
+    agent: claude
     session_id: cli
     status: failed
 - id: HEAL-rebase-organvm-domus-genoma-145
@@ -125705,7 +126779,7 @@ tasks:
   urls: []
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T10:52:01.610196Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -125731,6 +126805,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: aw-opencode-db-corpus-intake-0709
   title: Route opencode.db (8.3 GB packed session history) into the prompt-corpus
     intake
@@ -125845,7 +126926,7 @@ tasks:
     exists only in `--check` stdout. `writ'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T12:05:15.269255Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:34:00.181684Z'
     agent: opencode
@@ -125856,6 +126937,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-775
   title: MOUNT the 4444J99 SSD to recover the Nov-2025 deep-history archives
   repo: organvm/limen
@@ -125877,7 +126965,7 @@ tasks:
     \ This issue replaces the place"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T11:51:20.365322Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -125908,6 +126996,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-774
   title: Land the dispatch-admission lane preserved on heal/live-main-snapshot-60edc0d2
   repo: organvm/limen
@@ -125928,7 +127023,7 @@ tasks:
     \ gating, `scripts/handoff-relay.py` delta bey"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T11:51:20.365322Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -125945,6 +127040,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-universal-mail-automation-154
   title: Make UMA the single mail-triage owner with daily proof receipts
   repo: organvm/universal-mail--automation
@@ -126000,7 +127102,7 @@ tasks:
     stamps within a beat cycle. Any session can execute this; it needs no human hand.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T12:16:38.462698Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:43:33.664898Z'
     agent: opencode
@@ -126011,6 +127113,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-791
   title: 'needs-human (L-DAILY-ENGINE-PHONE-SETUP): Daily-engine phone setup'
   repo: organvm/limen
@@ -126727,7 +127836,7 @@ tasks:
     \ `docs/fable-allotment.md` were checked only aga"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T12:16:38.462698Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:43:33.664898Z'
     agent: opencode
@@ -126738,6 +127847,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: ORG-sovereignty-organ-deepen-0709
   title: Deepen the sovereignty organ toward a usable institution
   repo: organvm/manumissio
@@ -126943,7 +128059,7 @@ tasks:
     `scripts/verify-fable-gate.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T12:27:02.823294Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:53:43.364244Z'
     agent: opencode
@@ -126954,6 +128070,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-domus-genoma-230
   title: fix failing CI on organvm/domus-genoma#230
   repo: organvm/domus-genoma
@@ -127165,7 +128288,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--theoria#459
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -127212,7 +128335,7 @@ tasks:
     \ error **aborts the entire `chezmoi status`/`diff`/`ap"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T12:27:02.823294Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:53:43.364244Z'
     agent: opencode
@@ -127223,6 +128346,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-829
   title: 'Convergence campaign: remaining closing-engine levers (throughput, resume-not-respawn,
     needs_human drain)'
@@ -127244,7 +128374,7 @@ tasks:
     \ \u2014 drains the 62 GiB / 571-root debt - #806"
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T12:27:02.823294Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:53:43.364244Z'
     agent: opencode
@@ -127255,6 +128385,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-universal-mail-automation-157
   title: 'Waste triage 2026-07-09: closed 6 stale PRs, 3 green PRs ready to merge'
   repo: organvm/universal-mail--automation
@@ -127466,7 +128603,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/sovereign-systems--elevate-align#258
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -127496,7 +128633,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/sovereign-systems--elevate-align#259
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -127526,7 +128663,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/sovereign-systems--elevate-align#262
   repo: organvm/sovereign-systems--elevate-align
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -127556,7 +128693,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/specvla-ergon--avditor-mvndi#34
   repo: organvm/specvla-ergon--avditor-mvndi
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -127586,7 +128723,7 @@ tasks:
   title: fix failing CI on organvm/studium-generale#17
   repo: organvm/studium-generale
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -127611,7 +128748,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/system-governance-framework#41
   repo: organvm/system-governance-framework
   type: code
-  target_agent: opencode
+  target_agent: agy
   workstream: governance
   priority: high
   budget_cost: 1
@@ -127642,7 +128779,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/system-governance-framework#42
   repo: organvm/system-governance-framework
   type: code
-  target_agent: agy
+  target_agent: claude
   workstream: governance
   priority: high
   budget_cost: 1
@@ -127801,7 +128938,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/trendpulse#5
   repo: organvm/trendpulse
   type: code
-  target_agent: claude
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -127830,7 +128967,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/trendpulse#6
   repo: organvm/trendpulse
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -127859,7 +128996,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/trendpulse#8
   repo: organvm/trendpulse
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -127961,7 +129098,7 @@ tasks:
   title: Raise test coverage in organvm/my-knowledge-base
   repo: organvm/my-knowledge-base
   type: code
-  target_agent: agy
+  target_agent: claude
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -127983,7 +129120,7 @@ tasks:
   title: Raise test coverage in organvm/manumissio
   repo: organvm/manumissio
   type: code
-  target_agent: claude
+  target_agent: codex
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -128005,7 +129142,7 @@ tasks:
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
   type: code
-  target_agent: codex
+  target_agent: opencode
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -128027,7 +129164,7 @@ tasks:
   title: Raise test coverage in organvm/peer-audited--behavioral-blockchain
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: opencode
+  target_agent: agy
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -128049,7 +129186,7 @@ tasks:
   title: Make organvm/manumissio CI green
   repo: organvm/manumissio
   type: code
-  target_agent: agy
+  target_agent: claude
   workstream: contributions
   priority: high
   budget_cost: 1
@@ -128072,7 +129209,7 @@ tasks:
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
   type: code
-  target_agent: claude
+  target_agent: codex
   workstream: contributions
   priority: high
   budget_cost: 1
@@ -128095,7 +129232,7 @@ tasks:
   title: Make organvm/peer-audited--behavioral-blockchain CI green
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: opencode
   workstream: contributions
   priority: high
   budget_cost: 1
@@ -128511,7 +129648,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T09:25:43.023152Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T05:15:20.404324Z'
     agent: jules
@@ -128568,6 +129705,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-rebase-organvm-domus-genoma-173
   title: rebase/resolve conflicts on organvm/domus-genoma#173
   repo: organvm/domus-genoma
@@ -129049,7 +130193,7 @@ tasks:
     \ main history is almost entirely `limen: \u2026` / `tabularius"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T19:18:07.720625Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T17:13:43.412727Z'
     agent: opencode
@@ -129064,6 +130208,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: VOX-0
   title: "VOX core \u2014 voice substrate contract (clone/synthesize/transcribe/presets/API)"
   repo: organvm/vox
@@ -129152,7 +130303,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - vox
   - plan
@@ -129165,8 +130316,14 @@ tasks:
   depends_on:
   - VOX-0
   created: '2026-07-10'
-  updated: '2026-07-10T18:10:00Z'
-  dispatch_log: []
+  updated: '2026-07-10T21:48:19.218498Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T21:48:19.218498Z'
+    agent: claude-code
+    session_id: vox-closeout-2026-07-10
+    status: done
+    output: 'ingest seam vox/ingest.py merged on vox default branch via PR #4; deliverable
+      on trunk'
 - id: VOX-3b
   title: "In My Head transports \u2014 Twilio/Gmail adapters in universal-mail--automation"
   repo: organvm/universal-mail--automation
@@ -129198,7 +130355,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - vox
   - credential
@@ -129212,8 +130369,14 @@ tasks:
   depends_on:
   - VOX-0
   created: '2026-07-10'
-  updated: '2026-07-10T18:10:00Z'
-  dispatch_log: []
+  updated: '2026-07-10T21:55:16.165099Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T21:55:16.165099Z'
+    agent: claude-code
+    session_id: vox-closeout-2026-07-10
+    status: done
+    output: 'ElevenLabs lane registered in creds-hydrate DEFAULT_MAP (enabled=False;
+      mint atom homed on #898 + Wall #320) via limen PR #916'
 - id: VOX-5
   title: "Visual movie-scene \u2014 arrive at ideal form (canvas / talking-head)"
   repo: organvm/in-my-head
@@ -129244,7 +130407,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - vox
   - meta
@@ -129263,8 +130426,15 @@ tasks:
   - VOX-4
   - VOX-5
   created: '2026-07-10'
-  updated: '2026-07-10T18:10:00Z'
-  dispatch_log: []
+  updated: '2026-07-10T21:55:16.166149Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T21:55:16.166149Z'
+    agent: claude-code
+    session_id: vox-closeout-2026-07-10
+    status: done
+    output: 'macro-verification performed: scripts/vox-verify.py + spec/vox-program-verification.md
+      shipped via limen PR #916; all 5 gates + macro pass (gate 5 pass-with-note filed
+      as VOX-6)'
 - id: GH-organvm-universal-mail-automation-162
   title: "VOX-3b \xB7 In My Head transports \u2014 Twilio/Gmail adapters"
   repo: organvm/universal-mail--automation
@@ -129273,7 +130443,7 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - vox
   - plan
@@ -129288,7 +130458,7 @@ tasks:
     \ `a"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T20:25:38.658485Z'
+  updated: '2026-07-10T21:48:19.221654Z'
   dispatch_log:
   - timestamp: '2026-07-10T19:10:48.247520Z'
     agent: codex
@@ -129299,6 +130469,12 @@ tasks:
     agent: codex
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:48:19.221654Z'
+    agent: claude-code
+    session_id: vox-closeout-2026-07-10
+    status: archived
+    output: stale mine-backlog mirror; canonical VOX task owns the issue URL, so URL-dedup
+      will not recreate it
 - id: GH-organvm-limen-899
   title: "VOX-META \xB7 VOX program \u2014 register + macro-verify + assign"
   repo: organvm/limen
@@ -129306,7 +130482,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - vox
   - meta
@@ -129319,8 +130495,14 @@ tasks:
     \ with child tasks `VOX-0\u2026VOX-5` + `VOX-META`. 2. Verification g"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T18:48:56.801377Z'
-  dispatch_log: []
+  updated: '2026-07-10T21:48:19.221311Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T21:48:19.221311Z'
+    agent: claude-code
+    session_id: vox-closeout-2026-07-10
+    status: archived
+    output: stale mine-backlog mirror; canonical VOX task owns the issue URL, so URL-dedup
+      will not recreate it
 - id: GH-organvm-limen-898
   title: "VOX-4 \xB7 Credential protocol \u2014 register ElevenLabs in creds-hydrate\
     \ map"
@@ -129329,7 +130511,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - credential
   - vox
@@ -129343,8 +130525,14 @@ tasks:
     \ \u2192 `ELEVEN_API_KEY`, with `veri"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T18:48:56.802294Z'
-  dispatch_log: []
+  updated: '2026-07-10T21:48:19.220886Z'
+  dispatch_log:
+  - timestamp: '2026-07-10T21:48:19.220886Z'
+    agent: claude-code
+    session_id: vox-closeout-2026-07-10
+    status: archived
+    output: stale mine-backlog mirror; canonical VOX task owns the issue URL, so URL-dedup
+      will not recreate it
 - id: GH-organvm-limen-895
   title: Dedup repairs by work-intent, not just task-ID (two sessions raced the same
     red-trunk fix)
@@ -129412,7 +130600,7 @@ tasks:
     \ home** so the gap"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T20:25:38.658485Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T19:45:16.669254Z'
     agent: opencode
@@ -129423,6 +130611,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: GH-organvm-limen-890
   title: "COMMS: outbound mail drafts cannot attach a local file \u2014 need a path\u2192\
     draft-with-attachment tool"
@@ -129446,7 +130641,7 @@ tasks:
     \ make the owner of that problem know it.\"* This"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T20:25:38.658485Z'
+  updated: '2026-07-10T21:56:45.562692Z'
   dispatch_log:
   - timestamp: '2026-07-10T19:45:16.669254Z'
     agent: opencode
@@ -129457,6 +130652,13 @@ tasks:
     agent: opencode
     session_id: cli
     status: timeout->jules
+  - timestamp: '2026-07-10T21:56:45.562692Z'
+    agent: heal-board
+    session_id: heal-board
+    status: open
+    route_to: jules
+    output: 'heal-board: appended canonical dispatch_log head for task.status=open;
+      preserved legacy head timeout->jules'
 - id: HEAL-cifix-organvm-limen-620
   title: fix failing CI on organvm/limen#620
   repo: organvm/limen
@@ -129481,4 +130683,283 @@ tasks:
     \ [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-680
+  title: rebase/resolve conflicts on organvm/limen#680
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/680
+  context: 'PR organvm/limen#680 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/680
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-682
+  title: rebase/resolve conflicts on organvm/limen#682
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/682
+  context: 'PR organvm/limen#682 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/682
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-683
+  title: rebase/resolve conflicts on organvm/limen#683
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/683
+  context: 'PR organvm/limen#683 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/683
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-684
+  title: rebase/resolve conflicts on organvm/limen#684
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/684
+  context: 'PR organvm/limen#684 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/684
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-696
+  title: rebase/resolve conflicts on organvm/limen#696
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/696
+  context: 'PR organvm/limen#696 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/696
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-703
+  title: rebase/resolve conflicts on organvm/limen#703
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/703
+  context: 'PR organvm/limen#703 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/703
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-limen-812
+  title: "rebase organvm/limen#812 onto current base \u2014 stale base touches the\
+    \ daemon body"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  - core
+  urls:
+  - https://github.com/organvm/limen/pull/812
+  context: "PR organvm/limen#812 is MERGEABLE + green BUT its base is STALE and its\
+    \ diff touches CORE daemon files (cli/src/limen, scripts/*.py|sh, mcp/src, web/api,\
+    \ container). Merging as-is would silently REVERT newer code on the base \u2014\
+    \ the #111 failure mode. Check out the PR branch and REBASE it onto the CURRENT\
+    \ base (git fetch origin && git rebase origin/<base>). During the rebase, KEEP\
+    \ every change that is genuinely this PR's own work and DROP any hunk that would\
+    \ revert a file the PR did not intend to change (especially core files it only\
+    \ carries because it branched old). Push --force-with-lease to the SAME PR branch;\
+    \ confirm it reports MERGEABLE, current with base, and green. Do NOT open a new\
+    \ PR and do NOT drop any unique work \u2014 absorb the branch toward current ideal\
+    \ form. PR: https://github.com/organvm/limen/pull/812 [auto-emitted 2026-07-10\
+    \ by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-814
+  title: rebase/resolve conflicts on organvm/limen#814
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/814
+  context: 'PR organvm/limen#814 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/814
+    [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-limen-815
+  title: "rebase organvm/limen#815 onto current base \u2014 branched far behind"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  urls:
+  - https://github.com/organvm/limen/pull/815
+  context: "PR organvm/limen#815 is MERGEABLE + green but branched well behind its\
+    \ current base \u2014 the structural condition for a stale-base silent revert.\
+    \ Check out the branch, REBASE it onto the current base, KEEP all of the PR's\
+    \ genuine changes and DROP any hunk that merely reverts base files it didn't mean\
+    \ to touch, push --force-with-lease to the SAME branch, and confirm MERGEABLE\
+    \ + current + green. Do NOT open a new PR; preserve all unique work. PR: https://github.com/organvm/limen/pull/815\
+    \ [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]"
+  depends_on: []
+  created: '2026-07-10'
+  dispatch_log: []
+- id: VOX-6
+  title: "in-my-head \u2014 consume vox/types from the vox package (retire lib/types.ts\
+    \ mirror)"
+  repo: organvm/in-my-head
+  type: code
+  target_agent: codex
+  priority: low
+  budget_cost: 1
+  status: open
+  labels:
+  - vox
+  urls: []
+  context: 'VOX-META gate 5 (vox/types single-contract) = pass-with-note: the in-my-head
+    consumer redefines the vox contract in lib/types.ts (a documented mirror carrying
+    a TODO) instead of importing the canonical vox/profiles + vox/types. Retire the
+    mirror; import the contract from the vox package. See spec/vox-program-verification.md.'
+  depends_on:
+  - VOX-1
+  created: '2026-07-10'
+  updated: '2026-07-10T21:48:19.223207Z'
   dispatch_log: []

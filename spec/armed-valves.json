@@ -41,7 +41,8 @@
     "LIMEN_DISPATCH_ASYNC",
     "LIMEN_MEDIA_ATOMIZE",
     "LIMEN_QUICKEN_BREATHE",
-    "LIMEN_STUDIUM"
+    "LIMEN_STUDIUM",
+    "LIMEN_GITVS_APPLY"
   ],
   "_safety_note": "LIMEN_DISPATCH_ASYNC / LIMEN_CENSOR_APPLY / LIMEN_MEDIA_ATOMIZE are armed in the DAEMON'S environment (launchd plist), which this audit cannot read from a shell — promoting one to 'deliverable' requires a probe of daemon truth (a runtime stamp), not an env read; enactment-audit.py owns declared-vs-live for fleet flags. LIMEN_ALLOW_HIGH_LOCAL_LIMIT is a budget-cap override: off IS the design."
 }

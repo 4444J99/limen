@@ -178,6 +178,7 @@ C_WALLS="${LIMEN_BEAT_WALLS:-12}"        # WALLS (regenerate the credential Wall
 C_CVSTOS="${LIMEN_BEAT_CVSTOS:-24}"      # KEEP (CVSTOS — host stays factory: chat-app/local debt census + factory-invariant + reaper proprioception; filesystem walk ⇒ rare)
 C_VVLTVS="${LIMEN_BEAT_VVLTVS:-24}"      # FACE (VVLTVS — verify the public face reflects the live SSOT: profile/portfolio drift + contribution-mix radar; offline read ⇒ cheap)
 C_CONTRIB="${LIMEN_BEAT_CONTRIB:-12}"    # MIRROR (SPECVLVM — re-render the contributions proof surface from hub-ledger outputs; offline read ⇒ cheap)
+C_GITVS="${LIMEN_BEAT_GITVS:-8}"         # CUSTODIAN (GITVS — GitHub as one resource graph: observe→diff→reconcile; dry report until LIMEN_GITVS_APPLY=1)
 LOCKD="$LIMEN_ROOT/logs/.queue.lock.d"   # shared with supervisory ops (two-scale safety)
 c=0
 play() { [ $(( c % $1 )) -eq 0 ]; }   # true on this voice's beat
@@ -466,6 +467,18 @@ while true; do
                       # LIMEN_SELF_HEAL=0.
                       [ "${LIMEN_SELF_HEAL:-1}" = "1" ] && timeout "${LIMEN_SELF_HEAL_TIMEOUT:-150}" python3 "$LIMEN_ROOT/scripts/self-heal.py" --scan "${LIMEN_SELF_HEAL_SCAN:-30}" 2>&1 | tail -1 || true; }
   due_voice heal "$C_HEAL"    && stamp heal
+  # GITVS — the GitHub-custodian reconcile loop (outside the queue-lock; its delegate/reap organs
+  # self-acquire their own locks). Walks the estate's active resource types and dispatches each to its
+  # declared effector sink (delegate | file-atom | reap). DRY report by default — observable-before-
+  # autonomous, like check-main-green ships detect-armed / emit-dark; it mutates only when
+  # LIMEN_GITVS_APPLY=1, and even then every reap keeps its OWN dark-arming (double-dark). Cites the two
+  # human levers (L-LIMENBOT-INSTALL #910, L-BRANCH-PROTECTION #257), never recites a token. Off with
+  # LIMEN_GITVS=0; fail-open, timeout-bounded.
+  if [ "${LIMEN_GITVS:-1}" = "1" ] && due_voice gitvs "$C_GITVS"; then
+    _gitvs_apply=""; [ "${LIMEN_GITVS_APPLY:-0}" = "1" ] && _gitvs_apply="--apply"
+    timeout "${LIMEN_GITVS_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/gitvs.py" reconcile $_gitvs_apply 2>&1 | tail -3 || true
+  fi
+  due_voice gitvs "$C_GITVS"  && stamp gitvs
   # DISK PRESSURE — when the data volume is past high-water, run hygiene (clone-maintenance:
   # capture→reap→node_modules) EVERY beat, not just every C_HYGIENE, until it drains back under
   # target. Reclaim intensity tracks real fullness instead of a fixed clock (the "creeps back to

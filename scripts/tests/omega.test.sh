@@ -21,12 +21,12 @@ mkdir -p "$work/scripts" "$work/cli/src" "$work/logs"
 cp "$real_omega" "$work/scripts/omega.sh"
 
 # write_stubs <ask_gate_rc> — all det children exit 0 except ask-gate.py, whose rc is the argument.
-# (In --offline the live children — main-green/ship-gate/heal-convergence/overnight/credential — are
-# SKIPped without running, so only the det children need stubs: enactment, armed-valve, ask-gate,
-# handoff, no-tasks-on-me.)
+# (In --offline the live children — main-green/ship-gate/heal-convergence/overnight/credential/gitvs
+# posture — are SKIPped without running, so only the det children need stubs: enactment, armed-valve,
+# handoff, no-tasks-on-me, ask-gate, and gitvs (the estate-parity det rung).)
 write_stubs() {
   local ask_rc="$1"
-  for py in enactment-audit armed-valve-audit handoff-relay; do
+  for py in enactment-audit armed-valve-audit handoff-relay gitvs; do
     printf '#!/usr/bin/env python3\nimport sys; sys.exit(0)\n' > "$work/scripts/$py.py"
     chmod +x "$work/scripts/$py.py"
   done
