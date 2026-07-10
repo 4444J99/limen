@@ -154,15 +154,19 @@ facts:
     consumers: [fill-phi-jewishboard.py]  # resolves full value via op_read behind --unsafe-ssn at fill-time
 
   # ── signature / consent artifact (life) — so forms auto-complete the sig line ─
+  # applicable:true (the operator signs forms) but required:false — an OPTIONAL artifact the beat
+  # never nags. The value is a PATH to an image under the ARCA store; the image bytes are embedded
+  # at fill-time only (base64, transient), never rendered to chat/log. Absent -> the form falls back
+  # to a hand-sign blank and the filler prints a contextual populate hint (demand-surfaced, no lever).
   identity.signature.image:
     domain: life
     home: _life-private/identity.json
     atom: signature.image_path
     tier: sensitive
-    applicable: unknown
+    applicable: true
     required: false
     verify: non_empty
-    consumers: []
+    consumers: [fill-phi-jewishboard.py]
 
   # ── address history (life) — prior/mailing distinct from current ────────────
   identity.addresses.mailing:

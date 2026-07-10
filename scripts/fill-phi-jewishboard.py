@@ -11,15 +11,18 @@ fields), so we recreate the layout rather than overlay text.
 Any field the store lacks renders as an underlined blank to hand-write. Once the store is
 populated (identity.py verify -> exit 0), the PDF is complete with no blanks.
 """
-import json
-import sys
-import subprocess
-import os
-import html
 import argparse
+import base64
 import datetime
+import html
+import json
+import mimetypes
+import os
+import subprocess
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+WORKSPACE = os.environ.get("LIMEN_WORKSPACE", os.path.expanduser("~/Workspace"))  # override for tests
 
 # The personal-fact classes this form reads. fact-wall.py asserts every entry is a homed row in
 # institutio/governance/personal-facts.yaml — so an un-homed atom is a RED build, never a chat ask.
@@ -34,7 +37,27 @@ CONSUMES = [
     "identity.addresses.0.zip",
     "identity.phones.0.number",
     "identity.emails",
+    "identity.signature.image",
 ]
+
+
+def signature_data_uri(idn):
+    """Resolve the homed signature image to a base64 data URI for inline embedding.
+
+    Returns (uri, status). The image bytes live only in the transient HTML (deleted after render) —
+    never in chat, log, or a persisted artifact. status: embedded | absent | missing_file.
+    """
+    path = ((idn.get("signature") or {}).get("image_path") or "").strip()
+    if not path:
+        return "", "absent"
+    if not os.path.isabs(path):
+        path = os.path.join(WORKSPACE, path)
+    if not os.path.isfile(path):
+        return "", "missing_file"
+    mime = mimetypes.guess_type(path)[0] or "image/png"
+    with open(path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode("ascii")
+    return f"data:{mime};base64,{b64}", "embedded"
 
 def load_identity():
     """Read the identity store via the organ (form-filler is allowed the full record)."""
@@ -48,7 +71,10 @@ def build_fields(idn):
     name = idn.get("legal_name", {})
     addr = (idn.get("addresses") or [{}])[0]
     phone = (idn.get("phones") or [{}])[0].get("number", "")
+    sig_img, sig_status = signature_data_uri(idn)
     return {
+        "sig_img": sig_img,
+        "sig_status": sig_status,
         "first":  name.get("first", ""),
         "middle": (name.get("middle", "")[:1] if name.get("middle") else ""),
         "last":   name.get("last", ""),
@@ -75,6 +101,9 @@ def render(D, out, draft=False):
         return '<span class="cbx checked">&#9746;</span>' if c else '<span class="cbx">&#9744;</span>'
     other = D.get("records_other", ""); email = D.get("delivery_email", "")
     hf, ht = D.get("health_from", ""), D.get("health_through", "")
+    # signature: embed the homed image if present, else an underlined blank to hand-sign
+    sig_cell = (f'<img class="sig" src="{D["sig_img"]}" alt="signature">'
+                if D.get("sig_img") else v('_sig', 30))
     HTML = f"""<!doctype html><html><head><meta charset="utf-8"><style>
 @page {{ size: Letter; margin: 0.75in 0.9in; }}
 * {{ box-sizing: border-box; }}
@@ -87,6 +116,7 @@ h1 {{ font-size:12pt; text-align:center; margin:20px 0 16px; }}
 .blank {{ border-bottom:1px solid #111; padding:0 4px; }}
 .need {{ background:#fff3b0; }}
 .cbx {{ font-size:13pt; vertical-align:-1px; }}
+.sig {{ height:32px; vertical-align:-11px; }}
 .row {{ margin:2px 0; }}
 .intbox {{ border:1px solid #111; padding:9px 12px; margin-top:20px; }}
 .intbox .sec {{ margin-top:0; }}
@@ -106,7 +136,7 @@ h1 {{ font-size:12pt; text-align:center; margin:20px 0 16px; }}
 <div class="row" style="margin-left:28px">{box(D.get('home_delivery'))} Home Delivery (include address): {v('home_addr',34)}</div>
 <div class="row" style="margin-left:28px">{box(D.get('in_person'))} In-Person Pickup</div>
 <div class="row">Electronic (Email, CD) please specify: {('<span class="val">'+html.escape(email)+'</span>') if email else v('_e',40)}</div>
-<div class="row" style="margin-top:22px">Signature of client and/or personal representative {v('_sig',30)} Date: {v('sig_date',12)}</div>
+<div class="row" style="margin-top:22px">Signature of client and/or personal representative {sig_cell} Date: {v('sig_date',12)}</div>
 <div class="intbox">
 <div class="sec">Internal Use Only:</div>
 <div class="row">Client Medical Record #: {v('_mrn',24)}</div>
@@ -135,6 +165,15 @@ def main():
     print("wrote", a.out)
     if missing:
         print("still-blank (populate the identity store to auto-fill):", ", ".join(missing))
+    # demand-surfaced (no standing lever): the one moment the auto-sign hint is useful is now.
+    status = D.get("sig_status")
+    if status == "embedded":
+        print("signature: auto-embedded from the homed artifact (no hand-sign needed).")
+    elif status == "missing_file":
+        print("signature: image_path is set but the file is missing — fix the path to auto-sign.")
+    else:
+        print("signature: hand-sign the printed blank. To auto-sign future forms, save a signature "
+              "image under _life-private and set signature.image_path in the identity store.")
 
 if __name__ == "__main__":
     main()

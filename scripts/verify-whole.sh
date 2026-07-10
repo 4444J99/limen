@@ -115,6 +115,9 @@ python3 scripts/enactment-audit.py --check --wiring-only
 step "Verify the single-home reference-integrity predicate (a re-owned email is caught, never left to prose)"
 bash scripts/tests/identity-reconcile.test.sh
 
+step "Verify the signature-artifact fill (homed signature auto-embeds; absent -> hand-sign fallback)"
+bash scripts/tests/fill-phi-signature.test.sh
+
 step "Verify the omega fixed-point predicate (composes every gate's --check; SKIP is never a silent PASS)"
 bash scripts/tests/omega.test.sh
 # The tally/exit/stamp contract is the deterministic code rung (stubbed children — no live board or
