@@ -203,6 +203,11 @@ def test_harvest_archives_malformed_result_receipt_before_unlink(board):
 
 
 def test_async_reservation_value_gate_withholds_generic_non_value_work(tmp_path, monkeypatch):
+    # Disable dispatch admission so the test is hermetic: otherwise reserve_and_launch runs the
+    # real handoff-relay check against the host, which fails on a clean checkout (e.g. CI) and
+    # withholds ALL work — masking the value-gate behavior this test actually asserts. Every other
+    # test in this file gets this via the `board` fixture; this one builds its board inline.
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
     tasks_path = tmp_path / "tasks.yaml"
     runs = tmp_path / "logs" / "async-runs"
     runs.mkdir(parents=True)
