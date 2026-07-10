@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-10'
-      spent: 411
+      spent: 414
       per_agent:
         jules: 116
         gemini: 12
-        codex: 10
+        codex: 11
         opencode: 121
-        agy: 136
+        agy: 138
         claude: 12
         github_actions: 1
         ollama: 3
@@ -113359,7 +113359,7 @@ tasks:
   target_agent: agy
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -113376,7 +113376,7 @@ tasks:
     \ [auto-emitted 2026-07-07 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-09T23:35:24.867313Z'
+  updated: '2026-07-10T02:49:30.908910Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:21:29.129071Z'
     agent: agy
@@ -113393,6 +113393,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T02:49:30.908910Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-SUBSTRATE-DISK-TEMP
   title: Keep disk/temp/voice substrate from starving the swarm
   description: disk/temp pressure needs owner work
@@ -113910,7 +113915,7 @@ tasks:
   workstream: tabularius
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -113937,7 +113942,7 @@ tasks:
     been harvested.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T01:54:46.222690Z'
+  updated: '2026-07-10T02:49:30.908910Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -113973,6 +113978,11 @@ tasks:
     session_id: cli
     status: failed->codex
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-10T02:49:30.908910Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-SUBSTRATE-AGY-SCRATCH-CUSTODY
   title: Bridge or preserve remaining Antigravity scratch custody roots
   description: CVSTOS host-bin debt is cleared; factory state is still blocked by
@@ -114527,7 +114537,7 @@ tasks:
   target_agent: agy
   priority: normal
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -114544,7 +114554,7 @@ tasks:
     \ [auto-emitted 2026-07-07 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-09T23:35:24.867313Z'
+  updated: '2026-07-10T02:49:30.908910Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:39:20.449890Z'
     agent: agy
@@ -114561,6 +114571,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-10T02:49:30.908910Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-686
   title: Add historical token tombstone audit to the credential wall
   repo: organvm/limen
