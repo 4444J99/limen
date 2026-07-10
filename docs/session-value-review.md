@@ -1,7 +1,7 @@
 # Session Value Review
 
-Generated: `2026-07-10T03:53:44+00:00`
-Window: `2026-07-09T15:53:42+00:00` to `2026-07-10T03:53:42+00:00` (12.0h)
+Generated: `2026-07-10T03:56:23+00:00`
+Window: `2026-07-09T15:56:21+00:00` to `2026-07-10T03:56:21+00:00` (12.0h)
 
 ## Verdict
 
@@ -11,34 +11,34 @@ Window: `2026-07-09T15:53:42+00:00` to `2026-07-10T03:53:42+00:00` (12.0h)
 
 - Action: `continue_prompt_sweep` (exit `0`).
 - Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
-- Follow-up pressure: `9` follow-up roots vs `118` merged/routed roots; consecutive pressure reports `0`.
+- Follow-up pressure: `9` follow-up roots vs `128` merged/routed roots; consecutive pressure reports `0`.
 - No-receipt pressure: `false`; consecutive reports `0`; high-motion `false`.
-- Maintenance commits: `22`; value commits: `176`; custody-only: `false`.
-- Open review batches: `187`; no durable progress: `false`.
-- Next commands: `python3 scripts/resolve-codex-family-batch.py prompt-batch-medium-historical-worktree-review-035 --write`.
+- Maintenance commits: `22`; value commits: `178`; custody-only: `false`.
+- Open review batches: `186`; no durable progress: `false`.
+- Next commands: `python3 scripts/resolve-codex-family-batch.py prompt-batch-medium-historical-worktree-review-036 --write`.
 
 ## Measured Output
 
-- Commits landed: `198`; files touched: `404`; insertions/deletions: `32832` / `10505`.
-- Prompt batch receipts: `13`; batches/hour: `1.08`.
-- Sessions recorded: `306`; prompt events recorded: `4959`; prompt events/hour: `413.25`.
-- Merged-root evidence: `30`; follow-up roots: `9`; absent owner routes: `88`.
-- Commit mix: `other` 175, `task_board` 20, `receipt_refresh` 2, `direct_engineering` 1.
-- Receipt lane mix: `historical-worktree-review` 11, `legacy-session-review` 2.
-- Current corpus queue: `105` recorded, `187` open, `17` parked secret.
-- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 169, `needs-remote-proof` 6, `owner-recorded` 102, `parked-secret` 17, `superseded-recorded` 3.
+- Commits landed: `200`; files touched: `408`; insertions/deletions: `33311` / `10569`.
+- Prompt batch receipts: `14`; batches/hour: `1.17`.
+- Sessions recorded: `331`; prompt events recorded: `5047`; prompt events/hour: `420.58`.
+- Merged-root evidence: `31`; follow-up roots: `9`; absent owner routes: `97`.
+- Commit mix: `other` 177, `task_board` 20, `receipt_refresh` 2, `direct_engineering` 1.
+- Receipt lane mix: `historical-worktree-review` 12, `legacy-session-review` 2.
+- Current corpus queue: `106` recorded, `186` open, `17` parked secret.
+- Current queue status mix: `needs-owner-route` 12, `needs-private-review` 168, `needs-remote-proof` 6, `owner-recorded` 103, `parked-secret` 17, `superseded-recorded` 3.
 
 ## Value
 
-- Resolved 13 prompt-corpus batches covering 306 sessions and 4959 prompt events into durable metadata receipts.
-- Linked 30 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
-- Left the current redacted queue measurable: 105 recorded batches and 187 open review batches.
-- Landed 198 commits with 404 file touches and 32832 insertions.
+- Resolved 14 prompt-corpus batches covering 331 sessions and 5047 prompt events into durable metadata receipts.
+- Linked 31 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
+- Left the current redacted queue measurable: 106 recorded batches and 186 open review batches.
+- Landed 200 commits with 408 file touches and 33311 insertions.
 
 ## Critique
 
 - 9 roots still require follow-up review of an open/closed/live branch, so recording was not the same thing as finishing the downstream work.
-- 88 roots were routed to owner repos with no exact branch or PR; that is useful closure only if later runs do not rehydrate them without new evidence.
+- 97 roots were routed to owner repos with no exact branch or PR; that is useful closure only if later runs do not rehydrate them without new evidence.
 
 ## Next-Run Controls
 
@@ -50,8 +50,6 @@ Window: `2026-07-09T15:53:42+00:00` to `2026-07-10T03:53:42+00:00` (12.0h)
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-07-10T03:29:22+00:00` | `74e96af` | `other` | limen: resolve legacy session batch 005 |
-| `2026-07-10T03:30:26+00:00` | `d3b119b` | `other` | limen: resolve historical worktree batch 024 |
 | `2026-07-10T03:31:25+00:00` | `e46f7e9` | `other` | limen: resolve historical worktree batch 025 |
 | `2026-07-10T03:32:20+00:00` | `29858ce` | `other` | limen: resolve historical worktree batch 026 |
 | `2026-07-10T03:33:25+00:00` | `784f584` | `other` | limen: resolve historical worktree batch 027 |
@@ -70,6 +68,8 @@ Window: `2026-07-09T15:53:42+00:00` to `2026-07-10T03:53:42+00:00` (12.0h)
 | `2026-07-10T03:48:25+00:00` | `1df8b2c` | `task_board` | limen: dispatch jules rebase workers |
 | `2026-07-10T03:49:57+00:00` | `f7b38b2` | `other` | limen: resolve historical worktree batch 033 |
 | `2026-07-10T03:52:50+00:00` | `282db59` | `other` | limen: harvest and refill async workers |
+| `2026-07-10T03:54:38+00:00` | `e9a6883` | `other` | limen: resolve historical worktree batch 034 |
+| `2026-07-10T03:55:27+00:00` | `c9cea8c` | `other` | limen: harvest async reroute results |
 
 ## Batch Receipts
 
@@ -88,16 +88,17 @@ Window: `2026-07-09T15:53:42+00:00` to `2026-07-10T03:53:42+00:00` (12.0h)
 | `2026-07-10T03:43:46+00:00` | `prompt-batch-medium-historical-worktree-review-032` | `historical-worktree-review` | 25 | 99 | `needs_owner_route` 18, `owner_repo_routed_absent_branch` 7 |
 | `2026-07-10T03:49:06+00:00` | `prompt-batch-medium-historical-worktree-review-033` | `historical-worktree-review` | 25 | 102 | `needs_owner_route` 13, `owner_repo_routed_absent_branch` 12 |
 | `2026-07-10T03:53:31+00:00` | `prompt-batch-medium-historical-worktree-review-034` | `historical-worktree-review` | 25 | 94 | `owner_repo_routed_absent_branch` 13, `needs_owner_route` 12 |
+| `2026-07-10T03:56:03+00:00` | `prompt-batch-medium-historical-worktree-review-035` | `historical-worktree-review` | 25 | 88 | `needs_owner_route` 15, `owner_repo_routed_absent_branch` 9, `remote_pr_merged` 1 |
 
 ## Next Queue Slice
 
 | Batch | Status | Lane | Sessions | Events |
 |---|---|---|---:|---:|
-| `prompt-batch-medium-historical-worktree-review-035` | `needs-private-review` | `historical-worktree-review` | 25 | 88 |
 | `prompt-batch-medium-historical-worktree-review-036` | `needs-private-review` | `historical-worktree-review` | 25 | 87 |
 | `prompt-batch-medium-historical-worktree-review-037` | `needs-private-review` | `historical-worktree-review` | 25 | 100 |
 | `prompt-batch-medium-historical-worktree-review-038` | `needs-private-review` | `historical-worktree-review` | 25 | 87 |
 | `prompt-batch-medium-historical-worktree-review-039` | `needs-private-review` | `historical-worktree-review` | 25 | 126 |
+| `prompt-batch-medium-historical-worktree-review-040` | `needs-private-review` | `historical-worktree-review` | 25 | 95 |
 
 ## Commands
 
