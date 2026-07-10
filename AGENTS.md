@@ -83,6 +83,23 @@ human gates: irreversible deletion of personal data, credential or account actio
 public identity claims, legal/medical/financial commitments, or product/values decisions that cannot
 be derived from existing doctrine.
 
+## Dynamic Provider Selection
+
+Provider catalogs are live external state, not repository constants. Do not encode model IDs,
+catalog snapshots, name-based capability guesses, or fixed fallback tables in dispatch logic,
+instructions, tasks, or receipts.
+
+- Derive provider-neutral requirements from the current task and discover reachable capabilities at
+  execution time. Treat `tier:*` text as opaque context unless an owning schema explicitly defines a
+  numeric constraint.
+- When the provider exposes sufficient live metadata, filter and rank that catalog by capability,
+  availability, cost, and task pressure. When it does not, leave model selection to provider Auto.
+- A human-configured model override is an escape hatch, not a default. Validate it against the live
+  catalog when possible; otherwise fail blocked instead of inventing or silently substituting a name.
+- Tests use arbitrary and renamed fixture IDs and must prove that catalog add/remove/reorder changes
+  are handled without a code change. Receipts may record the actual selected model when exposed, but
+  never promise a future model name, price class, subscription outcome, or fixed tier mapping.
+
 ## Source of Truth and Local Cache
 
 For GitHub, profile, repo inventory, credential, and public proof surfaces, the remote owner is the

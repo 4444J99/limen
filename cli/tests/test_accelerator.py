@@ -3,8 +3,8 @@
 The daemon paced dispatch EVENLY and left 40–60% of usable headroom expiring unspent at every reset.
 These cover the fix: scale a lane's per-beat volume UP as it under-spends toward its cliff, but only
 on LEDGER-WON work-classes (never pour expiring budget into junk), lane-AWARE (async lanes burst, sync
-local lanes stay pool-bounded), with the reserve decaying to a floor near the cliff, codex failing over
-to the fresh Spark weekly pool, and routing draining the cliff-edge lane first. All fail-open + floored.
+local lanes stay pool-bounded), with the reserve decaying to a floor near the cliff and routing
+draining the cliff-edge lane first. All fail-open + floored.
 """
 
 from __future__ import annotations
@@ -183,48 +183,19 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
     _ = picked
 
 
-# ── codex Spark failover ────────────────────────────────────────────────────────────────────────
-def _write_usage(root: Path, codex_health: str):
-    (root / "logs").mkdir(parents=True, exist_ok=True)
-    (root / "logs" / "usage.json").write_text(json.dumps({"vendors": {"codex": {"health": codex_health}}}))
-
-
-def test_codex_spark_failover_on_degraded_meter(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+# ── codex provider-auto selection ───────────────────────────────────────────────────────────────
+def test_codex_uses_provider_auto_without_override(monkeypatch):
     monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.delenv("LIMEN_CODEX_SPARK_FAILOVER", raising=False)
-    _write_usage(tmp_path, "throttle")
-    assert D._codex_model() == "gpt-5.3-codex-spark", "main pool spent ⇒ fail over to the fresh Spark pool"
-
-
-def test_codex_no_failover_when_healthy(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    _write_usage(tmp_path, "ok")
-    assert D._codex_model() is None, "healthy main pool ⇒ bare invocation (main model)"
-
-
-def test_codex_explicit_model_wins(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.setenv("LIMEN_CODEX_MODEL", "gpt-5.5")
-    _write_usage(tmp_path, "throttle")
-    assert D._codex_model() == "gpt-5.5", "an explicit pin always wins over auto-failover"
-
-
-def test_codex_failover_disabled(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_CODEX_SPARK_FAILOVER", "0")
-    _write_usage(tmp_path, "exhausted")
     assert D._codex_model() is None
-
-
-def test_codex_argv_injects_spark_model(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    _write_usage(tmp_path, "low")
     argv = D._agent_argv("codex")
-    assert "-m" in argv and "gpt-5.3-codex-spark" in argv, f"codex argv must carry the spark flag: {argv}"
+    assert "-m" not in argv, f"bare invocation must delegate to provider Auto: {argv}"
+
+
+def test_codex_explicit_model_override_is_opaque(monkeypatch):
+    monkeypatch.setenv("LIMEN_CODEX_MODEL", "future-provider-id")
+    assert D._codex_model() == "future-provider-id"
+    argv = D._agent_argv("codex")
+    assert argv[-2:] == ["-m", "future-provider-id"]
 
 
 # ── cliff-edge routing (route.py) ───────────────────────────────────────────────────────────────

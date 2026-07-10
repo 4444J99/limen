@@ -111,7 +111,7 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="chatgpt_oauth",  # ~/.codex/auth.json — no API key held
         cred_ref=None,
         meter="vendor_ratelimit",  # real rate_limits in ~/.codex/sessions/*.jsonl (5h + weekly)
-        tiering="dispatch_adhoc",  # _codex_model fails over to gpt-5.3-codex-spark under load
+        tiering="provider_auto",  # explicit override only; no built-in model-name fallback
         budget=Budget(
             100_000_000, "tokens", "5h rolling", "ESTIMATE - tune to plan (/status)", "estimate", "openai-plan"
         ),

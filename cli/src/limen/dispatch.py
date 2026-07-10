@@ -1648,9 +1648,9 @@ def _call_configured_paid_service(agent: str, task: Task, dry_run: bool) -> bool
 
 def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
     """Static lane flags + any LAZILY-derived per-run flags, so nothing is pinned or
-    resolved at import time. opencode's/codex's model is derived here (only when it actually
-    runs); claude's TIER is derived per task (the earned-tier ladder) — names are outputs.
-    `task` is optional for legacy callers; OpenCode and Claude use its current evidence."""
+    resolved at import time. OpenCode selects from its live catalog; Codex uses provider Auto unless
+    the operator supplied an explicit override; Claude's tier is derived per task (the earned-tier
+    ladder). `task` is optional for legacy callers; OpenCode and Claude use its current evidence."""
     model: str | None = None
     flags = list(_LOCAL_AGENTS[agent])
     if agent == "opencode":
@@ -3190,25 +3190,13 @@ def _accel_limit(limen: LimenFile, agent: str, base_limit: int, now: datetime) -
 
 
 def _codex_model() -> str | None:
-    """Lazily pick the codex model so codex KEEPS PRODUCING when its main weekly pool is spent: fail
-    over to the separate, fresh Spark weekly pool (gpt-5.3-codex-spark) instead of benching the whole
-    lane. Explicit LIMEN_CODEX_MODEL always wins (manual pin). Otherwise, when the live meter shows the
-    codex lane degraded (throttle/low/exhausted/rate-limited), switch to Spark. Gated by
-    LIMEN_CODEX_SPARK_FAILOVER (default on); fail-open to None (bare = main model). Mirrors
-    _opencode_model(): names are outputs, resolved only when codex actually runs."""
-    env = os.environ.get("LIMEN_CODEX_MODEL")
-    if env:
-        return env
-    if os.environ.get("LIMEN_CODEX_SPARK_FAILOVER", "1") != "1":
-        return None
-    try:
-        root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
-        v = json.loads((root / "logs" / "usage.json").read_text()).get("vendors", {}).get("codex", {})
-        if v.get("health") in ("throttle", "low", "exhausted", "rate-limited"):
-            return os.environ.get("LIMEN_CODEX_SPARK_MODEL", "gpt-5.3-codex-spark")
-    except Exception:
-        pass
-    return None
+    """Return only an explicit Codex model override.
+
+    Codex does not expose a capability-rich live catalog that Limen can rank honestly, so the bare
+    CLI invocation delegates selection to provider Auto.  A configured override remains available
+    for an operator-owned exception; Limen never synthesizes a fallback model name from meter state.
+    """
+    return os.environ.get("LIMEN_CODEX_MODEL") or None
 
 
 # ─── Claude-lane earned-tier ladder (haiku-first-with-cheap-verify) ──────────
