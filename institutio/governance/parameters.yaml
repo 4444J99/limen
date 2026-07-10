@@ -1974,7 +1974,7 @@ parameters:
     env: LIMEN_MAIN_GREEN_APPLY
     self_update: none
     owner: tabularius
-    note: "Effector arm for the trunk-green sensor (observable-before-autonomous, the LIMEN_CENSOR_APPLY pattern). When 0 (default) a RED main is only detected + surfaced in the beat log. When 1, check-main-green.py also emits ONE idempotent HEAL-mainred-organvm-limen-<sha> task via the daemon's queue-lock (the safe shared-append path self-heal.py uses) so every lane converges on a single canonical heal task instead of duplicating (the #869-vs-#871 gap). Arm after watching the detection log prove out."
+    note: "Effector arm for the trunk-green sensor (observable-before-autonomous, the LIMEN_CENSOR_APPLY pattern). When 0 (default) a RED main is only detected + surfaced in the beat log. When 1, check-main-green.py also emits ONE idempotent SYMPTOM-scoped HEAL-mainred-organvm-limen task (id scoped to the symptom, not the head SHA — the SHA lives in the title/context) via the daemon's queue-lock (the safe shared-append path self-heal.py uses) so every lane AND every successive red commit converges on a single canonical heal task instead of duplicating (the #869-vs-#871 gap, limen#895); a recurrence after a prior heal re-opens the same ticket. Arm after watching the detection log prove out."
 
   LIMEN_MAIN_GREEN_THROTTLE:
     default: "1800"            # seconds between live gh queries; cached verdict surfaces every beat

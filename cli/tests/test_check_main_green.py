@@ -86,11 +86,59 @@ def test_red_verdict_emits_one_idempotent_task(tmp_path):
     assert r.returncode == 1, r.stdout
     tasks = load_limen_file(tmp_path / "tasks.yaml").tasks
     assert len(tasks) == 1
-    assert tasks[0].id == "HEAL-mainred-organvm-limen-deadbeef"
+    # SYMPTOM-scoped id (no SHA) so a moving red trunk converges on one task — limen#895
+    assert tasks[0].id == "HEAL-mainred-organvm-limen"
+    assert "deadbeef" in tasks[0].title  # the SHA lives in the title, not the id
     assert tasks[0].priority == "critical" and "mainred" in tasks[0].labels
     # idempotent: a second run adds nothing
     run(tmp_path, apply=True)
     assert len(load_limen_file(tmp_path / "tasks.yaml").tasks) == 1
+
+
+def test_moving_red_trunk_converges_on_one_task(tmp_path):
+    """A red trunk whose head SHA moves between beats must NOT spawn a task per SHA (limen#895)."""
+    _seed(tmp_path, "failure")
+    _empty_board(tmp_path)
+    run(tmp_path, apply=True)
+    # a new red commit lands: same symptom, different SHA
+    _seed(tmp_path, "failure")  # (re-stamps checked_at; head_sha would differ live)
+    # rewrite the cache with a different SHA to simulate the trunk moving while still red
+    stamp = json.loads((tmp_path / "logs" / "main-green.json").read_text())
+    stamp["head_sha"] = "feedface"
+    (tmp_path / "logs" / "main-green.json").write_text(json.dumps(stamp), encoding="utf-8")
+    run(tmp_path, apply=True)
+    tasks = load_limen_file(tmp_path / "tasks.yaml").tasks
+    assert len(tasks) == 1  # still ONE canonical task
+    assert tasks[0].id == "HEAL-mainred-organvm-limen"
+
+
+def test_recurrence_reopens_healed_task(tmp_path):
+    """If a prior red episode healed (task done) and trunk is red again, the SAME singleton reopens —
+    a recurrence must never be dropped by a stale done-row."""
+    _seed(tmp_path, "failure")
+    _empty_board(tmp_path)
+    run(tmp_path, apply=True)
+    tasks_path = tmp_path / "tasks.yaml"
+
+    # simulate the heal landing: mark the singleton done
+    lf = load_limen_file(tasks_path)
+    lf.tasks[0].status = "done"
+    save_limen_file(tasks_path, lf)
+
+    # trunk goes red again → reopen the same ticket, not a duplicate
+    run(tmp_path, apply=True)
+    tasks = load_limen_file(tasks_path).tasks
+    assert len(tasks) == 1
+    assert tasks[0].id == "HEAL-mainred-organvm-limen"
+    assert tasks[0].status == "open"  # reopened
+
+
+def test_active_states_parity_with_dispatch():
+    """The local _ACTIVE_STATES must stay in lockstep with dispatch's superseder set (no silent drift)."""
+    m = _load()
+    from limen.dispatch import _ACTIVE_SUPERSEDER_STATUSES
+
+    assert set(m._ACTIVE_STATES) == set(_ACTIVE_SUPERSEDER_STATUSES)
 
 
 def test_fail_open_when_status_unavailable(tmp_path):

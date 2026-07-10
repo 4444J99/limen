@@ -12,10 +12,13 @@ trunk-health proxy for pr-gate. This sensor reads it (`gh run list --workflow ci
 
 - **DETECT (always on):** on a RED verdict it exits non-zero so the beat surfaces ``↑ main trunk RED``
   — closing the silence gap. Verdict is cached (throttled `gh`) so it surfaces every beat cheaply.
-- **HEAL (dark until armed, ``LIMEN_MAIN_GREEN_APPLY=1``):** emit ONE idempotent
-  ``HEAL-mainred-organvm-limen-<sha>`` task via the daemon's queue-lock (the same safe shared-append
-  path self-heal.py uses) — a single canonical task all lanes converge on, closing the duplicate-work
-  gap. Observable-before-autonomous: detection ships armed, emission ships dark.
+- **HEAL (dark until armed, ``LIMEN_MAIN_GREEN_APPLY=1``):** emit ONE idempotent, SYMPTOM-scoped
+  ``HEAL-mainred-organvm-limen`` task via the daemon's queue-lock (the same safe shared-append path
+  self-heal.py uses) — a single canonical task all lanes converge on, closing the duplicate-work gap.
+  The id is scoped to the symptom (trunk is red), NOT the head SHA, so a *moving* red trunk (new
+  commits while it stays broken) converges on ONE task instead of spawning a fresh task per SHA
+  (limen#895); the SHA lives in the title/context. Observable-before-autonomous: detection ships
+  armed, emission ships dark.
 
 - **BLAST RADIUS + WEDGE (integrated from PR #882):** the ci.yml verdict says WHETHER trunk is red;
   a scan of open PRs says HOW MANY fresh PRs it is actually blocking and on which required check
@@ -58,6 +61,12 @@ RED = {"failure", "cancelled", "timed_out", "startup_failure"}
 WEDGE_K = int(os.environ.get("LIMEN_MAIN_GREEN_WEDGE_K", "5"))
 FRESH_HOURS = int(os.environ.get("LIMEN_MAIN_GREEN_FRESH_HOURS", "36"))
 BAD_CHECK = {"FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "STARTUP_FAILURE"}
+# Mirrors limen.dispatch._ACTIVE_SUPERSEDER_STATUSES (parity asserted in test_check_main_green.py so a
+# drift is a red test, not silent). A HEAL-mainred singleton in one of these states is already being
+# worked → converge on it. Any OTHER state (done/archived/failed) is a PRIOR red episode that healed;
+# a fresh red trunk RE-OPENS the same ticket so a recurrence is never dropped by a stale done-row.
+# (Kept local — mirrored not imported — so this beat-script stays light and does not pull in dispatch.)
+_ACTIVE_STATES = frozenset({"open", "dispatched", "in_progress", "needs_human", "failed_blocked"})
 
 
 def _now() -> datetime:
@@ -222,8 +231,17 @@ def verdict(throttle: int) -> dict:
 
 
 def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str = "") -> str | None:
-    """Emit ONE idempotent HEAL-mainred task under the queue-lock. Returns the id, or None."""
-    tid = f"HEAL-mainred-{REPO.replace('/', '-').lower()}-{head_sha or 'head'}"
+    """Emit/refresh ONE idempotent, SYMPTOM-scoped HEAL-mainred task under the queue-lock.
+
+    The id is scoped to the SYMPTOM (this repo's trunk is red), NOT the head SHA, so a *moving* red
+    trunk — new commits landing while it stays broken — converges on ONE canonical task instead of
+    spawning a fresh task per SHA (the limen#895 duplicate-repair gap). The specific SHA lives in the
+    title/context, never the id. The guard is status-aware (``_ACTIVE_STATES``): if the singleton is
+    already being worked we converge silently (return None); if a PRIOR red episode healed
+    (done/archived/failed) and trunk is red AGAIN, we RE-OPEN the same ticket so the recurrence is
+    never dropped by a stale done-row. Returns the id when it (re)opened, else None.
+    """
+    tid = f"HEAL-mainred-{REPO.replace('/', '-').lower()}"
     for _ in range(15):
         try:
             LOCKD.mkdir()
@@ -234,13 +252,33 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
             return None
     try:
         lf = load_limen_file(tasks_path)
-        if any(t.id == tid for t in lf.tasks):
-            return None  # already emitted — idempotent
         stamp = _now().date().isoformat()
+        title = f"Restore main to green — {REPO} CI is RED at {head_sha}"
+        context = (
+            f"main's CI ({WORKFLOW}) is RED at {head_sha} ({url}).{impact_note} Reproduce with "
+            "`PYTHONPATH=cli/src pytest web/api/tests cli/tests -q`, fix at root, land a heal PR. "
+            f"Single canonical SYMPTOM-scoped task (stable id {tid}) so every lane AND every "
+            f"successive red commit converges here instead of duplicating. "
+            f"[auto-emitted {stamp} by check-main-green]"
+        )
+        existing = next((t for t in lf.tasks if t.id == tid), None)
+        if existing is not None:
+            if existing.status in _ACTIVE_STATES:
+                return None  # already being worked — converge, idempotent
+            # prior red episode healed; trunk is red again → reopen the SAME canonical ticket
+            existing.status = "open"
+            existing.title = title
+            existing.context = context
+            existing.priority = "critical"
+            if url and url not in (existing.urls or []):
+                existing.urls = [*(existing.urls or []), url]
+            existing.updated = _now()
+            save_limen_file(tasks_path, lf)
+            return tid
         lf.tasks.append(
             Task(
                 id=tid,
-                title=f"Restore main to green — {REPO} CI is RED at {head_sha}",
+                title=title,
                 repo=REPO,
                 type="code",
                 target_agent="any",
@@ -249,12 +287,7 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
                 status="open",
                 labels=["lifecycle", "ci", "mainred"],
                 urls=[url] if url else [],
-                context=(
-                    f"main's CI ({WORKFLOW}) is RED at {head_sha} ({url}).{impact_note} Reproduce with "
-                    "`PYTHONPATH=cli/src pytest web/api/tests cli/tests -q`, fix at root, land a heal PR. "
-                    f"Single canonical task (stable id {tid}) so lanes converge instead of duplicating. "
-                    f"[auto-emitted {stamp} by check-main-green]"
-                ),
+                context=context,
                 depends_on=[],
                 created=stamp,
                 dispatch_log=[],
