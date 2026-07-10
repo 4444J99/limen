@@ -66,6 +66,7 @@ GENERATED_STATE_RECLAIM_LOG = ROOT / "logs" / "reclaim-generated-state.jsonl"
 TOOL_CACHE_RECLAIM_LOG = ROOT / "logs" / "reclaim-tool-caches.jsonl"
 OLLAMA_MODEL_RECLAIM_LOG = ROOT / "logs" / "reclaim-ollama-models.jsonl"
 OPENCODE_DB_INTAKE_DOC = ROOT / "docs" / "opencode-db-corpus-intake.md"
+SUBSTRATE_STORAGE_INDEX = PRIVATE_ROOT / "lifecycle" / "substrate-storage-pressure.json"
 WORKTREE_RECLAIM_CANDIDATES_DOC = ROOT / "docs" / "worktree-reclaim-candidates.md"
 WORKTREE_RECLAIM_CANDIDATES_JSON = ROOT / "docs" / "worktree-reclaim-candidates.json"
 STORAGE_OPERATING_MANUAL = ARCHIVE4T_ROOT / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
@@ -1123,8 +1124,16 @@ def substrate_receipt() -> dict[str, Any]:
     disk = disk_receipt()
     target_free_gib = float(os.environ.get("LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB", "200"))
     lifecycle = substrate_lifecycle_receipt()
+    storage_pressure = load_json(SUBSTRATE_STORAGE_INDEX, {})
     shortfall_gib = round(max(target_free_gib - float(disk["free_gib"]), 0.0), 1)
     open_substrate = bool(shortfall_gib > 0 or not disk["tmp_ok"] or not lifecycle["predicate_ok"])
+    owner_gated = bool(
+        shortfall_gib > 0
+        and disk["tmp_ok"]
+        and lifecycle["predicate_ok"]
+        and isinstance(storage_pressure, dict)
+        and storage_pressure.get("status") == "needs-owner-gates"
+    )
     if not lifecycle["predicate_ok"]:
         verdict = "substrate lifecycle predicate is failing"
     elif shortfall_gib > 0:
@@ -1139,7 +1148,10 @@ def substrate_receipt() -> dict[str, Any]:
         if last_ollama_reclaim.get("present") and last_ollama_reclaim.get("cumulative_reclaimed_size"):
             reclaim_parts.append(f"ollama-models {last_ollama_reclaim['cumulative_reclaimed_size']}")
         suffix = f"; recorded reclaim freed {', '.join(reclaim_parts)}" if reclaim_parts else ""
-        verdict = f"internal free space is {shortfall_gib} GiB below target{suffix}"
+        if owner_gated:
+            verdict = f"internal free space is {shortfall_gib} GiB below target{suffix}; remaining bytes require owner gates"
+        else:
+            verdict = f"internal free space is {shortfall_gib} GiB below target{suffix}"
     elif not disk["tmp_ok"]:
         verdict = "temp writes are failing"
     else:
@@ -1148,7 +1160,7 @@ def substrate_receipt() -> dict[str, Any]:
         "id": "SUBSTRATE-DISK-TEMP",
         "workstream": "substrate",
         "priority": PRIORITY["substrate"],
-        "status": STATUS_ASSIGNED if open_substrate else STATUS_DONE,
+        "status": STATUS_BLOCKED if owner_gated else (STATUS_ASSIGNED if open_substrate else STATUS_DONE),
         "title": "Keep disk/temp/voice substrate from starving the swarm",
         "verdict": verdict,
         "evidence": {
@@ -1156,6 +1168,7 @@ def substrate_receipt() -> dict[str, Any]:
             "target_free_gib": target_free_gib,
             "shortfall_gib": shortfall_gib,
             "lifecycle": lifecycle,
+            "storage_pressure_status": storage_pressure.get("status") if isinstance(storage_pressure, dict) else None,
         },
         "existing_receipts": [
             relpath(ROOT / "logs" / "heartbeat.out.log"),

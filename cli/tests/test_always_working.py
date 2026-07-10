@@ -231,6 +231,7 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
     )
 
     monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "SUBSTRATE_STORAGE_INDEX", root / ".limen-private" / "session-corpus" / "lifecycle" / "substrate-storage-pressure.json")
     monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
     monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
     monkeypatch.setattr(mod, "OLLAMA_MODEL_RECLAIM_LOG", root / "logs" / "reclaim-ollama-models.jsonl")
@@ -252,6 +253,51 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
     assert receipt["evidence"]["lifecycle"]["tool_cache_reclaim"]["cumulative_reclaimed_size"] == "4.7 GiB"
     assert receipt["evidence"]["lifecycle"]["ollama_model_reclaim"]["cumulative_reclaimed_size"] == "9.3 GiB"
     assert "generated-state 26.6 GiB, tool-cache 4.7 GiB, ollama-models 9.3 GiB" in receipt["verdict"]
+
+
+def test_substrate_receipt_blocks_when_storage_pressure_needs_owner_gates(monkeypatch, tmp_path):
+    mod = _load("always_working_substrate_owner_gate_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    private = root / ".limen-private" / "session-corpus"
+    storage_index = private / "lifecycle" / "substrate-storage-pressure.json"
+    storage_index.parent.mkdir(parents=True)
+    storage_index.write_text(
+        json.dumps(
+            {
+                "status": "needs-owner-gates",
+                "internal_free_gib": 93.0,
+                "target_free_gib": 200.0,
+                "shortfall_gib": 107.0,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (root / "logs").mkdir()
+    (root / "logs" / "reclaim-generated-state.jsonl").write_text(
+        json.dumps({"apply": True, "total_reclaimed_size": "26.6 GiB"}) + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "PRIVATE_ROOT", private)
+    monkeypatch.setattr(mod, "SUBSTRATE_STORAGE_INDEX", storage_index)
+    monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
+    monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
+    monkeypatch.setattr(mod, "OLLAMA_MODEL_RECLAIM_LOG", root / "logs" / "reclaim-ollama-models.jsonl")
+    monkeypatch.setattr(
+        mod, "disk_receipt", lambda: {"free_gib": 93.0, "used_pct": 80.0, "tmp_ok": True, "tmp_error": ""}
+    )
+    monkeypatch.setattr(
+        mod,
+        "run_command",
+        lambda *args, **kwargs: {"returncode": 0, "stdout": "ok", "stderr": "", "timed_out": False},
+    )
+
+    receipt = mod.substrate_receipt()
+
+    assert receipt["status"] == mod.STATUS_BLOCKED
+    assert receipt["evidence"]["storage_pressure_status"] == "needs-owner-gates"
+    assert "remaining bytes require owner gates" in receipt["verdict"]
 
 
 def test_substrate_receipt_blocks_when_lifecycle_predicate_fails(monkeypatch, tmp_path):
