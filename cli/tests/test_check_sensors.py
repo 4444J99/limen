@@ -9,6 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 CHECK = ROOT / "scripts" / "check-sensors.py"
 
@@ -83,6 +85,42 @@ def test_current_real_shell_derives_metabolize():
     so the current beat sources already resolve the metabolize source as derived."""
     m = _mod()
     assert "metabolize" in m.derived_sources(m.beat_source_text())
+
+
+def test_prompt_corpus_sensor_is_dark_manual_only_and_default_aligned():
+    """Do not let the unmeasured corpus drain become heartbeat or Omega work by configuration drift."""
+    registry = yaml.safe_load((ROOT / "institutio/governance/sensors.yaml").read_text(encoding="utf-8"))
+    panel = yaml.safe_load((ROOT / "institutio/governance/parameters.yaml").read_text(encoding="utf-8"))
+    sensor = registry["sensors"]["prompt-corpus-control"]
+    parameter = panel["parameters"]["LIMEN_PROMPT_ATOM_CONTROL"]
+
+    assert str(sensor["default"]) == str(parameter["default"]) == "0"
+    assert not sensor.get("omega_eligible")
+    assert "prompt-atom-ledger.py --scan" in sensor["steps"][0]["command"]
+    assert (
+        _mod().default_parity_errors(
+            "prompt-corpus-control",
+            sensor,
+            panel["parameters"],
+        )
+        == []
+    )
+
+
+def test_default_parity_rejects_dark_gate_or_shell_fallback_drift():
+    m = _mod()
+    sensor = {
+        "gate": "LIMEN_PROMPT_ATOM_CONTROL",
+        "default": "1",
+        "steps": [{"command": 'python3 scripts/prompt-atom-ledger.py --days "${LIMEN_PROMPT_ATOM_DAYS:-99}"'}],
+    }
+    params = {
+        "LIMEN_PROMPT_ATOM_CONTROL": {"default": "0"},
+        "LIMEN_PROMPT_ATOM_DAYS": {"default": 2},
+    }
+    errors = m.default_parity_errors("prompt-corpus-control", sensor, params)
+    assert any("LIMEN_PROMPT_ATOM_CONTROL default '0'" in error for error in errors)
+    assert any("LIMEN_PROMPT_ATOM_DAYS default 2" in error for error in errors)
 
 
 def test_undeclared_and_phantom_gate_fails(tmp_path):

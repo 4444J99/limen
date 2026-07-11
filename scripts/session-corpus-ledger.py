@@ -846,6 +846,7 @@ def render_markdown(
     blocker_receipts = sorted((ROOT / "docs").glob("session-lifecycle-blockers.md"))
     attack_paths = sorted((ROOT / "docs").glob("session-attack-paths.md"))
     priority_maps = sorted((ROOT / "docs").glob("prompt-priority-map.md"))
+    atom_ledgers = sorted((ROOT / "docs").glob("prompt-atom-ledger.md"))
     batch_review_ledgers = sorted((ROOT / "docs").glob("prompt-batch-review-ledger.md"))
     packet_ledgers = sorted((ROOT / "docs").glob("prompt-packet-ledger.md"))
     packet_resolution_receipts = sorted((ROOT / "docs").glob("prompt-packet-resolution-receipts.json"))
@@ -856,6 +857,7 @@ def render_markdown(
         or blocker_receipts
         or attack_paths
         or priority_maps
+        or atom_ledgers
         or batch_review_ledgers
         or packet_ledgers
         or packet_resolution_receipts
@@ -876,6 +878,8 @@ def render_markdown(
             lines.append(f"- Session attack paths: `{path.relative_to(ROOT)}`.")
         for path in priority_maps:
             lines.append(f"- Prompt priority map: `{path.relative_to(ROOT)}`.")
+        for path in atom_ledgers:
+            lines.append(f"- Canonical ask-atom control ledger: `{path.relative_to(ROOT)}`.")
         for path in batch_review_ledgers:
             lines.append(f"- Prompt batch review ledger: `{path.relative_to(ROOT)}`.")
         for path in packet_ledgers:
@@ -906,6 +910,7 @@ def render_markdown(
         "- Refresh parked blockers: `python3 scripts/session-blockers-ledger.py --write`",
         "- Refresh ranked attack paths: `python3 scripts/session-attack-paths.py --write`",
         "- Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`",
+        "- Refresh prompt ask atoms: `python3 scripts/prompt-atom-ledger.py --scan --write`",
         "- Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`",
         "- Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`",
         "- Rebuild session-meta atoms after preserving its dirty work: "

@@ -129,11 +129,18 @@ def stop(cfg: GatewayConfig) -> str:
 
 def status(cfg: GatewayConfig) -> dict:
     pid = _read_pid()
+    pid_alive = bool(pid and _alive(pid))
+    endpoint_reachable = reachable(cfg.host, cfg.port, timeout=1.5)
     return {
         "pid": pid,
-        "running": bool(pid and _alive(pid)),
+        "pid_alive": pid_alive,
+        "pidfile_state": "tracked" if pid_alive else ("stale" if pid else "missing"),
+        # launchd owns the foreground backend without going through ``ianva up``.
+        # A reachable endpoint is therefore running truth even when an old
+        # interactive pidfile remains after the custody transition.
+        "running": pid_alive or endpoint_reachable,
         "endpoint": f"http://{cfg.host}:{cfg.port}{cfg.path}",
-        "endpoint_reachable": reachable(cfg.host, cfg.port, timeout=1.5),
+        "endpoint_reachable": endpoint_reachable,
         "settings": str(paths.MCPHUB_SETTINGS),
         "log": str(LOGFILE),
     }

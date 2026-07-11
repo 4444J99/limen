@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import argparse
 from pathlib import Path
 
 
@@ -165,3 +166,44 @@ def test_quicken_snapshot_uses_latest_summary_event(tmp_path: Path):
     assert snapshot["alive"] == 1
     assert snapshot["closed"] == 1
     assert snapshot["reaped"] == 0
+
+
+def test_tracked_receipts_render_when_atom_ledger_is_not_bootstrapped(tmp_path: Path):
+    ledger = _load("session_corpus_ledger_receipt_render")
+    ledger.ROOT = tmp_path
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    for name in (
+        "prompt-priority-map.md",
+        "prompt-batch-review-ledger.md",
+        "prompt-packet-ledger.md",
+        "prompt-packet-resolution-receipts.json",
+        "capability-substrate-ledger.md",
+    ):
+        (docs / name).write_text("receipt\n", encoding="utf-8")
+
+    snapshot = {
+        "organs": [],
+        "session_meta": {
+            "manifest": {"present": False, "lines": 0},
+            "atoms": {"present": False, "lines": 0},
+        },
+        "knowledge_corpus": {"reduced_faces": 0, "the_one_present": False},
+        "quicken": {"present": False},
+        "codex_quicken": {"present": False},
+        "private_screenshots": {"files": 0},
+        "object_store": {"object_count": 0},
+        "scan_limits": [],
+    }
+    rendered = ledger.render_markdown(
+        snapshot,
+        [],
+        argparse.Namespace(days=7),
+        None,
+    )
+
+    assert "Prompt priority map" in rendered
+    assert "Prompt batch review ledger" in rendered
+    assert "Prompt packet ledger" in rendered
+    assert "Prompt packet resolution receipts" in rendered
+    assert "Capability substrate ledger" in rendered

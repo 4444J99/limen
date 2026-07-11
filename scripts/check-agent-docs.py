@@ -43,8 +43,12 @@ Checks (exit 0 iff all pass):
      statement, the BLOCKED-once protocol, and the registry-owns-the-answer rule are present
      in their owning CLAUDE.md sections and mirrored into the closeout skill.
 
+  L. The prompt corpus remains the concurrent control plane: ask/correction atoms are the unit,
+     completion is evidence-backed, and the human is not asked to restate settled intent.
+
 Run directly (``scripts/check-agent-docs.py``) or via ``scripts/verify-whole.sh``.
 """
+
 from __future__ import annotations
 
 import re
@@ -73,6 +77,7 @@ REQUIRED_SECTIONS = {
         "Precedence",
         "Correction Propagation",
         "Engineering Ownership",
+        "Prompt Corpus as the Control Plane",
         "Full Lifecycle Closure",
         "Task States",
         "Where to Find Tasks",
@@ -141,8 +146,7 @@ def section(text: str, heading: str) -> str:
 def precedence_items(text: str) -> list[str]:
     """Extract normalized numbered-list items from the Precedence section."""
     return [
-        re.sub(r"\s+", " ", item).strip()
-        for item in re.findall(r"^\d+\.\s+(.+)$", section(text, "Precedence"), re.M)
+        re.sub(r"\s+", " ", item).strip() for item in re.findall(r"^\d+\.\s+(.+)$", section(text, "Precedence"), re.M)
     ]
 
 
@@ -220,7 +224,7 @@ def main() -> int:
             if not has_heading(text, heading):
                 errors.append(f"{doc.name} is missing required section: {heading}")
         for match in re.finditer(r"`completed`", text):
-            if not negation.search(text[max(0, match.start() - 30):match.start()]):
+            if not negation.search(text[max(0, match.start() - 30) : match.start()]):
                 errors.append(
                     f"{doc.name} presents `completed` as a status — limen has no 'completed' "
                     f"state; use `done` (canonical set: {', '.join(sorted(valid))})"
@@ -242,10 +246,12 @@ def main() -> int:
     terminal = "CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items"
     for heading, phrase, label in [
         ("Closeout Definition", terminal, f"the terminal-statement rule ('{terminal}')"),
-        ("Standing Autonomy & Compliant Gate Reroute", "BLOCKED: <atom>",
-         "the BLOCKED-once protocol ('BLOCKED: <atom>' stated once, filed, never looped on)"),
-        ("Engage the Real Problem First", "The registry owns the answer",
-         "the registry-owns-the-answer rule"),
+        (
+            "Standing Autonomy & Compliant Gate Reroute",
+            "BLOCKED: <atom>",
+            "the BLOCKED-once protocol ('BLOCKED: <atom>' stated once, filed, never looped on)",
+        ),
+        ("Engage the Real Problem First", "The registry owns the answer", "the registry-owns-the-answer rule"),
     ]:
         try:
             if phrase not in section(claude_text, heading):
@@ -267,6 +273,18 @@ def main() -> int:
     except ValueError as exc:
         errors.append(str(exc))
 
+    prompt_control = section(agents_text, "Prompt Corpus as the Control Plane")
+    for phrase, label in [
+        ("individual ask or correction as the unit of intent", "ask-level intent unit"),
+        ("Corpus governance and execution run concurrently", "concurrent corpus/execution loop"),
+        ("Do not make the human restate settled intent", "no-restatement rule"),
+        ("`done` requires a durable owner receipt and a satisfied predicate", "strict done proof"),
+    ]:
+        if phrase not in prompt_control:
+            errors.append(f"AGENTS.md prompt-corpus control section lacks {label}")
+    if "Treat the full prompt corpus as a concurrent control plane" not in standard_text:
+        errors.append("agent instruction standard lacks the concurrent prompt-corpus rule")
+
     expected = expected_agents(agents_text)
     expected_canonical = valid_agents - {"any"}
     if expected != expected_canonical:
@@ -276,9 +294,7 @@ def main() -> int:
         )
 
     missing_notes = {
-        agent
-        for agent in expected
-        if normalize_agent_label(agent) not in documented_agent_notes(agents_text)
+        agent for agent in expected if normalize_agent_label(agent) not in documented_agent_notes(agents_text)
     }
     if missing_notes:
         errors.append(f"AGENTS.md is missing Agent-Specific Notes for: {sorted(missing_notes)}")
