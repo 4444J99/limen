@@ -74,9 +74,10 @@ const ownerOnlyUiNeedles = [
 ];
 
 assertLabels("index.html", ["Public"]);
-assertLabels("internal.html", ["Internal", "QA", "Insights", "Corpus", "Client", "Public"]);
-assertLabels("qa.html", ["Internal", "QA", "Insights", "Corpus", "Client", "Public"]);
-assertLabels("corpus.html", ["Internal", "QA", "Insights", "Corpus", "Client", "Public"]);
+assertLabels("internal.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+assertLabels("qa.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+assertLabels("corpus.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+assertLabels("observatory.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
 assertLabels("client.html", ["Client", "Public"]);
 assertLabels("public.html", ["Public"]);
 
@@ -105,8 +106,8 @@ assertNotIncludes("client.html", [">Internal</a>", ">QA</a>", ">Corpus</a>", "AP
 assertNotIncludes("public.html", [">Internal</a>", ">QA</a>", ">Corpus</a>", ">Client</a>", "Client token", "API verification unavailable", "API assignment unavailable", "API archive unavailable"]);
 assertNotIncludes("client.html", ['href="/surface-manifest.json"']);
 assertNotIncludes("public.html", ['href="/surface-manifest.json"']);
-for (const page of ["index.html", "internal.html", "qa.html", "corpus.html", "client.html", "public.html"]) {
-  assertNotIncludes(page, ["LIMEN-015", "Propagate PR #234 completions", "dispatch_log", "/tasks.json", "/qa-status.json", "/client-status.json", "/internal-status.json", "/owner-surface-manifest.json", "/readiness.json", "/corpus-status.json"]);
+for (const page of ["index.html", "internal.html", "qa.html", "corpus.html", "observatory.html", "client.html", "public.html"]) {
+  assertNotIncludes(page, ["LIMEN-015", "Propagate PR #234 completions", "dispatch_log", "/tasks.json", "/qa-status.json", "/client-status.json", "/internal-status.json", "/owner-surface-manifest.json", "/readiness.json", "/corpus-status.json", "/observatory-status.json"]);
 }
 assertSourceNotIncludes("lib/data.ts", [
   "tasks.json",
@@ -191,4 +192,4 @@ for (const needle of ['"body_preview"', '"body_object"', '"private_source_path"'
   }
 }
 console.log("Exported page persona/runtime checks verified");
-assertLabels("insights.html", ["Internal", "QA", "Insights", "Corpus", "Client", "Public"]);
+assertLabels("insights.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);

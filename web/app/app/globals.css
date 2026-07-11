@@ -150,6 +150,12 @@ h1 {
 .metric.green strong { color: var(--green); }
 .metric.amber strong { color: var(--amber); }
 .metric.red strong { color: var(--red); }
+.metric.violet strong { color: var(--violet); }
+
+/* Observatory owner surface */
+.muted { color: var(--muted); }
+.observatoryChange { font-size: 15px; line-height: 1.5; margin: 4px 0 12px; color: var(--text); }
+.observatoryShell .rankList em { font-style: normal; }
 
 .fleetPanel {
   background: var(--panel);

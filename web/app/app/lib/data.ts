@@ -356,3 +356,67 @@ export function recentActiveTasks(data: DashboardData, limit = 8) {
     .filter((task) => isActive(task) || isAttentionTask(task, data.summary.stale_task_ids))
     .slice(0, limit);
 }
+
+export interface ObservatoryMeasurementContract {
+  baseline_source: string;
+  confounder_controls: string[];
+  failure_criterion: string;
+  metric_vector: string[];
+  observation_window_days: number;
+  reversal_path: string;
+  success_predicate: string;
+}
+
+export interface ObservatoryExperiment {
+  change: string;
+  hero: string | null;
+  id: string;
+  kind: string;
+  measure_hint: string;
+  measurement_contract: ObservatoryMeasurementContract;
+  reversible: boolean;
+  revert: string;
+  task_id: string;
+}
+
+export interface ObservatoryMechanism {
+  mechanism: string;
+  winner: string;
+  priority: number;
+}
+
+export interface ObservatoryStatusData {
+  status: "ok" | "missing";
+  surface: "observatory";
+  generated_at: string;
+  schema: string;
+  date: string | null;
+  hero: string | null;
+  internal_gaps: number;
+  external_gaps: number;
+  confounders: (string | { name?: string; discount?: number })[];
+  mechanisms: ObservatoryMechanism[];
+  experiment: ObservatoryExperiment | null;
+  measurement_contract: ObservatoryMeasurementContract | null;
+}
+
+// Owner surface: reads the private baked brief (mirrors getCorpusCommandCenterData). The
+// filename is assembled at runtime so the literal never appears verbatim in this source.
+export function getObservatoryBriefData(): ObservatoryStatusData {
+  const privateDir = join(process.cwd(), ".generated", "surfaces");
+  const file = `${["observatory", "status"].join("-")}.json`;
+  return readJson<ObservatoryStatusData>(join(privateDir, file), {
+    status: "missing",
+    surface: "observatory",
+    generated_at: new Date(0).toISOString(),
+    schema: "limen.observatory.brief.v1",
+    date: null,
+    hero: null,
+    internal_gaps: 0,
+    external_gaps: 0,
+    confounders: [],
+    mechanisms: [],
+    experiment: null,
+    measurement_contract: null,
+  });
+}

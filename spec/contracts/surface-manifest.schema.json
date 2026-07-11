@@ -29,7 +29,7 @@
         "additionalProperties": false,
         "required": ["id", "title", "route", "contract", "persona", "sanctioned_personas", "disclosure"],
         "properties": {
-          "id": { "type": "string", "enum": ["internal", "qa", "corpus", "client", "public"] },
+          "id": { "type": "string", "enum": ["internal", "qa", "corpus", "observatory", "client", "public"] },
           "title": { "type": "string" },
           "route": { "type": "string" },
           "contract": { "type": "string" },
@@ -54,7 +54,8 @@
         "public": { "$ref": "#/$defs/publicContract" },
         "qa": { "$ref": "#/$defs/qaContract" },
         "readiness": { "$ref": "#/$defs/readinessContract" },
-        "corpus": { "$ref": "#/$defs/corpusContract" }
+        "corpus": { "$ref": "#/$defs/corpusContract" },
+        "observatory": { "$ref": "#/$defs/observatoryContract" }
       }
     }
   },
@@ -127,6 +128,16 @@
         "path": { "type": "string" },
         "includes_raw_text": { "type": "boolean" },
         "includes_private_paths": { "type": "boolean" }
+      }
+    },
+    "observatoryContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "includes_raw_text"],
+      "properties": {
+        "path": { "type": "string" },
+        "includes_raw_text": { "type": "boolean" },
+        "human_gated_experiment": { "type": "boolean" }
       }
     }
   }

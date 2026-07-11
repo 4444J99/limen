@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { copyFileSync, existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, readdirSync } from "fs";
+import { copyFileSync, existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, readdirSync, statSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import YAML from "yaml";
@@ -24,12 +24,15 @@ const readinessPath = join(privateDir, "readiness.json");
 const qaStatusPath = join(privateDir, "qa-status.json");
 const corpusStatusSourcePath = process.env.LIMEN_CORPUS_STATUS || join(limenRoot, ".limen-private", "session-corpus", "lifecycle", "corpus-command-center.public.json");
 const corpusStatusPath = join(privateDir, "corpus-status.json");
+const observatoryBriefSourcePath = process.env.LIMEN_OBSERVATORY_BRIEF || join(limenRoot, "logs", "observatory", "brief-latest.json");
+const observatoryStatusPath = join(privateDir, "observatory-status.json");
 const hostedPrivatePaths = [
   join(appRoot, "public", "tasks.json"),
   join(appRoot, "public", "client-status.json"),
   join(appRoot, "public", "internal-status.json"),
   join(appRoot, "public", "qa-status.json"),
   join(appRoot, "public", "corpus-status.json"),
+  join(appRoot, "public", "observatory-status.json"),
   join(appRoot, "public", "owner-surface-manifest.json"),
   join(appRoot, "public", "client-surface-manifest.json"),
   join(appRoot, "public", "readiness.json"),
@@ -460,6 +463,35 @@ function corpusStatus() {
   };
 }
 
+function observatoryStatus() {
+  // Owner surface: wrap the organ's daily brief (logs/observatory/brief-latest.json) with a
+  // surface envelope. Tolerant of absence (the organ ships dark) — a missing brief yields a
+  // "missing" stub so the build always succeeds, mirroring corpusStatus()/mirrorInsights().
+  if (existsSync(observatoryBriefSourcePath)) {
+    const brief = JSON.parse(readFileSync(observatoryBriefSourcePath, "utf8"));
+    return {
+      status: "ok",
+      surface: "observatory",
+      generated_at: statSync(observatoryBriefSourcePath).mtime.toISOString(),
+      ...brief,
+    };
+  }
+  return {
+    status: "missing",
+    surface: "observatory",
+    generated_at: new Date(0).toISOString(),
+    schema: "limen.observatory.brief.v1",
+    date: null,
+    hero: null,
+    internal_gaps: 0,
+    external_gaps: 0,
+    confounders: [],
+    mechanisms: [],
+    experiment: null,
+    measurement_contract: null,
+  };
+}
+
 function surfaceManifest(summary) {
   const generatedAt = summary.generated_at;
   return {
@@ -518,6 +550,15 @@ function surfaceManifest(summary) {
         sanctioned_personas: ["owner"],
         disclosure: "redacted prompt/reply/artifact atlas, Aug-1 gate, inbound magnet, and private corpus pointers",
       },
+      {
+        id: "observatory",
+        title: "Observatory",
+        route: "/observatory",
+        contract: "/observatory-status.json",
+        persona: "owner",
+        sanctioned_personas: ["owner"],
+        disclosure: "daily legibility & traction brief: winner mechanisms, confounders, gaps, and one human-gated experiment",
+      },
     ],
     contracts: {
       internal: {
@@ -557,6 +598,11 @@ function surfaceManifest(summary) {
         path: "/corpus-status.json",
         includes_raw_text: false,
         includes_private_paths: false,
+      },
+      observatory: {
+        path: "/observatory-status.json",
+        includes_raw_text: false,
+        human_gated_experiment: true,
       },
     },
   };
@@ -639,6 +685,7 @@ const publicManifest = sanctionedManifest(manifest, "public");
 const readiness = readinessReport(data, summary);
 const qa = qaStatus(data, summary);
 const corpus = corpusStatus();
+const observatory = observatoryStatus();
 
 mkdirSync(dirname(outPath), { recursive: true });
 mkdirSync(dirname(publicStatusPath), { recursive: true });
@@ -656,6 +703,7 @@ writeFileSync(publicSurfaceManifestPath, `${JSON.stringify(publicManifest, null,
 writeFileSync(readinessPath, `${JSON.stringify(readiness, null, 2)}\n`);
 writeFileSync(qaStatusPath, `${JSON.stringify(qa, null, 2)}\n`);
 writeFileSync(corpusStatusPath, `${JSON.stringify(corpus, null, 2)}\n`);
+writeFileSync(observatoryStatusPath, `${JSON.stringify(observatory, null, 2)}\n`);
 mirrorFleetStatus();
 mirrorInsights();
 console.log(`Generated ${outPath} with ${output.tasks?.length || 0} tasks`);

@@ -16,7 +16,7 @@ function fail(message) {
   process.exit(1);
 }
 
-for (const name of ["tasks.json", "client-status.json", "internal-status.json", "qa-status.json", "corpus-status.json", "owner-surface-manifest.json", "client-surface-manifest.json", "readiness.json"]) {
+for (const name of ["tasks.json", "client-status.json", "internal-status.json", "qa-status.json", "corpus-status.json", "observatory-status.json", "owner-surface-manifest.json", "client-surface-manifest.json", "readiness.json"]) {
   if (existsSync(join(publicDir, name))) fail(`${name} must not be hosted from public/`);
 }
 
@@ -32,12 +32,19 @@ const prStatus = readJson(publicDir, "pr-status.json");
 const readiness = readJson(privateDir, "readiness.json");
 const qaStatus = readJson(privateDir, "qa-status.json");
 const corpusStatus = readJson(privateDir, "corpus-status.json");
+const observatoryStatus = readJson(privateDir, "observatory-status.json");
 
 if (publicStatus.surface !== "public") fail("public-status.json has wrong surface");
 if (clientStatus.surface !== "client") fail("client-status.json has wrong surface");
 if (internalStatus.surface !== "internal") fail("internal-status.json has wrong surface");
 if (qaStatus.surface !== "qa") fail("qa-status.json has wrong surface");
 if (corpusStatus.surface !== "corpus") fail("corpus-status.json has wrong surface");
+if (observatoryStatus.surface !== "observatory") fail("observatory-status.json has wrong surface");
+if (!["ok", "missing"].includes(observatoryStatus.status)) fail("observatory-status.json has invalid status");
+const observatoryText = JSON.stringify(observatoryStatus);
+if (observatoryText.includes("dispatch_log")) fail("observatory status exposes dispatch logs");
+if (observatoryText.includes('"context"')) fail("observatory status exposes task context");
+if (observatoryText.includes('"urls"')) fail("observatory status exposes task URLs");
 if (surfaceManifest.status !== "ok") fail("surface-manifest.json has wrong status");
 if (ownerSurfaceManifest.status !== "ok") fail("owner-surface-manifest.json has wrong status");
 if (clientSurfaceManifest.status !== "ok") fail("client-surface-manifest.json has wrong status");
@@ -99,7 +106,7 @@ if (publicStatus.summary.total !== (tasks.tasks || []).length) fail("public stat
 if (clientStatus.summary.total !== (tasks.tasks || []).length) fail("client status total does not match tasks");
 if (qaStatus.lifecycle.total !== (tasks.tasks || []).length) fail("qa status total does not match tasks");
 
-for (const surface of ["internal", "client", "public", "qa", "corpus"]) {
+for (const surface of ["internal", "client", "public", "qa", "corpus", "observatory"]) {
   if (!ownerSurfaceManifest.contracts?.[surface]) fail(`owner manifest missing ${surface} contract`);
 }
 for (const surface of ownerSurfaceManifest.surfaces || []) {
@@ -110,6 +117,7 @@ const surfaceById = Object.fromEntries((ownerSurfaceManifest.surfaces || []).map
 if (JSON.stringify(surfaceById.internal?.sanctioned_personas) !== JSON.stringify(["owner"])) fail("internal surface is not owner-only");
 if (JSON.stringify(surfaceById.qa?.sanctioned_personas) !== JSON.stringify(["owner"])) fail("qa surface is not owner-only");
 if (JSON.stringify(surfaceById.corpus?.sanctioned_personas) !== JSON.stringify(["owner"])) fail("corpus surface is not owner-only");
+if (JSON.stringify(surfaceById.observatory?.sanctioned_personas) !== JSON.stringify(["owner"])) fail("observatory surface is not owner-only");
 if (!(surfaceById.client?.sanctioned_personas || []).includes("client")) fail("client surface is not sanctioned for client");
 if (!(surfaceById.public?.sanctioned_personas || []).includes("public")) fail("public surface is not sanctioned for public");
 if (ownerSurfaceManifest.contracts.public.includes_tasks !== false) fail("manifest says public includes tasks");
@@ -129,13 +137,13 @@ const clientManifestIds = (clientSurfaceManifest.surfaces || []).map((surface) =
 const publicManifestIds = (publicSurfaceManifest.surfaces || []).map((surface) => surface.id).sort();
 const defaultManifestIds = (surfaceManifest.surfaces || []).map((surface) => surface.id).sort();
 const ownerManifestIds = (ownerSurfaceManifest.surfaces || []).map((surface) => surface.id).sort();
-if (JSON.stringify(ownerManifestIds) !== JSON.stringify(["client", "corpus", "internal", "public", "qa"])) fail("owner manifest missing sanctioned surfaces");
+if (JSON.stringify(ownerManifestIds) !== JSON.stringify(["client", "corpus", "internal", "observatory", "public", "qa"])) fail("owner manifest missing sanctioned surfaces");
 if (JSON.stringify(clientManifestIds) !== JSON.stringify(["client", "public"])) fail("client manifest exposes unsanctioned surfaces");
 if (JSON.stringify(publicManifestIds) !== JSON.stringify(["public"])) fail("public manifest exposes unsanctioned surfaces");
 if (JSON.stringify(defaultManifestIds) !== JSON.stringify(["public"])) fail("default surface manifest is not public-filtered");
-if (clientSurfaceManifest.contracts.internal || clientSurfaceManifest.contracts.qa || clientSurfaceManifest.contracts.corpus || clientSurfaceManifest.contracts.readiness) fail("client manifest exposes owner contracts");
-if (publicSurfaceManifest.contracts.internal || publicSurfaceManifest.contracts.qa || publicSurfaceManifest.contracts.corpus || publicSurfaceManifest.contracts.client) fail("public manifest exposes non-public contracts");
-if (surfaceManifest.contracts.internal || surfaceManifest.contracts.qa || surfaceManifest.contracts.corpus || surfaceManifest.contracts.client) fail("default manifest exposes non-public contracts");
+if (clientSurfaceManifest.contracts.internal || clientSurfaceManifest.contracts.qa || clientSurfaceManifest.contracts.corpus || clientSurfaceManifest.contracts.observatory || clientSurfaceManifest.contracts.readiness) fail("client manifest exposes owner contracts");
+if (publicSurfaceManifest.contracts.internal || publicSurfaceManifest.contracts.qa || publicSurfaceManifest.contracts.corpus || publicSurfaceManifest.contracts.observatory || publicSurfaceManifest.contracts.client) fail("public manifest exposes non-public contracts");
+if (surfaceManifest.contracts.internal || surfaceManifest.contracts.qa || surfaceManifest.contracts.corpus || surfaceManifest.contracts.observatory || surfaceManifest.contracts.client) fail("default manifest exposes non-public contracts");
 if (publicSurfaceManifest.contracts.readiness || surfaceManifest.contracts.readiness) fail("public manifest exposes readiness contract");
 if (ownerSurfaceManifest.persona !== "owner") fail("owner manifest missing persona");
 if (clientSurfaceManifest.persona !== "client") fail("client manifest missing persona");
