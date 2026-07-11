@@ -413,5 +413,32 @@ def watch(once, compact, interval):
     run(once=once, compact=compact, interval=interval)
 
 
+@main.group("observatory")
+def observatory():
+    """OBSERVATORY — read-only daily GitHub success analysis (GITVS's legibility twin)."""
+
+
+@observatory.command("doctor")
+@click.option("--offline", is_flag=True, help="Skip the live gh probe")
+def observatory_doctor(offline):
+    """Self-verifying predicate: exit 0 ⟺ the organ is wired and safe."""
+    from limen.observatory import doctor as obs_doctor
+
+    report = obs_doctor.run(offline=offline)
+    click.echo(json.dumps(report, indent=2, sort_keys=True))
+    if not report.get("ok"):
+        sys.exit(1)
+
+
+@observatory.command("run")
+@click.option("--apply/--dry-run", default=False, help="Default: dry-run (proposes; writes no lever/task)")
+def observatory_run(apply):
+    """Run the whole loop (collect → analyze → reconcile → brief) for one beat."""
+    from limen.observatory import executive as obs_exec
+
+    status = obs_exec.run_beat(apply=apply)
+    click.echo(obs_exec.summary_line(status))
+
+
 if __name__ == "__main__":
     main()
