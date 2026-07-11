@@ -15,9 +15,10 @@ Both faces write ONE append-only evidence store (``logs/observatory/*.jsonl``) a
 ONE daily experiment selector; the experiment is always emitted as a human-gated
 *proposal* (a lever + a task), never auto-applied to a public surface.
 
-The spine (config, gh, ledger, executive, doctor), the internal-legibility ``reconcile``
-effector, and the external-legibility research loop (surface, collect, cohort, mechanism,
-estate) ship here; the unified brief + experiment selector is the next build step.
+The full loop ships here: the spine (config, gh, ledger, executive, doctor), the
+internal-legibility ``reconcile`` effector, the external-legibility research loop
+(surface, collect, cohort, mechanism, estate), and the unified ``brief`` + ``lever``
+(experiment selector + human-gated proposal). Beat wiring is the last build step.
 """
 
 from limen.observatory import (
@@ -32,6 +33,8 @@ from limen.observatory import (
     cohort,
     mechanism,
     estate,
+    lever,
+    brief,
 )
 
 __all__ = [
@@ -46,4 +49,6 @@ __all__ = [
     "cohort",
     "mechanism",
     "estate",
+    "lever",
+    "brief",
 ]

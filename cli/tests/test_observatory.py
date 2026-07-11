@@ -78,14 +78,11 @@ def test_write_latest_is_deterministic(obs_root):
 
 # ---------------------------------------------------------------- executive
 def test_run_beat_stages(obs_root, monkeypatch):
-    # Built stages run fail-open (offline); only the unbuilt brief stage reports 'pending'.
+    # All four stages are built now; each runs fail-open (offline) → 'ok', never crashes the beat.
     monkeypatch.setenv("LIMEN_OFFLINE", "1")
     status = executive.run_beat(apply=False)
     labels = {s["stage"]: s["status"] for s in status["stages"]}
-    assert labels["collect"] == "ok"  # built; offline → honest empty result
-    assert labels["analyze"] == "ok"  # built; empty evidence → 0 claims
-    assert labels["reconcile"] == "ok"  # built; sensor absent in tmp → fail-open ok
-    assert labels["brief"] == "pending"  # not built yet
+    assert labels == {"collect": "ok", "analyze": "ok", "reconcile": "ok", "brief": "ok"}
     assert status["apply"] is False
     # status.json + the stamp are written under the redirected data dir.
     assert (obs_root / "logs" / "observatory" / "status.json").exists()
@@ -96,7 +93,7 @@ def test_summary_line(obs_root, monkeypatch):
     monkeypatch.setenv("LIMEN_OFFLINE", "1")
     status = executive.run_beat()
     line = executive.summary_line(status)
-    assert line.startswith("observatory:") and "brief=pending" in line
+    assert line.startswith("observatory:") and "brief=ok" in line
 
 
 # ---------------------------------------------------------------- doctor
@@ -126,8 +123,9 @@ def test_main_run_exits_zero(obs_root, monkeypatch):
     assert obs_main.main(["run"]) == 0
 
 
-def test_main_pending_stage_exits_zero(obs_root):
-    assert obs_main.main(["brief"]) == 0  # stage not built yet → clean, exit 0
+def test_main_stage_exits_zero(obs_root, monkeypatch):
+    monkeypatch.setenv("LIMEN_OFFLINE", "1")
+    assert obs_main.main(["brief"]) == 0  # built stage runs fail-open → exit 0
 
 
 # ---------------------------------------------------------------- reconcile (internal-legibility face)
