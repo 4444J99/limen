@@ -2064,6 +2064,48 @@ parameters:
     owner: tabularius
     note: "Override for the crash-report scan root used by scripts/check-fork-safety.py (also settable via its --reports-dir flag). Empty (the default) scans the macOS default ~/Library/Logs/DiagnosticReports/ plus its Retired/ rotation subdir. Set to a temp directory in tests to inject fabricated .ips reports deterministically; never set on the live host."
 
+  LIMEN_LAUNCHAGENT_LIVENESS_CHECK:
+    default: "1"               # ON — assert critical launchd organs stay alive each beat
+    env: LIMEN_LAUNCHAGENT_LIVENESS_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the launch-agent liveness predicate (scripts/launch-agent-liveness.py --check) run each beat by metabolize.sh section 0g4. The invariant spec/critical-launch-agents.json names the launchd organs that MUST stay alive (the MONETA mint + its Cloudflare tunnel = the first-dollar revenue rail; creds-hydrate = the credential organ; ianva gateway = L-IANVA-LOCAL). A 2026-07-09 mass launchd-quiesce (fork-crash mitigation) disabled 11 agents and restored only the heartbeat, leaving the mint dark for days while armed-valve-audit saw it down every beat with no effector (the sensor-without-effector defect this closes). Read-only --check surfaces any down critical organ; the armed LIMEN_LAUNCHAGENT_HEAL effector restores it. macOS-only signal; fails OPEN off-darwin. Set 0 to silence."
+
+  LIMEN_LAUNCHAGENT_HEAL:
+    default: "0"               # OFF — the effector. The single durable grant to auto-restore down critical organs.
+    env: LIMEN_LAUNCHAGENT_HEAL
+    self_update: none
+    owner: tabularius
+    note: "The effector for the launch-agent liveness invariant (scripts/launch-agent-liveness.py --apply, sensor section 0g4, gated by when_env). When 1, the beat re-bootstraps + kickstarts any critical organ in spec/critical-launch-agents.json that is down — restoring a plist from ~/Library/LaunchAgents.disabled/ if a quiesce quarantined it. This is the SINGLE durable human grant that closes the sensor-without-effector defect: arm once and the daemon keeps the mint / tunnel / credential organ alive across quiesce + reboot forever, without a per-incident approval. OFF by default because it re-enables persistent launchd services (an authorization, not a default). Owner arms it in the daemon env (~/.limen.env)."
+
+  LIMEN_CRITICAL_AGENTS_FILE:
+    default: ""                # empty = spec/critical-launch-agents.json; also the --agents-file flag
+    env: LIMEN_CRITICAL_AGENTS_FILE
+    self_update: none
+    owner: tabularius
+    note: "Manifest-path override for scripts/launch-agent-liveness.py (the invariant of critical launchd agents). Empty (the default) uses spec/critical-launch-agents.json under LIMEN_ROOT. Set only in tests to point at a fabricated manifest; also settable via the --agents-file flag."
+
+  LIMEN_LAUNCHAGENTS_DIR:
+    default: ""                # empty = ~/Library/LaunchAgents; test-injection override
+    env: LIMEN_LAUNCHAGENTS_DIR
+    self_update: none
+    owner: tabularius
+    note: "Override for the active LaunchAgents directory used by scripts/launch-agent-liveness.py. Empty (the default) uses ~/Library/LaunchAgents. Set to a temp dir in tests so restore never touches the host's real launchd config; never set on the live host."
+
+  LIMEN_LAUNCHAGENTS_DISABLED_DIR:
+    default: ""                # empty = ~/Library/LaunchAgents.disabled; test-injection override
+    env: LIMEN_LAUNCHAGENTS_DISABLED_DIR
+    self_update: none
+    owner: tabularius
+    note: "Override for the quarantine directory (where a quiesce moves disabled plists) scanned by scripts/launch-agent-liveness.py to recover a critical agent. Empty (the default) uses ~/Library/LaunchAgents.disabled. Set to a temp dir in tests; never set on the live host."
+
+  LIMEN_LAUNCHCTL_UID:
+    default: ""                # empty = os.getuid(); test-injection override for the gui/<uid> domain
+    env: LIMEN_LAUNCHCTL_UID
+    self_update: none
+    owner: tabularius
+    note: "Override for the launchctl gui/<uid> domain target used by scripts/launch-agent-liveness.py. Empty (the default) uses the current uid (os.getuid()). Set only in tests; never on the live host."
+
   LIMEN_CREDS_HYDRATE:
     default: "1"               # ON — hydrate fleet creds from 1Password each beat (sensor 0a)
     env: LIMEN_CREDS_HYDRATE

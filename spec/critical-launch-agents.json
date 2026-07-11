@@ -1,0 +1,27 @@
+{
+  "_doc": "The liveness invariant, as DATA: these launchd agents MUST stay alive. scripts/launch-agent-liveness.py enforces it every beat — a down agent whose plist is recoverable is re-bootstrapped locally (restoring a quarantined backup from ~/Library/LaunchAgents.disabled/ if a quiesce moved it); a genuinely-unrecoverable one (plist exists nowhere) is surfaced RED with its exact remediation, never silently dropped. Adding a load-bearing organ = ONE entry here, never a memory chore. This is the 'organ owns its own liveness' form: the REGISTRY (not chat) owns WHICH organs are load-bearing, and the DAEMON (not an ephemeral session) owns keeping them alive. Origin: a 2026-07-09 mass launchd-quiesce (macOS 26.6 fork-crash mitigation) disabled 11 agents and restored only the heartbeat, leaving the MONETA revenue rail dark for days while armed-valve-audit saw it down every beat with no effector (the sensor-without-effector defect this closes).",
+  "agents": [
+    {
+      "label": "com.limen.moneta",
+      "role": "MONETA sovereign mint — the first-dollar revenue rail origin (node/tsx on :8787)",
+      "probe": { "kind": "http", "url": "http://localhost:8787/health", "expect_status": 200 },
+      "public_probe": { "kind": "http", "url": "https://mint.4444j99.dev/pubkey", "expect_status": 200 }
+    },
+    {
+      "label": "com.limen.moneta-tunnel",
+      "role": "Cloudflare tunnel fronting mint.4444j99.dev -> the mint origin",
+      "probe": { "kind": "launchd_loaded" },
+      "public_probe": { "kind": "http", "url": "https://mint.4444j99.dev/pubkey", "expect_status": 200 }
+    },
+    {
+      "label": "com.limen.creds-hydrate",
+      "role": "credential organ — hydrates + verifies every secret each beat (creds-hydrate)",
+      "probe": { "kind": "launchd_loaded" }
+    },
+    {
+      "label": "com.ianva.gateway",
+      "role": "ianva MCP doorway — keeps the gateway alive across reboot (lever L-IANVA-LOCAL)",
+      "probe": { "kind": "launchd_loaded" }
+    }
+  ]
+}

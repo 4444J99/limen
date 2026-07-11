@@ -264,6 +264,23 @@ sensors:
         severity: advisory
         escalation: "main trunk RED above — a heal PR is needed (arm LIMEN_MAIN_GREEN_APPLY=1 to auto-emit one canonical HEAL-mainred task); see scripts/check-main-green.py"
 
+  launch-agent-liveness:
+    section: "0g4"
+    title: "launch-agent liveness — critical organs (mint, tunnel, creds, ianva) must stay alive"
+    gate: LIMEN_LAUNCHAGENT_LIVENESS_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/launch-agent-liveness.py --check"
+        args_when:
+          - env: LIMEN_LAUNCHAGENT_HEAL
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "critical launch-agent DOWN above (spec/critical-launch-agents.json) — arm LIMEN_LAUNCHAGENT_HEAL=1 so the beat auto-restores it (mint/tunnel/credential organ), else it stays dark"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"
