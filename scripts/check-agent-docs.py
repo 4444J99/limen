@@ -48,6 +48,7 @@ Run directly (``scripts/check-agent-docs.py``) or via ``scripts/verify-whole.sh`
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -304,6 +305,16 @@ def main() -> int:
             errors.append(
                 f"{template.relative_to(ROOT)} presents non-canonical status values: {sorted(invalid_presented)}"
             )
+
+    student_email_check = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "check-student-email-grounding.py")],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if student_email_check.returncode != 0:
+        output = (student_email_check.stdout + student_email_check.stderr).strip()
+        errors.append("student-email grounding predicate failed" + (f":\n{output}" if output else ""))
 
     if errors:
         print("Agent-instruction doc drift detected:")

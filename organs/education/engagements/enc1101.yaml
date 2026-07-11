@@ -21,13 +21,17 @@ governance:
   manual_mode: true
   forbidden_acts:
     - autonomous D2L go-live
+    - autonomous D2L window changes
+    - autonomous D2L reopen/unlock/date exceptions
     - autonomous grade submission
     - autonomous credential issuance
+    - student-email replies that create instructor follow-up work
+    - student-email replies offering revised-post review or approval
 human_gates:
   - D2L go-live approval
+  - D2L window or exception approval
   - feedback release approval
   - grade submission approval
 artifacts:
   next_reviewable_output: ENC1101 module package
   wings_path: academic argument plus feedback bank
-

@@ -63,6 +63,24 @@ Those are faster only if the reply is first classified by context:
    - connect it to the writing process,
    - avoid turning the reply into extra required work.
 
+## No Extra Instructor Work
+
+Student email replies must not create extra instructor work unless the instructor explicitly asks
+for an exception. Do not offer to reopen or unlock D2L units, change dates, create special
+submission workflows, review revised posts, troubleshoot access, or invite a corrected version for
+approval.
+
+For closed work, keep the boundary concrete and professional: "I do not reopen closed D2L units.
+Complete the work and email it when finished." Use that completion path only when it is useful to
+the student and does not require a D2L change, new date, or instructor-side follow-up loop.
+
+For self-revision questions like Jimmy's, point the student back to learning and current work:
+"Use that revision to strengthen your own thinking/current essay work." Do not turn a discussion
+post, reflection, or self-correction into "send me a corrected version for approval."
+
+Keep the visible rationale professional: consistency, course logistics, and staying focused on
+current work. Do not reveal private grading/admin reality in the reply.
+
 ## Fast Commands
 
 ```bash
