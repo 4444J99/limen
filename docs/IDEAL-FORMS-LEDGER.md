@@ -57,17 +57,34 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 
 ### IF-SENSOR-REGISTRY — the beat sensors are declared data, all consumers derive
 - **Ideal form:** the beat's continuous-runtime sensors live in one registry
-  (`institutio/governance/sensors.yaml`, VIGILIA's third axis beside GATES + PARAMETERS); the beat
-  loop, `omega.sh`, and `armed-valve-audit.py` all **derive** from it; `check-sensors.py` holds it in
-  parity. Adding a sensor is one registry entry, never a hand-wired shell block in three places.
-- **Distance:** Phase 1 shipped 2026-07-10 (#884) — the registry (19 sensors), `beat-sensors.py`
-  (`--list`/`--run`; dry-run reproduces the shell sequence), and `check-sensors.py` (wired into pr-gate)
-  are live and drift-checked. But the live beat still **duplicates** the sensors: `metabolize.sh` runs
-  the 18 hand-wired `── 0x ──` blocks, `omega.sh` hardcodes its rungs, `armed-valve-audit.py` greps the
-  shell.
-- **Status:** PARTIAL — declared + drift-checked (Phase 1). Phase 2 flips `metabolize.sh`/`omega.sh`/
-  `armed-valve-audit.py` to derive from the registry — the high-blast-radius change on the live daemon,
-  landed after equivalence is proven.
+  (`institutio/governance/sensors.yaml`, VIGILIA's third axis beside GATES + PARAMETERS); the beat loop
+  and every consumer that reads a sensor gate **derive** from it; `check-sensors.py` holds it in parity.
+  Adding a sensor is one registry entry, never a hand-wired shell block in three places.
+- **Distance:** DONE for the beat. Phase 1 (#884) shipped the registry (now 20 sensors), `beat-sensors.py`
+  (`--list`/`--run`), and `check-sensors.py` (pr-gate). Phase 2 landed the consumer flips: `metabolize.sh`
+  **derives** its whole sensor loop from the registry — dark-first behind `LIMEN_BEAT_DERIVE` (#914,
+  proven byte-equivalent by a 23-script test + an observed real-sensor run), then default-on with the 20
+  hand-wired `── 0x ──` blocks deleted (#935, −227 lines). Two consumers that read sensor gates from the
+  old shell location were repointed to the registry so they didn't go blind: `check-params.py`
+  (`registry_referenced_tokens`, #935) and `armed-valve-audit.py` (`discover_sensor_valves`, which reads
+  each sensor's gate + `armed_valve_type` from the registry — a fleet lane landed this, healing the
+  ARMED 45→26 coverage regression #935 introduced; a thinner in-flight fix, #938, was closed as
+  superseded). `check-sensors.py` D-parity now passes with **zero gate literals in the shell**, purely
+  via derive-runner detection.
+- **`omega.sh` derives too.** A fleet lane took the convergence past the metabolize loop: sensors carry
+  an `omega_eligible` capability (registry-declared fixed-point checks, each with a label/tier/command),
+  and `omega.sh` derives those rungs via `beat-sensors.py --list-omega` / `--run-omega` rather than
+  hardcoding them. Same capability shape extends the registry to `schema_version 0.2`: `armed_valve_type`
+  (behavior-valve classification, read by `armed-valve-audit.py`'s `discover_sensor_valves`), `args_when`
+  (conditional argv like `--apply`), and scheduled `cadence`/`timeout`. So every consumer that reads a
+  sensor fact now derives it from the registry — the ideal form is fully realized, not partially.
+- **Status:** DONE (2026-07-11). The beat sensor estate is registry-owned across all consumers
+  (metabolize loop, `check-params`, `armed-valve-audit`, `omega.sh`); adding a sensor — or a fixed-point
+  rung, or a conditional valve — is one registry entry, and consumers work unchanged if an id is renamed.
+- **Follow-up (tracked, not blocking):** promote the three *domain-agnostic* predicates
+  (`check-fork-safety.py`, `check-test-hygiene.py`, `check-main-green.py`) to the ecosystem layer
+  (`organvm-engine`, per `docs/agent-instruction-standard.md`) so the pattern becomes cross-repo law —
+  dark-first, once proven in limen. The registry itself is limen-intrinsic and stays here.
 - **Owner:** Claude + tabularius.
 
 ### IF-LEDGER-OF-IDEALS — this ledger (self)

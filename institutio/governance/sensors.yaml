@@ -2,9 +2,9 @@
 #
 # The third axis of the VIGILIA spine: pre-merge is GATES (gates.yaml), configuration is PARAMETERS
 # (parameters.yaml), and continuous-runtime is SENSORS (here). Before this file the beat sensors were
-# 18 hand-wired `── 0x ──` shell blocks in metabolize.sh — omega.sh hardcoded their rungs and
-# armed-valve-audit.py had to GREP the shell to find their gates. Now they are one entry each: adding a
-# sensor is one registry entry, and a drifted copy is a red check (check-sensors.py), not a memory chore.
+# 20 hand-wired `── 0x ──` shell blocks in metabolize.sh — check-params.py and armed-valve-audit.py had
+# to GREP the shell to find their gates. Now they are one entry each: adding a sensor is one registry
+# entry, and a drifted copy is a red check (check-sensors.py), not a memory chore.
 # Same parameter-panel pattern as GATES, one domain over.
 #
 # Each sensor: the beat section it runs as, the gate env that toggles it (declared in parameters.yaml)
@@ -18,8 +18,11 @@
 #   fatal     → non-zero propagates and breaks the beat  (none today — the beat is fail-open)
 # `when_env` on a step runs it only when that env var is truthy (nested conditionals in the shell).
 #
-# Consumers (Phase 2): scripts/beat-sensors.py --run derives the beat loop from this; omega.sh derives
-# its rungs; armed-valve-audit.py reads these gates instead of grepping. Drift-check: scripts/check-sensors.py.
+# Consumers: metabolize.sh runs `scripts/beat-sensors.py --run --source metabolize` (the whole sensor
+# loop derives from here — the hand-wired blocks are gone); check-params.py and armed-valve-audit.py read
+# these gates from this registry instead of grepping the shell; omega.sh derives its registry-declared
+# fixed-point rungs via `beat-sensors.py --list-omega`/`--run-omega` (the `omega_eligible` capability).
+# Drift-check: scripts/check-sensors.py.
 
 schema_version: 0.2
 
