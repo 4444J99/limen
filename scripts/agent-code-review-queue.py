@@ -14,7 +14,7 @@ import json
 import os
 import re
 import subprocess
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 from typing import Any
 

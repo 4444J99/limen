@@ -14,7 +14,6 @@ import json
 import os
 import re
 import sqlite3
-import sys
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
