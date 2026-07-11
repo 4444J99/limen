@@ -77,10 +77,28 @@ def online(tok: str | None) -> bool:
 
 
 def search_repos(query: str, tok: str | None, *, sort: str = "stars", per_page: int = 30) -> list[dict]:
-    """Approximate Trending / competitor discovery via the search API. Fail-open ``[]``."""
+    """Approximate Trending / competitor discovery via the search API. Fail-open ``[]``.
+
+    Passes the query with ``-X GET -f q=...`` so ``gh`` URL-encodes it — the search query
+    contains spaces/``:``/``>`` that a hand-built endpoint string mis-parses (winners → 0)."""
     per_page = max(1, min(int(per_page), 100))
-    endpoint = f"/search/repositories?q={query}&sort={sort}&order=desc&per_page={per_page}"
-    items = gh_json(["api", endpoint, "--jq", ".items"], tok, default=[])
+    args = [
+        "api",
+        "-X",
+        "GET",
+        "/search/repositories",
+        "-f",
+        f"q={query}",
+        "-f",
+        f"sort={sort}",
+        "-f",
+        "order=desc",
+        "-f",
+        f"per_page={per_page}",
+        "--jq",
+        ".items",
+    ]
+    items = gh_json(args, tok, default=[])
     return items if isinstance(items, list) else []
 
 

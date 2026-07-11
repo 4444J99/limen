@@ -77,24 +77,26 @@ def test_write_latest_is_deterministic(obs_root):
 
 
 # ---------------------------------------------------------------- executive
-def test_run_beat_stages(obs_root):
-    # Unbuilt stages report 'pending' (never crash); the built reconcile stage runs fail-open.
+def test_run_beat_stages(obs_root, monkeypatch):
+    # Built stages run fail-open (offline); only the unbuilt brief stage reports 'pending'.
+    monkeypatch.setenv("LIMEN_OFFLINE", "1")
     status = executive.run_beat(apply=False)
     labels = {s["stage"]: s["status"] for s in status["stages"]}
-    assert labels["collect"] == "pending"
-    assert labels["analyze"] == "pending"
-    assert labels["brief"] == "pending"
+    assert labels["collect"] == "ok"  # built; offline → honest empty result
+    assert labels["analyze"] == "ok"  # built; empty evidence → 0 claims
     assert labels["reconcile"] == "ok"  # built; sensor absent in tmp → fail-open ok
+    assert labels["brief"] == "pending"  # not built yet
     assert status["apply"] is False
     # status.json + the stamp are written under the redirected data dir.
     assert (obs_root / "logs" / "observatory" / "status.json").exists()
     assert (obs_root / "logs" / "observatory" / "observatory.json").exists()
 
 
-def test_summary_line(obs_root):
+def test_summary_line(obs_root, monkeypatch):
+    monkeypatch.setenv("LIMEN_OFFLINE", "1")
     status = executive.run_beat()
     line = executive.summary_line(status)
-    assert line.startswith("observatory:") and "collect=pending" in line
+    assert line.startswith("observatory:") and "brief=pending" in line
 
 
 # ---------------------------------------------------------------- doctor
@@ -119,12 +121,13 @@ def test_main_doctor_exits_zero(obs_root):
     assert obs_main.main(["doctor", "--offline"]) == 0
 
 
-def test_main_run_exits_zero(obs_root):
+def test_main_run_exits_zero(obs_root, monkeypatch):
+    monkeypatch.setenv("LIMEN_OFFLINE", "1")  # hermetic: never touch the network
     assert obs_main.main(["run"]) == 0
 
 
 def test_main_pending_stage_exits_zero(obs_root):
-    assert obs_main.main(["collect"]) == 0  # stage not built yet → clean, exit 0
+    assert obs_main.main(["brief"]) == 0  # stage not built yet → clean, exit 0
 
 
 # ---------------------------------------------------------------- reconcile (internal-legibility face)
@@ -199,11 +202,3 @@ def test_reconcile_fail_open_when_sensor_absent(obs_root):
     summary = reconcile.run(apply=False)
     assert summary["sensor"] == "unavailable" and summary["gap_count"] == 0
     assert (obs_root / "logs" / "observatory" / "reconcile-latest.json").exists()
-
-
-def test_run_beat_picks_up_reconcile(obs_root):
-    # The convener now resolves the reconcile stage (sensor absent in tmp → ok/advisory, not pending).
-    status = executive.run_beat()
-    stages = {s["stage"]: s["status"] for s in status["stages"]}
-    assert stages["reconcile"] == "ok"  # built + ran (fail-open)
-    assert stages["collect"] == "pending"  # still unbuilt

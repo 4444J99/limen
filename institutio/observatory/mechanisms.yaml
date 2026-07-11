@@ -1,0 +1,63 @@
+# OBSERVATORY — mechanism seeds (the human-owned knobs of the priority formula)
+#
+# priority = explanatory_strength × controllability × similarity × expected_value ÷ activation_cost
+#
+# explanatory_strength (winner-vs-controls contrast, confounder-discounted), similarity, and
+# expected_value are COMPUTED at score time. controllability and activation_cost are the only
+# human judgment inputs — declared here, once, reviewable. They answer: "can WE add this now, and
+# how cheap is it?" A mechanism whose controllability is ~0 (e.g. "have a famous owner") can never
+# dominate the ranking, which is the whole point — the formula never tells you to become Apple.
+#
+# Each key matches a surface.py feature (surface.BINARY_FEATURES + a couple of count features).
+# controllability, activation_cost ∈ (0, 1]; activation_cost is floored away from 0 by the scorer.
+# target_component is the success-vector dimension the mechanism most drives.
+version: 1
+
+mechanisms:
+  names_user:
+    controllability: 0.95
+    activation_cost: 0.10
+    target_component: activation
+    note: "Name the one user in the first sentence. A word change; ours to make."
+
+  names_problem:
+    controllability: 0.90
+    activation_cost: 0.12
+    target_component: activation
+    note: "State the pain the project removes. README edit."
+
+  names_outcome:
+    controllability: 0.90
+    activation_cost: 0.12
+    target_component: activation
+    note: "Promise the concrete result ('X in one command'). README edit."
+
+  demo_above_fold:
+    controllability: 0.80
+    activation_cost: 0.25
+    target_component: activation
+    note: "A GIF/asciinema under the H1. Cheap to record, reversible, high-signal."
+
+  copy_paste_command:
+    controllability: 0.90
+    activation_cost: 0.10
+    target_component: activation
+    note: "One paste-able install/run line near the top. Ours to add."
+
+  api_example:
+    controllability: 0.75
+    activation_cost: 0.30
+    target_component: trust
+    note: "A minimal working code example. Slightly more effort; builds trust."
+
+  comparison:
+    controllability: 0.70
+    activation_cost: 0.35
+    target_component: trust
+    note: "An honest 'vs alternatives' table. Needs care to stay fair."
+
+  use_cases:
+    controllability: 0.75
+    activation_cost: 0.30
+    target_component: reach
+    note: "Concrete use-case section. Expands who sees themselves in it."
