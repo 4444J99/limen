@@ -247,6 +247,42 @@ parameters:
     self_update: none
     owner: continuity
     note: "Local-system free-space target used by always-working to keep the laptop as hot cache instead of durable storage."
+  LIMEN_ESTATE_SCAN_SECONDS:
+    default: 75
+    env: LIMEN_ESTATE_SCAN_SECONDS
+    self_update: none
+    owner: continuity
+    note: "Maximum wall-clock seconds for estate-closeout-audit.py to spend discovering local Git roots before marking the local estate scan bounded."
+  LIMEN_ESTATE_MAX_ROOTS:
+    default: 1400
+    env: LIMEN_ESTATE_MAX_ROOTS
+    self_update: none
+    owner: continuity
+    note: "Maximum local Git roots estate-closeout-audit.py records during whole-estate discovery before marking the inventory bounded."
+  LIMEN_ESTATE_LOCAL_DETAIL_LIMIT:
+    default: 900
+    env: LIMEN_ESTATE_LOCAL_DETAIL_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum discovered local Git roots estate-closeout-audit.py probes in detail for dirty, branch, upstream, PR, and deletion eligibility."
+  LIMEN_ESTATE_LOCAL_PR_PROBE_LIMIT:
+    default: 120
+    env: LIMEN_ESTATE_LOCAL_PR_PROBE_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum local roots estate-closeout-audit.py probes through GitHub PR lookup while classifying local custody."
+  LIMEN_ESTATE_PR_LIMIT:
+    default: 1000
+    env: LIMEN_ESTATE_PR_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum open GitHub PRs estate-closeout-audit.py collects across owned estate organizations before declaring remote PR classification bounded."
+  LIMEN_ESTATE_PR_CLASSIFY_LIMIT:
+    default: 120
+    env: LIMEN_ESTATE_PR_CLASSIFY_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum open GitHub PRs estate-closeout-audit.py deep-classifies for mergeability, CI, conflict, and owner-gate state."
   LIMEN_PROFILE_REPO:
     default: "$LIMEN_WORKSPACE_ROOT/organvm/4444J99"
     env: LIMEN_PROFILE_REPO
