@@ -1,5 +1,5 @@
 {
-  "_doc": "Classification registry for armed-valve-audit.py (RETRO-0708-ARMED-VALVE-AUDIT; PREC-2026-07-08-armed-valve-outcome). The AUDIT DERIVES the valve list from the beat sources (metabolize.sh / heartbeat-loop.sh ${LIMEN_*:-default} gates) — this file only holds what derivation cannot: WHICH disarmed-by-default valves are 'deliverable-IS-the-behavior' (a dry-run there is an UNMET ask) vs 'safety' (off-by-default is the design), plus external non-env probes (a URL that must serve, an artifact that must carry the rail). A discovered gate classified nowhere surfaces as UNCLASSIFIED — new valves self-surface, the registry never silently lags the code.",
+  "_doc": "Classification registry for armed-valve-audit.py (RETRO-0708-ARMED-VALVE-AUDIT; PREC-2026-07-08-armed-valve-outcome). The audit derives valves from beat-source gates and generic sensors.yaml capabilities. This file holds only non-sensor classifications and external probes (a URL that must serve, an artifact that must carry the rail). A discovered gate classified nowhere surfaces as UNCLASSIFIED — new valves self-surface, the registry never silently lags the code.",
   "deliverable": [
     {
       "id": "LIMEN_DISPATCH",
@@ -41,8 +41,7 @@
     "LIMEN_DISPATCH_ASYNC",
     "LIMEN_MEDIA_ATOMIZE",
     "LIMEN_QUICKEN_BREATHE",
-    "LIMEN_STUDIUM",
-    "LIMEN_GITVS_APPLY"
+    "LIMEN_STUDIUM"
   ],
   "_safety_note": "LIMEN_DISPATCH_ASYNC / LIMEN_CENSOR_APPLY / LIMEN_MEDIA_ATOMIZE are armed in the DAEMON'S environment (launchd plist), which this audit cannot read from a shell — promoting one to 'deliverable' requires a probe of daemon truth (a runtime stamp), not an env read; enactment-audit.py owns declared-vs-live for fleet flags. LIMEN_ALLOW_HIGH_LOCAL_LIMIT is a budget-cap override: off IS the design."
 }

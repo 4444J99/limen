@@ -22,6 +22,7 @@ per run), idempotent (skips a repo whose config already exists), fail-open, offl
   python3 scripts/sync-marketplace-config.py --check    # same, the sensor idiom (exit 0 unless a source is missing)
   python3 scripts/sync-marketplace-config.py --apply    # push missing configs — ONLY if LIMEN_MARKETPLACE_APPLY=1
 """
+
 from __future__ import annotations
 
 import argparse
@@ -36,7 +37,7 @@ import yaml
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent.resolve()
 ESTATE = Path(os.environ.get("LIMEN_GITVS_ESTATE") or (ROOT / "institutio" / "github" / "estate.yaml"))
-CONDUCTOR_REPO = "organvm/limen"   # derived identity of this repo (the config SOURCE); see _conductor_repo()
+CONDUCTOR_REPO = "organvm/limen"  # derived identity of this repo (the config SOURCE); see _conductor_repo()
 
 
 def _bool_env(name: str, default: bool) -> bool:
@@ -48,8 +49,9 @@ def _conductor_repo() -> str:
     """Derive owner/repo of THIS checkout from the git remote ("names are outputs"); fall back to the
     known conductor slug so the effector still resolves in a detached CI checkout."""
     try:
-        r = subprocess.run(["git", "-C", str(ROOT), "remote", "get-url", "origin"],
-                           capture_output=True, text=True, timeout=10)
+        r = subprocess.run(
+            ["git", "-C", str(ROOT), "remote", "get-url", "origin"], capture_output=True, text=True, timeout=10
+        )
         url = (r.stdout or "").strip()
         if url:
             tail = url.split("github.com", 1)[-1].lstrip(":/").removesuffix(".git")
@@ -73,8 +75,7 @@ def _gh(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
         return subprocess.CompletedProcess(args, 1, "", "offline")
     env = {**os.environ}
     try:
-        tok = subprocess.run(["bash", str(SCRIPT_DIR / "gh-app-token.sh")],
-                             capture_output=True, text=True, timeout=45)
+        tok = subprocess.run(["bash", str(SCRIPT_DIR / "gh-app-token.sh")], capture_output=True, text=True, timeout=45)
         if tok.returncode == 0 and tok.stdout.strip():
             env["GH_TOKEN"] = env["GITHUB_TOKEN"] = tok.stdout.strip()
     except Exception:
@@ -114,8 +115,20 @@ def _governed_repos(estate: dict, globs: list[str], cap: int) -> list[str]:
     owners = sorted({g.split("/", 1)[0] for g in globs if "/" in g and g.split("/", 1)[0] not in ("*", "**")})
     repos: list[str] = []
     for owner in owners:
-        r = _gh(["api", f"/users/{owner}/repos", "--paginate", "-X", "GET", "-F", "per_page=100",
-                 "--jq", ".[] | select(.archived==false) | .full_name"], timeout=90)
+        r = _gh(
+            [
+                "api",
+                f"/users/{owner}/repos",
+                "--paginate",
+                "-X",
+                "GET",
+                "-F",
+                "per_page=100",
+                "--jq",
+                ".[] | select(.archived==false) | .full_name",
+            ],
+            timeout=90,
+        )
         if r.returncode == 0:
             for full in (r.stdout or "").splitlines():
                 full = full.strip()
@@ -135,22 +148,50 @@ def _push_config(repo: str, path: str, content: str, app: str) -> str:
     head_sha = (sha.stdout or "").strip()
     if not head_sha:
         return f"{repo}: could not read {default} head"
-    mk = _gh(["api", "-X", "POST", f"/repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}",
-              "-f", f"sha={head_sha}"], timeout=20)
+    mk = _gh(
+        ["api", "-X", "POST", f"/repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}", "-f", f"sha={head_sha}"],
+        timeout=20,
+    )
     if mk.returncode != 0 and "already exists" not in (mk.stderr or ""):
         return f"{repo}: branch create failed"
     import base64
+
     b64 = base64.b64encode(content.encode()).decode()
-    put = _gh(["api", "-X", "PUT", f"/repos/{repo}/contents/{path}",
-               "-f", f"message=chore(gitvs): add {path} — {app} config (GITVS integrations)",
-               "-f", f"content={b64}", "-f", f"branch={branch}"], timeout=30)
+    put = _gh(
+        [
+            "api",
+            "-X",
+            "PUT",
+            f"/repos/{repo}/contents/{path}",
+            "-f",
+            f"message=chore(gitvs): add {path} — {app} config (GITVS integrations)",
+            "-f",
+            f"content={b64}",
+            "-f",
+            f"branch={branch}",
+        ],
+        timeout=30,
+    )
     if put.returncode != 0:
         return f"{repo}: contents PUT failed"
-    pr = _gh(["pr", "create", "--repo", repo, "--base", default, "--head", branch,
-              "--title", f"chore(gitvs): {app} config ({path})",
-              "--body", f"GITVS integrations pillar — machine-pushed {app} config so the repo is ready "
-                        f"the moment the Marketplace app is installed. Config sourced from {_conductor_repo()}."],
-             timeout=45)
+    pr = _gh(
+        [
+            "pr",
+            "create",
+            "--repo",
+            repo,
+            "--base",
+            default,
+            "--head",
+            branch,
+            "--title",
+            f"chore(gitvs): {app} config ({path})",
+            "--body",
+            f"GITVS integrations pillar — machine-pushed {app} config so the repo is ready "
+            f"the moment the Marketplace app is installed. Config sourced from {_conductor_repo()}.",
+        ],
+        timeout=45,
+    )
     return f"{repo}: PR opened" if pr.returncode == 0 else f"{repo}: PR create failed ({(pr.stderr or '')[:60]})"
 
 
@@ -175,7 +216,7 @@ def run(estate: dict, *, apply: bool) -> int:
         line = f"  {name:12s} {cf:28s} source={'present' if present else 'MISSING'} scope={scope}"
         print(line)
         if not present:
-            source_missing += 1   # the conductor's own config (the fan-out template) is absent — a defect
+            source_missing += 1  # the conductor's own config (the fan-out template) is absent — a defect
             continue
         content = src.read_text(encoding="utf-8")
         for cls in scope:
@@ -197,8 +238,10 @@ def run(estate: dict, *, apply: bool) -> int:
                 pushed.append(_push_config(repo, cf, content, name))
                 print(f"     ✓ {pushed[-1]}")
 
-    print(f"[sync-marketplace-config] {len(integrations)} active integration(s); "
-          f"{len(pushed)} config PR(s) opened; source_missing={source_missing}.")
+    print(
+        f"[sync-marketplace-config] {len(integrations)} active integration(s); "
+        f"{len(pushed)} config PR(s) opened; source_missing={source_missing}."
+    )
     return 1 if source_missing else 0
 
 

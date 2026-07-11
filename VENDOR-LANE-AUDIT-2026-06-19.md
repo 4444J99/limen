@@ -1,12 +1,12 @@
 # Vendor Lane Audit — 2026-06-19 (read-only)
 
-> **Correction 2026-07-10 (opencode):** the "opencode = free-model lane / free model fallback"
-> characterization below is superseded. opencode is multi-model — a free floor **and** the opencode
-> Zen subscription. Under dynamic provider routing (#921) its model is selected LIVE from
-> `opencode models --verbose` with **no free fallback and no name heuristic**; an unauthed /
-> capability-poor catalog yields `failed_blocked`, not a silent downgrade. The subscription becomes
-> reachable via `opencode auth login` (lever **L-OPENCODE-SUB-AUTH #928**). Live truth is the census
-> record + provider routing, not this dated snapshot.
+> **Correction 2026-07-10 (OpenCode):** the fixed free-model/fallback characterization below is
+> superseded. Limen discovers currently reachable capabilities and pricing from
+> `opencode models --verbose` at dispatch time; interactive authentication may change that catalog.
+> No catalog class, subscription product, model name, price class, or routing outcome is promised.
+> An empty, unreachable, or incapable catalog produces `failed_blocked`; optional authentication is
+> tracked by **L-OPENCODE-AUTH #928**. Live truth is the census plus provider routing, not this dated
+> snapshot.
 
 Mandate: use ALL 6 vendors, never serialize. Audit found the fleet is effectively
 serialized onto **codex** (now exhausted), with agy/gemini/claude/jules idle.
@@ -17,7 +17,7 @@ serialized onto **codex** (now exhausted), with agy/gemini/claude/jules idle.
 |---|---|---|---|---|
 | codex | /opt/homebrew/bin/codex 0.141.0 | ~/.codex/auth.json (chatgpt) OK | EXHAUSTED | router dumps 209 tasks here; usage.json health=exhausted, 0 tok remaining in 5h window |
 | claude | ~/.local/bin/claude | ~/.claude.json OK | HEALTHY but idle | router routes 0 tasks to claude; open_queue=0; 40% token headroom unused |
-| opencode | /opt/homebrew/bin/opencode 1.17.5 | NO auth.json -> free model fallback | HEALTHY (degraded) | only 10 tasks routed (deploy-only); no API key, runs free `opencode/north-mini-code-free` |
+| opencode | /opt/homebrew/bin/opencode 1.17.5 | no OpenCode auth file observed | HEALTHY (historical probe) | only 10 tasks routed (deploy-only); current capabilities and pricing must be discovered from the live catalog and may change after interactive authentication |
 | agy | /opt/homebrew/bin/agy 1.0.10 | local CLI, scratch bridge healed | HEALTHY but idle | 0 tasks routed; was on lanes-down.txt earlier (now gone); scratch-bridge makes it produce |
 | gemini | /opt/homebrew/bin/gemini 0.46.0 | GEMINI_API_KEY set but NOT exported | DOWN | key is shell var, not exported -> Python os.environ can't see it; free-tier key also rate-limits instantly |
 | jules | /opt/homebrew/bin/jules | ~/.jules OK | HEALTHY but idle | router reserves jules only for repos w/ no local checkout; everything has a checkout -> 0 routed; 8 stale claims |
@@ -70,7 +70,7 @@ serialized onto **codex** (now exhausted), with agy/gemini/claude/jules idle.
    do the one-time Google sign-in to create `~/.gemini/oauth_creds.json` then set
    `LIMEN_GEMINI_OAUTH=1` (dispatch.py:477 drops the API key for gemini's subprocess to
    use the higher-limit OAuth/Code-Assist tier). Free-tier key alone rate-limits.
-4. **opencode**: run `opencode auth login` to write `~/.local/share/opencode/auth.json`
-   so it uses a real model instead of the free fallback.
+4. **opencode**: optionally run `opencode auth login`, then re-read `opencode models --verbose`.
+   Authentication may expand the live catalog; it promises no particular model or capability.
 5. **agy / claude / jules**: no fix needed — route work to them (fixing #1 unblocks all
    three). jules also has 8 stale claims: `limen release-stale --agent jules --hours 24 --apply`.

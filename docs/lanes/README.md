@@ -5,6 +5,10 @@ worker session draws from, the axis **above** the vendor `target_agent` lane. It
 "channel" (the word `channel` is already taken in code by `evocator.py` and `launch-organ.py`, so
 the converged term is `workstream`).
 
+Model choice inside a vendor lane is a separate concern. See
+[`docs/provider-routing.md`](../provider-routing.md): Limen derives a live capability request and
+never keeps a fixed model catalog or closed tier table.
+
 **Why it exists.** Without a purpose axis the backlog was one undifferentiated grab-bag: a session
 reserved whatever was in front of it, so a mail task and a code task shared one context and one PR
 stream — the 10–20-mixed-PRs sprawl. The cure is one field plus one invariant.

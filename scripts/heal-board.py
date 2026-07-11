@@ -34,6 +34,7 @@ start of every beat — but IDEMPOTENT: a healthy board is a no-op (exit 0, no w
   python3 scripts/heal-board.py --check    # report only; exit 1 if collapsed, never mutate
   python3 scripts/heal-board.py --dry-run  # report what WOULD be restored; make no writes
 """
+
 from __future__ import annotations
 
 import argparse
@@ -88,7 +89,9 @@ def git_head_board() -> str | None:
     try:
         out = subprocess.run(
             ["git", "-C", str(ROOT), "show", f"HEAD:{rel}"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
     except (OSError, subprocess.SubprocessError):
         return None
@@ -137,12 +140,13 @@ def _reconcile_log_mismatch(task: Task, now: datetime) -> bool:
 
     The validator fails the build (`log_mismatches`) when a task's latest *canonical*
     dispatch_log status disagrees with task.status — the exact wedge that turned `verify`
-    red across every PR based on a momentarily-inconsistent board snapshot. task.status is
-    the authoritative projection head, so append one canonical event that restates it; the
-    log then agrees and the invariant holds. Idempotent: once the head matches (or the last
-    entry's status is non-canonical, which the validator ignores), it is a no-op. A task whose
-    own status is non-canonical is a *different* defect (validator: `invalid`) and is left
-    alone. Returns True iff it changed anything.
+    red across every PR based on a momentarily-inconsistent board snapshot. Historical
+    writers also embedded destinations in values such as ``timeout->jules``.  task.status
+    is the authoritative projection head, so append one canonical event that restates it
+    and carry the legacy destination forward as ``route_to``.  The historical row remains
+    byte-for-byte intact.  Idempotent: the new canonical head is a no-op on the next pass.
+    A task whose own status is non-canonical is a different defect and is left alone.
+    Returns True iff it changed anything.
     """
     if task.status not in VALID_STATUSES:
         return False
@@ -150,8 +154,12 @@ def _reconcile_log_mismatch(task: Task, now: datetime) -> bool:
     if not log:
         return False
     last_status = str(getattr(log[-1], "status", "") or "")
-    if last_status not in VALID_STATUSES or last_status == task.status:
+    if last_status in VALID_STATUSES and last_status == task.status:
         return False
+    route_to = str(getattr(log[-1], "route_to", "") or "") or None
+    if route_to is None and "->" in last_status:
+        candidate = last_status.rsplit("->", 1)[1].strip()
+        route_to = candidate if candidate and candidate != "requeue" else None
     task.updated = now
     task.dispatch_log.append(
         DispatchLogEntry(
@@ -159,7 +167,11 @@ def _reconcile_log_mismatch(task: Task, now: datetime) -> bool:
             agent="heal-board",
             session_id="heal-board",
             status=task.status,
-            output=f"heal-board: reconciled dispatch_log head to task.status={task.status} (was {last_status})",
+            route_to=route_to,
+            output=(
+                f"heal-board: appended canonical dispatch_log head for task.status={task.status}; "
+                f"preserved legacy head {last_status[:80]}"
+            ),
         )
     )
     return True
@@ -206,7 +218,9 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
     reopened, reconciled, mismatched = _apply_lifecycle_repairs(lf.tasks, now)
 
     if not reopened and not reconciled and not mismatched:
-        print(f"heal-board: OK — {BOARD.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})")
+        print(
+            f"heal-board: OK — {BOARD.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})"
+        )
         return 0
 
     if check:
@@ -214,9 +228,14 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
         if reopened:
             parts.append(f"{len(reopened)} reopened completed task(s) need repair: " + ", ".join(reopened[:10]))
         if reconciled:
-            parts.append(f"{len(reconciled)} needs-human task(s) need reconcile to needs_human: " + ", ".join(reconciled[:10]))
+            parts.append(
+                f"{len(reconciled)} needs-human task(s) need reconcile to needs_human: " + ", ".join(reconciled[:10])
+            )
         if mismatched:
-            parts.append(f"{len(mismatched)} task(s) need dispatch_log head reconcile to task.status: " + ", ".join(mismatched[:10]))
+            parts.append(
+                f"{len(mismatched)} task(s) need dispatch_log head reconcile to task.status: "
+                + ", ".join(mismatched[:10])
+            )
         print("heal-board: " + "; ".join(parts))
         return 1
     if dry_run:
@@ -224,9 +243,13 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
         if reopened:
             parts.append(f"WOULD restore {len(reopened)} reopened completed task(s): " + ", ".join(reopened[:10]))
         if reconciled:
-            parts.append(f"WOULD reconcile {len(reconciled)} needs-human task(s) to needs_human: " + ", ".join(reconciled[:10]))
+            parts.append(
+                f"WOULD reconcile {len(reconciled)} needs-human task(s) to needs_human: " + ", ".join(reconciled[:10])
+            )
         if mismatched:
-            parts.append(f"WOULD reconcile {len(mismatched)} log-mismatch task(s) to task.status: " + ", ".join(mismatched[:10]))
+            parts.append(
+                f"WOULD reconcile {len(mismatched)} log-mismatch task(s) to task.status: " + ", ".join(mismatched[:10])
+            )
         print("heal-board: " + "; ".join(parts))
         return 0
 
@@ -282,13 +305,18 @@ def main(argv: list[str] | None = None) -> int:
 
     s_load, s_total, s_active = board_health_from_text(snap, BOARD.parent)
     if not s_load or s_total <= FLOOR or s_total <= total:
-        print(f"heal-board: snapshot not healthier (loadable={s_load} total={s_total}) — refusing to heal", file=sys.stderr)
+        print(
+            f"heal-board: snapshot not healthier (loadable={s_load} total={s_total}) — refusing to heal",
+            file=sys.stderr,
+        )
         return 1
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     if args.dry_run:
-        print(f"heal-board: WOULD restore {BOARD.name} from HEAD ({s_total} tasks, {s_active} active); "
-              f"WOULD preserve the collapsed board to logs/{BOARD.name}.collapsed-{stamp}")
+        print(
+            f"heal-board: WOULD restore {BOARD.name} from HEAD ({s_total} tasks, {s_active} active); "
+            f"WOULD preserve the collapsed board to logs/{BOARD.name}.collapsed-{stamp}"
+        )
         return 0
 
     # preserve the collapsed board (never delete evidence), then atomically restore the snapshot.
@@ -301,8 +329,10 @@ def main(argv: list[str] | None = None) -> int:
     except OSError:
         pass
     atomic_write_text(BOARD, snap)
-    print(f"heal-board: RESTORED {BOARD.name} from HEAD — {s_total} tasks ({s_active} active); "
-          f"collapsed board preserved to {preserved.relative_to(ROOT)}")
+    print(
+        f"heal-board: RESTORED {BOARD.name} from HEAD — {s_total} tasks ({s_active} active); "
+        f"collapsed board preserved to {preserved.relative_to(ROOT)}"
+    )
     return 0
 
 

@@ -6,6 +6,7 @@ tests never execute the real beat sensors.
 
 import importlib.util
 import os
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -132,5 +133,99 @@ def test_real_registry_derives_nonempty_metabolize_loop(capsys):
     rc = m.run("metabolize", dry_run=True, registry=REAL_REGISTRY)
     out = capsys.readouterr().out
     assert rc == 0
-    assert out.count("── ") >= 15  # ~20 metabolize sensors each print a `── NN. title ──` header
-    assert "scripts/creds-hydrate.py --apply" in out  # first sensor still derived
+    assert out.count("── ") >= 15
+    assert "scripts/creds-hydrate.py --apply" in out
+
+
+def test_scheduled_sensor_is_identity_agnostic_and_stamps_only_when_due(tmp_path, monkeypatch):
+    m = _mod()
+    registry = tmp_path / "scheduled.yaml"
+    registry.write_text(
+        """\
+sensors:
+  completely-renamed-sentinel:
+    section: heartbeat
+    title: renamed sentinel
+    gate: null
+    default: "1"
+    source: [heartbeat]
+    cadence: {env: TEST_SENTINEL_CADENCE, default: 3}
+    timeout: {env: TEST_SENTINEL_TIMEOUT, default: 9}
+    steps:
+      - command: "python3 scripts/example.py"
+        severity: silent
+        escalation: skipped
+""",
+        encoding="utf-8",
+    )
+    calls = []
+    monkeypatch.setattr(m, "_run_command", lambda command, **kwargs: calls.append((command, kwargs)) or 0)
+    voice_dir = tmp_path / "voices"
+
+    # No prior stamp closes the restart/starvation hole, even off modulo.
+    assert m.run("heartbeat", registry=registry, scheduled_only=True, beat=1, loop_max=60, voice_dir=voice_dir) == 0
+    assert len(calls) == 1
+    assert calls[0][1]["timeout"] == 9
+    assert (voice_dir / "completely-renamed-sentinel").exists()
+
+    # Fresh stamp + off modulo skips; modulo cadence fires again.
+    assert m.run("heartbeat", registry=registry, scheduled_only=True, beat=2, loop_max=60, voice_dir=voice_dir) == 0
+    assert len(calls) == 1
+    assert m.run("heartbeat", registry=registry, scheduled_only=True, beat=3, loop_max=60, voice_dir=voice_dir) == 0
+    assert len(calls) == 2
+
+    # A malformed live override degrades to the declared registry default; it never silently
+    # removes the timeout/cadence ceiling.
+    monkeypatch.setenv("TEST_SENTINEL_CADENCE", "not-a-number")
+    monkeypatch.setenv("TEST_SENTINEL_TIMEOUT", "0")
+    sensor = m.load_sensors(registry)["completely-renamed-sentinel"]
+    assert m._cadence(sensor) == 3
+    assert m._positive_int(sensor["timeout"]) == 9
+
+
+def test_args_when_and_omega_capabilities_do_not_depend_on_sensor_id(tmp_path, monkeypatch, capsys):
+    m = _mod()
+    registry = tmp_path / "capabilities.yaml"
+    registry.write_text(
+        """\
+sensors:
+  arbitrary.future.id:
+    section: heartbeat
+    title: arbitrary future sensor
+    gate: null
+    source: [heartbeat]
+    timeout: 7
+    steps:
+      - command: "python3 scripts/arbitrary.py base"
+        args_when:
+          - env: TEST_ARBITRARY_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply", "two words"]
+        severity: silent
+        escalation: skipped
+    omega_eligible:
+      - label: arbitrary parity
+        tier: det
+        command: "python3 scripts/arbitrary.py check"
+""",
+        encoding="utf-8",
+    )
+    step = m.load_sensors(registry)["arbitrary.future.id"]["steps"][0]
+    monkeypatch.delenv("TEST_ARBITRARY_APPLY", raising=False)
+    assert m._step_command(step) == "python3 scripts/arbitrary.py base"
+    monkeypatch.setenv("TEST_ARBITRARY_APPLY", "1")
+    assert m._step_command(step) == "python3 scripts/arbitrary.py base --apply 'two words'"
+
+    assert m.list_omega(registry) == 0
+    assert capsys.readouterr().out == "arbitrary.future.id\t0\tdet\tarbitrary parity\n"
+    calls = []
+    monkeypatch.setattr(m, "_run_command", lambda command, **kwargs: calls.append((command, kwargs)) or 0)
+    assert m.run_omega("arbitrary.future.id", 0, registry=registry) == 0
+    assert calls == [("python3 scripts/arbitrary.py check", {"timeout": 7, "quiet": False})]
+
+
+def test_command_timeout_kills_the_bounded_process_group():
+    m = _mod()
+    command = f"{sys.executable} -c 'import time; time.sleep(5)'"
+    assert m._run_command(command, timeout=1, quiet=True) == 124

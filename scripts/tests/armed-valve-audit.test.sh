@@ -80,3 +80,30 @@ env -u VALVEFIX_TEST_VALVE python3 "$audit" --check --contract --offline --gate-
   || { echo "FAIL: complete registry failed contract mode (SILENT-OFF must not trip --contract)" >&2; exit 1; }
 
 echo "armed-valve-audit.test: contract cases pass"
+
+echo "case 7: arbitrary sensor id classifies its conditional valve from sensors.yaml"
+cat > "$work/sensors.yaml" <<'YAML'
+sensors:
+  arbitrary.future.id:
+    section: heartbeat
+    title: arbitrary future sensor
+    source: [heartbeat]
+    steps:
+      - command: "python3 scripts/arbitrary.py"
+        args_when:
+          - env: VALVEFIX_TEST_NEWGATE
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: skipped
+YAML
+out="$(env -u VALVEFIX_TEST_VALVE python3 "$audit" --check --contract --offline --gate-prefix VALVEFIX_ \
+  --registry "$work/registry.json" --sensors "$work/sensors.yaml" --sources "$work/beat.sh" \
+  --env-file "$work/env-armed" --levers "$work/levers-empty.json" --stamp "$work/stamp.json")" \
+  || { echo "FAIL: registry-declared safety valve failed contract mode" >&2; exit 1; }
+grep -q "SAFE-OFF.*VALVEFIX_TEST_NEWGATE" <<<"$out" \
+  || { echo "FAIL: sensor capability did not classify renamed valve: $out" >&2; exit 1; }
+
+echo "armed-valve-audit.test: sensor capability cases pass"

@@ -1834,25 +1834,25 @@ parameters:
     env: LIMEN_BEAT_GITVS
     self_update: none
     owner: gitvs
-    note: "Cadence (every N beats) of the GITVS custodian voice C_GITVS in heartbeat-loop.sh — the hygiene tier (network-touching janitor; must not contend with the tight drain cadence)."
+    note: "Cadence (every N beats) of the GitHub estate sensor declared in sensors.yaml. The generic scheduled runner resolves this environment override; heartbeat-loop.sh contains no sensor-specific cadence constant."
   LIMEN_GITVS:
     default: 1
     env: LIMEN_GITVS
     self_update: none
     owner: gitvs
-    note: "Master on/off for the GITVS reconcile voice. 1 (default) runs the DRY reconcile report each cadence (observable-before-autonomous); 0 disables the voice. Mutation is a SEPARATE gate (LIMEN_GITVS_APPLY)."
+    note: "Master on/off for the registry-declared GitHub estate reconciliation sensor. When the derive canary is armed, 1 runs the DRY report on its declared cadence and 0 disables it. Mutation remains a separate registry-classified gate (LIMEN_GITVS_APPLY)."
   LIMEN_GITVS_APPLY:
     default: 0
     env: LIMEN_GITVS_APPLY
     self_update: none
     owner: gitvs
-    note: "Arms the GITVS reconcile effector: 0 (default) reports the plan only; 1 invokes the delegate/reap organs with --apply. Ships DARK — even armed, each reap keeps its OWN dark-arming (e.g. LIMEN_REMOTE_REAP_APPLY), and setup-rulesets is never auto-run (his-hand #257)."
+    note: "Arms the GITVS reconcile effector: 0 (default) reports the plan only; 1 invokes each reachable delegate/reap adapter using the exact argv declared in estate.yaml. Ships DARK — adapters may retain their own dark-arming, and any adapter with a registry-declared approval lever remains human-gated."
   LIMEN_GITVS_TIMEOUT:
     default: 120
     env: LIMEN_GITVS_TIMEOUT
     self_update: none
     owner: gitvs
-    note: "Per-run timeout (seconds) for the GITVS reconcile voice and for each delegate/reap organ it dispatches (scripts/gitvs.py::_run_effector). Fail-open: a delegate that overruns is killed and the loop continues."
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for GitHub estate reconciliation and by each delegate/reap adapter it dispatches. The runner kills the full command group on overrun and the beat continues fail-open."
   LIMEN_MARKETPLACE_APPLY:
     default: 0
     env: LIMEN_MARKETPLACE_APPLY
@@ -2015,7 +2015,7 @@ parameters:
     env: LIMEN_BEAT_DERIVE
     self_update: none
     owner: governance
-    note: "Mode gate for the beat's continuous-runtime sensor loop (the IF-SENSOR-REGISTRY ideal form). When 1 (default) metabolize.sh DERIVES the whole loop from institutio/governance/sensors.yaml via one call to scripts/beat-sensors.py --run --source metabolize — adding a sensor is one registry entry, not a shell edit in three places. The 20 hand-wired `── 0x ──` blocks were deleted once the derive path was proven byte-equivalent (23-script equivalence test + an observed real-sensor run). 0 skips the sensor pass entirely — an escape hatch, NOT a fallback to hand-wired blocks (they no longer exist). Parity held by scripts/check-sensors.py (its D-check accepts the derive-runner call in place of the literal gate strings)."
+    note: "The continuous metabolize sensor loop is registry-derived and default-on after #935; the deleted hand-wired blocks are not a fallback, so 0 skips that pass as an escape hatch. The same generic runner now owns scheduled heartbeat cadence, timeout, conditional argv, voice stamps, Omega eligibility, and armed-valve metadata from sensors.yaml. Keep the integration drain in place until the bounded scheduled canary is receipted."
 
   LIMEN_MAIN_GREEN_CHECK:
     default: "1"               # ON — detect a RED main trunk each beat (§0g3)
@@ -2222,6 +2222,30 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Master gate for the dispatch admission check (cli/src/limen/dispatch.py): before a task is dispatched, admission requires fresh evidence that dispatching produces value (handoff recency + session-value review + a sourced next_action). 1=enforce; 0=admit everything (prior behavior). Verified by scripts/check-dispatch-admission.py."
+  LIMEN_OPENCODE_MODEL:
+    default: ""
+    env: LIMEN_OPENCODE_MODEL
+    self_update: none
+    owner: dispatch
+    note: "Optional operator override. It is usable only when the exact value is present and code-capable in the current `opencode models --verbose` catalog; blank derives from live capabilities."
+  LIMEN_OPENCODE_CATALOG_TIMEOUT:
+    default: 30
+    env: LIMEN_OPENCODE_CATALOG_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Seconds allowed for live OpenCode capability discovery before the affected task records failed_blocked. No named fallback is synthesized."
+  LIMEN_WARP_MODEL_OVERRIDE:
+    default: ""
+    env: LIMEN_WARP_MODEL_OVERRIDE
+    self_update: none
+    owner: dispatch
+    note: "Optional Warp model override. Blank delegates to Warp Auto; nonblank must appear in the current `oz model list --output-format json` catalog before dispatch."
+  LIMEN_WARP_CATALOG_TIMEOUT:
+    default: 30
+    env: LIMEN_WARP_CATALOG_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Seconds allowed to validate an explicit Warp override against the current Oz catalog. Normal provider-Auto dispatch does not need catalog enumeration."
   LIMEN_REQUIRE_HANDOFF:
     default: "1"               # ON — admission requires a fresh handoff relay record
     env: LIMEN_REQUIRE_HANDOFF

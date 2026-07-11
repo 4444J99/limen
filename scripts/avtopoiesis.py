@@ -45,7 +45,7 @@ def _load(path):
 
 
 def discover_doors(canon):
-    """The living door-list — every heartbeat beat is a door. Read from the heartbeat, never a roster."""
+    """The living door-list — shell beats plus scheduled registry sensors, never a roster."""
     disc = canon.get("discovery") or {}
     loop = ROOT / disc.get("source", "scripts/heartbeat-loop.sh")
     text = loop.read_text() if loop.exists() else ""
@@ -61,15 +61,55 @@ def discover_doors(canon):
         if "%s" in gate_tmpl:
             dormant = bool(re.search(gate_tmpl % name, text))
         doors[key] = {"key": key, "name": name, "cadence": int(cadence), "role": role, "dormant": dormant}
+    if re.search(r"beat-sensors\.py[^\n]*--source\s+heartbeat[^\n]*--scheduled-only", text):
+        sensors_path = ROOT / "institutio" / "governance" / "sensors.yaml"
+        try:
+            sensors = (_load(sensors_path).get("sensors") or {}) if yaml is not None else {}
+        except OSError:
+            sensors = {}
+        derive_match = re.search(r"LIMEN_BEAT_DERIVE:-(\d+)", text)
+        derive_default = derive_match.group(1) if derive_match else "0"
+        derive_live = os.environ.get("LIMEN_BEAT_DERIVE", derive_default) == "1"
+        for sensor_id, sensor in sensors.items():
+            if sensor_id in doors or "heartbeat" not in (sensor.get("source") or []):
+                continue
+            cadence_spec = sensor.get("cadence")
+            if cadence_spec is None:
+                continue
+            if isinstance(cadence_spec, dict):
+                cadence_value = os.environ.get(str(cadence_spec.get("env") or ""), str(cadence_spec.get("default", "")))
+                cadence_default = cadence_spec.get("default")
+            else:
+                cadence_value = cadence_spec
+                cadence_default = cadence_spec
+            try:
+                cadence = int(cadence_value)
+            except (TypeError, ValueError):
+                try:
+                    cadence = int(cadence_default)
+                except (TypeError, ValueError):
+                    continue
+            if cadence <= 0:
+                continue
+            gate_default = str(sensor.get("default", "1"))
+            doors[sensor_id] = {
+                "key": sensor_id,
+                "name": sensor_id.upper().replace("-", "_").replace(".", "_"),
+                "cadence": cadence,
+                "role": str(sensor.get("title") or f"{sensor_id} sensor"),
+                "dormant": (not derive_live) or bool(sensor.get("gate") and gate_default == "0"),
+                "registry_sensor": True,
+            }
     return list(doors.values())
 
 
 def _script_path_refs(text):
     refs = []
-    for rel in re.findall(r"\$LIMEN_ROOT/scripts/([^\"'\s;)]+)", text):
-        path = (ROOT / "scripts" / rel).resolve()
+    scripts_root = ROOT / "scripts"
+    for rel in re.findall(r"(?:\$LIMEN_ROOT/)?scripts/([^\"'\s;)]+)", text):
+        path = (scripts_root / rel).resolve()
         try:
-            path.relative_to(SCRIPTS.resolve())
+            path.relative_to(scripts_root.resolve())
         except ValueError:
             continue
         if path.exists() and path.is_file():
@@ -115,11 +155,27 @@ def _heartbeat_scripts_for(key):
     return hits
 
 
+def _sensor_scripts_for(key):
+    """Resolve an arbitrary scheduled sensor id to its declared implementation."""
+    try:
+        sensors = _load(ROOT / "institutio" / "governance" / "sensors.yaml").get("sensors") or {}
+    except OSError:
+        return []
+    sensor = sensors.get(key)
+    if not isinstance(sensor, dict):
+        return []
+    hits = []
+    for step in sensor.get("steps") or []:
+        hits.extend(_script_path_refs(str(step.get("command") or "")))
+    return hits
+
+
 def _door_scripts(key):
     """The implementing script(s) for a door — resolved from heartbeat, then by name fallback."""
     variants = {key, key.replace("_", "-"), key.replace("_", "")}
-    hits = _heartbeat_scripts_for(key)
-    for p in sorted(SCRIPTS.glob("*.py")) + sorted(SCRIPTS.glob("*.sh")):
+    hits = _heartbeat_scripts_for(key) + _sensor_scripts_for(key)
+    scripts_root = ROOT / "scripts"
+    for p in sorted(scripts_root.glob("*.py")) + sorted(scripts_root.glob("*.sh")):
         stem = p.stem.lower()
         if stem in variants or any(v and (stem.startswith(f"{v}-") or stem.startswith(f"{v}_")) for v in variants):
             hits.append(p)
@@ -399,10 +455,7 @@ def _evidence_summary(row, tense):
     if tense == "present":
         return f"{evidence.get('source', 'unknown')}:{evidence.get('reason', 'unknown')}"
     if tense == "future":
-        return (
-            f"{evidence.get('open_levers', 0)} open his-hand levers "
-            f"from {evidence.get('source', 'unknown')}"
-        )
+        return f"{evidence.get('open_levers', 0)} open his-hand levers from {evidence.get('source', 'unknown')}"
     return str(evidence.get("reason") or "unknown")
 
 

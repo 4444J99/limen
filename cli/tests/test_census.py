@@ -86,20 +86,26 @@ def test_census_projections_match_the_historical_values():
 def test_vendor_tiering_is_derived():
     """Per-vendor model-choice ownership is a projection of Vendor.tiering (Increment-1).
 
-    Only claude routes through model_selection.py; codex/opencode own an ad-hoc dispatch model
-    picker; every other lane defers (`none`). The value set is a closed sentinel set so a typo or a
-    stray new tier can't slip in unguarded.
+    Claude routes through its tier authority; OpenCode uses live capability selection; Warp/Oz
+    delegate underlying model choice to provider Auto. The closed set catches unowned strategies.
     """
     t = census.tiering()
     assert t["claude"] == "model_selection"
-    assert t["codex"] == "dispatch_adhoc"
-    assert t["opencode"] == "dispatch_adhoc"
-    for name in ("agy", "gemini", "ollama", "jules", "copilot", "warp", "oz", "github_actions"):
+    assert t["codex"] == "provider_auto"
+    assert t["opencode"] == "provider_selection"
+    assert t["warp"] == "provider_auto"
+    assert t["oz"] == "provider_auto"
+    for name in ("agy", "gemini", "ollama", "jules", "copilot", "github_actions"):
         assert t[name] == "none", f"{name} should not own a model-choice layer"
     # every vendor is projected, exactly once.
     assert set(t) == set(census.paid_agent_order())
     # closed sentinel set — no unmodeled tier value may leak in.
-    assert set(t.values()) == {"model_selection", "dispatch_adhoc", "none"}
+    assert set(t.values()) == {
+        "model_selection",
+        "provider_selection",
+        "provider_auto",
+        "none",
+    }
 
 
 def test_capacity_canonical_agent_still_resolves_aliases():

@@ -145,15 +145,20 @@ else
   rung "credential-wall (secrets homed)" live python3 "$ROOT/scripts/credential-wall.py" --check
 fi
 
-# 12. gitvs — the GitHub estate matches policy. The deterministic registry + wiring-integrity parity
-#     (also a per-PR gate: no active resource type may declare governance it cannot enact) plus the
-#     live per-repo posture (App install / branch protection / rate-limit; SKIP offline, never faked).
-rung "gitvs estate parity" det python3 "$ROOT/scripts/gitvs.py" doctor --offline --parity-only
-if [[ "$OFFLINE" == "1" ]]; then
-  skip_rung "gitvs estate posture" live "--offline (live App/protection/rate-limit posture needs gh)"
+# 12+. Registry-declared fixed-point checks. Sensor ids and commands remain inside sensors.yaml;
+#      omega consumes only generic {id,index,tier,label} metadata and therefore needs no edit when a
+#      sensor is added or renamed. ``rung`` owns offline handling, so every live check remains an
+#      explicit SKIP rather than a fake pass.
+SENSOR_OMEGA_ROWS="$(mktemp "${TMPDIR:-/tmp}/limen-omega-sensors.XXXXXX")"
+if python3 "$ROOT/scripts/beat-sensors.py" --list-omega > "$SENSOR_OMEGA_ROWS"; then
+  while IFS=$'\t' read -r sensor_id check_index tier label; do
+    [[ -n "$sensor_id" ]] || continue
+    rung "$label" "$tier" python3 "$ROOT/scripts/beat-sensors.py" --run-omega "$sensor_id" "$check_index"
+  done < "$SENSOR_OMEGA_ROWS"
 else
-  rung "gitvs estate posture" live python3 "$ROOT/scripts/gitvs.py" doctor
+  rung "sensor registry fixed-point discovery" det false
 fi
+rm -f "$SENSOR_OMEGA_ROWS"
 
 # ── verdict ──────────────────────────────────────────────────────────────────
 echo

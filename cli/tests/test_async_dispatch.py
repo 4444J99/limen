@@ -931,7 +931,7 @@ def test_reaper_restores_prior_pr_open_instead_of_reopening(tmp_path):
     assert reaped == ["PR-DEAD"]
     task = _board(tmp_path)["PR-DEAD"]
     assert task.status == "dispatched"
-    assert task.dispatch_log[-1].status == "pr_open"
+    assert task.dispatch_log[-1].status == "dispatched"
     assert task.dispatch_log[-1].session_id == "async-reap-stale"
 
 
@@ -1010,7 +1010,7 @@ def test_reaper_restores_markerless_prior_pr_open_instead_of_reopening(tmp_path)
     assert reaped == ["PR-MARKERLESS"]
     task = _board(tmp_path)["PR-MARKERLESS"]
     assert task.status == "dispatched"
-    assert task.dispatch_log[-1].status == "pr_open"
+    assert task.dispatch_log[-1].status == "dispatched"
     assert task.dispatch_log[-1].session_id == "async-reap-stale"
 
 

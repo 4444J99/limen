@@ -49,6 +49,21 @@ def test_enumerate_want_url_false_returns_pairs():
     assert got == [("organvm/alpha", 2), ("organvm/mid", 5), ("organvm/zeta", 9)]
 
 
+def test_enumerate_author_scope_is_optional_for_estate_census():
+    m = _load()
+    calls = []
+
+    def capture(argv):
+        calls.append(argv)
+        return _R("[]")
+
+    m.enumerate_open_prs(["organvm"], capture)
+    m.enumerate_open_prs(["organvm"], capture, author=None)
+
+    assert calls[0][calls[0].index("--author") + 1] == "@me"
+    assert "--author" not in calls[1]
+
+
 def test_enumerate_fails_open_on_gh_error():
     m = _load()
     assert m.enumerate_open_prs(["organvm"], lambda a, timeout=60: _R("", rc=1)) == []

@@ -16,8 +16,8 @@ the credential wall), or REAP through a native mutator behind the reclaim-worktr
 
 THE WIRING-INTEGRITY LAW (sensor-without-effector = defect; #881/#883): `doctor --parity-only` (the
 deterministic class-H rung, a PR gate) fails if a `status: active` resource type lacks a wired observe +
-effector + identity, if a declared effector script does not exist, or if a class `required_checks` names a
-job no .github/workflows file defines. GITVS cannot declare governance it can't enact.
+effector + identity, if a declared adapter command path does not exist, or if a class `required_checks`
+names a job no .github/workflows file defines. GITVS cannot declare governance it can't enact.
 
 Offline / no-gh is FAIL-OPEN (the sibling-organ contract): the git-derivable rungs (parity, local-branch
 hygiene, secret homing) still run; the live gh rungs (repo/PR/protection/App/rate-limit) report SKIP,
@@ -31,12 +31,14 @@ by lever id, not counted as a failure and never recited as a token.
 
 Env: LIMEN_ROOT, LIMEN_OFFLINE, LIMEN_GITVS_OWNERS (owners to enumerate; default derived from the remote).
 """
+
 from __future__ import annotations
 
 import argparse
 import fnmatch
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -47,8 +49,6 @@ import yaml
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
-
-from _pr_scan import enumerate_open_prs  # noqa: E402  (shared, dependency-injected, fail-open)
 
 # ROOT is the script's OWN tree (never LIMEN_ROOT) — a registry-drift predicate must validate the tree
 # it lives in, so the parity gate checks THIS checkout's estate.yaml in a worktree/CI, not wherever an
@@ -63,11 +63,19 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 REQUIRED_RESOURCE_FIELDS = ("identity", "desired", "observe", "effector", "status", "owner", "note")
 VALID_STATUS = {"active", "envisioned"}
 REQUIRED_CLASS_FIELDS = ("match", "visibility", "branch_protection", "required_checks", "owner", "note")
-REQUIRED_INTEGRATION_FIELDS = ("category", "app_slug", "config_file", "install_scope", "effector", "status", "owner", "note")
+REQUIRED_INTEGRATION_FIELDS = (
+    "category",
+    "app_slug",
+    "config_file",
+    "install_scope",
+    "effector",
+    "status",
+    "owner",
+    "note",
+)
 # The effector's three total sinks — the closure that makes the form complete.
 EFFECTOR_KINDS = {"delegate", "file-atom", "reap"}
-# Literal effector tokens that carry no script/lever (a human-obvious manual act).
-EFFECTOR_LITERALS = {"manual"}
+EFFECTOR_KINDS_WITH_COMMAND = {"delegate", "reap"}
 
 LEDGER_SCHEMA = "limen.github_estate.v1"
 
@@ -80,7 +88,9 @@ def _token() -> str | None:
     try:
         r = subprocess.run(
             ["bash", str(ROOT / "scripts" / "gh-app-token.sh")],
-            capture_output=True, text=True, timeout=45,
+            capture_output=True,
+            text=True,
+            timeout=45,
         )
     except Exception:
         return None
@@ -121,7 +131,9 @@ def _token_path() -> str:
     try:
         r = subprocess.run(
             ["bash", str(ROOT / "scripts" / "gh-app-token.sh"), "--which"],
-            capture_output=True, text=True, timeout=20,
+            capture_output=True,
+            text=True,
+            timeout=20,
         )
         return (r.stdout or "").strip().split()[0] if r.returncode == 0 and r.stdout.strip() else "none"
     except Exception:
@@ -145,7 +157,7 @@ def owners(estate: dict) -> list[str]:
         return listed
     derived: list[str] = []
     for cls in (estate.get("classes") or {}).values():
-        for m in (cls.get("match") or []):
+        for m in cls.get("match") or []:
             owner = str(m).split("/", 1)[0]
             if owner and owner not in ("*", "**") and owner not in derived:
                 derived.append(owner)
@@ -155,7 +167,7 @@ def owners(estate: dict) -> list[str]:
 def classify_repo(repo: str, estate: dict) -> str | None:
     """First-match-wins bucket of an owner/repo into a class name (most-specific class first in the file)."""
     for name, cls in (estate.get("classes") or {}).items():
-        for glob in (cls.get("match") or []):
+        for glob in cls.get("match") or []:
             if fnmatch.fnmatch(repo, glob):
                 return name
     return None
@@ -168,6 +180,7 @@ def _local_branch_reasons() -> dict[str, int]:
     session-lifecycle-pressure.py::remote_missing_counts() was missing (subsumed once the ratchet arms)."""
     try:
         import importlib.util
+
         spec = importlib.util.spec_from_file_location("reap_branches", str(SCRIPT_DIR / "reap-branches.py"))
         rb = importlib.util.module_from_spec(spec)
         sys.modules["reap_branches"] = rb  # register before exec so @dataclass introspection resolves (py3.14)
@@ -204,6 +217,51 @@ def _integration_observe(estate: dict, token: str | None, online: bool) -> dict:
                 slugs += [s.strip() for s in (r.stdout or "").splitlines() if s.strip()]
         out["installed_slugs"] = sorted(set(slugs))
     return out
+
+
+def _owner_open_pr_counts(owner: str, token: str | None) -> dict[str, int] | None:
+    """Return exact open-PR counts by repo through the paginated repository graph.
+
+    GitHub search is capped and an App token makes ``--author @me`` mean the App, so neither is an
+    estate census. Repository ``totalCount`` is exact and adding/removing repositories naturally
+    changes the result without a repo list or scan ceiling in Limen.
+    """
+
+    for root_kind in ("organization", "user"):
+        cursor: str | None = None
+        counts: dict[str, int] = {}
+        while True:
+            affiliation = ",ownerAffiliations:OWNER" if root_kind == "user" else ""
+            query = (
+                "query($login:String!,$cursor:String){"
+                f"{root_kind}(login:$login){{repositories(first:100,after:$cursor{affiliation}){{"
+                "nodes{nameWithOwner pullRequests(states:OPEN){totalCount}}"
+                "pageInfo{hasNextPage endCursor}}}}"
+            )
+            args = ["api", "graphql", "-f", f"query={query}", "-F", f"login={owner}"]
+            if cursor:
+                args.extend(["-F", f"cursor={cursor}"])
+            result = _gh(args, token, timeout=60)
+            if result.returncode != 0:
+                return None
+            try:
+                payload = json.loads(result.stdout or "{}")
+                owner_data = (payload.get("data") or {}).get(root_kind)
+                if owner_data is None:
+                    break
+                repositories = owner_data["repositories"]
+                for node in repositories.get("nodes") or []:
+                    repo = str(node["nameWithOwner"])
+                    counts[repo] = int((node.get("pullRequests") or {})["totalCount"])
+                page = repositories["pageInfo"]
+                if not page.get("hasNextPage"):
+                    return counts
+                cursor = str(page.get("endCursor") or "")
+                if not cursor:
+                    return None
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+                return None
+    return None
 
 
 def _org_app_estate(token: str | None, online: bool) -> dict:
@@ -243,10 +301,14 @@ def observe(estate: dict) -> dict:
     led: dict = {
         "schema": LEDGER_SCHEMA,
         "online": bool(online),
-        "app": {"installed": None, "slug": (estate.get("app") or {}).get("slug"),
-                "token_path": _token_path(), "installations": None},
+        "app": {
+            "installed": None,
+            "slug": (estate.get("app") or {}).get("slug"),
+            "token_path": _token_path(),
+            "installations": None,
+        },
         "repos": {"total": None, "by_class": {}},
-        "prs": {"open_total": 0, "by_repo": {}},
+        "prs": {"open_total": None, "by_repo": {}, "complete": False},
         "branches": {"conductor_by_reason": _local_branch_reasons()},
         "secrets": {"homed": None},
         "usage": {"rate_limit_headroom_pct": None},
@@ -254,12 +316,23 @@ def observe(estate: dict) -> dict:
 
     owner_list = owners(estate)
 
-    # PRs — reuse the shared enumerator (one cheap call, stable order, fail-open []).
-    prs = enumerate_open_prs(owner_list, lambda a: _gh(a, token), want_url=False) if online else []
-    by_repo: dict[str, int] = {}
-    for repo, _num in prs:
-        by_repo[repo] = by_repo.get(repo, 0) + 1
-    led["prs"] = {"open_total": len(prs), "by_repo": dict(sorted(by_repo.items()))}
+    # PRs — exact per-repository totalCount, paginated across the live owner graph. No search cap.
+    if online:
+        by_repo: dict[str, int] = {}
+        complete = True
+        for owner in owner_list:
+            counts = _owner_open_pr_counts(owner, token)
+            if counts is None:
+                complete = False
+                break
+            by_repo.update(counts)
+        if complete:
+            nonzero = {repo: count for repo, count in by_repo.items() if count}
+            led["prs"] = {
+                "open_total": sum(by_repo.values()),
+                "by_repo": dict(sorted(nonzero.items())),
+                "complete": True,
+            }
 
     # App installations (permissions posture; over-grant is class D).
     if online:
@@ -274,8 +347,21 @@ def observe(estate: dict) -> dict:
         total = 0
         by_class: dict[str, int] = {}
         for owner in owner_list:
-            r = _gh(["api", f"/users/{owner}/repos", "--paginate", "-X", "GET",
-                     "-F", "per_page=100", "--jq", ".[].full_name"], token, timeout=90)
+            r = _gh(
+                [
+                    "api",
+                    f"/users/{owner}/repos",
+                    "--paginate",
+                    "-X",
+                    "GET",
+                    "-F",
+                    "per_page=100",
+                    "--jq",
+                    ".[].full_name",
+                ],
+                token,
+                timeout=90,
+            )
             names = [ln.strip() for ln in (r.stdout or "").splitlines() if ln.strip()] if r.returncode == 0 else []
             for full in names:
                 total += 1
@@ -313,8 +399,17 @@ def write_ledger(led: dict) -> None:
         LEDGER.parent.mkdir(parents=True, exist_ok=True)
         LEDGER.write_text(json.dumps(led, indent=2, sort_keys=True) + "\n")
         STAMP.parent.mkdir(parents=True, exist_ok=True)
-        STAMP.write_text(json.dumps({"online": led.get("online"), "prs": led["prs"]["open_total"],
-                                     "app_installed": led["app"]["installed"]}, sort_keys=True) + "\n")
+        STAMP.write_text(
+            json.dumps(
+                {
+                    "online": led.get("online"),
+                    "prs": led["prs"]["open_total"],
+                    "app_installed": led["app"]["installed"],
+                },
+                sort_keys=True,
+            )
+            + "\n"
+        )
     except Exception as e:  # observability must never break the beat
         print(f"[gitvs] note: ledger/stamp write skipped ({str(e)[:80]})")
 
@@ -345,27 +440,45 @@ def _workflow_job_ids() -> set[str]:
             continue
         if isinstance(wf.get("name"), str):
             ids.add(wf["name"])
-        for job in (wf.get("jobs") or {}):
+        for job in wf.get("jobs") or {}:
             ids.add(str(job))
     return ids
 
 
-def _effector_defects(rt_name: str, effector: str) -> list[str]:
-    """A declared effector must resolve to the three total sinks, and any delegate/reap script must EXIST."""
+def _effector_defects(rt_name: str, effectors: object, *, require_reachable: bool) -> list[str]:
+    """Validate the data-declared adapter, command, and activation policy for each effector."""
     defects: list[str] = []
-    for tok in [t.strip() for t in str(effector).split("|") if t.strip()]:
-        if tok in EFFECTOR_LITERALS:
+    if not isinstance(effectors, list):
+        return [f"resource '{rt_name}': effector must be a list of mappings"]
+    for index, effector in enumerate(effectors):
+        where = f"resource '{rt_name}' effector[{index}]"
+        if not isinstance(effector, dict):
+            defects.append(f"{where}: must be a mapping")
             continue
-        if ":" not in tok:
-            defects.append(f"resource '{rt_name}': effector token '{tok}' is not <sink>:<target> or a literal")
+        kind = str(effector.get("kind") or "").strip()
+        if kind == "manual":
             continue
-        kind, target = tok.split(":", 1)
         if kind not in EFFECTOR_KINDS:
-            defects.append(f"resource '{rt_name}': effector kind '{kind}' not one of {sorted(EFFECTOR_KINDS)}")
+            defects.append(f"{where}: kind '{kind}' not one of {sorted(EFFECTOR_KINDS | {'manual'})}")
             continue
-        if kind in ("delegate", "reap"):
-            if not (ROOT / target.strip()).exists():
-                defects.append(f"resource '{rt_name}': {kind} effector script '{target.strip()}' does not exist")
+        if kind == "file-atom":
+            if not str(effector.get("target") or "").strip():
+                defects.append(f"{where}: file-atom requires target")
+            continue
+
+        argv = effector.get("argv")
+        if not isinstance(argv, list) or not argv or not all(isinstance(arg, str) and arg for arg in argv):
+            defects.append(f"{where}: {kind} requires a non-empty string argv list")
+            continue
+        if require_reachable:
+            for arg in argv[1:]:
+                candidate = ROOT / arg
+                if arg.startswith("scripts/") and not candidate.exists():
+                    defects.append(f"{where}: command path '{arg}' does not exist")
+        approval = effector.get("approval")
+        if approval is not None:
+            if not isinstance(approval, dict) or not str(approval.get("lever") or "").strip():
+                defects.append(f"{where}: approval must name a lever")
     return defects
 
 
@@ -391,12 +504,19 @@ def parity(estate: dict) -> list[str]:
         status = rt.get("status")
         if status not in VALID_STATUS:
             fails.append(f"resource '{name}': status '{status}' not in {sorted(VALID_STATUS)}")
+        effectors = rt.get("effector")
+        fails.extend(_effector_defects(name, effectors, require_reachable=status == "active"))
         # THE WIRING-INTEGRITY LAW: an active type must be fully wired; its effector scripts must exist.
         if status == "active":
-            for field in ("identity", "observe", "effector"):
+            for field in ("identity", "observe"):
                 if not str(rt.get(field) or "").strip():
-                    fails.append(f"resource '{name}' is active but '{field}' is unwired (sensor-without-effector = defect)")
-            fails.extend(_effector_defects(name, rt.get("effector") or ""))
+                    fails.append(
+                        f"resource '{name}' is active but '{field}' is unwired (sensor-without-effector = defect)"
+                    )
+            if not effectors:
+                fails.append(
+                    f"resource '{name}' is active but 'effector' is unwired (sensor-without-effector = defect)"
+                )
 
     classes = estate.get("classes")
     if not isinstance(classes, dict) or not classes:
@@ -414,7 +534,7 @@ def parity(estate: dict) -> list[str]:
         if checks is not None and not isinstance(checks, list):
             fails.append(f"class '{name}': required_checks must be a list")
         elif job_ids:  # only assert names once we can read the workflow universe
-            for chk in (checks or []):
+            for chk in checks or []:
                 if chk not in job_ids:
                     fails.append(f"class '{name}': required_check '{chk}' names no .github/workflows job")
 
@@ -435,8 +555,16 @@ def parity(estate: dict) -> list[str]:
                 st = ig.get("status")
                 if st not in VALID_STATUS:
                     fails.append(f"integration '{iname}': status '{st}' not in {sorted(VALID_STATUS)}")
-                if st == "active":
-                    fails.extend(_effector_defects(iname, ig.get("effector") or ""))
+                effectors = ig.get("effector")
+                fails.extend(
+                    _effector_defects(
+                        f"integration/{iname}",
+                        effectors,
+                        require_reachable=st == "active",
+                    )
+                )
+                if st == "active" and not effectors:
+                    fails.append(f"integration '{iname}' is active but 'effector' is unwired")
 
     # owner/note discipline on budgets (parity with the gates.yaml/parameters.yaml rule).
     for bname, budget in (estate.get("budgets") or {}).items():
@@ -456,7 +584,7 @@ def _homed_levers() -> set[str]:
         return set()
     levers = data.get("levers", data) if isinstance(data, dict) else data
     out: set[str] = set()
-    for lv in (levers if isinstance(levers, list) else []):
+    for lv in levers if isinstance(levers, list) else []:
         if isinstance(lv, dict) and lv.get("id"):
             out.add(str(lv["id"]))
     return out
@@ -506,7 +634,8 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
     elif not installed:
         atom = (estate.get("human_atoms") or {}).get("app_creation", {}).get("lever", "L-LIMENBOT-INSTALL")
         (cites if atom in homed else fails).append(
-            f"[F app-installed] limen[bot] not installed → {atom}" + (" (owned, open)" if atom in homed else " (UNHOMED)")
+            f"[F app-installed] limen[bot] not installed → {atom}"
+            + (" (owned, open)" if atom in homed else " (UNHOMED)")
         )
 
     # E — rate-limit headroom.
@@ -527,13 +656,14 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
         slugs = set(integ.get("installed_slugs") or [])
         cfg = integ.get("config_present") or {}
         satisfied = sum(
-            1 for n, ig in (estate.get("integrations") or {}).items()
-            if ig.get("app_slug") in slugs or cfg.get(n)
+            1 for n, ig in (estate.get("integrations") or {}).items() if ig.get("app_slug") in slugs or cfg.get(n)
         )
         owed = integ["declared"] - satisfied
         if owed:
-            cites.append(f"[I integration-gap] {satisfied}/{integ['declared']} ecosystem integrations present; "
-                         f"{owed} owed (envisioned — detail in the census ledger; $0-labor harness pending §3 D2)")
+            cites.append(
+                f"[I integration-gap] {satisfied}/{integ['declared']} ecosystem integrations present; "
+                f"{owed} owed (envisioned — detail in the census ledger; $0-labor harness pending §3 D2)"
+            )
 
     # A/D/G are per-repo posture rungs — the census surfaces the inputs; the full per-301-repo
     # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.
@@ -553,16 +683,14 @@ def _verdict(fails: list[str], cites: list[str], skips: list[str], mode: str) ->
         for f in fails:
             print(f"   {f}")
         return 1
-    print(f"✓ gitvs doctor ({mode}): drift == ∅ over {len(skips)} skipped + all run rungs; "
-          f"{len(cites)} homed atom(s) cited.")
+    print(
+        f"✓ gitvs doctor ({mode}): drift == ∅ over {len(skips)} skipped + all run rungs; "
+        f"{len(cites)} homed atom(s) cited."
+    )
     return 0
 
 
 # ── the Effector: reconcile() — the third projection of the loop ────────────────────────────────
-# setup-rulesets.py is the ONE delegate GITVS must never auto-run: arming branch protection fleet-wide
-# is his-hand (#257 / L-BRANCH-PROTECTION), and blanket protection would block the machine board writes.
-# Its drift is CITED to the lever, never enacted by the beat. Everything else auto-runs dry-safe.
-HUMAN_GATED_DELEGATES = {"scripts/setup-rulesets.py"}
 
 
 def _lever_index() -> dict[str, dict]:
@@ -588,18 +716,35 @@ def _cite(target: str, levers: dict[str, dict]) -> str:
     return f"{target} (owned)" if lv else f"{target} (cited)"
 
 
-def _run_effector(script: str, *, apply: bool) -> str:
-    """Invoke a delegate/reap organ. Each keeps its OWN arming (merge-policy guardrail, the reapers'
-    double-dark, env-gated issue mirrors) — GITVS only passes the global --apply through, NEVER forces
-    more and NEVER adds a self-merge path. Timeout-bounded, fail-open (a delegate crash never breaks
-    the loop); returns the delegate's last line for the beat log."""
-    path = ROOT / script
-    if not path.exists():
-        return f"MISSING {script}"
-    argv = ["python3", str(path)] + (["--apply"] if apply else [])
+def _effector_label(effector: dict) -> str:
+    kind = str(effector.get("kind") or "unknown")
+    if kind == "file-atom":
+        return f"file-atom:{effector.get('target', '')}"
+    argv = effector.get("argv") or []
+    return f"{kind}:{shlex.join(argv)}" if isinstance(argv, list) else kind
+
+
+def _run_effector(effector: dict) -> str:
+    """Invoke the exact adapter command declared by the registry, if its executable is reachable."""
+    argv = effector.get("argv") or []
+    if not isinstance(argv, list) or not argv:
+        return "BLOCKED invalid argv"
+    executable = argv[0]
+    if os.path.sep in executable:
+        executable_path = Path(executable)
+        if not executable_path.is_absolute():
+            executable_path = ROOT / executable_path
+        available = executable_path.exists()
+    else:
+        available = shutil.which(executable) is not None
+    if not available:
+        return f"BLOCKED missing executable {executable}"
     try:
         r = subprocess.run(
-            argv, capture_output=True, text=True,
+            argv,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
             timeout=int(os.environ.get("LIMEN_GITVS_TIMEOUT", "120")),
         )
         tail = (r.stdout or r.stderr or "").strip().splitlines()
@@ -610,47 +755,61 @@ def _run_effector(script: str, *, apply: bool) -> str:
 
 def reconcile(estate: dict, *, apply: bool) -> int:
     """The Effector — a GENERIC dispatcher (the mapping is DATA in estate.yaml, never a table here).
-    Walk each `status: active` resource type and route its declared effector to one of the three total
-    sinks: delegate (an existing compliant organ), reap (a native mutator behind its own dark-arming),
-    file-atom (CITE a lever — never recite a value). DRY by default (report the plan, mutate nothing) —
-    the observable-before-autonomous contract; --apply invokes the delegate/reap organs, each of which
-    still self-gates. Always exit 0: reconcile is an advisory effector, not the predicate (doctor owns
-    the drift verdict), and it must be fail-open in the beat."""
-    rts = estate.get("resource_types") or {}
+    Walk every active registry owner (resource type or ecosystem integration) and route its structured
+    effectors. Executable adapter, argv, and any human approval lever live in estate.yaml, so a new tool
+    or policy is a data change, never a target-name exception in this engine. DRY by default (report the
+    plan, mutate nothing). Always exit 0: reconcile is advisory and must be fail-open in the beat."""
+    registries = (
+        ("resource", estate.get("resource_types") or {}),
+        ("integration", estate.get("integrations") or {}),
+    )
     levers = _lever_index()
-    acted: list[str] = []          # ran (apply) or planned (dry)
+    acted: list[str] = []  # ran (apply) or planned (dry)
     cited: list[str] = []
     skipped: list[str] = []
-    for name, rt in rts.items():
-        if not isinstance(rt, dict) or rt.get("status") != "active":
-            continue
-        for tok in [t.strip() for t in str(rt.get("effector") or "").split("|") if t.strip()]:
-            if tok in EFFECTOR_LITERALS:
-                skipped.append(f"{name}: {tok} (human-obvious manual act)")
+    declared = 0
+    for registry_name, entries in registries:
+        declared += len(entries) if isinstance(entries, dict) else 0
+        for name, spec in entries.items() if isinstance(entries, dict) else ():
+            owner = f"{registry_name}/{name}"
+            if not isinstance(spec, dict) or spec.get("status") != "active":
                 continue
-            if ":" not in tok:
-                skipped.append(f"{name}: malformed effector '{tok}'")
+            effectors = spec.get("effector") or []
+            if not isinstance(effectors, list):
+                skipped.append(f"{owner}: malformed effector registry")
                 continue
-            kind, target = tok.split(":", 1)
-            target = target.strip()
-            if kind == "file-atom":
-                cited.append(f"{name} → {_cite(target, levers)}")
-            elif kind in ("delegate", "reap"):
-                if kind == "delegate" and target in HUMAN_GATED_DELEGATES:
-                    skipped.append(f"{name}: {target} is his-hand (#257) — cited to its lever, never auto-run")
+            for effector in effectors:
+                if not isinstance(effector, dict):
+                    skipped.append(f"{owner}: malformed effector entry")
                     continue
-                if apply:
-                    acted.append(f"{name} {kind}:{target} → {_run_effector(target, apply=True)}")
+                kind = str(effector.get("kind") or "").strip()
+                if kind == "manual":
+                    skipped.append(f"{owner}: manual (human-obvious act)")
+                    continue
+                if kind == "file-atom":
+                    target = str(effector.get("target") or "").strip()
+                    cited.append(f"{owner} → {_cite(target, levers)}")
+                elif kind in EFFECTOR_KINDS_WITH_COMMAND:
+                    label = _effector_label(effector)
+                    approval = effector.get("approval")
+                    if isinstance(approval, dict):
+                        lever = str(approval.get("lever") or "").strip()
+                        skipped.append(f"{owner}: {label} gated by {_cite(lever, levers)}")
+                        continue
+                    if apply:
+                        acted.append(f"{owner} {label} → {_run_effector(effector)}")
+                    else:
+                        note = "  (reap: still needs its own dark-arming to delete)" if kind == "reap" else ""
+                        acted.append(f"WOULD {owner} {label}{note}")
                 else:
-                    note = "  (reap: still needs its own dark-arming to delete)" if kind == "reap" else ""
-                    acted.append(f"WOULD {kind}:{target} --apply{note}")
-            else:
-                skipped.append(f"{name}: unknown sink '{kind}'")
+                    skipped.append(f"{owner}: unknown sink '{kind}'")
 
     mode = "APPLY" if apply else "report (dry)"
-    print(f"[gitvs] reconcile ({mode}): {len(rts)} resource types → "
-          f"{len(acted)} effector(s) {'ran' if apply else 'planned'}, "
-          f"{len(cited)} file-atom(s) cited, {len(skipped)} skipped.")
+    print(
+        f"[gitvs] reconcile ({mode}): {declared} registry owners → "
+        f"{len(acted)} effector(s) {'ran' if apply else 'planned'}, "
+        f"{len(cited)} file-atom(s) cited, {len(skipped)} skipped."
+    )
     for line in acted:
         print(f"   {'✓' if apply else '·'} {line}")
     for c in cited:
@@ -670,8 +829,14 @@ def main(argv: list[str] | None = None) -> int:
     pd.add_argument("--parity-only", action="store_true", help="class H only (deterministic, the PR gate)")
     pd.add_argument("--offline", action="store_true", help="det + offline-safe rungs; live rungs → SKIP")
     prc = sub.add_parser("reconcile", help="drive drift → policy via the three effector sinks (the Effector)")
-    prc.add_argument("--apply", action="store_true", help="invoke the delegate/reap organs (each self-gates); default is a dry report")
-    prc.add_argument("--check", action="store_true", help="report-only alias (the metabolize sensor idiom); never mutates")
+    prc.add_argument(
+        "--apply",
+        action="store_true",
+        help="invoke the delegate/reap organs (each self-gates); default is a dry report",
+    )
+    prc.add_argument(
+        "--check", action="store_true", help="report-only alias (the metabolize sensor idiom); never mutates"
+    )
     args = ap.parse_args(argv)
 
     estate = load_estate()
@@ -680,9 +845,12 @@ def main(argv: list[str] | None = None) -> int:
         led = observe(estate)
         write_ledger(led)
         n = led["repos"]["total"]
-        print(f"[gitvs] census: online={led['online']} token={led['app']['token_path']} "
-              f"repos={n if n is not None else '—'} open_prs={led['prs']['open_total']} "
-              f"→ {LEDGER.relative_to(ROOT)}")
+        print(
+            f"[gitvs] census: online={led['online']} token={led['app']['token_path']} "
+            f"repos={n if n is not None else '—'} "
+            f"open_prs={led['prs']['open_total'] if led['prs']['open_total'] is not None else '—'} "
+            f"→ {LEDGER.relative_to(ROOT)}"
+        )
         if args.print:
             print(json.dumps(led, indent=2, sort_keys=True))
         return 0

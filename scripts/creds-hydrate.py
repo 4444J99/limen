@@ -126,13 +126,13 @@ DEFAULT_MAP: list[dict] = [
         "enabled": False,
     },
     {
-        # Parked — PHANTOM env var, retired 2026-06-25 (same investigation). opencode derives its model from
-        # `opencode models` (see dispatch._opencode_model): paid tier comes from `opencode auth login` writing
-        # opencode's OWN auth.json, else it falls back to a FREE coding model — it never reads OPENROUTER_API_KEY.
-        # No fleet code reads OPENROUTER_API_KEY (grep of cli/src: zero consumers), no opencode provider auth
-        # exists on this host, and op://Personal/OpenRouter API Key never resolved (only-ever-tried ref, always
-        # failed). The opencode lane runs on its free model regardless. Enable only if an OpenRouter key is
-        # minted AND opencode is configured to consume the env var.
+        # Parked — PHANTOM env var, retired 2026-06-25 (same investigation). OpenCode discovers its
+        # currently reachable capabilities from `opencode models --verbose`; an interactive
+        # `opencode auth login` may change that live catalog by writing OpenCode's own auth.json.
+        # Neither reachability nor pricing is inferred from a model name or a fixed free/paid ladder.
+        # No fleet code reads OPENROUTER_API_KEY (grep of cli/src: zero consumers), and the attempted
+        # 1Password reference never resolved. Enable only if OpenCode is deliberately configured to
+        # consume this environment variable; its own interactive authentication is a separate lever.
         "lane": "opencode (openrouter)",
         "ref": "op://Personal/OpenRouter API Key/credential",
         "env": ["OPENROUTER_API_KEY"],

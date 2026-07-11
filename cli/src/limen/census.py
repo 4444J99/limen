@@ -35,8 +35,8 @@ head or a chat):
             target, documented).
   * DONE (Increment-1) — per-vendor model choice is homed on ``Vendor.tiering`` and projected by
             :func:`tiering`; ``test_census`` drift-guards it against a closed sentinel set. Remaining
-            Increment-2: make ``dispatch._codex_model``/``_opencode_model`` (the non-Claude analogue of
-            ``model_selection``) CONSUME :func:`tiering` instead of hard-coding who owns each.
+            OpenCode consumes the provider-neutral live capability selector; Warp/Oz delegate the
+            changing underlying catalog to provider Auto.  Model names remain runtime outputs.
 """
 
 from __future__ import annotations
@@ -111,7 +111,7 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="chatgpt_oauth",  # ~/.codex/auth.json — no API key held
         cred_ref=None,
         meter="vendor_ratelimit",  # real rate_limits in ~/.codex/sessions/*.jsonl (5h + weekly)
-        tiering="dispatch_adhoc",  # _codex_model fails over to gpt-5.3-codex-spark under load
+        tiering="provider_auto",  # explicit override only; no built-in model-name fallback
         budget=Budget(
             100_000_000, "tokens", "5h rolling", "ESTIMATE - tune to plan (/status)", "estimate", "openai-plan"
         ),
@@ -140,12 +140,12 @@ VENDORS: tuple[Vendor, ...] = (
         kind="local-cli",
         local_checkout=True,
         issue_assignment=False,
-        auth_mode="opencode_auth",  # own auth.json / free model
+        auth_mode="opencode_auth",  # own auth.json may expand the live reachable catalog
         cred_ref=None,
         meter="dispatch_count",
-        tiering="dispatch_adhoc",  # _opencode_model
+        tiering="provider_selection",  # provider_selection.py + live `opencode models --verbose`
         budget=Budget(100, "runs", "today", "operator board cap until live vendor meter", "calibrated"),
-        status=Status(True, "live", "free+subscription (opencode Zen) lane; deploy/cloudflare specialty"),
+        status=Status(True, "live", "capabilities and pricing discovered from the live catalog"),
     ),
     Vendor(
         name="agy",
@@ -252,7 +252,7 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="warp_key",  # WARP_API_KEY
         cred_ref=None,
         meter="none",
-        tiering="none",
+        tiering="provider_auto",
         budget=Budget(None, "runs", "none", "not modeled (paid service)", "unmodeled"),
         status=Status(True, "live", "paid-service lane"),
     ),
@@ -266,7 +266,7 @@ VENDORS: tuple[Vendor, ...] = (
         auth_mode="warp_key",  # WARP_API_KEY family
         cred_ref=None,
         meter="none",
-        tiering="none",
+        tiering="provider_auto",
         budget=Budget(None, "runs", "none", "not modeled (paid service)", "unmodeled"),
         status=Status(True, "live", "paid-service lane"),
     ),
