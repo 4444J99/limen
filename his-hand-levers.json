@@ -5,6 +5,17 @@
   "wall": "Everything involving a token/secret/API/login/env-var has two GitHub homes - never a chat or this file's prose. (1) The INFORMATION lives in code at scripts/creds-hydrate.py DEFAULT_MAP (op:// provenance + env-var name + validity probe; values never in-repo, behind _scrub()). (2) The ACTIONS live as the `credential`-labelled issues, indexed by the PINNED Wall issue #320. Verify the whole estate: `python3 scripts/creds-hydrate.py --verify`. Credential-class levers (L-FLEET-CAPACITY #265, L-IANVA-LOCAL #262, L-IANVA-CLOUD #263) are all on the Wall; the mail-credential atoms are owned by the mail organ's own record (see _doc), not a lever here; gh self-heals via keyring-derive (#251, zero hand); cloudflare closed 2026-07-01 (false-negative probe fixed, wrangler wired headless). The MCP-connector consent lane (Lane B — the claude.ai '! Needs authentication' class) is now probed every beat by scripts/mcp-auth-verify.py, the sibling of creds-hydrate --verify: a lapsed connector surfaces in the beat log with its cure (L-IANVA-CLOUD), never recited in chat. Per Anthony 2026-06-25: credential/login/env atoms are NOT a his-hand chat burden - the info is registered in its code home and the work is pinned on GitHub, not recited at him.",
   "levers": [
     {
+      "id": "L-MAIL-AUTOMATION-GRANT",
+      "label": "Grant macOS Automation permission for the heartbeat to control Mail.app, then set LIMEN_MAIL_DRAFTS=1 — this turns the restored C_MAIL draft effector from enrich-only (draft text on the obligations face) into real, one-tap-ready Drafts in your mailbox.",
+      "owner": "yours",
+      "cost": "~1 min once, durable",
+      "gate": "macOS TCC Automation (GUI approval) + one env flag",
+      "unlocks": "autonomic per-beat draft creation for reply-owed mail (draft-only; never auto-sent)",
+      "source_task": "mail organ · C_MAIL draft effector (limen PR #958)",
+      "note": "System Settings -> Privacy & Security -> Automation -> allow the limen heartbeat (or osascript/Terminal) to control Mail. Or run `bash scripts/mail-beat.sh` once in Terminal and click Allow at the prompt, then recreate the pinned interpreter so the grant sticks: `python3 -m venv --copies ~/Workspace/limen/.venv`. Then set LIMEN_MAIL_DRAFTS=1 in the daemon env. Enrich-only works with no grant; this only unlocks real Drafts. Send stays draft-only regardless.",
+      "issue": 960
+    },
+    {
       "id": "L-CONTAINER-CUTOVER",
       "label": "One-container cutover: mount an external backup, run container/migrate.sh S4-S13, confirm symlinks + the COMPLETE marker. ASK-20 extends container/manifest.tsv to relocate ~/.claude, ~/.codex, ~/.gemini. Irreversible and backup-gated — the durability the whole organism stands on.",
       "owner": "yours",
@@ -487,7 +498,7 @@
       "cost": "~1 min, reversible (one env line)",
       "unlocks": "a daily brief with one measured activation experiment; the organ's whole loop goes live",
       "source_task": "GEN-observatory-organ",
-      "issue": null
+      "issue": 961
     }
   ]
 }
