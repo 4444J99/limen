@@ -11,8 +11,10 @@ is Completed, pulls its diff into `harvest/<TASK_ID>/result.txt` (and
 Idempotent and read-mostly: it only adds result files for completed sessions and
 never mutates repos (no `--apply`) or re-dispatches. Safe to run on a timer.
 """
+
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -23,8 +25,22 @@ LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "lime
 TASKS = Path(os.environ.get("LIMEN_TASKS", LIMEN_ROOT / "tasks.yaml"))
 HARVEST = Path.home() / "Workspace" / "session-meta" / "scheduler" / "jules" / "harvest"
 
-_STATUS_KW = ["completed", "failed", "planning", "awaiting", "paused",
-              "in progress", "running", "queued"]
+_STATUS_KW = ["completed", "failed", "planning", "awaiting", "paused", "in progress", "running", "queued"]
+
+
+def _jules(args: list[str], timeout: int = 90) -> subprocess.CompletedProcess:
+    """Run a `jules` command. Fails OPEN (returncode 1), never raises — mirrors gitvs.py:_gh.
+
+    The `jules` CLI is a local-machine tool absent on CI runners (and can vanish on a broken
+    install). A missing binary must degrade to a clean skip, not a FileNotFoundError that dumps a
+    traceback into the conductor report and masks the report's real signal (see the swallowed
+    ``|| { echo … }`` in scripts/conductor-report.sh)."""
+    if not shutil.which("jules"):
+        return subprocess.CompletedProcess(args, 1, "", "jules not found")
+    try:
+        return subprocess.run(["jules", *args], capture_output=True, text=True, timeout=timeout)
+    except Exception as e:  # fail open — a jules fault must never crash the harvest→close pipeline
+        return subprocess.CompletedProcess(args, 1, "", str(e))
 
 
 def dispatched_by_session() -> dict[str, str]:
@@ -53,21 +69,20 @@ def dispatched_jules_ids() -> set[str]:
     match target, since the recorded session_id is often 'cli' (jules-new stdout parse
     failed at dispatch). The jules session Description carries 'Complete task <ID>:'."""
     data = yaml.safe_load(TASKS.read_text()) or {}
-    return {t["id"] for t in data.get("tasks", [])
-            if t.get("target_agent") == "jules"
-            and t.get("status") in ("dispatched", "in_progress")}
+    return {
+        t["id"]
+        for t in data.get("tasks", [])
+        if t.get("target_agent") == "jules" and t.get("status") in ("dispatched", "in_progress")
+    }
 
 
 def jules_sessions() -> list[tuple[str, str, str]]:
     """Return (session_id, status, task_id), newest first. session_id from the numeric ID
     column (never truncated); task_id parsed from the Description ('Complete task <ID>:'),
     which is the reliable session→task key when the recorded session_id was lost."""
-    r = subprocess.run(
-        ["jules", "remote", "list", "--session"],
-        capture_output=True, text=True, timeout=90,
-    )
+    r = _jules(["remote", "list", "--session"], timeout=90)
     rows = []
-    for line in r.stdout.splitlines():
+    for line in r.stdout.splitlines():  # empty when jules is absent → no rows, clean skip
         parts = line.split()
         if not parts or not parts[0].isdigit():
             continue
@@ -81,8 +96,8 @@ def jules_sessions() -> list[tuple[str, str, str]]:
 
 def main() -> int:
     HARVEST.mkdir(parents=True, exist_ok=True)
-    by_sid = dispatched_by_session()        # numeric session_id -> task (when captured)
-    open_jules = dispatched_jules_ids()      # robust target set (by task id in description)
+    by_sid = dispatched_by_session()  # numeric session_id -> task (when captured)
+    open_jules = dispatched_jules_ids()  # robust target set (by task id in description)
     pulled, already, failed = [], [], []
     for sid, status, desc_tid in jules_sessions():
         # prefer the recorded numeric mapping; fall back to the description task id
@@ -94,10 +109,7 @@ def main() -> int:
         if result.exists() and diff.exists():
             already.append(tid)
             continue
-        pr = subprocess.run(
-            ["jules", "remote", "pull", "--session", sid],
-            capture_output=True, text=True, timeout=120,
-        )
+        pr = _jules(["remote", "pull", "--session", sid], timeout=120)
         if pr.returncode != 0 or not pr.stdout.strip():
             failed.append(f"{tid}({sid}): {pr.stderr.strip()[:100]}")
             continue
