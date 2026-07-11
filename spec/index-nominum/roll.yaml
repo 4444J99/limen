@@ -36,6 +36,7 @@ names:
   - {display: NOMENCLATOR,   domain: nomenclator,   register: classical, note: "nomenclator · the enforcer of this very roll — announces and holds every name to the canon"}
   - {display: INDEX NOMINVM, domain: index-nominvm, register: classical, note: "index nominum · the naming institution itself (spec/index-nominum); u→v"}
   - {display: IANVA,         domain: ianva,         register: classical, note: "ianua · the MCP doorway/aggregator (ianva/); j→i, u→v"}
+  - {display: BIFRONS,       domain: bifrons,       register: classical, note: "bifrons · Janus two-faced · the star↔contribution portal (alchemia + ontologia + organvm-engine); distinct from IANVA (the MCP doorway)"}
   - {display: ADVOCATA,      domain: advocata,      register: classical, note: "advocata · the law-firm OS (organvm/advocata)"}
   - {display: ARCA,          domain: arca,          register: classical, note: "arca · the encrypted private vault (organvm/arca, PR#720)"}
   - {display: LAVREA,        domain: lavrea,        register: classical, note: "laurea · the computed-laurels proof organ (4444J99/laurea, #645); u→v"}
