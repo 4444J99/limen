@@ -928,7 +928,7 @@ def _passing_evidence(
         return False
     try:
         return bool(
-            int(item.get("exit_code")) == 0
+            int(str(item.get("exit_code"))) == 0
             and _verified_artifact(
                 evidence_root=evidence_root,
                 ref=item.get("ref"),
@@ -1126,9 +1126,10 @@ def merge_cursor(current: dict[str, Any], proposed: dict[str, Any] | None) -> di
     if proposed is None:
         return dict(current)
     current_revision = int(current.get("revision") or 0)
-    proposed_base_revision = int(
-        proposed.get("base_revision") if proposed.get("base_revision") is not None else proposed.get("revision") or 0
-    )
+    raw_base_revision = proposed.get("base_revision")
+    if raw_base_revision is None:
+        raw_base_revision = proposed.get("revision") or 0
+    proposed_base_revision = int(str(raw_base_revision))
     proposed_base_digest = str(proposed.get("base_cursor_digest") or "")
     stale = bool(
         (proposed_base_digest and proposed_base_digest != cursor_digest(current))
@@ -1860,7 +1861,11 @@ def update_ledger(
             if existing_occurrence and not is_revision:
                 continue
             classification_digest = digest(event.get("atoms") or []) if is_revision else None
-            if is_revision and existing_occurrence.get("classification_digest") == classification_digest:
+            if (
+                is_revision
+                and existing_occurrence is not None
+                and existing_occurrence.get("classification_digest") == classification_digest
+            ):
                 continue
             atoms = atoms_from_event(occurrence, event, policy)
             preceding_operator_atoms: list[str] = []
