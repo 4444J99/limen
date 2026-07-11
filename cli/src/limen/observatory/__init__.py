@@ -15,10 +15,11 @@ Both faces write ONE append-only evidence store (``logs/observatory/*.jsonl``) a
 ONE daily experiment selector; the experiment is always emitted as a human-gated
 *proposal* (a lever + a task), never auto-applied to a public surface.
 
-This scaffold ships the spine (config, gh, ledger, executive, doctor); the analytical
-and reconcile modules are added by later build steps and picked up by the convener.
+The spine (config, gh, ledger, executive, doctor) plus the internal-legibility
+``reconcile`` effector ship here; the external-legibility analytical modules and the
+brief are added by later build steps and picked up by the convener.
 """
 
-from limen.observatory import config, gh, ledger, executive, doctor
+from limen.observatory import config, gh, ledger, executive, doctor, reconcile
 
-__all__ = ["config", "gh", "ledger", "executive", "doctor"]
+__all__ = ["config", "gh", "ledger", "executive", "doctor", "reconcile"]

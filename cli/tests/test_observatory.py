@@ -77,11 +77,14 @@ def test_write_latest_is_deterministic(obs_root):
 
 
 # ---------------------------------------------------------------- executive
-def test_run_beat_scaffold_stages_pending(obs_root):
-    # In the scaffold only the spine exists; the pipeline stages report 'pending', never crash.
+def test_run_beat_stages(obs_root):
+    # Unbuilt stages report 'pending' (never crash); the built reconcile stage runs fail-open.
     status = executive.run_beat(apply=False)
     labels = {s["stage"]: s["status"] for s in status["stages"]}
-    assert labels == {"collect": "pending", "analyze": "pending", "reconcile": "pending", "brief": "pending"}
+    assert labels["collect"] == "pending"
+    assert labels["analyze"] == "pending"
+    assert labels["brief"] == "pending"
+    assert labels["reconcile"] == "ok"  # built; sensor absent in tmp → fail-open ok
     assert status["apply"] is False
     # status.json + the stamp are written under the redirected data dir.
     assert (obs_root / "logs" / "observatory" / "status.json").exists()
@@ -121,4 +124,86 @@ def test_main_run_exits_zero(obs_root):
 
 
 def test_main_pending_stage_exits_zero(obs_root):
-    assert obs_main.main(["reconcile"]) == 0  # stage not built yet → clean, exit 0
+    assert obs_main.main(["collect"]) == 0  # stage not built yet → clean, exit 0
+
+
+# ---------------------------------------------------------------- reconcile (internal-legibility face)
+def _fixture_assessment():
+    """A VVLTVS-shaped assessment (real shape: mirror is {faces:[...]}, check value key is 'face',
+    agreement state is 'agree'): one drifted face, one advisory source-stale, one severed pipe."""
+    return {
+        "pipes": [
+            {"key": "system-vars", "state": "severed", "detail": "build_vars step dropped 2026-05-22"},
+            {"key": "links", "state": "live", "detail": "flowing"},
+        ],
+        "mirror": {
+            "faces": [
+                {
+                    "face": "profile-bio",
+                    "present": True,
+                    "checks": [
+                        {"metric": "repos", "state": "drift", "face": "148", "src": 171, "source": "ssot"},
+                        {"metric": "words", "state": "agree", "face": "988K+", "src": "988K+", "source": "ssot"},
+                    ],
+                },
+                {
+                    "face": "portfolio-vitals",
+                    "present": True,
+                    "checks": [
+                        {
+                            "metric": "test_files",
+                            "state": "source-stale",
+                            "face": "2443",
+                            "src": "?",
+                            "source": "code-substance",
+                        },
+                    ],
+                },
+            ]
+        },
+    }
+
+
+def test_gaps_derives_drift_and_severed(obs_root):
+    from limen.observatory import reconcile
+
+    found = reconcile.gaps(_fixture_assessment())
+    kinds = sorted((g["kind"], g.get("face") or g.get("register")) for g in found)
+    assert ("claim_drift", "portfolio-vitals") in kinds  # advisory source-stale surfaced
+    assert ("claim_drift", "profile-bio") in kinds  # hard drift surfaced
+    assert ("severed_pipe", "system-vars") in kinds  # root-cause conduit surfaced
+    # the ok metric and the live pipe are NOT gaps
+    assert not any(g.get("metric") == "words" for g in found)
+
+
+def test_run_reconcile_writes_report_and_is_read_only(obs_root, monkeypatch):
+    from limen.observatory import reconcile
+
+    monkeypatch.setattr(reconcile, "assess", _fixture_assessment)
+    monkeypatch.setattr(reconcile, "plan_text", lambda: "revive system-vars conduit")
+    summary = reconcile.run(apply=False)
+    assert summary["sensor"] == "vvltvs"
+    assert summary["hard_gaps"] == 2  # profile-bio drift + severed pipe (advisory source-stale excluded)
+    assert summary["coherent"] is False
+    # evidence + latest written under logs/observatory/, nothing public touched
+    d = obs_root / "logs" / "observatory"
+    assert (d / "reconcile.jsonl").exists() and (d / "reconcile-latest.json").exists()
+    latest = json.loads((d / "reconcile-latest.json").read_text())
+    assert latest["gap_count"] == 3 and latest["plan"] == "revive system-vars conduit"
+
+
+def test_reconcile_fail_open_when_sensor_absent(obs_root):
+    # obs_root has no scripts/vvltvs-organ.py → assess() None → advisory, never crashes.
+    from limen.observatory import reconcile
+
+    summary = reconcile.run(apply=False)
+    assert summary["sensor"] == "unavailable" and summary["gap_count"] == 0
+    assert (obs_root / "logs" / "observatory" / "reconcile-latest.json").exists()
+
+
+def test_run_beat_picks_up_reconcile(obs_root):
+    # The convener now resolves the reconcile stage (sensor absent in tmp → ok/advisory, not pending).
+    status = executive.run_beat()
+    stages = {s["stage"]: s["status"] for s in status["stages"]}
+    assert stages["reconcile"] == "ok"  # built + ran (fail-open)
+    assert stages["collect"] == "pending"  # still unbuilt
