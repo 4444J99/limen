@@ -67,6 +67,7 @@ assert all({"rung", "tier", "status"} <= set(r) for r in d["rungs"]), "rung shap
 live = [r for r in d["rungs"] if r["tier"] == "live"]
 assert live and all(r["status"] == "SKIP" for r in live), [r["status"] for r in live]
 rows = {r["rung"]: r for r in d["rungs"]}
+assert rows["ask-lineage convergence"]["status"] == "SKIP", rows
 assert rows["arbitrary registry parity"]["status"] == "PASS", rows
 assert rows["arbitrary registry posture"]["status"] == "SKIP", rows
 print("  case1 stamp OK")

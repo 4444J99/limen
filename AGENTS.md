@@ -83,6 +83,37 @@ human gates: irreversible deletion of personal data, credential or account actio
 public identity claims, legal/medical/financial commitments, or product/values decisions that cannot
 be derived from existing doctrine.
 
+## Prompt Corpus as the Control Plane
+
+The human's prompt history is durable operating input, not disposable conversation context. Before
+inventing priorities or asking the human to repeat an instruction, consult the corpus ledgers and the
+current remote receipts. Treat the individual ask or correction as the unit of intent; a session,
+plan, task, branch, or PR is only one possible container for it.
+
+- Preserve every prompt event privately with source lineage. Atomize compound prompts into distinct
+  asks, corrections, constraints, acceptance criteria, and human gates without erasing the original
+  event or its relationship to later refinements.
+- Derive the current intent through lineage. Explicit corrections and newer evolved formulations can
+  supersede an older implementation shape, while the older prompt remains evidence and conceptual
+  context; age alone is never priority authority.
+- Rank unresolved atoms using current evidence: operator emphasis, systemic leverage, magnitude,
+  recurrence, dependency/blocking impact, preservation risk, recency, and the cost of delay. Easy or
+  visible code must not outrank a larger control-plane concern merely because its receipt is nearby.
+- Classify each atom with an evidence-backed corpus disposition such as unassessed, not-done,
+  partial, done, blocked, or superseded. These are analytic dispositions, **not** Limen task states.
+  `done` requires a durable owner receipt and a satisfied predicate; prose resemblance, motion, or a
+  related PR is not completion proof.
+- Corpus governance and execution run concurrently. The corpus ranks and feeds work while already
+  authorized lanes continue within their resource bounds; do not force a false choice between
+  auditing the whole and finishing sound in-flight work. Feed new receipts back into the corpus so
+  ranking and completion truth evolve continuously.
+- Do not make the human restate settled intent. Escalate only when the corpus and current doctrine
+  leave a genuine human gate or an irreducible product/values conflict.
+
+Tracked ledgers remain redacted; raw prompt bodies, private paths, full hashes, and sensitive source
+material stay in `.limen-private/session-corpus`. Board mutations derived from corpus review still go
+through TABVLARIVS, and task statuses still use only the canonical state vocabulary below.
+
 ## Dynamic Provider Selection
 
 Provider catalogs are live external state, not repository constants. Do not encode model IDs,

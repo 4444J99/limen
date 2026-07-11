@@ -85,6 +85,7 @@ These are known local app/store adapters with no matched files in this scan. Thi
 - Session lifecycle blockers: `docs/session-lifecycle-blockers.md`.
 - Session attack paths: `docs/session-attack-paths.md`.
 - Prompt priority map: `docs/prompt-priority-map.md`.
+- Canonical ask-atom control ledger: `docs/prompt-atom-ledger.md`.
 - Prompt batch review ledger: `docs/prompt-batch-review-ledger.md`.
 - Prompt packet ledger: `docs/prompt-packet-ledger.md`.
 - Prompt packet resolution receipts: `docs/prompt-packet-resolution-receipts.json`.
@@ -105,6 +106,7 @@ These are known local app/store adapters with no matched files in this scan. Thi
 - Refresh parked blockers: `python3 scripts/session-blockers-ledger.py --write`
 - Refresh ranked attack paths: `python3 scripts/session-attack-paths.py --write`
 - Refresh prompt priority/task map: `python3 scripts/prompt-priority-map.py --write`
+- Refresh prompt ask atoms: `python3 scripts/prompt-atom-ledger.py --scan --write`
 - Refresh prompt batch review ledger: `python3 scripts/prompt-batch-review-ledger.py --write`
 - Refresh prompt packet ledger: `python3 scripts/prompt-packet-ledger.py --write`
 - Rebuild session-meta atoms after preserving its dirty work: `cd ~/Workspace/session-meta && ./ingest/refresh-atoms.sh`

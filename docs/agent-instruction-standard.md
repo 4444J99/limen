@@ -45,6 +45,10 @@ back to `AGENTS.md` instead.
 6. Keep examples machine-checkable where practical.
 7. Keep direct-session behavior distinct from dispatch-mode behavior.
 8. Prefer bounded loops, explicit evidence, and append-only history over prose promises.
+9. Treat the full prompt corpus as a concurrent control plane, not a competing work lane. Preserve
+   individual ask/correction lineage, rank unresolved atoms by operator emphasis and systemic impact,
+   prove completion from owner receipts, and keep sound in-flight execution moving within resource
+   bounds while the corpus is refreshed. Do not require the human to restate settled intent.
 
 ## Home-scope generated surfaces
 

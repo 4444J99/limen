@@ -1,6 +1,22 @@
 {
-  "version": 1,
+  "version": 2,
   "generated_at": "2026-07-10T07:01:21Z",
+  "disposition_contract": {
+    "allowed": [
+      "unassessed",
+      "not_done",
+      "partial",
+      "done",
+      "blocked",
+      "superseded"
+    ],
+    "legacy_default": "unassessed",
+    "terminal": [
+      "done",
+      "superseded"
+    ],
+    "completion_rule": "A terminal row requires outcome_receipt.ref, outcome_receipt.result=pass, and a predicate for done or successor proof for superseded. Evidence status alone never closes work."
+  },
   "receipts": [
     {
       "batch": "prompt-batch-critical-historical-worktree-review-001",

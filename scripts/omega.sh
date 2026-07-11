@@ -107,9 +107,10 @@ rung "armed-valve (no silent-off)" det python3 "$ROOT/scripts/armed-valve-audit.
 # 4. ask-gate — every intake-window ask is predicate-shaped/bounded/owned (no SPLIT verdicts).
 rung "ask-gate (intake predicate-shaped)" det python3 "$ROOT/scripts/ask-gate.py" --audit --since 7 --check --top 0
 
-# 5. ask-lineage convergence — no ask-lineage exceeds 15 repeats without a converged grade. No
-#    machine predicate emits this metric yet (censor-lineage territory); reported SKIP, not faked.
-skip_rung "ask-lineage <15 unconverged" det "no censor-lineage repeat-count predicate yet"
+# 5. ask-lineage convergence has a manual predicate, but its heartbeat sensor remains DARK until a
+#    measured first-pass + idempotent-no-op canary proves the host-safe activation gate. It is not
+#    Omega-eligible before then; report the missing proof explicitly instead of running it here.
+skip_rung "ask-lineage convergence" det "prompt-corpus sensor is dark pending a measured bounded canary"
 
 # 6. ship-gate — every product-facing done-claim resolves to a reachable external artifact.
 rung "ship-gate (products reachable)" live python3 "$ROOT/scripts/ship-gate.py" --check

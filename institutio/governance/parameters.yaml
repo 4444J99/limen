@@ -2077,6 +2077,48 @@ parameters:
     owner: governance
     note: "The continuous metabolize sensor loop is registry-derived and default-on after #935; the deleted hand-wired blocks are not a fallback, so 0 skips that pass as an escape hatch. The same generic runner now owns scheduled heartbeat cadence, timeout, conditional argv, voice stamps, Omega eligibility, and armed-valve metadata from sensors.yaml. Keep the integration drain in place until the bounded scheduled canary is receipted."
 
+  LIMEN_PROMPT_ATOM_CONTROL:
+    default: "0"
+    env: LIMEN_PROMPT_ATOM_CONTROL
+    self_update: none
+    owner: tabularius
+    note: "DARK gate for the registry-derived prompt-corpus control sensor. Keep 0 until a bounded manual canary proves a healthy first pass and a cheap idempotent second pass without host pressure; activation must change this default and the matching sensors.yaml consumer default together. Manual predicate: python3 scripts/prompt-atom-ledger.py --check --require-scope all."
+
+  LIMEN_BEAT_PROMPT_ATOMS:
+    default: 4
+    env: LIMEN_BEAT_PROMPT_ATOMS
+    self_update: none
+    owner: tabularius
+    note: "Heartbeat cadence for incremental prompt-atom reconciliation after LIMEN_PROMPT_ATOM_CONTROL is explicitly activated. This bounds local scan frequency without capping, sampling, or dropping semantic atoms."
+
+  LIMEN_PROMPT_ATOM_DAYS:
+    default: 2
+    env: LIMEN_PROMPT_ATOM_DAYS
+    self_update: none
+    owner: tabularius
+    note: "Recent-source discovery horizon for ordinary prompt-atom heartbeat drains. Once an all-history cursor exists, prior atoms remain preserved and only changed/new sources are rescanned."
+
+  LIMEN_PROMPT_ATOM_TIMEOUT:
+    default: 180
+    env: LIMEN_PROMPT_ATOM_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Process-group timeout for one incremental prompt-atom heartbeat drain. A timeout preserves append-only journals and fails open at the beat. The dark sensor is not an Omega rung until its measured activation gate is satisfied."
+
+  LIMEN_PROMPT_ATOM_MAX_FILES:
+    default: 80
+    env: LIMEN_PROMPT_ATOM_MAX_FILES
+    self_update: none
+    owner: tabularius
+    note: "Maximum changed source work units drained per heartbeat. This is a lifecycle/resource bound only: pending work stays explicit in the cursor and no occurrence or atom inside a processed unit is sampled or truncated. Zero is rejected unless a deliberate quiet-window command also passes --unbounded."
+
+  LIMEN_PROMPT_CLASSIFIER_CMD:
+    default: ""
+    env: LIMEN_PROMPT_CLASSIFIER_CMD
+    self_update: none
+    owner: tabularius
+    note: "Optional opaque JSONL classifier command for prompt atoms. Limen passes provider-neutral occurrence IDs plus exact source segments over stdin and accepts grounded atom rows over stdout. Keep provider/model/catalog IDs and command snapshots out of code and receipts; an absent, invalid, or timed-out command leaves explicit structural fallback atoms."
+
   LIMEN_MAIN_GREEN_CHECK:
     default: "1"               # ON — detect a RED main trunk each beat (§0g3)
     env: LIMEN_MAIN_GREEN_CHECK

@@ -42,6 +42,9 @@ if [ "${#ARGV[@]}" -eq 0 ]; then
   exit 127
 fi
 
-cd "${IANVA_HOME:-$HOME/.config/ianva}"
+IANVA_RUNTIME_HOME="${IANVA_HOME:-$HOME/.config/ianva}"
+mkdir -p "$IANVA_RUNTIME_HOME/run"
+printf '%s\n' "$$" > "$IANVA_RUNTIME_HOME/run/backend.pid"
+cd "$IANVA_RUNTIME_HOME"
 echo "ianva-serve: exec ${ARGV[*]} (PORT=$PORT, cwd=$PWD)"
 exec "${ARGV[@]}"

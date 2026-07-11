@@ -5,6 +5,7 @@ The tracked markdown is intentionally counts-only and receipt-oriented. The igno
 private index keeps source paths, stable hashes, and prompt-event hashes so the raw
 material can be found in the private cartridge without committing prompt text.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,9 +34,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 REPO = Path(__file__).resolve().parents[1]
 HOME = Path.home()
 DOC_PATH = REPO / "docs" / "prompt-lifecycle-ledger.md"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 EVERY_ASK_PATH = REPO / "EVERY-ASK-LEDGER.md"
 EVERY_ASK_CURATED_BEGIN = "<!-- CURATED:BEGIN -->"
@@ -236,11 +235,7 @@ def iter_source_files(days: int | None) -> list[dict[str, Any]]:
         if not root.exists():
             continue
         seen: set[Path] = set()
-        candidates = [root] if root.is_file() else [
-            path
-            for pattern in patterns
-            for path in root.rglob(pattern)
-        ]
+        candidates = [root] if root.is_file() else [path for pattern in patterns for path in root.rglob(pattern)]
         for path in candidates:
             if path in seen or not path.is_file():
                 continue
@@ -471,8 +466,7 @@ def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
         sid = str(session["id"])
         try:
             messages = con.execute(
-                "SELECT id, time_created, time_updated, data FROM message WHERE session_id=? "
-                "ORDER BY time_created, id",
+                "SELECT id, time_created, time_updated, data FROM message WHERE session_id=? ORDER BY time_created, id",
                 (sid,),
             ).fetchall()
             parts_by_message: dict[str, list[sqlite3.Row]] = defaultdict(list)
@@ -490,7 +484,8 @@ def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
         event_times = [
             ts
             for ts in (
-                iso_from_epoch_ms(row["time_created"]) for row in list(messages) + [p for ps in parts_by_message.values() for p in ps]
+                iso_from_epoch_ms(row["time_created"])
+                for row in list(messages) + [p for ps in parts_by_message.values() for p in ps]
             )
             if ts
         ]
@@ -879,12 +874,7 @@ def worktree_remote_receipts(worktrees: list[dict[str, Any]]) -> dict[str, Any]:
             receipt["remote_branch"] = "present" if ls.returncode == 0 and ls.stdout.strip() else "missing"
             receipt["prs"] = gh_prs_for_branch(repo, branch)
         receipts.append(receipt)
-    ok_prs = [
-        pr
-        for receipt in receipts
-        for pr in receipt.get("prs", [])
-        if pr.get("ok")
-    ]
+    ok_prs = [pr for receipt in receipts for pr in receipt.get("prs", []) if pr.get("ok")]
     return {
         "receipts": receipts,
         "git_roots": sum(1 for r in receipts if r["git"]),
@@ -979,10 +969,7 @@ def cloud_receipts() -> dict[str, Any]:
         runtime_probe = probe_url(runtime_url.rstrip("/") + "/health", expect_json=True)
     return {
         "public_site_url": firebase_base,
-        "public_surface_probes": [
-            probe_url(url, expect_json=url.endswith(".json"))
-            for url in public_surfaces
-        ],
+        "public_surface_probes": [probe_url(url, expect_json=url.endswith(".json")) for url in public_surfaces],
         "runtime_url_configured": bool(runtime_url),
         "runtime_health_probe": runtime_probe,
         "env_flags": env_flags,
@@ -1022,11 +1009,7 @@ def codex_quicken_receipt() -> dict[str, Any]:
 def attach_worktree_slugs(sessions: list[dict[str, Any]], worktrees: list[dict[str, Any]]) -> None:
     slugs = [item["name"] for item in worktrees]
     for session in sessions:
-        haystack = " ".join(
-            str(x)
-            for x in (session.get("display_path"), session.get("path"), session.get("cwd"))
-            if x
-        )
+        haystack = " ".join(str(x) for x in (session.get("display_path"), session.get("path"), session.get("cwd")) if x)
         matched = next((slug for slug in slugs if slug in haystack), None)
         if matched is None:
             match = re.search(r"(?:limen-worktrees|--limen-worktrees-)[/-]?([A-Za-z0-9._-]+)", haystack)
@@ -1059,23 +1042,16 @@ def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
             1
             for entry in log
             if isinstance(entry, dict)
-            and (
-                "reopened" in str(entry.get("output", "")).lower()
-                or str(entry.get("status", "")).lower() == "open"
-            )
+            and ("reopened" in str(entry.get("output", "")).lower() or str(entry.get("status", "")).lower() == "open")
         )
         failure_hits = sum(
-            1
-            for entry in log
-            if isinstance(entry, dict) and "failed" in str(entry.get("status", "")).lower()
+            1 for entry in log if isinstance(entry, dict) and "failed" in str(entry.get("status", "")).lower()
         )
         if reopen_hits >= 2 and failure_hits >= 2:
             chronic_reopen += 1
         urls = task.get("urls") or []
         has_pr = any("pull/" in str(url) for url in urls) or any(
-            "pull/" in str((entry or {}).get("session_id", ""))
-            for entry in log
-            if isinstance(entry, dict)
+            "pull/" in str((entry or {}).get("session_id", "")) for entry in log if isinstance(entry, dict)
         )
         if task.get("status") == "dispatched":
             if has_pr:
@@ -1106,11 +1082,7 @@ def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
             continue
         log = task.get("dispatch_log") or []
         reopens = sum(1 for entry in log if isinstance(entry, dict) and str(entry.get("status")) == "open")
-        ever_pr = any(
-            "pull/" in str((entry or {}).get("session_id", ""))
-            for entry in log
-            if isinstance(entry, dict)
-        )
+        ever_pr = any("pull/" in str((entry or {}).get("session_id", "")) for entry in log if isinstance(entry, dict))
         if reopens >= 3 and not ever_pr:
             chronic_reopen += 1
     return {
@@ -1241,21 +1213,22 @@ def render_every_ask(snapshot: dict[str, Any], curated: str, *, max_rows: int = 
     ask_sessions.sort(key=lambda s: (s.get("mtime") or "", s["session_key"]), reverse=True)
 
     lines = [
-        "# Every ask — the standing register",
+        "# Prompt occurrence register (compatibility view)",
         "",
         "> Regenerated by `scripts/prompt-lifecycle-ledger.py --every-ask --write` (mechanical rows below,",
         "> curated judgment block preserved between markers). Raw prompt text never lands here — hashes,",
         "> counts, and receipts only; the full text lives in the private session corpus.",
         ">",
         f"> Horizon: `{horizon}` · newest source event `{newest}` · **{total_prompts}** prompt events across "
-        f"**{len(ask_sessions)}** ask-carrying sessions.",
+        f"**{len(ask_sessions)}** prompt-carrying sessions. The canonical per-ask control plane is "
+        "`docs/prompt-atom-ledger.md`; a session row is not an ask or completion receipt.",
         "",
-        "## Ask register (newest-first)",
+        "## Prompt-event session register (newest-first)",
         "",
-        "`Direct` = non-scaffold bodies (operator-typed or directly fed); the remainder are",
-        "fleet-dispatched task frames — automation lanes, not the operator's own asks.",
+        "`Direct` is the legacy non-scaffold bucket. It can contain operator text, transport echoes,",
+        "or directly fed frames and therefore does not prove operator authorship.",
         "",
-        "| When | Source | Where | Asks | Direct | Worktree |",
+        "| When | Source | Where | Prompt events | Legacy direct | Worktree |",
         "|---|---|---|---:|---:|---|",
     ]
     for session in ask_sessions[:max_rows]:
@@ -1268,7 +1241,7 @@ def render_every_ask(snapshot: dict[str, Any], curated: str, *, max_rows: int = 
     if len(ask_sessions) > max_rows:
         lines.append("")
         lines.append(
-            f"_{len(ask_sessions) - max_rows} older ask-carrying sessions not shown — full rows in the "
+            f"_{len(ask_sessions) - max_rows} older prompt-carrying sessions not shown — full rows in the "
             f"private index (`{relpath(PRIVATE_INDEX)}`)._"
         )
 
@@ -1473,7 +1446,9 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
             "- Codex has prompt-event coverage through `history.jsonl` and session JSONL, but no "
             "`codex-quicken.py` lifecycle journal was found yet."
         )
-    task_pr_errors = int(((remote.get("task_prs") or {}).get("counts") or {}).get("ERROR", 0)) if remote.get("enabled") else 0
+    task_pr_errors = (
+        int(((remote.get("task_prs") or {}).get("counts") or {}).get("ERROR", 0)) if remote.get("enabled") else 0
+    )
     if task_pr_errors:
         lines.append(
             f"- Remote task-board PR receipt scan has `{task_pr_errors}` GitHub/API errors; rerun before using those refs as closure proof."
