@@ -13,6 +13,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +22,7 @@ from typing import Any
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 POLICY_PATH = ROOT / "logs" / "autonomy-policy.json"
 PAUSE_MARKER = ROOT / "logs" / "AUTONOMY_PAUSED"
+MARKER_RECHECK_STAMP = ROOT / "logs" / ".autonomy-marker-recheck"
 VALID_MODES = {"paused", "observe", "dispatch"}
 
 DEFAULT_POLICY = {
@@ -61,9 +64,75 @@ def usage_dead_lanes() -> set[str]:
     }
 
 
+def _marker_owner_merged(marker: Path) -> bool:
+    """True iff the pause marker's ``owner:`` branch has a MERGED PR on GitHub.
+
+    A stale "integration drain" marker whose owner PR already merged is the exact 21h-freeze
+    incident (2026-07-10, owner codex/dynamic-routing-closeout-20260710, PR #921 merged the next
+    morning): under launchd KeepAlive the beat respawn-spins on ``return "paused"`` forever
+    because nothing clears the marker. This lets current_mode() — the single chokepoint the
+    heartbeat and dispatch admission both read — clear it within one cycle of the merge.
+
+    Fail-CLOSED: any ambiguity (autoclear disabled, no owner line, gh missing/errored, offline,
+    not-yet-merged) returns False so the beat stays paused. Throttled to at most once per
+    LIMEN_AUTONOMY_MARKER_RECHECK_SECS so rapid callers don't hammer ``gh`` while a marker exists.
+    """
+    if os.environ.get("LIMEN_AUTONOMY_MARKER_AUTOCLEAR", "1") != "1":
+        return False
+    try:
+        recheck = float(os.environ.get("LIMEN_AUTONOMY_MARKER_RECHECK_SECS", "120"))
+    except ValueError:
+        recheck = 120.0
+    now = time.time()
+    try:
+        if now - MARKER_RECHECK_STAMP.stat().st_mtime < recheck:
+            return False  # checked recently — stay paused until the throttle window elapses
+    except OSError:
+        pass
+    try:
+        owner = next(
+            (ln.split(":", 1)[1].strip() for ln in marker.read_text().splitlines()
+             if ln.strip().startswith("owner:")),
+            "",
+        )
+    except OSError:
+        return False
+    if not owner:
+        return False
+    try:
+        MARKER_RECHECK_STAMP.parent.mkdir(parents=True, exist_ok=True)
+        MARKER_RECHECK_STAMP.write_text(str(now))
+    except OSError:
+        pass
+    try:
+        proc = subprocess.run(
+            ["gh", "pr", "list", "--head", owner, "--state", "merged", "--json", "number", "--limit", "1"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if proc.returncode != 0:
+        return False
+    # A merged PR row survives branch deletion in GitHub's PR index, so --head is reliable here.
+    return proc.stdout.strip() not in ("", "[]")
+
+
 def current_mode() -> str:
     if PAUSE_MARKER.exists() and os.environ.get("LIMEN_FORCE_AUTONOMY") != "1":
-        return "paused"
+        if _marker_owner_merged(PAUSE_MARKER):
+            try:
+                PAUSE_MARKER.unlink()
+            except OSError:
+                pass
+            # owner PR merged — fall through to policy mode; a merged-owner marker
+            # can never freeze the next cycle. (Merge is a strict prerequisite of the
+            # marker's release_predicate; the remaining conditions are separately enforced
+            # by the ship-gate / omega sensors.)
+        else:
+            return "paused"
     return str(load_policy().get("mode", "observe")).lower()
 
 

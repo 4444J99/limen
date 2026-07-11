@@ -21,6 +21,20 @@ schema_version: 0.1
 
 parameters:
 
+  # --- autonomy governor: stale-pause-marker auto-clear -------------------------
+  LIMEN_AUTONOMY_MARKER_AUTOCLEAR:
+    default: 1
+    env: LIMEN_AUTONOMY_MARKER_AUTOCLEAR
+    self_update: none
+    owner: vigilia
+    note: "When 1 (default), autonomy-governor.current_mode() auto-clears an AUTONOMY_PAUSED 'integration drain' marker once its owner: branch has a MERGED PR (fail-closed via gh). Prevents the 2026-07-10 21h respawn-spin freeze (owner codex/dynamic-routing-closeout-20260710, PR #921 merged, marker never cleaned up). 0 = never auto-clear (a marker outlives its owner PR)."
+  LIMEN_AUTONOMY_MARKER_RECHECK_SECS:
+    default: 120
+    env: LIMEN_AUTONOMY_MARKER_RECHECK_SECS
+    self_update: none
+    owner: vigilia
+    note: "Throttle window for the marker auto-clear gh check — at most one `gh pr list` per this many seconds while a pause marker is present, so rapid current_mode() callers (dispatch admission) don't hammer GitHub."
+
   # --- the institution names ITSELF as the first parameter ---------------------
   INSTITVTIO_NOMEN:
     default: "VIGILIA"          # provisional codename — NOT ratified
