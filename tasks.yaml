@@ -42174,7 +42174,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - test-coverage
   - generated
@@ -42188,7 +42188,7 @@ tasks:
     to keep the stream endless]
   depends_on: []
   created: '2026-06-20'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-02T03:39:58.056479Z'
     agent: agy
@@ -42226,6 +42226,12 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-auto-revision-epistemic-engine-test-coverage-0620
   title: Raise test coverage in organvm/auto-revision-epistemic-engine
   repo: organvm/auto-revision-epistemic-engine
@@ -71577,7 +71583,7 @@ tasks:
   workstream: contributions
   priority: low
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - docs
   - generated
@@ -71592,7 +71598,7 @@ tasks:
     \ to keep the stream endless]"
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-06-30T16:01:22.835296Z'
     agent: codex
@@ -71676,6 +71682,12 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GEN-organvm-session-meta-security-0630
   title: Security hardening pass on organvm/session-meta
   repo: organvm/session-meta
@@ -74764,7 +74776,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - discover
   - value-discovery
@@ -74787,7 +74799,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-01'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-01T16:41:34.150614Z'
     agent: claude
@@ -74867,6 +74879,12 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: DISCOVER-organvm-metasystem-master
   title: Discover the latent value of organvm/metasystem-master
   repo: organvm/metasystem-master
@@ -77649,7 +77667,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - discover
   - value-discovery
@@ -77671,7 +77689,7 @@ tasks:
     \ the thesis. [auto-discovery 2026-07-02; no repo stays dark]"
   depends_on: []
   created: '2026-07-02'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-02T08:30:03.577691Z'
     agent: claude
@@ -77733,6 +77751,12 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: GH-organvm-limen-563
   title: 'needs-human (L-CARTRIDGE-REPOINT): Re-plug the chezmoi cartridge into its
     real source'
@@ -98619,7 +98643,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -98635,7 +98659,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:55:55.447902Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-07T11:51:16.792799Z'
     agent: opencode
@@ -98701,6 +98725,12 @@ tasks:
     status: open
     route_to: jules
     output: timeout on opencode; reopened to asynchronous lane
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-rebase-organvm-limen-387
   title: rebase/resolve conflicts on organvm/limen#387
   repo: organvm/limen
@@ -101423,7 +101453,7 @@ tasks:
   workstream: hr
   priority: high
   budget_cost: 2
-  status: open
+  status: needs_human
   labels:
   - organ-firstslice
   - pillar:hr
@@ -101446,7 +101476,7 @@ tasks:
     \ idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -101484,6 +101514,12 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-rebase-organvm-organvm-corpvs-testamentvm-491
   title: rebase/resolve conflicts on organvm/organvm-corpvs-testamentvm#491
   repo: organvm/organvm-corpvs-testamentvm
@@ -103994,7 +104030,7 @@ tasks:
   workstream: contributions
   priority: high
   budget_cost: 2
-  status: open
+  status: needs_human
   labels:
   - organ-selffeed
   - pillar:contributions
@@ -104017,7 +104053,7 @@ tasks:
     \ weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -104055,6 +104091,12 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: ASK-quicken-send
   title: send the drafted message (never auto-send)
   type: ops
@@ -104146,7 +104188,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -104163,7 +104205,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -104230,6 +104272,12 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-limen-403
   title: fix failing CI on organvm/limen#403
   repo: organvm/limen
@@ -104443,7 +104491,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -104460,7 +104508,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:50:23.463748Z'
     agent: opencode
@@ -104523,6 +104571,12 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-limen-408
   title: fix failing CI on organvm/limen#408
   repo: organvm/limen
@@ -104530,7 +104584,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -104547,7 +104601,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:55:55.447902Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -104609,6 +104663,12 @@ tasks:
     status: open
     route_to: jules
     output: timeout on opencode; reopened to asynchronous lane
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-limen-409
   title: fix failing CI on organvm/limen#409
   repo: organvm/limen
@@ -104732,7 +104792,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -104748,7 +104808,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:55:55.447902Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -104780,6 +104840,12 @@ tasks:
     status: open
     route_to: jules
     output: timeout on opencode; reopened to asynchronous lane
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-limen-412
   title: fix failing CI on organvm/limen#412
   repo: organvm/limen
@@ -105173,7 +105239,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -105190,7 +105256,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-07T14:39:50.025761Z'
     agent: jules
@@ -105242,6 +105308,12 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-limen-419
   title: fix failing CI on organvm/limen#419
   repo: organvm/limen
@@ -106268,7 +106340,7 @@ tasks:
   workstream: social
   priority: high
   budget_cost: 2
-  status: open
+  status: needs_human
   labels:
   - organ-firstslice
   - pillar:social
@@ -106288,7 +106360,7 @@ tasks:
     \ institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -106336,6 +106408,12 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-call-function--ontological-16
   title: fix failing CI on organvm/call-function--ontological#16
   repo: organvm/call-function--ontological
@@ -110079,7 +110157,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -110096,7 +110174,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-08T14:39:59.050705Z'
     agent: jules
@@ -110147,6 +110225,12 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-limen-451
   title: fix failing CI on organvm/limen#451
   repo: organvm/limen
@@ -110532,7 +110616,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -110548,7 +110632,7 @@ tasks:
     \ 2026-07-05 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-08T17:15:11.788963Z'
     agent: jules
@@ -110603,6 +110687,12 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-limen-457
   title: fix failing CI on organvm/limen#457
   repo: organvm/limen
@@ -110690,7 +110780,7 @@ tasks:
   workstream: contributions
   priority: high
   budget_cost: 2
-  status: open
+  status: needs_human
   labels:
   - organ-face
   - pillar:contributions
@@ -110725,7 +110815,7 @@ tasks:
     \ (VLTIMA).]"
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -110773,6 +110863,12 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: ORG-contributions-organ-operationalize-0705
   title: Operationalize contributions governance (rules as checks)
   repo: organvm/limen
@@ -113405,7 +113501,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - discover
   - value-discovery
@@ -113425,7 +113521,7 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:02:43.208712Z'
     agent: agy
@@ -113463,6 +113559,12 @@ tasks:
     route_to: agy
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->agy'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: DISCOVER-organvm-hokage-chess--4444j99
   title: Discover the latent value of organvm/hokage-chess--4444j99
   repo: organvm/hokage-chess--4444j99
@@ -113576,7 +113678,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - discover
   - value-discovery
@@ -113597,7 +113699,7 @@ tasks:
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -113631,6 +113733,12 @@ tasks:
     route_to: agy
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->agy'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: DISCOVER-organvm-micro-tato
   title: Discover the latent value of organvm/micro-tato
   repo: organvm/micro-tato
@@ -113947,7 +114055,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - discover
   - value-discovery
@@ -113968,7 +114076,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -114002,6 +114110,12 @@ tasks:
     route_to: agy
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->agy'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: DISCOVER-organvm-palimpsest
   title: Discover the latent value of organvm/palimpsest
   repo: organvm/palimpsest
@@ -114010,7 +114124,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - discover
   - value-discovery
@@ -114031,7 +114145,7 @@ tasks:
     \ stays dark]"
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:05:05.340391Z'
     agent: agy
@@ -114070,6 +114184,12 @@ tasks:
     route_to: agy
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->agy'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: DISCOVER-organvm-collaboratory
   title: Discover the latent value of organvm/collaboratory
   repo: organvm/collaboratory
@@ -116168,7 +116288,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - storage
   - reclaim
@@ -116186,7 +116306,7 @@ tasks:
     delete unclassified work.'
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-11T22:28:08.008676Z'
   dispatch_log:
   - timestamp: '2026-07-07T17:49:53.806463Z'
     agent: codex
@@ -116224,6 +116344,12 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-11T22:28:08.008676Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: REV-organvm-mirror-mirror-revenue-ship-0707
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
