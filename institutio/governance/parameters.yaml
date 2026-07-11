@@ -1097,6 +1097,30 @@ parameters:
     self_update: none
     owner: mail
     note: "Maximum accepted age for UMA mail status receipts before wrappers refresh."
+  LIMEN_MAIL_SWEEP:
+    default: 1
+    env: LIMEN_MAIL_SWEEP
+    self_update: none
+    owner: mail
+    note: "Master gate for the C_MAIL mutating inbound sweep (flag fires / archive folder-store noise, reversible; Gmail flag-only). 0 skips the sweep but still rebuilds the obligations ledger + face. The sweep touches Apple Mail, so it needs the one-time macOS Automation grant (lever L-MAIL-AUTOMATION-GRANT); it fails SAFE when the grant is absent."
+  LIMEN_MAIL_SWEEP_LIMIT:
+    default: 80
+    env: LIMEN_MAIL_SWEEP_LIMIT
+    self_update: none
+    owner: mail
+    note: "Max most-recent messages inbox_sweep.py reads per account each C_MAIL beat — bounds the AppleScript reads so the sweep is a couple of paged reads, not the whole inbox."
+  LIMEN_MAIL_DRAFTS:
+    default: 0
+    env: LIMEN_MAIL_DRAFTS
+    self_update: none
+    owner: mail
+    note: "Effector arm for draft_writer.py --save (observable-before-autonomous, the LIMEN_CENSOR_APPLY pattern). 0 (default) = enrich-only: the voice-matched draft_text lands in the ledger/face without touching the mailbox. 1 = persist real Drafts (idempotent), which drives Apple Mail and needs the one-time macOS Automation grant (lever L-MAIL-AUTOMATION-GRANT). Never sends."
+  LIMEN_MAIL_LEDGER_MAX_AGE_HOURS:
+    default: 12
+    env: LIMEN_MAIL_LEDGER_MAX_AGE_HOURS
+    self_update: none
+    owner: mail
+    note: "Max obligations-ledger age before scripts/check-mail-answered.py fails: a ledger not rebuilt within this window means the C_MAIL beat/effector is not running (the 2026-06 silent-freeze failure mode)."
   LIMEN_PRIVATE_MAIL_STORY:
     default: "$LIMEN_ROOT/.limen-private/mail-story"
     env: LIMEN_PRIVATE_MAIL_STORY
