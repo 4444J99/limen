@@ -1889,6 +1889,30 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for GitHub estate reconciliation and by each delegate/reap adapter it dispatches. The runner kills the full command group on overrun and the beat continues fail-open."
+  LIMEN_OBSERVATORY:
+    default: 0
+    env: LIMEN_OBSERVATORY
+    self_update: none
+    owner: observatory
+    note: "Master on/off for the registry-declared OBSERVATORY legibility-and-traction sensor (observatory-run in sensors.yaml). Ships DARK (0): the organ is registered but idle until armed by lever L-OBSERVATORY-ACTIVATE. 1 runs the whole loop (collect→analyze→reconcile→brief) DRY on its declared cadence. Proposal writes remain a separate armed valve (OBSERVATORY_APPLY)."
+  LIMEN_BEAT_OBSERVATORY:
+    default: 24
+    env: LIMEN_BEAT_OBSERVATORY
+    self_update: none
+    owner: observatory
+    note: "Cadence (every N beats) of the OBSERVATORY loop declared in sensors.yaml. The generic scheduled runner resolves this override; metabolize.sh contains no sensor-specific cadence constant."
+  LIMEN_OBSERVATORY_TIMEOUT:
+    default: 240
+    env: LIMEN_OBSERVATORY_TIMEOUT
+    self_update: none
+    owner: observatory
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the OBSERVATORY loop. The runner kills the command group on overrun and the beat continues fail-open."
+  OBSERVATORY_APPLY:
+    default: 0
+    env: OBSERVATORY_APPLY
+    self_update: none
+    owner: observatory
+    note: "Arms the OBSERVATORY human-gated proposal write: 0 (default) records the daily experiment only in the organ-owned logs/observatory/proposals.jsonl; 1 additionally homes the lever in his-hand-levers.json (idempotent by id). Never auto-applies a public surface change."
   LIMEN_MARKETPLACE_APPLY:
     default: 0
     env: LIMEN_MARKETPLACE_APPLY

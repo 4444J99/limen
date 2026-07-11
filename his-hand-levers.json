@@ -479,6 +479,15 @@
       "unlocks": "grouped, scheduled dependency PRs on organvm/limen; the GITVS renovate integration goes green",
       "source_task": "GITVS §3 integrations (institutio/github/estate.yaml integrations.renovate)",
       "issue": 934
+    },
+    {
+      "id": "L-OBSERVATORY-ACTIVATE",
+      "label": "Activate OBSERVATORY (the legibility-and-traction organ): set LIMEN_OBSERVATORY=1 in ~/.limen.env to run its daily loop (collect trending winners vs matched controls → score transferable mechanisms → reconcile our own claim-drift → one reversible experiment for the hero repo). Ships dark; runs DRY (proposals only) until OBSERVATORY_APPLY=1 is separately armed. Reversible: set back to 0.",
+      "owner": "yours",
+      "cost": "~1 min, reversible (one env line)",
+      "unlocks": "a daily brief with one measured activation experiment; the organ's whole loop goes live",
+      "source_task": "GEN-observatory-organ",
+      "issue": null
     }
   ]
 }

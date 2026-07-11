@@ -138,6 +138,34 @@ sensors:
         tier: live
         command: "python3 scripts/gitvs.py doctor"
 
+  observatory-run:
+    section: "heartbeat"
+    title: "run the OBSERVATORY legibility-and-traction loop (ships dark; armed by L-OBSERVATORY-ACTIVATE)"
+    gate: LIMEN_OBSERVATORY
+    default: "0"
+    source: [metabolize]
+    owner: observatory
+    cadence:
+      env: LIMEN_BEAT_OBSERVATORY
+      default: 24
+    timeout:
+      env: LIMEN_OBSERVATORY_TIMEOUT
+      default: 240
+    steps:
+      - command: "python3 scripts/observatory-beat.py"
+        args_when:
+          - env: OBSERVATORY_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "OBSERVATORY loop skipped or exceeded its bound"
+    omega_eligible:
+      - label: "observatory wiring"
+        tier: det
+        command: "python3 scripts/observatory-beat.py --doctor"
+
   fable-balance:
     section: "0e"
     title: "refresh the weekly Fable balance meter + surface an over-cap / unaccepted Fable run"
