@@ -405,6 +405,9 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
     frozen = set(payload["frozen_ids"])
     board = tmp_path / "tasks.yaml"
     save_limen_file(board, LimenFile(tasks=[task for task in source.tasks if task.id in frozen]))
+    task_id = "DISCOVER-organvm-arca"
+    baseline = {task.id: task for task in load_limen_file(board).tasks}[task_id]
+    archived_before = sum(entry.status == "archived" for entry in baseline.dispatch_log)
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
     kwargs = {"timestamp": timestamp, "agent": "codex", "session_id": f"later-{claim_status}"}
     children = compiler.compile_child_tickets(payload, **kwargs)
@@ -413,7 +416,6 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
     parents = compiler.compile_parent_tickets(payload, board, **kwargs)
     compiler.submit_compiled_tickets(board, parents)
 
-    task_id = "DISCOVER-organvm-arca"
     row = payload["tasks"][task_id]
     later_claim = compiler.Ticket(
         ticket_id=f"later-{claim_status}-claim",
@@ -435,7 +437,7 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
     assert (drained.applied, drained.rejected) == (52, 1)
     current = {task.id: task for task in load_limen_file(board).tasks}[task_id]
     assert current.status == claim_status
-    assert "archived" not in [entry.status for entry in current.dispatch_log]
+    assert sum(entry.status == "archived" for entry in current.dispatch_log) == archived_before
     parent = next(ticket for ticket in parents if ticket.task_id == task_id)
     reason = (tickets_root(board) / "rejected" / f"{parent.ticket_id}.json.reason.txt").read_text()
     assert "invalidated regardless of timestamp order" in reason
