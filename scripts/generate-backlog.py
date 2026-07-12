@@ -29,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import submit_task_upsert  # noqa: E402
 from limen.capacity import select_lanes  # noqa: E402
@@ -403,6 +404,7 @@ def main() -> int:
                     labels=[key, "generated", "build-out"],
                     urls=[],
                     context=ctx.format(repo=repo) + f" [auto-generated {stamp} to keep the stream endless]",
+                    **contract_fields(github_pr_contract(repo, tid)),
                     depends_on=[],
                     created=stamp,
                     dispatch_log=[],

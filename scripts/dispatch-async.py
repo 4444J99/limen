@@ -33,6 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import _weak_proxy_exhaustion, select_lanes  # noqa: E402
+from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import (  # noqa: E402
@@ -703,6 +704,11 @@ def _pick_reservations(
                 if cand.id in picked_ids or cand.budget_cost > rem:
                     continue
                 if task_id is None and chronic_dispatch_reason(cand):
+                    continue
+                try:
+                    normalize_selected_legacy_task(cand)
+                except IntakeContractError as exc:
+                    print(f"  INTAKE BLOCKED {cand.id}: {exc}")
                     continue
                 t = cand
                 break

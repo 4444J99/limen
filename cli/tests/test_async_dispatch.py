@@ -472,10 +472,61 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     assert len(dispatched) == 2
     assert all(t.dispatch_log[-1].status == "dispatched" for t in dispatched)
     assert all(t.dispatch_log[-1].session_id == "async-reserve" for t in dispatched)
+    assert all(t.predicate and t.receipt_target for t in dispatched)
     assert len(list(da.RUNS.glob("*__codex.running"))) == 2
     track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
     assert track.spent == 2
     assert track.per_agent["codex"] == 2
+
+
+def test_async_normalizes_only_selected_legacy_task(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks = [
+        Task(id="SELECTED", title="selected", repo="x/y", target_agent="codex", priority="critical", created=today),
+        Task(id="UNSELECTED", title="unselected", repo="x/y", target_agent="codex", priority="low", created=today),
+    ]
+
+    picked, _reset_changed = da._pick_reservations(
+        lf,
+        ["codex"],
+        per_agent=1,
+        cap=1,
+        dry=True,
+        now=datetime.datetime.now(datetime.timezone.utc),
+        usage_remaining={},
+        weak_proxy_agents=set(),
+    )
+
+    assert picked == [("codex", "SELECTED")]
+    assert lf.tasks[0].predicate and lf.tasks[0].receipt_target
+    assert lf.tasks[1].predicate is None and lf.tasks[1].receipt_target is None
+
+
+def test_async_skips_unowned_legacy_candidate_and_continues(tmp_path, capsys):
+    da = _load(tmp_path, n_open=0)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks = [
+        Task(id="UNOWNED", title="unowned", target_agent="codex", priority="critical", created=today),
+        Task(id="OWNED", title="owned", repo="x/y", target_agent="codex", priority="high", created=today),
+    ]
+
+    picked, _reset_changed = da._pick_reservations(
+        lf,
+        ["codex"],
+        per_agent=1,
+        cap=1,
+        dry=True,
+        now=datetime.datetime.now(datetime.timezone.utc),
+        usage_remaining={},
+        weak_proxy_agents=set(),
+    )
+
+    assert picked == [("codex", "OWNED")]
+    assert lf.tasks[0].predicate is None and lf.tasks[0].status == "open"
+    assert "INTAKE BLOCKED UNOWNED" in capsys.readouterr().out
 
 
 def test_dry_run_does_not_pick_same_any_task_for_multiple_lanes(tmp_path):

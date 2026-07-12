@@ -379,6 +379,7 @@ def emit_gaps(gap_texts: list[str], origin: str, apply: bool) -> int:
     if not gap_texts:
         return 0
     from limen.io import load_limen_file
+    from limen.intake import contract_fields, github_pr_contract
     from limen.tabularius import pending_task_ids, submit_task_upsert
     tasks_path = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
     try:
@@ -396,12 +397,14 @@ def emit_gaps(gap_texts: list[str], origin: str, apply: bool) -> int:
         task = dict(
             id=gid,
             title=g[:120],
+            repo="organvm/limen",
             created=_now().date(),
             status="open",
             target_agent="any",
             priority="low",
             type="corpus-gap",
             context=f"corpus gap surfaced by convergence of {origin}",
+            **contract_fields(github_pr_contract("organvm/limen", gid)),
         )
         if apply:
             submit_task_upsert(tasks_path, task, agent="corpus-converge", session_id=session_id)

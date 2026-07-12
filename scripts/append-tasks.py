@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import date
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.intake import contract_fields, github_issue_contract, github_pr_contract
 from limen.tabularius import pending_task_ids, submit_task_upsert
 
 tasks_to_add = [
@@ -81,6 +82,11 @@ for t in tasks_to_add:
             "created": date.today().isoformat(),
             "dispatch_log": []
         }
+        if t["urls"]:
+            issue_number = t["urls"][0].rsplit("/", 1)[-1]
+            new_task.update(contract_fields(github_issue_contract(t["repo"], issue_number)))
+        else:
+            new_task.update(contract_fields(github_pr_contract(t["repo"], t["id"])))
         submit_task_upsert(tasks_path, new_task, agent="append-tasks", session_id=session_id)
         existing_ids.add(t["id"])
         added_count += 1

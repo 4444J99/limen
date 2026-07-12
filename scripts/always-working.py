@@ -470,10 +470,10 @@ def profile_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-integrator",
-            "repo": relpath(PROFILE_REPO),
+            "repo": VISIBLE_PROFILE_REPO,
             "task": "Project the existing positioning/frontdoor and current metrics onto the profile README; fix stale counts and dead links.",
             "predicate": "python3 scripts/test_sync_readme.py && python3 scripts/sync-readme.py --check",
-            "receipt_target": relpath(PROFILE_REPO / "README.md"),
+            "receipt_target": f"git:{VISIBLE_PROFILE_REPO}:README.md",
             "stop_condition": "profile README has current metrics, live links, and evidence-backed top-engineer positioning",
         },
     }
@@ -612,10 +612,10 @@ def mail_receipts() -> list[dict[str, Any]]:
             **common,
             "assignment_packet": {
                 "lane_fit": "local-codex-or-opencode",
-                "repo": relpath(ROOT),
+                "repo": "organvm/limen",
                 "task": "Use existing mail-story atoms and UMA obligations to classify the active flagged set; draft/park, never send.",
                 "predicate": "python3 scripts/mail-story-ledger.py --scope flagged --write",
-                "receipt_target": relpath(ROOT / "docs" / "mail-story-ledger.md"),
+                "receipt_target": "git:organvm/limen:docs/mail-story-ledger.md",
                 "stop_condition": "flagged set has classified atoms, obligations, and needs-human buckets",
             },
         },
@@ -635,10 +635,10 @@ def mail_receipts() -> list[dict[str, Any]]:
             **{**common, "evidence": {**common["evidence"], "mail_story": history_story}},
             "assignment_packet": {
                 "lane_fit": "local-codex-or-opencode",
-                "repo": relpath(ROOT),
+                "repo": "organvm/limen",
                 "task": "Continue the historical metadata sweep from existing receipts; emit batch cursor/count receipt before any thread enrichment.",
                 "predicate": "python3 scripts/mail-story-ledger.py --scope all --limit 500 --write",
-                "receipt_target": relpath(ROOT / "docs" / "mail-story-ledger.md"),
+                "receipt_target": "git:organvm/limen:docs/mail-story-ledger.md",
                 "stop_condition": "next 500 historical messages are atomized or a precise cursor/blocker is recorded",
             },
         },
@@ -685,10 +685,10 @@ def repo_surface_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "agy-or-opencode-readonly",
-            "repo": relpath(ROOT),
+            "repo": "organvm/limen",
             "task": "Harvest existing repo-surface and consolidation receipts, then assign only missing classifications.",
             "predicate": "python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write",
-            "receipt_target": relpath(ROOT / "docs" / "repo-surface-ledger.md"),
+            "receipt_target": "git:organvm/limen:docs/repo-surface-ledger.md",
             "stop_condition": "all discovered roots are classified or recorded with blocker/gate",
         },
     }
@@ -719,10 +719,10 @@ def prompt_packet_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-conductor",
-            "repo": relpath(ROOT),
+            "repo": "organvm/limen",
             "task": "Map each open prompt packet to merged PR, open PR, owner task, supersession, or precise blocker.",
             "predicate": "python3 scripts/prompt-packet-ledger.py --write",
-            "receipt_target": relpath(ROOT / "docs" / "prompt-packet-ledger.md"),
+            "receipt_target": "git:organvm/limen:docs/prompt-packet-ledger.md",
             "stop_condition": "open prompt packet count is zero or every packet has an owner receipt",
         },
     }
@@ -810,10 +810,10 @@ def value_repo_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "jules-or-opencode-repo-specific",
-            "repo": ",".join(repos[:5]),
+            "repo": "organvm/limen",
             "task": "Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.",
             "predicate": "python3 scripts/product-ledger.py --write",
-            "receipt_target": relpath(ROOT / "docs" / "product-ledger.md"),
+            "receipt_target": "git:organvm/limen:docs/product-ledger.md",
             "stop_condition": "top value repo has shipped PR, open PR with predicate, owner task, or blocker",
         },
     }
@@ -909,7 +909,7 @@ def estate_custody_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-conductor",
-            "repo": relpath(ROOT),
+            "repo": "organvm/limen",
             "task": (
                 "Build the run-and-gun estate lifecycle: external SSDs hold durable private/raw data, "
                 "processed/redacted corpora, repo/org mirrors, photos/media packages, and recovery copies; "
@@ -923,7 +923,7 @@ def estate_custody_receipt() -> dict[str, Any]:
                 "python3 scripts/substrate-ledger.py --write && "
                 "python3 scripts/vltima-prior-excavations.py --write"
             ),
-            "receipt_target": relpath(ESTATE_CUSTODY_RECEIPT),
+            "receipt_target": "git:organvm/limen:docs/estate-custody-implementation-receipts.json",
             "stop_condition": (
                 "external estate cleanup, prompt chronology, repo/org custody, photos processing, and "
                 "pain-point productization each have owner receipts without destructive local-only action"
@@ -990,14 +990,14 @@ def contribution_balance_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-conductor",
-            "repo": contribution_balance_public_path(ROOT),
+            "repo": "organvm/limen",
             "task": (
                 "Use the live contribution balance as a value gate: route the next public work to "
                 "substantive PR review first, then real issue criteria and PR packaging, before more "
                 "commit-heavy implementation churn."
             ),
             "predicate": f"python3 scripts/github-contribution-balance.py --login {CONTRIBUTION_BALANCE_LOGIN} --json",
-            "receipt_target": contribution_balance_public_path(ROOT / "docs" / "always-working.md"),
+            "receipt_target": "git:organvm/limen:docs/always-working.md",
             "stop_condition": "reviews/issues/PRs have owner receipts and commit-only churn is no longer the next public action",
         },
     }
@@ -1054,14 +1054,14 @@ def credential_wall_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-integrator",
-            "repo": relpath(ROOT),
+            "repo": "organvm/limen",
             "task": (
                 "Keep token/scope failures out of chat by registering every current credential atom "
                 "and adding a historical tombstone receipt for formerly exposed or rotated tokens. "
                 "Never record secret values."
             ),
             "predicate": "python3 scripts/credential-wall.py --check && test -f docs/credential-token-tombstone-audit.md",
-            "receipt_target": relpath(CREDENTIAL_TOMBSTONE_DOC),
+            "receipt_target": "git:organvm/limen:docs/credential-token-tombstone-audit.md",
             "stop_condition": "current credential wall passes and historic token existence/revocation custody is recorded without values",
         },
     }
@@ -1111,10 +1111,10 @@ def tabularius_receipt() -> dict[str, Any]:
         "existing_receipts": [relpath(doc), relpath(audit_doc), relpath(ROOT / "cli" / "src" / "limen" / "tabularius.py")],
         "assignment_packet": {
             "lane_fit": "codex-integrator",
-            "repo": relpath(ROOT),
+            "repo": "organvm/limen",
             "task": "Convert status/result writers to keeper tickets; preserve tasks.yaml drift as separate board state.",
             "predicate": "python3 scripts/task-writer-audit.py && PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q",
-            "receipt_target": relpath(audit_doc),
+            "receipt_target": "git:organvm/limen:docs/tabularius-writer-audit.md",
             "stop_condition": "non-keeper status/result direct writers are converted or explicitly owner-recorded",
         },
     }
@@ -1190,10 +1190,10 @@ def substrate_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-local",
-            "repo": relpath(ROOT),
+            "repo": "organvm/limen",
             "task": "Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.",
             "predicate": "python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap",
-            "receipt_target": relpath(ROOT / "logs" / "cvstos-organ-state.json"),
+            "receipt_target": "git:organvm/limen:docs/estate-custody-implementation-receipts.json",
             "stop_condition": "free disk is at target, temp writes are usable, and reclaimable worktree debt is owner-routed",
         },
     }
@@ -1357,6 +1357,8 @@ def _task_from_item(item: dict[str, Any]) -> dict[str, Any]:
         "labels": ["always-working", "receipt-first", workstream],
         "urls": [str(value) for value in item.get("existing_receipts") or []][:10],
         "context": context,
+        "predicate": str(packet.get("predicate") or ""),
+        "receipt_target": str(packet.get("receipt_target") or ""),
         "created": dt.datetime.now(dt.timezone.utc).date().isoformat(),
     }
 

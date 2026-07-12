@@ -104,4 +104,14 @@ JSON
 out="$(run_root "$work/lookalike.json" 2>&1)" || true
 grep -q '"verdict": "DERIVE"' <<<"$out" && { echo "FAIL: false-fired DERIVE on a non-registry token: $out" >&2; exit 1; }
 
+echo "case 9: ordinary AND clauses are one bounded repair, not a false bundle"
+cat > "$work/ordinary-and.json" <<'JSON'
+{"id": "HEAL-rebase-stale-organvm-limen-434",
+ "title": "Rebase the stale repair branch",
+ "description": "Rebase the branch AND keep its unique change AND restore current base content AND verify the PR AND preserve its owner receipt AND report the exact head receipt. Predicate: gh pr view 434 --repo organvm/limen --json state.",
+ "repo": "organvm/limen", "target_agent": "codex"}
+JSON
+out="$(run "$work/ordinary-and.json")" || { echo "FAIL: ordinary AND prose tripped boundedness: $out" >&2; exit 1; }
+grep -q '"verdict": "PASS"' <<<"$out" || { echo "FAIL: expected PASS for ordinary AND prose, got: $out" >&2; exit 1; }
+
 echo "ask-gate.test: all cases pass"

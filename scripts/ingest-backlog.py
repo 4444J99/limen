@@ -47,6 +47,7 @@ except ImportError:  # pragma: no cover
 HERE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HERE / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import submit_task_upsert  # noqa: E402
 
@@ -104,6 +105,7 @@ def to_task(t: dict, stamp: str) -> Task:
         status="open",
         labels=["studium", "content", "expansion-backlog"],
         context=ctx,
+        **contract_fields(github_pr_contract(REPO, tid)),
         created=stamp,
     )
 

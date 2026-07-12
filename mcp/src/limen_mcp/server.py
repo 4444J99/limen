@@ -10,6 +10,8 @@ import yaml
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from limen_mcp.intake import normalize_selected_legacy_task, validate_intake_contract
+
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
 VALID_AGENTS = {
@@ -93,6 +95,8 @@ class Task(BaseModel):
     labels: List[str] = Field(default_factory=list)
     urls: List[str] = Field(default_factory=list)
     context: Optional[str] = None
+    predicate: Optional[str] = None
+    receipt_target: Optional[str] = None
     claude_tier: Optional[str] = None
     depends_on: List[str] = Field(default_factory=list)
     created: date
@@ -305,7 +309,15 @@ def get_task(task_id: str) -> dict:
 
 
 @mcp.tool()
-def add_task(title: str, repo: str, agent: str = "jules", priority: str = "medium", budget_cost: int = 1) -> str:
+def add_task(
+    title: str,
+    repo: str,
+    predicate: str,
+    receipt_target: str,
+    agent: str = "jules",
+    priority: str = "medium",
+    budget_cost: int = 1,
+) -> str:
     """Add a new task to the pipeline."""
     title = _validate_text(title, "title", 512)
     repo = _validate_text(repo, "repo", 256)
@@ -335,15 +347,24 @@ def add_task(title: str, repo: str, agent: str = "jules", priority: str = "mediu
         priority=priority,
         budget_cost=budget_cost,
         status="open",
+        predicate=predicate,
+        receipt_target=receipt_target,
         created=date.today(),
     )
+    validate_intake_contract(new_task, is_new=True)
     data.tasks.append(new_task)
     _save_data(data, commit_msg=f"feat: add task {new_id}")
     return f"Created task {new_id}"
 
 
 @mcp.tool()
-def update_task_status(task_id: str, status: str, context: Optional[str] = None) -> str:
+def update_task_status(
+    task_id: str,
+    status: str,
+    context: Optional[str] = None,
+    predicate: Optional[str] = None,
+    receipt_target: Optional[str] = None,
+) -> str:
     """Update the status and context of a task. Allows 'failed_blocked' to evict dependencies."""
     task_id = _validate_task_id(task_id)
     status = _validate_optional_enum(status, VALID_STATUSES, "status") or status
@@ -361,7 +382,13 @@ def update_task_status(task_id: str, status: str, context: Optional[str] = None)
             t.status = status
             if context:
                 t.context = context
+            if predicate is not None:
+                t.predicate = predicate
+            if receipt_target is not None:
+                t.receipt_target = receipt_target
             t.updated = datetime.now()
+
+            validate_intake_contract(t)
 
             _save_data(data, commit_msg=f"chore: update {task_id} to {status}")
             return f"Updated {task_id} to {status}. New budget cost: {t.budget_cost}"
@@ -427,6 +454,8 @@ def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
                 return f"Task {task_id} is not open (current status: {t.status}) - cannot claim"
             if t.target_agent not in (agent_name, "any"):
                 return f"Task {task_id} targets {t.target_agent}, not {agent_name} - cannot claim"
+
+            normalize_selected_legacy_task(t)
 
             now = datetime.now()
             t.status = "dispatched"

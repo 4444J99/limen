@@ -52,16 +52,21 @@ def to_task(experiment: dict, hero: str | None) -> dict:
     Validates as ``limen.models.Task`` so P-PROMOTE can submit it verbatim: ``target_agent='any'``
     (any lane may draft the reversible diff), the measurement contract serialized into the free-text
     ``context``, and a ``created`` date the model requires."""
+    from limen.intake import contract_fields, github_pr_contract
+
+    task_id = experiment.get("task_id", "OBS-EXP")
+    repo = hero or "organvm/limen"
     return {
-        "id": experiment.get("task_id", "OBS-EXP"),
+        "id": task_id,
         "title": f"Prepare OBSERVATORY experiment: {experiment.get('change', '')}",
-        "repo": hero,
+        "repo": repo,
         "type": "activation-experiment",
         "target_agent": "any",
         "priority": "high",
         "status": "open",
         "labels": ["human-gated", "observatory"],
         "context": json.dumps(experiment.get("measurement_contract", {}), sort_keys=True),
+        **contract_fields(github_pr_contract(repo, task_id)),
         "created": _today(),
     }
 

@@ -56,6 +56,8 @@ SCRIPT_ROOT = Path(__file__).resolve().parent.parent
 ROOT = Path(os.environ.get("LIMEN_ROOT", SCRIPT_ROOT))
 sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 
+from limen.intake import boundedness_finding, is_executable_predicate  # noqa: E402
+
 PREDICATE_RE = re.compile(
     r"(?ix)\b(done\.sh | predicate\s*: | --check\b | exit\s+0 | pytest | \.test\.sh"
     r" | verify-whole\.sh | merge-policy\.sh | curl\s+-s | npm\s+(test|run\s+check)"
@@ -63,7 +65,7 @@ PREDICATE_RE = re.compile(
     # the fleet's own outcome idioms — machine-emitted heal/packet tasks state their
     # check in prose; these are real predicates (verifiable by gh/CI state), and a
     # gate that flags 400 of them is noise, which is a dead organ
-    r" | stop\s+condition\s*: | receipt\s+target\s*: | \bMERGEABLE\b"
+    r" | stop\s+condition\s*: | \bMERGEABLE\b"
     r" | confirm(s|ed)?\b[^.]{0,80}\bgreen | checks?\s+go(es)?\s+green"
     r" | green\s+CI | returns?\s+200 | exits?\s+non-?zero | exit\s+1\b)"
 )
@@ -78,11 +80,7 @@ ARMED_BEHAVIOR_RE = re.compile(
 ARTIFACT_GATE_RE = re.compile(
     r"(?i)(ship-gate|armed-valve|https?://|200-?url|posted\s+link|booked\s+.*\bid\b|artifact)"
 )
-ENUM_ITEM_RE = re.compile(r"\((\d+)\)")
 PLACEHOLDER_REPOS = {"", "tbd", "unknown", "none"}
-
-MULTI_GOAL_ENUM_THRESHOLD = 4   # (1)…(4)+ enumerated sub-asks = a bundle
-MULTI_GOAL_CONJ_THRESHOLD = 5   # conjoined imperatives past this = a bundle
 
 
 def _text(task: dict) -> str:
@@ -176,16 +174,13 @@ def assess(task: dict) -> dict:
     text = _text(task)
     findings = []
 
-    if not PREDICATE_RE.search(text):
+    if not is_executable_predicate(task.get("predicate")) and not PREDICATE_RE.search(text):
         findings.append(("PREDICATE", "no executable done-check named — add a `Predicate:` line "
                                       "(a script/command whose exit 0 ⟺ done)"))
 
-    enum_items = {int(n) for n in ENUM_ITEM_RE.findall(text)}
-    conj = len(re.findall(r"(?i)\b(?:and\s+(?:then\s+)?also|;\s*then|\bAND\b)\s", text))
-    if len(enum_items) >= MULTI_GOAL_ENUM_THRESHOLD or conj >= MULTI_GOAL_CONJ_THRESHOLD:
-        n = len(enum_items) if len(enum_items) >= MULTI_GOAL_ENUM_THRESHOLD else conj
-        findings.append(("BOUNDED", f"multi-goal bundle ({n} sub-asks) — "
-                                    "split into children, one predicate each"))
+    bundle = boundedness_finding(task)
+    if bundle:
+        findings.append(("BOUNDED", f"{bundle} — split into children, one predicate each"))
 
     if str(task.get("repo", "")).strip().lower() in PLACEHOLDER_REPOS:
         findings.append(("OWNED", "no concrete repo owner"))

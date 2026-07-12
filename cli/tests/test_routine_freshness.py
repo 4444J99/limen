@@ -7,6 +7,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+from limen.io import load_limen_file
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "routine-freshness-audit.py"
 MANIFEST = ROOT / "cloud-routines.json"
@@ -207,8 +209,8 @@ def test_hang_down_atoms_idempotent(tmp_path, monkeypatch):
     # second run: task already exists → should be homed or refreshed, NOT created again
     assert "ASK-routine-atom-backlog-triage" not in result2.get("created", [])
 
-    data = tasks.read_text(encoding="utf-8")
-    assert data.count("ASK-routine-atom-backlog-triage") == 1
+    task_ids = [task.id for task in load_limen_file(tasks).tasks]
+    assert task_ids.count("ASK-routine-atom-backlog-triage") == 1
 
 
 def test_hang_down_atoms_gh_failure_no_atom(tmp_path, monkeypatch):

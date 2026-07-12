@@ -19,6 +19,8 @@ from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 
+from limen_intake import IntakeContractError, normalize_selected_legacy_task, validate_intake_contract
+
 VALID_STATUSES = {"open", "dispatched", "in_progress", "done", "failed", "failed_blocked", "needs_human", "archived"}
 VALID_PRIORITIES = {"critical", "high", "medium", "low", "backlog"}
 VALID_AGENTS = {
@@ -150,6 +152,8 @@ class TaskCreate(BaseModel):
     labels: list[str] = Field(default_factory=list, max_length=MAX_TASK_LIST_LENGTH)
     urls: list[str] = Field(default_factory=list, max_length=MAX_TASK_LIST_LENGTH)
     context: str = Field(default="", max_length=10000)
+    predicate: str = Field(max_length=2000)
+    receipt_target: str = Field(max_length=2048)
 
     @field_validator("priority")
     @classmethod
@@ -177,7 +181,7 @@ class TaskCreate(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
-    @field_validator("title", "context")
+    @field_validator("title", "context", "predicate", "receipt_target")
     @classmethod
     def validate_text(cls, v: str) -> str:
         return reject_control_chars(v, "text")
@@ -206,6 +210,8 @@ class TaskUpdate(BaseModel):
     context: str | None = Field(default=None, max_length=10000)
     urls: list[str] | None = Field(default=None, max_length=MAX_TASK_LIST_LENGTH)
     labels: list[str] | None = Field(default=None, max_length=MAX_TASK_LIST_LENGTH)
+    predicate: str | None = Field(default=None, max_length=2000)
+    receipt_target: str | None = Field(default=None, max_length=2048)
 
     @field_validator("status")
     @classmethod
@@ -214,7 +220,7 @@ class TaskUpdate(BaseModel):
             raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
         return v
 
-    @field_validator("output", "agent", "session_id", "context")
+    @field_validator("output", "agent", "session_id", "context", "predicate", "receipt_target")
     @classmethod
     def validate_text(cls, v: str | None) -> str | None:
         if v is None:
@@ -239,6 +245,8 @@ class AssignmentRequest(BaseModel):
     status: str | None = "open"
     note: str = Field(default="", max_length=2000)
     session_id: str = Field(default="assignment", max_length=128)
+    predicate: str | None = Field(default=None, max_length=2000)
+    receipt_target: str | None = Field(default=None, max_length=2048)
 
     @field_validator("priority")
     @classmethod
@@ -268,9 +276,11 @@ class AssignmentRequest(BaseModel):
             raise ValueError(f"target_agent must be one of {', '.join(sorted(VALID_AGENTS))}")
         return v
 
-    @field_validator("note", "session_id")
+    @field_validator("note", "session_id", "predicate", "receipt_target")
     @classmethod
-    def validate_text(cls, v: str) -> str:
+    def validate_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         return reject_control_chars(v, "text")
 
 
@@ -1189,6 +1199,10 @@ def create_task(req: TaskCreate, authorization: str | None = Header(None)) -> di
     task["created"] = now_iso()
     task["updated"] = task["created"]
     task["dispatch_log"] = []
+    try:
+        validate_intake_contract(task, is_new=True)
+    except IntakeContractError as exc:
+        raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
     data.setdefault("tasks", []).append(task)
     save_board(data, doc.sha)
     return {"status": "created", "task": task}
@@ -1212,6 +1226,10 @@ def update_task(task_id: str, req: TaskUpdate, authorization: str | None = Heade
         append_log(task, agent, session_id, status, output)
     else:
         task["updated"] = now_iso()
+    try:
+        validate_intake_contract(task)
+    except IntakeContractError as exc:
+        raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
     save_board(data, doc.sha)
     return {"status": "updated", "task": task}
 
@@ -1234,8 +1252,16 @@ def assign_task(task_id: str, req: AssignmentRequest, authorization: str | None 
         task["priority"] = req.priority
     if req.budget_cost is not None:
         task["budget_cost"] = req.budget_cost
+    if req.predicate is not None:
+        task["predicate"] = req.predicate
+    if req.receipt_target is not None:
+        task["receipt_target"] = req.receipt_target
     if req.status is not None:
         task["status"] = req.status
+    try:
+        validate_intake_contract(task)
+    except IntakeContractError as exc:
+        raise HTTPException(status_code=422, detail=f"typed intake contract rejected: {exc}") from exc
     after = {
         "target_agent": task.get("target_agent"),
         "priority": task.get("priority"),
@@ -1297,9 +1323,15 @@ def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> 
     maybe_reset_budget(data)
     remaining = remaining_budget(data, req.agent)
     selected: list[dict[str, Any]] = []
+    intake_blocked: list[dict[str, str]] = []
     for task in dispatch_candidates(data, req):
         cost = int(task.get("budget_cost", 1))
         if cost > remaining:
+            continue
+        try:
+            normalize_selected_legacy_task(task)
+        except IntakeContractError as exc:
+            intake_blocked.append({"id": str(task.get("id") or "unknown"), "reason": str(exc)})
             continue
         selected.append(task)
         remaining -= cost
@@ -1325,6 +1357,7 @@ def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> 
             "candidates": previews,
             "count": len(previews),
             "live": False,
+            "intake_blocked": intake_blocked,
         }
 
     dispatched: list[dict[str, Any]] = []
@@ -1348,6 +1381,7 @@ def dispatch(req: DispatchRequest, authorization: str | None = Header(None)) -> 
         "agent": req.agent,
         "dispatched": dispatched,
         "failed": failed,
+        "intake_blocked": intake_blocked,
         "count": len(dispatched),
         "live": True,
         "remaining_budget": remaining_budget(data, req.agent),

@@ -49,6 +49,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from limen.intake import validate_intake_contract
 from limen.io import BoardCollapseError, load_limen_file, queue_lock, save_limen_file
 from limen.materialize import EV_BOARD_META, EV_BOARD_ORDER, EV_TASK_UPSERT, Event, fold
 from limen.models import LimenFile, Task
@@ -159,6 +160,7 @@ def submit_task_upsert(
     and blind-upserting a live id would overwrite its fields (e.g. flip a `done` task back to `open`).
     """
     validated = task if isinstance(task, Task) else Task.model_validate(task)
+    validate_intake_contract(validated, is_new=True)
     fields = validated.model_dump(mode="json", exclude_none=True)
     tid = fields.get("id")
     if not tid:
@@ -392,6 +394,7 @@ def _apply(ticket: Ticket, tasks: OrderedDict[str, dict[str, Any]], meta: dict[s
     if ticket.intent in (INTENT_UPSERT, INTENT_STATUS):
         if not ticket.task_id:
             raise ValueError(f"{ticket.intent} requires task_id")
+        is_new = ticket.task_id not in tasks
         base = dict(tasks.get(ticket.task_id, {}))
         merged = {**base, **(ticket.patch or {})}
         merged["id"] = ticket.task_id
@@ -409,7 +412,11 @@ def _apply(ticket: Ticket, tasks: OrderedDict[str, dict[str, Any]], meta: dict[s
             # a task.status ticket carries the transition in its log payload; honor it as the status
             if ticket.intent == INTENT_STATUS and "status" not in (ticket.patch or {}) and status:
                 merged["status"] = status
-        Task.model_validate(merged)  # reject a bad ticket individually
+        validated = Task.model_validate(merged)  # reject a bad ticket individually
+        # A caller can bypass ``submit_task_upsert`` by constructing a raw Ticket.
+        # The keeper repeats admission independently so that ticket is quarantined
+        # alone while valid siblings still land.
+        validate_intake_contract(validated, is_new=is_new)
         tasks[ticket.task_id] = merged  # dict update keeps first-seen position; new id appends
         return
 

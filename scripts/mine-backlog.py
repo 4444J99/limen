@@ -117,6 +117,8 @@ def _to_task(issue: dict) -> dict:
         "labels": labels,
         "urls": [issue["url"]],
         "context": f"GitHub issue {nwo}#{num}. {excerpt}".strip(),
+        "predicate": f'test "$(gh issue view {num} --repo {nwo} --json state --jq .state)" = CLOSED',
+        "receipt_target": issue["url"],
         "created": date.today().isoformat(),
     }
 

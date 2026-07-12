@@ -111,7 +111,16 @@ def test_workstream_survives_tabularius_single_writer(tmp_path):
     board.write_text('version: "1.0"\nportal:\n  name: x\ntasks: []\n')
     tabularius.submit_task_upsert(
         board,
-        {"id": "W1", "title": "w", "target_agent": "any", "workstream": "Revenue", "created": "2026-07-01"},
+        {
+            "id": "W1",
+            "title": "w",
+            "repo": "organvm/limen",
+            "target_agent": "any",
+            "workstream": "Revenue",
+            "predicate": "pytest -q cli/tests/test_workstream.py",
+            "receipt_target": "github:organvm/limen:pull-request:W1",
+            "created": "2026-07-01",
+        },
         agent="tester",
         session_id="s",
     )

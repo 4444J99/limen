@@ -260,6 +260,7 @@ class FakeRuntime:
             "TASK-VERIFY": {"id": "TASK-VERIFY", "status": "in_progress"},
             "TASK-ASSIGN": {
                 "id": "TASK-ASSIGN",
+                "repo": "organvm/limen",
                 "status": "needs_human",
                 "target_agent": "codex",
                 "priority": "low",
@@ -346,6 +347,8 @@ class FakeRuntime:
                     "priority": body["priority"],
                     "budget_cost": body["budget_cost"],
                     "status": body["status"],
+                    "predicate": body["predicate"],
+                    "receipt_target": body["receipt_target"],
                 }
             )
             return self.response(
@@ -423,6 +426,8 @@ def test_main_verifies_optional_owner_mutations(
     assert fake.tasks["TASK-VERIFY"]["status"] == "done"
     assert fake.tasks["TASK-ASSIGN"]["target_agent"] == "jules"
     assert fake.tasks["TASK-ASSIGN"]["status"] == "open"
+    assert fake.tasks["TASK-ASSIGN"]["predicate"].startswith('test "$(gh pr list')
+    assert fake.tasks["TASK-ASSIGN"]["receipt_target"] == "github:organvm/limen:pull-request:TASK-ASSIGN"
     assert fake.tasks["TASK-ARCHIVE"]["status"] == "archived"
 
 

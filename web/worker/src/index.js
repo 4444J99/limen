@@ -8,7 +8,144 @@ const VALID_AGENTS = new Set(["jules", "claude", "gemini", "opencode", "codex", 
 const VALID_DISPATCH_AGENTS = new Set([...VALID_AGENTS].filter((agent) => agent !== "any"));
 const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
 const SAFE_TEXT_RE = /^[^\x00-\x08\x0b\x0c\x0e-\x1f\x7f]*$/;
+const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const PLACEHOLDER_RE = /<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b/i;
+const ACTIVE_STATUSES = new Set(["open", "dispatched", "in_progress"]);
+const EXECUTABLES = new Set([
+  "[", "bash", "bundle", "cargo", "curl", "gh", "git", "go", "just", "make", "node", "nox", "npm",
+  "pnpm", "py.test", "pytest", "python", "python3", "ruby", "sh", "test", "tox", "uv", "yarn", "zsh",
+]);
 let inlineBoardText = null;
+
+class IntakeContractError extends Error {}
+
+function taskText(task) {
+  return [task.title, task.description, task.context].filter(Boolean).map(String).join("\n");
+}
+
+function boundednessFinding(task) {
+  const text = taskText(task);
+  const numbered = new Set([...text.matchAll(/(?:^|\s)\((\d+)\)\s/g)].map((match) => Number(match[1])));
+  if (numbered.size >= 4) return `multi-goal bundle (${numbered.size} numbered objectives)`;
+  const sequenced = text.match(/;\s*then\b|\band\s+then\s+also\b/gi) || [];
+  if (sequenced.length >= 4) return `multi-goal bundle (${sequenced.length + 1} sequenced objectives)`;
+  return null;
+}
+
+function shellWords(command) {
+  return command.match(/(?:[^\s"'\\]+|"(?:\\.|[^"])*"|'[^']*')+/g) || [];
+}
+
+function isExecutablePredicate(value) {
+  if (typeof value !== "string") return false;
+  const command = value.trim();
+  if (!command || /[\r\n]/.test(command) || PLACEHOLDER_RE.test(command)) return false;
+  const words = shellWords(command);
+  let index = 0;
+  while (index < words.length) {
+    const word = words[index];
+    if (["command", "env", "sudo"].includes(word) || word.startsWith("-") || (/^[A-Za-z_][A-Za-z0-9_]*=/.test(word))) {
+      index += 1;
+      continue;
+    }
+    break;
+  }
+  if (index >= words.length) return false;
+  const first = words[index].replace(/^['"]|['"]$/g, "");
+  return EXECUTABLES.has(first) || first.includes("/") || first.endsWith(".py") || first.endsWith(".sh");
+}
+
+function isDurableReceiptTarget(value) {
+  if (typeof value !== "string") return false;
+  const target = value.trim();
+  if (!target || PLACEHOLDER_RE.test(target)) return false;
+  if (/^github:[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+:(?:pull-request|issue):[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(target)) return true;
+  const gitTarget = target.match(/^git:[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+:([^\s#]+)(?:#[^\s]+)?$/);
+  if (gitTarget) {
+    const path = gitTarget[1];
+    return !path.startsWith("/") && path.split("/").every((part) => !["", ".", "..", ".git"].includes(part));
+  }
+  try {
+    const url = new URL(target);
+    if (url.protocol !== "https:" || url.hostname.toLowerCase() !== "github.com") return false;
+    const parts = url.pathname.split("/").filter(Boolean);
+    return (parts.length >= 4 && ["issues", "pull", "commit", "blob", "tree"].includes(parts[2]))
+      || (parts.length >= 5 && parts[2] === "actions" && ["runs", "workflows"].includes(parts[3]));
+  } catch {
+    return false;
+  }
+}
+
+function validateIntakeContract(task, { isNew = false } = {}) {
+  const required = isNew || ACTIVE_STATUSES.has(String(task.status || "open"));
+  const predicate = String(task.predicate || "").trim();
+  const receiptTarget = String(task.receipt_target || "").trim();
+  const partial = Boolean(predicate || receiptTarget);
+  const errors = [];
+  if ((required || partial) && !isExecutablePredicate(predicate)) errors.push("predicate must be one executable command with no placeholders");
+  if ((required || partial) && !isDurableReceiptTarget(receiptTarget)) errors.push("receipt_target must name a durable GitHub receipt or repository-owned path");
+  const bundle = boundednessFinding(task);
+  if (required && bundle) errors.push(bundle);
+  if (errors.length) throw new IntakeContractError(errors.join("; "));
+  return predicate && receiptTarget ? { predicate, receipt_target: receiptTarget } : null;
+}
+
+function githubIssueContract(repo, number) {
+  if (!REPO_RE.test(repo) || !/^\d+$/.test(String(number))) throw new IntakeContractError("cannot build issue contract without exact owner/repo and issue number");
+  return {
+    predicate: `test "$(gh issue view ${number} --repo ${repo} --json state --jq .state)" = CLOSED`,
+    receipt_target: `https://github.com/${repo}/issues/${number}`,
+  };
+}
+
+function githubPrContract(repo, taskId) {
+  if (!REPO_RE.test(repo) || !TASK_ID_RE.test(taskId)) throw new IntakeContractError("cannot build PR contract without exact owner/repo and task id");
+  return {
+    predicate: `test "$(gh pr list --repo ${repo} --state merged --search '${taskId} in:body' --json number --jq length)" -gt 0`,
+    receipt_target: `github:${repo}:pull-request:${taskId}`,
+  };
+}
+
+function githubExistingPrContract(repo, number) {
+  if (!REPO_RE.test(repo) || !/^\d+$/.test(String(number))) throw new IntakeContractError("cannot build existing-PR contract without exact owner/repo and PR number");
+  return {
+    predicate: `test "$(gh pr view ${number} --repo ${repo} --json state --jq .state)" = MERGED`,
+    receipt_target: `https://github.com/${repo}/pull/${number}`,
+  };
+}
+
+function githubContractFromUrl(value) {
+  if (typeof value !== "string") return null;
+  const match = value.match(/^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/(issues|pull)\/(\d+)/);
+  if (!match) return null;
+  return match[2] === "issues" ? githubIssueContract(match[1], match[3]) : githubExistingPrContract(match[1], match[3]);
+}
+
+function normalizeSelectedLegacyTask(task) {
+  try {
+    const existing = validateIntakeContract(task);
+    if (existing) return existing;
+  } catch {}
+
+  const text = taskText(task);
+  const predicateLine = text.match(/^\s*predicate\s*:\s*([^\r\n]+?)\s*$/im);
+  const receiptLine = text.match(/^\s*receipt\s+target\s*:\s*(\S+)\s*$/im);
+  let predicate = predicateLine ? predicateLine[1].trim() : "";
+  let receiptTarget = receiptLine ? receiptLine[1].trim() : "";
+  const urlContract = (task.urls || []).map(githubContractFromUrl).find(Boolean);
+  if (urlContract) {
+    if (!isExecutablePredicate(predicate)) predicate = urlContract.predicate;
+    if (!isDurableReceiptTarget(receiptTarget)) receiptTarget = urlContract.receipt_target;
+  }
+  if (!isExecutablePredicate(predicate) || !isDurableReceiptTarget(receiptTarget)) {
+    const fallback = githubPrContract(String(task.repo || "").trim(), String(task.id || "").trim());
+    if (!isExecutablePredicate(predicate)) predicate = fallback.predicate;
+    if (!isDurableReceiptTarget(receiptTarget)) receiptTarget = fallback.receipt_target;
+  }
+  task.predicate = predicate;
+  task.receipt_target = receiptTarget;
+  return validateIntakeContract(task);
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -576,9 +713,19 @@ async function route(request, env) {
     if (limit.response) return limit.response;
     if (body.live !== undefined && typeof body.live !== "boolean") return error("live must be a boolean", 422, env);
     const doc = await loadBoard(env);
-    const candidates = dispatchCandidates(doc.data, agent.value, taskId.value).slice(0, limit.value);
+    const candidates = [];
+    const intakeBlocked = [];
+    for (const task of dispatchCandidates(doc.data, agent.value, taskId.value)) {
+      if (candidates.length >= limit.value) break;
+      try {
+        normalizeSelectedLegacyTask(task);
+        candidates.push(task);
+      } catch (err) {
+        intakeBlocked.push({ id: String(task.id || "unknown"), reason: err instanceof Error ? err.message : String(err) });
+      }
+    }
     if (body.live === true) return error("live dispatch is not implemented by the Cloudflare adapter", 501, env);
-    return json({ status: "dry_run", count: candidates.length, candidates, tasks: candidates, live: false, agent: agent.value }, 200, env);
+    return json({ status: "dry_run", count: candidates.length, candidates, tasks: candidates, intake_blocked: intakeBlocked, live: false, agent: agent.value }, 200, env);
   }
 
   const taskMatch = path.match(/^\/api\/tasks\/([^/]+)(?:\/(verify|assign|archive))?$/);
@@ -592,7 +739,7 @@ async function route(request, env) {
     if (request.method !== "POST") return error("method not allowed", 405, env);
     let rawBody;
     try { rawBody = await request.json(); } catch { return error("invalid JSON body", 422, env); }
-    const body = safeParseBody(rawBody, ["status", "note", "session_id", "target_agent", "priority", "budget_cost"]);
+    const body = safeParseBody(rawBody, ["status", "note", "session_id", "target_agent", "priority", "budget_cost", "predicate", "receipt_target"]);
     const doc = await loadBoard(env);
     const task = findTask(doc.data, taskId.value);
     if (action === "verify") {
@@ -613,7 +760,14 @@ async function route(request, env) {
       if (sessionId.response) return sessionId.response;
       const note = validateText(body.note, "note", env, { defaultValue: "", max: 2000 });
       if (note.response) return note.response;
-      const before = { target_agent: task.target_agent, priority: task.priority, budget_cost: task.budget_cost, status: task.status };
+      const before = {
+        target_agent: task.target_agent,
+        priority: task.priority,
+        budget_cost: task.budget_cost,
+        status: task.status,
+        predicate: task.predicate,
+        receipt_target: task.receipt_target,
+      };
       if (body.target_agent !== undefined) {
         const targetAgent = validateEnum(body.target_agent, VALID_AGENTS, "target_agent", env);
         if (targetAgent.response) return targetAgent.response;
@@ -629,12 +783,35 @@ async function route(request, env) {
         if (cost.response) return cost.response;
         task.budget_cost = cost.value;
       }
+      if (body.predicate !== undefined) {
+        const predicate = validateText(body.predicate, "predicate", env, { max: 2000 });
+        if (predicate.response) return predicate.response;
+        task.predicate = predicate.value;
+      }
+      if (body.receipt_target !== undefined) {
+        const receiptTarget = validateText(body.receipt_target, "receipt_target", env, { max: 2048 });
+        if (receiptTarget.response) return receiptTarget.response;
+        task.receipt_target = receiptTarget.value;
+      }
       if (body.status !== undefined) {
         const status = validateEnum(body.status, VALID_STATUSES, "status", env);
         if (status.response) return status.response;
         task.status = status.value;
       }
-      const after = { target_agent: task.target_agent, priority: task.priority, budget_cost: task.budget_cost, status: task.status };
+      try {
+        validateIntakeContract(task);
+      } catch (err) {
+        if (err instanceof IntakeContractError) return error(`typed intake contract rejected: ${err.message}`, 422, env);
+        throw err;
+      }
+      const after = {
+        target_agent: task.target_agent,
+        priority: task.priority,
+        budget_cost: task.budget_cost,
+        status: task.status,
+        predicate: task.predicate,
+        receipt_target: task.receipt_target,
+      };
       const changed = Object.keys(after).filter((key) => before[key] !== after[key]);
       appendLog(task, "api", sessionId.value, "assigned", note.value || `Assigned via steering controls: ${changed.join(", ") || "no field changes"}`);
       await saveBoard(env, doc.data, doc.sha);
@@ -668,3 +845,5 @@ export default {
     }
   },
 };
+
+export { isDurableReceiptTarget, isExecutablePredicate, normalizeSelectedLegacyTask, validateIntakeContract };

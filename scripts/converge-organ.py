@@ -89,6 +89,7 @@ def _emit_gaps(gap_texts: list[str], origin_id: str, apply: bool) -> int:
     if not gap_texts:
         return 0
     from limen.io import load_limen_file
+    from limen.intake import contract_fields, github_pr_contract
     from limen.tabularius import pending_task_ids, submit_task_upsert
     tasks_path = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -107,12 +108,14 @@ def _emit_gaps(gap_texts: list[str], origin_id: str, apply: bool) -> int:
         task = dict(
             id=gid,
             title=g[:120],
+            repo="organvm/limen",
             created=now.date(),
             status="open",
             target_agent="any",
             priority="low",
             type="converge-gap",
             context=f"gap surfaced by converge from {origin_id}",
+            **contract_fields(github_pr_contract("organvm/limen", gid)),
         )
         if apply:
             submit_task_upsert(tasks_path, task, agent="converge-organ", session_id=session_id)

@@ -8,6 +8,7 @@ import yaml
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.intake import contract_fields, github_issue_contract
 from limen.tabularius import pending_task_ids, submit_task_upsert
 
 TASKS_YAML = Path(__file__).resolve().parent.parent / "tasks.yaml"
@@ -352,6 +353,7 @@ def main():
             labels=["batch-2026-06-01"],
             created="2026-06-01",
             dispatch_log=[],
+            **contract_fields(github_issue_contract(repo, num)),
         )
         submit_task_upsert(TASKS_YAML, task, agent="batch-dispatch", session_id=session_id)
         pending_ids.add(tid)

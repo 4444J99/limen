@@ -26,6 +26,7 @@ import yaml
 # Producers never write tasks.yaml directly; they submit upsert tickets and Tabularius seals the
 # projection. The auto-scale workflow runs scripts/tabularius-organ.py after this producer.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.intake import contract_fields, github_issue_contract
 from limen.tabularius import pending_task_ids, pending_upsert_patches, submit_task_upsert
 
 TASKS_FILE = Path(__file__).resolve().parent.parent / "tasks.yaml"
@@ -191,6 +192,7 @@ def main() -> int:
                 "urls": [url],
                 "created": today,
                 "updated": today,
+                **contract_fields(github_issue_contract(candidate["repo"], url.rsplit("/", 1)[-1])),
             }
         )
         existing_urls.add(url)

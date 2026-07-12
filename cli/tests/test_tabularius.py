@@ -39,7 +39,15 @@ _NOW = datetime(2026, 7, 2, 12, 0, 0, tzinfo=timezone.utc)
 
 
 def _task(tid: str, **over) -> dict:
-    base = {"id": tid, "title": f"task {tid}", "target_agent": "jules", "created": "2026-07-01"}
+    base = {
+        "id": tid,
+        "title": f"task {tid}",
+        "repo": "organvm/limen",
+        "target_agent": "jules",
+        "created": "2026-07-01",
+        "predicate": f"pytest -q -k {tid}",
+        "receipt_target": f"github:organvm/limen:pull-request:{tid}",
+    }
     base.update(over)
     return base
 
@@ -215,6 +223,51 @@ def test_bad_ticket_quarantined_good_ticket_survives(tmp_path):
     assert (_rejected(board) / f"{bad.ticket_id}.json.reason.txt").exists()
 
 
+def test_bypassed_untyped_new_ticket_is_quarantined_without_blocking_typed_sibling(tmp_path):
+    board = _seed_board(tmp_path)
+    good = _ticket(INTENT_UPSERT, task_id="T-typed", patch=_task("T-typed", status="open"))
+    bad_patch = _task("T-untyped", status="open")
+    bad_patch.pop("predicate")
+    bad_patch.pop("receipt_target")
+    bad = _ticket(INTENT_UPSERT, task_id="T-untyped", patch=bad_patch)
+    submit_ticket(board, bad)
+    submit_ticket(board, good)
+
+    result = drain_once(board)
+
+    assert result.applied == 1 and result.rejected == 1
+    assert "T-typed" in {task.id for task in load_limen_file(board).tasks}
+    assert "T-untyped" not in {task.id for task in load_limen_file(board).tasks}
+    reason = (_rejected(board) / f"{bad.ticket_id}.json.reason.txt").read_text()
+    assert "predicate must be one executable command" in reason
+
+
+def test_bypassed_legacy_active_transition_is_quarantined_without_blocking_sibling(tmp_path):
+    board = _seed_board(tmp_path)
+    current = load_limen_file(board)
+    legacy = next(task for task in current.tasks if task.id == "T-0")
+    legacy.status = "needs_human"
+    legacy.predicate = None
+    legacy.receipt_target = None
+    save_limen_file(board, current)
+
+    bad = _ticket(INTENT_STATUS, task_id="T-0", log={"status": "dispatched"})
+    good = _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done"})
+    submit_ticket(board, bad)
+    submit_ticket(board, good)
+
+    result = drain_once(board)
+
+    assert result.applied == 1 and result.rejected == 1
+    tasks = {task.id: task for task in load_limen_file(board).tasks}
+    assert tasks["T-0"].status == "needs_human"
+    assert tasks["T-1"].status == "done"
+    assert (
+        "predicate must be one executable command"
+        in (_rejected(board) / f"{bad.ticket_id}.json.reason.txt").read_text()
+    )
+
+
 def test_bad_meta_ticket_quarantined_good_ticket_survives(tmp_path):
     board = _seed_board(tmp_path)
     good = _ticket(INTENT_UPSERT, task_id="T-ok", patch=_task("T-ok", status="open"))
@@ -345,4 +398,9 @@ def test_submit_task_upsert_validates_before_emitting(tmp_path):
     # a dict missing the required `id` — must raise at submit, not land a ticket
     with pytest.raises((ValueError, Exception)):
         submit_task_upsert(board, {"title": "no id"}, agent="gen")
+    untyped = _task("NEW-UNTYPED", status="open")
+    untyped.pop("predicate")
+    untyped.pop("receipt_target")
+    with pytest.raises(ValueError, match="predicate"):
+        submit_task_upsert(board, untyped, agent="gen")
     assert pending_count(board) == 0  # nothing entered the inbox

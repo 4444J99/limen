@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.io import load_limen_file  # noqa: E402
+from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import pending_task_ids, submit_task_upsert  # noqa: E402
 
@@ -68,6 +69,7 @@ def latest_reports(cadence_dir):
     return [p for _, p in sorted(latest.values())]
 
 def _task_for(insight, tid, repo):
+    contract = contract_fields(github_pr_contract(repo, tid))
     return Task(
         id=tid,
         title=f"Heal insight: {insight.get('title', '')}",
@@ -79,7 +81,8 @@ def _task_for(insight, tid, repo):
         budget_cost=1,
         status="open",
         context=f"Suggested action: {insight.get('suggested_action', '')}\nSource: {insight.get('source', '')}\nSeverity: {insight.get('severity', '')}",
-        created=date.today()
+        created=date.today(),
+        **contract,
     )
 
 def route_repo_insight(insight, apply, stats=None):

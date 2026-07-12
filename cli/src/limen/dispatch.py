@@ -27,6 +27,7 @@ from limen.capacity import (
     select_lanes,
 )
 from limen.io import load_limen_file, save_limen_file, queue_lock as _queue_lock
+from limen.intake import IntakeContractError, normalize_selected_legacy_task, validate_intake_contract
 from limen.jules_remote import (
     JulesRemoteSnapshot,
     classify_jules_claim,
@@ -533,6 +534,11 @@ def _explicit_task_source(tasks_path: Path | None, task_id: str | None) -> bool:
     task = next((candidate for candidate in board.tasks if candidate.id == task_id), None)
     if task is None:
         return False
+    try:
+        if validate_intake_contract(task) is not None:
+            return True
+    except IntakeContractError:
+        pass
     text = _task_search_text(task)
     has_owner = bool(task.repo or task.urls or "owner" in text)
     has_predicate = any(term in text for term in ("predicate", "verify", "test ", "pytest", "check ", "receipt target"))
@@ -1265,6 +1271,8 @@ def _build_prompt(task: Task, task_first: bool = False) -> str:
         parts.append(f"\nContext: {task.context}")
     if task.urls:
         parts.append(f"\nReferences: {', '.join(task.urls)}")
+    if task.predicate and task.receipt_target:
+        parts.append(f"\nPredicate: {task.predicate}\nReceipt target: {task.receipt_target}")
     pr_ref = _task_github_pr_ref(task)
     if pr_ref:
         parts.append(
@@ -2880,10 +2888,20 @@ def _commit_dispatch_results(
         fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
         _reset_budget_if_needed(fresh, now)
         fid = {t.id: t for t in fresh.tasks}
+        selected_contracts = {
+            t.id: (t.predicate, t.receipt_target) for t in limen.tasks if t.predicate and t.receipt_target
+        }
         ftrack = fresh.portal.budget.track
         for agent, tid, res in results:
             ft = fid.get(tid)
             if ft is not None:
+                contract = selected_contracts.get(tid)
+                # Backfill normalization only when the fresh task is still fully
+                # legacy. A concurrent keeper/owner update to either field wins;
+                # copying the stale pre-run pair would recreate the lost-update
+                # bug this fresh-reload commit path exists to prevent.
+                if contract and not ft.predicate and not ft.receipt_target:
+                    ft.predicate, ft.receipt_target = contract
                 _apply_result(ft, agent, res, now, ftrack)
         save_limen_file(tasks_path, fresh)
 
@@ -2985,6 +3003,12 @@ def dispatch_tasks(
     for task in candidates:
         if remaining < task.budget_cost:
             break
+
+        try:
+            normalize_selected_legacy_task(task)
+        except IntakeContractError as exc:
+            print(f"  INTAKE BLOCKED {task.id}: {exc}")
+            continue
 
         result = call_agent_dispatch(agent_filter, task, dry_run)
         if not dry_run:
@@ -3357,6 +3381,11 @@ def _select_parallel_reservations(
         spent_here = 0
         for t in ordered[:eff]:
             if spent_here + t.budget_cost > rem:
+                continue
+            try:
+                normalize_selected_legacy_task(t)
+            except IntakeContractError as exc:
+                print(f"  INTAKE BLOCKED {t.id}: {exc}")
                 continue
             chosen.append(t)
             spent_here += t.budget_cost

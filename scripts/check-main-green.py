@@ -46,6 +46,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.intake import IntakeContractError, contract_fields, github_main_green_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
@@ -298,7 +299,7 @@ def verdict(throttle: int) -> dict:
     payload = {
         "checked_at": _now().isoformat(timespec="seconds"),
         "conclusion": run.get("conclusion") or "unknown",
-        "head_sha": (run.get("headSha") or "")[:8],
+        "head_sha": run.get("headSha") or "",
         "url": run.get("url") or "",
     }
     _write_stamp(payload)
@@ -328,23 +329,46 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
     try:
         lf = load_limen_file(tasks_path)
         stamp = _now().date().isoformat()
-        title = f"Restore main to green — {REPO} CI is RED at {head_sha}"
+        short_head = head_sha[:8]
+        title = f"Restore main to green — {REPO} CI is RED at {short_head}"
         context = (
-            f"main's CI ({WORKFLOW}) is RED at {head_sha} ({url}).{impact_note} Reproduce with "
+            f"main's CI ({WORKFLOW}) is RED at exact head {head_sha} ({url}).{impact_note} Reproduce with "
             "`PYTHONPATH=cli/src pytest web/api/tests cli/tests -q`, fix at root, land a heal PR. "
             f"Single canonical SYMPTOM-scoped task (stable id {tid}) so every lane AND every "
             f"successive red commit converges here instead of duplicating. "
             f"[auto-emitted {stamp} by check-main-green]"
         )
         existing = next((t for t in lf.tasks if t.id == tid), None)
+        try:
+            contract = contract_fields(github_main_green_contract(REPO, head_sha, WORKFLOW))
+        except IntakeContractError:
+            return None  # stale/partial cache cannot create an exact-head contract; retry after live refresh
         if existing is not None:
             if existing.status in _ACTIVE_STATES:
+                changed = False
+                for key, value in {
+                    "title": title,
+                    "context": context,
+                    "predicate": contract["predicate"],
+                    "receipt_target": contract["receipt_target"],
+                }.items():
+                    if getattr(existing, key) != value:
+                        setattr(existing, key, value)
+                        changed = True
+                if url and url not in (existing.urls or []):
+                    existing.urls = [*(existing.urls or []), url]
+                    changed = True
+                if changed:
+                    existing.updated = _now()
+                    save_limen_file(tasks_path, lf)
                 return None  # already being worked — converge, idempotent
             # prior red episode healed; trunk is red again → reopen the SAME canonical ticket
             existing.status = "open"
             existing.title = title
             existing.context = context
             existing.priority = "critical"
+            existing.predicate = contract["predicate"]
+            existing.receipt_target = contract["receipt_target"]
             if url and url not in (existing.urls or []):
                 existing.urls = [*(existing.urls or []), url]
             existing.updated = _now()
@@ -363,6 +387,7 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
                 labels=["lifecycle", "ci", "mainred"],
                 urls=[url] if url else [],
                 context=context,
+                **contract,
                 depends_on=[],
                 created=stamp,
                 dispatch_log=[],

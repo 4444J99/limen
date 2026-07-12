@@ -45,6 +45,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.intake import contract_fields, github_existing_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 from _pr_scan import enumerate_open_prs, rotating_window, scaled_limit, stale_base_verdict  # noqa: E402
 
@@ -173,6 +174,7 @@ def task_id(kind_slug, repo, num):
 
 def build_task(verdict, repo, num, url, stamp):
     spec = KINDS[verdict]
+    contract = contract_fields(github_existing_pr_contract(repo, num))
     return Task(
         id=task_id(spec["slug"], repo, num),
         title=spec["title"].format(repo=repo, num=num),
@@ -186,6 +188,7 @@ def build_task(verdict, repo, num, url, stamp):
         urls=[url] if url else [],
         context=spec["context"].format(repo=repo, num=num, url=url or f"{repo}#{num}")
         + f" [auto-emitted {stamp} by self-heal so merge-drain can land it]",
+        **contract,
         depends_on=[],
         created=stamp,
         dispatch_log=[],

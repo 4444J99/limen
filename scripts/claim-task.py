@@ -12,6 +12,9 @@ from typing import Any
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
+
 VALID_CLAIM_AGENTS = {
     "agy",
     "claude",
@@ -96,6 +99,11 @@ def claim_task(data: dict[str, Any], task_id: str, agent: str, session_id: str) 
             per_agent[agent] if agent in per_agent else 0,
             f"portal.budget.track.per_agent.{agent}",
         )
+
+        try:
+            normalize_selected_legacy_task(task)
+        except IntakeContractError as exc:
+            raise SystemExit(f"typed intake blocked {task_id}: {exc}") from None
 
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         task["target_agent"] = agent

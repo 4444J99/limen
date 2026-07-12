@@ -29,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import select_lanes  # noqa: E402
 from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
+from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import submit_task_upsert  # noqa: E402
 
@@ -222,6 +223,7 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
                 + (f" CONSTRAINT: {note}." if note else "")
                 + f" [organ-backlog {stamp}: rank {org.get('rank','?')}, maturity {org.get('maturity','?')}% "
                   f"stage {org['stage']} — convert idle fleet capacity into institutional weight (VLTIMA).]",
+                **contract_fields(github_pr_contract(org["repo"], tid)),
                 depends_on=[], created=stamp, dispatch_log=[],
             ))
     return new, info

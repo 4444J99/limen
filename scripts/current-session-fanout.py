@@ -28,9 +28,12 @@ sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 try:
     from limen.io import load_limen_file  # noqa: E402
+    from limen.intake import contract_fields, github_pr_contract  # noqa: E402
     from limen.tabularius import pending_task_ids, submit_task_upsert  # noqa: E402
 except Exception:  # pragma: no cover - import fallback for hermetic tests
     load_limen_file = None
+    contract_fields = None
+    github_pr_contract = None
     pending_task_ids = None
     submit_task_upsert = None
 
@@ -666,6 +669,7 @@ def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[d
                 ],
                 "urls": [],
                 "context": task_seed_context(snapshot=snapshot, packet=packet, phase="planner"),
+                **contract_fields(github_pr_contract(repo, task_id)),
                 "depends_on": [],
                 "created": created,
                 "dispatch_log": [],
@@ -680,11 +684,12 @@ def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[d
 
     fallback_planner = seed[0]["id"] if seed else None
     for packet in snapshot.get("executor_packets", []):
+        task_id = task_seed_id(session_hash, str(packet["id"]))
         depends_on = [planner_task_ids.get(str(packet.get("theme")), fallback_planner)]
         depends_on = [task_id for task_id in depends_on if task_id]
         seed.append(
             {
-                "id": task_seed_id(session_hash, str(packet["id"])),
+                "id": task_id,
                 "title": f"Execute current-session fanout stream: {packet.get('theme')}",
                 "description": "Run the bounded executor lane after the matching planner packet lands.",
                 "repo": repo,
@@ -702,6 +707,7 @@ def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[d
                 ],
                 "urls": [],
                 "context": task_seed_context(snapshot=snapshot, packet=packet, phase="executor"),
+                **contract_fields(github_pr_contract(repo, task_id)),
                 "depends_on": depends_on,
                 "created": created,
                 "dispatch_log": [],
@@ -732,6 +738,8 @@ def task_model_payload(spec: dict[str, Any]) -> dict[str, Any]:
             "labels",
             "urls",
             "context",
+            "predicate",
+            "receipt_target",
             "depends_on",
             "created",
             "dispatch_log",

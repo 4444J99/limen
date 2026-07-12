@@ -26,7 +26,7 @@ def _seed(tmp: Path, conclusion: str) -> None:
             {
                 "checked_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                 "conclusion": conclusion,
-                "head_sha": "deadbeef",
+                "head_sha": "deadbeef" * 5,
                 "url": "https://github.com/organvm/limen/actions/runs/1",
             }
         ),
@@ -90,6 +90,8 @@ def test_red_verdict_emits_one_idempotent_task(tmp_path):
     assert tasks[0].id == "HEAL-mainred-organvm-limen"
     assert "deadbeef" in tasks[0].title  # the SHA lives in the title, not the id
     assert tasks[0].priority == "critical" and "mainred" in tasks[0].labels
+    assert "deadbeef" * 5 in tasks[0].predicate
+    assert "gh pr list" not in tasks[0].predicate
     # idempotent: a second run adds nothing
     run(tmp_path, apply=True)
     assert len(load_limen_file(tmp_path / "tasks.yaml").tasks) == 1
@@ -104,12 +106,14 @@ def test_moving_red_trunk_converges_on_one_task(tmp_path):
     _seed(tmp_path, "failure")  # (re-stamps checked_at; head_sha would differ live)
     # rewrite the cache with a different SHA to simulate the trunk moving while still red
     stamp = json.loads((tmp_path / "logs" / "main-green.json").read_text())
-    stamp["head_sha"] = "feedface"
+    stamp["head_sha"] = "feedface" * 5
     (tmp_path / "logs" / "main-green.json").write_text(json.dumps(stamp), encoding="utf-8")
     run(tmp_path, apply=True)
     tasks = load_limen_file(tmp_path / "tasks.yaml").tasks
     assert len(tasks) == 1  # still ONE canonical task
     assert tasks[0].id == "HEAL-mainred-organvm-limen"
+    assert "feedface" * 5 in tasks[0].predicate
+    assert "deadbeef" * 5 not in tasks[0].predicate
 
 
 def test_recurrence_reopens_healed_task(tmp_path):

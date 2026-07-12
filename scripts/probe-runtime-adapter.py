@@ -13,6 +13,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "spec" / "contracts"
+sys.path.insert(0, str(ROOT / "cli" / "src"))
+
+from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
 
 
 @dataclass
@@ -347,6 +350,11 @@ def main() -> None:
             fail("owner verify mutation did not move task to done")
 
     if args.assign_task_id:
+        assignment_task = get_task(args.api_url, args.owner_token, args.assign_task_id)
+        try:
+            contract = normalize_selected_legacy_task(assignment_task)
+        except IntakeContractError as exc:
+            fail(f"owner assign mutation lacks typed intake evidence: {exc}")
         response = request(
             args.api_url,
             f"/api/tasks/{args.assign_task_id}/assign",
@@ -357,6 +365,8 @@ def main() -> None:
                 "priority": "high",
                 "budget_cost": 2,
                 "status": "open",
+                "predicate": contract.predicate,
+                "receipt_target": contract.receipt_target,
                 "note": "Runtime probe assignment",
                 "session_id": "runtime-probe",
             },

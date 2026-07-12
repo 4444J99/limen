@@ -214,6 +214,7 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
         from datetime import timezone as _tz
 
         from limen.io import load_limen_file, queue_lock, save_limen_file
+        from limen.intake import contract_fields, github_issue_owner_contract
         from limen.models import Task
     except Exception as e:
         res["error"] = f"ledger unavailable ({e}); atoms not hung"
@@ -251,6 +252,7 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
             )
 
             ex = index.get(tid)
+            contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
             if ex and ex.status != "done":
                 refreshed = False
                 if ex.status != "needs_human":
@@ -273,12 +275,14 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
                     Task(
                         id=tid,
                         title=f"Routine '{name}' is DOWN — check claude.ai session",
+                        repo="organvm/limen",
                         type="ops",
                         target_agent="human",
                         priority="high",
                         status="needs_human",
                         labels=["routine-freshness", "needs-human"],
                         context=ctx,
+                        **contract,
                         created=_date.today(),
                         updated=now_dt,
                     )
