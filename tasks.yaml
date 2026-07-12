@@ -130382,13 +130382,14 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:claude
   - slow
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/124
   context: 'PR organvm/domus-genoma#124 is CONFLICTING with its base branch and merge-drain
@@ -130405,7 +130406,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T06:58:43.623202Z'
+  updated: '2026-07-12T07:18:34.266545Z'
   dispatch_log:
   - timestamp: '2026-07-10T05:15:20.404324Z'
     agent: jules
@@ -130495,6 +130496,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T07:18:34.266545Z'
+    agent: codex
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-domus-genoma-173
   title: rebase/resolve conflicts on organvm/domus-genoma#173
   repo: organvm/domus-genoma
@@ -131615,15 +131621,16 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#683
   repo: organvm/limen
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:opencode
   urls:
   - https://github.com/organvm/limen/pull/683
   context: 'PR organvm/limen#683 is CONFLICTING with its base branch and merge-drain
@@ -131640,7 +131647,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T06:58:43.623202Z'
+  updated: '2026-07-12T07:18:34.266545Z'
   dispatch_log:
   - timestamp: '2026-07-11T23:33:28.801098Z'
     agent: gemini
@@ -131658,6 +131665,12 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T07:18:34.266545Z'
+    agent: opencode
+    session_id: cli
+    status: open
+    route_to: agy
+    output: opencode lane failed; reopened to healthy fleet cascade
 - id: HEAL-rebase-organvm-limen-684
   title: rebase/resolve conflicts on organvm/limen#684
   repo: organvm/limen
@@ -132056,7 +132069,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -132075,7 +132088,7 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T06:58:43.623202Z'
+  updated: '2026-07-12T07:18:34.266545Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:14:38.503058Z'
     agent: agy
@@ -132134,6 +132147,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T07:18:34.266545Z'
+    agent: agy
+    session_id: cli
+    status: failed
 - id: HEAL-cifix-organvm-manumissio-23
   title: fix failing CI on organvm/manumissio#23
   repo: organvm/manumissio
@@ -132190,15 +132207,16 @@ tasks:
   title: fix failing CI on organvm/manumissio#24
   repo: organvm/manumissio
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
   - slow
+  - tried:claude
   urls:
   - https://github.com/organvm/manumissio/pull/24
   context: "PR organvm/manumissio#24 has FAILING CI checks and merge-drain correctly\
@@ -132211,7 +132229,7 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T06:58:43.623202Z'
+  updated: '2026-07-12T07:18:34.266545Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:14:38.503058Z'
     agent: gemini
@@ -132244,6 +132262,12 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T07:18:34.266545Z'
+    agent: claude
+    session_id: cli
+    status: open
+    route_to: opencode
+    output: claude lane failed; reopened to healthy fleet cascade
 - id: HEAL-cifix-organvm-manumissio-25
   title: fix failing CI on organvm/manumissio#25
   repo: organvm/manumissio
@@ -132389,7 +132413,7 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T06:58:43.623202Z'
+  updated: '2026-07-12T07:18:34.266545Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:25:38.387574Z'
     agent: claude
@@ -132459,6 +132483,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T07:18:34.266545Z'
+    agent: codex
+    session_id: https://github.com/organvm/manumissio/pull/28
+    status: dispatched
 - id: HEAL-cifix-organvm-manumissio-29
   title: fix failing CI on organvm/manumissio#29
   repo: organvm/manumissio
@@ -133217,12 +133245,13 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:agy
   urls:
   - https://github.com/organvm/portfolio/pull/146
   context: 'PR organvm/portfolio#146 is CONFLICTING with its base branch and merge-drain
@@ -133239,7 +133268,7 @@ tasks:
     [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T06:58:43.623202Z'
+  updated: '2026-07-12T07:18:34.266545Z'
   dispatch_log:
   - timestamp: '2026-07-12T04:32:25.248942Z'
     agent: gemini
@@ -133257,6 +133286,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T07:18:34.266545Z'
+    agent: agy
+    session_id: cli
+    status: failed
 - id: ASK-quicken-escalate-0bd3a5ed
   title: finish stalled session 'Design movement ontology and workout composi' (breathed
     2x, still stalling)
