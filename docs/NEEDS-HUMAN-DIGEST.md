@@ -28,3 +28,8 @@ essay-pipeline, tab-bookmark-manager, narratological-algorithmic-lenses, card-tr
 - ASK-5  open the merge gate — ~111 merge-ready PR pass
 - ASK-7  live-dispatch drain — set autonomy-policy to dispatch+enabled
 - ASK-20 relocate agent-state dirs — authorize the irreversible move
+
+## 5. Private-repo GitHub-hosted Actions gate — organvm/manumissio
+**Action:** Restore GitHub-hosted Actions eligibility for this private repository, or route its CI through an approved self-hosted runner.
+**Why:** Current push run `29212555132` ended before any job step. GitHub attached its generic payment/spending-limit annotation to check `86702633586`. The workflow requests `ubuntu-latest`, while the live repository and organization runner inventories both report zero self-hosted runners. This is not an organization-wide Actions outage: public `organvm/limen` jobs are running normally. The blocked predicate specifically requires a successful `manumissio` main-branch CI run.
+**Repo:** organvm/manumissio (private repository; do not generalize this receipt to public `organvm` repositories)
