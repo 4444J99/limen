@@ -2524,6 +2524,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "overnight-watch.py: lookback window in hours for its value-gate check on overnight sessions — the overnight sibling of LIMEN_VALUE_GATE_HOURS."
+  LIMEN_VALUE_DISCOVERY_DISPOSITIONS_FILE:
+    default: "$LIMEN_ROOT/value-discovery-dispositions.json"
+    env: LIMEN_VALUE_DISCOVERY_DISPOSITIONS_FILE
+    self_update: "updated only by merged discovery-ranking receipts"
+    owner: feed
+    note: "Tracked ranked/archival terminal decisions consumed by discover-value.py so board compaction cannot rediscover an already-assessed repository."
 
   # --- session-walk organ (full-horizon walk census, both vendors) --------------
   LIMEN_SESSION_WALK:
