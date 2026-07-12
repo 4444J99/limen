@@ -131621,7 +131621,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#682
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
