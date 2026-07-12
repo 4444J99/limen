@@ -32,7 +32,32 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.prompt_sources import (  # noqa: E402
+    PROMPT_SOURCE_SCANNER_VERSION,
+    source_adapter_contract,
+)
+
+
 SCANNER = ROOT / "scripts" / "prompt-atom-ledger.py"
+CANARY_CODE_PATHS = (
+    Path(__file__).resolve(),
+    SCANNER,
+    ROOT / "scripts" / "prompt-lifecycle-ledger.py",
+    ROOT / "cli" / "src" / "limen" / "prompt_corpus.py",
+    ROOT / "cli" / "src" / "limen" / "prompt_sources.py",
+    ROOT / "docs" / "prompt-corpus-policy.json",
+)
+REQUIRED_CANARY_FAMILIES = (
+    "codex-sessions",
+    "claude-projects",
+    "gemini-tmp",
+    "opencode-db",
+    "agy-cli-conversations",
+)
 MAX_WORK_UNITS = 5
 DEFAULT_TIMEOUT_SECONDS = 180
 MAX_CAPTURE_BYTES = 1024 * 1024
@@ -41,7 +66,7 @@ MAX_ARTIFACT_ENTRIES = 200_000
 SAFE_LABEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$")
 SCANNER_SUMMARY = re.compile(
     r"appended\s+(?P<occurrences>\d+)/(?P<atoms>\d+)/(?P<outcomes>\d+);\s+"
-    r"changed=(?P<changed>true|false)"
+    r"changed=(?P<changed>true|false);\s+work_units=(?P<work_units>\d+)"
 )
 
 
@@ -68,6 +93,64 @@ def file_metric(path: Path) -> dict[str, Any]:
         return {"exists": False, "bytes": 0, "sha256": sha256_bytes(b"")}
     size, file_hash = stream_file_digest(path)
     return {"exists": True, "bytes": size, "sha256": file_hash}
+
+
+def exact_head_code_identity() -> dict[str, Any]:
+    """Bind the canary receipt to the checked-out implementation bytes and Git HEAD."""
+
+    relative_paths = [str(path.relative_to(ROOT)) for path in CANARY_CODE_PATHS]
+    try:
+        head = subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise CanaryFailure("git_head_identity_unavailable") from exc
+    if re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", head) is None:
+        raise CanaryFailure("git_head_identity_malformed")
+    rows = []
+    matches_git_head = True
+    for path, relative in zip(CANARY_CODE_PATHS, relative_paths, strict=True):
+        if path.is_symlink():
+            raise CanaryFailure("canary_code_file_must_not_be_a_symlink")
+        metric = file_metric(path)
+        if not metric["exists"]:
+            raise CanaryFailure("canary_code_file_missing")
+        try:
+            head_result = subprocess.run(
+                ["git", "rev-parse", f"{head}:{relative}"],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+            head_blob = head_result.stdout.strip() if head_result.returncode == 0 else ""
+            working_blob = subprocess.run(
+                ["git", "hash-object", "--no-filters", "--", relative],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=True,
+            ).stdout.strip()
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise CanaryFailure("git_head_identity_unavailable") from exc
+        if re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", working_blob) is None:
+            raise CanaryFailure("git_blob_identity_malformed")
+        if head_blob and re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", head_blob) is None:
+            raise CanaryFailure("git_blob_identity_malformed")
+        matches_git_head = matches_git_head and bool(head_blob) and working_blob == head_blob
+        rows.append((relative, metric["bytes"], metric["sha256"]))
+    return {
+        "git_head": head,
+        "code_sha256": sha256_bytes(json.dumps(rows, separators=(",", ":")).encode()),
+        "matches_git_head": matches_git_head,
+    }
 
 
 def tree_metric(root: Path) -> dict[str, Any]:
@@ -110,6 +193,7 @@ def artifact_metrics(
         "source_cursor": file_metric(private / "source-cursor.json"),
         "private_checkpoint": file_metric(private / "prompt-atom-ledger.json"),
         "private_raw_objects": tree_metric(private / "raw-objects"),
+        "private_source_scan_receipts": tree_metric(private / "source-scan-receipts"),
         "public_snapshot": file_metric(public_snapshot),
         "public_markdown": file_metric(public_markdown),
     }
@@ -260,34 +344,82 @@ def run_bounded(command: list[str], env: dict[str, str], timeout: int) -> dict[s
 def scanner_summary(output: str) -> dict[str, Any]:
     match = SCANNER_SUMMARY.search(output)
     if match is None:
-        return {"occurrences": None, "atoms": None, "outcomes": None, "changed": None}
+        return {
+            "occurrences": None,
+            "atoms": None,
+            "outcomes": None,
+            "changed": None,
+            "work_units": None,
+        }
     return {
         "occurrences": int(match.group("occurrences")),
         "atoms": int(match.group("atoms")),
         "outcomes": int(match.group("outcomes")),
         "changed": match.group("changed") == "true",
+        "work_units": int(match.group("work_units")),
     }
 
 
-def fixed_failures(cursor: dict[str, Any], public: dict[str, Any], cap: int) -> list[str]:
+def fixed_failures(
+    cursor: dict[str, Any],
+    public: dict[str, Any],
+    cap: int,
+    first_summary: dict[str, Any],
+    expected_contract: dict[str, Any],
+) -> list[str]:
     failures: list[str] = []
-    if int(cursor.get("work_units_used") or 0) != cap:
+    if first_summary["work_units"] != cap:
         failures.append("first_pass_did_not_use_exact_cap")
+    if first_summary["changed"] is not True:
+        failures.append("first_pass_did_not_report_fresh_change")
+    if not isinstance(first_summary["occurrences"], int) or first_summary["occurrences"] <= 0:
+        failures.append("first_pass_appended_no_occurrences")
+    if not isinstance(first_summary["atoms"], int) or first_summary["atoms"] <= 0:
+        failures.append("first_pass_appended_no_atoms")
     if cursor.get("scope") != "all" or cursor.get("target_scope") != "all":
         failures.append("first_pass_scope_not_all")
+    if cursor.get("scanner_version") != PROMPT_SOURCE_SCANNER_VERSION:
+        failures.append("first_pass_scanner_version_mismatch")
+    if cursor.get("source_adapter_contract") != expected_contract:
+        failures.append("first_pass_source_contract_mismatch")
     if int(cursor.get("pending_files") or 0):
         failures.append("first_pass_has_pending_units")
     if cursor.get("source_errors"):
         failures.append("first_pass_has_source_errors")
     if int(cursor.get("unsupported_source_count") or 0):
         failures.append("first_pass_has_unsupported_sources")
+    if int(cursor.get("unresolved_unit_count") or 0):
+        failures.append("first_pass_has_unresolved_source_units")
     if cursor.get("adapter_gaps") or cursor.get("adapter_gap_routes"):
         failures.append("first_pass_has_adapter_gaps")
     if cursor.get("all_baseline_complete") is not True:
         failures.append("first_pass_baseline_incomplete")
+    families = cursor.get("source_families")
+    expected_family_row = {
+        "discovered": 1,
+        "converged": 1,
+        "adapted": 0,
+        "excluded": 0,
+        "pending": 0,
+        "errors": 0,
+        "unsupported": 0,
+    }
+    active_families = {
+        str(name): {key: int((counts or {}).get(key) or 0) for key in expected_family_row}
+        for name, counts in (families or {}).items()
+        if isinstance(name, str)
+        and isinstance(counts, dict)
+        and any(int(counts.get(key) or 0) for key in expected_family_row)
+    }
+    if active_families != {name: expected_family_row for name in REQUIRED_CANARY_FAMILIES}:
+        failures.append("first_pass_required_family_coverage_mismatch")
     source_scope = public.get("source_scope") if isinstance(public.get("source_scope"), dict) else {}
     if source_scope.get("scope") != "all" or source_scope.get("target_scope") != "all":
         failures.append("public_projection_scope_not_all")
+    if source_scope.get("scanner_version") != PROMPT_SOURCE_SCANNER_VERSION:
+        failures.append("public_projection_scanner_version_mismatch")
+    if source_scope.get("source_adapter_contract") != expected_contract:
+        failures.append("public_projection_source_contract_mismatch")
     validation = public.get("validation") if isinstance(public.get("validation"), dict) else {}
     if validation.get("ok") is not True or validation.get("errors"):
         failures.append("public_projection_validation_failed")
@@ -377,12 +509,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--cap", type=int, default=MAX_WORK_UNITS, help="work-unit cap; maximum 5")
     parser.add_argument("--nice", type=int, default=10, help="non-negative nice adjustment")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SECONDS, help="seconds per subprocess")
+    parser.add_argument(
+        "--allow-dirty-code",
+        action="store_true",
+        help="test-only escape hatch; receipt remains marked as not exact-head",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     failures: list[str] = []
+    code_identity: dict[str, Any] = {}
     try:
         label = safe_label(args.label)
         if not 1 <= args.cap <= MAX_WORK_UNITS:
@@ -408,6 +546,17 @@ def main(argv: list[str] | None = None) -> int:
         nice_binary = shutil.which("nice")
         if nice_binary is None:
             raise CanaryFailure("nice_binary_missing")
+        canonical_outputs = (
+            private_root / "prompt-atoms",
+            public_snapshot,
+            public_markdown,
+            receipt_path,
+        )
+        if any(os.path.lexists(path) for path in canonical_outputs):
+            raise CanaryFailure("canary_outputs_must_be_fresh")
+        code_identity = exact_head_code_identity()
+        if not code_identity["matches_git_head"] and not args.allow_dirty_code:
+            raise CanaryFailure("canary_code_does_not_match_git_head")
     except CanaryFailure as exc:
         print(f"prompt-atom-canary: FAIL — {exc}", file=sys.stderr)
         return 2
@@ -442,13 +591,21 @@ def main(argv: list[str] | None = None) -> int:
     outcome_journal = private_dir / "prompt-atom-outcomes.jsonl"
     cursor_path = private_dir / "source-cursor.json"
 
+    expected_contract = source_adapter_contract()
     receipt: dict[str, Any] = {
         "schema_version": 1,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "label": label,
         "status": "fail",
         "scanner": "scripts/prompt-atom-ledger.py",
-        "scanner_version": 2,
+        "scanner_version": PROMPT_SOURCE_SCANNER_VERSION,
+        "git_head": code_identity["git_head"],
+        "code_sha256": code_identity["code_sha256"],
+        "code_matches_git_head": code_identity["matches_git_head"],
+        "source_adapter_contract": {
+            "version": expected_contract["version"],
+            "digest": expected_contract["digest"],
+        },
         "work_unit_cap": args.cap,
         "hard_max_work_units": MAX_WORK_UNITS,
         "nice_priority_requested": args.nice,
@@ -472,12 +629,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         first_cursor = load_object(cursor_path, "source_cursor")
         first_public = load_object(public_snapshot, "public_snapshot")
-        failures.extend(fixed_failures(first_cursor, first_public, args.cap))
+        failures.extend(fixed_failures(first_cursor, first_public, args.cap, first_summary, expected_contract))
         first_metrics = artifact_metrics(private_root, public_snapshot, public_markdown)
         first_journal = journal_counts(event_journal)
         first_outcomes = outcome_count(outcome_journal)
         receipt["first_pass"] = {
-            "work_units_used": int(first_cursor.get("work_units_used") or 0),
+            "work_units_used": int(first_summary.get("work_units") or 0),
             "scope": first_cursor.get("scope"),
             "target_scope": first_cursor.get("target_scope"),
             "pending_units": int(first_cursor.get("pending_files") or 0),
@@ -487,6 +644,13 @@ def main(argv: list[str] | None = None) -> int:
             "atoms": int((first_public.get("coverage") or {}).get("atoms") or 0),
             "event_rows": first_journal["rows"],
             "outcome_rows": first_outcomes,
+            "source_families": {
+                name: {
+                    field: int(((first_cursor.get("source_families") or {}).get(name) or {}).get(field) or 0)
+                    for field in ("discovered", "converged")
+                }
+                for name in REQUIRED_CANARY_FAMILIES
+            },
         }
         receipt["artifacts_after_first"] = first_metrics
     except CanaryFailure as exc:
@@ -522,6 +686,7 @@ def main(argv: list[str] | None = None) -> int:
             "outcomes": second_outcomes - first_outcomes,
         }
         receipt["second_pass"] = {
+            "work_units_used": int(second_summary.get("work_units") or 0),
             "event_row_delta": journal_delta["event_rows"],
             "atom_delta": journal_delta["atoms"],
             "outcome_delta": journal_delta["outcomes"],
@@ -530,14 +695,16 @@ def main(argv: list[str] | None = None) -> int:
         receipt["artifacts_after_second"] = second_metrics
         if any(journal_delta.values()):
             failures.append("second_pass_journal_growth")
-        if second_summary["occurrences"] not in {0, None}:
+        if second_summary["occurrences"] != 0:
             failures.append("second_pass_appended_occurrences")
-        if second_summary["atoms"] not in {0, None}:
+        if second_summary["atoms"] != 0:
             failures.append("second_pass_appended_atoms")
-        if second_summary["outcomes"] not in {0, None}:
+        if second_summary["outcomes"] != 0:
             failures.append("second_pass_appended_outcomes")
         if second_summary["changed"] is not False:
             failures.append("second_pass_reported_change")
+        if second_summary["work_units"] != 0:
+            failures.append("second_pass_used_work_units")
         if first_metrics != second_metrics:
             failures.append("second_pass_bytes_changed")
     except CanaryFailure as exc:
@@ -568,6 +735,22 @@ def main(argv: list[str] | None = None) -> int:
     }
     if checked["returncode"] != 0:
         failures.append("authoritative_check_failed")
+
+    try:
+        final_code_identity = exact_head_code_identity()
+        identity_stable = bool(
+            final_code_identity["git_head"] == code_identity["git_head"]
+            and final_code_identity["code_sha256"] == code_identity["code_sha256"]
+            and final_code_identity["matches_git_head"] == code_identity["matches_git_head"]
+        )
+        receipt["code_identity_reverified"] = identity_stable
+        if not identity_stable:
+            failures.append("canary_code_identity_changed_during_run")
+        if not args.allow_dirty_code and not final_code_identity["matches_git_head"]:
+            failures.append("canary_code_no_longer_matches_git_head")
+    except CanaryFailure as exc:
+        receipt["code_identity_reverified"] = False
+        failures.append(str(exc))
 
     receipt["failures"] = list(dict.fromkeys(failures))
     receipt["status"] = "pass" if not failures else "fail"

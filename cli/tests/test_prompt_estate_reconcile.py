@@ -11,7 +11,23 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "prompt-estate-reconcile.py"
+PRIORITY_SCRIPT = ROOT / "scripts" / "prompt-priority-map.py"
 DIGEST = "a" * 64
+
+
+def _source_adapter_contract() -> dict:
+    path = ROOT / "cli" / "src" / "limen" / "prompt_sources.py"
+    spec = importlib.util.spec_from_file_location("prompt_sources_estate_fixture", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.source_adapter_contract()
+
+
+def _policy_digest() -> str:
+    spec = importlib.util.spec_from_file_location("prompt_priority_policy_estate_fixture", PRIORITY_SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.current_policy_digest()
 
 
 def _load():
@@ -42,14 +58,30 @@ def _projection(atoms: list[dict], *, scope: str = "all") -> dict:
     payload = {
         "version": 1,
         "semantic_digest": DIGEST,
-        "policy_digest": "b" * 64,
+        "policy_digest": _policy_digest(),
         "source_cursor_digest": "c" * 64,
         "source_scope": {
+            "scanner_version": _source_adapter_contract()["scanner_version"],
             "scope": scope,
             "target_scope": "all",
+            "all_baseline_complete": True,
+            "all_source_manifest_digest": "d" * 64,
             "pending_files": 0,
             "source_error_count": 0,
+            "source_unit_count": 1,
+            "source_units_digest": hashlib.sha256(b'["fixture"]').hexdigest(),
+            "unsupported_source_count": 0,
+            "unsupported_units_digest": hashlib.sha256(b"{}").hexdigest(),
+            "unresolved_unit_count": 0,
+            "unresolved_units_digest": hashlib.sha256(b"[]").hexdigest(),
             "source_manifest_digest": "d" * 64,
+            "source_adapter_contract": _source_adapter_contract(),
+            "excluded_source_count": 0,
+            "source_exclusion_counts": {},
+            "excluded_unit_receipts_digest": hashlib.sha256(b"{}").hexdigest(),
+            "adapted_source_count": 0,
+            "source_adapter_counts": {},
+            "adapted_unit_receipts_digest": hashlib.sha256(b"{}").hexdigest(),
             "adapter_gaps": [],
             "adapter_gap_routes": [],
         },

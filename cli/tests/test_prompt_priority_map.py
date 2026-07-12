@@ -13,6 +13,14 @@ SCRIPT = ROOT / "scripts" / "prompt-priority-map.py"
 DIGEST = "a" * 64
 
 
+def _source_adapter_contract() -> dict:
+    path = ROOT / "cli" / "src" / "limen" / "prompt_sources.py"
+    spec = importlib.util.spec_from_file_location("prompt_sources_fixture", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.source_adapter_contract()
+
+
 def _load():
     spec = importlib.util.spec_from_file_location("prompt_priority_map", SCRIPT)
     mod = importlib.util.module_from_spec(spec)
@@ -25,6 +33,9 @@ def _configure(ppm, tmp_path: Path) -> None:
     ppm.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
     ppm.PROMPT_INDEX = ppm.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
     ppm.ATOM_INDEX = tmp_path / "docs" / "prompt-atom-ledger.json"
+    ppm.POLICY_PATH = tmp_path / "docs" / "prompt-corpus-policy.json"
+    ppm.POLICY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    ppm.POLICY_PATH.write_bytes((ROOT / "docs" / "prompt-corpus-policy.json").read_bytes())
     ppm.CODEX_INDEX = ppm.PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
     ppm.ATTACK_INDEX = ppm.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
     ppm.BLOCKER_INDEX = ppm.PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
@@ -45,14 +56,30 @@ def _projection(*, atoms: list[dict], scope: str = "all", validation_ok: bool = 
     return {
         "version": 1,
         "semantic_digest": DIGEST,
-        "policy_digest": "b" * 64,
+        "policy_digest": _load().current_policy_digest(),
         "source_cursor_digest": "c" * 64,
         "source_scope": {
+            "scanner_version": _source_adapter_contract()["scanner_version"],
             "scope": scope,
             "target_scope": "all",
+            "all_baseline_complete": True,
+            "all_source_manifest_digest": "d" * 64,
             "pending_files": 0,
             "source_error_count": 0,
+            "source_unit_count": 1,
+            "source_units_digest": hashlib.sha256(b'["fixture"]').hexdigest(),
+            "unsupported_source_count": 0,
+            "unsupported_units_digest": hashlib.sha256(b"{}").hexdigest(),
+            "unresolved_unit_count": 0,
+            "unresolved_units_digest": hashlib.sha256(b"[]").hexdigest(),
             "source_manifest_digest": "d" * 64,
+            "source_adapter_contract": _source_adapter_contract(),
+            "excluded_source_count": 0,
+            "source_exclusion_counts": {},
+            "excluded_unit_receipts_digest": hashlib.sha256(b"{}").hexdigest(),
+            "adapted_source_count": 0,
+            "source_adapter_counts": {},
+            "adapted_unit_receipts_digest": hashlib.sha256(b"{}").hexdigest(),
             "adapter_gaps": [],
             "adapter_gap_routes": [],
         },
@@ -255,7 +282,7 @@ def test_prompt_priority_map_builds_redacted_batches_without_raw_text(tmp_path: 
         "scope": "all",
         "governing_unit": "atom_id",
         "semantic_digest": DIGEST,
-        "policy_digest": "b" * 64,
+        "policy_digest": ppm.current_policy_digest(),
         "source_cursor_digest": "c" * 64,
         "projection_form": "full",
         "legacy_can_override": False,
@@ -334,6 +361,38 @@ def test_missing_atom_projection_fails_before_legacy_fallback(tmp_path: Path):
         (lambda payload: payload["source_scope"].update(scope="partial:all"), "scope must be exact all/all"),
         (lambda payload: payload["source_scope"].update(pending_files=3), "pending source files"),
         (lambda payload: payload["source_scope"].update(source_error_count=1), "source errors"),
+        (
+            lambda payload: payload["source_scope"].update(unsupported_source_count=1),
+            "unsupported source units",
+        ),
+        (
+            lambda payload: payload["source_scope"].update(unresolved_unit_count=1),
+            "unresolved source obligations",
+        ),
+        (
+            lambda payload: payload["source_scope"].update(unsupported_units_digest="f" * 64),
+            "does not prove an empty unsupported cache",
+        ),
+        (
+            lambda payload: payload["source_scope"].update(unresolved_units_digest="f" * 64),
+            "does not prove empty unresolved obligations",
+        ),
+        (
+            lambda payload: payload["source_scope"].update(all_baseline_complete=False),
+            "complete all-history baseline",
+        ),
+        (
+            lambda payload: payload["source_scope"].update(all_source_manifest_digest="bad"),
+            "all_source_manifest_digest",
+        ),
+        (
+            lambda payload: payload["source_scope"].update(all_source_manifest_digest="e" * 64),
+            "manifest digests do not match",
+        ),
+        (
+            lambda payload: payload["source_scope"].update(source_unit_count=0),
+            "no discovered source units",
+        ),
     ],
 )
 def test_invalid_or_partial_atom_projection_fails_closed(tmp_path: Path, mutate, message: str):
@@ -521,6 +580,30 @@ def test_adapter_gaps_or_routes_block_priority_authority(tmp_path: Path, gap_fie
         ppm.build_snapshot(batch_size=10)
 
 
+@pytest.mark.parametrize(
+    ("count_field", "total_field", "message"),
+    [
+        ("source_exclusion_counts", "excluded_source_count", "unknown rule"),
+        ("source_adapter_counts", "adapted_source_count", "unknown adapter"),
+    ],
+)
+def test_unknown_source_contract_count_ids_block_priority_authority(
+    tmp_path: Path,
+    count_field: str,
+    total_field: str,
+    message: str,
+):
+    ppm = _load()
+    _configure(ppm, tmp_path)
+    payload = _projection(atoms=[_unresolved_atom("pa-one", 50.0)])
+    payload["source_scope"][count_field] = {"invented-contract-id": 1}
+    payload["source_scope"][total_field] = 1
+    _write_projection(ppm, payload)
+
+    with pytest.raises(ppm.AtomProjectionError, match=message):
+        ppm.build_snapshot(batch_size=10)
+
+
 def test_projection_counts_must_reconcile_with_complete_rows(tmp_path: Path):
     ppm = _load()
     _configure(ppm, tmp_path)
@@ -575,3 +658,32 @@ def test_private_check_receipt_must_hash_match_exact_projection(tmp_path: Path):
 
     with pytest.raises(ppm.AtomProjectionError, match="does not match projection"):
         ppm.build_snapshot(batch_size=10)
+
+
+def test_surviving_malformed_private_state_blocks_receipt_fallback(tmp_path: Path):
+    ppm = _load()
+    _configure(ppm, tmp_path)
+    payload = _projection(atoms=[_unresolved_atom("pa-one", 50.0)])
+    _write_projection(ppm, payload)
+    outcomes = ppm.PRIVATE_ROOT / "prompt-atoms" / "prompt-atom-outcomes.jsonl"
+    outcomes.write_text("{malformed\n", encoding="utf-8")
+
+    with pytest.raises(ppm.AtomProjectionError, match="private atom checker failed"):
+        ppm.verify_private_check_receipt(payload)
+
+
+def test_stale_policy_cannot_gain_authority_from_matching_projection_and_receipt(tmp_path: Path):
+    ppm = _load()
+    _configure(ppm, tmp_path)
+    payload = _projection(atoms=[_unresolved_atom("pa-one", 50.0)])
+    _write_projection(ppm, payload)
+
+    policy = json.loads(ppm.POLICY_PATH.read_text(encoding="utf-8"))
+    policy["weights"]["system_leverage"] = 0.5
+    ppm.POLICY_PATH.write_text(json.dumps(policy), encoding="utf-8")
+
+    projection = ppm.load_atom_projection(ppm.ATOM_INDEX)
+    with pytest.raises(ppm.AtomProjectionError, match="policy_digest does not match current"):
+        ppm.validate_atom_projection(projection)
+    with pytest.raises(ppm.AtomProjectionError, match="policy_digest does not match current"):
+        ppm.verify_private_check_receipt(projection, allow_live=False)

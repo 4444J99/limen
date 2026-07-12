@@ -30,6 +30,7 @@ HOME = Path.home()
 PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PROMPT_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 ATOM_INDEX = ROOT / "docs" / "prompt-atom-ledger.json"
+POLICY_PATH = ROOT / "docs" / "prompt-corpus-policy.json"
 CODEX_INDEX = PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
 ATTACK_INDEX = PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
 BLOCKER_INDEX = PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
@@ -83,6 +84,26 @@ def canonical_digest(value: Any) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def current_source_adapter_contract() -> dict[str, Any]:
+    path = Path(__file__).resolve().parents[1] / "cli" / "src" / "limen" / "prompt_sources.py"
+    spec = importlib.util.spec_from_file_location("_limen_prompt_sources_for_priority", path)
+    if spec is None or spec.loader is None:
+        raise AtomProjectionError("cannot load current prompt source adapter contract")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.source_adapter_contract()
+
+
+def current_policy_digest() -> str:
+    """Return the digest of the currently loaded runtime policy."""
+
+    cli_src = Path(__file__).resolve().parents[1] / "cli" / "src"
+    if str(cli_src) not in sys.path:
+        sys.path.insert(0, str(cli_src))
+    corpus = importlib.import_module("limen.prompt_corpus")
+    return str(corpus.digest(corpus.load_policy(POLICY_PATH)))
+
+
 def projection_digest_valid(atom_index: dict[str, Any]) -> bool:
     claimed = str(atom_index.get("projection_digest") or "")
     material = {key: value for key, value in atom_index.items() if key != "projection_digest"}
@@ -93,10 +114,14 @@ def _private_core_check(atom_index: dict[str, Any]) -> dict[str, Any] | None:
     """Use the canonical checker when its private journals are present."""
 
     private_dir = PRIVATE_ROOT / "prompt-atoms"
-    if not any(
-        (private_dir / name).exists()
-        for name in ("prompt-events.jsonl", "prompt-atom-ledger.json", "source-cursor.json")
-    ):
+    state_paths = (
+        private_dir / "prompt-events.jsonl",
+        private_dir / "prompt-atom-outcomes.jsonl",
+        private_dir / "source-cursor.json",
+        private_dir / "prompt-atom-ledger.json",
+        private_dir / "raw-objects",
+    )
+    if not any(os.path.lexists(path) for path in state_paths):
         return None
     cli_src = Path(__file__).resolve().parents[1] / "cli" / "src"
     if str(cli_src) not in sys.path:
@@ -130,6 +155,9 @@ def verify_private_check_receipt(
 ) -> dict[str, Any]:
     """Require a private, hash-matched receipt for the exact public projection."""
 
+    expected_policy_digest = current_policy_digest()
+    if atom_index.get("policy_digest") != expected_policy_digest:
+        raise AtomProjectionError("atom projection policy_digest does not match current prompt-corpus policy")
     if allow_live:
         live = _private_core_check(atom_index)
         if live is not None:
@@ -156,7 +184,7 @@ def verify_private_check_receipt(
         "projection_digest": atom_index.get("projection_digest"),
         "projection_file_sha256": hashlib.sha256(projection_path.read_bytes()).hexdigest(),
         "semantic_digest": atom_index.get("semantic_digest"),
-        "policy_digest": atom_index.get("policy_digest"),
+        "policy_digest": expected_policy_digest,
         "source_cursor_digest": atom_index.get("source_cursor_digest"),
     }
     mismatched = [key for key, expected in required.items() if receipt.get(key) != expected]
@@ -333,6 +361,8 @@ def validate_atom_projection(atom_index: dict[str, Any]) -> tuple[list[dict[str,
     for field in ("semantic_digest", "policy_digest", "source_cursor_digest"):
         if not _digest_like(atom_index.get(field)):
             errors.append(f"{field} must be a 64-character lowercase hex digest")
+    if atom_index.get("policy_digest") != current_policy_digest():
+        errors.append("policy_digest does not match current prompt-corpus policy")
 
     validation = atom_index.get("validation")
     if not isinstance(validation, dict) or validation.get("ok") is not True:
@@ -346,6 +376,15 @@ def validate_atom_projection(atom_index: dict[str, Any]) -> tuple[list[dict[str,
         scope = {}
     if scope.get("scope") != "all" or scope.get("target_scope") != "all":
         errors.append("atom projection scope must be exact all/all")
+    expected_source_contract = current_source_adapter_contract()
+    if scope.get("scanner_version") != expected_source_contract["scanner_version"]:
+        errors.append("source_scope.scanner_version is missing or stale")
+    if scope.get("all_baseline_complete") is not True:
+        errors.append("atom projection lacks a complete all-history baseline")
+    if not _digest_like(scope.get("all_source_manifest_digest")):
+        errors.append("source_scope.all_source_manifest_digest is missing or malformed")
+    if scope.get("all_source_manifest_digest") != scope.get("source_manifest_digest"):
+        errors.append("exact all source and all-history manifest digests do not match")
     if _nonnegative_int(scope.get("pending_files", 0), "source_scope.pending_files", errors):
         errors.append("atom projection still has pending source files")
     source_error_count = _nonnegative_int(
@@ -355,6 +394,37 @@ def validate_atom_projection(atom_index: dict[str, Any]) -> tuple[list[dict[str,
     )
     if source_error_count or scope.get("source_errors"):
         errors.append("atom projection has source errors")
+    source_unit_count = _nonnegative_int(
+        scope.get("source_unit_count"),
+        "source_scope.source_unit_count",
+        errors,
+    )
+    if source_unit_count <= 0:
+        errors.append("atom projection has no discovered source units")
+    if not _digest_like(scope.get("source_units_digest")):
+        errors.append("source_scope.source_units_digest is missing or malformed")
+    unsupported_source_count = _nonnegative_int(
+        scope.get("unsupported_source_count"),
+        "source_scope.unsupported_source_count",
+        errors,
+    )
+    if unsupported_source_count:
+        errors.append("atom projection has unsupported source units")
+    if not _digest_like(scope.get("unsupported_units_digest")):
+        errors.append("source_scope.unsupported_units_digest is missing or malformed")
+    elif scope.get("unsupported_units_digest") != canonical_digest({}):
+        errors.append("source_scope.unsupported_units_digest does not prove an empty unsupported cache")
+    unresolved_unit_count = _nonnegative_int(
+        scope.get("unresolved_unit_count"),
+        "source_scope.unresolved_unit_count",
+        errors,
+    )
+    if unresolved_unit_count:
+        errors.append("atom projection has unresolved source obligations")
+    if not _digest_like(scope.get("unresolved_units_digest")):
+        errors.append("source_scope.unresolved_units_digest is missing or malformed")
+    elif scope.get("unresolved_units_digest") != canonical_digest([]):
+        errors.append("source_scope.unresolved_units_digest does not prove empty unresolved obligations")
     adapter_gaps = scope.get("adapter_gaps")
     adapter_gap_routes = scope.get("adapter_gap_routes")
     if not isinstance(adapter_gaps, list) or not isinstance(adapter_gap_routes, list):
@@ -363,6 +433,46 @@ def validate_atom_projection(atom_index: dict[str, Any]) -> tuple[list[dict[str,
         errors.append("atom projection has unresolved adapter gaps or routes")
     if not _digest_like(scope.get("source_manifest_digest")):
         errors.append("source_scope.source_manifest_digest is missing or malformed")
+    if scope.get("source_adapter_contract") != expected_source_contract:
+        errors.append("source_scope.source_adapter_contract is missing or stale")
+    excluded_count = _nonnegative_int(
+        scope.get("excluded_source_count"),
+        "source_scope.excluded_source_count",
+        errors,
+    )
+    exclusion_counts = scope.get("source_exclusion_counts")
+    if not isinstance(exclusion_counts, dict):
+        errors.append("source_scope.source_exclusion_counts must be an object")
+    else:
+        if set(exclusion_counts) - set(expected_source_contract["exclusion_ids"]):
+            errors.append("source_scope.source_exclusion_counts contains an unknown rule")
+        counted_exclusions = sum(
+            _nonnegative_int(value, f"source_scope.source_exclusion_counts.{key}", errors)
+            for key, value in exclusion_counts.items()
+        )
+        if counted_exclusions != excluded_count:
+            errors.append("source exclusion counts do not match excluded_source_count")
+    if not _digest_like(scope.get("excluded_unit_receipts_digest")):
+        errors.append("source_scope.excluded_unit_receipts_digest is missing or malformed")
+    adapted_count = _nonnegative_int(
+        scope.get("adapted_source_count"),
+        "source_scope.adapted_source_count",
+        errors,
+    )
+    adapter_counts = scope.get("source_adapter_counts")
+    if not isinstance(adapter_counts, dict):
+        errors.append("source_scope.source_adapter_counts must be an object")
+    else:
+        if set(adapter_counts) - set(expected_source_contract["adapter_ids"]):
+            errors.append("source_scope.source_adapter_counts contains an unknown adapter")
+        counted_adapters = sum(
+            _nonnegative_int(value, f"source_scope.source_adapter_counts.{key}", errors)
+            for key, value in adapter_counts.items()
+        )
+        if counted_adapters != adapted_count:
+            errors.append("source adapter counts do not match adapted_source_count")
+    if not _digest_like(scope.get("adapted_unit_receipts_digest")):
+        errors.append("source_scope.adapted_unit_receipts_digest is missing or malformed")
 
     coverage = atom_index.get("coverage")
     if not isinstance(coverage, dict):

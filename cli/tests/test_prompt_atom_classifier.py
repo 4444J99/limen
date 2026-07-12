@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import shlex
+import subprocess
 import sys
 import textwrap
 import time
@@ -100,6 +102,73 @@ def test_classifier_command_uses_exact_jsonl_ids_and_grounded_segments(
         {"index": 1, "text": "Verify it."},
     ]
     assert all("model" not in request and "provider" not in request for request in requests)
+
+
+def test_cli_main_uses_opaque_classifier_command_from_environment(tmp_path: Path):
+    ledger = _load()
+    helper = tmp_path / "classifier.py"
+    _write_helper(
+        helper,
+        """
+        import json
+        import sys
+
+        for line in sys.stdin:
+            request = json.loads(line)
+            segment = request["segments"][0]
+            print(json.dumps({
+                "occurrence_id": request["occurrence_id"],
+                "atoms": [{
+                    "text": segment["text"],
+                    "kind": "ask",
+                    "coverage_segment_indexes": [segment["index"]],
+                    "source_segments": [segment["text"]],
+                    "classification_confidence": 0.97,
+                }],
+            }, sort_keys=True))
+        """,
+    )
+    event_path = tmp_path / "events.jsonl"
+    event_path.write_text(
+        json.dumps(_event("Classify this through the CLI environment.", "cli-env")) + "\n",
+        encoding="utf-8",
+    )
+    root = tmp_path / "ledger"
+    private_root = tmp_path / "private"
+    env = os.environ.copy()
+    env.pop("LIMEN_PRIVATE_SESSION_CORPUS", None)
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["LIMEN_PROMPT_CLASSIFIER_CMD"] = shlex.join([sys.executable, str(helper)])
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--events-jsonl",
+            str(event_path),
+            "--write",
+            "--root",
+            str(root),
+            "--private-root",
+            str(private_root),
+        ],
+        cwd=ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    paths = ledger.LedgerPaths.for_root(root, private_root=private_root)
+    occurrences, atoms, errors = ledger.load_event_journal(paths.event_journal)
+    assert errors == []
+    assert len(occurrences) == 1
+    assert len(atoms) == 1
+    assert atoms[0]["atomization_mode"] == "semantic_adapter"
+    assert atoms[0]["classifier_provenance"] == "runtime_command"
+    assert atoms[0]["classification_confidence"] == 0.97
 
 
 def test_classifier_absence_or_wrong_occurrence_id_keeps_structural_fallback(tmp_path: Path):
@@ -350,7 +419,18 @@ def test_scan_proposal_rotates_fair_budget_and_carries_nonsemantic_cas_metadata(
         "files": {},
     }
     paths.cursor.write_text(json.dumps(current), encoding="utf-8")
-    monkeypatch.setattr(ledger, "load_lifecycle_module", lambda: object())
+    scan_paths = type("ScanPaths", (), {"cursor": paths.cursor, "policy": paths.policy})()
+    lifecycle = type(
+        "Lifecycle",
+        (),
+        {
+            "LOCAL_SOURCES": [],
+            "HOME": tmp_path / "missing-home",
+            "OPENCODE_DB": tmp_path / "missing-opencode.db",
+            "AGY_CLI_CONVERSATIONS": tmp_path / "missing-agy",
+        },
+    )()
+    monkeypatch.setattr(ledger, "load_lifecycle_module", lambda: lifecycle)
     monkeypatch.setattr(
         ledger,
         "regular_source_rows",
@@ -368,7 +448,7 @@ def test_scan_proposal_rotates_fair_budget_and_carries_nonsemantic_cas_metadata(
         while budget.claim():
             pass
         used[source] = budget.used
-        signature = {"size": 1, "mtime_ns": 1}
+        signature = {"size": 1, "mtime_ns": 1, "ctime_ns": 1, "inode": 1, "device": 1}
         unit = f"scan-v2:{source}:fixture"
         common = {
             "discovered": {unit: signature},
@@ -404,7 +484,7 @@ def test_scan_proposal_rotates_fair_budget_and_carries_nonsemantic_cas_metadata(
             while budget[lane].claim():
                 pass
             used[lane] = budget[lane].used
-            signature = {"size": 1, "mtime_ns": 1}
+            signature = {"size": 1, "mtime_ns": 1, "ctime_ns": 1, "inode": 1, "device": 1}
             unit = f"scan-v2:{lane}:fixture"
             discovered[unit] = signature
             files[unit] = signature
@@ -423,6 +503,11 @@ def test_scan_proposal_rotates_fair_budget_and_carries_nonsemantic_cas_metadata(
             "errors": [],
             "unsupported": [],
             "unsupported_units": {},
+            "excluded_unit_receipts": {},
+            "excluded_file_keys": [],
+            "source_exclusion_counts": {},
+            "adapted_unit_receipts": {},
+            "source_adapter_counts": {},
             "pending_files": 0,
             "attempted_files": sum(used[lane] for lane in ("codex", "claude", "gemini")),
             "coverage": coverage,
@@ -447,7 +532,7 @@ def test_scan_proposal_rotates_fair_budget_and_carries_nonsemantic_cas_metadata(
         }
     }
     _events, first = ledger.scan_native_sources(
-        paths,
+        scan_paths,
         days=None,
         max_files=5,
         policy=policy,
@@ -455,7 +540,7 @@ def test_scan_proposal_rotates_fair_budget_and_carries_nonsemantic_cas_metadata(
     first_used = dict(used)
     volatile_scanned["value"] = 0
     _events, second = ledger.scan_native_sources(
-        paths,
+        scan_paths,
         days=None,
         max_files=5,
         policy=policy,

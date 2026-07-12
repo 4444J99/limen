@@ -14,10 +14,12 @@ import datetime as dt
 import fcntl
 import gzip
 import hashlib
+import importlib.util
 import json
 import math
 import os
 import re
+import secrets
 import tempfile
 import threading
 import unicodedata
@@ -26,7 +28,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Sequence
 from urllib.parse import urlsplit
-
 
 DISPOSITIONS = {
     "unassessed",
@@ -132,6 +133,7 @@ class LedgerPaths:
     event_journal: Path
     outcome_journal: Path
     raw_objects: Path
+    source_scan_receipts: Path
     cursor: Path
     lock: Path
     private_snapshot: Path
@@ -160,6 +162,7 @@ class LedgerPaths:
             event_journal=private_dir / "prompt-events.jsonl",
             outcome_journal=private_dir / "prompt-atom-outcomes.jsonl",
             raw_objects=private_dir / "raw-objects",
+            source_scan_receipts=private_dir / "source-scan-receipts",
             cursor=private_dir / "source-cursor.json",
             lock=private_dir / "writer.lock",
             private_snapshot=private_dir / "prompt-atom-ledger.json",
@@ -265,10 +268,14 @@ def append_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> int:
     return len(material)
 
 
+def raw_object_reference(prompt_hash: str) -> str:
+    return str(Path(prompt_hash[:2]) / f"{prompt_hash}.txt.gz")
+
+
 def preserve_raw_object(paths: LedgerPaths, prompt_hash: str, text: str) -> str:
     """Content-address the exact private body once; journals keep only this opaque reference."""
 
-    relative = Path(prompt_hash[:2]) / f"{prompt_hash}.txt.gz"
+    relative = Path(raw_object_reference(prompt_hash))
     destination = paths.raw_objects / relative
     if not destination.exists():
         atomic_write_bytes(
@@ -511,10 +518,14 @@ def _clamp(value: Any, default: float = 0.0) -> float:
 
 
 def _parse_time(value: Any) -> dt.datetime | None:
+    if isinstance(value, bool):
+        return None
     if not value:
         return None
     if isinstance(value, (int, float)):
         number = float(value)
+        if not math.isfinite(number):
+            return None
         if number > 10_000_000_000:
             number /= 1000.0
         try:
@@ -530,12 +541,22 @@ def _parse_time(value: Any) -> dt.datetime | None:
     return parsed.astimezone(dt.timezone.utc)
 
 
+def _event_position(event: dict[str, Any], field: str) -> int:
+    value = event.get(field, 0)
+    if value is None:
+        value = 0
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{field} must be a non-negative integer")
+    return value
+
+
 def occurrence_from_event(event: dict[str, Any]) -> dict[str, Any]:
     text = str(event.get("text") or "")
     source = str(event.get("source") or "unknown")
     session_ref = str(event.get("session_ref") or "unknown")
-    event_ref = str(event.get("event_ref") or event.get("event_index") or "0")
-    text_index = int(event.get("text_index") or 0)
+    event_index = _event_position(event, "event_index")
+    text_index = _event_position(event, "text_index")
+    event_ref = str(event.get("event_ref") or event_index or "0")
     prompt_hash = hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
     occurrence_id = stable_id("po", source, session_ref, event_ref, text_index, prompt_hash, length=24)
     provenance = str(event.get("provenance") or "unknown_user_input")
@@ -552,7 +573,7 @@ def occurrence_from_event(event: dict[str, Any]) -> dict[str, Any]:
         "source": source,
         "session_ref_hash": digest(session_ref)[:24],
         "event_ref_hash": digest(event_ref)[:24],
-        "event_index": int(event.get("event_index") or 0),
+        "event_index": event_index,
         "text_index": text_index,
         "source_locator": event.get("source_locator"),
         "timestamp": event.get("timestamp"),
@@ -1070,30 +1091,249 @@ def validate_outcome_history(
     return errors
 
 
+def _int_or_zero(value: Any) -> int:
+    if isinstance(value, bool):
+        return 0
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _nonnegative_exact_int(value: Any) -> bool:
+    return not isinstance(value, bool) and isinstance(value, int) and value >= 0
+
+
+_LEGACY_FILE_SIGNATURE_FIELDS = {"size", "mtime_ns"}
+_STRONG_FILE_SIGNATURE_FIELDS = {"size", "mtime_ns", "ctime_ns", "inode", "device"}
+_OPENCODE_UNIT_SIGNATURE_FIELDS = {
+    "content_sha256",
+    "db_ctime_ns",
+    "db_device",
+    "db_inode",
+    "db_mtime_ns",
+    "db_size",
+    "time_created",
+    "time_updated",
+    "wal_ctime_ns",
+    "wal_device",
+    "wal_inode",
+    "wal_mtime_ns",
+    "wal_size",
+}
+_AGY_CONVERSATION_UNIT_SIGNATURE_FIELDS = _OPENCODE_UNIT_SIGNATURE_FIELDS - {
+    "time_created",
+    "time_updated",
+}
+
+
+def _file_signature_valid(value: Any, *, strong: bool = False) -> bool:
+    if not isinstance(value, dict):
+        return False
+    fields = set(value)
+    if fields != _STRONG_FILE_SIGNATURE_FIELDS and (strong or fields != _LEGACY_FILE_SIGNATURE_FIELDS):
+        return False
+    return all(_nonnegative_exact_int(value.get(field)) for field in fields)
+
+
+def _cursor_unit_key_valid(value: Any) -> bool:
+    return bool(isinstance(value, str) and re.fullmatch(r"scan-v[1-9][0-9]*:[A-Za-z0-9_.-]+:.+", value) is not None)
+
+
+def _cursor_unit_signature_valid(key: Any, value: Any, *, strong_file: bool = False) -> bool:
+    if not _cursor_unit_key_valid(key) or not isinstance(value, dict):
+        return False
+    parts = key.split(":", 2)
+    source = parts[1] if len(parts) == 3 and parts[0].startswith("scan-v") else ""
+    if source == "opencode-db":
+        fields = set(value)
+        valid_fields = fields == _OPENCODE_UNIT_SIGNATURE_FIELDS or (
+            not strong_file and fields == {"time_created", "time_updated"}
+        )
+        return bool(
+            valid_fields
+            and (
+                fields == {"time_created", "time_updated"}
+                or (
+                    isinstance(value.get("content_sha256"), str)
+                    and re.fullmatch(r"[0-9a-f]{64}", value["content_sha256"]) is not None
+                    and all(_nonnegative_exact_int(value.get(field)) for field in fields - {"content_sha256"})
+                )
+            )
+        )
+    if source == "agy-cli-conversations":
+        fields = set(value)
+        valid_fields = fields == _AGY_CONVERSATION_UNIT_SIGNATURE_FIELDS or (
+            not strong_file and fields == _STRONG_FILE_SIGNATURE_FIELDS
+        )
+        return bool(
+            valid_fields
+            and (
+                fields == _STRONG_FILE_SIGNATURE_FIELDS
+                or (
+                    isinstance(value.get("content_sha256"), str)
+                    and re.fullmatch(r"[0-9a-f]{64}", value["content_sha256"]) is not None
+                    and all(_nonnegative_exact_int(value.get(field)) for field in fields - {"content_sha256"})
+                )
+            )
+        )
+    return _file_signature_valid(value, strong=strong_file)
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [str(item) for item in value]
+
+
+def _semantic_count_map(value: Any) -> dict[str, int]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): _int_or_zero(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+
+
+def _safe_digest(value: Any) -> str | None:
+    try:
+        return digest(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _semantic_source_families(value: Any) -> dict[str, dict[str, int]]:
     if not isinstance(value, dict):
         return {}
-    stable_fields = ("discovered", "converged", "pending", "errors", "unsupported")
+    stable_fields = ("discovered", "converged", "adapted", "excluded", "pending", "errors", "unsupported")
     return {
-        str(source): {field: int(counts.get(field) or 0) for field in stable_fields}
-        for source, counts in sorted(value.items())
+        str(source): {field: _int_or_zero(counts.get(field)) for field in stable_fields}
+        for source, counts in sorted(value.items(), key=lambda pair: str(pair[0]))
         if isinstance(counts, dict)
     }
+
+
+def _semantic_source_adapter_contract(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    adapter_ids = value.get("adapter_ids")
+    exclusion_ids = value.get("exclusion_ids")
+    adapter_sources = value.get("adapter_sources")
+    exclusion_sources = value.get("exclusion_sources")
+
+    def source_map(candidate: Any) -> dict[str, str]:
+        if not isinstance(candidate, dict):
+            return {}
+        return {
+            str(contract_id): str(source)
+            for contract_id, source in sorted(candidate.items(), key=lambda pair: str(pair[0]))
+            if isinstance(contract_id, str) and isinstance(source, str)
+        }
+
+    return {
+        "version": _int_or_zero(value.get("version")),
+        "scanner_version": _int_or_zero(value.get("scanner_version")),
+        "digest": str(value.get("digest") or ""),
+        "adapter_ids": sorted(_string_list(adapter_ids)),
+        "exclusion_ids": sorted(_string_list(exclusion_ids)),
+        "adapter_sources": source_map(adapter_sources),
+        "exclusion_sources": source_map(exclusion_sources),
+    }
+
+
+def _unit_receipts_digest(cursor: dict[str, Any], receipts_field: str, digest_field: str) -> str | None:
+    receipts = cursor.get(receipts_field)
+    if isinstance(receipts, dict):
+        return _safe_digest(receipts)
+    value = cursor.get(digest_field)
+    return str(value) if value else None
+
+
+def _unit_key_list_digest(cursor: dict[str, Any], units_field: str, digest_field: str) -> str | None:
+    units = cursor.get(units_field)
+    if isinstance(units, list):
+        return _safe_digest(units)
+    value = cursor.get(digest_field)
+    return str(value) if value else None
+
+
+def _load_source_contract_module() -> Any:
+    path = Path(__file__).with_name("prompt_sources.py")
+    spec = importlib.util.spec_from_file_location("_limen_prompt_sources_for_corpus", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot load current prompt source adapter contract")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def current_source_adapter_contract() -> dict[str, Any]:
+    return _load_source_contract_module().source_adapter_contract()
 
 
 def cursor_semantic(cursor: dict[str, Any]) -> dict[str, Any]:
     return {
         "version": cursor.get("version", 1),
+        "scanner_version": _int_or_zero(cursor.get("scanner_version")),
         "scope": cursor.get("scope", "fixture"),
         "target_scope": cursor.get("target_scope", cursor.get("scope", "fixture")),
         "horizon_days": cursor.get("horizon_days"),
-        "pending_files": int(cursor.get("pending_files") or 0),
-        "source_errors": [str(value) for value in (cursor.get("source_errors") or [])],
+        "all_baseline_complete": cursor.get("all_baseline_complete") is True,
+        "all_source_manifest_digest": (
+            str(cursor.get("all_source_manifest_digest"))
+            if cursor.get("all_source_manifest_digest") is not None
+            else None
+        ),
+        "pending_files": _int_or_zero(cursor.get("pending_files")),
+        "source_errors": _string_list(cursor.get("source_errors")),
         "source_manifest_digest": cursor.get("source_manifest_digest"),
+        "source_discovery_spec_digest": _safe_digest(cursor.get("source_discovery_spec")),
+        "source_container_signatures_digest": _safe_digest(cursor.get("source_container_signatures")),
         "source_families": _semantic_source_families(cursor.get("source_families")),
-        "adapter_gaps": [str(value) for value in (cursor.get("adapter_gaps") or [])],
-        "adapter_gap_routes": [value for value in (cursor.get("adapter_gap_routes") or []) if isinstance(value, dict)],
-        "files": cursor.get("files") or {},
+        "source_unit_count": _int_or_zero(cursor.get("source_unit_count")),
+        "source_units_digest": _unit_key_list_digest(
+            cursor,
+            "source_units",
+            "source_units_digest",
+        ),
+        "unsupported_source_count": _int_or_zero(cursor.get("unsupported_source_count")),
+        "unsupported_units_digest": _unit_receipts_digest(
+            cursor,
+            "unsupported_units",
+            "unsupported_units_digest",
+        ),
+        "unresolved_unit_count": _int_or_zero(cursor.get("unresolved_unit_count")),
+        "unresolved_units_digest": _unit_key_list_digest(
+            cursor,
+            "unresolved_units",
+            "unresolved_units_digest",
+        ),
+        "source_adapter_contract": _semantic_source_adapter_contract(cursor.get("source_adapter_contract")),
+        "excluded_source_count": _int_or_zero(cursor.get("excluded_source_count")),
+        "source_exclusion_counts": _semantic_count_map(cursor.get("source_exclusion_counts")),
+        "excluded_unit_receipts_digest": _unit_receipts_digest(
+            cursor,
+            "excluded_unit_receipts",
+            "excluded_unit_receipts_digest",
+        ),
+        "adapted_source_count": _int_or_zero(cursor.get("adapted_source_count")),
+        "source_adapter_counts": _semantic_count_map(cursor.get("source_adapter_counts")),
+        "adapted_unit_receipts_digest": _unit_receipts_digest(
+            cursor,
+            "adapted_unit_receipts",
+            "adapted_unit_receipts_digest",
+        ),
+        "adapter_gaps": _string_list(cursor.get("adapter_gaps")),
+        "adapter_gap_routes": [value for value in (cursor.get("adapter_gap_routes") or []) if isinstance(value, dict)]
+        if isinstance(cursor.get("adapter_gap_routes"), (list, tuple))
+        else [],
+        "source_scan_receipt": {
+            "schema": str(cursor.get("source_scan_receipt_schema") or ""),
+            "ref": str(cursor.get("source_scan_receipt_ref") or ""),
+            "sha256": str(cursor.get("source_scan_receipt_sha256") or ""),
+            "scanner_code_digest": str(cursor.get("source_scan_code_digest") or ""),
+            "scan_payload_digest": str(cursor.get("source_scan_payload_digest") or ""),
+            "base_revision": _int_or_zero(cursor.get("source_scan_base_revision")),
+            "base_cursor_digest": str(cursor.get("source_scan_base_cursor_digest") or ""),
+        },
+        "files": cursor.get("files") if isinstance(cursor.get("files"), dict) else {},
     }
 
 
@@ -1101,18 +1341,678 @@ def cursor_digest(cursor: dict[str, Any]) -> str:
     return digest(cursor_semantic(cursor))
 
 
-def _newer_signature(current: Any, proposed: Any) -> Any:
-    if not isinstance(current, dict):
-        return proposed
-    if not isinstance(proposed, dict):
-        return current
-    current_mtime = int(current.get("mtime_ns") or 0)
-    proposed_mtime = int(proposed.get("mtime_ns") or 0)
-    if proposed_mtime > current_mtime:
-        return proposed
-    if proposed_mtime < current_mtime:
-        return current
-    return proposed if canonical_json(proposed) >= canonical_json(current) else current
+_SOURCE_SCAN_SCHEMA = "limen.prompt-source-scan.v1"
+_SOURCE_SCAN_FIELDS = {
+    "source_scan_attestation",
+    "source_scan_receipt_schema",
+    "source_scan_receipt_ref",
+    "source_scan_receipt_sha256",
+    "source_scan_code_digest",
+    "source_scan_payload_digest",
+    "source_scan_base_revision",
+    "source_scan_base_cursor_digest",
+}
+_PENDING_SOURCE_SCANS: dict[str, dict[str, Any]] = {}
+_PENDING_SOURCE_SCANS_LOCK = threading.Lock()
+
+
+def _source_scan_payload(cursor: dict[str, Any]) -> dict[str, Any]:
+    clean = {key: value for key, value in cursor.items() if key not in _SOURCE_SCAN_FIELDS}
+    return {
+        "base_revision": _int_or_zero(cursor.get("source_scan_base_revision", cursor.get("base_revision"))),
+        "base_cursor_digest": str(cursor.get("source_scan_base_cursor_digest", cursor.get("base_cursor_digest")) or ""),
+        "cursor": cursor_semantic(clean),
+    }
+
+
+def source_scan_payload_digest(cursor: dict[str, Any]) -> str:
+    return digest(_source_scan_payload(cursor))
+
+
+def current_source_scanner_code_digest() -> str:
+    root = Path(__file__).resolve().parents[3]
+    files = (
+        root / "scripts" / "prompt-atom-ledger.py",
+        root / "cli" / "src" / "limen" / "prompt_corpus.py",
+        root / "cli" / "src" / "limen" / "prompt_sources.py",
+    )
+    return digest({str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files})
+
+
+def attest_source_scan(cursor: dict[str, Any], *, scanner_code_digest: str) -> str:
+    """Bind an exact scanner result to this process until the writer seals it."""
+
+    if re.fullmatch(r"[0-9a-f]{64}", scanner_code_digest) is None:
+        raise ValueError("source scanner code digest must be lowercase sha256")
+    if scanner_code_digest != current_source_scanner_code_digest():
+        raise ValueError("source scanner code digest does not match the running implementation")
+    cursor["source_scan_code_digest"] = scanner_code_digest
+    cursor["source_scan_base_revision"] = _int_or_zero(cursor.get("base_revision"))
+    cursor["source_scan_base_cursor_digest"] = str(cursor.get("base_cursor_digest") or "")
+    cursor["source_scan_payload_digest"] = source_scan_payload_digest(cursor)
+    token = secrets.token_hex(32)
+    cursor["source_scan_attestation"] = token
+    with _PENDING_SOURCE_SCANS_LOCK:
+        if len(_PENDING_SOURCE_SCANS) >= 1024:
+            _PENDING_SOURCE_SCANS.clear()
+        _PENDING_SOURCE_SCANS[token] = {
+            "payload_digest": cursor["source_scan_payload_digest"],
+            "scanner_code_digest": scanner_code_digest,
+        }
+    return token
+
+
+def _pending_source_scan_valid(cursor: dict[str, Any], *, consume: bool = False) -> bool:
+    token = cursor.get("source_scan_attestation")
+    if not isinstance(token, str) or re.fullmatch(r"[0-9a-f]{64}", token) is None:
+        return False
+    with _PENDING_SOURCE_SCANS_LOCK:
+        pending = _PENDING_SOURCE_SCANS.pop(token, None) if consume else _PENDING_SOURCE_SCANS.get(token)
+    return bool(
+        isinstance(pending, dict)
+        and pending.get("payload_digest") == cursor.get("source_scan_payload_digest")
+        and pending.get("scanner_code_digest") == cursor.get("source_scan_code_digest")
+        and cursor.get("source_scan_payload_digest") == source_scan_payload_digest(cursor)
+    )
+
+
+def _source_scan_receipt_payload(cursor: dict[str, Any]) -> dict[str, Any]:
+    contract = _semantic_source_adapter_contract(cursor.get("source_adapter_contract"))
+    return {
+        "schema": _SOURCE_SCAN_SCHEMA,
+        "scanner_code_digest": str(cursor.get("source_scan_code_digest") or ""),
+        "source_adapter_contract_digest": str(contract.get("digest") or ""),
+        "scan_payload_digest": str(cursor.get("source_scan_payload_digest") or ""),
+        "base_revision": _int_or_zero(cursor.get("source_scan_base_revision")),
+        "base_cursor_digest": str(cursor.get("source_scan_base_cursor_digest") or ""),
+        "scope": str(cursor.get("scope") or ""),
+        "target_scope": str(cursor.get("target_scope") or ""),
+        "all_baseline_complete": cursor.get("all_baseline_complete") is True,
+        "source_unit_count": _int_or_zero(cursor.get("source_unit_count")),
+        "source_units_digest": str(cursor.get("source_units_digest") or ""),
+        "files_digest": digest(cursor.get("files") if isinstance(cursor.get("files"), dict) else {}),
+        "excluded_unit_receipts_digest": str(cursor.get("excluded_unit_receipts_digest") or ""),
+        "adapted_unit_receipts_digest": str(cursor.get("adapted_unit_receipts_digest") or ""),
+        "unsupported_units_digest": str(cursor.get("unsupported_units_digest") or ""),
+        "unresolved_units_digest": str(cursor.get("unresolved_units_digest") or ""),
+    }
+
+
+def _source_scan_receipt_errors(cursor: dict[str, Any], receipt_root: Path | None) -> list[str]:
+    if str(cursor.get("scope") or "") != "all" or str(cursor.get("target_scope") or "") != "all":
+        return []
+    if _pending_source_scan_valid(cursor):
+        return []
+    errors: list[str] = []
+    receipt_ref = cursor.get("source_scan_receipt_ref")
+    receipt_sha = cursor.get("source_scan_receipt_sha256")
+    if cursor.get("source_scan_receipt_schema") != _SOURCE_SCAN_SCHEMA:
+        errors.append("exact all/all scope requires a typed source scan receipt")
+    if (
+        not isinstance(receipt_ref, str)
+        or re.fullmatch(r"source-scan-receipts/[0-9a-f]{64}\.json", receipt_ref) is None
+    ):
+        errors.append("source scan receipt reference is missing or malformed")
+    if not isinstance(receipt_sha, str) or re.fullmatch(r"[0-9a-f]{64}", receipt_sha) is None:
+        errors.append("source scan receipt hash is missing or malformed")
+    for field in ("source_scan_code_digest", "source_scan_payload_digest", "source_scan_base_cursor_digest"):
+        value = cursor.get(field)
+        if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+            errors.append(f"{field} is missing or malformed")
+    if cursor.get("source_scan_code_digest") != current_source_scanner_code_digest():
+        errors.append("source scan receipt code identity is stale")
+    if cursor.get("source_scan_payload_digest") != source_scan_payload_digest(cursor):
+        errors.append("source scan payload digest is stale")
+    if errors or receipt_root is None:
+        return errors
+    root = receipt_root.resolve()
+    artifact = (root / str(receipt_ref)).resolve()
+    if root not in artifact.parents or not artifact.is_file():
+        return ["source scan receipt artifact is missing"]
+    try:
+        payload = artifact.read_bytes()
+        mode = artifact.stat().st_mode & 0o777
+    except OSError:
+        return ["source scan receipt artifact is unreadable"]
+    if mode != 0o400:
+        errors.append("source scan receipt artifact is not immutable")
+    if hashlib.sha256(payload).hexdigest() != receipt_sha:
+        errors.append("source scan receipt artifact hash is stale")
+    try:
+        receipt = json.loads(payload.decode("utf-8", errors="strict"))
+    except (UnicodeError, ValueError):
+        receipt = None
+    if receipt != _source_scan_receipt_payload(cursor):
+        errors.append("source scan receipt artifact does not match cursor custody")
+    return errors
+
+
+def _seal_attested_source_scan(cursor: dict[str, Any]) -> tuple[dict[str, Any], str, bytes]:
+    if not _pending_source_scan_valid(cursor, consume=True):
+        raise ValueError("exact all/all cursor lacks a live scanner attestation")
+    sealed = dict(cursor)
+    sealed.pop("source_scan_attestation", None)
+    sealed["source_scan_receipt_schema"] = _SOURCE_SCAN_SCHEMA
+    receipt = _source_scan_receipt_payload(sealed)
+    receipt_bytes = (canonical_json(receipt) + "\n").encode("utf-8")
+    receipt_sha = hashlib.sha256(receipt_bytes).hexdigest()
+    receipt_ref = f"source-scan-receipts/{receipt_sha}.json"
+    sealed["source_scan_receipt_ref"] = receipt_ref
+    sealed["source_scan_receipt_sha256"] = receipt_sha
+    return sealed, receipt_ref, receipt_bytes
+
+
+def _validate_source_scan_receipt_destination(paths: LedgerPaths, receipt_path: Path) -> None:
+    root = paths.private_dir.resolve()
+    parent = receipt_path.parent
+    if os.path.lexists(parent):
+        if parent.is_symlink() or not parent.is_dir() or parent.resolve().parent != root:
+            raise ValueError("source scan receipt directory escapes private custody")
+    elif parent.parent.resolve() != root:
+        raise ValueError("source scan receipt directory escapes private custody")
+    if os.path.lexists(receipt_path) and receipt_path.is_symlink():
+        raise ValueError("source scan receipt path is a symlink")
+
+
+def _clear_source_scan_authority(cursor: dict[str, Any]) -> dict[str, Any]:
+    cleared = dict(cursor)
+    token = cleared.get("source_scan_attestation")
+    if isinstance(token, str):
+        with _PENDING_SOURCE_SCANS_LOCK:
+            _PENDING_SOURCE_SCANS.pop(token, None)
+    for field in _SOURCE_SCAN_FIELDS:
+        cleared.pop(field, None)
+    return cleared
+
+
+def source_scan_state_digest(cursor: dict[str, Any]) -> str:
+    clean = {key: value for key, value in cursor.items() if key not in _SOURCE_SCAN_FIELDS}
+    return digest(cursor_semantic(clean))
+
+
+def _source_discovery_spec_valid(value: Any) -> bool:
+    if not isinstance(value, dict) or set(value) != {
+        "version",
+        "regular",
+        "gemini_root",
+        "opencode_db",
+        "agy_conversations_root",
+    }:
+        return False
+    if value.get("version") != 1 or not isinstance(value.get("regular"), list):
+        return False
+    for item in value["regular"]:
+        if not isinstance(item, dict) or set(item) != {"source", "root", "patterns"}:
+            return False
+        if not isinstance(item.get("source"), str) or not item["source"]:
+            return False
+        if not isinstance(item.get("root"), str) or not Path(item["root"]).is_absolute():
+            return False
+        patterns = item.get("patterns")
+        if (
+            not isinstance(patterns, list)
+            or not patterns
+            or any(
+                not isinstance(pattern, str)
+                or not pattern
+                or Path(pattern).is_absolute()
+                or ".." in Path(pattern).parts
+                for pattern in patterns
+            )
+        ):
+            return False
+    gemini_root = value.get("gemini_root")
+    if gemini_root is not None and (not isinstance(gemini_root, str) or not Path(gemini_root).is_absolute()):
+        return False
+    return all(
+        isinstance(value.get(field), str) and Path(value[field]).is_absolute()
+        for field in ("opencode_db", "agy_conversations_root")
+    )
+
+
+def _source_container_signatures_valid(value: Any) -> bool:
+    if not isinstance(value, dict) or set(value) != {"opencode-db"}:
+        return False
+    signature = value.get("opencode-db")
+    if signature is None:
+        return True
+    expected_fields = {f"{prefix}_{field}" for prefix in ("db", "wal") for field in _STRONG_FILE_SIGNATURE_FIELDS}
+    return bool(
+        isinstance(signature, dict)
+        and set(signature) == expected_fields
+        and all(_nonnegative_exact_int(item) for item in signature.values())
+    )
+
+
+def _strong_source_path_signature(path: Path) -> dict[str, int] | None:
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    return {
+        "size": stat.st_size,
+        "mtime_ns": stat.st_mtime_ns,
+        "ctime_ns": stat.st_ctime_ns,
+        "inode": stat.st_ino,
+        "device": stat.st_dev,
+    }
+
+
+def _sqlite_storage_signature(path: Path) -> dict[str, int] | None:
+    database = _strong_source_path_signature(path)
+    if database is None:
+        return None
+    wal_path = Path(f"{path}-wal")
+    if wal_path.is_symlink():
+        return None
+    wal = _strong_source_path_signature(wal_path) if wal_path.exists() else None
+    if wal is None:
+        wal = {field: 0 for field in _STRONG_FILE_SIGNATURE_FIELDS}
+    return {
+        **{f"db_{field}": int(database[field]) for field in _STRONG_FILE_SIGNATURE_FIELDS},
+        **{f"wal_{field}": int(wal[field]) for field in _STRONG_FILE_SIGNATURE_FIELDS},
+    }
+
+
+def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
+    """Re-discover exact-all paths and re-stat their typed custody without reading prompt bodies."""
+
+    if cursor.get("scope") != "all" or cursor.get("target_scope") != "all":
+        return []
+    spec = cursor.get("source_discovery_spec")
+    if not _source_discovery_spec_valid(spec):
+        return ["exact all/all source discovery specification is missing or malformed"]
+    assert isinstance(spec, dict)
+    container_signatures = cursor.get("source_container_signatures")
+    if not _source_container_signatures_valid(container_signatures):
+        return ["exact all/all source container signatures are missing or malformed"]
+    assert isinstance(container_signatures, dict)
+    source_units = set(cursor.get("source_units") or [])
+    scanner_version = _int_or_zero(cursor.get("scanner_version"))
+    ceiling = _int_or_zero((cursor.get("resource_limits") or {}).get("max_discovery_units"))
+    ceiling = ceiling if ceiling > 0 else 100_000
+    discovered: set[str] = set()
+    seen_paths: set[str] = set()
+    discovery_count = 0
+    errors: list[str] = []
+
+    def consider(source: str, path: Path, root: Path) -> bool:
+        nonlocal discovery_count
+        try:
+            if not path.is_file():
+                return True
+            discovery_count += 1
+            if discovery_count > ceiling:
+                errors.append("live source discovery exceeds the sealed resource ceiling")
+                return False
+            lexical_root = root.expanduser().absolute()
+            lexical_path = path.expanduser().absolute()
+            lexical_path.relative_to(lexical_root) if lexical_path != lexical_root else None
+            current = lexical_path
+            while current != lexical_root:
+                if current.is_symlink():
+                    raise ValueError("symlink below source root")
+                current = current.parent
+            resolved_root = lexical_root.resolve(strict=True)
+            resolved_path = lexical_path.resolve(strict=True)
+            resolved_path.relative_to(resolved_root) if resolved_path != resolved_root else None
+        except (OSError, ValueError):
+            errors.append(f"{source}: live source containment changed after the sealed scan")
+            return True
+        path_key = str(path)
+        if path_key not in seen_paths:
+            seen_paths.add(path_key)
+            discovered.add(f"scan-v{scanner_version}:{source}:{path}")
+        return True
+
+    for item in spec["regular"]:
+        source = item["source"]
+        root = Path(item["root"])
+        if not root.exists():
+            continue
+        candidates = (
+            (root,) if root.is_file() else (path for pattern in item["patterns"] for path in root.rglob(pattern))
+        )
+        for path in candidates:
+            if not consider(source, path, root):
+                break
+        if errors and errors[-1] == "live source discovery exceeds the sealed resource ceiling":
+            break
+    gemini_root = spec.get("gemini_root")
+    if gemini_root and discovery_count <= ceiling:
+        root = Path(gemini_root)
+        if root.exists():
+            for path in root.rglob("chats/*.jsonl"):
+                if not consider("gemini-tmp", path, root):
+                    break
+    agy_root = Path(spec["agy_conversations_root"])
+    if agy_root.exists() and discovery_count <= ceiling:
+        for path in agy_root.rglob("*.db"):
+            if not consider("agy-cli-conversations", path, agy_root):
+                break
+
+    current_opencode_container = _sqlite_storage_signature(Path(spec["opencode_db"]))
+    if current_opencode_container != container_signatures.get("opencode-db"):
+        errors.append("opencode-db: live container generation changed after the sealed scan")
+
+    expected_discovered = {key for key in source_units if isinstance(key, str) and ":opencode-db:" not in key}
+    if discovered != expected_discovered:
+        errors.append("live source unit manifest changed after the sealed scan")
+
+    raw_files = cursor.get("files")
+    raw_excluded = cursor.get("excluded_unit_receipts")
+    raw_adapted = cursor.get("adapted_unit_receipts")
+    files: dict[str, Any] = raw_files if isinstance(raw_files, dict) else {}
+    excluded: dict[str, Any] = raw_excluded if isinstance(raw_excluded, dict) else {}
+    adapted: dict[str, Any] = raw_adapted if isinstance(raw_adapted, dict) else {}
+    for key in sorted(value for value in source_units if isinstance(value, str)):
+        if not _cursor_unit_key_valid(key):
+            continue
+        _, source, locator = key.split(":", 2)
+        receipt = excluded.get(key) or adapted.get(key)
+        expected = files.get(key) or (receipt.get("signature") if isinstance(receipt, dict) else None)
+        if not isinstance(expected, dict):
+            errors.append(f"{source}: sealed unit lacks typed live custody")
+            continue
+        if source == "opencode-db":
+            database_path = Path(locator.rsplit("#session:", 1)[0])
+            storage = _sqlite_storage_signature(database_path)
+            if storage is None or any(expected.get(field) != value for field, value in storage.items()):
+                errors.append("opencode-db: live database generation changed after the sealed scan")
+        elif source == "agy-cli-conversations":
+            storage = _sqlite_storage_signature(Path(locator))
+            if storage is None or any(expected.get(field) != value for field, value in storage.items()):
+                errors.append("agy-cli-conversations: live database generation changed after the sealed scan")
+        elif _strong_source_path_signature(Path(locator)) != expected:
+            errors.append(f"{source}: live source signature changed after the sealed scan")
+        if isinstance(receipt, dict) and receipt.get("contract_id") == "claude-project-memory-mirror-v1":
+            sibling = Path(locator).parent / "memory" / Path(locator).name
+            related = receipt.get("related_signatures") or {}
+            if _strong_source_path_signature(sibling) != related.get("memory_sibling"):
+                errors.append("claude-projects: live memory mirror sibling changed after the sealed scan")
+    return list(dict.fromkeys(errors))
+
+
+def validate_source_adapter_cursor(
+    cursor: dict[str, Any],
+    *,
+    receipt_root: Path | None = None,
+) -> list[str]:
+    """Validate private exclusion receipts and the current adapter contract."""
+
+    target_scope = str(cursor.get("target_scope") or cursor.get("scope") or "")
+    scope = str(cursor.get("scope") or "")
+    raw_excluded = cursor.get("excluded_unit_receipts")
+    raw_adapted = cursor.get("adapted_unit_receipts")
+    raw_unsupported = cursor.get("unsupported_units")
+    raw_unresolved = cursor.get("unresolved_units")
+    raw_source_units = cursor.get("source_units")
+    excluded = raw_excluded if isinstance(raw_excluded, dict) else {}
+    adapted = raw_adapted if isinstance(raw_adapted, dict) else {}
+    unsupported = raw_unsupported if isinstance(raw_unsupported, dict) else {}
+    unresolved = raw_unresolved if isinstance(raw_unresolved, list) else []
+    source_units = raw_source_units if isinstance(raw_source_units, list) else []
+    needs_contract = bool(
+        target_scope in {"all", "partial:all"}
+        or cursor.get("scanner_version") is not None
+        or cursor.get("source_adapter_contract") is not None
+        or raw_excluded is not None
+        or raw_adapted is not None
+        or raw_unsupported is not None
+        or raw_unresolved is not None
+        or raw_source_units is not None
+    )
+    if not needs_contract:
+        return []
+
+    errors: list[str] = []
+    errors.extend(_source_scan_receipt_errors(cursor, receipt_root))
+    source_contract_module = _load_source_contract_module()
+    expected = source_contract_module.source_adapter_contract()
+    if cursor.get("scanner_version") != expected["scanner_version"]:
+        errors.append("source scanner version is missing or stale")
+    baseline_complete = cursor.get("all_baseline_complete")
+    all_manifest_digest = cursor.get("all_source_manifest_digest")
+    if not isinstance(baseline_complete, bool):
+        errors.append("all_baseline_complete must be boolean")
+    if baseline_complete is True:
+        if scope != "all" or target_scope != "all":
+            errors.append("all_baseline_complete requires exact all/all scope")
+        if not isinstance(all_manifest_digest, str) or re.fullmatch(r"[0-9a-f]{64}", all_manifest_digest) is None:
+            errors.append("all_source_manifest_digest is missing or malformed")
+    elif scope == "all" and target_scope == "all":
+        errors.append("exact all/all scope requires a complete all-history baseline")
+    if (
+        scope == "all"
+        and target_scope == "all"
+        and not _source_discovery_spec_valid(cursor.get("source_discovery_spec"))
+    ):
+        errors.append("exact all/all source discovery specification is missing or malformed")
+    if (
+        scope == "all"
+        and target_scope == "all"
+        and not _source_container_signatures_valid(cursor.get("source_container_signatures"))
+    ):
+        errors.append("exact all/all source container signatures are missing or malformed")
+    contract = _semantic_source_adapter_contract(cursor.get("source_adapter_contract"))
+    if contract != expected:
+        errors.append("source adapter contract is missing or stale")
+    if not isinstance(raw_excluded, dict):
+        errors.append("excluded unit receipts must be an object")
+    if not isinstance(raw_adapted, dict):
+        errors.append("adapted unit receipts must be an object")
+    if not isinstance(raw_unsupported, dict):
+        errors.append("unsupported unit cache must be an object")
+    if not isinstance(raw_unresolved, list):
+        errors.append("unresolved unit obligations must be a list")
+    if not isinstance(raw_source_units, list):
+        errors.append("source unit manifest must be a list")
+    if cursor.get("excluded_unit_receipts_digest") != _safe_digest(excluded):
+        errors.append("excluded unit receipt digest is missing or stale")
+    if cursor.get("adapted_unit_receipts_digest") != _safe_digest(adapted):
+        errors.append("adapted unit receipt digest is missing or stale")
+    if cursor.get("unsupported_units_digest") != _safe_digest(unsupported):
+        errors.append("unsupported unit cache digest is missing or stale")
+    if cursor.get("unresolved_units_digest") != _safe_digest(unresolved):
+        errors.append("unresolved unit obligation digest is missing or stale")
+    if cursor.get("source_units_digest") != _safe_digest(source_units):
+        errors.append("source unit manifest digest is missing or stale")
+
+    def count_field(name: str, expected_count: int) -> int:
+        value = cursor.get(name)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            errors.append(f"{name} must be a non-negative integer")
+            return 0
+        if value != expected_count:
+            errors.append(f"{name} does not match unit receipts")
+        return value
+
+    count_field("excluded_source_count", len(excluded))
+    count_field("adapted_source_count", len(adapted))
+    unsupported_count = count_field("unsupported_source_count", len(unsupported))
+    unresolved_count = count_field("unresolved_unit_count", len(unresolved))
+    source_unit_count = count_field("source_unit_count", len(source_units))
+
+    def count_map(name: str, expected_counts: dict[str, int]) -> None:
+        value = cursor.get(name)
+        if not isinstance(value, dict):
+            errors.append(f"{name} must be an object")
+            return
+        if any(not isinstance(key, str) for key in value):
+            errors.append(f"{name} keys must be strings")
+            return
+        if any(isinstance(item, bool) or not isinstance(item, int) or item < 0 for item in value.values()):
+            errors.append(f"{name} values must be non-negative integers")
+            return
+        if value != expected_counts:
+            errors.append(f"{name} does not match unit receipts")
+
+    def receipt_counts(receipts: dict[str, Any]) -> dict[str, int]:
+        counts: Counter[str] = Counter()
+        for receipt in receipts.values():
+            if isinstance(receipt, dict) and isinstance(receipt.get("contract_id"), str):
+                counts[receipt["contract_id"]] += 1
+        return dict(sorted(counts.items()))
+
+    count_map("source_exclusion_counts", receipt_counts(excluded))
+    count_map("source_adapter_counts", receipt_counts(adapted))
+
+    def signature_valid(value: Any) -> bool:
+        return _file_signature_valid(value, strong=True)
+
+    def validate_group(
+        receipts: dict[str, Any],
+        *,
+        disposition: str,
+        valid_ids: set[str],
+    ) -> None:
+        for key, receipt in receipts.items():
+            if not _cursor_unit_key_valid(key) or not isinstance(receipt, dict):
+                errors.append(f"{disposition} unit receipt is malformed")
+                continue
+            _, source, locator = key.split(":", 2)
+            related = receipt.get("related_signatures", {})
+            related_ok = isinstance(related, dict) and all(
+                isinstance(label, str) and signature_valid(signature) for label, signature in related.items()
+            )
+            related_evidence = receipt.get("related_evidence", {})
+            contract_id = receipt.get("contract_id")
+            if (
+                receipt.get("version") != expected["version"]
+                or receipt.get("disposition") != disposition
+                or not isinstance(contract_id, str)
+                or contract_id not in valid_ids
+                or receipt.get("contract_digest") != expected["digest"]
+                or not signature_valid(receipt.get("signature"))
+                or not related_ok
+                or not isinstance(related_evidence, dict)
+                or not source_contract_module.source_contract_receipt_applies(
+                    contract_id,
+                    source,
+                    locator,
+                    signature=receipt.get("signature"),
+                    related_signatures=related if isinstance(related, dict) else None,
+                    related_evidence=related_evidence if isinstance(related_evidence, dict) else None,
+                )
+            ):
+                errors.append(f"{key}: {disposition} unit receipt is malformed or stale")
+
+    validate_group(excluded, disposition="excluded", valid_ids=set(expected["exclusion_ids"]))
+    validate_group(adapted, disposition="adapted", valid_ids=set(expected["adapter_ids"]))
+
+    files = cursor.get("files")
+    if not isinstance(files, dict):
+        errors.append("parsed file cache must be an object")
+    files = files if isinstance(files, dict) else {}
+    if any(not _cursor_unit_signature_valid(key, signature, strong_file=True) for key, signature in files.items()):
+        errors.append("parsed file cache contains a malformed unit signature")
+    if any(
+        not _cursor_unit_signature_valid(key, signature, strong_file=True) for key, signature in unsupported.items()
+    ):
+        errors.append("unsupported unit cache contains a malformed unit signature")
+    if (
+        any(not _cursor_unit_key_valid(key) for key in unresolved)
+        or len(set(unresolved)) != len(unresolved)
+        or unresolved != sorted(unresolved)
+    ):
+        errors.append("unresolved unit obligations are malformed")
+    if (
+        any(not _cursor_unit_key_valid(key) for key in source_units)
+        or len(set(source_units)) != len(source_units)
+        or source_units != sorted(source_units)
+    ):
+        errors.append("source unit manifest is malformed")
+    if set(unsupported) - set(unresolved):
+        errors.append("unsupported units are missing from unresolved obligations")
+    raw_families = cursor.get("source_families")
+    family_fields = ("discovered", "converged", "adapted", "excluded", "pending", "errors", "unsupported")
+    family_totals = {field: 0 for field in family_fields}
+    if isinstance(raw_families, dict):
+        family_counts_valid = True
+        for source, counts in raw_families.items():
+            if not isinstance(source, str) or not isinstance(counts, dict):
+                family_counts_valid = False
+                break
+            for field in family_fields:
+                value = counts.get(field, 0)
+                if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                    family_counts_valid = False
+                    break
+                family_totals[field] += value
+            if not family_counts_valid:
+                break
+    else:
+        family_counts_valid = False
+    if not family_counts_valid:
+        errors.append("source family unresolved counts are malformed")
+    elif family_totals["unsupported"] != unsupported_count:
+        errors.append("source family unsupported counts do not match unsupported_source_count")
+    pending_files = cursor.get("pending_files", 0)
+    if isinstance(pending_files, bool) or not isinstance(pending_files, int) or pending_files < 0:
+        errors.append("pending_files must be a non-negative integer")
+        pending_files = 0
+    source_errors = cursor.get("source_errors", [])
+    if not isinstance(source_errors, list) or any(not isinstance(value, str) for value in source_errors):
+        errors.append("source_errors must be a list of strings")
+        source_errors = []
+    if family_counts_valid and family_totals["pending"] != pending_files:
+        errors.append("source family pending counts do not match pending_files")
+    if family_counts_valid and family_totals["errors"] != len(source_errors):
+        errors.append("source family error counts do not match source_errors")
+    if family_counts_valid and family_totals["discovered"] != source_unit_count:
+        errors.append("source family discovered counts do not match source_unit_count")
+    if family_counts_valid and family_totals["excluded"] != int(cursor.get("excluded_source_count") or 0):
+        errors.append("source family excluded counts do not match excluded_source_count")
+    if family_counts_valid and family_totals["adapted"] != int(cursor.get("adapted_source_count") or 0):
+        errors.append("source family adapted counts do not match adapted_source_count")
+    overlap = set(excluded) & set(files)
+    if overlap:
+        errors.append("excluded units remain in the parsed file cache")
+    for key, receipt in adapted.items():
+        if isinstance(receipt, dict) and files.get(key) != receipt.get("signature"):
+            errors.append(f"{key}: adapted unit receipt does not match the parsed file cache")
+    if set(excluded) & set(adapted):
+        errors.append("source units cannot be both adapted and excluded")
+    if scope == "all" and target_scope == "all":
+        if pending_files:
+            errors.append("exact all/all scope cannot have pending source files")
+        if source_errors:
+            errors.append("exact all/all scope cannot have source errors")
+        if unsupported_count or unsupported or family_totals["unsupported"]:
+            errors.append("exact all/all scope cannot have unsupported source units")
+        if unresolved_count or unresolved:
+            errors.append("exact all/all scope cannot have unresolved source obligations")
+        if cursor.get("adapter_gaps") or cursor.get("adapter_gap_routes"):
+            errors.append("exact all/all scope cannot have adapter gaps or routes")
+        if cursor.get("all_source_manifest_digest") != cursor.get("source_manifest_digest"):
+            errors.append("exact all/all scope requires matching source and all-history manifest digests")
+        if set(source_units) != set(files) | set(excluded):
+            errors.append("exact all/all source units do not match parsed and excluded unit custody")
+        if family_counts_valid:
+
+            def grouped_source(key: Any) -> str:
+                parts = key.split(":", 2) if isinstance(key, str) else []
+                return parts[1] if len(parts) == 3 else "__malformed__"
+
+            grouped = {
+                "discovered": Counter(grouped_source(key) for key in source_units),
+                "converged": Counter(grouped_source(key) for key in files),
+                "adapted": Counter(grouped_source(key) for key in adapted),
+                "excluded": Counter(grouped_source(key) for key in excluded),
+                "unsupported": Counter(grouped_source(key) for key in unsupported),
+            }
+            typed_families = raw_families if isinstance(raw_families, dict) else {}
+            sources = set(typed_families) | {source for counts in grouped.values() for source in counts}
+            for source in sorted(sources):
+                counts = typed_families.get(source, {})
+                if counts.get("discovered", 0) != counts.get("converged", 0) + counts.get("excluded", 0):
+                    errors.append(f"{source}: exact all source family coverage is incomplete")
+                if counts.get("adapted", 0) > counts.get("converged", 0):
+                    errors.append(f"{source}: adapted source count exceeds converged coverage")
+                for field, grouped_counts in grouped.items():
+                    if counts.get(field, 0) != grouped_counts.get(source, 0):
+                        errors.append(f"{source}: source family {field} count does not match unit custody")
+    return errors
 
 
 def _target_scope(cursor: dict[str, Any]) -> str:
@@ -1120,49 +2020,153 @@ def _target_scope(cursor: dict[str, Any]) -> str:
     return value.removeprefix("partial:")
 
 
+def validate_cursor_shape(cursor: Any, *, role: str) -> list[str]:
+    """Validate fields consumed before semantic ledger validation."""
+
+    if not isinstance(cursor, dict):
+        return [f"{role} cursor must be an object"]
+    errors: list[str] = []
+    for field in (
+        "version",
+        "scanner_version",
+        "revision",
+        "base_revision",
+        "pending_files",
+        "source_unit_count",
+        "unsupported_source_count",
+        "unresolved_unit_count",
+        "excluded_source_count",
+        "adapted_source_count",
+        "work_units_used",
+    ):
+        if field not in cursor:
+            continue
+        value = cursor.get(field)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            errors.append(f"{role} cursor {field} must be a non-negative integer")
+    for field in ("horizon_days", "effective_horizon_days"):
+        value = cursor.get(field)
+        if value is not None and (isinstance(value, bool) or not isinstance(value, int) or value < 0):
+            errors.append(f"{role} cursor {field} must be null or a non-negative integer")
+    for field in (
+        "files",
+        "unsupported_units",
+        "excluded_unit_receipts",
+        "adapted_unit_receipts",
+        "source_exclusion_counts",
+        "source_adapter_counts",
+        "source_families",
+        "source_coverage",
+        "source_adapter_contract",
+    ):
+        if field in cursor and not isinstance(cursor.get(field), dict):
+            errors.append(f"{role} cursor {field} must be an object")
+    for field in ("files", "unsupported_units"):
+        value = cursor.get(field)
+        if isinstance(value, dict) and any(
+            not _cursor_unit_signature_valid(key, signature) for key, signature in value.items()
+        ):
+            errors.append(f"{role} cursor {field} contains a malformed unit signature")
+    for field in (
+        "source_errors",
+        "excluded_file_keys",
+        "adapter_gaps",
+        "adapter_gap_routes",
+        "source_units",
+        "unresolved_units",
+    ):
+        if field in cursor and not isinstance(cursor.get(field), list):
+            errors.append(f"{role} cursor {field} must be a list")
+    if isinstance(cursor.get("source_errors"), list) and any(
+        not isinstance(value, str) for value in cursor["source_errors"]
+    ):
+        errors.append(f"{role} cursor source_errors values must be strings")
+    if isinstance(cursor.get("excluded_file_keys"), list) and any(
+        not isinstance(value, str) for value in cursor["excluded_file_keys"]
+    ):
+        errors.append(f"{role} cursor excluded_file_keys values must be strings")
+    if isinstance(cursor.get("unresolved_units"), list) and any(
+        not _cursor_unit_key_valid(value) for value in cursor["unresolved_units"]
+    ):
+        errors.append(f"{role} cursor unresolved_units contains a malformed unit key")
+    if isinstance(cursor.get("source_units"), list) and any(
+        not _cursor_unit_key_valid(value) for value in cursor["source_units"]
+    ):
+        errors.append(f"{role} cursor source_units contains a malformed unit key")
+    for field in ("all_baseline_complete", "replace_files", "work_units_unbounded"):
+        if field in cursor and not isinstance(cursor.get(field), bool):
+            errors.append(f"{role} cursor {field} must be boolean")
+    for field in (
+        "base_cursor_digest",
+        "source_manifest_digest",
+        "all_source_manifest_digest",
+        "unsupported_units_digest",
+        "unresolved_units_digest",
+        "source_units_digest",
+    ):
+        if field in cursor and cursor.get(field) is not None and not isinstance(cursor.get(field), str):
+            errors.append(f"{role} cursor {field} must be text or null")
+    return errors
+
+
 def merge_cursor(current: dict[str, Any], proposed: dict[str, Any] | None) -> dict[str, Any]:
     """Monotonically merge a scan result produced before the writer lock was acquired."""
 
+    current_errors = validate_cursor_shape(current, role="current")
+    if current_errors:
+        raise ValueError("invalid current cursor: " + "; ".join(current_errors))
     if proposed is None:
         return dict(current)
+    proposed_errors = validate_cursor_shape(proposed, role="proposed")
+    if proposed_errors:
+        raise ValueError("invalid proposed cursor: " + "; ".join(proposed_errors))
     current_revision = int(current.get("revision") or 0)
-    raw_base_revision = proposed.get("base_revision")
-    if raw_base_revision is None:
-        raw_base_revision = proposed.get("revision") or 0
-    proposed_base_revision = int(str(raw_base_revision))
-    proposed_base_digest = str(proposed.get("base_cursor_digest") or "")
-    stale = bool(
-        (proposed_base_digest and proposed_base_digest != cursor_digest(current))
-        or (current_revision and proposed_base_revision < current_revision)
-    )
+    has_base_revision = "base_revision" in proposed
+    has_base_digest = "base_cursor_digest" in proposed
+    if has_base_revision != has_base_digest or (current and not (has_base_revision and has_base_digest)):
+        raise ValueError("invalid proposed cursor: non-initial proposals require exact CAS revision and digest")
+    if has_base_revision and has_base_digest:
+        proposed_base_revision = int(proposed["base_revision"])
+        proposed_base_digest = str(proposed["base_cursor_digest"])
+        stale = bool(proposed_base_revision != current_revision or proposed_base_digest != cursor_digest(current))
+    else:
+        proposed_base_revision = 0
+        stale = False
     if stale:
-        # A scan based on an older cursor may contribute only monotonic file
-        # signatures.  It may not replace manifest, family, gap, or scope
-        # assertions made by the current writer.
-        merged = dict(current)
-        files = dict(current.get("files") or {})
-        for key, signature in (proposed.get("files") or {}).items():
-            files[str(key)] = _newer_signature(files.get(str(key)), signature)
-        target = "all" if "all" in {_target_scope(current), _target_scope(proposed)} else _target_scope(current)
-        stale_error = "stale cursor proposal requires a fresh scan"
-        merged["files"] = files
-        merged["target_scope"] = target
-        merged["scope"] = f"partial:{target}"
-        merged["pending_files"] = max(
-            1,
-            int(current.get("pending_files") or 0),
-            int(proposed.get("pending_files") or 0),
-        )
-        merged["source_errors"] = list(dict.fromkeys([*(current.get("source_errors") or []), stale_error]))
-        merged["revision"] = max(current_revision, int(proposed.get("revision") or 0)) + 1
-        return merged
+        raise ValueError("stale cursor proposal requires a fresh scan")
+    current_unresolved = set(current.get("unresolved_units") or [])
+    proposed_unresolved = set(proposed.get("unresolved_units") or [])
+    cleared_unresolved = current_unresolved - proposed_unresolved
+    proposed_source_units = set(proposed.get("source_units") or [])
+    proposed_resolved = proposed_source_units & (
+        set(proposed.get("files") or {}) | set(proposed.get("excluded_unit_receipts") or {})
+    )
+    if cleared_unresolved - proposed_resolved:
+        raise ValueError("invalid proposed cursor: unresolved obligations lack parsed or excluded resolution proof")
     merged = dict(current)
     merged.update(
-        {key: value for key, value in proposed.items() if key not in {"files", "base_cursor_digest", "base_revision"}}
+        {
+            key: value
+            for key, value in proposed.items()
+            if key
+            not in {
+                "files",
+                "excluded_file_keys",
+                "replace_files",
+                "base_cursor_digest",
+                "base_revision",
+            }
+        }
     )
-    files = dict(current.get("files") or {})
+    files = {} if proposed.get("replace_files") is True else dict(current.get("files") or {})
     for key, signature in (proposed.get("files") or {}).items():
-        files[str(key)] = _newer_signature(files.get(str(key)), signature)
+        # Exact cursor CAS makes this proposal the only admissible scan of the
+        # current state. Source files may legitimately be replaced or rolled
+        # back, so metadata ordering must not override fresh observed truth.
+        files[str(key)] = signature
+    for key in proposed.get("excluded_file_keys") or []:
+        files.pop(str(key), None)
+    merged.pop("excluded_file_keys", None)
     merged["files"] = files
     current_target = _target_scope(current)
     proposed_target = _target_scope(proposed)
@@ -1173,7 +2177,14 @@ def merge_cursor(current: dict[str, Any], proposed: dict[str, Any] | None) -> di
         errors = [str(value) for value in (proposed.get("source_errors") or [])]
     elif current_target == "all":
         target = "all"
-        proposed_has_gap = bool(int(proposed.get("pending_files") or 0) or proposed.get("source_errors"))
+        proposed_has_gap = bool(
+            int(proposed.get("pending_files") or 0)
+            or proposed.get("source_errors")
+            or int(proposed.get("unsupported_source_count") or 0)
+            or int(proposed.get("unresolved_unit_count") or 0)
+            or proposed.get("adapter_gaps")
+            or proposed.get("adapter_gap_routes")
+        )
         current_was_complete = str(current.get("scope") or "") == "all"
         scope = "all" if current_was_complete and not proposed_has_gap else "partial:all"
         pending = (
@@ -1194,13 +2205,20 @@ def merge_cursor(current: dict[str, Any], proposed: dict[str, Any] | None) -> di
         scope = str(proposed.get("scope") or target)
         pending = int(proposed.get("pending_files") or 0)
         errors = [str(value) for value in (proposed.get("source_errors") or [])]
-    if pending or errors:
+    if (
+        pending
+        or errors
+        or int(merged.get("unsupported_source_count") or 0)
+        or int(merged.get("unresolved_unit_count") or 0)
+        or merged.get("adapter_gaps")
+        or merged.get("adapter_gap_routes")
+    ):
         scope = f"partial:{target}" if not scope.startswith("partial:") else scope
     merged["target_scope"] = target
     merged["scope"] = scope
     merged["pending_files"] = pending
     merged["source_errors"] = errors
-    merged["revision"] = max(current_revision, int(proposed.get("revision") or 0)) + 1
+    merged["revision"] = current_revision + 1
     return merged
 
 
@@ -1267,17 +2285,25 @@ def build_snapshot(
         atom["outcome"] = _outcome_for_atom(str(atom["atom_id"]), outcomes)
         projected_atoms.append(atom)
 
+    occurrence_rows = [dict(row) for row in occurrences]
+    occurrences_by_id = _index_by_id(occurrence_rows, "occurrence_id")
+    projected_atoms_by_id = _index_by_id(projected_atoms, "atom_id")
     successor_edges = {
-        predecessor
+        predecessor_id
         for atom in projected_atoms
         if lineage_edge_valid(atom, policy=policy)
         for predecessor in (atom.get("predecessor_ids") or [])
+        if (predecessor_id := str(predecessor)) in projected_atoms_by_id
+        and lineage_edge_chronology_valid(
+            atom,
+            projected_atoms_by_id[predecessor_id],
+            occurrences_by_id,
+        )
     }
     for atom in projected_atoms:
         atom["is_current_intent"] = str(atom["atom_id"]) not in successor_edges
     projected_atoms.sort(key=lambda atom: (-float(atom["priority_score"]), str(atom["atom_id"])))
 
-    occurrence_rows = [dict(row) for row in occurrences]
     source_counts = Counter(str(row.get("source") or "unknown") for row in occurrence_rows)
     provenance_counts = Counter(str(row.get("provenance") or "unknown") for row in occurrence_rows)
     kind_counts = Counter(str(atom.get("kind") or "unknown") for atom in projected_atoms)
@@ -1320,6 +2346,7 @@ def build_snapshot(
     }
     validation_errors = [
         *journal_errors,
+        *validate_source_adapter_cursor(cursor),
         *validate_snapshot(
             snapshot,
             outcome_rows=outcome_rows,
@@ -1373,7 +2400,11 @@ def validate_snapshot(
         if any(value not in atoms_by_id for value in linked_ids):
             errors.append(f"{occurrence_id}: occurrence references missing atoms")
         if occurrence.get("authority") == "operator" and not linked_ids:
-            if occurrence.get("excluded_reason") not in {"transport_duplicate", "transport_echo"}:
+            if occurrence.get("excluded_reason") not in {
+                "source_contract_excluded",
+                "transport_duplicate",
+                "transport_echo",
+            }:
                 errors.append(f"{occurrence.get('occurrence_id')}: operator occurrence lacks atom coverage")
         if not str(occurrence.get("raw_object") or "").strip():
             errors.append(f"{occurrence_id}: occurrence lacks a private raw object reference")
@@ -1417,6 +2448,14 @@ def validate_snapshot(
                 errors.append(f"{atom_id}: predecessor edge crosses unrelated lineages")
             if not lineage_edge_valid(atom, policy=policy):
                 errors.append(f"{atom_id}: predecessor edge lacks valid correction/refinement evidence")
+            for predecessor_id in predecessor_ids:
+                predecessor = atoms_by_id.get(predecessor_id)
+                if predecessor is not None and not lineage_edge_chronology_valid(
+                    atom,
+                    predecessor,
+                    occurrences_by_id,
+                ):
+                    errors.append(f"{atom_id}: predecessor edge is not strictly chronological")
         errors.extend(validate_outcome(atom, atoms_by_id, evidence_root=evidence_root))
     errors.extend(
         validate_outcome_history(
@@ -1474,11 +2513,35 @@ def public_projection(snapshot: dict[str, Any], *, limit: int | None = None) -> 
         "source_cursor_digest": snapshot.get("source_cursor_digest"),
         "source_scope": {
             "scope": (snapshot.get("source_scope") or {}).get("scope"),
+            "scanner_version": _int_or_zero((snapshot.get("source_scope") or {}).get("scanner_version")),
             "target_scope": (snapshot.get("source_scope") or {}).get("target_scope"),
             "horizon_days": (snapshot.get("source_scope") or {}).get("horizon_days"),
+            "all_baseline_complete": (snapshot.get("source_scope") or {}).get("all_baseline_complete") is True,
+            "all_source_manifest_digest": (snapshot.get("source_scope") or {}).get("all_source_manifest_digest"),
             "pending_files": (snapshot.get("source_scope") or {}).get("pending_files", 0),
             "source_error_count": len((snapshot.get("source_scope") or {}).get("source_errors") or []),
+            "source_unit_count": _int_or_zero((snapshot.get("source_scope") or {}).get("source_unit_count")),
+            "source_units_digest": (snapshot.get("source_scope") or {}).get("source_units_digest"),
+            "unsupported_source_count": _int_or_zero(
+                (snapshot.get("source_scope") or {}).get("unsupported_source_count")
+            ),
+            "unsupported_units_digest": (snapshot.get("source_scope") or {}).get("unsupported_units_digest"),
+            "unresolved_unit_count": _int_or_zero((snapshot.get("source_scope") or {}).get("unresolved_unit_count")),
+            "unresolved_units_digest": (snapshot.get("source_scope") or {}).get("unresolved_units_digest"),
             "source_manifest_digest": (snapshot.get("source_scope") or {}).get("source_manifest_digest"),
+            "source_adapter_contract": _semantic_source_adapter_contract(
+                (snapshot.get("source_scope") or {}).get("source_adapter_contract")
+            ),
+            "excluded_source_count": _int_or_zero((snapshot.get("source_scope") or {}).get("excluded_source_count")),
+            "source_exclusion_counts": _semantic_count_map(
+                (snapshot.get("source_scope") or {}).get("source_exclusion_counts")
+            ),
+            "excluded_unit_receipts_digest": (snapshot.get("source_scope") or {}).get("excluded_unit_receipts_digest"),
+            "adapted_source_count": _int_or_zero((snapshot.get("source_scope") or {}).get("adapted_source_count")),
+            "source_adapter_counts": _semantic_count_map(
+                (snapshot.get("source_scope") or {}).get("source_adapter_counts")
+            ),
+            "adapted_unit_receipts_digest": (snapshot.get("source_scope") or {}).get("adapted_unit_receipts_digest"),
             "adapter_gaps": (snapshot.get("source_scope") or {}).get("adapter_gaps") or [],
             "adapter_gap_routes": (snapshot.get("source_scope") or {}).get("adapter_gap_routes") or [],
         },
@@ -1514,7 +2577,7 @@ def render_markdown(public: dict[str, Any], policy: dict[str, Any]) -> str:
         "",
         "## Coverage",
         "",
-        f"- Source scope: `{scope.get('scope') or 'unknown'}`; target: `{scope.get('target_scope') or 'unknown'}`; horizon days: `{scope.get('horizon_days')}`; pending files: `{scope.get('pending_files', 0)}`; source errors: `{scope.get('source_error_count', 0)}`.",
+        f"- Source scope: `{scope.get('scope') or 'unknown'}`; target: `{scope.get('target_scope') or 'unknown'}`; horizon days: `{scope.get('horizon_days')}`; pending files: `{scope.get('pending_files', 0)}`; source errors: `{scope.get('source_error_count', 0)}`; unsupported: `{scope.get('unsupported_source_count', 0)}`; unresolved units: `{scope.get('unresolved_unit_count', 0)}`.",
         f"- Prompt occurrences: `{coverage.get('occurrences', 0)}`; operator: `{coverage.get('operator_occurrences', 0)}`; derived: `{coverage.get('derived_occurrences', 0)}`.",
         f"- Ask atoms: `{coverage.get('atoms', 0)}` across `{coverage.get('lineages', 0)}` lineages; current intents: `{coverage.get('current_intents', 0)}`.",
         f"- Assessed atoms: `{coverage.get('assessed_atoms', 0)}`; excluded occurrences: `{coverage.get('excluded_occurrences', 0)}`.",
@@ -1563,17 +2626,36 @@ def render_markdown(public: dict[str, Any], policy: dict[str, Any]) -> str:
 
 
 def _compact_source_scope(snapshot: dict[str, Any]) -> dict[str, Any]:
-    scope = snapshot.get("source_scope") or {}
+    raw_scope = snapshot.get("source_scope")
+    scope = raw_scope if isinstance(raw_scope, dict) else {}
     return {
         "scope": scope.get("scope"),
+        "scanner_version": _int_or_zero(scope.get("scanner_version")),
         "target_scope": scope.get("target_scope"),
         "horizon_days": scope.get("horizon_days"),
-        "pending_files": int(scope.get("pending_files") or 0),
-        "source_errors": [str(value) for value in (scope.get("source_errors") or [])],
+        "all_baseline_complete": scope.get("all_baseline_complete") is True,
+        "all_source_manifest_digest": scope.get("all_source_manifest_digest"),
+        "pending_files": _int_or_zero(scope.get("pending_files")),
+        "source_errors": _string_list(scope.get("source_errors")),
+        "source_unit_count": _int_or_zero(scope.get("source_unit_count")),
+        "source_units_digest": scope.get("source_units_digest"),
+        "unsupported_source_count": _int_or_zero(scope.get("unsupported_source_count")),
+        "unsupported_units_digest": scope.get("unsupported_units_digest"),
+        "unresolved_unit_count": _int_or_zero(scope.get("unresolved_unit_count")),
+        "unresolved_units_digest": scope.get("unresolved_units_digest"),
         "source_manifest_digest": scope.get("source_manifest_digest"),
         "source_families": _semantic_source_families(scope.get("source_families")),
-        "adapter_gaps": [str(value) for value in (scope.get("adapter_gaps") or [])],
-        "adapter_gap_routes": [value for value in (scope.get("adapter_gap_routes") or []) if isinstance(value, dict)],
+        "source_adapter_contract": _semantic_source_adapter_contract(scope.get("source_adapter_contract")),
+        "excluded_source_count": _int_or_zero(scope.get("excluded_source_count")),
+        "source_exclusion_counts": _semantic_count_map(scope.get("source_exclusion_counts")),
+        "excluded_unit_receipts_digest": scope.get("excluded_unit_receipts_digest"),
+        "adapted_source_count": _int_or_zero(scope.get("adapted_source_count")),
+        "source_adapter_counts": _semantic_count_map(scope.get("source_adapter_counts")),
+        "adapted_unit_receipts_digest": scope.get("adapted_unit_receipts_digest"),
+        "adapter_gaps": _string_list(scope.get("adapter_gaps")),
+        "adapter_gap_routes": [value for value in (scope.get("adapter_gap_routes") or []) if isinstance(value, dict)]
+        if isinstance(scope.get("adapter_gap_routes"), (list, tuple))
+        else [],
     }
 
 
@@ -1694,11 +2776,53 @@ def _dedupe_key(occurrence: dict[str, Any]) -> tuple[str, str, str]:
     )
 
 
-def _occurrence_order_key(occurrence: dict[str, Any]) -> tuple[dt.datetime, int] | None:
+def _occurrence_order_key(occurrence: dict[str, Any]) -> tuple[dt.datetime, int, int] | None:
     parsed = _parse_time(occurrence.get("timestamp"))
-    if parsed is None:
+    event_index = occurrence.get("event_index")
+    text_index = occurrence.get("text_index")
+    if (
+        parsed is None
+        or isinstance(event_index, bool)
+        or not isinstance(event_index, int)
+        or event_index < 0
+        or isinstance(text_index, bool)
+        or not isinstance(text_index, int)
+        or text_index < 0
+    ):
         return None
-    return parsed, int(occurrence.get("event_index") or 0)
+    return parsed, event_index, text_index
+
+
+def lineage_edge_chronology_valid(
+    successor_atom: dict[str, Any],
+    predecessor_atom: dict[str, Any],
+    occurrences_by_id: dict[str, dict[str, Any]],
+) -> bool:
+    """Return whether a semantic successor is provably later than its predecessor."""
+
+    successor_occurrence_id = str(successor_atom.get("occurrence_id") or "")
+    predecessor_occurrence_id = str(predecessor_atom.get("occurrence_id") or "")
+    if not successor_occurrence_id or successor_occurrence_id == predecessor_occurrence_id:
+        return False
+    successor = occurrences_by_id.get(successor_occurrence_id)
+    predecessor = occurrences_by_id.get(predecessor_occurrence_id)
+    if successor is None or predecessor is None:
+        return False
+    successor_key = _occurrence_order_key(successor)
+    predecessor_key = _occurrence_order_key(predecessor)
+    if successor_key is None or predecessor_key is None:
+        return False
+
+    successor_time = successor_key[0]
+    predecessor_time = predecessor_key[0]
+    if successor_time != predecessor_time:
+        return successor_time > predecessor_time
+
+    # Equal timestamps are orderable only within the same session, where the
+    # normalized event/text indexes form an explicit source order.
+    if str(successor.get("session_ref_hash") or "") != str(predecessor.get("session_ref_hash") or ""):
+        return False
+    return successor_key[1:] > predecessor_key[1:]
 
 
 def _adjacent_operator_predecessor(
@@ -1710,7 +2834,7 @@ def _adjacent_operator_predecessor(
     if current_key is None:
         return None
     session_hash = str(occurrence.get("session_ref_hash") or "")
-    candidates: list[tuple[tuple[dt.datetime, int], dict[str, Any]]] = []
+    candidates: list[tuple[tuple[dt.datetime, int, int], dict[str, Any]]] = []
     for row in occurrences:
         if str(row.get("session_ref_hash") or "") != session_hash:
             continue
@@ -1746,15 +2870,57 @@ def lineage_edge_valid(atom: dict[str, Any], *, policy: dict[str, Any] | None = 
 def _event_ingest_order(item: tuple[int, dict[str, Any]]) -> tuple[Any, ...]:
     original_index, event = item
     parsed = _parse_time(event.get("timestamp"))
+    try:
+        event_index = _event_position(event, "event_index")
+        text_index = _event_position(event, "text_index")
+        position_invalid = False
+    except ValueError:
+        event_index = 0
+        text_index = 0
+        position_invalid = True
     return (
         str(event.get("source") or "unknown"),
         str(event.get("session_ref") or event.get("existing_occurrence_id") or "unknown"),
         parsed is None,
         parsed or dt.datetime.max.replace(tzinfo=dt.timezone.utc),
-        int(event.get("event_index") or 0),
-        int(event.get("text_index") or 0),
+        position_invalid,
+        event_index,
+        text_index,
         original_index,
     )
+
+
+SOURCE_REVISION_FIELDS = (
+    "body_kind",
+    "provenance",
+    "authority",
+    "source_locator",
+    "timestamp",
+    "duplicate_of",
+    "excluded_reason",
+)
+
+
+def _source_revision_material(proposed: dict[str, Any]) -> dict[str, Any]:
+    return {field: proposed.get(field) for field in SOURCE_REVISION_FIELDS}
+
+
+def _source_revision_changed(current: dict[str, Any], proposed: dict[str, Any]) -> bool:
+    return any(current.get(field) != proposed.get(field) for field in SOURCE_REVISION_FIELDS)
+
+
+def _excluded_source_units(cursor: dict[str, Any]) -> set[tuple[str, str]]:
+    units: set[tuple[str, str]] = set()
+    receipts = cursor.get("excluded_unit_receipts")
+    if not isinstance(receipts, dict):
+        return units
+    for key in receipts:
+        if not isinstance(key, str):
+            continue
+        parts = key.split(":", 2)
+        if len(parts) == 3 and parts[0].startswith("scan-v"):
+            units.add((parts[1], parts[2]))
+    return units
 
 
 def update_ledger(
@@ -1773,7 +2939,50 @@ def update_ledger(
         current_cursor, cursor_errors = load_json_strict(paths.cursor)
         if cursor_errors:
             raise ValueError("; ".join(cursor_errors))
+        replacement_attested = bool(cursor is not None and _pending_source_scan_valid(cursor))
+        current_source_cursor_errors = validate_source_adapter_cursor(
+            current_cursor,
+            receipt_root=paths.private_dir,
+        )
+        if current_source_cursor_errors and not replacement_attested:
+            raise ValueError("invalid stored source adapter cursor: " + "; ".join(current_source_cursor_errors))
         effective_cursor = merge_cursor(current_cursor, cursor)
+        exact_all = bool(effective_cursor.get("scope") == "all" and effective_cursor.get("target_scope") == "all")
+        cursor_changed = cursor_digest(effective_cursor) != cursor_digest(current_cursor)
+        pending_scan_receipt: tuple[Path, bytes] | None = None
+        if exact_all and replacement_attested:
+            preseal_live_errors = validate_live_source_custody(effective_cursor)
+            if preseal_live_errors:
+                raise ValueError("live source custody changed: " + "; ".join(preseal_live_errors))
+        if exact_all and cursor is not None and cursor_changed:
+            if (
+                not current_source_cursor_errors
+                and current_cursor.get("scope") == "all"
+                and current_cursor.get("target_scope") == "all"
+                and source_scan_state_digest(effective_cursor) == source_scan_state_digest(current_cursor)
+            ):
+                _clear_source_scan_authority(effective_cursor)
+                effective_cursor = current_cursor
+            else:
+                effective_cursor, receipt_ref, receipt_bytes = _seal_attested_source_scan(effective_cursor)
+                receipt_path = paths.private_dir / receipt_ref
+                _validate_source_scan_receipt_destination(paths, receipt_path)
+                if receipt_path.exists() and receipt_path.read_bytes() != receipt_bytes:
+                    raise ValueError("source scan receipt hash path contains different bytes")
+                if receipt_path.exists() and receipt_path.stat().st_mode & 0o777 != 0o400:
+                    raise ValueError("source scan receipt artifact is not immutable")
+                pending_scan_receipt = (receipt_path, receipt_bytes)
+        elif not exact_all:
+            effective_cursor = _clear_source_scan_authority(effective_cursor)
+        source_cursor_errors = validate_source_adapter_cursor(
+            effective_cursor,
+            receipt_root=None if pending_scan_receipt else paths.private_dir,
+        )
+        if source_cursor_errors:
+            raise ValueError("invalid source adapter cursor: " + "; ".join(source_cursor_errors))
+        live_source_errors = validate_live_source_custody(effective_cursor)
+        if live_source_errors:
+            raise ValueError("live source custody changed: " + "; ".join(live_source_errors))
         if cursor_digest(effective_cursor) == cursor_digest(current_cursor):
             effective_cursor = current_cursor
 
@@ -1832,13 +3041,65 @@ def update_ledger(
         new_occurrences: list[dict[str, Any]] = []
         new_atoms: list[dict[str, Any]] = []
         new_event_rows: list[dict[str, Any]] = []
+        pending_raw_objects: dict[str, str] = {}
         replacements: dict[str, tuple[dict[str, Any], list[dict[str, Any]]]] = {}
+        excluded_units = _excluded_source_units(effective_cursor)
+        if excluded_units:
+            contract = _semantic_source_adapter_contract(effective_cursor.get("source_adapter_contract"))
+            exclusion_digest = digest(
+                {
+                    "kind": "source_contract_excluded",
+                    "contract_digest": contract.get("digest"),
+                }
+            )
+            for stored_occurrence in occurrence_rows:
+                occurrence_id = str(stored_occurrence.get("occurrence_id") or "")
+                source_locator = str(stored_occurrence.get("source_locator") or "")
+                source_path = source_locator.rsplit("#", 1)[0] if "#" in source_locator else source_locator
+                if (
+                    not occurrence_id
+                    or (str(stored_occurrence.get("source") or ""), source_path) not in excluded_units
+                    or stored_occurrence.get("excluded_reason") == "source_contract_excluded"
+                ):
+                    continue
+                old_atom_ids = set(atoms_by_occurrence.get(occurrence_id, []))
+                assessed_removed = {
+                    atom_id
+                    for atom_id in old_atom_ids
+                    if str((outcomes_by_atom.get(atom_id) or {}).get("disposition") or "unassessed") != "unassessed"
+                }
+                if assessed_removed:
+                    raise ValueError(
+                        "source contract exclusion would orphan assessed atoms: " + ", ".join(sorted(assessed_removed))
+                    )
+                revised = dict(stored_occurrence)
+                revised["atom_ids"] = []
+                revised["coverage_segment_hashes"] = []
+                revised["excluded_reason"] = "source_contract_excluded"
+                revised["classification_revision"] = int(stored_occurrence.get("classification_revision") or 0) + 1
+                revised["classification_digest"] = exclusion_digest
+                replacements[occurrence_id] = (revised, [])
+                new_event_rows.append(
+                    {
+                        "occurrence": revised,
+                        "atoms": [],
+                        "revision_of": occurrence_id,
+                    }
+                )
+                occurrence_by_id[occurrence_id] = revised
+                atoms_by_occurrence[occurrence_id] = []
+                for atom_id in old_atom_ids:
+                    atom_by_id.pop(atom_id, None)
         ordered_events = sorted(
             ((index, event) for index, event in enumerate(events) if isinstance(event, dict)),
             key=_event_ingest_order,
         )
         for _input_index, event in ordered_events:
             if not isinstance(event, dict):
+                continue
+            event_locator = str(event.get("source_locator") or "")
+            event_path = event_locator.rsplit("#", 1)[0] if "#" in event_locator else event_locator
+            if (str(event.get("source") or ""), event_path) in excluded_units:
                 continue
             proposed_occurrence = occurrence_from_event(event)
             requested_existing_id = str(event.get("existing_occurrence_id") or "")
@@ -1851,16 +3112,35 @@ def update_ledger(
                 occurrence = dict(existing_occurrence)
                 occurrence["raw_text"] = proposed_occurrence["raw_text"]
                 occurrence["atom_ids"] = []
-                occurrence["excluded_reason"] = None
+                for field in SOURCE_REVISION_FIELDS:
+                    occurrence[field] = proposed_occurrence.get(field)
                 occurrence_id = requested_existing_id
             else:
                 occurrence = proposed_occurrence
                 occurrence_id = str(occurrence["occurrence_id"])
                 existing_occurrence = occurrence_by_id.get(occurrence_id)
-            is_revision = bool(existing_occurrence and isinstance(event.get("atoms"), list))
+            resolved_locator = str(occurrence.get("source_locator") or "")
+            resolved_path = resolved_locator.rsplit("#", 1)[0] if "#" in resolved_locator else resolved_locator
+            if (str(occurrence.get("source") or ""), resolved_path) in excluded_units:
+                continue
+            explicit_revision = bool(existing_occurrence and isinstance(event.get("atoms"), list))
+            source_revision = bool(
+                existing_occurrence is not None and _source_revision_changed(existing_occurrence, occurrence)
+            )
+            is_revision = bool(explicit_revision or source_revision)
             if existing_occurrence and not is_revision:
                 continue
-            classification_digest = digest(event.get("atoms") or []) if is_revision else None
+            classification_digest = (
+                digest(
+                    {
+                        "kind": "occurrence_classification_revision",
+                        "atoms": event.get("atoms") if explicit_revision else None,
+                        "source_fields": _source_revision_material(occurrence),
+                    }
+                )
+                if is_revision
+                else None
+            )
             if (
                 is_revision
                 and existing_occurrence is not None
@@ -1914,7 +3194,9 @@ def update_ledger(
                 for old_atom_id in old_atom_ids:
                     atom_by_id.pop(old_atom_id, None)
             else:
-                occurrence["raw_object"] = preserve_raw_object(paths, str(occurrence["prompt_hash"]), raw_text)
+                prompt_hash = str(occurrence["prompt_hash"])
+                occurrence["raw_object"] = raw_object_reference(prompt_hash)
+                pending_raw_objects[prompt_hash] = raw_text
                 occurrence["classification_revision"] = 0
                 occurrence["classification_digest"] = (
                     digest(event.get("atoms") or []) if isinstance(event.get("atoms"), list) else None
@@ -1954,6 +3236,26 @@ def update_ledger(
         )
         if outcome_validation_errors:
             raise ValueError("invalid outcome history: " + "; ".join(outcome_validation_errors))
+        final_live_source_errors = validate_live_source_custody(effective_cursor)
+        if final_live_source_errors:
+            raise ValueError("live source custody changed: " + "; ".join(final_live_source_errors))
+        created_raw_objects: list[Path] = []
+        for prompt_hash, raw_text in pending_raw_objects.items():
+            destination = paths.raw_objects / raw_object_reference(prompt_hash)
+            existed = destination.exists()
+            preserve_raw_object(paths, prompt_hash, raw_text)
+            if not existed:
+                created_raw_objects.append(destination)
+        post_raw_live_errors = validate_live_source_custody(effective_cursor)
+        if post_raw_live_errors:
+            for destination in created_raw_objects:
+                with contextlib.suppress(OSError):
+                    destination.unlink()
+                with contextlib.suppress(OSError):
+                    destination.parent.rmdir()
+            with contextlib.suppress(OSError):
+                paths.raw_objects.rmdir()
+            raise ValueError("live source custody changed: " + "; ".join(post_raw_live_errors))
         append_jsonl(paths.event_journal, new_event_rows)
         append_jsonl(paths.outcome_journal, new_outcomes)
 
@@ -1969,6 +3271,18 @@ def update_ledger(
         atom_rows.extend(atom for atom in new_atoms if str(atom.get("occurrence_id") or "") not in replacements)
         outcome_rows.extend(new_outcomes)
         if cursor is not None and cursor_digest(effective_cursor) != cursor_digest(current_cursor):
+            if pending_scan_receipt is not None:
+                receipt_path, receipt_bytes = pending_scan_receipt
+                _validate_source_scan_receipt_destination(paths, receipt_path)
+                receipt_existed = receipt_path.exists()
+                if not receipt_path.exists():
+                    atomic_write_bytes(receipt_path, receipt_bytes, mode=0o400)
+                receipt_errors = _source_scan_receipt_errors(effective_cursor, paths.private_dir)
+                if receipt_errors:
+                    if not receipt_existed:
+                        with contextlib.suppress(OSError):
+                            receipt_path.unlink()
+                    raise ValueError("invalid materialized source scan receipt: " + "; ".join(receipt_errors))
             atomic_write_bytes(paths.cursor, _json_bytes(effective_cursor), mode=0o600)
 
         raw_errors = validate_raw_references(paths, occurrence_rows, verify_content=True)
@@ -2039,6 +3353,9 @@ def check_ledger(paths: LedgerPaths, *, require_scope: str | None = None) -> lis
     if private:
         live_cursor, cursor_errors = load_json_strict(paths.cursor)
         errors.extend(cursor_errors)
+        errors.extend(validate_cursor_shape(live_cursor, role="live"))
+        errors.extend(validate_source_adapter_cursor(live_cursor, receipt_root=paths.private_dir))
+        errors.extend(validate_live_source_custody(live_cursor))
         if private.get("source_cursor_digest") != cursor_digest(live_cursor):
             errors.append("source cursor changed after the private projection")
         occurrence_rows, atom_rows, event_errors = load_event_journal(paths.event_journal)

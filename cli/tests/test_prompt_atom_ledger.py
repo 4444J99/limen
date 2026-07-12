@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = ROOT / "cli" / "src" / "limen" / "prompt_corpus.py"
@@ -33,6 +35,28 @@ def _cursor(module, *, scope: str = "fixture") -> dict:
         "source_manifest_digest": module.digest({"fixture": 1}),
         "files": {},
     }
+
+
+def _attest_exact_cursor(module, cursor: dict) -> dict:
+    cursor.setdefault("base_revision", 0)
+    cursor.setdefault("base_cursor_digest", module.cursor_digest({}))
+    cursor.setdefault(
+        "source_discovery_spec",
+        {
+            "version": 1,
+            "regular": [],
+            "gemini_root": None,
+            "opencode_db": "/definitely/missing/opencode.db",
+            "agy_conversations_root": "/definitely/missing/agy",
+        },
+    )
+    cursor.setdefault("resource_limits", {"max_discovery_units": 100})
+    cursor.setdefault("source_container_signatures", {"opencode-db": None})
+    module.attest_source_scan(
+        cursor,
+        scanner_code_digest=module.current_source_scanner_code_digest(),
+    )
+    return cursor
 
 
 def _event(
@@ -80,7 +104,6 @@ def test_compound_prompt_yields_distinct_asks_and_correction(tmp_path: Path):
                 event_ref="compound",
             )
         ],
-        cursor=_cursor(corpus),
     )
 
     assert snapshot["coverage"]["occurrences"] == 1
@@ -119,7 +142,6 @@ def test_transport_echo_is_preserved_without_inflating_operator_atoms(tmp_path: 
                 authority="derived",
             ),
         ],
-        cursor=_cursor(corpus),
     )
 
     assert snapshot["coverage"]["occurrences"] == 2
@@ -164,7 +186,6 @@ def test_explicit_correction_edge_moves_current_intent(tmp_path: Path):
                 ],
             )
         ],
-        cursor=_cursor(corpus),
     )
 
     by_id = {atom["atom_id"]: atom for atom in second["atoms"]}
@@ -462,21 +483,13 @@ def test_malformed_journal_and_tampered_public_projection_fail_closed_and_repair
     assert any("malformed JSON" in error for error in corpus.check_ledger(paths))
 
 
-def _passing_receipt(paths, atom_id: str, *, owner: str = "organvm/limen") -> dict:
-    evidence = {
-        "kind": "github_pr",
-        "ref": "https://github.com/organvm/limen/pull/1",
-        "predicate": "exact-head CI",
-        "result": "pass",
-        "verified_at": "2026-07-11T12:05:00Z",
-        "owner": owner,
-        "subject_atom_ids": [atom_id],
-        "verifier": "github_api",
-        "state": "merged",
-        "head_sha": "a" * 40,
-        "merge_commit_sha": "b" * 40,
-        "reachable_from_default": True,
+def _bind_github_receipt(paths, evidence: dict) -> dict:
+    bound = {
+        key: value
+        for key, value in evidence.items()
+        if key not in {"verification_receipt_ref", "verification_receipt_sha256"}
     }
+    atom_id = str((bound.get("subject_atom_ids") or ["unknown"])[0])
     receipt_ref = f"docs/github-proof-{atom_id}.json"
     receipt = paths.root / receipt_ref
     receipt.parent.mkdir(parents=True, exist_ok=True)
@@ -485,7 +498,7 @@ def _passing_receipt(paths, atom_id: str, *, owner: str = "organvm/limen") -> di
             {
                 "schema": "limen.github-verification.v1",
                 "exit_code": 0,
-                "evidence": evidence,
+                "evidence": bound,
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -493,9 +506,29 @@ def _passing_receipt(paths, atom_id: str, *, owner: str = "organvm/limen") -> di
         + "\n",
         encoding="utf-8",
     )
-    evidence["verification_receipt_ref"] = receipt_ref
-    evidence["verification_receipt_sha256"] = hashlib.sha256(receipt.read_bytes()).hexdigest()
-    return evidence
+    bound["verification_receipt_ref"] = receipt_ref
+    bound["verification_receipt_sha256"] = hashlib.sha256(receipt.read_bytes()).hexdigest()
+    return bound
+
+
+def _passing_receipt(paths, atom_id: str, *, owner: str = "organvm/limen") -> dict:
+    return _bind_github_receipt(
+        paths,
+        {
+            "kind": "github_pr",
+            "ref": "https://github.com/organvm/limen/pull/1",
+            "predicate": "exact-head CI",
+            "result": "pass",
+            "verified_at": "2026-07-11T12:05:00Z",
+            "owner": owner,
+            "subject_atom_ids": [atom_id],
+            "verifier": "github_api",
+            "state": "merged",
+            "head_sha": "a" * 40,
+            "merge_commit_sha": "b" * 40,
+            "reachable_from_default": True,
+        },
+    )
 
 
 def test_outcome_evidence_residuals_and_unknown_atoms_fail_closed(tmp_path: Path):
@@ -588,27 +621,29 @@ def test_public_projection_is_redacted_and_has_complete_opaque_queue(tmp_path: P
     assert corpus.check_ledger(paths) == []
 
 
-def test_cursor_merge_never_downgrades_newer_file_or_promotes_partial_all():
+def test_cursor_merge_accepts_fresh_cas_file_replacement_without_promoting_partial_all():
     corpus = _load()
     current = {
         "scope": "partial:all",
         "target_scope": "all",
         "pending_files": 4,
         "source_errors": [],
-        "files": {"source:a": {"size": 10, "mtime_ns": 20}},
+        "files": {"scan-v2:fixture:a": {"size": 10, "mtime_ns": 20}},
     }
     recent = {
+        "base_revision": 0,
+        "base_cursor_digest": corpus.cursor_digest(current),
         "scope": "recent:14",
         "target_scope": "recent:14",
         "pending_files": 0,
         "source_errors": [],
-        "files": {"source:a": {"size": 99, "mtime_ns": 10}},
+        "files": {"scan-v2:fixture:a": {"size": 99, "mtime_ns": 10}},
     }
     merged = corpus.merge_cursor(current, recent)
 
     assert merged["scope"] == "partial:all"
     assert merged["pending_files"] == 4
-    assert merged["files"]["source:a"] == {"size": 10, "mtime_ns": 20}
+    assert merged["files"]["scan-v2:fixture:a"] == {"size": 99, "mtime_ns": 10}
 
 
 def test_raw_object_tamper_fails_explicit_check(tmp_path: Path):
@@ -629,40 +664,992 @@ def test_raw_object_tamper_fails_explicit_check(tmp_path: Path):
 
 def test_stale_cursor_cas_cannot_erase_partial_all_failures():
     corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    exclusion_receipts = {
+        "scan-v2:claude-plans:/home/.claude/plans/opaque.md": {
+            "version": contract["version"],
+            "disposition": "excluded",
+            "contract_id": "claude-generated-plan-v1",
+            "contract_digest": contract["digest"],
+            "signature": {"size": 10, "mtime_ns": 20},
+        }
+    }
     current = {
         "revision": 7,
+        "scanner_version": 2,
         "scope": "partial:all",
         "target_scope": "all",
         "pending_files": 3,
         "source_errors": ["claude-plans: adapter missing"],
-        "files": {"source:a": {"size": 20, "mtime_ns": 20}},
+        "source_adapter_contract": contract,
+        "excluded_source_count": 1,
+        "source_exclusion_counts": {"claude-generated-plan-v1": 1},
+        "excluded_unit_receipts": exclusion_receipts,
+        "excluded_unit_receipts_digest": corpus.digest(exclusion_receipts),
+        "files": {"scan-v2:fixture:a": {"size": 20, "mtime_ns": 20}},
     }
     proposed = {
         "base_revision": 6,
         "base_cursor_digest": corpus.digest({"stale": True}),
         "revision": 6,
+        "scanner_version": 2,
+        "source_adapter_contract": contract,
         "scope": "all",
         "target_scope": "all",
         "pending_files": 0,
         "source_errors": [],
         "files": {
-            "source:a": {"size": 10, "mtime_ns": 10},
-            "source:b": {"size": 1, "mtime_ns": 30},
+            "scan-v2:fixture:a": {"size": 10, "mtime_ns": 10},
+            "scan-v2:fixture:b": {"size": 1, "mtime_ns": 30},
         },
+    }
+
+    before = json.dumps(current, sort_keys=True)
+    with pytest.raises(ValueError, match="stale cursor proposal requires a fresh scan"):
+        corpus.merge_cursor(current, proposed)
+    assert json.dumps(current, sort_keys=True) == before
+
+
+def test_stale_cursor_update_is_rejected_without_changing_private_cursor_bytes(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    corpus.update_ledger(
+        paths,
+        events=[_event("Preserve exact CAS state.", event_ref="cas-state")],
+        cursor=_cursor(corpus),
+    )
+    current = corpus.load_json(paths.cursor)
+    before = paths.cursor.read_bytes()
+    stale = {
+        "base_revision": int(current["revision"]) - 1,
+        "base_cursor_digest": "0" * 64,
+        "scope": "all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "files": {},
+    }
+
+    with pytest.raises(ValueError, match="stale cursor proposal requires a fresh scan"):
+        corpus.update_ledger(paths, cursor=stale)
+    assert paths.cursor.read_bytes() == before
+
+
+def test_exact_all_cannot_be_seeded_by_an_invented_self_certifying_source_unit(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    contract = corpus.current_source_adapter_contract()
+    key = "scan-v2:codex-sessions:/definitely/not/a/real/source.jsonl"
+    signature = {"size": 123, "mtime_ns": 456, "ctime_ns": 789, "inode": 1011, "device": 12}
+    cursor = {
+        "base_revision": 0,
+        "base_cursor_digest": corpus.cursor_digest({}),
+        "scanner_version": contract["scanner_version"],
+        "scope": "all",
+        "target_scope": "all",
+        "all_baseline_complete": True,
+        "all_source_manifest_digest": "f" * 64,
+        "source_manifest_digest": "f" * 64,
+        "source_unit_count": 1,
+        "source_units": [key],
+        "source_units_digest": corpus.digest([key]),
+        "source_adapter_contract": contract,
+        "excluded_source_count": 0,
+        "source_exclusion_counts": {},
+        "excluded_unit_receipts": {},
+        "excluded_unit_receipts_digest": corpus.digest({}),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 0,
+        "unresolved_units": [],
+        "unresolved_units_digest": corpus.digest([]),
+        "source_families": {
+            "codex-sessions": {
+                "discovered": 1,
+                "converged": 1,
+                "adapted": 0,
+                "excluded": 0,
+                "pending": 0,
+                "errors": 0,
+                "unsupported": 0,
+            }
+        },
+        "files": {key: signature},
+    }
+
+    with pytest.raises(ValueError, match="live scanner attestation"):
+        corpus.update_ledger(
+            paths,
+            events=[_event("Do not authorize invented exact source custody.", event_ref="invented-all")],
+            cursor=cursor,
+        )
+
+    assert not paths.cursor.exists()
+    assert not paths.event_journal.exists()
+    assert not paths.public_snapshot.exists()
+
+
+def test_source_adapter_receipts_are_contract_and_signature_bound():
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    receipts = {
+        "scan-v2:claude-plans:/home/.claude/plans/opaque.md": {
+            "version": contract["version"],
+            "disposition": "excluded",
+            "contract_id": "claude-generated-plan-v1",
+            "contract_digest": contract["digest"],
+            "signature": {"size": 12, "mtime_ns": 34, "ctime_ns": 35, "inode": 36, "device": 37},
+        }
+    }
+    source_key = next(iter(receipts))
+    cursor = {
+        "scanner_version": contract["scanner_version"],
+        "scope": "all",
+        "target_scope": "all",
+        "all_baseline_complete": True,
+        "all_source_manifest_digest": "f" * 64,
+        "source_manifest_digest": "f" * 64,
+        "source_unit_count": 1,
+        "source_units": [source_key],
+        "source_units_digest": corpus.digest([source_key]),
+        "source_adapter_contract": contract,
+        "excluded_source_count": 1,
+        "source_exclusion_counts": {"claude-generated-plan-v1": 1},
+        "excluded_unit_receipts": receipts,
+        "excluded_unit_receipts_digest": corpus.digest(receipts),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 0,
+        "unresolved_units": [],
+        "unresolved_units_digest": corpus.digest([]),
+        "source_families": {
+            "claude-plans": {
+                "discovered": 1,
+                "converged": 0,
+                "adapted": 0,
+                "excluded": 1,
+                "pending": 0,
+                "errors": 0,
+                "unsupported": 0,
+            }
+        },
+        "files": {},
+    }
+
+    _attest_exact_cursor(corpus, cursor)
+    assert corpus.validate_source_adapter_cursor(cursor) == []
+    original_digest = corpus.cursor_digest(cursor)
+
+    weak_receipts = json.loads(json.dumps(receipts))
+    weak_receipts[source_key]["signature"] = {"size": 12, "mtime_ns": 34}
+    weak_cursor = {
+        **cursor,
+        "excluded_unit_receipts": weak_receipts,
+        "excluded_unit_receipts_digest": corpus.digest(weak_receipts),
+    }
+    assert any("malformed or stale" in error for error in corpus.validate_source_adapter_cursor(weak_cursor))
+
+    tampered_receipts = json.loads(json.dumps(receipts))
+    tampered_receipts[source_key]["signature"]["mtime_ns"] = 35
+    tampered = {**cursor, "excluded_unit_receipts": tampered_receipts}
+    assert corpus.cursor_digest(tampered) != original_digest
+    assert "excluded unit receipt digest is missing or stale" in corpus.validate_source_adapter_cursor(tampered)
+
+    stale_contract = {**contract, "digest": "0" * 64}
+    assert "source adapter contract is missing or stale" in corpus.validate_source_adapter_cursor(
+        {**cursor, "source_adapter_contract": stale_contract}
+    )
+    incomplete_baseline = {**cursor, "all_baseline_complete": False}
+    assert corpus.cursor_digest(incomplete_baseline) != original_digest
+    assert "exact all/all scope requires a complete all-history baseline" in corpus.validate_source_adapter_cursor(
+        incomplete_baseline
+    )
+    stale_all_manifest = {**cursor, "all_source_manifest_digest": "bad"}
+    assert corpus.cursor_digest(stale_all_manifest) != original_digest
+    assert "all_source_manifest_digest is missing or malformed" in corpus.validate_source_adapter_cursor(
+        stale_all_manifest
+    )
+    stale_scanner = {**cursor, "scanner_version": contract["scanner_version"] + 1}
+    assert corpus.cursor_digest(stale_scanner) != original_digest
+    assert "source scanner version is missing or stale" in corpus.validate_source_adapter_cursor(stale_scanner)
+    malformed_key_receipts = {"garbage": next(iter(receipts.values()))}
+    malformed_key_cursor = {
+        **cursor,
+        "excluded_unit_receipts": malformed_key_receipts,
+        "excluded_unit_receipts_digest": corpus.digest(malformed_key_receipts),
+    }
+    assert "excluded unit receipt is malformed" in corpus.validate_source_adapter_cursor(malformed_key_cursor)
+
+    for forged_key, family in (
+        ("scan-v2:codex-sessions:/home/.claude/plans/opaque.md", "codex-sessions"),
+        ("scan-v2:claude-plans:/home/.claude/projects/project/session.jsonl", "claude-plans"),
+    ):
+        forged_receipts = {forged_key: json.loads(json.dumps(receipts[source_key]))}
+        forged_cursor = {
+            **cursor,
+            "source_units": [forged_key],
+            "source_units_digest": corpus.digest([forged_key]),
+            "excluded_unit_receipts": forged_receipts,
+            "excluded_unit_receipts_digest": corpus.digest(forged_receipts),
+            "source_families": {
+                family: {
+                    "discovered": 1,
+                    "converged": 0,
+                    "adapted": 0,
+                    "excluded": 1,
+                    "pending": 0,
+                    "errors": 0,
+                    "unsupported": 0,
+                }
+            },
+        }
+        assert f"{forged_key}: excluded unit receipt is malformed or stale" in (
+            corpus.validate_source_adapter_cursor(forged_cursor)
+        )
+
+    unsupported_key = "scan-v2:codex-sessions:opaque-media"
+    unsupported_signature = {"size": 22, "mtime_ns": 44}
+    unsupported_cursor = {
+        **cursor,
+        "unsupported_source_count": 1,
+        "unsupported_units": {unsupported_key: unsupported_signature},
+        "unsupported_units_digest": corpus.digest({unsupported_key: unsupported_signature}),
+        "unresolved_unit_count": 1,
+        "unresolved_units": [unsupported_key],
+        "unresolved_units_digest": corpus.digest([unsupported_key]),
+        "source_families": {"codex-sessions": {"unsupported": 1}},
+    }
+    unsupported_errors = corpus.validate_source_adapter_cursor(unsupported_cursor)
+    assert "exact all/all scope cannot have unsupported source units" in unsupported_errors
+    assert "exact all/all scope cannot have unresolved source obligations" in unsupported_errors
+    assert corpus.cursor_digest(unsupported_cursor) != original_digest
+
+    recent_with_stale_unsupported_digest = {
+        **unsupported_cursor,
+        "scope": "partial:recent:14",
+        "target_scope": "recent:14",
+        "all_baseline_complete": False,
+        "all_source_manifest_digest": None,
+        "unsupported_units_digest": "0" * 64,
+    }
+    assert "unsupported unit cache digest is missing or stale" in corpus.validate_source_adapter_cursor(
+        recent_with_stale_unsupported_digest
+    )
+
+    family_pending = {**cursor, "source_families": {"codex-sessions": {"pending": 1}}}
+    assert "source family pending counts do not match pending_files" in corpus.validate_source_adapter_cursor(
+        family_pending
+    )
+    family_errors = {**cursor, "source_families": {"codex-sessions": {"errors": 1}}}
+    assert "source family error counts do not match source_errors" in corpus.validate_source_adapter_cursor(
+        family_errors
+    )
+
+
+def test_memory_mirror_receipt_binds_sibling_locator_signature_and_content_equality():
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    locator = "/home/.claude/projects/project/notes.md"
+    sibling = "/home/.claude/projects/project/memory/notes.md"
+    key = f"scan-v2:claude-projects:{locator}"
+    signature = {"size": 12, "mtime_ns": 34, "ctime_ns": 35, "inode": 36, "device": 37}
+    sibling_signature = {"size": 12, "mtime_ns": 44, "ctime_ns": 45, "inode": 46, "device": 47}
+    content_sha = "a" * 64
+    receipt = {
+        "version": contract["version"],
+        "disposition": "excluded",
+        "contract_id": "claude-project-memory-mirror-v1",
+        "contract_digest": contract["digest"],
+        "signature": signature,
+        "related_signatures": {"memory_sibling": sibling_signature},
+        "related_evidence": {
+            "memory_sibling": {
+                "locator_sha256": hashlib.sha256(sibling.encode()).hexdigest(),
+                "primary_content_sha256": content_sha,
+                "related_content_sha256": content_sha,
+            }
+        },
+    }
+
+    def cursor_for(candidate: dict) -> dict:
+        receipts = {key: candidate}
+        return _attest_exact_cursor(
+            corpus,
+            {
+                "scanner_version": contract["scanner_version"],
+                "scope": "all",
+                "target_scope": "all",
+                "all_baseline_complete": True,
+                "all_source_manifest_digest": "f" * 64,
+                "source_manifest_digest": "f" * 64,
+                "source_unit_count": 1,
+                "source_units": [key],
+                "source_units_digest": corpus.digest([key]),
+                "source_adapter_contract": contract,
+                "excluded_source_count": 1,
+                "source_exclusion_counts": {"claude-project-memory-mirror-v1": 1},
+                "excluded_unit_receipts": receipts,
+                "excluded_unit_receipts_digest": corpus.digest(receipts),
+                "adapted_source_count": 0,
+                "source_adapter_counts": {},
+                "adapted_unit_receipts": {},
+                "adapted_unit_receipts_digest": corpus.digest({}),
+                "unsupported_source_count": 0,
+                "unsupported_units": {},
+                "unsupported_units_digest": corpus.digest({}),
+                "unresolved_unit_count": 0,
+                "unresolved_units": [],
+                "unresolved_units_digest": corpus.digest([]),
+                "source_families": {
+                    "claude-projects": {
+                        "discovered": 1,
+                        "converged": 0,
+                        "adapted": 0,
+                        "excluded": 1,
+                        "pending": 0,
+                        "errors": 0,
+                        "unsupported": 0,
+                    }
+                },
+                "files": {},
+            },
+        )
+
+    assert corpus.validate_source_adapter_cursor(cursor_for(receipt)) == []
+
+    forged = json.loads(json.dumps(receipt))
+    forged["related_signatures"]["memory_sibling"]["size"] = 99
+    assert any("malformed or stale" in error for error in corpus.validate_source_adapter_cursor(cursor_for(forged)))
+
+    forged = json.loads(json.dumps(receipt))
+    forged["related_evidence"]["memory_sibling"]["locator_sha256"] = "0" * 64
+    assert any("malformed or stale" in error for error in corpus.validate_source_adapter_cursor(cursor_for(forged)))
+
+    forged = json.loads(json.dumps(receipt))
+    forged["related_evidence"]["memory_sibling"]["related_content_sha256"] = "b" * 64
+    assert any("malformed or stale" in error for error in corpus.validate_source_adapter_cursor(cursor_for(forged)))
+
+
+def test_exact_all_source_family_counts_are_bound_to_unit_custody():
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    key = "scan-v2:codex-sessions:one"
+    signature = {"size": 12, "mtime_ns": 34, "ctime_ns": 35, "inode": 36, "device": 37}
+    cursor = {
+        "scanner_version": contract["scanner_version"],
+        "scope": "all",
+        "target_scope": "all",
+        "all_baseline_complete": True,
+        "all_source_manifest_digest": "f" * 64,
+        "source_manifest_digest": "f" * 64,
+        "source_unit_count": 1,
+        "source_units": [key],
+        "source_units_digest": corpus.digest([key]),
+        "source_adapter_contract": contract,
+        "excluded_source_count": 0,
+        "source_exclusion_counts": {},
+        "excluded_unit_receipts": {},
+        "excluded_unit_receipts_digest": corpus.digest({}),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 0,
+        "unresolved_units": [],
+        "unresolved_units_digest": corpus.digest([]),
+        "source_families": {
+            "codex-sessions": {
+                "discovered": 1,
+                "converged": 1,
+                "adapted": 0,
+                "excluded": 0,
+                "pending": 0,
+                "errors": 0,
+                "unsupported": 0,
+            }
+        },
+        "files": {key: signature},
+    }
+    _attest_exact_cursor(corpus, cursor)
+    assert corpus.validate_source_adapter_cursor(cursor) == []
+
+    invented = "scan-v2:codex-sessions:invented"
+    invented_cursor = {
+        **cursor,
+        "source_units": [invented],
+        "source_units_digest": corpus.digest([invented]),
+    }
+    assert "exact all/all source units do not match parsed and excluded unit custody" in (
+        corpus.validate_source_adapter_cursor(invented_cursor)
+    )
+    no_files = {**cursor, "files": {}}
+    assert "exact all/all source units do not match parsed and excluded unit custody" in (
+        corpus.validate_source_adapter_cursor(no_files)
+    )
+    moved_family = {
+        **cursor,
+        "source_families": {"claude-projects": dict(cursor["source_families"]["codex-sessions"])},
+    }
+    assert any(
+        "count does not match unit custody" in error for error in corpus.validate_source_adapter_cursor(moved_family)
+    )
+    negative = json.loads(json.dumps(cursor))
+    negative["source_families"]["codex-sessions"]["discovered"] = -1
+    assert "source family unresolved counts are malformed" in corpus.validate_source_adapter_cursor(negative)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("excluded_source_count", "1"),
+        ("excluded_source_count", True),
+        ("excluded_source_count", -1),
+        ("adapted_source_count", "0"),
+        ("source_exclusion_counts", []),
+        ("source_exclusion_counts", {"claude-generated-plan-v1": True}),
+        ("source_exclusion_counts", {"unrelated-rule": 1}),
+        ("source_adapter_counts", []),
+        ("excluded_unit_receipts", []),
+        ("adapted_unit_receipts", []),
+        ("files", []),
+        ("files", {"garbage": {"size": 1, "mtime_ns": 2}}),
+        ("files", {"scan-v2:claude-projects:opaque": "not-a-signature"}),
+        ("unsupported_units", {"scan-v2:claude-projects:opaque": {"size": True, "mtime_ns": 1}}),
+    ],
+)
+def test_malformed_source_adapter_cursor_fields_fail_closed_without_digest_crash(field, value):
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    receipts = {
+        "scan-v2:claude-plans:/home/.claude/plans/opaque.md": {
+            "version": contract["version"],
+            "disposition": "excluded",
+            "contract_id": "claude-generated-plan-v1",
+            "contract_digest": contract["digest"],
+            "signature": {"size": 12, "mtime_ns": 34},
+            "related_signatures": {},
+        }
+    }
+    source_key = next(iter(receipts))
+    cursor = {
+        "scanner_version": contract["scanner_version"],
+        "scope": "all",
+        "target_scope": "all",
+        "all_baseline_complete": True,
+        "all_source_manifest_digest": "f" * 64,
+        "source_manifest_digest": "f" * 64,
+        "source_unit_count": 1,
+        "source_units": [source_key],
+        "source_units_digest": corpus.digest([source_key]),
+        "source_adapter_contract": contract,
+        "excluded_source_count": 1,
+        "source_exclusion_counts": {"claude-generated-plan-v1": 1},
+        "excluded_unit_receipts": receipts,
+        "excluded_unit_receipts_digest": corpus.digest(receipts),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 0,
+        "unresolved_units": [],
+        "unresolved_units_digest": corpus.digest([]),
+        "source_families": {
+            "claude-plans": {
+                "discovered": 1,
+                "converged": 0,
+                "adapted": 0,
+                "excluded": 1,
+                "pending": 0,
+                "errors": 0,
+                "unsupported": 0,
+            }
+        },
+        "files": {},
+    }
+    malformed = {**cursor, field: value}
+
+    assert isinstance(corpus.cursor_digest(malformed), str)
+    assert corpus.validate_source_adapter_cursor(malformed)
+
+
+def test_malformed_source_contract_sequences_and_receipts_fail_closed_without_crashing():
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    malformed_receipt = {
+        "scan-v2:claude-plans:/home/.claude/plans/opaque.md": {
+            "version": True,
+            "disposition": "excluded",
+            "contract_id": ["not", "typed"],
+            "contract_digest": contract["digest"],
+            "signature": {"size": True, "mtime_ns": -1},
+            "related_signatures": [],
+        }
+    }
+    cursor = {
+        "scanner_version": contract["scanner_version"],
+        "scope": "all",
+        "target_scope": "all",
+        "all_baseline_complete": True,
+        "all_source_manifest_digest": "f" * 64,
+        "source_adapter_contract": {**contract, "adapter_ids": 7, "exclusion_ids": {"bad": 1}},
+        "excluded_source_count": 1,
+        "source_exclusion_counts": {"opaque": 1},
+        "excluded_unit_receipts": malformed_receipt,
+        "excluded_unit_receipts_digest": corpus.digest(malformed_receipt),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "source_errors": 7,
+        "adapter_gaps": 7,
+        "adapter_gap_routes": 7,
+        "files": {},
+    }
+
+    assert isinstance(corpus.cursor_digest(cursor), str)
+    errors = corpus.validate_source_adapter_cursor(cursor)
+    assert "source adapter contract is missing or stale" in errors
+    assert any("receipt is malformed or stale" in error for error in errors)
+
+
+def test_fresh_exclusion_proposal_removes_prior_parser_cache_but_stale_cannot():
+    corpus = _load()
+    key = "scan-v2:claude-projects:tool-result"
+    current = {
+        "revision": 4,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "files": {key: {"size": 9, "mtime_ns": 10}},
+    }
+    proposal = {
+        "base_revision": 4,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scope": "all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "files": {},
+        "excluded_file_keys": [key],
+    }
+
+    merged = corpus.merge_cursor(current, proposal)
+    assert key not in merged["files"]
+    assert "excluded_file_keys" not in merged
+
+    with pytest.raises(ValueError, match="stale cursor proposal requires a fresh scan"):
+        corpus.merge_cursor(
+            current,
+            {**proposal, "base_revision": 3, "base_cursor_digest": "0" * 64},
+        )
+
+
+def test_fresh_contract_reset_replaces_parser_cache_but_stale_reset_cannot():
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    current = {
+        "revision": 4,
+        "scanner_version": 2,
+        "scope": "all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "files": {"scan-v2:claude-projects:legacy": {"size": 9, "mtime_ns": 10}},
+    }
+    proposal = {
+        "base_revision": 4,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "scanner_version": 2,
+        "source_adapter_contract": contract,
+        "replace_files": True,
+        "files": {"scan-v2:claude-projects:fresh": {"size": 3, "mtime_ns": 20}},
+    }
+
+    merged = corpus.merge_cursor(current, proposal)
+    assert merged["files"] == {"scan-v2:claude-projects:fresh": {"size": 3, "mtime_ns": 20}}
+    assert "replace_files" not in merged
+
+    with pytest.raises(ValueError, match="stale cursor proposal requires a fresh scan"):
+        corpus.merge_cursor(
+            current,
+            {
+                **proposal,
+                "base_revision": 3,
+                "base_cursor_digest": "0" * 64,
+                "source_adapter_contract": {**contract, "digest": "0" * 64},
+            },
+        )
+
+
+@pytest.mark.parametrize(("current_updated", "proposed_updated"), [(9, 10), (10, 9)])
+def test_exact_cas_accepts_fresh_observed_opencode_signature(current_updated, proposed_updated):
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    key = "scan-v2:opencode-db:session-1"
+    current = {
+        "revision": 5,
+        "scanner_version": 2,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "files": {key: {"time_created": 1, "time_updated": current_updated}},
+    }
+    proposed = {
+        "base_revision": 5,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scanner_version": 2,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 1,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "files": {key: {"time_created": 1, "time_updated": proposed_updated}},
     }
 
     merged = corpus.merge_cursor(current, proposed)
 
-    assert merged["scope"] == "partial:all"
-    assert merged["pending_files"] == 3
-    assert merged["source_errors"] == [
-        "claude-plans: adapter missing",
-        "stale cursor proposal requires a fresh scan",
-    ]
-    assert merged["files"]["source:a"] == {"size": 20, "mtime_ns": 20}
-    assert merged["files"]["source:b"] == {"size": 1, "mtime_ns": 30}
-    assert "base_revision" not in merged
-    assert "base_cursor_digest" not in merged
+    assert merged["files"][key]["time_updated"] == proposed_updated
+
+
+def test_exact_cas_accepts_replacement_with_lower_times_and_different_inode():
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    key = "scan-v2:claude-projects:session.jsonl"
+    current = {
+        "revision": 5,
+        "scanner_version": 2,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 1,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "files": {key: {"size": 10, "mtime_ns": 20, "ctime_ns": 30, "inode": 40, "device": 1}},
+    }
+    proposed = {
+        "base_revision": 5,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scanner_version": 2,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 1,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "files": {key: {"size": 99, "mtime_ns": 10, "ctime_ns": 15, "inode": 41, "device": 1}},
+    }
+
+    merged = corpus.merge_cursor(current, proposed)
+
+    assert merged["files"][key] == {
+        "size": 99,
+        "mtime_ns": 10,
+        "ctime_ns": 15,
+        "inode": 41,
+        "device": 1,
+    }
+
+
+@pytest.mark.parametrize(
+    ("side", "field", "value", "message"),
+    [
+        ("current", "revision", "broken", "invalid current cursor"),
+        ("current", "source_errors", 7, "invalid current cursor"),
+        ("proposed", "base_revision", "broken", "invalid proposed cursor"),
+        ("proposed", "pending_files", "broken", "invalid proposed cursor"),
+        ("proposed", "excluded_file_keys", 7, "invalid proposed cursor"),
+    ],
+)
+def test_merge_cursor_rejects_malformed_cas_fields_explicitly(side, field, value, message):
+    corpus = _load()
+    current = {
+        "revision": 1,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 1,
+        "source_errors": [],
+        "files": {},
+    }
+    proposed = {
+        "base_revision": 1,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 1,
+        "source_errors": [],
+        "files": {},
+    }
+    target = current if side == "current" else proposed
+    target[field] = value
+
+    with pytest.raises(ValueError, match=message):
+        corpus.merge_cursor(current, proposed)
+
+
+def test_merge_cursor_requires_exact_cas_pair_and_future_revision_cannot_poison_writer_state():
+    corpus = _load()
+    current = {
+        "revision": 7,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 2,
+        "source_errors": ["owner-routed gap"],
+        "files": {"scan-v2:fixture:current": {"size": 1, "mtime_ns": 2}},
+    }
+    missing_digest = {
+        "base_revision": 999,
+        "scope": "all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "files": {},
+    }
+    with pytest.raises(ValueError, match="exact CAS revision and digest"):
+        corpus.merge_cursor(current, missing_digest)
+
+    future = {
+        **missing_digest,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "revision": 10**9,
+    }
+    with pytest.raises(ValueError, match="stale cursor proposal requires a fresh scan"):
+        corpus.merge_cursor(current, future)
+    assert current["revision"] == 7
+
+
+def test_fresh_cas_cannot_clear_unresolved_obligation_without_unit_resolution_proof():
+    corpus = _load()
+    key = "scan-v2:codex-sessions:unresolved"
+    signature = {"size": 12, "mtime_ns": 34}
+    current = {
+        "revision": 3,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 1,
+        "source_errors": [],
+        "unresolved_units": [key],
+        "files": {},
+    }
+    proposal = {
+        "base_revision": 3,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scope": "all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "source_units": [],
+        "unresolved_units": [],
+        "files": {},
+    }
+
+    with pytest.raises(ValueError, match="lack parsed or excluded resolution proof"):
+        corpus.merge_cursor(current, proposal)
+
+    resolved = {
+        **proposal,
+        "source_units": [key],
+        "files": {key: signature},
+    }
+    merged = corpus.merge_cursor(current, resolved)
+    assert merged["unresolved_units"] == []
+    assert merged["files"] == {key: signature}
+
+
+def test_update_ledger_rejects_malformed_private_cursor_before_merge(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    paths.private_dir.mkdir(parents=True)
+    paths.cursor.write_text(json.dumps({"revision": "broken"}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="invalid current cursor"):
+        corpus.update_ledger(paths, cursor=_cursor(corpus))
+
+
+def test_check_ledger_rejects_malformed_nonsemantic_cursor_revision(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    corpus.update_ledger(
+        paths,
+        events=[_event("Preserve cursor CAS shape.", event_ref="cursor-shape")],
+        cursor=_cursor(corpus),
+    )
+    cursor = corpus.load_json(paths.cursor)
+    cursor["revision"] = -1
+    paths.cursor.write_text(json.dumps(cursor), encoding="utf-8")
+
+    assert any("live cursor revision must be a non-negative integer" in error for error in corpus.check_ledger(paths))
+
+
+def test_source_authority_change_revises_existing_occurrence_once_without_losing_history(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    original = {
+        **_event("Delegated child instruction.", event_ref="same-source-event"),
+        "source": "claude-projects",
+        "source_locator": "/private/project/session/subagents/child.jsonl#0:0",
+    }
+    first = corpus.update_ledger(paths, events=[original], cursor=_cursor(corpus))
+    assert first["occurrences"][0]["authority"] == "operator"
+
+    revised_event = {
+        **original,
+        "provenance": "delegated_task_frame",
+        "authority": "derived",
+        "atoms": [
+            {
+                "text": "Delegated child instruction.",
+                "kind": "ask",
+                "classifier_provenance": "runtime-classifier",
+                "classification_confidence": 0.96,
+            }
+        ],
+    }
+    second = corpus.update_ledger(paths, events=[revised_event])
+
+    assert second["appended"]["reclassified"] == 1
+    assert second["occurrences"][0]["authority"] == "derived"
+    assert second["occurrences"][0]["provenance"] == "delegated_task_frame"
+    assert {atom["authority"] for atom in second["atoms"]} == {"derived"}
+    assert {atom["atomization_mode"] for atom in second["atoms"]} == {"semantic_adapter"}
+    assert len(paths.event_journal.read_text(encoding="utf-8").splitlines()) == 2
+
+    third = corpus.update_ledger(paths, events=[revised_event])
+    assert third["appended"]["reclassified"] == 0
+    assert len(paths.event_journal.read_text(encoding="utf-8").splitlines()) == 2
+
+
+def test_source_exclusion_receipt_retracts_prior_false_atoms_once_and_preserves_occurrence(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    source_path = "/private/home/.claude/projects/project/session/tool-results/result.json"
+    original = {
+        **_event("Tool output that was previously mistaken for an ask.", event_ref="tool-result"),
+        "source": "claude-projects",
+        "source_locator": f"{source_path}#0:0",
+    }
+    first = corpus.update_ledger(paths, events=[original], cursor=_cursor(corpus))
+    assert first["coverage"]["atoms"] == 1
+    current_cursor = corpus.load_json(paths.cursor)
+    contract = corpus.current_source_adapter_contract()
+    signature = {"size": 42, "mtime_ns": 99, "ctime_ns": 100, "inode": 101, "device": 102}
+    key = f"scan-v2:claude-projects:{source_path}"
+    receipts = {
+        key: {
+            "version": contract["version"],
+            "disposition": "excluded",
+            "contract_id": "claude-project-tool-result-v1",
+            "contract_digest": contract["digest"],
+            "signature": signature,
+            "related_signatures": {},
+        }
+    }
+    proposal = {
+        "base_revision": current_cursor["revision"],
+        "base_cursor_digest": corpus.cursor_digest(current_cursor),
+        "version": 1,
+        "scanner_version": contract["scanner_version"],
+        "scope": "partial:all",
+        "target_scope": "all",
+        "all_baseline_complete": False,
+        "pending_files": 0,
+        "source_errors": [],
+        "source_manifest_digest": "f" * 64,
+        "source_unit_count": 1,
+        "source_units": [key],
+        "source_units_digest": corpus.digest([key]),
+        "source_adapter_contract": contract,
+        "excluded_source_count": 1,
+        "source_exclusion_counts": {"claude-project-tool-result-v1": 1},
+        "excluded_unit_receipts": receipts,
+        "excluded_unit_receipts_digest": corpus.digest(receipts),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 0,
+        "unresolved_units": [],
+        "unresolved_units_digest": corpus.digest([]),
+        "source_families": {
+            "claude-projects": {
+                "discovered": 1,
+                "converged": 0,
+                "adapted": 0,
+                "excluded": 1,
+                "pending": 0,
+                "errors": 0,
+                "unsupported": 0,
+            }
+        },
+        "files": {},
+    }
+
+    second = corpus.update_ledger(paths, cursor=proposal)
+
+    assert second["appended"]["reclassified"] == 1
+    assert second["coverage"]["occurrences"] == 1
+    assert second["coverage"]["atoms"] == 0
+    assert second["occurrences"][0]["excluded_reason"] == "source_contract_excluded"
+    assert second["validation"]["ok"] is True
+    journal_lines = len(paths.event_journal.read_text(encoding="utf-8").splitlines())
+
+    third = corpus.update_ledger(paths)
+    assert third["appended"]["reclassified"] == 0
+    assert len(paths.event_journal.read_text(encoding="utf-8").splitlines()) == journal_lines
+
+    current_cursor = corpus.load_json(paths.cursor)
+    restored_cursor = {
+        **proposal,
+        "base_revision": current_cursor["revision"],
+        "base_cursor_digest": corpus.cursor_digest(current_cursor),
+        "excluded_source_count": 0,
+        "source_exclusion_counts": {},
+        "excluded_unit_receipts": {},
+        "excluded_unit_receipts_digest": corpus.digest({}),
+        "source_families": {
+            "claude-projects": {
+                "discovered": 1,
+                "converged": 1,
+                "adapted": 0,
+                "excluded": 0,
+                "pending": 0,
+                "errors": 0,
+                "unsupported": 0,
+            }
+        },
+        "files": {key: signature},
+    }
+    restored = corpus.update_ledger(paths, events=[original], cursor=restored_cursor)
+    assert restored["appended"]["reclassified"] == 1
+    assert restored["coverage"]["atoms"] == 1
+    assert restored["occurrences"][0]["excluded_reason"] is None
+
+    stable = corpus.update_ledger(paths, events=[original])
+    assert stable["appended"]["reclassified"] == 0
 
 
 def test_malformed_or_deleted_private_marker_fails_closed(tmp_path: Path):
@@ -729,6 +1716,161 @@ def test_corrections_use_chronology_not_input_order(tmp_path: Path):
     assert correction["predecessor_ids"] == []
     assert predecessor["is_current_intent"] is True
     assert snapshot["validation"]["ok"] is True
+
+
+@pytest.mark.parametrize(
+    ("predecessor_timestamp", "predecessor_index", "successor_timestamp", "successor_index"),
+    [
+        ("2026-07-11T12:00:00Z", 0, "", 1),
+        ("2026-07-11T12:00:00Z", 0, True, 1),
+        ("2026-07-11T12:00:00Z", 0, "2026-07-11T12:00:00Z", 0),
+        ("2026-07-11T12:02:00Z", 0, "2026-07-11T12:01:00Z", 1),
+    ],
+    ids=("missing-time", "boolean-time", "equal-order", "future-predecessor"),
+)
+def test_semantic_correction_edges_fail_closed_without_strict_chronology(
+    tmp_path: Path,
+    predecessor_timestamp: str,
+    predecessor_index: int,
+    successor_timestamp: str,
+    successor_index: int,
+):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    predecessor_event = _event(
+        "Use the earlier implementation shape.",
+        event_ref="chronology-predecessor",
+        timestamp=predecessor_timestamp,
+    )
+    predecessor_event["event_index"] = predecessor_index
+    first = corpus.update_ledger(paths, events=[predecessor_event], cursor=_cursor(corpus))
+    predecessor = first["atoms"][0]
+    classifier = "fixture-chronology-adapter"
+
+    successor_event = _event(
+        "No, use the corrected implementation shape.",
+        event_ref="chronology-successor",
+        timestamp=successor_timestamp,
+        atoms=[
+            {
+                "text": "No, use the corrected implementation shape.",
+                "kind": "correction",
+                "lineage_id": predecessor["lineage_id"],
+                "relation": "corrects",
+                "predecessor_ids": [predecessor["atom_id"]],
+                "classifier_provenance": classifier,
+                "lineage_evidence": {
+                    "kind": "semantic_adapter",
+                    "classifier_provenance": classifier,
+                    "confidence": 1.0,
+                },
+            }
+        ],
+    )
+    successor_event["event_index"] = successor_index
+    snapshot = corpus.update_ledger(paths, events=[successor_event])
+
+    by_id = {atom["atom_id"]: atom for atom in snapshot["atoms"]}
+    successor = next(atom for atom in snapshot["atoms"] if atom["atom_id"] != predecessor["atom_id"])
+    assert by_id[predecessor["atom_id"]]["is_current_intent"] is True
+    assert successor["is_current_intent"] is True
+    assert snapshot["validation"]["ok"] is False
+    assert "predecessor edge is not strictly chronological" in " ".join(snapshot["validation"]["errors"])
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("event_index", True),
+        ("text_index", True),
+        ("event_index", float("nan")),
+        ("text_index", float("inf")),
+        ("event_index", -1),
+        ("text_index", "1"),
+    ],
+)
+def test_event_positions_require_exact_nonnegative_integers(tmp_path: Path, field: str, value):
+    corpus = _load()
+    event = _event("Reject malformed chronology evidence.", event_ref="bad-position")
+    event[field] = value
+
+    with pytest.raises(ValueError, match=f"{field} must be a non-negative integer"):
+        corpus.update_ledger(_paths(corpus, tmp_path), events=[event], cursor=_cursor(corpus))
+
+
+def test_semantic_correction_accepts_equal_timestamp_with_later_same_session_order(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    predecessor_event = _event(
+        "Use the first source segment.",
+        event_ref="same-source-event",
+        timestamp="2026-07-11T12:00:00Z",
+    )
+    predecessor_event.update({"event_index": 7, "text_index": 0})
+    first = corpus.update_ledger(paths, events=[predecessor_event], cursor=_cursor(corpus))
+    predecessor = first["atoms"][0]
+    classifier = "fixture-chronology-adapter"
+
+    successor_event = _event(
+        "No, use the later source segment.",
+        event_ref="same-source-event",
+        timestamp="2026-07-11T12:00:00Z",
+        atoms=[
+            {
+                "text": "No, use the later source segment.",
+                "kind": "correction",
+                "lineage_id": predecessor["lineage_id"],
+                "relation": "corrects",
+                "predecessor_ids": [predecessor["atom_id"]],
+                "classifier_provenance": classifier,
+                "lineage_evidence": {
+                    "kind": "semantic_adapter",
+                    "classifier_provenance": classifier,
+                    "confidence": 1.0,
+                },
+            }
+        ],
+    )
+    successor_event.update({"event_index": 7, "text_index": 1})
+    snapshot = corpus.update_ledger(paths, events=[successor_event])
+
+    by_id = {atom["atom_id"]: atom for atom in snapshot["atoms"]}
+    assert by_id[predecessor["atom_id"]]["is_current_intent"] is False
+    assert snapshot["validation"]["ok"] is True
+
+
+def test_semantic_correction_with_missing_predecessor_never_retires_intent(tmp_path: Path):
+    corpus = _load()
+    classifier = "fixture-chronology-adapter"
+    snapshot = corpus.update_ledger(
+        _paths(corpus, tmp_path),
+        events=[
+            _event(
+                "No, use the available intent only.",
+                event_ref="missing-predecessor",
+                atoms=[
+                    {
+                        "text": "No, use the available intent only.",
+                        "kind": "correction",
+                        "lineage_id": "pl-missing-predecessor",
+                        "relation": "corrects",
+                        "predecessor_ids": ["pa-missing-predecessor"],
+                        "classifier_provenance": classifier,
+                        "lineage_evidence": {
+                            "kind": "semantic_adapter",
+                            "classifier_provenance": classifier,
+                            "confidence": 1.0,
+                        },
+                    }
+                ],
+            )
+        ],
+        cursor=_cursor(corpus),
+    )
+
+    assert snapshot["atoms"][0]["is_current_intent"] is True
+    assert snapshot["validation"]["ok"] is False
+    assert "lineage/dependency edge does not resolve" in " ".join(snapshot["validation"]["errors"])
 
 
 def test_invalid_disposition_is_never_promoted(tmp_path: Path):
@@ -948,6 +2090,64 @@ def test_runtime_policy_controls_confidence_and_owner_route(tmp_path: Path):
     assert policy["owner_routing"]["sources"] == {"agy-cli-conversations": {"route": "issue:641"}}
 
 
+def test_runtime_policy_weights_and_authority_bands_control_exact_ranking(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    paths.policy.parent.mkdir(parents=True, exist_ok=True)
+    weights = {name: 0.0 for name in corpus.DIMENSIONS}
+    weights["magnitude"] = 1.0
+    paths.policy.write_text(
+        json.dumps(
+            {
+                "weights": weights,
+                "authority_bands": {
+                    "derived": {"floor": 0.0, "ceiling": 0.1},
+                    "unknown": {"floor": 0.2, "ceiling": 0.3},
+                    "operator": {"floor": 0.8, "ceiling": 0.9},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    low = "Keep the runtime-weighted low-magnitude item."
+    high = "Keep the runtime-weighted high-magnitude item."
+    snapshot = corpus.update_ledger(
+        paths,
+        events=[
+            _event(
+                low,
+                event_ref="runtime-low",
+                atoms=[
+                    {
+                        "text": low,
+                        "kind": "ask",
+                        "dimensions": {"magnitude": 0.0},
+                    }
+                ],
+            ),
+            _event(
+                high,
+                event_ref="runtime-high",
+                atoms=[
+                    {
+                        "text": high,
+                        "kind": "ask",
+                        "dimensions": {"magnitude": 1.0},
+                    }
+                ],
+            ),
+        ],
+        cursor=_cursor(corpus),
+    )
+    by_intent = {atom["intent"]: atom for atom in snapshot["atoms"]}
+
+    assert by_intent[low]["priority_score"] == 80.0
+    assert by_intent[high]["priority_score"] == 90.0
+    assert by_intent[high]["priority_score"] > by_intent[low]["priority_score"]
+    assert by_intent[high]["authority_band"] == {"floor": 0.8, "ceiling": 0.9}
+    assert snapshot["atoms"][0]["intent"] == high
+
+
 def test_hash_matched_local_predicate_receipt_can_close_atom(tmp_path: Path):
     corpus = _load()
     paths = _paths(corpus, tmp_path)
@@ -990,6 +2190,96 @@ def test_hash_matched_local_predicate_receipt_can_close_atom(tmp_path: Path):
 
     assert closed["validation"]["ok"] is True
     assert closed["counts"]["dispositions"] == {"done": 1}
+
+
+@pytest.mark.parametrize("artifact_state", ["missing", "tampered"])
+def test_local_predicate_receipt_must_still_exist_and_match_its_hash(tmp_path: Path, artifact_state: str):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    first = corpus.update_ledger(
+        paths,
+        events=[_event("Reject stale local predicate evidence.", event_ref=f"local-{artifact_state}")],
+        cursor=_cursor(corpus),
+    )
+    atom_id = first["atoms"][0]["atom_id"]
+    receipt = tmp_path / "docs" / "local-proof.json"
+    receipt.parent.mkdir(parents=True, exist_ok=True)
+    receipt.write_text('{"predicate":"pass"}\n', encoding="utf-8")
+    receipt_hash = hashlib.sha256(receipt.read_bytes()).hexdigest()
+    evidence = {
+        "kind": "predicate_receipt",
+        "ref": "docs/local-proof.json",
+        "predicate": "fixture predicate",
+        "result": "pass",
+        "verified_at": "2026-07-11T12:05:00Z",
+        "owner": "organvm/limen",
+        "subject_atom_ids": [atom_id],
+        "verifier": "local_predicate",
+        "exit_code": 0,
+        "artifact_sha256": receipt_hash,
+    }
+    if artifact_state == "missing":
+        receipt.unlink()
+    else:
+        receipt.write_text('{"predicate":"changed"}\n', encoding="utf-8")
+    before = paths.outcome_journal.read_bytes() if paths.outcome_journal.exists() else b""
+
+    with pytest.raises(ValueError, match="typed, canonical"):
+        corpus.update_ledger(
+            paths,
+            outcomes=[
+                {
+                    "atom_id": atom_id,
+                    "disposition": "done",
+                    "owner": "organvm/limen",
+                    "assessed_at": "2026-07-11T12:05:00Z",
+                    "evidence": [evidence],
+                }
+            ],
+        )
+    after = paths.outcome_journal.read_bytes() if paths.outcome_journal.exists() else b""
+    assert after == before
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("owner", "organvm/other"),
+        ("subject_atom_ids", ["pa-unrelated"]),
+        ("state", "open"),
+        ("reachable_from_default", False),
+    ],
+    ids=("owner", "subject", "state", "reachability"),
+)
+def test_github_proof_must_bind_owner_subject_merge_and_reachability(tmp_path: Path, field: str, value):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    first = corpus.update_ledger(
+        paths,
+        events=[_event("Reject forged GitHub closure fields.", event_ref=f"github-{field}")],
+        cursor=_cursor(corpus),
+    )
+    atom_id = first["atoms"][0]["atom_id"]
+    evidence = _passing_receipt(paths, atom_id)
+    evidence[field] = value
+    evidence = _bind_github_receipt(paths, evidence)
+    before = paths.outcome_journal.read_bytes() if paths.outcome_journal.exists() else b""
+
+    with pytest.raises(ValueError, match="typed, canonical"):
+        corpus.update_ledger(
+            paths,
+            outcomes=[
+                {
+                    "atom_id": atom_id,
+                    "disposition": "done",
+                    "owner": "organvm/limen",
+                    "assessed_at": "2026-07-11T12:05:00Z",
+                    "evidence": [evidence],
+                }
+            ],
+        )
+    after = paths.outcome_journal.read_bytes() if paths.outcome_journal.exists() else b""
+    assert after == before
 
 
 def test_github_claim_requires_existing_hash_matched_verification_receipt(tmp_path: Path):
