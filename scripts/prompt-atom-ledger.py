@@ -955,12 +955,10 @@ def source_exclusion_candidate_id(
         return None
     if source == "claude-plans":
         return "claude-generated-plan-v1"
-    if source == "codex-attachments":
-        return "codex-attachment-v1"
-    if source == "claude-tasks" and len(parts) >= 1:
-        if path.name == ".lock" and int(signature.get("size") or 0) == 0:
+    if source == "claude-tasks" and len(parts) >= 2:
+        if len(parts) == 2 and path.name == ".lock" and int(signature.get("size") or 0) == 0:
             return "claude-task-lock-v1"
-        if path.name == ".highwatermark":
+        if len(parts) == 2 and path.name == ".highwatermark":
             return "claude-task-watermark-v1"
         if suffix not in (".json", ".jsonl", ".md"):
             return "claude-task-artifact-v1"
@@ -1448,6 +1446,12 @@ def strict_native_records(
     limits: ResourceLimits | None = None,
 ) -> tuple[list[dict[str, Any]], str | None, bool]:
     """Read one native source through its exact, bounded adapter contract."""
+
+    # Detached attachment bytes have no authority without a canonical parent
+    # event.  Do not let a JSON-looking filename fall through to the generic
+    # record parser and accidentally become prompt truth.
+    if source == "codex-attachments":
+        return [], None, False
 
     active_limits = limits or runtime_limits({})
     adapter_id = native_source_adapter_candidate_id(lifecycle, source, path)

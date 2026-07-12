@@ -3029,13 +3029,48 @@ def test_source_contract_digest_covers_complete_rule_descriptors(monkeypatch):
     assert changed["digest"] != original["digest"]
 
 
-def test_codex_attachment_is_excluded(tmp_path: Path):
+@pytest.mark.parametrize(
+    ("name", "body"),
+    [
+        ("pasted-text-1.txt", "potentially prompt-bearing attachment"),
+        (
+            "detached.json",
+            json.dumps(
+                {
+                    "timestamp": "2026-07-12T12:00:00Z",
+                    "type": "response_item",
+                    "payload": {
+                        "type": "message",
+                        "role": "user",
+                        "content": [{"type": "input_text", "text": "detached JSON prompt"}],
+                    },
+                }
+            ),
+        ),
+        (
+            "detached.jsonl",
+            json.dumps(
+                {
+                    "timestamp": "2026-07-12T12:00:00Z",
+                    "type": "response_item",
+                    "payload": {
+                        "type": "message",
+                        "role": "user",
+                        "content": [{"type": "input_text", "text": "detached JSONL prompt"}],
+                    },
+                }
+            )
+            + "\n",
+        ),
+    ],
+)
+def test_detached_codex_attachment_remains_an_explicit_gap(tmp_path: Path, name: str, body: str):
     sources = _load()
     lifecycle = sources.load_lifecycle_module()
     attachments = tmp_path / ".codex" / "attachments"
-    attachment = attachments / "opaque-parent" / "pasted-text-1.txt"
+    attachment = attachments / "opaque-parent" / name
     attachment.parent.mkdir(parents=True)
-    attachment.write_text("potentially prompt-bearing attachment", encoding="utf-8")
+    attachment.write_text(body, encoding="utf-8")
     lifecycle.LOCAL_SOURCES = [("codex-attachments", attachments, ("*",))]
     lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
     lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
@@ -3050,10 +3085,197 @@ def test_codex_attachment_is_excluded(tmp_path: Path):
     )
 
     assert events == []
-    assert result["unsupported"] == []
-    assert key in result["excluded_unit_receipts"]
-    assert result["excluded_unit_receipts"][key]["contract_id"] == "codex-attachment-v1"
-    assert result["coverage"]["codex-attachments"]["excluded"] == 1
+    assert result["errors"] == []
+    assert result["unsupported"] == [key]
+    assert result["unsupported_units"][key] == sources.file_signature(attachment)
+    assert result["excluded_unit_receipts"] == {}
+    assert result["coverage"]["codex-attachments"]["excluded"] == 0
+    assert result["coverage"]["codex-attachments"]["unsupported"] == 1
+    assert "codex-attachment-v1" not in sources.source_adapter_contract()["exclusion_ids"]
+
+
+@pytest.mark.parametrize(
+    ("name", "body"),
+    [
+        ("pasted-text-1.txt", "potentially prompt-bearing attachment"),
+        (
+            "detached.json",
+            json.dumps(
+                {
+                    "timestamp": "2026-07-12T12:00:00Z",
+                    "type": "response_item",
+                    "payload": {
+                        "type": "message",
+                        "role": "user",
+                        "content": [{"type": "input_text", "text": "detached JSON prompt"}],
+                    },
+                }
+            ),
+        ),
+        (
+            "detached.jsonl",
+            json.dumps(
+                {
+                    "timestamp": "2026-07-12T12:00:00Z",
+                    "type": "response_item",
+                    "payload": {
+                        "type": "message",
+                        "role": "user",
+                        "content": [{"type": "input_text", "text": "detached JSONL prompt"}],
+                    },
+                }
+            )
+            + "\n",
+        ),
+    ],
+)
+def test_detached_codex_attachment_keeps_all_scope_partial(
+    tmp_path: Path,
+    monkeypatch,
+    name: str,
+    body: str,
+):
+    sources = _load()
+    attachments = tmp_path / ".codex" / "attachments"
+    attachment = attachments / "opaque-parent" / name
+    attachment.parent.mkdir(parents=True)
+    attachment.write_text(body, encoding="utf-8")
+    lifecycle = sources.load_lifecycle_module()
+    lifecycle.LOCAL_SOURCES = [("codex-attachments", attachments, ("*",))]
+    lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
+    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
+    lifecycle.HOME = tmp_path / "missing-home"
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, cursor = sources.scan_native_sources(
+        SimpleNamespace(cursor=tmp_path / "missing-cursor.json"),
+        days=None,
+        max_files=1,
+    )
+
+    assert events == []
+    assert cursor["scope"] == "partial:all"
+    assert cursor["unsupported_source_count"] == 1
+    assert cursor["unsupported_units"][key] == sources.file_signature(attachment)
+    assert cursor["adapter_gaps"] == ["codex-attachments"]
+    assert cursor["excluded_unit_receipts"] == {}
+    assert key not in cursor["files"]
+    assert sources.validate_source_adapter_cursor(cursor) == []
+
+
+def test_removed_codex_attachment_contract_resets_stale_cursor_to_gap(tmp_path: Path, monkeypatch):
+    sources = _load()
+    attachments = tmp_path / ".codex" / "attachments"
+    attachment = attachments / "opaque-parent" / "detached.json"
+    attachment.parent.mkdir(parents=True)
+    attachment.write_text(json.dumps({"role": "user", "content": "detached prompt"}), encoding="utf-8")
+    lifecycle = sources.load_lifecycle_module()
+    lifecycle.LOCAL_SOURCES = [("codex-attachments", attachments, ("*",))]
+    lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
+    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
+    lifecycle.HOME = tmp_path / "missing-home"
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+    signature = sources.file_signature(attachment)
+    assert signature is not None
+    stale_contract = json.loads(json.dumps(sources.source_adapter_contract()))
+    stale_contract["digest"] = "a" * 64
+    stale_contract["exclusion_ids"] = sorted([*stale_contract["exclusion_ids"], "codex-attachment-v1"])
+    stale_contract["exclusion_sources"]["codex-attachment-v1"] = "codex-attachments"
+    cursor_path = tmp_path / "cursor.json"
+    cursor_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "scanner_version": sources.SCANNER_VERSION,
+                "scope": "partial:all",
+                "target_scope": "all",
+                "all_baseline_complete": False,
+                "source_adapter_contract": stale_contract,
+                "files": {},
+                "unsupported_units": {},
+                "unresolved_units": [],
+                "excluded_unit_receipts": {
+                    key: {
+                        "version": sources.SOURCE_ADAPTER_CONTRACT_VERSION,
+                        "disposition": "excluded",
+                        "contract_id": "codex-attachment-v1",
+                        "contract_digest": stale_contract["digest"],
+                        "signature": signature,
+                        "related_signatures": {},
+                    }
+                },
+                "adapted_unit_receipts": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    events, cursor = sources.scan_native_sources(
+        SimpleNamespace(cursor=cursor_path),
+        days=None,
+        max_files=1,
+    )
+
+    assert events == []
+    assert cursor["replace_files"] is True
+    assert cursor["excluded_unit_receipts"] == {}
+    assert cursor["unsupported_units"][key] == signature
+    assert cursor["scope"] == "partial:all"
+    assert cursor["adapter_gaps"] == ["codex-attachments"]
+    assert sources.validate_source_adapter_cursor(cursor) == []
+
+
+@pytest.mark.parametrize(
+    ("relative", "payload", "expected_contract"),
+    [
+        ("artifact.bin", b"provider artifact", None),
+        ("session/artifact.bin", b"provider artifact", "claude-task-artifact-v1"),
+        ("session/.lock", b"", "claude-task-lock-v1"),
+        ("session/.highwatermark", b"42\n", "claude-task-watermark-v1"),
+        ("session/nested/.lock", b"", "claude-task-artifact-v1"),
+        ("session/nested/.highwatermark", b"42\n", "claude-task-artifact-v1"),
+    ],
+)
+def test_claude_task_exclusion_candidate_matches_receipt_depth(
+    tmp_path: Path,
+    relative: str,
+    payload: bytes,
+    expected_contract: str | None,
+):
+    sources = _load()
+    lifecycle = sources.load_lifecycle_module()
+    tasks = tmp_path / ".claude" / "tasks"
+    artifact = tasks / relative
+    artifact.parent.mkdir(parents=True, exist_ok=True)
+    artifact.write_bytes(payload)
+    lifecycle.LOCAL_SOURCES = [("claude-tasks", tasks, ("*",))]
+    signature = sources.file_signature(artifact)
+    assert signature is not None
+
+    candidate = sources.source_exclusion_candidate_id(
+        lifecycle,
+        "claude-tasks",
+        artifact,
+        signature,
+    )
+
+    assert candidate == expected_contract
+    if expected_contract is None:
+        assert not sources.source_contract_receipt_applies(
+            "claude-task-artifact-v1",
+            "claude-tasks",
+            str(artifact),
+            signature=signature,
+        )
+    else:
+        assert sources.source_contract_receipt_applies(
+            expected_contract,
+            "claude-tasks",
+            str(artifact),
+            signature=signature,
+        )
 
 
 def test_symlinked_exclusion_never_receives_a_contract_receipt(tmp_path: Path):

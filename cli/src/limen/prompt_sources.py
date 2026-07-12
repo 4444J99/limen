@@ -111,10 +111,6 @@ SOURCE_EXCLUSION_RULES: dict[str, dict[str, Any]] = {
             "suffix": ".js",
         },
     },
-    "codex-attachment-v1": {
-        "source": "codex-attachments",
-        "path": {"minimum_relative_depth": 1},
-    },
     "claude-task-artifact-v1": {
         "source": "claude-tasks",
         "path": {"minimum_relative_depth": 2},
@@ -629,7 +625,6 @@ def source_contract_receipt_applies(
         ),
         "claude-subagent-metadata-v1": lambda: "subagents" in relative[2:] and suffix == ".json",
         "claude-workflow-metadata-v1": lambda: "workflows" in relative[2:] and suffix == ".json",
-        "codex-attachment-v1": lambda: len(relative) >= 1,
         "claude-project-media-v1": lambda: len(relative) >= 4 and suffix not in prompt_suffixes,
     }
     predicate = predicates.get(contract_id)
