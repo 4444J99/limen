@@ -133798,12 +133798,11 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - cifix
   - self-heal
   - ci-red
-  - tried:agy
   urls:
   - https://github.com/organvm/domus-genoma/pull/300
   context: "PR organvm/domus-genoma#300 has FAILING CI checks and merge-drain correctly\
@@ -133819,7 +133818,7 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/300
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-12T18:17:56.502845Z'
+  updated: '2026-07-12T19:36:52.229635Z'
   dispatch_log:
   - timestamp: '2026-07-12T16:37:41.226753Z'
     agent: agy
@@ -133844,3 +133843,8 @@ tasks:
     agent: agy
     session_id: cli
     status: failed
+  - timestamp: '2026-07-12T19:36:52.229635Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
