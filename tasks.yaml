@@ -135373,3 +135373,41 @@ tasks:
     session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
     status: open
     output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/content-engine--asset-amplifier--a-organvm-legacy:pull-request:DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS'
+- id: FIX-dynamic-worktree-admission-0712
+  title: Replace the static worktree debt cap with marginal live admission
+  repo: organvm/limen
+  type: code
+  target_agent: claude
+  workstream: substrate
+  priority: critical
+  budget_cost: 1
+  status: open
+  labels:
+  - lifecycle
+  - dispatch
+  - dynamic-admission
+  - operator-correction
+  - value-tier
+  urls: []
+  context: 'Operator correction: the default worktree debt cap of 12 is static and
+    must not deadlock healthy paid lanes. Replace the dispatch policy with marginal,
+    live admission. Distinguish work that creates lifecycle debt from receipt-only,
+    preservation, merge, cleanup, and remote work; allow debt-reducing/non-increasing
+    packets under pressure; derive local creation room from current disk, memory,
+    active local concurrency, accepted-reaper state, and live task impact; never apply
+    a local worktree threshold to remote lanes. Preserve default-deny cleanup and
+    the exact zero-debt Omega finish line. Keep explicit operator overrides as overrides,
+    not the default. Add adversarial tests for high legacy debt with safe cleanup/receipt
+    work, low-resource denial, local build-out denial, remote-lane independence, and
+    arbitrary fixture counts so no literal 12 is policy authority. Work in an isolated
+    worktree, open a PR whose body contains the exact task ID, and do not edit tasks.yaml
+    directly.'
+  predicate: 'bash -lc ''python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_worktree_debt.py
+    -q && test "$(gh pr list --repo organvm/limen --state merged --search "FIX-dynamic-worktree-admission-0712
+    in:body" --json body --jq "([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])FIX\\-dynamic\\-worktree\\-admission\\-0712([^A-Za-z0-9_.-]|$)"))]
+    | length)")" -gt 0'' '
+  receipt_target: github:organvm/limen:pull-request:FIX-dynamic-worktree-admission-0712
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T22:46:39.774971Z'
+  dispatch_log: []
