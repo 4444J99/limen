@@ -14,15 +14,15 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-07-11'
-      spent: 18
+      date: '2026-07-12'
+      spent: 26
       per_agent:
-        jules: 6
-        gemini: 3
-        codex: 1
-        opencode: 3
-        agy: 1
-        claude: 0
+        jules: 9
+        gemini: 4
+        codex: 2
+        opencode: 4
+        agy: 2
+        claude: 1
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -98493,7 +98493,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-11T23:54:48.907960Z'
+  updated: '2026-07-12T00:11:05.941478Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -98550,6 +98550,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T00:11:05.941478Z'
+    agent: jules
+    session_id: '15653622372813215097'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-385
   title: fix failing CI on organvm/limen#385
   repo: organvm/limen
@@ -104485,7 +104489,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-11T23:54:48.907960Z'
+  updated: '2026-07-12T00:11:05.941478Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -104530,6 +104534,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T00:11:05.941478Z'
+    agent: jules
+    session_id: '15336966600402723206'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-407
   title: fix failing CI on organvm/limen#407
   repo: organvm/limen
@@ -104739,7 +104747,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-11T23:54:48.907960Z'
+  updated: '2026-07-12T00:11:05.941478Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -104795,6 +104803,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T00:11:05.941478Z'
+    agent: jules
+    session_id: '18196565025242638533'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-410
   title: fix failing CI on organvm/limen#410
   repo: organvm/limen
@@ -104802,7 +104814,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104818,7 +104830,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T00:14:38.503058Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:17:56.380680Z'
     agent: limen
@@ -104841,6 +104853,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T00:14:38.503058Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-411
   title: fix failing CI on organvm/limen#411
   repo: organvm/limen
@@ -104909,7 +104926,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -104926,7 +104943,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-11T23:26:29.659908Z'
+  updated: '2026-07-12T00:14:38.503058Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:54:41.017379Z'
     agent: opencode
@@ -104971,6 +104988,11 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h
+  - timestamp: '2026-07-12T00:14:38.503058Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-413
   title: fix failing CI on organvm/limen#413
   repo: organvm/limen
@@ -105073,7 +105095,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -105089,7 +105111,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T00:14:38.503058Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: gemini
@@ -105136,6 +105158,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T00:14:38.503058Z'
+    agent: jules
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-415
   title: fix failing CI on organvm/limen#415
   repo: organvm/limen
@@ -130938,14 +130965,15 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#680
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/680
   context: 'PR organvm/limen#680 is CONFLICTING with its base branch and merge-drain
@@ -130962,25 +130990,32 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-11T23:33:28.801098Z'
+  updated: '2026-07-12T00:11:05.941478Z'
   dispatch_log:
   - timestamp: '2026-07-11T23:33:28.801098Z'
     agent: gemini
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T00:11:05.941478Z'
+    agent: gemini
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on gemini; reopened to asynchronous lane
 - id: HEAL-rebase-organvm-limen-682
   title: rebase/resolve conflicts on organvm/limen#682
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/682
   context: 'PR organvm/limen#682 is CONFLICTING with its base branch and merge-drain
@@ -130997,25 +131032,32 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-11T23:33:28.801098Z'
+  updated: '2026-07-12T00:11:05.941478Z'
   dispatch_log:
   - timestamp: '2026-07-11T23:33:28.801098Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T00:11:05.941478Z'
+    agent: opencode
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on opencode; reopened to asynchronous lane
 - id: HEAL-rebase-organvm-limen-683
   title: rebase/resolve conflicts on organvm/limen#683
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/683
   context: 'PR organvm/limen#683 is CONFLICTING with its base branch and merge-drain
@@ -131032,25 +131074,32 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-11T23:33:28.801098Z'
+  updated: '2026-07-12T00:11:05.941478Z'
   dispatch_log:
   - timestamp: '2026-07-11T23:33:28.801098Z'
     agent: gemini
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T00:11:05.941478Z'
+    agent: gemini
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on gemini; reopened to asynchronous lane
 - id: HEAL-rebase-organvm-limen-684
   title: rebase/resolve conflicts on organvm/limen#684
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/684
   context: 'PR organvm/limen#684 is CONFLICTING with its base branch and merge-drain
@@ -131067,25 +131116,32 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-11T23:33:28.801098Z'
+  updated: '2026-07-12T00:11:05.941478Z'
   dispatch_log:
   - timestamp: '2026-07-11T23:33:28.801098Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T00:11:05.941478Z'
+    agent: opencode
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on opencode; reopened to asynchronous lane
 - id: HEAL-rebase-organvm-limen-696
   title: rebase/resolve conflicts on organvm/limen#696
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
+  - slow
   urls:
   - https://github.com/organvm/limen/pull/696
   context: 'PR organvm/limen#696 is CONFLICTING with its base branch and merge-drain
@@ -131102,13 +131158,19 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-11T23:33:28.801098Z'
+  updated: '2026-07-12T00:11:05.941478Z'
   dispatch_log:
   - timestamp: '2026-07-11T23:33:28.801098Z'
     agent: gemini
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T00:11:05.941478Z'
+    agent: gemini
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on gemini; reopened to asynchronous lane
 - id: HEAL-rebase-organvm-limen-703
   title: rebase/resolve conflicts on organvm/limen#703
   repo: organvm/limen
@@ -131250,7 +131312,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -131267,7 +131329,13 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  dispatch_log: []
+  updated: '2026-07-12T00:14:38.503058Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T00:14:38.503058Z'
+    agent: codex
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-manumissio-19
   title: fix failing CI on organvm/manumissio#19
   repo: organvm/manumissio
@@ -131275,7 +131343,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -131292,7 +131360,13 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  dispatch_log: []
+  updated: '2026-07-12T00:14:38.503058Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T00:14:38.503058Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-manumissio-20
   title: fix failing CI on organvm/manumissio#20
   repo: organvm/manumissio
@@ -131300,7 +131374,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -131317,7 +131391,13 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  dispatch_log: []
+  updated: '2026-07-12T00:14:38.503058Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T00:14:38.503058Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-manumissio-23
   title: fix failing CI on organvm/manumissio#23
   repo: organvm/manumissio
@@ -131325,7 +131405,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -131342,7 +131422,13 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  dispatch_log: []
+  updated: '2026-07-12T00:14:38.503058Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T00:14:38.503058Z'
+    agent: claude
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-manumissio-24
   title: fix failing CI on organvm/manumissio#24
   repo: organvm/manumissio
@@ -131350,7 +131436,7 @@ tasks:
   target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -131367,7 +131453,13 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  dispatch_log: []
+  updated: '2026-07-12T00:14:38.503058Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T00:14:38.503058Z'
+    agent: gemini
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-manumissio-25
   title: fix failing CI on organvm/manumissio#25
   repo: organvm/manumissio
@@ -131521,4 +131613,390 @@ tasks:
     [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-11'
+  dispatch_log: []
+- id: GH-organvm-limen-961
+  title: 'needs-human (L-OBSERVATORY-ACTIVATE): Activate OBSERVATORY (the legibility-and-traction
+    organ)'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/961
+  context: "GitHub issue organvm/limen#961. **Owner:** Anthony (human-gated lever\
+    \ `L-OBSERVATORY-ACTIVATE`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Activate OBSERVATORY\
+    \ (the legibility-and-traction organ): set LIMEN_OBSERVATORY=1 in ~/.limen.env\
+    \ to run its daily loop (collect trending winners v"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.569626Z'
+  dispatch_log: []
+- id: GH-organvm-limen-960
+  title: "needs-human (L-MAIL-AUTOMATION-GRANT): Grant macOS Automation permission\
+    \ for the heartbeat to control Mail.a\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/960
+  context: "GitHub issue organvm/limen#960. **Owner:** Anthony (human-gated lever\
+    \ `L-MAIL-AUTOMATION-GRANT`). Surfaced once, never nagged, never auto-pulled.\
+    \ This issue is the lever's permanent, individually-closeable home in the graph\
+    \ \u2014 the registry `his-hand-levers.json` is its source of truth. Grant macOS\
+    \ Automation permission for the heartbeat to control Mail.app, then set LIMEN_MAIL_DRAFTS=1\
+    \ \u2014 this turns the restored C_MAIL draft effec"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.571206Z'
+  dispatch_log: []
+- id: GH-organvm-limen-957
+  title: 'Prompt corpus: close native adapter gaps before all/all authority'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/957
+  context: 'GitHub issue organvm/limen#957. ## Owner organvm/limen prompt-corpus control
+    plane ## Ground truth PR #952 is merged. A nice-d all-history drain on the durable
+    Archive4T private corpus reached: - pending source units: 0 - source errors: 0
+    - validation: PASS - preserved occurrences: 25,831 - preserved atoms: 737,242
+    - source scope: partial:all, never promoted to all - unsupported units: 7,490
+    Unsupported units by native family: -'
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.571909Z'
+  dispatch_log: []
+- id: GH-organvm-limen-940
+  title: 'Provider routing: remove remaining named model defaults outside PR #921'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/940
+  context: 'GitHub issue organvm/limen#940. ## Owner Limen provider-routing governance
+    ## Residual PR #921 makes OpenCode, Warp/Oz, and Codex dispatch catalog-driven
+    or provider-Auto and adds the cross-agent rule that provider model IDs are runtime
+    outputs. A separate pre-existing API path still carries named defaults, notably
+    `cli/src/limen/converge.py::_TIER_FALLBACK_API`; Claude policy/chokepoint fixtures
+    also contain named IDs that need'
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.574342Z'
+  dispatch_log: []
+- id: GH-organvm-limen-934
+  title: 'needs-human (L-INTEGRATION-RENOVATE): install Renovate on organvm + trim
+    dependabot.yml'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/934
+  context: "GitHub issue organvm/limen#934. GITVS integrations pillar \u2014 the OAuth\
+    \ half of harnessing Renovate on the conductor. Renovate is ALREADY authorized\
+    \ on **organvm-i-theoria**; extend the install to **organvm** at https://github.com/apps/renovate.\
+    \ Free. The machine half is DONE: `renovate.json` is committed at the conductor\
+    \ root. **Coexistence:** to avoid duplicate dependency PRs, trim `.github/dependabot.yml`\
+    \ to security-only (or r"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.575145Z'
+  dispatch_log: []
+- id: GH-organvm-limen-933
+  title: 'needs-human (L-INTEGRATION-CODERABBIT): install CodeRabbit on organvm (extend
+    from organvm-i-theoria)'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/933
+  context: "GitHub issue organvm/limen#933. GITVS integrations pillar \u2014 the OAuth\
+    \ half of harnessing CodeRabbit on the conductor. CodeRabbit is ALREADY authorized\
+    \ on **organvm-i-theoria**; extend the install to the **organvm** org (or organvm/limen\
+    \ specifically) at https://github.com/apps/coderabbitai. Free for public repos.\
+    \ The machine half is DONE: `.coderabbit.yaml` is committed at the conductor root\
+    \ (its live config), and `scripts/sync-"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.576527Z'
+  dispatch_log: []
+- id: GH-organvm-domus-genoma-278
+  title: Own daily-engine launchd durability in Domus
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/domus-genoma/issues/278
+  context: 'GitHub issue organvm/domus-genoma#278. ## Owner boundary Domus owns the
+    macOS LaunchAgent lifecycle for `organvm/daily-engine`. The application repo should
+    expose a service contract; it must not become the host-state writer. ## Dynamic
+    implementation contract - Derive executable, working-directory, log, and data
+    paths from the current Domus host inventory/configuration; do not pin one laptop
+    path in application code. - Generate or mana'
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.577847Z'
+  dispatch_log: []
+- id: GH-organvm-limen-928
+  title: 'needs-human (L-OPENCODE-AUTH): optionally authorize OpenCode catalog access'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/928
+  context: GitHub issue organvm/limen#928. **Owner:** Anthony (human-gated lever `L-OPENCODE-AUTH`).
+    Surfaced once, never nagged, never auto-pulled. Optionally run `opencode auth
+    login` on this host, then verify `opencode models --verbose`. The interactive
+    provider login may expand the currently reachable catalog. Limen derives requirements
+    from the task, filters the live catalog by capability metadata, and records the
+    runtime selection. I
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.578633Z'
+  dispatch_log: []
+- id: GH-organvm-limen-927
+  title: "needs-human (L-IDENTITY-POPULATE): Populate the core personal-fact atoms\
+    \ ONCE \u2014 DOB, home address (stree\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/927
+  context: "GitHub issue organvm/limen#927. **Owner:** Anthony (human-gated lever\
+    \ `L-IDENTITY-POPULATE`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Populate the core\
+    \ personal-fact atoms ONCE \u2014 DOB, home address (street/city/state/zip), and\
+    \ phone \u2014 into ~/Workspace/_life-private/identity.json (ARCA"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.579369Z'
+  dispatch_log: []
+- id: GH-organvm-limen-926
+  title: 'needs-human (L-FABLE-GUARD-ARM): Arm the Fable interactive-guard settings
+    snippet'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/926
+  context: "GitHub issue organvm/limen#926. **Owner:** Anthony (human-gated lever\
+    \ `L-FABLE-GUARD-ARM`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Arm the Fable interactive-guard\
+    \ settings snippet: paste docs/keys/fable-guard-settings-snippet.json into ~/.claude/settings.json\
+    \ (sets \"model\":\"opus\" of"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.582121Z'
+  dispatch_log: []
+- id: GH-organvm-limen-912
+  title: "needs-human (L-STORAGE-DRAIN-PUSHED): Flip LIMEN_RECLAIM_PUSHED_OK=1 in\
+    \ the beat/launchd environment to DRA\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/912
+  context: "GitHub issue organvm/limen#912. **Owner:** Anthony (human-gated lever\
+    \ `L-STORAGE-DRAIN-PUSHED`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Flip LIMEN_RECLAIM_PUSHED_OK=1\
+    \ in the beat/launchd environment to DRAIN the pushed-but-unmerged worktree backlog\
+    \ (~293 roots, the dominant boot-dis"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.583346Z'
+  dispatch_log: []
+- id: GH-organvm-limen-910
+  title: 'needs-human (L-LIMENBOT-INSTALL): Create + install the limen[bot] GitHub
+    App'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/910
+  context: "GitHub issue organvm/limen#910. The one irreducibly-human atom in the\
+    \ GITVS estate (institutio/github/estate.yaml \u2192 app / app_installation).\
+    \ **Act:** create the `limen[bot]` GitHub App (manifest flow via `scripts/bootstrap-github-app.py`),\
+    \ generate its private key, and install it on the governed owners. **Least-privilege\
+    \ contract** (docs/github-app-architecture.md): contents:write, pull_requests:write,\
+    \ actions:read, metadata:rea"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:03:45.584072Z'
+  dispatch_log: []
+- id: ORG-observation-organ-kernel-0711
+  title: Map the VLTIMA 5-primitive kernel to the observation organ
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: critical
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-kernel
+  - pillar:observation
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen, author organs/observation/ + cli/src/limen/observatory/KERNEL.md:\
+    \ map the domain-neutral kernel (Member - Mandate - Standing - Standard - Governance)\
+    \ onto the observation domain (Member=a repo/public surface (ours or a comparable\
+    \ winner's); Mandate=a legibility/traction gap to close; Standing=drift/gap state;\
+    \ Standard=the priority formula (explanatory_strength \xD7 controllability \xD7\
+    \ similarity \xD7 EV \xF7 activation_cost) + the confounder-honesty rule (stars\
+    \ are a signal, never truth); Governance=human-gated experiment proposal (dry\
+    \ by default; --apply arms)). State the organ's purpose as an institutional prosthesis,\
+    \ its MACRO deployment (GITVS's legibility twin: the same observe\u2192diff\u2192\
+    reconcile loop run on how the world understands/trusts/uses/circulates an estate\
+    \ \u2014 any operator studies why comparable winners get adopted, proves their\
+    \ own surfaces are true, and gets ONE reversible experiment/day instead of a vanity-trend\
+    \ dashboard) and its MICRO deployment (Anthony's activation deficit: study daily\
+    \ GitHub winners vs matched CONTROLS, score transferable mechanisms against the\
+    \ estate, reconcile the estate's own claim-drift (the 105/116/171 numbers) via\
+    \ the face-ownership.json/VVLTVS loop, and hand up one reversible activation experiment\
+    \ for the hero repo (value-repos rank 1)). Generic + nameless underneath, his\
+    \ instance on top. One PR, no lorem. CONSTRAINT: Convergence, not greenfield:\
+    \ reuses GITVS gh-helpers, the JSONL keeper discipline, value-repos/revenue-ladder/estate-ledger\
+    \ as ground truth, face-ownership.json/VVLTVS as the internal-legibility sensor.\
+    \ The imported ChatGPT spec's greenfield stack (organvm/observatory repo + DuckDB\
+    \ + Astro + Playwright) is overruled by codebase idiom (in-repo organ + JSONL\
+    \ + Next.js); Playwright website capture is the one recorded phase-3 residual.\
+    \ Working handle OBSERVATORY \u2014 final name via nomenclator (INDEX\xB7NOMINVM)..\
+    \ [organ-backlog 2026-07-11: rank 15, maturity 10% stage scaffold \u2014 convert\
+    \ idle fleet capacity into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:05:49.929729Z'
+  dispatch_log: []
+- id: ORG-observation-organ-charter-0711
+  title: Charter the observation organ as an institution rivaling a growth/DevRel
+    + competitive-intelligence team (a launch-analytics desk fused with a positioning
+    studio)
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: critical
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-charter
+  - pillar:observation
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/observation/ + cli/src/limen/observatory/, write\
+    \ CHARTER.md: the org-chart of AI roles (the 'virtual firm/team'), the workflows\
+    \ it runs, its inputs/outputs, and exactly how it gives one person the institutional\
+    \ weight of a growth/DevRel + competitive-intelligence team (a launch-analytics\
+    \ desk fused with a positioning studio). Concrete and buildable. No invented capabilities.\
+    \ CONSTRAINT: Convergence, not greenfield: reuses GITVS gh-helpers, the JSONL\
+    \ keeper discipline, value-repos/revenue-ladder/estate-ledger as ground truth,\
+    \ face-ownership.json/VVLTVS as the internal-legibility sensor. The imported ChatGPT\
+    \ spec's greenfield stack (organvm/observatory repo + DuckDB + Astro + Playwright)\
+    \ is overruled by codebase idiom (in-repo organ + JSONL + Next.js); Playwright\
+    \ website capture is the one recorded phase-3 residual. Working handle OBSERVATORY\
+    \ \u2014 final name via nomenclator (INDEX\xB7NOMINVM).. [organ-backlog 2026-07-11:\
+    \ rank 15, maturity 10% stage scaffold \u2014 convert idle fleet capacity into\
+    \ institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:05:49.932769Z'
+  dispatch_log: []
+- id: ORG-observation-organ-firstslice-0711
+  title: Build the first working vertical slice of the observation organ
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-firstslice
+  - pillar:observation
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen organs/observation/ + cli/src/limen/observatory/, deliver\
+    \ one real end-to-end artifact the organ produces: cli/src/limen/observatory/\
+    \ spine (config/gh/ledger/executive/doctor) + organs/observation/ charter + organ-ladder\
+    \ entry: the read-only scaffold this chunk; the reconcile effector + research\
+    \ loop + beat wiring follow. A tangible proof the institution works for ONE real\
+    \ case. One PR; tested where it is code; drafts only for anything outbound (his\
+    \ hand on send/sign). CONSTRAINT: Convergence, not greenfield: reuses GITVS gh-helpers,\
+    \ the JSONL keeper discipline, value-repos/revenue-ladder/estate-ledger as ground\
+    \ truth, face-ownership.json/VVLTVS as the internal-legibility sensor. The imported\
+    \ ChatGPT spec's greenfield stack (organvm/observatory repo + DuckDB + Astro +\
+    \ Playwright) is overruled by codebase idiom (in-repo organ + JSONL + Next.js);\
+    \ Playwright website capture is the one recorded phase-3 residual. Working handle\
+    \ OBSERVATORY \u2014 final name via nomenclator (INDEX\xB7NOMINVM).. [organ-backlog\
+    \ 2026-07-11: rank 15, maturity 10% stage scaffold \u2014 convert idle fleet capacity\
+    \ into institutional weight (VLTIMA).]"
+  depends_on: []
+  created: '2026-07-11'
+  updated: '2026-07-12T00:05:49.933667Z'
   dispatch_log: []
