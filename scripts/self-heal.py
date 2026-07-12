@@ -31,6 +31,7 @@ Safety / shape (matches the sibling organs exactly):
   --limit N     max heal tasks to EMIT this run, headroom-scaled (default 10)
   --dry-run     assess + report what WOULD be emitted; make ZERO writes (cursor + lock untouched)
 """
+
 import argparse
 import collections
 import concurrent.futures as cf
@@ -54,6 +55,8 @@ OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").s
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOCKD = ROOT / "logs" / ".queue.lock.d"
 LOG = ROOT / "logs" / "self-heal.log"
+HEAL_CONVERGENCE = ROOT / "logs" / "heal-convergence.json"
+CHRONIC_MAX_AGE_SECONDS = 2 * 60 * 60
 
 # the heal kinds this organ emits, keyed by the classifier verdict it reacts to.
 KINDS = {
@@ -138,32 +141,75 @@ def assess(pr):
     # always agree on what is READY vs CI-RED vs CONFLICT — they are two halves of one verdict).
     repo, num, url = pr
     try:
-        r = gh(["pr", "view", str(num), "-R", repo, "--json",
-                "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,baseRefName,headRefOid"],
-               timeout=40)
+        r = gh(
+            [
+                "pr",
+                "view",
+                str(num),
+                "-R",
+                repo,
+                "--json",
+                "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,baseRefName,headRefOid",
+            ],
+            timeout=40,
+        )
         if r.returncode != 0:
-            return (repo, num, url, "ERR")
+            return (repo, num, url, "ERR", [])
         d = json.loads(r.stdout)
         if d.get("state") != "OPEN" or d.get("isDraft"):
-            return (repo, num, url, "SKIP")
+            return (repo, num, url, "SKIP", [])
         if d.get("mergeable") == "CONFLICTING":
-            return (repo, num, url, "CONFLICT")
-        states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
+            return (repo, num, url, "CONFLICT", [])
+        rollup = d.get("statusCheckRollup") or []
+        states = [(c.get("conclusion") or c.get("state") or "") for c in rollup]
         if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
-            return (repo, num, url, "CI-RED")
+            failing_checks = sorted(
+                {
+                    str(check.get("name") or "?")
+                    for check in rollup
+                    if (check.get("conclusion") or check.get("state") or "")
+                    in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED")
+                }
+            )
+            return (repo, num, url, "CI-RED", failing_checks)
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
-            return (repo, num, url, "CI-PENDING")
+            return (repo, num, url, "CI-PENDING", [])
         if d.get("mergeable") == "MERGEABLE":
             # STALE-BASE GATE (identical to merge-drain.assess — one verdict): refuse a green+mergeable
             # PR off an old base that would silently revert work, and emit a rebase-to-current heal task.
             paths = [f.get("path", "") for f in (d.get("files") or [])]
             sb = stale_base_verdict(repo, paths, d.get("baseRefName"), d.get("headRefOid"), gh)
             if sb:
-                return (repo, num, url, sb)  # STALE-CORE / STALE-BASE → rebase task below
-            return (repo, num, url, "READY")
-        return (repo, num, url, "BLOCKED")
+                return (repo, num, url, sb, [])  # STALE-CORE / STALE-BASE → rebase task below
+            return (repo, num, url, "READY", [])
+        return (repo, num, url, "BLOCKED", [])
     except Exception:
-        return (repo, num, url, "ERR")
+        return (repo, num, url, "ERR", [])
+
+
+def live_chronic_groups(path=HEAL_CONVERGENCE, *, now=None):
+    """Fresh ``(repo, failing-check)`` groups from the convergence sensor's live receipt.
+
+    A stale or malformed receipt cannot freeze new work indefinitely. The next metabolize/heartbeat
+    refresh repairs the gap; until then self-heal falls back to its existing idempotent behavior.
+    """
+
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    try:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        generated = datetime.datetime.fromisoformat(str(payload["timestamp"]).replace("Z", "+00:00"))
+    except (OSError, ValueError, KeyError, TypeError):
+        return set()
+    if generated.tzinfo is None:
+        generated = generated.replace(tzinfo=datetime.timezone.utc)
+    age_seconds = (now - generated.astimezone(datetime.timezone.utc)).total_seconds()
+    if age_seconds < 0 or age_seconds > CHRONIC_MAX_AGE_SECONDS:
+        return set()
+    return {
+        (str(group.get("repo") or ""), str(group.get("check") or ""))
+        for group in payload.get("chronic") or []
+        if isinstance(group, dict) and group.get("repo") and group.get("check")
+    }
 
 
 def task_id(kind_slug, repo, num):
@@ -234,12 +280,24 @@ def parse_pr_spec(raw):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scan", type=int, default=env_int("LIMEN_HEAL_SCAN", 30),
-                    help="assess WINDOW per run — how many PRs to classify this beat (rotates)")
-    ap.add_argument("--scan-max", type=int, default=env_int("LIMEN_HEAL_SCAN_MAX", 500),
-                    help="cap on the cheap full-fleet enumeration the rotating window draws from")
-    ap.add_argument("--limit", type=int, default=env_int("LIMEN_HEAL_LIMIT", 10),
-                    help="max heal tasks to EMIT this run (headroom-scaled up to 3x on a full tank)")
+    ap.add_argument(
+        "--scan",
+        type=int,
+        default=env_int("LIMEN_HEAL_SCAN", 30),
+        help="assess WINDOW per run — how many PRs to classify this beat (rotates)",
+    )
+    ap.add_argument(
+        "--scan-max",
+        type=int,
+        default=env_int("LIMEN_HEAL_SCAN_MAX", 500),
+        help="cap on the cheap full-fleet enumeration the rotating window draws from",
+    )
+    ap.add_argument(
+        "--limit",
+        type=int,
+        default=env_int("LIMEN_HEAL_LIMIT", 10),
+        help="max heal tasks to EMIT this run (headroom-scaled up to 3x on a full tank)",
+    )
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
     ap.add_argument(
         "--pr",
@@ -271,7 +329,17 @@ def main():
     # the stuck PRs this organ exists to heal, capped per run (the cap lifts when vendor capacity
     # is idle, so a full tank drains the red pile faster instead of trickling 10/beat).
     limit = scaled_limit(a.limit, ROOT)
-    sick = [(r[3], r[0], r[1], r[2]) for r in rows if r[3] in KINDS][:limit]
+    chronic = live_chronic_groups()
+    frozen = []
+    sick = []
+    for repo, num, url, verdict, failing_checks in rows:
+        chronic_hits = sorted(check for check in failing_checks if (repo, check) in chronic)
+        if verdict == "CI-RED" and failing_checks and len(chronic_hits) == len(failing_checks):
+            frozen.append((repo, num, chronic_hits))
+            continue
+        if verdict in KINDS:
+            sick.append((verdict, repo, num, url))
+    sick = sick[:limit]
     stamp = datetime.date.today().isoformat()
 
     tasks_path = Path(a.tasks)
@@ -286,10 +354,12 @@ def main():
                 dup += 1
             else:
                 would.append((tid, verdict, repo, num))
-        print(f"[self-heal] DRY-RUN window={len(prs)}/{len(allprs)} ready={b['READY']} "
-              f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
-              f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']} "
-              f"| would-emit={len(would)} already-queued={dup}")
+        print(
+            f"[self-heal] DRY-RUN window={len(prs)}/{len(allprs)} ready={b['READY']} "
+            f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
+            f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']} "
+            f"chronic-frozen={len(frozen)} | would-emit={len(would)} already-queued={dup}"
+        )
         print("| heal task id (would emit) | kind | repo | pr |")
         print("|---|---|---|---|")
         for tid, verdict, repo, num in would:
@@ -323,9 +393,12 @@ def main():
             pass
 
     ts = datetime.datetime.now().strftime("%F %T")
-    summary = (f"[self-heal] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} ci-red={b['CI-RED']} "
-               f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} stale-core={b['STALE-CORE']} "
-               f"stale-base={b['STALE-BASE']} | emitted={len(emitted)} (limit={limit})")
+    summary = (
+        f"[self-heal] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} ci-red={b['CI-RED']} "
+        f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} stale-core={b['STALE-CORE']} "
+        f"stale-base={b['STALE-BASE']} chronic-frozen={len(frozen)} "
+        f"| emitted={len(emitted)} (limit={limit})"
+    )
     print(summary)
     for tid in emitted:
         print(f"    emit: {tid}")
