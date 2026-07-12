@@ -131391,7 +131391,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - bug
   - slow
@@ -131406,7 +131406,7 @@ tasks:
     \ meant no new post). Fi"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T12:33:10.436388Z'
+  updated: '2026-07-12T13:33:30.996166Z'
   dispatch_log:
   - timestamp: '2026-07-12T01:15:48.903684Z'
     agent: gemini
@@ -131444,6 +131444,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-12T13:33:30.996166Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: GH-organvm-limen-892
   title: 'L-IDENTITY-POPULATE: one-time populate of core identity atoms (DOB / address
     / phone)'
@@ -131880,7 +131885,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - rebase
   - self-heal
@@ -131904,7 +131909,7 @@ tasks:
     \ by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T12:33:10.436388Z'
+  updated: '2026-07-12T13:33:30.996166Z'
   dispatch_log:
   - timestamp: '2026-07-12T01:15:48.903684Z'
     agent: gemini
@@ -131942,6 +131947,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-12T13:33:30.996166Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: 'recover: repeated no-op failures (2) -> needs_human; stop fresh cascade'
 - id: HEAL-rebase-organvm-limen-814
   title: rebase/resolve conflicts on organvm/limen#814
   repo: organvm/limen
@@ -133411,7 +133421,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - rebase
   - self-heal
@@ -133433,7 +133443,7 @@ tasks:
     [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T12:33:10.436388Z'
+  updated: '2026-07-12T13:39:37.826916Z'
   dispatch_log:
   - timestamp: '2026-07-12T04:32:25.248942Z'
     agent: gemini
@@ -133483,6 +133493,11 @@ tasks:
     agent: opencode
     session_id: https://github.com/organvm/portfolio/pull/146
     status: dispatched
+  - timestamp: '2026-07-12T13:39:37.826916Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: ASK-quicken-escalate-0bd3a5ed
   title: finish stalled session 'Design movement ontology and workout composi' (breathed
     2x, still stalling)
