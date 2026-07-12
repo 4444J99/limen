@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-12'
-      spent: 123
+      spent: 124
       per_agent:
         jules: 56
         gemini: 16
         codex: 0
         opencode: 35
-        agy: 12
+        agy: 13
         claude: 0
         github_actions: 1
         ollama: 3
@@ -130029,6 +130029,10 @@ tasks:
     pass. If CI is already green, add the single most valuable missing check (e.g.
     typecheck or test-matrix) instead. [auto-generated 2026-07-09 to keep the stream
     endless]
+  predicate: gh run view 29198231301 --repo organvm/limen --json headSha,conclusion
+    --jq 'select(.headSha == "04baa47d471f44a8faa3beb790f5636fe65d77ef" and .conclusion
+    == "success")'
+  receipt_target: https://github.com/organvm/limen/actions/runs/29198231301
   depends_on: []
   created: '2026-07-09'
   updated: '2026-07-12T15:48:35.168282Z'
@@ -130040,10 +130044,6 @@ tasks:
     output: 'Stale task closed from current remote truth: exact-head CI/Fleet Gate/validate
       passed at 04baa47d; workflow-dispatched Conductor Report 29198792444 also passed
       on that exact head.'
-  predicate: gh run view 29198231301 --repo organvm/limen --json headSha,conclusion
-    --jq 'select(.headSha == "04baa47d471f44a8faa3beb790f5636fe65d77ef" and .conclusion
-    == "success")'
-  receipt_target: https://github.com/organvm/limen/actions/runs/29198231301
 - id: REV-organvm-mirror-mirror-revenue-ship-0709
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -133798,12 +133798,11 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: failed
+  status: dispatched
   labels:
   - cifix
   - self-heal
   - ci-red
-  - tried:agy
   urls:
   - https://github.com/organvm/domus-genoma/pull/300
   context: "PR organvm/domus-genoma#300 has FAILING CI checks and merge-drain correctly\
@@ -133814,9 +133813,12 @@ tasks:
     \ side of those paths rather than repairing on top of a rollback. Do not open\
     \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/300\
     \ [auto-emitted 2026-07-12 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 300 --repo organvm/domus-genoma --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/domus-genoma/pull/300
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-12T16:46:33.711991Z'
+  updated: '2026-07-12T17:54:49.385046Z'
   dispatch_log:
   - timestamp: '2026-07-12T16:37:41.226753Z'
     agent: agy
@@ -133827,3 +133829,13 @@ tasks:
     agent: agy
     session_id: cli
     status: failed
+  - timestamp: '2026-07-12T17:41:17.889912Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-12T17:54:49.385046Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
