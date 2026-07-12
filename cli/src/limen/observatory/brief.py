@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 
-from . import config, ledger, lever
+from . import config, interpret, ledger, lever
 
 # internal-legibility gap priorities (formula-shaped: strength≈1, controllability≈0.9, sim=1,
 # ev≈0.8, cost small → a known truth-violation outranks a hypothesised external mechanism early).
@@ -181,6 +181,12 @@ def render_markdown(brief: dict) -> str:
 def run(*, apply: bool = False) -> dict:
     """The executive brief stage: assemble both faces → one brief + one proposed experiment."""
     brief = build_brief()
+    # P2-LLM — attach an evidence-constrained interpretation ONLY when OBSERVATORY_LLM is armed and
+    # the synthesis model returned text. Off (default) → no key, brief stays byte-deterministic.
+    enrichment = interpret.interpret(brief, apply=apply)
+    if enrichment.get("interpretation"):
+        brief["interpretation"] = enrichment["interpretation"]
+        brief["interpretation_model"] = enrichment.get("model")
     ledger.write_latest("brief-latest.json", brief)
     ledger.write_text("brief-latest.md", render_markdown(brief))
     ledger.snapshot_line("briefs.jsonl", brief)

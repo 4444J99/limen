@@ -11,7 +11,11 @@
 # Each key matches a surface.py feature (surface.BINARY_FEATURES + a couple of count features).
 # controllability, activation_cost ∈ (0, 1]; activation_cost is floored away from 0 by the scorer.
 # target_component is the success-vector dimension the mechanism most drives.
-version: 1
+#
+# v2 adds the two P3-CAPTURE live-homepage features (site_*), present only when
+# OBSERVATORY_CAPTURE is armed and the site was reachable — otherwise absent, so they never
+# fabricate a mechanism when capture is off.
+version: 2
 
 mechanisms:
   names_user:
@@ -61,3 +65,15 @@ mechanisms:
     activation_cost: 0.30
     target_component: reach
     note: "Concrete use-case section. Expands who sees themselves in it."
+
+  site_demo_above_fold:
+    controllability: 0.75
+    activation_cost: 0.30
+    target_component: activation
+    note: "A demo/screenshot above the fold on the live homepage (P3-CAPTURE). What a visitor sees before the README."
+
+  site_cta_visible:
+    controllability: 0.85
+    activation_cost: 0.15
+    target_component: activation
+    note: "A visible call-to-action near the top of the homepage (P3-CAPTURE). One button/link; ours to add."

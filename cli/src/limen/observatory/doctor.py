@@ -5,7 +5,8 @@ Exit 0 ⟺ the spine is wired and safe. This is the scaffold-stage acceptance ch
 never faults on a missing ``gh`` — a live read simply reports SKIP.
 
 Checks (each a named rung, GITVS's ``doctor`` idiom):
-  wiring       every core module imports and exposes its public surface
+  wiring       every engine module imports and exposes its public surface
+  pipeline     every executive stage resolves (module + entry fn) — the whole 5-stage loop
   paths        ``logs/observatory/`` is writable
   params       the shared parameter panel resolves (or degrades to in-code defaults)
   registries   the three read-only ground-truth registries load (empty is OK)
@@ -18,10 +19,21 @@ import importlib
 
 from . import config, gh, ledger
 
+# The whole engine (the organ is complete — every residual shipped). __main__/__init__ excluded.
 _CORE_MODULES = [
     "limen.observatory.config",
     "limen.observatory.gh",
     "limen.observatory.ledger",
+    "limen.observatory.surface",
+    "limen.observatory.collect",
+    "limen.observatory.cohort",
+    "limen.observatory.mechanism",
+    "limen.observatory.estate",
+    "limen.observatory.reconcile",
+    "limen.observatory.interpret",
+    "limen.observatory.brief",
+    "limen.observatory.synthesis",
+    "limen.observatory.lever",
     "limen.observatory.executive",
     "limen.observatory.doctor",
 ]
@@ -35,6 +47,21 @@ def _check_wiring() -> dict:
         except Exception as exc:
             missing.append(f"{m}: {str(exc)[:80]}")
     return {"rung": "wiring", "ok": not missing, "missing": missing}
+
+
+def _check_pipeline() -> dict:
+    """Every executive pipeline stage resolves (module imports + its entry fn is present)."""
+    from .executive import _PIPELINE
+
+    broken = []
+    for label, module, entry in _PIPELINE:
+        try:
+            mod = importlib.import_module(module)
+            if getattr(mod, entry, None) is None:
+                broken.append(f"{label}: no {entry}()")
+        except Exception as exc:
+            broken.append(f"{label}: {str(exc)[:60]}")
+    return {"rung": "pipeline", "ok": not broken, "stages": len(_PIPELINE), "broken": broken}
 
 
 def _check_paths() -> dict:
@@ -76,7 +103,7 @@ def _check_online() -> dict:
 
 def run(*, offline: bool = False) -> dict:
     """Return ``{ok, rungs}``. ``offline`` skips the live probe entirely."""
-    rungs = [_check_wiring(), _check_paths(), _check_params(), _check_registries()]
+    rungs = [_check_wiring(), _check_pipeline(), _check_paths(), _check_params(), _check_registries()]
     if not offline:
         rungs.append(_check_online())
     ok = all(r.get("ok") for r in rungs)

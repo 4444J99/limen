@@ -78,11 +78,12 @@ def test_write_latest_is_deterministic(obs_root):
 
 # ---------------------------------------------------------------- executive
 def test_run_beat_stages(obs_root, monkeypatch):
-    # All four stages are built now; each runs fail-open (offline) → 'ok', never crashes the beat.
+    # All five stages resolve; the first four run fail-open (offline) → 'ok'; synthesize self-gates
+    # off (OBSERVATORY_SYNTH_ENABLED unset) → 'off'. None crashes the beat.
     monkeypatch.setenv("LIMEN_OFFLINE", "1")
     status = executive.run_beat(apply=False)
     labels = {s["stage"]: s["status"] for s in status["stages"]}
-    assert labels == {"collect": "ok", "analyze": "ok", "reconcile": "ok", "brief": "ok"}
+    assert labels == {"collect": "ok", "analyze": "ok", "reconcile": "ok", "brief": "ok", "synthesize": "off"}
     assert status["apply"] is False
     # status.json + the stamp are written under the redirected data dir.
     assert (obs_root / "logs" / "observatory" / "status.json").exists()

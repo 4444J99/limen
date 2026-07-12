@@ -12,6 +12,9 @@ only, which keeps the whole research loop hermetically testable.
 from __future__ import annotations
 
 import re
+import urllib.error
+import urllib.request
+from collections.abc import Callable
 
 # The first ~1200 chars are the "above the fold" region a visitor sees first.
 _FOLD = 1200
@@ -216,4 +219,102 @@ BINARY_FEATURES = (
     "copy_paste_command",
     "api_example",
     "comparison",
+    # P3-CAPTURE — live-homepage features (present only when OBSERVATORY_CAPTURE armed and the
+    # site was reachable; absent otherwise, so they never fabricate a mechanism when off).
+    "site_demo_above_fold",
+    "site_cta_visible",
 )
+
+
+# ── P3-CAPTURE: live-homepage capture ────────────────────────────────────────────────
+# First-impression signals a README can't show. A NETWORK function, deliberately kept OUT of
+# the pure ``extract()`` above so the doctor's determinism rung stays byte-stable. Fail-open:
+# any fetch fault yields the unreachable record, never an exception. Playwright is overruled to
+# stdlib ``urllib`` (no headless browser in the repo; $0-capex) — a JS-only site simply reads as
+# "not demoed above the fold", which is itself an honest legibility signal.
+
+_SITE_UA = "limen-observatory/1.0 (+https://github.com/organvm/limen)"
+_SITE_TIMEOUT = 8
+_SITE_BLOCKED = {401, 403, 429, 999}
+_SITE_HEAD = 4000  # the "above the fold" region of the served HTML
+
+_TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.IGNORECASE | re.DOTALL)
+_H1_RE = re.compile(r"<h1[^>]*>(.*?)</h1>", re.IGNORECASE | re.DOTALL)
+_META_DESC_RE = re.compile(r'<meta[^>]+name=["\']description["\'][^>]*content=["\']([^"\']*)["\']', re.IGNORECASE)
+_MEDIA_RE = re.compile(r"<(?:img|video|picture|source)\b", re.IGNORECASE)
+_CTA_RE = re.compile(
+    r"\b(get started|getting started|sign up|start free|try it|try now|download|install now|"
+    r"get the app|book a demo|request access|start building|start now)\b",
+    re.IGNORECASE,
+)
+_TAG_RE = re.compile(r"<[^>]+>")
+
+# (html|None, status|None, error|None)
+SiteFetch = Callable[[str, int], "tuple[str | None, int | None, str | None]"]
+
+# The site features merged into a snapshot's surface dict when capture is armed.
+SITE_FEATURE_KEYS = (
+    "site_reachable",
+    "site_headline",
+    "site_demo_above_fold",
+    "site_names_outcome",
+    "site_cta_visible",
+)
+
+
+def _strip_tags(s: str | None) -> str:
+    return re.sub(r"\s+", " ", _TAG_RE.sub(" ", s or "")).strip()
+
+
+def _first(rx: re.Pattern[str], s: str) -> str | None:
+    m = rx.search(s or "")
+    return _strip_tags(m.group(1)) if m else None
+
+
+def _default_site_fetch(url: str, timeout: int) -> tuple[str | None, int | None, str | None]:
+    """Fail-open urllib fetch — never raises. Returns (html, status, error)."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": _SITE_UA})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (scheme guarded by caller)
+            html = resp.read(600_000).decode("utf-8", "replace")
+            return html, getattr(resp, "status", 200), None
+    except urllib.error.HTTPError as exc:
+        return None, exc.code, f"http {exc.code}"
+    except Exception as exc:  # DNS/timeout/TLS/etc. — fail open
+        return None, None, str(exc)[:120]
+
+
+def _unreachable_site() -> dict:
+    return {
+        "site_reachable": False,
+        "site_headline": None,
+        "site_demo_above_fold": False,
+        "site_names_outcome": False,
+        "site_cta_visible": False,
+    }
+
+
+def capture_site(url: str, *, timeout: int = _SITE_TIMEOUT, fetch: SiteFetch | None = None) -> dict:
+    """Fetch a winner's live homepage and extract deterministic first-impression features.
+
+    ``fetch`` is injectable for hermetic tests (must return ``(html, status, error)``). Only
+    ``http(s)`` URLs are attempted; anything else, or any fetch fault / blocked status, returns
+    the unreachable record. Pure/deterministic given ``fetch``'s output — no clock, no state."""
+    if not isinstance(url, str) or not re.match(r"^https?://", url, re.IGNORECASE):
+        return _unreachable_site()
+    html, status, _err = (fetch or _default_site_fetch)(url, timeout)
+    if not html or (status is not None and status in _SITE_BLOCKED):
+        return _unreachable_site()
+    head = html[:_SITE_HEAD]
+    title = _first(_TITLE_RE, html)
+    h1 = _first(_H1_RE, head)
+    meta = _first(_META_DESC_RE, html)
+    headline = h1 or title
+    outcome_text = " ".join(x for x in (title, h1, meta) if x)
+    return {
+        "site_reachable": True,
+        "site_headline": headline[:200] if headline else None,
+        "site_demo_above_fold": bool(_MEDIA_RE.search(head)),
+        "site_names_outcome": bool(_OUTCOME_RE.search(outcome_text)),
+        "site_cta_visible": bool(_CTA_RE.search(head)),
+    }

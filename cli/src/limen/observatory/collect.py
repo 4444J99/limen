@@ -100,6 +100,12 @@ def snapshot(owner_repo: str, tok, *, role: str, now: datetime | None = None) ->
     rels = gh.releases(owner_repo, tok)
     readme = gh.readme_markdown(owner_repo, tok) or ""
     feats = surface.extract(readme, meta)
+    # P3-CAPTURE — merge live-homepage first-impression features when armed (OBSERVATORY_CAPTURE=1)
+    # and the repo declares a homepage. Off by default → README-only, byte-identical to before.
+    if config.get("OBSERVATORY_CAPTURE", 0, cast=int):
+        home = meta.get("homepage")
+        if isinstance(home, str) and home.strip():
+            feats = {**feats, **surface.capture_site(home.strip())}
     snap = {
         "schema": "limen.observatory.snapshot.v1",
         "owner_repo": meta["full_name"],

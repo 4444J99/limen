@@ -8,16 +8,18 @@ Safety posture (the default beat is read-only against every contended/live file)
   * ``propose(apply=False)`` — the beat default — appends the proposal to the
     organ-owned ``logs/observatory/proposals.jsonl`` and writes **nothing else**.
   * ``propose(apply=True)`` — the explicit arm — additionally appends the lever to
-    ``his-hand-levers.json`` **idempotently by id** (atomic temp+rename). It does NOT
-    write ``tasks.yaml`` directly: that board is single-writer (tabularius) via a ticket
-    inbox, so task promotion is left to the recorded ``P-PROMOTE`` residual — the task
-    object is carried in the proposal, ready to promote.
+    ``his-hand-levers.json`` **idempotently by id** (atomic temp+rename) AND promotes the
+    reversible-preparation task onto the board through the tabularius single-writer (P-PROMOTE):
+    a ticket dropped in ``logs/tickets/inbox/`` that the keeper folds onto ``tasks.yaml`` next
+    beat — **never a direct board write**. Both writes are fail-open and gated behind
+    ``OBSERVATORY_APPLY``; the merge/publish decision stays behind the human lever.
 """
 
 from __future__ import annotations
 
 import json
 import os
+from datetime import date
 
 from . import config, ledger
 
@@ -39,18 +41,28 @@ def to_lever(experiment: dict, hero: str | None) -> dict:
     }
 
 
+def _today() -> str:
+    """A seam — the task's created date (tests may monkeypatch for determinism)."""
+    return date.today().isoformat()
+
+
 def to_task(experiment: dict, hero: str | None) -> dict:
-    """Shape the reversible preparation as a tasks.yaml-style task (fleet may draft; human publishes)."""
+    """Shape the reversible preparation as a VALID tasks.yaml Task (fleet may draft; human publishes).
+
+    Validates as ``limen.models.Task`` so P-PROMOTE can submit it verbatim: ``target_agent='any'``
+    (any lane may draft the reversible diff), the measurement contract serialized into the free-text
+    ``context``, and a ``created`` date the model requires."""
     return {
         "id": experiment.get("task_id", "OBS-EXP"),
         "title": f"Prepare OBSERVATORY experiment: {experiment.get('change', '')}",
         "repo": hero,
         "type": "activation-experiment",
-        "target_agent": None,
+        "target_agent": "any",
         "priority": "high",
         "status": "open",
         "labels": ["human-gated", "observatory"],
-        "context": experiment.get("measurement_contract", {}),
+        "context": json.dumps(experiment.get("measurement_contract", {}), sort_keys=True),
+        "created": _today(),
     }
 
 
@@ -76,6 +88,27 @@ def _append_lever_idempotent(lever: dict) -> bool:
         return False
 
 
+def _promote_task(task: dict) -> bool:
+    """P-PROMOTE — submit the reversible-prep task to the board via the tabularius single-writer.
+
+    Drops an upsert ticket in ``logs/tickets/inbox/`` that the keeper folds onto ``tasks.yaml`` next
+    beat — it NEVER writes the board directly (the single-writer invariant). Fail-open: an invalid
+    task / unwritable inbox / missing keeper → no ticket, no crash. Returns True iff a ticket landed."""
+    try:
+        from limen.tabularius import submit_task_upsert
+
+        board = config.repo_root() / "tasks.yaml"
+        submit_task_upsert(
+            board,
+            task,
+            agent="observatory",
+            session_id=os.environ.get("LIMEN_SESSION_ID", "observatory"),
+        )
+        return True
+    except Exception:
+        return False
+
+
 def propose(brief: dict, *, apply: bool = False) -> dict:
     """Record (and, when armed, home) the day's experiment proposal. Never touches a public surface."""
     experiment = brief.get("experiment")
@@ -88,10 +121,12 @@ def propose(brief: dict, *, apply: bool = False) -> dict:
     lever = to_lever(experiment, hero)
     task = to_task(experiment, hero)
     homed = _append_lever_idempotent(lever) if apply else False
+    task_promoted = _promote_task(task) if apply else False
     result = {
         "proposed": True,
         "armed": bool(apply),
         "lever_homed": homed,  # True only if apply and the id was newly written to the registry
+        "task_promoted": task_promoted,  # True only if apply and a board ticket was submitted
         "lever": lever,
         "task": task,
     }

@@ -24,6 +24,9 @@ _PIPELINE = [
     ("analyze", "limen.observatory.mechanism", "run"),
     ("reconcile", "limen.observatory.reconcile", "run"),
     ("brief", "limen.observatory.brief", "run"),
+    # P2-SYNTH — folds the mechanism history into weekly KEEP/TEST/REJECT priors. Self-gates on
+    # OBSERVATORY_SYNTH_ENABLED + an ISO-week state file, so it evaluates daily but acts weekly.
+    ("synthesize", "limen.observatory.synthesis", "run"),
 ]
 
 

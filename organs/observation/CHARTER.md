@@ -41,21 +41,27 @@ full derivation.
 4. **Bounded & fail-open.** v1 caps the daily gh budget (`OBSERVATORY_WINNERS_LIMIT=3`); offline degrades
    to SKIP; every stage is `_safe`-wrapped.
 
-## Owned remaining work (each owner records its own residual)
+## Shipped — the organ is whole (zero residual)
 
-The scaffold + reconcile + research + brief + beat steps are the organ's build-out. Beyond them, the
-organ owns — and schedules — its own residual (not deferred-and-forgotten, not a menu):
+The scaffold + reconcile + research + brief + beat build-out, then **every owned residual**, are shipped.
+Each capability ships **DARK** behind its own default-off gate — nothing changes runtime behavior until armed:
 
-- **P3-CAPTURE** — Playwright website capture (the one genuinely new dependency): screenshot a winner's
-  homepage/above-the-fold for first-impression features a README can't show. Isolated behind
-  `surface.capture_site()` + an `OBSERVATORY_PLAYWRIGHT` param.
-- **P2-LLM** — an optional evidence-constrained interpretation step tagged `classes:[synthesis, analysis]`
-  (→ Opus via `model_selection`), behind `OBSERVATORY_LLM` (default 0); enriches regex-extracted surface
-  features. v1 is fully deterministic.
-- **P2-SYNTH** — weekly/monthly KEEP/TEST/REJECT synthesis folding `mechanisms.jsonl` history into
-  standing mechanism priors.
-- **P3-DASH** — a Next.js `web/app/app/observatory/` report page: a *pure consumer* of `brief-latest.json`
-  (no organ code change), the way the money dashboard reads `revenue-ladder.json`.
+- **P3-CAPTURE** ✅ — live-homepage capture (`surface.capture_site`, stdlib `urllib`; Playwright overruled to
+  $0-capex, the DuckDB→JSONL / Astro→Next.js precedent). Merges `site_*` first-impression features when
+  `OBSERVATORY_CAPTURE=1`; fail-open on unreachable/blocked/JS-only. Kept OUT of the pure `extract()`.
+- **P2-LLM** ✅ — evidence-constrained interpretation (`interpret.py`) behind `OBSERVATORY_LLM` (default 0): a
+  synthesis-class model (Opus via `model_selection`) explains the brief's mechanisms in the evidence's own
+  terms, reached via a bounded `claude -p` subprocess, fail-open. The v1 core stays fully deterministic.
+- **P2-SYNTH** ✅ — weekly KEEP/TEST/REJECT synthesis (`synthesis.py`, the 5th executive stage) behind
+  `OBSERVATORY_SYNTH_ENABLED` (default 0): folds `mechanisms.jsonl` history into standing priors, at most once
+  per ISO week (state-file gate). Writes recommendations only — never edits the human-curated `mechanisms.yaml`.
+- **P-PROMOTE** ✅ — experiment→board via the tabularius single-writer (`lever.propose(apply=True)` →
+  `submit_task_upsert` ticket inbox), behind `OBSERVATORY_APPLY`. Never a direct `tasks.yaml` write.
+- **P3-DASH** ✅ — the owner `/observatory` Next.js page: a *pure consumer* of `brief-latest.json`, deployed
+  live (`limen-dashboard.pages.dev/observatory`).
+
+No residual remains. Future "study GitHub success" / "fix claim drift" work **EXTENDS** this organ (a new
+mechanism seed, a new gap source, a new success-vector measurement) — it does not rebuild it.
 
 ## Merge & safety
 
