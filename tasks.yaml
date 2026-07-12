@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-12'
-      spent: 117
+      spent: 118
       per_agent:
         jules: 56
         gemini: 15
         codex: 0
-        opencode: 31
+        opencode: 32
         agy: 11
         claude: 0
         github_actions: 1
@@ -131391,7 +131391,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - bug
   - slow
@@ -131405,7 +131405,7 @@ tasks:
     \ meant no new post). Fi"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T01:55:01.154934Z'
+  updated: '2026-07-12T11:16:30.217346Z'
   dispatch_log:
   - timestamp: '2026-07-12T01:15:48.903684Z'
     agent: gemini
@@ -131418,6 +131418,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on gemini; reopened to asynchronous lane
+  - timestamp: '2026-07-12T11:16:30.217346Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-892
   title: 'L-IDENTITY-POPULATE: one-time populate of core identity atoms (DOB / address
     / phone)'
@@ -131843,13 +131848,14 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - stale-base
   - core
   - slow
+  - noop
   urls:
   - https://github.com/organvm/limen/pull/812
   context: "PR organvm/limen#812 is MERGEABLE + green BUT its base is STALE and its\
@@ -131866,7 +131872,7 @@ tasks:
     \ by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T10:54:52.182410Z'
+  updated: '2026-07-12T11:12:49.947281Z'
   dispatch_log:
   - timestamp: '2026-07-12T01:15:48.903684Z'
     agent: gemini
@@ -131884,6 +131890,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T11:12:49.947281Z'
+    agent: opencode
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: HEAL-rebase-organvm-limen-814
   title: rebase/resolve conflicts on organvm/limen#814
   repo: organvm/limen
@@ -132859,7 +132870,7 @@ tasks:
     path in application code. - Generate or mana'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T10:54:52.182410Z'
+  updated: '2026-07-12T11:12:49.947281Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:36:52.771769Z'
     agent: codex
@@ -132887,6 +132898,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T11:12:49.947281Z'
+    agent: agy
+    session_id: https://github.com/organvm/domus-genoma/pull/300
+    status: dispatched
 - id: GH-organvm-limen-928
   title: 'needs-human (L-OPENCODE-AUTH): optionally authorize OpenCode catalog access'
   repo: organvm/limen
@@ -133188,7 +133203,7 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T10:54:52.182410Z'
+  updated: '2026-07-12T11:12:49.947281Z'
   dispatch_log:
   - timestamp: '2026-07-12T04:32:25.248942Z'
     agent: gemini
@@ -133206,6 +133221,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T11:12:49.947281Z'
+    agent: opencode
+    session_id: https://github.com/organvm/limen/pull/974
+    status: dispatched
 - id: HEAL-rebase-organvm-organvm-engine-144
   title: rebase/resolve conflicts on organvm/organvm-engine#144
   repo: organvm/organvm-engine
@@ -133652,10 +133671,14 @@ tasks:
     \ idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-12T10:39:35.582781Z'
+  updated: '2026-07-12T11:12:49.947281Z'
   dispatch_log:
   - timestamp: '2026-07-12T10:39:35.582781Z'
     agent: opencode
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T11:12:49.947281Z'
+    agent: opencode
+    session_id: https://github.com/organvm/limen/pull/973
+    status: dispatched
