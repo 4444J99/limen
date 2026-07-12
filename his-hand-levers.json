@@ -16,6 +16,15 @@
       "issue": 960
     },
     {
+      "id": "L-ARCA-KEY-ESCROW",
+      "label": "Escrow the ARCA vault key off-machine (~2 min): Keychain Access → search 'limen-arca' → show password → save it in your password manager (and/or paper). ARCA (scripts/arca.sh, beat 5c) seals every ~/Workspace/_*-private store AES-256 into the private repo organvm/arca; until the key is escrowed, restore requires this Mac's Keychain — Mac+Keychain lost together is the one uncovered failure mode. Never paste the key into chat, a repo, or an env file.",
+      "owner": "yours",
+      "cost": "~2 min, reversible",
+      "unlocks": "full off-machine restore of the encrypted private estate (health/legal/people/finance/life)",
+      "source_task": "ARCA build 2026-07-08",
+      "issue": 719
+    },
+    {
       "id": "L-CONTAINER-CUTOVER",
       "label": "One-container cutover: mount an external backup, run container/migrate.sh S4-S13, confirm symlinks + the COMPLETE marker. ASK-20 extends container/manifest.tsv to relocate ~/.claude, ~/.codex, ~/.gemini. Irreversible and backup-gated — the durability the whole organism stands on.",
       "owner": "yours",
