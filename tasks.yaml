@@ -113208,9 +113208,13 @@ tasks:
     \ beat (2026-07-03). Maturity 40%->70% auto-advanced by financial-organ.py beat\
     \ (2026-07-03).. [organ-backlog 2026-07-06: rank 2, maturity 70% stage maturing\
     \ \u2014 convert idle fleet capacity into institutional weight (VLTIMA).]"
+  predicate: test "$(gh pr list --repo organvm/limen --state merged --search 'ORG-financial-organ-face-0706
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])ORG\\-financial\\-organ\\-face\\-0706([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/limen:pull-request:ORG-financial-organ-face-0706
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -113238,6 +113242,11 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/limen:pull-request:ORG-financial-organ-face-0706'
 - id: HEAL-cifix-organvm-dot-github--theoria-493
   title: fix failing CI on organvm/dot-github--theoria#493
   repo: organvm/dot-github--theoria
@@ -113520,7 +113529,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -113537,10 +113546,21 @@ tasks:
     \ best concrete first task; if it is genuinely archival, write the thesis saying\
     \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS","DISCOVER-organvm-pages--theoria-copy--poiesis-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--poiesis
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.726462Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--poiesis'
 - id: DISCOVER-organvm-pages--theoria-copy--ergon
   title: Discover the latent value of organvm/pages--theoria-copy--ergon
   repo: organvm/pages--theoria-copy--ergon
@@ -113625,7 +113645,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -113642,10 +113662,21 @@ tasks:
     \ best concrete first task; if it is genuinely archival, write the thesis saying\
     \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-pages--theoria-copy--taxis-THESIS","DISCOVER-organvm-pages--theoria-copy--taxis-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--taxis
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.732752Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--taxis'
 - id: DISCOVER-organvm-pages--theoria-copy--logos
   title: Discover the latent value of organvm/pages--theoria-copy--logos
   repo: organvm/pages--theoria-copy--logos
@@ -113730,7 +113761,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -113747,10 +113778,21 @@ tasks:
     \ best concrete first task; if it is genuinely archival, write the thesis saying\
     \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS","DISCOVER-organvm-pages--theoria-copy--koinonia-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--koinonia
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.736967Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--koinonia'
 - id: DISCOVER-organvm-pages--theoria-copy--kerygma
   title: Discover the latent value of organvm/pages--theoria-copy--kerygma
   repo: organvm/pages--theoria-copy--kerygma
@@ -113759,7 +113801,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -113777,9 +113819,15 @@ tasks:
     \ best concrete first task; if it is genuinely archival, write the thesis saying\
     \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
     \ Output the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS","DISCOVER-organvm-pages--theoria-copy--kerygma-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--kerygma
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T21:22:49.733430Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:02:43.208712Z'
     agent: agy
@@ -113796,6 +113844,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-pages--theoria-copy--kerygma'
 - id: DISCOVER-organvm-pages--theoria-copy--meta-organvm
   title: Discover the latent value of organvm/pages--theoria-copy--meta-organvm
   repo: organvm/pages--theoria-copy--meta-organvm
@@ -113953,7 +114006,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -113970,10 +114023,21 @@ tasks:
     \ first task; if it is genuinely archival, write the thesis saying so (so it is\
     \ never re-discovered) \u2014 do NOT promote it. Keep any build green. Output\
     \ the thesis. [auto-discovery 2026-07-06; no repo stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-hokage-chess--4444j99-THESIS","DISCOVER-organvm-hokage-chess--4444j99-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-hokage-chess--4444j99
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:27:09.744921Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-hokage-chess--4444j99'
 - id: DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy
   title: Discover the latent value of organvm/content-engine--asset-amplifier--a-organvm-legacy
   repo: organvm/content-engine--asset-amplifier--a-organvm-legacy
@@ -113982,7 +114046,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -114000,9 +114064,15 @@ tasks:
     \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
     \ Keep any build green. Output the thesis. [auto-discovery 2026-07-06; no repo\
     \ stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS","DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-09T23:35:24.867313Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-06T20:03:38.283216Z'
     agent: agy
@@ -114050,6 +114120,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy'
 - id: DISCOVER-organvm-studium-generale--4444j99
   title: Discover the latent value of organvm/studium-generale--4444j99
   repo: organvm/studium-generale--4444j99
@@ -114127,7 +114202,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -114146,9 +114221,15 @@ tasks:
     \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
     \ Keep any build green. Output the thesis. [auto-discovery 2026-07-06; no repo\
     \ stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-micro-tato-THESIS","DISCOVER-organvm-micro-tato-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-micro-tato
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -114182,6 +114263,11 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-micro-tato'
 - id: DISCOVER-organvm-micro-tato-play
   title: Discover the latent value of organvm/micro-tato-play
   repo: organvm/micro-tato-play
@@ -114190,7 +114276,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -114207,10 +114293,21 @@ tasks:
     \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
     \ Keep any build green. Output the thesis. [auto-discovery 2026-07-06; no repo\
     \ stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-micro-tato-play-THESIS","DISCOVER-organvm-micro-tato-play-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-micro-tato-play
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:43:04.235811Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-micro-tato-play'
 - id: DISCOVER-organvm-browser-state
   title: Discover the latent value of organvm/browser-state
   repo: organvm/browser-state
@@ -114578,7 +114675,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -114595,10 +114692,21 @@ tasks:
     \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
     \ Keep any build green. Output the thesis. [auto-discovery 2026-07-06; no repo\
     \ stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-collaboratory-THESIS","DISCOVER-organvm-collaboratory-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-collaboratory
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-06T13:43:04.243062Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-collaboratory'
 - id: DISCOVER-organvm-gens
   title: Discover the latent value of organvm/gens
   repo: organvm/gens
@@ -115142,7 +115250,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -115159,10 +115267,21 @@ tasks:
     \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
     \ Keep any build green. Output the thesis. [auto-discovery 2026-07-06; no repo\
     \ stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-studium-generale-THESIS","DISCOVER-organvm-studium-generale-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-studium-generale
   depends_on: []
   created: '2026-07-06'
-  updated: '2026-07-07T00:41:27.936091Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-studium-generale'
 - id: HEAL-rebase-organvm-public-process-30
   title: rebase/resolve conflicts on organvm/public-process#30
   repo: organvm/public-process
@@ -117120,9 +117239,12 @@ tasks:
     receipt for formerly existing or rotated tokens without exposing values. ## Existing
     owner surface - `scripts/credential-wall.py` - `scripts/creds-hydrate.py` - pinned
     credential wall'
+  predicate: test "$(gh issue view 686 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/686
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -117156,6 +117278,11 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/686'
 - id: GH-organvm-limen-687
   title: Owner-route contribution balance before more commit-heavy dispatch
   repo: organvm/limen
@@ -117175,9 +117302,12 @@ tasks:
     --login 4444J99 --json` reported on 2026-07-07: - commits: 12,885, share 74.03%
     target <= 60% - issues: 2,097, share 12.05% target >= 15% - pull requests: 2,317,
     share 13.31% ta'
+  predicate: test "$(gh issue view 687 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/687
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:55:47.344707Z'
     agent: opencode
@@ -117195,6 +117325,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/687'
 - id: GH-organvm-limen-685
   title: Make disk and worktree lifecycle enforce the 200GiB local-free target
   repo: organvm/limen
@@ -117213,9 +117348,12 @@ tasks:
     ## Measured consumers - `/Users/4jp/Workspace`: 87G - `/Users/4jp/Workspace/.limen-worktrees`:
     36G - `/Users/4jp/.gemini/antigravity-cli/scratch`: 22G - `/Users/4jp/Workspace/limen`:
     15G - `/Users/4j'
+  predicate: test "$(gh issue view 685 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/685
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:55:47.344707Z'
     agent: opencode
@@ -117233,6 +117371,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/685'
 - id: GH-organvm-limen-688
   title: Build external estate custody implementation receipt
   repo: organvm/limen
@@ -117252,9 +117395,12 @@ tasks:
     the drives are unplugged. ## Owner scope - Preserve Archive4T as curated archive,
     Ingress as intake, Scratch as disposable workspace, and T7Recovery as second local
     recovery copy. - Keep private/raw data'
+  predicate: test "$(gh issue view 688 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/688
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -117292,6 +117438,11 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/688'
 - id: DISCOVER-organvm-organvm-iii-ergon.github.io
   title: Discover the latent value of organvm/organvm-iii-ergon.github.io
   repo: organvm/organvm-iii-ergon.github.io
@@ -117300,7 +117451,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -117318,9 +117469,15 @@ tasks:
     \ best concrete first task; if it is genuinely archival, write the thesis saying\
     \ so (so it is never re-discovered) \u2014 do NOT promote it. Keep any build green.\
     \ Output the thesis. [auto-discovery 2026-07-07; no repo stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS","DISCOVER-organvm-organvm-iii-ergon.github.io-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-organvm-iii-ergon.github.io
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-09T23:35:24.867313Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -117352,6 +117509,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-organvm-iii-ergon.github.io'
 - id: HEAL-rebase-organvm-a-i-council--coliseum-175
   title: rebase/resolve conflicts on organvm/a-i-council--coliseum#175
   repo: organvm/a-i-council--coliseum
@@ -117521,9 +117683,12 @@ tasks:
     \ PR and do NOT drop any unique work \u2014 absorb the branch toward current ideal\
     \ form. PR: https://github.com/organvm/limen/pull/434 [auto-emitted 2026-07-07\
     \ by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 434 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/434
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -117566,6 +117731,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/pull/434'
 - id: HEAL-rebase-organvm-limen-436
   title: rebase/resolve conflicts on organvm/limen#436
   repo: organvm/limen
@@ -120091,9 +120261,13 @@ tasks:
   urls: []
   context: 'docs/reviews/retro-2026-06-24--2026-07-08.md finding 1 (cifix hamster
     wheel: growth-auditor #16-#22, dot-github--theoria #492+ all open-unmergeable)'
+  predicate: test "$(gh pr list --repo organvm/limen --state merged --search 'RETRO-0708-HEAL-GATE
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])RETRO\\-0708\\-HEAL\\-GATE([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/limen:pull-request:RETRO-0708-HEAL-GATE
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
@@ -120111,6 +120285,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/limen:pull-request:RETRO-0708-HEAL-GATE'
 - id: RETRO-0708-HEAL-RECEIPT-OUTCOME
   title: Heal receipts outcome field + beat-wired heal-convergence report
   description: 'Add {outcome: already_green|fixed|gave_up, failing_checks:[...]} to
@@ -120397,9 +120576,13 @@ tasks:
   urls: []
   context: 'docs/reviews/retro-2026-06-24--2026-07-08.md finding 10 (session 019f3f56:
     3.85M budget tokens over 10.4h, gate blocks continuation-beat only)'
+  predicate: test "$(gh pr list --repo organvm/limen --state merged --search 'RETRO-0708-CODEX-BUDGET-RESET
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])RETRO\\-0708\\-CODEX\\-BUDGET\\-RESET([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/limen:pull-request:RETRO-0708-CODEX-BUDGET-RESET
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -120423,6 +120606,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/limen:pull-request:RETRO-0708-CODEX-BUDGET-RESET'
 - id: RETRO-0708-STRANDED-PR-SWEEP
   title: Reconcile stranded PRs by mechanism + dispatch-time dedup
   description: 'Run merge-policy.sh across the open CAPFILL set and the codex drafts
@@ -120583,9 +120771,13 @@ tasks:
   urls: []
   context: docs/reviews/retro-2026-06-24--2026-07-08.md finding 5 + gap model (receipts-for-results,
     07-06 surge 56% churn) + evolution 6
+  predicate: test "$(gh pr list --repo organvm/limen --state merged --search 'RETRO-0708-RECEIPT-CLASSIFIER
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])RETRO\\-0708\\-RECEIPT\\-CLASSIFIER([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/limen:pull-request:RETRO-0708-RECEIPT-CLASSIFIER
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -120613,6 +120805,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/limen:pull-request:RETRO-0708-RECEIPT-CLASSIFIER'
 - id: HEAL-rebase-organvm-petasum-super-petasum-151
   title: rebase/resolve conflicts on organvm/petasum-super-petasum#151
   repo: organvm/petasum-super-petasum
@@ -122265,9 +122462,13 @@ tasks:
   - tried:jules
   urls: []
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
+  predicate: test "$(gh pr list --repo organvm/limen --state merged --search 'EXCAV-0708-BURIED-SWEEP
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])EXCAV\\-0708\\-BURIED\\-SWEEP([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/limen:pull-request:EXCAV-0708-BURIED-SWEEP
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -122301,6 +122502,11 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/limen:pull-request:EXCAV-0708-BURIED-SWEEP'
 - id: EXCAV-0708-THEONE-REFRAME
   title: Reframe 00-THE-ONE.md as the theory appendix (FLAME is the operating speech)
   description: 'Per the consolidation decision: add a framing header to knowledge-corpus/00-THE-ONE.md
@@ -122316,10 +122522,20 @@ tasks:
   - excav-0708
   urls: []
   context: docs/reviews/full-history-excavation-2026-06-08--2026-07-08.md
+  predicate: test "$(gh pr list --repo organvm/knowledge-corpus --state merged --search
+    'EXCAV-0708-THEONE-REFRAME in:body' --json body --jq '([.[] | select((.body //
+    "") | test("(^|[^A-Za-z0-9_.-])EXCAV\\-0708\\-THEONE\\-REFRAME([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/knowledge-corpus:pull-request:EXCAV-0708-THEONE-REFRAME
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-08T15:12:04.437426Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/knowledge-corpus:pull-request:EXCAV-0708-THEONE-REFRAME'
 - id: REV-organvm-limen-revenue-ship-0708
   title: Drive PR-Repair Factory to deploy-ready
   repo: organvm/limen
@@ -122343,9 +122559,14 @@ tasks:
     \ confirm the app runs end-to-end. Output: a deploy-ready build + a short DEPLOY.md\
     \ listing exactly what remains. [revenue-backlog 2026-07-08: rank 7, stage building\
     \ \u2014 spend tokens on income, not busywork]"
+  predicate: python3 scripts/ship-gate.py --check --task REV-organvm-limen-revenue-ship-0708
+    && test "$(gh pr list --repo organvm/limen --state merged --search 'REV-organvm-limen-revenue-ship-0708
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])REV\\-organvm\\-limen\\-revenue\\-ship\\-0708([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/limen:pull-request:REV-organvm-limen-revenue-ship-0708
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -122373,6 +122594,11 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/limen:pull-request:REV-organvm-limen-revenue-ship-0708'
 - id: REV-organvm-limen-revenue-funding-0708
   title: Stage the donation funnel for MONETA Mint-as-a-Service
   repo: organvm/limen
@@ -122433,9 +122659,13 @@ tasks:
     \ is the case study) and close it with a real, tested change. One focused PR;\
     \ keep CI green. [revenue-backlog 2026-07-08: rank 7, stage building \u2014 spend\
     \ tokens on income, not busywork]"
+  predicate: test "$(gh pr list --repo organvm/limen --state merged --search 'REV-organvm-limen-revenue-readiness-0708
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])REV\\-organvm\\-limen\\-revenue\\-readiness\\-0708([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/limen:pull-request:REV-organvm-limen-revenue-readiness-0708
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T10:07:55.764360Z'
     agent: opencode
@@ -122453,6 +122683,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/limen:pull-request:REV-organvm-limen-revenue-readiness-0708'
 - id: REV-organvm-limen-revenue-pro-tier-0708
   title: Make the Pro-tier checkout merge-ready for MONETA Mint-as-a-Service
   repo: organvm/limen
@@ -124463,16 +124698,22 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - sovereign
   - excav-0708
   - slow
   urls: []
   context: operator ask 2026-07-08 (encrypted client comms)
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("SOVEREIGN-0708-GPG-DISCOVERABILITY","SOVEREIGN-0708-GPG-ESCROW","SOVEREIGN-0708-GPG-UID");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#SOVEREIGN-0708-GPG-CURRENT
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T12:33:13.252713Z'
     agent: opencode
@@ -124490,6 +124731,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#SOVEREIGN-0708-GPG-CURRENT'
 - id: SOVEREIGN-0708-MONERO-RAIL
   title: "MONETA v2: add a Monero (XMR) rail \u2014 privacy-max payment, view-key/proof\
     \ verification"
@@ -125284,7 +125530,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - slow
   urls:
@@ -125295,9 +125541,12 @@ tasks:
     \ and pushes ciphertext to the private vault repo \\`organvm/arca\\`. The key\
     \ was auto-generated into the macOS Keychain (service: \\`limen-arca-vault\\`)\
     \ and exists nowhere else. **The one atom only Anthony can pull (~2 min):**"
+  predicate: test "$(gh issue view 719 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/719
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:20:30.792444Z'
     agent: opencode
@@ -125315,6 +125564,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: needs_human
+    output: 'ask-gate-migration-2026-07-12: parents:needs_human; receipt=https://github.com/organvm/limen/issues/719'
 - id: HEAL-cifix-organvm-limen-695
   title: fix failing CI on organvm/limen#695
   repo: organvm/limen
@@ -125757,9 +126011,12 @@ tasks:
     \ auto-closed the moment the residual clears from `logs/censor-residual.json`\
     \ (the beat regenerates that file from the insights lineage). Closing it by hand\
     \ is a veto: respected forever, never reopened. First s"
+  predicate: test "$(gh issue view 764 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/764
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -125797,6 +126054,11 @@ tasks:
     route_to: codex
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head failed->codex'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/764'
 - id: GH-organvm-limen-763
   title: 'censor: Recurring friction across 2 insights reports: Premature or hollow
     completion claims'
@@ -125818,9 +126080,12 @@ tasks:
     \ auto-closed the moment the residual clears from `logs/censor-residual.json`\
     \ (the beat regenerates that file from the insights lineage). Closing it by hand\
     \ is a veto: respected forever, never reopened. First s"
+  predicate: test "$(gh issue view 763 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/763
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -125853,6 +126118,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/763'
 - id: GH-organvm-limen-762
   title: 'censor: Recurring friction across 3 insights reports: Auth, permission,
     and safety-gate interruptions'
@@ -125873,9 +126143,12 @@ tasks:
     \ auto-closed the moment the residual clears from `logs/censor-residual.json`\
     \ (the beat regenerates that file from the insights lineage). Closing it by hand\
     \ is a veto: respected forever, never reopened. First s"
+  predicate: test "$(gh issue view 762 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/762
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:20:30.792444Z'
     agent: opencode
@@ -125893,6 +126166,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/762'
 - id: GH-organvm-limen-761
   title: 'censor: Recurring friction across 4 insights reports: Shallow first approach
     requiring redirection'
@@ -125913,9 +126191,12 @@ tasks:
     \ auto-closed the moment the residual clears from `logs/censor-residual.json`\
     \ (the beat regenerates that file from the insights lineage). Closing it by hand\
     \ is a veto: respected forever, never reopened. First s"
+  predicate: test "$(gh issue view 761 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/761
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:20:30.792444Z'
     agent: opencode
@@ -125933,6 +126214,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/761'
 - id: HEAL-rebase-organvm-public-record-data-scrapper-338
   title: rebase/resolve conflicts on organvm/public-record-data-scrapper#338
   repo: organvm/public-record-data-scrapper
@@ -127122,9 +127408,12 @@ tasks:
     \ auto-closed the moment the residual clears from `logs/censor-residual.json`\
     \ (the beat regenerates that file from the insights lineage). Closing it by hand\
     \ is a veto: respected forever, never reopened. First s"
+  predicate: test "$(gh issue view 766 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/766
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -127148,6 +127437,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/766'
 - id: HEAL-rebase-organvm-domus-genoma-132
   title: rebase/resolve conflicts on organvm/domus-genoma#132
   repo: organvm/domus-genoma
@@ -127534,9 +127828,14 @@ tasks:
   - tried:opencode
   - slow
   urls: []
+  predicate: bash -lc 'python3 scripts/antigravity-scratch-bridge.py --json | jq -e
+    "([.summary.by_disposition.bridge_required // 0, .summary.by_disposition.preserve_required
+    // 0, .summary.by_disposition.container_review_required // 0, .summary.by_disposition.non_git_review_required
+    // 0, .summary.by_disposition.safe_reap_candidate // 0] | add) == 0" >/dev/null'
+  receipt_target: git:organvm/limen:docs/antigravity-scratch-preservation.jsonl
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -127569,6 +127868,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=git:organvm/limen:docs/antigravity-scratch-preservation.jsonl'
 - id: aw-opencode-db-corpus-intake-0709
   title: Route opencode.db (8.3 GB packed session history) into the prompt-corpus
     intake
@@ -127681,9 +127985,12 @@ tasks:
     Two defects, one organ (scripts/reap-branches.py): 1. **Pending-acceptance branches
     have no durable home.** A branch classified `reap` but lacking a ledger entry
     exists only in `--check` stdout. `writ'
+  predicate: test "$(gh issue view 784 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/784
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:34:00.181684Z'
     agent: opencode
@@ -127701,6 +128008,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/784'
 - id: GH-organvm-limen-775
   title: MOUNT the 4444J99 SSD to recover the Nov-2025 deep-history archives
   repo: organvm/limen
@@ -127708,7 +128020,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - tried:jules
   - slow
@@ -127720,9 +128032,14 @@ tasks:
     \ `.../cognitive-archaelogy-tribunal/chat-exports-all-112125/` are hollow shells\
     \ needing recovery. Route via the CVSTOS estate registry. Blocker for: EXCAV-0708-VENDOR-ARCHIVES.\
     \ This issue replaces the place"
+  predicate: python3 -c 'import json,subprocess; p=json.loads(subprocess.check_output(["gh","issue","view","775","--repo","organvm/limen","--json","state,stateReason"]));
+    l=json.load(open("his-hand-levers.json")); assert p["state"] == "CLOSED" and p["stateReason"]
+    == "NOT_PLANNED"; assert next(x["issue"] for x in l["levers"] if x["id"] == "L-ESTATE-MOUNT-4444J99")
+    == 790'
+  receipt_target: https://github.com/organvm/limen/issues/790
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:38:25.193412Z'
     agent: jules
@@ -127760,6 +128077,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:superseded; receipt=https://github.com/organvm/limen/issues/790'
 - id: GH-organvm-limen-774
   title: Land the dispatch-admission lane preserved on heal/live-main-snapshot-60edc0d2
   repo: organvm/limen
@@ -127778,9 +128100,12 @@ tasks:
     \ gate dispatch admission** \u2014 1,602 insertions: `scripts/dispatch-admission.py`,\
     \ `scripts/check-dispatch-admission.py`, `cli/src/limen/dispatch.py` admission\
     \ gating, `scripts/handoff-relay.py` delta bey"
+  predicate: test "$(gh issue view 774 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/774
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
     agent: codex
@@ -127804,6 +128129,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/774'
 - id: GH-organvm-universal-mail-automation-154
   title: Make UMA the single mail-triage owner with daily proof receipts
   repo: organvm/universal-mail--automation
@@ -127847,7 +128177,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - slow
   urls:
@@ -127857,9 +128187,12 @@ tasks:
     the pre-C_MAT loop body. Once sync-release reconciles the live checkout: `launchctl
     kickstart -k gui/$(id -u)/com.limen.heartbeat`, then verify `logs/.voice/mat`
     stamps within a beat cycle. Any session can execute this; it needs no human hand.'
+  predicate: test "$(gh issue view 793 --repo organvm/limen --json state,stateReason
+    --jq '.state + ":" + .stateReason')" = CLOSED:COMPLETED
+  receipt_target: https://github.com/organvm/limen/issues/793
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:43:33.664898Z'
     agent: opencode
@@ -127877,6 +128210,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: done
+    output: 'ask-gate-migration-2026-07-12: parents:done; receipt=https://github.com/organvm/limen/issues/793'
 - id: GH-organvm-limen-791
   title: 'needs-human (L-DAILY-ENGINE-PHONE-SETUP): Daily-engine phone setup'
   repo: organvm/limen
@@ -128580,7 +128918,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - slow
   urls:
@@ -128591,9 +128929,12 @@ tasks:
     \ Claude Code sessions bypass the fleet model shim and used the account default\
     \ (Fable); subagent fan-out inherits the session model. - The 40%/50% caps in\
     \ `docs/fable-allotment.md` were checked only aga"
+  predicate: test "$(gh issue view 817 --repo organvm/limen --json state,stateReason
+    --jq '.state + ":" + .stateReason')" = CLOSED:COMPLETED
+  receipt_target: https://github.com/organvm/limen/issues/817
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:43:33.664898Z'
     agent: opencode
@@ -128611,6 +128952,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: done
+    output: 'ask-gate-migration-2026-07-12: parents:done; receipt=https://github.com/organvm/limen/issues/817'
 - id: ORG-sovereignty-organ-deepen-0709
   title: Deepen the sovereignty organ toward a usable institution
   repo: organvm/manumissio
@@ -128803,7 +129149,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - slow
   urls:
@@ -128814,9 +129160,12 @@ tasks:
     appends the SessionStart `fable-session-guard.py` hook. Makes the interactive-Fable
     bypass closure durable (dispatch-side cap already live on main via #818). Verify:
     `scripts/verify-fable-gate.'
+  predicate: test "$(gh issue view 827 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/827
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:53:43.364244Z'
     agent: opencode
@@ -128834,6 +129183,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: needs_human
+    output: 'ask-gate-migration-2026-07-12: parents:needs_human; receipt=https://github.com/organvm/limen/issues/827'
 - id: HEAL-cifix-organvm-domus-genoma-230
   title: fix failing CI on organvm/domus-genoma#230
   repo: organvm/domus-genoma
@@ -129090,9 +129444,12 @@ tasks:
     \ (`{{ if .ssh_signing_key_literal }}` \u2014 errors under strict `missingkey`;\
     \ already fixed on `master` via the `index . \"\u2026\"` guard). That single template\
     \ error **aborts the entire `chezmoi status`/`diff`/`ap"
+  predicate: test "$(gh issue view 833 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/833
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:53:43.364244Z'
     agent: opencode
@@ -129110,6 +129467,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/833'
 - id: GH-organvm-limen-829
   title: 'Convergence campaign: remaining closing-engine levers (throughput, resume-not-respawn,
     needs_human drain)'
@@ -129129,9 +129491,12 @@ tasks:
     \ heal(sync-release): preserve-then-unpark \u2014 merged code always runs within\
     \ one beat - #826 feat(reclaim): pushed-to-origin is enough to reap a local worktree\
     \ \u2014 drains the 62 GiB / 571-root debt - #806"
+  predicate: test "$(gh issue view 829 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/829
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T11:53:43.364244Z'
     agent: opencode
@@ -129149,6 +129514,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/829'
 - id: GH-organvm-universal-mail-automation-157
   title: 'Waste triage 2026-07-09: closed 6 stale PRs, 3 green PRs ready to merge'
   repo: organvm/universal-mail--automation
@@ -129245,7 +129615,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -129262,10 +129632,21 @@ tasks:
     \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
     \ Keep any build green. Output the thesis. [auto-discovery 2026-07-09; no repo\
     \ stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-arca-THESIS","DISCOVER-organvm-arca-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-arca
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T00:27:36.921983Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-arca'
 - id: DISCOVER-organvm-daily-engine
   title: Discover the latent value of organvm/daily-engine
   repo: organvm/daily-engine
@@ -129274,7 +129655,7 @@ tasks:
   workstream: conductor
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - discover
   - value-discovery
@@ -129291,10 +129672,21 @@ tasks:
     \ the thesis saying so (so it is never re-discovered) \u2014 do NOT promote it.\
     \ Keep any build green. Output the thesis. [auto-discovery 2026-07-09; no repo\
     \ stays dark]"
+  predicate: python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"cli/src");
+    from limen.intake import validate_intake_contract; from limen.io import load_limen_file;
+    b={t.id:t for t in load_limen_file(Path("tasks.yaml")).tasks}; ids=("DISCOVER-organvm-daily-engine-THESIS","DISCOVER-organvm-daily-engine-RANK");
+    assert all(i in b for i in ids); [validate_intake_contract(b[i],is_new=True) for
+    i in ids]'
+  receipt_target: git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-daily-engine
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T00:27:36.930305Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: archived
+    output: 'ask-gate-migration-2026-07-12: parents:split; receipt=git:organvm/limen:docs/ask-gate-migration-2026-07-12.json#DISCOVER-organvm-daily-engine'
 - id: HEAL-rebase-organvm-session-meta-149
   title: rebase/resolve conflicts on organvm/session-meta#149
   repo: organvm/session-meta
@@ -129958,10 +130350,22 @@ tasks:
     pass. If CI is already green, add the single most valuable missing check (e.g.
     typecheck or test-matrix) instead. [auto-generated 2026-07-09 to keep the stream
     endless]
+  predicate: test "$(gh pr list --repo organvm/manumissio --state merged --search
+    'GEN-organvm-manumissio-ci-green-0709 in:body' --json body --jq '([.[] | select((.body
+    // "") | test("(^|[^A-Za-z0-9_.-])GEN\\-organvm\\-manumissio\\-ci\\-green\\-0709([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0 && test "$(gh api repos/organvm/manumissio/commits/main --jq
+    .sha)" = "$(gh run list --repo organvm/manumissio --workflow ci.yml --branch main
+    --event push --status success --limit 1 --json headSha --jq '.[0].headSha')"
+  receipt_target: github:organvm/manumissio:pull-request:GEN-organvm-manumissio-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T01:55:24.234474Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/manumissio:pull-request:GEN-organvm-manumissio-ci-green-0709'
 - id: GEN-organvm-portfolio-ci-green-0709
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
@@ -129981,10 +130385,21 @@ tasks:
     pass. If CI is already green, add the single most valuable missing check (e.g.
     typecheck or test-matrix) instead. [auto-generated 2026-07-09 to keep the stream
     endless]
+  predicate: test "$(gh pr list --repo organvm/portfolio --state merged --search 'GEN-organvm-portfolio-ci-green-0709
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])GEN\\-organvm\\-portfolio\\-ci\\-green\\-0709([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0 && test "$(gh api repos/organvm/portfolio/commits/main --jq
+    .sha)" = "$(gh run list --repo organvm/portfolio --workflow ci.yml --branch main
+    --event push --status success --limit 1 --json headSha --jq '.[0].headSha')"
+  receipt_target: github:organvm/portfolio:pull-request:GEN-organvm-portfolio-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T01:55:24.235223Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/portfolio:pull-request:GEN-organvm-portfolio-ci-green-0709'
 - id: GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709
   title: Make organvm/peer-audited--behavioral-blockchain CI green
   repo: organvm/peer-audited--behavioral-blockchain
@@ -130004,10 +130419,23 @@ tasks:
     confirm the checks pass. If CI is already green, add the single most valuable
     missing check (e.g. typecheck or test-matrix) instead. [auto-generated 2026-07-09
     to keep the stream endless]
+  predicate: test "$(gh pr list --repo organvm/peer-audited--behavioral-blockchain
+    --state merged --search 'GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])GEN\\-organvm\\-peer\\-audited\\-\\-behavioral\\-blockchain\\-ci\\-green\\-0709([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0 && test "$(gh api repos/organvm/peer-audited--behavioral-blockchain/commits/main
+    --jq .sha)" = "$(gh run list --repo organvm/peer-audited--behavioral-blockchain
+    --workflow ci.yml --branch main --event push --status success --limit 1 --json
+    headSha --jq '.[0].headSha')"
+  receipt_target: github:organvm/peer-audited--behavioral-blockchain:pull-request:GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T01:55:24.237005Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/peer-audited--behavioral-blockchain:pull-request:GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709'
 - id: GEN-organvm-limen-ci-green-0709
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -130029,13 +130457,12 @@ tasks:
     pass. If CI is already green, add the single most valuable missing check (e.g.
     typecheck or test-matrix) instead. [auto-generated 2026-07-09 to keep the stream
     endless]
-  predicate: gh run view 29198231301 --repo organvm/limen --json headSha,conclusion
-    --jq 'select(.headSha == "04baa47d471f44a8faa3beb790f5636fe65d77ef" and .conclusion
-    == "success")'
+  predicate: test "$(gh run view 29198231301 --repo organvm/limen --json headSha,conclusion
+    --jq '.headSha + ":" + .conclusion')" = "04baa47d471f44a8faa3beb790f5636fe65d77ef:success"
   receipt_target: https://github.com/organvm/limen/actions/runs/29198231301
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-12T15:48:35.168282Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-12T15:48:35.168282Z'
     agent: codex
@@ -130044,6 +130471,11 @@ tasks:
     output: 'Stale task closed from current remote truth: exact-head CI/Fleet Gate/validate
       passed at 04baa47d; workflow-dispatched Conductor Report 29198792444 also passed
       on that exact head.'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: done
+    output: 'ask-gate-migration-2026-07-12: parents:done; receipt=https://github.com/organvm/limen/actions/runs/29198231301'
 - id: REV-organvm-mirror-mirror-revenue-ship-0709
   title: Drive Mirror Mirror to deploy-ready
   repo: organvm/mirror-mirror
@@ -130991,7 +131423,7 @@ tasks:
   target_agent: claude
   priority: medium
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - bug
   - slow
@@ -131003,9 +131435,12 @@ tasks:
     \ pr-gate. Verified: `127304e8` / `5ad34aa3` (\"limen: \u2026 live \u2026 meters\
     \ in capacity\") are single-parent commits with **no PR association**; recent\
     \ main history is almost entirely `limen: \u2026` / `tabularius"
+  predicate: test "$(gh issue view 872 --repo organvm/limen --json state,stateReason
+    --jq '.state + ":" + .stateReason')" = CLOSED:COMPLETED
+  receipt_target: https://github.com/organvm/limen/issues/872
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T17:13:43.412727Z'
     agent: opencode
@@ -131027,6 +131462,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: done
+    output: 'ask-gate-migration-2026-07-12: parents:done; receipt=https://github.com/organvm/limen/issues/872'
 - id: VOX-0
   title: "VOX core \u2014 voice substrate contract (clone/synthesize/transcribe/presets/API)"
   repo: organvm/vox
@@ -131080,11 +131520,20 @@ tasks:
     of vox; onboarding consumes voice_id (no ElevenLabs login UI); paste/import +
     style picker + tts + client-side 9:16 video export + inbox card. Verify: consumes
     vox only, no account/credential UI, video respects preset video_layout/intro_line.'
+  predicate: test "$(gh pr list --repo organvm/in-my-head --state merged --search
+    'VOX-1 in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])VOX\\-1([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/in-my-head:pull-request:VOX-1
   depends_on:
   - VOX-0
   created: '2026-07-10'
-  updated: '2026-07-10T18:10:00Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/in-my-head:pull-request:VOX-1'
 - id: VOX-2
   title: "Reading styles \u2014 arrive at the ideal form of a delivery persona"
   repo: organvm/vox
@@ -131103,11 +131552,20 @@ tasks:
     wrappers); fold into VoiceCharacteristics without breaking vox/types. Verify:
     anchored to speech-score terminology charter, single type contract, no account
     logic.'
+  predicate: test "$(gh pr list --repo organvm/vox --state merged --search 'VOX-2
+    in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])VOX\\-2([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/vox:pull-request:VOX-2
   depends_on:
   - VOX-0
   created: '2026-07-10'
-  updated: '2026-07-10T18:10:00Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/vox:pull-request:VOX-2'
 - id: VOX-3a
   title: "Ingest receiver \u2014 pure seam (IncomingMessage + RenderJob) in vox"
   repo: organvm/vox
@@ -131221,11 +131679,20 @@ tasks:
     talking-head; A/B layouts against shareability. Verify: reuses existing streaming
     subsystem (no duplicate engine), layout driven by preset video_layout, no credential
     in visual layer.'
+  predicate: test "$(gh pr list --repo organvm/in-my-head --state merged --search
+    'VOX-5 in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])VOX\\-5([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/in-my-head:pull-request:VOX-5
   depends_on:
   - VOX-1
   created: '2026-07-10'
-  updated: '2026-07-10T18:10:00Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/in-my-head:pull-request:VOX-5'
 - id: VOX-META
   title: "VOX program \u2014 register + macro-verify + assign to owners"
   repo: organvm/limen
@@ -131522,9 +131989,12 @@ tasks:
     \ the completed PDF** (`~/Downloads/JewishBoard-PHI-Request-Anthony-Padavano.pdf`,\
     \ 136 KB). The user's directive: *\"that's a problem that needs solving \u2014\
     \ make the owner of that problem know it.\"* This"
+  predicate: test "$(gh issue view 890 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/890
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-10T21:56:45.562692Z'
+  updated: '2026-07-12T22:11:25Z'
   dispatch_log:
   - timestamp: '2026-07-10T19:45:16.669254Z'
     agent: opencode
@@ -131542,6 +132012,11 @@ tasks:
     route_to: jules
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head timeout->jules'
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=https://github.com/organvm/limen/issues/890'
 - id: HEAL-cifix-organvm-limen-620
   title: fix failing CI on organvm/limen#620
   repo: organvm/limen
@@ -132090,11 +132565,20 @@ tasks:
     consumer redefines the vox contract in lib/types.ts (a documented mirror carrying
     a TODO) instead of importing the canonical vox/profiles + vox/types. Retire the
     mirror; import the contract from the vox package. See spec/vox-program-verification.md.'
+  predicate: test "$(gh pr list --repo organvm/in-my-head --state merged --search
+    'VOX-6 in:body' --json body --jq '([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])VOX\\-6([^A-Za-z0-9_.-]|$)"))]
+    | length)')" -gt 0
+  receipt_target: github:organvm/in-my-head:pull-request:VOX-6
   depends_on:
   - VOX-1
   created: '2026-07-10'
-  updated: '2026-07-10T21:48:19.223207Z'
-  dispatch_log: []
+  updated: '2026-07-12T22:11:25Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T22:11:25Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/in-my-head:pull-request:VOX-6'
 - id: HEAL-cifix-organvm-manumissio-18
   title: fix failing CI on organvm/manumissio#18
   repo: organvm/manumissio
@@ -133798,11 +134282,12 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
   - ci-red
+  - noop
   urls:
   - https://github.com/organvm/domus-genoma/pull/300
   context: "PR organvm/domus-genoma#300 has FAILING CI checks and merge-drain correctly\
@@ -133818,7 +134303,7 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/300
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-12T21:36:57.961698Z'
+  updated: '2026-07-12T21:56:42.887994Z'
   dispatch_log:
   - timestamp: '2026-07-12T16:37:41.226753Z'
     agent: agy
@@ -133863,6 +134348,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T21:56:42.887994Z'
+    agent: agy
+    session_id: cli
+    status: failed
+    output: No-op result; failed for recovery instead of archived.
 - id: DISCOVER-organvm-organvm-iii-ergon.github.io-RANK
   title: Materialize the value disposition for organvm/organvm-iii-ergon.github.io
   description: After DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS merges, record
