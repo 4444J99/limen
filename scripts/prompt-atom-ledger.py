@@ -950,16 +950,20 @@ def source_exclusion_candidate_id(
     suffix = path.suffix.lower()
 
     if source == "claude-file-history":
-        if len(parts) == 2 and re.fullmatch(r"[0-9a-fA-F]{16}@v[0-9]+", path.name):
+        if len(parts) >= 1 and re.fullmatch(r"[0-9a-fA-F]+@v[0-9]+", path.name):
             return "claude-file-history-snapshot-v1"
         return None
     if source == "claude-plans":
-        return "claude-generated-plan-v1" if len(parts) == 1 and suffix == ".md" else None
-    if source == "claude-tasks" and len(parts) == 2:
+        return "claude-generated-plan-v1"
+    if source == "codex-attachments":
+        return "codex-attachment-v1"
+    if source == "claude-tasks" and len(parts) >= 1:
         if path.name == ".lock" and int(signature.get("size") or 0) == 0:
             return "claude-task-lock-v1"
         if path.name == ".highwatermark":
             return "claude-task-watermark-v1"
+        if suffix not in (".json", ".jsonl", ".md"):
+            return "claude-task-artifact-v1"
         return None
     if source != "claude-projects" or len(parts) < 2:
         return None
@@ -976,6 +980,8 @@ def source_exclusion_candidate_id(
         if sibling_relative is not None and sibling_relative.parts == (parts[0], "memory", path.name):
             return "claude-project-memory-mirror-v1"
         return None
+    if len(parts) >= 4 and suffix not in (".json", ".jsonl", ".md"):
+        return "claude-project-media-v1"
     return None
 
 

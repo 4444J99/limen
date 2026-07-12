@@ -1907,11 +1907,13 @@ def test_all_history_prune_does_not_resurrect_last_stale_source_receipts(tmp_pat
 
 def test_unsupported_source_is_visible_and_blocks_all_scope(tmp_path: Path, monkeypatch):
     sources = _load()
-    unsupported = tmp_path / "plan.md"
-    unsupported.write_text("derived plan", encoding="utf-8")
+    projects = tmp_path / ".claude" / "projects"
+    unsupported = projects / "project" / "rogue.md"
+    unsupported.parent.mkdir(parents=True)
+    unsupported.write_text("unknown markdown", encoding="utf-8")
     lifecycle = _regular_lifecycle(
         sources,
-        [{"source": "claude-plans", "path": unsupported, "mtime": "2026-07-11"}],
+        [{"source": "claude-projects", "path": unsupported, "mtime": "2026-07-11"}],
     )
     monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
 
@@ -1923,9 +1925,9 @@ def test_unsupported_source_is_visible_and_blocks_all_scope(tmp_path: Path, monk
 
     assert cursor["scope"] == "partial:all"
     assert cursor["unsupported_source_count"] == 1
-    assert cursor["adapter_gaps"] == ["claude-plans"]
-    assert cursor["source_coverage"]["claude-plans"]["unsupported"] == 1
-    assert cursor["source_families"]["claude-plans"]["unsupported"] == 1
+    assert cursor["adapter_gaps"] == ["claude-projects"]
+    assert cursor["source_coverage"]["claude-projects"]["unsupported"] == 1
+    assert cursor["source_families"]["claude-projects"]["unsupported"] == 1
 
     cursor_path = tmp_path / "cursor.json"
     cursor_path.write_text(json.dumps(cursor), encoding="utf-8")
@@ -2092,12 +2094,14 @@ def test_structural_exclusion_near_misses_remain_adapter_gaps(tmp_path: Path):
 
     assert events == []
     assert result["errors"] == []
-    assert len(result["unsupported"]) == 4
-    assert result["excluded_unit_receipts"] == {}
+    assert len(result["unsupported"]) == 3
+    nonempty_lock_key = sources.cursor_unit_key("claude-tasks", nonempty_lock)
+    assert nonempty_lock_key in result["excluded_unit_receipts"]
+    assert result["excluded_unit_receipts"][nonempty_lock_key]["contract_id"] == "claude-task-artifact-v1"
     rogue_key = sources.cursor_unit_key("claude-projects", rogue_memory)
     assert result["unsupported_units"][rogue_key] == sources.file_signature(rogue_memory)
     assert rogue_key not in result["files"]
-    assert {row["unsupported"] for row in result["coverage"].values()} == {1, 2}
+    assert {row["unsupported"] for row in result["coverage"].values()} == {1}
 
 
 def test_claude_remote_task_command_adapts_despite_old_file_cache_and_cached_rerun_is_free(
@@ -3025,7 +3029,7 @@ def test_source_contract_digest_covers_complete_rule_descriptors(monkeypatch):
     assert changed["digest"] != original["digest"]
 
 
-def test_codex_text_attachment_stays_explicit_gap_without_parent_event_index(tmp_path: Path):
+def test_codex_attachment_is_excluded(tmp_path: Path):
     sources = _load()
     lifecycle = sources.load_lifecycle_module()
     attachments = tmp_path / ".codex" / "attachments"
@@ -3037,19 +3041,19 @@ def test_codex_text_attachment_stays_explicit_gap_without_parent_event_index(tmp
     lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
     row = {"source": "codex-attachments", "path": attachment}
     key = sources.cursor_unit_key("codex-attachments", attachment)
-    signature = sources.file_signature(attachment)
     events, result = sources.scan_regular_sources(
         lifecycle,
-        {"files": {}, "unsupported_units": {key: signature}},
+        {"files": {}, "unsupported_units": {}},
         days=None,
         budget=sources.ScanBudget(limit=1),
         rows=[row],
     )
 
     assert events == []
-    assert result["unsupported"] == [key]
-    assert result["adapted_unit_receipts"] == {}
-    assert result["coverage"]["codex-attachments"]["unsupported"] == 1
+    assert result["unsupported"] == []
+    assert key in result["excluded_unit_receipts"]
+    assert result["excluded_unit_receipts"][key]["contract_id"] == "codex-attachment-v1"
+    assert result["coverage"]["codex-attachments"]["excluded"] == 1
 
 
 def test_symlinked_exclusion_never_receives_a_contract_receipt(tmp_path: Path):

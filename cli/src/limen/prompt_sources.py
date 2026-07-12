@@ -71,11 +71,11 @@ SOURCE_ADAPTER_RULES: dict[str, dict[str, Any]] = {
 SOURCE_EXCLUSION_RULES: dict[str, dict[str, Any]] = {
     "claude-file-history-snapshot-v1": {
         "source": "claude-file-history",
-        "path": {"relative_depth": 2, "basename_regex": "[0-9a-fA-F]{16}@v[0-9]+"},
+        "path": {"minimum_relative_depth": 1, "basename_regex": "[0-9a-fA-F]+@v[0-9]+"},
     },
     "claude-generated-plan-v1": {
         "source": "claude-plans",
-        "path": {"relative_depth": 1, "suffix": ".md"},
+        "path": {"minimum_relative_depth": 1},
     },
     "claude-project-memory-v1": {
         "source": "claude-projects",
@@ -110,6 +110,18 @@ SOURCE_EXCLUSION_RULES: dict[str, dict[str, Any]] = {
             "segments_2_3": ["workflows", "scripts"],
             "suffix": ".js",
         },
+    },
+    "codex-attachment-v1": {
+        "source": "codex-attachments",
+        "path": {"minimum_relative_depth": 1},
+    },
+    "claude-task-artifact-v1": {
+        "source": "claude-tasks",
+        "path": {"minimum_relative_depth": 2},
+    },
+    "claude-project-media-v1": {
+        "source": "claude-projects",
+        "path": {"minimum_relative_depth": 4},
     },
 }
 SOURCE_ADAPTER_IDS = tuple(sorted(SOURCE_ADAPTER_RULES))
@@ -592,11 +604,13 @@ def source_contract_receipt_applies(
             and signature.get("size") == sibling_signature.get("size")
         )
 
+    prompt_suffixes = {".json", ".jsonl", ".md"}
+
     predicates = {
         "claude-file-history-snapshot-v1": lambda: (
-            len(relative) == 2 and re.fullmatch(r"[0-9a-fA-F]{16}@v[0-9]+", path.name) is not None
+            len(relative) >= 1 and re.fullmatch(r"[0-9a-fA-F]+@v[0-9]+", path.name) is not None
         ),
-        "claude-generated-plan-v1": lambda: len(relative) == 1 and suffix == ".md",
+        "claude-generated-plan-v1": lambda: len(relative) >= 1,
         "claude-project-memory-v1": lambda: len(relative) == 3 and relative[1] == "memory" and suffix == ".md",
         "claude-project-memory-mirror-v1": lambda: (
             len(relative) == 2 and suffix == ".md" and set(related) == {"memory_sibling"}
@@ -606,6 +620,7 @@ def source_contract_receipt_applies(
             len(relative) == 2 and path.name == ".lock" and isinstance(signature, dict) and signature.get("size") == 0
         ),
         "claude-task-watermark-v1": lambda: len(relative) == 2 and path.name == ".highwatermark",
+        "claude-task-artifact-v1": lambda: len(relative) >= 2 and suffix not in prompt_suffixes,
         "claude-workflow-script-v1": lambda: (
             len(relative) >= 5 and relative[2:4] == ("workflows", "scripts") and suffix == ".js"
         ),
@@ -614,6 +629,8 @@ def source_contract_receipt_applies(
         ),
         "claude-subagent-metadata-v1": lambda: "subagents" in relative[2:] and suffix == ".json",
         "claude-workflow-metadata-v1": lambda: "workflows" in relative[2:] and suffix == ".json",
+        "codex-attachment-v1": lambda: len(relative) >= 1,
+        "claude-project-media-v1": lambda: len(relative) >= 4 and suffix not in prompt_suffixes,
     }
     predicate = predicates.get(contract_id)
     if not predicate or not predicate():
