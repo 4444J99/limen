@@ -29,6 +29,9 @@ from typing import Any
 import yaml
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+from limen.runtime_config import RUNTIME_URL_ENV_ORDER, runtime_api_url  # noqa: E402
+
 # Doc artifacts belong to the repo this script lives in — never to the runtime root — so a
 # dev/worktree run cannot silently dirty the live checkout (LIMEN_ROOT keeps owning the board).
 REPO = Path(__file__).resolve().parents[1]
@@ -950,12 +953,11 @@ def cloud_receipts() -> dict[str, Any]:
         f"{firebase_base}/qa",
         f"{firebase_base}/client",
     ]
-    runtime_url = os.environ.get("LIMEN_WORKER_URL") or os.environ.get("NEXT_PUBLIC_API_URL")
+    runtime_url = runtime_api_url(ROOT)
     env_flags = {
         name: bool(os.environ.get(name))
         for name in (
-            "LIMEN_WORKER_URL",
-            "NEXT_PUBLIC_API_URL",
+            *RUNTIME_URL_ENV_ORDER,
             "LIMEN_API_TOKEN",
             "LIMEN_CLIENT_TOKEN",
             "CLOUDFLARE_API_TOKEN",

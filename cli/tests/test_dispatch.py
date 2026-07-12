@@ -18,6 +18,7 @@ from limen.capacity import PAID_AGENT_ORDER, agent_status, capacity_census, form
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.io import load_limen_file
+from limen.jules_remote import JulesRemoteSnapshot
 from limen.models import BudgetTrack, DispatchLogEntry, Task
 from limen.status import print_status
 
@@ -1016,7 +1017,7 @@ def test_release_stale_apply_survives_concurrent_board_write(
                 "id": "STALE-CLAIM",
                 "title": "Stale dispatched task",
                 "repo": "organvm/limen",
-                "target_agent": "jules",
+                "target_agent": "codex",
                 "priority": "high",
                 "budget_cost": 1,
                 "status": "dispatched",
@@ -1998,7 +1999,13 @@ def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:
     )
     before = tasks_path.read_text()
 
-    release_stale_tasks(load_limen_file(tasks_path), tasks_path, hours=24, dry_run=True)
+    release_stale_tasks(
+        load_limen_file(tasks_path),
+        tasks_path,
+        hours=24,
+        dry_run=True,
+        jules_snapshot=JulesRemoteSnapshot(available=False, sessions={}),
+    )
 
     assert tasks_path.read_text() == before
 
@@ -2012,7 +2019,7 @@ def test_release_stale_apply_reopens_task(tmp_path: Path) -> None:
                 "id": "LIMEN-002",
                 "title": "Stale Jules task",
                 "repo": "4444J99/limen",
-                "target_agent": "jules",
+                "target_agent": "codex",
                 "priority": "high",
                 "budget_cost": 1,
                 "status": "in_progress",
@@ -2270,7 +2277,14 @@ def test_release_stale_report_dry_run_does_not_mutate(tmp_path: Path) -> None:
     )
     before = tasks_path.read_text()
 
-    report = release_stale_tasks(load_limen_file(tasks_path), tasks_path, hours=24, dry_run=True, agent="jules")
+    report = release_stale_tasks(
+        load_limen_file(tasks_path),
+        tasks_path,
+        hours=24,
+        dry_run=True,
+        agent="jules",
+        jules_snapshot=JulesRemoteSnapshot(available=False, sessions={}),
+    )
 
     assert report["status"] == "dry_run"
     assert report["count"] == 1

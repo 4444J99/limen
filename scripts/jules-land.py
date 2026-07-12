@@ -26,6 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.dispatch import _resolve_repo_dir, _git, _default_branch  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.jules_remote import JulesRemoteSnapshot, probe_jules_remote_sessions  # noqa: E402
 from limen.models import DispatchLogEntry, Task  # noqa: E402
 from limen.worktree_roots import default_worktrees_root  # noqa: E402
 import datetime  # noqa: E402
@@ -61,7 +62,10 @@ def purge_generated_payloads(wt: Path) -> str:
     return f"removed:{removed}"
 
 
-def completed_sessions(sid_map: dict | None = None):
+def completed_sessions(
+    sid_map: dict | None = None,
+    snapshot: JulesRemoteSnapshot | None = None,
+):
     """(sid, task_id) for every COMPLETED jules session.
 
     task_id resolves FIRST from sid_map (session id → task id, built from tasks.yaml dispatch_log
@@ -71,18 +75,17 @@ def completed_sessions(sid_map: dict | None = None):
     (completed sessions never matched → never landed as PRs). sid_map is the robust primary matcher;
     the regex stays as a fallback for sessions we have no local record of."""
     sid_map = sid_map or {}
-    r = subprocess.run([JULES, "remote", "list", "--session"], capture_output=True, text=True, timeout=90)
+    remote = snapshot or probe_jules_remote_sessions(binary=JULES)
+    if not remote.available:
+        return []
     out = []
-    for line in r.stdout.splitlines():
-        parts = line.split()
-        if not parts or not parts[0].isdigit():
+    for session in remote.sessions.values():
+        if session.status != "completed":
             continue
-        if "completed" not in line.lower():
-            continue
-        sid = parts[0]
-        m = _TASK_ID_RE.search(line)
+        sid = session.session_id
+        m = _TASK_ID_RE.search(session.raw)
         out.append((sid, sid_map.get(sid) or (m.group(1) if m else "")))
-    return out
+    return sorted(out)
 
 
 def land_one(task: Task, sid: str, apply: bool) -> str:

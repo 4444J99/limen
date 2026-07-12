@@ -27,6 +27,12 @@ from limen.capacity import (
     select_lanes,
 )
 from limen.io import load_limen_file, save_limen_file, queue_lock as _queue_lock
+from limen.jules_remote import (
+    JulesRemoteSnapshot,
+    classify_jules_claim,
+    probe_jules_remote_sessions,
+    task_jules_session_id,
+)
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.doctor import stale_tasks
 from limen.provider_selection import (
@@ -3502,12 +3508,14 @@ def dispatch_parallel(
     )
 
 
-class ReleaseStaleCandidate(TypedDict):
+class ReleaseStaleCandidate(TypedDict, total=False):
     id: str
     title: str
     repo: str | None
     target_agent: str
     status: str
+    action: str
+    remote_status: str
 
 
 class ReleaseStaleReport(TypedDict):
@@ -3518,7 +3526,44 @@ class ReleaseStaleReport(TypedDict):
     count: int
     released: list[str]
     restored_done: list[str]
+    held: list[str]
+    harvest_ready: list[str]
+    recover_ready: list[str]
+    remote_probe: dict[str, Any]
     candidates: list[ReleaseStaleCandidate]
+
+
+def _release_stale_route(
+    task: Task,
+    snapshot: JulesRemoteSnapshot | None,
+) -> tuple[str, str]:
+    if task.target_agent != "jules":
+        return "release", "not_jules"
+    if snapshot is None:
+        return "hold", "cli_unavailable"
+    return classify_jules_claim(snapshot, task_jules_session_id(task))
+
+
+def _release_stale_snapshot(
+    candidates: list[Task],
+    supplied: JulesRemoteSnapshot | None,
+) -> JulesRemoteSnapshot | None:
+    if not any(task.target_agent == "jules" and not _has_done_transition(task) for task in candidates):
+        return None
+    return supplied if supplied is not None else probe_jules_remote_sessions()
+
+
+def _release_stale_probe_report(snapshot: JulesRemoteSnapshot | None, candidates: list[Task]) -> dict[str, Any]:
+    if not any(task.target_agent == "jules" for task in candidates):
+        return {"status": "not_requested", "session_count": 0}
+    if snapshot is None:
+        # The only no-snapshot Jules case is a prior-done transition, which does not require a
+        # remote lookup to restore its terminal invariant.
+        return {"status": "not_required", "session_count": 0}
+    return {
+        "status": "available" if snapshot.available else "unavailable",
+        "session_count": len(snapshot.sessions),
+    }
 
 
 def release_stale_tasks(
@@ -3527,6 +3572,8 @@ def release_stale_tasks(
     hours: int = 24,
     dry_run: bool = True,
     agent: str | None = None,
+    *,
+    jules_snapshot: JulesRemoteSnapshot | None = None,
 ) -> ReleaseStaleReport:
     now = datetime.now(timezone.utc)
     candidates = stale_tasks(limen, hours=hours, agent=agent)
@@ -3535,6 +3582,14 @@ def release_stale_tasks(
     print(f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}")
     released: list[str] = []
     restored_done: list[str] = []
+    held: list[str] = []
+    harvest_ready: list[str] = []
+    recover_ready: list[str] = []
+    candidate_rows: list[ReleaseStaleCandidate] = []
+    # Remote I/O must never occupy the single-writer board lock. Probe from the caller's read-only
+    # candidate snapshot first; the successful catalog remains valid for any freshly re-read Jules
+    # candidate, while a candidate that appeared after this read fails closed if no probe was needed.
+    snapshot = _release_stale_snapshot(candidates, jules_snapshot)
     if not dry_run:
         # APPLY re-selects and mutates on a FRESH board under the queue lock — persisting the
         # caller's snapshot would erase every write made since it was loaded (the dispatch
@@ -3551,12 +3606,16 @@ def release_stale_tasks(
                     "count": 0,
                     "released": [],
                     "restored_done": [],
+                    "held": [],
+                    "harvest_ready": [],
+                    "recover_ready": [],
+                    "remote_probe": {"status": "not_requested", "session_count": 0},
                     "candidates": [],
                 }
             fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
             candidates = stale_tasks(fresh, hours=hours, agent=agent)
             for task in candidates:
-                print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
+                original_status = task.status
                 if _restore_done_status(
                     task,
                     now,
@@ -3565,6 +3624,42 @@ def release_stale_tasks(
                     output="release-stale: prior done transition wins; restored terminal status",
                 ):
                     restored_done.append(task.id)
+                    candidate_rows.append(
+                        {
+                            "id": task.id,
+                            "title": task.title,
+                            "repo": task.repo,
+                            "target_agent": task.target_agent,
+                            "status": original_status,
+                            "action": "restore_done",
+                            "remote_status": "prior_done",
+                        }
+                    )
+                    print(f"  RESTORE done: {task.id} {original_status} {task.target_agent} — {task.title}")
+                    continue
+                action, remote_status = _release_stale_route(task, snapshot)
+                candidate_rows.append(
+                    {
+                        "id": task.id,
+                        "title": task.title,
+                        "repo": task.repo,
+                        "target_agent": task.target_agent,
+                        "status": original_status,
+                        "action": action,
+                        "remote_status": remote_status,
+                    }
+                )
+                if action == "hold":
+                    held.append(task.id)
+                    print(f"  HOLD: {task.id} remote={remote_status} — {task.title}")
+                    continue
+                if action == "harvest":
+                    harvest_ready.append(task.id)
+                    print(f"  ROUTE harvest: {task.id} remote={remote_status} — {task.title}")
+                    continue
+                if action == "recover":
+                    recover_ready.append(task.id)
+                    print(f"  ROUTE recover: {task.id} remote={remote_status} — {task.title}")
                     continue
                 task.status = "open"
                 task.updated = now
@@ -3574,14 +3669,43 @@ def release_stale_tasks(
                         agent="limen",
                         session_id=session_id(),
                         status="open",
-                        output=f"Released stale claim after {hours}h",
+                        output=(
+                            f"Released stale claim after {hours}h; remote status {remote_status}"
+                            if task.target_agent == "jules"
+                            else f"Released stale claim after {hours}h"
+                        ),
                     )
                 )
                 released.append(task.id)
-            save_limen_file(tasks_path, fresh)
+                print(f"  RELEASE: {task.id} remote={remote_status} — {task.title}")
+            if released or restored_done:
+                save_limen_file(tasks_path, fresh)
     else:
         for task in candidates:
-            print(f"  {task.id} {task.status} {task.target_agent} — {task.title}")
+            if _has_done_transition(task):
+                action, remote_status = "restore_done", "prior_done"
+            else:
+                action, remote_status = _release_stale_route(task, snapshot)
+            candidate_rows.append(
+                {
+                    "id": task.id,
+                    "title": task.title,
+                    "repo": task.repo,
+                    "target_agent": task.target_agent,
+                    "status": task.status,
+                    "action": action,
+                    "remote_status": remote_status,
+                }
+            )
+            if action == "release":
+                released.append(task.id)
+            elif action == "hold":
+                held.append(task.id)
+            elif action == "harvest":
+                harvest_ready.append(task.id)
+            elif action == "recover":
+                recover_ready.append(task.id)
+            print(f"  {action.upper()}: {task.id} remote={remote_status} — {task.title}")
 
     return {
         "status": "dry_run" if dry_run else "applied",
@@ -3589,16 +3713,11 @@ def release_stale_tasks(
         "hours": hours,
         "tasks_path": str(tasks_path),
         "count": len(candidates),
-        "released": [task.id for task in candidates] if dry_run else released,
+        "released": released,
         "restored_done": [] if dry_run else restored_done,
-        "candidates": [
-            {
-                "id": task.id,
-                "title": task.title,
-                "repo": task.repo,
-                "target_agent": task.target_agent,
-                "status": task.status,
-            }
-            for task in candidates
-        ],
+        "held": held,
+        "harvest_ready": harvest_ready,
+        "recover_ready": recover_ready,
+        "remote_probe": _release_stale_probe_report(snapshot, candidates),
+        "candidates": candidate_rows,
     }

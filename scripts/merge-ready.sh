@@ -56,8 +56,9 @@ gh api -X GET search/issues --paginate -f q="is:pr is:open author:@me" \
   | while IFS=$'\t' read -r repo num title; do
       [ -z "$repo" ] && continue
       echo "$title" | grep -qE "$JUNK_RE" && continue   # skip junk
-      state=$(gh pr view "$num" --repo "$repo" --json mergeStateStatus -q .mergeStateStatus 2>/dev/null || echo "?")
-      [ "$state" = "CLEAN" ] && printf '%s\t%s\t%s\n' "$repo" "$num" "$title" >> "$tmp"
+      read -r state head < <(gh pr view "$num" --repo "$repo" --json mergeStateStatus,headRefOid \
+        -q '[.mergeStateStatus,.headRefOid] | @tsv' 2>/dev/null || printf '?\t?\n')
+      [ "$state" = "CLEAN" ] && printf '%s\t%s\t%s\t%s\n' "$repo" "$num" "$head" "$title" >> "$tmp"
     done
 
 # order: priority repos first (in listed order), then the rest
@@ -69,13 +70,13 @@ cat "$tmp" >> "$order_file"
 total=$(wc -l < "$order_file" | tr -d ' ')
 echo "→ $total CLEAN, non-junk PRs ready to merge (revenue-first order):" >&2
 n=0
-while IFS=$'\t' read -r repo num title; do
+while IFS=$'\t' read -r repo num head title; do
   [ -z "$repo" ] && continue
   n=$((n+1))
   [ "$LIMIT" -gt 0 ] && [ "$n" -gt "$LIMIT" ] && { echo "  …(stopped at --limit $LIMIT)"; break; }
   if [ "$APPLY" = 1 ]; then
     record_review "$repo" "$num"
-    if gh pr merge "$num" --repo "$repo" --squash >/dev/null 2>&1; then
+    if gh pr merge "$num" --repo "$repo" --squash --match-head-commit "$head" >/dev/null 2>&1; then
       echo "  ✓ merged  $repo#$num  $title"
     else
       echo "  ✗ FAILED  $repo#$num (skipped — check manually)"

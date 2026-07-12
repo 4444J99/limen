@@ -14,6 +14,7 @@ This is the executable predicate for the organ.
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
 import time
@@ -97,6 +98,64 @@ def test_numeric_env_knobs_fall_back(monkeypatch):
 def test_ancestor_reported_before_pr_merged():
     v = reap.classify(F(is_ancestor=True, pr_merged_safe=True))
     assert v.reason == "landed-ancestor"
+
+
+def test_exact_branch_allowlist_never_broadens_scope():
+    selected, missing = reap.exact_branch_allowlist(
+        ["main", "landed-one", "landed-two"],
+        ["landed-two", "missing", "landed-two"],
+    )
+
+    assert selected == ["landed-two"]
+    assert missing == ["missing"]
+
+
+def test_empty_branch_allowlist_preserves_default_scope():
+    branches = ["main", "landed-one", "landed-two"]
+
+    assert reap.exact_branch_allowlist(branches, []) == (branches, [])
+
+
+def test_targeted_apply_preserves_global_state_and_ledger(tmp_path, monkeypatch):
+    logs = tmp_path / "logs"
+    docs = tmp_path / "docs"
+    logs.mkdir()
+    docs.mkdir()
+    state = logs / "reap-branches-state.json"
+    ledger = docs / "branch-hygiene.md"
+    marker = logs / ".reap-branches-last"
+    state.write_text("global-state\n", encoding="utf-8")
+    ledger.write_text("global-ledger\n", encoding="utf-8")
+    monkeypatch.setattr(reap, "LOG", logs / "reap-branches.jsonl")
+    monkeypatch.setattr(reap, "STATE", state)
+    monkeypatch.setattr(reap, "MARKER", marker)
+    monkeypatch.setattr(reap, "LEDGER", ledger)
+    monkeypatch.setattr(reap, "local_branches", lambda: ["target", "unrelated-livework"])
+    monkeypatch.setattr(reap, "default_ref", lambda: "origin/main")
+    monkeypatch.setattr(reap, "default_name", lambda _ref: "main")
+    monkeypatch.setattr(reap, "checked_out_branches", set)
+    monkeypatch.setattr(reap, "gh_head_states", lambda: ({}, set(), True))
+    monkeypatch.setattr(reap, "gather_facts", lambda *_args: F(is_ancestor=True))
+    monkeypatch.setattr(reap, "load_branch_reap_acceptance", list)
+    monkeypatch.setattr(reap, "branch_reap_accepted", lambda *_args: (True, "accepted"))
+    monkeypatch.setattr(
+        reap,
+        "_git",
+        lambda args, timeout=30: subprocess.CompletedProcess(args, 0, "", ""),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["reap-branches.py", "--apply", "--force", "--branch", "target"],
+    )
+
+    assert reap.main() == 0
+    assert state.read_text(encoding="utf-8") == "global-state\n"
+    assert ledger.read_text(encoding="utf-8") == "global-ledger\n"
+    assert not marker.exists()
+    receipt = json.loads((logs / "reap-branches.jsonl").read_text())
+    assert receipt["scope"] == "targeted"
+    assert receipt["targets"] == ["target"]
 
 
 # ----------------------------------------------------------------- gather_facts() on real repos

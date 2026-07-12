@@ -11,6 +11,7 @@ blocked workstreams that need their own owner, and writes:
 It never reads secret values and never attempts account, login, deploy, or
 credential repair.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,14 +25,13 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 
+from limen.runtime_config import RUNTIME_URL_ENV_ORDER
 from limen.worktree_debt import worktree_debt_report
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
 DOC_PATH = ROOT / "docs" / "session-lifecycle-blockers.md"
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "session-lifecycle-blockers.json"
 PROMPT_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 CODEX_INDEX = PRIVATE_ROOT / "lifecycle" / "codex-session-lifecycle.json"
@@ -74,7 +74,7 @@ CLOUD_CREDENTIAL_FLAGS = (
     "NETLIFY_AUTH_TOKEN",
     "VERCEL_TOKEN",
 )
-RUNTIME_ENDPOINT_FLAGS = ("LIMEN_WORKER_URL", "NEXT_PUBLIC_API_URL")
+RUNTIME_ENDPOINT_FLAGS = RUNTIME_URL_ENV_ORDER
 
 CAPABILITY_ROOTS_ENV = "LIMEN_CAPABILITY_ROOTS"
 DEFAULT_CAPABILITY_ROOTS = (
@@ -398,7 +398,9 @@ def cloud_blockers(prompt: dict[str, Any], blockers: list[dict[str, Any]]) -> No
         )
 
 
-def unresolved_missing_remote_roots(prompt: dict[str, Any], worktree_report: dict[str, Any]) -> tuple[list[str], list[str]]:
+def unresolved_missing_remote_roots(
+    prompt: dict[str, Any], worktree_report: dict[str, Any]
+) -> tuple[list[str], list[str]]:
     worktrees = (prompt.get("remote") or {}).get("worktrees") or {}
     raw_missing = [
         str(receipt.get("name"))
@@ -426,9 +428,8 @@ def unresolved_missing_remote_roots(prompt: dict[str, Any], worktree_report: dic
         item = by_name.get(root)
         reason = str((item or {}).get("reason") or "")
         if (
-            (item and not item.get("debt") and live_scanner_defers_remote_missing(reason))
-            or receipt_closes_remote_missing(receipts_by_root.get(root))
-        ):
+            item and not item.get("debt") and live_scanner_defers_remote_missing(reason)
+        ) or receipt_closes_remote_missing(receipts_by_root.get(root)):
             closed.append(root)
         else:
             unresolved.append(root)
@@ -907,9 +908,7 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
                 "collision_packet_complete": bool(collision_packet.get("complete")),
                 "transfer_apply_gate_open": bool((gates or {}).get("can_run_transfer_apply_after_human_gate")),
                 "collision_packet_missing_keepers": len(collision_packet.get("missing_keepers") or []),
-                "collision_packet_missing_rename_commands": len(
-                    collision_packet.get("missing_rename_commands") or []
-                ),
+                "collision_packet_missing_rename_commands": len(collision_packet.get("missing_rename_commands") or []),
                 "collision_packet_target_conflicts": len(collision_packet.get("target_conflicts") or []),
                 "collision_packet_target_unknown": len(collision_packet.get("target_unknown") or []),
                 "blocking": gates.get("blocking") or [],

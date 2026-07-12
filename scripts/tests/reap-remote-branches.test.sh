@@ -49,6 +49,15 @@ assert classify(facts(protected=True, is_ancestor=True)).landed is False, "prote
 if fail:
     print(f"classify: FAIL ({fail})"); sys.exit(1)
 print(f"classify: PASS ({len(cases)} invariants)")
+
+# Enumeration is deterministic and idempotent even if the ref backend repeats a row.
+class RefResult:
+    returncode = 0
+    stdout = "origin/zeta\norigin/HEAD\norigin/alpha\norigin/zeta\norigin/alpha\n"
+    stderr = ""
+m._git = lambda _args: RefResult()
+assert m.remote_branches() == ["alpha", "zeta"]
+print("remote enumeration: PASS (sorted + deduplicated)")
 PY
 rc=$?
 [ "$rc" = 0 ] || exit 1

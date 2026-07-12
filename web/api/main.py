@@ -1364,18 +1364,37 @@ def release_stale(
     doc = load_board_doc()
     data = doc.data
     candidates = release_stale_candidates(data, hours)
-    candidate_ids = {candidate["id"] for candidate in candidates}
-    if not dry_run:
+    # The deployed API image intentionally has no Jules CLI.  Without a successful remote catalog
+    # it cannot prove a Jules session absent, so it must fail closed and leave those claims for the
+    # CLI heartbeat's shared remote-aware release/harvest/recover path.
+    routed_candidates = [
+        {
+            **candidate,
+            "action": "hold" if candidate.get("agent") == "jules" else "release",
+            "remote_status": "cli_unavailable" if candidate.get("agent") == "jules" else "not_jules",
+        }
+        for candidate in candidates
+    ]
+    release_ids = {candidate["id"] for candidate in routed_candidates if candidate.get("action") == "release"}
+    held = [candidate["id"] for candidate in routed_candidates if candidate.get("action") == "hold"]
+    if not dry_run and release_ids:
         for task in data.get("tasks", []):
-            if task.get("id") in candidate_ids:
+            if task.get("id") in release_ids:
                 task["status"] = "open"
                 append_log(task, "api", "release-stale", "open", f"Released stale claim after {hours}h")
-    if not dry_run:
         save_board(data, doc.sha)
     return {
         "status": "dry_run" if dry_run else "released",
-        "released": [candidate["id"] for candidate in candidates],
-        "candidates": candidates,
-        "count": len(candidates),
+        "released": sorted(release_ids),
+        "held": held,
+        "harvest_ready": [],
+        "recover_ready": [],
+        "remote_probe": {
+            "status": "unavailable" if held else "not_requested",
+            "session_count": 0,
+        },
+        "candidates": routed_candidates,
+        "candidate_count": len(routed_candidates),
+        "count": len(routed_candidates) if dry_run else len(release_ids),
         "dry_run": dry_run,
     }

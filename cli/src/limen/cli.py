@@ -120,7 +120,7 @@ def dispatch(agent, budget, dry_run, task, limit):
 @click.option("--json-output", "json_output", is_flag=True, help="Print machine-readable JSON")
 @click.option("--report-file", default=None, help="Write machine-readable JSON to this path")
 def release_stale(hours, agent, dry_run, json_output, report_file):
-    """Reopen dispatched/in-progress tasks whose latest event is stale."""
+    """Route stale claims; Jules claims reopen only after confirmed remote absence."""
     root = resolve_root()
     tasks_path = resolve_tasks_path(root)
     limen = load_limen_file(tasks_path)

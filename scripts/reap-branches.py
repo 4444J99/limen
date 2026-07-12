@@ -41,6 +41,8 @@ out in a worktree (git refuses + it is in active use). Offline / no `gh` → pro
 squash-merged branches are conservatively KEPT until an online beat — never wrongly deleted.
 
 Dry-run by default; --apply deletes (git branch -D — safe: proven landed, reflog-recoverable).
+Use repeatable --branch NAME arguments for an exact allowlist; a missing name fails closed without
+touching any branch. With no --branch arguments the existing whole-local-ref policy is unchanged.
 --check exits 1 iff any provably-landed branch still LINGERS — spent for longer than the digestion
 grace window (the fixed-point predicate wired into scripts/no-tasks-on-me.sh). A branch whose PR
 merged seconds ago is mid-beat housekeeping, not hanging debt; without the grace, a continuously
@@ -228,6 +230,18 @@ def default_name(dref: str) -> str:
 def local_branches() -> list[str]:
     r = _git(["for-each-ref", "--format=%(refname:short)", "refs/heads/"])
     return [b for b in r.stdout.splitlines() if b.strip()]
+
+
+def exact_branch_allowlist(branches: list[str], requested: list[str]) -> tuple[list[str], list[str]]:
+    """Select only exact requested names; report typos/missing refs instead of broadening scope."""
+
+    if not requested:
+        return branches, []
+    available = set(branches)
+    wanted = sorted(set(requested))
+    return [branch for branch in wanted if branch in available], [
+        branch for branch in wanted if branch not in available
+    ]
 
 
 def checked_out_branches() -> set[str]:
@@ -425,6 +439,12 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="exit 1 if any provably-landed branch lingers (read-only)")
     ap.add_argument("--force", action="store_true", help="ignore the self-throttle")
     ap.add_argument("--max", type=int, default=_int_env("LIMEN_BRANCH_REAP_MAX", 100, minimum=1))
+    ap.add_argument(
+        "--branch",
+        action="append",
+        default=[],
+        help="limit inspection/reaping to this exact local branch; repeat for an allowlist",
+    )
     args = ap.parse_args()
 
     every_min = _float_env("LIMEN_BRANCH_REAP_EVERY_MIN", 30.0, minimum=0.0)
@@ -436,9 +456,15 @@ def main() -> int:
     dname = default_name(dref)
     checked = checked_out_branches()
     merged, open_, online = gh_head_states()
+    branches, missing_targets = exact_branch_allowlist(local_branches(), args.branch)
+    if missing_targets:
+        print(
+            "[reap-branches] HOLD — exact target(s) not found; no branches were reaped: " + ", ".join(missing_targets)
+        )
+        return 2
 
     # Self-throttle only applies to a real --apply beat (a --check gate always runs).
-    if args.apply and not args.force and not args.check and MARKER.exists():
+    if args.apply and not args.branch and not args.force and not args.check and MARKER.exists():
         if (time.time() - MARKER.stat().st_mtime) / 60.0 < every_min:
             print(f"[reap-branches] ran < {every_min:g}min ago — skip (--force to override)")
             return 0
@@ -448,7 +474,7 @@ def main() -> int:
     livework: list[str] = []
     advanced: list[str] = []
     kept_reasons: dict[str, int] = {}
-    for b in local_branches():
+    for b in branches:
         f = gather_facts(b, dref, checked, merged, open_, dname)
         v = classify(f)
         if v.action == "reap":
@@ -522,13 +548,15 @@ def main() -> int:
 
     if args.apply:
         try:
-            MARKER.parent.mkdir(parents=True, exist_ok=True)
-            MARKER.write_text(str(time.time()))
+            targeted = bool(args.branch)
+            LOG.parent.mkdir(parents=True, exist_ok=True)
             with LOG.open("a") as fh:
                 fh.write(
                     json.dumps(
                         {
                             "ts": time.time(),
+                            "scope": "targeted" if targeted else "full",
+                            "targets": sorted(set(args.branch)),
                             "default": dref,
                             "online": online,
                             "reaped": reaped_names,
@@ -540,21 +568,24 @@ def main() -> int:
                     )
                     + "\n"
                 )
-            STATE.write_text(
-                json.dumps(
-                    {
-                        "ts": time.time(),
-                        "default": dref,
-                        "online": online,
-                        "reaped_this_run": reaped_names,
-                        "inflight": sorted(inflight),
-                        "advanced": sorted(advanced),
-                        "livework": sorted(livework),
-                    },
-                    indent=2,
+            if not targeted:
+                MARKER.parent.mkdir(parents=True, exist_ok=True)
+                MARKER.write_text(str(time.time()))
+                STATE.write_text(
+                    json.dumps(
+                        {
+                            "ts": time.time(),
+                            "default": dref,
+                            "online": online,
+                            "reaped_this_run": reaped_names,
+                            "inflight": sorted(inflight),
+                            "advanced": sorted(advanced),
+                            "livework": sorted(livework),
+                        },
+                        indent=2,
+                    )
                 )
-            )
-            write_ledger(livework, advanced, len(inflight))
+                write_ledger(livework, advanced, len(inflight))
         except Exception as e:  # observability must never break the beat
             print(f"[reap-branches] note: stamp/ledger write skipped ({str(e)[:80]})")
 

@@ -88,7 +88,7 @@ def test_release_stale_reopens_tasks_only_when_not_dry_run(client: TestClient, t
                 "id": "LIMEN-002",
                 "title": "Stale active task",
                 "repo": "4444J99/limen",
-                "target_agent": "jules",
+                "target_agent": "codex",
                 "priority": "high",
                 "budget_cost": 1,
                 "status": "dispatched",
@@ -117,6 +117,45 @@ def test_release_stale_reopens_tasks_only_when_not_dry_run(client: TestClient, t
     task = read_board(tmp_path)["tasks"][0]
     assert task["status"] == "open"
     assert task["dispatch_log"][-1]["session_id"] == "release-stale"
+
+
+def test_release_stale_api_holds_jules_when_remote_probe_is_unavailable(
+    client: TestClient,
+    tmp_path: Path,
+) -> None:
+    write_board(
+        tmp_path / "tasks.yaml",
+        [
+            {
+                "id": "JULES-STALE",
+                "title": "Remote claim",
+                "repo": "organvm/limen",
+                "target_agent": "jules",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "dispatched",
+                "created": "2026-06-01",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-06-01T00:00:00+00:00",
+                        "agent": "jules",
+                        "session_id": "12345678901234567890",
+                        "status": "dispatched",
+                    }
+                ],
+            }
+        ],
+    )
+
+    response = client.post("/api/release-stale?hours=24&dry_run=false")
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+    assert response.json()["candidate_count"] == 1
+    assert response.json()["held"] == ["JULES-STALE"]
+    assert response.json()["released"] == []
+    assert response.json()["remote_probe"]["status"] == "unavailable"
+    assert read_board(tmp_path)["tasks"][0]["status"] == "dispatched"
 
 
 def test_live_dispatch_mutates_after_command_success(

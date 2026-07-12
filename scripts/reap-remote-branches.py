@@ -125,7 +125,10 @@ def _git(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
     try:
         return subprocess.run(
             ["git", "-C", str(LIMEN_ROOT), *args],
-            capture_output=True, text=True, timeout=timeout, env=_GIT_ENV,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=_GIT_ENV,
         )
     except Exception as e:  # fail open per-call
         return subprocess.CompletedProcess(args, 1, "", str(e))
@@ -215,10 +218,13 @@ def remote_branches() -> list[str]:
         short = line.strip()
         if not short or not short.startswith("origin/"):
             continue
-        name = short[len("origin/"):]
+        name = short[len("origin/") :]
         if name and name != "HEAD":
             out.append(name)
-    return out
+    # A ref backend or fixture may surface the same short name more than once.  Enumeration is a
+    # set contract: deterministic ordering keeps previews stable, and de-duplication guarantees a
+    # future armed run can never issue the same remote deletion twice.
+    return sorted(set(out))
 
 
 def checked_out_branches() -> set[str]:
@@ -227,7 +233,7 @@ def checked_out_branches() -> set[str]:
     r = _git(["worktree", "list", "--porcelain"])
     for line in r.stdout.splitlines():
         if line.startswith("branch refs/heads/"):
-            out.add(line[len("branch refs/heads/"):].strip())
+            out.add(line[len("branch refs/heads/") :].strip())
     return out
 
 
@@ -247,7 +253,11 @@ def gh_head_states() -> tuple[dict[str, float | None], set[str], bool]:
     try:
         res = subprocess.run(
             ["gh", "pr", "list", "--state", "all", "--json", "headRefName,state,mergedAt", "--limit", "800"],
-            cwd=str(LIMEN_ROOT), capture_output=True, text=True, timeout=60, env=_GIT_ENV,
+            cwd=str(LIMEN_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=_GIT_ENV,
         )
         if res.returncode != 0 or not res.stdout.strip():
             return {}, set(), False
@@ -358,7 +368,10 @@ def _delete_remote(branch: str) -> tuple[bool, str]:
         if repo:
             g = subprocess.run(
                 ["gh", "api", "-X", "DELETE", f"repos/{repo}/git/refs/heads/{branch}"],
-                capture_output=True, text=True, timeout=60, env=_GIT_ENV,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                env=_GIT_ENV,
             )
             if g.returncode == 0:
                 return True, "gh api DELETE"
@@ -368,8 +381,12 @@ def _delete_remote(branch: str) -> tuple[bool, str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Reap provably-landed REMOTE branches (loss-free, double-dark).")
-    ap.add_argument("--apply", action="store_true", help="delete landed remote branches (needs LIMEN_REMOTE_REAP_APPLY=1)")
-    ap.add_argument("--check", action="store_true", help="exit 1 if any landed remote branch lingers past grace (read-only)")
+    ap.add_argument(
+        "--apply", action="store_true", help="delete landed remote branches (needs LIMEN_REMOTE_REAP_APPLY=1)"
+    )
+    ap.add_argument(
+        "--check", action="store_true", help="exit 1 if any landed remote branch lingers past grace (read-only)"
+    )
     ap.add_argument("--force", action="store_true", help="ignore the self-throttle")
     ap.add_argument("--max", type=int, default=_int_env("LIMEN_REMOTE_REAP_MAX", 100, minimum=1))
     args = ap.parse_args()
@@ -387,8 +404,10 @@ def main() -> int:
     # env flag defaults OFF (unlike the local reaper). An unarmed --apply degrades to a dry-run.
     armed = args.apply and _bool_env("LIMEN_REMOTE_REAP_APPLY", default=False)
     if args.apply and not armed:
-        print("[reap-remote-branches] --apply given but LIMEN_REMOTE_REAP_APPLY!=1 — staying DARK (dry-run). "
-              "Remote deletes are not reflog-recoverable; arm deliberately.")
+        print(
+            "[reap-remote-branches] --apply given but LIMEN_REMOTE_REAP_APPLY!=1 — staying DARK (dry-run). "
+            "Remote deletes are not reflog-recoverable; arm deliberately."
+        )
 
     if armed and not args.force and not args.check and MARKER.exists():
         if (time.time() - MARKER.stat().st_mtime) / 60.0 < every_min:
@@ -420,22 +439,28 @@ def main() -> int:
         now = time.time()
         lingering = [(b, why) for b, why in reap if _landed_age_s(b, merged, now) > grace_s]
         if lingering:
-            print(f"[reap-remote-branches] FAIL — {len(lingering)} landed remote branch(es) lingering past grace "
-                  "(review docs/remote-branch-reap-acceptance.md, then --apply with LIMEN_REMOTE_REAP_APPLY=1):")
+            print(
+                f"[reap-remote-branches] FAIL — {len(lingering)} landed remote branch(es) lingering past grace "
+                "(review docs/remote-branch-reap-acceptance.md, then --apply with LIMEN_REMOTE_REAP_APPLY=1):"
+            )
             for b, why in sorted(lingering)[:20]:
                 print(f"  landed  origin/{b}  ({why})")
             if len(lingering) > 20:
                 print(f"  … and {len(lingering) - 20} more")
             return 1
         note = "" if online else " (offline — gh proof-2 skipped; ancestor-only)"
-        print(f"[reap-remote-branches] ok — no landed remote branch lingers past grace{note}. "
-              f"{len(inflight)} in-flight, {len(advanced)} merged-advanced, {len(livework)} live-work kept.")
+        print(
+            f"[reap-remote-branches] ok — no landed remote branch lingers past grace{note}. "
+            f"{len(inflight)} in-flight, {len(advanced)} merged-advanced, {len(livework)} live-work kept."
+        )
         return 0
 
     mode = "APPLY(armed)" if armed else "dry-run"
     online_note = "online" if online else "offline(gh proof-2 skipped)"
-    print(f"[reap-remote-branches] {mode}; default={dref}; {online_note}; "
-          f"{len(reap)} reapable, {len(inflight)} in-flight, {len(advanced)} merged-advanced, {len(livework)} live-work.")
+    print(
+        f"[reap-remote-branches] {mode}; default={dref}; {online_note}; "
+        f"{len(reap)} reapable, {len(inflight)} in-flight, {len(advanced)} merged-advanced, {len(livework)} live-work."
+    )
 
     done = 0
     reaped_names: list[str] = []
@@ -463,23 +488,43 @@ def main() -> int:
             MARKER.parent.mkdir(parents=True, exist_ok=True)
             MARKER.write_text(str(time.time()))
             with LOG.open("a") as fh:
-                fh.write(json.dumps({
-                    "ts": time.time(), "default": dref, "online": online,
-                    "reaped": reaped_names, "inflight": sorted(inflight),
-                    "advanced": sorted(advanced), "livework": sorted(livework),
-                    "kept_reasons": kept_reasons,
-                }) + "\n")
-            STATE.write_text(json.dumps({
-                "ts": time.time(), "default": dref, "online": online,
-                "reaped_this_run": reaped_names, "inflight": sorted(inflight),
-                "advanced": sorted(advanced), "livework": sorted(livework),
-            }, indent=2))
+                fh.write(
+                    json.dumps(
+                        {
+                            "ts": time.time(),
+                            "default": dref,
+                            "online": online,
+                            "reaped": reaped_names,
+                            "inflight": sorted(inflight),
+                            "advanced": sorted(advanced),
+                            "livework": sorted(livework),
+                            "kept_reasons": kept_reasons,
+                        }
+                    )
+                    + "\n"
+                )
+            STATE.write_text(
+                json.dumps(
+                    {
+                        "ts": time.time(),
+                        "default": dref,
+                        "online": online,
+                        "reaped_this_run": reaped_names,
+                        "inflight": sorted(inflight),
+                        "advanced": sorted(advanced),
+                        "livework": sorted(livework),
+                    },
+                    indent=2,
+                )
+            )
         except Exception as e:  # observability must never break the beat
             print(f"[reap-remote-branches] note: stamp/log write skipped ({str(e)[:80]})")
 
     kr = ", ".join(f"{k}={n}" for k, n in sorted(kept_reasons.items())) or "none"
-    print(f"[reap-remote-branches] {'reaped' if armed else 'would reap'} "
-          f"{len(reaped_names) if armed else done} remote branch(es); kept {sum(kept_reasons.values())} ({kr}).")
+    print(
+        f"[reap-remote-branches] {'reaped' if armed else 'would reap'} "
+        f"{len(reaped_names) if armed else done} remote branch(es); kept {sum(kept_reasons.values())} ({kr})."
+    )
     # REQUIRED_ACCEPTANCE_PROOF_FIELDS is imported to bind this surface to the shared covenant contract.
     _ = REQUIRED_ACCEPTANCE_PROOF_FIELDS
     return 0
