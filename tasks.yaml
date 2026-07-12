@@ -130382,12 +130382,11 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - rebase
   - self-heal
   - conflict
-  - tried:claude
   - slow
   - noop
   urls:
@@ -130406,7 +130405,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T07:18:34.266545Z'
+  updated: '2026-07-12T08:22:25.701534Z'
   dispatch_log:
   - timestamp: '2026-07-10T05:15:20.404324Z'
     agent: jules
@@ -130501,6 +130500,17 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-12T08:11:39.243637Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-12T08:22:25.701534Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-rebase-organvm-domus-genoma-173
   title: rebase/resolve conflicts on organvm/domus-genoma#173
   repo: organvm/domus-genoma
@@ -132081,12 +132091,11 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: failed
+  status: needs_human
   labels:
   - cifix
   - self-heal
   - ci-red
-  - tried:agy
   - slow
   urls:
   - https://github.com/organvm/manumissio/pull/20
@@ -132100,7 +132109,7 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T07:18:34.266545Z'
+  updated: '2026-07-12T08:22:25.701534Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:14:38.503058Z'
     agent: agy
@@ -132163,6 +132172,17 @@ tasks:
     agent: agy
     session_id: cli
     status: failed
+  - timestamp: '2026-07-12T08:11:39.243637Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-12T08:22:25.701534Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-manumissio-23
   title: fix failing CI on organvm/manumissio#23
   repo: organvm/manumissio
@@ -132219,10 +132239,10 @@ tasks:
   title: fix failing CI on organvm/manumissio#24
   repo: organvm/manumissio
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cifix
   - self-heal
@@ -132241,7 +132261,7 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T07:18:34.266545Z'
+  updated: '2026-07-12T08:22:25.701534Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:14:38.503058Z'
     agent: gemini
@@ -132280,6 +132300,12 @@ tasks:
     status: open
     route_to: opencode
     output: claude lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-12T08:22:25.701534Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
+      \ stop re-looping"
 - id: HEAL-cifix-organvm-manumissio-25
   title: fix failing CI on organvm/manumissio#25
   repo: organvm/manumissio
@@ -132407,7 +132433,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -132425,7 +132451,7 @@ tasks:
     \ [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T07:18:34.266545Z'
+  updated: '2026-07-12T08:22:25.701534Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:25:38.387574Z'
     agent: claude
@@ -132499,6 +132525,11 @@ tasks:
     agent: codex
     session_id: https://github.com/organvm/manumissio/pull/28
     status: dispatched
+  - timestamp: '2026-07-12T08:22:25.701534Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: HEAL-cifix-organvm-manumissio-29
   title: fix failing CI on organvm/manumissio#29
   repo: organvm/manumissio
@@ -132791,7 +132822,7 @@ tasks:
   title: Own daily-engine launchd durability in Domus
   repo: organvm/domus-genoma
   type: code
-  target_agent: claude
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -133257,13 +133288,12 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
-  - tried:agy
   urls:
   - https://github.com/organvm/portfolio/pull/146
   context: 'PR organvm/portfolio#146 is CONFLICTING with its base branch and merge-drain
@@ -133280,7 +133310,7 @@ tasks:
     [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T07:18:34.266545Z'
+  updated: '2026-07-12T08:11:39.243637Z'
   dispatch_log:
   - timestamp: '2026-07-12T04:32:25.248942Z'
     agent: gemini
@@ -133302,6 +133332,11 @@ tasks:
     agent: agy
     session_id: cli
     status: failed
+  - timestamp: '2026-07-12T08:11:39.243637Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: ASK-quicken-escalate-0bd3a5ed
   title: finish stalled session 'Design movement ontology and workout composi' (breathed
     2x, still stalling)
@@ -133330,7 +133365,7 @@ tasks:
   title: fix failing CI on organvm/session-meta#106
   repo: organvm/session-meta
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
