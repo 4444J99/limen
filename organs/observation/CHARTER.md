@@ -15,6 +15,31 @@ an in-repo organ (GITVS's twin), JSONL evidence, a Next.js dashboard consumer, a
 as ground truth. See `docs/…/review-and-implement-…observatory….md` in the plans archive for the
 full derivation.
 
+## Role & capabilities
+
+This organ acts as the institutional equivalent of a **growth/DevRel + competitive-intelligence team** — a launch-analytics desk fused with a positioning studio. By automating the workflows of observation and reconciliation, it converts idle fleet capacity into the structural weight of a dedicated positioning team.
+
+### Virtual Firm (Org-Chart of AI Roles)
+
+To achieve this institutional weight without human headcount, OBSERVATORY is structured as a virtual firm of AI roles, executed sequentially by the `executive.py` convener:
+
+- **The Scout (Data Collector):** (`collect.py` + `gh.py`) Finds top cohorts using `gh` queries. Bounded and fail-open.
+- **The Analyst (Mechanism Extraction):** (`mechanism.py` + `interpret.py`) Distills unstructured signals into structured JSONL vectors. Backed by `OBSERVATORY_LLM` (Opus) when armed, otherwise uses deterministic heuristics.
+- **The Auditor (Internal Face):** (`reconcile.py` + `VVLTVS`) Holds our public surfaces accountable to the internal `face-ownership.json` constitution.
+- **The Strategist (Experiment Synthesis):** (`synthesis.py` + `lever.py`) Folds weekly histories into actionable priors and files human-gated proposals (PRs/levers) via `lever.propose`.
+- **The Archivist (Ledger Discipline):** (`ledger.py`) Ensures all evidence is immutable (append-only JSONL) and derived state is safely regenerated.
+
+### Workflows
+
+1. **Observation (Macro Face):** Scans cohorts of successful external repositories and extracts the mechanisms driving their adoption (docs, fast starts, CI/CD signals).
+2. **Reconciliation (Micro Face):** Holds the estate's own public surfaces against these mechanisms to ensure internal metrics are coherent.
+3. **Experiment Generation:** Translates legibility gaps into actionable positioning levers and launch experiments without requiring a dedicated human staff.
+
+### Inputs / Outputs
+
+- **Inputs:** `gh` CLI search results, `value-repos/revenue-ladder/estate-ledger` as ground truth, internal metrics from `VVLTVS`.
+- **Outputs:** Append-only JSONL evidence (`logs/observatory/*.jsonl`), daily briefs (`brief-latest.json`), and human-gated proposals (levers/PRs) to close legibility gaps.
+
 ## Home & shape
 
 - **Charter / private data:** `organs/observation/` (this directory).
