@@ -293,6 +293,42 @@ def test_default_branch_is_protected(repo):
     assert reap.classify(f).action == "keep"
 
 
+def test_open_pr_protects_only_its_exact_local_head(repo):
+    spent_tip = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "refs/heads/spent"], text=True).strip()
+
+    exact = reap.gather_facts("spent", "main", set(), {}, {"spent": spent_tip}, "main")
+    reused_name = reap.gather_facts("spent", "main", set(), {}, {"spent": "f" * 40}, "main")
+
+    assert exact.pr_open is True
+    assert reap.classify(exact).reason == "inflight"
+    assert reused_name.pr_open is False
+    assert reap.classify(reused_name).reason == "landed-ancestor"
+
+
+def test_github_open_head_snapshot_keeps_exact_oid(monkeypatch):
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    payload = [
+        {
+            "headRefName": "same-name",
+            "headRefOid": "a" * 40,
+            "state": "OPEN",
+            "mergedAt": None,
+        }
+    ]
+    monkeypatch.setattr(
+        reap.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
+    )
+
+    merged, open_heads, online = reap.gh_head_states()
+
+    assert merged == {}
+    assert open_heads == {"same-name": "a" * 40}
+    assert online is True
+
+
 # ----------------------------------------------------------------- --check grace window
 def test_landed_age_uses_merged_at():
     now = time.time()

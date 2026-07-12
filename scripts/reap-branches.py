@@ -264,13 +264,27 @@ def _merged_at_epoch(iso: str | None) -> float | None:
         return None
 
 
-def gh_head_states() -> tuple[dict[str, float | None], set[str], bool]:
-    """(merged_heads→mergedAt_epoch, open_heads, online). Fail-safe: offline/no gh → ({}, ∅, False)."""
+def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], bool]:
+    """(merged heads, open head→exact SHA, online).
+
+    Branch names are reusable. An open PR protects a local ref only when that ref still points at
+    the PR's exact remote head; a stale same-name ancestor must remain reapable.
+    """
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
-        return {}, set(), False
+        return {}, {}, False
     try:
         res = subprocess.run(
-            ["gh", "pr", "list", "--state", "all", "--json", "headRefName,state,mergedAt", "--limit", "800"],
+            [
+                "gh",
+                "pr",
+                "list",
+                "--state",
+                "all",
+                "--json",
+                "headRefName,headRefOid,state,mergedAt",
+                "--limit",
+                "800",
+            ],
             cwd=str(LIMEN_ROOT),
             capture_output=True,
             text=True,
@@ -278,12 +292,12 @@ def gh_head_states() -> tuple[dict[str, float | None], set[str], bool]:
             env=_GIT_ENV,
         )
         if res.returncode != 0 or not res.stdout.strip():
-            return {}, set(), False
+            return {}, {}, False
         prs = json.loads(res.stdout)
     except Exception:
-        return {}, set(), False
+        return {}, {}, False
     merged: dict[str, float | None] = {}
-    open_: set[str] = set()
+    open_: dict[str, str] = {}
     for p in prs:
         head = p.get("headRefName")
         if not head:
@@ -291,7 +305,7 @@ def gh_head_states() -> tuple[dict[str, float | None], set[str], bool]:
         if p.get("state") == "MERGED":
             merged[head] = _merged_at_epoch(p.get("mergedAt"))
         elif p.get("state") == "OPEN":
-            open_.add(head)
+            open_[head] = str(p.get("headRefOid") or "")
     return merged, open_, True
 
 
@@ -335,12 +349,25 @@ def classify(f: Facts) -> Verdict:
 
 
 def gather_facts(
-    branch: str, dref: str, checked_out: set[str], merged: dict[str, float | None], open_: set[str], dname: str
+    branch: str,
+    dref: str,
+    checked_out: set[str],
+    merged: dict[str, float | None],
+    open_: dict[str, str] | set[str],
+    dname: str,
 ) -> Facts:
     """Compute the branch's Facts via git + the precomputed gh maps. Every git/parse failure → the
     conservative value (which makes the branch HARDER to reap, never easier)."""
     ref = f"refs/heads/{branch}"
     is_ancestor = _git(["merge-base", "--is-ancestor", ref, dref]).returncode == 0
+    tip_oid_result = _git(["rev-parse", ref])
+    tip_oid = tip_oid_result.stdout.strip() if tip_oid_result.returncode == 0 else ""
+    if isinstance(open_, set):
+        # Compatibility for older callers/tests: name-only evidence is conservative and protects.
+        pr_open = branch in open_
+    else:
+        remote_open_tip = open_.get(branch)
+        pr_open = bool(remote_open_tip and tip_oid and remote_open_tip == tip_oid)
     pr_merged_raw = branch in merged
     pr_merged_safe = False
     if pr_merged_raw:
@@ -357,7 +384,7 @@ def gather_facts(
         is_ancestor=is_ancestor,
         pr_merged_safe=pr_merged_safe,
         pr_merged_raw=pr_merged_raw,
-        pr_open=branch in open_,
+        pr_open=pr_open,
         checked_out=branch in checked_out,
         protected=(branch == dname or branch in BASE_PROTECT or branch in EXTRA_PROTECT),
     )
