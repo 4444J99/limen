@@ -37,6 +37,8 @@ Design invariants (each carried over from a shipped safety precedent):
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import subprocess
 import tempfile
@@ -83,6 +85,18 @@ class Ticket(BaseModel):
     patch: dict[str, Any] | None = None
     # optional dispatch_log payload appended to the task's log — {"status": .., "output"?: ..}.
     log: dict[str, Any] | None = None
+    # Optional optimistic concurrency guard, evaluated by the keeper against
+    # the exact current task immediately before this ticket is folded.  A
+    # migration can therefore never archive a task that another ticket claimed
+    # after compilation.
+    precondition: dict[str, Any] | None = None
+
+
+def task_state_sha256(fields: dict[str, Any]) -> str:
+    """Content hash for one JSON-mode task state, including its append-only log."""
+
+    encoded = json.dumps(fields, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def new_ticket_id(session_id: str = "unknown", now: datetime | None = None) -> str:
@@ -379,6 +393,46 @@ def _parse_pending(inbox: Path) -> tuple[list[tuple[Path, Ticket]], list[tuple[P
     return good, bad
 
 
+def _admit_exact_preconditions(
+    pending: list[tuple[Path, Ticket]],
+) -> tuple[list[tuple[Path, Ticket]], list[tuple[Path, str]]]:
+    """Reject exact-state tickets that conflict anywhere in the captured batch.
+
+    Sequential optimistic checks are insufficient: an archive ticket at T can
+    satisfy its precondition and then a same-task claim at T+1 can reopen it in
+    the same keeper drain.  Admission therefore inspects the entire
+    lock-captured batch before folding any task.  Any other pending state event
+    for the same task invalidates a ``task_sha256`` precondition regardless of
+    timestamp order.  Only the guarded ticket is rejected; unrelated tickets
+    and the conflicting owner event retain their normal append-only custody.
+    """
+
+    task_mutations = {INTENT_UPSERT, INTENT_STATUS, INTENT_REMOVE}
+    by_task: dict[str, list[tuple[Path, Ticket]]] = {}
+    for path, ticket in pending:
+        if ticket.task_id and ticket.intent in task_mutations:
+            by_task.setdefault(ticket.task_id, []).append((path, ticket))
+
+    rejected: list[tuple[Path, str]] = []
+    rejected_paths: set[Path] = set()
+    for path, ticket in pending:
+        if not ticket.task_id or "task_sha256" not in (ticket.precondition or {}):
+            continue
+        peers = [(peer_path, peer) for peer_path, peer in by_task.get(ticket.task_id, []) if peer_path != path]
+        if not peers:
+            continue
+        peer_ids = sorted(peer.ticket_id for _, peer in peers)
+        rejected_paths.add(path)
+        rejected.append(
+            (
+                path,
+                f"batch precondition failed: {ticket.task_id} has {len(peers)} other pending state event(s) "
+                f"{peer_ids}; exact task state is invalidated regardless of timestamp order",
+            )
+        )
+    return [(path, ticket) for path, ticket in pending if path not in rejected_paths], rejected
+
+
 def _apply(ticket: Ticket, tasks: OrderedDict[str, dict[str, Any]], meta: dict[str, Any]) -> None:
     """Fold one ticket onto the in-memory board state (mutates `tasks`/`meta` in place).
 
@@ -396,6 +450,26 @@ def _apply(ticket: Ticket, tasks: OrderedDict[str, dict[str, Any]], meta: dict[s
             raise ValueError(f"{ticket.intent} requires task_id")
         is_new = ticket.task_id not in tasks
         base = dict(tasks.get(ticket.task_id, {}))
+        precondition = ticket.precondition or {}
+        unknown_preconditions = set(precondition) - {"absent", "status", "task_sha256"}
+        if unknown_preconditions:
+            raise ValueError(f"unknown task preconditions: {sorted(unknown_preconditions)}")
+        if precondition.get("absent") is True and not is_new:
+            raise ValueError(f"task precondition failed: {ticket.task_id} is no longer absent")
+        if "task_sha256" in precondition:
+            if is_new:
+                raise ValueError(f"task precondition failed: {ticket.task_id} is absent")
+            actual_hash = task_state_sha256(base)
+            if actual_hash != precondition["task_sha256"]:
+                raise ValueError(
+                    f"task precondition failed: {ticket.task_id} exact state changed "
+                    f"({actual_hash[:12]} != {str(precondition['task_sha256'])[:12]})"
+                )
+        if "status" in precondition and base.get("status") != precondition["status"]:
+            raise ValueError(
+                f"task precondition failed: {ticket.task_id} status is {base.get('status')!r}, "
+                f"expected {precondition['status']!r}"
+            )
         merged = {**base, **(ticket.patch or {})}
         merged["id"] = ticket.task_id
         merged["updated"] = ticket.timestamp.isoformat()
@@ -481,22 +555,35 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
     if not inbox.is_dir():
         return DrainResult(note="inbox empty")
 
-    good, bad = _parse_pending(inbox)
-    pending = len(good) + len(bad)
-    if pending == 0:
+    pending_hint = len(list(inbox.glob("*.json")))
+    if pending_hint == 0:
         return DrainResult(note="inbox empty")
 
     if dry_run:
+        good, bad = _parse_pending(inbox)
+        admitted, precondition_rejections = _admit_exact_preconditions(good)
+        pending = len(good) + len(bad)
         return DrainResult(
             pending=pending,
-            applied=len(good),
-            rejected=len(bad),
-            note=f"dry-run: {len(good)} applicable, {len(bad)} unparseable",
+            applied=len(admitted),
+            rejected=len(bad) + len(precondition_rejections),
+            note=(
+                f"dry-run: {len(admitted)} applicable, "
+                f"{len(bad)} unparseable, {len(precondition_rejections)} precondition conflict(s)"
+            ),
         )
 
     with queue_lock(board_path, timeout=lock_timeout) as locked:
         if not locked:
-            return DrainResult(pending=pending, deferred=True, note="queue lock held; deferred to next beat")
+            return DrainResult(pending=pending_hint, deferred=True, note="queue lock held; deferred to next beat")
+
+        # Parse only after taking the same lock used by phase publishers.  A
+        # keeper can therefore observe either the complete published phase or
+        # none of it, never an in-flight prefix captured before the lock.
+        good, bad = _parse_pending(inbox)
+        pending = len(good) + len(bad)
+        if pending == 0:
+            return DrainResult(note="inbox empty")
 
         board = load_limen_file(board_path)
         board_json = board.model_dump(mode="json", exclude_none=True)
@@ -504,8 +591,9 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
         meta: dict[str, Any] = {"version": board_json.get("version", "1.0"), "portal": board_json.get("portal")}
 
         applied: list[tuple[Path, Ticket]] = []
-        rejected: list[tuple[Path, str]] = list(bad)
-        for p, ticket in good:
+        admitted, precondition_rejections = _admit_exact_preconditions(good)
+        rejected: list[tuple[Path, str]] = [*bad, *precondition_rejections]
+        for p, ticket in admitted:
             try:
                 _apply(ticket, tasks, meta)
                 applied.append((p, ticket))
