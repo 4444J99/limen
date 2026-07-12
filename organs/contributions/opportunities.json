@@ -4,11 +4,11 @@
   "pool": [
     {
       "dependency": "pytest",
-      "used_in_repos": 32
+      "used_in_repos": 34
     },
     {
       "dependency": "typescript",
-      "used_in_repos": 29
+      "used_in_repos": 30
     },
     {
       "dependency": "vitest",
@@ -16,7 +16,7 @@
     },
     {
       "dependency": "ruff",
-      "used_in_repos": 21
+      "used_in_repos": 22
     },
     {
       "dependency": "eslint",
@@ -24,19 +24,19 @@
     },
     {
       "dependency": "pyyaml",
-      "used_in_repos": 19
+      "used_in_repos": 20
     },
     {
       "dependency": "react",
-      "used_in_repos": 14
+      "used_in_repos": 15
     },
     {
       "dependency": "react-dom",
-      "used_in_repos": 13
+      "used_in_repos": 14
     },
     {
       "dependency": "node",
-      "used_in_repos": 12
+      "used_in_repos": 13
     },
     {
       "dependency": "pytest-cov",

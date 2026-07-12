@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (238) — decide each
+## Live-work branches (249) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -60,6 +60,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `feature/ORG-education-organ-face-0630` — 9d174794 feat(education): author polished macro and micro face for education organ
 - `feature/tale-of-genji-chapters-2-5` — 50a31de4 studium: author Tale of Genji chapters 2-5
 - `fix-branch` — 70689bf3 fix: resolve ruff format failure and remove mypy_cache artifacts
+- `fix-pr-680` — b8b2ea40 fix failing CI on organvm/limen#432
 - `fix/616-format` — e020757c style: ruff format test_corpus_command_center.py (CI format-check gate)
 - `fix/dispatch-admission-ci-768` — 96f6c10b Merge remote-tracking branch 'origin/main' into fix/dispatch-admission-ci-768
 - `fix/fork-safety-predicate` — 09b6eb0c style(fork-safety): ruff format the predicate + its test
@@ -133,6 +134,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-cifix-organvm-limen-485-db7de160` — 4fd78795 Recover closed PR task: Router fans across ALL paid services, not just the 6 vendors
 - `limen/heal-cifix-organvm-limen-490-8e65bdf4` — f70008a7 Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane
 - `limen/heal-cifix-organvm-limen-516-55653ae8` — 59d881d4 Raise test coverage in organvm/limen
+- `limen/heal-cifix-organvm-limen-620-091fdee6` — 4a4f2d10 Build the first working vertical slice of the legal organ
 - `limen/heal-cifix-organvm-limen-624-83943155` — 6014b920 Deepen the financial organ toward a usable institution
 - `limen/heal-cifix-organvm-limen-624-9ad64703` — 6014b920 Deepen the financial organ toward a usable institution
 - `limen/heal-cifix-organvm-limen-630-6bb2c8d1` — 51bfc3fa Make the financial organ's macro + micro face excellent
@@ -167,6 +169,13 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-rebase-organvm-limen-629-bcec6316` — 111d812b Charter the health organ as an institution rivaling a concierge medical / recovery team
 - `limen/heal-rebase-organvm-limen-630-790853f9` — f124ddd2 Make the financial organ's macro + micro face excellent
 - `limen/heal-rebase-organvm-limen-630-d878401c` — f124ddd2 Make the financial organ's macro + micro face excellent
+- `limen/heal-rebase-organvm-limen-680-c1c9768f` — b8b2ea40 fix failing CI on organvm/limen#432
+- `limen/heal-rebase-organvm-limen-680-e0f6856e` — b8b2ea40 fix failing CI on organvm/limen#432
+- `limen/heal-rebase-organvm-limen-682-04a48a4c` — 3dc7ad6a limen: harvest async receipt results
+- `limen/heal-rebase-organvm-limen-684-0483d311` — 97aff27a Deepen the contributions organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-684-aa986f4c` — 97aff27a Deepen the contributions organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-696-99224303` — 42d75f7e fix failing CI on organvm/limen#375
+- `limen/heal-rebase-organvm-limen-703-3cf56c8a` — 742f6330 handoff-relay.py: cross-session/cross-vendor warm-resume packet
 - `limen/heal-rebase-stale-organvm-limen-434-180b7ce7` — b1a12a51 style: format cli.py
 - `limen/heal-rebase-stale-organvm-limen-434-8020d59d` — b1a12a51 style: format cli.py
 - `limen/heal-rebase-stale-organvm-limen-620-913107b3` — b79d6404 Build the first working vertical slice of the legal organ
@@ -247,6 +256,8 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `pr-440` — 6775009f fix: resolve mypy errors in task typing
 - `pr-445` — 99c28280 Agy daily capacity-fill packet 04
 - `pr-669-governance-deepen` — 3dc75166 ci: declare async archive parameters
+- `pr-680` — b8b2ea40 fix failing CI on organvm/limen#432
+- `pr-682` — 9410ebc8 docs: add organvm/sovereign--ground--4444j99 to value-repos
 - `promote-domus-genoma` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
 - `rebase-630` — 51bfc3fa Make the financial organ's macro + micro face excellent
 - `refactor/armed-valve-derive` — e342c68f refactor(armed-valve): read sensor gates from the SENSORS registry, not just the shell

@@ -64,15 +64,15 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 
 | dependency | used across our repos |
 |---|---|
-| pytest | 32 |
-| typescript | 29 |
+| pytest | 34 |
+| typescript | 30 |
 | vitest | 23 |
-| ruff | 21 |
+| ruff | 22 |
 | eslint | 20 |
-| pyyaml | 19 |
-| react | 14 |
-| react-dom | 13 |
-| node | 12 |
+| pyyaml | 20 |
+| react | 15 |
+| react-dom | 14 |
+| node | 13 |
 | pytest-cov | 12 |
 | js | 10 |
 | jsdom | 9 |

@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-10T18:02:07+00:00`
+Generated: `2026-07-12T06:58:35+00:00`
 Status: `needs-work`
-Required open: `3`
+Required open: `5`
 Blocked: `1`
-Done from receipt: `7`
+Done from receipt: `5`
 
 ## Contract
 
@@ -31,13 +31,13 @@ Done from receipt: `7`
 | 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | substrate lifecycle predicate is failing |
 | 5 | `ESTATE-CUSTODY` | `done_from_receipt` | run-and-gun laptop cache and external estate custody have implementation receipts |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
-| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 74.1%, PRs 13.6%, issues 11.4%, reviews 0.9% |
+| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.9%, PRs 13.8%, issues 11.4%, reviews 0.9% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `done_from_receipt` | credential wall and historical token tombstone receipt are present |
-| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 131 active flagged non-deleted messages require classification |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 83705 indexed non-deleted messages remain for future batches |
-| 40 | `REPO-BOIL-UP` | `done_from_receipt` | fresh repo surface ledger covers broad repo estate; 42 duplicate remote group(s) recorded |
+| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 135 active flagged non-deleted messages require classification |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 84159 indexed non-deleted messages remain for future batches |
+| 40 | `REPO-BOIL-UP` | `assigned_from_existing_work` | broad repo surface ledger exists, but it is stale for current boil-up work |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
-| 60 | `VALUE-REPOS` | `done_from_receipt` | top 5 value repos have owner receipts; 15 value repos are sell-ready in the product ledger |
+| 60 | `VALUE-REPOS` | `assigned_from_existing_work` | value repo product ledger exists, but it is stale for current funded-lane steering |
 | 70 | `TABVLARIVS-STATUS-WRITERS` | `done_from_receipt` | status-mutator tier is recorded closed |
 
 ## Assignment Packets
@@ -112,4 +112,32 @@ Done from receipt: `7`
   - `~/Workspace/limen/obligations-ledger.json`
   - `~/Workspace/limen/scripts/mail-story-ledger.py`
   - `~/Workspace/limen/scripts/mail-beat.sh`
+
+### REPO-BOIL-UP
+
+- Lane fit: `agy-or-opencode-readonly`
+- Repo/root: `~/Workspace/limen`
+- Task: Harvest existing repo-surface and consolidation receipts, then assign only missing classifications.
+- Predicate: `python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write`
+- Receipt target: `~/Workspace/limen/docs/repo-surface-ledger.md`
+- Stop condition: all discovered roots are classified or recorded with blocker/gate
+- Existing receipts:
+  - `~/Workspace/limen/docs/repo-surface-ledger.md`
+  - `~/Workspace/limen/docs/consolidation/GATES.md`
+  - `~/Workspace/limen/docs/consolidation/EXECUTION-MANIFEST.md`
+  - `~/Workspace/limen/scripts/repo-surface-ledger.py`
+  - `~/Workspace/limen/scripts/salvage-yard-map.py`
+
+### VALUE-REPOS
+
+- Lane fit: `jules-or-opencode-repo-specific`
+- Repo/root: `organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/peer-audited--behavioral-blockchain,organvm/mirror-mirror`
+- Task: Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.
+- Predicate: `python3 scripts/product-ledger.py --write`
+- Receipt target: `~/Workspace/limen/docs/product-ledger.md`
+- Stop condition: top value repo has shipped PR, open PR with predicate, owner task, or blocker
+- Existing receipts:
+  - `~/Workspace/limen/value-repos.json`
+  - `~/Workspace/limen/docs/product-ledger.md`
+  - `~/Workspace/limen/docs/positioning/_frontdoor.md`
 
