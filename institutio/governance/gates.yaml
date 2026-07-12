@@ -208,7 +208,17 @@ gates:
     paths: ["scripts/omega.sh", "scripts/tests/omega.test.sh"]
     scoped: false
     owner: omega
-    note: "The fixed-point composer's tally/exit/stamp contract; SKIP is never a silent PASS."
+    note: "The fixed-point composer's version/hash/tally/strict contract; SKIP is never a silent PASS."
+  main-green-test:
+    command: "python3 -m pytest cli/tests/test_check_main_green.py -q"
+    paths: ["scripts/check-main-green.py", "cli/tests/test_check_main_green.py", "scripts/omega.sh"]
+    owner: omega
+    note: "Workflow-filtered completed CI must match the full current origin/main head; a prior or pending run is never green proof."
+  handoff-relay-test:
+    command: "python3 -m pytest cli/tests/test_handoff_relay.py -q"
+    paths: ["scripts/handoff-relay.py", "scripts/heartbeat-loop.sh", "scripts/metabolize.sh", "scripts/hooks/session-closeout.sh", "cli/tests/test_handoff_relay.py"]
+    owner: continuity
+    note: "The warm-resume packet carries authoritative budget/provider/next truth and refreshes across heartbeat, metabolize, and SessionEnd seams."
 
   # ── session/docs/board predicates ───────────────────────────────────────────
   session-orient:

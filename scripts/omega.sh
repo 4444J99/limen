@@ -18,24 +18,29 @@
 #   omega.sh              all rungs (live host / beat) — the real fixed point
 #   omega.sh --offline    det rungs only; live rungs → SKIP (CI-safe, deterministic)
 #   omega.sh --full       also runs verify-whole.sh for the authoritative main-green rung
+#   omega.sh --strict     any FAIL or SKIP is non-zero (default remains zero-FAIL compatible)
 #   omega.sh --quiet      table + verdict only (suppress per-rung child output)
 #
 # Fail-open per rung: a rung whose command errors unexpectedly is FAIL (honest), never a crash of
-# the whole predicate. Exit 0 ⟺ zero FAIL rungs (SKIPs are allowed but always reported).
+# the whole predicate. Default exit 0 ⟺ zero FAIL rungs (SKIPs are allowed but always reported);
+# strict exit 0 ⟺ zero FAIL and zero SKIP rungs.
 
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PYTHONPATH="$ROOT/cli/src${PYTHONPATH:+:$PYTHONPATH}"
 STAMP="$ROOT/logs/omega.json"   # derived from ROOT; the test drives it via a temp-ROOT copy
+OMEGA_SCHEMA_VERSION=1
 
 OFFLINE=0
 FULL=0
+STRICT=0
 QUIET=0
 for arg in "$@"; do
   case "$arg" in
     --offline) OFFLINE=1 ;;
     --full)    FULL=1 ;;
+    --strict)  STRICT=1 ;;
     --quiet)   QUIET=1 ;;
     -h|--help) grep '^#' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "omega.sh: unknown arg '$arg'" >&2; exit 2 ;;
@@ -83,17 +88,73 @@ skip_rung() {
 
 cd "$ROOT"
 
-echo "══ omega.sh — autonomic fixed-point predicate$([[ $OFFLINE == 1 ]] && echo ' (offline/det subset)') ══"
+# Discover the registry-owned rungs once.  The same normalized rows feed both execution and the
+# contract hash, so the stamp identifies the exact contract that produced its verdict.  Sorting in
+# the hash makes registry serialization order irrelevant while add/remove/rename/capability changes
+# still change the identity.
+SENSOR_OMEGA_ROWS="$(mktemp "${TMPDIR:-/tmp}/limen-omega-sensors.XXXXXX")"
+trap 'rm -f "$SENSOR_OMEGA_ROWS"' EXIT
+SENSOR_DISCOVERY_OK=0
+if python3 "$ROOT/scripts/beat-sensors.py" --list-omega > "$SENSOR_OMEGA_ROWS"; then
+  SENSOR_DISCOVERY_OK=1
+fi
+CONTRACT_HASH="$(python3 - "$ROOT/scripts/omega.sh" "$SENSOR_OMEGA_ROWS" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
 
-# 1. main green — the trunk itself compiles/tests/builds. Authoritative only via verify-whole.sh
-#    (--full); on the beat we read the last CI conclusion for origin/main if gh is reachable.
+script_path, sensor_path = map(Path, sys.argv[1:])
+rows = []
+for raw in sensor_path.read_text(encoding="utf-8").splitlines():
+    if not raw:
+        continue
+    parts = raw.split("\t", 5)
+    if len(parts) != 6:
+        raise SystemExit(f"invalid omega sensor row: {raw!r}")
+    sensor_id, check_index, tier, label, command, timeout = parts
+    rows.append(
+        {
+            "check_index": int(check_index),
+            "id": sensor_id,
+            "label": label,
+            "tier": tier,
+            "command": command,
+            "timeout": int(timeout),
+        }
+    )
+normalized = json.dumps(
+    sorted(rows, key=lambda row: (row["id"], row["check_index"], row["tier"], row["label"])),
+    ensure_ascii=True,
+    separators=(",", ":"),
+    sort_keys=True,
+).encode("ascii")
+digest = hashlib.sha256()
+digest.update(b"omega.sh\0")
+digest.update(script_path.read_bytes())
+digest.update(b"\0normalized-sensor-rungs\0")
+digest.update(normalized)
+print(digest.hexdigest())
+PY
+)"
+if [[ ! "$CONTRACT_HASH" =~ ^[0-9a-f]{64}$ ]]; then
+  SENSOR_DISCOVERY_OK=0
+  CONTRACT_HASH="$(python3 - "$ROOT/scripts/omega.sh" <<'PY'
+import hashlib, sys
+from pathlib import Path
+print(hashlib.sha256(b"omega.sh\0" + Path(sys.argv[1]).read_bytes() + b"\0sensor-discovery-error").hexdigest())
+PY
+)"
+fi
+
+echo "══ omega.sh — autonomic fixed-point predicate$([[ $OFFLINE == 1 ]] && echo ' (offline/det subset)')$([[ $STRICT == 1 ]] && echo ' (strict)') ══"
+
+# 1. main green — the trunk itself compiles/tests/builds. Authoritative locally via verify-whole.sh
+#    (--full); on the beat require the workflow-filtered completed CI run for the exact origin/main.
 if [[ "$FULL" == "1" ]]; then
   rung "main-green (verify-whole)" det bash "$ROOT/scripts/verify-whole.sh"
 elif command -v gh >/dev/null 2>&1 && [[ "$OFFLINE" == "0" ]]; then
-  rung "main-green (last CI on origin/main)" live bash -c '
-    concl=$(gh run list --branch main --limit 1 --json conclusion -q ".[0].conclusion" 2>/dev/null)
-    [[ "$concl" == "success" ]] || { echo "  latest main CI conclusion: ${concl:-unknown} (want: success)"; exit 1; }
-    echo "  latest main CI: success"'
+  rung "main-green (exact-head completed CI)" live env LIMEN_ROOT="$ROOT" python3 "$ROOT/scripts/check-main-green.py" --exact-head-check
 else
   skip_rung "main-green" live "no gh / offline — run omega.sh --full for the authoritative check"
 fi
@@ -150,16 +211,14 @@ fi
 #      omega consumes only generic {id,index,tier,label} metadata and therefore needs no edit when a
 #      sensor is added or renamed. ``rung`` owns offline handling, so every live check remains an
 #      explicit SKIP rather than a fake pass.
-SENSOR_OMEGA_ROWS="$(mktemp "${TMPDIR:-/tmp}/limen-omega-sensors.XXXXXX")"
-if python3 "$ROOT/scripts/beat-sensors.py" --list-omega > "$SENSOR_OMEGA_ROWS"; then
-  while IFS=$'\t' read -r sensor_id check_index tier label; do
+if [[ "$SENSOR_DISCOVERY_OK" == "1" ]]; then
+  while IFS=$'\t' read -r sensor_id check_index tier label _command _timeout; do
     [[ -n "$sensor_id" ]] || continue
     rung "$label" "$tier" python3 "$ROOT/scripts/beat-sensors.py" --run-omega "$sensor_id" "$check_index"
   done < "$SENSOR_OMEGA_ROWS"
 else
   rung "sensor registry fixed-point discovery" det false
 fi
-rm -f "$SENSOR_OMEGA_ROWS"
 
 # ── verdict ──────────────────────────────────────────────────────────────────
 echo
@@ -170,17 +229,28 @@ done
 echo
 printf 'omega: %d PASS · %d FAIL · %d SKIP\n' "$PASS_N" "$FAIL_N" "$SKIP_N"
 
-VERDICT=$([[ $FAIL_N -eq 0 ]] && echo "HOLDS" || echo "BROKEN")
+if [[ $FAIL_N -gt 0 ]]; then
+  VERDICT="BROKEN"
+elif [[ $STRICT -eq 1 && $SKIP_N -gt 0 ]]; then
+  VERDICT="INCOMPLETE"
+else
+  VERDICT="HOLDS"
+fi
 
 # Stamp logs/omega.json so session-orient / handoff can read the fixed-point state without re-running.
 mkdir -p "$(dirname "$STAMP")" 2>/dev/null || true
-python3 - "$STAMP" "$VERDICT" "$PASS_N" "$FAIL_N" "$SKIP_N" "$OFFLINE" "${JSON_ROWS[@]}" <<'PY' 2>/dev/null || true
+python3 - "$STAMP" "$OMEGA_SCHEMA_VERSION" "$CONTRACT_HASH" "$VERDICT" "$PASS_N" "$FAIL_N" "$SKIP_N" "$OFFLINE" "$STRICT" "${JSON_ROWS[@]}" <<'PY' 2>/dev/null || true
 import datetime as dt, json, sys
-stamp, verdict, p, f, s, offline, *rows = sys.argv[1:]
+stamp, schema, contract_hash, verdict, p, f, s, offline, strict, *rows = sys.argv[1:]
+generated_at = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 payload = {
-    "generated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+    "schema_version": int(schema),
+    "generated": generated_at,
+    "generated_at": generated_at,
+    "contract_hash": contract_hash,
     "verdict": verdict,
     "offline": offline == "1",
+    "strict": strict == "1",
     "pass": int(p), "fail": int(f), "skip": int(s),
     "rungs": [json.loads(r) for r in rows],
 }
@@ -189,9 +259,12 @@ open(tmp, "w").write(json.dumps(payload, indent=1, sort_keys=True))
 import os; os.replace(tmp, stamp)
 PY
 
-if [[ $FAIL_N -eq 0 ]]; then
+if [[ "$VERDICT" == "HOLDS" ]]; then
   echo "══ OMEGA HOLDS ══  (SKIPs above are unverified rungs, not failures — close them to raise confidence)"
   exit 0
+elif [[ "$VERDICT" == "INCOMPLETE" ]]; then
+  echo "══ OMEGA INCOMPLETE ══  ($SKIP_N rung(s) skipped under --strict — every rung must be verified)"
+  exit 1
 else
   echo "══ OMEGA BROKEN ══  ($FAIL_N rung(s) failed — the system is not at its fixed point)"
   exit 1

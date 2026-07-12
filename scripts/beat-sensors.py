@@ -260,9 +260,17 @@ def iter_omega(sensors: dict):
 
 
 def list_omega(registry: Path = REGISTRY) -> int:
-    """Emit stable TSV metadata; commands stay inside the registry runner."""
-    for sensor_id, index, _sensor, check in iter_omega(load_sensors(registry)):
-        fields = (sensor_id, str(index), str(check.get("tier", "det")), str(check.get("label", sensor_id)))
+    """Emit stable TSV contract metadata; execution still stays inside the registry runner."""
+    for sensor_id, index, sensor, check in iter_omega(load_sensors(registry)):
+        timeout = _positive_int(check.get("timeout"), fallback=_positive_int(sensor.get("timeout")))
+        fields = (
+            sensor_id,
+            str(index),
+            str(check.get("tier", "det")),
+            str(check.get("label", sensor_id)),
+            str(check["command"]),
+            str(timeout),
+        )
         if any("\t" in field or "\n" in field for field in fields):
             print(f"beat-sensors: invalid tab/newline in omega metadata for {sensor_id}", file=sys.stderr)
             return 2

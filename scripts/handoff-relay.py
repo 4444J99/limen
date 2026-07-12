@@ -4,8 +4,9 @@
 The 84-ask overnight/walk-away loop kept dying at every session/vendor/beat seam because each
 pickup cold-derived the world from scratch (retro 2026-07-08, finding 3). This writes one compact,
 PII-clean ``logs/handoff.json`` every beat and at SessionEnd, so the NEXT session/vendor/beat
-resumes WARM: it knows the open lanes, the in-flight claims, the last blocker, the budget left, and
-the single next action. ``session-orient`` injects it at SessionStart.
+resumes WARM: it knows the open lanes, the in-flight claims, the last blocker, authoritative board
+budget, timestamped provider headroom, and both the ostensible and actually dispatchable next task.
+``session-orient`` injects it at SessionStart.
 
   write   (default)   recompute logs/handoff.json from the live board + beat state
   --check             predicate: exit 0 iff a FRESH, complete handoff exists (a warm resume is
@@ -47,16 +48,23 @@ def _load_json(path: Path, default: Any) -> Any:
         return default
 
 
-def _load_tasks() -> list[dict[str, Any]]:
+def _load_board() -> dict[str, Any]:
     try:
         import yaml
     except Exception:
-        return []
+        return {}
     try:
         board = yaml.safe_load(TASKS.read_text())
     except Exception:
+        return {}
+    return board if isinstance(board, dict) else {}
+
+
+def _load_tasks(board: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    board = _load_board() if board is None else board
+    if not isinstance(board, dict):
         return []
-    tasks = board.get("tasks", board) if isinstance(board, dict) else board
+    tasks = board.get("tasks", board)
     if isinstance(tasks, dict):
         tasks = list(tasks.values())
     return [t for t in (tasks or []) if isinstance(t, dict)]
@@ -121,63 +129,239 @@ def _last_blocker(tasks: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _budget() -> dict[str, Any]:
-    """What runway is left — the beat's async budget and per-vendor spend."""
-    out: dict[str, Any] = {"overnight_spent": None, "overnight_cap": None, "vendors": {}}
-    # overnight-watch prints "spent=62/600" — the cheapest live gauge.
+def _provider_headroom() -> dict[str, Any]:
+    """Timestamped provider capacity from the owning usage receipt."""
+    usage = _load_json(USAGE, {})
+    generated = None
+    vendors: dict[str, Any] = {}
+    if isinstance(usage, dict):
+        generated = usage.get("generated") or usage.get("generated_at")
+        raw_vendors = usage.get("vendors")
+        if isinstance(raw_vendors, dict):
+            for name, value in list(raw_vendors.items())[:20]:
+                if isinstance(value, dict):
+                    projected = {
+                        key: value.get(key)
+                        for key in (
+                            "remaining",
+                            "spent",
+                            "consumed",
+                            "state",
+                            "status",
+                            "health",
+                            "headroom_pct",
+                            "effective_reserve_pct",
+                        )
+                        if key in value
+                    }
+                    reset_at = value.get("resets_at", value.get("reset_at"))
+                    if reset_at is not None:
+                        projected["resets_at"] = reset_at
+                    vendors[str(name)] = projected
+    return {"generated": generated, "vendors": vendors}
+
+
+def _legacy_budget(provider_headroom: dict[str, Any]) -> dict[str, Any]:
+    """Backward-compatible overnight gauge retained for existing handoff consumers."""
+    out: dict[str, Any] = {
+        "overnight_spent": None,
+        "overnight_cap": None,
+        "vendors": dict(provider_headroom.get("vendors") or {}),
+    }
     try:
-        for ln in reversed(OVERNIGHT.read_text().splitlines()):
-            if "spent=" in ln:
-                frag = ln.split("spent=", 1)[1].split()[0]
-                spent, cap = frag.split("/")
-                out["overnight_spent"], out["overnight_cap"] = int(spent), int(cap)
-                out["overnight_remaining"] = int(cap) - int(spent)
-                break
+        for line in reversed(OVERNIGHT.read_text().splitlines()):
+            if "spent=" not in line:
+                continue
+            fragment = line.split("spent=", 1)[1].split()[0]
+            spent, cap = fragment.split("/")
+            out["overnight_spent"], out["overnight_cap"] = int(spent), int(cap)
+            out["overnight_remaining"] = int(cap) - int(spent)
+            break
     except Exception:
         pass
-    usage = _load_json(USAGE, {})
-    vendors = usage.get("vendors") if isinstance(usage, dict) else None
-    if isinstance(vendors, dict):
-        for name, v in list(vendors.items())[:10]:
-            if isinstance(v, dict):
-                out["vendors"][name] = {k: v.get(k) for k in ("remaining", "spent", "state", "status") if k in v}
     return out
 
 
-def _next_action(tasks: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """The single next honest step: highest-priority OPEN task whose deps are satisfied. The
-    resume acts instead of re-deriving 'what now'."""
-    done = {t.get("id") for t in tasks if t.get("status") in {"done", "archived"}}
+def _as_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
+    """Authoritative budget from ``tasks.yaml`` rather than the overnight log proxy."""
+    portal = board.get("portal") if isinstance(board, dict) else None
+    budget = portal.get("budget") if isinstance(portal, dict) else None
+    budget = budget if isinstance(budget, dict) else {}
+    track = budget.get("track") if isinstance(budget.get("track"), dict) else {}
+    caps = budget.get("per_agent") if isinstance(budget.get("per_agent"), dict) else {}
+    spent_by = track.get("per_agent") if isinstance(track.get("per_agent"), dict) else {}
+    reset_by = track.get("per_agent_reset") if isinstance(track.get("per_agent_reset"), dict) else {}
+    daily = _as_int(budget.get("daily"))
+    spent = _as_int(track.get("spent"))
+    global_remaining = max(0, daily - spent) if daily is not None and spent is not None else None
+    agents: dict[str, Any] = {}
+    for name in sorted(set(caps) | set(spent_by) | set(reset_by)):
+        cap = _as_int(caps.get(name))
+        agent_spent = _as_int(spent_by.get(name)) or 0
+        remaining = global_remaining
+        if cap is not None:
+            cap_remaining = max(0, cap - agent_spent)
+            remaining = cap_remaining if remaining is None else min(remaining, cap_remaining)
+        agents[str(name)] = {
+            "cap": cap,
+            "spent": agent_spent,
+            "remaining": remaining,
+            "reset_at": reset_by.get(name),
+        }
+    return {
+        "daily": daily,
+        "unit": budget.get("unit"),
+        "track_date": track.get("date"),
+        "spent": spent,
+        "remaining": global_remaining,
+        "per_agent": agents,
+    }
+
+
+def _task_summary(task: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": task.get("id"),
+        "title": str(task.get("title", ""))[:90],
+        "repo": task.get("repo"),
+        "agent": task.get("target_agent"),
+        "priority": task.get("priority"),
+    }
+
+
+def _ostensible_next(tasks: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Highest-priority open task after only the legacy dependency/status view."""
+    done = {task.get("id") for task in tasks if task.get("status") in {"done", "archived"}}
     candidates = []
-    for t in tasks:
-        if t.get("status") != "open":
+    for task in tasks:
+        if task.get("status") != "open":
             continue
-        deps = t.get("depends_on") or []
-        if any(d not in done for d in deps):
+        if any(dep not in done for dep in task.get("depends_on") or []):
             continue
-        candidates.append(t)
+        candidates.append(task)
     if not candidates:
         return None
-    top = sorted(candidates, key=lambda t: (_PRIORITY.get(str(t.get("priority")), 9), str(t.get("id"))))[0]
-    return {
-        "id": top.get("id"),
-        "title": str(top.get("title", ""))[:90],
-        "repo": top.get("repo"),
-        "agent": top.get("target_agent"),
-        "priority": top.get("priority"),
+    top = sorted(
+        candidates,
+        key=lambda task: (_PRIORITY.get(str(task.get("priority")), 9), str(task.get("id"))),
+    )[0]
+    return _task_summary(top)
+
+
+def _has_terminal_transition(task: dict[str, Any]) -> bool:
+    for entry in task.get("dispatch_log") or []:
+        if isinstance(entry, dict) and str(entry.get("status") or "") in {"done", "archived", "pr_open"}:
+            return True
+    return False
+
+
+def _dependency_merged(task: dict[str, Any] | None) -> bool:
+    if not isinstance(task, dict):
+        return False
+    for entry in task.get("dispatch_log") or []:
+        if not isinstance(entry, dict):
+            continue
+        text = f"{entry.get('status') or ''} {entry.get('output') or ''}".lower()
+        if "merged" in text:
+            return True
+    return False
+
+
+def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
+    if agent in {"", "any"}:
+        return True
+    vendors = provider_headroom.get("vendors")
+    value = vendors.get(agent) if isinstance(vendors, dict) else None
+    if not isinstance(value, dict):
+        return True  # unknown is not the same as measured-down
+    remaining = value.get("remaining")
+    if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) and remaining <= 0:
+        return False
+    state = str(value.get("health") or value.get("state") or value.get("status") or "")
+    state = state.strip().lower().replace("-", "_")
+    return state not in {
+        "down",
+        "disabled",
+        "exhausted",
+        "low",
+        "rate_limited",
+        "unavailable",
+        "blocked",
     }
+
+
+def _dispatchable_next(
+    tasks: list[dict[str, Any]],
+    board_budget: dict[str, Any],
+    provider_headroom: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Highest-priority task that clears the handoff's read-only reservation gates.
+
+    Admission itself reads this handoff, so the relay cannot recursively launch the admission
+    subprocess.  These are the stable per-task gates: open machine work only, no terminal history,
+    merged dependencies, available budget, and no measured-down provider.
+    """
+    by_id = {str(task.get("id")): task for task in tasks if task.get("id")}
+    global_remaining = _as_int(board_budget.get("remaining"))
+    per_agent = board_budget.get("per_agent") if isinstance(board_budget.get("per_agent"), dict) else {}
+    candidates: list[dict[str, Any]] = []
+    for task in tasks:
+        if task.get("status") != "open" or _has_terminal_transition(task):
+            continue
+        labels = {str(label) for label in task.get("labels") or []}
+        if "needs-human" in labels:
+            continue
+        deps = [str(value) for value in task.get("depends_on") or []]
+        if any(not _dependency_merged(by_id.get(dep)) for dep in deps):
+            continue
+        cost = _as_int(task.get("budget_cost")) or 1
+        if global_remaining is not None and cost > global_remaining:
+            continue
+        agent = str(task.get("target_agent") or "")
+        agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
+        agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
+        if agent_remaining is not None and cost > agent_remaining:
+            continue
+        if not _provider_available(agent, provider_headroom):
+            continue
+        candidates.append(task)
+    if not candidates:
+        return None
+    top = sorted(
+        candidates,
+        key=lambda task: (_PRIORITY.get(str(task.get("priority")), 9), str(task.get("id"))),
+    )[0]
+    return _task_summary(top)
 
 
 def build() -> dict[str, Any]:
     now = _now()
-    tasks = _load_tasks()
+    board = _load_board()
+    tasks = _load_tasks(board)
+    provider_headroom = _provider_headroom()
+    board_budget = _board_budget(board)
+    ostensible_next = _ostensible_next(tasks)
+    dispatchable_next = _dispatchable_next(tasks, board_budget, provider_headroom)
     return {
         "generated": now.isoformat(timespec="seconds"),
         "open_lanes": _open_lanes(tasks),
         "in_flight_claims": _in_flight(tasks, now),
         "last_blocker": _last_blocker(tasks),
-        "budget_remaining": _budget(),
-        "next_action": _next_action(tasks),
+        "board_budget": board_budget,
+        "provider_headroom": provider_headroom,
+        "ostensible_next": ostensible_next,
+        "dispatchable_next": dispatchable_next,
+        # Compatibility aliases for consumers deployed before the truthful split.
+        "budget_remaining": _legacy_budget(provider_headroom),
+        "next_action": ostensible_next,
     }
 
 
@@ -187,7 +371,7 @@ def write() -> int:
     tmp = HANDOFF.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(payload, indent=1, sort_keys=True))
     tmp.replace(HANDOFF)
-    na = payload["next_action"]
+    na = payload["dispatchable_next"]
     print(
         f"handoff-relay: wrote {HANDOFF.name} — open={payload['open_lanes']['total_open']} "
         f"in_flight={payload['in_flight_claims']['count']} "
@@ -210,11 +394,34 @@ def check() -> int:
     if age_min > FRESH_MAX_MINUTES:
         print(f"handoff-relay --check: FAIL — stale ({age_min:.0f}m > {FRESH_MAX_MINUTES}m); seam went cold")
         return 1
-    for field in ("open_lanes", "in_flight_claims", "last_blocker", "budget_remaining"):
+    for field in (
+        "open_lanes",
+        "in_flight_claims",
+        "last_blocker",
+        "budget_remaining",
+        "board_budget",
+        "provider_headroom",
+        "ostensible_next",
+        "dispatchable_next",
+    ):
         if field not in data:
             print(f"handoff-relay --check: FAIL — missing '{field}'")
             return 1
-    na = (data.get("next_action") or {}).get("id") if data.get("next_action") else "none(board drained)"
+    provider = data.get("provider_headroom")
+    try:
+        provider_generated = dt.datetime.fromisoformat(str(provider["generated"]))
+        provider_age_min = (_now() - provider_generated).total_seconds() / 60
+    except Exception:
+        print("handoff-relay --check: FAIL — provider headroom timestamp missing or unparseable")
+        return 1
+    if provider_age_min > FRESH_MAX_MINUTES:
+        print(f"handoff-relay --check: FAIL — provider headroom stale ({provider_age_min:.0f}m > {FRESH_MAX_MINUTES}m)")
+        return 1
+    na = (
+        (data.get("dispatchable_next") or {}).get("id")
+        if data.get("dispatchable_next")
+        else "none(gated or board drained)"
+    )
     print(f"handoff-relay --check: OK — fresh ({age_min:.0f}m), warm resume ready; next={na}")
     return 0
 
@@ -222,8 +429,9 @@ def check() -> int:
 def render(data: dict[str, Any]) -> str:
     if not isinstance(data, dict):
         return ""
-    na = data.get("next_action")
-    b = data.get("budget_remaining") or {}
+    na = data.get("dispatchable_next")
+    ostensible = data.get("ostensible_next")
+    b = data.get("board_budget") or {}
     blk = data.get("last_blocker") or {}
     inflight = data.get("in_flight_claims") or {}
     lanes = data.get("open_lanes") or {}
@@ -233,10 +441,12 @@ def render(data: dict[str, Any]) -> str:
         f"{inflight.get('count', 0)} in-flight ({inflight.get('stale', 0)} stale) · "
         f"needs_human {blk.get('needs_human_count', 0)}",
     ]
-    if b.get("overnight_remaining") is not None:
-        parts[0] += f" · beat budget {b.get('overnight_spent')}/{b.get('overnight_cap')}"
+    if b.get("remaining") is not None:
+        parts[0] += f" · board budget {b.get('spent')}/{b.get('daily')}"
     if na:
         parts.append(f"  next → `{na.get('id')}` [{na.get('priority')}] {na.get('title', '')}")
+    elif ostensible:
+        parts.append(f"  ostensible (currently gated) → `{ostensible.get('id')}` {ostensible.get('title', '')}")
     if blk.get("heal_pressure"):
         parts.append(f"  heal: {blk['heal_pressure']}")
     return "\n".join(parts)

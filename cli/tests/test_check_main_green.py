@@ -204,3 +204,65 @@ def test_wedge_impact_counts_fresh_only():
     fresh = [_pr(200 + n, [("pr-gate", "FAILURE")], updated="2026-07-10T00:00:00Z") for n in range(6)]
     v = m.wedge_impact(stale + fresh, {"pr-gate"}, fresh_since="2026-07-09T00:00:00Z", k=5)
     assert v["wedged_prs"] == 6 and v["considered"] == 6
+
+
+# --- Omega exact-head contract ---------------------------------------------------------------
+
+
+def _run_row(head, *, conclusion="success", status="completed", event="push"):
+    return {
+        "databaseId": 1,
+        "conclusion": conclusion,
+        "status": status,
+        "headSha": head,
+        "url": "https://github.com/organvm/limen/actions/runs/1",
+        "event": event,
+    }
+
+
+def test_exact_head_selector_ignores_prior_pending_and_non_push_runs():
+    m = _load()
+    current = "a" * 40
+    prior = "b" * 40
+    runs = [
+        _run_row(current, status="in_progress"),
+        _run_row(current, event="workflow_dispatch"),
+        _run_row(prior),
+        _run_row(current),
+    ]
+    assert m.select_completed_push_run(runs, head_sha=current) == runs[-1]
+    assert m.select_completed_push_run(runs[:3], head_sha=current) is None
+
+
+def test_exact_head_check_requires_success_for_current_remote_main(monkeypatch, capsys):
+    m = _load()
+    current = "a" * 40
+    monkeypatch.setattr(m, "_remote_main_head", lambda: current)
+    monkeypatch.setattr(m, "_gh_main_runs", lambda: [_run_row("b" * 40), _run_row(current)])
+    assert m.exact_head_check() == 0
+    assert "EXACT-HEAD GREEN" in capsys.readouterr().out
+
+    monkeypatch.setattr(m, "_gh_main_runs", lambda: [_run_row(current, conclusion="failure")])
+    assert m.exact_head_check() == 1
+    assert "EXACT-HEAD RED" in capsys.readouterr().out
+
+
+def test_exact_head_check_fails_closed_without_matching_completed_run(monkeypatch, capsys):
+    m = _load()
+    current = "a" * 40
+    monkeypatch.setattr(m, "_remote_main_head", lambda: current)
+    monkeypatch.setattr(m, "_gh_main_runs", lambda: [_run_row(current, status="in_progress")])
+    assert m.exact_head_check() == 1
+    assert "no completed" in capsys.readouterr().out
+
+
+def test_remote_main_head_reads_owner_ref_not_cached_tracking_ref(monkeypatch):
+    m = _load()
+    current = "c" * 40
+
+    def fake_run(args, **kwargs):
+        assert args[-4:] == ["ls-remote", "--exit-code", "origin", "refs/heads/main"]
+        return subprocess.CompletedProcess(args, 0, f"{current}\trefs/heads/main\n", "")
+
+    monkeypatch.setattr(m.subprocess, "run", fake_run)
+    assert m._remote_main_head() == current

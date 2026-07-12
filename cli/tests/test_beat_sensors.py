@@ -218,7 +218,9 @@ sensors:
     assert m._step_command(step) == "python3 scripts/arbitrary.py base --apply 'two words'"
 
     assert m.list_omega(registry) == 0
-    assert capsys.readouterr().out == "arbitrary.future.id\t0\tdet\tarbitrary parity\n"
+    assert capsys.readouterr().out == (
+        "arbitrary.future.id\t0\tdet\tarbitrary parity\tpython3 scripts/arbitrary.py check\t7\n"
+    )
     calls = []
     monkeypatch.setattr(m, "_run_command", lambda command, **kwargs: calls.append((command, kwargs)) or 0)
     assert m.run_omega("arbitrary.future.id", 0, registry=registry) == 0

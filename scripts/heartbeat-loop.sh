@@ -344,6 +344,9 @@ while true; do
 
     if [ "$MODE" != "dispatch" ]; then
       echo "autonomy mode=$MODE — telemetry/status only; queue mutation and dispatch skipped"
+      # HANDOFF — even an observe-only beat refreshes the warm-resume packet.  The heartbeat does
+      # not invoke metabolize.sh, so this direct seam is required to keep continuity truthful.
+      python3 "$LIMEN_ROOT/scripts/handoff-relay.py" 2>&1 | tail -1 || true
       python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true
       play "$C_WEB" && bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
       beat="$MAX"
@@ -685,6 +688,9 @@ while true; do
     python3 "$LIMEN_ROOT/scripts/evocator.py" --apply 2>&1 | tail -2 || true
     stamp evocator
   fi
+  # HANDOFF — final read after this beat's board, usage, reconciliation, and provider mutations.
+  # metabolize.sh has its own caller, but the live heartbeat never invokes metabolize.
+  python3 "$LIMEN_ROOT/scripts/handoff-relay.py" 2>&1 | tail -1 || true
   # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
   # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min
   # while tasks wait); exponential backoff to MAX only when genuinely idle (empty queue, no PR).

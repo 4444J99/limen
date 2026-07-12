@@ -127,7 +127,7 @@ if [ "$(( $(date +%s) / 3600 % N ))" = "0" ]; then
 fi
 
 # ── 7. handoff-relay — write the seam-survival packet so the next session/vendor/beat
-# resumes WARM (open lanes, in-flight claims, last blocker, budget, next action). Keystone of
+# resumes WARM (open lanes, in-flight claims, board budget, provider headroom, truthful next). Keystone of
 # the walk-away loop (retro 2026-07-08). Read-only over the board; never writes tasks.yaml.
 python3 "$LIMEN_ROOT/scripts/handoff-relay.py" || echo "  (handoff-relay skipped)"
 
