@@ -946,6 +946,24 @@ parameters:
     self_update: "updated by scripts/overnight-watch.py"
     owner: continuity
     note: "Deduped active alert path for overnight monitor failures; replaces long interactive-agent polling loops with WATCH_ALERT receipts."
+  LIMEN_OVERNIGHT_TRIAL_RECEIPT:
+    default: "$LIMEN_ROOT/logs/overnight-trial.json"
+    env: LIMEN_OVERNIGHT_TRIAL_RECEIPT
+    self_update: "content-addressed finalization by scripts/overnight-watch.py"
+    owner: continuity
+    note: "Counts-only prospective eight-hour unattended-trial receipt; exact bounded-source reconstruction plus evaluator, normalized-input, and content hashes bind the proof without publishing prompt bodies."
+  LIMEN_OVERNIGHT_TRIAL_WINDOW:
+    default: "$LIMEN_ROOT/logs/overnight-trial-window.json"
+    env: LIMEN_OVERNIGHT_TRIAL_WINDOW
+    self_update: "started and finalized by scripts/overnight-watch.py"
+    owner: continuity
+    note: "Single-writer lifecycle marker for the fixed eight-hour unattended trial; active markers cannot be replaced or backfilled and keep Omega red until automatic finalization records terminal custody."
+  LIMEN_OVERNIGHT_TRIAL_OBSERVATIONS:
+    default: "$LIMEN_ROOT/logs/overnight-trial-observations.jsonl"
+    env: LIMEN_OVERNIGHT_TRIAL_OBSERVATIONS
+    self_update: "append-only hash-chain by scripts/overnight-watch.py"
+    owner: continuity
+    note: "Counts-and-hashes-only prospective observation chain. Trial start seals its byte prefix; each heartbeat binds one new watch append, first-seen task events, prompt-journal prefixes, handoff custody, provider session proof, and predicate plus durable-receipt proof."
   LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC:
     default: 1200
     env: LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC

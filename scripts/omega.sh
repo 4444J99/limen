@@ -179,16 +179,12 @@ rung "ship-gate (products reachable)" live python3 "$ROOT/scripts/ship-gate.py" 
 # 7. heal-convergence — the healer converges (no chronic cluster re-spending on the same wall).
 rung "heal-convergence (no chronic wall)" live python3 "$ROOT/scripts/heal-convergence.py" --check
 
-# 8. overnight-trial — the most recent unattended overnight run met its thresholds. Written by the
-#    trial harness to logs/overnight-trial.json ({pass:true,...}); SKIP until a trial has run.
+# 8. overnight-trial — the most recent unattended overnight run met its content-addressed contract.
+#    The producer verifies eight-hour coverage, every 90-minute value/blocker window, a warm handoff,
+#    at least one structured session seam, zero operator interventions, zero alerts, and
+#    evaluator/input hashes reconstructed from the exact bounded source receipts.
 if [[ -f "$ROOT/logs/overnight-trial.json" ]]; then
-  rung "overnight-trial (last run passed)" live python3 -c '
-import json,sys
-d=json.load(open("logs/overnight-trial.json"))
-ok=bool(d.get("pass"))
-print(f"  overnight-trial: pass={ok} "
-      f"hours={d.get(\"hours\")} seams={d.get(\"vendor_seams\")} merged={d.get(\"merged_prs\")} prompts={d.get(\"operator_prompts\")}")
-sys.exit(0 if ok else 1)'
+  rung "overnight-trial (last run passed)" live env LIMEN_ROOT="$ROOT" python3 "$ROOT/scripts/overnight-watch.py" --check-trial
 else
   skip_rung "overnight-trial (last run passed)" live "no logs/overnight-trial.json yet — run one trial"
 fi
