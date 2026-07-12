@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-12'
-      spent: 124
+      spent: 125
       per_agent:
         jules: 56
         gemini: 16
         codex: 0
         opencode: 35
-        agy: 13
+        agy: 14
         claude: 0
         github_actions: 1
         ollama: 3
@@ -133798,7 +133798,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -133818,7 +133818,7 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/300
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-12T19:36:52.229635Z'
+  updated: '2026-07-12T21:23:55.004987Z'
   dispatch_log:
   - timestamp: '2026-07-12T16:37:41.226753Z'
     agent: agy
@@ -133848,3 +133848,1028 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-12T21:23:55.004987Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+- id: DISCOVER-organvm-organvm-iii-ergon.github.io-RANK
+  title: Materialize the value disposition for organvm/organvm-iii-ergon.github.io
+  description: After DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS merges, record
+    exactly one terminal disposition for organvm/organvm-iii-ergon.github.io. A ranked
+    result must also enter value-repos.json; an archival result must remain outside
+    it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-organvm-iii-ergon.github.io.
+    It depends on the merged owner thesis and records the terminal ranked-or-archival
+    decision so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/organvm-iii-ergon.github.io";
+    tid="DISCOVER-organvm-organvm-iii-ergon.github.io-RANK"; prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-organvm-iii-ergon.github.io-RANK
+  depends_on:
+  - DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-organvm-iii-ergon.github.io-RANK'
+- id: DISCOVER-organvm-arca-THESIS
+  title: Write the value thesis for organvm/arca
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/arca
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-arca, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef.
+    This child owns only the repository thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/arca --state merged --search 'DISCOVER-organvm-arca-THESIS
+    in:body' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/arca:pull-request:DISCOVER-organvm-arca-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/arca:pull-request:DISCOVER-organvm-arca-THESIS'
+- id: DISCOVER-organvm-pages--theoria-copy--koinonia-RANK
+  title: Materialize the value disposition for organvm/pages--theoria-copy--koinonia
+  description: After DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS merges,
+    record exactly one terminal disposition for organvm/pages--theoria-copy--koinonia.
+    A ranked result must also enter value-repos.json; an archival result must remain
+    outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-pages--theoria-copy--koinonia.
+    It depends on the merged owner thesis and records the terminal ranked-or-archival
+    decision so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/pages--theoria-copy--koinonia";
+    tid="DISCOVER-organvm-pages--theoria-copy--koinonia-RANK"; prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--koinonia-RANK
+  depends_on:
+  - DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--koinonia-RANK'
+- id: DISCOVER-organvm-daily-engine-THESIS
+  title: Write the value thesis for organvm/daily-engine
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/daily-engine
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-daily-engine, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef.
+    This child owns only the repository thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/daily-engine --state merged --search
+    'DISCOVER-organvm-daily-engine-THESIS in:body' --json number --jq length)" -gt
+    0
+  receipt_target: github:organvm/daily-engine:pull-request:DISCOVER-organvm-daily-engine-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/daily-engine:pull-request:DISCOVER-organvm-daily-engine-THESIS'
+- id: DISCOVER-organvm-collaboratory-THESIS
+  title: Write the value thesis for organvm/collaboratory
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/collaboratory
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-collaboratory, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef.
+    This child owns only the repository thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/collaboratory --state merged --search
+    'DISCOVER-organvm-collaboratory-THESIS in:body' --json number --jq length)" -gt
+    0
+  receipt_target: github:organvm/collaboratory:pull-request:DISCOVER-organvm-collaboratory-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/collaboratory:pull-request:DISCOVER-organvm-collaboratory-THESIS'
+- id: DISCOVER-organvm-studium-generale-RANK
+  title: Materialize the value disposition for organvm/studium-generale
+  description: After DISCOVER-organvm-studium-generale-THESIS merges, record exactly
+    one terminal disposition for organvm/studium-generale. A ranked result must also
+    enter value-repos.json; an archival result must remain outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-studium-generale. It depends
+    on the merged owner thesis and records the terminal ranked-or-archival decision
+    so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/studium-generale";
+    tid="DISCOVER-organvm-studium-generale-RANK"; prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-studium-generale-RANK
+  depends_on:
+  - DISCOVER-organvm-studium-generale-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-studium-generale-RANK'
+- id: DISCOVER-organvm-pages--theoria-copy--poiesis-RANK
+  title: Materialize the value disposition for organvm/pages--theoria-copy--poiesis
+  description: After DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS merges,
+    record exactly one terminal disposition for organvm/pages--theoria-copy--poiesis.
+    A ranked result must also enter value-repos.json; an archival result must remain
+    outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-pages--theoria-copy--poiesis.
+    It depends on the merged owner thesis and records the terminal ranked-or-archival
+    decision so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/pages--theoria-copy--poiesis";
+    tid="DISCOVER-organvm-pages--theoria-copy--poiesis-RANK"; prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--poiesis-RANK
+  depends_on:
+  - DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--poiesis-RANK'
+- id: DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS
+  title: Write the value thesis for organvm/pages--theoria-copy--koinonia
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/pages--theoria-copy--koinonia
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-pages--theoria-copy--koinonia, frozen
+    from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository
+    thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/pages--theoria-copy--koinonia --state
+    merged --search 'DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS in:body'
+    --json number --jq length)" -gt 0
+  receipt_target: github:organvm/pages--theoria-copy--koinonia:pull-request:DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/pages--theoria-copy--koinonia:pull-request:DISCOVER-organvm-pages--theoria-copy--koinonia-THESIS'
+- id: DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS
+  title: Write the value thesis for organvm/pages--theoria-copy--kerygma
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/pages--theoria-copy--kerygma
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-pages--theoria-copy--kerygma, frozen
+    from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository
+    thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/pages--theoria-copy--kerygma --state
+    merged --search 'DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS in:body'
+    --json number --jq length)" -gt 0
+  receipt_target: github:organvm/pages--theoria-copy--kerygma:pull-request:DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/pages--theoria-copy--kerygma:pull-request:DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS'
+- id: DISCOVER-organvm-collaboratory-RANK
+  title: Materialize the value disposition for organvm/collaboratory
+  description: After DISCOVER-organvm-collaboratory-THESIS merges, record exactly
+    one terminal disposition for organvm/collaboratory. A ranked result must also
+    enter value-repos.json; an archival result must remain outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-collaboratory. It depends on
+    the merged owner thesis and records the terminal ranked-or-archival decision so
+    completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/collaboratory"; tid="DISCOVER-organvm-collaboratory-RANK";
+    prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-collaboratory-RANK
+  depends_on:
+  - DISCOVER-organvm-collaboratory-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-collaboratory-RANK'
+- id: SOVEREIGN-0708-GPG-UID
+  title: Add the later recourse.email UID to the current GPG identity
+  description: After the address exists, add the recourse.email UID and publish the
+    updated public key. This later identity mutation remains human-owned.
+  repo: organvm/limen
+  type: ops
+  target_agent: any
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  - gpg
+  - public-identity
+  - ask-gate-migration
+  urls: []
+  context: Later UID gate for public fingerprint 205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E;
+    no address value is fixed in this receipt.
+  predicate: bash -lc 'set -o pipefail; curl -fsS https://keys.openpgp.org/vks/v1/by-fingerprint/205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E
+    | gpg --batch --show-keys --with-colons 2>/dev/null | grep -Fq "recourse.email"
+    && test "$(gh issue list --repo organvm/limen --state closed --search "SOVEREIGN-0708-GPG-UID
+    in:title,body" --json number --jq length)" -gt 0'
+  receipt_target: github:organvm/limen:issue:SOVEREIGN-0708-GPG-UID
+  depends_on:
+  - SOVEREIGN-0708-GPG-DISCOVERABILITY
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: needs_human
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:issue:SOVEREIGN-0708-GPG-UID'
+- id: SOVEREIGN-0708-GPG-ESCROW
+  title: Escrow the current GPG private material off-machine
+  description: 'Human owner action: attest that the current private export and recovery
+    phrase are durably escrowed off-machine and that plaintext staging is removed,
+    without exposing values or paths.'
+  repo: organvm/limen
+  type: ops
+  target_agent: any
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  - gpg
+  - ask-gate-migration
+  urls: []
+  context: Secret-free human receipt for the public fingerprint 205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E.
+    No credential material may enter the issue, task, commit, or dispatch log.
+  predicate: test "$(gh issue list --repo organvm/limen --state closed --search 'SOVEREIGN-0708-GPG-ESCROW
+    in:title,body' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/limen:issue:SOVEREIGN-0708-GPG-ESCROW
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: needs_human
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:issue:SOVEREIGN-0708-GPG-ESCROW'
+- id: DISCOVER-organvm-pages--theoria-copy--taxis-THESIS
+  title: Write the value thesis for organvm/pages--theoria-copy--taxis
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/pages--theoria-copy--taxis
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-pages--theoria-copy--taxis, frozen
+    from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository
+    thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/pages--theoria-copy--taxis --state
+    merged --search 'DISCOVER-organvm-pages--theoria-copy--taxis-THESIS in:body' --json
+    number --jq length)" -gt 0
+  receipt_target: github:organvm/pages--theoria-copy--taxis:pull-request:DISCOVER-organvm-pages--theoria-copy--taxis-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/pages--theoria-copy--taxis:pull-request:DISCOVER-organvm-pages--theoria-copy--taxis-THESIS'
+- id: DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS
+  title: Write the value thesis for organvm/pages--theoria-copy--poiesis
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/pages--theoria-copy--poiesis
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-pages--theoria-copy--poiesis, frozen
+    from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository
+    thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/pages--theoria-copy--poiesis --state
+    merged --search 'DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS in:body'
+    --json number --jq length)" -gt 0
+  receipt_target: github:organvm/pages--theoria-copy--poiesis:pull-request:DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/pages--theoria-copy--poiesis:pull-request:DISCOVER-organvm-pages--theoria-copy--poiesis-THESIS'
+- id: DISCOVER-organvm-hokage-chess--4444j99-THESIS
+  title: Write the value thesis for organvm/hokage-chess--4444j99
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/hokage-chess--4444j99
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-hokage-chess--4444j99, frozen from
+    04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository
+    thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/hokage-chess--4444j99 --state merged
+    --search 'DISCOVER-organvm-hokage-chess--4444j99-THESIS in:body' --json number
+    --jq length)" -gt 0
+  receipt_target: github:organvm/hokage-chess--4444j99:pull-request:DISCOVER-organvm-hokage-chess--4444j99-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/hokage-chess--4444j99:pull-request:DISCOVER-organvm-hokage-chess--4444j99-THESIS'
+- id: DISCOVER-organvm-micro-tato-play-RANK
+  title: Materialize the value disposition for organvm/micro-tato-play
+  description: After DISCOVER-organvm-micro-tato-play-THESIS merges, record exactly
+    one terminal disposition for organvm/micro-tato-play. A ranked result must also
+    enter value-repos.json; an archival result must remain outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-micro-tato-play. It depends
+    on the merged owner thesis and records the terminal ranked-or-archival decision
+    so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/micro-tato-play"; tid="DISCOVER-organvm-micro-tato-play-RANK";
+    prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-micro-tato-play-RANK
+  depends_on:
+  - DISCOVER-organvm-micro-tato-play-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-micro-tato-play-RANK'
+- id: DISCOVER-organvm-micro-tato-play-THESIS
+  title: Write the value thesis for organvm/micro-tato-play
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/micro-tato-play
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-micro-tato-play, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef.
+    This child owns only the repository thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/micro-tato-play --state merged --search
+    'DISCOVER-organvm-micro-tato-play-THESIS in:body' --json number --jq length)"
+    -gt 0
+  receipt_target: github:organvm/micro-tato-play:pull-request:DISCOVER-organvm-micro-tato-play-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/micro-tato-play:pull-request:DISCOVER-organvm-micro-tato-play-THESIS'
+- id: DISCOVER-organvm-pages--theoria-copy--taxis-RANK
+  title: Materialize the value disposition for organvm/pages--theoria-copy--taxis
+  description: After DISCOVER-organvm-pages--theoria-copy--taxis-THESIS merges, record
+    exactly one terminal disposition for organvm/pages--theoria-copy--taxis. A ranked
+    result must also enter value-repos.json; an archival result must remain outside
+    it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-pages--theoria-copy--taxis.
+    It depends on the merged owner thesis and records the terminal ranked-or-archival
+    decision so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/pages--theoria-copy--taxis";
+    tid="DISCOVER-organvm-pages--theoria-copy--taxis-RANK"; prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--taxis-RANK
+  depends_on:
+  - DISCOVER-organvm-pages--theoria-copy--taxis-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--taxis-RANK'
+- id: DISCOVER-organvm-hokage-chess--4444j99-RANK
+  title: Materialize the value disposition for organvm/hokage-chess--4444j99
+  description: After DISCOVER-organvm-hokage-chess--4444j99-THESIS merges, record
+    exactly one terminal disposition for organvm/hokage-chess--4444j99. A ranked result
+    must also enter value-repos.json; an archival result must remain outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-hokage-chess--4444j99. It depends
+    on the merged owner thesis and records the terminal ranked-or-archival decision
+    so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/hokage-chess--4444j99";
+    tid="DISCOVER-organvm-hokage-chess--4444j99-RANK"; prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-hokage-chess--4444j99-RANK
+  depends_on:
+  - DISCOVER-organvm-hokage-chess--4444j99-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-hokage-chess--4444j99-RANK'
+- id: DISCOVER-organvm-studium-generale-THESIS
+  title: Write the value thesis for organvm/studium-generale
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/studium-generale
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-studium-generale, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef.
+    This child owns only the repository thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/studium-generale --state merged --search
+    'DISCOVER-organvm-studium-generale-THESIS in:body' --json number --jq length)"
+    -gt 0
+  receipt_target: github:organvm/studium-generale:pull-request:DISCOVER-organvm-studium-generale-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/studium-generale:pull-request:DISCOVER-organvm-studium-generale-THESIS'
+- id: DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS
+  title: Write the value thesis for organvm/organvm-iii-ergon.github.io
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/organvm-iii-ergon.github.io
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-organvm-iii-ergon.github.io, frozen
+    from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the repository
+    thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/organvm-iii-ergon.github.io --state
+    merged --search 'DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS in:body'
+    --json number --jq length)" -gt 0
+  receipt_target: github:organvm/organvm-iii-ergon.github.io:pull-request:DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/organvm-iii-ergon.github.io:pull-request:DISCOVER-organvm-organvm-iii-ergon.github.io-THESIS'
+- id: DISCOVER-organvm-daily-engine-RANK
+  title: Materialize the value disposition for organvm/daily-engine
+  description: After DISCOVER-organvm-daily-engine-THESIS merges, record exactly one
+    terminal disposition for organvm/daily-engine. A ranked result must also enter
+    value-repos.json; an archival result must remain outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-daily-engine. It depends on
+    the merged owner thesis and records the terminal ranked-or-archival decision so
+    completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/daily-engine"; tid="DISCOVER-organvm-daily-engine-RANK";
+    prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-daily-engine-RANK
+  depends_on:
+  - DISCOVER-organvm-daily-engine-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-daily-engine-RANK'
+- id: DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK
+  title: Materialize the value disposition for organvm/content-engine--asset-amplifier--a-organvm-legacy
+  description: After DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS
+    merges, record exactly one terminal disposition for organvm/content-engine--asset-amplifier--a-organvm-legacy.
+    A ranked result must also enter value-repos.json; an archival result must remain
+    outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy.
+    It depends on the merged owner thesis and records the terminal ranked-or-archival
+    decision so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/content-engine--asset-amplifier--a-organvm-legacy";
+    tid="DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK";
+    prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK
+  depends_on:
+  - DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK'
+- id: DISCOVER-organvm-micro-tato-RANK
+  title: Materialize the value disposition for organvm/micro-tato
+  description: After DISCOVER-organvm-micro-tato-THESIS merges, record exactly one
+    terminal disposition for organvm/micro-tato. A ranked result must also enter value-repos.json;
+    an archival result must remain outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-micro-tato. It depends on the
+    merged owner thesis and records the terminal ranked-or-archival decision so completed
+    archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/micro-tato"; tid="DISCOVER-organvm-micro-tato-RANK";
+    prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-micro-tato-RANK
+  depends_on:
+  - DISCOVER-organvm-micro-tato-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-micro-tato-RANK'
+- id: DISCOVER-organvm-micro-tato-THESIS
+  title: Write the value thesis for organvm/micro-tato
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/micro-tato
+  type: research
+  target_agent: codex
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-micro-tato, frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef.
+    This child owns only the repository thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/micro-tato --state merged --search
+    'DISCOVER-organvm-micro-tato-THESIS in:body' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/micro-tato:pull-request:DISCOVER-organvm-micro-tato-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/micro-tato:pull-request:DISCOVER-organvm-micro-tato-THESIS'
+- id: SOVEREIGN-0708-GPG-DISCOVERABILITY
+  title: Publish the current GPG public key to a discoverable surface
+  description: 'Human/outward action: publish and verify the existing public fingerprint
+    on the public key directory or WKD; never publish credential material.'
+  repo: organvm/limen
+  type: ops
+  target_agent: any
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  - gpg
+  - public-identity
+  - ask-gate-migration
+  urls: []
+  context: Public discoverability gate for fingerprint 205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E;
+    outward identity action remains human-owned.
+  predicate: bash -lc 'curl -fsS https://keys.openpgp.org/vks/v1/by-fingerprint/205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E
+    >/dev/null && test "$(gh issue list --repo organvm/limen --state closed --search
+    "SOVEREIGN-0708-GPG-DISCOVERABILITY in:title,body" --json number --jq length)"
+    -gt 0'
+  receipt_target: github:organvm/limen:issue:SOVEREIGN-0708-GPG-DISCOVERABILITY
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: needs_human
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:issue:SOVEREIGN-0708-GPG-DISCOVERABILITY'
+- id: DISCOVER-organvm-pages--theoria-copy--kerygma-RANK
+  title: Materialize the value disposition for organvm/pages--theoria-copy--kerygma
+  description: After DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS merges,
+    record exactly one terminal disposition for organvm/pages--theoria-copy--kerygma.
+    A ranked result must also enter value-repos.json; an archival result must remain
+    outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-pages--theoria-copy--kerygma.
+    It depends on the merged owner thesis and records the terminal ranked-or-archival
+    decision so completed archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/pages--theoria-copy--kerygma";
+    tid="DISCOVER-organvm-pages--theoria-copy--kerygma-RANK"; prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--kerygma-RANK
+  depends_on:
+  - DISCOVER-organvm-pages--theoria-copy--kerygma-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-pages--theoria-copy--kerygma-RANK'
+- id: DISCOVER-organvm-arca-RANK
+  title: Materialize the value disposition for organvm/arca
+  description: After DISCOVER-organvm-arca-THESIS merges, record exactly one terminal
+    disposition for organvm/arca. A ranked result must also enter value-repos.json;
+    an archival result must remain outside it.
+  repo: organvm/limen
+  type: governance
+  target_agent: codex
+  workstream: governance
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-ranking
+  - ask-gate-migration
+  urls: []
+  context: Conditional Limen half of DISCOVER-organvm-arca. It depends on the merged
+    owner thesis and records the terminal ranked-or-archival decision so completed
+    archival work cannot be rediscovered.
+  predicate: python3 -c 'import json,subprocess; repo="organvm/arca"; tid="DISCOVER-organvm-arca-RANK";
+    prs=json.loads(subprocess.check_output(["gh","pr","list","--repo","organvm/limen","--state","merged","--search",tid+"
+    in:body","--json","number"])); assert prs; d=json.load(open("value-discovery-dispositions.json"));
+    rows=[x for x in d["dispositions"] if x.get("repo")==repo]; assert len(rows)==1
+    and rows[0].get("disposition") in {"ranked","archival"} and rows[0].get("receipt");
+    ranked=set(json.load(open("value-repos.json"))["repos"]); assert (rows[0]["disposition"]=="ranked")
+    == (repo in ranked)'
+  receipt_target: github:organvm/limen:pull-request:DISCOVER-organvm-arca-RANK
+  depends_on:
+  - DISCOVER-organvm-arca-THESIS
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:pull-request:DISCOVER-organvm-arca-RANK'
+- id: DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS
+  title: Write the value thesis for organvm/content-engine--asset-amplifier--a-organvm-legacy
+  description: Inspect the owner repository and merge DISCOVERY.md with one explicit
+    disposition (ranked or archival), one evidence-backed thesis, and one first task
+    only when ranked.
+  repo: organvm/content-engine--asset-amplifier--a-organvm-legacy
+  type: research
+  target_agent: agy
+  workstream: contributions
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - discover
+  - value-thesis
+  - ask-gate-migration
+  urls: []
+  context: Owner-repo half of DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy,
+    frozen from 04baa47d471f44a8faa3beb790f5636fe65d77ef. This child owns only the
+    repository thesis and its merged receipt.
+  predicate: test "$(gh pr list --repo organvm/content-engine--asset-amplifier--a-organvm-legacy
+    --state merged --search 'DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS
+    in:body' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/content-engine--asset-amplifier--a-organvm-legacy:pull-request:DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS
+  depends_on: []
+  created: '2026-07-12'
+  updated: '2026-07-12T21:26:49Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T21:26:49Z'
+    agent: codex
+    session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
+    status: open
+    output: 'ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/content-engine--asset-amplifier--a-organvm-legacy:pull-request:DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS'
