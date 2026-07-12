@@ -15,23 +15,23 @@ portal:
       claude: 100
     track:
       date: '2026-07-12'
-      spent: 111
+      spent: 113
       per_agent:
         jules: 56
         gemini: 15
-        codex: 3
-        opencode: 24
-        agy: 8
-        claude: 1
+        codex: 0
+        opencode: 28
+        agy: 10
+        claude: 0
         github_actions: 1
         ollama: 3
       per_agent_reset:
         jules: '2026-07-11T23:33:28.801098+00:00'
         gemini: '2026-07-11T23:33:28.801098+00:00'
-        codex: '2026-07-12T04:38:21.560900+00:00'
+        codex: '2026-07-12T10:39:35.582781+00:00'
         opencode: '2026-07-11T23:33:28.801098+00:00'
         agy: '2026-07-11T23:33:28.801098+00:00'
-        claude: '2026-07-12T04:38:21.560900+00:00'
+        claude: '2026-07-12T10:39:35.582781+00:00'
   agents:
     opencode:
       status: idle
@@ -131640,7 +131640,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -131663,7 +131663,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T07:18:34.266545Z'
+  updated: '2026-07-12T10:39:35.582781Z'
   dispatch_log:
   - timestamp: '2026-07-11T23:33:28.801098Z'
     agent: gemini
@@ -131687,6 +131687,11 @@ tasks:
     status: open
     route_to: agy
     output: opencode lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-12T10:39:35.582781Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-684
   title: rebase/resolve conflicts on organvm/limen#684
   repo: organvm/limen
@@ -131875,7 +131880,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -131897,7 +131902,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T05:10:56.091722Z'
+  updated: '2026-07-12T10:39:35.582781Z'
   dispatch_log:
   - timestamp: '2026-07-12T04:32:25.248942Z'
     agent: gemini
@@ -131910,6 +131915,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on gemini; reopened to asynchronous lane
+  - timestamp: '2026-07-12T10:39:35.582781Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-organvm-limen-815
   title: "rebase organvm/limen#815 onto current base \u2014 branched far behind"
   repo: organvm/limen
@@ -132825,7 +132835,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - slow
   urls:
@@ -132838,7 +132848,7 @@ tasks:
     path in application code. - Generate or mana'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T01:12:54.666059Z'
+  updated: '2026-07-12T10:39:35.582781Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:36:52.771769Z'
     agent: codex
@@ -132851,6 +132861,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on codex; reopened to asynchronous lane
+  - timestamp: '2026-07-12T10:39:35.582781Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-928
   title: 'needs-human (L-OPENCODE-AUTH): optionally authorize OpenCode catalog access'
   repo: organvm/limen
@@ -133288,7 +133303,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -133310,7 +133325,7 @@ tasks:
     [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T08:11:39.243637Z'
+  updated: '2026-07-12T10:39:35.582781Z'
   dispatch_log:
   - timestamp: '2026-07-12T04:32:25.248942Z'
     agent: gemini
@@ -133337,6 +133352,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-12T10:39:35.582781Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ASK-quicken-escalate-0bd3a5ed
   title: finish stalled session 'Design movement ontology and workout composi' (breathed
     2x, still stalling)
@@ -133564,7 +133584,7 @@ tasks:
   workstream: observation
   priority: critical
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-kernel
   - pillar:observation
@@ -133601,5 +133621,10 @@ tasks:
     \ idle fleet capacity into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-12T06:51:24.318478Z'
-  dispatch_log: []
+  updated: '2026-07-12T10:39:35.582781Z'
+  dispatch_log:
+  - timestamp: '2026-07-12T10:39:35.582781Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
