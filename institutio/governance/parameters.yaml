@@ -81,6 +81,25 @@ parameters:
     owner: dispatch
     note: "Async dispatch is the enacted fleet mode (overnight-watch expects 1). Generator default was 0 until 2026-07-09, when a regen under a bare session env silently rendered async OFF — the default now matches the enacted state."
 
+  LIMEN_PROBE_ATTEMPTS:
+    default: "40 for the API runtime; 80 for the Worker runtime"
+    env: LIMEN_PROBE_ATTEMPTS
+    self_update: none
+    owner: dispatch
+    note: "Maximum readiness attempts for either local runtime probe. Tests lower this value to exercise the terminal-failure cleanup path without a long wait."
+  LIMEN_PROBE_RETRY_DELAY:
+    default: 0.25
+    env: LIMEN_PROBE_RETRY_DELAY
+    self_update: none
+    owner: dispatch
+    note: "Seconds between local runtime readiness attempts."
+  LIMEN_PROBE_TERM_GRACE:
+    default: 2
+    env: LIMEN_PROBE_TERM_GRACE
+    self_update: none
+    owner: dispatch
+    note: "Seconds allowed for a directly owned probe server to exit after TERM before its isolated process group receives KILL."
+
   LIMEN_LOCAL_FLOOR:
     default: 0
     env: LIMEN_LOCAL_FLOOR

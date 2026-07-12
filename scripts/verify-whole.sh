@@ -126,6 +126,9 @@ bash scripts/tests/omega.test.sh
 # The tally/exit/stamp contract is the deterministic code rung (stubbed children — no live board or
 # network); the live fixed-point verdict runs offline in the beat via metabolize.sh step 0i.
 
+step "Verify local runtime probes own and reap their server processes (hermetic)"
+python3 scripts/tests/probe-process-ownership.test.py
+
 step "Verify session orientation and lifecycle-pressure hooks"
 bash scripts/done-session-orient.sh
 

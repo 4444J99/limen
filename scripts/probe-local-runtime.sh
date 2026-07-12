@@ -2,13 +2,60 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TMP_DIR="${TMPDIR:-/tmp}/limen-runtime-probe"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/limen-runtime-probe.XXXXXX")"
+# shellcheck disable=SC2329  # invoked by EXIT trap
+early_cleanup() {
+  rm -rf -- "$TMP_DIR"
+}
+trap early_cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+chmod 700 "$TMP_DIR"
+
 TASKS_PATH="$TMP_DIR/tasks.yaml"
-PORT="${LIMEN_PROBE_PORT:-8765}"
+SERVER_LOG="$TMP_DIR/uvicorn.log"
+PROBE_LOG="$TMP_DIR/probe.log"
 OWNER_TOKEN="${LIMEN_PROBE_OWNER_TOKEN:-owner-probe-token}"
 CLIENT_TOKEN="${LIMEN_PROBE_CLIENT_TOKEN:-client-probe-token}"
+ATTEMPTS="${LIMEN_PROBE_ATTEMPTS:-40}"
+RETRY_DELAY="${LIMEN_PROBE_RETRY_DELAY:-0.25}"
+TERM_GRACE="${LIMEN_PROBE_TERM_GRACE:-2}"
 
-mkdir -p "$TMP_DIR"
+port_available() {
+  python3 - "$1" <<'PY'
+import socket
+import sys
+
+port = int(sys.argv[1])
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    try:
+        sock.bind(("127.0.0.1", port))
+    except OSError:
+        raise SystemExit(1)
+PY
+}
+
+choose_port() {
+  python3 - <<'PY'
+import socket
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    sock.bind(("127.0.0.1", 0))
+    print(sock.getsockname()[1])
+PY
+}
+
+if [[ -n "${LIMEN_PROBE_PORT:-}" ]]; then
+  PORT="$LIMEN_PROBE_PORT"
+  if ! port_available "$PORT"; then
+    printf 'LIMEN_PROBE_PORT=%s is already in use; refusing to probe an unrelated process\n' "$PORT" >&2
+    exit 1
+  fi
+else
+  PORT="$(choose_port)"
+fi
+
 cat > "$TASKS_PATH" <<'YAML'
 version: '1.0'
 portal:
@@ -71,25 +118,81 @@ tasks:
     dispatch_log: []
 YAML
 
+# shellcheck disable=SC2329  # invoked by EXIT trap
 cleanup() {
-  if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
-    kill "$SERVER_PID" 2>/dev/null || true
-    wait "$SERVER_PID" 2>/dev/null || true
+  local exit_code="$?"
+  local pid="${SERVER_PID:-}"
+  local deadline
+  local escalated=0
+  local leader_reaped=0
+  local leader_state
+  trap - EXIT INT TERM HUP
+  {
+    if [[ -n "$pid" ]]; then
+      if kill -0 "$pid" 2>/dev/null || kill -0 -- "-$pid" 2>/dev/null; then
+        kill -TERM "$pid" 2>/dev/null || true
+        deadline="$(python3 - "$TERM_GRACE" <<'PY'
+import sys
+import time
+
+print(time.monotonic() + float(sys.argv[1]))
+PY
+)"
+        while { kill -0 "$pid" 2>/dev/null || kill -0 -- "-$pid" 2>/dev/null; } && python3 - "$deadline" <<'PY'
+import sys
+import time
+
+raise SystemExit(0 if time.monotonic() < float(sys.argv[1]) else 1)
+PY
+        do
+          leader_state="$(ps -o state= -p "$pid" 2>/dev/null | tr -d '[:space:]' || true)"
+          if [[ -z "$leader_state" || "$leader_state" == Z* ]]; then
+            wait "$pid" 2>/dev/null || true
+            leader_reaped=1
+          fi
+          if ! kill -0 "$pid" 2>/dev/null && ! kill -0 -- "-$pid" 2>/dev/null; then
+            break
+          fi
+          sleep 0.05
+        done
+        if kill -0 "$pid" 2>/dev/null || kill -0 -- "-$pid" 2>/dev/null; then
+          escalated=1
+          if kill -0 -- "-$pid" 2>/dev/null; then
+            kill -KILL -- "-$pid" 2>/dev/null || true
+          else
+            kill -KILL "$pid" 2>/dev/null || true
+          fi
+        fi
+      fi
+      if [[ "$leader_reaped" -eq 0 ]]; then
+        wait "$pid" 2>/dev/null || true
+      fi
+    fi
+  } 2>/dev/null
+  if [[ "$escalated" -eq 1 ]]; then
+    printf 'probe server group %s did not exit after TERM; sending KILL\n' "$pid" >&2
   fi
+  rm -rf -- "$TMP_DIR"
+  return "$exit_code"
 }
 trap cleanup EXIT
 
-(
-  cd "$ROOT/web/api"
-  LIMEN_TASKS="$TASKS_PATH" \
-    LIMEN_API_TOKEN="$OWNER_TOKEN" \
-    LIMEN_CLIENT_TOKEN="$CLIENT_TOKEN" \
-    PYTHONPATH="${PYTHONPATH:-}" \
-    python3 -m uvicorn main:app --host 127.0.0.1 --port "$PORT" >/tmp/limen-runtime-probe-uvicorn.log 2>&1
-) &
+LIMEN_TASKS="$TASKS_PATH" \
+  LIMEN_API_TOKEN="$OWNER_TOKEN" \
+  LIMEN_CLIENT_TOKEN="$CLIENT_TOKEN" \
+  PYTHONPATH="${PYTHONPATH:-}" \
+  python3 -c \
+    'import os, sys; os.chdir(sys.argv[1]); os.setsid(); os.execvpe(sys.argv[2], sys.argv[2:], os.environ)' \
+    "$ROOT/web/api" \
+    python3 -m uvicorn main:app --host 127.0.0.1 --port "$PORT" >"$SERVER_LOG" 2>&1 &
 SERVER_PID="$!"
 
-for _ in {1..40}; do
+for ((attempt = 0; attempt < ATTEMPTS; attempt++)); do
+  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    cat "$SERVER_LOG" >&2 || true
+    printf 'uvicorn exited before the runtime probe became ready\n' >&2
+    exit 1
+  fi
   if "$ROOT/scripts/probe-runtime-adapter.py" \
     --api-url "http://127.0.0.1:$PORT" \
     --owner-token "$OWNER_TOKEN" \
@@ -97,13 +200,13 @@ for _ in {1..40}; do
     --task-id PROBE-001 \
     --verify-task-id PROBE-VERIFY \
     --assign-task-id PROBE-ASSIGN \
-    --archive-task-id PROBE-ARCHIVE >/tmp/limen-runtime-probe.log 2>&1; then
-    cat /tmp/limen-runtime-probe.log
+    --archive-task-id PROBE-ARCHIVE >"$PROBE_LOG" 2>&1; then
+    cat "$PROBE_LOG"
     exit 0
   fi
-  sleep 0.25
+  sleep "$RETRY_DELAY"
 done
 
-cat /tmp/limen-runtime-probe-uvicorn.log >&2 || true
-cat /tmp/limen-runtime-probe.log >&2 || true
+cat "$SERVER_LOG" >&2 || true
+cat "$PROBE_LOG" >&2 || true
 exit 1
