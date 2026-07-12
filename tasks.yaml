@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-12'
-      spent: 113
+      spent: 117
       per_agent:
         jules: 56
         gemini: 15
         codex: 0
-        opencode: 28
-        agy: 10
+        opencode: 31
+        agy: 11
         claude: 0
         github_actions: 1
         ollama: 3
@@ -131640,13 +131640,14 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed_blocked
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
   - tried:opencode
+  - blocked:routing
   urls:
   - https://github.com/organvm/limen/pull/683
   context: 'PR organvm/limen#683 is CONFLICTING with its base branch and merge-drain
@@ -131663,7 +131664,7 @@ tasks:
     [auto-emitted 2026-07-10 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T10:39:35.582781Z'
+  updated: '2026-07-12T10:51:33.205639Z'
   dispatch_log:
   - timestamp: '2026-07-11T23:33:28.801098Z'
     agent: gemini
@@ -131692,6 +131693,11 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T10:51:33.205639Z'
+    agent: opencode
+    session_id: cli
+    status: failed_blocked
+    output: no code-capable model is exposed by the live OpenCode catalog
 - id: HEAL-rebase-organvm-limen-684
   title: rebase/resolve conflicts on organvm/limen#684
   repo: organvm/limen
@@ -131837,7 +131843,7 @@ tasks:
   target_agent: opencode
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -131860,7 +131866,7 @@ tasks:
     \ by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-10'
-  updated: '2026-07-12T01:55:01.154934Z'
+  updated: '2026-07-12T10:54:52.182410Z'
   dispatch_log:
   - timestamp: '2026-07-12T01:15:48.903684Z'
     agent: gemini
@@ -131873,6 +131879,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on gemini; reopened to asynchronous lane
+  - timestamp: '2026-07-12T10:54:52.182410Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-814
   title: rebase/resolve conflicts on organvm/limen#814
   repo: organvm/limen
@@ -132848,7 +132859,7 @@ tasks:
     path in application code. - Generate or mana'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T10:39:35.582781Z'
+  updated: '2026-07-12T10:54:52.182410Z'
   dispatch_log:
   - timestamp: '2026-07-12T00:36:52.771769Z'
     agent: codex
@@ -132862,6 +132873,16 @@ tasks:
     route_to: jules
     output: timeout on codex; reopened to asynchronous lane
   - timestamp: '2026-07-12T10:39:35.582781Z'
+    agent: agy
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T10:51:13.003397Z'
+    agent: agy
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 2100s reaped; task reopened'
+  - timestamp: '2026-07-12T10:54:52.182410Z'
     agent: agy
     session_id: async-reserve
     status: dispatched
@@ -133140,7 +133161,7 @@ tasks:
   workstream: observation
   priority: high
   budget_cost: 2
-  status: open
+  status: dispatched
   labels:
   - organ-firstslice
   - pillar:observation
@@ -133167,7 +133188,7 @@ tasks:
     \ into institutional weight (VLTIMA).]"
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T05:10:56.091722Z'
+  updated: '2026-07-12T10:54:52.182410Z'
   dispatch_log:
   - timestamp: '2026-07-12T04:32:25.248942Z'
     agent: gemini
@@ -133180,6 +133201,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on gemini; reopened to asynchronous lane
+  - timestamp: '2026-07-12T10:54:52.182410Z'
+    agent: opencode
+    session_id: async-reserve
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-organvm-engine-144
   title: rebase/resolve conflicts on organvm/organvm-engine#144
   repo: organvm/organvm-engine
@@ -133303,12 +133329,13 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:agy
   urls:
   - https://github.com/organvm/portfolio/pull/146
   context: 'PR organvm/portfolio#146 is CONFLICTING with its base branch and merge-drain
@@ -133325,7 +133352,7 @@ tasks:
     [auto-emitted 2026-07-11 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-12T10:39:35.582781Z'
+  updated: '2026-07-12T10:51:33.205639Z'
   dispatch_log:
   - timestamp: '2026-07-12T04:32:25.248942Z'
     agent: gemini
@@ -133357,6 +133384,10 @@ tasks:
     session_id: async-reserve
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-12T10:51:33.205639Z'
+    agent: agy
+    session_id: cli
+    status: failed
 - id: ASK-quicken-escalate-0bd3a5ed
   title: finish stalled session 'Design movement ontology and workout composi' (breathed
     2x, still stalling)
@@ -133385,7 +133416,7 @@ tasks:
   title: fix failing CI on organvm/session-meta#106
   repo: organvm/session-meta
   type: code
-  target_agent: claude
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
