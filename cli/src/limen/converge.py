@@ -36,9 +36,9 @@ installed — each raises a clear error only when actually constructed/used:
   * :class:`AnthropicSynthesizer` — THE CORE alchemy. Calls the Anthropic SDK
     (``anthropic`` package, import-guarded) with the ranked shots and asks for ONE
     better version plus the kept/dropped accounting. The model is DERIVED per tier by
-    :func:`resolve_tier_model` (env-overridable; sonnet falls back to
-    ``claude-sonnet-4-6``), never pinned, and :class:`LadderSynthesizer` climbs the
-    tiers haiku→sonnet→opus under a cheap :class:`Scorer` gate.
+    :func:`resolve_tier_model` (env-overridable; sonnet falls back to the current
+    sonnet model via the ``claude`` CLI), never pinned, and :class:`LadderSynthesizer`
+    climbs the tiers haiku→sonnet→opus under a cheap :class:`Scorer` gate.
   * :class:`CCEPromoter` — wraps ``conversation_corpus_engine.corpus_candidates``:
     promote = ``stage_corpus_candidate`` -> ``review_corpus_candidate(decision=
     'approve')`` -> ``promote_corpus_candidate``; rollback =
@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass, field
+import functools
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
@@ -412,16 +413,65 @@ class MeshGapFinder:
 
 LADDER_TIERS: tuple[str, ...] = ("haiku", "sonnet", "opus")
 
-# Last-resort fallback model ids — OUTPUTS used only when the env override is absent
-# ([[derive-never-pin-hardcodes]]). The model id lives in exactly this one place; each
-# tier is independently overridable via LIMEN_CONVERGE_MODEL_<TIER>. The CLI path prefers
-# the bare tier alias (the `claude` CLI resolves it to the current dated model itself), so
-# nothing is pinned there at all.
-_TIER_FALLBACK_API: dict[str, str] = {
-    "haiku": "claude-haiku-4-5",
-    "sonnet": "claude-sonnet-4-6",
-    "opus": "claude-opus-4-8",
-}
+# Tier-to-model resolution — derives the concrete API model ID from the claude CLI
+# at runtime ([[derive-never-pin]]). Each tier is independently overridable via
+# LIMEN_CONVERGE_MODEL_<TIER>. The cache ensures at most one CLI call per tier per
+# process lifetime — the model for a tier changes at most with a CLI update.
+
+
+@functools.lru_cache(maxsize=8)
+def _resolve_api_model(tier: str) -> str:
+    """Resolve a tier alias to an API model ID by querying the claude CLI.
+
+    Calls ``claude -p ... --model <tier> --output-format json`` and extracts
+    the resolved model name from the init/assistant metadata. The result is
+    cached per tier so the CLI is called at most once per process lifetime.
+
+    Raises RuntimeError if the claude CLI is not on PATH or the call fails.
+    """
+    import json as _json
+    import shutil as _shutil
+    import subprocess as _subprocess
+
+    binary = _shutil.which("claude")
+    if not binary:
+        raise RuntimeError(
+            f"LIMEN_CONVERGE_MODEL_{tier.upper()} not set and 'claude' CLI not found "
+            f"on PATH. Set LIMEN_CONVERGE_MODEL_{tier.upper()}=<model-id> or install "
+            f"the claude CLI to auto-resolve tier '{tier}'."
+        )
+    proc = _subprocess.run(
+        [binary, "-p", ".", "--model", tier, "--output-format", "json"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"claude CLI failed to resolve tier '{tier}' (rc={proc.returncode}): "
+            f"{(proc.stderr or '')[:200]}. "
+            f"Set LIMEN_CONVERGE_MODEL_{tier.upper()}=<model-id> to bypass."
+        )
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = _json.loads(line)
+        except _json.JSONDecodeError:
+            continue
+        # The first line of --output-format json is a list containing the init object
+        if isinstance(obj, list):
+            obj = obj[0] if obj else {}
+        if obj.get("type") == "assistant":
+            msg = obj.get("message") or {}
+            model = msg.get("model")
+            if model:
+                return model
+    raise RuntimeError(
+        f"Could not locate model in claude CLI output for tier '{tier}'. "
+        f"Set LIMEN_CONVERGE_MODEL_{tier.upper()}=<model-id> to bypass."
+    )
 
 
 def resolve_tier_model(tier: str, *, cli: bool = False) -> str:
@@ -432,8 +482,8 @@ def resolve_tier_model(tier: str, *, cli: bool = False) -> str:
       2. ``cli=True``  → the bare CLI tier alias (``haiku``/``sonnet``/``opus``); the
          ``claude`` CLI resolves it to the current dated model, so nothing is pinned and
          it survives model renames;
-         ``cli=False`` → the env-overridable last-resort fallback id from
-         :data:`_TIER_FALLBACK_API`.
+         ``cli=False`` → the derived API model id from the ``claude`` CLI
+         (:func:`_resolve_api_model`), cached per tier.
     """
     import os
 
@@ -442,7 +492,7 @@ def resolve_tier_model(tier: str, *, cli: bool = False) -> str:
         return env
     if cli:
         return tier
-    return _TIER_FALLBACK_API[tier]
+    return _resolve_api_model(tier)
 
 
 class AnthropicSynthesizer:
@@ -454,10 +504,9 @@ class AnthropicSynthesizer:
     the kept/dropped accounting is machine-readable.
 
     The default model is DERIVED from the sonnet tier via :func:`resolve_tier_model`
-    (env ``LIMEN_CONVERGE_MODEL_SONNET``; falls back to ``claude-sonnet-4-6``) rather
-    than pinned here — Sonnet 4.6 uses adaptive thinking (no ``budget_tokens``).
-    Override with ``model=``. The Anthropic client reads ``ANTHROPIC_API_KEY`` from the
-    environment by default.
+    (env ``LIMEN_CONVERGE_MODEL_SONNET``; falls back to the current sonnet model
+    via the ``claude`` CLI) rather than pinned here. Override with ``model=``. The
+    Anthropic client reads ``ANTHROPIC_API_KEY`` from the environment by default.
     """
 
     _PROMPT = (
@@ -501,7 +550,7 @@ class AnthropicSynthesizer:
         import json
 
         user = f"{self._PROMPT}\n\nIDEA:\n{idea}\n\nSHOTS (best-first):\n{self._render_shots(ranked)}"
-        # Sonnet 4.6: adaptive thinking only, no budget_tokens. Plain create() call.
+        # The resolved model determines which thinking feature set applies.
         message = self._client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
@@ -773,8 +822,9 @@ def _build_dry_run_kit() -> dict:
 
 
 def _api_tier_factory(client=None):
-    """tier → an :class:`AnthropicSynthesizer` at that tier's resolved API model id (the
-    raw-API rung). ``client`` is the test/injection seam, threaded to every rung."""
+    """tier → an :class:`AnthropicSynthesizer` at that tier's resolved API model id
+    (the raw-API rung, derived from the ``claude`` CLI). ``client`` is the
+    test/injection seam, threaded to every rung."""
 
     def build(tier: str) -> Synthesizer:
         model = resolve_tier_model(tier, cli=False)

@@ -36,6 +36,15 @@ from limen.converge import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _mock_api_model_resolution(monkeypatch):
+    """Prevent ALL tests from shelling out to the claude CLI for model resolution."""
+    monkeypatch.setattr(
+        "limen.converge._resolve_api_model",
+        lambda tier: f"claude-{tier}-4-6",
+    )
+
+
 # ─── Fake adapters ───────────────────────────────────────────────────
 
 
@@ -610,7 +619,7 @@ def test_ladder_over_cli_climbs_aliases_in_order(monkeypatch):
 
 def test_resolve_tier_model_env_override_and_cli_alias(monkeypatch):
     """Derive-never-pin: env pin wins; else CLI path returns the bare alias, API path the
-    last-resort fallback id."""
+    derived model from the claude CLI."""
     monkeypatch.delenv("LIMEN_CONVERGE_MODEL_SONNET", raising=False)
     monkeypatch.delenv("LIMEN_CONVERGE_MODEL_HAIKU", raising=False)
     assert resolve_tier_model("sonnet", cli=False) == "claude-sonnet-4-6"
@@ -633,7 +642,7 @@ def test_live_kit_ladder_off_uses_single_tier(monkeypatch):
 
 
 def test_anthropic_synthesizer_default_model_derives_to_sonnet(monkeypatch):
-    """The lone line-441 hardcode is gone: the default derives to the sonnet tier (env-overridable)."""
+    """The lone hardcoded fallback is gone: the default derives to the sonnet tier (env-overridable)."""
     monkeypatch.delenv("LIMEN_CONVERGE_MODEL_SONNET", raising=False)
     client = FakeAnthropicClient('{"better_version": "x", "kept_ids": [], "dropped_ids": []}')
     assert AnthropicSynthesizer(client=client).model == "claude-sonnet-4-6"
