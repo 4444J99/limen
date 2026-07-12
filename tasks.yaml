@@ -131532,7 +131532,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#680
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -131723,7 +131723,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#696
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
