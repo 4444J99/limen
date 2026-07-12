@@ -103,10 +103,12 @@ def test_compilers_are_deterministic_typed_and_append_only() -> None:
     assert all(compiler.MIGRATION_ID in ticket.log["output"] for ticket in parents_a if ticket.log)
 
 
-def test_parent_phase_refuses_before_children_cross_keeper() -> None:
+def test_parent_phase_refuses_before_children_cross_keeper(tmp_path: Path) -> None:
     compiler = _module()
+    board = tmp_path / "tasks.yaml"
+    save_limen_file(board, LimenFile())
     with pytest.raises(compiler.MigrationError, match="is not admitted on the board"):
-        compiler.verify_children_admitted(_payload(), BOARD)
+        compiler.verify_children_admitted(_payload(), board)
 
 
 def test_child_preflight_refuses_same_id_without_migration_custody(tmp_path: Path) -> None:
@@ -128,8 +130,13 @@ def test_child_preflight_refuses_same_id_without_migration_custody(tmp_path: Pat
 def test_parent_owner_state_gate_rejects_newly_terminal_open_work() -> None:
     compiler = _module()
     payload = _payload()
-    by_predicate = {row["predicate"]: row["action"] for row in payload["tasks"].values()}
-    stale_predicate = payload["tasks"]["GH-organvm-limen-685"]["predicate"]
+    by_predicate = {
+        compiler.effective_parent_predicate(task_id, row): row["action"] for task_id, row in payload["tasks"].items()
+    }
+    stale_predicate = compiler.effective_parent_predicate(
+        "GH-organvm-limen-685",
+        payload["tasks"]["GH-organvm-limen-685"],
+    )
 
     def runner(command: str):
         action = by_predicate[command]
@@ -138,6 +145,66 @@ def test_parent_owner_state_gate_rejects_newly_terminal_open_work() -> None:
 
     with pytest.raises(compiler.MigrationError, match="GH-organvm-limen-685.*expected not satisfied"):
         compiler.check_parent_dispositions(payload, runner=runner)
+
+
+def test_parent_owner_state_gate_accepts_reasoned_false_and_rejects_evaluation_error() -> None:
+    compiler = _module()
+    payload = _payload()
+    actions = {
+        compiler.effective_parent_predicate(task_id, row): row["action"] for task_id, row in payload["tasks"].items()
+    }
+
+    def reasoned_false(command: str):
+        satisfied = actions[command] in {"done", "superseded", "split"}
+        return SimpleNamespace(
+            returncode=0 if satisfied else 1,
+            stdout="",
+            stderr="owner predicate is not satisfied yet" if not satisfied else "",
+        )
+
+    assert compiler.check_parent_dispositions(payload, runner=reasoned_false) == {
+        "terminal": 19,
+        "nonterminal": 33,
+    }
+
+    def evaluation_error(command: str):
+        return SimpleNamespace(returncode=2, stdout="", stderr="synthetic evaluator failure")
+
+    with pytest.raises(compiler.MigrationError, match="could not be evaluated.*synthetic evaluator failure"):
+        compiler.check_parent_dispositions(payload, runner=evaluation_error)
+
+
+def test_task_keyed_pr_predicates_require_exact_body_and_preserve_extra_gates() -> None:
+    compiler = _module()
+    payload = _payload()
+
+    simple = compiler.effective_parent_predicate(
+        "RETRO-0708-HEAL-GATE",
+        payload["tasks"]["RETRO-0708-HEAL-GATE"],
+    )
+    assert "--json body" in simple
+    assert "test(" in simple
+    assert "RETRO-0708-HEAL-GATE" in simple
+    assert "--json number --jq length" not in simple
+    token_pattern = compiler.task_pr_body_pattern("RETRO-0708-HEAL-GATE")
+    assert compiler.re.search(token_pattern, "Closes `RETRO-0708-HEAL-GATE`.")
+    assert not compiler.re.search(token_pattern, "Closes RETRO-0708-HEAL-GATE-FOLLOWUP.")
+    assert not compiler.re.search(token_pattern, "Closes PREFIX-RETRO-0708-HEAL-GATE.")
+
+    main_green = compiler.effective_parent_predicate(
+        "GEN-organvm-manumissio-ci-green-0709",
+        payload["tasks"]["GEN-organvm-manumissio-ci-green-0709"],
+    )
+    assert "GEN-organvm-manumissio-ci-green-0709" in main_green
+    assert "repos/organvm/manumissio/commits/main" in main_green
+    assert "--workflow ci.yml" in main_green
+
+    ship = compiler.effective_parent_predicate(
+        "REV-organvm-limen-revenue-ship-0708",
+        payload["tasks"]["REV-organvm-limen-revenue-ship-0708"],
+    )
+    assert "scripts/ship-gate.py --check --task REV-organvm-limen-revenue-ship-0708" in ship
+    assert "REV-organvm-limen-revenue-ship-0708" in ship
 
 
 def test_keeper_archive_proves_children_and_rejection_fails_closed(tmp_path: Path) -> None:
@@ -156,6 +223,11 @@ def test_keeper_archive_proves_children_and_rejection_fails_closed(tmp_path: Pat
     drained = drain_once(board)
     assert drained.applied == 29
     assert drained.rejected == 0
+    assert compiler.verify_children_admitted(payload, board) == {"admitted": 29, "rejected": 0, "pending": 0}
+
+    routed = load_limen_file(board)
+    routed.tasks[0] = routed.tasks[0].model_copy(update={"target_agent": "claude"})
+    save_limen_file(board, routed)
     assert compiler.verify_children_admitted(payload, board) == {"admitted": 29, "rejected": 0, "pending": 0}
 
     rejected = tickets_root(board) / "rejected" / f"{tickets[0].ticket_id}.json.reason.txt"

@@ -26,6 +26,8 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
+import shlex
 import subprocess
 import sys
 from collections.abc import Callable, Iterable
@@ -58,6 +60,9 @@ PHASE_CHILDREN = "children"
 PHASE_PARENTS = "parents"
 PHASE_VERIFY = "verify"
 APPLY_PHASES = (PHASE_CHILDREN, PHASE_PARENTS)
+# The keeper archive seals the exact creation packet.  After admission, the
+# live purpose router owns target_agent and may legitimately rebalance it.
+CHILD_ROUTING_VOLATILE_FIELDS = ("updated", "dispatch_log", "target_agent")
 RunPredicate = Callable[[str], subprocess.CompletedProcess[str]]
 
 
@@ -128,6 +133,82 @@ def _default_predicate_runner(command: str) -> subprocess.CompletedProcess[str]:
         check=False,
         timeout=60,
     )
+
+
+_TASK_PR_RECEIPT_RE = re.compile(
+    r"^github:(?P<repo>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+):pull-request:(?P<task>[A-Za-z0-9_.-]+)$"
+)
+
+
+def task_pr_body_pattern(task_id: str) -> str:
+    return rf"(^|[^A-Za-z0-9_.-]){re.escape(task_id)}([^A-Za-z0-9_.-]|$)"
+
+
+def effective_parent_predicate(task_id: str, row: dict[str, Any]) -> str:
+    """Compile exact task-keyed PR custody without changing the frozen manifest digest."""
+
+    predicate = str(row.get("predicate") or "").strip()
+    receipt_target = str(row.get("receipt_target") or "")
+    match = _TASK_PR_RECEIPT_RE.fullmatch(receipt_target)
+    if match is None:
+        return predicate
+    if match.group("task") != task_id:
+        raise MigrationError(f"parent {task_id!r} task-keyed PR receipt names a different task")
+    repo = match.group("repo")
+    jq_filter = f'([.[] | select((.body // "") | test({json.dumps(task_pr_body_pattern(task_id))}))] | length)'
+    exact_search = shlex.join(
+        [
+            "gh",
+            "pr",
+            "list",
+            "--repo",
+            repo,
+            "--state",
+            "merged",
+            "--search",
+            f"{task_id} in:body",
+            "--json",
+            "body",
+            "--jq",
+            jq_filter,
+        ]
+    )
+    exact_receipt = f'test "$({exact_search})" -gt 0'
+    if "scripts/ship-gate.py --check" in predicate:
+        ship_gate = shlex.join(["python3", "scripts/ship-gate.py", "--check", "--task", task_id])
+        return f"{ship_gate} && {exact_receipt}"
+    if "gh api" in predicate and "gh run list" in predicate:
+        workflow_match = re.search(r"--workflow\s+([A-Za-z0-9_.-]+)", predicate)
+        if workflow_match is None:
+            raise MigrationError(f"parent {task_id!r} main-green predicate has no bounded workflow")
+        main_head = shlex.join(["gh", "api", f"repos/{repo}/commits/main", "--jq", ".sha"])
+        green_head = shlex.join(
+            [
+                "gh",
+                "run",
+                "list",
+                "--repo",
+                repo,
+                "--workflow",
+                workflow_match.group(1),
+                "--branch",
+                "main",
+                "--event",
+                "push",
+                "--status",
+                "success",
+                "--limit",
+                "1",
+                "--json",
+                "headSha",
+                "--jq",
+                ".[0].headSha",
+            ]
+        )
+        return f'{exact_receipt} && test "$({main_head})" = "$({green_head})"'
+    if "bash -lc" in predicate or "&&" in predicate or "||" in predicate:
+        raise MigrationError(f"parent {task_id!r} has an unrecognized compound task-PR predicate")
+    return exact_receipt
 
 
 def check_live_prerequisites(
@@ -274,7 +355,7 @@ def compile_parent_tickets(
                 f"parent {task_id!r} status drifted to {parent.status!r}; expected one of {sorted(expected_statuses)}"
             )
         patch: dict[str, Any] = {
-            "predicate": row.get("predicate"),
+            "predicate": effective_parent_predicate(task_id, row),
             "receipt_target": row.get("receipt_target"),
             **(row.get("status_patch") or {}),
         }
@@ -453,7 +534,7 @@ def preflight_child_submission(payload: dict[str, Any], board_path: Path, ticket
             raise MigrationError(f"child {task_id!r} already exists without this migration's keeper receipt")
         actual = current.model_dump(mode="json", exclude_none=True)
         expected = _child_manifest_fields(children[task_id])
-        for volatile in ("updated", "dispatch_log"):
+        for volatile in CHILD_ROUTING_VOLATILE_FIELDS:
             actual.pop(volatile, None)
             expected.pop(volatile, None)
         if actual != expected:
@@ -480,18 +561,16 @@ def check_parent_dispositions(
         if not isinstance(row, dict):
             raise MigrationError(f"parent {task_id!r} has no disposition row")
         action = str(row.get("action") or "")
-        predicate = str(row.get("predicate") or "")
+        predicate = effective_parent_predicate(task_id, row)
         try:
             result = runner(predicate)
         except (OSError, subprocess.SubprocessError) as exc:
             raise MigrationError(f"parent {task_id!r} owner predicate could not be executed: {exc}") from exc
+        if result.returncode not in {0, 1}:
+            detail = (result.stderr or result.stdout or "predicate evaluation failed").strip().replace("\n", " ")
+            raise MigrationError(f"parent {task_id!r} owner predicate could not be evaluated: {detail[:180]}")
         satisfied = result.returncode == 0
         expected_satisfied = action in {"done", "superseded", "split"}
-        if not satisfied and not expected_satisfied and str(result.stderr or "").strip():
-            detail = str(result.stderr).strip().replace("\n", " ")
-            raise MigrationError(
-                f"parent {task_id!r} owner predicate could not be evaluated as nonterminal: {detail[:180]}"
-            )
         if satisfied != expected_satisfied:
             observed = "satisfied" if satisfied else "not satisfied"
             expected = "satisfied" if expected_satisfied else "not satisfied"
@@ -525,7 +604,7 @@ def verify_children_admitted(payload: dict[str, Any], board_path: Path) -> dict[
         validate_intake_contract(child, is_new=True)
         actual = child.model_dump(mode="json", exclude_none=True)
         expected = _child_manifest_fields(children[task_id])
-        for volatile in ("updated", "dispatch_log"):
+        for volatile in CHILD_ROUTING_VOLATILE_FIELDS:
             actual.pop(volatile, None)
             expected.pop(volatile, None)
         if actual != expected:
@@ -592,10 +671,11 @@ def verify_parents_applied(payload: dict[str, Any], board_path: Path) -> dict[st
         expected_status = str((row.get("status_patch") or {}).get("status") or parent.status)
         if parent.status != expected_status:
             raise MigrationError(f"parent {task_id!r} has status {parent.status!r}, expected {expected_status!r}")
-        if parent.predicate != row.get("predicate") or parent.receipt_target != row.get("receipt_target"):
+        effective_predicate = effective_parent_predicate(task_id, row)
+        if parent.predicate != effective_predicate or parent.receipt_target != row.get("receipt_target"):
             raise MigrationError(f"parent {task_id!r} lacks the frozen typed contract")
         expected_patch = {
-            "predicate": row.get("predicate"),
+            "predicate": effective_predicate,
             "receipt_target": row.get("receipt_target"),
             **(row.get("status_patch") or {}),
         }
