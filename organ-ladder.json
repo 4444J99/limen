@@ -238,7 +238,7 @@
       "organ": "OBSERVATORY / Legibility & Traction",
       "repo": "organvm/limen",
       "home": "organs/observation/ + cli/src/limen/observatory/",
-      "maturity": 10,
+      "maturity": 28,
       "stage": "scaffold",
       "whose_hand": "mine (all study/scoring/reconcile is the organ's, read-only by default); his only for the irreducible act it proposes each day — approving ONE reversible experiment on a public surface (a his-hand lever), never recited, never auto-applied",
       "rival": "a growth/DevRel + competitive-intelligence team (a launch-analytics desk fused with a positioning studio)",
@@ -246,7 +246,7 @@
       "macro": "GITVS's legibility twin: the same observe→diff→reconcile loop run on how the world understands/trusts/uses/circulates an estate — any operator studies why comparable winners get adopted, proves their own surfaces are true, and gets ONE reversible experiment/day instead of a vanity-trend dashboard",
       "micro": "Anthony's activation deficit: study daily GitHub winners vs matched CONTROLS, score transferable mechanisms against the estate, reconcile the estate's own claim-drift (the 105/116/171 numbers) via the face-ownership.json/VVLTVS loop, and hand up one reversible activation experiment for the hero repo (value-repos rank 1)",
       "first_artifact": "cli/src/limen/observatory/ spine (config/gh/ledger/executive/doctor) + organs/observation/ charter + organ-ladder entry: the read-only scaffold this chunk; the reconcile effector + research loop + beat wiring follow",
-      "note": "Convergence, not greenfield: reuses GITVS gh-helpers, the JSONL keeper discipline, value-repos/revenue-ladder/estate-ledger as ground truth, face-ownership.json/VVLTVS as the internal-legibility sensor. The imported ChatGPT spec's greenfield stack (organvm/observatory repo + DuckDB + Astro + Playwright) is overruled by codebase idiom (in-repo organ + JSONL + Next.js); Playwright website capture is the one recorded phase-3 residual. Working handle OBSERVATORY — final name via nomenclator (INDEX·NOMINVM)."
+      "note": "Convergence, not greenfield: reuses GITVS gh-helpers, the JSONL keeper discipline, value-repos/revenue-ladder/estate-ledger as ground truth, face-ownership.json/VVLTVS as the internal-legibility sensor. The imported ChatGPT spec's greenfield stack (organvm/observatory repo + DuckDB + Astro + Playwright) is overruled by codebase idiom (in-repo organ + JSONL + Next.js); Playwright website capture is the one recorded phase-3 residual. Working handle OBSERVATORY — final name via nomenclator (INDEX·NOMINVM). VERIFIED 2026-07-12: full vertical slice complete — 17 engine modules, 60 hermetic tests (44 scaffold + 16 capture/synthesis/interpret), doctor --offline green, ruff clean, beat wiring wired (observatory-beat.py + sensors.yaml + parameters.yaml + L-OBSERVATORY-ACTIVATE lever), CLI integrated as `limen observatory` subcommand. Ships DARK behind LIMEN_OBSERVATORY=0. Next step: arm L-OBSERVATORY-ACTIVATE and fire the first live beat."
     }
   ],
   "power_snapshot": {
