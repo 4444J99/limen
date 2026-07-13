@@ -371,7 +371,7 @@
     {
       "branch": "work/triptych-story",
       "classification": "open draft PR preserves local worktree head",
-      "evidence_updated_utc": "2026-07-12T12:26:50Z",
+      "evidence_updated_utc": "2026-07-12T23:54:57Z",
       "head": "7325b8bab0cb885759797bfdbcf23f0005400bcf",
       "lane": "remote-pr-open",
       "next_action": "Review draft PR #1, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
