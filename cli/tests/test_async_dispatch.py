@@ -9,6 +9,7 @@ import contextlib
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -574,7 +575,9 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     dispatched = [t for t in load_limen_file(tmp_path / "tasks.yaml").tasks if t.status == "dispatched"]
     assert len(dispatched) == 2
     assert all(t.dispatch_log[-1].status == "dispatched" for t in dispatched)
-    assert all(t.dispatch_log[-1].session_id == "async-reserve" for t in dispatched)
+    reservation_ids = [t.dispatch_log[-1].session_id for t in dispatched]
+    assert all(re.fullmatch(r"async-reserve:[0-9a-f]{32}", value) for value in reservation_ids)
+    assert len(set(reservation_ids)) == len(reservation_ids)
     assert all(t.predicate and t.receipt_target for t in dispatched)
     current = {task.id: task for task in dispatched}
     for call in calls:
@@ -582,7 +585,7 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
         task_id = argv[argv.index("--task-id") + 1]
         contract_hash = argv[argv.index("--execution-contract-hash") + 1]
         assert contract_hash == execution_contract_hash(current[task_id])
-    assert len(list(da.RUNS.glob("*__codex.running"))) == 2
+    assert len(list(da.RUNS.glob("*__codex--*.running"))) == 2
     track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
     assert track.spent == 2
     assert track.per_agent["codex"] == 2
@@ -1650,9 +1653,7 @@ def test_no_launch_mode_skips_always_working_writer(tmp_path, monkeypatch):
     assert (tmp_path / "tasks.yaml").read_text() == before
 
 
-def test_targeted_only_main_launches_exact_task_without_broad_reap_or_harvest(
-    tmp_path, monkeypatch, capsys
-):
+def test_targeted_only_main_launches_exact_task_without_broad_reap_or_harvest(tmp_path, monkeypatch, capsys):
     da = _load(tmp_path, n_open=2)
     calls = []
 
@@ -1713,6 +1714,7 @@ def test_targeted_only_main_launches_exact_task_without_broad_reap_or_harvest(
         "launched": [["codex", "T1"]],
         "launched_count": 1,
         "reaped_count": 0,
+        "reservation_id": None,
         "schema_version": "limen-targeted-dispatch.v1",
         "status": "launched",
         "targeted_only": True,
@@ -1998,7 +2000,7 @@ def test_targeted_only_retains_dispatch_admission_gate(tmp_path, monkeypatch, ca
     assert receipt["status"] == "zero_launch"
 
 
-def _mark_async_dispatched(tmp_path, *, age_seconds=0):
+def _mark_async_dispatched(tmp_path, *, age_seconds=0, reservation_id="async-reserve"):
     board = load_limen_file(tmp_path / "tasks.yaml")
     task = board.tasks[0]
     stamp = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=age_seconds)
@@ -2008,7 +2010,7 @@ def _mark_async_dispatched(tmp_path, *, age_seconds=0):
         DispatchLogEntry(
             timestamp=stamp,
             agent="codex",
-            session_id="async-reserve",
+            session_id=reservation_id,
             status="dispatched",
             output="reserved for exact recovery test",
         )
@@ -2118,11 +2120,11 @@ def test_exact_recovery_rechecks_result_immediately_before_mutation(tmp_path, mo
     da._write_running_marker(task.id, "codex", stamp, 999999, 0.0)
     checks = []
 
-    def result_ids():
+    def result_exists(_task_id, _reservation_id=None):
         checks.append(True)
-        return set() if len(checks) == 1 else {task.id}
+        return len(checks) > 1
 
-    monkeypatch.setattr(da, "_result_task_ids", result_ids)
+    monkeypatch.setattr(da, "_result_exists", result_exists)
     monkeypatch.setattr(da, "_pid_alive", lambda _pid: False)
     monkeypatch.setattr(da, "_active_admission_leases", lambda: [])
     monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
@@ -2181,9 +2183,7 @@ def test_async_worker_revalidates_contract_before_provider_side_effects(tmp_path
         ("contract_mismatch", "async-execution-contract-mismatch"),
     ],
 )
-def test_all_worker_validation_failures_are_publication_and_harvest_fenced(
-    tmp_path, monkeypatch, case, failure_id
-):
+def test_all_worker_validation_failures_are_publication_and_harvest_fenced(tmp_path, monkeypatch, case, failure_id):
     da = _load(tmp_path, n_open=1)
     task, expected_hash, _stamp = _mark_async_dispatched(tmp_path)
     board = load_limen_file(tmp_path / "tasks.yaml")
@@ -2259,9 +2259,7 @@ def test_all_worker_validation_failures_are_publication_and_harvest_fenced(
 
 
 @pytest.mark.parametrize("case", ["task_missing", "status_reopened", "contract_changed", "owner_changed"])
-def test_harvest_independently_fences_non_notask_receipt_without_current_custody(
-    tmp_path, case
-):
+def test_harvest_independently_fences_non_notask_receipt_without_current_custody(tmp_path, case):
     da = _load(tmp_path, n_open=1)
     task, expected_hash, stamp = _mark_async_dispatched(tmp_path)
     da._write_running_marker(task.id, "codex", stamp, 999999, 0.0)
@@ -2383,3 +2381,357 @@ def test_exact_orphan_recovery_command_reopens_once_and_is_idempotent(tmp_path, 
     assert current[task.id].status == "open"
     assert current["T1"].status == "open"
     assert current[task.id].dispatch_log[-1].session_id == "async-recover-exact"
+
+
+def test_reaper_rechecks_nonce_result_under_lock_before_reopening(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    reservation_id = "async-reserve:" + "b" * 32
+    task, contract_hash, stamp = _mark_async_dispatched(
+        tmp_path,
+        age_seconds=7200,
+        reservation_id=reservation_id,
+    )
+    da._write_running_marker(task.id, "codex", stamp, 999999, 0.0, reservation_id)
+    result_path = da._result_path(task.id, reservation_id)
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    killed = []
+    real_queue_lock = da._queue_lock
+    published = False
+
+    @contextlib.contextmanager
+    def publish_before_reaper_lock(path):
+        nonlocal published
+        with real_queue_lock(path) as got:
+            if got and not published:
+                result_path.write_text(
+                    json.dumps(
+                        {
+                            "task_id": task.id,
+                            "agent": "codex",
+                            "reservation_id": reservation_id,
+                            "execution_contract_hash": contract_hash,
+                            "execution_started": True,
+                            "result": True,
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                published = True
+            yield got
+
+    monkeypatch.setattr(da, "_queue_lock", publish_before_reaper_lock)
+    monkeypatch.setattr(da, "_pid_alive", lambda _pid: False)
+    monkeypatch.setattr(da, "_worker_has_defunct_child", lambda _pid: False)
+    monkeypatch.setattr(da, "_kill_worker_group", lambda pid: killed.append(pid))
+
+    assert da.reap_stale(max_age_s=1) == []
+    assert published is True
+    assert result_path.exists()
+    assert da._running_marker_path(task.id, "codex", reservation_id).exists()
+    assert killed == []
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+
+
+def test_exact_recovery_ignores_malformed_marker_from_stale_nonce(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    reservation_a = "async-reserve:" + "a" * 32
+    reservation_b = "async-reserve:" + "b" * 32
+    task, contract_hash, stamp = _mark_async_dispatched(
+        tmp_path,
+        age_seconds=7200,
+        reservation_id=reservation_b,
+    )
+    marker_b = da._running_marker_path(task.id, "codex", reservation_b)
+    da._write_running_marker(task.id, "codex", stamp, 999999, 0.0, reservation_b)
+    marker_a = da._running_marker_path(task.id, "codex", reservation_a)
+    marker_a.write_text("{malformed-stale-a", encoding="utf-8")
+    monkeypatch.setattr(da, "_pid_alive", lambda _pid: False)
+    monkeypatch.setattr(da, "_active_admission_leases", lambda: [])
+    monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
+
+    result = da.recover_exact_task(
+        task.id,
+        contract_hash,
+        reservation_id=reservation_b,
+        dry_run=False,
+    )
+
+    assert result == {"status": "recovered", "recovered_count": 1}
+    assert _board(tmp_path)[task.id].status == "open"
+    assert not marker_b.exists()
+    assert marker_a.read_text(encoding="utf-8") == "{malformed-stale-a"
+
+
+def test_exact_open_task_launches_new_nonce_despite_stale_nonce_artifacts(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    task_id = "T0"
+    agent = "codex"
+    reservation_a = "async-reserve:" + "a" * 32
+    marker_a = da._running_marker_path(task_id, agent, reservation_a)
+    result_a = da._result_path(task_id, reservation_a)
+    da._write_running_marker(
+        task_id,
+        agent,
+        datetime.datetime.now(datetime.timezone.utc),
+        11111,
+        0.0,
+        reservation_a,
+    )
+    result_a.write_text(
+        json.dumps(
+            {
+                "task_id": task_id,
+                "agent": agent,
+                "reservation_id": reservation_a,
+                "result": "__notask__",
+                "execution_started": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    marker_a_bytes = marker_a.read_bytes()
+    result_a_bytes = result_a.read_bytes()
+    worker_argv = []
+
+    def fake_popen(argv, **_kwargs):
+        worker_argv.append(list(argv))
+        return type("P", (), {"pid": 22222})()
+
+    monkeypatch.setattr(da.subprocess, "Popen", fake_popen)
+
+    launched = da.reserve_and_launch(
+        [agent],
+        per_agent=1,
+        cap=1,
+        dry=False,
+        task_id=task_id,
+        expected_contract_hash=_contract_hash(tmp_path, task_id),
+    )
+
+    assert launched == [(agent, task_id)]
+    current = _board(tmp_path)[task_id]
+    reservation_b = current.dispatch_log[-1].session_id
+    assert re.fullmatch(r"async-reserve:[0-9a-f]{32}", reservation_b)
+    assert reservation_b != reservation_a
+    assert worker_argv[0][worker_argv[0].index("--reservation-id") + 1] == reservation_b
+    assert da._running_marker_path(task_id, agent, reservation_b).exists()
+    assert marker_a.read_bytes() == marker_a_bytes
+    assert result_a.read_bytes() == result_a_bytes
+
+
+@pytest.mark.parametrize("artifact_kind", ["legacy", "malformed", "wrong_path"])
+def test_exact_open_task_keeps_unfenced_same_task_marker_fail_closed(tmp_path, monkeypatch, artifact_kind):
+    da = _load(tmp_path, n_open=1)
+    task_id = "T0"
+    agent = "codex"
+    marker = da._running_marker_path(task_id, agent)
+    if artifact_kind == "legacy":
+        da._write_running_marker(
+            task_id,
+            agent,
+            datetime.datetime.now(datetime.timezone.utc),
+            11111,
+            0.0,
+        )
+    elif artifact_kind == "malformed":
+        marker.write_text("{malformed", encoding="utf-8")
+    else:
+        marker.write_text(
+            json.dumps(
+                {
+                    "task_id": task_id,
+                    "agent": agent,
+                    "reservation_id": "async-reserve:" + "a" * 32,
+                    "reserved_gib": 0.0,
+                    "pid": 11111,
+                    "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                }
+            ),
+            encoding="utf-8",
+        )
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    monkeypatch.setattr(
+        da.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("unfenced marker must block launch")),
+    )
+
+    assert da._task_claim_artifacts_are_nonce_fenced(task_id) is False
+    assert da._running_for(agent, exclude_task_id=task_id) == 1
+    assert da._running_local(exclude_task_id=task_id) == 1
+    assert (
+        da.reserve_and_launch(
+            [agent],
+            per_agent=1,
+            cap=1,
+            dry=False,
+            task_id=task_id,
+            expected_contract_hash=_contract_hash(tmp_path, task_id),
+        )
+        == []
+    )
+    assert marker.exists()
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+
+
+def test_exact_nonce_exclusion_recomputes_room_from_unclamped_base(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    task_id = "T0"
+    agent = "codex"
+    reservation_a = "async-reserve:" + "a" * 32
+    base_snapshot = _worktree_snapshot(blocked=False, room_gib=1.0)
+    da._write_running_marker(
+        task_id,
+        agent,
+        datetime.datetime.now(datetime.timezone.utc),
+        11111,
+        5.0,
+        reservation_a,
+    )
+    observed_snapshots = []
+    real_admission = da._worktree_admission_for_task
+
+    def record_admission(task, selected_agent, snapshot, **kwargs):
+        observed_snapshots.append(dict(snapshot))
+        return real_admission(task, selected_agent, snapshot, **kwargs)
+
+    monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
+    monkeypatch.setattr(da, "_worktree_admission_snapshot", lambda: dict(base_snapshot))
+    monkeypatch.setattr(da, "_worktree_admission_for_task", record_admission)
+    monkeypatch.setattr(dispatch_module, "_tracked_head_checkout_gib", lambda _task: 2.0)
+    monkeypatch.setattr(
+        da.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("one GiB cannot admit two GiB")),
+    )
+
+    launched = da.reserve_and_launch(
+        [agent],
+        per_agent=1,
+        cap=1,
+        dry=False,
+        task_id=task_id,
+        expected_contract_hash=_contract_hash(tmp_path, task_id),
+    )
+
+    assert launched == []
+    assert observed_snapshots
+    assert observed_snapshots[0]["reserved_gib"] == 0.0
+    assert observed_snapshots[0]["room_gib"] == 1.0
+    assert _board(tmp_path)[task_id].status == "open"
+
+
+def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    task_id = "T0"
+    agent = "codex"
+    pids = iter([11111, 22222])
+    worker_argv = []
+    killed = []
+
+    def fake_popen(argv, **_kwargs):
+        worker_argv.append(list(argv))
+        return type("P", (), {"pid": next(pids)})()
+
+    monkeypatch.setattr(da.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(da, "_active_admission_leases", lambda: [])
+    monkeypatch.setattr(da, "_kill_worker_group", lambda pid: killed.append(pid))
+    monkeypatch.setattr(da, "_worker_has_defunct_child", lambda _pid: False)
+    monkeypatch.setattr(da, "_pid_alive", lambda pid: pid == 22222)
+    monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
+
+    assert da.reserve_and_launch([agent], 1, 1, False, task_id=task_id) == [(agent, task_id)]
+    task_a = _board(tmp_path)[task_id]
+    contract_hash = execution_contract_hash(task_a)
+    reservation_a = task_a.dispatch_log[-1].session_id
+    assert re.fullmatch(r"async-reserve:[0-9a-f]{32}", reservation_a)
+    marker_a = da._running_marker_path(task_id, agent, reservation_a)
+    marker_a_payload = json.loads(marker_a.read_text(encoding="utf-8"))
+    marker_a_payload["started_at"] = (
+        datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=2)
+    ).isoformat()
+    marker_a.write_text(json.dumps(marker_a_payload), encoding="utf-8")
+
+    recovered = da.recover_exact_task(
+        task_id,
+        contract_hash,
+        reservation_id=reservation_a,
+        dry_run=False,
+    )
+    assert recovered == {"status": "recovered", "recovered_count": 1}
+    assert _board(tmp_path)[task_id].status == "open"
+    assert not marker_a.exists()
+
+    assert da.reserve_and_launch([agent], 1, 1, False, task_id=task_id) == [(agent, task_id)]
+    task_b = _board(tmp_path)[task_id]
+    reservation_b = task_b.dispatch_log[-1].session_id
+    assert re.fullmatch(r"async-reserve:[0-9a-f]{32}", reservation_b)
+    assert reservation_b != reservation_a
+    marker_b = da._running_marker_path(task_id, agent, reservation_b)
+    marker_b_bytes = marker_b.read_bytes()
+    result_b = da._result_path(task_id, reservation_b)
+    result_b_bytes = b'{"reservation":"B","sentinel":true}\n'
+    result_b.write_bytes(result_b_bytes)
+    board_b_bytes = (tmp_path / "tasks.yaml").read_bytes()
+
+    assert [argv[argv.index("--reservation-id") + 1] for argv in worker_argv] == [
+        reservation_a,
+        reservation_b,
+    ]
+
+    stale_worker = _load_worker(tmp_path)
+    monkeypatch.setattr(
+        stale_worker,
+        "call_agent_dispatch",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("stale A must not execute")),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "async-run-one.py",
+            "--agent",
+            agent,
+            "--task-id",
+            task_id,
+            "--reservation-id",
+            reservation_a,
+            "--execution-contract-hash",
+            contract_hash,
+        ],
+    )
+
+    assert stale_worker.main() == 10
+    result_a = stale_worker._result_path(task_id, reservation_a)
+    stale_receipt = json.loads(result_a.read_text(encoding="utf-8"))
+    assert stale_receipt["reservation_id"] == reservation_a
+    assert stale_receipt["execution_started"] is False
+    assert stale_receipt["result"] == "__notask__"
+    assert stale_receipt["publication_failure"]["id"] == "async-result-publication-fenced"
+    assert result_b.read_bytes() == result_b_bytes
+    assert marker_b.read_bytes() == marker_b_bytes
+    assert (tmp_path / "tasks.yaml").read_bytes() == board_b_bytes
+
+    result_b.unlink()
+    assert da.harvest() == 0
+    assert not result_a.exists()
+    assert marker_b.read_bytes() == marker_b_bytes
+    assert (tmp_path / "tasks.yaml").read_bytes() == board_b_bytes
+
+    stale_recovery = da.recover_exact_task(
+        task_id,
+        contract_hash,
+        reservation_id=reservation_a,
+        dry_run=False,
+    )
+    assert stale_recovery["status"] == "blocked"
+    assert stale_recovery["blocker"]["id"] == "targeted-recovery-reservation-mismatch"
+    assert marker_b.read_bytes() == marker_b_bytes
+    assert (tmp_path / "tasks.yaml").read_bytes() == board_b_bytes
+
+    old = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=2)
+    da._write_running_marker(task_id, agent, old, 11111, 0.0, reservation_a)
+    da.reap_stale(max_age_s=1)
+    assert killed == []
+    assert marker_b.read_bytes() == marker_b_bytes
+    assert (tmp_path / "tasks.yaml").read_bytes() == board_b_bytes

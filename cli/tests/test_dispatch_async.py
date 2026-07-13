@@ -97,12 +97,12 @@ def test_reap_stale_leaves_marker_when_result_present(board):
 
 def test_reap_dead_pid_marker_without_waiting_for_age(board, monkeypatch):
     tasks_path, runs = board
-    marker = runs / "T1__agy.running"
+    marker = runs / "T1__jules.running"
     marker.write_text(
         json.dumps(
             {
                 "started_at": dispatch_async._now().isoformat(),
-                "agent": "agy",
+                "agent": "jules",
                 "task_id": "T1",
                 "pid": 424242,
             }
@@ -123,13 +123,13 @@ def test_reap_dead_pid_marker_without_waiting_for_age(board, monkeypatch):
 
 def test_reap_zombie_child_marker_after_grace(board, monkeypatch):
     tasks_path, runs = board
-    marker = runs / "T1__agy.running"
+    marker = runs / "T1__jules.running"
     started = dispatch_async._now() - dispatch_async.datetime.timedelta(seconds=300)
     marker.write_text(
         json.dumps(
             {
                 "started_at": started.isoformat(),
-                "agent": "agy",
+                "agent": "jules",
                 "task_id": "T1",
                 "pid": 12345,
             }
@@ -152,12 +152,12 @@ def test_reap_zombie_child_marker_after_grace(board, monkeypatch):
 
 def test_reap_leaves_live_pid_marker_before_grace(board, monkeypatch):
     tasks_path, runs = board
-    marker = runs / "T1__agy.running"
+    marker = runs / "T1__jules.running"
     marker.write_text(
         json.dumps(
             {
                 "started_at": dispatch_async._now().isoformat(),
-                "agent": "agy",
+                "agent": "jules",
                 "task_id": "T1",
                 "pid": 12345,
             }

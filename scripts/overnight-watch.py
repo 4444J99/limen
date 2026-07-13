@@ -66,13 +66,12 @@ TRIAL_OBSERVATION_PATH = Path(
 TOKEN_REPORT = Path(os.environ.get("LIMEN_CODEX_TOKEN_REPORT", LOGS / "codex-token-report.json"))
 HANDOFF_SCRIPT = ROOT / "scripts" / "handoff-relay.py"
 SESSION_VALUE_SCRIPT = ROOT / "scripts" / "session-value-review.py"
-ALWAYS_WORKING_SCRIPT = Path(
-    os.environ.get("LIMEN_ALWAYS_WORKING_SCRIPT", ROOT / "scripts" / "always-working.py")
-)
+ALWAYS_WORKING_SCRIPT = Path(os.environ.get("LIMEN_ALWAYS_WORKING_SCRIPT", ROOT / "scripts" / "always-working.py"))
 TABULARIUS_SCRIPT = ROOT / "scripts" / "tabularius-organ.py"
 DISPATCH_ASYNC_SCRIPT = ROOT / "scripts" / "dispatch-async.py"
 USAGE_PATH = Path(os.environ.get("LIMEN_USAGE_JSON", LOGS / "usage.json"))
 LANE_SWITCH_LOCK = Path(os.environ.get("LIMEN_OVERNIGHT_LANE_SWITCH_LOCK", LOGS / "overnight-lane-switch.lock"))
+_ASYNC_RESERVATION_RE = re.compile(r"^async-reserve:[0-9a-f]{32}$")
 LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", os.environ.get("LIMEN_LAUNCHD_LABEL", "com.limen.heartbeat"))
 WATCHDOG_LABEL = os.environ.get("LIMEN_WATCHDOG_LABEL", "com.limen.watchdog")
 LAUNCH_AGENTS = Path.home() / "Library" / "LaunchAgents"
@@ -117,9 +116,7 @@ try:
 except ValueError:
     VALUE_GATE_HOURS = 1.5
 try:
-    LANE_SWITCH_PROVIDER_MAX_AGE_MIN = float(
-        os.environ.get("LIMEN_OVERNIGHT_PROVIDER_MAX_AGE_MIN", "90") or "90"
-    )
+    LANE_SWITCH_PROVIDER_MAX_AGE_MIN = float(os.environ.get("LIMEN_OVERNIGHT_PROVIDER_MAX_AGE_MIN", "90") or "90")
 except ValueError:
     LANE_SWITCH_PROVIDER_MAX_AGE_MIN = 90.0
 
@@ -582,8 +579,7 @@ def _usage_snapshot() -> tuple[dict[str, Any], str]:
     age_min = (utc_now() - generated).total_seconds() / 60
     if age_min < -5 or age_min > LANE_SWITCH_PROVIDER_MAX_AGE_MIN:
         return {}, (
-            f"provider usage receipt is not fresh ({age_min:.1f}m; "
-            f"limit {LANE_SWITCH_PROVIDER_MAX_AGE_MIN:g}m)"
+            f"provider usage receipt is not fresh ({age_min:.1f}m; limit {LANE_SWITCH_PROVIDER_MAX_AGE_MIN:g}m)"
         )
     return payload, ""
 
@@ -692,17 +688,48 @@ def _exact_task_command(task: Task) -> str:
     return "PYTHONPATH=cli/src " + shlex.join(relative)
 
 
-def _targeted_recovery_command(task: Task) -> str:
+def _targeted_recovery_command(task: Task, reservation_id: str | None = None) -> str:
     relative = [
         "python3",
         "scripts/dispatch-async.py",
         "--recover-task",
         task.id,
+        *(
+            ["--reservation-id", reservation_id]
+            if reservation_id and _ASYNC_RESERVATION_RE.fullmatch(reservation_id)
+            else []
+        ),
         "--execution-contract-hash",
         execution_contract_hash(task),
         "--json-output",
     ]
     return "PYTHONPATH=cli/src " + shlex.join(relative)
+
+
+def _current_async_reservation_id(task_id: str) -> str | None:
+    try:
+        board = load_limen_file(TASKS_PATH)
+    except Exception:
+        return None
+    current = next((task for task in board.tasks if task.id == task_id), None)
+    last = current.dispatch_log[-1] if current is not None and current.dispatch_log else None
+    if (
+        current is None
+        or current.status != "dispatched"
+        or last is None
+        or last.status != "dispatched"
+        or (last.session_id != "async-reserve" and not _ASYNC_RESERVATION_RE.fullmatch(last.session_id))
+    ):
+        return None
+    return last.session_id
+
+
+def _artifact_matches_reservation(artifact_reservation_id: object, current_reservation_id: str) -> bool:
+    if current_reservation_id == "async-reserve":
+        # Pre-nonce receipts omitted this field; workers produced during the
+        # migration may write the explicit legacy value.
+        return artifact_reservation_id in {None, "async-reserve"}
+    return artifact_reservation_id == current_reservation_id
 
 
 def _pid_alive(pid: int) -> bool:
@@ -718,13 +745,27 @@ def _pid_alive(pid: int) -> bool:
 def _async_task_state(task_id: str) -> dict[str, Any] | None:
     """Return only durable exact-task async state; never infer from a lossy filename alone."""
 
+    current_reservation_id = _current_async_reservation_id(task_id)
+    if current_reservation_id is None:
+        # Filesystem residue has no authority when the board has no current
+        # async owner.  In particular, recovered reservation A must not suppress
+        # a new launch B while the task is open.
+        return None
     for result_path in sorted(ASYNC_RUNS.glob("*.result.json")):
         try:
             payload = json.loads(result_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        if str(payload.get("task_id") or "") == task_id:
-            return {"status": "result_pending_harvest", "receipt": result_path.name}
+        if str(payload.get("task_id") or "") != task_id:
+            continue
+        artifact_reservation_id = payload.get("reservation_id")
+        if not _artifact_matches_reservation(artifact_reservation_id, current_reservation_id):
+            continue
+        return {
+            "status": "result_pending_harvest",
+            "receipt": result_path.name,
+            "reservation_id": artifact_reservation_id if isinstance(artifact_reservation_id, str) else None,
+        }
     for marker_path in sorted(ASYNC_RUNS.glob("*.running")):
         try:
             payload = json.loads(marker_path.read_text(encoding="utf-8"))
@@ -734,10 +775,14 @@ def _async_task_state(task_id: str) -> dict[str, Any] | None:
             continue
         if marker_task_id != task_id:
             continue
+        artifact_reservation_id = payload.get("reservation_id")
+        if not _artifact_matches_reservation(artifact_reservation_id, current_reservation_id):
+            continue
         return {
             "status": "already_running" if _pid_alive(pid) else "orphaned_claim",
             "receipt": marker_path.name,
             "pid": pid,
+            "reservation_id": artifact_reservation_id if isinstance(artifact_reservation_id, str) else None,
         }
     return None
 
@@ -758,6 +803,11 @@ def _active_owner_outcome(task: Task, owner_state: str) -> dict[str, Any]:
     if async_state and async_state.get("status") in {"already_running", "result_pending_harvest"}:
         return {**async_state, "owner_state": owner_state}
     receipt = async_state.get("receipt") if async_state else ""
+    reservation_id = (
+        async_state.get("reservation_id")
+        if async_state and isinstance(async_state.get("reservation_id"), str)
+        else _current_async_reservation_id(task.id)
+    )
     return {
         "status": "blocked",
         "owner_state": owner_state,
@@ -770,7 +820,7 @@ def _active_owner_outcome(task: Task, owner_state: str) -> dict[str, Any]:
             owner=str(task.repo or "organvm/limen"),
             failed_predicate=str(task.predicate or ""),
             next_command=(
-                _targeted_recovery_command(task)
+                _targeted_recovery_command(task, reservation_id)
                 if owner_state == "dispatched"
                 else str(task.predicate or "python3 scripts/always-working.py --json")
             ),
@@ -844,10 +894,16 @@ def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str
     receipt = _targeted_dispatch_receipt(dispatched.stdout)
     exact_launch = receipt.get("launched") == [[task.target_agent, task.id]]
     post_state = _async_task_state(task.id)
-    if dispatched.returncode == 0 and exact_launch and post_state and post_state.get("status") in {
-        "already_running",
-        "result_pending_harvest",
-    }:
+    if (
+        dispatched.returncode == 0
+        and exact_launch
+        and post_state
+        and post_state.get("status")
+        in {
+            "already_running",
+            "result_pending_harvest",
+        }
+    ):
         return {
             "status": "launched",
             "owner_state": "dispatched",
@@ -1066,9 +1122,7 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
                     }
             local_ok, local_reason, local_gate = _local_admission_gate(task.target_agent, local_admission)
             if not local_ok:
-                base["skipped"].append(
-                    {"task_id": task.id, "gate": local_gate, "reason": local_reason[:300]}
-                )
+                base["skipped"].append({"task_id": task.id, "gate": local_gate, "reason": local_reason[:300]})
                 continue
         owner_state = _owned_task_state(task, board, pending_ids)
         if owner_state and owner_state not in {"pending", *LANE_SWITCH_ACTIVE_TASK_STATUSES}:

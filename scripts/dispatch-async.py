@@ -18,7 +18,7 @@ remote lanes such as Jules are bounded by provider runway, not host slots. Per-a
 
 Usage: dispatch-async.py --lanes auto --per-lane 8 --local-per-lane 3 [--local-max N] [--dry-run]
        dispatch-async.py --task-id TASK --execution-contract-hash SHA256 --targeted-only
-       dispatch-async.py --recover-task TASK --execution-contract-hash SHA256
+       dispatch-async.py --recover-task TASK --reservation-id NONCE --execution-contract-hash SHA256
 
 For a control-plane caller that has already selected one typed task, ``--targeted-only`` keeps
 the operation exact: no broad harvest/reap and no always-working producer pass, and success is
@@ -30,8 +30,10 @@ import argparse
 import datetime
 import hashlib
 import json
+import math
 import os
 import re
+import secrets
 import signal
 import shutil
 import subprocess
@@ -82,6 +84,7 @@ WORKER = ROOT / "scripts" / "async-run-one.py"
 _TOKEN_RE = re.compile(r"(github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{12,})")
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 _SAFE_STEM_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+_ASYNC_RESERVATION_RE = re.compile(r"^async-reserve:[0-9a-f]{32}$")
 
 
 def _truthy_env(name: str, default: bool = True) -> bool:
@@ -143,12 +146,26 @@ def _run_log_path(task_id: str) -> Path:
     return RUNS / f"{_run_stem(task_id)}.log"
 
 
-def _result_path(task_id: str) -> Path:
-    return RUNS / f"{_run_stem(task_id)}.result.json"
+def _reservation_suffix(reservation_id: str) -> str:
+    return hashlib.sha256(reservation_id.encode("utf-8")).hexdigest()[:16]
 
 
-def _running_marker_path(task_id: str, agent: str) -> Path:
-    return RUNS / f"{_run_stem(task_id)}__{agent}.running"
+def _result_path(task_id: str, reservation_id: str | None = None) -> Path:
+    suffix = f"--{_reservation_suffix(reservation_id)}" if reservation_id and reservation_id != "async-reserve" else ""
+    return RUNS / f"{_run_stem(task_id)}{suffix}.result.json"
+
+
+def _running_marker_path(task_id: str, agent: str, reservation_id: str | None = None) -> Path:
+    suffix = f"--{_reservation_suffix(reservation_id)}" if reservation_id and reservation_id != "async-reserve" else ""
+    return RUNS / f"{_run_stem(task_id)}__{agent}{suffix}.running"
+
+
+def _new_async_reservation_id() -> str:
+    return f"async-reserve:{secrets.token_hex(16)}"
+
+
+def _is_async_reservation_id(value: str) -> bool:
+    return value == "async-reserve" or bool(_ASYNC_RESERVATION_RE.fullmatch(value))
 
 
 def _write_running_marker(
@@ -157,9 +174,10 @@ def _write_running_marker(
     now: datetime.datetime,
     pid: int,
     reserved_gib: float,
+    reservation_id: str | None = None,
 ) -> None:
     """Publish the marker atomically so slot readers never observe a partial JSON document."""
-    marker = _running_marker_path(task_id, agent)
+    marker = _running_marker_path(task_id, agent, reservation_id)
     tmp = marker.with_suffix(f".{os.getpid()}.tmp")
     tmp.write_text(
         json.dumps(
@@ -169,13 +187,20 @@ def _write_running_marker(
                 "task_id": task_id,
                 "pid": pid,
                 "reserved_gib": reserved_gib,
+                "reservation_id": reservation_id,
             }
         )
     )
     os.replace(tmp, marker)
 
 
-def _rollback_unlaunched_reservation(agent: str, task_id: str, now: datetime.datetime, error: Exception) -> bool:
+def _rollback_unlaunched_reservation(
+    agent: str,
+    task_id: str,
+    reservation_id: str,
+    now: datetime.datetime,
+    error: Exception,
+) -> bool:
     """Reopen/refund an async reservation when no worker process was created."""
     with _queue_lock(TASKS) as got:
         if not got:
@@ -185,7 +210,7 @@ def _rollback_unlaunched_reservation(agent: str, task_id: str, now: datetime.dat
         if task is None or task.status != "dispatched":
             return True
         last = task.dispatch_log[-1] if task.dispatch_log else None
-        if last is None or last.session_id != "async-reserve" or last.agent != agent:
+        if last is None or last.session_id != reservation_id or last.agent != agent:
             return True
         task.status = "open"
         task.updated = now
@@ -209,10 +234,11 @@ def _rollback_unlaunched_reservation(agent: str, task_id: str, now: datetime.dat
 def _marker_task_agent(marker: Path) -> tuple[str, str]:
     try:
         data = json.loads(marker.read_text(encoding="utf-8"))
-        task_id = str(data.get("task_id") or "")
-        agent = str(data.get("agent") or "")
-        if task_id and agent:
-            return task_id, agent
+        if isinstance(data, dict):
+            task_id = str(data.get("task_id") or "")
+            agent = str(data.get("agent") or "")
+            if task_id and agent:
+                return task_id, agent
     except (OSError, ValueError):
         pass
     return marker.name[: -len(".running")].rsplit("__", 1)
@@ -221,23 +247,53 @@ def _marker_task_agent(marker: Path) -> tuple[str, str]:
 def _result_task_id(result_file: Path) -> str:
     try:
         data = json.loads(result_file.read_text(encoding="utf-8"))
-        task_id = str(data.get("task_id") or "")
-        if task_id:
-            return task_id
+        if isinstance(data, dict):
+            task_id = str(data.get("task_id") or "")
+            if task_id:
+                return task_id
     except (OSError, ValueError):
         pass
     return result_file.name[: -len(".result.json")]
 
 
-def _clear_running_markers(task_id: str) -> None:
+def _result_exists(task_id: str, reservation_id: str | None = None) -> bool:
+    stem = _run_stem(task_id)
+    expected_name = _result_path(task_id, reservation_id).name if reservation_id else None
+    for path in RUNS.glob("*.result.json"):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = None
+        if isinstance(data, dict) and str(data.get("task_id") or "") == task_id:
+            if reservation_id is None or data.get("reservation_id") == reservation_id:
+                return True
+        if expected_name is not None and path.name == expected_name:
+            return True
+        if reservation_id is None and (
+            path.name == f"{stem}.result.json"
+            or (path.name.startswith(f"{stem}--") and path.name.endswith(".result.json"))
+        ):
+            return True
+    return False
+
+
+def _clear_running_markers(task_id: str, reservation_id: str | None = None) -> None:
     prefix = f"{task_id}__"
     for marker in RUNS.glob("*.running"):
         try:
             marker_task_id, _agent = _marker_task_agent(marker)
         except ValueError:
             marker_task_id = ""
-        if marker_task_id == task_id or marker.name.startswith(prefix):
-            marker.unlink(missing_ok=True)
+        if marker_task_id != task_id and not marker.name.startswith(prefix):
+            continue
+        if reservation_id is not None:
+            try:
+                marker_reservation = _running_marker_info(marker).get("reservation_id")
+            except (OSError, ValueError):
+                marker_reservation = None
+            if marker_reservation != reservation_id:
+                continue
+        marker.unlink(missing_ok=True)
 
 
 def _running_marker_info(marker: Path) -> dict[str, object]:
@@ -246,9 +302,41 @@ def _running_marker_info(marker: Path) -> dict[str, object]:
         data = json.loads(raw)
         started = datetime.datetime.fromisoformat(str(data.get("started_at") or ""))
         pid = data.get("pid")
-        return {"started_at": started, "pid": int(pid) if pid is not None else None}
+        return {
+            "started_at": started,
+            "pid": int(pid) if pid is not None else None,
+            "reservation_id": data.get("reservation_id"),
+        }
     except Exception:
-        return {"started_at": datetime.datetime.fromisoformat(raw), "pid": None}
+        return {
+            "started_at": datetime.datetime.fromisoformat(raw),
+            "pid": None,
+            "reservation_id": None,
+        }
+
+
+def _marker_claim_matches(
+    marker: Path,
+    task_id: str,
+    agent: str,
+    reservation_id: str | None,
+) -> bool:
+    """Prove a scanned marker still names the same reservation.
+
+    Reapers call this again while holding the queue lock.  A worker can publish
+    its result and unlink its marker between the initial filesystem scan and
+    that lock; neither a missing/replaced marker nor an unreadable marker is
+    authority to reopen the board row.
+    """
+
+    if marker != _running_marker_path(task_id, agent, reservation_id) or not marker.is_file():
+        return False
+    try:
+        marker_task_id, marker_agent = _marker_task_agent(marker)
+        marker_reservation_id = _running_marker_info(marker).get("reservation_id")
+    except Exception:
+        return False
+    return marker_task_id == task_id and marker_agent == agent and marker_reservation_id == reservation_id
 
 
 def _pid_alive(pid: int) -> bool:
@@ -395,6 +483,18 @@ def harvest() -> int:
             t = byid.get(task_id) if isinstance(task_id, str) else None
             expected_hash = data.get("execution_contract_hash")
             agent = data.get("agent")
+            reservation_id = data.get("reservation_id")
+            reservation_id_valid = reservation_id is None or (
+                isinstance(reservation_id, str) and _is_async_reservation_id(reservation_id)
+            )
+            result_path_matches = bool(
+                isinstance(task_id, str)
+                and (
+                    rf == _result_path(task_id, reservation_id)
+                    if isinstance(reservation_id, str)
+                    else rf == _result_path(task_id)
+                )
+            )
             custody_ok = (
                 isinstance(task_id, str)
                 and bool(task_id)
@@ -404,6 +504,8 @@ def harvest() -> int:
                 and re.fullmatch(r"[0-9a-f]{64}", expected_hash) is not None
                 and data.get("execution_started") is True
                 and "result" in data
+                and reservation_id_valid
+                and result_path_matches
                 and t is not None
                 and t.status == "dispatched"
             )
@@ -414,9 +516,17 @@ def harvest() -> int:
                     custody_ok = False
             if custody_ok:
                 last = t.dispatch_log[-1] if t.dispatch_log else None
-                custody_ok = bool(
+                reservation_matches = bool(
                     last is not None
-                    and last.session_id == "async-reserve"
+                    and (
+                        (reservation_id is None and last.session_id == "async-reserve")
+                        or (isinstance(reservation_id, str) and last.session_id == reservation_id)
+                    )
+                )
+                custody_ok = bool(
+                    custody_ok
+                    and reservation_matches
+                    and last is not None
                     and last.status == "dispatched"
                     and last.agent == agent
                 )
@@ -425,7 +535,10 @@ def harvest() -> int:
                 if data["result"] != "__notask__":
                     _apply_result(t, agent, data["result"], now, track, charge_budget=False)
                     applied += 1
-                _clear_running_markers(task_id)
+                _clear_running_markers(
+                    task_id,
+                    (reservation_id if isinstance(reservation_id, str) and reservation_id != "async-reserve" else None),
+                )
                 archive_reason = "harvested"
             else:
                 # A receipt is untrusted input.  Task id alone is never custody: a stale worker or
@@ -456,49 +569,53 @@ def reap_stale(max_age_s: int):
     now = _now()
     defunct_grace_s = max(1, _env_int("LIMEN_ASYNC_DEFUNCT_GRACE", 120))
     reaped = []
-    marker_task_ids = set()
-    result_task_ids = {_result_task_id(rf) for rf in RUNS.glob("*.result.json")}
+    marker_claims: set[tuple[str, str | None]] = set()
     for m in RUNS.glob("*__*.running"):
         tid, agent = _marker_task_agent(m)
-        marker_task_ids.add(tid)
         try:
             info = _running_marker_info(m)
             age = (now - info["started_at"]).total_seconds()  # type: ignore[operator]
         except Exception:
             age = max_age_s + 1  # unreadable/empty marker → treat as stale
-            info = {"pid": None}
+            info = {"pid": None, "reservation_id": None}
         pid = info.get("pid")
+        reservation_id = info.get("reservation_id") if isinstance(info.get("reservation_id"), str) else None
+        marker_claims.add((tid, reservation_id))
         dead_pid = isinstance(pid, int) and not _pid_alive(pid)
         zombie_stuck = isinstance(pid, int) and age > defunct_grace_s and _worker_has_defunct_child(pid)
         if age > max_age_s:
             # if the worker DID finish (result file present), let harvest handle it; don't reap
-            if not _result_path(tid).exists():
+            if not _result_exists(tid, reservation_id):
                 # Defer the marker unlink until the reopen is committed under the lock (below), so a
                 # lock timeout can't leave the slot leaked (marker gone, task still 'dispatched').
-                reaped.append((tid, agent, m, pid if isinstance(pid, int) else None))
+                reaped.append((tid, agent, m, pid if isinstance(pid, int) else None, reservation_id))
         elif dead_pid or zombie_stuck:
-            if not _result_path(tid).exists():
-                reaped.append((tid, agent, m, pid if isinstance(pid, int) else None))
+            if not _result_exists(tid, reservation_id):
+                reaped.append((tid, agent, m, pid if isinstance(pid, int) else None, reservation_id))
     markerless = []
     try:
         lf_preview = load_limen_file(TASKS)
         for t in lf_preview.tasks:
-            if t.status != "dispatched" or t.id in marker_task_ids or t.id in result_task_ids:
+            if t.status != "dispatched":
                 continue
             if not t.dispatch_log:
                 continue
             last = t.dispatch_log[-1]
-            if last.session_id != "async-reserve" or last.status != "dispatched":
+            if not _is_async_reservation_id(last.session_id) or last.status != "dispatched":
+                continue
+            reservation_id = last.session_id if _ASYNC_RESERVATION_RE.fullmatch(last.session_id) else None
+            if (t.id, reservation_id) in marker_claims or _result_exists(t.id, reservation_id):
                 continue
             stamp = t.updated or last.timestamp
             if stamp and (now - stamp).total_seconds() > max_age_s:
-                markerless.append((t.id, last.agent or t.target_agent))
+                markerless.append((t.id, last.agent or t.target_agent, reservation_id))
     except Exception:
         markerless = []
+    applied_reaped: list[str] = []
     applied_markerless = []
     if reaped or markerless:
-        for _tid, _agent, _m, pid in reaped:
-            _kill_worker_group(pid)
+        pids_to_kill: list[int | None] = []
+        markers_to_remove: list[Path] = []
         with _queue_lock(TASKS) as got:
             if not got:
                 # Lock busy — keep the markers (not yet unlinked) so a later beat retries the reap;
@@ -507,9 +624,29 @@ def reap_stale(max_age_s: int):
             lf = load_limen_file(TASKS)
             byid = {t.id: t for t in lf.tasks}
             changed = False
-            for tid, agent, _m, _pid in reaped:
+            for tid, agent, marker, _pid, marker_reservation_id in reaped:
+                # Revalidate the exact artifact and pending-result state under the
+                # publication lock.  A result that won the race keeps custody and
+                # must be harvested; it must never be converted into a retry.
+                if not _marker_claim_matches(marker, tid, agent, marker_reservation_id):
+                    continue
                 t = byid.get(tid)
-                if t is not None and t.status == "dispatched":
+                last = t.dispatch_log[-1] if t is not None and t.dispatch_log else None
+                reservation_matches = bool(
+                    last is not None
+                    and last.status == "dispatched"
+                    and last.agent == agent
+                    and (
+                        (marker_reservation_id is None and last.session_id == "async-reserve")
+                        or last.session_id == marker_reservation_id
+                    )
+                )
+                if t is not None and t.status == "dispatched" and reservation_matches:
+                    if _result_exists(tid, marker_reservation_id):
+                        continue
+                    pids_to_kill.append(_pid)
+                    markers_to_remove.append(marker)
+                    applied_reaped.append(tid)
                     if _has_done_transition(t):
                         _restore_done_status(
                             t,
@@ -542,23 +679,41 @@ def reap_stale(max_age_s: int):
                             )
                         )
                         changed = True
+                else:
+                    # This is a proven stale artifact for an older reservation.
+                    # Its nonce-specific path can be retired without touching the
+                    # current row, worker, marker, or result.
+                    markers_to_remove.append(marker)
             if markerless:
-                fresh_marker_task_ids = {_marker_task_agent(m)[0] for m in RUNS.glob("*__*.running")}
-                fresh_result_task_ids = {_result_task_id(rf) for rf in RUNS.glob("*.result.json")}
-                for tid, agent in markerless:
+                fresh_marker_claims: set[tuple[str, str | None]] = set()
+                for marker in RUNS.glob("*__*.running"):
+                    marker_tid, _marker_agent = _marker_task_agent(marker)
+                    try:
+                        marker_info = _running_marker_info(marker)
+                    except Exception:
+                        marker_info = {"reservation_id": None}
+                    marker_reservation_id = (
+                        marker_info.get("reservation_id")
+                        if isinstance(marker_info.get("reservation_id"), str)
+                        else None
+                    )
+                    fresh_marker_claims.add((marker_tid, marker_reservation_id))
+                for tid, agent, reservation_id in markerless:
                     t = byid.get(tid)
                     if (
                         t is None
                         or t.status != "dispatched"
-                        or tid in fresh_marker_task_ids
-                        or tid in fresh_result_task_ids
+                        or (tid, reservation_id) in fresh_marker_claims
+                        or _result_exists(tid, reservation_id)
                         or not t.dispatch_log
                     ):
                         continue
                     last = t.dispatch_log[-1]
                     stamp = t.updated or last.timestamp
                     if (
-                        last.session_id != "async-reserve"
+                        not _is_async_reservation_id(last.session_id)
+                        or (reservation_id is not None and last.session_id != reservation_id)
+                        or (reservation_id is None and last.session_id != "async-reserve")
                         or last.status != "dispatched"
                         or not stamp
                         or (now - stamp).total_seconds() <= max_age_s
@@ -602,10 +757,12 @@ def reap_stale(max_age_s: int):
                         changed = True
             if changed:
                 save_limen_file(TASKS, lf)
+        for pid in pids_to_kill:
+            _kill_worker_group(pid)
         # reopen is committed → now safe to remove the markers that freed these slots
-        for _tid, _agent, m, _pid in reaped:
-            m.unlink(missing_ok=True)
-    return [tid for tid, _agent, _m, _pid in reaped] + applied_markerless
+        for marker in markers_to_remove:
+            marker.unlink(missing_ok=True)
+    return applied_reaped + applied_markerless
 
 
 def inspect_stale(max_age_s: int) -> list[str]:
@@ -619,9 +776,11 @@ def inspect_stale(max_age_s: int) -> list[str]:
             age = (now - info["started_at"]).total_seconds()  # type: ignore[operator]
         except Exception:
             age = max_age_s + 1
+            info = {"reservation_id": None}
         if age > max_age_s:
             tid, _agent = _marker_task_agent(m)
-            if not _result_path(tid).exists():
+            reservation_id = info.get("reservation_id") if isinstance(info.get("reservation_id"), str) else None
+            if not _result_exists(tid, reservation_id):
                 stale.append(tid)
     return stale
 
@@ -639,7 +798,31 @@ def _running_total() -> int:
     return len(list(RUNS.glob("*.running")))
 
 
-def _running_local() -> int:
+def _nonce_artifact_reservation(path: Path, task_id: str) -> str | None:
+    if path.is_symlink():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict) or str(payload.get("task_id") or "") != task_id:
+        return None
+    reservation_id = payload.get("reservation_id")
+    if not isinstance(reservation_id, str) or not _ASYNC_RESERVATION_RE.fullmatch(reservation_id):
+        return None
+    if path.name.endswith(".running"):
+        agent = payload.get("agent")
+        if not isinstance(agent, str) or path != _running_marker_path(task_id, agent, reservation_id):
+            return None
+    elif path.name.endswith(".result.json"):
+        if path != _result_path(task_id, reservation_id):
+            return None
+    else:
+        return None
+    return reservation_id
+
+
+def _running_local(*, exclude_task_id: str | None = None) -> int:
     """In-flight LOCAL-lane runs only. The concurrency cap bounds LOCAL host pressure (each local run
     holds a worktree + a ThreadPoolExecutor slot). An async/remote run (jules, github_actions, ...)
     executes OFF-BOX — a `jules remote new` session runs on Google's VM — so it must NOT consume a
@@ -648,14 +831,67 @@ def _running_local() -> int:
     budget, not this local cap."""
     total = 0
     for m in RUNS.glob("*__*.running"):
-        _task_id, agent = _marker_task_agent(m)
+        marker_task_id, agent = _marker_task_agent(m)
+        if (
+            exclude_task_id is not None
+            and marker_task_id == exclude_task_id
+            and _nonce_artifact_reservation(m, exclude_task_id) is not None
+        ):
+            continue
         if agent in LOCAL_CHECKOUT_AGENTS:  # census local_checkout authority, not a hand-kept lane set
             total += 1
     return total
 
 
-def _running_for(agent: str) -> int:
-    return sum(1 for marker in RUNS.glob("*__*.running") if _marker_task_agent(marker)[1] == agent)
+def _running_for(agent: str, *, exclude_task_id: str | None = None) -> int:
+    total = 0
+    for marker in RUNS.glob("*__*.running"):
+        marker_task_id, marker_agent = _marker_task_agent(marker)
+        if marker_agent != agent:
+            continue
+        if (
+            exclude_task_id is not None
+            and marker_task_id == exclude_task_id
+            and _nonce_artifact_reservation(marker, exclude_task_id) is not None
+        ):
+            continue
+        total += 1
+    return total
+
+
+def _nonce_local_marker_reservations(task_id: str) -> tuple[int, float]:
+    """Return only finite, nonce-fenced local promises for one exact task.
+
+    These may be subtracted from an exact open-task admission snapshot because
+    the new board nonce fences the old worker.  Legacy, malformed, remote, and
+    unknown-size markers remain fail-closed and continue consuming capacity.
+    """
+
+    slots = 0
+    reserved_gib = 0.0
+    for marker in RUNS.glob("*__*.running"):
+        try:
+            payload = json.loads(marker.read_text(encoding="utf-8"))
+            if not isinstance(payload, dict):
+                continue
+            marker_task_id, marker_agent = _marker_task_agent(marker)
+            raw_reserved_gib = payload.get("reserved_gib")
+            if (
+                marker_task_id != task_id
+                or marker_agent not in LOCAL_CHECKOUT_AGENTS
+                or _nonce_artifact_reservation(marker, task_id) is None
+                or isinstance(raw_reserved_gib, bool)
+                or not isinstance(raw_reserved_gib, (int, float))
+            ):
+                continue
+            marker_reserved_gib = float(raw_reserved_gib)
+            if not math.isfinite(marker_reserved_gib) or marker_reserved_gib < 0:
+                continue
+        except (OSError, ValueError, TypeError):
+            continue
+        slots += 1
+        reserved_gib += marker_reserved_gib
+    return slots, reserved_gib
 
 
 def _running_task_ids() -> set[str]:
@@ -673,6 +909,15 @@ def _result_task_ids() -> set[str]:
 
 def _claimed_task_ids() -> set[str]:
     return _running_task_ids() | _result_task_ids()
+
+
+def _task_claim_artifacts_are_nonce_fenced(task_id: str) -> bool:
+    artifacts = [
+        path
+        for path in [*RUNS.glob("*__*.running"), *RUNS.glob("*.result.json")]
+        if (_marker_task_agent(path)[0] if path.name.endswith(".running") else _result_task_id(path)) == task_id
+    ]
+    return bool(artifacts) and all(_nonce_artifact_reservation(path, task_id) is not None for path in artifacts)
 
 
 def _usage_by_agent() -> dict[str, dict[str, object]]:
@@ -750,6 +995,7 @@ def recover_exact_task(
     task_id: str,
     expected_contract_hash: str,
     *,
+    reservation_id: str | None = None,
     dry_run: bool = False,
 ) -> dict[str, object]:
     """Safely reopen one proven orphaned async reservation, never a broad claim set."""
@@ -784,7 +1030,7 @@ def recover_exact_task(
                 ),
             }
         last = task.dispatch_log[-1] if task.dispatch_log else None
-        if last is None or last.session_id != "async-reserve" or last.status != "dispatched":
+        if last is None or not _is_async_reservation_id(last.session_id) or last.status != "dispatched":
             return {
                 "status": "blocked",
                 "recovered_count": 0,
@@ -794,11 +1040,34 @@ def recover_exact_task(
                     "exact claim is not owned by async-reserve",
                 ),
             }
-        if task_id in _result_task_ids():
+        active_reservation_id = last.session_id if _ASYNC_RESERVATION_RE.fullmatch(last.session_id) else None
+        if active_reservation_id != reservation_id:
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-reservation-mismatch",
+                    task_id,
+                    "exact recovery nonce does not match the current async reservation",
+                ),
+            }
+        if _result_exists(task_id, active_reservation_id):
             return {"status": "result_pending_harvest", "recovered_count": 0}
 
         matching_markers: list[tuple[Path, int, float]] = []
-        for marker in RUNS.glob("*.running"):
+        if active_reservation_id is not None:
+            # A nonce-bound claim owns one deterministic marker path.  Do not
+            # parse same-task artifacts from older reservations: malformed A
+            # must not be able to block recovery of current reservation B.
+            expected_marker = _running_marker_path(
+                task_id,
+                last.agent or task.target_agent,
+                active_reservation_id,
+            )
+            marker_paths = [expected_marker] if expected_marker.is_file() else []
+        else:
+            marker_paths = list(RUNS.glob("*.running"))
+        for marker in marker_paths:
             marker_task_id, marker_agent = _marker_task_agent(marker)
             if marker_task_id != task_id:
                 continue
@@ -823,6 +1092,8 @@ def recover_exact_task(
                         f"exact task marker cannot prove worker age or pid: {exc}",
                     ),
                 }
+            if marker_data.get("reservation_id") != active_reservation_id:
+                continue
             if marker_agent != last.agent:
                 return {
                     "status": "blocked",
@@ -929,7 +1200,7 @@ def recover_exact_task(
         # Result publishers take this same queue lock. Recheck immediately before mutation so a
         # result that won the lock is harvested, while a late publisher sees the reopened status
         # and fences its receipt instead of applying it to a new claim.
-        if task_id in _result_task_ids():
+        if _result_exists(task_id, active_reservation_id):
             return {"status": "result_pending_harvest", "recovered_count": 0}
 
         if dry_run:
@@ -968,6 +1239,12 @@ def _pick_reservations(
 ):
     picked = []
     picked_ids = set(_claimed_task_ids())
+    if task_id is not None and _task_claim_artifacts_are_nonce_fenced(task_id):
+        # Exact selection is governed by the queue-locked board row.  Residue
+        # from a recovered nonce A must not self-deadlock launch B; B's distinct
+        # nonce fences A at worker preflight/publication.  Other tasks' markers
+        # still count against host and lane limits below.
+        picked_ids.discard(task_id)
     reset_changed = _reset_budget_if_needed(lf, now)
     track = lf.portal.budget.track
     unbounded_remaining = _effectively_unbounded_remaining(lf)
@@ -981,13 +1258,16 @@ def _pick_reservations(
         print(f"── async: {admission_snapshot['reason']}")
     # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
     # separately below (see _running_local).
-    slots = max(0, cap - (_running_local() if running_local is None else running_local))
+    slots = max(
+        0,
+        cap - (_running_local(exclude_task_id=task_id) if running_local is None else running_local),
+    )
     id2 = {t.id: t for t in lf.tasks}  # for dependency resolution
     states = []
     for agent in agents:
         # Locality is the census authority (LOCAL_CHECKOUT_AGENTS); a non-local lane runs off-box.
         is_async = agent not in LOCAL_CHECKOUT_AGENTS  # remote lane — off-box, not gated by the local cap
-        running_for_agent = _running_for(agent)
+        running_for_agent = _running_for(agent, exclude_task_id=task_id)
         lane_per_agent = per_agent if is_async else min(per_agent, local_per_agent or per_agent)
         launch_room = max(0, lane_per_agent - running_for_agent)
         if launch_room <= 0:
@@ -1082,7 +1362,7 @@ def _pick_reservations(
                     DispatchLogEntry(
                         timestamp=now,
                         agent=agent,
-                        session_id="async-reserve",
+                        session_id=_new_async_reservation_id(),
                         status="dispatched",
                         output="dispatch-async: reserved before detached worker launch",
                     )
@@ -1126,6 +1406,7 @@ def reserve_and_launch(
     usage_remaining = _usage_remaining_by_agent(usage)
     weak_proxy_agents = _weak_proxy_agents(usage)
     reserved_contract_hashes: dict[str, str] = {}
+    reserved_ids: dict[str, str] = {}
     if dry:
         lf = load_limen_file(TASKS)
         if task_id and expected_contract_hash:
@@ -1163,7 +1444,24 @@ def reserve_and_launch(
                     reservation_blocker.update(blocker)
                 return []
         with _machine_admission_lock():
-            live_snapshot, used_slots = _snapshot_with_machine_reservations()
+            base_snapshot = _worktree_admission_snapshot()
+            live_snapshot, used_slots = _snapshot_with_machine_reservations(dict(base_snapshot))
+            if task_id is not None:
+                stale_slots, stale_reserved_gib = _nonce_local_marker_reservations(task_id)
+                if stale_slots:
+                    base_reserved = base_snapshot.get("reserved_gib")
+                    snapshot_reserved = live_snapshot.get("reserved_gib")
+                    base_room = base_snapshot.get("room_gib")
+                    finite_admission_truth = all(
+                        isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
+                        for value in (base_reserved, snapshot_reserved, base_room)
+                    )
+                    if finite_admission_truth:
+                        promised_gib = max(0.0, float(snapshot_reserved) - float(base_reserved))
+                        adjusted_promised_gib = max(0.0, promised_gib - stale_reserved_gib)
+                        live_snapshot["reserved_gib"] = float(base_reserved) + adjusted_promised_gib
+                        live_snapshot["room_gib"] = max(0.0, float(base_room) - adjusted_promised_gib)
+                    used_slots = max(0, used_slots - stale_slots)
             picked, reset_changed = _pick_reservations(
                 lf,
                 agents,
@@ -1180,10 +1478,8 @@ def reserve_and_launch(
                 machine_lease=True,
             )
             by_id = {task.id: task for task in lf.tasks}
-            reserved_contract_hashes = {
-                tid: execution_contract_hash(by_id[tid])
-                for _agent, tid in picked
-            }
+            reserved_contract_hashes = {tid: execution_contract_hash(by_id[tid]) for _agent, tid in picked}
+            reserved_ids = {tid: by_id[tid].dispatch_log[-1].session_id for _agent, tid in picked}
             if not dry and (picked or reset_changed):
                 try:
                     save_limen_file(TASKS, lf)
@@ -1196,6 +1492,7 @@ def reserve_and_launch(
     # The machine lease remains authoritative throughout this gap.
     launched = []
     for agent, tid in picked:
+        reservation_id = reserved_ids[tid]
         try:
             logf = open(_run_log_path(tid), "a")
             proc = subprocess.Popen(
@@ -1206,6 +1503,8 @@ def reserve_and_launch(
                     agent,
                     "--task-id",
                     tid,
+                    "--reservation-id",
+                    reservation_id,
                     "--execution-contract-hash",
                     reserved_contract_hashes[tid],
                 ],
@@ -1216,14 +1515,21 @@ def reserve_and_launch(
                 env={**os.environ, "PYTHONPATH": str(ROOT / "cli" / "src")},
             )
         except Exception as exc:
-            if _rollback_unlaunched_reservation(agent, tid, now, exc):
+            if _rollback_unlaunched_reservation(agent, tid, reservation_id, now, exc):
                 _release_machine_admission(tid)
             else:
                 _transfer_machine_admission_owner(tid, os.getpid(), "launch-failed-unreconciled")
             print(f"── async: failed to launch {agent} {tid}: {str(exc)[:160]}")
             continue
         try:
-            _write_running_marker(tid, agent, now, proc.pid, _machine_admission_reserved_gib(tid))
+            _write_running_marker(
+                tid,
+                agent,
+                now,
+                proc.pid,
+                _machine_admission_reserved_gib(tid),
+                reservation_id,
+            )
         except Exception as exc:
             # The child is live but invisible to marker accounting. Transfer the durable lease to
             # that child and keep it fail-closed until the child exits; its result receipt/harvest
@@ -1291,6 +1597,10 @@ def main() -> int:
         help="expected canonical execution hash for an exact task",
     )
     ap.add_argument(
+        "--reservation-id",
+        help="exact async reservation nonce required to recover a nonce-bound claim",
+    )
+    ap.add_argument(
         "--targeted-only",
         action="store_true",
         help="require --task-id, skip broad reap/harvest, and fail unless exactly that task launches",
@@ -1308,20 +1618,22 @@ def main() -> int:
         ap.error("--recover-task and --targeted-only are mutually exclusive")
     if a.targeted_only and not a.task_id:
         ap.error("--targeted-only requires --task-id")
-    if (a.targeted_only or a.recover_task) and not re.fullmatch(
-        r"[0-9a-f]{64}", str(a.execution_contract_hash or "")
-    ):
+    if (a.targeted_only or a.recover_task) and not re.fullmatch(r"[0-9a-f]{64}", str(a.execution_contract_hash or "")):
         ap.error("exact dispatch/recovery requires a 64-character --execution-contract-hash")
+    if a.reservation_id and not _ASYNC_RESERVATION_RE.fullmatch(str(a.reservation_id)):
+        ap.error("--reservation-id must be an async-reserve nonce")
     if a.recover_task:
         recovery = recover_exact_task(
             a.recover_task,
             str(a.execution_contract_hash),
+            reservation_id=a.reservation_id,
             dry_run=a.dry_run,
         )
         receipt = {
             "schema_version": "limen-targeted-recovery.v1",
             "task_id": a.recover_task,
             "execution_contract_hash": a.execution_contract_hash,
+            "reservation_id": a.reservation_id,
             **recovery,
         }
         if a.json_output:
@@ -1331,13 +1643,18 @@ def main() -> int:
                 f"── async exact recovery: {recovery.get('status')} "
                 f"task={a.recover_task} recovered={recovery.get('recovered_count', 0)}"
             )
-        return 0 if recovery.get("status") in {
-            "recovered",
-            "would_recover",
-            "already_open",
-            "already_running",
-            "result_pending_harvest",
-        } else 10
+        return (
+            0
+            if recovery.get("status")
+            in {
+                "recovered",
+                "would_recover",
+                "already_open",
+                "already_running",
+                "result_pending_harvest",
+            }
+            else 10
+        )
     down = _down_lanes()
     lanes = resolve_lanes(a.lanes, down)
     if down:
@@ -1390,6 +1707,15 @@ def main() -> int:
         f"{[t for _, t in launched]}"
     )
     exact_launch = len(launched) == 1 and launched[0][1] == a.task_id
+    launched_reservation_id = None
+    if exact_launch and not a.dry_run and a.task_id:
+        try:
+            current = next(task for task in load_limen_file(TASKS).tasks if task.id == a.task_id)
+            last = current.dispatch_log[-1] if current.dispatch_log else None
+            if last is not None and _ASYNC_RESERVATION_RE.fullmatch(last.session_id):
+                launched_reservation_id = last.session_id
+        except Exception:
+            launched_reservation_id = None
     targeted_status = (
         "contract_mismatch"
         if reservation_blocker.get("id") == "targeted-execution-contract-mismatch"
@@ -1407,6 +1733,7 @@ def main() -> int:
                     "targeted_only": bool(a.targeted_only),
                     "task_id": a.task_id,
                     "execution_contract_hash": a.execution_contract_hash,
+                    "reservation_id": launched_reservation_id,
                     "lanes": lanes,
                     "admission_allow": bool(admission.get("allow", False)),
                     "reaped_count": len(reaped),

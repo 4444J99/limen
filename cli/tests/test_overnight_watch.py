@@ -552,14 +552,31 @@ def test_lane_switch_drains_launches_exactly_one_and_is_idempotent(tmp_path, mon
             return _CP(args, rc=0, stdout="tabularius: sealed 1 ticket")
         if str(module.DISPATCH_ASYNC_SCRIPT) in [str(arg) for arg in args]:
             from limen.io import load_limen_file, save_limen_file
+            from limen.models import DispatchLogEntry
 
             board = load_limen_file(module.TASKS_PATH)
             task = next(task for task in board.tasks if task.id == expected.id)
+            reservation_id = "async-reserve:" + "b" * 32
             task.status = "dispatched"
+            task.dispatch_log.append(
+                DispatchLogEntry(
+                    timestamp=module.utc_now(),
+                    agent=task.target_agent,
+                    session_id=reservation_id,
+                    status="dispatched",
+                )
+            )
             save_limen_file(module.TASKS_PATH, board)
             marker = module.ASYNC_RUNS / f"exact__{expected.target_agent}.running"
             marker.write_text(
-                json.dumps({"task_id": expected.id, "agent": expected.target_agent, "pid": os.getpid()}),
+                json.dumps(
+                    {
+                        "task_id": expected.id,
+                        "agent": expected.target_agent,
+                        "reservation_id": reservation_id,
+                        "pid": os.getpid(),
+                    }
+                ),
                 encoding="utf-8",
             )
             receipt = {
@@ -568,6 +585,7 @@ def test_lane_switch_drains_launches_exactly_one_and_is_idempotent(tmp_path, mon
                 "task_id": expected.id,
                 "launched": [[expected.target_agent, expected.id]],
                 "launched_count": 1,
+                "reservation_id": reservation_id,
                 "status": "launched",
             }
             return _CP(args, rc=0, stdout="dispatch detail\n" + json.dumps(receipt))
@@ -677,13 +695,14 @@ def test_lane_switch_dispatched_without_worker_receipt_fails_closed(tmp_path, mo
 
     task = module.owner_task_from_item(item)
     old = module.utc_now() - dt.timedelta(minutes=2)
+    reservation_id = "async-reserve:" + "a" * 32
     task.status = "dispatched"
     task.updated = old
     task.dispatch_log.append(
         DispatchLogEntry(
             timestamp=old,
             agent=task.target_agent,
-            session_id="async-reserve",
+            session_id=reservation_id,
             status="dispatched",
             output="reserved before detached worker launch",
         )
@@ -706,6 +725,7 @@ def test_lane_switch_dispatched_without_worker_receipt_fails_closed(tmp_path, mo
     assert result["blocker"]["id"] == "overnight-owner-claim-orphaned"
     assert result["owner_state"] == "dispatched"
     assert "--recover-task" in result["blocker"]["next_command"]
+    assert f"--reservation-id {reservation_id}" in result["blocker"]["next_command"]
     assert "--execution-contract-hash" in result["blocker"]["next_command"]
 
 
@@ -713,8 +733,18 @@ def test_lane_switch_result_receipt_prevents_relaunch(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     item = _owner_item(item_id="RESULT")
     _prepare_lane_switch(module, monkeypatch, items=[item])
+    from limen.models import DispatchLogEntry
+
     task = module.owner_task_from_item(item)
     task.status = "dispatched"
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=module.utc_now(),
+            agent=task.target_agent,
+            session_id="async-reserve",
+            status="dispatched",
+        )
+    )
     board = json.loads(module.TASKS_PATH.read_text(encoding="utf-8"))
     board["tasks"] = [task.model_dump(mode="json", exclude_none=True)]
     module.TASKS_PATH.write_text(json.dumps(board) + "\n", encoding="utf-8")
@@ -736,6 +766,96 @@ def test_lane_switch_result_receipt_prevents_relaunch(tmp_path, monkeypatch):
     assert result["status"] == "result_pending_harvest"
     assert result["ticket_count"] == 0
     assert result["generic_dispatch_allowed"] is False
+
+
+def test_lane_switch_async_state_ignores_stale_reservation_artifacts(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    _prepare_lane_switch(module, monkeypatch)
+    from limen.io import load_limen_file, save_limen_file
+    from limen.models import DispatchLogEntry
+
+    task = module.owner_task_from_item(_owner_item(item_id="NONCE-STATE"))
+    reservation_a = "async-reserve:" + "a" * 32
+    reservation_b = "async-reserve:" + "b" * 32
+    task.status = "dispatched"
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=module.utc_now(),
+            agent=task.target_agent,
+            session_id=reservation_b,
+            status="dispatched",
+        )
+    )
+    board = load_limen_file(module.TASKS_PATH)
+    board.tasks = [task]
+    save_limen_file(module.TASKS_PATH, board)
+    (module.ASYNC_RUNS / "00-stale-a.result.json").write_text(
+        json.dumps(
+            {
+                "task_id": task.id,
+                "agent": task.target_agent,
+                "reservation_id": reservation_a,
+                "result": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (module.ASYNC_RUNS / "01-current-b.running").write_text(
+        json.dumps(
+            {
+                "task_id": task.id,
+                "agent": task.target_agent,
+                "reservation_id": reservation_b,
+                "pid": os.getpid(),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    state = module._async_task_state(task.id)
+
+    assert state is not None
+    assert state["status"] == "already_running"
+    assert state["reservation_id"] == reservation_b
+    assert state["receipt"] == "01-current-b.running"
+
+
+def test_lane_switch_async_state_rejects_stale_artifacts_without_async_owner(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    _prepare_lane_switch(module, monkeypatch)
+    from limen.io import load_limen_file, save_limen_file
+
+    task = module.owner_task_from_item(_owner_item(item_id="OPEN-NO-OWNER"))
+    task.status = "open"
+    board = load_limen_file(module.TASKS_PATH)
+    board.tasks = [task]
+    save_limen_file(module.TASKS_PATH, board)
+    reservation_a = "async-reserve:" + "a" * 32
+    (module.ASYNC_RUNS / "stale-a.result.json").write_text(
+        json.dumps(
+            {
+                "task_id": task.id,
+                "agent": task.target_agent,
+                "reservation_id": reservation_a,
+                "result": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (module.ASYNC_RUNS / "stale-a.running").write_text(
+        json.dumps(
+            {
+                "task_id": task.id,
+                "agent": task.target_agent,
+                "reservation_id": reservation_a,
+                "pid": os.getpid(),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert module._current_async_reservation_id(task.id) is None
+    assert module._async_task_state(task.id) is None
 
 
 def test_lane_switch_next_command_uses_repo_owned_dispatch_script(tmp_path, monkeypatch):

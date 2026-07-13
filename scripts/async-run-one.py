@@ -9,8 +9,9 @@ queue-lock. This is what decouples agent runtime from the beat: the orchestrator
 detached and returns immediately; a slow/stuck agent can no longer gate the whole beat.
 
 Usage (spawned detached by dispatch-async.py; rarely run by hand):
-    async-run-one.py --agent codex --task-id CIFIX-foo --execution-contract-hash SHA256
+    async-run-one.py --agent codex --task-id CIFIX-foo --reservation-id NONCE --execution-contract-hash SHA256
 """
+
 import argparse
 import datetime
 import hashlib
@@ -29,6 +30,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 RUNS = ROOT / "logs" / "async-runs"
 _SAFE_STEM_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+_ASYNC_RESERVATION_RE = re.compile(r"^async-reserve:[0-9a-f]{32}$")
 
 
 def _run_stem(task_id: str) -> str:
@@ -39,17 +41,29 @@ def _run_stem(task_id: str) -> str:
     return f"{slug[:80]}--{digest}"
 
 
-def _result_path(task_id: str) -> Path:
-    return RUNS / f"{_run_stem(task_id)}.result.json"
+def _reservation_suffix(reservation_id: str) -> str:
+    return hashlib.sha256(reservation_id.encode("utf-8")).hexdigest()[:16]
 
 
-def _running_marker_path(task_id: str, agent: str) -> Path:
-    return RUNS / f"{_run_stem(task_id)}__{agent}.running"
+def _result_path(task_id: str, reservation_id: str = "async-reserve") -> Path:
+    suffix = "" if reservation_id == "async-reserve" else f"--{_reservation_suffix(reservation_id)}"
+    return RUNS / f"{_run_stem(task_id)}{suffix}.result.json"
+
+
+def _running_marker_path(task_id: str, agent: str, reservation_id: str = "async-reserve") -> Path:
+    suffix = "" if reservation_id == "async-reserve" else f"--{_reservation_suffix(reservation_id)}"
+    return RUNS / f"{_run_stem(task_id)}__{agent}{suffix}.running"
 
 
 def _contract_hash(value: str) -> str:
     if not re.fullmatch(r"[0-9a-f]{64}", value):
         raise argparse.ArgumentTypeError("execution contract hash must be 64 lowercase hexadecimal characters")
+    return value
+
+
+def _reservation_id(value: str) -> str:
+    if value != "async-reserve" and not _ASYNC_RESERVATION_RE.fullmatch(value):
+        raise argparse.ArgumentTypeError("reservation ID must be async-reserve plus 32 lowercase hex characters")
     return value
 
 
@@ -60,6 +74,7 @@ def _failure(blocker_id: str, reason: str, **evidence: object) -> dict[str, obje
 def _load_verified_task(
     task_id: str,
     agent: str,
+    reservation_id: str,
     expected_hash: str,
 ) -> tuple[object | None, str | bool, dict[str, object] | None, str]:
     """Load one immutable execution snapshot under the queue lock.
@@ -109,12 +124,7 @@ def _load_verified_task(
                 actual_hash,
             )
         last = task.dispatch_log[-1] if task.dispatch_log else None
-        if (
-            last is None
-            or last.session_id != "async-reserve"
-            or last.status != "dispatched"
-            or last.agent != agent
-        ):
+        if last is None or last.session_id != reservation_id or last.status != "dispatched" or last.agent != agent:
             return (
                 task,
                 False,
@@ -144,6 +154,7 @@ def _publish_result(
     *,
     task_id: str,
     agent: str,
+    reservation_id: str,
     expected_hash: str,
     execution_started: bool,
 ) -> bool:
@@ -181,7 +192,7 @@ def _publish_result(
             and current.status == "dispatched"
             and current_hash == expected_hash
             and last is not None
-            and last.session_id == "async-reserve"
+            and last.session_id == reservation_id
             and last.status == "dispatched"
             and last.agent == agent
         )
@@ -199,11 +210,11 @@ def _publish_result(
             out["result"] = "__notask__"
 
         RUNS.mkdir(parents=True, exist_ok=True)
-        tmp = _result_path(task_id).with_suffix(f".{os.getpid()}.tmp")
+        tmp = _result_path(task_id, reservation_id).with_suffix(f".{os.getpid()}.tmp")
         tmp.write_text(json.dumps(out))
-        tmp.replace(_result_path(task_id))  # atomic publish while recovery is excluded
+        tmp.replace(_result_path(task_id, reservation_id))  # atomic publish while recovery is excluded
         try:
-            _running_marker_path(task_id, agent).unlink()
+            _running_marker_path(task_id, agent, reservation_id).unlink()
         except OSError:
             pass
         return True
@@ -231,14 +242,21 @@ def heal_outcome(task, result):
     try:
         v = subprocess.run(
             ["gh", "pr", "view", num, "-R", repo, "--json", "statusCheckRollup,mergeable"],
-            capture_output=True, text=True, timeout=60,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
         if v.returncode != 0:
             return None
         data = json.loads(v.stdout or "{}") or {}
         rollup = data.get("statusCheckRollup") or []
-        failing = sorted({c.get("name", "?") for c in rollup
-                          if (c.get("conclusion") or "").upper() in ("FAILURE", "TIMED_OUT", "CANCELLED")})
+        failing = sorted(
+            {
+                c.get("name", "?")
+                for c in rollup
+                if (c.get("conclusion") or "").upper() in ("FAILURE", "TIMED_OUT", "CANCELLED")
+            }
+        )
         green = not failing and str(data.get("mergeable", "")).upper() != "CONFLICTING"
         if green:
             outcome = "already_green" if result in ("__noop__", False, None) else "fixed"
@@ -253,6 +271,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--agent", required=True)
     ap.add_argument("--task-id", required=True)
+    ap.add_argument("--reservation-id", default="async-reserve", type=_reservation_id)
     ap.add_argument("--execution-contract-hash", required=True, type=_contract_hash)
     a = ap.parse_args()
     err = None
@@ -264,6 +283,7 @@ def main() -> int:
         task, result, validation_failure, actual_hash = _load_verified_task(
             a.task_id,
             a.agent,
+            a.reservation_id,
             a.execution_contract_hash,
         )
         if validation_failure is None and task is not None:
@@ -275,6 +295,7 @@ def main() -> int:
     out = {
         "task_id": a.task_id,
         "agent": a.agent,
+        "reservation_id": a.reservation_id,
         "result": result,  # bool | str (PR url / __noop__ / __ratelimit__ / __timeout__)
         "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "err": err,
@@ -292,6 +313,7 @@ def main() -> int:
         out,
         task_id=a.task_id,
         agent=a.agent,
+        reservation_id=a.reservation_id,
         expected_hash=a.execution_contract_hash,
         execution_started=execution_started,
     )
