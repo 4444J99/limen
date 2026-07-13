@@ -1227,7 +1227,7 @@ def _semantic_source_adapter_contract(value: Any) -> dict[str, Any]:
             if isinstance(contract_id, str) and isinstance(source, str)
         }
 
-    return {
+    semantic = {
         "version": _int_or_zero(value.get("version")),
         "scanner_version": _int_or_zero(value.get("scanner_version")),
         "digest": str(value.get("digest") or ""),
@@ -1236,6 +1236,9 @@ def _semantic_source_adapter_contract(value: Any) -> dict[str, Any]:
         "adapter_sources": source_map(adapter_sources),
         "exclusion_sources": source_map(exclusion_sources),
     }
+    if "alias_blocker_reasons" in value:
+        semantic["alias_blocker_reasons"] = sorted(_string_list(value.get("alias_blocker_reasons")))
+    return semantic
 
 
 def _unit_receipts_digest(cursor: dict[str, Any], receipts_field: str, digest_field: str) -> str | None:
@@ -1269,7 +1272,7 @@ def current_source_adapter_contract() -> dict[str, Any]:
 
 
 def cursor_semantic(cursor: dict[str, Any]) -> dict[str, Any]:
-    return {
+    semantic = {
         "version": cursor.get("version", 1),
         "scanner_version": _int_or_zero(cursor.get("scanner_version")),
         "scope": cursor.get("scope", "fixture"),
@@ -1335,6 +1338,9 @@ def cursor_semantic(cursor: dict[str, Any]) -> dict[str, Any]:
         },
         "files": cursor.get("files") if isinstance(cursor.get("files"), dict) else {},
     }
+    if "source_alias_blocker_counts" in cursor:
+        semantic["source_alias_blocker_counts"] = _semantic_count_map(cursor.get("source_alias_blocker_counts"))
+    return semantic
 
 
 def cursor_digest(cursor: dict[str, Any]) -> str:
@@ -1635,31 +1641,27 @@ def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
     seen_paths: set[str] = set()
     discovery_count = 0
     errors: list[str] = []
+    source_contract_module = _load_source_contract_module()
+    roots_by_source: dict[str, Path] = {}
+    custody_by_locator: dict[str, Any] = {}
 
     def consider(source: str, path: Path, root: Path) -> bool:
         nonlocal discovery_count
         try:
-            if not path.is_file():
+            custody = source_contract_module.inspect_source_path_custody(source, path, root)
+            if custody.error is not None:
+                raise ValueError(custody.error)
+            if custody.alias_contract_id is None and not path.is_file():
                 return True
             discovery_count += 1
             if discovery_count > ceiling:
                 errors.append("live source discovery exceeds the sealed resource ceiling")
                 return False
-            lexical_root = root.expanduser().absolute()
-            lexical_path = path.expanduser().absolute()
-            lexical_path.relative_to(lexical_root) if lexical_path != lexical_root else None
-            current = lexical_path
-            while current != lexical_root:
-                if current.is_symlink():
-                    raise ValueError("symlink below source root")
-                current = current.parent
-            resolved_root = lexical_root.resolve(strict=True)
-            resolved_path = lexical_path.resolve(strict=True)
-            resolved_path.relative_to(resolved_root) if resolved_path != resolved_root else None
         except (OSError, ValueError):
             errors.append(f"{source}: live source containment changed after the sealed scan")
             return True
         path_key = str(path)
+        custody_by_locator[path_key] = custody
         if path_key not in seen_paths:
             seen_paths.add(path_key)
             discovered.add(f"scan-v{scanner_version}:{source}:{path}")
@@ -1668,6 +1670,7 @@ def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
     for item in spec["regular"]:
         source = item["source"]
         root = Path(item["root"])
+        roots_by_source[source] = root
         if not root.exists():
             continue
         candidates = (
@@ -1681,12 +1684,14 @@ def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
     gemini_root = spec.get("gemini_root")
     if gemini_root and discovery_count <= ceiling:
         root = Path(gemini_root)
+        roots_by_source["gemini-tmp"] = root
         if root.exists():
             for path in root.rglob("chats/*.jsonl"):
                 if not consider("gemini-tmp", path, root):
                     break
     agy_root = Path(spec["agy_conversations_root"])
     if agy_root.exists() and discovery_count <= ceiling:
+        roots_by_source["agy-cli-conversations"] = agy_root
         for path in agy_root.rglob("*.db"):
             if not consider("agy-cli-conversations", path, agy_root):
                 break
@@ -1723,13 +1728,50 @@ def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
             storage = _sqlite_storage_signature(Path(locator))
             if storage is None or any(expected.get(field) != value for field, value in storage.items()):
                 errors.append("agy-cli-conversations: live database generation changed after the sealed scan")
-        elif _strong_source_path_signature(Path(locator)) != expected:
-            errors.append(f"{source}: live source signature changed after the sealed scan")
+        else:
+            custody = custody_by_locator.get(locator)
+            if custody is None and source in roots_by_source:
+                custody = source_contract_module.inspect_source_path_custody(
+                    source,
+                    Path(locator),
+                    roots_by_source[source],
+                )
+            current_signature = (
+                custody.unit_signature
+                if custody is not None and custody.error is None
+                else _strong_source_path_signature(Path(locator))
+            )
+            if current_signature != expected:
+                errors.append(f"{source}: live source signature changed after the sealed scan")
         if isinstance(receipt, dict) and receipt.get("contract_id") == "claude-project-memory-mirror-v1":
             sibling = Path(locator).parent / "memory" / Path(locator).name
             related = receipt.get("related_signatures") or {}
             if _strong_source_path_signature(sibling) != related.get("memory_sibling"):
                 errors.append("claude-projects: live memory mirror sibling changed after the sealed scan")
+        if isinstance(receipt, dict) and receipt.get("contract_id") == getattr(
+            source_contract_module, "CLAUDE_PROJECT_MEMORY_ALIAS_ID", ""
+        ):
+            custody = custody_by_locator.get(locator)
+            related = receipt.get("related_signatures") or {}
+            evidence = receipt.get("related_evidence") or {}
+            if (
+                custody is None
+                or custody.error is not None
+                or custody.alias_contract_id != receipt.get("contract_id")
+                or custody.related_signatures != related
+                or custody.related_evidence != evidence
+            ):
+                errors.append("claude-projects: live project-memory alias changed after the sealed scan")
+            else:
+                target_key = f"scan-v{scanner_version}:{source}:{custody.alias_target}"
+                target_receipt = excluded.get(target_key)
+                if (
+                    target_key not in source_units
+                    or not isinstance(target_receipt, dict)
+                    or target_receipt.get("contract_id") != "claude-project-memory-v1"
+                    or target_receipt.get("signature") != related.get("memory_target")
+                ):
+                    errors.append("claude-projects: project-memory alias target lacks independent custody")
         if isinstance(receipt, dict) and receipt.get("contract_id") == "codex-pasted-text-attachment-v1":
             related = receipt.get("related_signatures") or {}
             evidence = receipt.get("related_evidence") or {}
@@ -1865,6 +1907,17 @@ def validate_source_adapter_cursor(
 
     count_map("source_exclusion_counts", receipt_counts(excluded))
     count_map("source_adapter_counts", receipt_counts(adapted))
+    raw_alias_blockers = cursor.get("source_alias_blocker_counts", {})
+    alias_blockers = _semantic_count_map(raw_alias_blockers)
+    valid_alias_reasons = set(getattr(source_contract_module, "SOURCE_ALIAS_BLOCKER_REASONS", ()))
+    if not isinstance(raw_alias_blockers, dict):
+        errors.append("source_alias_blocker_counts must be an object")
+    elif alias_blockers != raw_alias_blockers or any(
+        isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in raw_alias_blockers.values()
+    ):
+        errors.append("source_alias_blocker_counts must contain non-negative integer counts")
+    elif set(alias_blockers) - valid_alias_reasons:
+        errors.append("source_alias_blocker_counts contains an unknown reason")
 
     def signature_valid(value: Any) -> bool:
         return _file_signature_valid(value, strong=True)
@@ -1908,6 +1961,30 @@ def validate_source_adapter_cursor(
 
     validate_group(excluded, disposition="excluded", valid_ids=set(expected["exclusion_ids"]))
     validate_group(adapted, disposition="adapted", valid_ids=set(expected["adapter_ids"]))
+    alias_contract_id = getattr(source_contract_module, "CLAUDE_PROJECT_MEMORY_ALIAS_ID", "")
+    scanner_version = _int_or_zero(cursor.get("scanner_version"))
+    source_unit_set = set(source_units)
+    for key, receipt in excluded.items():
+        if not isinstance(receipt, dict) or receipt.get("contract_id") != alias_contract_id:
+            continue
+        parts = key.split(":", 2)
+        if len(parts) != 3:
+            continue
+        source, locator = parts[1], parts[2]
+        target = Path(locator).parent / "memory" / Path(locator).name
+        target_key = f"scan-v{scanner_version}:{source}:{target}"
+        target_receipt = excluded.get(target_key)
+        related = receipt.get("related_signatures") or {}
+        target_is_pending = target_key in set(unresolved)
+        if target_key not in source_unit_set or (
+            not target_is_pending
+            and (
+                not isinstance(target_receipt, dict)
+                or target_receipt.get("contract_id") != "claude-project-memory-v1"
+                or target_receipt.get("signature") != related.get("memory_target")
+            )
+        ):
+            errors.append(f"{key}: project-memory alias target lacks independent custody")
 
     files = cursor.get("files")
     if not isinstance(files, dict):
@@ -1952,10 +2029,14 @@ def validate_source_adapter_cursor(
                 break
     else:
         family_counts_valid = False
+    claude_family = raw_families.get("claude-projects") if isinstance(raw_families, dict) else None
+    claude_errors = int(claude_family.get("errors") or 0) if isinstance(claude_family, dict) else 0
     if not family_counts_valid:
         errors.append("source family unresolved counts are malformed")
     elif family_totals["unsupported"] != unsupported_count:
         errors.append("source family unsupported counts do not match unsupported_source_count")
+    if family_counts_valid and sum(alias_blockers.values()) > claude_errors:
+        errors.append("source alias blocker counts exceed claude-projects errors")
     pending_files = cursor.get("pending_files", 0)
     if isinstance(pending_files, bool) or not isinstance(pending_files, int) or pending_files < 0:
         errors.append("pending_files must be a non-negative integer")
@@ -2064,6 +2145,7 @@ def validate_cursor_shape(cursor: Any, *, role: str) -> list[str]:
         "adapted_unit_receipts",
         "source_exclusion_counts",
         "source_adapter_counts",
+        "source_alias_blocker_counts",
         "source_families",
         "source_coverage",
         "source_adapter_contract",
@@ -2549,6 +2631,9 @@ def public_projection(snapshot: dict[str, Any], *, limit: int | None = None) -> 
             "adapted_source_count": _int_or_zero((snapshot.get("source_scope") or {}).get("adapted_source_count")),
             "source_adapter_counts": _semantic_count_map(
                 (snapshot.get("source_scope") or {}).get("source_adapter_counts")
+            ),
+            "source_alias_blocker_counts": _semantic_count_map(
+                (snapshot.get("source_scope") or {}).get("source_alias_blocker_counts")
             ),
             "adapted_unit_receipts_digest": (snapshot.get("source_scope") or {}).get("adapted_unit_receipts_digest"),
             "adapter_gaps": (snapshot.get("source_scope") or {}).get("adapter_gaps") or [],

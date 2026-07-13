@@ -51,6 +51,7 @@ from limen.prompt_corpus import (  # noqa: E402
 from limen.prompt_sources import (  # noqa: E402
     AGY_CONVERSATION_UNIT_SIGNATURE_FIELDS,
     AGY_HISTORY_KEYSETS,
+    CLAUDE_PROJECT_MEMORY_ALIAS_ID,
     CODEX_HISTORY_KEYSETS,
     CODEX_BYTE_RANGE_KEYS,
     CODEX_EVENT_USER_PAYLOAD_KEYSETS,
@@ -83,7 +84,10 @@ from limen.prompt_sources import (  # noqa: E402
     PROMPT_SOURCE_SCANNER_VERSION,
     SOURCE_ADAPTER_CONTRACT_VERSION,
     SOURCE_ADAPTER_RULES,
+    SOURCE_ALIAS_BLOCKER_REASONS,
     SOURCE_FILE_SIGNATURE_FIELDS,
+    SourcePathCustody,
+    inspect_source_path_custody,
     source_adapter_contract,
     source_contract_receipt_applies,
 )
@@ -147,6 +151,7 @@ class DiscoveredRows(list[dict[str, Any]]):
     def __init__(self) -> None:
         super().__init__()
         self.discovery_errors: list[tuple[str, str]] = []
+        self.source_alias_blocker_counts: Counter[str] = Counter()
         self.truncated_source: str | None = None
         self.discovered_count = 0
 
@@ -890,27 +895,70 @@ def canonical_source_root(lifecycle: Any, source: str) -> Path | None:
     return None
 
 
+def containing_source_root(lifecycle: Any, source: str, path: Path) -> Path | None:
+    """Select the most specific declared root that lexically contains this unit."""
+
+    lexical_path = path.expanduser().absolute()
+    candidates: list[Path] = []
+    for item in getattr(lifecycle, "LOCAL_SOURCES", ()):
+        if not isinstance(item, (tuple, list)) or len(item) < 2 or str(item[0]) != source:
+            continue
+        root = Path(item[1])
+        lexical_root = root.expanduser().absolute()
+        try:
+            lexical_path.relative_to(lexical_root) if lexical_path != lexical_root else None
+        except ValueError:
+            continue
+        candidates.append(root)
+    if candidates:
+        return max(candidates, key=lambda candidate: len(candidate.expanduser().absolute().parts))
+    return canonical_source_root(lifecycle, source)
+
+
+def source_path_custody(
+    lifecycle: Any,
+    source: str,
+    path: Path,
+    *,
+    containment_root: Path | None = None,
+) -> SourcePathCustody:
+    root = containment_root or containing_source_root(lifecycle, source, path) or path.parent
+    return inspect_source_path_custody(
+        source,
+        path,
+        root,
+        isolated_home=SOURCE_HOME_OVERRIDE,
+    )
+
+
 def source_relative_path(lifecycle: Any, source: str, path: Path) -> Path | None:
-    """Return a canonical source-relative path, rejecting symlinks below its declared root."""
+    """Return a source-relative role after typed direct-or-alias custody succeeds."""
 
     root_path = canonical_source_root(lifecycle, source)
     if root_path is None:
         return None
-    try:
-        lexical_root = root_path.expanduser().absolute()
-        lexical_path = path.expanduser().absolute()
-        relative = lexical_path.relative_to(lexical_root)
-        current = lexical_path
-        while current != lexical_root:
-            if current.is_symlink():
-                return None
-            current = current.parent
-        resolved_root = lexical_root.resolve(strict=True)
-        resolved_path = lexical_path.resolve(strict=True)
-        resolved_path.relative_to(resolved_root)
-    except (OSError, ValueError):
+    custody = source_path_custody(lifecycle, source, path, containment_root=root_path)
+    return custody.relative if custody.error is None else None
+
+
+def source_unit_signature(
+    lifecycle: Any,
+    source: str,
+    path: Path,
+    *,
+    containment_root: Path | None = None,
+) -> dict[str, int] | None:
+    custody = source_path_custody(
+        lifecycle,
+        source,
+        path,
+        containment_root=containment_root,
+    )
+    if custody.error is not None:
         return None
-    return relative
+    if custody.alias_contract_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+        return custody.unit_signature
+    return file_signature(path)
 
 
 def _bounded_file_bytes(path: Path, signature: dict[str, Any], *, maximum: int) -> bytes | None:
@@ -943,9 +991,12 @@ def source_exclusion_candidate_id(
 ) -> str | None:
     """Return a path/metadata-only exclusion candidate without reading content."""
 
-    relative = source_relative_path(lifecycle, source, path)
-    if relative is None:
+    custody = source_path_custody(lifecycle, source, path)
+    relative = custody.relative
+    if custody.error is not None or relative is None:
         return None
+    if custody.alias_contract_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+        return CLAUDE_PROJECT_MEMORY_ALIAS_ID
     parts = relative.parts
     suffix = path.suffix.lower()
 
@@ -1007,7 +1058,19 @@ def confirm_source_exclusion(
         return None
     related: dict[str, dict[str, Any]] = {}
     related_evidence: dict[str, dict[str, str]] = {}
-    if candidate_id == "claude-project-memory-mirror-v1":
+    if candidate_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+        custody = source_path_custody(lifecycle, source, path)
+        if (
+            custody.error is not None
+            or custody.alias_contract_id != candidate_id
+            or custody.unit_signature != signature
+            or custody.related_signatures is None
+            or custody.related_evidence is None
+        ):
+            return None
+        related = dict(custody.related_signatures)
+        related_evidence = dict(custody.related_evidence)
+    elif candidate_id == "claude-project-memory-mirror-v1":
         sibling = path.parent / "memory" / path.name
         sibling_signature = _memory_mirror_signature(lifecycle, source, path)
         if sibling_signature is None or sibling_signature.get("size") != signature.get("size"):
@@ -1038,10 +1101,29 @@ def current_exclusion_related_signatures(
     path: Path,
     candidate_id: str,
 ) -> dict[str, dict[str, Any]] | None:
+    if candidate_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+        custody = source_path_custody(lifecycle, source, path)
+        if custody.error is not None or custody.alias_contract_id != candidate_id:
+            return None
+        return dict(custody.related_signatures or {})
     if candidate_id != "claude-project-memory-mirror-v1":
         return {}
     signature = _memory_mirror_signature(lifecycle, source, path)
     return {"memory_sibling": signature} if signature is not None else None
+
+
+def current_exclusion_related_evidence(
+    lifecycle: Any,
+    source: str,
+    path: Path,
+    candidate_id: str,
+) -> dict[str, dict[str, Any]] | None:
+    if candidate_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+        custody = source_path_custody(lifecycle, source, path)
+        if custody.error is not None or custody.alias_contract_id != candidate_id:
+            return None
+        return dict(custody.related_evidence or {})
+    return None
 
 
 def source_unit_receipt_matches(
@@ -1874,36 +1956,21 @@ def native_record_schema_error(
     return None
 
 
-def source_path_error(path: Path, *, containment_root: Path | None = None) -> str | None:
-    """Contain one source below its declared root and reject symlinks beneath that root."""
+def source_path_error(
+    path: Path,
+    *,
+    containment_root: Path | None = None,
+    source: str = "",
+) -> str | None:
+    """Contain one source and admit only its explicitly typed alias contract."""
 
-    try:
-        lexical_path = path.expanduser().absolute()
-        lexical_root = containment_root.expanduser().absolute() if containment_root is not None else lexical_path.parent
-        lexical_path.relative_to(lexical_root) if lexical_path != lexical_root else None
-        current = lexical_path
-        while current != lexical_root:
-            if current.is_symlink():
-                return "source path contains a symlink hop"
-            parent = current.parent
-            if parent == current:
-                return "source path is outside its containment root"
-            current = parent
-        candidate = lexical_path.resolve(strict=True)
-        resolved_root = lexical_root.resolve(strict=True)
-        candidate.relative_to(resolved_root) if candidate != resolved_root else None
-    except ValueError:
-        return "source path escapes its declared source root"
-    except OSError as exc:
-        return f"source path cannot be resolved: {exc}"
-    if SOURCE_HOME_OVERRIDE is not None:
-        try:
-            root = SOURCE_HOME_OVERRIDE.resolve(strict=True)
-            resolved_root.relative_to(root) if resolved_root != root else None
-            candidate.relative_to(root)
-        except (OSError, ValueError):
-            return "source path escapes isolated source home"
-    return None
+    lexical_root = containment_root or path.parent
+    return inspect_source_path_custody(
+        source,
+        path,
+        lexical_root,
+        isolated_home=SOURCE_HOME_OVERRIDE,
+    ).error
 
 
 def _discover_candidate(
@@ -1918,27 +1985,38 @@ def _discover_candidate(
 ) -> bool:
     """Add one eligible source or return False when discovery reached its cap."""
 
+    custody = inspect_source_path_custody(
+        source,
+        path,
+        containment_root,
+        isolated_home=SOURCE_HOME_OVERRIDE,
+    )
+    if custody.error is not None:
+        rows.discovery_errors.append((source, f"{source}:{path}: {custody.error}"))
+        if source == "claude-projects" and custody.blocker_reason in SOURCE_ALIAS_BLOCKER_REASONS:
+            rows.source_alias_blocker_counts[str(custody.blocker_reason)] += 1
+        return True
     try:
-        if not path.is_file():
+        if custody.alias_contract_id is None and not path.is_file():
             return True
-        stat = path.stat()
+        source_mtime = (
+            int((custody.related_signatures or {}).get("memory_target", {}).get("mtime_ns") or 0) / 1_000_000_000
+            if custody.alias_contract_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID
+            else path.stat().st_mtime
+        )
     except OSError:
         return True
     if rows.discovered_count >= limit:
         rows.truncated_source = source
         return False
     rows.discovered_count += 1
-    if cutoff is not None and stat.st_mtime < cutoff:
+    if cutoff is not None and source_mtime < cutoff:
         return True
     path_key = str(path)
     if path_key in known_paths:
         return True
-    escape = source_path_error(path, containment_root=containment_root)
-    if escape:
-        rows.discovery_errors.append((source, f"{source}:{path}: {escape}"))
-        return True
     known_paths.add(path_key)
-    rows.append({"source": source, "path": path, "mtime": stat.st_mtime})
+    rows.append({"source": source, "path": path, "mtime": source_mtime})
     return True
 
 
@@ -2012,6 +2090,7 @@ def regular_source_rows(
         generic = generic_gemini_rows(lifecycle, days, limits=active_limits)
         for source, error in generic.discovery_errors:
             rows.discovery_errors.append((source, error))
+        rows.source_alias_blocker_counts.update(generic.source_alias_blocker_counts)
         for row in generic:
             if not _discover_candidate(
                 rows,
@@ -2750,6 +2829,7 @@ def scan_regular_sources(
             limits=active_limits,
         )
     )
+    source_alias_blocker_counts: Counter[str] = Counter(getattr(active_rows, "source_alias_blocker_counts", {}))
     has_codex_attachment_rows = any(str(row["source"]) == "codex-attachments" for row in active_rows)
     for source, error in getattr(active_rows, "discovery_errors", []):
         coverage_row(coverage, source)["errors"] += 1
@@ -2768,7 +2848,14 @@ def scan_regular_sources(
         lane_budget = source_scan_budget(budget, source)
         counts = coverage_row(coverage, source)
         path = Path(row["path"])
-        signature = file_signature(path)
+        custody = source_path_custody(lifecycle, source, path)
+        if custody.error is not None:
+            counts["errors"] += 1
+            errors.append(f"{source}:{path}: {custody.error}")
+            if source == "claude-projects" and custody.blocker_reason in SOURCE_ALIAS_BLOCKER_REASONS:
+                source_alias_blocker_counts[str(custody.blocker_reason)] += 1
+            continue
+        signature = source_unit_signature(lifecycle, source, path)
         if signature is None:
             counts["discovered"] += 1
             counts["errors"] += 1
@@ -2791,6 +2878,12 @@ def scan_regular_sources(
                 path,
                 exclusion_id,
             )
+            expected_related_evidence = current_exclusion_related_evidence(
+                lifecycle,
+                source,
+                path,
+                exclusion_id,
+            )
             if related_signatures is not None and source_unit_receipt_matches(
                 excluded_unit_receipts.get(key),
                 disposition="excluded",
@@ -2800,9 +2893,10 @@ def scan_regular_sources(
                 locator=str(path),
                 signature=signature,
                 related_signatures=related_signatures,
+                expected_related_evidence=expected_related_evidence,
             ):
                 if (
-                    file_signature(path) != signature
+                    source_unit_signature(lifecycle, source, path) != signature
                     or current_exclusion_related_signatures(
                         lifecycle,
                         source,
@@ -2810,10 +2904,22 @@ def scan_regular_sources(
                         exclusion_id,
                     )
                     != related_signatures
+                    or (
+                        expected_related_evidence is not None
+                        and current_exclusion_related_evidence(
+                            lifecycle,
+                            source,
+                            path,
+                            exclusion_id,
+                        )
+                        != expected_related_evidence
+                    )
                 ):
                     excluded_unit_receipts.pop(key, None)
                     counts["errors"] += 1
                     errors.append(f"{source}:{path}: source changed during cached exclusion validation")
+                    if exclusion_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+                        source_alias_blocker_counts["alias_changed"] += 1
                     continue
                 exclusion_counts[exclusion_id] += 1
                 counts["excluded"] += 1
@@ -2828,13 +2934,18 @@ def scan_regular_sources(
                 continue
             attempted += 1
             claimed = True
-            escape = source_path_error(
+            refreshed_custody = source_path_custody(
+                lifecycle,
+                source,
                 path,
-                containment_root=canonical_source_root(lifecycle, source) or path.parent,
+                containment_root=containing_source_root(lifecycle, source, path) or path.parent,
             )
+            escape = refreshed_custody.error
             if escape:
                 counts["errors"] += 1
                 errors.append(f"{source}:{path}: {escape}")
+                if source == "claude-projects" and refreshed_custody.blocker_reason in SOURCE_ALIAS_BLOCKER_REASONS:
+                    source_alias_blocker_counts[str(refreshed_custody.blocker_reason)] += 1
                 continue
             confirmed = confirm_source_exclusion(
                 lifecycle,
@@ -2846,14 +2957,28 @@ def scan_regular_sources(
             if confirmed is None:
                 excluded_unit_receipts.pop(key, None)
                 adapted_unit_receipts.pop(key, None)
+                if exclusion_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+                    counts["errors"] += 1
+                    errors.append(f"{source}:{path}: approved alias changed during exclusion classification")
+                    source_alias_blocker_counts["alias_changed"] += 1
+                    continue
                 counts["unsupported"] += 1
                 unsupported.append(key)
                 unsupported_units[key] = signature
                 continue
             confirmed_id, related_signatures, related_evidence = confirmed
-            if file_signature(path) != signature:
+            related_changed = bool(
+                exclusion_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID
+                and (
+                    current_exclusion_related_signatures(lifecycle, source, path, exclusion_id) != related_signatures
+                    or current_exclusion_related_evidence(lifecycle, source, path, exclusion_id) != related_evidence
+                )
+            )
+            if source_unit_signature(lifecycle, source, path) != signature or related_changed:
                 counts["errors"] += 1
                 errors.append(f"{source}:{path}: source changed during exclusion classification")
+                if exclusion_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+                    source_alias_blocker_counts["alias_changed"] += 1
                 continue
             excluded_unit_receipts[key] = {
                 "version": SOURCE_ADAPTER_CONTRACT_VERSION,
@@ -2919,7 +3044,7 @@ def scan_regular_sources(
                     != adapter_related_signatures.get("parent_session")
                 )
             )
-            if file_signature(path) != signature or parent_changed:
+            if source_unit_signature(lifecycle, source, path) != signature or parent_changed:
                 files.pop(key, None)
                 adapted_unit_receipts.pop(key, None)
                 counts["errors"] += 1
@@ -2934,7 +3059,7 @@ def scan_regular_sources(
         if adapter_id:
             files.pop(key, None)
         if unsupported_units.get(key) == signature and not adapter_id:
-            if file_signature(path) != signature:
+            if source_unit_signature(lifecycle, source, path) != signature:
                 unsupported_units.pop(key, None)
                 counts["errors"] += 1
                 errors.append(f"{source}:{path}: source changed during cached unsupported validation")
@@ -2943,7 +3068,7 @@ def scan_regular_sources(
             unsupported.append(key)
             continue
         if files.get(key) == signature and not adapter_id:
-            if file_signature(path) != signature:
+            if source_unit_signature(lifecycle, source, path) != signature:
                 files.pop(key, None)
                 counts["errors"] += 1
                 errors.append(f"{source}:{path}: source changed during cached parser validation")
@@ -2981,13 +3106,18 @@ def scan_regular_sources(
             continue
         if not claimed:
             attempted += 1
-        escape = source_path_error(
+        refreshed_custody = source_path_custody(
+            lifecycle,
+            source,
             path,
-            containment_root=canonical_source_root(lifecycle, source) or path.parent,
+            containment_root=containing_source_root(lifecycle, source, path) or path.parent,
         )
+        escape = refreshed_custody.error
         if escape:
             counts["errors"] += 1
             errors.append(f"{source}:{path}: {escape}")
+            if source == "claude-projects" and refreshed_custody.blocker_reason in SOURCE_ALIAS_BLOCKER_REASONS:
+                source_alias_blocker_counts[str(refreshed_custody.blocker_reason)] += 1
             continue
         if adapter_id == "codex-pasted-text-attachment-v1":
             file_events, adapter_related_signatures, adapter_related_evidence, error, supported = (
@@ -3034,7 +3164,7 @@ def scan_regular_sources(
                     parent_completeness_unknown.add(key)
                 if targeted_error:
                     error = targeted_error
-                if targeted_parent_events and file_signature(path) == signature:
+                if targeted_parent_events and source_unit_signature(lifecycle, source, path) == signature:
                     collect_codex_attachment_parents(
                         lifecycle,
                         parent_path=path,
@@ -3078,7 +3208,7 @@ def scan_regular_sources(
             counts["errors"] += 1
             errors.append(f"{source}:{error}")
             continue
-        if file_signature(path) != signature:
+        if source_unit_signature(lifecycle, source, path) != signature:
             counts["errors"] += 1
             errors.append(f"{source}:{path}: source changed during scan; cursor not advanced")
             continue
@@ -3122,6 +3252,7 @@ def scan_regular_sources(
         "source_exclusion_counts": dict(sorted(exclusion_counts.items())),
         "adapted_unit_receipts": adapted_unit_receipts,
         "source_adapter_counts": dict(sorted(adapter_counts.items())),
+        "source_alias_blocker_counts": dict(sorted(source_alias_blocker_counts.items())),
         "coverage": coverage,
     }
 
@@ -3914,6 +4045,7 @@ def scan_native_sources(
     discovered.update(opencode_scan["discovered"])
     discovered.update(agy_scan["discovered"])
     source_errors = [*regular["errors"], *opencode_scan["errors"], *agy_scan["errors"]]
+    source_alias_blocker_counts = dict(regular.get("source_alias_blocker_counts") or {})
     unsupported = [*regular["unsupported"], *opencode_scan["unsupported"], *agy_scan["unsupported"]]
     pending_files = sum(int(result.get("pending_files") or 0) for result in (regular, opencode_scan, agy_scan))
     source_coverage = merge_coverage(
@@ -4064,6 +4196,7 @@ def scan_native_sources(
         "adapted_source_count": adapted_source_count,
         "source_adapter_counts": source_adapter_counts,
         "adapted_unit_receipts_digest": adapted_unit_receipts_digest,
+        "source_alias_blocker_counts": source_alias_blocker_counts,
         "resource_limits": {key: value for key, value in vars(limits).items()},
         "work_units_unbounded": unbounded,
         "prior_all_manifest": (
@@ -4114,6 +4247,7 @@ def scan_native_sources(
         "source_adapter_counts": source_adapter_counts,
         "adapted_unit_receipts": adapted_unit_receipts,
         "adapted_unit_receipts_digest": adapted_unit_receipts_digest,
+        "source_alias_blocker_counts": source_alias_blocker_counts,
         "excluded_file_keys": regular.get("excluded_file_keys") or [],
         "adapter_gaps": adapter_gaps,
         "adapter_gap_routes": adapter_gap_routes,
