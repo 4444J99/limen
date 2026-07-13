@@ -82,11 +82,11 @@
       "rank": 8,
       "repo": "organvm/limen",
       "product": "MONETA Mint-as-a-Service",
-      "stage": "deploy-ready",
+      "stage": "live",
       "whose_hand": "yours",
-      "next_action": "deploy the Dockerfile ($0) + set the receive address (L-REVENUE-ACCT) — reserved orders auto-open; then externalize as a drop-in 'take BTC, sign an offline ECDSA licence' primitive",
+      "next_action": "route the exporter Pro checkout through the live mint; reserved orders draining (waiting=1); then externalize as a drop-in 'take BTC, sign an offline ECDSA licence' primitive",
       "first_dollar_path": "exporter Pro licences through the own mint — keyless explorer confirmation, no processor in the path",
-      "note": "retro finding 4: most-complete un-enacted organ; the deliverable IS the armed behavior (PREC-2026-07-08-armed-valve-outcome)"
+      "note": "retro finding 4: most-complete un-enacted organ; the deliverable IS the armed behavior (PREC-2026-07-08-armed-valve-outcome). LIVE: https://mint.4444j99.dev/health -> 200 {ok:true,configured:true,waiting:1} since 2026-07-12 — receive address set, deploy done"
     },
     {
       "rank": 9,
