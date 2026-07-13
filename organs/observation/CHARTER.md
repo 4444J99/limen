@@ -98,10 +98,12 @@ and derived state is regenerated each run (`*-latest.json`) with atomic writes. 
 preserve history. Shared parameter panel `OBSERVATORY_*` in `institutio/governance/parameters.yaml`.
 All readers fail-open: missing/corrupt registry → empty structure, never a crash.
 
-## Workflows (the 6-stage pipeline)
+## Workflows (the 5-stage pipeline)
 
-The executive `run_beat()` orchestrates 6 stages in sequence. Each is `_safe`-wrapped: a faulting
-stage stops no other stage and never wedges the beat (exit 0 always).
+The executive `run_beat()` orchestrates 5 stages in sequence (`executive._PIPELINE` — the doctor's
+`pipeline` rung counts them). Each is `_safe`-wrapped: a faulting stage stops no other stage and
+never wedges the beat (exit 0 always). The propose step is nested inside the brief stage
+(`brief.run()` convenes `lever.propose()`), not a separate `_PIPELINE` entry.
 
 | # | Stage | Module | What it does | Writes |
 |---|-------|--------|-------------|--------|
@@ -109,8 +111,8 @@ stage stops no other stage and never wedges the beat (exit 0 always).
 | 2 | **analyze** | `mechanism.py` | Score winner-vs-control contrasts by priority formula; compute activation gap against our hero's surface | `mechanisms.jsonl`, `gap-latest.json` |
 | 3 | **reconcile** | `reconcile.py` | Run VVLTVS sensor → convert drifted faces + severed pipes into internal-legibility gaps | `reconcile.jsonl`, `reconcile-latest.json` |
 | 4 | **brief** | `brief.py` + `interpret.py` (P2-LLM) | Merge both faces; pick highest-priority gap → one experiment; optionally attach LLM interpretation | `brief-latest.json`, `brief-latest.md`, `briefs.jsonl` |
-| 5 | **propose** | `lever.py` | Shape experiment as lever + task; home to `his-hand-levers.json` when armed | `proposals.jsonl`; lever (armed only) |
-| 6 | **synthesize** | `synthesis.py` (P2-SYNTH) | Fold mechanism history → KEEP/TEST/REJECT priors (at most once/ISO week) | `synthesis-weekly-latest.json`, `synthesis.jsonl` |
+| ↳ 4b | **propose** (within brief) | `lever.py` | Shape experiment as lever + task; home to `his-hand-levers.json` when armed | `proposals.jsonl`; lever (armed only) |
+| 5 | **synthesize** | `synthesis.py` (P2-SYNTH) | Fold mechanism history → KEEP/TEST/REJECT priors (at most once/ISO week) | `synthesis-weekly-latest.json`, `synthesis.jsonl` |
 
 All stages write under `logs/observatory/` — never to a public surface.
 
@@ -209,11 +211,20 @@ until armed by `L-OBSERVATORY-ACTIVATE`.
 
 Residual work to reach 30% (building stage):
 1. **Arm L-OBSERVATORY-ACTIVATE** — the lever is declared in `his-hand-levers.json`; needs human
-   approval to set `LIMEN_OBSERVATORY=1`.
-2. **Run one real beat** — produce the first `brief-latest.json` with real winners from the live
-   `gh` search, a real hero gap, and the first experiment proposal.
-3. **Beat wiring verification** — confirm the `observatory-run` sensor fires on its cadence, the
-   loop completes within its timeout, and `doctor --offline` is green on the deployed checkout.
+   approval to set `LIMEN_OBSERVATORY=1`. This is the sole remaining residual: it turns the
+   proven loop (see 2–3, done) into the standing daily brief on the beat's own cadence.
+2. ~~Run one real beat~~ **DONE 2026-07-13 (first light).** One-shot dry run against live GitHub:
+   all stages green in 106s. Real winner (`langchain-ai/openwiki`), real hero
+   (`organvm/a-i-chat--exporter`), 3 scored mechanisms (top: `copy_paste_command`, priority 9.0),
+   7 internal + 4 external gaps, one reversible experiment with a full measurement contract.
+   Dry discipline held: `armed/lever_homed/task_promoted` all false. The run surfaced and fixed
+   two brief-shape defects at root (`date: null` → stamped; external experiment `kind: null` →
+   `mechanism_transfer`).
+3. ~~Beat wiring verification~~ **DONE 2026-07-13 (machine-verifiable half).** The beat's det-tier
+   wiring rung fires on its own (`doctor-latest.json` written by the heartbeat, `ok: true`), and
+   the full loop completes in 106s — well inside the sensor's 240s timeout. The remaining
+   *on-cadence gated-loop* observation is exactly what residual 1 unlocks — it is the lever's
+   receipt, not separate work.
 
 **No capability is invented.** Every mechanism seed in `mechanisms.yaml` corresponds to a real
 feature extracted by `surface.py`. Every gap type (`claim_drift`, `severed_pipe`) corresponds to

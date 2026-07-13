@@ -85,6 +85,14 @@ def test_external_gap_selected_when_no_internal(obs_root):
     b = brief.build_brief()
     assert b["experiment"]["face"] if "face" in b["experiment"] else True
     assert "names_user" in b["experiment"]["change"]
+    # An external gap carries no VVLTVS kind — the experiment self-describes as a transfer.
+    assert b["experiment"]["kind"] == "mechanism_transfer"
+
+
+def test_brief_date_defaults_to_today(obs_root):
+    _seed_evidence(obs_root)
+    assert brief.build_brief()["date"] == lever._today()
+    assert brief.build_brief(date="2026-01-01")["date"] == "2026-01-01"  # the test seam still wins
 
 
 # ---------------------------------------------------------------- lever (human-gated proposal)

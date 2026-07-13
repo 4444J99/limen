@@ -86,6 +86,8 @@ def _top_confounders(n: int = 3) -> list[dict]:
 def _experiment_from_gap(gap: dict, hero: str | None) -> dict:
     kind = gap.get("kind")
     if gap.get("face") == "external":
+        # External gaps carry no VVLTVS kind — their one class is a mechanism transfer.
+        kind = kind or "mechanism_transfer"
         mech = gap.get("mechanism")
         change = f"Add '{mech}' to {hero or 'the hero repo'}'s first screen (one reversible surface edit)."
         measure_hint = f"{gap.get('target_component', 'activation')} proxy over the window vs baseline"
@@ -138,7 +140,7 @@ def build_brief(date: str | None = None) -> dict:
     experiment = select_experiment(all_gaps, hero)
     return {
         "schema": "limen.observatory.brief.v1",
-        "date": date,
+        "date": date or lever._today(),
         "hero": hero,
         "mechanisms": _top_mechanisms(3),
         "confounders": _top_confounders(3),
