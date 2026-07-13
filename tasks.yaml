@@ -135964,7 +135964,8 @@ tasks:
   title: Map the VLTIMA 5-primitive kernel to the observation organ
   repo: organvm/limen
   type: content
-  target_agent: any
+  target_agent: codex
+  workstream: observation
   priority: critical
   budget_cost: 2
   status: open
@@ -136021,7 +136022,8 @@ tasks:
     studio)
   repo: organvm/limen
   type: content
-  target_agent: any
+  target_agent: codex
+  workstream: observation
   priority: critical
   budget_cost: 2
   status: open
