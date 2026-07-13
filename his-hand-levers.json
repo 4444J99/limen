@@ -508,6 +508,16 @@
       "unlocks": "a daily brief with one measured activation experiment; the organ's whole loop goes live",
       "source_task": "GEN-observatory-organ",
       "issue": 961
+    },
+    {
+      "id": "L-LAUNCHAGENT-HEAL",
+      "label": "Arm the launch-agent self-heal effector: append `export LIMEN_LAUNCHAGENT_HEAL=1` to ~/.limen.env. The 0g4 liveness sensor (live-wired in PR #1013) already detects the quarantined creds-hydrate organ every due beat; this single durable grant lets the beat auto-restore any down critical organ (mint / tunnel / credential organ / ianva gateway) from ~/Library/LaunchAgents.disabled quarantine — across quiesce and reboot, forever, with no per-incident approval.",
+      "owner": "yours",
+      "cost": "~30 s once, durable",
+      "gate": "auto-mode classifier denies the agent appending a persistence-arming env flag (Unauthorized Persistence) — this arming is deliberately your hand",
+      "unlocks": "recurrence immunity for the 2026-07-09 quiesce class; creds-hydrate auto-restores on the next due beat; armed-valve-audit flips this valve from SILENT-OFF to ARMED",
+      "source_task": "sensor-lane live-wire · limen PR #1013 + #1020 · plan 2026-07-13",
+      "note": "One-liner: printf '\\nexport LIMEN_LAUNCHAGENT_HEAL=1\\n' >> ~/.limen.env && launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat. The kickstart refreshes the heartbeat lane immediately (its shell sources ~/.limen.env at startup only); the metabolize lane picks the grant up on its own next pass either way. Verify after the next due beat: launchctl print gui/$(id -u)/com.limen.creds-hydrate exits 0 and logs/launch-agent-liveness.json shows green:true. creds-hydrate's write_env preserves unmanaged lines, so the grant survives hydration rewrites."
     }
   ]
 }
