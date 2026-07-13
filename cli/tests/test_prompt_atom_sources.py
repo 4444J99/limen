@@ -34,6 +34,21 @@ def _regular_lifecycle(module, rows):
     return lifecycle
 
 
+def _claude_memory_alias_fixture(module, tmp_path: Path, *, absolute: bool = False):
+    projects = tmp_path / ".claude" / "projects"
+    target = projects / "project" / "memory" / "fixture.md"
+    alias = projects / "project" / target.name
+    target.parent.mkdir(parents=True)
+    target.write_text("synthetic memory fixture", encoding="utf-8")
+    alias.symlink_to(target if absolute else Path("memory") / target.name)
+    lifecycle = module.load_lifecycle_module()
+    lifecycle.LOCAL_SOURCES = [("claude-projects", projects, ("*",))]
+    lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
+    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
+    lifecycle.HOME = tmp_path
+    return lifecycle, projects, alias, target
+
+
 def test_claude_tool_and_transport_surfaces_never_become_operator_input():
     sources = _load()
     lifecycle = sources.load_lifecycle_module()
@@ -2044,6 +2059,322 @@ def test_structural_non_prompt_exclusions_precede_extension_and_cache(tmp_path: 
     assert cached_budget.used == 0
     assert cached["excluded_unit_receipts"] == result["excluded_unit_receipts"]
     assert cached["source_exclusion_counts"] == result["source_exclusion_counts"]
+
+
+def test_claude_memory_alias_to_exact_in_root_sibling_is_excluded(tmp_path: Path, monkeypatch):
+    sources = _load()
+    lifecycle, _projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    rows = sources.regular_source_rows(lifecycle, None)
+    monkeypatch.setattr(
+        sources,
+        "_bounded_file_bytes",
+        lambda *_args, **_kwargs: pytest.fail("alias classification must stay metadata-only"),
+    )
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=rows,
+    )
+
+    alias_key = sources.cursor_unit_key("claude-projects", alias)
+    target_key = sources.cursor_unit_key("claude-projects", target)
+    alias_receipt = result["excluded_unit_receipts"][alias_key]
+    assert events == []
+    assert result["errors"] == []
+    assert result["source_alias_blocker_counts"] == {}
+    assert result["source_exclusion_counts"][sources.CLAUDE_PROJECT_MEMORY_ALIAS_ID] == 1
+    assert alias_receipt["contract_id"] == sources.CLAUDE_PROJECT_MEMORY_ALIAS_ID
+    assert alias_receipt["signature"] == sources.source_unit_signature(lifecycle, "claude-projects", alias)
+    assert alias_receipt["related_signatures"]["memory_target"] == sources.file_signature(target)
+    assert result["excluded_unit_receipts"][target_key]["contract_id"] == "claude-project-memory-v1"
+
+
+def test_claude_memory_alias_accepts_only_normalized_exact_sibling(tmp_path: Path, monkeypatch):
+    sources = _load()
+    lifecycle, _projects, alias, _target = _claude_memory_alias_fixture(sources, tmp_path, absolute=True)
+    custody = sources.source_path_custody(lifecycle, "claude-projects", alias)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": alias}],
+    )
+
+    assert custody.alias_contract_id == sources.CLAUDE_PROJECT_MEMORY_ALIAS_ID
+    assert custody.error is None
+    assert events == []
+    assert result["errors"] == []
+    assert result["source_exclusion_counts"] == {sources.CLAUDE_PROJECT_MEMORY_ALIAS_ID: 1}
+
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    _events, partial = sources.scan_native_sources(
+        SimpleNamespace(cursor=tmp_path / "missing-cursor.json"),
+        days=None,
+        max_files=1,
+    )
+    assert partial["scope"] == "partial:all"
+    assert partial["pending_files"] == 1
+    assert sources.validate_source_adapter_cursor(partial) == []
+
+
+def test_claude_memory_alias_to_other_in_root_file_is_blocked(tmp_path: Path):
+    sources = _load()
+    lifecycle, _projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    other = target.with_name("other.md")
+    other.write_text("synthetic alternate fixture", encoding="utf-8")
+    alias.unlink()
+    alias.symlink_to(Path("memory") / other.name)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": alias}],
+    )
+
+    assert events == []
+    assert len(result["errors"]) == 1
+    assert result["source_alias_blocker_counts"] == {"alias_target_mismatch": 1}
+    assert result["excluded_unit_receipts"] == {}
+
+
+def test_claude_memory_alias_escape_is_blocked(tmp_path: Path):
+    sources = _load()
+    lifecycle, _projects, alias, _target = _claude_memory_alias_fixture(sources, tmp_path)
+    outside = tmp_path / "outside.md"
+    outside.write_text("synthetic outside fixture", encoding="utf-8")
+    alias.unlink()
+    alias.symlink_to(outside)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": alias}],
+    )
+
+    assert events == []
+    assert len(result["errors"]) == 1
+    assert result["source_alias_blocker_counts"] == {"alias_target_mismatch": 1}
+    assert result["excluded_unit_receipts"] == {}
+
+
+def test_claude_memory_alias_chain_is_blocked(tmp_path: Path):
+    sources = _load()
+    lifecycle, _projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    terminal = target.with_name("terminal.md")
+    terminal.write_text("synthetic terminal fixture", encoding="utf-8")
+    target.unlink()
+    target.symlink_to(terminal.name)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": alias}],
+    )
+
+    assert events == []
+    assert result["source_alias_blocker_counts"] == {"alias_link_chain": 1}
+    assert result["excluded_unit_receipts"] == {}
+
+
+def test_claude_memory_alias_dangling_target_is_blocked(tmp_path: Path):
+    sources = _load()
+    lifecycle, _projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    target.unlink()
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": alias}],
+    )
+
+    assert events == []
+    assert result["source_alias_blocker_counts"] == {"alias_dangling_target": 1}
+    assert result["excluded_unit_receipts"] == {}
+
+
+def test_claude_memory_alias_cycle_is_blocked(tmp_path: Path):
+    sources = _load()
+    lifecycle, _projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    target.unlink()
+    target.symlink_to(Path("..") / alias.name)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": alias}],
+    )
+
+    assert events == []
+    assert result["source_alias_blocker_counts"] == {"alias_link_chain": 1}
+    assert result["excluded_unit_receipts"] == {}
+
+
+def test_claude_memory_alias_wrong_target_type_is_blocked(tmp_path: Path):
+    sources = _load()
+    lifecycle, _projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    target.unlink()
+    target.mkdir()
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": alias}],
+    )
+
+    assert events == []
+    assert result["source_alias_blocker_counts"] == {"alias_target_not_regular": 1}
+    assert result["excluded_unit_receipts"] == {}
+
+
+def test_claude_memory_alias_below_symlinked_directory_is_blocked(tmp_path: Path):
+    sources = _load()
+    projects = tmp_path / ".claude" / "projects"
+    projects.mkdir(parents=True)
+    external_project = tmp_path / "external-project"
+    target = external_project / "memory" / "fixture.md"
+    alias = external_project / target.name
+    target.parent.mkdir(parents=True)
+    target.write_text("synthetic memory fixture", encoding="utf-8")
+    alias.symlink_to(Path("memory") / target.name)
+    (projects / "project").symlink_to(external_project, target_is_directory=True)
+    lexical_alias = projects / "project" / alias.name
+    lifecycle = sources.load_lifecycle_module()
+    lifecycle.LOCAL_SOURCES = [("claude-projects", projects, ("*",))]
+    lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
+    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": lexical_alias}],
+    )
+
+    assert events == []
+    assert result["source_alias_blocker_counts"] == {"alias_ancestor_symlink": 1}
+    assert result["excluded_unit_receipts"] == {}
+
+
+def test_claude_memory_alias_retarget_race_never_advances_cursor(tmp_path: Path, monkeypatch):
+    sources = _load()
+    lifecycle, _projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    other = target.with_name("other.md")
+    other.write_text("synthetic alternate fixture", encoding="utf-8")
+    real_signature = sources.source_unit_signature
+    mutated = False
+
+    def mutate_after_signature(*args, **kwargs):
+        nonlocal mutated
+        signature = real_signature(*args, **kwargs)
+        if Path(args[2]) == alias and not mutated:
+            mutated = True
+            alias.unlink()
+            alias.symlink_to(Path("memory") / other.name)
+        return signature
+
+    monkeypatch.setattr(sources, "source_unit_signature", mutate_after_signature)
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        rows=[{"source": "claude-projects", "path": alias}],
+    )
+
+    key = sources.cursor_unit_key("claude-projects", alias)
+    assert events == []
+    assert result["source_alias_blocker_counts"] == {"alias_target_mismatch": 1}
+    assert key not in result["files"]
+    assert key not in result["excluded_unit_receipts"]
+
+
+def test_exact_live_custody_rejects_memory_alias_changed_after_seal(tmp_path: Path, monkeypatch):
+    sources = _load()
+    lifecycle, _projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    _events, cursor = sources.scan_native_sources(
+        SimpleNamespace(cursor=tmp_path / "missing-cursor.json"),
+        days=None,
+        max_files=2,
+    )
+    assert cursor["scope"] == "all"
+
+    other = target.with_name("other.md")
+    other.write_text("synthetic alternate fixture", encoding="utf-8")
+    alias.unlink()
+    alias.symlink_to(Path("memory") / other.name)
+
+    from limen.prompt_corpus import validate_live_source_custody
+
+    errors = validate_live_source_custody(cursor)
+    assert any("containment changed" in error or "alias changed" in error for error in errors)
+
+
+def test_memory_alias_second_pass_is_zero_growth_byte_identical_and_public_safe(tmp_path: Path, monkeypatch):
+    sources = _load()
+    lifecycle, projects, alias, target = _claude_memory_alias_fixture(sources, tmp_path)
+    rows = sources.regular_source_rows(lifecycle, None)
+    first_budget = sources.ScanBudget(limit=2)
+    first_events, first = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=first_budget,
+        rows=rows,
+    )
+    first_bytes = json.dumps(first["excluded_unit_receipts"], sort_keys=True, separators=(",", ":")).encode()
+    second_budget = sources.ScanBudget(limit=2)
+    second_events, second = sources.scan_regular_sources(
+        lifecycle,
+        first,
+        days=None,
+        budget=second_budget,
+        rows=rows,
+    )
+    second_bytes = json.dumps(second["excluded_unit_receipts"], sort_keys=True, separators=(",", ":")).encode()
+
+    assert first_events == second_events == []
+    assert second_budget.used == 0
+    assert first_bytes == second_bytes
+    assert second["source_alias_blocker_counts"] == {}
+    alias_key = sources.cursor_unit_key("claude-projects", alias)
+    target_key = sources.cursor_unit_key("claude-projects", target)
+    assert alias_key != target_key
+    assert set(second["excluded_unit_receipts"]) == {alias_key, target_key}
+
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    _events, cursor = sources.scan_native_sources(
+        SimpleNamespace(cursor=tmp_path / "missing-cursor.json"),
+        days=None,
+        max_files=2,
+    )
+    from limen.prompt_corpus import DEFAULT_POLICY, build_snapshot, public_projection
+
+    snapshot = build_snapshot([], [], [], DEFAULT_POLICY, cursor)
+    public = public_projection(snapshot)
+    encoded = json.dumps(public, sort_keys=True)
+    assert public["source_scope"]["source_exclusion_counts"][sources.CLAUDE_PROJECT_MEMORY_ALIAS_ID] == 1
+    assert public["source_scope"]["source_alias_blocker_counts"] == {}
+    assert str(projects) not in encoded
+    assert alias.name not in encoded
 
 
 def test_structural_exclusion_near_misses_remain_adapter_gaps(tmp_path: Path):
