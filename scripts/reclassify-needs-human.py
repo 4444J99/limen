@@ -53,6 +53,27 @@ _STALE_SIGNAL = re.compile(r"live-dispatch|dispatch.drain|set autonomy.*dispatch
 _REVIEW_SIGNAL = re.compile(r"activation audit:\s*(skip|kill)\b", re.IGNORECASE)
 
 
+def _lever_ids() -> set[str]:
+    """The owned human-gate registry — a task naming any of these is his hand BY DEFINITION.
+
+    Derived, never pinned: a `needs_human` task tagged to a lever (`needs-human (L-…)`, `[his-hand]`,
+    or naming a registered lever id) must stay KEEP even absent a credential keyword — else the drain
+    would flip a real lever (e.g. L-ENC1101-GOLIVE "take the course live", L-SOCIAL-SEND) to `open`
+    and hand a human-gated, sometimes IRREVERSIBLE act to the autonomous fleet.
+    """
+    try:
+        raw = json.loads((ROOT / "his-hand-levers.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return set()
+    levers = raw.get("levers") if isinstance(raw, dict) else raw
+    return {lv["id"] for lv in (levers or []) if isinstance(lv, dict) and lv.get("id")}
+
+
+_LEVER_IDS = _lever_ids()
+# Explicit lever tag on a task — the surest human-atom signal, independent of the credential cluster.
+_LEVER_MARKER = re.compile(r"needs-human \(L-|\[his-hand\]", re.IGNORECASE)
+
+
 def _live_root() -> Path:
     """The live checkout, even when run from a worktree (whose logs/ are stale): strip a trailing
     .claude/worktrees/<name>. Falls back to ROOT."""
@@ -81,6 +102,10 @@ def _dispatch_is_live() -> bool:
 
 def classify(task, dispatch_live: bool) -> str:
     blob = " ".join(str(x) for x in (task.id, task.title, task.context, task.description) if x)
+    # A lever-tagged task is his hand by definition — checked FIRST so a real lever can never leak
+    # into FLIP for lack of a credential keyword. Derived from the registry, not a pinned id list.
+    if _LEVER_MARKER.search(blob) or any(lv in blob for lv in _LEVER_IDS):
+        return "KEEP"
     if task.id.startswith(_HUMAN_ID_PREFIXES):
         return "KEEP"
     if _REVIEW_SIGNAL.search(blob):
