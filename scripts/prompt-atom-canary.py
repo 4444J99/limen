@@ -185,6 +185,7 @@ def artifact_metrics(
     private_root: Path,
     public_snapshot: Path,
     public_markdown: Path,
+    public_seal: Path,
 ) -> dict[str, dict[str, Any]]:
     private = private_root / "prompt-atoms"
     return {
@@ -196,6 +197,7 @@ def artifact_metrics(
         "private_source_scan_receipts": tree_metric(private / "source-scan-receipts"),
         "public_snapshot": file_metric(public_snapshot),
         "public_markdown": file_metric(public_markdown),
+        "public_seal": file_metric(public_seal),
     }
 
 
@@ -438,6 +440,7 @@ def require_isolated_paths(
     private_root: Path,
     public_snapshot: Path,
     public_markdown: Path,
+    public_seal: Path,
     receipt: Path,
 ) -> None:
     if sandbox_root.is_symlink():
@@ -464,6 +467,7 @@ def require_isolated_paths(
         "private_root": private_root,
         "public_snapshot": public_snapshot,
         "public_markdown": public_markdown,
+        "public_seal": public_seal,
         "receipt": receipt,
     }
     resolved = {name: path.resolve(strict=False) for name, path in named_paths.items()}
@@ -504,6 +508,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--private-root", type=Path, required=True, help="isolated private corpus root")
     parser.add_argument("--public-snapshot", type=Path, required=True, help="isolated redacted JSON output")
     parser.add_argument("--public-markdown", type=Path, required=True, help="isolated redacted Markdown output")
+    parser.add_argument("--public-seal", type=Path, required=True, help="isolated counts/hash-only seal output")
     parser.add_argument("--receipt", type=Path, required=True, help="redacted canary JSON receipt")
     parser.add_argument("--label", default="prompt-atom-v2-canary", help="safe receipt label")
     parser.add_argument("--cap", type=int, default=MAX_WORK_UNITS, help="work-unit cap; maximum 5")
@@ -534,6 +539,7 @@ def main(argv: list[str] | None = None) -> int:
         private_root = args.private_root.resolve()
         public_snapshot = args.public_snapshot.resolve()
         public_markdown = args.public_markdown.resolve()
+        public_seal = args.public_seal.resolve()
         receipt_path = args.receipt.resolve()
         require_isolated_paths(
             sandbox_root,
@@ -541,6 +547,7 @@ def main(argv: list[str] | None = None) -> int:
             private_root,
             public_snapshot,
             public_markdown,
+            public_seal,
             receipt_path,
         )
         nice_binary = shutil.which("nice")
@@ -550,6 +557,7 @@ def main(argv: list[str] | None = None) -> int:
             private_root / "prompt-atoms",
             public_snapshot,
             public_markdown,
+            public_seal,
             receipt_path,
         )
         if any(os.path.lexists(path) for path in canonical_outputs):
@@ -580,6 +588,8 @@ def main(argv: list[str] | None = None) -> int:
         str(public_snapshot),
         "--public-markdown",
         str(public_markdown),
+        "--public-seal",
+        str(public_seal),
         "--scan",
         "--all",
         "--max-files",
@@ -630,7 +640,7 @@ def main(argv: list[str] | None = None) -> int:
         first_cursor = load_object(cursor_path, "source_cursor")
         first_public = load_object(public_snapshot, "public_snapshot")
         failures.extend(fixed_failures(first_cursor, first_public, args.cap, first_summary, expected_contract))
-        first_metrics = artifact_metrics(private_root, public_snapshot, public_markdown)
+        first_metrics = artifact_metrics(private_root, public_snapshot, public_markdown, public_seal)
         first_journal = journal_counts(event_journal)
         first_outcomes = outcome_count(outcome_journal)
         receipt["first_pass"] = {
@@ -676,7 +686,7 @@ def main(argv: list[str] | None = None) -> int:
         failures.append("second_scanner_failed")
 
     try:
-        second_metrics = artifact_metrics(private_root, public_snapshot, public_markdown)
+        second_metrics = artifact_metrics(private_root, public_snapshot, public_markdown, public_seal)
         second_journal = journal_counts(event_journal)
         second_outcomes = outcome_count(outcome_journal)
         journal_delta = {
@@ -724,6 +734,8 @@ def main(argv: list[str] | None = None) -> int:
         str(public_snapshot),
         "--public-markdown",
         str(public_markdown),
+        "--public-seal",
+        str(public_seal),
         "--check",
         "--require-scope",
         "all",
@@ -735,6 +747,15 @@ def main(argv: list[str] | None = None) -> int:
     }
     if checked["returncode"] != 0:
         failures.append("authoritative_check_failed")
+    try:
+        final_seal = load_object(public_seal, "public_authority_seal")
+        authority_ready = final_seal.get("authority_ready") is True
+        receipt["verification"]["authority_ready"] = authority_ready
+        if not authority_ready:
+            failures.append("public_authority_seal_not_ready")
+    except CanaryFailure as exc:
+        receipt["verification"]["authority_ready"] = False
+        failures.append(str(exc))
 
     try:
         final_code_identity = exact_head_code_identity()

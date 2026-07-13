@@ -4302,6 +4302,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--private-root", type=Path)
     parser.add_argument("--public-markdown", type=Path)
     parser.add_argument("--public-snapshot", type=Path)
+    parser.add_argument("--public-seal", type=Path)
     parser.add_argument("--policy", type=Path)
     parser.add_argument(
         "--source-home",
@@ -4320,6 +4321,7 @@ def main() -> int:
         private_root=args.private_root.resolve() if args.private_root else None,
         public_markdown=args.public_markdown.resolve() if args.public_markdown else None,
         public_snapshot=args.public_snapshot.resolve() if args.public_snapshot else None,
+        public_seal=args.public_seal.resolve() if args.public_seal else None,
         policy=args.policy.resolve() if args.policy else None,
     )
     if args.check:
