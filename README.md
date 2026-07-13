@@ -216,7 +216,7 @@ Every AI agent reads `tasks.yaml` at session start, finds open tasks matching th
 - **Jules** — async coding agent (Google). Dispatch via `jules new --repo`.
 - **Copilot** — GitHub Copilot coding agent lane. Dispatch assigns an existing GitHub issue to `copilot-swe-agent`; census marks it down until `LIMEN_COPILOT_ENABLED=1` or `LIMEN_COPILOT_HEALTH_REPO` confirms assignability.
 - **Warp/Oz** — paid service lanes via `LIMEN_WARP_DISPATCH_CMD`, `LIMEN_OZ_DISPATCH_CMD`, or the generic `agent-dispatch` adapter.
-- **GitHub Actions** — runner lane via `gh workflow run` against `LIMEN_GITHUB_ACTIONS_WORKFLOW` (default `limen-agent.yml`).
+- **GitHub Actions** — public verification-only runner lane for a dedicated verifier child after its implementation parent has merged custody; dispatches the live-discovered `LIMEN_GITHUB_ACTIONS_WORKFLOW` (default `limen-agent.yml`) through a validated control branch/tag independently pinned to an exact control SHA.
 
 ## Support / Sponsor
 

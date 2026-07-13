@@ -24,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
-from limen.dispatch import _queue_lock, call_agent_dispatch  # noqa: E402
+from limen.dispatch import _REMOTE_SUBMISSION_RECEIPTS, _queue_lock, call_agent_dispatch  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -302,6 +302,7 @@ def main() -> int:
         "execution_contract_hash": a.execution_contract_hash,
         "actual_execution_contract_hash": actual_hash,
         "execution_started": execution_started,
+        "remote_submission": dict(_REMOTE_SUBMISSION_RECEIPTS.get(a.task_id, {})),
     }
     if validation_failure is not None:
         out["validation_failure"] = validation_failure

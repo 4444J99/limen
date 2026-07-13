@@ -62,6 +62,24 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Per-lane launch room for local async workers. Remote lanes such as Jules use live provider runway and --per-lane; this knob prevents a remote burst command from becoming 100 local OpenCode/Agy processes."
+  LIMEN_REMOTE_BASE_REF:
+    default: "HEAD"
+    env: LIMEN_REMOTE_BASE_REF
+    self_update: none
+    owner: dispatch
+    note: "Public target ref resolved through the remote GitHub owner to an exact pushed SHA before deterministic off-box verification."
+  LIMEN_GITHUB_ACTIONS_CONTROL_REF:
+    default: "<live remote default branch>"
+    env: LIMEN_GITHUB_ACTIONS_CONTROL_REF
+    self_update: none
+    owner: dispatch
+    note: "Optional explicit short branch/tag name. When unset, discovery uses the live remote default branch. HEAD, raw SHAs, pull refs, unprotected branches, ambiguous branch/tag names, and unsafe ref syntax fail closed. The branch/tag and its exact re-resolved SHA are packet- and receipt-bound."
+  LIMEN_REMOTE_RECEIPT_ROOT:
+    default: "$LIMEN_ROOT/logs/remote-execution"
+    env: LIMEN_REMOTE_RECEIPT_ROOT
+    self_update: none
+    owner: dispatch
+    note: "Local content-addressed observation store for public GitHub Actions run IDs, URLs, exact SHAs, predicate digests, and durable receipt identities. Raw provider output and credentials are excluded."
   LIMEN_FACTS_APPLY:
     default: 0
     env: LIMEN_FACTS_APPLY

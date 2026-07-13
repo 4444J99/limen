@@ -6,6 +6,7 @@ dead-worker reaper. Agent spawning (subprocess.Popen) is monkeypatched so no rea
 
 import datetime
 import contextlib
+import hashlib
 import importlib.util
 import json
 import os
@@ -26,6 +27,15 @@ sys.path.insert(0, str(CLI_SRC))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task  # noqa: E402
+from limen.provider_selection import execution_profile_for  # noqa: E402
+from limen.remote_execution import verification_context_for_task  # noqa: E402
+from limen.remote_predicate import (  # noqa: E402
+    SCHEMA_VERSION,
+    canonical_json,
+    digest_bytes,
+    digest_text,
+    packet_digest as compute_packet_digest,
+)
 import limen.dispatch as dispatch_module  # noqa: E402
 
 
@@ -63,6 +73,205 @@ def _load_worker(tmp_path):
 
 def _board(tmp_path):
     return {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
+
+
+def _remote_harvest_fixture(tmp_path):
+    da = _load(tmp_path, n_open=1, agent="github_actions")
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    task = lf.tasks[0]
+    task.type = "verification"
+    task.labels = ["mode:verification-only"]
+    task.depends_on = ["PARENT"]
+    task.predicate = "python3 scripts/verify.py"
+    task.receipt_target = f"artifact:organvm/limen:task:{task.id}"
+    task.status = "dispatched"
+    reservation_id = f"async-reserve:{'a' * 32}"
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            agent="github_actions",
+            session_id=reservation_id,
+            status="dispatched",
+        )
+    )
+    lf.tasks.append(
+        Task(
+            id="PARENT",
+            title="implementation parent",
+            repo=str(task.repo),
+            type="code",
+            target_agent="codex",
+            status="done",
+            receipt_target="github:x/y:pull-request:9",
+            created=datetime.date.today(),
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=datetime.datetime.now(datetime.timezone.utc),
+                    agent="codex",
+                    session_id="https://github.com/x/y/pull/9",
+                    status="done",
+                    output="merged https://github.com/x/y/pull/9",
+                )
+            ],
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    tasks_by_id = {item.id: item for item in lf.tasks}
+    context_digest = digest_bytes(canonical_json(verification_context_for_task(task, tasks_by_id)))
+    execution_profile = execution_profile_for(task).as_dict()
+    profile_digest = digest_bytes(canonical_json(execution_profile))
+    instruction_digest = digest_text(
+        f"Verify completed implementation for task {task.id}; do not modify code: {task.title}"
+    )
+    computed_packet_digest = compute_packet_digest(
+        provider="github_actions",
+        task_id=task.id,
+        repo=str(task.repo),
+        base_sha="a" * 40,
+        control_repo="organvm/limen",
+        control_ref="main",
+        control_ref_kind="branch",
+        control_sha="b" * 40,
+        workflow_id=123,
+        workflow_path=".github/workflows/limen-agent.yml",
+        workflow_event="workflow_dispatch",
+        verification_context_digest=context_digest,
+        predicate_digest=digest_text(str(task.predicate).strip()),
+        instruction_digest=instruction_digest,
+        receipt_target=str(task.receipt_target),
+        custody_mode="artifact",
+        inputs=[],
+        execution_profile=execution_profile,
+    )
+    request_id = computed_packet_digest.removeprefix("sha256:")[:32]
+    metadata: dict[str, object] = {
+        "provider": "github_actions",
+        "task_id": task.id,
+        "repo": task.repo,
+        "provider_run_id": "42",
+        "provider_url": "https://github.com/organvm/limen/actions/runs/42",
+        "base_sha": "a" * 40,
+        "control_repo": "organvm/limen",
+        "control_ref": "main",
+        "control_ref_kind": "branch",
+        "control_sha": "b" * 40,
+        "workflow_id": 123,
+        "workflow_path": ".github/workflows/limen-agent.yml",
+        "workflow_event": "workflow_dispatch",
+        "verification_context_digest": context_digest,
+        "remote_state": "queued",
+        "remote_request_id": request_id,
+        "packet_digest": computed_packet_digest,
+    }
+    request = {
+        "provider": metadata["provider"],
+        "task_id": metadata["task_id"],
+        "repo": metadata["repo"],
+        "base_sha": metadata["base_sha"],
+        "control_repo": metadata["control_repo"],
+        "control_ref": metadata["control_ref"],
+        "control_ref_kind": metadata["control_ref_kind"],
+        "control_sha": metadata["control_sha"],
+        "workflow_id": metadata["workflow_id"],
+        "workflow_path": metadata["workflow_path"],
+        "workflow_event": metadata["workflow_event"],
+        "verification_context_digest": metadata["verification_context_digest"],
+        "predicate_digest": digest_text(str(task.predicate).strip()),
+        "instruction_digest": instruction_digest,
+        "receipt_target": task.receipt_target,
+        "custody_mode": "artifact",
+        "inputs": [],
+        "execution_profile_digest": profile_digest,
+        "packet_digest": computed_packet_digest,
+    }
+    run = {
+        "provider": metadata["provider"],
+        "provider_run_id": metadata["provider_run_id"],
+        "url": metadata["provider_url"],
+        "base_sha": metadata["base_sha"],
+        "control_repo": metadata["control_repo"],
+        "control_ref": metadata["control_ref"],
+        "control_ref_kind": metadata["control_ref_kind"],
+        "control_sha": metadata["control_sha"],
+        "workflow_id": metadata["workflow_id"],
+        "workflow_path": metadata["workflow_path"],
+        "workflow_event": metadata["workflow_event"],
+        "verification_context_digest": metadata["verification_context_digest"],
+        "state": metadata["remote_state"],
+        "request_id": request_id,
+        "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "detail": "submission observed; not completion",
+    }
+    receipt: dict[str, object] = {
+        "schema_version": SCHEMA_VERSION,
+        "request": request,
+        "run": run,
+        "state": metadata["remote_state"],
+        "predicate": None,
+        "outputs": [],
+        "observed_sha": None,
+        "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "detail": "submission observed; not completion",
+        "done": False,
+    }
+    receipt_dir = da.REMOTE_RECEIPT_ROOT / task.id
+    receipt_dir.mkdir(parents=True, exist_ok=True)
+    digest = hashlib.sha256(canonical_json(receipt)).hexdigest()
+    receipt_path = receipt_dir / f"{digest}.json"
+    receipt_path.write_bytes(canonical_json(receipt) + b"\n")
+    metadata["remote_receipt"] = str(receipt_path.relative_to(tmp_path))
+    result = {
+        "task_id": task.id,
+        "agent": "github_actions",
+        "reservation_id": reservation_id,
+        "result": "42",
+        "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "err": None,
+        "execution_contract_hash": execution_contract_hash(task),
+        "actual_execution_contract_hash": execution_contract_hash(task),
+        "execution_started": True,
+        "remote_submission": metadata,
+    }
+    return da, result, receipt
+
+
+def _write_async_result(da, result):
+    path = da._result_path(str(result["task_id"]), str(result["reservation_id"]))
+    path.write_text(json.dumps(result))
+    return path
+
+
+def _rewrite_remote_receipt(tmp_path, da, result, receipt):
+    digest = hashlib.sha256(canonical_json(receipt)).hexdigest()
+    path = da.REMOTE_RECEIPT_ROOT / str(result["task_id"]) / f"{digest}.json"
+    path.write_bytes(canonical_json(receipt) + b"\n")
+    result["remote_submission"]["remote_receipt"] = str(path.relative_to(tmp_path))
+    return path
+
+
+def _assert_remote_harvest_blocked(tmp_path, da, result, *, marker_cleared: bool = True):
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    da._write_running_marker(
+        str(result["task_id"]),
+        "github_actions",
+        datetime.datetime.now(datetime.timezone.utc),
+        os.getpid(),
+        0.0,
+        str(result["reservation_id"]),
+    )
+    result_path = _write_async_result(da, result)
+
+    assert da.harvest() == 0
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+    assert not result_path.exists()
+    markers = list(da.RUNS.glob("*.running"))
+    assert (not markers) if marker_cleared else bool(markers)
+    archives = sorted(da.RECEIPT_ARCHIVE.rglob("*.result.json"))
+    assert archives
+    blocker = json.loads(archives[-1].read_text())
+    assert blocker["reason"] == "remote-metadata-blocked"
+    assert blocker["blocker"]
 
 
 def _contract_hash(tmp_path, task_id):
@@ -566,6 +775,350 @@ def test_harvest_applies_pr_result_and_cleans(tmp_path):
     assert track.per_agent["codex"] == 1
 
 
+def test_remote_harvest_accepts_only_complete_hash_bound_identity(tmp_path):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    _write_async_result(da, result)
+
+    assert da.harvest() == 1
+    task = _board(tmp_path)["T0"]
+    entry = task.dispatch_log[-1]
+    metadata = result["remote_submission"]
+    assert entry.session_id == metadata["provider_run_id"]
+    assert entry.provider_run_id == metadata["provider_run_id"]
+    assert entry.provider_url == metadata["provider_url"]
+    assert entry.base_sha == metadata["base_sha"]
+    assert entry.control_ref == metadata["control_ref"]
+    assert entry.control_ref_kind == metadata["control_ref_kind"]
+    assert entry.control_sha == metadata["control_sha"]
+    assert entry.workflow_id == metadata["workflow_id"]
+    assert entry.workflow_path == metadata["workflow_path"]
+    assert entry.workflow_event == metadata["workflow_event"]
+    assert entry.verification_context_digest == metadata["verification_context_digest"]
+    assert entry.remote_request_id == metadata["remote_request_id"]
+    assert entry.remote_receipt == metadata["remote_receipt"]
+    assert not dispatch_module._REMOTE_SUBMISSION_RECEIPTS
+
+
+def test_remote_preflight_blocker_is_consumed_once_without_run_metadata(tmp_path):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    result["result"] = "__failed_blocked__:control workflow unavailable"
+    result["remote_submission"] = {}
+    result_path = _write_async_result(da, result)
+
+    assert da.harvest() == 1
+    task = _board(tmp_path)["T0"]
+    assert task.status == "failed_blocked"
+    assert task.dispatch_log[-1].status == "failed_blocked"
+    assert task.dispatch_log[-1].output == "control workflow unavailable"
+    assert not result_path.exists()
+    assert da.harvest() == 0
+    assert sum(entry.status == "failed_blocked" for entry in _board(tmp_path)["T0"].dispatch_log) == 1
+
+
+def test_forged_remote_preflight_blocker_cannot_cross_execution_contract(tmp_path):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    board = load_limen_file(tmp_path / "tasks.yaml")
+    board.tasks[0].title = "changed after the worker snapshot"
+    save_limen_file(tmp_path / "tasks.yaml", board)
+    result["result"] = "__failed_blocked__:forged blocker"
+    result["remote_submission"] = {}
+
+    _assert_remote_harvest_blocked(tmp_path, da, result, marker_cleared=False)
+    assert _board(tmp_path)["T0"].status == "dispatched"
+
+
+def test_remote_harvest_rejects_result_run_id_that_differs_from_submission(tmp_path):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    result["result"] = "99"
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+@pytest.mark.parametrize("bad_task_id", [[], {}])
+def test_remote_harvest_blocks_unhashable_task_id_without_board_mutation(tmp_path, bad_task_id):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    result["task_id"] = bad_task_id
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    path = da.RUNS / "00-malformed-remote.result.json"
+    path.write_text(json.dumps(result))
+
+    assert da.harvest() == 0
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+    assert not path.exists()
+    archives = sorted(da.RECEIPT_ARCHIVE.rglob("*.result.json"))
+    blocker = json.loads(archives[-1].read_text())
+    assert blocker["reason"] == "remote-metadata-blocked"
+    assert blocker["blocker"] == "async result task ID is missing or non-string"
+
+
+def test_malformed_remote_task_id_does_not_starve_later_valid_result(tmp_path):
+    da, valid, _receipt = _remote_harvest_fixture(tmp_path)
+    malformed = dict(valid)
+    malformed["task_id"] = []
+    (da.RUNS / "00-malformed-remote.result.json").write_text(json.dumps(malformed))
+    valid_path = _write_async_result(da, valid)
+
+    assert da.harvest() == 1
+    assert not valid_path.exists()
+    assert _board(tmp_path)["T0"].dispatch_log[-1].provider_run_id == "42"
+
+
+@pytest.mark.parametrize(
+    "missing_field",
+    [
+        "provider",
+        "task_id",
+        "repo",
+        "provider_run_id",
+        "provider_url",
+        "base_sha",
+        "control_repo",
+        "control_ref",
+        "control_ref_kind",
+        "control_sha",
+        "workflow_id",
+        "workflow_path",
+        "workflow_event",
+        "verification_context_digest",
+        "remote_state",
+        "remote_request_id",
+        "packet_digest",
+        "remote_receipt",
+    ],
+)
+def test_remote_harvest_rejects_each_incomplete_identity_without_board_mutation(
+    tmp_path,
+    missing_field,
+):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    result["remote_submission"].pop(missing_field)
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+@pytest.mark.parametrize(
+    ("field", "contradiction"),
+    [
+        ("provider", "renamed-actions"),
+        ("task_id", "OTHER"),
+        ("repo", "other/repo"),
+        ("provider_run_id", "43"),
+        ("provider_url", "https://github.com/organvm/limen/actions/runs/43"),
+        ("base_sha", "9" * 40),
+        ("control_repo", "other/control"),
+        ("control_ref", "other"),
+        ("control_ref_kind", "tag"),
+        ("control_sha", "8" * 40),
+        ("workflow_id", 456),
+        ("workflow_path", ".github/workflows/other.yml"),
+        ("workflow_event", "push"),
+        ("verification_context_digest", f"sha256:{'7' * 64}"),
+        ("remote_state", "running"),
+        ("remote_request_id", "6" * 32),
+        ("packet_digest", f"sha256:{'5' * 64}"),
+    ],
+)
+def test_remote_harvest_rejects_each_contradictory_identity_without_board_mutation(
+    tmp_path,
+    field,
+    contradiction,
+):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    result["remote_submission"][field] = contradiction
+    if field == "provider_run_id":
+        result["result"] = contradiction
+    if field == "provider":
+        result["agent"] = contradiction
+    _assert_remote_harvest_blocked(tmp_path, da, result, marker_cleared=field != "provider")
+
+
+@pytest.mark.parametrize(
+    ("section", "field", "contradiction"),
+    [
+        ("request", "control_ref", "other"),
+        ("request", "verification_context_digest", f"sha256:{'4' * 64}"),
+        ("run", "provider_run_id", "43"),
+        ("run", "control_ref_kind", "tag"),
+        ("run", "workflow_event", "push"),
+    ],
+)
+def test_remote_harvest_rejects_internal_request_run_contradictions(
+    tmp_path,
+    section,
+    field,
+    contradiction,
+):
+    da, result, receipt = _remote_harvest_fixture(tmp_path)
+    receipt[section][field] = contradiction
+    _rewrite_remote_receipt(tmp_path, da, result, receipt)
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+def test_remote_harvest_rejects_incomplete_content_addressed_receipt(tmp_path):
+    da, result, receipt = _remote_harvest_fixture(tmp_path)
+    receipt["request"].pop("verification_context_digest")
+    _rewrite_remote_receipt(tmp_path, da, result, receipt)
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+def test_remote_harvest_rejects_receipt_hash_mismatch(tmp_path):
+    da, result, receipt = _remote_harvest_fixture(tmp_path)
+    path = tmp_path / result["remote_submission"]["remote_receipt"]
+    receipt["detail"] = "tampered without content-address update"
+    path.write_bytes(canonical_json(receipt) + b"\n")
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+def test_remote_harvest_rejects_self_consistent_forged_packet_digest(tmp_path):
+    da, result, receipt = _remote_harvest_fixture(tmp_path)
+    forged_packet = f"sha256:{'0' * 64}"
+    forged_request_id = forged_packet.removeprefix("sha256:")[:32]
+    receipt["request"]["packet_digest"] = forged_packet
+    receipt["run"]["request_id"] = forged_request_id
+    result["remote_submission"]["packet_digest"] = forged_packet
+    result["remote_submission"]["remote_request_id"] = forged_request_id
+    _rewrite_remote_receipt(tmp_path, da, result, receipt)
+
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+def test_remote_harvest_rejects_receipt_outside_configured_custody(tmp_path):
+    da, result, receipt = _remote_harvest_fixture(tmp_path)
+    path = tmp_path / f"{hashlib.sha256(canonical_json(receipt)).hexdigest()}.json"
+    path.write_bytes(canonical_json(receipt) + b"\n")
+    result["remote_submission"]["remote_receipt"] = str(path.relative_to(tmp_path))
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+def test_remote_harvest_rejects_hash_valid_receipt_in_sibling_task_custody(tmp_path):
+    da, result, receipt = _remote_harvest_fixture(tmp_path)
+    digest = hashlib.sha256(canonical_json(receipt)).hexdigest()
+    sibling = da.REMOTE_RECEIPT_ROOT / "OTHER-TASK" / f"{digest}.json"
+    sibling.parent.mkdir(parents=True)
+    sibling.write_bytes(canonical_json(receipt) + b"\n")
+    result["remote_submission"]["remote_receipt"] = str(sibling.relative_to(tmp_path))
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+def test_remote_harvest_rejects_symlinked_task_custody_outside_remote_root(tmp_path):
+    da, result, receipt = _remote_harvest_fixture(tmp_path)
+    digest = hashlib.sha256(canonical_json(receipt)).hexdigest()
+    task_root = da.REMOTE_RECEIPT_ROOT / str(result["task_id"])
+    for child in task_root.iterdir():
+        child.unlink()
+    task_root.rmdir()
+    external = tmp_path / "external-task-custody"
+    external.mkdir()
+    (external / f"{digest}.json").write_bytes(canonical_json(receipt) + b"\n")
+    task_root.symlink_to(external, target_is_directory=True)
+
+    _assert_remote_harvest_blocked(tmp_path, da, result)
+
+
+def test_remote_harvest_rejects_stale_result_after_newer_authoritative_reroute(tmp_path):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    task = lf.tasks[0]
+    task.status = "open"
+    task.target_agent = "codex"
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            agent="codex",
+            session_id="manual-reroute",
+            status="open",
+            output="newer authoritative reroute",
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    _assert_remote_harvest_blocked(tmp_path, da, result, marker_cleared=False)
+
+
+def test_remote_harvest_rejects_old_same_agent_result_after_new_reservation(tmp_path):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    task = next(item for item in lf.tasks if item.id == result["task_id"])
+    task.title = "changed verification contract"
+    task.predicate = "python3 scripts/check-other.py"
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            agent="github_actions",
+            session_id=f"async-reserve:{'b' * 32}",
+            status="dispatched",
+            output="newer same-agent reservation",
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    _assert_remote_harvest_blocked(tmp_path, da, result, marker_cleared=False)
+
+
+def test_remote_harvest_rejects_changed_current_contract_even_with_replayed_nonce(tmp_path):
+    da, result, _receipt = _remote_harvest_fixture(tmp_path)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    task = next(item for item in lf.tasks if item.id == result["task_id"])
+    task.title = "changed after reservation"
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    _assert_remote_harvest_blocked(tmp_path, da, result, marker_cleared=False)
+
+
+def test_superseded_worker_never_calls_provider_or_overwrites_new_attempt(tmp_path, monkeypatch):
+    _load(tmp_path, n_open=1, agent="github_actions")
+    old_reservation = f"async-reserve:{'a' * 32}"
+    current_reservation = f"async-reserve:{'b' * 32}"
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    task = lf.tasks[0]
+    task.status = "dispatched"
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=datetime.datetime.now(datetime.timezone.utc),
+            agent="github_actions",
+            session_id=current_reservation,
+            status="dispatched",
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    contract_hash = execution_contract_hash(task)
+
+    worker = _load_worker(tmp_path)
+    worker.RUNS.mkdir(parents=True, exist_ok=True)
+    old_marker = worker._running_marker_path(task.id, "github_actions", old_reservation)
+    new_marker = worker._running_marker_path(task.id, "github_actions", current_reservation)
+    old_marker.write_text("old")
+    new_marker.write_text("new")
+    new_result = worker._result_path(task.id, current_reservation)
+    new_result.write_text("new-attempt-result")
+    monkeypatch.setattr(
+        worker,
+        "call_agent_dispatch",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("stale worker called provider")),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "async-run-one.py",
+            "--agent",
+            "github_actions",
+            "--task-id",
+            task.id,
+            "--reservation-id",
+            old_reservation,
+            "--execution-contract-hash",
+            contract_hash,
+        ],
+    )
+
+    assert worker.main() == 10
+    old_result = json.loads(worker._result_path(task.id, old_reservation).read_text())
+    assert old_result["result"] == "__notask__"
+    assert old_result["validation_failure"]["id"] == "async-execution-claim-owner-mismatch"
+    assert new_result.read_text() == "new-attempt-result"
+    assert not old_marker.exists()
+    assert new_marker.exists()
+
+
 def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     da = _load(tmp_path, n_open=6)
     calls = []
@@ -582,6 +1135,7 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     current = {task.id: task for task in dispatched}
     for call in calls:
         argv = call[0]
+        assert "--reservation-id" in argv
         task_id = argv[argv.index("--task-id") + 1]
         contract_hash = argv[argv.index("--execution-contract-hash") + 1]
         assert contract_hash == execution_contract_hash(current[task_id])
@@ -615,7 +1169,7 @@ def test_marker_failure_keeps_child_owned_machine_lease(tmp_path, monkeypatch):
     payload = json.loads(lease.read_text())
     assert payload["phase"] == "worker-live-marker-failed"
     assert payload["pid"] == os.getpid()
-    assert not da._running_marker_path("T0", "codex").exists()
+    assert not list(da.RUNS.glob("T0__codex*.running"))
     dispatch_module._release_machine_admission("T0")
 
 
@@ -1259,6 +1813,107 @@ def test_reaper_frees_dead_workers_not_live(tmp_path):
     board = _board(tmp_path)
     assert board["DEAD"].status == "open" and board["LIVE"].status == "dispatched"
     assert board["DEAD"].dispatch_log[-1].session_id == "async-reap-stale"
+
+
+def test_nonce_scoped_result_prevents_matching_dead_marker_reap(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    reservation_id = f"async-reserve:{'a' * 32}"
+    reserved_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks.append(
+        Task(
+            id="NONCE-RESULT",
+            title="t",
+            repo="x/y",
+            target_agent="codex",
+            status="dispatched",
+            created=datetime.date.today(),
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=reserved_at,
+                    agent="codex",
+                    session_id=reservation_id,
+                    status="dispatched",
+                )
+            ],
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    da._write_running_marker("NONCE-RESULT", "codex", reserved_at, 999999, 0.0, reservation_id)
+    da._result_path("NONCE-RESULT", reservation_id).write_text(
+        json.dumps(
+            {
+                "task_id": "NONCE-RESULT",
+                "agent": "codex",
+                "reservation_id": reservation_id,
+                "result": True,
+            }
+        )
+    )
+
+    assert da.reap_stale(1200) == []
+    assert _board(tmp_path)["NONCE-RESULT"].status == "dispatched"
+    assert da._running_marker_path("NONCE-RESULT", "codex", reservation_id).exists()
+
+
+def test_old_dead_marker_cannot_reopen_newer_same_agent_reservation(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    old_reservation = f"async-reserve:{'a' * 32}"
+    current_reservation = f"async-reserve:{'b' * 32}"
+    old_at = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=3000)
+    current_at = datetime.datetime.now(datetime.timezone.utc)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks.append(
+        Task(
+            id="NEWER-RESERVATION",
+            title="t",
+            repo="x/y",
+            target_agent="codex",
+            status="dispatched",
+            created=datetime.date.today(),
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=old_at,
+                    agent="codex",
+                    session_id=old_reservation,
+                    status="dispatched",
+                ),
+                DispatchLogEntry(
+                    timestamp=current_at,
+                    agent="codex",
+                    session_id=current_reservation,
+                    status="dispatched",
+                ),
+            ],
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    old_marker = da._running_marker_path("NEWER-RESERVATION", "codex", old_reservation)
+    da._write_running_marker("NEWER-RESERVATION", "codex", old_at, 999999, 0.0, old_reservation)
+
+    assert da.reap_stale(1200) == []
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+    assert not old_marker.exists()
+
+
+def test_inspect_stale_handles_unreadable_marker_without_mutation(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    marker = da.RUNS / "BROKEN__codex.running"
+    marker.write_text("{")
+
+    assert da.inspect_stale(1200) == ["BROKEN"]
+    assert marker.exists()
+
+
+def test_non_object_marker_falls_back_to_filename_and_clears_without_crash(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    marker = da.RUNS / "T0__github_actions.running"
+    marker.write_text("[]")
+
+    assert da._marker_task_agent(marker) == ("T0", "github_actions")
+    da._clear_running_markers("T0")
+    assert not marker.exists()
 
 
 def test_reaper_restores_prior_done_instead_of_reopening(tmp_path):

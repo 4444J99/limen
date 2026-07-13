@@ -21,7 +21,6 @@ import fcntl
 
 from limen import census
 from limen.capacity import (
-    DEFAULT_GITHUB_ACTIONS_WORKFLOW,
     LOCAL_CHECKOUT_AGENTS,
     canonical_agent,
     capacity_census,
@@ -50,6 +49,16 @@ from limen.provider_selection import (
     execution_profile_for,
     paid_service_block_reason,
     select_opencode_model,
+)
+from limen.remote_execution import (
+    GitHubWorkflowAdapter,
+    ReceiptStore,
+    RemoteExecutionError,
+    RemoteLifecycle,
+    discover_adapters,
+    remote_request_from_task,
+    resolve_pushed_sha,
+    verification_context_for_task,
 )
 from limen.model_selection import (  # the shared model vocabulary — also used by the non-bypassable `claude` shim
     _CLAUDE_TIER_ORDER,
@@ -1448,6 +1457,7 @@ _PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4
 # The slow agent run happens OUTSIDE this lock — that's where the parallelism lives.
 _GIT_PLUMBING_LOCK = threading.Lock()
 _MODEL_SELECTION_RECEIPTS: dict[str, dict[str, Any]] = {}
+_REMOTE_SUBMISSION_RECEIPTS: dict[str, dict[str, Any]] = {}
 
 
 def _record_model_selection(
@@ -1480,18 +1490,19 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     agent = canonical_agent(agent)
     if agent == "jules":
         return _call_jules(task, dry_run)
-    # Explicit escape/test hook: when LIMEN_DISPATCH_CMD is set, route EVERY agent through that
-    # stub command instead of the real lane CLIs. Production never sets it (the daemon relies on
-    # the local-lane path below), so this only keeps unit tests hermetic — no real codex/opencode
-    # subprocess blocking on auth/network. (Earlier the local-lane routing bypassed this hook,
-    # which made test_dispatch_limit_and_per_agent_budget invoke the real codex CLI and hang.)
+    if agent == "github_actions":
+        # The attested adapter is part of the security boundary: no command override may bypass
+        # its verification-only and exact-control-identity checks.
+        return _call_remote_adapter(agent, task, dry_run)
+    # Explicit escape/test hook: when LIMEN_DISPATCH_CMD is set, route remaining lanes through
+    # that stub command instead of the real lane CLIs. Production never sets it (the daemon relies
+    # on the local-lane path below), so this only keeps unit tests hermetic — no real codex/opencode
+    # subprocess blocking on auth/network. Guarded Jules and GitHub Actions routes stay above it.
     cmd_override = os.environ.get("LIMEN_DISPATCH_CMD")
     if cmd_override:
         return _run_cmd([cmd_override, agent, _build_prompt(task)], task, dry_run)
     if agent == "copilot":
         return _call_copilot(task, dry_run)
-    if agent == "github_actions":
-        return _call_github_actions(task, dry_run)
     if agent in {"warp", "oz"}:
         return _call_warp_oz(agent, task, dry_run)
     if agent in _CONFIGURED_SERVICE_AGENTS:
@@ -1499,6 +1510,133 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     if agent in _LOCAL_AGENTS:
         return _call_local_agent(agent, task, dry_run)
     return _run_cmd(["agent-dispatch", agent, _build_prompt(task)], task, dry_run)
+
+
+def _remote_receipt_store() -> ReceiptStore:
+    root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+    configured = os.environ.get("LIMEN_REMOTE_RECEIPT_ROOT")
+    return ReceiptStore(Path(configured).expanduser() if configured else root / "logs" / "remote-execution")
+
+
+def _receipt_path_for_board(path: Path) -> str:
+    root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+    try:
+        return str(path.resolve().relative_to(root.resolve()))
+    except ValueError:
+        return str(path)
+
+
+def _authoritative_remote_verification(task: Task) -> tuple[Task, dict[str, object]]:
+    root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+    tasks_path = Path(os.environ.get("LIMEN_TASKS", str(root / "tasks.yaml"))).expanduser()
+    if not tasks_path.is_file():
+        raise RemoteExecutionError("authoritative task board is unavailable for verification-only dispatch")
+    board = load_limen_file(tasks_path)
+    by_id = {item.id: item for item in board.tasks}
+    authoritative = by_id.get(task.id)
+    if authoritative is None:
+        raise RemoteExecutionError("verification child is absent from the authoritative task board")
+    fields = ("type", "repo", "target_agent", "predicate", "receipt_target", "labels", "depends_on")
+    if any(getattr(authoritative, field) != getattr(task, field) for field in fields):
+        raise RemoteExecutionError("verification child changed on the authoritative board before dispatch")
+    return authoritative, verification_context_for_task(authoritative, by_id)
+
+
+def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
+    """Submit only the deterministic GitHub Actions verification lane.
+
+    Native AI providers keep their established guarded paths. This avoids bypassing Jules prompt
+    shaping, Copilot issue identity, paid-service/Fable policy, or provider model validation.
+    """
+
+    try:
+        remote_task, verification_context = _authoritative_remote_verification(task)
+    except (RemoteExecutionError, ValueError, OSError) as exc:
+        return _blocked_result(f"remote {agent} verification-only gate blocked: {str(exc)[:300]}")
+    adapters, _capabilities = discover_adapters()
+    adapter = adapters.get(agent)
+    if not isinstance(adapter, GitHubWorkflowAdapter):
+        return _blocked_result("GitHub Actions auth or deterministic worker workflow is unavailable")
+    repo = _remote_repo_arg(remote_task)
+    if repo is None:
+        return _blocked_result(f"remote lane needs GitHub owner/repo, got {remote_task.repo or '(no repo)'}")
+    instruction = f"Verify completed implementation for task {remote_task.id}; do not modify code: {remote_task.title}"
+    if dry_run:
+        try:
+            preview = remote_request_from_task(
+                remote_task,
+                agent,
+                base_sha="0" * 40,
+                control_repo=adapter.control_repo,
+                control_ref=adapter.control_ref,
+                control_ref_kind=adapter.control_ref_kind,
+                control_sha=adapter.control_sha,
+                workflow_id=adapter.workflow_id,
+                workflow_path=adapter.workflow_path,
+                verification_context=verification_context,
+                instruction=instruction,
+                repo=repo,
+                execution_profile=execution_profile_for(remote_task).as_dict(),
+            )
+            adapter.preflight(preview)
+            adapter.intent(preview)
+        except (RemoteExecutionError, ValueError) as exc:
+            return _blocked_result(f"remote {agent} packet blocked: {str(exc)[:300]}")
+        print(
+            f"  would remote-verify {remote_task.id} via {agent} from exact pushed {repo}@<resolved-sha> "
+            f"using control {adapter.control_repo}:{adapter.control_ref_kind}:{adapter.control_ref}"
+            f"@{adapter.control_sha} workflow {adapter.workflow_id}"
+        )
+        return True
+    try:
+        base_ref = os.environ.get("LIMEN_REMOTE_BASE_REF", "HEAD")
+        base_sha = resolve_pushed_sha(
+            repo,
+            ref=base_ref,
+            gh=os.environ.get("LIMEN_GITHUB_ACTIONS_BIN", "gh"),
+        )
+        request = remote_request_from_task(
+            remote_task,
+            agent,
+            base_sha=base_sha,
+            control_repo=adapter.control_repo,
+            control_ref=adapter.control_ref,
+            control_ref_kind=adapter.control_ref_kind,
+            control_sha=adapter.control_sha,
+            workflow_id=adapter.workflow_id,
+            workflow_path=adapter.workflow_path,
+            verification_context=verification_context,
+            instruction=instruction,
+            repo=repo,
+            execution_profile=execution_profile_for(remote_task).as_dict(),
+        )
+        run, receipt_path = RemoteLifecycle(adapter, _remote_receipt_store()).submit(request)
+    except (RemoteExecutionError, ValueError, OSError) as exc:
+        reason = f"remote {agent} submission blocked: {str(exc)[:300]}"
+        print(f"  BLOCKED {task.id}: {reason}")
+        return _blocked_result(reason)
+    _REMOTE_SUBMISSION_RECEIPTS[task.id] = {
+        "provider": request.provider,
+        "task_id": request.task_id,
+        "repo": request.repo,
+        "provider_run_id": run.provider_run_id,
+        "provider_url": run.url,
+        "base_sha": run.base_sha,
+        "control_repo": run.control_repo,
+        "control_ref": run.control_ref,
+        "control_ref_kind": run.control_ref_kind,
+        "control_sha": run.control_sha,
+        "workflow_id": run.workflow_id,
+        "workflow_path": run.workflow_path,
+        "workflow_event": run.workflow_event,
+        "verification_context_digest": request.verification_context_digest,
+        "remote_state": run.state.value,
+        "remote_request_id": run.request_id,
+        "packet_digest": request.packet_digest,
+        "remote_receipt": _receipt_path_for_board(receipt_path),
+    }
+    print(f"  remote submitted: {task.id} -> {agent} run {run.provider_run_id}")
+    return run.provider_run_id
 
 
 _FLAME_CACHE: dict[str, str] = {}
@@ -1776,31 +1914,7 @@ def _call_copilot(task: Task, dry_run: bool) -> bool | str:
 
 
 def _call_github_actions(task: Task, dry_run: bool) -> bool | str:
-    if not task.repo:
-        print(f"  SKIP {task.id}: github_actions lane needs task.repo")
-        return False
-    gh = os.environ.get("LIMEN_GITHUB_ACTIONS_BIN", "gh")
-    workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", DEFAULT_GITHUB_ACTIONS_WORKFLOW)
-    cmd = [
-        gh,
-        "workflow",
-        "run",
-        workflow,
-        "--repo",
-        task.repo,
-        "-f",
-        f"task_id={task.id}",
-        "-f",
-        f"repo={task.repo}",
-        "-f",
-        f"title={task.title}",
-        "-f",
-        f"prompt={_build_prompt(task)}",
-    ]
-    result = _run_cmd(cmd, task, dry_run)
-    if result is True and not dry_run:
-        return f"github-actions:{task.repo}:{workflow}"
-    return result
+    return _call_remote_adapter("github_actions", task, dry_run)
 
 
 def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
@@ -2718,6 +2832,14 @@ def _agent_timed_out_on_task(agent: str, task: Task) -> bool:
 def agent_can_run_task(agent: str, task: Task) -> bool:
     agent = canonical_agent(agent)
     if _agent_timed_out_on_task(agent, task):
+        return False
+    if agent == "github_actions" and not (
+        str(task.type or "").lower() == "verification"
+        and "mode:verification-only" in (task.labels or [])
+        and bool(task.depends_on)
+    ):
+        # This lane is an isolated verifier, never an implementation/build/code executor.  The
+        # targeted call seam performs the stronger authoritative-board + parent-custody check.
         return False
     if agent == "ollama" and not _local_floor_allowed_for_task(task):
         return False
@@ -4041,6 +4163,7 @@ def _commit_dispatch_results(
                 if contract and not ft.predicate and not ft.receipt_target:
                     ft.predicate, ft.receipt_target = contract
                 _apply_result(ft, agent, res, now, ftrack)
+                _REMOTE_SUBMISSION_RECEIPTS.pop(tid, None)
         save_limen_file(tasks_path, fresh)
 
 
@@ -4284,6 +4407,21 @@ def _apply_result(
         entry.selected_model = selection.get("selected_model")
         entry.selection_source = selection.get("selection_source")
         entry.catalog_hash = selection.get("catalog_hash")
+    if remote := _REMOTE_SUBMISSION_RECEIPTS.get(task.id):
+        entry.provider_run_id = remote.get("provider_run_id")
+        entry.provider_url = remote.get("provider_url")
+        entry.base_sha = remote.get("base_sha")
+        entry.control_repo = remote.get("control_repo")
+        entry.control_ref = remote.get("control_ref")
+        entry.control_ref_kind = remote.get("control_ref_kind")
+        entry.control_sha = remote.get("control_sha")
+        entry.workflow_id = remote.get("workflow_id")
+        entry.workflow_path = remote.get("workflow_path")
+        entry.workflow_event = remote.get("workflow_event")
+        entry.verification_context_digest = remote.get("verification_context_digest")
+        entry.remote_state = remote.get("remote_state")
+        entry.remote_request_id = remote.get("remote_request_id")
+        entry.remote_receipt = remote.get("remote_receipt")
     task.updated = now
     task.dispatch_log.append(entry)
 
@@ -4714,6 +4852,7 @@ def dispatch_parallel(
             ft = fid.get(tid)
             if ft is not None:
                 _apply_result(ft, agent, res, now, ftrack)
+                _REMOTE_SUBMISSION_RECEIPTS.pop(tid, None)
             if res == _RATELIMIT:
                 n_rl += 1
             elif res == _NOOP:

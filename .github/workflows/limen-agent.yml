@@ -1,0 +1,203 @@
+name: Limen Remote Deterministic Worker
+run-name: remote:${{ inputs.request_id }}:${{ inputs.task_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: Stable content-addressed Limen attempt ID
+        required: true
+        type: string
+      provider:
+        description: Runtime-discovered lane identifier
+        required: true
+        type: string
+      task_id:
+        description: Limen task ID
+        required: true
+        type: string
+      target_repo:
+        description: GitHub owner/name to verify
+        required: true
+        type: string
+      base_sha:
+        description: Exact pushed commit to check out
+        required: true
+        type: string
+      control_repo:
+        description: Exact repository owning trusted verifier control code
+        required: true
+        type: string
+      control_ref:
+        description: Validated branch or tag used by workflow-dispatch
+        required: true
+        type: string
+      control_ref_kind:
+        description: Whether the dispatch ref is a branch or tag
+        required: true
+        type: string
+      control_sha:
+        description: Exact control commit containing this workflow and verifier
+        required: true
+        type: string
+      workflow_id:
+        description: Exact GitHub workflow database identity
+        required: true
+        type: string
+      workflow_path:
+        description: Exact workflow path discovered from GitHub
+        required: true
+        type: string
+      verification_context_digest:
+        description: Digest of verifier-child and terminal implementation-parent custody
+        required: true
+        type: string
+      predicate:
+        description: Strict verifier command parsed without a shell
+        required: true
+        type: string
+      instruction_digest:
+        description: Digest of the redacted instruction retained by the control plane
+        required: true
+        type: string
+      receipt_target:
+        description: Exact durable receipt identity
+        required: true
+        type: string
+      custody_mode:
+        description: Result custody contract
+        required: true
+        type: string
+      inputs_json:
+        description: Redacted content-addressed input references
+        required: true
+        type: string
+      execution_profile_json:
+        description: Provider-neutral execution profile
+        required: true
+        type: string
+      packet_digest:
+        description: Digest binding every execution input
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-compute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LIMEN_REQUEST_ID: ${{ inputs.request_id }}
+      LIMEN_PROVIDER: ${{ inputs.provider }}
+      LIMEN_TASK_ID: ${{ inputs.task_id }}
+      LIMEN_TARGET_REPO: ${{ inputs.target_repo }}
+      LIMEN_BASE_SHA: ${{ inputs.base_sha }}
+      LIMEN_CONTROL_REPO: ${{ inputs.control_repo }}
+      LIMEN_CONTROL_REF: ${{ inputs.control_ref }}
+      LIMEN_CONTROL_REF_KIND: ${{ inputs.control_ref_kind }}
+      LIMEN_CONTROL_SHA: ${{ inputs.control_sha }}
+      LIMEN_WORKFLOW_ID: ${{ inputs.workflow_id }}
+      LIMEN_WORKFLOW_PATH: ${{ inputs.workflow_path }}
+      LIMEN_WORKFLOW_EVENT: workflow_dispatch
+      LIMEN_VERIFICATION_CONTEXT_DIGEST: ${{ inputs.verification_context_digest }}
+      LIMEN_PREDICATE: ${{ inputs.predicate }}
+      LIMEN_INSTRUCTION_DIGEST: ${{ inputs.instruction_digest }}
+      LIMEN_RECEIPT_TARGET: ${{ inputs.receipt_target }}
+      LIMEN_CUSTODY_MODE: ${{ inputs.custody_mode }}
+      LIMEN_INPUTS_JSON: ${{ inputs.inputs_json }}
+      LIMEN_EXECUTION_PROFILE_JSON: ${{ inputs.execution_profile_json }}
+      LIMEN_PACKET_DIGEST: ${{ inputs.packet_digest }}
+      LIMEN_OBSERVED_CONTROL_REPO: ${{ github.repository }}
+      LIMEN_OBSERVED_CONTROL_REF: ${{ github.ref_name }}
+      LIMEN_OBSERVED_CONTROL_REF_KIND: ${{ github.ref_type }}
+      LIMEN_OBSERVED_WORKFLOW_EVENT: ${{ github.event_name }}
+      LIMEN_OBSERVED_WORKFLOW_REF: ${{ github.workflow_ref }}
+      LIMEN_OBSERVED_WORKFLOW_SHA: ${{ github.workflow_sha }}
+      LIMEN_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      LIMEN_SANDBOX_IMAGE: python@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280
+      LIMEN_SANDBOX_SECRET_SENTINEL: host-secret-must-not-cross
+    steps:
+      - name: Check out pinned control code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          repository: ${{ inputs.control_repo }}
+          ref: ${{ inputs.control_sha }}
+          path: .limen-control
+          persist-credentials: false
+
+      - name: Check out exact pushed target
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          repository: ${{ inputs.target_repo }}
+          ref: ${{ inputs.base_sha }}
+          path: target
+          persist-credentials: false
+
+      - name: Resolve exact allowlisted sandbox image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker version --format '{{.Server.Version}}'
+          docker pull "$LIMEN_SANDBOX_IMAGE"
+
+      - name: Execute attested verifier in the verification sandbox
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .limen-control/cli/src/limen/remote_predicate.py \
+            --request-id "$LIMEN_REQUEST_ID" \
+            --provider "$LIMEN_PROVIDER" \
+            --task-id "$LIMEN_TASK_ID" \
+            --repo "$LIMEN_TARGET_REPO" \
+            --control-repo "$LIMEN_CONTROL_REPO" \
+            --control-ref "$LIMEN_CONTROL_REF" \
+            --control-ref-kind "$LIMEN_CONTROL_REF_KIND" \
+            --base-sha "$LIMEN_BASE_SHA" \
+            --control-sha "$LIMEN_CONTROL_SHA" \
+            --workflow-id "$LIMEN_WORKFLOW_ID" \
+            --workflow-path "$LIMEN_WORKFLOW_PATH" \
+            --workflow-event "$LIMEN_WORKFLOW_EVENT" \
+            --observed-control-repo "$LIMEN_OBSERVED_CONTROL_REPO" \
+            --observed-control-ref "$LIMEN_OBSERVED_CONTROL_REF" \
+            --observed-control-ref-kind "$LIMEN_OBSERVED_CONTROL_REF_KIND" \
+            --observed-workflow-event "$LIMEN_OBSERVED_WORKFLOW_EVENT" \
+            --observed-workflow-ref "$LIMEN_OBSERVED_WORKFLOW_REF" \
+            --observed-workflow-sha "$LIMEN_OBSERVED_WORKFLOW_SHA" \
+            --verification-context-digest "$LIMEN_VERIFICATION_CONTEXT_DIGEST" \
+            --predicate "$LIMEN_PREDICATE" \
+            --instruction-digest "$LIMEN_INSTRUCTION_DIGEST" \
+            --receipt-target "$LIMEN_RECEIPT_TARGET" \
+            --custody-mode "$LIMEN_CUSTODY_MODE" \
+            --inputs-json "$LIMEN_INPUTS_JSON" \
+            --execution-profile-json "$LIMEN_EXECUTION_PROFILE_JSON" \
+            --packet-digest "$LIMEN_PACKET_DIGEST" \
+            --run-url "$LIMEN_RUN_URL" \
+            --cwd target \
+            --control-cwd .limen-control \
+            --output receipt.json
+
+      - name: Upload counts-only receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0 # v7
+        with:
+          name: remote-execution-receipt
+          path: receipt.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Reflect attested predicate result
+        if: always()
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(Path("receipt.json").read_text())
+          if (
+              int(receipt["predicate_exit_code"]) != 0
+              or receipt["workspace_clean"] is not True
+              or receipt["delta_safe"] is not True
+          ):
+              raise SystemExit(1)

@@ -33,6 +33,22 @@ class DispatchLogEntry(BaseModel):
     selected_model: str | None = None
     selection_source: str | None = None
     catalog_hash: str | None = None
+    # Provider-neutral remote lifecycle.  Submission is only ``dispatched``; these fields make the
+    # exact off-box run recoverable without interpreting a provider-shaped session string.
+    provider_run_id: str | None = None
+    provider_url: str | None = None
+    base_sha: str | None = None
+    control_repo: str | None = None
+    control_ref: str | None = None
+    control_ref_kind: str | None = None
+    control_sha: str | None = None
+    workflow_id: int | None = None
+    workflow_path: str | None = None
+    workflow_event: str | None = None
+    verification_context_digest: str | None = None
+    remote_state: str | None = None
+    remote_request_id: str | None = None
+    remote_receipt: str | None = None
     output: str | None = None
 
     @field_validator("status")

@@ -46,12 +46,21 @@ from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
+from limen.provider_selection import execution_profile_for  # noqa: E402
+from limen.remote_execution import (  # noqa: E402
+    RemoteExecutionError,
+    validate_remote_submission_harvest,
+    verification_context_for_task,
+)
+from limen.remote_predicate import canonical_json, digest_bytes, digest_text  # noqa: E402
 from limen.dispatch import (  # noqa: E402
     _apply_result,
+    _REMOTE_SUBMISSION_RECEIPTS,
     _deps_met,
     _dispatchable,
     _down_lanes,
     _has_done_transition,
+    _is_blocked_result,
     _queue_lock,
     _reset_budget_if_needed,
     _restore_done_status,
@@ -80,6 +89,9 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 RUNS = ROOT / "logs" / "async-runs"
 RECEIPT_ARCHIVE = ROOT / ".limen-private" / "async-runs" / "archive"
+REMOTE_RECEIPT_ROOT = Path(
+    os.environ.get("LIMEN_REMOTE_RECEIPT_ROOT", str(ROOT / "logs" / "remote-execution"))
+).expanduser()
 WORKER = ROOT / "scripts" / "async-run-one.py"
 _TOKEN_RE = re.compile(r"(github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{12,})")
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
@@ -241,7 +253,8 @@ def _marker_task_agent(marker: Path) -> tuple[str, str]:
                 return task_id, agent
     except (OSError, ValueError):
         pass
-    return marker.name[: -len(".running")].rsplit("__", 1)
+    task_id, agent = marker.name[: -len(".running")].rsplit("__", 1)
+    return task_id, agent
 
 
 def _result_task_id(result_file: Path) -> str:
@@ -407,6 +420,7 @@ def _archive_result_receipt(
     parsed: object | None,
     reason: str,
     parse_error: str | None = None,
+    blocker: str | None = None,
 ) -> Path:
     day_dir = RECEIPT_ARCHIVE / now.strftime("%Y-%m-%d")
     day_dir.mkdir(parents=True, exist_ok=True)
@@ -432,6 +446,8 @@ def _archive_result_receipt(
     if parse_error:
         archive["parse_error"] = _redact_receipt_value(parse_error)
         archive["raw_preview"] = _redact_receipt_value(raw.decode("utf-8", errors="replace"))
+    if blocker:
+        archive["blocker"] = _redact_receipt_value(blocker)
     out.write_text(json.dumps(archive, indent=2, sort_keys=True) + "\n")
     return out
 
@@ -480,6 +496,21 @@ def harvest() -> int:
                 rf.unlink(missing_ok=True)
                 continue
             task_id = data.get("task_id")
+            remote_submission = data.get("remote_submission")
+            remote_hint = data.get("agent") == "github_actions" or (
+                remote_submission is not None and remote_submission != {}
+            )
+            if not isinstance(task_id, str) or not task_id:
+                _archive_result_receipt(
+                    rf,
+                    raw,
+                    now,
+                    parsed=data,
+                    reason="remote-metadata-blocked" if remote_hint else "harvest-fenced",
+                    blocker="async result task ID is missing or non-string" if remote_hint else None,
+                )
+                rf.unlink(missing_ok=True)
+                continue
             t = byid.get(task_id) if isinstance(task_id, str) else None
             expected_hash = data.get("execution_contract_hash")
             agent = data.get("agent")
@@ -531,9 +562,73 @@ def harvest() -> int:
                     and last.agent == agent
                 )
 
+            authoritative_worker_receipt = custody_ok
+            remote_blocker: str | None = None
+            validated_remote: dict[str, object] | None = None
+            last = t.dispatch_log[-1] if t is not None and t.dispatch_log else None
+            requires_remote_identity = remote_hint or "github_actions" in {
+                str(t.target_agent if t is not None else ""),
+                str(last.agent if last is not None else ""),
+            }
+            result_value = data.get("result")
+            remote_preflight_blocked = bool(
+                custody_ok
+                and requires_remote_identity
+                and isinstance(result_value, (bool, str))
+                and _is_blocked_result(result_value)
+                and (remote_submission is None or remote_submission == {})
+            )
+            if custody_ok and requires_remote_identity and not remote_preflight_blocked:
+                try:
+                    if (
+                        last is None
+                        or not isinstance(reservation_id, str)
+                        or not _ASYNC_RESERVATION_RE.fullmatch(reservation_id)
+                        or last.session_id != reservation_id
+                        or last.agent != agent
+                    ):
+                        raise RemoteExecutionError(
+                            "remote async result no longer matches the current authoritative reservation"
+                        )
+                    if t is None or not t.predicate or not t.receipt_target:
+                        raise RemoteExecutionError("current remote task contract is incomplete")
+                    current_context = verification_context_for_task(t, byid)
+                    execution_profile = execution_profile_for(t).as_dict()
+                    expected_request_contract = {
+                        "predicate_digest": digest_text(t.predicate.strip()),
+                        "instruction_digest": digest_text(
+                            f"Verify completed implementation for task {t.id}; do not modify code: {t.title}"
+                        ),
+                        "receipt_target": t.receipt_target,
+                        "custody_mode": "artifact",
+                        "inputs": [],
+                        "execution_profile": execution_profile,
+                        "execution_profile_digest": digest_bytes(canonical_json(execution_profile)),
+                        "verification_context_digest": digest_bytes(canonical_json(current_context)),
+                    }
+                    validated_remote = validate_remote_submission_harvest(
+                        remote_submission,
+                        result=data.get("result"),
+                        agent=agent,
+                        expected_agent=last.agent,
+                        expected_request_contract=expected_request_contract,
+                        task_id=t.id,
+                        task_repo=t.repo,
+                        root=ROOT,
+                        receipt_root=REMOTE_RECEIPT_ROOT,
+                    )
+                except (RemoteExecutionError, TypeError, ValueError) as exc:
+                    custody_ok = False
+                    remote_blocker = str(exc)
+
             if custody_ok:
                 if data["result"] != "__notask__":
-                    _apply_result(t, agent, data["result"], now, track, charge_budget=False)
+                    if validated_remote is not None:
+                        _REMOTE_SUBMISSION_RECEIPTS[task_id] = validated_remote
+                    try:
+                        _apply_result(t, agent, data["result"], now, track, charge_budget=False)
+                    finally:
+                        _REMOTE_SUBMISSION_RECEIPTS.pop(task_id, None)
                     applied += 1
                 _clear_running_markers(
                     task_id,
@@ -541,10 +636,24 @@ def harvest() -> int:
                 )
                 archive_reason = "harvested"
             else:
+                _REMOTE_SUBMISSION_RECEIPTS.pop(task_id, None)
                 # A receipt is untrusted input.  Task id alone is never custody: a stale worker or
                 # forged/legacy receipt must not mutate (or clear the marker of) a changed claim.
-                archive_reason = "harvest-fenced"
-            _archive_result_receipt(rf, raw, now, parsed=data, reason=archive_reason)
+                if requires_remote_identity:
+                    if authoritative_worker_receipt and isinstance(reservation_id, str):
+                        _clear_running_markers(task_id, reservation_id)
+                    archive_reason = "remote-metadata-blocked"
+                    remote_blocker = remote_blocker or "remote async result failed authoritative execution custody"
+                else:
+                    archive_reason = "harvest-fenced"
+            _archive_result_receipt(
+                rf,
+                raw,
+                now,
+                parsed=data,
+                reason=archive_reason,
+                blocker=remote_blocker,
+            )
             rf.unlink(missing_ok=True)
         if applied:
             save_limen_file(TASKS, lf)
