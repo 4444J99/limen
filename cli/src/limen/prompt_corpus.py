@@ -2609,6 +2609,7 @@ _PROMPT_AUTHORITY_HASH_FIELDS = (
     "semantic",
     "policy",
     "source_cursor",
+    "source_families",
     "source_manifest",
     "all_source_manifest",
     "source_units",
@@ -2626,6 +2627,7 @@ _PUBLIC_SCOPE_LABEL = re.compile(r"(?:all|fixture|unknown|partial:all|(?:partial
 _PUBLIC_SCOPE_ALIAS = re.compile(r"scope-[0-9a-f]{16}")
 _PUBLIC_SOURCE_ALIAS = re.compile(r"source-[0-9a-f]{16}")
 _PUBLIC_SOURCE_FAMILY_LABELS: frozenset[str] | None = None
+_PROMPT_AUTHORITY_ALIAS_BLOCKER_REASONS: tuple[str, ...] | None = None
 
 
 def _public_scope_label(value: Any) -> str:
@@ -2687,6 +2689,34 @@ def _public_source_family_label_valid(value: Any) -> bool:
             or _PUBLIC_SOURCE_ALIAS.fullmatch(value) is not None
         )
     )
+
+
+def _prompt_authority_alias_blocker_reasons() -> tuple[str, ...]:
+    """Return a fixed, contract-owned public reason taxonomy plus a safe overflow row."""
+
+    global _PROMPT_AUTHORITY_ALIAS_BLOCKER_REASONS
+    if _PROMPT_AUTHORITY_ALIAS_BLOCKER_REASONS is None:
+        contract = current_source_adapter_contract()
+        reasons = tuple(
+            sorted(value for value in (contract.get("alias_blocker_reasons") or []) if isinstance(value, str))
+        )
+        _PROMPT_AUTHORITY_ALIAS_BLOCKER_REASONS = (*reasons, "other")
+    return _PROMPT_AUTHORITY_ALIAS_BLOCKER_REASONS
+
+
+def _prompt_authority_alias_blocker_counts(value: Any) -> dict[str, int]:
+    """Collapse alias blockers into the fixed public taxonomy without leaking labels."""
+
+    reasons = _prompt_authority_alias_blocker_reasons()
+    known = set(reasons) - {"other"}
+    counts = {reason: 0 for reason in reasons}
+    if not isinstance(value, dict):
+        return counts
+    for raw_reason, raw_count in value.items():
+        reason = str(raw_reason)
+        count = _int_or_zero(raw_count)
+        counts[reason if reason in known else "other"] += count
+    return counts
 
 
 def _public_digest(value: Any) -> str | None:
@@ -2776,26 +2806,45 @@ def _prompt_authority_ready(
     scope: Any,
     totals: Any,
     hashes: Any,
+    source_alias_blocker_counts: Any,
+    public_projection_digest: Any,
 ) -> bool:
     """Derive the authority verdict from complete, public-safe evidence."""
 
-    if not isinstance(scope, dict) or not isinstance(totals, dict) or not isinstance(hashes, dict):
+    if (
+        not isinstance(scope, dict)
+        or not isinstance(totals, dict)
+        or not isinstance(hashes, dict)
+        or not isinstance(source_alias_blocker_counts, dict)
+    ):
         return False
     zero_fields = ("pending", "errors", "unsupported", "unresolved", "adapter_gaps", "validation_errors")
-    if any(not _nonnegative_exact_int(totals.get(field)) for field in zero_fields):
+    numeric_fields = (*zero_fields, "source_units", "converged", "excluded", "adapted")
+    if any(not _nonnegative_exact_int(totals.get(field)) for field in numeric_fields):
         return False
+    current_contract = _semantic_source_adapter_contract(current_source_adapter_contract())
     return bool(
         validation_ok
         and scope.get("scope") == "all"
         and scope.get("target_scope") == "all"
         and scope.get("all_baseline_complete") is True
+        and scope.get("scanner_version") == current_contract.get("scanner_version")
         and not any(totals.get(field) for field in zero_fields)
+        and not any(source_alias_blocker_counts.values())
+        and _public_digest(public_projection_digest) is not None
         and all(_public_digest(hashes.get(field)) is not None for field in _PROMPT_AUTHORITY_REQUIRED_HASH_FIELDS)
+        and hashes.get("source_adapter_contract") == current_contract.get("digest")
         and hashes.get("source_manifest") == hashes.get("all_source_manifest")
+        and totals.get("source_units") == totals.get("converged", 0) + totals.get("excluded", 0)
+        and totals.get("adapted", 0) <= totals.get("converged", 0)
     )
 
 
-def prompt_authority_seal(snapshot: dict[str, Any]) -> dict[str, Any]:
+def prompt_authority_seal(
+    snapshot: dict[str, Any],
+    *,
+    public: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Build a deterministic counts/hash-only public authority receipt."""
 
     raw_scope = snapshot.get("source_scope")
@@ -2809,6 +2858,10 @@ def prompt_authority_seal(snapshot: dict[str, Any]) -> dict[str, Any]:
         source_error_reasons[_prompt_authority_error_reason(error)] += 1
 
     source_families, family_overflow = _prompt_authority_source_families(scope.get("source_families"))
+    source_family_totals = {
+        field: sum(counts[field] for counts in source_families.values()) for field in _PROMPT_AUTHORITY_FAMILY_FIELDS
+    }
+    source_alias_blocker_counts = _prompt_authority_alias_blocker_counts(scope.get("source_alias_blocker_counts"))
     raw_gaps = scope.get("adapter_gaps")
     adapter_gaps = (
         sorted({_public_source_family_label(value) for value in raw_gaps})
@@ -2826,6 +2879,7 @@ def prompt_authority_seal(snapshot: dict[str, Any]) -> dict[str, Any]:
     target_scope = _public_scope_label(scope.get("target_scope"))
     totals = {
         "source_units": _int_or_zero(scope.get("source_unit_count")),
+        "converged": source_family_totals["converged"],
         "pending": _int_or_zero(scope.get("pending_files")),
         "errors": len(source_errors),
         "unsupported": _int_or_zero(scope.get("unsupported_source_count")),
@@ -2839,6 +2893,12 @@ def prompt_authority_seal(snapshot: dict[str, Any]) -> dict[str, Any]:
         "semantic": _public_digest(snapshot.get("semantic_digest")),
         "policy": _public_digest(snapshot.get("policy_digest")),
         "source_cursor": _public_digest(snapshot.get("source_cursor_digest")),
+        "source_families": digest(
+            {
+                "families": source_families,
+                "overflow": family_overflow,
+            }
+        ),
         "source_manifest": _public_digest(scope.get("source_manifest_digest")),
         "all_source_manifest": _public_digest(scope.get("all_source_manifest_digest")),
         "source_units": _public_digest(scope.get("source_units_digest")),
@@ -2856,17 +2916,23 @@ def prompt_authority_seal(snapshot: dict[str, Any]) -> dict[str, Any]:
         "scope": scope_label,
         "target_scope": target_scope,
         "all_baseline_complete": scope.get("all_baseline_complete") is True,
+        "scanner_version": _int_or_zero(scope.get("scanner_version")),
         "horizon_days": (
             scope.get("horizon_days")
             if isinstance(scope.get("horizon_days"), int) and not isinstance(scope.get("horizon_days"), bool)
             else None
         ),
     }
+    public_projection_digest = _public_digest(
+        (public if isinstance(public, dict) else public_projection(snapshot)).get("projection_digest")
+    )
     authority_ready = _prompt_authority_ready(
         validation_ok=validation_ok,
         scope=seal_scope,
         totals=totals,
         hashes=hashes,
+        source_alias_blocker_counts=source_alias_blocker_counts,
+        public_projection_digest=public_projection_digest,
     )
     material: dict[str, Any] = {
         "schema": PROMPT_AUTHORITY_SEAL_SCHEMA,
@@ -2879,7 +2945,9 @@ def prompt_authority_seal(snapshot: dict[str, Any]) -> dict[str, Any]:
         "source_families": source_families,
         "source_family_overflow": family_overflow,
         "source_error_reason_counts": source_error_reasons,
+        "source_alias_blocker_counts": source_alias_blocker_counts,
         "adapter_gaps_digest": digest(adapter_gaps),
+        "public_projection_digest": public_projection_digest,
         "hashes": hashes,
     }
     material["content_hash"] = digest(material)
@@ -2921,7 +2989,9 @@ def _prompt_authority_seal_schema_errors(seal: Any) -> list[str]:
         "source_families",
         "source_family_overflow",
         "source_error_reason_counts",
+        "source_alias_blocker_counts",
         "adapter_gaps_digest",
+        "public_projection_digest",
         "hashes",
         "content_hash",
     }
@@ -2929,7 +2999,10 @@ def _prompt_authority_seal_schema_errors(seal: Any) -> list[str]:
         errors.append("seal fields do not match the fixed schema")
     if seal.get("schema") != PROMPT_AUTHORITY_SEAL_SCHEMA:
         errors.append("seal schema is stale")
-    if seal.get("schema_version") != PROMPT_AUTHORITY_SEAL_SCHEMA_VERSION:
+    if (
+        not _nonnegative_exact_int(seal.get("schema_version"))
+        or seal.get("schema_version") != PROMPT_AUTHORITY_SEAL_SCHEMA_VERSION
+    ):
         errors.append("seal schema version is stale")
     if not isinstance(seal.get("authority_ready"), bool):
         errors.append("seal authority verdict must be boolean")
@@ -2937,7 +3010,7 @@ def _prompt_authority_seal_schema_errors(seal: Any) -> list[str]:
         errors.append("seal validation verdict must be boolean")
 
     scope = seal.get("scope")
-    expected_scope = {"scope", "target_scope", "all_baseline_complete", "horizon_days"}
+    expected_scope = {"scope", "target_scope", "all_baseline_complete", "scanner_version", "horizon_days"}
     if not isinstance(scope, dict) or set(scope) != expected_scope:
         errors.append("seal scope is malformed")
     else:
@@ -2945,6 +3018,8 @@ def _prompt_authority_seal_schema_errors(seal: Any) -> list[str]:
             errors.append("seal scope labels are unsafe")
         if not isinstance(scope.get("all_baseline_complete"), bool):
             errors.append("seal baseline verdict must be boolean")
+        if not _nonnegative_exact_int(scope.get("scanner_version")):
+            errors.append("seal scanner version must be a non-negative integer")
         horizon = scope.get("horizon_days")
         if horizon is not None and (isinstance(horizon, bool) or not isinstance(horizon, int) or horizon < 0):
             errors.append("seal horizon must be a non-negative integer or null")
@@ -2952,6 +3027,7 @@ def _prompt_authority_seal_schema_errors(seal: Any) -> list[str]:
     totals = seal.get("totals")
     expected_totals = {
         "source_units",
+        "converged",
         "pending",
         "errors",
         "unsupported",
@@ -3013,9 +3089,18 @@ def _prompt_authority_seal_schema_errors(seal: Any) -> list[str]:
         if sum(reasons.values()) != totals.get("errors"):
             errors.append("seal source error reasons do not match the error total")
 
-    if seal.get("validation_ok") is True and isinstance(families, dict) and isinstance(totals, dict):
+    alias_blockers = seal.get("source_alias_blocker_counts")
+    if (
+        not isinstance(alias_blockers, dict)
+        or set(alias_blockers) != set(_prompt_authority_alias_blocker_reasons())
+        or any(not _nonnegative_exact_int(value) for value in alias_blockers.values())
+    ):
+        errors.append("seal source alias blocker counts are malformed")
+
+    if isinstance(families, dict) and isinstance(totals, dict):
         family_total_fields = {
             "discovered": "source_units",
+            "converged": "converged",
             "adapted": "adapted",
             "excluded": "excluded",
             "pending": "pending",
@@ -3030,14 +3115,33 @@ def _prompt_authority_seal_schema_errors(seal: Any) -> list[str]:
                     total_field
                 ):
                     errors.append(f"seal source family {family_field} counts do not match {total_field}")
+        if (
+            isinstance(scope, dict)
+            and scope.get("scope") == "all"
+            and scope.get("target_scope") == "all"
+            and all(
+                _nonnegative_exact_int(totals.get(field))
+                for field in ("source_units", "converged", "excluded", "adapted")
+            )
+        ):
+            if totals["source_units"] != totals["converged"] + totals["excluded"]:
+                errors.append("seal exact-all source family coverage is incomplete")
+            if totals["adapted"] > totals["converged"]:
+                errors.append("seal exact-all adapted count exceeds converged coverage")
 
     hashes = seal.get("hashes")
     if not isinstance(hashes, dict) or set(hashes) != set(_PROMPT_AUTHORITY_HASH_FIELDS):
         errors.append("seal hash bindings are malformed")
     elif any(value is not None and _public_digest(value) is None for value in hashes.values()):
         errors.append("seal hash bindings must be lowercase SHA-256 values or null")
+    elif isinstance(families, dict) and isinstance(overflow, dict):
+        expected_family_digest = digest({"families": families, "overflow": overflow})
+        if hashes.get("source_families") != expected_family_digest:
+            errors.append("seal source family aggregate digest is stale")
     if _public_digest(seal.get("adapter_gaps_digest")) is None:
         errors.append("seal adapter gap digest is malformed")
+    if _public_digest(seal.get("public_projection_digest")) is None:
+        errors.append("seal public projection digest is malformed")
     if _public_digest(seal.get("content_hash")) is None:
         errors.append("seal content hash is malformed")
     expected_authority_ready = _prompt_authority_ready(
@@ -3045,6 +3149,8 @@ def _prompt_authority_seal_schema_errors(seal: Any) -> list[str]:
         scope=scope,
         totals=totals,
         hashes=hashes,
+        source_alias_blocker_counts=alias_blockers,
+        public_projection_digest=seal.get("public_projection_digest"),
     )
     if seal.get("authority_ready") != expected_authority_ready:
         errors.append("seal authority verdict does not match its evidence")
@@ -3064,6 +3170,7 @@ def _prompt_authority_seal_matches_public(seal: dict[str, Any], public: dict[str
     public_coverage = object_field(public, "coverage")
     validation = object_field(public, "validation")
     public_adapter_contract = object_field(public_scope, "source_adapter_contract")
+    current_adapter_contract = _semantic_source_adapter_contract(current_source_adapter_contract())
     public_source_scan = object_field(public_scope, "source_scan_receipt")
     public_adapter_gaps = public_scope.get("adapter_gaps")
     sanitized_public_adapter_gaps = (
@@ -3071,10 +3178,37 @@ def _prompt_authority_seal_matches_public(seal: dict[str, Any], public: dict[str
         if isinstance(public_adapter_gaps, list)
         else []
     )
+    raw_public_alias_blockers = public_scope.get("source_alias_blocker_counts")
+    public_alias_blockers = _prompt_authority_alias_blocker_counts(raw_public_alias_blockers)
+    current_alias_reasons = set(current_adapter_contract.get("alias_blocker_reasons") or [])
+    public_alias_blockers_valid = bool(
+        isinstance(raw_public_alias_blockers, dict)
+        and set(raw_public_alias_blockers) <= current_alias_reasons
+        and all(
+            isinstance(reason, str) and _nonnegative_exact_int(count)
+            for reason, count in raw_public_alias_blockers.items()
+        )
+    )
+    contract_required = bool(
+        public_scope.get("target_scope") == "all"
+        or _int_or_zero(public_scope.get("scanner_version"))
+        or _public_digest(public_adapter_contract.get("digest")) is not None
+    )
+    current_contract_matches = bool(
+        not contract_required
+        or (
+            _semantic_source_adapter_contract(public_adapter_contract) == current_adapter_contract
+            and public_scope.get("scanner_version") == current_adapter_contract.get("scanner_version")
+        )
+    )
     return bool(
-        hashes.get("semantic") == _public_digest(public.get("semantic_digest"))
+        current_contract_matches
+        and public_alias_blockers_valid
+        and seal.get("public_projection_digest") == _public_digest(public.get("projection_digest"))
+        and hashes.get("semantic") == _public_digest(public.get("semantic_digest"))
         and hashes.get("policy") == _public_digest(public.get("policy_digest"))
         and hashes.get("source_cursor") == _public_digest(public.get("source_cursor_digest"))
+        and hashes.get("source_families") == _public_digest(public_scope.get("source_families_digest"))
         and hashes.get("source_manifest") == _public_digest(public_scope.get("source_manifest_digest"))
         and hashes.get("all_source_manifest") == _public_digest(public_scope.get("all_source_manifest_digest"))
         and hashes.get("source_units") == _public_digest(public_scope.get("source_units_digest"))
@@ -3090,8 +3224,10 @@ def _prompt_authority_seal_matches_public(seal: dict[str, Any], public: dict[str
         and seal_scope.get("scope") == _public_scope_label(public_scope.get("scope"))
         and seal_scope.get("target_scope") == _public_scope_label(public_scope.get("target_scope"))
         and seal_scope.get("all_baseline_complete") == (public_scope.get("all_baseline_complete") is True)
+        and seal_scope.get("scanner_version") == _int_or_zero(public_scope.get("scanner_version"))
         and seal_scope.get("horizon_days") == public_scope.get("horizon_days")
         and totals.get("source_units") == _int_or_zero(public_scope.get("source_unit_count"))
+        and totals.get("converged") == _int_or_zero(public_scope.get("source_converged_count"))
         and totals.get("pending") == _int_or_zero(public_scope.get("pending_files"))
         and totals.get("errors") == _int_or_zero(public_scope.get("source_error_count"))
         and totals.get("unsupported") == _int_or_zero(public_scope.get("unsupported_source_count"))
@@ -3100,6 +3236,7 @@ def _prompt_authority_seal_matches_public(seal: dict[str, Any], public: dict[str
         and totals.get("adapted") == _int_or_zero(public_scope.get("adapted_source_count"))
         and totals.get("adapter_gaps") == len(sanitized_public_adapter_gaps)
         and seal.get("adapter_gaps_digest") == digest(sanitized_public_adapter_gaps)
+        and seal.get("source_alias_blocker_counts") == public_alias_blockers
         and totals.get("validation_errors")
         == (len(validation.get("errors") or []) if isinstance(validation.get("errors"), list) else 0)
         and all(coverage.get(field) == _int_or_zero(public_coverage.get(field)) for field in coverage)
@@ -3111,6 +3248,14 @@ def public_projection(snapshot: dict[str, Any], *, limit: int | None = None) -> 
     source_scope = raw_source_scope if isinstance(raw_source_scope, dict) else {}
     raw_source_scan = source_scope.get("source_scan_receipt")
     source_scan = raw_source_scan if isinstance(raw_source_scan, dict) else {}
+    source_families, source_family_overflow = _prompt_authority_source_families(source_scope.get("source_families"))
+    source_family_digest = digest(
+        {
+            "families": source_families,
+            "overflow": source_family_overflow,
+        }
+    )
+    source_converged_count = sum(counts["converged"] for counts in source_families.values())
     unresolved = [
         atom
         for atom in snapshot.get("atoms") or []
@@ -3154,6 +3299,8 @@ def public_projection(snapshot: dict[str, Any], *, limit: int | None = None) -> 
             "pending_files": (snapshot.get("source_scope") or {}).get("pending_files", 0),
             "source_error_count": len((snapshot.get("source_scope") or {}).get("source_errors") or []),
             "source_unit_count": _int_or_zero((snapshot.get("source_scope") or {}).get("source_unit_count")),
+            "source_converged_count": source_converged_count,
+            "source_families_digest": source_family_digest,
             "source_units_digest": (snapshot.get("source_scope") or {}).get("source_units_digest"),
             "unsupported_source_count": _int_or_zero(
                 (snapshot.get("source_scope") or {}).get("unsupported_source_count")
@@ -3287,11 +3434,23 @@ def _compact_source_scope(snapshot: dict[str, Any]) -> dict[str, Any]:
         "source_manifest_digest": scope.get("source_manifest_digest"),
         "source_families": _semantic_source_families(scope.get("source_families")),
         "source_adapter_contract": _semantic_source_adapter_contract(scope.get("source_adapter_contract")),
+        "source_scan_receipt": {
+            "sha256": _public_digest((scope.get("source_scan_receipt") or {}).get("sha256"))
+            if isinstance(scope.get("source_scan_receipt"), dict)
+            else None,
+            "scanner_code_digest": _public_digest((scope.get("source_scan_receipt") or {}).get("scanner_code_digest"))
+            if isinstance(scope.get("source_scan_receipt"), dict)
+            else None,
+            "scan_payload_digest": _public_digest((scope.get("source_scan_receipt") or {}).get("scan_payload_digest"))
+            if isinstance(scope.get("source_scan_receipt"), dict)
+            else None,
+        },
         "excluded_source_count": _int_or_zero(scope.get("excluded_source_count")),
         "source_exclusion_counts": _semantic_count_map(scope.get("source_exclusion_counts")),
         "excluded_unit_receipts_digest": scope.get("excluded_unit_receipts_digest"),
         "adapted_source_count": _int_or_zero(scope.get("adapted_source_count")),
         "source_adapter_counts": _semantic_count_map(scope.get("source_adapter_counts")),
+        "source_alias_blocker_counts": _semantic_count_map(scope.get("source_alias_blocker_counts")),
         "adapted_unit_receipts_digest": scope.get("adapted_unit_receipts_digest"),
         "adapter_gaps": _string_list(scope.get("adapter_gaps")),
         "adapter_gap_routes": [value for value in (scope.get("adapter_gap_routes") or []) if isinstance(value, dict)]
@@ -3366,6 +3525,63 @@ def _public_digest_valid(public: dict[str, Any]) -> bool:
     claimed = str(public.get("projection_digest") or "")
     material = {key: value for key, value in public.items() if key != "projection_digest"}
     return bool(claimed and claimed == digest(material))
+
+
+def _prompt_authority_fast_path_valid(
+    *,
+    marker: dict[str, Any],
+    public: dict[str, Any],
+    seal: dict[str, Any],
+    current_cursor: dict[str, Any],
+) -> bool:
+    """Re-derive every seal input from the private checkpoint and current cursor."""
+
+    current_scope = cursor_semantic(current_cursor)
+    expected_marker_scope = _compact_source_scope({"source_scope": current_scope})
+    if marker.get("source_scope") != expected_marker_scope:
+        return False
+    expected_snapshot = {
+        "version": marker.get("version"),
+        "updated_through": marker.get("updated_through"),
+        "semantic_digest": marker.get("semantic_digest"),
+        "policy_digest": marker.get("policy_digest"),
+        "source_cursor_digest": marker.get("source_cursor_digest"),
+        "source_scope": current_scope,
+        "coverage": marker.get("coverage") or {},
+        "counts": marker.get("counts") or {},
+        "validation": marker.get("validation") or {},
+    }
+    expected_public_scope = public_projection(expected_snapshot)["source_scope"]
+    if public.get("source_scope") != expected_public_scope:
+        return False
+    for field in (
+        "version",
+        "updated_through",
+        "semantic_digest",
+        "policy_digest",
+        "source_cursor_digest",
+        "coverage",
+        "counts",
+        "validation",
+    ):
+        if public.get(field) != expected_snapshot.get(field):
+            return False
+    public_rows = public.get("unresolved_atoms")
+    public_truncated = public.get("unresolved_atoms_truncated")
+    current_unresolved = (expected_snapshot.get("coverage") or {}).get("current_unresolved_atoms")
+    if (
+        not isinstance(public_rows, list)
+        or not _nonnegative_exact_int(public_truncated)
+        or not _nonnegative_exact_int(current_unresolved)
+        or len(public_rows) + _int_or_zero(public_truncated) != _int_or_zero(current_unresolved)
+    ):
+        return False
+    expected_seal = prompt_authority_seal(expected_snapshot, public=public)
+    return bool(
+        seal == expected_seal
+        and _prompt_authority_seal_digest_valid(seal)
+        and _prompt_authority_seal_matches_public(seal, public)
+    )
 
 
 def validate_raw_references(
@@ -3657,8 +3873,12 @@ def update_ledger(
                 "raw_store": _raw_store_signature(paths),
             }
             and _public_digest_valid(existing_public)
-            and _prompt_authority_seal_digest_valid(existing_seal)
-            and _prompt_authority_seal_matches_public(existing_seal, existing_public)
+            and _prompt_authority_fast_path_valid(
+                marker=marker,
+                public=existing_public,
+                seal=existing_seal,
+                current_cursor=current_cursor,
+            )
             and paths.public_snapshot.exists()
             and paths.public_snapshot.read_bytes() == _json_bytes(existing_public)
             and paths.public_seal.exists()
@@ -3951,7 +4171,7 @@ def update_ledger(
             evidence_root=paths.root,
         )
         public = public_projection(snapshot)
-        seal = prompt_authority_seal(snapshot)
+        seal = prompt_authority_seal(snapshot, public=public)
         markdown = render_markdown(public, policy)
         next_marker = private_marker(snapshot, public, seal, paths=paths)
         public_bytes = _json_bytes(public)
@@ -4021,6 +4241,8 @@ def check_ledger(paths: LedgerPaths, *, require_scope: str | None = None) -> lis
     scope = str((source.get("source_scope") or {}).get("scope") or "unknown")
     if require_scope and scope != require_scope:
         errors.append(f"source scope is {scope}; require {require_scope}")
+    if require_scope == "all" and (not seal or seal.get("authority_ready") is not True):
+        errors.append("public prompt authority seal is not authority-ready for required all scope")
     if private:
         live_cursor, cursor_errors = load_json_strict(paths.cursor)
         errors.extend(cursor_errors)
@@ -4044,7 +4266,7 @@ def check_ledger(paths: LedgerPaths, *, require_scope: str | None = None) -> lis
         if not (rebuilt.get("validation") or {}).get("ok"):
             errors.extend(str(value) for value in (rebuilt.get("validation") or {}).get("errors") or [])
         rebuilt_public = public_projection(rebuilt)
-        rebuilt_seal = prompt_authority_seal(rebuilt)
+        rebuilt_seal = prompt_authority_seal(rebuilt, public=rebuilt_public)
         rebuilt_marker = private_marker(rebuilt, rebuilt_public, rebuilt_seal, paths=paths)
         if private != rebuilt_marker:
             errors.append("private journals do not match the compact checkpoint")

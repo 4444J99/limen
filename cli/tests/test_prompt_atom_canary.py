@@ -225,6 +225,7 @@ def test_five_family_canary_proves_second_pass_byte_identity(tmp_path: Path) -> 
     assert receipt["artifacts_after_first"] == receipt["artifacts_after_second"]
     assert receipt["artifacts_after_first"]["private_source_scan_receipts"]["files"] == 1
     assert receipt["verification"]["returncode"] == 0
+    assert receipt["verification"]["authority_ready"] is True
     assert receipt["code_identity_reverified"] is True
 
     serialized = json.dumps(receipt, sort_keys=True)

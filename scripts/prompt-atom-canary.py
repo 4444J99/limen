@@ -747,6 +747,15 @@ def main(argv: list[str] | None = None) -> int:
     }
     if checked["returncode"] != 0:
         failures.append("authoritative_check_failed")
+    try:
+        final_seal = load_object(public_seal, "public_authority_seal")
+        authority_ready = final_seal.get("authority_ready") is True
+        receipt["verification"]["authority_ready"] = authority_ready
+        if not authority_ready:
+            failures.append("public_authority_seal_not_ready")
+    except CanaryFailure as exc:
+        receipt["verification"]["authority_ready"] = False
+        failures.append(str(exc))
 
     try:
         final_code_identity = exact_head_code_identity()

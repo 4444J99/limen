@@ -164,16 +164,23 @@ dispositions, owner routes, and canonical receipt references.
 `docs/prompt-authority-seal.json` is the bounded publication receipt for source-corpus authority. Its
 schema is `limen.prompt-authority-seal.v1`; it contains only fixed numeric aggregates, safe family and
 reason labels, and SHA-256 bindings to the semantic projection, cursor, manifests, adapter contract,
-and sealed scan. It never contains prompt bodies, source locators, private paths, session identifiers,
-or per-atom rows, and the writer refuses any receipt over 64 KiB. A zero-change rerun must leave its
-bytes and modification time unchanged.
+sealed scan, bounded family aggregates, and exact public-projection digest. Alias blocker counts use
+the contract-owned fixed reason taxonomy and any nonzero blocker makes the derived authority verdict
+false. Exact-all readiness also requires the current scanner version and complete current adapter
+contract, reconciled discovered/converged/excluded/adapted totals, and every required hash. It never
+contains prompt bodies, source locators, private paths, session identifiers, or per-atom rows, and the
+writer refuses any receipt over 64 KiB. `--require-scope all` requires the seal's derived
+`authority_ready` verdict, not only the textual scope labels. A zero-change rerun must leave its bytes
+and modification time unchanged.
 
 An exclusive writer lock serializes updates; journal appends are flushed before atomic projection
 replacement, and the compact checkpoint is written last. Stable occurrence and atom IDs plus a
 monotonic cursor merge make concurrent or repeated drains idempotent. The cursor digest is embedded
-in the projection, so a cursor advance without a matching projection fails closed. Verification
-rebuilds the public JSON and Markdown byte-for-byte from the private journals and detects missing,
-malformed, or altered raw objects.
+in the projection, so a cursor advance without a matching projection fails closed. Before the
+zero-input fast path adopts existing public bytes, it re-derives the full seal inputs from the private
+checkpoint and current cursor; coherently rehashed projection/seal references that disagree with that
+custody are rebuilt. Verification rebuilds the public JSON and Markdown byte-for-byte from the private
+journals and detects missing, malformed, or altered raw objects.
 
 The priority map additionally binds the projection to the currently loaded runtime-policy digest.
 A projection and private receipt that agree with each other but carry stale weights, authority bands,

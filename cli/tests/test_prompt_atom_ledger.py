@@ -37,6 +37,48 @@ def _cursor(module, *, scope: str = "fixture") -> dict:
     }
 
 
+def _exact_authority_snapshot(module, *, policy_digest: str = "b" * 64) -> dict:
+    contract = module.current_source_adapter_contract()
+    return {
+        "semantic_digest": "a" * 64,
+        "policy_digest": policy_digest,
+        "source_cursor_digest": "c" * 64,
+        "source_scope": {
+            "scope": "all",
+            "target_scope": "all",
+            "all_baseline_complete": True,
+            "scanner_version": contract["scanner_version"],
+            "horizon_days": None,
+            "pending_files": 0,
+            "source_unit_count": 0,
+            "unsupported_source_count": 0,
+            "unresolved_unit_count": 0,
+            "excluded_source_count": 0,
+            "adapted_source_count": 0,
+            "source_manifest_digest": "d" * 64,
+            "all_source_manifest_digest": "d" * 64,
+            "source_units_digest": "e" * 64,
+            "unsupported_units_digest": "f" * 64,
+            "unresolved_units_digest": "1" * 64,
+            "excluded_unit_receipts_digest": "2" * 64,
+            "adapted_unit_receipts_digest": "3" * 64,
+            "source_adapter_contract": contract,
+            "source_scan_receipt": {
+                "sha256": "5" * 64,
+                "scanner_code_digest": "6" * 64,
+                "scan_payload_digest": "7" * 64,
+            },
+            "source_errors": [],
+            "source_families": {},
+            "source_alias_blocker_counts": {},
+            "adapter_gaps": [],
+        },
+        "coverage": {},
+        "counts": {},
+        "validation": {"ok": True, "errors": []},
+    }
+
+
 def _attest_exact_cursor(module, cursor: dict) -> dict:
     cursor.setdefault("base_revision", 0)
     cursor.setdefault("base_cursor_digest", module.cursor_digest({}))
@@ -662,13 +704,39 @@ def test_prompt_authority_seal_is_counts_hash_only_private_safe_and_schema_bound
                 f"codex-sessions:/private/codex.jsonl: novel parser failure {private_prompt}",
             ],
             "source_families": {
-                "claude-projects": {"discovered": 7, "converged": 2, "errors": 1},
-                "opencode-db": {"discovered": 4, "converged": 1, "errors": 1},
-                "agy-cli-conversations": {"discovered": 3, "errors": 1},
-                "codex-sessions": {"discovered": 2, "errors": 1},
+                "claude-projects": {
+                    "discovered": 7,
+                    "converged": 2,
+                    "adapted": 2,
+                    "excluded": 2,
+                    "errors": 1,
+                },
+                "opencode-db": {
+                    "discovered": 4,
+                    "converged": 1,
+                    "adapted": 1,
+                    "excluded": 1,
+                    "errors": 1,
+                    "unsupported": 1,
+                },
+                "agy-cli-conversations": {
+                    "discovered": 3,
+                    "converged": 1,
+                    "adapted": 1,
+                    "excluded": 1,
+                    "errors": 1,
+                },
+                "codex-sessions": {
+                    "discovered": 2,
+                    "converged": 1,
+                    "adapted": 1,
+                    "errors": 1,
+                    "unsupported": 1,
+                },
                 private_home: {"discovered": 1, "unsupported": 1},
                 private_prompt: {"discovered": 0},
             },
+            "source_alias_blocker_counts": {"alias_changed": 1, private_home: 2},
             "adapter_gaps": ["claude-projects", private_home],
         },
         "coverage": {
@@ -698,6 +766,7 @@ def test_prompt_authority_seal_is_counts_hash_only_private_safe_and_schema_bound
     assert seal["totals"] == {
         "adapted": 5,
         "adapter_gaps": 2,
+        "converged": 5,
         "errors": 4,
         "excluded": 4,
         "pending": 0,
@@ -707,6 +776,8 @@ def test_prompt_authority_seal_is_counts_hash_only_private_safe_and_schema_bound
         "validation_errors": 1,
     }
     assert seal["source_families"]["claude-projects"]["discovered"] == 7
+    assert seal["source_alias_blocker_counts"]["alias_changed"] == 1
+    assert seal["source_alias_blocker_counts"]["other"] == 2
     assert f"source-{corpus.digest(private_prompt)[:16]}" in seal["source_families"]
     assert seal["source_error_reason_counts"] == {
         "adapter_missing": 0,
@@ -733,41 +804,7 @@ def test_prompt_authority_seal_is_counts_hash_only_private_safe_and_schema_bound
 
 def test_prompt_authority_seal_ready_verdict_requires_complete_bound_evidence_and_is_derived():
     corpus = _load()
-    exact_snapshot = {
-        "semantic_digest": "a" * 64,
-        "policy_digest": "b" * 64,
-        "source_cursor_digest": "c" * 64,
-        "source_scope": {
-            "scope": "all",
-            "target_scope": "all",
-            "all_baseline_complete": True,
-            "horizon_days": None,
-            "pending_files": 0,
-            "source_unit_count": 0,
-            "unsupported_source_count": 0,
-            "unresolved_unit_count": 0,
-            "excluded_source_count": 0,
-            "adapted_source_count": 0,
-            "source_manifest_digest": "d" * 64,
-            "all_source_manifest_digest": "d" * 64,
-            "source_units_digest": "e" * 64,
-            "unsupported_units_digest": "f" * 64,
-            "unresolved_units_digest": "1" * 64,
-            "excluded_unit_receipts_digest": "2" * 64,
-            "adapted_unit_receipts_digest": "3" * 64,
-            "source_adapter_contract": {"digest": "4" * 64},
-            "source_scan_receipt": {
-                "sha256": "5" * 64,
-                "scanner_code_digest": "6" * 64,
-                "scan_payload_digest": "7" * 64,
-            },
-            "source_errors": [],
-            "source_families": {},
-            "adapter_gaps": [],
-        },
-        "coverage": {},
-        "validation": {"ok": True, "errors": []},
-    }
+    exact_snapshot = _exact_authority_snapshot(corpus)
 
     seal = corpus.prompt_authority_seal(exact_snapshot)
 
@@ -788,6 +825,130 @@ def test_prompt_authority_seal_ready_verdict_requires_complete_bound_evidence_an
     assert corpus._prompt_authority_seal_digest_valid(incomplete)
 
 
+def test_prompt_authority_seal_binds_projection_alias_blockers_and_current_contract():
+    corpus = _load()
+    snapshot = _exact_authority_snapshot(corpus)
+    public = corpus.public_projection(snapshot)
+    seal = corpus.prompt_authority_seal(snapshot, public=public)
+
+    assert seal["public_projection_digest"] == public["projection_digest"]
+    assert not any(seal["source_alias_blocker_counts"].values())
+    assert corpus._prompt_authority_seal_matches_public(seal, public)
+
+    blocker_public = json.loads(json.dumps(public))
+    blocker_public["source_scope"]["source_alias_blocker_counts"] = {"alias_changed": 1}
+    blocker_public["projection_digest"] = corpus.digest(
+        {key: value for key, value in blocker_public.items() if key != "projection_digest"}
+    )
+    assert corpus._prompt_authority_seal_matches_public(seal, blocker_public) is False
+
+    leaky_alias_public = json.loads(json.dumps(public))
+    leaky_alias_public["source_scope"]["source_alias_blocker_counts"] = {"/Users/private/source": 0}
+    leaky_alias_public["projection_digest"] = corpus.digest(
+        {key: value for key, value in leaky_alias_public.items() if key != "projection_digest"}
+    )
+    leaky_alias_seal = corpus.prompt_authority_seal(snapshot, public=leaky_alias_public)
+    assert corpus._prompt_authority_seal_matches_public(leaky_alias_seal, leaky_alias_public) is False
+
+    forged_ready = json.loads(json.dumps(seal))
+    forged_ready["public_projection_digest"] = blocker_public["projection_digest"]
+    forged_ready["source_alias_blocker_counts"]["alias_changed"] = 1
+    forged_ready["content_hash"] = corpus.digest(
+        {key: value for key, value in forged_ready.items() if key != "content_hash"}
+    )
+    assert corpus._prompt_authority_seal_digest_valid(forged_ready) is False
+    assert "seal authority verdict does not match its evidence" in corpus._prompt_authority_seal_schema_errors(
+        forged_ready
+    )
+
+    stale_contract_public = json.loads(json.dumps(public))
+    stale_contract_public["source_scope"]["source_adapter_contract"]["adapter_ids"].append("forged-adapter")
+    stale_contract_public["projection_digest"] = corpus.digest(
+        {key: value for key, value in stale_contract_public.items() if key != "projection_digest"}
+    )
+    stale_contract_seal = corpus.prompt_authority_seal(snapshot, public=stale_contract_public)
+    assert corpus._prompt_authority_seal_digest_valid(stale_contract_seal)
+    assert corpus._prompt_authority_seal_matches_public(stale_contract_seal, stale_contract_public) is False
+
+
+def test_prompt_authority_seal_rejects_rehashed_converged_aggregate_tamper():
+    corpus = _load()
+    snapshot = _exact_authority_snapshot(corpus)
+    snapshot["source_scope"]["source_unit_count"] = 1
+    snapshot["source_scope"]["source_families"] = {
+        "codex-sessions": {
+            "discovered": 1,
+            "converged": 1,
+            "adapted": 0,
+            "excluded": 0,
+            "pending": 0,
+            "errors": 0,
+            "unsupported": 0,
+        }
+    }
+    seal = corpus.prompt_authority_seal(snapshot)
+    assert seal["authority_ready"] is True
+    assert corpus._prompt_authority_seal_digest_valid(seal)
+
+    family_only = json.loads(json.dumps(seal))
+    family_only["source_families"]["codex-sessions"]["converged"] = 999
+    family_only["hashes"]["source_families"] = corpus.digest(
+        {
+            "families": family_only["source_families"],
+            "overflow": family_only["source_family_overflow"],
+        }
+    )
+    family_only["content_hash"] = corpus.digest(
+        {key: value for key, value in family_only.items() if key != "content_hash"}
+    )
+    assert corpus._prompt_authority_seal_digest_valid(family_only) is False
+    assert "seal source family converged counts do not match converged" in (
+        corpus._prompt_authority_seal_schema_errors(family_only)
+    )
+
+    coherent_aggregate = json.loads(json.dumps(family_only))
+    coherent_aggregate["totals"]["converged"] = 999
+    coherent_aggregate["content_hash"] = corpus.digest(
+        {key: value for key, value in coherent_aggregate.items() if key != "content_hash"}
+    )
+    assert corpus._prompt_authority_seal_digest_valid(coherent_aggregate) is False
+    assert "seal exact-all source family coverage is incomplete" in (
+        corpus._prompt_authority_seal_schema_errors(coherent_aggregate)
+    )
+
+
+@pytest.mark.parametrize("schema_version", [True, 1.0])
+def test_prompt_authority_seal_schema_version_requires_exact_integer(schema_version):
+    corpus = _load()
+    seal = corpus.prompt_authority_seal(_exact_authority_snapshot(corpus))
+    seal["schema_version"] = schema_version
+    seal["content_hash"] = corpus.digest({key: value for key, value in seal.items() if key != "content_hash"})
+
+    assert corpus._prompt_authority_seal_digest_valid(seal) is False
+    assert "seal schema version is stale" in corpus._prompt_authority_seal_schema_errors(seal)
+
+
+def test_require_all_rejects_exact_scope_without_authority_ready_seal(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    policy = corpus.load_policy(paths.policy)
+    snapshot = _exact_authority_snapshot(corpus, policy_digest=corpus.digest(policy))
+    del snapshot["source_scope"]["source_scan_receipt"]["scan_payload_digest"]
+    public = corpus.public_projection(snapshot)
+    seal = corpus.prompt_authority_seal(snapshot, public=public)
+    paths.public_snapshot.parent.mkdir(parents=True, exist_ok=True)
+    paths.public_snapshot.write_bytes(corpus._json_bytes(public))
+    paths.public_seal.write_bytes(corpus._json_bytes(seal))
+    paths.public_markdown.write_text(corpus.render_markdown(public, policy), encoding="utf-8")
+
+    assert seal["authority_ready"] is False
+    assert corpus.check_ledger(paths) == []
+    assert "public prompt authority seal is not authority-ready for required all scope" in corpus.check_ledger(
+        paths,
+        require_scope="all",
+    )
+
+
 def test_prompt_authority_seal_family_cardinality_is_hard_bounded():
     corpus = _load()
     family_count = 5_000
@@ -798,6 +959,8 @@ def test_prompt_authority_seal_family_cardinality_is_hard_bounded():
         "source_scope": {
             "scope": "partial:all",
             "target_scope": "all",
+            "source_unit_count": family_count,
+            "unsupported_source_count": family_count,
             "source_families": {
                 f"family-{index:05d}": {"discovered": 1, "unsupported": 1} for index in range(family_count)
             },
@@ -868,6 +1031,46 @@ def test_prompt_authority_seal_is_byte_identical_on_zero_change_rerun(tmp_path: 
     assert second["write_changed"] is False
     assert paths.public_seal.read_bytes() == before
     assert paths.public_seal.stat().st_mtime_ns == before_mtime
+    assert corpus.check_ledger(paths) == []
+
+
+def test_update_ledger_repairs_coherently_rehashed_public_seal_and_marker(tmp_path: Path):
+    corpus = _load()
+    paths = _paths(corpus, tmp_path)
+    corpus.update_ledger(
+        paths,
+        events=[_event("Keep canonical journals authoritative.", event_ref="coherent-rehash")],
+        cursor=_cursor(corpus),
+    )
+    public = corpus.load_json(paths.public_snapshot)
+    seal = corpus.load_json(paths.public_seal)
+    marker = corpus.load_json(paths.private_snapshot)
+    original_atoms = public["coverage"]["atoms"]
+
+    public["coverage"]["atoms"] = original_atoms + 999
+    public["projection_digest"] = corpus.digest(
+        {key: value for key, value in public.items() if key != "projection_digest"}
+    )
+    seal["coverage"]["atoms"] = public["coverage"]["atoms"]
+    seal["public_projection_digest"] = public["projection_digest"]
+    seal["content_hash"] = corpus.digest({key: value for key, value in seal.items() if key != "content_hash"})
+    marker["public_projection_digest"] = public["projection_digest"]
+    marker["public_authority_seal_hash"] = seal["content_hash"]
+    paths.public_snapshot.write_bytes(corpus._json_bytes(public))
+    paths.public_seal.write_bytes(corpus._json_bytes(seal))
+    paths.private_snapshot.write_bytes(corpus._json_bytes(marker))
+    paths.public_markdown.write_text(
+        corpus.render_markdown(public, corpus.load_policy(paths.policy)),
+        encoding="utf-8",
+    )
+
+    assert corpus._prompt_authority_seal_digest_valid(seal)
+    assert corpus._prompt_authority_seal_matches_public(seal, public)
+    repaired = corpus.update_ledger(paths)
+
+    repaired_public = corpus.load_json(paths.public_snapshot)
+    assert repaired["write_changed"] is True
+    assert repaired_public["coverage"]["atoms"] == original_atoms
     assert corpus.check_ledger(paths) == []
 
 
