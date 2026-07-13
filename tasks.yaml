@@ -135890,7 +135890,7 @@ tasks:
     work to ephemeral remote execution with durable terminal receipts.
   repo: organvm/limen
   type: code
-  target_agent: claude
+  target_agent: gemini
   workstream: substrate
   priority: critical
   budget_cost: 1
@@ -135936,7 +135936,7 @@ tasks:
   title: fix failing CI on organvm/mirror-mirror#125
   repo: organvm/mirror-mirror
   type: code
-  target_agent: agy
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
