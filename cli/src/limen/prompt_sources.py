@@ -27,9 +27,12 @@ SOURCE_ADAPTER_RULES: dict[str, dict[str, Any]] = {
                 "pasted text file: <canonical-absolute-attachment-path>. Read this file before continuing."
             ),
             "cardinality": "exactly-one-canonical-parent-event",
+            "session_identity": "exactly-one-canonical-session-meta-identity",
             "inherits": ["session_ref", "timestamp", "provenance", "authority"],
         },
         "body_encoding": "utf-8-strict",
+        "unparsed_parent_record_authority": "unknown-or-fail-closed",
+        "parent_byte_accounting": "cumulative-actual-read",
         "max_probe_bytes": 1048576,
         "max_parent_probe_bytes": 536870912,
         "max_parent_record_bytes": 1048576,

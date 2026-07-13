@@ -3221,7 +3221,9 @@ def test_codex_attachment_symlink_never_receives_adapter_custody(tmp_path: Path,
     session = sessions / "rollout-fixture.jsonl"
     session.parent.mkdir(parents=True)
     session.write_text(
-        json.dumps(
+        json.dumps({"type": "session_meta", "payload": {"id": "fixture-thread"}})
+        + "\n"
+        + json.dumps(
             {
                 "timestamp": "2026-07-13T01:00:00Z",
                 "type": "response_item",
@@ -3324,6 +3326,131 @@ def test_codex_attachment_streams_parent_larger_than_the_regular_source_limit(tm
     assert "bounded ceiling" in " ".join(result["errors"])
 
 
+def test_codex_attachment_reordered_oversized_echo_is_regular_streaming_equivalent(
+    tmp_path: Path,
+    monkeypatch,
+):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rows = [json.loads(line) for line in session.read_text(encoding="utf-8").splitlines()]
+    rows.insert(
+        1,
+        {
+            "payload": {
+                "message": "x" * 12000,
+                "local_images": [],
+                "text_elements": [],
+                "type": "user_message",
+            },
+            "timestamp": "2026-07-13T01:00:00Z",
+            "type": "event_msg",
+        },
+    )
+    session.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    signature = sources.file_signature(session)
+    assert signature is not None
+    rule = sources.SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]
+    monkeypatch.setitem(rule, "max_parent_record_bytes", 1024)
+    limits = sources.runtime_limits({})
+
+    regular_events, regular_error = sources.targeted_codex_attachment_parent_events(
+        lifecycle,
+        session,
+        rows,
+        limits=limits,
+    )
+    streaming_events, streaming_error = sources.bounded_codex_attachment_parent_events_from_path(
+        lifecycle,
+        session,
+        signature,
+        limits=limits,
+    )
+
+    assert regular_error == streaming_error is None
+    assert regular_events == streaming_events
+    assert len(regular_events) == 1
+    assert regular_events[0]["provenance"] == "unknown_user_input"
+    assert regular_events[0]["authority"] == "unknown"
+
+    projections = []
+    attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
+    scan_rows = [
+        {"source": "codex-sessions", "path": session},
+        {"source": "codex-attachments", "path": attachment},
+    ]
+    for max_source_bytes in (1048576, 128):
+        events, result = sources.scan_regular_sources(
+            lifecycle,
+            {"files": {}},
+            days=None,
+            budget=sources.ScanBudget(limit=2),
+            limits=sources.runtime_limits({"resource_limits": {"max_source_bytes_per_unit": max_source_bytes}}),
+            rows=scan_rows,
+        )
+        attachment_events = [event for event in events if event["source"] == "codex-attachments"]
+        assert len(attachment_events) == 1
+        projections.append(
+            (
+                {key: attachment_events[0][key] for key in ("session_ref", "timestamp", "provenance", "authority")},
+                result["adapted_unit_receipts"][attachment_key]["related_evidence"],
+            )
+        )
+    assert projections[0] == projections[1]
+
+
+@pytest.mark.parametrize("max_source_bytes", [1048576, 128])
+def test_codex_attachment_multi_session_identity_fails_regular_and_streaming(
+    tmp_path: Path,
+    max_source_bytes: int,
+):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rows = [json.loads(line) for line in session.read_text(encoding="utf-8").splitlines()]
+    rows.insert(1, {"type": "session_meta", "payload": {"id": "fixture-second-thread"}})
+    session.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    limits = sources.runtime_limits({"resource_limits": {"max_source_bytes_per_unit": max_source_bytes}})
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        limits=limits,
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert key not in result["adapted_unit_receipts"]
+    assert result["unsupported"] == [key]
+    assert "session identity is ambiguous" in " ".join(result["errors"])
+
+
+def test_codex_attachment_actual_bytes_reject_stale_signature_growth(tmp_path: Path, monkeypatch):
+    sources = _load()
+    lifecycle, session, _attachment = _codex_attachment_fixture(sources, tmp_path)
+    stale_signature = sources.file_signature(session)
+    assert stale_signature is not None
+    rule = sources.SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]
+    byte_ceiling = int(stale_signature["size"]) + 16
+    monkeypatch.setitem(rule, "max_parent_probe_bytes", byte_ceiling)
+    with session.open("ab") as handle:
+        handle.write(b" " * 64)
+
+    events, error = sources.bounded_codex_attachment_parent_events_from_path(
+        lifecycle,
+        session,
+        stale_signature,
+        limits=sources.runtime_limits({}),
+    )
+
+    assert events == []
+    assert error is not None and f"byte ceiling {byte_ceiling}" in error
+
+
 def test_codex_attachment_streaming_parent_caps_fail_closed(tmp_path: Path, monkeypatch):
     sources = _load()
     lifecycle, session, _attachment = _codex_attachment_fixture(sources, tmp_path)
@@ -3418,7 +3545,7 @@ def test_codex_attachment_malformed_transport_echo_downgrades_authority(tmp_path
             "type": "event_msg",
             "payload": {
                 "type": "user_message",
-                "message": sources.codex_attachment_reference_line(attachment),
+                "message": "Synthetic malformed transport envelope.",
             },
         },
     )
@@ -3482,6 +3609,41 @@ def test_codex_attachment_parent_replay_invalidates_cached_receipt(tmp_path: Pat
     assert second["unsupported"] == [attachment_key]
     assert attachment_key not in second["adapted_unit_receipts"]
     assert attachment_key not in second["files"]
+
+
+def test_codex_attachment_session_identity_ambiguity_invalidates_cached_receipt(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    scan_rows = [
+        {"source": "codex-sessions", "path": session},
+        {"source": "codex-attachments", "path": attachment},
+    ]
+    _events, first = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=scan_rows,
+    )
+    attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
+    assert attachment_key in first["adapted_unit_receipts"]
+    session_rows = [json.loads(line) for line in session.read_text(encoding="utf-8").splitlines()]
+    session_rows.insert(1, {"type": "session_meta", "payload": {"id": "fixture-second-thread"}})
+    session.write_text("".join(json.dumps(row) + "\n" for row in session_rows), encoding="utf-8")
+
+    events, second = sources.scan_regular_sources(
+        lifecycle,
+        first,
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=scan_rows,
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert second["unsupported"] == [attachment_key]
+    assert attachment_key not in second["adapted_unit_receipts"]
+    assert attachment_key not in second["files"]
+    assert "session identity is ambiguous" in " ".join(second["errors"])
 
 
 def test_codex_attachment_cached_second_pass_is_zero_growth(tmp_path: Path):
@@ -3578,6 +3740,32 @@ def test_codex_attachment_native_ledger_second_pass_changes_no_canonical_bytes(
         "reclassified": 0,
     }
     assert canonical_bytes() == first_bytes
+
+
+def test_codex_attachment_ambiguous_session_identity_keeps_all_scope_partial(
+    tmp_path: Path,
+    monkeypatch,
+):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    session_rows = [json.loads(line) for line in session.read_text(encoding="utf-8").splitlines()]
+    session_rows.insert(1, {"type": "session_meta", "payload": {"id": "fixture-second-thread"}})
+    session.write_text("".join(json.dumps(row) + "\n" for row in session_rows), encoding="utf-8")
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, cursor = sources.scan_native_sources(
+        SimpleNamespace(cursor=tmp_path / "missing-cursor.json"),
+        days=None,
+        max_files=2,
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert cursor["scope"] == "partial:all"
+    assert cursor["all_baseline_complete"] is False
+    assert attachment_key in cursor["unresolved_units"]
+    assert attachment_key not in cursor["adapted_unit_receipts"]
+    assert {"codex-attachments", "codex-sessions"}.issubset(cursor["adapter_gaps"])
 
 
 @pytest.mark.parametrize(
