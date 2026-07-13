@@ -1730,6 +1730,15 @@ def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
             related = receipt.get("related_signatures") or {}
             if _strong_source_path_signature(sibling) != related.get("memory_sibling"):
                 errors.append("claude-projects: live memory mirror sibling changed after the sealed scan")
+        if isinstance(receipt, dict) and receipt.get("contract_id") == "codex-pasted-text-attachment-v1":
+            related = receipt.get("related_signatures") or {}
+            evidence = receipt.get("related_evidence") or {}
+            parent = evidence.get("parent_event") if isinstance(evidence, dict) else None
+            parent_locator = parent.get("parent_locator") if isinstance(parent, dict) else None
+            if not isinstance(parent_locator, str) or _strong_source_path_signature(
+                Path(parent_locator)
+            ) != related.get("parent_session"):
+                errors.append("codex-attachments: live parent session changed after the sealed scan")
     return list(dict.fromkeys(errors))
 
 

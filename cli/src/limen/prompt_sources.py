@@ -13,6 +13,34 @@ SOURCE_ADAPTER_CONTRACT_VERSION = 1
 PROMPT_SOURCE_SCANNER_VERSION = 2
 SOURCE_FILE_SIGNATURE_FIELDS = ("ctime_ns", "device", "inode", "mtime_ns", "size")
 SOURCE_ADAPTER_RULES: dict[str, dict[str, Any]] = {
+    "codex-pasted-text-attachment-v1": {
+        "source": "codex-attachments",
+        "path": {
+            "relative_depth": 2,
+            "basename_regex": r"pasted-text-[1-9][0-9]*\.txt",
+        },
+        "parent": {
+            "source": "codex-sessions",
+            "record": "response_item:message:user",
+            "content_block_type": "input_text",
+            "reference_line": (
+                "pasted text file: <canonical-absolute-attachment-path>. Read this file before continuing."
+            ),
+            "cardinality": "exactly-one-canonical-parent-event",
+            "session_identity": "exactly-one-canonical-session-meta-identity",
+            "inherits": ["session_ref", "timestamp", "provenance", "authority"],
+        },
+        "body_encoding": "utf-8-strict",
+        "unparsed_parent_record_authority": "parent-completeness-unknown",
+        "unknown_parent_completeness_with_attachment_candidate": "fail-closed",
+        "parent_byte_accounting": "cumulative-actual-read",
+        "max_probe_bytes": 1048576,
+        "max_parent_probe_bytes": 536870912,
+        "max_parent_record_bytes": 1048576,
+        "max_parent_candidate_bytes": 16777216,
+        "max_parent_records": 100000,
+        "max_parent_session_ids": 16,
+    },
     "claude-remote-task-command-v1": {
         "source": "claude-projects",
         "path": {"relative_depth": 4, "segment_2": "remote-agents", "suffix": ".json"},
@@ -123,11 +151,23 @@ SOURCE_EXCLUSION_RULES: dict[str, dict[str, Any]] = {
 SOURCE_ADAPTER_IDS = tuple(sorted(SOURCE_ADAPTER_RULES))
 SOURCE_EXCLUSION_IDS = tuple(sorted(SOURCE_EXCLUSION_RULES))
 SOURCE_RECEIPT_EVIDENCE_RULES = {
+    "codex-pasted-text-attachment-v1": {
+        "related_label": "parent_session",
+        "cardinality": "exactly-one",
+        "parent_locator": "private-canonical-codex-session-path",
+        "identity": [
+            "parent_locator_sha256",
+            "parent_event_ref_sha256",
+            "parent_session_ref_sha256",
+            "reference_sha256",
+        ],
+        "inherited": ["provenance", "authority", "timestamp"],
+    },
     "claude-project-memory-mirror-v1": {
         "related_label": "memory_sibling",
         "related_locator": "<primary-parent>/memory/<primary-basename>",
         "content_predicate": "primary-and-related-sha256-equal",
-    }
+    },
 }
 SOURCE_AUTHORITY_RULES = {
     "claude-project-main-session-v1": {
@@ -539,6 +579,7 @@ def source_adapter_contract() -> dict[str, Any]:
 
 def _relative_role_parts(source: str, locator: str) -> tuple[str, ...] | None:
     roots = {
+        "codex-attachments": (".codex", "attachments"),
         "claude-file-history": (".claude", "file-history"),
         "claude-plans": (".claude", "plans"),
         "claude-projects": (".claude", "projects"),
@@ -600,9 +641,98 @@ def source_contract_receipt_applies(
             and signature.get("size") == sibling_signature.get("size")
         )
 
+    def codex_attachment_evidence_valid() -> bool:
+        detail = evidence.get("parent_event")
+        parent_signature = related.get("parent_session")
+        if not isinstance(detail, dict) or not isinstance(parent_signature, dict):
+            return False
+        expected_keys = {
+            "authority",
+            "parent_event_index",
+            "parent_event_ref_sha256",
+            "parent_locator",
+            "parent_locator_sha256",
+            "parent_session_ref_sha256",
+            "parent_text_index",
+            "provenance",
+            "reference_sha256",
+            "timestamp",
+        }
+        if set(evidence) != {"parent_event"} or set(detail) != expected_keys:
+            return False
+        parent_locator = detail.get("parent_locator")
+        if not isinstance(parent_locator, str) or not parent_locator:
+            return False
+        parent_parts = PurePath(parent_locator).parts
+        codex_sessions = (".codex", "sessions")
+        parent_root_indexes = [
+            index
+            for index in range(len(parent_parts) - len(codex_sessions) + 1)
+            if tuple(parent_parts[index : index + len(codex_sessions)]) == codex_sessions
+        ]
+        attachment_parts = path.parts
+        attachment_root_indexes = [
+            index
+            for index in range(len(attachment_parts) - 1)
+            if tuple(attachment_parts[index : index + 2]) == (".codex", "attachments")
+        ]
+        if (
+            len(parent_root_indexes) != 1
+            or len(attachment_root_indexes) != 1
+            or parent_parts[: parent_root_indexes[0]] != attachment_parts[: attachment_root_indexes[0]]
+            or PurePath(parent_locator).suffix.lower() != ".jsonl"
+        ):
+            return False
+        if (
+            detail.get("parent_locator_sha256")
+            != hashlib.sha256(parent_locator.encode("utf-8", errors="replace")).hexdigest()
+        ):
+            return False
+        reference = f"pasted text file: {locator}. Read this file before continuing."
+        if detail.get("reference_sha256") != hashlib.sha256(reference.encode("utf-8", errors="replace")).hexdigest():
+            return False
+        for field in ("parent_event_ref_sha256", "parent_session_ref_sha256"):
+            value = detail.get(field)
+            if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+                return False
+        for field in ("parent_event_index", "parent_text_index"):
+            value = detail.get(field)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                return False
+        provenance = detail.get("provenance")
+        authority = detail.get("authority")
+        expected_authority = (
+            "operator"
+            if provenance == "operator_typed"
+            else ("unknown" if provenance == "unknown_user_input" else "derived")
+        )
+        return bool(
+            provenance
+            in {
+                "operator_typed",
+                "transport_echo",
+                "continuation_summary",
+                "delegated_task_frame",
+                "unknown_user_input",
+            }
+            and authority == expected_authority
+            and (
+                detail.get("timestamp") is None
+                or (
+                    not isinstance(detail.get("timestamp"), bool)
+                    and isinstance(detail.get("timestamp"), (str, int, float))
+                )
+            )
+        )
+
     prompt_suffixes = {".json", ".jsonl", ".md"}
 
     predicates = {
+        "codex-pasted-text-attachment-v1": lambda: (
+            len(relative) == 2
+            and re.fullmatch(r"pasted-text-[1-9][0-9]*\.txt", path.name) is not None
+            and set(related) == {"parent_session"}
+        ),
         "claude-file-history-snapshot-v1": lambda: (
             len(relative) >= 1 and re.fullmatch(r"[0-9a-fA-F]+@v[0-9]+", path.name) is not None
         ),
@@ -632,4 +762,6 @@ def source_contract_receipt_applies(
         return False
     if contract_id == "claude-project-memory-mirror-v1":
         return mirror_evidence_valid()
+    if contract_id == "codex-pasted-text-attachment-v1":
+        return codex_attachment_evidence_valid()
     return not evidence
