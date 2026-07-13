@@ -136061,3 +136061,31 @@ tasks:
   created: '2026-07-13'
   updated: '2026-07-13T04:25:33.538160Z'
   dispatch_log: []
+- id: ASK-quicken-escalate-9feaa902
+  title: finish stalled session 'Complete chat tasks with appropriate model a' (breathed
+    2x, still stalling)
+  repo: organvm/limen
+  type: ops
+  target_agent: human
+  priority: high
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - quicken-residue
+  - quicken-escalate
+  - needs-human
+  urls: []
+  context: "Session 9feaa902-acdd-4656-87a0-4ee7e3b5760c ('Complete chat tasks with\
+    \ appropriate model assignments') re-stalled after 2 guardrailed breathes \u2014\
+    \ the identical continuation will not move it. Parked purpose (last prompt): \"\
+    Resume and FINISH your original purpose \u2014 you stalled at a decision and have\
+    \ been sitting. Decide every open step via th\". Resume by hand or with a NEW\
+    \ instruction: claude --resume 9feaa902-acdd-4656-87a0-4ee7e3b5760c   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/bright-cooking-kahn).\
+    \ Auto-escalated by QUICKEN."
+  predicate: test "$(gh issue list --repo organvm/limen --state closed --search 'ASK-quicken-escalate-9feaa902
+    in:title' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/limen:issue:ASK-quicken-escalate-9feaa902
+  depends_on: []
+  created: '2026-07-13'
+  updated: '2026-07-13T06:50:37.613354Z'
+  dispatch_log: []
