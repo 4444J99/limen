@@ -10,7 +10,7 @@ for harvest.
 import importlib.util
 import json
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -20,7 +20,8 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import LimenFile, Task  # noqa: E402
+from limen.execution_contract import execution_contract_hash  # noqa: E402
+from limen.models import DispatchLogEntry, LimenFile, Task  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location("dispatch_async", str(ROOT / "scripts" / "dispatch-async.py"))
 dispatch_async = importlib.util.module_from_spec(_spec)
@@ -38,7 +39,23 @@ def board(tmp_path, monkeypatch):
     save_limen_file(
         tasks_path,
         LimenFile(
-            tasks=[Task(id="T1", title="t", target_agent="jules", status="dispatched", created=date(2026, 7, 1))]
+            tasks=[
+                Task(
+                    id="T1",
+                    title="t",
+                    target_agent="jules",
+                    status="dispatched",
+                    created=date(2026, 7, 1),
+                    dispatch_log=[
+                        DispatchLogEntry(
+                            timestamp=datetime.now(timezone.utc),
+                            agent="jules",
+                            session_id="async-reserve",
+                            status="dispatched",
+                        )
+                    ],
+                )
+            ]
         ),
     )
     monkeypatch.setattr(dispatch_async, "TASKS", tasks_path)
@@ -80,12 +97,12 @@ def test_reap_stale_leaves_marker_when_result_present(board):
 
 def test_reap_dead_pid_marker_without_waiting_for_age(board, monkeypatch):
     tasks_path, runs = board
-    marker = runs / "T1__agy.running"
+    marker = runs / "T1__jules.running"
     marker.write_text(
         json.dumps(
             {
                 "started_at": dispatch_async._now().isoformat(),
-                "agent": "agy",
+                "agent": "jules",
                 "task_id": "T1",
                 "pid": 424242,
             }
@@ -106,13 +123,13 @@ def test_reap_dead_pid_marker_without_waiting_for_age(board, monkeypatch):
 
 def test_reap_zombie_child_marker_after_grace(board, monkeypatch):
     tasks_path, runs = board
-    marker = runs / "T1__agy.running"
+    marker = runs / "T1__jules.running"
     started = dispatch_async._now() - dispatch_async.datetime.timedelta(seconds=300)
     marker.write_text(
         json.dumps(
             {
                 "started_at": started.isoformat(),
-                "agent": "agy",
+                "agent": "jules",
                 "task_id": "T1",
                 "pid": 12345,
             }
@@ -135,12 +152,12 @@ def test_reap_zombie_child_marker_after_grace(board, monkeypatch):
 
 def test_reap_leaves_live_pid_marker_before_grace(board, monkeypatch):
     tasks_path, runs = board
-    marker = runs / "T1__agy.running"
+    marker = runs / "T1__jules.running"
     marker.write_text(
         json.dumps(
             {
                 "started_at": dispatch_async._now().isoformat(),
-                "agent": "agy",
+                "agent": "jules",
                 "task_id": "T1",
                 "pid": 12345,
             }
@@ -160,12 +177,15 @@ def test_reap_leaves_live_pid_marker_before_grace(board, monkeypatch):
 
 def test_harvest_archives_result_receipt_before_unlink(board):
     tasks_path, runs = board
+    task = load_limen_file(tasks_path).tasks[0]
     result = {
         "task_id": "T1",
-        "agent": "agy",
+        "agent": "jules",
         "result": False,
         "ts": "2026-07-06T00:00:00+00:00",
         "err": "token sk-secretsecretsecret and contact test@example.com",
+        "execution_contract_hash": execution_contract_hash(task),
+        "execution_started": True,
     }
     receipt = runs / "T1.result.json"
     receipt.write_text(json.dumps(result))
@@ -181,7 +201,7 @@ def test_harvest_archives_result_receipt_before_unlink(board):
     assert archived["raw_sha256"]
     assert archived["receipt"]["err"] == "token [REDACTED_TOKEN] and contact [REDACTED_EMAIL]"
     got = {t.id: t for t in load_limen_file(tasks_path).tasks}
-    assert got["T1"].dispatch_log[-1].agent == "agy"
+    assert got["T1"].dispatch_log[-1].agent == "jules"
 
 
 def test_harvest_archives_malformed_result_receipt_before_unlink(board):

@@ -33,6 +33,17 @@ from urllib.parse import urlparse
 
 import yaml
 
+SOURCE_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SOURCE_ROOT / "cli" / "src"))
+
+from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
+from limen.execution_contract import execution_contract_hash  # noqa: E402
+from limen.intake import validate_intake_contract  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
+from limen.models import Task  # noqa: E402
+from limen.tabularius import pending_upsert_patches, submit_task_upsert  # noqa: E402
+from limen.worktree_debt import take_admission_snapshot  # noqa: E402
+
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOGS = ROOT / "logs"
@@ -55,6 +66,12 @@ TRIAL_OBSERVATION_PATH = Path(
 TOKEN_REPORT = Path(os.environ.get("LIMEN_CODEX_TOKEN_REPORT", LOGS / "codex-token-report.json"))
 HANDOFF_SCRIPT = ROOT / "scripts" / "handoff-relay.py"
 SESSION_VALUE_SCRIPT = ROOT / "scripts" / "session-value-review.py"
+ALWAYS_WORKING_SCRIPT = Path(os.environ.get("LIMEN_ALWAYS_WORKING_SCRIPT", ROOT / "scripts" / "always-working.py"))
+TABULARIUS_SCRIPT = ROOT / "scripts" / "tabularius-organ.py"
+DISPATCH_ASYNC_SCRIPT = ROOT / "scripts" / "dispatch-async.py"
+USAGE_PATH = Path(os.environ.get("LIMEN_USAGE_JSON", LOGS / "usage.json"))
+LANE_SWITCH_LOCK = Path(os.environ.get("LIMEN_OVERNIGHT_LANE_SWITCH_LOCK", LOGS / "overnight-lane-switch.lock"))
+_ASYNC_RESERVATION_RE = re.compile(r"^async-reserve:[0-9a-f]{32}$")
 LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", os.environ.get("LIMEN_LAUNCHD_LABEL", "com.limen.heartbeat"))
 WATCHDOG_LABEL = os.environ.get("LIMEN_WATCHDOG_LABEL", "com.limen.watchdog")
 LAUNCH_AGENTS = Path.home() / "Library" / "LaunchAgents"
@@ -98,6 +115,19 @@ try:
     VALUE_GATE_HOURS = float(os.environ.get("LIMEN_OVERNIGHT_VALUE_GATE_HOURS", "1.5") or "1.5")
 except ValueError:
     VALUE_GATE_HOURS = 1.5
+try:
+    LANE_SWITCH_PROVIDER_MAX_AGE_MIN = float(os.environ.get("LIMEN_OVERNIGHT_PROVIDER_MAX_AGE_MIN", "90") or "90")
+except ValueError:
+    LANE_SWITCH_PROVIDER_MAX_AGE_MIN = 90.0
+
+LANE_SWITCH_OPEN_STATUSES = frozenset({"assigned_from_existing_work", "needs_assignment"})
+LANE_SWITCH_ACTIVE_TASK_STATUSES = frozenset({"open", "dispatched", "in_progress"})
+LANE_SWITCH_GOOD_STATUSES = frozenset(
+    {"would_submit", "would_launch", "launched", "already_running", "result_pending_harvest"}
+)
+LANE_SWITCH_BAD_PROVIDER_HEALTH = frozenset(
+    {"blocked", "disabled", "down", "exhausted", "low", "rate_limited", "unavailable"}
+)
 
 TICK_RE = re.compile(
     r"tick emitted:\s*(?P<ts>\S+).*?\btotal=(?P<total>\d+)\s+open=(?P<open>\d+)\s+spent=(?P<spent>\S+)"
@@ -396,6 +426,816 @@ def first_next_command(value_gate: dict[str, Any]) -> str:
     return str(commands[0]) if commands else ""
 
 
+def always_working_snapshot() -> dict[str, Any]:
+    """Read the counts/receipt-derived owner-packet surface without writing it.
+
+    ``always-working.py --json`` reads reconciled owner receipts and private counts-only
+    lifecycle indexes; it does not read or return raw prompt bodies.  Keeping this as a
+    subprocess also prevents its comparatively broad estate discovery imports from becoming
+    part of the watcher's cheap normal path when the value gate is green.
+    """
+
+    proc = run([sys.executable, str(ALWAYS_WORKING_SCRIPT), "--json"], timeout=120)
+    payload = parse_json_stdout(proc.stdout)
+    items = payload.get("items") if isinstance(payload.get("items"), list) else None
+    return {
+        "returncode": proc.returncode,
+        "output": short_output(proc),
+        "snapshot": payload if items is not None else {},
+    }
+
+
+def _owner_task_id(item: dict[str, Any], packet: dict[str, Any], target_agent: str) -> str:
+    """Stable per-contract task id, so one unresolved receipt cannot ticket-storm.
+
+    Historical ``AW-<item>`` tasks may already be terminal while the current receipt proves the
+    condition is open again.  The contract fingerprint creates the new task required by the task
+    lifecycle protocol without reopening the terminal row.  The same live contract always maps to
+    the same id, making repeated watch beats idempotent.
+    """
+
+    stable = {
+        "item_id": item.get("id"),
+        "workstream": item.get("workstream"),
+        "target_agent": target_agent,
+        "repo": packet.get("repo"),
+        "task": packet.get("task"),
+        "predicate": packet.get("predicate"),
+        "receipt_target": packet.get("receipt_target"),
+        "stop_condition": packet.get("stop_condition"),
+    }
+    digest = hashlib.sha256(
+        json.dumps(stable, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()[:12]
+    raw = re.sub(r"[^A-Za-z0-9._/-]+", "-", str(item.get("id") or "owner-packet")).strip("-")
+    max_base = 128 - len("AW--") - len(digest)
+    return f"AW-{raw[:max_base]}-{digest}"
+
+
+def _priority_name(value: Any) -> str:
+    try:
+        priority = int(value)
+    except (TypeError, ValueError):
+        priority = 100
+    if priority <= 20:
+        return "critical"
+    if priority <= 50:
+        return "high"
+    return "medium"
+
+
+def _priority_order(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 100
+
+
+def owner_task_from_item(item: dict[str, Any]) -> Task:
+    """Compile one always-working row into a fail-fast, predicate-shaped owner task."""
+
+    packet = item.get("assignment_packet")
+    if not isinstance(packet, dict):
+        raise ValueError("assignment packet is missing")
+    target_agent = canonical_agent(str(item.get("target_agent") or packet.get("target_agent") or ""))
+    repo = str(packet.get("repo") or "").strip()
+    if not target_agent or target_agent == "any":
+        raise ValueError("owner packet requires one concrete target agent")
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+        raise ValueError("owner packet requires one exact owner/repo")
+    workstream = str(item.get("workstream") or "always-working")
+    context = "\n".join(
+        [
+            f"Receipt-first verdict: {item.get('verdict') or ''}",
+            f"Task: {packet.get('task') or item.get('title') or ''}",
+            f"Predicate: {packet.get('predicate') or ''}",
+            f"Receipt target: {packet.get('receipt_target') or ''}",
+            f"Stop condition: {packet.get('stop_condition') or ''}",
+            "This is the single bounded alternate selected after generic dispatch was value-gated.",
+        ]
+    )
+    task = Task.model_validate(
+        {
+            "id": _owner_task_id(item, packet, target_agent),
+            "title": str(item.get("title") or item.get("id") or "Always-working owner packet"),
+            "description": str(item.get("verdict") or ""),
+            "repo": repo,
+            "type": "coordination",
+            "target_agent": target_agent,
+            "workstream": workstream,
+            "priority": _priority_name(item.get("priority")),
+            "budget_cost": 1,
+            "status": "open",
+            "labels": ["always-working", "receipt-first", "overnight-lane-switch", workstream],
+            "context": context,
+            "predicate": str(packet.get("predicate") or ""),
+            "receipt_target": str(packet.get("receipt_target") or ""),
+            "created": utc_now().date().isoformat(),
+        }
+    )
+    validate_intake_contract(task, is_new=True)
+    return task
+
+
+def _packet_summary(task: Task) -> dict[str, str]:
+    return {
+        "task_id": task.id,
+        "execution_contract_hash": execution_contract_hash(task),
+        "target_agent": task.target_agent,
+        "workstream": str(task.workstream or ""),
+        "repo": str(task.repo or ""),
+        "predicate": str(task.predicate or ""),
+        "receipt_target": str(task.receipt_target or ""),
+    }
+
+
+def _named_lane_blocker(
+    blocker_id: str,
+    reason: str,
+    *,
+    owner: str = "organvm/limen",
+    failed_predicate: str = "python3 scripts/always-working.py --json",
+    next_command: str = "python3 scripts/always-working.py --write",
+) -> dict[str, str]:
+    return {
+        "id": blocker_id,
+        "owner": owner,
+        "reason": reason[:500],
+        "failed_predicate": failed_predicate,
+        "next_command": next_command,
+    }
+
+
+def _usage_snapshot() -> tuple[dict[str, Any], str]:
+    try:
+        payload = json.loads(USAGE_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}, "provider usage receipt is missing or malformed"
+    if not isinstance(payload, dict) or not isinstance(payload.get("vendors"), dict):
+        return {}, "provider usage receipt has no vendor map"
+    generated = parse_iso(str(payload.get("generated") or payload.get("generated_at") or ""))
+    if generated is None:
+        return {}, "provider usage receipt has no parseable generation time"
+    age_min = (utc_now() - generated).total_seconds() / 60
+    if age_min < -5 or age_min > LANE_SWITCH_PROVIDER_MAX_AGE_MIN:
+        return {}, (
+            f"provider usage receipt is not fresh ({age_min:.1f}m; limit {LANE_SWITCH_PROVIDER_MAX_AGE_MIN:g}m)"
+        )
+    return payload, ""
+
+
+def _finite_number(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not (number == number and abs(number) != float("inf")):
+        return None
+    return number
+
+
+def _provider_gate(agent: str, usage: dict[str, Any]) -> tuple[bool, str]:
+    vendors = usage.get("vendors") if isinstance(usage.get("vendors"), dict) else {}
+    info = vendors.get(agent) if isinstance(vendors, dict) else None
+    if not isinstance(info, dict):
+        return False, f"provider {agent} has no current capacity receipt"
+    health = str(info.get("health") or info.get("state") or info.get("status") or "").strip().lower()
+    health = health.replace("-", "_")
+    weak_agy_proxy = bool(
+        agent == "agy"
+        and str(info.get("signal") or "") in {"dispatch-count", "count", "runs"}
+        and "operator board cap" in str(info.get("limit_source") or "")
+        and not info.get("recent_rate_limit")
+        and health != "rate_limited"
+    )
+    if health in LANE_SWITCH_BAD_PROVIDER_HEALTH and not weak_agy_proxy:
+        return False, f"provider {agent} is measured {health or 'unavailable'}"
+    remaining = _finite_number(info.get("remaining"))
+    headroom = _finite_number(info.get("headroom_pct"))
+    reserve = _finite_number(info.get("effective_reserve_pct"))
+    if remaining is not None and remaining <= 0 and not weak_agy_proxy:
+        return False, f"provider {agent} has no measured remaining capacity"
+    if headroom is not None and headroom <= 0 and not weak_agy_proxy:
+        return False, f"provider {agent} has no measured headroom"
+    if headroom is not None and reserve is not None and headroom <= reserve and not weak_agy_proxy:
+        return False, f"provider {agent} headroom does not clear its live reserve"
+    if remaining is None and headroom is None and not weak_agy_proxy:
+        return False, f"provider {agent} capacity is unknown"
+    return True, ""
+
+
+def _local_admission_gate(agent: str, admission: dict[str, Any]) -> tuple[bool, str, str]:
+    if canonical_agent(agent) not in LOCAL_CHECKOUT_AGENTS:
+        return True, "", "remote"
+    if admission.get("resource_blocked") or admission.get("vitals_shed"):
+        return False, str(admission.get("reason") or "local resource gate is closed"), "resource"
+    if admission.get("reaper_blocked") or admission.get("block_new_local"):
+        return False, str(admission.get("reason") or "local lifecycle gate is closed"), "lifecycle"
+    return True, "", "local"
+
+
+def _owned_task_state(task: Task, board: Any, pending_ids: set[str]) -> str | None:
+    if task.id in pending_ids:
+        return "pending"
+    for current in getattr(board, "tasks", []) or []:
+        if current.id == task.id:
+            return str(current.status)
+    return None
+
+
+def _targeted_dispatch_argv(task: Task) -> list[str]:
+    return [
+        sys.executable,
+        str(DISPATCH_ASYNC_SCRIPT),
+        "--lanes",
+        task.target_agent,
+        "--per-lane",
+        "1",
+        "--local-per-lane",
+        "1",
+        "--max",
+        "1",
+        "--task-id",
+        task.id,
+        "--execution-contract-hash",
+        execution_contract_hash(task),
+        "--targeted-only",
+        "--json-output",
+    ]
+
+
+def _exact_task_command(task: Task) -> str:
+    relative = [
+        "python3",
+        "scripts/dispatch-async.py",
+        "--lanes",
+        task.target_agent,
+        "--per-lane",
+        "1",
+        "--local-per-lane",
+        "1",
+        "--max",
+        "1",
+        "--task-id",
+        task.id,
+        "--execution-contract-hash",
+        execution_contract_hash(task),
+        "--targeted-only",
+        "--json-output",
+    ]
+    return "PYTHONPATH=cli/src " + shlex.join(relative)
+
+
+def _targeted_recovery_command(task: Task, reservation_id: str | None = None) -> str:
+    relative = [
+        "python3",
+        "scripts/dispatch-async.py",
+        "--recover-task",
+        task.id,
+        *(
+            ["--reservation-id", reservation_id]
+            if reservation_id and _ASYNC_RESERVATION_RE.fullmatch(reservation_id)
+            else []
+        ),
+        "--execution-contract-hash",
+        execution_contract_hash(task),
+        "--json-output",
+    ]
+    return "PYTHONPATH=cli/src " + shlex.join(relative)
+
+
+def _current_async_reservation_id(task_id: str) -> str | None:
+    try:
+        board = load_limen_file(TASKS_PATH)
+    except Exception:
+        return None
+    current = next((task for task in board.tasks if task.id == task_id), None)
+    last = current.dispatch_log[-1] if current is not None and current.dispatch_log else None
+    if (
+        current is None
+        or current.status != "dispatched"
+        or last is None
+        or last.status != "dispatched"
+        or (last.session_id != "async-reserve" and not _ASYNC_RESERVATION_RE.fullmatch(last.session_id))
+    ):
+        return None
+    return last.session_id
+
+
+def _artifact_matches_reservation(artifact_reservation_id: object, current_reservation_id: str) -> bool:
+    if current_reservation_id == "async-reserve":
+        # Pre-nonce receipts omitted this field; workers produced during the
+        # migration may write the explicit legacy value.
+        return artifact_reservation_id in {None, "async-reserve"}
+    return artifact_reservation_id == current_reservation_id
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _async_task_state(task_id: str) -> dict[str, Any] | None:
+    """Return only durable exact-task async state; never infer from a lossy filename alone."""
+
+    current_reservation_id = _current_async_reservation_id(task_id)
+    if current_reservation_id is None:
+        # Filesystem residue has no authority when the board has no current
+        # async owner.  In particular, recovered reservation A must not suppress
+        # a new launch B while the task is open.
+        return None
+    for result_path in sorted(ASYNC_RUNS.glob("*.result.json")):
+        try:
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if str(payload.get("task_id") or "") != task_id:
+            continue
+        artifact_reservation_id = payload.get("reservation_id")
+        if not _artifact_matches_reservation(artifact_reservation_id, current_reservation_id):
+            continue
+        return {
+            "status": "result_pending_harvest",
+            "receipt": result_path.name,
+            "reservation_id": artifact_reservation_id if isinstance(artifact_reservation_id, str) else None,
+        }
+    for marker_path in sorted(ASYNC_RUNS.glob("*.running")):
+        try:
+            payload = json.loads(marker_path.read_text(encoding="utf-8"))
+            marker_task_id = str(payload.get("task_id") or "")
+            pid = int(payload.get("pid"))
+        except (OSError, TypeError, ValueError):
+            continue
+        if marker_task_id != task_id:
+            continue
+        artifact_reservation_id = payload.get("reservation_id")
+        if not _artifact_matches_reservation(artifact_reservation_id, current_reservation_id):
+            continue
+        return {
+            "status": "already_running" if _pid_alive(pid) else "orphaned_claim",
+            "receipt": marker_path.name,
+            "pid": pid,
+            "reservation_id": artifact_reservation_id if isinstance(artifact_reservation_id, str) else None,
+        }
+    return None
+
+
+def _targeted_dispatch_receipt(output: str) -> dict[str, Any]:
+    for line in reversed(output.splitlines()):
+        try:
+            payload = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(payload, dict) and payload.get("schema_version") == "limen-targeted-dispatch.v1":
+            return payload
+    return {}
+
+
+def _active_owner_outcome(task: Task, owner_state: str) -> dict[str, Any]:
+    async_state = _async_task_state(task.id)
+    if async_state and async_state.get("status") in {"already_running", "result_pending_harvest"}:
+        return {**async_state, "owner_state": owner_state}
+    receipt = async_state.get("receipt") if async_state else ""
+    reservation_id = (
+        async_state.get("reservation_id")
+        if async_state and isinstance(async_state.get("reservation_id"), str)
+        else _current_async_reservation_id(task.id)
+    )
+    return {
+        "status": "blocked",
+        "owner_state": owner_state,
+        "blocker": _named_lane_blocker(
+            "overnight-owner-claim-orphaned",
+            (
+                f"exact owner packet {task.id} is {owner_state} without a live worker or result receipt"
+                + (f" ({receipt})" if receipt else "")
+            ),
+            owner=str(task.repo or "organvm/limen"),
+            failed_predicate=str(task.predicate or ""),
+            next_command=(
+                _targeted_recovery_command(task, reservation_id)
+                if owner_state == "dispatched"
+                else str(task.predicate or "python3 scripts/always-working.py --json")
+            ),
+        ),
+    }
+
+
+def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str, Any]:
+    """Drain/launch one exact packet, or return a named fail-closed blocker."""
+
+    existing_async = _async_task_state(task.id)
+    if existing_async:
+        if existing_async.get("status") in {"already_running", "result_pending_harvest"}:
+            return {**existing_async, "owner_state": owner_state, "targeted_launch_count": 0}
+        return _active_owner_outcome(task, owner_state)
+    if owner_state in {"dispatched", "in_progress"}:
+        return _active_owner_outcome(task, owner_state)
+
+    if owner_state == "pending":
+        keeper = run([sys.executable, str(TABULARIUS_SCRIPT)], timeout=120)
+        if keeper.returncode != 0:
+            return {
+                "status": "blocked",
+                "blocker": _named_lane_blocker(
+                    "overnight-owner-ticket-drain-failed",
+                    f"TABVLARIVS could not drain exact owner packet {task.id} (exit {keeper.returncode})",
+                    owner=str(task.repo or "organvm/limen"),
+                    failed_predicate="python3 scripts/check-tabularius.py",
+                    next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                ),
+            }
+
+    try:
+        board = load_limen_file(TASKS_PATH)
+        pending_ids = {
+            str(patch.get("id"))
+            for patch in pending_upsert_patches(TASKS_PATH)
+            if isinstance(patch, dict) and patch.get("id")
+        }
+        current_state = _owned_task_state(task, board, pending_ids)
+    except Exception:
+        current_state = None
+    if current_state == "pending" or current_state is None:
+        return {
+            "status": "blocked",
+            "owner_state": current_state,
+            "blocker": _named_lane_blocker(
+                "overnight-owner-ticket-not-drained",
+                f"exact owner packet {task.id} did not become an open board task after its keeper pass",
+                owner=str(task.repo or "organvm/limen"),
+                failed_predicate="python3 scripts/check-tabularius.py",
+                next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+            ),
+        }
+    if current_state in {"dispatched", "in_progress"}:
+        return _active_owner_outcome(task, current_state)
+    if current_state != "open":
+        return {
+            "status": "blocked",
+            "owner_state": current_state,
+            "blocker": _named_lane_blocker(
+                "overnight-owner-packet-terminal",
+                f"exact owner packet {task.id} became terminal ({current_state}) before launch",
+                owner=str(task.repo or "organvm/limen"),
+                failed_predicate=str(task.predicate or ""),
+                next_command=str(task.receipt_target or ""),
+            ),
+        }
+
+    dispatched = run(_targeted_dispatch_argv(task), timeout=120)
+    receipt = _targeted_dispatch_receipt(dispatched.stdout)
+    exact_launch = receipt.get("launched") == [[task.target_agent, task.id]]
+    post_state = _async_task_state(task.id)
+    if (
+        dispatched.returncode == 0
+        and exact_launch
+        and post_state
+        and post_state.get("status")
+        in {
+            "already_running",
+            "result_pending_harvest",
+        }
+    ):
+        return {
+            "status": "launched",
+            "owner_state": "dispatched",
+            "async_state": post_state.get("status"),
+            "receipt": post_state.get("receipt"),
+            "targeted_launch_count": 1,
+        }
+    # A durable task-specific marker/result outranks a lost subprocess response: the worker really
+    # did launch, so preserve idempotence instead of launching it again.
+    if post_state and post_state.get("status") in {"already_running", "result_pending_harvest"}:
+        return {
+            "status": "launched",
+            "owner_state": "dispatched",
+            "async_state": post_state.get("status"),
+            "receipt": post_state.get("receipt"),
+            "targeted_launch_count": 1,
+        }
+    dispatch_blocker = receipt.get("blocker") if isinstance(receipt.get("blocker"), dict) else {}
+    if dispatch_blocker.get("id") == "targeted-execution-contract-mismatch":
+        return {
+            "status": "blocked",
+            "owner_state": current_state,
+            "targeted_launch_count": 0,
+            "blocker": _named_lane_blocker(
+                "overnight-owner-execution-contract-mismatch",
+                str(dispatch_blocker.get("reason") or "selected owner execution contract changed before reserve"),
+                owner=str(task.repo or "organvm/limen"),
+                failed_predicate=str(task.predicate or ""),
+                next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
+            ),
+        }
+    launched_count = int(receipt.get("launched_count") or 0) if receipt else 0
+    return {
+        "status": "blocked",
+        "owner_state": current_state,
+        "targeted_launch_count": launched_count,
+        "blocker": _named_lane_blocker(
+            "overnight-owner-targeted-zero-launch",
+            (
+                f"exact owner packet {task.id} produced no durable targeted launch "
+                f"(exit {dispatched.returncode}, launched {launched_count})"
+            ),
+            owner=str(task.repo or "organvm/limen"),
+            failed_predicate=str(task.predicate or ""),
+            next_command=_exact_task_command(task),
+        ),
+    }
+
+
+def _submit_one_owner_task(task: Task) -> dict[str, Any]:
+    """Recheck ownership under a short machine lock, then append at most one ticket."""
+
+    LANE_SWITCH_LOCK.parent.mkdir(parents=True, exist_ok=True)
+    with LANE_SWITCH_LOCK.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        board = load_limen_file(TASKS_PATH)
+        pending_ids = {
+            str(patch.get("id"))
+            for patch in pending_upsert_patches(TASKS_PATH)
+            if isinstance(patch, dict) and patch.get("id")
+        }
+        state = _owned_task_state(task, board, pending_ids)
+        if state == "pending" or state in LANE_SWITCH_ACTIVE_TASK_STATUSES:
+            return {"status": "already_owned", "ticket_submitted": False, "owner_state": state}
+        if state:
+            return {
+                "status": "blocked",
+                "ticket_submitted": False,
+                "blocker": _named_lane_blocker(
+                    "overnight-owner-packet-terminal",
+                    f"exact owner packet {task.id} is terminal ({state}) while its receipt remains unresolved",
+                    owner=str(task.repo or "organvm/limen"),
+                    failed_predicate=str(task.predicate or ""),
+                    next_command=str(task.receipt_target or ""),
+                ),
+            }
+        path = submit_task_upsert(
+            TASKS_PATH,
+            task,
+            agent=os.environ.get("LIMEN_AGENT", "github_actions"),
+            session_id="overnight-lane-switch",
+        )
+        return {
+            "status": "submitted",
+            "ticket_submitted": True,
+            "ticket_name": path.name,
+        }
+
+
+def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str, Any]:
+    """Choose exactly one bounded alternate while generic fan-out stays closed."""
+
+    value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
+    try:
+        gate_rc = int(value_gate.get("returncode") or 0)
+    except (TypeError, ValueError):
+        gate_rc = -1
+    base: dict[str, Any] = {
+        "requested": gate_rc in {10, 20},
+        "value_gate_exit": gate_rc,
+        "generic_dispatch_allowed": False if gate_rc in {10, 20} else None,
+        "status": "not_requested",
+        "ticket_submitted": False,
+        "ticket_count": 0,
+        "skipped": [],
+        "quarantined": [],
+    }
+    if gate_rc not in {10, 20}:
+        return base
+    handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
+    if handoff and not handoff.get("ok"):
+        base.update(
+            {
+                "status": "blocked",
+                "blocker": _named_lane_blocker(
+                    "overnight-handoff-blocked",
+                    "handoff relay is not fresh enough to transfer one owner packet",
+                    next_command="python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check",
+                ),
+            }
+        )
+        return base
+
+    always = always_working_snapshot()
+    owner_snapshot = always.get("snapshot") if isinstance(always.get("snapshot"), dict) else {}
+    if always.get("returncode") != 0 or not isinstance(owner_snapshot.get("items"), list):
+        base.update(
+            {
+                "status": "blocked",
+                "blocker": _named_lane_blocker(
+                    "always-working-owner-surface-unavailable",
+                    "always-working did not return a valid owner-packet snapshot",
+                ),
+            }
+        )
+        return base
+    try:
+        board = load_limen_file(TASKS_PATH)
+        pending_ids = {
+            str(patch.get("id"))
+            for patch in pending_upsert_patches(TASKS_PATH)
+            if isinstance(patch, dict) and patch.get("id")
+        }
+    except Exception:
+        base.update(
+            {
+                "status": "blocked",
+                "blocker": _named_lane_blocker(
+                    "overnight-owner-board-unavailable",
+                    "the task board or keeper inbox could not be read safely",
+                    failed_predicate="python3 scripts/check-tabularius.py",
+                    next_command="python3 scripts/tabularius-organ.py",
+                ),
+            }
+        )
+        return base
+
+    usage, usage_error = _usage_snapshot()
+    if usage_error:
+        base.update(
+            {
+                "status": "blocked",
+                "blocker": _named_lane_blocker(
+                    "overnight-provider-telemetry-blocked",
+                    usage_error,
+                    failed_predicate="python3 scripts/usage-telemetry.py",
+                    next_command="python3 scripts/usage-telemetry.py",
+                ),
+            }
+        )
+        return base
+
+    items = [item for item in owner_snapshot["items"] if isinstance(item, dict)]
+    candidates = sorted(
+        (item for item in items if item.get("status") in LANE_SWITCH_OPEN_STATUSES),
+        key=lambda item: (_priority_order(item.get("priority")), str(item.get("id") or "")),
+    )
+    local_admission: dict[str, Any] | None = None
+    first_owner = "organvm/limen"
+    for item in candidates:
+        packet = item.get("assignment_packet") if isinstance(item.get("assignment_packet"), dict) else {}
+        if packet.get("repo"):
+            first_owner = str(packet["repo"])
+        try:
+            task = owner_task_from_item(item)
+        except Exception as exc:
+            item_id = str(item.get("id") or "unknown")[:128]
+            base["quarantined"].append(
+                {
+                    "item_id": item_id,
+                    "gate": "intake",
+                    "reason": str(exc)[:300] or "typed intake rejected the owner packet",
+                }
+            )
+            base["skipped"].append(
+                {
+                    "task_id": item_id,
+                    "gate": "intake",
+                    "reason": "owner packet quarantined before ticket submission",
+                }
+            )
+            continue
+        provider_ok, provider_reason = _provider_gate(task.target_agent, usage)
+        if not provider_ok:
+            base["skipped"].append({"task_id": task.id, "gate": "provider", "reason": provider_reason[:300]})
+            continue
+        if canonical_agent(task.target_agent) in LOCAL_CHECKOUT_AGENTS:
+            if local_admission is None:
+                try:
+                    local_admission = dict(take_admission_snapshot(ROOT))
+                except Exception:
+                    local_admission = {
+                        "block_new_local": True,
+                        "resource_blocked": True,
+                        "reason": "local admission snapshot failed closed",
+                    }
+            local_ok, local_reason, local_gate = _local_admission_gate(task.target_agent, local_admission)
+            if not local_ok:
+                base["skipped"].append({"task_id": task.id, "gate": local_gate, "reason": local_reason[:300]})
+                continue
+        owner_state = _owned_task_state(task, board, pending_ids)
+        if owner_state and owner_state not in {"pending", *LANE_SWITCH_ACTIVE_TASK_STATUSES}:
+            base["skipped"].append(
+                {
+                    "task_id": task.id,
+                    "gate": "owner",
+                    "reason": f"exact packet is terminal ({owner_state}) while receipt remains unresolved",
+                }
+            )
+            continue
+        base["packet"] = _packet_summary(task)
+        if not submit:
+            if owner_state in {"dispatched", "in_progress"}:
+                base.update(_active_owner_outcome(task, owner_state))
+                if base.get("status") in LANE_SWITCH_GOOD_STATUSES:
+                    base["next_command"] = _exact_task_command(task)
+                return base
+            base.update(
+                {
+                    "status": "would_launch" if owner_state in {"pending", "open"} else "would_submit",
+                    "owner_state": owner_state,
+                    "next_command": "python3 scripts/overnight-watch.py",
+                }
+            )
+            return base
+        outcome: dict[str, Any] = {
+            "status": "already_owned",
+            "ticket_submitted": False,
+            "owner_state": owner_state,
+        }
+        if owner_state is None:
+            try:
+                outcome = _submit_one_owner_task(task)
+            except Exception:
+                outcome = {
+                    "status": "blocked",
+                    "ticket_submitted": False,
+                    "blocker": _named_lane_blocker(
+                        "overnight-owner-ticket-rejected",
+                        "TABVLARIVS rejected the selected owner packet before it entered the inbox",
+                        owner=str(task.repo or "organvm/limen"),
+                        failed_predicate=str(task.predicate or ""),
+                        next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
+                    ),
+                }
+        base.update(outcome)
+        base["ticket_count"] = 1 if base.get("ticket_submitted") else 0
+        if base.get("status") == "blocked":
+            return base
+        execution_state = str(base.get("owner_state") or ("pending" if base.get("ticket_submitted") else ""))
+        execution = _drain_and_dispatch_one_owner_task(task, execution_state)
+        base.update(execution)
+        if base.get("status") in LANE_SWITCH_GOOD_STATUSES:
+            base["next_command"] = _exact_task_command(task)
+        return base
+
+    blocked_items = [item for item in items if item.get("status") == "blocked"]
+    if base["skipped"]:
+        gates = sorted({str(entry.get("gate") or "unknown") for entry in base["skipped"]})
+        if gates == ["intake"]:
+            reason = f"all {len(base['quarantined'])} bounded owner packet(s) failed typed intake"
+            blocker_id = "always-working-invalid-owner-packets"
+        else:
+            reason = f"all bounded owner packets are closed by current {', '.join(gates)} gate(s)"
+            blocker_id = "overnight-owner-packets-gated"
+    elif blocked_items:
+        item = sorted(
+            blocked_items,
+            key=lambda row: (_priority_order(row.get("priority")), str(row.get("id") or "")),
+        )[0]
+        packet = item.get("assignment_packet") if isinstance(item.get("assignment_packet"), dict) else {}
+        first_owner = str(packet.get("repo") or first_owner)
+        reason = f"always-working owner item {str(item.get('id') or 'unknown')[:128]} is externally blocked"
+        blocker_id = "always-working-owner-blocked"
+    else:
+        reason = "always-working has no unresolved predicate-shaped alternate to own"
+        blocker_id = "always-working-no-owner-packet"
+    base.update(
+        {
+            "status": "blocked",
+            "blocker": _named_lane_blocker(blocker_id, reason, owner=first_owner),
+        }
+    )
+    return base
+
+
+def apply_lane_switch_control(dispatch: dict[str, Any], lane_switch: dict[str, Any]) -> dict[str, Any]:
+    if not lane_switch.get("requested"):
+        return dispatch
+    result = dict(dispatch)
+    result["allow_dispatch"] = False
+    if lane_switch.get("status") in LANE_SWITCH_GOOD_STATUSES:
+        task_id = str((lane_switch.get("packet") or {}).get("task_id") or "owner packet")
+        result.update(
+            {
+                "exit_code": 10,
+                "reason": f"generic dispatch remains closed; bounded owner packet {task_id} selected",
+                "next_command": str(lane_switch.get("next_command") or ""),
+            }
+        )
+        return result
+    blocker = lane_switch.get("blocker") if isinstance(lane_switch.get("blocker"), dict) else {}
+    result.update(
+        {
+            "exit_code": 20,
+            "reason": str(blocker.get("reason") or "no bounded owner packet clears current gates"),
+            "next_command": str(blocker.get("next_command") or "python3 scripts/always-working.py --write"),
+        }
+    )
+    return result
+
+
 def dispatch_control(snapshot: dict[str, Any]) -> dict[str, Any]:
     handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
     value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
@@ -557,7 +1397,12 @@ def next_stale_count(previous: dict[str, Any], tick: dict[str, Any] | None) -> i
     return int(previous.get("stale_tick_count") or 0) + 1
 
 
-def build_snapshot(*, refresh_handoff: bool = True, record_gate: bool = True) -> dict[str, Any]:
+def build_snapshot(
+    *,
+    refresh_handoff: bool = True,
+    record_gate: bool = True,
+    submit_lane_switch: bool = False,
+) -> dict[str, Any]:
     text = tail_text(HEARTBEAT_LOG)
     heartbeat = parse_heartbeat(text)
     previous = load_json(STATE_PATH)
@@ -589,6 +1434,8 @@ def build_snapshot(*, refresh_handoff: bool = True, record_gate: bool = True) ->
     snapshot["handoff_relay"] = handoff_relay_snapshot(refresh=refresh_handoff)
     snapshot["value_gate"] = session_value_gate_snapshot(record_gate=record_gate)
     snapshot["dispatch_control"] = dispatch_control(snapshot)
+    snapshot["lane_switch"] = lane_switch_snapshot(snapshot, submit=submit_lane_switch)
+    snapshot["dispatch_control"] = apply_lane_switch_control(snapshot["dispatch_control"], snapshot["lane_switch"])
     snapshot["overnight_counts"] = overnight_counts(snapshot)
     snapshot["plist_drift"] = plist_drift()
     snapshot["throughput"] = throughput_snapshot(snapshot)
@@ -601,6 +1448,9 @@ def overnight_counts(snapshot: dict[str, Any]) -> dict[str, Any]:
     value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
     dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
     handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
+    lane_switch = snapshot.get("lane_switch") if isinstance(snapshot.get("lane_switch"), dict) else {}
+    packet = lane_switch.get("packet") if isinstance(lane_switch.get("packet"), dict) else {}
+    blocker = lane_switch.get("blocker") if isinstance(lane_switch.get("blocker"), dict) else {}
     return {
         "launched": int(async_line.get("launched") or 0),
         "harvested": int(async_line.get("harvested") or 0),
@@ -613,6 +1463,10 @@ def overnight_counts(snapshot: dict[str, Any]) -> dict[str, Any]:
         "gate_action": value_gate.get("action") or "unknown",
         "gate_exit": int(value_gate.get("returncode") or 0),
         "dispatch_allowed": bool(dispatch.get("allow_dispatch", True)),
+        "lane_switch_status": lane_switch.get("status") or "not_requested",
+        "lane_switch_task": packet.get("task_id") or "",
+        "lane_switch_ticket_count": int(lane_switch.get("ticket_count") or 0),
+        "lane_switch_blocker": blocker.get("id") or "",
         "next_command": dispatch.get("next_command") or "",
     }
 
@@ -624,6 +1478,7 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
     value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
     dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
+    lane_switch = snapshot.get("lane_switch") if isinstance(snapshot.get("lane_switch"), dict) else {}
 
     if not launchd.get("ok") or launchd.get("state") not in (None, "active", "running"):
         alerts.append(
@@ -684,7 +1539,19 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
             }
         )
     gate_rc = int(value_gate.get("returncode") or 0)
-    if gate_rc >= 20:
+    lane_status = str(lane_switch.get("status") or "")
+    if lane_switch.get("requested") and lane_status == "blocked":
+        blocker = lane_switch.get("blocker") if isinstance(lane_switch.get("blocker"), dict) else {}
+        alerts.append(
+            {
+                "id": "overnight-lane-switch-blocked",
+                "evidence": (
+                    f"blocker={blocker.get('id') or 'unnamed'} owner={blocker.get('owner') or 'unknown'} "
+                    f"reason={blocker.get('reason') or 'no eligible owner packet'}"
+                )[:500],
+            }
+        )
+    elif gate_rc >= 20 and lane_status not in LANE_SWITCH_GOOD_STATUSES:
         alerts.append(
             {
                 "id": "session-value-gate-stop",
@@ -956,6 +1823,9 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
     handoff = snapshot.get("handoff_relay") or {}
     value_gate = snapshot.get("value_gate") or {}
     dispatch = snapshot.get("dispatch_control") or {}
+    lane_switch = snapshot.get("lane_switch") or {}
+    lane_packet = lane_switch.get("packet") or {}
+    lane_blocker = lane_switch.get("blocker") or {}
     lines = [
         "# Overnight Watch",
         "",
@@ -976,6 +1846,9 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
         f"- Stale handoff: `{str(counts.get('stale_handoff', False)).lower()}`.",
         f"- Gate action: `{counts.get('gate_action', 'unknown')}` (exit `{counts.get('gate_exit', 'n/a')}`).",
         f"- Dispatch allowed: `{str(counts.get('dispatch_allowed', True)).lower()}`.",
+        f"- Lane switch: `{counts.get('lane_switch_status', 'not_requested')}`; owner packet: "
+        f"`{counts.get('lane_switch_task') or 'none'}`; tickets: `{counts.get('lane_switch_ticket_count', 0)}`.",
+        f"- Lane blocker: `{counts.get('lane_switch_blocker') or 'none'}`.",
         f"- Next command: `{counts.get('next_command') or 'none'}`.",
         "",
         "## Gate Checks",
@@ -983,6 +1856,7 @@ def write_markdown(snapshot: dict[str, Any]) -> None:
         f"- Handoff refresh: `{handoff.get('refresh_returncode')}`; check: `{handoff.get('check_returncode')}`.",
         f"- Value gate: `{value_gate.get('returncode')}`; action: `{value_gate.get('action')}`.",
         f"- Dispatch control: {dispatch.get('reason', 'dispatch allowed')}.",
+        f"- Selected owner: `{lane_packet.get('repo') or lane_blocker.get('owner') or 'none'}`.",
     ]
     throughput = snapshot.get("throughput") if isinstance(snapshot.get("throughput"), dict) else {}
     if throughput:
@@ -4040,6 +4914,11 @@ def check_trial_receipt(
             verify_sidecars=True,
         )
     )
+    # Do not reconstruct from sources after the receipt, marker, authoritative paths, or immutable
+    # custody sidecars have already failed trust validation. Besides avoiding work on untrusted
+    # input, this guarantees FIFOs/devices are rejected without reaching predicate re-execution.
+    if errors:
+        return False, sorted(set(errors))
     try:
         expected = build_trial_receipt(
             active_marker,
@@ -4081,7 +4960,11 @@ def print_summary(snapshot: dict[str, Any]) -> None:
 
 
 def run_once(*, dry_run: bool, json_output: bool) -> int:
-    snapshot = build_snapshot(refresh_handoff=not dry_run, record_gate=not dry_run)
+    snapshot = build_snapshot(
+        refresh_handoff=not dry_run,
+        record_gate=not dry_run,
+        submit_lane_switch=not dry_run,
+    )
     if not dry_run:
         heal_actions = heal(snapshot)
         if heal_actions:

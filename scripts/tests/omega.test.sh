@@ -144,7 +144,7 @@ PY
 
 # ── Case 3: overnight-trial receipt is content-addressed, not a bare pass boolean ────────────────
 cp "$real_watch" "$work/scripts/overnight-watch.py"
-LIMEN_ROOT="$work" python3 - "$work/scripts/overnight-watch.py" <<'PY'
+PYTHONPATH="$here/../../cli/src" LIMEN_ROOT="$work" python3 - "$work/scripts/overnight-watch.py" <<'PY'
 import datetime as dt
 import importlib.util
 import json
@@ -247,7 +247,7 @@ result = module.maybe_finalize_trial()
 assert result["receipt"]["pass"] is True, result
 PY
 set +e
-LIMEN_ROOT="$work" python3 - "$work/scripts/overnight-watch.py" >/dev/null 2>&1 <<'PY'
+PYTHONPATH="$here/../../cli/src" LIMEN_ROOT="$work" python3 - "$work/scripts/overnight-watch.py" >/dev/null 2>&1 <<'PY'
 import datetime as dt, importlib.util, json, sys
 from pathlib import Path
 spec = importlib.util.spec_from_file_location("omega_watch_check", Path(sys.argv[1]))
@@ -277,7 +277,7 @@ d["input_hash"] = "f" * 64
 json.dump(d, open(p, "w"), indent=2, sort_keys=True)
 PY
 set +e
-LIMEN_ROOT="$work" python3 - "$work/scripts/overnight-watch.py" >/dev/null 2>&1 <<'PY'
+PYTHONPATH="$here/../../cli/src" LIMEN_ROOT="$work" python3 - "$work/scripts/overnight-watch.py" >/dev/null 2>&1 <<'PY'
 import importlib.util, json, sys
 from pathlib import Path
 spec = importlib.util.spec_from_file_location("omega_watch_tamper", Path(sys.argv[1]))
