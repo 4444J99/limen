@@ -3828,6 +3828,70 @@ def test_codex_attachment_cached_second_pass_is_zero_growth(tmp_path: Path):
     assert json.dumps(second["adapted_unit_receipts"], sort_keys=True) == first_receipts
 
 
+def test_codex_attachment_bounded_scan_converges_over_three_passes(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rows = [
+        {"source": "codex-sessions", "path": session},
+        {"source": "codex-attachments", "path": attachment},
+    ]
+    session_key = sources.cursor_unit_key("codex-sessions", session)
+    attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    first_budget = sources.ScanBudget(limit=1)
+    first_events, first = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=first_budget,
+        rows=rows,
+    )
+
+    assert len(first_events) == 1
+    assert first_events[0]["source"] == "codex-sessions"
+    assert first_budget.used == 1
+    assert first["pending_files"] == 1
+    assert first["coverage"]["codex-attachments"]["pending"] == 1
+    assert session_key in first["files"]
+    assert attachment_key not in first["files"]
+    assert attachment_key not in first["adapted_unit_receipts"]
+
+    second_budget = sources.ScanBudget(limit=1)
+    second_events, second = sources.scan_regular_sources(
+        lifecycle,
+        first,
+        days=None,
+        budget=second_budget,
+        rows=rows,
+    )
+    second_receipts = json.dumps(second["adapted_unit_receipts"], sort_keys=True)
+
+    assert len(second_events) == 1
+    assert second_events[0]["source"] == "codex-attachments"
+    assert second_budget.used == 1
+    assert second["pending_files"] == 0
+    assert second["errors"] == []
+    assert second["unsupported"] == []
+    assert attachment_key in second["files"]
+    assert attachment_key in second["adapted_unit_receipts"]
+
+    third_budget = sources.ScanBudget(limit=1)
+    third_events, third = sources.scan_regular_sources(
+        lifecycle,
+        second,
+        days=None,
+        budget=third_budget,
+        rows=rows,
+    )
+
+    assert third_events == []
+    assert third_budget.used == 0
+    assert third["pending_files"] == 0
+    assert third["errors"] == []
+    assert third["unsupported"] == []
+    assert json.dumps(third["adapted_unit_receipts"], sort_keys=True) == second_receipts
+
+
 def test_codex_attachment_native_ledger_second_pass_changes_no_canonical_bytes(
     tmp_path: Path,
     monkeypatch,

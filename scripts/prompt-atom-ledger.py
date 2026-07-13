@@ -2750,6 +2750,7 @@ def scan_regular_sources(
             limits=active_limits,
         )
     )
+    has_codex_attachment_rows = any(str(row["source"]) == "codex-attachments" for row in active_rows)
     for source, error in getattr(active_rows, "discovery_errors", []):
         coverage_row(coverage, source)["errors"] += 1
         errors.append(error)
@@ -2947,6 +2948,31 @@ def scan_regular_sources(
                 counts["errors"] += 1
                 errors.append(f"{source}:{path}: source changed during cached parser validation")
                 continue
+            if source == "codex-sessions" and has_codex_attachment_rows:
+                (
+                    targeted_parent_events,
+                    targeted_error,
+                    targeted_completeness_unknown,
+                ) = bounded_codex_attachment_parent_events_from_path(
+                    lifecycle,
+                    path,
+                    signature,
+                    limits=active_limits,
+                )
+                if targeted_completeness_unknown:
+                    parent_completeness_unknown.add(key)
+                if targeted_error:
+                    files.pop(key, None)
+                    counts["errors"] += 1
+                    errors.append(f"{source}:{targeted_error}")
+                    continue
+                collect_codex_attachment_parents(
+                    lifecycle,
+                    parent_path=path,
+                    parent_signature=signature,
+                    file_events=targeted_parent_events,
+                    parents=codex_attachment_parents,
+                )
             counts["converged"] += 1
             continue
         if not claimed and not lane_budget.claim():
