@@ -1326,6 +1326,11 @@ def build_snapshot() -> dict[str, Any]:
         value_repo_receipt(),
         tabularius_receipt(),
     ]
+    # Carry the already-derived lane choice in the machine snapshot so downstream
+    # conductors can validate and route one packet without copying this workstream
+    # map or guessing a provider from prose such as ``lane_fit``.
+    for item in items:
+        item["target_agent"] = AGENT_BY_WORKSTREAM.get(str(item.get("workstream") or ""), "codex")
     items = sorted(items, key=lambda row: (int(row["priority"]), str(row["id"])))
     open_items = [item for item in items if item["status"] in REQUIRED_OPEN]
     blocked_items = [item for item in items if item["status"] == STATUS_BLOCKED]
@@ -1463,7 +1468,7 @@ def _task_from_item(item: dict[str, Any]) -> dict[str, Any]:
         "description": str(item.get("verdict") or ""),
         "repo": str(packet.get("repo") or relpath(ROOT)),
         "type": "coordination",
-        "target_agent": AGENT_BY_WORKSTREAM.get(workstream, "codex"),
+        "target_agent": str(item.get("target_agent") or AGENT_BY_WORKSTREAM.get(workstream, "codex")),
         "workstream": workstream,
         "priority": _priority(item),
         "budget_cost": 1,

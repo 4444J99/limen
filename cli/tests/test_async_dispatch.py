@@ -19,6 +19,7 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "dispatch-async.py"
 sys.path.insert(0, str(CLI_SRC))
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task  # noqa: E402
 import limen.dispatch as dispatch_module  # noqa: E402
 
@@ -50,6 +51,10 @@ def _board(tmp_path):
     return {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
 
 
+def _contract_hash(tmp_path, task_id):
+    return execution_contract_hash(_board(tmp_path)[task_id])
+
+
 def _worktree_snapshot(*, blocked: bool, room_gib: float = 40.0) -> dict[str, object]:
     floor = 60.0
     return {
@@ -79,6 +84,50 @@ def test_task_id_limits_async_reservation(tmp_path):
     da = _load(tmp_path, n_open=6)
     picked = da.reserve_and_launch(["codex"], per_agent=8, cap=4, dry=True, task_id="T3")
     assert picked == [("codex", "T3")]
+
+
+def test_task_id_skips_broad_always_working_producer(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=2)
+
+    def fail_always_working(*_args, **_kwargs):
+        raise AssertionError("exact task reservation must not run the broad producer")
+
+    monkeypatch.setattr(da, "run_always_working_before_dispatch", fail_always_working)
+
+    assert da.reserve_and_launch(["codex"], 1, 1, True, task_id="T1") == [("codex", "T1")]
+
+
+def test_exact_contract_is_revalidated_under_queue_lock_before_reservation(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    selected_hash = _contract_hash(tmp_path, "T0")
+    board = load_limen_file(tmp_path / "tasks.yaml")
+    board.tasks[0].context = "changed after owner selection"
+    save_limen_file(tmp_path / "tasks.yaml", board)
+    blocker = {}
+    monkeypatch.setattr(
+        da.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("mismatched task must not spawn")),
+    )
+
+    picked = da.reserve_and_launch(
+        ["codex"],
+        per_agent=1,
+        cap=1,
+        dry=False,
+        task_id="T0",
+        admission_checked=True,
+        expected_contract_hash=selected_hash,
+        reservation_blocker=blocker,
+    )
+
+    current = _board(tmp_path)["T0"]
+    assert picked == []
+    assert current.status == "open"
+    assert load_limen_file(tmp_path / "tasks.yaml").portal.budget.track.spent == 0
+    assert blocker["id"] == "targeted-execution-contract-mismatch"
+    assert blocker["expected_hash"] == selected_hash
+    assert blocker["actual_hash"] == execution_contract_hash(current)
 
 
 def test_inflight_markers_consume_slots(tmp_path):
@@ -1571,3 +1620,397 @@ def test_no_launch_mode_skips_always_working_writer(tmp_path, monkeypatch):
 
     assert da.main() == 0
     assert (tmp_path / "tasks.yaml").read_text() == before
+
+
+def test_targeted_only_main_launches_exact_task_without_broad_reap_or_harvest(
+    tmp_path, monkeypatch, capsys
+):
+    da = _load(tmp_path, n_open=2)
+    calls = []
+
+    monkeypatch.setattr(da, "_down_lanes", lambda: set())
+    monkeypatch.setattr(da, "resolve_lanes", lambda selector, down: ["codex"])
+    contract_hash = _contract_hash(tmp_path, "T1")
+    monkeypatch.setattr(
+        da,
+        "reap_stale",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not broad-reap")),
+    )
+    monkeypatch.setattr(
+        da,
+        "harvest",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not broad-harvest")),
+    )
+    monkeypatch.setattr(da, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True})
+
+    def fake_reserve(agents, per_agent, cap, dry, task_id=None, **kwargs):
+        calls.append((agents, per_agent, cap, dry, task_id, kwargs))
+        return [("codex", "T1")]
+
+    monkeypatch.setattr(da, "reserve_and_launch", fake_reserve)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "dispatch-async.py",
+            "--lanes",
+            "codex",
+            "--per-lane",
+            "1",
+            "--local-per-lane",
+            "1",
+            "--max",
+            "1",
+            "--task-id",
+            "T1",
+            "--execution-contract-hash",
+            contract_hash,
+            "--targeted-only",
+            "--json-output",
+        ],
+    )
+
+    assert da.main() == 0
+    assert len(calls) == 1
+    assert calls[0][4] == "T1"
+    assert calls[0][5]["admission_checked"] is True
+    assert calls[0][5]["expected_contract_hash"] == contract_hash
+    receipt = json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert receipt == {
+        "admission_allow": True,
+        "blocker": None,
+        "execution_contract_hash": contract_hash,
+        "harvested_count": 0,
+        "lanes": ["codex"],
+        "launched": [["codex", "T1"]],
+        "launched_count": 1,
+        "reaped_count": 0,
+        "schema_version": "limen-targeted-dispatch.v1",
+        "status": "launched",
+        "targeted_only": True,
+        "task_id": "T1",
+    }
+
+
+def test_targeted_only_main_returns_nonzero_named_zero_launch(tmp_path, monkeypatch, capsys):
+    da = _load(tmp_path, n_open=1)
+    monkeypatch.setattr(da, "_down_lanes", lambda: set())
+    monkeypatch.setattr(da, "resolve_lanes", lambda selector, down: ["codex"])
+    monkeypatch.setattr(da, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True})
+    monkeypatch.setattr(da, "reserve_and_launch", lambda *_args, **_kwargs: [])
+    contract_hash = _contract_hash(tmp_path, "T0")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "dispatch-async.py",
+            "--lanes",
+            "codex",
+            "--per-lane",
+            "1",
+            "--max",
+            "1",
+            "--task-id",
+            "T0",
+            "--execution-contract-hash",
+            contract_hash,
+            "--targeted-only",
+            "--json-output",
+        ],
+    )
+
+    assert da.main() == 10
+    receipt = json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert receipt["status"] == "zero_launch"
+    assert receipt["launched_count"] == 0
+    assert receipt["targeted_only"] is True
+
+
+def test_targeted_only_main_returns_named_contract_mismatch_without_mutation(tmp_path, monkeypatch, capsys):
+    da = _load(tmp_path, n_open=1)
+    selected_hash = _contract_hash(tmp_path, "T0")
+    board = load_limen_file(tmp_path / "tasks.yaml")
+    board.tasks[0].predicate = "python3 scripts/changed.py"
+    save_limen_file(tmp_path / "tasks.yaml", board)
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    monkeypatch.setattr(da, "_down_lanes", lambda: set())
+    monkeypatch.setattr(da, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True})
+    monkeypatch.setattr(
+        da.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("mismatched task must not spawn")),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "dispatch-async.py",
+            "--lanes",
+            "codex",
+            "--per-lane",
+            "1",
+            "--max",
+            "1",
+            "--task-id",
+            "T0",
+            "--execution-contract-hash",
+            selected_hash,
+            "--targeted-only",
+            "--json-output",
+        ],
+    )
+
+    assert da.main() == 10
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+    receipt = json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert receipt["status"] == "contract_mismatch"
+    assert receipt["blocker"]["id"] == "targeted-execution-contract-mismatch"
+    assert receipt["launched_count"] == 0
+
+
+def test_targeted_only_dry_run_is_exact_and_does_not_mutate(tmp_path, monkeypatch, capsys):
+    da = _load(tmp_path, n_open=3)
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    admission_calls = []
+    monkeypatch.setattr(da, "_down_lanes", lambda: set())
+
+    def admission(path, task_id=None, refresh_handoff=True):
+        admission_calls.append((path, task_id, refresh_handoff))
+        return {"allow": True}
+
+    monkeypatch.setattr(da, "dispatch_admission_check", admission)
+    contract_hash = _contract_hash(tmp_path, "T2")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "dispatch-async.py",
+            "--lanes",
+            "codex",
+            "--per-lane",
+            "1",
+            "--max",
+            "1",
+            "--task-id",
+            "T2",
+            "--execution-contract-hash",
+            contract_hash,
+            "--targeted-only",
+            "--json-output",
+            "--dry-run",
+        ],
+    )
+
+    assert da.main() == 0
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+    assert list(da.RUNS.glob("*")) == []
+    assert admission_calls == [(da.TASKS, "T2", False)]
+    receipt = json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert receipt["status"] == "would_launch"
+    assert receipt["launched"] == [["codex", "T2"]]
+    assert receipt["reaped_count"] == 0
+    assert receipt["harvested_count"] == 0
+
+
+def test_targeted_only_dry_run_is_unmocked_byte_identical_across_control_surfaces(tmp_path):
+    os.environ["LIMEN_ROOT"] = str(tmp_path)
+    os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
+    _load(tmp_path, n_open=1)
+    board = load_limen_file(tmp_path / "tasks.yaml")
+    task = board.tasks[0]
+    task.context = "exact dry-run byte identity"
+    task.predicate = "python3 scripts/check.py"
+    task.receipt_target = "git:organvm/limen:logs/check.json"
+    save_limen_file(tmp_path / "tasks.yaml", board)
+
+    scripts = tmp_path / "scripts"
+    logs = tmp_path / "logs"
+    tickets = logs / "tickets" / "inbox"
+    runs = logs / "async-runs"
+    scripts.mkdir(parents=True, exist_ok=True)
+    tickets.mkdir(parents=True, exist_ok=True)
+    runs.mkdir(parents=True, exist_ok=True)
+    handoff_script = scripts / "handoff-relay.py"
+    handoff_script.write_text(
+        """#!/usr/bin/env python3
+import pathlib
+import sys
+if "--check" in sys.argv:
+    print("handoff check ok")
+    raise SystemExit(0)
+pathlib.Path("logs/handoff.json").write_text("MUTATED BY FORBIDDEN REFRESH")
+""",
+        encoding="utf-8",
+    )
+    handoff_script.chmod(0o755)
+    (logs / "handoff.json").write_text(
+        json.dumps(
+            {
+                "generated": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "next_action": {"task_id": task.id},
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (tickets / "sentinel.json").write_bytes(b"ticket-bytes\n")
+    (runs / "sentinel.bin").write_bytes(b"async-run-bytes\n")
+    (logs / "overnight-watch-state.json").write_bytes(b'{"state":"sentinel"}\n')
+    (logs / "overnight-watch-alert.json").write_bytes(b'{"alert":"sentinel"}\n')
+    (logs / "overnight-watch.jsonl").write_bytes(b'{"receipt":"sentinel"}\n')
+    (logs / "overnight-watch.md").write_bytes(b"receipt sentinel\n")
+
+    watched = [
+        tmp_path / "tasks.yaml",
+        logs / "handoff.json",
+        logs / "tickets",
+        runs,
+        logs / "overnight-watch-state.json",
+        logs / "overnight-watch-alert.json",
+        logs / "overnight-watch.jsonl",
+        logs / "overnight-watch.md",
+    ]
+
+    def byte_snapshot():
+        snapshot = {}
+        for path in watched:
+            if path.is_dir():
+                for child in sorted(candidate for candidate in path.rglob("*") if candidate.is_file()):
+                    snapshot[str(child.relative_to(tmp_path))] = child.read_bytes()
+            else:
+                snapshot[str(path.relative_to(tmp_path))] = path.read_bytes()
+        return snapshot
+
+    before = byte_snapshot()
+    env = {
+        **os.environ,
+        "LIMEN_ROOT": str(tmp_path),
+        "LIMEN_TASKS": str(tmp_path / "tasks.yaml"),
+        "LIMEN_DISPATCH_ADMISSION": "1",
+        "LIMEN_REQUIRE_HANDOFF": "1",
+        "LIMEN_REQUIRE_NEXT_ACTION_SOURCE": "1",
+        "LIMEN_SESSION_VALUE_GATE": "1",
+        "LIMEN_WORKTREE_DEBT_GATE": "0",
+        "LIMEN_DISK_PRESSURE_VALUE_ONLY": "0",
+    }
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--lanes",
+            "codex",
+            "--per-lane",
+            "1",
+            "--max",
+            "1",
+            "--task-id",
+            task.id,
+            "--execution-contract-hash",
+            execution_contract_hash(task),
+            "--targeted-only",
+            "--json-output",
+            "--dry-run",
+        ],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert byte_snapshot() == before
+    receipt = json.loads(proc.stdout.splitlines()[-1])
+    assert receipt["status"] == "would_launch"
+    assert receipt["launched"] == [["codex", task.id]]
+
+
+def test_targeted_only_retains_dispatch_admission_gate(tmp_path, monkeypatch, capsys):
+    da = _load(tmp_path, n_open=1)
+    seen = []
+    monkeypatch.setattr(da, "_down_lanes", lambda: set())
+
+    def blocked_admission(path, task_id=None, refresh_handoff=True):
+        seen.append((path, task_id, refresh_handoff))
+        return {"allow": False, "reason": "fresh handoff is required"}
+
+    monkeypatch.setattr(da, "dispatch_admission_check", blocked_admission)
+    contract_hash = _contract_hash(tmp_path, "T0")
+    monkeypatch.setattr(
+        da,
+        "reserve_and_launch",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("blocked task must not reserve")),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "dispatch-async.py",
+            "--lanes",
+            "codex",
+            "--per-lane",
+            "1",
+            "--max",
+            "1",
+            "--task-id",
+            "T0",
+            "--execution-contract-hash",
+            contract_hash,
+            "--targeted-only",
+            "--json-output",
+        ],
+    )
+
+    assert da.main() == 10
+    assert seen == [(da.TASKS, "T0", True)]
+    receipt = json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert receipt["admission_allow"] is False
+    assert receipt["status"] == "zero_launch"
+
+
+def test_exact_orphan_recovery_command_reopens_once_and_is_idempotent(tmp_path, monkeypatch, capsys):
+    da = _load(tmp_path, n_open=2)
+    board = load_limen_file(tmp_path / "tasks.yaml")
+    task = board.tasks[0]
+    old = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=2)
+    task.status = "dispatched"
+    task.updated = old
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=old,
+            agent="codex",
+            session_id="async-reserve",
+            status="dispatched",
+            output="reserved for exact recovery test",
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", board)
+    contract_hash = execution_contract_hash(task)
+    monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
+
+    argv = [
+        "dispatch-async.py",
+        "--recover-task",
+        task.id,
+        "--execution-contract-hash",
+        contract_hash,
+        "--json-output",
+    ]
+    monkeypatch.setattr(sys, "argv", argv)
+    assert da.main() == 0
+    first = json.loads(capsys.readouterr().out.splitlines()[-1])
+
+    monkeypatch.setattr(sys, "argv", argv)
+    assert da.main() == 0
+    second = json.loads(capsys.readouterr().out.splitlines()[-1])
+
+    current = _board(tmp_path)
+    assert first["status"] == "recovered"
+    assert first["recovered_count"] == 1
+    assert second["status"] == "already_open"
+    assert second["recovered_count"] == 0
+    assert current[task.id].status == "open"
+    assert current["T1"].status == "open"
+    assert current[task.id].dispatch_log[-1].session_id == "async-recover-exact"

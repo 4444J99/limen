@@ -16,7 +16,14 @@ Concurrency: at most LIMEN_ASYNC_MAX LOCAL background runs at once (default: liv
 remote lanes such as Jules are bounded by provider runway, not host slots. Per-agent in-flight count is tracked via
 <task-id>__<agent>.running markers so budgets aren't blown between reserve & harvest.
 
-Usage: dispatch-async.py --lanes auto --per-lane 8 --local-per-lane 3 [--local-max N] [--task-id TASK] [--dry-run]
+Usage: dispatch-async.py --lanes auto --per-lane 8 --local-per-lane 3 [--local-max N] [--dry-run]
+       dispatch-async.py --task-id TASK --execution-contract-hash SHA256 --targeted-only
+       dispatch-async.py --recover-task TASK --execution-contract-hash SHA256
+
+For a control-plane caller that has already selected one typed task, ``--targeted-only`` keeps
+the operation exact: no broad harvest/reap and no always-working producer pass, and success is
+reported only when the requested task is the sole launch. ``--json-output`` emits a final
+machine-readable counts-only receipt for that decision.
 """
 
 import argparse
@@ -33,6 +40,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import LOCAL_CHECKOUT_AGENTS, _weak_proxy_exhaustion, select_lanes  # noqa: E402
+from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
@@ -48,6 +56,7 @@ from limen.dispatch import (  # noqa: E402
     _restore_pr_open_status,
     _routine_generated_buildout_allowed,
     _admission_lease_path,
+    _active_admission_leases,
     _machine_admission_lock,
     _machine_admission_reserved_gib,
     _release_machine_admission,
@@ -679,6 +688,165 @@ def _effectively_unbounded_remaining(lf) -> int:
     return max(total, 1)
 
 
+def _execution_contract_blocker(lf, task_id: str, expected_hash: str) -> dict[str, object] | None:
+    """Compare the selected contract with fresh board state before any reservation mutation."""
+
+    task = next((candidate for candidate in lf.tasks if candidate.id == task_id), None)
+    actual_hash = execution_contract_hash(task) if task is not None else ""
+    if task is not None and actual_hash == expected_hash:
+        return None
+    return {
+        "id": "targeted-execution-contract-mismatch",
+        "reason": (
+            f"exact task {task_id} changed between owner selection and queue-locked reservation"
+            if task is not None
+            else f"exact task {task_id} disappeared before queue-locked reservation"
+        ),
+        "task_id": task_id,
+        "expected_hash": expected_hash,
+        "actual_hash": actual_hash,
+    }
+
+
+def _targeted_recovery_blocker(blocker_id: str, task_id: str, reason: str) -> dict[str, object]:
+    return {"id": blocker_id, "task_id": task_id, "reason": reason[:500]}
+
+
+def recover_exact_task(
+    task_id: str,
+    expected_contract_hash: str,
+    *,
+    dry_run: bool = False,
+) -> dict[str, object]:
+    """Safely reopen one proven orphaned async reservation, never a broad claim set."""
+
+    RUNS.mkdir(parents=True, exist_ok=True)
+    now = _now()
+    markers_to_remove: list[Path] = []
+    with _queue_lock(TASKS) as got:
+        if not got:
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-queue-lock-busy", task_id, "task queue lock is busy"
+                ),
+            }
+        lf = load_limen_file(TASKS)
+        contract_blocker = _execution_contract_blocker(lf, task_id, expected_contract_hash)
+        if contract_blocker:
+            return {"status": "blocked", "recovered_count": 0, "blocker": contract_blocker}
+        task = next(candidate for candidate in lf.tasks if candidate.id == task_id)
+        if task.status == "open":
+            return {"status": "already_open", "recovered_count": 0}
+        if task.status != "dispatched":
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-status-unsafe",
+                    task_id,
+                    f"exact task status is {task.status}; only an async dispatched claim can be recovered",
+                ),
+            }
+        if task_id in _result_task_ids():
+            return {"status": "result_pending_harvest", "recovered_count": 0}
+
+        matching_markers: list[tuple[Path, int | None, float]] = []
+        for marker in RUNS.glob("*.running"):
+            marker_task_id, _agent = _marker_task_agent(marker)
+            if marker_task_id != task_id:
+                continue
+            try:
+                info = _running_marker_info(marker)
+                pid = info.get("pid")
+                age_s = (now - info["started_at"]).total_seconds()  # type: ignore[operator]
+            except Exception:
+                pid = None
+                age_s = float(default_max_age_s() + 1)
+            matching_markers.append((marker, pid if isinstance(pid, int) else None, age_s))
+        live_marker = next(
+            (pid for _marker, pid, _age in matching_markers if pid is not None and _pid_alive(pid)), None
+        )
+        if live_marker is not None:
+            return {"status": "already_running", "recovered_count": 0, "pid": live_marker}
+
+        if matching_markers:
+            unproven = [
+                marker
+                for marker, pid, age_s in matching_markers
+                if pid is None and age_s <= default_max_age_s()
+            ]
+            if unproven:
+                return {
+                    "status": "blocked",
+                    "recovered_count": 0,
+                    "blocker": _targeted_recovery_blocker(
+                        "targeted-recovery-marker-unproven",
+                        task_id,
+                        "exact task has a recent marker without a verifiable worker pid",
+                    ),
+                }
+            markers_to_remove = [marker for marker, _pid, _age in matching_markers]
+        else:
+            last = task.dispatch_log[-1] if task.dispatch_log else None
+            if last is None or last.session_id != "async-reserve" or last.status != "dispatched":
+                return {
+                    "status": "blocked",
+                    "recovered_count": 0,
+                    "blocker": _targeted_recovery_blocker(
+                        "targeted-recovery-owner-unsafe",
+                        task_id,
+                        "markerless claim is not owned by async-reserve",
+                    ),
+                }
+            stamp = task.updated or last.timestamp
+            # Markerless workers have no PID proof. Match the accepted reaper's full worker-timeout
+            # grace by default; tests/operators may lower it only through the explicit recovery knob.
+            grace_s = max(1, _env_int("LIMEN_TARGETED_RECOVERY_GRACE", default_max_age_s()))
+            age_s = (now - stamp).total_seconds() if stamp else 0
+            if age_s <= grace_s:
+                return {
+                    "status": "blocked",
+                    "recovered_count": 0,
+                    "blocker": _targeted_recovery_blocker(
+                        "targeted-recovery-grace-active",
+                        task_id,
+                        f"markerless claim is only {max(0, int(age_s))}s old; retry after {grace_s}s spawn grace",
+                    ),
+                }
+            with _machine_admission_lock():
+                live_leases = [lease for lease in _active_admission_leases() if lease.get("task_id") == task_id]
+            if live_leases:
+                return {
+                    "status": "blocked",
+                    "recovered_count": 0,
+                    "blocker": _targeted_recovery_blocker(
+                        "targeted-recovery-live-lease",
+                        task_id,
+                        "markerless claim still has a live machine-admission lease",
+                    ),
+                }
+
+        if dry_run:
+            return {"status": "would_recover", "recovered_count": 0}
+        task.status = "open"
+        task.updated = now
+        task.dispatch_log.append(
+            DispatchLogEntry(
+                timestamp=now,
+                agent=task.target_agent,
+                session_id="async-recover-exact",
+                status="open",
+                output="dispatch-async: exact orphaned async claim reopened after custody proof",
+            )
+        )
+        save_limen_file(TASKS, lf)
+    for marker in markers_to_remove:
+        marker.unlink(missing_ok=True)
+    return {"status": "recovered", "recovered_count": 1}
+
+
 def _pick_reservations(
     lf,
     agents,
@@ -833,15 +1001,20 @@ def reserve_and_launch(
     *,
     admission_checked: bool = False,
     local_per_agent=None,
+    expected_contract_hash: str | None = None,
+    reservation_blocker: dict[str, object] | None = None,
 ):
     """Reserve open tasks (under lock) up to the concurrency cap + per-agent budget, then spawn
     detached workers. Returns the list of (agent, task_id) launched/would-launch."""
     if should_reserve(per_agent, cap) and not admission_checked:
-        admission = dispatch_admission_check(TASKS, task_id=task_id)
+        admission = dispatch_admission_check(TASKS, task_id=task_id, refresh_handoff=not dry)
         if not admission.get("allow", False):
             print_dispatch_admission_block("async", admission)
             return []
-    if not run_always_working_before_dispatch(TASKS, dry_run=dry):
+    # An explicit task has already passed typed intake and owner selection. Running the broad
+    # always-working producer here could enqueue unrelated packets immediately before an exact-one
+    # launch, so keep that producer exclusive to generic reservation passes.
+    if task_id is None and not run_always_working_before_dispatch(TASKS, dry_run=dry):
         print("── async: always-working gate blocked reservation")
         return []
     now = _now()
@@ -850,6 +1023,12 @@ def reserve_and_launch(
     weak_proxy_agents = _weak_proxy_agents(usage)
     if dry:
         lf = load_limen_file(TASKS)
+        if task_id and expected_contract_hash:
+            blocker = _execution_contract_blocker(lf, task_id, expected_contract_hash)
+            if blocker:
+                if reservation_blocker is not None:
+                    reservation_blocker.update(blocker)
+                return []
         picked, _reset_changed = _pick_reservations(
             lf,
             agents,
@@ -869,8 +1048,16 @@ def reserve_and_launch(
             # detached workers (below) prevents launching workers for tasks never persisted as
             # 'dispatched', which would double-dispatch. Self-corrects next beat.
             return []
+        # Load and fingerprint under the queue lock.  This is the last read before reservation;
+        # a changed predicate/receipt/context/route can never spend budget under the old selection.
+        lf = load_limen_file(TASKS)
+        if task_id and expected_contract_hash:
+            blocker = _execution_contract_blocker(lf, task_id, expected_contract_hash)
+            if blocker:
+                if reservation_blocker is not None:
+                    reservation_blocker.update(blocker)
+                return []
         with _machine_admission_lock():
-            lf = load_limen_file(TASKS)
             live_snapshot, used_slots = _snapshot_with_machine_reservations()
             picked, reset_changed = _pick_reservations(
                 lf,
@@ -976,14 +1163,74 @@ def main() -> int:
         help="Local host slot ceiling. Remote lanes such as Jules do not consume it.",
     )
     ap.add_argument("--task-id", help="Reserve and launch only this task id")
+    ap.add_argument(
+        "--recover-task",
+        help="safely reopen only this proven orphaned async claim, then exit",
+    )
+    ap.add_argument(
+        "--execution-contract-hash",
+        help="expected canonical execution hash for an exact task",
+    )
+    ap.add_argument(
+        "--targeted-only",
+        action="store_true",
+        help="require --task-id, skip broad reap/harvest, and fail unless exactly that task launches",
+    )
+    ap.add_argument(
+        "--json-output",
+        action="store_true",
+        help="emit a final counts-only JSON dispatch receipt",
+    )
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+    if a.recover_task and a.task_id:
+        ap.error("--recover-task and --task-id are mutually exclusive")
+    if a.recover_task and a.targeted_only:
+        ap.error("--recover-task and --targeted-only are mutually exclusive")
+    if a.targeted_only and not a.task_id:
+        ap.error("--targeted-only requires --task-id")
+    if (a.targeted_only or a.recover_task) and not re.fullmatch(
+        r"[0-9a-f]{64}", str(a.execution_contract_hash or "")
+    ):
+        ap.error("exact dispatch/recovery requires a 64-character --execution-contract-hash")
+    if a.recover_task:
+        recovery = recover_exact_task(
+            a.recover_task,
+            str(a.execution_contract_hash),
+            dry_run=a.dry_run,
+        )
+        receipt = {
+            "schema_version": "limen-targeted-recovery.v1",
+            "task_id": a.recover_task,
+            "execution_contract_hash": a.execution_contract_hash,
+            **recovery,
+        }
+        if a.json_output:
+            print(json.dumps(receipt, sort_keys=True))
+        else:
+            print(
+                f"── async exact recovery: {recovery.get('status')} "
+                f"task={a.recover_task} recovered={recovery.get('recovered_count', 0)}"
+            )
+        return 0 if recovery.get("status") in {
+            "recovered",
+            "would_recover",
+            "already_open",
+            "already_running",
+            "result_pending_harvest",
+        } else 10
     down = _down_lanes()
     lanes = resolve_lanes(a.lanes, down)
     if down:
         print(f"── skipping down lanes: {sorted(down)}")
     max_age = default_max_age_s()
-    if a.dry_run:
+    if a.targeted_only:
+        # The overnight lane switch owns one exact task. Broad recovery/harvest belongs to the
+        # heartbeat and could mutate or free unrelated lanes, so this path deliberately does
+        # neither. Launch failures still use _rollback_unlaunched_reservation for the exact task.
+        reaped = []
+        applied = 0
+    elif a.dry_run:
         reaped = inspect_stale(max_age)
         applied = inspect_harvest()
     else:
@@ -993,11 +1240,12 @@ def main() -> int:
     reserve_allowed = True
     admission = {"allow": True}
     if should_reserve(a.per_lane, a.max):
-        admission = dispatch_admission_check(TASKS, task_id=a.task_id)
+        admission = dispatch_admission_check(TASKS, task_id=a.task_id, refresh_handoff=not a.dry_run)
         if not admission.get("allow", False):
             reserve_allowed = False
             print_dispatch_admission_block("async", admission)
     if should_reserve(a.per_lane, a.max) and reserve_allowed:
+        reservation_blocker: dict[str, object] = {}
         launched = (
             reserve_and_launch(
                 lanes,
@@ -1007,11 +1255,14 @@ def main() -> int:
                 task_id=a.task_id,
                 admission_checked=True,
                 local_per_agent=a.local_per_lane,
+                expected_contract_hash=a.execution_contract_hash,
+                reservation_blocker=reservation_blocker,
             )
             if should_reserve(a.per_lane, a.max)
             else []
         )
     else:
+        reservation_blocker = {}
         launched = []
     verb = "would launch" if a.dry_run else "launched"
     print(
@@ -1019,7 +1270,37 @@ def main() -> int:
         f"{verb} {len(launched)} (local cap {a.max}, local per-lane {a.local_per_lane}) → "
         f"{[t for _, t in launched]}"
     )
-    return 0
+    exact_launch = len(launched) == 1 and launched[0][1] == a.task_id
+    targeted_status = (
+        "contract_mismatch"
+        if reservation_blocker.get("id") == "targeted-execution-contract-mismatch"
+        else (
+            ("would_launch" if a.dry_run else "launched")
+            if exact_launch
+            else ("zero_launch" if not launched else "launch_mismatch")
+        )
+    )
+    if a.json_output:
+        print(
+            json.dumps(
+                {
+                    "schema_version": "limen-targeted-dispatch.v1",
+                    "targeted_only": bool(a.targeted_only),
+                    "task_id": a.task_id,
+                    "execution_contract_hash": a.execution_contract_hash,
+                    "lanes": lanes,
+                    "admission_allow": bool(admission.get("allow", False)),
+                    "reaped_count": len(reaped),
+                    "harvested_count": applied,
+                    "launched": [[agent, task] for agent, task in launched],
+                    "launched_count": len(launched),
+                    "status": targeted_status if a.targeted_only else "complete",
+                    "blocker": reservation_blocker or None,
+                },
+                sort_keys=True,
+            )
+        )
+    return 0 if not a.targeted_only or exact_launch else 10
 
 
 if __name__ == "__main__":
