@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-09T23:49:19Z",
+  "generated_utc": "2026-07-13T05:30:03Z",
   "receipts": [
     {
       "branch": "pr-110-branch",
@@ -3906,6 +3906,42 @@
       "score_discount": 35,
       "status": "open_pr_preserved",
       "worktree": "/Volumes/Scratch/limen-worktrees/a-i--skills-conflict"
+    },
+    {
+      "branch": "codex/omega-handoff-contract-20260712",
+      "classification": "merged PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-13T05:30:03Z",
+      "head": "e9e0e1f5cd1d37d630d2e21a0836b56d6f9b6b4e",
+      "lane": "remote-merged",
+      "merge_commit": "599f5954aff521d3eb87eafd527a88eb843a702b",
+      "next_action": "No local PR or branch preservation action remains. GitHub PR #976 is MERGED, its head OID exactly equals the clean local worktree HEAD, and all reported exact-head checks succeeded. Reclaim the local checkout only through the accepted worktree reaper.",
+      "pr_number": 976,
+      "pr_state": "MERGED",
+      "pr_title": "feat(omega): make handoff and fixed-point truth explicit",
+      "pr_url": "https://github.com/organvm/limen/pull/976",
+      "repo": "organvm/limen",
+      "root": "codex-omega-handoff-contract-20260712",
+      "score_discount": 35,
+      "status": "merged_pr_preserved",
+      "worktree": "/Volumes/Scratch/limen-worktrees/codex-omega-handoff-contract-20260712"
+    },
+    {
+      "branch": "codex/jules-lifecycle-truth-20260712",
+      "classification": "merged PR preserves local worktree head",
+      "evidence_updated_utc": "2026-07-13T05:30:03Z",
+      "head": "d75c99da87b972521f29ea8df2ea52df23af6ced",
+      "lane": "remote-merged",
+      "merge_commit": "f334f0a7a33205f2ea1410deead0bff5cdfb9602",
+      "next_action": "No local PR or branch preservation action remains. GitHub PR #977 is MERGED, its head OID exactly equals the clean local worktree HEAD, and all reported exact-head checks succeeded. Reclaim the local checkout only through the accepted worktree reaper.",
+      "pr_number": 977,
+      "pr_state": "MERGED",
+      "pr_title": "fix(lifecycle): make stale release remote-aware",
+      "pr_url": "https://github.com/organvm/limen/pull/977",
+      "repo": "organvm/limen",
+      "root": "codex-jules-lifecycle-truth-20260712",
+      "score_discount": 35,
+      "status": "merged_pr_preserved",
+      "worktree": "/Volumes/Scratch/limen-worktrees/codex-jules-lifecycle-truth-20260712"
     }
   ],
   "schema": 1
