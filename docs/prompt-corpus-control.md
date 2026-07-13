@@ -161,6 +161,13 @@ atoms as one transaction. The compact private checkpoint does not duplicate the 
 tracked JSON and Markdown projections contain only opaque IDs, aggregate counts, numeric dimensions,
 dispositions, owner routes, and canonical receipt references.
 
+`docs/prompt-authority-seal.json` is the bounded publication receipt for source-corpus authority. Its
+schema is `limen.prompt-authority-seal.v1`; it contains only fixed numeric aggregates, safe family and
+reason labels, and SHA-256 bindings to the semantic projection, cursor, manifests, adapter contract,
+and sealed scan. It never contains prompt bodies, source locators, private paths, session identifiers,
+or per-atom rows, and the writer refuses any receipt over 64 KiB. A zero-change rerun must leave its
+bytes and modification time unchanged.
+
 An exclusive writer lock serializes updates; journal appends are flushed before atomic projection
 replacement, and the compact checkpoint is written last. Stable occurrence and atom IDs plus a
 monotonic cursor merge make concurrent or repeated drains idempotent. The cursor digest is embedded
@@ -209,7 +216,8 @@ LIMEN_PROMPT_CLASSIFIER_CMD='<opaque command>' \
 python3 scripts/prompt-atom-canary.py --sandbox-root <isolated-canary-root> \
   --home <isolated-source-home> \
   --private-root <private-output> --public-snapshot <private-redacted-json> \
-  --public-markdown <private-redacted-markdown> --receipt <private-receipt>
+  --public-markdown <private-redacted-markdown> --public-seal <private-redacted-seal> \
+  --receipt <private-receipt>
 ```
 
 Board work derived from unresolved atoms must still enter through TABVLARIVS. The atom ledger never
