@@ -5,6 +5,7 @@ overrides only the registry; params + beat sources stay the real repo, so gate c
 """
 
 import importlib.util
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -85,6 +86,22 @@ def test_current_real_shell_derives_metabolize():
     so the current beat sources already resolve the metabolize source as derived."""
     m = _mod()
     assert "metabolize" in m.derived_sources(m.beat_source_text())
+
+
+def test_derive_fallback_matches_panel_default():
+    """Every `${LIMEN_BEAT_DERIVE:-N}` fallback in BOTH beat sources must equal the parameter-panel
+    default. The drift class this pins shut: metabolize.sh said `:-1`, heartbeat-loop.sh said `:-0`,
+    and the panel declared \"1\" — three copies of one default, so the heartbeat's whole scheduled
+    sensor lane (github-estate-reconcile, the 0g4 liveness rung) silently never executed live while
+    every layer looked declared-on."""
+    panel = yaml.safe_load((ROOT / "institutio/governance/parameters.yaml").read_text(encoding="utf-8"))
+    declared = str(panel["parameters"]["LIMEN_BEAT_DERIVE"]["default"]).strip()
+    for source in (ROOT / "scripts/metabolize.sh", ROOT / "scripts/heartbeat-loop.sh"):
+        fallbacks = re.findall(r"\$\{LIMEN_BEAT_DERIVE:-([^}]+)\}", source.read_text(encoding="utf-8"))
+        assert fallbacks, f"{source.name}: no ${{LIMEN_BEAT_DERIVE:-N}} fallback found"
+        assert all(fb.strip() == declared for fb in fallbacks), (
+            f"{source.name}: LIMEN_BEAT_DERIVE fallbacks {fallbacks} != panel default {declared!r}"
+        )
 
 
 def test_prompt_corpus_sensor_is_dark_manual_only_and_default_aligned():

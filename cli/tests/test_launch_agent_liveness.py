@@ -11,6 +11,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = ROOT / "scripts" / "launch-agent-liveness.py"
 
@@ -133,3 +135,27 @@ def test_http_probe_down_detected(tmp_path, monkeypatch):
         [{"label": "com.x.mint", "role": "mint", "probe": {"kind": "http", "url": "http://localhost:8787/health"}}],
     )
     assert m.main(["--check", "--agents-file", str(mani)]) == 1
+
+
+def test_registry_declares_live_loop_reachability():
+    """The liveness rung must be REACHABLE from the live loop. The founding defect (2026-07-13):
+    the registry declared `source: [metabolize]` with no cadence while the daemon's only derive call
+    is `--run --source heartbeat --scheduled-only`, which runs cadence-declaring heartbeat sensors
+    only — so the rung guarding the revenue rail had zero live executions ever. Reachability needs
+    BOTH heartbeat in source AND a positive cadence, with the override envs declared in the panel.
+    The sensor is found by capability (the step invoking this script), never by id."""
+    registry = yaml.safe_load((ROOT / "institutio/governance/sensors.yaml").read_text(encoding="utf-8"))
+    panel = yaml.safe_load((ROOT / "institutio/governance/parameters.yaml").read_text(encoding="utf-8"))
+    matches = [
+        sensor
+        for sensor in registry["sensors"].values()
+        if any("launch-agent-liveness.py" in str(step.get("command", "")) for step in sensor.get("steps") or [])
+    ]
+    assert len(matches) == 1, "exactly one sensor must own the liveness predicate"
+    sensor = matches[0]
+    assert "heartbeat" in (sensor.get("source") or []), "not reachable from the live scheduled lane"
+    for capability in ("cadence", "timeout"):
+        spec = sensor.get(capability)
+        assert isinstance(spec, dict), f"{capability} must be a scheduled {{env, default}} mapping"
+        assert int(spec["default"]) > 0
+        assert spec["env"] in panel["parameters"], f"{spec['env']} not declared in parameters.yaml"

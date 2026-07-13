@@ -498,9 +498,12 @@ while true; do
   due_voice heal "$C_HEAL"    && stamp heal
   # Scheduled registry sensors — cadence, timeout, conditional argv, voice id, and gate all come
   # from sensors.yaml. The runner knows no sensor names, so a rename or a newly-declared scheduled
-  # sensor needs no shell edit. Dark-first: this path stays behind the existing derive flag until
-  # dry canaries and one explicitly feature-flagged live beat prove parity.
-  if [ "${LIMEN_BEAT_DERIVE:-0}" = "1" ]; then
+  # sensor needs no shell edit. Default-ON: the fallback matches the parameter-panel default and
+  # metabolize.sh (the :-0/:-1/"1" three-way drift kept this lane dark — github-estate-reconcile and
+  # the 0g4 liveness rung never executed live). Released by the 2026-07-13 canary receipts (dry +
+  # one live-parity pass; PR #1013 body). Loop-body edit:
+  # takes effect only after `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat`.
+  if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ]; then
     python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source heartbeat --scheduled-only \
       --beat "$c" --loop-max "$MAX" --voice-dir "$VOICED" || true
   fi

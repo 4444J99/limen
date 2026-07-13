@@ -297,8 +297,17 @@ sensors:
     title: "launch-agent liveness — critical organs (mint, tunnel, creds, ianva) must stay alive"
     gate: LIMEN_LAUNCHAGENT_LIVENESS_CHECK
     default: "1"
-    source: [metabolize]
+    # heartbeat + cadence make this rung REACHABLE from the live loop: the daemon's only derive call
+    # is `--source heartbeat --scheduled-only`, which runs cadence-declaring heartbeat sensors only —
+    # declared as [metabolize] with no cadence, this sensor had zero live executions ever.
+    source: [metabolize, heartbeat]
     owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_LAUNCHAGENT_LIVENESS
+      default: 4                # cheap check guarding the revenue rail (prompt-corpus-control precedent)
+    timeout:
+      env: LIMEN_LAUNCHAGENT_LIVENESS_TIMEOUT
+      default: 300              # founding incident: 4-agent quiesce restore ≈ 264 s; gitvs's 120 would kill it mid-restore
     steps:
       - command: "python3 scripts/launch-agent-liveness.py --check"
         args_when:

@@ -2282,7 +2282,7 @@ parameters:
     env: LIMEN_LAUNCHAGENT_LIVENESS_CHECK
     self_update: none
     owner: tabularius
-    note: "Beat gate for the launch-agent liveness predicate (scripts/launch-agent-liveness.py --check) run each beat by metabolize.sh section 0g4. The invariant spec/critical-launch-agents.json names the launchd organs that MUST stay alive (the MONETA mint + its Cloudflare tunnel = the first-dollar revenue rail; creds-hydrate = the credential organ; ianva gateway = L-IANVA-LOCAL). A 2026-07-09 mass launchd-quiesce (fork-crash mitigation) disabled 11 agents and restored only the heartbeat, leaving the mint dark for days while armed-valve-audit saw it down every beat with no effector (the sensor-without-effector defect this closes). Read-only --check surfaces any down critical organ; the armed LIMEN_LAUNCHAGENT_HEAL effector restores it. macOS-only signal; fails OPEN off-darwin. Set 0 to silence."
+    note: "Beat gate for the launch-agent liveness predicate (scripts/launch-agent-liveness.py --check), sensor section 0g4 in sensors.yaml — run on its declared cadence in BOTH beat lanes (metabolize + the heartbeat scheduled derive lane, live-wired 2026-07-13). The invariant spec/critical-launch-agents.json names the launchd organs that MUST stay alive (the MONETA mint + its Cloudflare tunnel = the first-dollar revenue rail; creds-hydrate = the credential organ; ianva gateway = L-IANVA-LOCAL). A 2026-07-09 mass launchd-quiesce (fork-crash mitigation) disabled 11 agents and restored only the heartbeat, leaving the mint dark for days while armed-valve-audit saw it down every beat with no effector (the sensor-without-effector defect this closes). Read-only --check surfaces any down critical organ; the armed LIMEN_LAUNCHAGENT_HEAL effector restores it. macOS-only signal; fails OPEN off-darwin. Set 0 to silence."
 
   LIMEN_LAUNCHAGENT_HEAL:
     default: "0"               # OFF — the effector. The single durable grant to auto-restore down critical organs.
@@ -2290,6 +2290,20 @@ parameters:
     self_update: none
     owner: tabularius
     note: "The effector for the launch-agent liveness invariant (scripts/launch-agent-liveness.py --apply, sensor section 0g4, gated by when_env). When 1, the beat re-bootstraps + kickstarts any critical organ in spec/critical-launch-agents.json that is down — restoring a plist from ~/Library/LaunchAgents.disabled/ if a quiesce quarantined it. This is the SINGLE durable human grant that closes the sensor-without-effector defect: arm once and the daemon keeps the mint / tunnel / credential organ alive across quiesce + reboot forever, without a per-incident approval. OFF by default because it re-enables persistent launchd services (an authorization, not a default). Owner arms it in the daemon env (~/.limen.env)."
+
+  LIMEN_BEAT_LAUNCHAGENT_LIVENESS:
+    default: 4
+    env: LIMEN_BEAT_LAUNCHAGENT_LIVENESS
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the launch-agent liveness sensor (sensors.yaml 0g4) in the heartbeat's scheduled derive lane. 4 follows the prompt-corpus-control precedent for a cheap check — this one guards the first-dollar revenue rail (mint + tunnel + credential organ), so it runs tight. The generic scheduled runner resolves this override; heartbeat-loop.sh contains no sensor-specific cadence constant."
+
+  LIMEN_LAUNCHAGENT_LIVENESS_TIMEOUT:
+    default: 300
+    env: LIMEN_LAUNCHAGENT_LIVENESS_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the liveness pass. Sized to the founding incident: the 2026-07-09 quiesce restore walked 4 down agents in ≈264 s with --apply armed — gitvs's 120 would kill a multi-agent restore mid-flight. The runner kills the whole command group on overrun and the beat continues fail-open."
 
   LIMEN_CRITICAL_AGENTS_FILE:
     default: ""                # empty = spec/critical-launch-agents.json; also the --agents-file flag
@@ -2330,7 +2344,7 @@ parameters:
     env: LIMEN_BEAT_DERIVE
     self_update: none
     owner: governance
-    note: "The continuous metabolize sensor loop is registry-derived and default-on after #935; the deleted hand-wired blocks are not a fallback, so 0 skips that pass as an escape hatch. The same generic runner now owns scheduled heartbeat cadence, timeout, conditional argv, voice stamps, Omega eligibility, and armed-valve metadata from sensors.yaml. Keep the integration drain in place until the bounded scheduled canary is receipted."
+    note: "The continuous metabolize sensor loop is registry-derived and default-on after #935; the deleted hand-wired blocks are not a fallback, so 0 skips that pass as an escape hatch. The same generic runner now owns scheduled heartbeat cadence, timeout, conditional argv, voice stamps, Omega eligibility, and armed-valve metadata from sensors.yaml. The heartbeat's scheduled lane is live-wired too (heartbeat-loop.sh fallback 1, held equal to this default by test_derive_fallback_matches_panel_default): the post-#921 integration drain was released by the 2026-07-13 dry + live-parity canary receipts (PR #1013 body)."
 
   LIMEN_PROMPT_ATOM_CONTROL:
     default: "0"
