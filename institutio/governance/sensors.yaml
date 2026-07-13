@@ -318,6 +318,30 @@ sensors:
         severity: advisory
         escalation: "critical launch-agent DOWN above (spec/critical-launch-agents.json) — arm LIMEN_LAUNCHAGENT_HEAL=1 so the beat auto-restores it (mint/tunnel/credential organ), else it stays dark"
 
+  sensor-canary:
+    section: "0g5"
+    title: "sensor canary — every scheduled sensor observed live within bounds (merged ≠ running)"
+    gate: LIMEN_SENSOR_CANARY
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: tabularius
+    # Mechanizes the canary ritual that used to live only in operator memory: the runner already
+    # stamps logs/.voice/<id> per visit, so NEVER-RAN / STALE is derived data. A stamp records
+    # visited, not armed (arming is armed-valve-audit's axis); a metabolize-only scheduled sensor
+    # (e.g. a lever-parked organ) is owner-routed, never red. First run after landing may self-flag
+    # never-visited sensors once — they clear as the scheduled lane visits them.
+    cadence:
+      env: LIMEN_BEAT_SENSOR_CANARY
+      default: 8
+    steps:
+      - command: "python3 scripts/beat-sensors.py --canary"
+        severity: advisory
+        escalation: "scheduled sensor NEVER-RAN or STALE above — a lane is dark or a rung is unreachable (merged is not running); check LIMEN_BEAT_DERIVE and the sensor's source/cadence"
+    omega_eligible:
+      - label: "sensor canary — scheduled lane observed live"
+        tier: live                # reads the live daemon's voice stamps — offline omega SKIPs it visibly
+        command: "python3 scripts/beat-sensors.py --canary"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"

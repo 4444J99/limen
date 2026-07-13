@@ -11,6 +11,7 @@ shell blocks, the beat runs one `beat-sensors.py --run`. Adding a sensor is one 
   python3 scripts/beat-sensors.py --run                   # run the metabolize sensors (the beat call)
   python3 scripts/beat-sensors.py --run --source heartbeat
   python3 scripts/beat-sensors.py --run --dry-run         # print what WOULD run (no execution)
+  python3 scripts/beat-sensors.py --canary                # merged-but-never-observed-live audit
 """
 
 from __future__ import annotations
@@ -252,6 +253,53 @@ def run(
     return worst
 
 
+def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path | None = None) -> int:
+    """Mechanize the sensor-canary ritual: "merged but never observed live" is fully derivable from
+    the voice stamps the scheduled runner already writes (one ``logs/.voice/<id>`` per visit) — it
+    must never again live only in an operator's memory (the post-#921 drain left the 0g4 liveness
+    rung and github-estate-reconcile declared, gated on, and never executed, with nothing watching).
+
+    For every cadence-declaring sensor: a missing stamp is NEVER-RAN; a stamp older than
+    cadence × loop_max × 2 (twice the worst-case wall-clock for one cadence window) is STALE.
+    Exit 1 only for live-lane findings (``heartbeat`` in source) — a metabolize-only scheduled
+    sensor that never ran is usually an organ parked behind its activation lever (observatory-run),
+    so it is printed and routed to its owner but never reads as red every beat.
+
+    Two semantics this deliberately does NOT own: a stamp records VISITED, not ARMED (a gated-off
+    sensor still stamps — silently-off valves are armed-valve-audit's axis), and on the first beat
+    after this canary lands, never-visited sensors correctly self-flag once and clear as the
+    scheduled lane visits them (transient, not a defect)."""
+    sensors = load_sensors(registry)
+    voice_dir = voice_dir or (ROOT / "logs" / ".voice")
+    now = time.time()
+    live_findings: list[str] = []
+    routed: list[str] = []
+    for sid, s in sensors.items():
+        cadence = _cadence(s)
+        if cadence is None:
+            continue
+        try:
+            age = now - (voice_dir / sid).stat().st_mtime
+        except OSError:
+            finding = f"NEVER-RAN {sid} — no voice stamp ({s.get('title', sid)})"
+        else:
+            bound = cadence * max(1, loop_max) * 2
+            if age <= bound:
+                continue
+            finding = f"STALE {sid} — stamp {int(age)}s old > bound {int(bound)}s ({s.get('title', sid)})"
+        if "heartbeat" in (s.get("source") or []):
+            live_findings.append(finding)
+        else:
+            routed.append(f"{finding} → owner {s.get('owner', '?')} (metabolize-only; not a live-lane failure)")
+    for line in live_findings:
+        print(f"  ✗ {line}")
+    for line in routed:
+        print(f"  · {line}")
+    if not live_findings and not routed:
+        print(f"sensor-canary: OK — every scheduled sensor observed live within bounds ({voice_dir})")
+    return 1 if live_findings else 0
+
+
 def iter_omega(sensors: dict):
     """Yield registry-declared fixed-point checks in declaration order."""
     for sensor_id, sensor in sensors.items():
@@ -320,8 +368,11 @@ def main(argv=None) -> int:
     ap.add_argument("--voice-dir", type=Path, default=None, help="voice-stamp directory")
     ap.add_argument("--list-omega", action="store_true", help="emit TSV metadata for omega-eligible checks")
     ap.add_argument("--run-omega", nargs=2, metavar=("SENSOR_ID", "INDEX"), help="run one omega check")
+    ap.add_argument("--canary", action="store_true", help="audit scheduled sensors for never-ran/stale voice stamps")
     args = ap.parse_args(argv)
 
+    if args.canary:
+        return canary(registry=args.registry, loop_max=args.loop_max, voice_dir=args.voice_dir)
     if args.list:
         return list_sensors(args.registry)
     if args.list_omega:

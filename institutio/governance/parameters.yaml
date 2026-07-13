@@ -2352,6 +2352,20 @@ parameters:
     owner: governance
     note: "The continuous metabolize sensor loop is registry-derived and default-on after #935; the deleted hand-wired blocks are not a fallback, so 0 skips that pass as an escape hatch. The same generic runner now owns scheduled heartbeat cadence, timeout, conditional argv, voice stamps, Omega eligibility, and armed-valve metadata from sensors.yaml. The heartbeat's scheduled lane is live-wired too (heartbeat-loop.sh fallback 1, held equal to this default by test_derive_fallback_matches_panel_default): the post-#921 integration drain was released by the 2026-07-13 dry + live-parity canary receipts (PR #1013 body)."
 
+  LIMEN_SENSOR_CANARY:
+    default: "1"
+    env: LIMEN_SENSOR_CANARY
+    self_update: none
+    owner: tabularius
+    note: "Gate for the sensor-canary rung (sensors.yaml 0g5): derives 'merged but never observed live' from the voice stamps the scheduled runner writes (logs/.voice/<id>), so the canary ritual is mechanized instead of operator memory. NEVER-RAN / STALE on a live-lane (heartbeat-source) sensor exits 1 (advisory in the beat); a metabolize-only scheduled sensor is owner-routed, never red — a lever-parked organ must not read as a failure every beat. Set 0 to silence."
+
+  LIMEN_BEAT_SENSOR_CANARY:
+    default: 8
+    env: LIMEN_BEAT_SENSOR_CANARY
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the sensor-canary rung in the heartbeat's scheduled derive lane — matches the gitvs precedent for a cheap audit pass. The generic scheduled runner resolves this override; heartbeat-loop.sh contains no sensor-specific cadence constant."
+
   LIMEN_PROMPT_ATOM_CONTROL:
     default: "0"
     env: LIMEN_PROMPT_ATOM_CONTROL

@@ -12,6 +12,11 @@ panel, and the beat sources:
                     heartbeat-loop.sh), i.e. the registry names no phantom sensor.
   E default parity — registry consumer defaults and `${ENV:-fallback}` values agree with the
                      parameter-panel defaults, so a declared dark gate cannot wake up by drift.
+  F live reachability — a heartbeat-source sensor is executed either by the scheduled derive lane
+                     (which requires a cadence: `--source heartbeat --scheduled-only` runs
+                     cadence-declaring sensors only) or by a hand-wired gate literal in a beat
+                     source. Neither ⇒ merged-but-unreachable (the 0g4 founding defect: declared,
+                     gated on, zero live executions ever).
 
   python3 scripts/check-sensors.py     # gate (CI): exit 1 on any drift
 """
@@ -279,6 +284,17 @@ def main(argv=None) -> int:
             if not (srcs and all(src in derived for src in srcs)):
                 fail("D", f"{sid}: gate {gate} not found in any beat source (phantom sensor?)")
 
+        # F live reachability — the heartbeat derive lane is `--scheduled-only` (cadence-declaring
+        # sensors only), so a heartbeat-source sensor with no cadence runs ONLY if hand-wired via its
+        # gate literal (enactment-audit's inline call). Neither path ⇒ declared-but-unreachable.
+        if "heartbeat" in (s.get("source") or []) and s.get("cadence") is None:
+            if not (gate and gate in shell):
+                fail(
+                    "F",
+                    f"{sid}: heartbeat-source sensor has no cadence and no hand-wired gate literal "
+                    f"in a beat source — unreachable from the live loop (merged is not running)",
+                )
+
     if _failures:
         print("SENSORS DRIFT — registry does not match code/params/beat:")
         for f in _failures:
@@ -288,7 +304,8 @@ def main(argv=None) -> int:
 
     print(
         f"check-sensors: OK — {len(sensors)} sensors; schema valid, scripts exist, "
-        f"gates declared, consumer defaults match the parameter panel, all gates present in the beat sources."
+        f"gates declared, consumer defaults match the parameter panel, all gates present in the beat "
+        f"sources, every heartbeat sensor reachable from the live loop."
     )
     return 0
 

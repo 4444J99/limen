@@ -203,6 +203,36 @@ sensors:
     assert r.returncode == 0, r.stdout
 
 
+def test_unreachable_heartbeat_sensor_without_cadence_fails_f(tmp_path):
+    """The 0g4 founding defect as a CI-time class: a heartbeat-source sensor with no cadence is
+    invisible to the scheduled derive lane (`--scheduled-only` runs cadence-declaring sensors only)
+    and, without a hand-wired gate literal in a beat source, cannot execute at all — declared,
+    gated on, unreachable. LIMEN_GITVS is panel-declared but absent from both beat sources, so
+    only [F] fires here (not [C]/[D])."""
+    reg = _write(
+        tmp_path,
+        "sensors:\n  x:\n    section: '0x'\n    source: [heartbeat]\n    gate: LIMEN_GITVS\n"
+        '    default: "1"\n'
+        "    steps:\n      - command: 'python3 scripts/gitvs.py reconcile'\n        severity: silent\n"
+        "        escalation: 'e'\n",
+    )
+    r = run("--registry", str(reg))
+    assert r.returncode == 1
+    assert "[F]" in r.stdout and "unreachable" in r.stdout
+    # the fix is exactly PR A's shape: the same sensor WITH a cadence is reachable again
+    reg2 = tmp_path / "fixed.yaml"
+    reg2.write_text(
+        "sensors:\n  x:\n    section: '0x'\n    source: [heartbeat]\n    gate: LIMEN_GITVS\n"
+        '    default: "1"\n'
+        "    cadence: {env: LIMEN_BEAT_GITVS, default: 8}\n"
+        "    steps:\n      - command: 'python3 scripts/gitvs.py reconcile'\n        severity: silent\n"
+        "        escalation: 'e'\n",
+        encoding="utf-8",
+    )
+    r2 = run("--registry", str(reg2))
+    assert r2.returncode == 0, r2.stdout
+
+
 def test_invalid_capability_shape_fails_schema(tmp_path):
     reg = _write(
         tmp_path,
