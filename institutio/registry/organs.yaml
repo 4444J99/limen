@@ -103,6 +103,13 @@ organs:
     role: "The body feels whether its own organs are firing (9-rung liveness + self-heal)."
     residual: "Feed the-seat: organ-health.json should drive this registry's per-organ status."
 
+  - name: correspondence
+    layer: somatic
+    home: "limen (scripts/mail-beat.sh = C_MAIL effector; institutio/governance/mail-tiers.yaml = tier registry; scripts/check-mail-answered.py = the mail-answered sensor) + universal-mail--automation (obligations_build/draft_writer/send_drafts)"
+    status: partial
+    role: "The inbound mail voice: sweep → obligations ledger → tiered draft → fail-closed SAFE-tier send. Answers reply-owed mail so the operator is never the default send button."
+    residual: "Sender ships DISARMED (LIMEN_MAIL_SEND=0); SAFE tier is opt-in and currently empty (grows on trust). Open distance (IF-MAIL): the keyed headless send/draft path that designs out the TCC grant (lever L-MAIL-AUTOMATION-GRANT #960); drafts still persist via the Apple-Mail path."
+
   # ----------------------------------------------------------------- FACE
   - name: face
     layer: face
