@@ -1054,6 +1054,7 @@ def source_unit_receipt_matches(
     locator: str,
     signature: dict[str, Any],
     related_signatures: dict[str, dict[str, Any]] | None = None,
+    expected_related_evidence: dict[str, dict[str, Any]] | None = None,
 ) -> bool:
     related_evidence = receipt.get("related_evidence", {}) if isinstance(receipt, dict) else {}
     return bool(
@@ -1064,6 +1065,7 @@ def source_unit_receipt_matches(
         and receipt.get("contract_digest") == contract_digest
         and receipt.get("signature") == signature
         and receipt.get("related_signatures", {}) == (related_signatures or {})
+        and (expected_related_evidence is None or related_evidence == expected_related_evidence)
         and source_contract_receipt_applies(
             contract_id,
             source,
@@ -1081,7 +1083,13 @@ def native_source_adapter_candidate_id(
     path: Path,
 ) -> str | None:
     relative = source_relative_path(lifecycle, source, path)
-    if source != "claude-projects" or relative is None or path.suffix.lower() != ".json":
+    if relative is None:
+        return None
+    if source == "codex-attachments":
+        if len(relative.parts) == 2 and re.fullmatch(r"pasted-text-[1-9][0-9]*\.txt", path.name):
+            return "codex-pasted-text-attachment-v1"
+        return None
+    if source != "claude-projects" or path.suffix.lower() != ".json":
         return None
     if len(relative.parts) == 4 and relative.parts[2] == "remote-agents":
         return "claude-remote-task-command-v1"
@@ -2165,6 +2173,618 @@ def normalize_codex_file_events(
     return primary_before_echo(events)
 
 
+def _codex_canonical_parent_record(obj: dict[str, Any]) -> bool:
+    payload = obj.get("payload")
+    return bool(
+        obj.get("type") == "response_item"
+        and isinstance(payload, dict)
+        and payload.get("type") == "message"
+        and payload.get("role") == "user"
+    )
+
+
+def codex_attachment_reference_line(path: Path) -> str:
+    return f"pasted text file: {path.expanduser().absolute()}. Read this file before continuing."
+
+
+def codex_attachment_reference_paths(lifecycle: Any, text: str) -> list[str]:
+    """Resolve exact provider attachment envelopes without guessing at prompt text."""
+
+    prefix = "pasted text file: "
+    suffix = ". Read this file before continuing."
+    targets: list[str] = []
+    for line in text.splitlines():
+        if not line.startswith(prefix) or not line.endswith(suffix):
+            continue
+        raw_path = line[len(prefix) : -len(suffix)]
+        if not raw_path or "\x00" in raw_path:
+            continue
+        candidate = Path(raw_path)
+        if not candidate.is_absolute() or ".." in candidate.parts:
+            continue
+        lexical = candidate.expanduser().absolute()
+        if str(lexical) != raw_path:
+            continue
+        if source_relative_path(lifecycle, "codex-attachments", lexical) is None:
+            continue
+        if native_source_adapter_candidate_id(lifecycle, "codex-attachments", lexical) != (
+            "codex-pasted-text-attachment-v1"
+        ):
+            continue
+        targets.append(str(lexical))
+    return targets
+
+
+def regular_file_events(
+    lifecycle: Any,
+    source: str,
+    path: Path,
+    records: list[dict[str, Any]],
+    *,
+    adapter_id: str | None,
+    limits: ResourceLimits,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Normalize one schema-validated regular file into bounded prompt events."""
+
+    file_session_id = canonical_file_session_id(source, path, records)
+    file_is_forked = codex_file_is_forked(source, records)
+    path_authority = claude_project_path_authority(lifecycle, source, path)
+    file_events: list[dict[str, Any]] = []
+    for event_index, obj in enumerate(records):
+        texts = prompt_texts_for(lifecycle, source, obj)
+        for text_index, text in enumerate(texts):
+            if adapter_id == "claude-remote-task-command-v1":
+                task_body, body_kind = "", "direct"
+            else:
+                task_body, body_kind = lifecycle.normalize_task_body(text)
+            provenance, authority = provenance_for(source, obj, body_kind)
+            if path_authority == "derived" or adapter_id:
+                provenance, authority = "delegated_task_frame", "derived"
+            elif path_authority == "unknown" and provenance == "operator_typed":
+                provenance, authority = "unknown_user_input", "unknown"
+            payload = obj.get("payload")
+            event_ref = (
+                obj.get("uuid")
+                or obj.get("id")
+                or (payload.get("id") if isinstance(payload, dict) else None)
+                or event_index
+            )
+            file_events.append(
+                {
+                    "source": source,
+                    "session_ref": session_reference(
+                        source,
+                        path,
+                        obj,
+                        file_session_id=file_session_id,
+                    ),
+                    "event_ref": event_ref,
+                    "event_index": event_index,
+                    "text_index": text_index,
+                    "source_locator": f"{path}#{event_index}:{text_index}",
+                    "timestamp": event_timestamp(obj),
+                    "text": text,
+                    "task_body": task_body if body_kind == "flame_with_task_body" else "",
+                    "body_kind": body_kind,
+                    "provenance": provenance,
+                    "authority": authority,
+                    **({"claude_transport_candidate": True} if claude_transport_candidate(obj) else {}),
+                    **(
+                        {"_codex_attachment_parent": True}
+                        if source == "codex-sessions" and _codex_canonical_parent_record(obj)
+                        else {}
+                    ),
+                }
+            )
+            if len(file_events) > limits.max_events_per_unit:
+                break
+        if len(file_events) > limits.max_events_per_unit:
+            break
+    if len(file_events) > limits.max_events_per_unit:
+        return (
+            [],
+            f"prompt occurrence count exceeds bounded ceiling {limits.max_events_per_unit}",
+        )
+    file_events = normalize_claude_file_events(source, file_events)
+    return normalize_codex_file_events(source, file_events, forked=file_is_forked), None
+
+
+def targeted_codex_attachment_parent_events(
+    lifecycle: Any,
+    path: Path,
+    records: list[dict[str, Any]],
+    *,
+    limits: ResourceLimits,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Extract only exact attachment parents even when unrelated session rows are unsupported."""
+
+    echo_hashes: set[str] = set()
+    echo_unknown = False
+    for obj in records:
+        payload = obj.get("payload")
+        if obj.get("type") == "session_meta" and not isinstance(payload, dict):
+            return [], "attachment parent session metadata is malformed"
+        if not (obj.get("type") == "event_msg" and isinstance(payload, dict) and payload.get("type") == "user_message"):
+            continue
+        if native_record_schema_error(
+            lifecycle,
+            "codex-sessions",
+            path,
+            [obj],
+            adapter_id=None,
+        ):
+            echo_unknown = True
+            continue
+        echo_hashes.update(digest(text) for text in prompt_texts_for(lifecycle, "codex-sessions", obj))
+
+    file_session_id = canonical_file_session_id("codex-sessions", path, records)
+    forked = codex_file_is_forked("codex-sessions", records)
+    parent_events: list[dict[str, Any]] = []
+    reference_count = 0
+    for event_index, obj in enumerate(records):
+        if not _codex_canonical_parent_record(obj):
+            continue
+        if native_record_schema_error(
+            lifecycle,
+            "codex-sessions",
+            path,
+            [obj],
+            adapter_id=None,
+        ):
+            continue
+        payload = obj.get("payload")
+        event_ref = (
+            obj.get("uuid")
+            or obj.get("id")
+            or (payload.get("id") if isinstance(payload, dict) else None)
+            or event_index
+        )
+        for text_index, text in enumerate(prompt_texts_for(lifecycle, "codex-sessions", obj)):
+            references = codex_attachment_reference_paths(lifecycle, text)
+            if not references:
+                continue
+            reference_count += len(references)
+            if reference_count > limits.max_events_per_unit:
+                return (
+                    [],
+                    f"attachment parent reference count exceeds bounded ceiling {limits.max_events_per_unit}",
+                )
+            task_body, body_kind = lifecycle.normalize_task_body(text)
+            provenance, authority = "operator_typed", "operator"
+            if forked:
+                task_body, body_kind = "", "session_context"
+                provenance, authority = "continuation_summary", "derived"
+            elif echo_unknown or (echo_hashes and digest(text) not in echo_hashes):
+                provenance, authority = "unknown_user_input", "unknown"
+            parent_events.append(
+                {
+                    "source": "codex-sessions",
+                    "session_ref": session_reference(
+                        "codex-sessions",
+                        path,
+                        obj,
+                        file_session_id=file_session_id,
+                    ),
+                    "event_ref": event_ref,
+                    "event_index": event_index,
+                    "text_index": text_index,
+                    "source_locator": f"{path}#{event_index}:{text_index}",
+                    "timestamp": event_timestamp(obj),
+                    "text": text,
+                    "task_body": task_body if body_kind == "flame_with_task_body" else "",
+                    "body_kind": body_kind,
+                    "provenance": provenance,
+                    "authority": authority,
+                    "_codex_attachment_parent": True,
+                }
+            )
+    return parent_events, None
+
+
+def bounded_codex_attachment_parent_events_from_path(
+    lifecycle: Any,
+    path: Path,
+    signature: dict[str, Any],
+    *,
+    limits: ResourceLimits,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Stream oversized JSONL parents under explicit byte, row, and candidate ceilings."""
+
+    rule = SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]
+    max_probe_bytes = int(rule["max_parent_probe_bytes"])
+    max_record_bytes = int(rule["max_parent_record_bytes"])
+    max_candidate_bytes = int(rule["max_parent_candidate_bytes"])
+    max_parent_records = int(rule["max_parent_records"])
+    max_session_ids = int(rule["max_parent_session_ids"])
+    if int(signature.get("size") or 0) > max_probe_bytes:
+        return [], f"attachment parent exceeds bounded byte ceiling {max_probe_bytes}"
+
+    attachment_marker = b"pasted text file: "
+    session_ids: list[str] = []
+    forked = False
+    echo_hashes: set[str] = set()
+    echo_unknown = False
+    candidates: list[dict[str, Any]] = []
+    candidate_bytes = 0
+    record_index = 0
+    try:
+        with path.open("rb") as handle:
+            while True:
+                parts: list[bytes] = []
+                prefix = b""
+                marker_tail = b""
+                marker_seen = False
+                oversized = False
+                saw_data = False
+                while True:
+                    chunk = handle.readline(65536)
+                    if not chunk:
+                        break
+                    saw_data = True
+                    if len(prefix) < 8192:
+                        prefix += chunk[: 8192 - len(prefix)]
+                    probe = marker_tail + chunk
+                    marker_seen = marker_seen or attachment_marker in probe
+                    marker_tail = probe[-(len(attachment_marker) - 1) :]
+                    if not oversized and sum(len(part) for part in parts) + len(chunk) <= max_record_bytes:
+                        parts.append(chunk)
+                    else:
+                        oversized = True
+                        parts = []
+                    if chunk.endswith(b"\n"):
+                        break
+                if not saw_data:
+                    break
+                if not oversized and not b"".join(parts).strip():
+                    continue
+                if record_index >= max_parent_records:
+                    return (
+                        [],
+                        f"attachment parent record count exceeds bounded ceiling {max_parent_records}",
+                    )
+                current_index = record_index
+                record_index += 1
+                compact_prefix = re.sub(rb"\s+", b"", prefix)
+                if oversized:
+                    is_session_meta = b'"type":"session_meta"' in compact_prefix[:4096]
+                    is_user_response = all(
+                        marker in compact_prefix[:8192]
+                        for marker in (b'"type":"response_item"', b'"type":"message"', b'"role":"user"')
+                    )
+                    is_user_echo = all(
+                        marker in compact_prefix[:8192] for marker in (b'"type":"event_msg"', b'"type":"user_message"')
+                    )
+                    if is_session_meta or (marker_seen and is_user_response):
+                        return [], "attachment parent envelope exceeds bounded record ceiling"
+                    echo_unknown = echo_unknown or is_user_echo
+                    continue
+                raw = b"".join(parts)
+                try:
+                    obj = json.loads(raw.decode("utf-8", errors="strict"))
+                except (UnicodeError, ValueError):
+                    is_session_meta = b'"type":"session_meta"' in compact_prefix[:4096]
+                    is_user_response = all(
+                        marker in compact_prefix[:8192]
+                        for marker in (b'"type":"response_item"', b'"type":"message"', b'"role":"user"')
+                    )
+                    is_user_echo = all(
+                        marker in compact_prefix[:8192] for marker in (b'"type":"event_msg"', b'"type":"user_message"')
+                    )
+                    if is_session_meta or (marker_seen and is_user_response):
+                        return [], "attachment parent envelope is malformed"
+                    echo_unknown = echo_unknown or is_user_echo
+                    if marker_seen:
+                        return [], "attachment parent reference is in a malformed JSONL record"
+                    continue
+                if not isinstance(obj, dict):
+                    if marker_seen:
+                        return [], "attachment parent reference record is not an object"
+                    continue
+                payload = obj.get("payload")
+                if obj.get("type") == "session_meta" and not isinstance(payload, dict):
+                    return [], "attachment parent session metadata is malformed"
+                if obj.get("type") == "session_meta" and isinstance(payload, dict):
+                    for field in ("id", "session_id"):
+                        value = payload.get(field)
+                        if value and str(value) not in session_ids:
+                            session_ids.append(str(value))
+                    if len(session_ids) > max_session_ids:
+                        return [], "attachment parent has too many session identities"
+                    forked = bool(
+                        forked
+                        or payload.get("forked_from_id")
+                        or payload.get("parent_thread_id")
+                        or payload.get("thread_source") == "subagent"
+                    )
+                    continue
+                if (
+                    obj.get("type") == "event_msg"
+                    and isinstance(payload, dict)
+                    and payload.get("type") == "user_message"
+                ):
+                    if native_record_schema_error(
+                        lifecycle,
+                        "codex-sessions",
+                        path,
+                        [obj],
+                        adapter_id=None,
+                    ):
+                        echo_unknown = True
+                    else:
+                        echo_hashes.update(digest(text) for text in prompt_texts_for(lifecycle, "codex-sessions", obj))
+                    continue
+                if not _codex_canonical_parent_record(obj):
+                    continue
+                if native_record_schema_error(
+                    lifecycle,
+                    "codex-sessions",
+                    path,
+                    [obj],
+                    adapter_id=None,
+                ):
+                    if marker_seen:
+                        return [], "attachment parent does not match the canonical user-message schema"
+                    continue
+                event_ref = (
+                    obj.get("uuid")
+                    or obj.get("id")
+                    or (payload.get("id") if isinstance(payload, dict) else None)
+                    or current_index
+                )
+                for text_index, text in enumerate(prompt_texts_for(lifecycle, "codex-sessions", obj)):
+                    references = codex_attachment_reference_paths(lifecycle, text)
+                    if not references:
+                        continue
+                    candidate_bytes += len(text.encode("utf-8", errors="replace"))
+                    if candidate_bytes > max_candidate_bytes:
+                        return [], f"attachment parent candidates exceed bounded ceiling {max_candidate_bytes}"
+                    candidates.append(
+                        {
+                            "event_ref": event_ref,
+                            "event_index": current_index,
+                            "text_index": text_index,
+                            "timestamp": event_timestamp(obj),
+                            "text": text,
+                        }
+                    )
+                    if len(candidates) > limits.max_events_per_unit:
+                        return (
+                            [],
+                            f"attachment parent candidate count exceeds bounded ceiling {limits.max_events_per_unit}",
+                        )
+    except OSError:
+        return [], "attachment parent cannot be read"
+
+    file_session_id = next((value for value in session_ids if value in path.name), None)
+    if file_session_id is None and session_ids:
+        file_session_id = session_ids[0]
+    parent_events: list[dict[str, Any]] = []
+    for candidate in candidates:
+        text = str(candidate["text"])
+        task_body, body_kind = lifecycle.normalize_task_body(text)
+        provenance, authority = "operator_typed", "operator"
+        if forked:
+            task_body, body_kind = "", "session_context"
+            provenance, authority = "continuation_summary", "derived"
+        elif echo_unknown or (echo_hashes and digest(text) not in echo_hashes):
+            provenance, authority = "unknown_user_input", "unknown"
+        parent_events.append(
+            {
+                "source": "codex-sessions",
+                "session_ref": (f"codex:{file_session_id}" if file_session_id else f"codex-sessions:{path}"),
+                "event_ref": candidate["event_ref"],
+                "event_index": candidate["event_index"],
+                "text_index": candidate["text_index"],
+                "source_locator": f"{path}#{candidate['event_index']}:{candidate['text_index']}",
+                "timestamp": candidate["timestamp"],
+                "text": text,
+                "task_body": task_body if body_kind == "flame_with_task_body" else "",
+                "body_kind": body_kind,
+                "provenance": provenance,
+                "authority": authority,
+                "_codex_attachment_parent": True,
+            }
+        )
+    return parent_events, None
+
+
+def collect_codex_attachment_parents(
+    lifecycle: Any,
+    *,
+    parent_path: Path,
+    parent_signature: dict[str, Any],
+    file_events: list[dict[str, Any]],
+    parents: dict[str, list[dict[str, Any]]],
+) -> None:
+    """Index every exact reference occurrence; duplicates intentionally remain ambiguous."""
+
+    for event in file_events:
+        if not event.get("_codex_attachment_parent"):
+            continue
+        for reference_ordinal, target in enumerate(
+            codex_attachment_reference_paths(lifecycle, str(event.get("text") or ""))
+        ):
+            parents.setdefault(target, []).append(
+                {
+                    "parent_locator": str(parent_path),
+                    "parent_signature": parent_signature,
+                    "event_ref": str(event.get("event_ref") or event.get("event_index") or "0"),
+                    "event_index": int(event.get("event_index") or 0),
+                    "text_index": int(event.get("text_index") or 0),
+                    "session_ref": str(event.get("session_ref") or "unknown"),
+                    "timestamp": event.get("timestamp"),
+                    "provenance": str(event.get("provenance") or "unknown_user_input"),
+                    "authority": str(event.get("authority") or "unknown"),
+                    "reference_ordinal": reference_ordinal,
+                }
+            )
+
+
+def _codex_attachment_parent_identity(parent: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        parent.get("parent_locator"),
+        parent.get("event_ref"),
+        parent.get("event_index"),
+        parent.get("text_index"),
+        parent.get("session_ref"),
+        parent.get("reference_ordinal"),
+    )
+
+
+def merge_codex_attachment_parents(*groups: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    seen: set[tuple[Any, ...]] = set()
+    for group in groups:
+        for parent in group:
+            identity = _codex_attachment_parent_identity(parent)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            merged.append(parent)
+    return merged
+
+
+def codex_attachment_parent_material(
+    attachment: Path,
+    parent: dict[str, Any],
+) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    parent_locator = str(parent["parent_locator"])
+    reference = codex_attachment_reference_line(attachment)
+
+    def hash_text(value: str) -> str:
+        return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()
+
+    return (
+        {"parent_session": dict(parent["parent_signature"])},
+        {
+            "parent_event": {
+                "authority": str(parent["authority"]),
+                "parent_event_index": int(parent["event_index"]),
+                "parent_event_ref_sha256": hash_text(str(parent["event_ref"])),
+                "parent_locator": parent_locator,
+                "parent_locator_sha256": hash_text(parent_locator),
+                "parent_session_ref_sha256": hash_text(str(parent["session_ref"])),
+                "parent_text_index": int(parent["text_index"]),
+                "provenance": str(parent["provenance"]),
+                "reference_sha256": hash_text(reference),
+                "timestamp": parent.get("timestamp"),
+            }
+        },
+    )
+
+
+def codex_attachment_receipt_parents(
+    lifecycle: Any,
+    attachment: Path,
+    receipt: Any,
+    *,
+    limits: ResourceLimits,
+) -> list[dict[str, Any]]:
+    """Revalidate only the receipt-bound parent file on a cached second pass."""
+
+    if not isinstance(receipt, dict):
+        return []
+    evidence = receipt.get("related_evidence")
+    detail = evidence.get("parent_event") if isinstance(evidence, dict) else None
+    related = receipt.get("related_signatures")
+    expected_signature = related.get("parent_session") if isinstance(related, dict) else None
+    if not isinstance(detail, dict) or not isinstance(expected_signature, dict):
+        return []
+    parent_locator = detail.get("parent_locator")
+    if not isinstance(parent_locator, str):
+        return []
+    parent_path = Path(parent_locator)
+    if source_relative_path(lifecycle, "codex-sessions", parent_path) is None:
+        return []
+    signature = file_signature(parent_path)
+    if signature != expected_signature:
+        return []
+    records, error, supported = strict_native_records(
+        lifecycle,
+        "codex-sessions",
+        parent_path,
+        signature,
+        limits=limits,
+    )
+    if error or not supported:
+        file_events, event_error = bounded_codex_attachment_parent_events_from_path(
+            lifecycle,
+            parent_path,
+            signature,
+            limits=limits,
+        )
+    else:
+        file_events, event_error = targeted_codex_attachment_parent_events(
+            lifecycle,
+            parent_path,
+            records,
+            limits=limits,
+        )
+    if event_error or file_signature(parent_path) != signature:
+        return []
+    parents: dict[str, list[dict[str, Any]]] = {}
+    collect_codex_attachment_parents(
+        lifecycle,
+        parent_path=parent_path,
+        parent_signature=signature,
+        file_events=file_events,
+        parents=parents,
+    )
+    return parents.get(str(attachment.expanduser().absolute()), [])
+
+
+def adapt_codex_attachment(
+    lifecycle: Any,
+    path: Path,
+    signature: dict[str, Any],
+    parents: Sequence[dict[str, Any]],
+    *,
+    limits: ResourceLimits,
+) -> tuple[
+    list[dict[str, Any]],
+    dict[str, dict[str, Any]],
+    dict[str, dict[str, Any]],
+    str | None,
+    bool,
+]:
+    """Bind a bounded pasted-text body to exactly one canonical parent event."""
+
+    if len(parents) != 1:
+        return [], {}, {}, None, False
+    adapter_limit = int(SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]["max_probe_bytes"])
+    maximum = min(adapter_limit, limits.max_source_bytes_per_unit)
+    payload = _bounded_file_bytes(path, signature, maximum=maximum)
+    if payload is None:
+        return [], {}, {}, f"attachment exceeds bounded byte ceiling {maximum}", True
+    try:
+        text = payload.decode("utf-8", errors="strict")
+    except UnicodeError:
+        return [], {}, {}, "attachment is not strict UTF-8 text", True
+    if not text.strip():
+        return [], {}, {}, "attachment body is empty", True
+    parent = parents[0]
+    if file_signature(Path(str(parent["parent_locator"]))) != parent.get("parent_signature"):
+        return [], {}, {}, "attachment parent changed during binding", True
+    related_signatures, related_evidence = codex_attachment_parent_material(path, parent)
+    task_body, body_kind = lifecycle.normalize_task_body(text)
+    attachment_ref = digest(str(path.expanduser().absolute()))[:24]
+    event = {
+        "source": "codex-attachments",
+        "session_ref": str(parent["session_ref"]),
+        "event_ref": f"{parent['event_ref']}:attachment:{attachment_ref}",
+        "event_index": int(parent["event_index"]),
+        "text_index": int(parent["text_index"]),
+        "source_locator": f"{path}#0:0",
+        "timestamp": parent.get("timestamp"),
+        "text": text,
+        "task_body": task_body if body_kind == "flame_with_task_body" else "",
+        "body_kind": body_kind,
+        "provenance": str(parent["provenance"]),
+        "authority": str(parent["authority"]),
+    }
+    return [event], related_signatures, related_evidence, None, True
+
+
 def scan_regular_sources(
     lifecycle: Any,
     cursor: dict[str, Any],
@@ -2190,6 +2810,7 @@ def scan_regular_sources(
         coverage_row(coverage, source)
     errors: list[str] = []
     unsupported: list[str] = []
+    codex_attachment_parents: dict[str, list[dict[str, Any]]] = {}
     processed = 0
     pending = 0
     attempted = 0
@@ -2230,6 +2851,10 @@ def scan_regular_sources(
         counts["discovered"] += 1
         exclusion_id = source_exclusion_candidate_id(lifecycle, source, path, signature)
         adapter_id = native_source_adapter_candidate_id(lifecycle, source, path)
+        adapter_related_signatures: dict[str, dict[str, Any]] = {}
+        adapter_related_evidence: dict[str, dict[str, Any]] = {}
+        attachment_candidates: list[dict[str, Any]] = []
+        targeted_parent_events: list[dict[str, Any]] = []
         claimed = False
         if exclusion_id:
             related_signatures = current_exclusion_related_signatures(
@@ -2319,9 +2944,36 @@ def scan_regular_sources(
             excluded_file_keys.add(key)
             continue
         excluded_unit_receipts.pop(key, None)
-        if (
-            adapter_id
-            and source_unit_receipt_matches(
+        cached_adapter_matches = False
+        if adapter_id == "codex-pasted-text-attachment-v1":
+            receipt_parents = codex_attachment_receipt_parents(
+                lifecycle,
+                path,
+                adapted_unit_receipts.get(key),
+                limits=active_limits,
+            )
+            attachment_candidates = merge_codex_attachment_parents(
+                codex_attachment_parents.get(str(path.expanduser().absolute()), []),
+                receipt_parents,
+            )
+            if len(attachment_candidates) == 1:
+                adapter_related_signatures, adapter_related_evidence = codex_attachment_parent_material(
+                    path,
+                    attachment_candidates[0],
+                )
+                cached_adapter_matches = source_unit_receipt_matches(
+                    adapted_unit_receipts.get(key),
+                    disposition="adapted",
+                    contract_id=adapter_id,
+                    contract_digest=adapter_contract["digest"],
+                    source=source,
+                    locator=str(path),
+                    signature=signature,
+                    related_signatures=adapter_related_signatures,
+                    expected_related_evidence=adapter_related_evidence,
+                )
+        elif adapter_id:
+            cached_adapter_matches = source_unit_receipt_matches(
                 adapted_unit_receipts.get(key),
                 disposition="adapted",
                 contract_id=adapter_id,
@@ -2330,9 +2982,16 @@ def scan_regular_sources(
                 locator=str(path),
                 signature=signature,
             )
-            and files.get(key) == signature
-        ):
-            if file_signature(path) != signature:
+        if cached_adapter_matches and adapter_id is not None and files.get(key) == signature:
+            parent_changed = bool(
+                adapter_id == "codex-pasted-text-attachment-v1"
+                and (
+                    len(attachment_candidates) != 1
+                    or file_signature(Path(attachment_candidates[0]["parent_locator"]))
+                    != adapter_related_signatures.get("parent_session")
+                )
+            )
+            if file_signature(path) != signature or parent_changed:
                 files.pop(key, None)
                 adapted_unit_receipts.pop(key, None)
                 counts["errors"] += 1
@@ -2377,13 +3036,76 @@ def scan_regular_sources(
             counts["errors"] += 1
             errors.append(f"{source}:{path}: {escape}")
             continue
-        records, error, supported = strict_native_records(
-            lifecycle,
-            source,
-            path,
-            signature,
-            limits=active_limits,
-        )
+        if adapter_id == "codex-pasted-text-attachment-v1":
+            file_events, adapter_related_signatures, adapter_related_evidence, error, supported = (
+                adapt_codex_attachment(
+                    lifecycle,
+                    path,
+                    signature,
+                    attachment_candidates,
+                    limits=active_limits,
+                )
+            )
+        else:
+            records, error, supported = strict_native_records(
+                lifecycle,
+                source,
+                path,
+                signature,
+                limits=active_limits,
+            )
+            if source == "codex-sessions":
+                if error or not supported:
+                    targeted_parent_events, targeted_error = bounded_codex_attachment_parent_events_from_path(
+                        lifecycle,
+                        path,
+                        signature,
+                        limits=active_limits,
+                    )
+                else:
+                    targeted_parent_events, targeted_error = targeted_codex_attachment_parent_events(
+                        lifecycle,
+                        path,
+                        records,
+                        limits=active_limits,
+                    )
+                if targeted_error and not error:
+                    error = targeted_error
+                if targeted_parent_events and file_signature(path) == signature:
+                    collect_codex_attachment_parents(
+                        lifecycle,
+                        parent_path=path,
+                        parent_signature=signature,
+                        file_events=targeted_parent_events,
+                        parents=codex_attachment_parents,
+                    )
+            if error or not supported:
+                file_events = []
+            else:
+                if not error:
+                    schema_error = native_record_schema_error(
+                        lifecycle,
+                        source,
+                        path,
+                        records,
+                        adapter_id=adapter_id,
+                    )
+                    if schema_error:
+                        files.pop(key, None)
+                        adapted_unit_receipts.pop(key, None)
+                        counts["unsupported"] += 1
+                        unsupported.append(key)
+                        unsupported_units[key] = signature
+                        continue
+                    file_events, error = regular_file_events(
+                        lifecycle,
+                        source,
+                        path,
+                        records,
+                        adapter_id=adapter_id,
+                        limits=active_limits,
+                    )
+                    supported = True
         if not supported:
             counts["unsupported"] += 1
             unsupported.append(key)
@@ -2393,87 +3115,13 @@ def scan_regular_sources(
             counts["errors"] += 1
             errors.append(f"{source}:{error}")
             continue
-        schema_error = native_record_schema_error(
-            lifecycle,
-            source,
-            path,
-            records,
-            adapter_id=adapter_id,
-        )
-        if schema_error:
-            files.pop(key, None)
-            adapted_unit_receipts.pop(key, None)
-            counts["unsupported"] += 1
-            unsupported.append(key)
-            unsupported_units[key] = signature
-            continue
-        file_session_id = canonical_file_session_id(source, path, records)
-        file_is_forked = codex_file_is_forked(source, records)
-        path_authority = claude_project_path_authority(lifecycle, source, path)
-        file_events: list[dict[str, Any]] = []
-        for event_index, obj in enumerate(records):
-            texts = prompt_texts_for(lifecycle, source, obj)
-            for text_index, text in enumerate(texts):
-                if adapter_id == "claude-remote-task-command-v1":
-                    task_body, body_kind = "", "direct"
-                else:
-                    task_body, body_kind = lifecycle.normalize_task_body(text)
-                provenance, authority = provenance_for(source, obj, body_kind)
-                if path_authority == "derived" or adapter_id:
-                    provenance, authority = "delegated_task_frame", "derived"
-                elif path_authority == "unknown" and provenance == "operator_typed":
-                    provenance, authority = "unknown_user_input", "unknown"
-                payload = obj.get("payload")
-                event_ref = (
-                    obj.get("uuid")
-                    or obj.get("id")
-                    or (payload.get("id") if isinstance(payload, dict) else None)
-                    or event_index
-                )
-                file_events.append(
-                    {
-                        "source": source,
-                        "session_ref": session_reference(
-                            source,
-                            path,
-                            obj,
-                            file_session_id=file_session_id,
-                        ),
-                        "event_ref": event_ref,
-                        "event_index": event_index,
-                        "text_index": text_index,
-                        "source_locator": f"{path}#{event_index}:{text_index}",
-                        "timestamp": event_timestamp(obj),
-                        "text": text,
-                        "task_body": task_body if body_kind == "flame_with_task_body" else "",
-                        "body_kind": body_kind,
-                        "provenance": provenance,
-                        "authority": authority,
-                        **({"claude_transport_candidate": True} if claude_transport_candidate(obj) else {}),
-                    }
-                )
-                if len(file_events) > active_limits.max_events_per_unit:
-                    break
-            if len(file_events) > active_limits.max_events_per_unit:
-                break
-        if len(file_events) > active_limits.max_events_per_unit:
-            counts["errors"] += 1
-            errors.append(
-                f"{source}:{path}: prompt occurrence count exceeds bounded ceiling {active_limits.max_events_per_unit}"
-            )
-            continue
         if file_signature(path) != signature:
             counts["errors"] += 1
             errors.append(f"{source}:{path}: source changed during scan; cursor not advanced")
             continue
-        file_events = normalize_claude_file_events(source, file_events)
-        events.extend(
-            normalize_codex_file_events(
-                source,
-                file_events,
-                forked=file_is_forked,
-            )
-        )
+        for event in file_events:
+            event.pop("_codex_attachment_parent", None)
+        events.extend(file_events)
         files[key] = signature
         unsupported_units.pop(key, None)
         if adapter_id:
@@ -2483,7 +3131,8 @@ def scan_regular_sources(
                 "contract_id": adapter_id,
                 "contract_digest": adapter_contract["digest"],
                 "signature": signature,
-                "related_signatures": {},
+                "related_signatures": adapter_related_signatures,
+                "related_evidence": adapter_related_evidence,
             }
             adapter_counts[adapter_id] += 1
             counts["adapted"] += 1

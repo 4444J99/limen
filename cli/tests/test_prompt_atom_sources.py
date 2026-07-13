@@ -3029,6 +3029,557 @@ def test_source_contract_digest_covers_complete_rule_descriptors(monkeypatch):
     assert changed["digest"] != original["digest"]
 
 
+def _codex_attachment_fixture(
+    sources,
+    tmp_path: Path,
+    *,
+    body: str = "Bounded synthetic attachment request.",
+    parent_texts: list[str] | None = None,
+    duplicate_reference: bool = False,
+    forked: bool = False,
+):
+    attachments = tmp_path / ".codex" / "attachments"
+    attachment = attachments / "fixture-container" / "pasted-text-1.txt"
+    attachment.parent.mkdir(parents=True, exist_ok=True)
+    attachment.write_text(body, encoding="utf-8")
+    sessions = tmp_path / ".codex" / "sessions"
+    session = sessions / "2026" / "07" / "13" / "rollout-fixture.jsonl"
+    session.parent.mkdir(parents=True, exist_ok=True)
+    reference = sources.codex_attachment_reference_line(attachment)
+    active_parent_texts = [reference] if parent_texts is None else parent_texts
+    if duplicate_reference:
+        active_parent_texts = [f"{reference}\n{reference}"]
+    metadata = {"id": "fixture-thread"}
+    if forked:
+        metadata["forked_from_id"] = "fixture-parent"
+    rows = [{"type": "session_meta", "payload": metadata}]
+    rows.extend(
+        {
+            "timestamp": f"2026-07-13T01:00:0{index}Z",
+            "type": "response_item",
+            "payload": {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": text}],
+            },
+        }
+        for index, text in enumerate(active_parent_texts, start=1)
+    )
+    session.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    lifecycle = sources.load_lifecycle_module()
+    lifecycle.LOCAL_SOURCES = [
+        ("codex-sessions", sessions, ("*",)),
+        ("codex-attachments", attachments, ("*",)),
+    ]
+    lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
+    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
+    lifecycle.HOME = tmp_path
+    return lifecycle, session, attachment
+
+
+@pytest.mark.parametrize(
+    ("forked", "expected_provenance", "expected_authority"),
+    [
+        (False, "operator_typed", "operator"),
+        (True, "continuation_summary", "derived"),
+    ],
+)
+def test_codex_pasted_text_attachment_binds_to_one_parent_and_inherits_authority(
+    tmp_path: Path,
+    forked: bool,
+    expected_provenance: str,
+    expected_authority: str,
+):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path, forked=forked)
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    attachment_events = [event for event in events if event["source"] == "codex-attachments"]
+    parent_events = [event for event in events if event["source"] == "codex-sessions"]
+    assert result["errors"] == []
+    assert result["unsupported"] == []
+    assert len(attachment_events) == len(parent_events) == 1
+    assert attachment_events[0]["text"] == "Bounded synthetic attachment request."
+    assert attachment_events[0]["session_ref"] == parent_events[0]["session_ref"]
+    assert attachment_events[0]["timestamp"] == parent_events[0]["timestamp"]
+    assert attachment_events[0]["provenance"] == expected_provenance
+    assert attachment_events[0]["authority"] == expected_authority
+    receipt = result["adapted_unit_receipts"][key]
+    assert receipt["contract_id"] == "codex-pasted-text-attachment-v1"
+    assert set(receipt["related_signatures"]) == {"parent_session"}
+    assert set(receipt["related_evidence"]) == {"parent_event"}
+    assert sources.source_contract_receipt_applies(
+        receipt["contract_id"],
+        "codex-attachments",
+        str(attachment),
+        signature=sources.file_signature(attachment),
+        related_signatures=receipt["related_signatures"],
+        related_evidence=receipt["related_evidence"],
+    )
+    assert result["source_adapter_counts"] == {"codex-pasted-text-attachment-v1": 1}
+    assert result["coverage"]["codex-attachments"]["adapted"] == 1
+
+
+@pytest.mark.parametrize("ambiguity", ["missing", "multiple-events", "duplicate-reference"])
+def test_codex_attachment_missing_or_ambiguous_parent_fails_closed(
+    tmp_path: Path,
+    ambiguity: str,
+):
+    sources = _load()
+    parent_texts = [] if ambiguity == "missing" else None
+    lifecycle, session, attachment = _codex_attachment_fixture(
+        sources,
+        tmp_path,
+        parent_texts=parent_texts,
+        duplicate_reference=ambiguity == "duplicate-reference",
+    )
+    if ambiguity == "multiple-events":
+        reference = sources.codex_attachment_reference_line(attachment)
+        lifecycle, session, attachment = _codex_attachment_fixture(
+            sources,
+            tmp_path,
+            parent_texts=[reference, reference],
+        )
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert result["errors"] == []
+    assert result["unsupported"] == [key]
+    assert result["unsupported_units"][key] == sources.file_signature(attachment)
+    assert key not in result["files"]
+    assert key not in result["adapted_unit_receipts"]
+
+
+def test_codex_attachment_traversal_reference_does_not_bind(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path, parent_texts=[])
+    relative_alias = attachment.parent / ".." / attachment.parent.name / attachment.name
+    traversal_reference = f"pasted text file: {relative_alias}. Read this file before continuing."
+    lifecycle, session, attachment = _codex_attachment_fixture(
+        sources,
+        tmp_path,
+        parent_texts=[traversal_reference],
+    )
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert result["unsupported"] == [key]
+    assert key not in result["adapted_unit_receipts"]
+
+
+@pytest.mark.parametrize("symlink_kind", ["file", "directory"])
+def test_codex_attachment_symlink_never_receives_adapter_custody(tmp_path: Path, symlink_kind: str):
+    sources = _load()
+    attachments = tmp_path / ".codex" / "attachments"
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    outside_attachment = outside / "pasted-text-1.txt"
+    outside_attachment.write_text("Synthetic outside body.", encoding="utf-8")
+    if symlink_kind == "file":
+        attachment = attachments / "fixture-container" / "pasted-text-1.txt"
+        attachment.parent.mkdir(parents=True)
+        attachment.symlink_to(outside_attachment)
+    else:
+        attachments.mkdir(parents=True)
+        linked_parent = attachments / "fixture-container"
+        linked_parent.symlink_to(outside, target_is_directory=True)
+        attachment = linked_parent / "pasted-text-1.txt"
+    sessions = tmp_path / ".codex" / "sessions"
+    session = sessions / "rollout-fixture.jsonl"
+    session.parent.mkdir(parents=True)
+    session.write_text(
+        json.dumps(
+            {
+                "timestamp": "2026-07-13T01:00:00Z",
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": sources.codex_attachment_reference_line(attachment)}],
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    lifecycle = sources.load_lifecycle_module()
+    lifecycle.LOCAL_SOURCES = [
+        ("codex-sessions", sessions, ("*",)),
+        ("codex-attachments", attachments, ("*",)),
+    ]
+    lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
+    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert result["adapted_unit_receipts"] == {}
+    assert len(result["errors"]) == 1
+    assert "symlink hop" in result["errors"][0]
+
+
+def test_codex_attachment_enforces_byte_and_encoding_bounds(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    limit = sources.SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]["max_probe_bytes"]
+    attachment.write_bytes(b"x" * (limit + 1))
+
+    events, oversized = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert "bounded byte ceiling" in " ".join(oversized["errors"])
+    assert oversized["adapted_unit_receipts"] == {}
+
+    attachment.write_bytes(b"\xff\xfe\xfa")
+    events, malformed = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert "strict UTF-8" in " ".join(malformed["errors"])
+    assert malformed["adapted_unit_receipts"] == {}
+
+
+def test_codex_attachment_streams_parent_larger_than_the_regular_source_limit(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    limits = sources.runtime_limits({"resource_limits": {"max_source_bytes_per_unit": 256}})
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        limits=limits,
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    attachment_events = [event for event in events if event["source"] == "codex-attachments"]
+    assert len(attachment_events) == 1
+    assert attachment_events[0]["provenance"] == "operator_typed"
+    assert result["adapted_unit_receipts"][key]["contract_id"] == "codex-pasted-text-attachment-v1"
+    assert result["coverage"]["codex-sessions"]["errors"] == 1
+    assert "bounded ceiling" in " ".join(result["errors"])
+
+
+def test_codex_attachment_streaming_parent_caps_fail_closed(tmp_path: Path, monkeypatch):
+    sources = _load()
+    lifecycle, session, _attachment = _codex_attachment_fixture(sources, tmp_path)
+    signature = sources.file_signature(session)
+    assert signature is not None
+    rule = sources.SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]
+    monkeypatch.setitem(rule, "max_parent_records", 1)
+
+    events, error = sources.bounded_codex_attachment_parent_events_from_path(
+        lifecycle,
+        session,
+        signature,
+        limits=sources.runtime_limits({}),
+    )
+
+    assert events == []
+    assert error is not None and "record count exceeds" in error
+
+    monkeypatch.setitem(rule, "max_parent_records", 100)
+    monkeypatch.setitem(rule, "max_parent_probe_bytes", 1)
+    events, error = sources.bounded_codex_attachment_parent_events_from_path(
+        lifecycle,
+        session,
+        signature,
+        limits=sources.runtime_limits({}),
+    )
+    assert events == []
+    assert error is not None and "byte ceiling" in error
+
+
+def test_codex_attachment_malformed_parent_reference_fails_closed(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    reference = sources.codex_attachment_reference_line(attachment)
+    session.write_text(
+        '{"type":"response_item","payload":{"type":"message","role":"user",'
+        f'"content":[{{"type":"input_text","text":"{reference}"}}]'
+        "\n",
+        encoding="utf-8",
+    )
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert key not in result["adapted_unit_receipts"]
+    assert result["unsupported"] == [key]
+    assert result["coverage"]["codex-sessions"]["errors"] == 1
+
+
+def test_codex_attachment_malformed_parent_metadata_fails_closed(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rows = [json.loads(line) for line in session.read_text(encoding="utf-8").splitlines()]
+    rows[0]["payload"] = "invalid"
+    session.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    key = sources.cursor_unit_key("codex-attachments", attachment)
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert key not in result["adapted_unit_receipts"]
+    assert result["unsupported"] == [key]
+    assert "session metadata is malformed" in " ".join(result["errors"])
+
+
+def test_codex_attachment_malformed_transport_echo_downgrades_authority(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rows = [json.loads(line) for line in session.read_text(encoding="utf-8").splitlines()]
+    rows.insert(
+        1,
+        {
+            "type": "event_msg",
+            "payload": {
+                "type": "user_message",
+                "message": sources.codex_attachment_reference_line(attachment),
+            },
+        },
+    )
+    session.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+
+    events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    attachment_events = [event for event in events if event["source"] == "codex-attachments"]
+    assert len(attachment_events) == 1
+    assert attachment_events[0]["provenance"] == "unknown_user_input"
+    assert attachment_events[0]["authority"] == "unknown"
+    assert result["coverage"]["codex-sessions"]["unsupported"] == 1
+
+
+def test_codex_attachment_parent_replay_invalidates_cached_receipt(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rows = [
+        {"source": "codex-sessions", "path": session},
+        {"source": "codex-attachments", "path": attachment},
+    ]
+    _events, first = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=rows,
+    )
+    attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
+    reference = sources.codex_attachment_reference_line(attachment)
+    existing = session.read_text(encoding="utf-8")
+    replay = {
+        "timestamp": "2026-07-13T01:00:09Z",
+        "type": "response_item",
+        "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": reference}],
+        },
+    }
+    session.write_text(existing + json.dumps(replay) + "\n", encoding="utf-8")
+
+    events, second = sources.scan_regular_sources(
+        lifecycle,
+        first,
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=rows,
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert second["unsupported"] == [attachment_key]
+    assert attachment_key not in second["adapted_unit_receipts"]
+    assert attachment_key not in second["files"]
+
+
+def test_codex_attachment_cached_second_pass_is_zero_growth(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rows = [
+        {"source": "codex-sessions", "path": session},
+        {"source": "codex-attachments", "path": attachment},
+    ]
+    first_budget = sources.ScanBudget(limit=2)
+    first_events, first = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=first_budget,
+        rows=rows,
+    )
+    first_receipts = json.dumps(first["adapted_unit_receipts"], sort_keys=True)
+
+    second_budget = sources.ScanBudget(limit=2)
+    second_events, second = sources.scan_regular_sources(
+        lifecycle,
+        first,
+        days=None,
+        budget=second_budget,
+        rows=rows,
+    )
+
+    assert len(first_events) == 2
+    assert first_budget.used == 2
+    assert second_events == []
+    assert second_budget.used == 0
+    assert second["errors"] == []
+    assert second["unsupported"] == []
+    assert json.dumps(second["adapted_unit_receipts"], sort_keys=True) == first_receipts
+
+
+def test_codex_attachment_native_ledger_second_pass_changes_no_canonical_bytes(
+    tmp_path: Path,
+    monkeypatch,
+):
+    sources = _load()
+    lifecycle, _session, _attachment = _codex_attachment_fixture(sources, tmp_path)
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    root = tmp_path / "ledger"
+    paths = sources.LedgerPaths.for_root(
+        root,
+        policy=ROOT / "docs" / "prompt-corpus-policy.json",
+    )
+
+    first_events, first_cursor = sources.scan_native_sources(
+        paths,
+        days=None,
+        max_files=2,
+    )
+    first_snapshot = sources.update_ledger(paths, events=first_events, cursor=first_cursor)
+
+    def canonical_bytes() -> dict[str, str]:
+        files = [
+            paths.event_journal,
+            paths.outcome_journal,
+            paths.cursor,
+            paths.private_snapshot,
+            paths.public_snapshot,
+            paths.public_markdown,
+            *sorted(path for path in paths.raw_objects.rglob("*") if path.is_file()),
+            *sorted(path for path in paths.source_scan_receipts.rglob("*") if path.is_file()),
+        ]
+        return {
+            str(index): hashlib.sha256(path.read_bytes()).hexdigest()
+            for index, path in enumerate(files)
+            if path.exists()
+        }
+
+    first_bytes = canonical_bytes()
+    second_events, second_cursor = sources.scan_native_sources(
+        paths,
+        days=None,
+        max_files=2,
+    )
+    second_snapshot = sources.update_ledger(paths, events=second_events, cursor=second_cursor)
+
+    assert first_cursor["scope"] == "all"
+    assert first_cursor["adapter_gaps"] == []
+    assert first_cursor["work_units_used"] == 2
+    assert first_snapshot["appended"]["occurrences"] == 2
+    assert second_events == []
+    assert second_cursor["work_units_used"] == 0
+    assert second_snapshot["write_changed"] is False
+    assert second_snapshot["appended"] == {
+        "occurrences": 0,
+        "atoms": 0,
+        "outcomes": 0,
+        "reclassified": 0,
+    }
+    assert canonical_bytes() == first_bytes
+
+
 @pytest.mark.parametrize(
     ("name", "body"),
     [
