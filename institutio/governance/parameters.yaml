@@ -250,6 +250,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Public receipt document emitted from the always-working lifecycle index. Contains aggregate statuses and receipt paths, not private raw prompt content."
+  LIMEN_ALWAYS_WORKING_SCRIPT:
+    default: "$LIMEN_ROOT/scripts/always-working.py"
+    env: LIMEN_ALWAYS_WORKING_SCRIPT
+    self_update: none
+    owner: continuity
+    note: "Executable producer used by overnight-watch for the bounded alternate-work snapshot. Tests and isolated deployments may replace the path without changing dispatch code."
   LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH:
     default: "1"
     env: LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH
@@ -970,6 +976,24 @@ parameters:
     self_update: "updated by scripts/overnight-watch.py"
     owner: continuity
     note: "Deduped active alert path for overnight monitor failures; replaces long interactive-agent polling loops with WATCH_ALERT receipts."
+  LIMEN_OVERNIGHT_LANE_SWITCH_LOCK:
+    default: "$LIMEN_ROOT/logs/overnight-lane-switch.lock"
+    env: LIMEN_OVERNIGHT_LANE_SWITCH_LOCK
+    self_update: none
+    owner: continuity
+    note: "Short critical-section lock for selecting, ticketing, and launching at most one exact alternate owner packet when the generic overnight value gate is closed."
+  LIMEN_OVERNIGHT_PROVIDER_MAX_AGE_MIN:
+    default: 90
+    env: LIMEN_OVERNIGHT_PROVIDER_MAX_AGE_MIN
+    self_update: none
+    owner: dispatch
+    note: "Maximum age in minutes for provider headroom telemetry accepted by the overnight exact-lane selector; stale capacity evidence fails closed."
+  LIMEN_USAGE_JSON:
+    default: "$LIMEN_ROOT/logs/usage.json"
+    env: LIMEN_USAGE_JSON
+    self_update: "refreshed by scripts/usage-telemetry.py"
+    owner: dispatch
+    note: "Provider headroom snapshot consumed by the overnight exact-lane selector. Override supports isolated tests without redirecting other Limen receipts."
   LIMEN_OVERNIGHT_TRIAL_RECEIPT:
     default: "$LIMEN_ROOT/logs/overnight-trial.json"
     env: LIMEN_OVERNIGHT_TRIAL_RECEIPT
@@ -1072,6 +1096,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Attached --watch loop interval; launchd should normally run one-shot invocations instead."
+  LIMEN_TARGETED_RECOVERY_GRACE:
+    default: "derived from the live async worker timeout"
+    env: LIMEN_TARGETED_RECOVERY_GRACE
+    self_update: none
+    owner: dispatch
+    note: "Minimum marker or markerless-claim age in seconds before exact orphan recovery may reopen a dispatched task. Tests may lower it explicitly; production derives the default from the worker timeout."
   LIMEN_PUBLIC_SITE_URL:
     default: "https://device-streaming-067d747a.web.app"
     env: LIMEN_PUBLIC_SITE_URL

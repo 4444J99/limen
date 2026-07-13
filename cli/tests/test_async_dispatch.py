@@ -16,6 +16,7 @@ from pathlib import Path
 
 CLI_SRC = Path(__file__).resolve().parents[1] / "src"
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "dispatch-async.py"
+WORKER_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "async-run-one.py"
 sys.path.insert(0, str(CLI_SRC))
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
@@ -45,6 +46,15 @@ def _load(tmp_path, n_open=6, agent="codex"):
     spec.loader.exec_module(da)
     da.RUNS.mkdir(parents=True, exist_ok=True)
     return da
+
+
+def _load_worker(tmp_path):
+    os.environ["LIMEN_ROOT"] = str(tmp_path)
+    os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
+    spec = importlib.util.spec_from_file_location("async_run_one_under_test", WORKER_SCRIPT)
+    worker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(worker)
+    return worker
 
 
 def _board(tmp_path):
@@ -554,6 +564,12 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     assert all(t.dispatch_log[-1].status == "dispatched" for t in dispatched)
     assert all(t.dispatch_log[-1].session_id == "async-reserve" for t in dispatched)
     assert all(t.predicate and t.receipt_target for t in dispatched)
+    current = {task.id: task for task in dispatched}
+    for call in calls:
+        argv = call[0]
+        task_id = argv[argv.index("--task-id") + 1]
+        contract_hash = argv[argv.index("--execution-contract-hash") + 1]
+        assert contract_hash == execution_contract_hash(current[task_id])
     assert len(list(da.RUNS.glob("*__codex.running"))) == 2
     track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
     assert track.spent == 2
@@ -1968,6 +1984,157 @@ def test_targeted_only_retains_dispatch_admission_gate(tmp_path, monkeypatch, ca
     receipt = json.loads(capsys.readouterr().out.splitlines()[-1])
     assert receipt["admission_allow"] is False
     assert receipt["status"] == "zero_launch"
+
+
+def _mark_async_dispatched(tmp_path, *, age_seconds=0):
+    board = load_limen_file(tmp_path / "tasks.yaml")
+    task = board.tasks[0]
+    stamp = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=age_seconds)
+    task.status = "dispatched"
+    task.updated = stamp
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=stamp,
+            agent="codex",
+            session_id="async-reserve",
+            status="dispatched",
+            output="reserved for exact recovery test",
+        )
+    )
+    save_limen_file(tmp_path / "tasks.yaml", board)
+    return task, execution_contract_hash(task), stamp
+
+
+def test_exact_recovery_blocks_fresh_dead_marker(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    task, contract_hash, stamp = _mark_async_dispatched(tmp_path)
+    da._write_running_marker(task.id, "codex", stamp, 999999, 0.0)
+    monkeypatch.setattr(da, "_pid_alive", lambda _pid: False)
+    monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "3600")
+
+    result = da.recover_exact_task(task.id, contract_hash, dry_run=True)
+
+    assert result["status"] == "blocked"
+    assert result["blocker"]["id"] == "targeted-recovery-marker-grace-active"
+    assert _board(tmp_path)[task.id].status == "dispatched"
+
+
+def test_exact_recovery_blocks_unreadable_marker(tmp_path):
+    da = _load(tmp_path, n_open=1)
+    task, contract_hash, _stamp = _mark_async_dispatched(tmp_path, age_seconds=7200)
+    (da.RUNS / f"{task.id}__codex.running").write_text("{not-json", encoding="utf-8")
+
+    result = da.recover_exact_task(task.id, contract_hash, dry_run=True)
+
+    assert result["status"] == "blocked"
+    assert result["blocker"]["id"] == "targeted-recovery-marker-unreadable"
+    assert _board(tmp_path)[task.id].status == "dispatched"
+
+
+def test_exact_recovery_checks_live_lease_even_with_stale_dead_marker(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    task, contract_hash, stamp = _mark_async_dispatched(tmp_path, age_seconds=7200)
+    da._write_running_marker(task.id, "codex", stamp, 999999, 0.0)
+    monkeypatch.setattr(da, "_pid_alive", lambda _pid: False)
+    monkeypatch.setattr(da, "_active_admission_leases", lambda: [{"task_id": task.id, "pid": 1234}])
+    monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
+
+    result = da.recover_exact_task(task.id, contract_hash, dry_run=True)
+
+    assert result["status"] == "blocked"
+    assert result["blocker"]["id"] == "targeted-recovery-live-lease"
+    assert _board(tmp_path)[task.id].status == "dispatched"
+
+
+def test_exact_recovery_rechecks_result_immediately_before_mutation(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    task, contract_hash, _stamp = _mark_async_dispatched(tmp_path, age_seconds=7200)
+    checks = []
+
+    def result_ids():
+        checks.append(True)
+        return set() if len(checks) == 1 else {task.id}
+
+    monkeypatch.setattr(da, "_result_task_ids", result_ids)
+    monkeypatch.setattr(da, "_active_admission_leases", lambda: [])
+    monkeypatch.setenv("LIMEN_TARGETED_RECOVERY_GRACE", "1")
+
+    result = da.recover_exact_task(task.id, contract_hash, dry_run=False)
+
+    assert result == {"status": "result_pending_harvest", "recovered_count": 0}
+    assert len(checks) == 2
+    assert _board(tmp_path)[task.id].status == "dispatched"
+
+
+def test_async_worker_revalidates_contract_before_provider_side_effects(tmp_path, monkeypatch):
+    _load(tmp_path, n_open=1)
+    task, expected_hash, _stamp = _mark_async_dispatched(tmp_path)
+    board = load_limen_file(tmp_path / "tasks.yaml")
+    board.tasks[0].context = "changed after reservation"
+    save_limen_file(tmp_path / "tasks.yaml", board)
+    worker = _load_worker(tmp_path)
+    monkeypatch.setattr(
+        worker,
+        "call_agent_dispatch",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("provider must not run")),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "async-run-one.py",
+            "--agent",
+            "codex",
+            "--task-id",
+            task.id,
+            "--execution-contract-hash",
+            expected_hash,
+        ],
+    )
+
+    assert worker.main() == 10
+    receipt = json.loads(worker._result_path(task.id).read_text(encoding="utf-8"))
+    assert receipt["execution_started"] is False
+    assert receipt["validation_failure"]["id"] == "async-execution-contract-mismatch"
+    assert receipt["execution_contract_hash"] == expected_hash
+    assert receipt["actual_execution_contract_hash"] == execution_contract_hash(_board(tmp_path)[task.id])
+
+
+def test_async_worker_fences_result_when_recovery_wins_publication_race(tmp_path, monkeypatch):
+    _load(tmp_path, n_open=1)
+    task, expected_hash, _stamp = _mark_async_dispatched(tmp_path)
+    worker = _load_worker(tmp_path)
+    seen = []
+
+    def execute(_agent, task_snapshot, dry_run=False):
+        seen.append((task_snapshot.context, execution_contract_hash(task_snapshot), dry_run))
+        board = load_limen_file(tmp_path / "tasks.yaml")
+        board.tasks[0].status = "open"
+        save_limen_file(tmp_path / "tasks.yaml", board)
+        return "https://github.com/x/y/pull/99"
+
+    monkeypatch.setattr(worker, "call_agent_dispatch", execute)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "async-run-one.py",
+            "--agent",
+            "codex",
+            "--task-id",
+            task.id,
+            "--execution-contract-hash",
+            expected_hash,
+        ],
+    )
+
+    assert worker.main() == 0
+    receipt = json.loads(worker._result_path(task.id).read_text(encoding="utf-8"))
+    assert seen == [(task.context, expected_hash, False)]
+    assert receipt["execution_started"] is True
+    assert receipt["result"] == "__notask__"
+    assert receipt["publication_failure"]["id"] == "async-result-publication-fenced"
+    assert _board(tmp_path)[task.id].status == "open"
 
 
 def test_exact_orphan_recovery_command_reopens_once_and_is_idempotent(tmp_path, monkeypatch, capsys):

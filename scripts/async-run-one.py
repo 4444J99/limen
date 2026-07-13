@@ -9,7 +9,7 @@ queue-lock. This is what decouples agent runtime from the beat: the orchestrator
 detached and returns immediately; a slow/stuck agent can no longer gate the whole beat.
 
 Usage (spawned detached by dispatch-async.py; rarely run by hand):
-    async-run-one.py --agent codex --task-id CIFIX-foo
+    async-run-one.py --agent codex --task-id CIFIX-foo --execution-contract-hash SHA256
 """
 import argparse
 import datetime
@@ -21,8 +21,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
-from limen.dispatch import call_agent_dispatch  # noqa: E402
+from limen.dispatch import _queue_lock, call_agent_dispatch  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
@@ -44,6 +45,151 @@ def _result_path(task_id: str) -> Path:
 
 def _running_marker_path(task_id: str, agent: str) -> Path:
     return RUNS / f"{_run_stem(task_id)}__{agent}.running"
+
+
+def _contract_hash(value: str) -> str:
+    if not re.fullmatch(r"[0-9a-f]{64}", value):
+        raise argparse.ArgumentTypeError("execution contract hash must be 64 lowercase hexadecimal characters")
+    return value
+
+
+def _failure(blocker_id: str, reason: str, **evidence: object) -> dict[str, object]:
+    return {"id": blocker_id, "reason": reason[:500], **evidence}
+
+
+def _load_verified_task(
+    task_id: str,
+    agent: str,
+    expected_hash: str,
+) -> tuple[object | None, str | bool, dict[str, object] | None, str]:
+    """Load one immutable execution snapshot under the queue lock.
+
+    The returned task object is the exact snapshot passed to dispatch. Later
+    board rewrites therefore cannot change the prompt after this verification.
+    """
+
+    with _queue_lock(TASKS) as got:
+        if not got:
+            return (
+                None,
+                "__notask__",
+                _failure("async-execution-queue-lock-busy", "task queue lock was unavailable before execution"),
+                "",
+            )
+        board = load_limen_file(TASKS)
+        task = next((candidate for candidate in board.tasks if candidate.id == task_id), None)
+        if task is None:
+            return (
+                None,
+                "__notask__",
+                _failure("async-execution-task-missing", "reserved task disappeared before execution"),
+                "",
+            )
+        try:
+            actual_hash = execution_contract_hash(task)
+        except Exception as exc:
+            return (
+                task,
+                False,
+                _failure(
+                    "async-execution-contract-invalid",
+                    f"fresh task cannot be canonically fingerprinted: {exc}",
+                ),
+                "",
+            )
+        if task.status != "dispatched":
+            return (
+                task,
+                "__notask__",
+                _failure(
+                    "async-execution-status-unsafe",
+                    f"fresh task status is {task.status}; expected dispatched",
+                    actual_status=task.status,
+                ),
+                actual_hash,
+            )
+        last = task.dispatch_log[-1] if task.dispatch_log else None
+        if (
+            last is None
+            or last.session_id != "async-reserve"
+            or last.status != "dispatched"
+            or last.agent != agent
+        ):
+            return (
+                task,
+                False,
+                _failure(
+                    "async-execution-claim-owner-mismatch",
+                    "fresh task is not owned by this async reservation",
+                ),
+                actual_hash,
+            )
+        if actual_hash != expected_hash:
+            return (
+                task,
+                False,
+                _failure(
+                    "async-execution-contract-mismatch",
+                    "task execution contract changed after reservation",
+                    expected_hash=expected_hash,
+                    actual_hash=actual_hash,
+                ),
+                actual_hash,
+            )
+        return task, False, None, actual_hash
+
+
+def _publish_result(
+    out: dict[str, object],
+    *,
+    task_id: str,
+    agent: str,
+    expected_hash: str,
+    execution_started: bool,
+) -> bool:
+    """Publish under the same queue lock used by recovery.
+
+    If exact recovery won the lock and reopened the task, fence the late result
+    instead of applying it to a new claim. The counts-only receipt remains
+    durable for diagnosis, but harvest will not mutate the reopened row.
+    """
+
+    with _queue_lock(TASKS) as got:
+        if not got:
+            return False
+        try:
+            board = load_limen_file(TASKS)
+            current = next((candidate for candidate in board.tasks if candidate.id == task_id), None)
+            current_hash = execution_contract_hash(current) if current is not None else ""
+        except Exception as exc:
+            current = None
+            current_hash = ""
+            out["publication_failure"] = _failure(
+                "async-result-board-unreadable",
+                f"fresh board could not be verified before result publication: {exc}",
+            )
+
+        if execution_started and (
+            current is None or current.status != "dispatched" or current_hash != expected_hash
+        ):
+            out["result"] = "__notask__"
+            out["publication_failure"] = _failure(
+                "async-result-publication-fenced",
+                "task changed or was recovered before the worker could publish its result",
+                expected_hash=expected_hash,
+                actual_hash=current_hash,
+                actual_status=getattr(current, "status", None),
+            )
+
+        RUNS.mkdir(parents=True, exist_ok=True)
+        tmp = _result_path(task_id).with_suffix(f".{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(out))
+        tmp.replace(_result_path(task_id))  # atomic publish while recovery is excluded
+        try:
+            _running_marker_path(task_id, agent).unlink()
+        except OSError:
+            pass
+        return True
 
 
 def heal_outcome(task, result):
@@ -90,14 +236,22 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--agent", required=True)
     ap.add_argument("--task-id", required=True)
+    ap.add_argument("--execution-contract-hash", required=True, type=_contract_hash)
     a = ap.parse_args()
-    RUNS.mkdir(parents=True, exist_ok=True)
     err = None
     task = None
+    execution_started = False
+    actual_hash = ""
+    validation_failure = None
     try:
-        lf = load_limen_file(TASKS)
-        task = next((t for t in lf.tasks if t.id == a.task_id), None)
-        result = call_agent_dispatch(a.agent, task, dry_run=False) if task is not None else "__notask__"
+        task, result, validation_failure, actual_hash = _load_verified_task(
+            a.task_id,
+            a.agent,
+            a.execution_contract_hash,
+        )
+        if validation_failure is None and task is not None:
+            execution_started = True
+            result = call_agent_dispatch(a.agent, task, dry_run=False)
     except Exception as e:  # never crash without leaving a result the harvester can apply
         result = False
         err = str(e)[:300]
@@ -107,19 +261,27 @@ def main() -> int:
         "result": result,  # bool | str (PR url / __noop__ / __ratelimit__ / __timeout__)
         "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "err": err,
+        "execution_contract_hash": a.execution_contract_hash,
+        "actual_execution_contract_hash": actual_hash,
+        "execution_started": execution_started,
     }
-    if task is not None and a.task_id.startswith("HEAL-"):
+    if validation_failure is not None:
+        out["validation_failure"] = validation_failure
+    if execution_started and task is not None and a.task_id.startswith("HEAL-"):
         derived = heal_outcome(task, result)
         if derived:
             out.update(derived)
-    tmp = _result_path(a.task_id).with_suffix(".tmp")
-    tmp.write_text(json.dumps(out))
-    tmp.replace(_result_path(a.task_id))  # atomic publish
-    try:
-        _running_marker_path(a.task_id, a.agent).unlink()
-    except OSError:
-        pass
-    return 0
+    published = _publish_result(
+        out,
+        task_id=a.task_id,
+        agent=a.agent,
+        expected_hash=a.execution_contract_hash,
+        execution_started=execution_started,
+    )
+    if not published:
+        print("async worker could not acquire the queue lock for result publication", file=sys.stderr)
+        return 2
+    return 0 if validation_failure is None else 10
 
 
 if __name__ == "__main__":

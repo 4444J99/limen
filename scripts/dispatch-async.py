@@ -749,21 +749,49 @@ def recover_exact_task(
                     f"exact task status is {task.status}; only an async dispatched claim can be recovered",
                 ),
             }
+        last = task.dispatch_log[-1] if task.dispatch_log else None
+        if last is None or last.session_id != "async-reserve" or last.status != "dispatched":
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-owner-unsafe",
+                    task_id,
+                    "exact claim is not owned by async-reserve",
+                ),
+            }
         if task_id in _result_task_ids():
             return {"status": "result_pending_harvest", "recovered_count": 0}
 
         matching_markers: list[tuple[Path, int | None, float]] = []
         for marker in RUNS.glob("*.running"):
-            marker_task_id, _agent = _marker_task_agent(marker)
+            marker_task_id, marker_agent = _marker_task_agent(marker)
             if marker_task_id != task_id:
                 continue
             try:
                 info = _running_marker_info(marker)
                 pid = info.get("pid")
                 age_s = (now - info["started_at"]).total_seconds()  # type: ignore[operator]
-            except Exception:
-                pid = None
-                age_s = float(default_max_age_s() + 1)
+            except Exception as exc:
+                return {
+                    "status": "blocked",
+                    "recovered_count": 0,
+                    "blocker": _targeted_recovery_blocker(
+                        "targeted-recovery-marker-unreadable",
+                        task_id,
+                        f"exact task marker cannot prove worker age or pid: {exc}",
+                    ),
+                }
+            if marker_agent != last.agent:
+                return {
+                    "status": "blocked",
+                    "recovered_count": 0,
+                    "blocker": _targeted_recovery_blocker(
+                        "targeted-recovery-marker-owner-mismatch",
+                        task_id,
+                        "exact task marker agent does not match the async reservation owner",
+                    ),
+                }
             matching_markers.append((marker, pid if isinstance(pid, int) else None, age_s))
         live_marker = next(
             (pid for _marker, pid, _age in matching_markers if pid is not None and _pid_alive(pid)), None
@@ -771,39 +799,28 @@ def recover_exact_task(
         if live_marker is not None:
             return {"status": "already_running", "recovered_count": 0, "pid": live_marker}
 
+        grace_s = max(1, _env_int("LIMEN_TARGETED_RECOVERY_GRACE", default_max_age_s()))
         if matching_markers:
-            unproven = [
+            fresh_markers = [
                 marker
-                for marker, pid, age_s in matching_markers
-                if pid is None and age_s <= default_max_age_s()
+                for marker, _pid, age_s in matching_markers
+                if age_s <= grace_s
             ]
-            if unproven:
+            if fresh_markers:
                 return {
                     "status": "blocked",
                     "recovered_count": 0,
                     "blocker": _targeted_recovery_blocker(
-                        "targeted-recovery-marker-unproven",
+                        "targeted-recovery-marker-grace-active",
                         task_id,
-                        "exact task has a recent marker without a verifiable worker pid",
+                        "exact task marker is not stale enough for safe orphan recovery",
                     ),
                 }
             markers_to_remove = [marker for marker, _pid, _age in matching_markers]
         else:
-            last = task.dispatch_log[-1] if task.dispatch_log else None
-            if last is None or last.session_id != "async-reserve" or last.status != "dispatched":
-                return {
-                    "status": "blocked",
-                    "recovered_count": 0,
-                    "blocker": _targeted_recovery_blocker(
-                        "targeted-recovery-owner-unsafe",
-                        task_id,
-                        "markerless claim is not owned by async-reserve",
-                    ),
-                }
             stamp = task.updated or last.timestamp
             # Markerless workers have no PID proof. Match the accepted reaper's full worker-timeout
             # grace by default; tests/operators may lower it only through the explicit recovery knob.
-            grace_s = max(1, _env_int("LIMEN_TARGETED_RECOVERY_GRACE", default_max_age_s()))
             age_s = (now - stamp).total_seconds() if stamp else 0
             if age_s <= grace_s:
                 return {
@@ -815,18 +832,25 @@ def recover_exact_task(
                         f"markerless claim is only {max(0, int(age_s))}s old; retry after {grace_s}s spawn grace",
                     ),
                 }
-            with _machine_admission_lock():
-                live_leases = [lease for lease in _active_admission_leases() if lease.get("task_id") == task_id]
-            if live_leases:
-                return {
-                    "status": "blocked",
-                    "recovered_count": 0,
-                    "blocker": _targeted_recovery_blocker(
-                        "targeted-recovery-live-lease",
-                        task_id,
-                        "markerless claim still has a live machine-admission lease",
-                    ),
-                }
+
+        with _machine_admission_lock():
+            live_leases = [lease for lease in _active_admission_leases() if lease.get("task_id") == task_id]
+        if live_leases:
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-live-lease",
+                    task_id,
+                    "exact claim still has a live machine-admission lease",
+                ),
+            }
+
+        # Result publishers take this same queue lock. Recheck immediately before mutation so a
+        # result that won the lock is harvested, while a late publisher sees the reopened status
+        # and fences its receipt instead of applying it to a new claim.
+        if task_id in _result_task_ids():
+            return {"status": "result_pending_harvest", "recovered_count": 0}
 
         if dry_run:
             return {"status": "would_recover", "recovered_count": 0}
@@ -1021,6 +1045,7 @@ def reserve_and_launch(
     usage = _usage_by_agent()
     usage_remaining = _usage_remaining_by_agent(usage)
     weak_proxy_agents = _weak_proxy_agents(usage)
+    reserved_contract_hashes: dict[str, str] = {}
     if dry:
         lf = load_limen_file(TASKS)
         if task_id and expected_contract_hash:
@@ -1074,6 +1099,11 @@ def reserve_and_launch(
                 running_local=used_slots,
                 machine_lease=True,
             )
+            by_id = {task.id: task for task in lf.tasks}
+            reserved_contract_hashes = {
+                tid: execution_contract_hash(by_id[tid])
+                for _agent, tid in picked
+            }
             if not dry and (picked or reset_changed):
                 try:
                     save_limen_file(TASKS, lf)
@@ -1089,7 +1119,16 @@ def reserve_and_launch(
         try:
             logf = open(_run_log_path(tid), "a")
             proc = subprocess.Popen(
-                [sys.executable, str(WORKER), "--agent", agent, "--task-id", tid],
+                [
+                    sys.executable,
+                    str(WORKER),
+                    "--agent",
+                    agent,
+                    "--task-id",
+                    tid,
+                    "--execution-contract-hash",
+                    reserved_contract_hashes[tid],
+                ],
                 stdout=logf,
                 stderr=logf,
                 stdin=subprocess.DEVNULL,

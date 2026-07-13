@@ -4860,6 +4860,11 @@ def check_trial_receipt(
             verify_sidecars=True,
         )
     )
+    # Do not reconstruct from sources after the receipt, marker, authoritative paths, or immutable
+    # custody sidecars have already failed trust validation. Besides avoiding work on untrusted
+    # input, this guarantees FIFOs/devices are rejected without reaching predicate re-execution.
+    if errors:
+        return False, sorted(set(errors))
     try:
         expected = build_trial_receipt(
             active_marker,
