@@ -23,7 +23,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (249) — decide each
+## Live-work branches (254) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
@@ -115,6 +115,8 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-cifix-organvm-limen-419-3fb355e2` — 199ec2ac Jules daily capacity-fill packet 02
 - `limen/heal-cifix-organvm-limen-419-68eb0e65` — 199ec2ac Jules daily capacity-fill packet 02
 - `limen/heal-cifix-organvm-limen-419-7595de98` — 199ec2ac Jules daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-425-0597e483` — 2f47ab18 fix failing CI on organvm/limen#425
+- `limen/heal-cifix-organvm-limen-427-5f8bb97d` — fc744034 fix failing CI on organvm/limen#427
 - `limen/heal-cifix-organvm-limen-428-2ae62246` — e4fa19a8 fix(ci): repair PR 428 gate failures
 - `limen/heal-cifix-organvm-limen-430-955f9dd1` — e752ed9d fix(ci): clear PR gate regressions
 - `limen/heal-cifix-organvm-limen-430-b979134a` — 1a6b2a2e fix(ci): declare new limen parameters
@@ -176,6 +178,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-rebase-organvm-limen-684-aa986f4c` — 97aff27a Deepen the contributions organ toward a usable institution
 - `limen/heal-rebase-organvm-limen-696-99224303` — 42d75f7e fix failing CI on organvm/limen#375
 - `limen/heal-rebase-organvm-limen-703-3cf56c8a` — 742f6330 handoff-relay.py: cross-session/cross-vendor warm-resume packet
+- `limen/heal-rebase-organvm-limen-814-004a5918` — 95b47a63 limen: guard worktree session launches
 - `limen/heal-rebase-stale-organvm-limen-434-180b7ce7` — b1a12a51 style: format cli.py
 - `limen/heal-rebase-stale-organvm-limen-434-8020d59d` — b1a12a51 style: format cli.py
 - `limen/heal-rebase-stale-organvm-limen-620-913107b3` — b79d6404 Build the first working vertical slice of the legal organ
@@ -190,6 +193,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/jules-aw-mail-historical-backlog-e50f` — 4cbf2f03 Continue historical mail backlog in resumable batches
 - `limen/org-artist-organ-face-0704-2152` — 0bf299b0 artist: polish macro and micro faces (ORG-artist-organ-face-0704)
 - `limen/org-artist-organ-face-0704-54ed` — f0ca6297 chore(artist): mark ORG-artist-organ-face-0704 as done
+- `limen/org-governance-organ-deepen-0628-0e39` — f23a6f66 limen: ruff-format test_dispatch_engine and test_session_lifecycle_pressure
 - `limen/org-governance-organ-deepen-0628-90ee` — 3b2001f6 feat: operationalize cvrsvs-honorvm rule as executable validator
 - `limen/org-governance-organ-deepen-0703-9f8e` — 6d486017 governance: enforce publication-policy convergence
 - `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf04 limen: close governance organ self-feed task
@@ -212,6 +216,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ada organs/social: ship first slice
 - `limen/org-social-organ-firstslice-0703-6fb5` — 4e699332 feat(social): add first koinonia slice
 - `limen/org-social-organ-firstslice-0703-edcd` — 0fbca3fa social: ship koinonia first slice
+- `limen/promote-fetch-familiar-friends-value-tier` — 9d64fc58 limen: promote organvm/fetch-familiar-friends to the value tier
 - `limen/studium-deepen-aeneid-e6cf` — fcee5d4d feat(studium): Aeneid Books 4-8 arcs and essays (desire/sacrifice/revelation/war)
 - `limen/studium-deepen-analects-78fa` — d5d8c190 feat(studium): Analects books 9-11 music arcs + essays (ascent/memory/salvation)
 - `limen/studium-deepen-beowulf-4918` — 99fb7715 feat(studium): Beowulf fitts 2–6 — force-matched arcs + essays

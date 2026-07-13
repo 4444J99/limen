@@ -9,6 +9,7 @@
 - **approve the irreversible delete/clear (archived reversibly; purge is yours)**  ·  owner: **you**  ·  hung: `ASK-quicken-delete` (needs_human)  ·  unblocks: Design movement ontology and workout composition
 - **finish stalled session 'Audit Codex handoff and validate token-accou' (breathed 50x, still stalling)**  ·  owner: **you**  ·  hung: `ASK-quicken-misc` (needs_human)  ·  unblocks: permanent queue
 - **finish stalled session 'Build alchemical synthesizer for audio sampl' (breathed 49x, still stalling)**  ·  owner: **you**  ·  hung: `ASK-quicken-misc` (needs_human)  ·  unblocks: permanent queue
+- **finish stalled session 'Complete chat tasks with appropriate model a' (breathed 2x, still stalling)**  ·  owner: **you**  ·  hung: `ASK-quicken-misc` (needs_human)  ·  unblocks: permanent queue
 - **finish stalled session 'Design movement ontology and workout composi' (breathed 24x, still stalling)**  ·  owner: **you**  ·  hung: `ASK-quicken-misc` (needs_human)  ·  unblocks: permanent queue
 - **finish stalled session 'Design movement ontology and workout composi' (breathed 2x, still stalling)**  ·  owner: **you**  ·  hung: `ASK-quicken-misc` (needs_human)  ·  unblocks: permanent queue
 - **finish stalled session 'bash permission config investigation' (breathed 53x, still stalling)**  ·  owner: **you**  ·  hung: `ASK-quicken-misc` (needs_human)  ·  unblocks: permanent queue
