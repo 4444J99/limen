@@ -117,7 +117,9 @@ def _promote_task(task: dict) -> bool:
 def propose(brief: dict, *, apply: bool = False) -> dict:
     """Record (and, when armed, home) the day's experiment proposal. Never touches a public surface."""
     experiment = brief.get("experiment")
-    hero = brief.get("hero")
+    # the experiment names its own target repo (portfolio-wide selection); older briefs fall
+    # back to the portfolio hero.
+    hero = (experiment or {}).get("repo") or brief.get("hero")
     if not experiment:
         result = {"proposed": False, "reason": "no experiment (no gap today)", "armed": bool(apply)}
         ledger.append_jsonl("proposals.jsonl", result)

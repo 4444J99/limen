@@ -9,7 +9,7 @@ the hero — the highest-ranked repo that actually has a transferable gap to clo
 
 from __future__ import annotations
 
-from . import config, gh, surface
+from . import collect, config, gh, surface
 
 # which success-vector component matters most at each product stage (drives expected_value).
 _STAGE_COMPONENT = {
@@ -58,6 +58,39 @@ def our_surface(owner_repo: str, tok) -> dict | None:
         return None
     readme = gh.readme_markdown(owner_repo, tok) or ""
     return surface.extract(readme, meta)
+
+
+def our_estate(tok) -> dict[str, dict]:
+    """Profile EVERY value repo for the estate-wide comparison: its README surface plus the
+    match variables a facing edge needs (category, language). One meta+README read per repo;
+    fail-open per repo — an unreadable repo is simply absent, never faked."""
+    out: dict[str, dict] = {}
+    for repo in our_repos():
+        meta = gh.repo(repo, tok)
+        if not isinstance(meta, dict) or not meta.get("full_name"):
+            continue
+        readme = gh.readme_markdown(repo, tok) or ""
+        out[repo] = {
+            "surface": surface.extract(readme, meta),
+            "category": collect._category(meta.get("topics") or [], meta.get("language")),
+            "language": meta.get("language") or "unknown",
+        }
+    return out
+
+
+def facing_repos(field_snapshot: dict, estate_profiles: dict[str, dict]) -> list[str]:
+    """Which of our repos a trending repo *faces* — same category (when both are known), else
+    same language. A metadata-only adjacency edge: it costs no extra API calls and claims
+    nothing beyond adjacency."""
+    cat = field_snapshot.get("category")
+    lang = field_snapshot.get("language") or "unknown"
+    out = []
+    for repo, prof in estate_profiles.items():
+        if cat and cat != "unknown" and prof.get("category") == cat:
+            out.append(repo)
+        elif lang != "unknown" and prof.get("language") == lang:
+            out.append(repo)
+    return sorted(out)
 
 
 def has_feature(features: dict, mechanism: str) -> bool:

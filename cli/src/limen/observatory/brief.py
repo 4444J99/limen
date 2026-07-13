@@ -65,7 +65,10 @@ def _top_mechanisms(n: int = 3) -> list[dict]:
         if mech in seen:
             continue
         seen.add(mech)
-        out.append({"mechanism": c.get("mechanism"), "priority": c.get("priority"), "winner": c.get("winner")})
+        row = {"mechanism": c.get("mechanism"), "priority": c.get("priority"), "winner": c.get("winner")}
+        if c.get("field_prevalence") is not None:
+            row["field_prevalence"] = c.get("field_prevalence")
+        out.append(row)
         if len(out) >= n:
             break
     return out
@@ -85,11 +88,14 @@ def _top_confounders(n: int = 3) -> list[dict]:
 
 def _experiment_from_gap(gap: dict, hero: str | None) -> dict:
     kind = gap.get("kind")
+    # A gap row that names its own estate repo targets THAT repo; older/internal rows fall back
+    # to the portfolio hero.
+    target_repo = gap.get("repo") or hero
     if gap.get("face") == "external":
         # External gaps carry no VVLTVS kind — their one class is a mechanism transfer.
         kind = kind or "mechanism_transfer"
         mech = gap.get("mechanism")
-        change = f"Add '{mech}' to {hero or 'the hero repo'}'s first screen (one reversible surface edit)."
+        change = f"Add '{mech}' to {target_repo or 'the hero repo'}'s first screen (one reversible surface edit)."
         measure_hint = f"{gap.get('target_component', 'activation')} proxy over the window vs baseline"
         target = gap.get("target_component", "activation")
     elif kind == "severed_pipe":
@@ -113,7 +119,8 @@ def _experiment_from_gap(gap: dict, hero: str | None) -> dict:
     return {
         "id": "L-OBS-EXP",
         "task_id": "OBS-EXP",
-        "hero": hero,
+        "hero": target_repo,
+        "repo": target_repo,
         "kind": kind,
         "change": change,
         "reversible": True,
@@ -138,7 +145,7 @@ def build_brief(date: str | None = None) -> dict:
     latest_gap = config_latest("gap-latest.json") or {}
     hero = latest_gap.get("hero")
     experiment = select_experiment(all_gaps, hero)
-    return {
+    brief = {
         "schema": "limen.observatory.brief.v1",
         "date": date or lever._today(),
         "hero": hero,
@@ -149,6 +156,27 @@ def build_brief(date: str | None = None) -> dict:
         "experiment": experiment,
         "measurement_contract": experiment.get("measurement_contract") if experiment else None,
     }
+    # Portfolio + field views — additive keys, absent when the engine ran offline/pre-field,
+    # so the brief stays byte-identical for the ships-dark determinism proof.
+    by_repo = latest_gap.get("gaps_by_repo")
+    if isinstance(by_repo, dict) and by_repo:
+        portfolio = []
+        for repo, rgaps in by_repo.items():
+            top = (rgaps or [{}])[0]
+            portfolio.append(
+                {
+                    "repo": repo,
+                    "top_mechanism": top.get("mechanism"),
+                    "priority": top.get("priority"),
+                    "gap_count": len(rgaps or []),
+                }
+            )
+        portfolio.sort(key=lambda r: (-(r.get("priority") or 0.0), r["repo"]))
+        brief["portfolio"] = portfolio
+    field = latest_gap.get("field")
+    if isinstance(field, dict) and field.get("studied"):
+        brief["field"] = field
+    return brief
 
 
 def render_markdown(brief: dict) -> str:
@@ -157,6 +185,14 @@ def render_markdown(brief: dict) -> str:
         "",
         f"**Hero:** {brief.get('hero') or '(none — no gap today)'}",
         f"**Gaps:** {brief.get('external_gaps', 0)} external · {brief.get('internal_gaps', 0)} internal",
+    ]
+    field = brief.get("field") or {}
+    if field.get("studied"):
+        lines.append(
+            f"**Field:** {field.get('studied', 0)} trending repos studied"
+            f" (of {field.get('total', 0)} found) · {field.get('facing', 0)} face our repos"
+        )
+    lines += [
         "",
         "## Three success mechanisms",
     ]
@@ -169,6 +205,13 @@ def render_markdown(brief: dict) -> str:
         lines.append(f"- {c.get('kind')}: {c.get('evidence', '')}")
     if not brief.get("confounders"):
         lines.append("- (none flagged)")
+    if brief.get("portfolio"):
+        lines += ["", "## Portfolio (per-repo top gap)"]
+        for row in brief["portfolio"][:10]:
+            lines.append(
+                f"- `{row['repo']}` — {row.get('top_mechanism')}"
+                f" (priority {row.get('priority')}, {row.get('gap_count')} gaps)"
+            )
     exp = brief.get("experiment")
     lines += ["", "## One reversible experiment"]
     if exp:

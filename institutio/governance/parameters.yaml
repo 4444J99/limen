@@ -2073,11 +2073,17 @@ parameters:
     owner: observatory
     note: "Cadence (every N beats) of the OBSERVATORY loop declared in sensors.yaml. The generic scheduled runner resolves this override; metabolize.sh contains no sensor-specific cadence constant."
   LIMEN_OBSERVATORY_TIMEOUT:
-    default: 240
+    default: 480
     env: LIMEN_OBSERVATORY_TIMEOUT
     self_update: none
     owner: observatory
-    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the OBSERVATORY loop. The runner kills the command group on overrun and the beat continues fail-open."
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the OBSERVATORY loop. The runner kills the command group on overrun and the beat continues fail-open. 480 covers the full-field pass (~50 light snapshots + 17 estate surfaces on top of the deep winners; the 3-winner loop measured 106s)."
+  OBSERVATORY_FIELD_LIMIT:
+    default: 50
+    env: OBSERVATORY_FIELD_LIMIT
+    self_update: none
+    owner: observatory
+    note: "The whole day's trending FIELD studied per beat (one bounded search; GitHub caps a page at 100). The top OBSERVATORY_WINNERS_LIMIT of the field get the deep treatment (full snapshot + matched controls); the tail gets light snapshots (meta+README, 2 calls each) for prevalence and inward-facing evidence. Never below the winners limit; the collect report records field_total/field_studied/field_dropped — no silent caps. Degrades to the winners limit when gh rate headroom < 20% (recorded as degraded: true)."
   LIMEN_BIFRONS:
     default: 1
     env: LIMEN_BIFRONS

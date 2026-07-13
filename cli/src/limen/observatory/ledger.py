@@ -80,6 +80,14 @@ def write_latest(name: str, obj: Any) -> None:
         print(f"[observatory] note: write {name} skipped ({str(e)[:80]})")
 
 
+def read_latest(name: str, default: Any = None) -> Any:
+    """Read back a regenerated ``*-latest.json`` doc (``default`` when absent/corrupt)."""
+    try:
+        return json.loads(_path(name).read_text(encoding="utf-8"))
+    except Exception:
+        return default
+
+
 def write_text(name: str, text: str) -> None:
     """Regenerate a human-face artifact (e.g. ``brief-latest.md``)."""
     try:

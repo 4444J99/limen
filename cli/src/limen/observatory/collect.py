@@ -90,14 +90,18 @@ def _slug(owner_repo: str) -> str:
     return owner_repo.replace("/", "-")
 
 
-def snapshot(owner_repo: str, tok, *, role: str, now: datetime | None = None) -> dict | None:
-    """One normalized RepoSnapshot (+ its surface record embedded). None when the repo can't be read."""
+def snapshot(owner_repo: str, tok, *, role: str, now: datetime | None = None, light: bool = False) -> dict | None:
+    """One normalized RepoSnapshot (+ its surface record embedded). None when the repo can't be read.
+
+    ``light=True`` is the field-tail mode: meta + README only (2 calls, no releases read) —
+    ``release_maturity`` is honestly ``None`` (unknown), never guessed. Light rows are for
+    prevalence/facing evidence, not cohort matching."""
     meta = gh.repo(owner_repo, tok)
     if not isinstance(meta, dict) or not meta.get("full_name"):
         return None
     owner = meta.get("owner") or {}
     topics = meta.get("topics") or []
-    rels = gh.releases(owner_repo, tok)
+    rels = [] if light else gh.releases(owner_repo, tok)
     readme = gh.readme_markdown(owner_repo, tok) or ""
     feats = surface.extract(readme, meta)
     # P3-CAPTURE — merge live-homepage first-impression features when armed (OBSERVATORY_CAPTURE=1)
@@ -117,7 +121,7 @@ def snapshot(owner_repo: str, tok, *, role: str, now: datetime | None = None) ->
         "category": _category(topics, meta.get("language")),
         "owner_archetype": _owner_archetype(owner),
         "owner_followers": None,  # a second call; left null in v1 rather than faked
-        "release_maturity": _release_maturity(rels),
+        "release_maturity": None if light else _release_maturity(rels),
         "signals": {
             "stars": meta.get("stargazers_count"),
             "forks": meta.get("forks_count"),
@@ -131,14 +135,20 @@ def snapshot(owner_repo: str, tok, *, role: str, now: datetime | None = None) ->
     return snap
 
 
-def collect_winners(tok, *, window_days: int, limit: int) -> list[dict]:
+def _trending_items(tok, *, window_days: int, per_page: int) -> list[dict]:
     """Approximate Trending (no official API): repos CREATED within the recency window, sorted by
-    stars — recent risers. The query is tunable via OBSERVATORY_TRENDING_QUERY. Fail-open []."""
+    stars — recent risers. ONE bounded search returns the whole field. The query is tunable via
+    OBSERVATORY_TRENDING_QUERY. Fail-open []."""
     query = str(config.get("OBSERVATORY_TRENDING_QUERY", "") or "").strip()
     if not query:
         cutoff = (datetime.now(timezone.utc) - timedelta(days=window_days)).date().isoformat()
         query = f"stars:>50 created:>={cutoff}"  # GitHub search needs an absolute ISO date, not now-Nd
-    items = gh.search_repos(query, tok, sort="stars", per_page=max(limit, 10))
+    return gh.search_repos(query, tok, sort="stars", per_page=per_page)
+
+
+def collect_winners(tok, *, window_days: int, limit: int) -> list[dict]:
+    """Deep-snapshot the top of the field (kept as the standalone winners path)."""
+    items = _trending_items(tok, window_days=window_days, per_page=max(limit, 10))
     out = []
     for it in items[:limit]:
         name = it.get("full_name")
@@ -172,18 +182,41 @@ def _candidates_for(winner: dict, tok, *, per_winner_search: int) -> list[dict]:
 
 
 def run(*, apply: bool = False) -> dict:
-    """The executive collect stage: winners + competitors + matched controls → evidence."""
+    """The executive collect stage: the whole trending field + competitors + matched controls →
+    evidence. The top of the field (winners) gets the deep treatment (full snapshot + controls);
+    the tail gets light snapshots for prevalence/facing evidence. Nothing is dropped silently."""
     tok = gh.token()
     if not gh.online(tok):
-        report = {"online": False, "winners": 0, "controls": 0, "cohorts": 0}
+        report: dict = {"online": False, "winners": 0, "controls": 0, "cohorts": 0}
         ledger.write_latest("collect-latest.json", report)
         return report
 
     limit = config.get("OBSERVATORY_WINNERS_LIMIT", 3, cast=int)
     window = config.get("OBSERVATORY_TRENDING_WINDOW_DAYS", 30, cast=int)
     k = config.get("OBSERVATORY_CONTROLS_PER_WINNER", 3, cast=int)
+    field_limit = max(config.get("OBSERVATORY_FIELD_LIMIT", 50, cast=int), limit)
 
-    winners = collect_winners(tok, window_days=window, limit=limit)
+    # Headroom guard: with the rate budget nearly exhausted, degrade to the deep-study core
+    # rather than half-finish the field. A None probe reads as healthy (fail-open).
+    headroom = gh.rate_headroom_pct(tok)
+    degraded = headroom is not None and headroom < 20
+    if degraded:
+        field_limit = limit
+
+    items = _trending_items(tok, window_days=window, per_page=max(field_limit, 10))
+    names = [str(it["full_name"]) for it in items if it.get("full_name")]
+
+    winners = []
+    for name in names[:limit]:
+        snap = snapshot(name, tok, role="winner")
+        if snap:
+            winners.append(snap)
+    field = []
+    for name in names[limit:field_limit]:
+        snap = snapshot(name, tok, role="field", light=True)
+        if snap:
+            field.append(snap)
+
     competitors = collect_competitors(tok, config.competitor_seeds())
 
     n_controls = 0
@@ -210,9 +243,24 @@ def run(*, apply: bool = False) -> dict:
         )
         n_cohorts += 1
 
+    for snap in field:
+        ledger.append_jsonl("snapshots.jsonl", snap)
+        ledger.append_jsonl("surfaces.jsonl", {"owner_repo": snap["owner_repo"], "features": snap["surface"]})
+
     for snap in competitors:
         ledger.append_jsonl("snapshots.jsonl", snap)
 
-    report = {"online": True, "winners": len(winners), "controls": n_controls, "cohorts": n_cohorts}
+    report = {
+        "online": True,
+        "winners": len(winners),
+        "controls": n_controls,
+        "cohorts": n_cohorts,
+        "field_total": len(names),
+        "field_studied": len(winners) + len(field),
+        "field_dropped": max(0, len(names) - field_limit),
+        "degraded": degraded,
+        # today's field roster — analyze bounds prevalence/facing to THIS run, not all history.
+        "field_repos": [s["owner_repo"] for s in (*winners, *field)],
+    }
     ledger.write_latest("collect-latest.json", report)
     return report

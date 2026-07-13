@@ -150,7 +150,7 @@ sensors:
       default: 24
     timeout:
       env: LIMEN_OBSERVATORY_TIMEOUT
-      default: 240
+      default: 480
     steps:
       - command: "python3 scripts/observatory-beat.py"
         args_when:

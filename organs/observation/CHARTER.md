@@ -49,9 +49,12 @@ The organ is a **virtual firm** of 5 AI roles, executed in sequence by `executiv
 role maps to a concrete module (or pair of modules) in `cli/src/limen/observatory/`:
 
 ### 1. The Scout — Data Collection (`collect.py` + `gh.py`)
-Finds today's GitHub winners and competitor seeds, snapshots each into a normalized record,
-extracts README surfaces, and selects matched controls. Bounded by `OBSERVATORY_WINNERS_LIMIT`
-(default 3). Fail-open on offline/unreachable.
+Studies the WHOLE day's trending field (one bounded search, `OBSERVATORY_FIELD_LIMIT`, default
+50): the top `OBSERVATORY_WINNERS_LIMIT` (default 3) get the deep treatment — full snapshot +
+matched controls — and the tail gets light snapshots (meta + README, 2 calls each) for
+prevalence and inward-facing evidence. Competitor seeds as before. Nothing is dropped silently
+(the collect report records `field_total`/`field_studied`/`field_dropped`), and the field
+degrades to the deep core when `gh` rate headroom runs low. Fail-open on offline/unreachable.
 
 **Code boundary:** `gh.py` is the ONLY shell-out boundary (a cascade token + thin subprocess
 wrappers that fail open). `collect.py` owns the searches and snapshots; pure matching lives
@@ -107,8 +110,8 @@ never wedges the beat (exit 0 always). The propose step is nested inside the bri
 
 | # | Stage | Module | What it does | Writes |
 |---|-------|--------|-------------|--------|
-| 1 | **collect** | `collect.py` | Search trending + competitors; snapshot each; select ~k matched controls per winner; extract README surfaces | `snapshots.jsonl`, `surfaces.jsonl`, `cohorts.jsonl` |
-| 2 | **analyze** | `mechanism.py` | Score winner-vs-control contrasts by priority formula; compute activation gap against our hero's surface | `mechanisms.jsonl`, `gap-latest.json` |
+| 1 | **collect** | `collect.py` | Search the whole trending field; deep-snapshot top winners + ~k matched controls; light-snapshot the field tail; extract README surfaces | `snapshots.jsonl`, `surfaces.jsonl`, `cohorts.jsonl` |
+| 2 | **analyze** | `mechanism.py` | Score winner-vs-control contrasts by priority formula; compute activation gaps for EVERY value repo (per-repo outcome class) + field prevalence + inward-facing edges | `mechanisms.jsonl`, `gap-latest.json` |
 | 3 | **reconcile** | `reconcile.py` | Run VVLTVS sensor → convert drifted faces + severed pipes into internal-legibility gaps | `reconcile.jsonl`, `reconcile-latest.json` |
 | 4 | **brief** | `brief.py` + `interpret.py` (P2-LLM) | Merge both faces; pick highest-priority gap → one experiment; optionally attach LLM interpretation | `brief-latest.json`, `brief-latest.md`, `briefs.jsonl` |
 | ↳ 4b | **propose** (within brief) | `lever.py` | Shape experiment as lever + task; home to `his-hand-levers.json` when armed | `proposals.jsonl`; lever (armed only) |
@@ -225,6 +228,22 @@ Residual work to reach 30% (building stage):
    the full loop completes in 106s — well inside the sensor's 240s timeout. The remaining
    *on-cadence gated-loop* observation is exactly what residual 1 unlocks — it is the lever's
    receipt, not separate work.
+
+**Field build (2026-07-13, correction-driven).** The first-light shape — 3 winners funneled into
+one hero — under-used the signal: the trending field is 50+ repos/day and they face inward toward
+the things we built. The engine now studies the whole field (`OBSERVATORY_FIELD_LIMIT`, light
+snapshots for the tail), computes activation gaps for EVERY value repo (each rescored with its
+own outcome class — similarity and expected_value actually vary), annotates inward-facing edges
+(which of our repos each trending repo faces, metadata-only), and records per-mechanism field
+prevalence on the mechanism history (weekly synthesis evidence, never a formula term). The brief
+carries a `portfolio` (per-repo top gap) and a `field` summary; the ONE human-gated experiment is
+now selected portfolio-wide. Sensor timeout raised 240 → 480 for the bigger pass.
+
+Recorded frontier (this organ's own next EXTENDs, not owed by anyone today):
+- **Estate-ledger-wide facing** — extend facing edges from the 17 value-repos to the full
+  203-repo `docs/github-estate-ledger.json` inventory (metadata-only; needs no README fetches).
+- **Dashboard portfolio panel** — surface `portfolio`/`field` on the owner `/observatory` page
+  (a separate concern: the web/app 7-gate surface lattice).
 
 **No capability is invented.** Every mechanism seed in `mechanisms.yaml` corresponds to a real
 feature extracted by `surface.py`. Every gap type (`claim_drift`, `severed_pipe`) corresponds to
