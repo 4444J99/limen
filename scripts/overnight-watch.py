@@ -76,7 +76,6 @@ THROUGHPUT_BASELINE_DAYS = int(os.environ.get("LIMEN_THROUGHPUT_BASELINE_DAYS", 
 ISSUE_ESCALATE = (os.environ.get("LIMEN_THROUGHPUT_ISSUE_ESCALATE", "1") or "1") != "0"
 ESCALATE_REPO = os.environ.get("LIMEN_CENSOR_ISSUES_REPO", "organvm/limen")
 PLIST_DRIFT_KEYS = ("LIMEN_ASYNC_MAX", "LIMEN_DISPATCH_ASYNC", "LIMEN_DISPATCH_LANES", "LIMEN_ROOT")
-VITALS_SKIP_MARKER = "vitals-pressure: dispatch skipped"
 TAIL_BYTES = 192 * 1024
 TRIAL_SCHEMA_VERSION = "overnight-trial.v2"
 TRIAL_MARKER_SCHEMA_VERSION = "overnight-trial-window.v2"
@@ -464,8 +463,9 @@ def throughput_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     """Windowed completion velocity vs a floor derived from trailing history.
 
     below_floor is True only when the recent windows are all under the floor AND open work
-    exists AND no sanctioned suppression explains the quiet (governor pause, vitals shed,
-    budget exhaustion, dispatch gate). Sanctioned quiet is surfaced as `suppressed`, never
+    exists AND no sanctioned suppression explains the quiet (governor pause,
+    budget exhaustion, dispatch gate). VITALS shed is not a suppression because off-box lanes
+    remain eligible. Sanctioned quiet is surfaced as `suppressed`, never
     hidden.
     """
     result: dict[str, Any] = {
@@ -524,8 +524,6 @@ def throughput_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
         result["suppressed"] = "dispatch-gated"
     elif cap and spent >= cap:
         result["suppressed"] = "daily-budget-exhausted"
-    elif VITALS_SKIP_MARKER in tail_text(HEARTBEAT_LOG):
-        result["suppressed"] = "vitals-critical-shed"
     elif governor_mode() == "paused":
         result["suppressed"] = "governor-paused"
     else:

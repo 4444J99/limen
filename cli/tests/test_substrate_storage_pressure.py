@@ -69,7 +69,7 @@ def test_build_snapshot_classifies_configured_bucket(monkeypatch, tmp_path):
             "total": 2,
             "debt": 0,
             "reapable": 0,
-            "limit": 12,
+            "debt_target": 0,
             "reapable_limit": 0,
             "by_reason": {"active(<6h)": 2},
             "by_reapable_reason": {},
@@ -159,7 +159,7 @@ def test_worktree_lifecycle_summary_parses_worktree_debt(monkeypatch, tmp_path):
                     "total": 3,
                     "debt": 0,
                     "reapable": 1,
-                    "limit": 12,
+                    "debt_target": 0,
                     "reapable_limit": 0,
                     "by_reason": {"active(<6h)": 2, "clean+merged+idle": 1},
                     "by_reapable_reason": {"clean+merged+idle": 1},
@@ -175,6 +175,8 @@ def test_worktree_lifecycle_summary_parses_worktree_debt(monkeypatch, tmp_path):
     assert summary["ok"] is True
     assert summary["total"] == 3
     assert summary["reapable"] == 1
+    assert summary["debt_target"] == 0
+    assert summary["complete"] is True
     assert summary["by_reason"]["clean+merged+idle"] == 1
     assert summary["summary"] == "0 debt roots / 3 scanned; 1 reapable roots"
 
@@ -191,7 +193,8 @@ def test_render_includes_worktree_lifecycle(monkeypatch, tmp_path):
         "worktree_lifecycle": {
             "ok": True,
             "summary": "0 debt roots / 3 scanned; 1 reapable roots",
-            "limit": 12,
+            "debt_target": 0,
+            "complete": True,
             "reapable_limit": 0,
             "by_reason": {"active(<6h)": 2, "clean+merged+idle": 1},
         },
@@ -202,4 +205,5 @@ def test_render_includes_worktree_lifecycle(monkeypatch, tmp_path):
 
     assert "## Scratch / Worktree Lifecycle" in rendered
     assert "`0 debt roots / 3 scanned; 1 reapable roots`" in rendered
+    assert "Debt target: `0`; complete: `True`; reapable cap: `0`" in rendered
     assert "| `clean+merged+idle` | `1` |" in rendered

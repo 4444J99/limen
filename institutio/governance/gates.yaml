@@ -249,11 +249,11 @@ gates:
     owner: board
     note: "Task-board statuses match the canonical vocabulary (pr-gate separately guards parse/load)."
   worktree-debt:
-    command: "python3 scripts/worktree-debt.py --fail-over-cap --fail-reapable-over-cap"
+    command: "python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap"
     paths: ["scripts/worktree-debt.py", "cli/src/limen/worktree_debt.py", "cli/src/limen/worktree_roots.py", "scripts/reclaim-worktrees.py"]
     scoped: false
     owner: lifecycle
-    note: "Hard lifecycle-debt gate: dirty/unpushed roots stay capped, and clean remote-preserved roots must be reaped or explicitly blocked."
+    note: "Exact-zero lifecycle-debt gate: completion is debt == 0 — every dirty/unpushed/not-git root must be landed, reassigned, or preserved into a terminal receipt, and clean remote-preserved roots reaped or explicitly blocked. No tolerated count."
   workflow-yaml:
     command: "python3 -c \"import pathlib, yaml; [yaml.safe_load(p.read_text()) for p in sorted(pathlib.Path('.github/workflows').glob('*.y*ml'))]\""
     paths: [".github/workflows/**"]

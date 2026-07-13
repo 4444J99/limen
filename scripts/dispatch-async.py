@@ -12,11 +12,11 @@ Agents run in the background; their results land on a later beat. Beats stay fas
 slow any single agent is. Opt-in: the heartbeat calls this instead of dispatch-parallel.py when
 LIMEN_DISPATCH_ASYNC=1. The synchronous dispatch-parallel.py is left completely unchanged.
 
-Concurrency: at most LIMEN_ASYNC_MAX (default 12) LOCAL background runs at once; remote lanes such as
-Jules are bounded by provider runway, not host slots. Per-agent in-flight count is tracked via
+Concurrency: at most LIMEN_ASYNC_MAX LOCAL background runs at once (default: live host CPU count);
+remote lanes such as Jules are bounded by provider runway, not host slots. Per-agent in-flight count is tracked via
 <task-id>__<agent>.running markers so budgets aren't blown between reserve & harvest.
 
-Usage: dispatch-async.py --lanes auto --per-lane 8 --local-per-lane 3 --max 12 [--task-id TASK] [--dry-run]
+Usage: dispatch-async.py --lanes auto --per-lane 8 --local-per-lane 3 [--local-max N] [--task-id TASK] [--dry-run]
 """
 
 import argparse
@@ -32,12 +32,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.capacity import _weak_proxy_exhaustion, select_lanes  # noqa: E402
+from limen.capacity import LOCAL_CHECKOUT_AGENTS, _weak_proxy_exhaustion, select_lanes  # noqa: E402
 from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import (  # noqa: E402
-    _ASYNC_LANES,
     _apply_result,
     _deps_met,
     _dispatchable,
@@ -47,10 +46,16 @@ from limen.dispatch import (  # noqa: E402
     _reset_budget_if_needed,
     _restore_done_status,
     _restore_pr_open_status,
-    _routine_generated_buildout,
     _routine_generated_buildout_allowed,
+    _admission_lease_path,
+    _machine_admission_lock,
+    _machine_admission_reserved_gib,
+    _release_machine_admission,
+    _snapshot_with_machine_reservations,
+    _transfer_machine_admission_owner,
     _superseded_by_rebase_task,
-    _worktree_debt_gate,
+    _worktree_admission_for_task,
+    _worktree_admission_snapshot,
     _value_tier_repos,
     agent_can_run_task,
     chronic_dispatch_reason,
@@ -86,6 +91,11 @@ def _int_or_default(raw: object, default: int) -> int:
 
 def _env_int(name: str, default: int) -> int:
     return _int_or_default(os.environ.get(name), default)
+
+
+def _default_local_max() -> int:
+    """Host-sized local ceiling; VITALS applies live memory backpressure separately."""
+    return max(1, os.cpu_count() or 1)
 
 
 def _disk_free_gib() -> float | None:
@@ -130,6 +140,61 @@ def _result_path(task_id: str) -> Path:
 
 def _running_marker_path(task_id: str, agent: str) -> Path:
     return RUNS / f"{_run_stem(task_id)}__{agent}.running"
+
+
+def _write_running_marker(
+    task_id: str,
+    agent: str,
+    now: datetime.datetime,
+    pid: int,
+    reserved_gib: float,
+) -> None:
+    """Publish the marker atomically so slot readers never observe a partial JSON document."""
+    marker = _running_marker_path(task_id, agent)
+    tmp = marker.with_suffix(f".{os.getpid()}.tmp")
+    tmp.write_text(
+        json.dumps(
+            {
+                "started_at": now.isoformat(),
+                "agent": agent,
+                "task_id": task_id,
+                "pid": pid,
+                "reserved_gib": reserved_gib,
+            }
+        )
+    )
+    os.replace(tmp, marker)
+
+
+def _rollback_unlaunched_reservation(agent: str, task_id: str, now: datetime.datetime, error: Exception) -> bool:
+    """Reopen/refund an async reservation when no worker process was created."""
+    with _queue_lock(TASKS) as got:
+        if not got:
+            return False
+        lf = load_limen_file(TASKS)
+        task = next((candidate for candidate in lf.tasks if candidate.id == task_id), None)
+        if task is None or task.status != "dispatched":
+            return True
+        last = task.dispatch_log[-1] if task.dispatch_log else None
+        if last is None or last.session_id != "async-reserve" or last.agent != agent:
+            return True
+        task.status = "open"
+        task.updated = now
+        task.dispatch_log.append(
+            DispatchLogEntry(
+                timestamp=now,
+                agent=agent,
+                session_id="async-launch-failed",
+                status="open",
+                output=f"dispatch-async: detached worker did not launch; reservation reopened ({str(error)[:160]})",
+            )
+        )
+        cost = max(0, int(task.budget_cost or 0))
+        track = lf.portal.budget.track
+        track.spent = max(0, track.spent - cost)
+        track.per_agent[agent] = max(0, track.per_agent.get(agent, 0) - cost)
+        save_limen_file(TASKS, lf)
+        return True
 
 
 def _marker_task_agent(marker: Path) -> tuple[str, str]:
@@ -541,7 +606,7 @@ def _running_local() -> int:
     total = 0
     for m in RUNS.glob("*__*.running"):
         _task_id, agent = _marker_task_agent(m)
-        if agent not in _ASYNC_LANES:
+        if agent in LOCAL_CHECKOUT_AGENTS:  # census local_checkout authority, not a hand-kept lane set
             total += 1
     return total
 
@@ -625,6 +690,9 @@ def _pick_reservations(
     weak_proxy_agents,
     task_id=None,
     local_per_agent=None,
+    admission_snapshot=None,
+    running_local=None,
+    machine_lease=False,
 ):
     picked = []
     picked_ids = set(_claimed_task_ids())
@@ -633,16 +701,20 @@ def _pick_reservations(
     unbounded_remaining = _effectively_unbounded_remaining(lf)
     value_repos = _value_tier_repos()
     disk_pressure = _disk_pressure_active()
-    debt_blocked, debt_message = (False, "") if task_id else _worktree_debt_gate()
-    if debt_message and not dry:
-        print(f"── async: {debt_message}")
+    # Worktree admission is ALWAYS evaluated — an explicit --task does NOT bypass resource/VITALS/
+    # reaper custody (a task-id run still creates a local worktree). The only override is the
+    # documented LIMEN_WORKTREE_DEBT_GATE=0 lever (snapshot → inactive → gate returns False).
+    admission_snapshot = admission_snapshot or _worktree_admission_snapshot()
+    if admission_snapshot.get("reason") and not dry:
+        print(f"── async: {admission_snapshot['reason']}")
     # The cap counts only LOCAL in-flight runs; remote/async lanes run off-box and are budgeted
     # separately below (see _running_local).
-    slots = max(0, cap - _running_local())
+    slots = max(0, cap - (_running_local() if running_local is None else running_local))
     id2 = {t.id: t for t in lf.tasks}  # for dependency resolution
     states = []
     for agent in agents:
-        is_async = agent in _ASYNC_LANES  # remote lane (jules, ...) — off-box, not gated by the local cap
+        # Locality is the census authority (LOCAL_CHECKOUT_AGENTS); a non-local lane runs off-box.
+        is_async = agent not in LOCAL_CHECKOUT_AGENTS  # remote lane — off-box, not gated by the local cap
         running_for_agent = _running_for(agent)
         lane_per_agent = per_agent if is_async else min(per_agent, local_per_agent or per_agent)
         launch_room = max(0, lane_per_agent - running_for_agent)
@@ -668,7 +740,6 @@ def _pick_reservations(
             and t.budget_cost <= rem
             and _deps_met(t, id2)
             and (task_id is not None or not _superseded_by_rebase_task(t, id2))
-            and not (debt_blocked and _routine_generated_buildout(t))
             and _routine_generated_buildout_allowed(t)
         ]
         cands = sort_value_gate_candidates(cands, value_repos, disk_pressure=disk_pressure)
@@ -698,6 +769,7 @@ def _pick_reservations(
 
             cands = state["cands"]
             t = None
+            agent = state["agent"]
             while state["index"] < len(cands):
                 cand = cands[state["index"]]
                 state["index"] += 1
@@ -710,12 +782,21 @@ def _pick_reservations(
                 except IntakeContractError as exc:
                     print(f"  INTAKE BLOCKED {cand.id}: {exc}")
                     continue
+                blocked, msg = _worktree_admission_for_task(
+                    cand,
+                    agent,
+                    admission_snapshot,
+                    reserve=True,
+                    machine_lease=machine_lease,
+                )
+                if blocked:
+                    print(f"  Worktree admission blocked {cand.id}: {msg}")
+                    continue
                 t = cand
                 break
             if t is None:
                 continue
 
-            agent = state["agent"]
             picked.append((agent, t.id))
             picked_ids.add(t.id)
             if agent_rem is not None:
@@ -788,36 +869,67 @@ def reserve_and_launch(
             # detached workers (below) prevents launching workers for tasks never persisted as
             # 'dispatched', which would double-dispatch. Self-corrects next beat.
             return []
-        lf = load_limen_file(TASKS)
-        picked, reset_changed = _pick_reservations(
-            lf,
-            agents,
-            per_agent,
-            cap,
-            dry,
-            now,
-            usage_remaining,
-            weak_proxy_agents,
-            task_id=task_id,
-            local_per_agent=local_per_agent,
-        )
-        if not dry and (picked or reset_changed):
-            save_limen_file(TASKS, lf)
-    # outside the lock: write markers + spawn detached workers (fast; we never wait on them)
+        with _machine_admission_lock():
+            lf = load_limen_file(TASKS)
+            live_snapshot, used_slots = _snapshot_with_machine_reservations()
+            picked, reset_changed = _pick_reservations(
+                lf,
+                agents,
+                per_agent,
+                cap,
+                dry,
+                now,
+                usage_remaining,
+                weak_proxy_agents,
+                task_id=task_id,
+                local_per_agent=local_per_agent,
+                admission_snapshot=live_snapshot,
+                running_local=used_slots,
+                machine_lease=True,
+            )
+            if not dry and (picked or reset_changed):
+                try:
+                    save_limen_file(TASKS, lf)
+                except Exception:
+                    for agent, tid in picked:
+                        if agent in LOCAL_CHECKOUT_AGENTS:
+                            _admission_lease_path(tid).unlink(missing_ok=True)
+                    raise
+    # Outside the board lock: spawn + atomically publish markers (fast; never wait on workers).
+    # The machine lease remains authoritative throughout this gap.
+    launched = []
     for agent, tid in picked:
-        logf = open(_run_log_path(tid), "a")
-        proc = subprocess.Popen(
-            [sys.executable, str(WORKER), "--agent", agent, "--task-id", tid],
-            stdout=logf,
-            stderr=logf,
-            stdin=subprocess.DEVNULL,
-            start_new_session=True,
-            env={**os.environ, "PYTHONPATH": str(ROOT / "cli" / "src")},
-        )
-        _running_marker_path(tid, agent).write_text(
-            json.dumps({"started_at": now.isoformat(), "agent": agent, "task_id": tid, "pid": proc.pid})
-        )
-    return picked
+        try:
+            logf = open(_run_log_path(tid), "a")
+            proc = subprocess.Popen(
+                [sys.executable, str(WORKER), "--agent", agent, "--task-id", tid],
+                stdout=logf,
+                stderr=logf,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+                env={**os.environ, "PYTHONPATH": str(ROOT / "cli" / "src")},
+            )
+        except Exception as exc:
+            if _rollback_unlaunched_reservation(agent, tid, now, exc):
+                _release_machine_admission(tid)
+            else:
+                _transfer_machine_admission_owner(tid, os.getpid(), "launch-failed-unreconciled")
+            print(f"── async: failed to launch {agent} {tid}: {str(exc)[:160]}")
+            continue
+        try:
+            _write_running_marker(tid, agent, now, proc.pid, _machine_admission_reserved_gib(tid))
+        except Exception as exc:
+            # The child is live but invisible to marker accounting. Transfer the durable lease to
+            # that child and keep it fail-closed until the child exits; its result receipt/harvest
+            # still reconciles the board.
+            _transfer_machine_admission_owner(tid, proc.pid, "worker-live-marker-failed")
+            print(f"── async: marker publish failed for live {agent} {tid}: {str(exc)[:160]}")
+            launched.append((agent, tid))
+        else:
+            # Only a successfully durable marker supersedes the selection lease.
+            _release_machine_admission(tid)
+            launched.append((agent, tid))
+    return launched
 
 
 def should_reserve(per_agent: int, cap: int) -> bool:
@@ -860,7 +972,7 @@ def main() -> int:
         "--local-max",
         dest="max",
         type=int,
-        default=max(0, _env_int("LIMEN_ASYNC_MAX", 12)),
+        default=max(0, _env_int("LIMEN_ASYNC_MAX", _default_local_max())),
         help="Local host slot ceiling. Remote lanes such as Jules do not consume it.",
     )
     ap.add_argument("--task-id", help="Reserve and launch only this task id")

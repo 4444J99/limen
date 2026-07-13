@@ -229,15 +229,12 @@ def build_snapshot() -> dict[str, Any]:
     private_bytes = dir_size(PRIVATE_ROOT)
     total_local_bytes = worktree_bytes + private_bytes
     debt = int(wt_report.get("debt") or 0)
-    limit = int(wt_report.get("limit") or 0)
-    over_cap = limit > 0 and debt > limit
     missing_remote = remote_missing_counts(worktree_remote, wt_report)
     pr_errors = int(task_pr_counts.get("ERROR") or 0)
 
     pressure: list[str] = []
-    if over_cap:
-        pressure.append("worktree debt above cap")
-    elif debt:
+    # Completion is exact zero debt — any nonzero debt is open pressure; there is no tolerated count.
+    if debt:
         pressure.append("worktree debt open")
     if int(missing_remote["unresolved"]):
         pressure.append("remote branch gaps")
@@ -254,8 +251,8 @@ def build_snapshot() -> dict[str, Any]:
             "roots": worktree_roots,
             "bytes": worktree_bytes,
             "debt": debt,
-            "limit": limit,
-            "over_cap": over_cap,
+            "debt_target": 0,
+            "complete": debt == 0,  # exact-zero completion; no tolerated count
             "by_reason": wt_report.get("by_reason") or {},
             "error": wt_report.get("error") or "",
         },
@@ -297,7 +294,7 @@ def render(snapshot: dict[str, Any]) -> str:
         remote_missing += f" (unresolved {remote['remote_branches_unresolved_missing']})"
     return (
         "**Lifecycle pressure** — "
-        f"worktrees {wt['roots']} roots / {fmt_bytes(wt['bytes'])} / debt {wt['debt']}/{wt['limit']} · "
+        f"worktrees {wt['roots']} roots / {fmt_bytes(wt['bytes'])} / debt {wt['debt']} (target 0) · "
         f"private corpus {fmt_bytes(corpus['bytes'])} ({corpus['object_count']} objects) · "
         f"remote branches present/missing {remote_missing} · "
         f"state: {pressure}"

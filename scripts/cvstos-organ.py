@@ -419,11 +419,11 @@ def reaper_proprioception() -> dict:
     return {"reapers": rows, "fresh": fresh, "stale": stale, "unknown": unknown, "stale_after_h": REAPER_STALE_H}
 
 
-def _worktree_over_cap() -> bool | None:
+def _worktree_has_debt() -> bool | None:
     script = ROOT / "scripts" / "worktree-debt.py"
     if not script.exists():
         return None
-    rc, _ = _run([sys.executable, str(script), "--fail-over-cap"])
+    rc, _ = _run([sys.executable, str(script), "--fail-on-debt"])
     if rc == 127:
         return None
     return rc != 0
@@ -541,7 +541,7 @@ def assess() -> dict:
         "debt": census_debt(),
         "factory": factory_invariant(),
         "reapers": reaper_proprioception(),
-        "worktree_over_cap": _worktree_over_cap(),
+        "worktree_has_debt": _worktree_has_debt(),
         "antigravity_scratch": antigravity_scratch(),
     }
 
@@ -557,8 +557,8 @@ def failures(a: dict) -> list[str]:
         out.append(f"{fac['bin_orphans']['count']} hand-dropped script(s) on ~/.local/bin not backed by the cartridge")
     if a["reapers"]["stale"] > 0:
         out.append(f"{a['reapers']['stale']} reaper(s) stale (no fire in {REAPER_STALE_H:g}h)")
-    if a["worktree_over_cap"] is True:
-        out.append("worktree debt over cap (worktree-debt.py --fail-over-cap)")
+    if a["worktree_has_debt"] is True:
+        out.append("worktree lifecycle debt not at zero (worktree-debt.py --fail-on-debt)")
     if a["debt"]["over_cap"]:
         out.append(
             f"chat-app evictable cache {a['debt']['evictable_gb']}GB over the {a['debt']['cap_gb']:g}GB cap "
@@ -592,7 +592,7 @@ def write_stamp(a: dict, reclaimed: int | None = None) -> None:
         "domus_pkg_drift": fac["domus_packages"]["drift"] if fac["domus_packages"]["measured"] else None,
         "reapers_fresh": a["reapers"]["fresh"],
         "reapers_stale": a["reapers"]["stale"],
-        "worktree_over_cap": a["worktree_over_cap"],
+        "worktree_has_debt": a["worktree_has_debt"],
         "antigravity_scratch": {
             "measured": a["antigravity_scratch"].get("measured"),
             "total_roots": a["antigravity_scratch"].get("total_roots"),
@@ -654,7 +654,7 @@ def main() -> int:
     if args.check:
         fails = failures(a)
         if not fails:
-            print("cvstos --check: host at factory ✓ (cartridge connected, no orphans, reapers fresh, debt under cap)")
+            print("cvstos --check: host at factory ✓ (cartridge connected, no orphans, reapers fresh, worktree debt zero)")
             return 0
         print("cvstos --check: NOT at factory — open invariants:")
         for f in fails:

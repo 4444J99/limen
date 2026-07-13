@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -39,6 +40,7 @@ def _hermetic_dispatch_env(tmp_path: Path, monkeypatch) -> None:
     root to an empty per-test dir; tests that need a real root re-set LIMEN_ROOT themselves."""
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "hermetic-root"))
     monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
+    monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "0")
     for var in ("LIMEN_VALUE_REPOS", "LIMEN_VALUE_REPOS_FILE", "LIMEN_VALUE_GATE_STRICT"):
         monkeypatch.delenv(var, raising=False)
 
@@ -680,7 +682,7 @@ def test_parallel_selection_normalizes_only_selected_legacy_task(monkeypatch) ->
         1,
         datetime.now(timezone.utc),
         dry_run=False,
-        debt_blocked=False,
+        admission_snapshot=None,
     )
 
     assert picked == [("codex", "SELECTED")]
@@ -715,7 +717,7 @@ def test_parallel_selection_fails_closed_when_legacy_owner_cannot_be_derived(mon
         1,
         datetime.now(timezone.utc),
         dry_run=False,
-        debt_blocked=False,
+        admission_snapshot=None,
     )
 
     assert picked == []
@@ -723,51 +725,70 @@ def test_parallel_selection_fails_closed_when_legacy_owner_cannot_be_derived(mon
     assert "INTAKE BLOCKED NO-OWNER" in capsys.readouterr().out
 
 
-def test_dispatch_parallel_debt_gate_skips_routine_generated_buildout(tmp_path: Path, capsys, monkeypatch) -> None:
-    # Patch _worktree_debt_gate directly (not worktree_debt_exceeded) so the gate fires even
-    # when LIMEN_WORKTREE_DEBT_GATE=0 leaks in from test_async_dispatch._load().
-    monkeypatch.setattr(
-        D,
-        "_worktree_debt_gate",
-        lambda: (True, "13 preserved worktree roots exceed cap 12; skipping routine generated build-out this dispatch"),
+def _blocked_local_snapshot() -> "D.WorktreeAdmissionSnapshot":
+    return D.WorktreeAdmissionSnapshot(
+        active=True,
+        block_new_local=True,
+        reason="local free 2.0 GiB < 45 GiB floor",
+        resource_blocked=True,
+        vitals_shed=False,
+        reaper_blocked=False,
+        free_gib=2.0,
+        floor_gib=45,
+        reserved_gib=0.0,
+        room_gib=0.0,
+        targets_present=True,
+        debt=0,
+        vitals_action="ok",
     )
+
+
+def test_dispatch_parallel_admission_blocks_every_local_candidate(tmp_path: Path, capsys, monkeypatch) -> None:
+    """When custody is unavailable, EVERY local candidate is withheld (not only generated build-out);
+    a remote lane still runs the same work off-box."""
+    monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
+    monkeypatch.setattr(D, "_worktree_admission_snapshot", _blocked_local_snapshot)
     tasks_path = tmp_path / "tasks.yaml"
-    write_board(
-        tasks_path,
-        [
-            {
-                "id": "GEN-BUILDOUT",
-                "title": "Generated build-out",
-                "repo": "someorg/dispatch-lab",
-                "target_agent": "any",
-                "priority": "critical",
-                "budget_cost": 1,
-                "status": "open",
-                "labels": ["typing", "generated", "build-out"],
-                "created": "2026-06-20",
-                "dispatch_log": [],
-            },
-            {
-                "id": "RECOVERY",
-                "title": "Recover lifecycle debt",
-                "repo": "someorg/dispatch-lab",
-                "target_agent": "any",
-                "priority": "critical",
-                "budget_cost": 1,
-                "status": "open",
-                "labels": ["lifecycle"],
-                "created": "2026-06-20",
-                "dispatch_log": [],
-            },
-        ],
-    )
+    board = [
+        {
+            "id": "GEN-BUILDOUT",
+            "title": "Generated build-out",
+            "repo": "someorg/dispatch-lab",
+            "target_agent": "any",
+            "priority": "critical",
+            "budget_cost": 1,
+            "status": "open",
+            "labels": ["typing", "generated", "build-out"],
+            "created": "2026-06-20",
+            "dispatch_log": [],
+        },
+        {
+            "id": "LIFECYCLE-RECLAIM",
+            "title": "Reclaim lifecycle debt (still creates a local worktree)",
+            "repo": "someorg/dispatch-lab",
+            "target_agent": "any",
+            "priority": "critical",
+            "budget_cost": 1,
+            "status": "open",
+            "labels": ["lifecycle", "reclaim"],
+            "created": "2026-06-20",
+            "dispatch_log": [],
+        },
+    ]
+    write_board(tasks_path, board)
 
+    # Local lane: both candidates blocked — cleanup/reclaim is NOT exempt (it creates a worktree too).
     dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["codex"], dry_run=True)
-
     output = capsys.readouterr().out
-    assert "Lifecycle debt gate" in output
-    assert "RECOVERY" in output
-    assert "GEN-BUILDOUT" not in output
+    assert "Worktree admission" in output
+    assert "GEN-BUILDOUT" not in output  # non-value generated build-out is filtered before final selection
+    assert "Worktree admission blocked LIFECYCLE-RECLAIM" in output
+
+    # Remote lane: runs off-box, never inherits local pressure.
+    write_board(tasks_path, board)
+    dispatch_parallel(load_limen_file(tasks_path), tasks_path, agents=["jules"], dry_run=True)
+    remote_out = capsys.readouterr().out
+    assert "jules:" in remote_out
 
 
 def test_dispatch_parallel_skips_generated_buildout_outside_value_tier(tmp_path: Path, capsys, monkeypatch) -> None:
@@ -1391,7 +1412,7 @@ def test_isolated_local_run_updates_same_repo_pr_head(tmp_path: Path, monkeypatc
         lambda repo_dir, wt, branch, base_ref, pushed, task=None: cleanups.append((base_ref, pushed)),
     )
     monkeypatch.setattr(D.secrets, "token_hex", lambda _n: "abcd")
-    monkeypatch.setattr(D, "_ISOLATION_ROOT", tmp_path / "worktrees")
+    monkeypatch.setattr(D, "_isolation_root", lambda: tmp_path / "worktrees")
     task = Task(
         id="HEAL-cifix-organvm-domus-genoma-175",
         title="fix failing CI on organvm/domus-genoma#175",
@@ -1457,7 +1478,7 @@ def test_isolated_local_run_treats_agent_committed_pr_head_as_work(tmp_path: Pat
     monkeypatch.setattr(D, "_arm_auto_merge", lambda *args: None)
     monkeypatch.setattr(D, "_cleanup_isolated_worktree", lambda *args, **kwargs: None)
     monkeypatch.setattr(D.secrets, "token_hex", lambda _n: "abcd")
-    monkeypatch.setattr(D, "_ISOLATION_ROOT", tmp_path / "worktrees")
+    monkeypatch.setattr(D, "_isolation_root", lambda: tmp_path / "worktrees")
     task = Task(
         id="HEAL-cifix-organvm-domus-genoma-175",
         title="fix failing CI on organvm/domus-genoma#175",
@@ -2487,3 +2508,1096 @@ def test_qa_report_derives_lifecycle_without_mutation_or_private_fields(tmp_path
     assert mechanisms["assign-next"]["command"] == "POST /api/tasks/{task_id}/assign"
     assert mechanisms["archive-done"]["command"] == "POST /api/tasks/{task_id}/archive"
     assert tasks_path.read_text() == before
+
+
+# ── Marginal worktree-impact classification (binary, census-derived locality) ──
+
+
+def _wtask(labels=None, agent="codex", repo="x/y", workstream=None) -> Task:
+    return Task(
+        id="WT-CLASSIFY",
+        title="t",
+        repo=repo,
+        target_agent=agent,
+        status="open",
+        created=date(2026, 7, 12),
+        labels=labels or [],
+        workstream=workstream,
+    )
+
+
+def test_classify_impact_local_checkout_lane_is_debt_creating() -> None:
+    # EVERY local-checkout lane creates a worktree — labels are irrelevant. Locality authority is
+    # census LOCAL_CHECKOUT_AGENTS.
+    for lane in sorted(D.LOCAL_CHECKOUT_AGENTS):
+        assert D._classify_worktree_impact(_wtask(["generated", "build-out"]), lane) == D.IMPACT_DEBT_CREATING
+        assert D._classify_worktree_impact(_wtask(["reclaim", "cleanup", "receipt"]), lane) == D.IMPACT_DEBT_CREATING
+        assert D._classify_worktree_impact(_wtask([]), lane) == D.IMPACT_DEBT_CREATING
+
+
+def test_classify_impact_non_local_lane_is_remote() -> None:
+    for lane in ("jules", "github_actions", "warp", "oz", "copilot"):
+        assert lane not in D.LOCAL_CHECKOUT_AGENTS
+        assert D._classify_worktree_impact(_wtask(["generated", "build-out"]), lane) == D.IMPACT_REMOTE
+
+
+def test_classify_impact_locality_is_census_not_hardcoded(monkeypatch) -> None:
+    # An arbitrary/renamed agent gains locality purely from the census set — no hand-kept lane table.
+    renamed = "codex_ng_20260712"
+    assert D._classify_worktree_impact(_wtask([], agent=renamed), renamed) == D.IMPACT_REMOTE
+    monkeypatch.setattr(D, "LOCAL_CHECKOUT_AGENTS", frozenset(D.LOCAL_CHECKOUT_AGENTS) | {renamed})
+    assert D._classify_worktree_impact(_wtask([], agent=renamed), renamed) == D.IMPACT_DEBT_CREATING
+
+
+def test_tracked_head_checkout_estimate_uses_live_block_allocation_and_tree_structure(
+    tmp_path: Path, monkeypatch
+) -> None:
+    repo = tmp_path / "repo"
+    _init_test_git_repo(repo)
+    task = _wtask(repo=str(repo))
+    monkeypatch.setattr(D, "_filesystem_block_size", lambda _path: 4096)
+
+    # One rounded blob block + root directory + tracked dirent + .git control-file blocks.
+    assert D._tracked_head_checkout_gib(task) == (4 * 4096) / (1024**3)
+
+
+def test_tracked_head_checkout_estimate_unknown_without_local_repo() -> None:
+    assert D._tracked_head_checkout_gib(_wtask(repo="not-present/example")) is None
+
+
+def test_missing_checkout_requirement_uses_live_remote_repository_and_tree_bytes(monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_capture(cmd, **_kwargs):
+        calls.append(cmd)
+        if cmd[-1] == "repos/not-present/example":
+            payload = {"default_branch": "trunk", "size": 2048}
+        else:
+            payload = {
+                "truncated": False,
+                "tree": [
+                    {"type": "tree", "path": "src"},
+                    {"type": "blob", "path": "README.md", "size": 1024},
+                    {"type": "blob", "path": "src/app.py", "size": 3072},
+                ],
+            }
+        return subprocess.CompletedProcess(cmd, 0, json.dumps(payload), "")
+
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda _task: None)
+    monkeypatch.setattr(D, "_clone_cache_root", lambda: Path("/scratch/.worktrees-repo-cache"))
+    monkeypatch.setattr(D, "_filesystem_block_size", lambda _path: 4096)
+    monkeypatch.setattr(D, "_filesystem_device", lambda _path: 2)
+    monkeypatch.setattr(D, "_run_capture", fake_capture)
+
+    task = _wtask(repo="not-present/example")
+    checkout_bytes = 7 * 4096
+    repository_bytes = 2048 * 1024 + 4 * 4096
+    expected = (repository_bytes + checkout_bytes) / (1024**3)
+    assert D._local_admission_requirement_gib(task) == expected
+    assert calls == [
+        ["gh", "api", "repos/not-present/example"],
+        ["gh", "api", "repos/not-present/example/git/trees/trunk?recursive=1"],
+    ]
+
+
+@pytest.mark.parametrize(
+    "tree_payload",
+    [
+        {"truncated": True, "tree": []},
+        {"truncated": False, "tree": [{"type": "blob", "path": "bad"}]},
+    ],
+)
+def test_missing_checkout_requirement_fails_closed_on_inexact_remote_tree(monkeypatch, tree_payload) -> None:
+    responses = iter(
+        [
+            {"default_branch": "main", "size": 1},
+            tree_payload,
+        ]
+    )
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda _task: None)
+    monkeypatch.setattr(D, "_clone_cache_root", lambda: Path("/scratch/.worktrees-repo-cache"))
+    monkeypatch.setattr(D, "_filesystem_block_size", lambda _path: 4096)
+    monkeypatch.setattr(D, "_filesystem_device", lambda _path: 2)
+    monkeypatch.setattr(
+        D,
+        "_run_capture",
+        lambda cmd, **_kwargs: subprocess.CompletedProcess(cmd, 0, json.dumps(next(responses)), ""),
+    )
+    assert D._local_admission_requirement_gib(_wtask(repo="not-present/example")) is None
+
+
+def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: Path, monkeypatch) -> None:
+    workdir = tmp_path / "workspace"
+    isolation_root = tmp_path / "worktrees"
+    task = _wtask(repo="not-present/example")
+    clone_calls: list[list[str]] = []
+    plumbing_calls: list[list[str]] = []
+    born: list[Path] = []
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "limen"))
+    monkeypatch.setenv("LIMEN_WORKDIR", str(workdir))
+    clone_cache = tmp_path / ".worktrees-repo-cache"
+    monkeypatch.setattr(D, "_clone_cache_root", lambda: clone_cache)
+    monkeypatch.setattr(D, "_remote_hydration_requirement_gib", lambda _task: 0.5)
+    monkeypatch.setattr(D, "_repo_unavailable_reason", lambda _repo: None)
+    monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
+    monkeypatch.setattr(D, "_default_branch", lambda _repo: "main")
+    monkeypatch.setattr(D, "_same_repo_pr_head_for_task", lambda _task: None)
+    monkeypatch.setattr(D, "_isolation_root", lambda: isolation_root)
+    monkeypatch.setattr(D.secrets, "token_hex", lambda _n: "abcd1234")
+
+    def fake_capture(cmd, **_kwargs):
+        clone_calls.append(cmd)
+        dest = Path(cmd[-1])
+        (dest / ".git").mkdir(parents=True)
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    def fake_plumbing(args, _repo, timeout=120):
+        plumbing_calls.append(args)
+        if args[:2] == ["worktree", "add"]:
+            Path(args[4]).mkdir(parents=True)
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(D, "_run_capture", fake_capture)
+    monkeypatch.setattr(D, "_git_plumbing", fake_plumbing)
+    monkeypatch.setattr(D, "_record_worktree_birth", lambda _task, wt, *_a, **_k: born.append(wt))
+    monkeypatch.setattr(
+        D,
+        "_git",
+        lambda args, _cwd, timeout=120: subprocess.CompletedProcess(args, 0, "base-head\n", ""),
+    )
+    monkeypatch.setattr(D, "_run_isolated_agent", lambda *_a, **_k: True)
+    monkeypatch.setattr(D, "_commit_isolated_changes", lambda *_a, **_k: D._NOOP)
+    monkeypatch.setattr(D, "_cleanup_isolated_worktree", lambda *_a, **_k: None)
+
+    snapshot = D.WorktreeAdmissionSnapshot(
+        active=True,
+        block_new_local=False,
+        reason="",
+        resource_blocked=False,
+        vitals_shed=False,
+        reaper_blocked=False,
+        free_gib=60.5,
+        floor_gib=60.0,
+        reserved_gib=0.0,
+        room_gib=0.5,
+        targets_present=False,
+        debt=0,
+        vitals_action="ok",
+    )
+    with D._machine_admission_lock():
+        blocked, reason = D._worktree_admission_for_task(task, "codex", snapshot, reserve=True, machine_lease=True)
+    assert not blocked, reason
+    assert D._admission_lease_path(task.id).exists()
+
+    try:
+        assert D._isolated_local_run("codex", task, dry_run=False) == D._NOOP
+        expected_clone = clone_cache / D._clone_cache_key(task.repo)
+        assert clone_calls == [["gh", "repo", "clone", "not-present/example", str(expected_clone)]]
+        assert any(call[:2] == ["worktree", "add"] for call in plumbing_calls)
+        assert born == [isolation_root / "wt-classify-abcd1234"]
+        payload = json.loads(D._admission_lease_path(task.id).read_text())
+        assert payload["phase"] == "worktree-born"
+        assert payload["reserved_gib"] == 0.0
+    finally:
+        D._release_machine_admission(task.id)
+
+
+def test_allocation_estimate_is_positive_for_empty_zero_and_tiny_trees() -> None:
+    block = 16_384
+    assert D._tracked_tree_allocation_bytes([], block) == 2 * block
+    assert D._tracked_tree_allocation_bytes([("empty", "blob", 0)], block) == 4 * block
+    assert D._tracked_tree_allocation_bytes([("src/tiny", "blob", 1)], block) == 5 * block
+
+
+def test_clone_cache_stays_on_worktree_device_not_workdir_device(tmp_path: Path, monkeypatch) -> None:
+    scratch = tmp_path / "scratch"
+    worktrees = scratch / "worktrees"
+    internal = tmp_path / "internal" / "Workspace"
+    scratch.mkdir()
+    internal.mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(worktrees))
+    monkeypatch.setenv("LIMEN_WORKDIR", str(internal))
+
+    monkeypatch.setattr(D, "dispatch_clone_cache_root", lambda: scratch / ".worktrees-repo-cache")
+    clone_calls: list[list[str]] = []
+
+    def fake_capture(cmd, **_kwargs):
+        clone_calls.append(cmd)
+        (Path(cmd[-1]) / ".git").mkdir(parents=True)
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(D, "_run_capture", fake_capture)
+    task = _wtask(repo="not-present/example")
+    repo = D._clone_repo(task)
+
+    expected = scratch / ".worktrees-repo-cache" / D._clone_cache_key(task.repo)
+    assert repo == expected
+    assert clone_calls == [["gh", "repo", "clone", task.repo, str(expected)]]
+    assert not str(repo).startswith(str(internal))
+
+
+def test_clone_cache_fails_closed_when_parent_is_a_different_device(tmp_path: Path, monkeypatch) -> None:
+    root = tmp_path / "mount" / "worktrees"
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(root))
+    monkeypatch.setattr(D, "dispatch_clone_cache_root", lambda: None)
+    assert D._clone_cache_root() is None
+
+
+def test_clone_cache_keys_are_flat_and_collision_safe() -> None:
+    first = D._clone_cache_key("owner-a/repo")
+    second = D._clone_cache_key("owner/a--repo")
+    assert "/" not in first
+    assert "/" not in second
+    assert first != second
+
+
+def test_parallel_multi_lane_reserves_shared_checkout_room_only_when_selected(monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_VALUE_GATE", "0")
+    board = LimenFile.model_validate(
+        {
+            "portal": {
+                "budget": {
+                    "daily": 10,
+                    "per_agent": {"codex": 10, "claude": 10},
+                    "track": {"date": "", "spent": 0, "per_agent": {}},
+                }
+            },
+            "tasks": [
+                {
+                    "id": "FIRST-SMALL",
+                    "title": "first small local checkout",
+                    "repo": "someorg/first",
+                    "target_agent": "any",
+                    "priority": "critical",
+                    "status": "open",
+                    "created": "2026-07-12",
+                },
+                {
+                    "id": "SECOND-OVER-ROOM",
+                    "title": "second local checkout",
+                    "repo": "someorg/second",
+                    "target_agent": "any",
+                    "priority": "high",
+                    "status": "open",
+                    "created": "2026-07-12",
+                },
+            ],
+        }
+    )
+    snapshot = D.WorktreeAdmissionSnapshot(
+        active=True,
+        block_new_local=False,
+        reason="",
+        resource_blocked=False,
+        vitals_shed=False,
+        reaper_blocked=False,
+        free_gib=61.5,
+        floor_gib=60.0,
+        reserved_gib=0.0,
+        room_gib=1.5,
+        targets_present=False,
+        debt=0,
+        vitals_action="ok",
+    )
+    estimates = {"FIRST-SMALL": 1.0, "SECOND-OVER-ROOM": 0.6}
+    monkeypatch.setattr(D, "_tracked_head_checkout_gib", lambda task: estimates[task.id])
+
+    picked = D._select_parallel_reservations(
+        board,
+        ["codex", "claude"],
+        1,
+        datetime.now(timezone.utc),
+        dry_run=False,
+        admission_snapshot=snapshot,
+    )
+
+    assert picked == [("codex", "FIRST-SMALL")]
+    assert snapshot["reserved_gib"] == 1.0
+    assert snapshot["room_gib"] == 0.5
+
+
+@pytest.mark.parametrize(
+    "marker_body",
+    [
+        "{malformed",
+        json.dumps({"task_id": "LEGACY-LOCAL"}),
+        json.dumps({"agent": "jules", "task_id": "LEGACY-LOCAL"}),
+    ],
+)
+def test_local_running_marker_with_unknown_reservation_fails_closed(
+    tmp_path: Path,
+    monkeypatch,
+    marker_body: str,
+) -> None:
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    run_dir = tmp_path / "logs" / "async-runs"
+    run_dir.mkdir(parents=True)
+    (run_dir / "LEGACY-LOCAL__codex.running").write_text(marker_body, encoding="utf-8")
+
+    slots, reserved_gib = D._running_local_marker_state()
+
+    assert slots == 1
+    assert reserved_gib == float("inf")
+
+
+def test_remote_parallel_batch_starts_outside_saturated_local_executor() -> None:
+    local_release = threading.Event()
+    remote_started = threading.Event()
+    finished = threading.Event()
+    results: list[tuple[str, str, bool | str]] = []
+
+    def run_one(item: tuple[str, str]) -> tuple[str, str, bool | str]:
+        agent, task_id = item
+        if agent == "codex":
+            assert local_release.wait(timeout=2), "test did not release the local worker"
+        else:
+            remote_started.set()
+        return agent, task_id, True
+
+    def run_batch() -> None:
+        results.extend(
+            D._run_parallel_batch(
+                [("codex", "LOCAL"), ("jules", "REMOTE")],
+                run_one,
+                max_local_workers=1,
+            )
+        )
+        finished.set()
+
+    thread = threading.Thread(target=run_batch)
+    thread.start()
+    try:
+        assert remote_started.wait(timeout=1), "remote task queued behind the occupied local worker"
+    finally:
+        local_release.set()
+        thread.join(timeout=3)
+
+    assert finished.is_set()
+    assert results == [("codex", "LOCAL", True), ("jules", "REMOTE", True)]
+
+
+# ── Narrow agent_can_run_task safety (replaces the blanket repo bans) ───────
+
+
+def _limen_task(**kw) -> Task:
+    base = dict(
+        id="HEAL-cifix-organvm-limen-1",
+        title="Fix Limen CI",
+        repo="organvm/limen",
+        target_agent="any",
+        status="open",
+        created=date(2026, 7, 12),
+    )
+    base.update(kw)
+    return Task(**base)
+
+
+@pytest.mark.parametrize(
+    "repo",
+    [
+        "organvm/limen",
+        "organvm/limen/",
+        "ORGANVM/LIMEN.git",
+        "github.com/OrganVM/Limen.git",
+        "https://github.com/ORGANVM/LIMEN.git",
+        "https://github.com/organvm/limen/",
+        "ssh://git@github.com/OrganVM/Limen.git",
+        "SSH://GIT@GitHub.com/OrganVM/Limen.git",
+        "git@github.com:OrganVM/Limen.git",
+    ],
+)
+def test_limen_repo_identity_accepts_supported_github_forms(repo: str) -> None:
+    assert D._github_repo_identity(repo) == "organvm/limen"
+    assert D._limen_repo_task(_limen_task(repo=repo))
+
+
+@pytest.mark.parametrize(
+    "repo",
+    [
+        "",
+        "limen",
+        "organvm/limen/extra",
+        "github.com/organvm/limen/extra",
+        "https://github.com/organvm/limen/issues",
+        "https://github.com//organvm/limen",
+        "https://github.com/organvm/limen?tab=readme",
+        "https://github.com.evil.example/organvm/limen",
+        "https://gitlab.com/organvm/limen",
+        "git@gitlab.com:organvm/limen.git",
+        "ssh://root@github.com/organvm/limen.git",
+    ],
+)
+def test_github_repo_identity_rejects_ambiguous_or_non_github_forms(repo: str) -> None:
+    assert D._github_repo_identity(repo) is None
+    assert not D._limen_repo_task(_limen_task(repo=repo))
+
+
+def test_organvm_engine_repo_identity_accepts_url_form() -> None:
+    task = Task(
+        id="ENGINE-URL",
+        title="Engine URL",
+        repo="SSH://git@GitHub.com/OrganVM/OrganVM-Engine.git",
+        target_agent="any",
+        status="open",
+        created=date(2026, 7, 12),
+    )
+    assert D._organvm_engine_task(task)
+
+
+def _init_test_git_repo(path: Path, *, origin: str | None = None) -> None:
+    path.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(path)], check=True)
+    subprocess.run(["git", "-C", str(path), "config", "user.email", "limen-test@example.invalid"], check=True)
+    subprocess.run(["git", "-C", str(path), "config", "user.name", "Limen Test"], check=True)
+    (path / "README.md").write_text("limen\n")
+    subprocess.run(["git", "-C", str(path), "add", "README.md"], check=True)
+    subprocess.run(["git", "-C", str(path), "commit", "-qm", "init"], check=True)
+    if origin:
+        subprocess.run(["git", "-C", str(path), "remote", "add", "origin", origin], check=True)
+
+
+def _assert_local_limen_repo_guard(repo: str) -> None:
+    broad = _limen_task(
+        repo=repo,
+        predicate="scripts/verify-whole.sh",
+        receipt_target="organvm/limen#local-broad",
+    )
+    narrow = _limen_task(
+        repo=repo,
+        predicate="python -m pytest cli/tests/test_dispatch.py -q",
+        receipt_target="organvm/limen#local-narrow",
+    )
+    assert D._limen_repo_task(broad)
+    assert not D.agent_can_run_task("codex", broad)
+    assert D.agent_can_run_task("codex", narrow)
+
+
+def test_limen_local_absolute_tilde_and_relative_paths_keep_self_repo_guard(tmp_path: Path, monkeypatch) -> None:
+    home = tmp_path / "home"
+    root = home / "Workspace" / "limen"
+    _init_test_git_repo(root)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("LIMEN_ROOT", str(root))
+    monkeypatch.setenv("LIMEN_ISOLATION", "worktree")
+
+    _assert_local_limen_repo_guard(str(root))
+    _assert_local_limen_repo_guard("~/Workspace/limen")
+    monkeypatch.chdir(root)
+    _assert_local_limen_repo_guard(".")
+
+
+def test_registered_limen_worktree_path_keeps_self_repo_guard(tmp_path: Path, monkeypatch) -> None:
+    root = tmp_path / "limen"
+    worktree = tmp_path / "limen-isolated-worktree"
+    _init_test_git_repo(root)
+    subprocess.run(
+        ["git", "-C", str(root), "worktree", "add", "-q", "-b", "test-isolated", str(worktree)],
+        check=True,
+    )
+    monkeypatch.setenv("LIMEN_ROOT", str(root))
+    monkeypatch.setenv("LIMEN_ISOLATION", "worktree")
+
+    _assert_local_limen_repo_guard(str(worktree))
+
+
+def test_local_origin_slug_keeps_self_repo_guard(tmp_path: Path, monkeypatch) -> None:
+    checkout = tmp_path / "renamed-checkout"
+    _init_test_git_repo(checkout, origin="git@github.com:OrganVM/Limen.git")
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "unrelated-live-root"))
+    monkeypatch.setenv("LIMEN_ISOLATION", "worktree")
+
+    _assert_local_limen_repo_guard(str(checkout))
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "python -m pytest cli/tests/test_dispatch.py -q",
+        "pytest cli/tests/test_dispatch.py::test_narrow_safe_limen_task_allowed_for_local_lanes",
+        "scripts/verify.py --changed",
+        "scripts/verify-scoped.sh cli/src/limen/dispatch.py",
+        "pytest cli/tests/test_dispatch.py -q && rg -n dispatch cli/src/limen/dispatch.py",
+        "scripts/verify.py --changed; pytest cli/tests/test_dispatch.py",
+        "bash -lc 'python -m pytest cli/tests/test_dispatch.py -q'",
+        'python -m pytest cli/tests/test_dispatch.py -q && test "$(gh pr list --json number --jq length)" -gt 0',
+    ],
+)
+def test_narrow_verification_accepts_independently_scoped_commands(predicate: str) -> None:
+    assert D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "",
+        "scripts/verify-whole.sh",
+        "scripts/verify-whole.sh; echo --changed",
+        "scripts/verify.py",
+        "scripts/verify.py && echo --changed",
+        "scripts/verify.py --changed --full",
+        "scripts/verify.py --changed --full=true",
+        "python -m pytest",
+        "python -m pytest; echo cli/tests/fake.py",
+        "pytest cli/tests",
+        "pytest $(echo cli/tests/test_dispatch.py)",
+        "scripts/verify.py --changed $EXTRA_ARGS",
+        "pytest `echo cli/tests/test_dispatch.py`",
+        "eval 'pytest cli/tests/test_dispatch.py'",
+        "bash -c 'python -m pytest'",
+        "sh -lc 'python -m pytest; echo cli/tests/fake.py'",
+        "bash -lc 'scripts/verify.py && echo --changed'",
+        "bash -lc 'pytest cli/tests/test_dispatch.py && scripts/verify-whole.sh'",
+        "bash -lc 'scripts/verify.py --changed --full'",
+        "bash -lc 'test \"$(python -m pytest cli/tests/test_dispatch.py)\" -eq 0'",
+        "bash -lc 'test \"$(scripts/verify.py --changed)\" = ok'",
+        'pytest cli/tests/test_dispatch.py "$(gh pr view --json body --jq .body)"',
+        "pytest cli/tests/test_dispatch.py && scripts/verify-whole.sh",
+        "pytest cli/tests/test_dispatch.py\necho scripts/verify-whole.sh",
+    ],
+)
+def test_narrow_verification_rejects_broad_or_shell_bypass(predicate: str) -> None:
+    assert not D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "python -c 'import pytest; raise SystemExit(pytest.main())'",
+        "make test",
+        "scripts/check-everything.sh",
+        "nox -s tests",
+        "tox",
+        "npm test",
+        "pnpm test",
+        "yarn test",
+        "bun test",
+        "gh pr list --repo organvm/limen",
+        "pytest cli/tests/test_dispatch.py && scripts/check-everything.sh",
+    ],
+)
+def test_narrow_verification_fails_closed_for_unknown_or_receipt_only_commands(predicate: str) -> None:
+    assert not D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest --ignore cli/tests/test_dispatch.py",
+        "pytest --confcutdir cli/tests/test_dispatch.py",
+        "pytest --basetemp cli/tests/test_dispatch.py",
+        "pytest -c cli/tests/test_dispatch.py",
+        "pytest -p cli/tests/test_dispatch.py",
+        "python -m pytest --ignore cli/tests/test_dispatch.py",
+        "python3 -m pytest --confcutdir cli/tests/test_dispatch.py",
+        "pytest --ignore=cli/tests/test_dispatch.py",
+        "pytest cli/tests/test_dispatch.py tests",
+        "pytest --unknown-option cli/tests/test_dispatch.py",
+    ],
+)
+def test_pytest_option_values_cannot_launder_a_collection_target(predicate: str) -> None:
+    assert not D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest -q cli/tests/test_dispatch.py",
+        "pytest cli/tests/test_dispatch.py -q",
+        "python -m pytest -k narrow cli/tests/test_dispatch.py",
+        "python3 -m pytest cli/tests/test_dispatch.py -k narrow",
+        "pytest --ignore cli/tests/test_other.py cli/tests/test_dispatch.py",
+        "pytest --ignore=cli/tests/test_other.py cli/tests/test_dispatch.py",
+        "pytest -- cli/tests/test_dispatch.py::test_narrow_safe_limen_task_allowed_for_local_lanes",
+    ],
+)
+def test_pytest_explicit_targets_survive_known_options_before_and_after(predicate: str) -> None:
+    assert D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest --collect-only cli/tests/test_dispatch.py",
+        "pytest --fixtures cli/tests/test_dispatch.py",
+        "pytest --setup-plan cli/tests/test_dispatch.py",
+        "pytest --version cli/tests/test_dispatch.py",
+        "pytest --pyargs cli/tests/test_dispatch.py",
+    ],
+)
+def test_pytest_non_executing_modes_are_not_execution_proof(predicate: str) -> None:
+    assert not D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest cli/tests/*.py",
+        "bash -lc 'pytest cli/tests/*.py'",
+        "pytest 'cli/tests/*.py'",
+        "pytest cli/tests/test_?.py",
+        "pytest cli/tests/test_[ad]*.py",
+        "pytest cli/tests/{test_dispatch,test_worktree_debt}.py",
+        "pytest cli/tests/**/test_*.py",
+        "pytest cli/tests/test_dispatch.py::test_*",
+        "pytest @cli/tests/test_dispatch.py",
+    ],
+)
+def test_pytest_collection_targets_reject_indirect_or_runtime_expanding_scope(predicate: str) -> None:
+    assert not D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest cli/tests/test_dispatch.py",
+        "pytest cli/tests/test_dispatch.py::test_narrow_safe_limen_task_allowed_for_local_lanes",
+        "bash -lc 'pytest cli/tests/test_dispatch.py'",
+        "bash -lc 'pytest cli/tests/test_dispatch.py::test_narrow_safe_limen_task_allowed_for_local_lanes'",
+    ],
+)
+def test_pytest_literal_file_and_node_targets_remain_narrow(predicate: str) -> None:
+    assert D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "evil-verify-scoped-whole.sh",
+        "verify-scoped-not-really cli/tests/test_dispatch.py",
+        "python evil-verify-scoped.py",
+        "/tmp/verify-scoped.sh cli/tests/test_dispatch.py",
+        "python /tmp/verify.py --changed",
+        "pytest cli/tests/test_dispatch.py && evil-verify-scoped-whole.sh",
+    ],
+)
+def test_only_exact_verify_scoped_wrapper_is_recognized(predicate: str) -> None:
+    assert not D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "scripts/verify-scoped.sh",
+        "./scripts/verify-scoped.sh",
+        "scripts/verify.py --changed",
+        "python ./scripts/verify.py --changed",
+    ],
+)
+def test_only_canonical_repo_verifier_scripts_are_recognized(predicate: str) -> None:
+    assert D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest cli/tests/test_dispatch.py && git branch --show-current",
+        "pytest cli/tests/test_dispatch.py && git branch --list",
+        "pytest cli/tests/test_dispatch.py && git remote -v",
+        "pytest cli/tests/test_dispatch.py && git remote get-url origin",
+        "pytest cli/tests/test_dispatch.py && git remote show -n origin",
+        "pytest cli/tests/test_dispatch.py && git symbolic-ref HEAD",
+        "pytest cli/tests/test_dispatch.py && git symbolic-ref --short HEAD",
+        "pytest cli/tests/test_dispatch.py && git diff --exit-code",
+        "pytest cli/tests/test_dispatch.py && git show --no-patch HEAD",
+    ],
+)
+def test_git_receipt_controls_are_read_only(predicate: str) -> None:
+    assert D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest cli/tests/test_dispatch.py && git branch -D old-branch",
+        "pytest cli/tests/test_dispatch.py && git remote remove origin",
+        "pytest cli/tests/test_dispatch.py && git symbolic-ref HEAD refs/heads/newref",
+        "pytest cli/tests/test_dispatch.py && git diff --output=/Users/4jp/Workspace/limen/tasks.yaml",
+        "pytest cli/tests/test_dispatch.py && git show --output=/Users/4jp/Workspace/limen/tasks.yaml HEAD",
+        "pytest cli/tests/test_dispatch.py && git log --paginate",
+        "pytest cli/tests/test_dispatch.py && git grep --open-files-in-pager=less pattern",
+    ],
+)
+def test_mutating_git_receipt_commands_are_denied(predicate: str) -> None:
+    assert not D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest cli/tests/test_dispatch.py && true > victim",
+        "pytest cli/tests/test_dispatch.py && true >> victim",
+        "pytest cli/tests/test_dispatch.py && true < victim",
+        "pytest cli/tests/test_dispatch.py && true 2> victim",
+        "pytest cli/tests/test_dispatch.py && true 2>> victim",
+        "pytest cli/tests/test_dispatch.py && true <<EOF",
+        "pytest cli/tests/test_dispatch.py && true <<< value",
+    ],
+)
+def test_unquoted_shell_redirections_are_denied(predicate: str) -> None:
+    assert not D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        'pytest cli/tests/test_dispatch.py && test "3 > 2" = "3 > 2"',
+        'pytest cli/tests/test_dispatch.py && test "<" = "<"',
+    ],
+)
+def test_quoted_comparison_characters_remain_receipt_data(predicate: str) -> None:
+    assert D._is_narrow_verification(predicate)
+
+
+@pytest.mark.parametrize(
+    "predicate",
+    [
+        "pytest cli/tests/test_dispatch.py && gh pr list --repo organvm/limen",
+        "scripts/verify.py --changed && git diff --exit-code",
+        "scripts/verify-scoped.sh && true",
+    ],
+)
+def test_narrow_verifier_plus_read_only_receipt_is_authoritative(predicate: str) -> None:
+    assert D._is_narrow_verification(predicate)
+
+
+def test_broad_limen_task_still_banned_for_local_lanes_allowed_remote() -> None:
+    task = _limen_task()  # no predicate/receipt → broad, no isolation contract
+    assert not D.agent_can_run_task("codex", task)
+    assert not D.agent_can_run_task("claude", task)
+    assert not D.agent_can_run_task("agy", task)
+    assert D.agent_can_run_task("jules", task)  # remote runs off-box, never gated here
+
+
+def test_narrow_safe_limen_task_allowed_for_local_lanes() -> None:
+    task = _limen_task(
+        id="FIX-limen-scoped-1",
+        predicate="python -m pytest cli/tests/test_dispatch.py -q",
+        receipt_target="organvm/limen#123",
+    )
+    assert D.agent_can_run_task("codex", task)
+    assert D.agent_can_run_task("claude", task)
+    assert D.agent_can_run_task("agy", task)
+
+
+_CANONICAL_DYNAMIC_ADMISSION_PREDICATE = r"""bash -lc 'python3 -m pytest cli/tests/test_dispatch.py cli/tests/test_worktree_debt.py -q && test "$(gh pr list --repo organvm/limen --state merged --search "FIX-dynamic-worktree-admission-0712 in:body" --json body --jq "([.[] | select((.body // "") | test("(^|[^A-Za-z0-9_.-])FIX\-dynamic\-worktree\-admission\-0712([^A-Za-z0-9_.-]|$)"))] | length)")" -gt 0' """.strip()
+
+
+def test_canonical_dynamic_admission_predicate_allows_every_local_lane(monkeypatch) -> None:
+    task = _limen_task(
+        id="FIX-dynamic-worktree-admission-0712",
+        predicate=_CANONICAL_DYNAMIC_ADMISSION_PREDICATE,
+        receipt_target="github:organvm/limen:pull-request:FIX-dynamic-worktree-admission-0712",
+    )
+    # Ollama's separate task-class floor is irrelevant to this isolation-contract regression.
+    monkeypatch.setattr(D, "_local_floor_allowed_for_task", lambda _task: True)
+
+    assert D._is_narrow_verification(task.predicate)
+    for lane in sorted(D.LOCAL_CHECKOUT_AGENTS):
+        assert D.agent_can_run_task(lane, task), lane
+
+
+def test_broad_verification_limen_task_denied_even_with_receipt() -> None:
+    task = _limen_task(
+        id="FIX-limen-broad-1",
+        predicate="scripts/verify-whole.sh",  # whole-world gate → off the isolation contract
+        receipt_target="organvm/limen#124",
+    )
+    assert not D.agent_can_run_task("codex", task)
+    assert not D.agent_can_run_task("claude", task)
+
+
+def test_limen_task_missing_receipt_denied() -> None:
+    task = _limen_task(id="FIX-limen-noreceipt", predicate="python -m pytest cli/tests/test_x.py -q")
+    assert not D.agent_can_run_task("codex", task)
+
+
+def test_organvm_engine_narrow_scope_preserved_for_codex() -> None:
+    # organvm-engine's ban was Claude-only; codex was always allowed and still is.
+    task = Task(
+        id="HEAL-cifix-organvm-engine-1",
+        title="Fix engine CI",
+        repo="organvm/organvm-engine",
+        target_agent="any",
+        status="open",
+        created=date(2026, 7, 12),
+    )
+    assert not D.agent_can_run_task("claude", task)
+    assert D.agent_can_run_task("codex", task)
+    # With the isolation contract, claude is admitted too.
+    safe = Task(
+        id="FIX-engine-scoped-1",
+        title="Fix engine",
+        repo="organvm/organvm-engine",
+        target_agent="any",
+        status="open",
+        created=date(2026, 7, 12),
+        predicate="python -m pytest tests/test_a.py::test_b",
+        receipt_target="organvm/organvm-engine#9",
+    )
+    assert D.agent_can_run_task("claude", safe)
+
+
+def test_agy_live_root_registry_hazard_preserved_even_with_contract() -> None:
+    # The truly task-specific Agy hazard is NOT a repo ban and survives the narrowing.
+    task = Task(
+        id="DISCOVER-organvm-example",
+        title="Discover latent value",
+        repo="organvm/example",
+        type="research",
+        target_agent="any",
+        status="open",
+        created=date(2026, 7, 12),
+        context='append "organvm/example" to value-repos.json after writing DISCOVERY.md',
+        predicate="python -m pytest cli/tests/test_x.py -q",
+        receipt_target="organvm/example#1",
+    )
+    assert not D.agent_can_run_task("agy", task)
+
+
+def test_isolated_safe_task_denied_when_isolation_off(monkeypatch) -> None:
+    # LIMEN_ISOLATION=off runs in-place (touches the live tree) → never safe for a self-modifying repo,
+    # even with a full typed predicate + receipt + narrow verification.
+    task = _limen_task(
+        id="FIX-limen-offisolation",
+        predicate="python -m pytest cli/tests/test_dispatch.py -q",
+        receipt_target="organvm/limen#125",
+    )
+    assert D.agent_can_run_task("codex", task)  # isolation on (default) → allowed
+    monkeypatch.setenv("LIMEN_ISOLATION", "off")
+    assert not D.agent_can_run_task("codex", task)
+    assert not D.agent_can_run_task("claude", task)
+
+
+def test_local_runtime_uses_same_worktree_isolation_authority(tmp_path: Path, monkeypatch) -> None:
+    task = _wtask(repo="example/repo")
+    monkeypatch.setattr(D, "_isolated_local_run", lambda *_args: "isolated")
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda _task: tmp_path)
+    monkeypatch.setattr(D, "_run_cmd", lambda *_args, **_kwargs: "in-place")
+
+    monkeypatch.setenv("LIMEN_ISOLATION", " worktree ")
+    assert D._worktree_isolation_enabled()
+    assert D._call_local_agent("codex", task, False) == "isolated"
+
+    monkeypatch.setenv("LIMEN_ISOLATION", " OFF ")
+    assert not D._worktree_isolation_enabled()
+    assert D._call_local_agent("codex", task, False) == "in-place"
+
+
+def test_isolation_creation_root_follows_live_env_after_module_import(tmp_path: Path, monkeypatch) -> None:
+    first = tmp_path / "first-volume" / "worktrees"
+    second = tmp_path / "second-volume" / "worktrees"
+
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(first))
+    assert D._isolation_root() == first
+
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(second))
+    assert D._isolation_root() == second
+
+
+# ── Explicit --task does NOT bypass worktree admission (item 7) ─────────────
+
+
+def _resource_blocked_snapshot() -> "D.WorktreeAdmissionSnapshot":
+    return D.WorktreeAdmissionSnapshot(
+        active=True,
+        block_new_local=True,
+        reason="local free 1.0 GiB < 45 GiB floor",
+        resource_blocked=True,
+        vitals_shed=False,
+        reaper_blocked=False,
+        free_gib=1.0,
+        floor_gib=45,
+        reserved_gib=0.0,
+        room_gib=0.0,
+        targets_present=True,
+        debt=0,
+        vitals_action="ok",
+    )
+
+
+def test_explicit_task_dispatch_still_obeys_admission(tmp_path: Path, capsys, monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
+    monkeypatch.setattr(D, "_worktree_admission_snapshot", _resource_blocked_snapshot)
+    monkeypatch.setattr(
+        D, "call_agent_dispatch", lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("must not dispatch"))
+    )
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "EXPLICIT-LOCAL",
+                "title": "explicit local task",
+                "repo": "someorg/dispatch-lab",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=False, task_id="EXPLICIT-LOCAL")
+
+    out = capsys.readouterr().out
+    assert "Worktree admission blocked EXPLICIT-LOCAL" in out
+    assert read_board(tasks_path)["tasks"][0]["status"] == "open"
+
+
+def test_explicit_task_reserves_its_dynamic_checkout_estimate(tmp_path: Path, capsys, monkeypatch) -> None:
+    snapshot = D.WorktreeAdmissionSnapshot(
+        active=True,
+        block_new_local=False,
+        reason="",
+        resource_blocked=False,
+        vitals_shed=False,
+        reaper_blocked=False,
+        free_gib=61.25,
+        floor_gib=60.0,
+        reserved_gib=0.0,
+        room_gib=1.25,
+        targets_present=False,
+        debt=0,
+        vitals_action="ok",
+    )
+    monkeypatch.setattr(D, "_worktree_admission_snapshot", lambda: snapshot)
+    monkeypatch.setattr(D, "_tracked_head_checkout_gib", lambda _task: 0.75)
+    monkeypatch.setattr(D, "call_agent_dispatch", lambda *_args, **_kwargs: True)
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "EXPLICIT-SIZED",
+                "title": "explicit sized local task",
+                "repo": "someorg/dispatch-lab",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=True, task_id="EXPLICIT-SIZED")
+
+    assert "DRY-RUN: 1 task" in capsys.readouterr().out
+    assert snapshot["reserved_gib"] == 0.75
+    assert snapshot["room_gib"] == 0.5
+
+
+def test_serial_live_dispatch_obeys_machine_local_slot_ceiling(tmp_path: Path, capsys, monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_ASYNC_MAX", "1")
+    holder = _wtask(repo="someorg/holder")
+    with D._machine_admission_lock():
+        D._write_machine_admission_lease(holder, "codex", 0.0)
+    monkeypatch.setattr(
+        D, "call_agent_dispatch", lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("slot must block"))
+    )
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "SERIAL-SECOND",
+                "title": "second serial local task",
+                "repo": "someorg/second",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+            }
+        ],
+    )
+    try:
+        dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=False)
+    finally:
+        D._release_machine_admission(holder.id)
+
+    assert "machine local slots full (1/1)" in capsys.readouterr().out
+    assert read_board(tasks_path)["tasks"][0]["status"] == "open"
+
+
+def test_explicit_local_task_with_unknown_checkout_estimate_is_denied(tmp_path: Path, capsys, monkeypatch) -> None:
+    snapshot = D.WorktreeAdmissionSnapshot(
+        active=True,
+        block_new_local=False,
+        reason="",
+        resource_blocked=False,
+        vitals_shed=False,
+        reaper_blocked=False,
+        free_gib=100.0,
+        floor_gib=60.0,
+        reserved_gib=0.0,
+        room_gib=40.0,
+        targets_present=False,
+        debt=0,
+        vitals_action="ok",
+    )
+    monkeypatch.setattr(D, "_worktree_admission_snapshot", lambda: snapshot)
+    monkeypatch.setattr(D, "_tracked_head_checkout_gib", lambda _task: None)
+    monkeypatch.setattr(
+        D, "call_agent_dispatch", lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("must not dispatch"))
+    )
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "EXPLICIT-UNKNOWN-SIZE",
+                "title": "explicit unknown local task",
+                "repo": "someorg/missing",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    dispatch_tasks(
+        load_limen_file(tasks_path),
+        tasks_path,
+        agent="codex",
+        dry_run=True,
+        task_id="EXPLICIT-UNKNOWN-SIZE",
+    )
+
+    out = capsys.readouterr().out
+    assert "Worktree admission blocked EXPLICIT-UNKNOWN-SIZE" in out
+    assert "tracked HEAD checkout size is unknown" in out
+
+
+def test_explicit_task_operator_override_gate_off(tmp_path: Path, capsys, monkeypatch) -> None:
+    # The documented override is LIMEN_WORKTREE_DEBT_GATE=0 (snapshot inactive), not task_id.
+    monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "0")
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "EXPLICIT-LOCAL",
+                "title": "explicit local task",
+                "repo": "someorg/dispatch-lab",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=True, task_id="EXPLICIT-LOCAL")
+    out = capsys.readouterr().out
+    assert "Worktree admission blocked" not in out
+    assert "DRY-RUN: 1 task" in out

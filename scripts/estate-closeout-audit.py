@@ -714,7 +714,8 @@ def render(snapshot: dict[str, Any]) -> str:
         "",
         "## Worktree / Reclaim",
         "",
-        f"- Debt cap: `{worktree.get('limit')}`; reapable cap: `{worktree.get('reapable_limit')}`.",
+        f"- Debt target: `{worktree.get('debt_target', 0)}`; complete: `{worktree.get('complete')}`; "
+        f"reapable cap: `{worktree.get('reapable_limit')}`.",
         f"- Reclaim dry-run reapable count: `{reclaim.get('reapable_count')}`.",
         "",
         "| Reason | Roots |",

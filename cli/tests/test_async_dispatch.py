@@ -8,7 +8,9 @@ import datetime
 import importlib.util
 import json
 import os
+import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -18,6 +20,7 @@ sys.path.insert(0, str(CLI_SRC))
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task  # noqa: E402
+import limen.dispatch as dispatch_module  # noqa: E402
 
 
 def _load(tmp_path, n_open=6, agent="codex"):
@@ -45,6 +48,25 @@ def _load(tmp_path, n_open=6, agent="codex"):
 
 def _board(tmp_path):
     return {t.id: t for t in load_limen_file(tmp_path / "tasks.yaml").tasks}
+
+
+def _worktree_snapshot(*, blocked: bool, room_gib: float = 40.0) -> dict[str, object]:
+    floor = 60.0
+    return {
+        "active": True,
+        "block_new_local": blocked,
+        "reason": "local worktree custody unavailable" if blocked else "",
+        "resource_blocked": blocked,
+        "vitals_shed": False,
+        "reaper_blocked": False,
+        "free_gib": floor + room_gib,
+        "floor_gib": floor,
+        "reserved_gib": 0.0,
+        "room_gib": 0.0 if blocked else room_gib,
+        "targets_present": False,
+        "debt": 0,
+        "vitals_action": "ok",
+    }
 
 
 def test_concurrency_cap_bounds_reservation(tmp_path):
@@ -402,6 +424,16 @@ def test_async_numeric_env_knobs_fail_open_when_malformed(tmp_path, monkeypatch)
     assert da.main() == 0
 
 
+def test_default_local_max_tracks_live_host_cpu_count(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=0)
+    monkeypatch.setattr(da.os, "cpu_count", lambda: 14)
+
+    assert da._default_local_max() == 14
+
+    monkeypatch.setattr(da.os, "cpu_count", lambda: None)
+    assert da._default_local_max() == 1
+
+
 def test_async_main_value_gate_blocks_reservation(tmp_path, monkeypatch, capsys):
     da = _load(tmp_path, n_open=2)
     monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "1")
@@ -477,6 +509,123 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     track = load_limen_file(tmp_path / "tasks.yaml").portal.budget.track
     assert track.spent == 2
     assert track.per_agent["codex"] == 2
+
+
+def test_spawn_failure_reopens_refunds_and_releases_machine_lease(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    monkeypatch.setattr(da.subprocess, "Popen", lambda *_a, **_k: (_ for _ in ()).throw(OSError("no spawn")))
+
+    assert da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=False) == []
+
+    task = _board(tmp_path)["T0"]
+    assert task.status == "open"
+    assert task.dispatch_log[-1].session_id == "async-launch-failed"
+    assert load_limen_file(tmp_path / "tasks.yaml").portal.budget.track.spent == 0
+    assert not dispatch_module._admission_lease_path("T0").exists()
+
+
+def test_marker_failure_keeps_child_owned_machine_lease(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1)
+    monkeypatch.setattr(da.subprocess, "Popen", lambda *_a, **_k: type("P", (), {"pid": os.getpid()})())
+    monkeypatch.setattr(da, "_write_running_marker", lambda *_a, **_k: (_ for _ in ()).throw(OSError("disk")))
+
+    assert da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=False) == [("codex", "T0")]
+
+    lease = dispatch_module._admission_lease_path("T0")
+    payload = json.loads(lease.read_text())
+    assert payload["phase"] == "worker-live-marker-failed"
+    assert payload["pid"] == os.getpid()
+    assert not da._running_marker_path("T0", "codex").exists()
+    dispatch_module._release_machine_admission("T0")
+
+
+def test_async_marker_holds_checkout_room_until_worktree_birth(tmp_path):
+    da = _load(tmp_path, n_open=0)
+    now = da._now()
+    da._write_running_marker("PENDING-WT", "codex", now, os.getpid(), 0.75)
+    snapshot = _worktree_snapshot(blocked=False, room_gib=1.0)
+
+    with dispatch_module._machine_admission_lock():
+        promised, used_slots = dispatch_module._snapshot_with_machine_reservations(snapshot)
+    assert used_slots == 1
+    assert promised["reserved_gib"] == 0.75
+    assert promised["room_gib"] == 0.25
+
+    dispatch_module._mark_machine_admission_born("PENDING-WT")
+    marker_payload = json.loads(da._running_marker_path("PENDING-WT", "codex").read_text())
+    assert marker_payload["reserved_gib"] == 0.0
+    da._running_marker_path("PENDING-WT", "codex").unlink()
+
+
+def test_two_async_processes_cannot_reuse_slot_before_first_marker_exists(tmp_path):
+    """The durable lease closes the board-save -> running-marker cross-process race."""
+    da = _load(tmp_path, n_open=2)
+    ready = tmp_path / "first-at-spawn"
+    release = tmp_path / "release-first"
+    first_out = tmp_path / "first.json"
+    second_out = tmp_path / "second.json"
+    env = {
+        **os.environ,
+        "LIMEN_ROOT": str(tmp_path),
+        "LIMEN_TASKS": str(tmp_path / "tasks.yaml"),
+        "LIMEN_DISPATCH_ADMISSION": "0",
+        "LIMEN_WORKTREE_DEBT_GATE": "0",
+        "LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH": "0",
+        "PYTHONPATH": str(CLI_SRC),
+    }
+    first_code = f"""
+import importlib.util, json, os, time
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('dispatch_async_child_one', {str(SCRIPT)!r})
+da = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(da)
+class FakeProc:
+    pid = os.getpid()
+def fake_popen(*args, **kwargs):
+    Path({str(ready)!r}).write_text('ready')
+    while not Path({str(release)!r}).exists():
+        time.sleep(0.01)
+    return FakeProc()
+da.subprocess.Popen = fake_popen
+picked = da.reserve_and_launch(['codex'], per_agent=1, cap=1, dry=False)
+Path({str(first_out)!r}).write_text(json.dumps(picked))
+"""
+    second_code = f"""
+import importlib.util, json
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('dispatch_async_child_two', {str(SCRIPT)!r})
+da = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(da)
+def must_not_spawn(*args, **kwargs):
+    raise AssertionError('second process reused the reserved local slot')
+da.subprocess.Popen = must_not_spawn
+picked = da.reserve_and_launch(['codex'], per_agent=1, cap=1, dry=False)
+Path({str(second_out)!r}).write_text(json.dumps(picked))
+"""
+    first = subprocess.Popen([sys.executable, "-c", first_code], env=env)
+    deadline = time.monotonic() + 10
+    while not ready.exists() and first.poll() is None and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert ready.exists(), "first dispatcher never reached the pre-marker barrier"
+    try:
+        second = subprocess.run(
+            [sys.executable, "-c", second_code],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        assert second.returncode == 0, second.stderr
+        assert json.loads(second_out.read_text()) == []
+        # The first worker is still paused before writing its marker: only the machine lease can
+        # have denied process two.
+        assert not list(da.RUNS.glob("*.running"))
+    finally:
+        release.write_text("go")
+        first.wait(timeout=10)
+    assert first.returncode == 0
+    assert len(json.loads(first_out.read_text())) == 1
 
 
 def test_async_normalizes_only_selected_legacy_task(tmp_path):
@@ -826,12 +975,14 @@ def test_disk_pressure_filters_generic_churn_when_focused_work_exists(tmp_path, 
     assert picked == [("codex", "PROMPT-LIFECYCLE-MEDIUM")]
 
 
-def test_worktree_debt_gate_suppresses_async_routine_buildout(tmp_path, monkeypatch):
+def test_worktree_resource_pressure_suppresses_all_local_async_candidates(tmp_path, monkeypatch):
+    # Custody unavailable → EVERY local candidate is withheld (a lifecycle/reclaim task creates a
+    # worktree too; the heartbeat reaper drains debt OUTSIDE agent dispatch). No fixed count is used.
     monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/generated")
     monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
     da = _load(tmp_path, n_open=0, agent="codex")
     monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
-    monkeypatch.setattr(da, "_worktree_debt_gate", lambda: (True, "91 preserved worktree roots exceed cap 12"))
+    monkeypatch.setattr(da, "_worktree_admission_snapshot", lambda: _worktree_snapshot(blocked=True))
     today = datetime.date.today()
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.tasks = [
@@ -847,7 +998,7 @@ def test_worktree_debt_gate_suppresses_async_routine_buildout(tmp_path, monkeypa
         ),
         Task(
             id="SUBSTRATE-RECLAIM-MEDIUM",
-            title="recover worktree lifecycle debt",
+            title="recover worktree lifecycle debt (still creates a worktree)",
             repo="organvm/session-meta",
             target_agent="codex",
             workstream="substrate",
@@ -860,7 +1011,135 @@ def test_worktree_debt_gate_suppresses_async_routine_buildout(tmp_path, monkeypa
 
     picked = da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True)
 
-    assert picked == [("codex", "SUBSTRATE-RECLAIM-MEDIUM")]
+    assert picked == []  # every local candidate withheld under resource block
+
+
+def test_explicit_task_id_async_dispatch_still_obeys_admission(tmp_path, monkeypatch):
+    # An explicit task_id async dispatch does NOT bypass worktree admission (item 7).
+    da = _load(tmp_path, n_open=0, agent="codex")
+    monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
+    monkeypatch.setattr(da, "_worktree_admission_snapshot", lambda: _worktree_snapshot(blocked=True))
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks = [
+        Task(
+            id="EXPLICIT-CODEX",
+            title="explicit local task",
+            repo="organvm/session-meta",
+            target_agent="codex",
+            priority="high",
+            status="open",
+            created=today,
+        ),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=True, task_id="EXPLICIT-CODEX")
+
+    assert picked == []
+
+
+def test_remote_lane_never_inherits_local_worktree_pressure(tmp_path, monkeypatch):
+    # A jules (remote/async) generated-buildout task runs OFF-BOX, so it is admitted even when the
+    # local resource-custody signal is red. Requirement (3): remote lanes never inherit local pressure.
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/generated")
+    monkeypatch.delenv("LIMEN_VALUE_REPOS_FILE", raising=False)
+    da = _load(tmp_path, n_open=0, agent="jules")
+    monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
+    snapshot = _worktree_snapshot(blocked=True)
+    monkeypatch.setattr(da, "_worktree_admission_snapshot", lambda: snapshot)
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"jules": 50}
+    lf.tasks = [
+        Task(
+            id="GEN-BUILDOUT-REMOTE",
+            title="generated build-out on the remote lane",
+            repo="organvm/generated",
+            target_agent="jules",
+            priority="high",
+            status="open",
+            labels=["generated", "build-out"],
+            created=today,
+        ),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["jules"], per_agent=1, cap=1, dry=True)
+
+    assert picked == [("jules", "GEN-BUILDOUT-REMOTE")]
+    assert snapshot["reserved_gib"] == 0.0
+    assert snapshot["room_gib"] == 0.0
+
+
+def test_async_multi_candidate_selection_reserves_cumulative_local_checkout_room(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=0, agent="codex")
+    monkeypatch.setenv("LIMEN_VALUE_GATE", "0")
+    snapshot = _worktree_snapshot(blocked=False, room_gib=1.5)
+    monkeypatch.setattr(da, "_worktree_admission_snapshot", lambda: snapshot)
+    estimates = {"FIRST-LOCAL": 1.0, "SECOND-LOCAL": 0.6}
+    monkeypatch.setattr(dispatch_module, "_tracked_head_checkout_gib", lambda task: estimates[task.id])
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks = [
+        Task(
+            id="FIRST-LOCAL",
+            title="first local checkout",
+            repo="organvm/first",
+            target_agent="codex",
+            priority="critical",
+            status="open",
+            created=today,
+        ),
+        Task(
+            id="SECOND-LOCAL",
+            title="second local checkout",
+            repo="organvm/second",
+            target_agent="codex",
+            priority="high",
+            status="open",
+            created=today,
+        ),
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], per_agent=2, cap=2, dry=True)
+
+    assert picked == [("codex", "FIRST-LOCAL")]
+    assert snapshot["reserved_gib"] == 1.0
+    assert snapshot["room_gib"] == 0.5
+
+
+def test_async_remote_candidates_do_not_consume_or_require_local_checkout_estimates(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=0, agent="jules")
+    monkeypatch.setenv("LIMEN_VALUE_GATE", "0")
+    snapshot = _worktree_snapshot(blocked=True)
+    monkeypatch.setattr(da, "_worktree_admission_snapshot", lambda: snapshot)
+    monkeypatch.setattr(
+        dispatch_module,
+        "_tracked_head_checkout_gib",
+        lambda _task: (_ for _ in ()).throw(AssertionError("remote must not estimate a local checkout")),
+    )
+    today = datetime.date.today()
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.portal.budget.per_agent = {"jules": 50}
+    lf.tasks = [
+        Task(
+            id=f"REMOTE-{index}",
+            title="remote task",
+            repo="organvm/remote",
+            target_agent="jules",
+            status="open",
+            created=today,
+        )
+        for index in range(7)
+    ]
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["jules"], per_agent=7, cap=0, dry=True)
+
+    assert picked == [("jules", f"REMOTE-{index}") for index in range(7)]
+    assert snapshot["reserved_gib"] == 0.0
 
 
 def test_reaper_frees_dead_workers_not_live(tmp_path):

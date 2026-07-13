@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.worktree_roots import (
+    WorktreeInventoryError,
     WorktreeTarget,
     _children,
     _dedupe_targets,
@@ -21,6 +22,7 @@ from limen.worktree_roots import (
     _legacy_dispatch_roots,
     _path_list,
     _registered_repo_roots,
+    dispatch_clone_cache_root,
     iter_worktree_targets,
 )
 
@@ -169,6 +171,15 @@ def test_children_handles_permission_denied(monkeypatch, tmp_path):
     assert _children(tmp_path, 1.0, "x") == []
 
 
+def test_children_permission_denied_is_error_in_strict_inventory(monkeypatch, tmp_path):
+    def denied(_path):
+        raise PermissionError("configured root is unreadable")
+
+    monkeypatch.setattr(Path, "iterdir", denied)
+    with pytest.raises(WorktreeInventoryError, match="cannot enumerate x"):
+        _children(tmp_path, 1.0, "x", strict=True)
+
+
 # ---------------------------------------------------------------- _discover_repo_local_roots
 def test_discover_repo_local_roots_finds_worktrees(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_RECLAIM_WORKSPACE_ROOTS", str(tmp_path))
@@ -256,6 +267,15 @@ def test_git_worktree_paths_not_a_repo(tmp_path):
     assert _git_worktree_paths(tmp_path / "nope") == []
 
 
+def test_git_worktree_paths_failed_configured_repo_is_error_in_strict_mode(tmp_path):
+    nonrepo = tmp_path / "configured-but-not-a-repo"
+    nonrepo.mkdir()
+
+    assert _git_worktree_paths(nonrepo) == []
+    with pytest.raises(WorktreeInventoryError, match="git worktree inventory failed"):
+        _git_worktree_paths(nonrepo, strict=True)
+
+
 # ---------------------------------------------------------------- _registered_repo_roots
 def test_registered_repo_roots_finds_sibling_worktrees(tmp_path, monkeypatch):
     main = tmp_path / "main-repo"
@@ -315,6 +335,57 @@ def test_iter_worktree_targets_dispatch_root_children(tmp_path, monkeypatch):
     targets = iter_worktree_targets(tmp_path)
     names = {t.path.name for t in targets}
     assert "active-task" in names
+
+
+def test_dispatch_clone_cache_root_requires_same_device_parent(tmp_path, monkeypatch):
+    worktrees = tmp_path / "scratch" / "worktrees"
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(worktrees))
+    monkeypatch.setattr(
+        "limen.worktree_roots._filesystem_device",
+        lambda path: 2 if path == worktrees else 1,
+    )
+    assert dispatch_clone_cache_root() is None
+
+
+def test_iter_worktree_targets_owns_flat_dispatch_clone_cache_children(tmp_path, monkeypatch):
+    dispatch = tmp_path / "worktrees"
+    cache = tmp_path / ".worktrees-repo-cache"
+    clone = cache / "owner--repo-deadbeef"
+    dispatch.mkdir()
+    clone.mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_MIN_AGE_H", "2")
+
+    targets = iter_worktree_targets(tmp_path)
+    target = next(item for item in targets if item.path == clone)
+    assert target.source == "dispatch-clone-cache"
+    assert target.min_age_h == 2.0
+
+
+def test_inventory_modes_diverge_on_unreadable_configured_dispatch_root(tmp_path, monkeypatch):
+    dispatch = tmp_path / ".limen-worktrees"
+    dispatch.mkdir()
+    original_iterdir = Path.iterdir
+
+    def deny_dispatch(path: Path):
+        if path == dispatch:
+            raise PermissionError("configured dispatch root is unreadable")
+        return original_iterdir(path)
+
+    monkeypatch.setattr(Path, "iterdir", deny_dispatch)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(dispatch))
+    monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REPO_LOCAL_WT", "0")
+    monkeypatch.setenv("LIMEN_RECLAIM_REGISTERED_WT", "0")
+
+    # Operational reaping remains best-effort and can still drain every readable scope.
+    assert iter_worktree_targets(tmp_path) == []
+    # Admission cannot prove the inventory is empty, so the strict mode preserves the fault.
+    with pytest.raises(WorktreeInventoryError, match="dispatch-root"):
+        iter_worktree_targets(tmp_path, strict=True)
 
 
 def test_iter_worktree_targets_scans_legacy_dispatch_root_when_scratch_is_default(tmp_path, monkeypatch):

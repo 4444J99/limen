@@ -25,6 +25,8 @@ from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(ROOT / "cli" / "src"))
+from limen.worktree_debt import REAPABLE_REASONS  # noqa: E402
+
 HOME = Path.home()
 WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE_ROOT", HOME / "Workspace"))
 PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
@@ -65,6 +67,8 @@ ESTATE_CUSTODY_RECEIPT = ROOT / "docs" / "estate-custody-implementation-receipts
 GENERATED_STATE_RECLAIM_LOG = ROOT / "logs" / "reclaim-generated-state.jsonl"
 TOOL_CACHE_RECLAIM_LOG = ROOT / "logs" / "reclaim-tool-caches.jsonl"
 OLLAMA_MODEL_RECLAIM_LOG = ROOT / "logs" / "reclaim-ollama-models.jsonl"
+CVSTOS_STATE = ROOT / "logs" / "cvstos-organ-state.json"
+LIFECYCLE_PRESSURE_STATE = ROOT / "logs" / "session-lifecycle-pressure.json"
 OPENCODE_DB_INTAKE_DOC = ROOT / "docs" / "opencode-db-corpus-intake.md"
 SUBSTRATE_STORAGE_INDEX = PRIVATE_ROOT / "lifecycle" / "substrate-storage-pressure.json"
 WORKTREE_RECLAIM_CANDIDATES_DOC = ROOT / "docs" / "worktree-reclaim-candidates.md"
@@ -380,15 +384,125 @@ def _short_command_receipt(args: list[str], *, timeout: int = 90) -> dict[str, A
     }
 
 
-def substrate_lifecycle_receipt() -> dict[str, Any]:
-    cvstos = _short_command_receipt([sys.executable, str(ROOT / "scripts" / "cvstos-organ.py"), "--check"])
-    worktree_debt = _short_command_receipt(
-        [sys.executable, str(ROOT / "scripts" / "worktree-debt.py"), "--fail-over-cap"]
+def _cached_state(path: Path) -> tuple[dict[str, Any], float | None]:
+    data = load_json(path, {})
+    if not isinstance(data, dict):
+        return {}, None
+    try:
+        age_seconds = max(0.0, dt.datetime.now().timestamp() - path.stat().st_mtime)
+    except OSError:
+        age_seconds = None
+    return data, age_seconds
+
+
+def _positive_env_int(name: str, default: int, *, allow_zero: bool = False) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    if value < 0 or (value == 0 and not allow_zero):
+        return default
+    return value
+
+
+def _lifecycle_cache_windows() -> tuple[int, int]:
+    """Return freshness bounds derived from the heartbeat's actual producer cadences."""
+    loop_max = _positive_env_int("LIMEN_LOOP_MAX", 1800)
+    producer_timeout = _positive_env_int("LIMEN_RECLAIM_TIMEOUT", 300)
+    cvstos_cadence = _positive_env_int("LIMEN_BEAT_CVSTOS", 24)
+    pressure_cadence = _positive_env_int("LIMEN_BEAT_DRAIN", 3)
+    pressure_throttle = _positive_env_int(
+        "LIMEN_LIFECYCLE_PRESSURE_THROTTLE", 1800, allow_zero=True
     )
+
+    # A throttled producer can be called just before its snapshot becomes eligible, then wait one
+    # full scheduler cadence before the next call. Include both intervals and the bounded command
+    # runtime. CVSTOS is not internally throttled, so only its cadence and runtime apply.
+    cvstos_window = cvstos_cadence * loop_max + producer_timeout
+    pressure_window = pressure_throttle + pressure_cadence * loop_max + producer_timeout
+    return cvstos_window, pressure_window
+
+
+def substrate_lifecycle_receipt() -> dict[str, Any]:
+    # This function runs before every dispatch reservation. Full CVSTOS + worktree classification
+    # costs roughly two estate scans (>100s on the current host), so consume the heartbeat's cached,
+    # counts-only receipts here. Exact classification remains in the assignment/closeout predicate.
+    cvstos_state, cvstos_age = _cached_state(CVSTOS_STATE)
+    pressure_state, pressure_age = _cached_state(LIFECYCLE_PRESSURE_STATE)
+    worktrees_raw = pressure_state.get("worktrees")
+    worktrees = worktrees_raw if isinstance(worktrees_raw, dict) else {}
+    try:
+        raw_debt = worktrees["debt"]
+        debt = raw_debt if isinstance(raw_debt, int) and not isinstance(raw_debt, bool) and raw_debt >= 0 else None
+    except (TypeError, ValueError):
+        debt = None
+    except KeyError:
+        debt = None
+    by_reason_raw = worktrees.get("by_reason")
+    by_reason = by_reason_raw if isinstance(by_reason_raw, dict) else None
+    reapable_by_reason: dict[str, int] = {}
+    if by_reason is not None:
+        for reason in REAPABLE_REASONS:
+            raw_count = by_reason.get(reason, 0)
+            if not isinstance(raw_count, int) or isinstance(raw_count, bool) or raw_count < 0:
+                reapable_by_reason = {}
+                reapable = None
+                break
+            reapable_by_reason[reason] = raw_count
+        else:
+            reapable = sum(reapable_by_reason.values())
+    else:
+        reapable = None
+    pressure_error = worktrees.get("error")
+    pressure_complete = worktrees.get("complete")
+    pressure_valid = bool(
+        isinstance(worktrees_raw, dict)
+        and debt is not None
+        and isinstance(by_reason_raw, dict)
+        and isinstance(pressure_error, str)
+        and isinstance(pressure_complete, bool)
+        and pressure_complete == (debt == 0)
+    )
+    cvstos_at_factory = cvstos_state.get("at_factory")
+    cvstos_open_invariants = cvstos_state.get("open_invariants")
+    cvstos_worktree_has_debt = cvstos_state.get("worktree_has_debt")
+    cvstos_valid = bool(
+        isinstance(cvstos_at_factory, bool)
+        and isinstance(cvstos_open_invariants, list)
+        and isinstance(cvstos_worktree_has_debt, bool)
+        and cvstos_at_factory == (len(cvstos_open_invariants) == 0)
+        and (not cvstos_at_factory or cvstos_worktree_has_debt is False)
+    )
+    cvstos_window, pressure_window = _lifecycle_cache_windows()
+    cvstos = {
+        "source": relpath(CVSTOS_STATE),
+        "age_seconds": round(cvstos_age, 1) if cvstos_age is not None else None,
+        "freshness_window_seconds": cvstos_window,
+        "valid": cvstos_valid,
+        "fresh": cvstos_age is not None and cvstos_age <= cvstos_window,
+        "ok": cvstos_valid and cvstos_at_factory is True,
+        "open_invariant_count": len(cvstos_state.get("open_invariants") or []),
+    }
+    worktree_debt = {
+        "source": relpath(LIFECYCLE_PRESSURE_STATE),
+        "age_seconds": round(pressure_age, 1) if pressure_age is not None else None,
+        "freshness_window_seconds": pressure_window,
+        "valid": pressure_valid,
+        "fresh": pressure_age is not None and pressure_age <= pressure_window,
+        "debt": debt,
+        "debt_target": 0,
+        "reapable": reapable,
+        "reapable_target": 0,
+        "reapable_by_reason": reapable_by_reason,
+        "error": pressure_error if isinstance(pressure_error, str) else "invalid pressure receipt",
+        "ok": pressure_valid and not pressure_error and debt == 0 and reapable == 0,
+    }
     return {
         "cvstos": cvstos,
         "worktree_debt": worktree_debt,
-        "predicate_ok": bool(cvstos["ok"] and worktree_debt["ok"]),
+        "predicate_ok": bool(
+            cvstos["fresh"] and cvstos["ok"] and worktree_debt["fresh"] and worktree_debt["ok"]
+        ),
         "generated_state_reclaim": reclaim_log_summary(
             GENERATED_STATE_RECLAIM_LOG, ("changed_roots", "failed_roots")
         ),
@@ -1192,9 +1306,9 @@ def substrate_receipt() -> dict[str, Any]:
             "lane_fit": "codex-local",
             "repo": "organvm/limen",
             "task": "Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.",
-            "predicate": "python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap",
+            "predicate": "python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap",
             "receipt_target": "git:organvm/limen:docs/estate-custody-implementation-receipts.json",
-            "stop_condition": "free disk is at target, temp writes are usable, and reclaimable worktree debt is owner-routed",
+            "stop_condition": "free disk is at target, temp writes are usable, worktree debt is exactly zero, and reapable roots are zero",
         },
     }
 

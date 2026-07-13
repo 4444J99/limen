@@ -231,7 +231,8 @@ def worktree_lifecycle_summary() -> dict[str, Any]:
         "total": total,
         "debt": debt,
         "reapable": reapable,
-        "limit": data.get("limit"),
+        "debt_target": 0,
+        "complete": debt == 0,  # exact-zero completion; no tolerated debt count
         "reapable_limit": data.get("reapable_limit"),
         "by_reason": by_reason,
         "by_reapable_reason": by_reapable_reason,
@@ -305,7 +306,10 @@ def render(snapshot: dict[str, Any]) -> str:
     ]
     if lifecycle.get("ok"):
         lines.append(f"- Summary: `{lifecycle.get('summary')}`.")
-        lines.append(f"- Debt cap: `{lifecycle.get('limit')}`; reapable cap: `{lifecycle.get('reapable_limit')}`.")
+        lines.append(
+            f"- Debt target: `{lifecycle.get('debt_target', 0)}`; complete: `{lifecycle.get('complete')}`; "
+            f"reapable cap: `{lifecycle.get('reapable_limit')}`."
+        )
         by_reason = lifecycle.get("by_reason") if isinstance(lifecycle.get("by_reason"), dict) else {}
         if by_reason:
             lines += ["", "| Reason | Roots |", "|---|---:|"]

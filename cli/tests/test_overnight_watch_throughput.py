@@ -106,7 +106,7 @@ def test_governor_pause_is_suppressed(tmp_path, monkeypatch):
     assert result["suppressed"] == "governor-paused"
 
 
-def test_vitals_shed_is_suppressed(tmp_path, monkeypatch):
+def test_vitals_shed_does_not_hide_remote_throughput_collapse(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "governor_mode", lambda: "dispatch")
     module.HEARTBEAT_LOG.write_text(
@@ -115,8 +115,8 @@ def test_vitals_shed_is_suppressed(tmp_path, monkeypatch):
     )
     _seed_ticks(module, _COLLAPSE, open_count=50)
     result = module.throughput_snapshot({"dispatch_control": {"allow_dispatch": True}})
-    assert result["below_floor"] is False
-    assert result["suppressed"] == "vitals-critical-shed"
+    assert result["below_floor"] is True
+    assert result["suppressed"] is None
 
 
 def test_budget_exhausted_is_suppressed(tmp_path, monkeypatch):

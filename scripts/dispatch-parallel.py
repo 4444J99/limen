@@ -4,7 +4,7 @@ Replaces the heartbeat's serial per-lane for-loop. Safe: tasks.yaml written twic
 single process; slow agent runs happen in a thread pool; git plumbing is lock-guarded.
 
   python3 scripts/dispatch-parallel.py --lanes auto \
-      --per-lane 3 --workers 8 [--dry-run]
+      --per-lane 3 [--workers N] [--dry-run]
 """
 import argparse
 import json
@@ -23,7 +23,12 @@ def main() -> int:
     ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS"))
     ap.add_argument("--lanes", default="auto")
     ap.add_argument("--per-lane", type=int, default=int(os.environ.get("LIMEN_LOCAL_LIMIT", "3")))
-    ap.add_argument("--workers", type=int, default=int(os.environ.get("LIMEN_WORKERS", "8")))
+    ap.add_argument(
+        "--workers",
+        type=int,
+        default=int(os.environ.get("LIMEN_WORKERS", str(max(1, os.cpu_count() or 1)))),
+        help="Local worker ceiling (default: live host CPU count); remote lanes remain provider-bounded.",
+    )
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))

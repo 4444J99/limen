@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sqlite3
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -18,6 +20,34 @@ def _load(name: str, path: Path):
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module
+
+
+def _seed_cached_lifecycle(root: Path, *, debt: int = 0, reapable: int = 0, at_factory: bool = True) -> None:
+    logs = root / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    (logs / "cvstos-organ-state.json").write_text(
+        json.dumps(
+            {
+                "at_factory": at_factory,
+                "open_invariants": [] if at_factory else ["open"],
+                "worktree_has_debt": debt != 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (logs / "session-lifecycle-pressure.json").write_text(
+        json.dumps(
+            {
+                "worktrees": {
+                    "debt": debt,
+                    "complete": debt == 0,
+                    "by_reason": {"clean+merged+idle": reapable} if reapable else {},
+                    "error": "",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def _mail_index(path: Path) -> None:
@@ -83,6 +113,7 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
     (root / "cli" / "src" / "limen" / "tabularius.py").write_text("", encoding="utf-8")
     (root / "logs").mkdir()
     (root / "logs" / "heartbeat.out.log").write_text("", encoding="utf-8")
+    _seed_cached_lifecycle(root)
     (root / "scripts" / "cvstos-organ.py").write_text("", encoding="utf-8")
     (root / "scripts" / "worktree-debt.py").write_text("", encoding="utf-8")
     (root / "scripts" / "dispatch-health.py").write_text("", encoding="utf-8")
@@ -111,6 +142,8 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
     monkeypatch.setattr(mod, "REPO_SURFACE_INDEX", lifecycle / "repo-surface-ledger.json")
     monkeypatch.setattr(mod, "PRODUCT_LEDGER_INDEX", lifecycle / "product-ledger.json")
     monkeypatch.setattr(mod, "VALUE_REPOS", root / "value-repos.json")
+    monkeypatch.setattr(mod, "CVSTOS_STATE", root / "logs" / "cvstos-organ-state.json")
+    monkeypatch.setattr(mod, "LIFECYCLE_PRESSURE_STATE", root / "logs" / "session-lifecycle-pressure.json")
     monkeypatch.setattr(
         mod,
         "github_profile_surface",
@@ -229,6 +262,7 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
         + "\n",
         encoding="utf-8",
     )
+    _seed_cached_lifecycle(root)
 
     monkeypatch.setattr(mod, "ROOT", root)
     monkeypatch.setattr(
@@ -239,15 +273,16 @@ def test_substrate_receipt_reports_free_space_shortfall_after_reclaim(monkeypatc
     monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
     monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
     monkeypatch.setattr(mod, "OLLAMA_MODEL_RECLAIM_LOG", root / "logs" / "reclaim-ollama-models.jsonl")
+    monkeypatch.setattr(mod, "CVSTOS_STATE", root / "logs" / "cvstos-organ-state.json")
+    monkeypatch.setattr(mod, "LIFECYCLE_PRESSURE_STATE", root / "logs" / "session-lifecycle-pressure.json")
     monkeypatch.setattr(
         mod, "disk_receipt", lambda: {"free_gib": 78.0, "used_pct": 82.0, "tmp_ok": True, "tmp_error": ""}
     )
     monkeypatch.setattr(
         mod,
         "run_command",
-        lambda *args, **kwargs: {"returncode": 0, "stdout": "ok", "stderr": "", "timed_out": False},
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("hot path must use cached lifecycle state")),
     )
-
     receipt = mod.substrate_receipt()
 
     assert receipt["status"] == mod.STATUS_ASSIGNED
@@ -281,6 +316,7 @@ def test_substrate_receipt_blocks_when_storage_pressure_needs_owner_gates(monkey
         json.dumps({"apply": True, "total_reclaimed_size": "26.6 GiB"}) + "\n",
         encoding="utf-8",
     )
+    _seed_cached_lifecycle(root)
 
     monkeypatch.setattr(mod, "ROOT", root)
     monkeypatch.setattr(mod, "PRIVATE_ROOT", private)
@@ -288,15 +324,11 @@ def test_substrate_receipt_blocks_when_storage_pressure_needs_owner_gates(monkey
     monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
     monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
     monkeypatch.setattr(mod, "OLLAMA_MODEL_RECLAIM_LOG", root / "logs" / "reclaim-ollama-models.jsonl")
+    monkeypatch.setattr(mod, "CVSTOS_STATE", root / "logs" / "cvstos-organ-state.json")
+    monkeypatch.setattr(mod, "LIFECYCLE_PRESSURE_STATE", root / "logs" / "session-lifecycle-pressure.json")
     monkeypatch.setattr(
         mod, "disk_receipt", lambda: {"free_gib": 93.0, "used_pct": 80.0, "tmp_ok": True, "tmp_error": ""}
     )
-    monkeypatch.setattr(
-        mod,
-        "run_command",
-        lambda *args, **kwargs: {"returncode": 0, "stdout": "ok", "stderr": "", "timed_out": False},
-    )
-
     receipt = mod.substrate_receipt()
 
     assert receipt["status"] == mod.STATUS_BLOCKED
@@ -311,26 +343,131 @@ def test_substrate_receipt_blocks_when_lifecycle_predicate_fails(monkeypatch, tm
     monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
     monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
     monkeypatch.setattr(mod, "OLLAMA_MODEL_RECLAIM_LOG", root / "logs" / "reclaim-ollama-models.jsonl")
+    _seed_cached_lifecycle(root, debt=1)
+    monkeypatch.setattr(mod, "CVSTOS_STATE", root / "logs" / "cvstos-organ-state.json")
+    monkeypatch.setattr(mod, "LIFECYCLE_PRESSURE_STATE", root / "logs" / "session-lifecycle-pressure.json")
     monkeypatch.setattr(
         mod, "disk_receipt", lambda: {"free_gib": 250.0, "used_pct": 40.0, "tmp_ok": True, "tmp_error": ""}
     )
-
-    def fake_run(args, **kwargs):
-        script = str(args[1]) if len(args) > 1 else ""
-        return {
-            "returncode": 1 if script.endswith("worktree-debt.py") else 0,
-            "stdout": "",
-            "stderr": "debt over cap" if script.endswith("worktree-debt.py") else "ok",
-            "timed_out": False,
-        }
-
-    monkeypatch.setattr(mod, "run_command", fake_run)
 
     receipt = mod.substrate_receipt()
 
     assert receipt["status"] == mod.STATUS_ASSIGNED
     assert receipt["verdict"] == "substrate lifecycle predicate is failing"
     assert receipt["evidence"]["lifecycle"]["worktree_debt"]["ok"] is False
+    assert receipt["evidence"]["lifecycle"]["worktree_debt"]["debt"] == 1
+
+
+def test_lifecycle_cache_stays_fresh_between_heartbeat_refreshes(monkeypatch, tmp_path):
+    mod = _load("always_working_lifecycle_cadence_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    _seed_cached_lifecycle(root)
+    monkeypatch.setattr(mod, "CVSTOS_STATE", root / "logs" / "cvstos-organ-state.json")
+    monkeypatch.setattr(mod, "LIFECYCLE_PRESSURE_STATE", root / "logs" / "session-lifecycle-pressure.json")
+    monkeypatch.setenv("LIMEN_LOOP_MAX", "100")
+    monkeypatch.setenv("LIMEN_BEAT_CVSTOS", "4")
+    monkeypatch.setenv("LIMEN_BEAT_DRAIN", "3")
+    monkeypatch.setenv("LIMEN_LIFECYCLE_PRESSURE_THROTTLE", "50")
+    monkeypatch.setenv("LIMEN_RECLAIM_TIMEOUT", "20")
+
+    # CVSTOS: 4*100+20=420s. Pressure: throttle 50+3*100+20=370s.
+    now = time.time()
+    os.utime(mod.CVSTOS_STATE, (now - 419, now - 419))
+    os.utime(mod.LIFECYCLE_PRESSURE_STATE, (now - 369, now - 369))
+
+    receipt = mod.substrate_lifecycle_receipt()
+
+    assert receipt["cvstos"]["freshness_window_seconds"] == 420
+    assert receipt["worktree_debt"]["freshness_window_seconds"] == 370
+    assert receipt["predicate_ok"] is True
+
+
+def test_lifecycle_cache_missing_invalid_or_past_scheduler_bound_fails_closed(monkeypatch, tmp_path):
+    mod = _load("always_working_lifecycle_stale_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    _seed_cached_lifecycle(root)
+    monkeypatch.setattr(mod, "CVSTOS_STATE", root / "logs" / "cvstos-organ-state.json")
+    monkeypatch.setattr(mod, "LIFECYCLE_PRESSURE_STATE", root / "logs" / "session-lifecycle-pressure.json")
+    monkeypatch.setenv("LIMEN_LOOP_MAX", "100")
+    monkeypatch.setenv("LIMEN_BEAT_CVSTOS", "4")
+    monkeypatch.setenv("LIMEN_BEAT_DRAIN", "3")
+    monkeypatch.setenv("LIMEN_LIFECYCLE_PRESSURE_THROTTLE", "50")
+    monkeypatch.setenv("LIMEN_RECLAIM_TIMEOUT", "20")
+
+    now = time.time()
+    os.utime(mod.LIFECYCLE_PRESSURE_STATE, (now - 371, now - 371))
+    stale = mod.substrate_lifecycle_receipt()
+    assert stale["worktree_debt"]["fresh"] is False
+    assert stale["predicate_ok"] is False
+
+    # A fresh file with an incomplete producer schema cannot manufacture exact-zero authority.
+    mod.LIFECYCLE_PRESSURE_STATE.write_text(json.dumps({"worktrees": {"debt": 0}}), encoding="utf-8")
+    invalid = mod.substrate_lifecycle_receipt()
+    assert invalid["worktree_debt"]["fresh"] is True
+    assert invalid["worktree_debt"]["valid"] is False
+    assert invalid["predicate_ok"] is False
+
+    _seed_cached_lifecycle(root)
+    mod.CVSTOS_STATE.write_text(
+        json.dumps({"at_factory": True, "open_invariants": ["contradiction"], "worktree_has_debt": False}),
+        encoding="utf-8",
+    )
+    invalid_cvstos = mod.substrate_lifecycle_receipt()
+    assert invalid_cvstos["cvstos"]["fresh"] is True
+    assert invalid_cvstos["cvstos"]["valid"] is False
+    assert invalid_cvstos["predicate_ok"] is False
+
+    mod.LIFECYCLE_PRESSURE_STATE.unlink()
+    missing = mod.substrate_lifecycle_receipt()
+    assert missing["worktree_debt"]["fresh"] is False
+    assert missing["predicate_ok"] is False
+
+
+def test_lifecycle_cache_sums_every_authoritative_reapable_reason(monkeypatch, tmp_path):
+    mod = _load("always_working_lifecycle_reapable_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    _seed_cached_lifecycle(root)
+    pressure_path = root / "logs" / "session-lifecycle-pressure.json"
+    pressure_path.write_text(
+        json.dumps(
+            {
+                "worktrees": {
+                    "debt": 0,
+                    "complete": True,
+                    "by_reason": {
+                        "clean+pushed+idle": 1,
+                        "receipt-remote-merged+clean+idle": 2,
+                    },
+                    "error": "",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "CVSTOS_STATE", root / "logs" / "cvstos-organ-state.json")
+    monkeypatch.setattr(mod, "LIFECYCLE_PRESSURE_STATE", pressure_path)
+
+    receipt = mod.substrate_lifecycle_receipt()
+
+    assert receipt["worktree_debt"]["reapable"] == 3
+    assert receipt["worktree_debt"]["reapable_by_reason"] == {
+        "clean+merged+idle": 0,
+        "clean+pushed+idle": 1,
+        "receipt-remote-merged+clean+idle": 2,
+    }
+    assert receipt["worktree_debt"]["ok"] is False
+    assert receipt["predicate_ok"] is False
+
+
+def test_heartbeat_produces_lifecycle_pressure_off_dispatch_hot_path():
+    heartbeat = (ROOT / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+
+    assert 'if [ "${DRAIN_VOICE_DUE:-0}" = "1" ]; then' in heartbeat
+    assert 'scripts/session-lifecycle-pressure.py" --write' in heartbeat
+    assert '--throttle "${LIMEN_LIFECYCLE_PRESSURE_THROTTLE:-1800}"' in heartbeat
+    assert heartbeat.index('scripts/reclaim-worktrees.py" "${reclaim_args[@]}"') < heartbeat.index(
+        'scripts/session-lifecycle-pressure.py" --write'
+    )
 
 
 def test_profile_receipt_accepts_computed_laurel_positioning(monkeypatch, tmp_path):

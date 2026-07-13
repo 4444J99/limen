@@ -5,7 +5,7 @@ Update verified 2026-06-28:
 - Live launchd heartbeat is running and `python3 scripts/watchdog.py --dry-run` reports healthy.
 - Live heartbeat is still using SYNC dispatch. The installed plist now records `LIMEN_DISPATCH_ASYNC=0`; the currently loaded launchd job has not been reloaded since that file repair.
 - Async orchestration is implemented and tested. `pytest -q cli/tests/test_async_dispatch.py` passes after fixing stale-worker reaping so async-reserved tasks reopen when their detached worker dies.
-- `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --max 12 --dry-run` reports no current async workers and no launchable async tasks.
+- `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --per-lane 3 --dry-run` reports current async workers and launchable tasks using the live host-derived local ceiling.
 
 The heartbeat (`scripts/heartbeat-loop.sh`, launchd `com.limen.heartbeat`) runs one polyrhythmic
 beat repeatedly: drain → heal → feed (mine) → route/rebalance → **dispatch** → reconcile → web.
@@ -26,7 +26,7 @@ immediately**.
   `logs/async-runs/<id>.result.json`; never touches tasks.yaml.
 - `dispatch-async.py` (orchestrator): harvest applies results under the queue-lock; reserve marks
   dispatched + writes a `<id>__<agent>.running` marker + `Popen(start_new_session)` the worker.
-- Local concurrency = `LIMEN_ASYNC_MAX` (12); local fan-out per lane =
+- Local concurrency = `LIMEN_ASYNC_MAX` (derived from live host CPU count); local fan-out per lane =
   `LIMEN_ASYNC_LOCAL_PER_LANE` / `--local-per-lane`. Remote lanes such as Jules are not local CPU
   workers: their burst size comes from `--per-lane` plus live provider runway in `logs/usage.json`,
   and they do not consume the local host slot cap. Per-agent in-flight is counted from

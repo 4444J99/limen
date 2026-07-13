@@ -51,11 +51,11 @@ parameters:
     note: "Repo home is a decision, not a constant. Extracting later is a clean git subtree."
 
   LIMEN_ASYNC_MAX:
-    default: "clamp(hw.ncpu, 4, 12) — derived at plist generation, override only via env"
+    default: "hw.ncpu — derived at plist generation, override only via env"
     env: LIMEN_ASYNC_MAX
     self_update: none
     owner: dispatch
-    note: "Global concurrency ceiling for local async dispatch workers. 2026-07-08 incident: a manually pinned 1 in the live plist starved every local lane for a night (12 PRs vs 23-40/day baseline) while budget sat 493/600 unused. The cap is decided by gen-launchd-plist.sh's derivation, never by hand; the vitals-pressure gate is the runtime backpressure."
+    note: "Host-sized concurrency ceiling for local async dispatch workers. It derives from live CPU count with no literal fleet cap; per-lane limits prevent monopolization and VITALS supplies runtime memory backpressure. Remote lanes do not consume it. A manual override remains an escape hatch."
   LIMEN_ASYNC_LOCAL_PER_LANE:
     default: "$LIMEN_LOCAL_LIMIT"
     env: LIMEN_ASYNC_LOCAL_PER_LANE
@@ -134,13 +134,13 @@ parameters:
     env: LIMEN_VITALS_CRIT
     self_update: none
     owner: vitals
-    note: "At >=critical (4): idle beat (skip dispatch-heavy work) AND shed running discretionary load (e.g. ollama) before jetsam escalates."
+    note: "At >=critical (4): block new local checkout work and shed running discretionary load (e.g. ollama) before jetsam escalates; off-box provider lanes remain eligible."
   VITALS_THROTTLE_DIVISOR:
     default: 2
     env: LIMEN_VITALS_THROTTLE_DIVISOR
     self_update: none
     owner: vitals
-    note: "Divisor applied to LIMEN_ASYNC_MAX while memory pressure is at warn (floor 1). Graduated backpressure: throttle at warn, idle+shed only at critical."
+    note: "Divisor applied to both async local slots and synchronous local workers while memory pressure is at warn (floor 1). At critical, local admission sheds while off-box lanes continue."
   VITALS_HEAVY_SURFACE_LIMIT:
     default: 1
     env: LIMEN_VITALS_HEAVY_LIMIT
@@ -532,6 +532,30 @@ parameters:
     self_update: none
     owner: continuity
     note: "DATA_ONLY push guard (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main). When on (default), the autonomic direct-push lanes (scripts/capture.sh, scripts/continuation-beat.py) refuse to stage SOURCE (code/config that belongs behind pr-gate) onto a repo's `main` when that repo has .github/workflows/pr-gate.yml — so no uncommitted .py in the live checkout ever reaches protected main un-CI'd. Refused source is left on disk (reversible) and surfaced; route it via PR. `off` disables the guard. Non-main branches and ungated repos are unaffected either way."
+  LIMEN_RECLAIM:
+    default: "1"
+    env: LIMEN_RECLAIM
+    self_update: none
+    owner: continuity
+    note: "Master live-enable switch for the heartbeat worktree reaper. Worktree admission requires the registered live value 1; disabling reclaim blocks new local worktree creation while remote lanes continue."
+  LIMEN_RECLAIM_MAX:
+    default: 50
+    env: LIMEN_RECLAIM_MAX
+    self_update: none
+    owner: continuity
+    note: "Maximum accepted worktree roots physically removed per reclaim-worktrees apply run. Additional eligible roots are durably listed in deferred_over_cap; a nonempty deferred list blocks new local worktree creation until the next drain."
+  LIMEN_BEAT_DRAIN:
+    default: 3
+    env: LIMEN_BEAT_DRAIN
+    self_update: none
+    owner: continuity
+    note: "Heartbeat voice cadence, in beats, for drain and its worktree-reclaim pass. Combined with LIMEN_LOOP_MAX and LIMEN_RECLAIM_TIMEOUT to derive the worst-case durable reaper receipt freshness window."
+  LIMEN_LOOP_MAX:
+    default: 1800
+    env: LIMEN_LOOP_MAX
+    self_update: none
+    owner: continuity
+    note: "Maximum heartbeat-loop backoff in seconds. Worktree admission uses this live scheduler bound with LIMEN_BEAT_DRAIN and LIMEN_RECLAIM_TIMEOUT; it is not a worktree-count cap."
   LIMEN_RECLAIM_GENERATED:
     default: "1"
     env: LIMEN_RECLAIM_GENERATED
@@ -2031,17 +2055,17 @@ parameters:
     owner: limen-daemon
     note: "When 1, scripts/drain.sh passes --apply to reclaim-worktrees.py. The reaper still refuses dirty, unique-unpushed, unmerged, active, or live/self roots. Set 0 for preview-only operation."
   LIMEN_WORKTREE_DEBT_GATE:
-    default: "1"               # ON — debt suppresses routine generated build-out, not recovery work
+    default: "1"               # ON — per-candidate worktree custody admission active
     env: LIMEN_WORKTREE_DEBT_GATE
     self_update: none
     owner: limen-daemon
-    note: "When enabled, generate-backlog.py and dispatch selection suppress routine generated build-out if preserved worktree debt exceeds LIMEN_WORKTREE_DEBT_MAX. Explicit targeted/recovery work still runs."
-  LIMEN_WORKTREE_DEBT_MAX:
-    default: 12                # above this, the fleet must metabolize existing work before making more
-    env: LIMEN_WORKTREE_DEBT_MAX
+    note: "Master switch for per-candidate marginal worktree admission (limen.worktree_debt.take_admission_snapshot). When ON, a NEW LOCAL worktree is admitted only when the host can take custody — free disk >= LIMEN_DISK_FLOOR_GIB, VITALS not shedding, and, whenever lifecycle targets exist, a fresh heartbeat reaper apply receipt proves the inventory is draining. Remote lanes are never gated. There is NO tolerated debt count; completion is debt == 0. Set 0 as the documented operator override to admit all local work regardless of custody."
+  LIMEN_RECLAIM_EVERY_MIN:
+    default: 30                # reclaim-worktrees self-throttle; input to scheduler-derived freshness
+    env: LIMEN_RECLAIM_EVERY_MIN
     self_update: none
     owner: limen-daemon
-    note: "Maximum preserved dirty/unique-unpushed/not-Git worktree roots tolerated before routine generated build-out pauses. Keeps prompt-started work visible and prevents the conductor from outrunning its own closeout lifecycle."
+    note: "Minutes between real reclaim-worktrees.py --apply passes (self-throttle so it is cheap to call every beat). Worktree admission derives freshness as max(2 * this cadence, LIMEN_BEAT_DRAIN * LIMEN_LOOP_MAX / 60 + LIMEN_RECLAIM_TIMEOUT / 60); a stale or incoherent applied receipt blocks new local worktree creation until the reaper drains."
   LIMEN_WORKTREE_REAPABLE_MAX:
     default: 0
     env: LIMEN_WORKTREE_REAPABLE_MAX

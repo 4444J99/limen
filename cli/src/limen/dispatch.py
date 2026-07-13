@@ -1,4 +1,5 @@
 import json
+import hashlib
 import math
 import os
 import re
@@ -9,14 +10,19 @@ import subprocess
 import sys
 import threading
 import time
+from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, Iterator, TypedDict
+from urllib.parse import quote, urlsplit
+
+import fcntl
 
 from limen import census
 from limen.capacity import (
     DEFAULT_GITHUB_ACTIONS_WORKFLOW,
+    LOCAL_CHECKOUT_AGENTS,
     canonical_agent,
     capacity_census,
     format_capacity_census,
@@ -56,8 +62,14 @@ from limen.model_selection import (  # the shared model vocabulary — also used
     _guard_fable_model_pin,
     _resolve_claude_model,
 )
-from limen.worktree_debt import worktree_debt_exceeded
-from limen.worktree_roots import default_worktrees_root
+from limen.worktree_debt import (
+    IMPACT_DEBT_CREATING,
+    IMPACT_REMOTE,
+    WorktreeAdmissionSnapshot,
+    admission_blocks,
+    take_admission_snapshot,
+)
+from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
 
 
 def _int_or_default(raw: object, default: int) -> int:
@@ -1110,20 +1122,324 @@ def _routine_generated_buildout_allowed(task: Task) -> bool:
     return bool(task.repo and task.repo in allowed)
 
 
-def _worktree_debt_gate() -> tuple[bool, str]:
-    if os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") != "1":
-        return False, ""
+# Marginal worktree-impact classification. Locality is the ONLY axis, and its authority is
+# limen.capacity.LOCAL_CHECKOUT_AGENTS (census ``local_checkout``) — never a hand-kept lane set.
+# EVERY local-checkout execution creates a fresh isolated worktree, even cleanup/receipt/substrate
+# work, so there is no label/workstream that makes a local run non-debt-creating (accepted reaper
+# drain happens on the heartbeat, OUTSIDE agent dispatch). Impact is therefore binary.
+def _classify_worktree_impact(task: Task, agent: str | None) -> str:
+    """Marginal impact of admitting THIS task: REMOTE off-box, or DEBT_CREATING (+1 local worktree).
+
+    ``task`` is accepted for call-site symmetry; locality alone decides the class.
+    """
+    if agent and canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS:
+        return IMPACT_DEBT_CREATING
+    return IMPACT_REMOTE
+
+
+def _worktree_admission_snapshot() -> WorktreeAdmissionSnapshot:
     try:
-        exceeded, report, limit = worktree_debt_exceeded()
+        return take_admission_snapshot()
     except Exception:
-        return False, ""
-    if not exceeded:
-        return False, ""
-    return (
-        True,
-        f"{report['debt']} preserved worktree roots exceed cap {limit}; "
-        "skipping routine generated build-out this dispatch",
+        # Fail CLOSED for new local creation on any snapshot fault; remote continues.
+        return {
+            "active": True,
+            "block_new_local": True,
+            "reason": "worktree admission snapshot failed — failing closed for new local worktree",
+            "resource_blocked": True,
+            "vitals_shed": False,
+            "reaper_blocked": False,
+            "free_gib": None,
+            "floor_gib": None,
+            "reserved_gib": 0.0,
+            "room_gib": None,
+            "targets_present": None,
+            "debt": None,
+            "vitals_action": "ok",
+        }
+
+
+def _admission_runtime_dir() -> Path:
+    return Path(os.environ.get("LIMEN_ROOT", ".")) / "logs" / "dispatch-admission"
+
+
+@contextmanager
+def _machine_admission_lock() -> Iterator[None]:
+    """Serialize the short read/decide/reserve admission transaction across processes.
+
+    The lock is deliberately independent of ``tasks.yaml``.  Callers may hold the queue lock while
+    they persist board reservations, but neither lock is held while an agent executes.  Durable
+    lease files bridge the gap from selection to an async running marker or synchronous worktree
+    birth, so a second dispatcher cannot spend the same slot or disk room in that gap.
+    """
+    runtime = _admission_runtime_dir()
+    runtime.mkdir(parents=True, exist_ok=True)
+    with (runtime / ".lock").open("a+") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def _admission_lease_path(task_id: str, *, pid: int | None = None) -> Path:
+    owner = os.getpid() if pid is None else pid
+    digest = hashlib.sha256(f"{owner}\0{task_id}".encode()).hexdigest()[:24]
+    return _admission_runtime_dir() / f"{digest}.json"
+
+
+def _pid_is_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _active_admission_leases() -> list[dict[str, Any]]:
+    """Read live leases and reap only receipts whose owning process is confirmed absent."""
+    runtime = _admission_runtime_dir()
+    leases: list[dict[str, Any]] = []
+    for path in runtime.glob("*.json"):
+        try:
+            lease = json.loads(path.read_text(encoding="utf-8"))
+            pid = int(lease["pid"])
+            task_id = str(lease["task_id"])
+            reserved_gib = float(lease.get("reserved_gib", 0.0))
+            if not task_id or not math.isfinite(reserved_gib) or reserved_gib < 0:
+                raise ValueError("invalid admission lease")
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            # Malformed state is not silently discarded: count one slot and infinite disk below by
+            # returning a fail-closed sentinel.  An operator can inspect the named receipt.
+            leases.append({"path": str(path), "pid": None, "task_id": path.stem, "reserved_gib": math.inf})
+            continue
+        if not _pid_is_alive(pid):
+            path.unlink(missing_ok=True)
+            continue
+        lease["path"] = str(path)
+        lease["pid"] = pid
+        lease["task_id"] = task_id
+        lease["reserved_gib"] = reserved_gib
+        leases.append(lease)
+    return leases
+
+
+def _running_local_marker_state() -> tuple[int, float]:
+    total = 0
+    reserved_gib = 0.0
+    run_dir = Path(os.environ.get("LIMEN_ROOT", ".")) / "logs" / "async-runs"
+    for marker in run_dir.glob("*.running"):
+        stem = marker.name[: -len(".running")]
+        stem_agent = stem.rsplit("__", 1)[-1] if "__" in stem else ""
+        marker_agents = {canonical_agent(stem_agent)} if stem_agent else set()
+        marker_reserved = math.inf
+        try:
+            payload = json.loads(marker.read_text(encoding="utf-8"))
+            payload_agent = str(payload.get("agent") or "")
+            if payload_agent:
+                marker_agents.add(canonical_agent(payload_agent))
+            # Markers written before disk reservations were added cannot prove how much checkout
+            # room they promised. Preserve that unknown as infinite, matching malformed admission
+            # leases, until the worker records an explicit finite value (zero only after birth).
+            raw_reserved = payload.get("reserved_gib", math.inf)
+            if isinstance(raw_reserved, bool):
+                marker_reserved = math.inf
+            else:
+                marker_reserved = float(raw_reserved)
+                if not math.isfinite(marker_reserved) or marker_reserved < 0:
+                    marker_reserved = math.inf
+        except (OSError, ValueError, json.JSONDecodeError):
+            pass
+        # Either durable identity is enough to establish local custody. A malformed payload cannot
+        # relabel a filename-owned local marker as remote and evade its slot/disk promise.
+        if marker_agents & LOCAL_CHECKOUT_AGENTS:
+            total += 1
+            reserved_gib += marker_reserved
+    return total, reserved_gib
+
+
+def _run_parallel_batch(
+    picked: list[tuple[str, str]],
+    run_one: Any,
+    max_local_workers: int,
+) -> list[tuple[str, str, bool | str]]:
+    """Run local work under the host ceiling while remote work starts independently.
+
+    Selection has already bounded remote work by live provider runway and lane limits. Giving those
+    off-box calls their own submission pool prevents a saturated or slow local executor from
+    becoming a global fleet cap. The remote pool is therefore derived from this batch's actual
+    remote selections rather than a fixed machine constant.
+    """
+    local = [item for item in picked if canonical_agent(item[0]) in LOCAL_CHECKOUT_AGENTS]
+    remote = [item for item in picked if canonical_agent(item[0]) not in LOCAL_CHECKOUT_AGENTS]
+    local_executor = ThreadPoolExecutor(max_workers=max(1, max_local_workers)) if local else None
+    remote_executor = ThreadPoolExecutor(max_workers=len(remote)) if remote else None
+    futures = []
+    try:
+        for item in picked:
+            executor = local_executor if canonical_agent(item[0]) in LOCAL_CHECKOUT_AGENTS else remote_executor
+            if executor is None:  # pragma: no cover - partition invariant
+                raise RuntimeError(f"no executor for dispatch lane {item[0]}")
+            futures.append(executor.submit(run_one, item))
+        return [future.result() for future in futures]
+    finally:
+        if local_executor is not None:
+            local_executor.shutdown(wait=True)
+        if remote_executor is not None:
+            remote_executor.shutdown(wait=True)
+
+
+def _local_dispatch_ceiling() -> int:
+    """Current machine-local worker authority, derived from runtime override or live host CPUs."""
+    host_default = max(1, os.cpu_count() or 1)
+    return max(0, _env_int("LIMEN_ASYNC_MAX", host_default))
+
+
+def _snapshot_with_machine_reservations(
+    snapshot: WorktreeAdmissionSnapshot | None = None,
+) -> tuple[WorktreeAdmissionSnapshot, int]:
+    """Fold durable cross-process leases into a fresh resource snapshot.
+
+    Must be called while ``_machine_admission_lock`` is held.  ``slot_count`` includes both leases
+    (selected but not yet represented elsewhere) and async running markers.
+    """
+    snap = snapshot or _worktree_admission_snapshot()
+    leases = _active_admission_leases()
+    lease_gib = sum(float(lease.get("reserved_gib", math.inf)) for lease in leases)
+    marker_slots, marker_gib = _running_local_marker_state()
+    promised_gib = lease_gib + marker_gib
+    if snap.get("active"):
+        current = float(snap.get("reserved_gib", 0.0))
+        snap["reserved_gib"] = current + promised_gib
+        room = snap.get("room_gib")
+        if isinstance(room, bool) or room is None or not math.isfinite(promised_gib):
+            snap["room_gib"] = None
+        else:
+            snap["room_gib"] = max(0.0, float(room) - promised_gib)
+    return snap, len(leases) + marker_slots
+
+
+def _write_machine_admission_lease(task: Task, agent: str, reserved_gib: float) -> None:
+    if _classify_worktree_impact(task, agent) != IMPACT_DEBT_CREATING:
+        return
+    path = _admission_lease_path(task.id)
+    payload = {
+        "schema": "limen.dispatch_admission_lease.v1",
+        "pid": os.getpid(),
+        "task_id": task.id,
+        "agent": canonical_agent(agent),
+        "reserved_gib": reserved_gib,
+        "phase": "selected",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    tmp = path.with_suffix(f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _mark_machine_admission_born(task_id: str) -> None:
+    """Convert disk reservation to a slot-only lease after the worktree exists on disk."""
+    path = _admission_lease_path(task_id)
+    with _machine_admission_lock():
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError):
+            payload = None
+        if payload is not None:
+            payload["reserved_gib"] = 0.0
+            payload["phase"] = "worktree-born"
+            payload["born_at"] = datetime.now(timezone.utc).isoformat()
+            tmp = path.with_suffix(f".{os.getpid()}.tmp")
+            tmp.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+            os.replace(tmp, path)
+        # Async selection has already transferred slot authority to its running marker. The marker
+        # also carries pending checkout GiB until this exact birth point; once the filesystem
+        # reflects the worktree, keep the marker slot but zero its disk promise.
+        run_dir = Path(os.environ.get("LIMEN_ROOT", ".")) / "logs" / "async-runs"
+        for marker in run_dir.glob("*.running"):
+            try:
+                marker_payload = json.loads(marker.read_text(encoding="utf-8"))
+            except (OSError, ValueError, json.JSONDecodeError):
+                continue
+            if str(marker_payload.get("task_id") or "") != task_id:
+                continue
+            marker_payload["reserved_gib"] = 0.0
+            marker_tmp = marker.with_suffix(f".{os.getpid()}.tmp")
+            marker_tmp.write_text(json.dumps(marker_payload, sort_keys=True) + "\n", encoding="utf-8")
+            os.replace(marker_tmp, marker)
+
+
+def _machine_admission_reserved_gib(task_id: str) -> float:
+    try:
+        payload = json.loads(_admission_lease_path(task_id).read_text(encoding="utf-8"))
+        value = float(payload.get("reserved_gib", 0.0))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return 0.0
+    return value if math.isfinite(value) and value >= 0 else 0.0
+
+
+def _transfer_machine_admission_owner(task_id: str, pid: int, phase: str) -> None:
+    """Keep a lease live when an async child exists but its running marker could not be written."""
+    path = _admission_lease_path(task_id)
+    with _machine_admission_lock():
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError):
+            return
+        payload["pid"] = pid
+        payload["phase"] = phase
+        payload["transferred_at"] = datetime.now(timezone.utc).isoformat()
+        transferred = _admission_lease_path(task_id, pid=pid)
+        tmp = transferred.with_suffix(f".{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+        os.replace(tmp, transferred)
+        if transferred != path:
+            path.unlink(missing_ok=True)
+
+
+def _release_machine_admission(task_id: str) -> None:
+    with _machine_admission_lock():
+        _admission_lease_path(task_id).unlink(missing_ok=True)
+
+
+def _worktree_admission_for_task(
+    task: Task,
+    agent: str,
+    snapshot: WorktreeAdmissionSnapshot,
+    *,
+    reserve: bool = False,
+    machine_lease: bool = False,
+) -> tuple[bool, str]:
+    """Per-candidate marginal live admission → (blocked, reason).
+
+    Remote work never resolves or reserves a local checkout. Local work fails closed when its
+    live tracked-tree requirement is unavailable. A missing local clone is measured from GitHub's
+    current repository metadata and recursive default-branch tree before hydration. Reservation
+    mutates only this dispatch cycle's shared snapshot, and callers request it only at final
+    selection time.
+    """
+    impact = _classify_worktree_impact(task, agent)
+    checkout_gib = (
+        _local_admission_requirement_gib(task) if impact == IMPACT_DEBT_CREATING and snapshot.get("active") else None
     )
+    blocked, reason = admission_blocks(impact, snapshot, checkout_gib, reserve=reserve)
+    if not blocked and reserve and machine_lease and impact == IMPACT_DEBT_CREATING:
+        # The explicit operator override disables the disk gate but never disables machine-wide
+        # slot serialization. Its lease therefore carries zero disk room and still consumes a slot.
+        _write_machine_admission_lease(task, agent, checkout_gib or 0.0)
+    return blocked, reason
+
+
+def _worktree_debt_gate() -> tuple[bool, str]:
+    """Cycle-level gate → (block_new_local, reason) for LOCAL lanes.
+
+    Retained for the async path and for tests that patch it directly. Folds resource + VITALS +
+    reaper truth, never a fixed worktree count.
+    """
+    snap = _worktree_admission_snapshot()
+    return bool(snap.get("block_new_local")), snap.get("reason", "")
 
 
 _PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4}
@@ -1800,14 +2116,592 @@ def _limen_registry_promotion_task(task: Task) -> bool:
     return str(task.id or "").startswith("DISCOVER-") and "value-repos.json" in text
 
 
+_GITHUB_REPO_PART_RE = re.compile(r"[a-z0-9][a-z0-9_.-]*", re.IGNORECASE)
+
+
+def _github_repo_identity(repo: str | None) -> str | None:
+    """Return a canonical lower-case GitHub ``owner/repo`` identity.
+
+    Task producers use a mix of GitHub slugs and clone URLs.  Parse only the
+    unambiguous GitHub forms we support; never let an arbitrary URL containing
+    ``github.com`` masquerade as an owner repository.
+    """
+    raw = str(repo or "").strip()
+    if not raw:
+        return None
+
+    path: str | None = None
+    lowered = raw.lower()
+    if lowered.startswith("github.com/"):
+        path = raw[len("github.com/") :]
+    elif re.match(r"^git@github\.com:", raw, re.IGNORECASE):
+        path = re.sub(r"^git@github\.com:", "", raw, count=1, flags=re.IGNORECASE)
+    elif "://" in raw:
+        try:
+            parsed = urlsplit(raw)
+            port = parsed.port
+        except ValueError:
+            return None
+        if parsed.scheme.lower() not in {"https", "ssh"} or (parsed.hostname or "").lower() != "github.com":
+            return None
+        if port is not None or parsed.query or parsed.fragment:
+            return None
+        if parsed.scheme.lower() == "https" and (parsed.username is not None or parsed.password is not None):
+            return None
+        if parsed.scheme.lower() == "ssh" and (parsed.username or "git").lower() != "git":
+            return None
+        if not parsed.path.startswith("/"):
+            return None
+        path = parsed.path[1:]
+    else:
+        bare = raw.rstrip("/")
+        if bare.count("/") == 1:
+            path = bare
+
+    if path is None:
+        return None
+    path = path.rstrip("/")
+    if path.lower().endswith(".git"):
+        path = path[:-4]
+    parts = path.split("/")
+    if len(parts) != 2 or not all(_GITHUB_REPO_PART_RE.fullmatch(part) for part in parts):
+        return None
+    return "/".join(part.lower() for part in parts)
+
+
+def _local_repo_candidate(repo: str | None) -> Path | None:
+    raw = str(repo or "").strip()
+    if raw not in {".", ".."} and not raw.startswith(("~/", "/", "./", "../")):
+        return None
+    try:
+        path = Path(raw).expanduser().resolve()
+    except OSError:
+        return None
+    return path if path.is_dir() and (path / ".git").exists() else None
+
+
+def _git_common_dir(path: Path) -> Path | None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(path), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0 or not result.stdout.strip():
+        return None
+    common = Path(result.stdout.strip())
+    if not common.is_absolute():
+        common = path / common
+    try:
+        return common.resolve()
+    except OSError:
+        return None
+
+
+def _local_repo_matches(repo: str | None, identity: str) -> bool:
+    path = _local_repo_candidate(repo)
+    if path is None:
+        return False
+    if _github_repo_identity(_github_slug_from_local_repo(path)) == identity:
+        return True
+    if identity != "organvm/limen":
+        return False
+
+    roots = {
+        Path(raw).expanduser().resolve()
+        for raw in (
+            os.environ.get("LIMEN_ROOT"),
+            os.environ.get("LIMEN_LIVE_ROOT"),
+            str(Path.home() / "Workspace" / "limen"),
+        )
+        if raw
+    }
+    if path in roots:
+        return True
+    common = _git_common_dir(path)
+    if common is None:
+        return False
+    return any(root.is_dir() and _git_common_dir(root) == common for root in roots)
+
+
 def _limen_repo_task(task: Task) -> bool:
     """Limen-root PR repair has repeatedly triggered prohibited broad local checks."""
-    return str(task.repo or "").lower() == "organvm/limen"
+    return _github_repo_identity(task.repo) == "organvm/limen" or _local_repo_matches(task.repo, "organvm/limen")
 
 
 def _organvm_engine_task(task: Task) -> bool:
     """Claude has repeatedly used full pytest on organvm-engine PR repair tasks."""
-    return str(task.repo or "").lower() == "organvm/organvm-engine"
+    identity = "organvm/organvm-engine"
+    return _github_repo_identity(task.repo) == identity or _local_repo_matches(task.repo, identity)
+
+
+_SHELL_COMMANDS = {"bash", "dash", "fish", "ksh", "sh", "zsh"}
+_COMMAND_SEPARATORS = {";", "&&", "||", "|", "&"}
+_RAW_BROAD_VERIFICATION_RE = re.compile(r"verify-whole|--full", re.IGNORECASE)
+_SUBSTITUTED_VERIFICATION_RE = re.compile(r"pytest|verify\.py|verify-whole|--full", re.IGNORECASE)
+_RECEIPT_COMMANDS = {"test", "[", "[[", "gh", "git", "jq", "cmp", "diff", "grep", "rg", "true"}
+_GIT_READ_COMMANDS = {
+    "cat-file",
+    "describe",
+    "diff",
+    "for-each-ref",
+    "grep",
+    "log",
+    "ls-files",
+    "ls-remote",
+    "ls-tree",
+    "merge-base",
+    "name-rev",
+    "rev-list",
+    "rev-parse",
+    "show",
+    "show-ref",
+    "status",
+}
+_GH_READ_ACTIONS = {
+    "issue": {"list", "status", "view"},
+    "pr": {"checks", "diff", "list", "status", "view"},
+    "repo": {"list", "view"},
+    "run": {"list", "view", "watch"},
+    "search": {"code", "commits", "issues", "prs", "repos"},
+}
+
+
+def _receipt_segment_safe(segment: list[str]) -> bool:
+    if not segment:
+        return False
+    command = Path(segment[0]).name.lower()
+    if command not in _RECEIPT_COMMANDS:
+        return False
+    lowered = [token.lower() for token in segment]
+    if command == "gh":
+        if len(lowered) < 2:
+            return False
+        if lowered[1] == "api":
+            mutating_flags = {"-f", "--field", "--input", "--method", "--raw-field", "-x"}
+            return not any(token in mutating_flags or token.startswith("--method=") for token in lowered[2:])
+        if lowered[1] == "status":
+            return True
+        return len(lowered) >= 3 and lowered[2] in _GH_READ_ACTIONS.get(lowered[1], set())
+    if command == "git":
+        if len(lowered) < 2:
+            return False
+        denied_options = {
+            "--config-env",
+            "--exec-path",
+            "--ext-diff",
+            "--git-dir",
+            "--no-pager",
+            "--open-files-in-pager",
+            "--output",
+            "--paginate",
+            "--textconv",
+            "--work-tree",
+        }
+        if any(
+            token in denied_options or any(token.startswith(f"{option}=") for option in denied_options)
+            for token in lowered[2:]
+        ):
+            return False
+        subcommand = lowered[1]
+        if subcommand == "branch":
+            if lowered[2:] == ["--show-current"]:
+                return True
+            return (
+                len(lowered) >= 3 and lowered[2] == "--list" and all(not token.startswith("-") for token in lowered[3:])
+            )
+        if subcommand == "remote":
+            if lowered[2:] == ["-v"]:
+                return True
+            if len(lowered) < 4 or lowered[2] not in {"get-url", "show"}:
+                return False
+            allowed_options = {"--all", "--push"} if lowered[2] == "get-url" else {"-n"}
+            names = [token for token in lowered[3:] if not token.startswith("-")]
+            return len(names) == 1 and all(
+                not token.startswith("-") or token in allowed_options for token in lowered[3:]
+            )
+        if subcommand == "symbolic-ref":
+            allowed_options = {"-q", "--quiet", "--short", "--no-recurse"}
+            refs = [token for token in lowered[2:] if not token.startswith("-")]
+            return len(refs) == 1 and all(
+                not token.startswith("-") or token in allowed_options for token in lowered[2:]
+            )
+        return subcommand in _GIT_READ_COMMANDS
+    return True
+
+
+def _has_unquoted_redirection(command: str) -> bool:
+    quote: str | None = None
+    index = 0
+    while index < len(command):
+        char = command[index]
+        if char == "\\" and quote != "'":
+            index += 2
+            continue
+        if char in {"'", '"'}:
+            if quote is None:
+                quote = char
+            elif quote == char:
+                quote = None
+            index += 1
+            continue
+        if quote is None and char in {"<", ">"}:
+            return True
+        index += 1
+    return False
+
+
+def _receipt_substitution_safe(content: str) -> bool:
+    """Validate a command substitution as read-only receipt/assertion work."""
+    if (
+        "$(" in content
+        or _has_unquoted_redirection(content)
+        or re.search(r"`|[<>]\(|\$(?:\{|[A-Za-z_?*@#!0-9])", content)
+    ):
+        return False
+    try:
+        tokens = shlex.split(content, posix=True)
+    except ValueError:
+        return False
+    segments: list[list[str]] = []
+    current: list[str] = []
+    for token in tokens:
+        if token in _COMMAND_SEPARATORS:
+            if not current:
+                return False
+            segments.append(current)
+            current = []
+        else:
+            current.append(token)
+    if not current:
+        return False
+    segments.append(current)
+    return all(_receipt_segment_safe(segment) for segment in segments)
+
+
+def _mask_safe_command_substitutions(predicate: str) -> str | None:
+    """Mask receipt-only ``$(...)`` expressions before shell lexing.
+
+    Receipt checks commonly query GitHub inside command substitution.  Those are
+    safe to ignore for verification scope, but a substituted pytest/verifier
+    could launder a broad check past the segment validator, so verifier-bearing
+    substitutions are denied before masking.
+    """
+    masked: list[str] = []
+    cursor = 0
+    substitution = 0
+    while True:
+        start = predicate.find("$(", cursor)
+        if start < 0:
+            masked.append(predicate[cursor:])
+            break
+        masked.append(predicate[cursor:start])
+        depth = 1
+        end = start + 2
+        while end < len(predicate) and depth:
+            char = predicate[end]
+            if char == "\\":
+                end += 2
+                continue
+            if char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+            end += 1
+        if depth:
+            return None
+        content = predicate[start + 2 : end - 1]
+        if _SUBSTITUTED_VERIFICATION_RE.search(content) or not _receipt_substitution_safe(content):
+            return None
+        masked.append(f"__RECEIPT_SUBSTITUTION_{substitution}__")
+        substitution += 1
+        cursor = end
+    result = "".join(masked)
+    # Parameter expansion remains unauditable (it can inject a verifier or
+    # --full at runtime); only inspected, receipt-only command substitution is
+    # admitted.
+    return None if "$" in result else result
+
+
+def _predicate_segments(predicate: str) -> list[list[str]] | None:
+    """Lex a shell predicate into commands without executing or expanding it."""
+    if re.search(r"`|[<>]\(", predicate):
+        return None
+    predicate = _mask_safe_command_substitutions(predicate) or ""
+    if not predicate or _has_unquoted_redirection(predicate):
+        return None
+    try:
+        lexer = shlex.shlex(predicate.replace("\n", " ; "), posix=True, punctuation_chars=";&|()")
+        lexer.whitespace_split = True
+        lexer.commenters = ""
+        tokens = list(lexer)
+    except ValueError:
+        return None
+    if not tokens or any(token in {"(", ")"} for token in tokens):
+        return None
+    segments: list[list[str]] = []
+    current: list[str] = []
+    for token in tokens:
+        if token in _COMMAND_SEPARATORS:
+            if not current:
+                return None
+            segments.append(current)
+            current = []
+        else:
+            current.append(token)
+    if not current:
+        return None
+    segments.append(current)
+    return segments
+
+
+def _python_command(command: str) -> bool:
+    return bool(re.fullmatch(r"(?:python|pypy)(?:\d+(?:\.\d+)*)?", command))
+
+
+def _pytest_command_index(segment: list[str]) -> int | None:
+    basenames = [Path(token).name.lower() for token in segment]
+    if basenames and basenames[0] == "pytest":
+        return 0
+    if len(basenames) >= 3 and _python_command(basenames[0]) and segment[1] == "-m" and basenames[2] == "pytest":
+        return 2
+    return None
+
+
+_PYTEST_VALUE_OPTIONS = {
+    "-c",
+    "-k",
+    "-m",
+    "-o",
+    "-p",
+    "-r",
+    "--basetemp",
+    "--capture",
+    "--code-highlight",
+    "--color",
+    "--confcutdir",
+    "--deselect",
+    "--durations",
+    "--durations-min",
+    "--ignore",
+    "--ignore-glob",
+    "--import-mode",
+    "--junit-prefix",
+    "--junitxml",
+    "--log-cli-date-format",
+    "--log-cli-format",
+    "--log-cli-level",
+    "--log-date-format",
+    "--log-file",
+    "--log-file-date-format",
+    "--log-file-format",
+    "--log-file-level",
+    "--log-format",
+    "--log-level",
+    "--maxfail",
+    "--override-ini",
+    "--pastebin",
+    "--pdbcls",
+    "--rootdir",
+    "--show-capture",
+    "--tb",
+    "--verbosity",
+}
+_PYTEST_FLAG_OPTIONS = {
+    "--cache-clear",
+    "--continue-on-collection-errors",
+    "--debug",
+    "--disable-warnings",
+    "--keep-duplicates",
+    "--lf",
+    "--new-first",
+    "--no-header",
+    "--no-summary",
+    "--noconftest",
+    "--pdb",
+    "--quiet",
+    "--runxfail",
+    "--setup-show",
+    "--showlocals",
+    "--strict-config",
+    "--strict-markers",
+    "--trace",
+    "--verbose",
+    "-s",
+    "-x",
+}
+
+
+def _pytest_positional_targets(arguments: list[str]) -> list[str] | None:
+    """Return pytest's positional collection targets, or None for ambiguous option arity."""
+    targets: list[str] = []
+    positional_only = False
+    index = 0
+    while index < len(arguments):
+        token = arguments[index]
+        lowered = token.lower()
+        if positional_only:
+            targets.append(token)
+            index += 1
+            continue
+        if token == "--":
+            positional_only = True
+            index += 1
+            continue
+        option, separator, _value = lowered.partition("=")
+        if option in _PYTEST_VALUE_OPTIONS:
+            if separator:
+                index += 1
+                continue
+            if index + 1 >= len(arguments):
+                return None
+            index += 2
+            continue
+        if separator:
+            # Unknown long-option arity is not safe to guess.
+            return None
+        if lowered in _PYTEST_FLAG_OPTIONS or re.fullmatch(r"-[qv]+", lowered):
+            index += 1
+            continue
+        if token.startswith("-"):
+            return None
+        targets.append(token)
+        index += 1
+    return targets
+
+
+_PYTEST_BROAD_TARGET_RE = re.compile(r"[?*\[\]{}]")
+
+
+def _pytest_target_is_narrow(target: str) -> bool:
+    """Accept only a literal Python file or a literal node within one.
+
+    Shell glob and brace syntax is deliberately rejected even when it would
+    currently match a small set: the match set is runtime-dependent and can
+    silently grow into a broad self-repo collection.  Pytest ``@argfile``
+    targets are likewise indirect, so their scope cannot be proven here.
+    """
+    if not target or target.startswith("@") or _PYTEST_BROAD_TARGET_RE.search(target):
+        return False
+    path, separator, node = target.partition("::")
+    if not path.lower().endswith(".py"):
+        return False
+    return not separator or bool(node)
+
+
+def _recognized_narrow_verifier(segment: list[str]) -> bool:
+    if not segment or any("__receipt_substitution_" in token.lower() for token in segment):
+        return False
+    basenames = [Path(token).name.lower() for token in segment]
+    pytest_index = _pytest_command_index(segment)
+    if pytest_index is not None:
+        targets = _pytest_positional_targets(segment[pytest_index + 1 :])
+        if not targets:
+            return False
+        return all(_pytest_target_is_narrow(target) for target in targets)
+    verifier_index = 0
+    if _python_command(basenames[0]):
+        verifier_index = 1
+    if verifier_index >= len(segment):
+        return False
+    verifier_path = os.path.normpath(segment[verifier_index])
+    if Path(verifier_path).is_absolute():
+        return False
+    if verifier_path == "scripts/verify-scoped.sh":
+        return verifier_index == 0
+    return verifier_path == "scripts/verify.py" and "--changed" in [
+        token.lower() for token in segment[verifier_index + 1 :]
+    ]
+
+
+def _shell_command_string(segment: list[str]) -> str | None:
+    """Return the command string for a shell ``-c``/``-lc`` segment, if present."""
+    if not segment or Path(segment[0]).name.lower() not in _SHELL_COMMANDS:
+        return None
+    command_option: int | None = None
+    for index in range(1, len(segment)):
+        option = segment[index].lower()
+        if option == "--":
+            break
+        if option == "--command" or (option.startswith("-") and not option.startswith("--") and "c" in option[1:]):
+            command_option = index
+            break
+        if not option.startswith("-"):
+            break
+    if command_option is None:
+        return ""
+    command_index = command_option + 1
+    if command_index >= len(segment) or command_index != len(segment) - 1:
+        return ""
+    return segment[command_index]
+
+
+def _safe_verification_segment(segment: list[str], *, depth: int) -> tuple[bool, bool]:
+    basenames = [Path(token).name.lower() for token in segment]
+    if "eval" in basenames:
+        return False, False
+    shell_command = _shell_command_string(segment)
+    if shell_command is not None:
+        if not shell_command:
+            return False, False
+        return _validate_verification_predicate(shell_command, depth=depth + 1)
+    if _recognized_narrow_verifier(segment):
+        return True, True
+    if _receipt_segment_safe(segment):
+        return True, False
+    return False, False
+
+
+def _validate_verification_predicate(predicate: str, *, depth: int) -> tuple[bool, bool]:
+    if depth > 8 or _RAW_BROAD_VERIFICATION_RE.search(predicate):
+        return False, False
+    segments = _predicate_segments(predicate.strip())
+    if not segments:
+        return False, False
+    has_verifier = False
+    for segment in segments:
+        valid, segment_has_verifier = _safe_verification_segment(segment, depth=depth)
+        if not valid:
+            return False, False
+        has_verifier = has_verifier or segment_has_verifier
+    return True, has_verifier
+
+
+def _is_narrow_verification(predicate: str | None) -> bool:
+    """A verification is NARROW when it names a specific scope and never invokes a whole-world gate.
+
+    The live self-modifying repos tolerate only narrow verification in an isolated worktree — the
+    exact hazard the old blanket ban guarded against was a full ``pytest`` / ``verify-whole`` run in
+    the live tree.
+    """
+    valid, has_verifier = _validate_verification_predicate(predicate or "", depth=0)
+    return valid and has_verifier
+
+
+def _self_modifying_repo_task(task: Task) -> bool:
+    """The repos whose live checkout the fleet also runs from (limen, organvm-engine)."""
+    return _limen_repo_task(task) or _organvm_engine_task(task)
+
+
+def _worktree_isolation_enabled() -> bool:
+    """Single authority for both admission safety and the local execution path."""
+    return os.environ.get("LIMEN_ISOLATION", "worktree").strip().lower() != "off"
+
+
+def _isolated_safe_task(task: Task) -> bool:
+    """Safe for a LOCAL lane under the isolation contract.
+
+    Requires ALL of: isolated execution actually in effect (``LIMEN_ISOLATION`` != ``off`` — an
+    in-place run touches the live tree and is never safe for a self-modifying repo); typed intake
+    evidence (a ``predicate`` and a ``receipt_target``); and a NARROW (scoped) verification command.
+    """
+    if not _worktree_isolation_enabled():
+        return False
+    return bool(task.predicate and task.receipt_target) and _is_narrow_verification(task.predicate)
 
 
 def _agent_timed_out_on_task(agent: str, task: Task) -> bool:
@@ -1829,11 +2723,20 @@ def agent_can_run_task(agent: str, task: Task) -> bool:
         return False
     if agent in _LOCAL_AGENTS and _limen_registry_promotion_task(task):
         return False
-    if agent in {"agy", "antigravity"} and (_agy_live_root_registry_task(task) or _limen_repo_task(task)):
+    # PRESERVED: Agy's TRULY task-specific live-root registry hazard (it has been observed ignoring
+    # cwd for registry-discovery prompts). This is not a repo ban — it targets the specific task
+    # shape that is unsafe on that CLI.
+    if agent in {"agy", "antigravity"} and _agy_live_root_registry_task(task):
         return False
-    if agent in {"codex", "claude"} and _limen_repo_task(task):
+    # NARROW safety check replacing the old blanket repo bans: a LOCAL lane may run a self-modifying
+    # repo task (organvm/limen — was banned for agy/codex/claude; organvm/organvm-engine — was banned
+    # for claude) only under the isolation contract (typed predicate + receipt + narrow verification).
+    # Without it the ban stands (broad checks in the live tree were the repeated hazard). Remote lanes
+    # run off-box and are never gated here. organvm-engine keeps its Claude-only scope so codex — which
+    # was always allowed there — still is.
+    if agent in _LOCAL_AGENTS and _limen_repo_task(task) and not _isolated_safe_task(task):
         return False
-    if agent == "claude" and _organvm_engine_task(task):
+    if agent == "claude" and _organvm_engine_task(task) and not _isolated_safe_task(task):
         return False
     return True
 
@@ -1984,7 +2887,16 @@ def _resolve_repo_dir(task: Task) -> Path | None:
     org, _, name = task.repo.partition("/")
     ws = Path(os.environ.get("LIMEN_WORKDIR", Path.home() / "Workspace"))
     cart = Path.home() / "Workspace" / ".home-cartridge" / "Code"
-    for cand in (ws / task.repo, ws / org / name, ws / name, cart / org / name, cart / name):
+    cache = _clone_cache_root()
+    cache_candidates = (cache / _clone_cache_key(task.repo),) if cache is not None else ()
+    for cand in (
+        *cache_candidates,
+        ws / task.repo,
+        ws / org / name,
+        ws / name,
+        cart / org / name,
+        cart / name,
+    ):
         if (cand / ".git").exists():
             return cand
     matches = [p for root in (ws, cart) for p in root.glob(f"*/{name}") if (p / ".git").exists()]
@@ -2005,14 +2917,227 @@ def _resolve_repo_dir(task: Task) -> Path | None:
     return matches[0] if matches else None
 
 
+def _existing_ancestor(path: Path) -> Path | None:
+    """Nearest existing ancestor, used for pre-creation filesystem truth."""
+    probe = path.expanduser()
+    for _ in range(64):
+        try:
+            probe.stat()
+            return probe
+        except FileNotFoundError:
+            parent = probe.parent
+            if parent == probe:
+                return None
+            probe = parent
+        except OSError:
+            return None
+    return None
+
+
+def _filesystem_device(path: Path) -> int | None:
+    probe = _existing_ancestor(path)
+    if probe is None:
+        return None
+    try:
+        return int(probe.stat().st_dev)
+    except (OSError, TypeError, ValueError):
+        return None
+
+
+def _filesystem_block_size(path: Path) -> int | None:
+    """Live allocation unit for ``path``'s filesystem; unknown fails local admission closed."""
+    probe = _existing_ancestor(path)
+    if probe is None:
+        return None
+    try:
+        stats = os.statvfs(probe)
+        raw = stats.f_frsize or stats.f_bsize
+        block = int(raw)
+    except (OSError, TypeError, ValueError):
+        return None
+    return block if block > 0 else None
+
+
+def _clone_cache_root() -> Path | None:
+    """Same-device repository cache beside the disposable worktree root.
+
+    Missing repositories used to hydrate under ``LIMEN_WORKDIR`` even when the admitted worktree
+    lived on Scratch. That spent unmeasured internal-disk room. A hidden sibling keeps repository
+    objects on the exact admitted filesystem without making the cache a child lifecycle target.
+    Configurations whose root has no same-device parent fail closed instead of silently falling
+    back to another volume.
+    """
+    return dispatch_clone_cache_root()
+
+
+def _clone_cache_key(repo: str) -> str:
+    """Flat, collision-safe lifecycle target name for one GitHub repository slug."""
+    normalized = repo.strip().removesuffix(".git").lower()
+    label = re.sub(r"[^a-z0-9._-]+", "-", normalized.replace("/", "--")).strip("-.") or "repo"
+    digest = hashlib.sha256(normalized.encode()).hexdigest()[:16]
+    return f"{label}-{digest}"
+
+
+def _round_allocation(size: int, block: int) -> int:
+    if size < 0 or block <= 0:
+        raise ValueError("invalid allocation input")
+    return max(1, math.ceil(size / block)) * block
+
+
+def _tracked_tree_allocation_bytes(entries: list[tuple[str, str, int | None]], block: int) -> int | None:
+    """Conservative materialized checkout allocation from live block size and tree structure.
+
+    Logical blob sums are unsafe for empty/tiny trees: a checkout still allocates directories,
+    dirents, a ``.git`` control file, and filesystem blocks. Count one live allocation unit for
+    every structural entry and directory, plus block-rounded blob content. This is deliberately
+    conservative and remains dynamic across filesystems and arbitrary tree shapes.
+    """
+    if block <= 0:
+        return None
+    directories = {"."}
+    content_bytes = 0
+    structural_entries = 1  # the linked checkout's .git control file
+    for path_text, kind, size in entries:
+        path = Path(path_text)
+        if not path_text or path.is_absolute() or ".." in path.parts:
+            return None
+        parents = path.parents
+        for parent in parents:
+            if str(parent) == ".":
+                break
+            directories.add(parent.as_posix())
+        structural_entries += 1
+        if kind == "commit":
+            directories.add(path.as_posix())
+            continue
+        if kind != "blob" or size is None or size < 0:
+            return None
+        content_bytes += _round_allocation(size, block)
+    return content_bytes + block * (len(directories) + structural_entries)
+
+
+def _tracked_head_checkout_gib(task: Task) -> float | None:
+    """Estimate allocated local-worktree bytes from tracked ``HEAD`` and live filesystem truth.
+
+    The estimate uses the destination filesystem's actual allocation unit and the complete tracked
+    entry/path structure. Missing local custody, unreadable filesystem truth, an unreadable ``HEAD``,
+    or malformed tree metadata returns ``None`` so local admission fails closed.
+    """
+    repo_dir = _resolve_repo_dir(task)
+    if repo_dir is None:
+        return None
+    block = _filesystem_block_size(effective_worktree_root())
+    if block is None:
+        return None
+    tree = _git(["ls-tree", "-r", "-l", "-z", "HEAD"], repo_dir, timeout=30)
+    if tree.returncode != 0:
+        return None
+
+    entries: list[tuple[str, str, int | None]] = []
+    for record in tree.stdout.split("\0"):
+        if not record:
+            continue
+        metadata, separator, path = record.partition("\t")
+        if not separator:
+            return None
+        fields = metadata.split()
+        if len(fields) != 4:
+            return None
+        _mode, object_type, _object_id, size = fields
+        if object_type == "commit":
+            entries.append((path, object_type, None))
+            continue
+        if object_type != "blob" or not size.isdigit():
+            return None
+        entries.append((path, object_type, int(size)))
+    allocated = _tracked_tree_allocation_bytes(entries, block)
+    return allocated / (1024**3) if allocated is not None else None
+
+
+def _remote_hydration_requirement_gib(task: Task) -> float | None:
+    """Measure a missing clone from live GitHub repository and tracked-tree metadata.
+
+    GitHub's repository ``size`` is the current repository storage in KiB. The recursive default
+    tree supplies the tracked entry structure. Both the clone cache and worktree are created on the
+    effective worktree filesystem, so one authoritative reservation covers both. Logical sizes are
+    rounded using that filesystem's live allocation unit; truncated trees, an unsafe cache root, or
+    missing/malformed live metadata fail closed.
+    """
+    if _path_like_repo(task.repo) or not task.repo or task.repo.count("/") != 1:
+        return None
+    cache = _clone_cache_root()
+    block = _filesystem_block_size(effective_worktree_root())
+    if cache is None or block is None or _filesystem_device(cache) != _filesystem_device(effective_worktree_root()):
+        return None
+    slug = task.repo.strip().removesuffix(".git")
+    try:
+        repo_result = _run_capture(["gh", "api", f"repos/{slug}"], timeout=30)
+        if repo_result.returncode != 0:
+            return None
+        repo_payload = json.loads(repo_result.stdout)
+        default_branch = str(repo_payload.get("default_branch") or "").strip()
+        repo_kib = repo_payload.get("size")
+        if (
+            not default_branch
+            or isinstance(repo_kib, bool)
+            or not isinstance(repo_kib, int | float)
+            or not math.isfinite(float(repo_kib))
+            or float(repo_kib) < 0
+        ):
+            return None
+        tree_result = _run_capture(
+            ["gh", "api", f"repos/{slug}/git/trees/{quote(default_branch, safe='')}?recursive=1"],
+            timeout=60,
+        )
+        if tree_result.returncode != 0:
+            return None
+        tree_payload = json.loads(tree_result.stdout)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+    if tree_payload.get("truncated") is not False or not isinstance(tree_payload.get("tree"), list):
+        return None
+    entries: list[tuple[str, str, int | None]] = []
+    for entry in tree_payload["tree"]:
+        if not isinstance(entry, dict):
+            return None
+        kind = entry.get("type")
+        path = entry.get("path")
+        if not isinstance(path, str) or not path:
+            return None
+        if kind == "tree":
+            continue
+        if kind == "commit":
+            entries.append((path, kind, None))
+            continue
+        size = entry.get("size")
+        if kind != "blob" or isinstance(size, bool) or not isinstance(size, int) or size < 0:
+            return None
+        entries.append((path, kind, size))
+    checkout_bytes = _tracked_tree_allocation_bytes(entries, block)
+    if checkout_bytes is None:
+        return None
+    # Repository storage plus one allocation unit per tracked object/path and the clone root/.git
+    # structure. This is a block-derived structural estimate, not a fixed byte allowance.
+    repository_bytes = _round_allocation(math.ceil(float(repo_kib) * 1024), block)
+    repository_bytes += block * (len(entries) + 2)
+    return (repository_bytes + checkout_bytes) / (1024**3)
+
+
+def _local_admission_requirement_gib(task: Task) -> float | None:
+    local = _tracked_head_checkout_gib(task)
+    if local is not None:
+        return local
+    return _remote_hydration_requirement_gib(task)
+
+
 def _clone_repo(task: Task) -> Path | None:
     """Clone task.repo locally when no checkout exists yet, so local lanes can
     work it instead of bleeding to the scarce cloud lane.
 
     Post-consolidation many repos (org scaffolding: --superproject, .github.io,
     org-dotgithub, _agent, …) live in the `organvm` org but were never cloned —
-    _resolve_repo_dir correctly returns None for them. We clone on demand into
-    $LIMEN_WORKDIR/<owner>/<name> using gh's auth (handles private repos), then
+    _resolve_repo_dir correctly returns None for them. We clone on demand into a same-device cache
+    beside ``effective_worktree_root`` using gh's auth (handles private repos), then
     the next _resolve_repo_dir finds it. Serialized on the git-plumbing lock so
     two same-repo dispatches don't race the same clone. Returns the dir or None.
     """
@@ -2020,8 +3145,11 @@ def _clone_repo(task: Task) -> Path | None:
         return _resolve_repo_dir(task)
     if not task.repo or "/" not in task.repo:
         return None
-    ws = Path(os.environ.get("LIMEN_WORKDIR", Path.home() / "Workspace"))
-    dest = ws / task.repo  # ws/<owner>/<name>
+    cache = _clone_cache_root()
+    if cache is None:
+        print(f"  clone {task.repo} blocked: effective worktree filesystem cache is unavailable")
+        return None
+    dest = cache / _clone_cache_key(task.repo)
     with _GIT_PLUMBING_LOCK:
         if (dest / ".git").exists():  # a concurrent dispatch already cloned it
             return dest
@@ -2055,7 +3183,15 @@ def _clone_repo(task: Task) -> Path | None:
 # local branch are removed; the only surviving artifacts are the remote branch +
 # PR. This is the universal default for ALL local lanes (codex/opencode/agy/
 # claude/gemini) — set LIMEN_ISOLATION=off only for a deliberate in-place run.
-_ISOLATION_ROOT = default_worktrees_root()
+def _isolation_root() -> Path:
+    """Resolve the creation root at dispatch time, after live environment hydration.
+
+    Admission reads the same ``effective_worktree_root`` authority. Keeping no import-time cache
+    prevents a daemon environment update from measuring one volume and creating on another.
+    """
+    return effective_worktree_root()
+
+
 _GENERATED_CLEAN_PATHS = (
     "node_modules",
     ".venv",
@@ -2680,7 +3816,8 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     # retries because old no-op runs left many empty local branches behind.
     suffix = secrets.token_hex(4)
     branch = f"limen/{slug}-{suffix}"
-    wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
+    isolation_root = _isolation_root()
+    wt = isolation_root / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
     agent_args = _agent_argv(agent, task)
     prompt = _build_prompt(task)
     if os.environ.get("LIMEN_ISOLATION_PROMPT_GUARD", "1") == "1":
@@ -2715,12 +3852,12 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         if attempt:
             suffix = secrets.token_hex(4)
             branch = f"limen/{slug}-{suffix}"
-            wt = _ISOLATION_ROOT / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
+            wt = isolation_root / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
         with _GIT_PLUMBING_LOCK:
             if attempt == 0:
                 if fetch_refspec:
                     _git_plumbing(["fetch", "origin", fetch_refspec], repo_dir, timeout=300)
-            _ISOLATION_ROOT.mkdir(parents=True, exist_ok=True)
+            isolation_root.mkdir(parents=True, exist_ok=True)
             if wt.exists():  # leftover from a prior clean/no-op run
                 _cleanup_isolated_worktree(repo_dir, wt, branch, checkout_ref, pushed=False, task=task)
                 if wt.exists():
@@ -2737,6 +3874,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
         print(f"  FAILED worktree add {task.id}: {add.stderr.strip()[:300]}")
         return False
     _record_worktree_birth(task, wt, branch, checkout_ref, pr_base, existing_pr=bool(pr_head))
+    _mark_machine_admission_born(task.id)
 
     pushed = False
     try:
@@ -2789,7 +3927,7 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
             return True
         print(f"  BLOCKED {task.id}: {reason}")
         return _blocked_result(reason)
-    if os.environ.get("LIMEN_ISOLATION", "worktree").lower() != "off":
+    if _worktree_isolation_enabled():
         return _isolated_local_run(agent, task, dry_run)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)
     binary = _resolve_agent_binary(agent)
@@ -2954,46 +4092,45 @@ def dispatch_tasks(
         if not tasks:
             print(f"Task {task_id} not found")
             return
-        debt_blocked = False
-        debt_message = ""
-    else:
-        debt_blocked, debt_message = _worktree_debt_gate()
+    # Worktree admission is ALWAYS evaluated — an explicit --task does NOT bypass resource/VITALS/
+    # reaper custody (a task-id run still creates a local worktree). The only override is the
+    # documented operator lever LIMEN_WORKTREE_DEBT_GATE=0 (snapshot → inactive).
+    admission_snapshot = _worktree_admission_snapshot()
 
     # Serial dispatch gates on dependencies the SAME way dispatch_parallel does (line ~1706): a
     # dependent increment stays OPEN but un-dispatched until its predecessor's PR merges, so the
     # roadmap self-advances with no parallel-built conflicts. Without this, bulk `limen dispatch`
     # dispatched dependents immediately, violating depends_on ordering the parallel path enforces.
-    # An EXPLICIT single-task dispatch (`limen dispatch --task X`) is a deliberate human override and
-    # bypasses the gate; only BULK dispatch respects it.
+    # An EXPLICIT single-task dispatch (`limen dispatch --task X`) is a human override for the
+    # dependency/chronic gates only; worktree custody admission still applies.
     id2 = {t.id: t for t in limen.tasks}
     value_repos = _value_tier_repos()
-    raw_candidates = [
-        t
-        for t in tasks
-        if _dispatchable(t)
-        and (t.target_agent == agent_filter or t.target_agent == "any")
-        and agent_can_run_task(agent_filter, t)
-        and t.budget_cost <= remaining
-        and (task_id is not None or _deps_met(t, id2))
-        and (task_id is not None or not _superseded_by_rebase_task(t, id2))
-        and (task_id is not None or chronic_dispatch_reason(t) is None)
-        and not (debt_blocked and _routine_generated_buildout(t))
-        and _routine_generated_buildout_allowed(t)
-    ]
+    raw_candidates = []
+    for t in tasks:
+        if not _dispatchable(t):
+            continue
+        if t.target_agent != agent_filter and t.target_agent != "any":
+            continue
+        if not agent_can_run_task(agent_filter, t):
+            continue
+        if t.budget_cost > remaining:
+            continue
+        if task_id is None and not _deps_met(t, id2):
+            continue
+        if task_id is None and _superseded_by_rebase_task(t, id2):
+            continue
+        if task_id is None and chronic_dispatch_reason(t) is not None:
+            continue
+        if not _routine_generated_buildout_allowed(t):
+            continue
+        raw_candidates.append(t)
     candidates = sort_value_gate_candidates(raw_candidates, value_repos)
-
-    if limit is not None:
-        candidates = candidates[: max(0, limit)]
 
     if not candidates:
         if raw_candidates and _value_gate_configured(value_repos):
             print(f"Value gate: withheld {len(raw_candidates)} non-value candidate(s) for '{agent_filter}'")
-        if debt_message:
-            print(f"Lifecycle debt gate: {debt_message}")
         print(f"No open tasks for agent '{agent_filter}' within remaining budget ({remaining})")
         return
-    if debt_message:
-        print(f"Lifecycle debt gate: {debt_message}")
 
     mode = "DRY-RUN" if dry_run else "LIVE"
     print(f"── limen dispatch ({mode}) — agent={agent_filter} budget_remaining={remaining}")
@@ -3001,6 +4138,8 @@ def dispatch_tasks(
     dispatched = 0
     results: list[tuple[str, str, bool | str]] = []
     for task in candidates:
+        if limit is not None and dispatched >= max(0, limit):
+            break
         if remaining < task.budget_cost:
             break
 
@@ -3010,7 +4149,31 @@ def dispatch_tasks(
             print(f"  INTAKE BLOCKED {task.id}: {exc}")
             continue
 
-        result = call_agent_dispatch(agent_filter, task, dry_run)
+        if dry_run:
+            blocked, msg = _worktree_admission_for_task(task, agent_filter, admission_snapshot, reserve=True)
+        else:
+            with _machine_admission_lock():
+                live_snapshot, used_slots = _snapshot_with_machine_reservations()
+                local = _classify_worktree_impact(task, agent_filter) == IMPACT_DEBT_CREATING
+                if local and used_slots >= _local_dispatch_ceiling():
+                    blocked, msg = True, (f"machine local slots full ({used_slots}/{_local_dispatch_ceiling()})")
+                else:
+                    blocked, msg = _worktree_admission_for_task(
+                        task,
+                        agent_filter,
+                        live_snapshot,
+                        reserve=True,
+                        machine_lease=True,
+                    )
+        if blocked:
+            print(f"  Worktree admission blocked {task.id}: {msg}")
+            continue
+
+        try:
+            result = call_agent_dispatch(agent_filter, task, dry_run)
+        finally:
+            if not dry_run:
+                _release_machine_admission(task.id)
         if not dry_run:
             # In-memory apply keeps this loop's bookkeeping consistent; persistence happens
             # once at commit, re-applied onto a FRESH board (never this stale snapshot).
@@ -3135,7 +4298,7 @@ def _apply_result(
 # is lane-AWARE — async/remote lanes (jules) absorb big bursts without blocking the beat, while local
 # SYNC lanes (codex/claude/agy) are wall-clock bound (the thread pool blocks the beat) so they stay at
 # base unless explicitly allowed. Env-gated LIMEN_ACCEL (default on); fail-open to base everywhere.
-_ASYNC_LANES = {"jules", "github_actions", "copilot", "warp", "oz"}  # remote dispatch — non-blocking
+# Locality is the census authority (LOCAL_CHECKOUT_AGENTS); a non-local lane is off-box / non-blocking.
 
 
 def _ledger_lanes() -> dict[str, dict[str, list[str]]]:
@@ -3208,7 +4371,7 @@ def _accel_limit(limen: LimenFile, agent: str, base_limit: int, now: datetime) -
         urgency = remaining_frac / max(time_left_frac, floor)
         if urgency <= 1.0:
             return base_limit
-        non_blocking = agent in _ASYNC_LANES or os.environ.get("LIMEN_DISPATCH_ASYNC") == "1"
+        non_blocking = agent not in LOCAL_CHECKOUT_AGENTS or os.environ.get("LIMEN_DISPATCH_ASYNC") == "1"
         ceiling = _env_int(
             "LIMEN_ACCEL_ASYNC_CEIL" if non_blocking else "LIMEN_ACCEL_LOCAL_CEIL",
             25 if non_blocking else 8,
@@ -3340,7 +4503,9 @@ def _select_parallel_reservations(
     now: datetime,
     *,
     dry_run: bool,
-    debt_blocked: bool,
+    admission_snapshot: WorktreeAdmissionSnapshot | None,
+    local_slots: int | None = None,
+    machine_lease: bool = False,
 ) -> list[tuple[str, str]]:
     """Pick and optionally reserve parallel-dispatch tasks on the supplied fresh board."""
     track = limen.portal.budget.track
@@ -3356,19 +4521,25 @@ def _select_parallel_reservations(
         rem = daily - spent_daily if cap is None else max(0, min(daily - spent_daily, cap - agent_spent))
         if rem <= 0:
             continue
-        raw_cands = [
-            t
-            for t in limen.tasks
-            if _dispatchable(t)
-            and (t.target_agent == agent or t.target_agent == "any")
-            and agent_can_run_task(agent, t)
-            and t.budget_cost <= rem
-            and _deps_met(t, id2)
-            and not _superseded_by_rebase_task(t, id2)
-            and chronic_dispatch_reason(t) is None
-            and not (debt_blocked and _routine_generated_buildout(t))
-            and _routine_generated_buildout_allowed(t)
-        ]
+        raw_cands = []
+        for t in limen.tasks:
+            if not _dispatchable(t):
+                continue
+            if t.target_agent != agent and t.target_agent != "any":
+                continue
+            if not agent_can_run_task(agent, t):
+                continue
+            if t.budget_cost > rem:
+                continue
+            if not _deps_met(t, id2):
+                continue
+            if _superseded_by_rebase_task(t, id2):
+                continue
+            if chronic_dispatch_reason(t) is not None:
+                continue
+            if not _routine_generated_buildout_allowed(t):
+                continue
+            raw_cands.append(t)
         cands = sort_value_gate_candidates(raw_cands, value_repos)
         # FRONT-LOAD: base picks by priority, then an ACCELERATION TAIL (only when the lane is
         # under-spending toward its reset cliff) drawn ONLY from work-classes the ledger says this
@@ -3382,12 +4553,28 @@ def _select_parallel_reservations(
         for t in ordered[:eff]:
             if spent_here + t.budget_cost > rem:
                 continue
+            local = _classify_worktree_impact(t, agent) == IMPACT_DEBT_CREATING
+            if local and local_slots is not None and local_slots <= 0:
+                continue
             try:
                 normalize_selected_legacy_task(t)
             except IntakeContractError as exc:
                 print(f"  INTAKE BLOCKED {t.id}: {exc}")
                 continue
+            if admission_snapshot is not None:
+                blocked, msg = _worktree_admission_for_task(
+                    t,
+                    agent,
+                    admission_snapshot,
+                    reserve=True,
+                    machine_lease=machine_lease,
+                )
+                if blocked:
+                    print(f"  Worktree admission blocked {t.id}: {msg}")
+                    continue
             chosen.append(t)
+            if local and local_slots is not None:
+                local_slots -= 1
             spent_here += t.budget_cost
         spent_daily += spent_here
         for t in chosen:
@@ -3429,9 +4616,9 @@ def dispatch_parallel(
     if not run_always_working_before_dispatch(tasks_path, dry_run=dry_run):
         print("Always-working gate blocked parallel dispatch before reservation")
         return
-    debt_blocked, debt_message = _worktree_debt_gate()
-    if debt_message:
-        print(f"Lifecycle debt gate: {debt_message}")
+    admission_snapshot = _worktree_admission_snapshot()
+    if admission_snapshot.get("reason"):
+        print(f"Worktree admission: {admission_snapshot['reason']}")
 
     if dry_run:
         _reset_budget_if_needed(limen, now)
@@ -3441,7 +4628,7 @@ def dispatch_parallel(
             per_agent_limit,
             now,
             dry_run=True,
-            debt_blocked=debt_blocked,
+            admission_snapshot=admission_snapshot,
         )
         print(f"── PARALLEL DRY-RUN — would dispatch {len(picked)} task(s) across {agents}:")
         for a, tid in picked:
@@ -3458,23 +4645,33 @@ def dispatch_parallel(
             # a double-dispatch, so we skip the whole round; it self-corrects on the next beat.
             print("── PARALLEL: queue busy — skipped this dispatch round (self-corrects next beat)")
             return
-        fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
-        reset = _reset_budget_if_needed(fresh, now)
-        picked = _select_parallel_reservations(
-            fresh,
-            agents,
-            per_agent_limit,
-            now,
-            dry_run=False,
-            debt_blocked=debt_blocked,
-        )
-        if not picked:
-            if reset:
-                save_limen_file(tasks_path, fresh)
-            print(f"── PARALLEL: nothing to dispatch for {agents} within budget")
-            return
-        save_limen_file(tasks_path, fresh)  # reserve commit (atomic vs supervisor writes)
-        limen = fresh
+        with _machine_admission_lock():
+            fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
+            reset = _reset_budget_if_needed(fresh, now)
+            live_snapshot, used_slots = _snapshot_with_machine_reservations()
+            picked = _select_parallel_reservations(
+                fresh,
+                agents,
+                per_agent_limit,
+                now,
+                dry_run=False,
+                admission_snapshot=live_snapshot,
+                local_slots=max(0, max_workers - used_slots),
+                machine_lease=True,
+            )
+            if not picked:
+                if reset:
+                    save_limen_file(tasks_path, fresh)
+                print(f"── PARALLEL: nothing to dispatch for {agents} within budget")
+                return
+            try:
+                save_limen_file(tasks_path, fresh)  # reserve commit (atomic vs supervisor writes)
+            except Exception:
+                for agent, tid in picked:
+                    if canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS:
+                        _admission_lease_path(tid).unlink(missing_ok=True)
+                raise
+            limen = fresh
 
     # ── RUN: concurrent agent executions (worktree→PR / jules), no tasks.yaml access here
     id2task = {t.id: t for t in limen.tasks}
@@ -3487,14 +4684,14 @@ def dispatch_parallel(
         except Exception as e:  # never let one task kill the pool
             print(f"  ERROR {agent} {tid}: {str(e)[:160]}")
             res = False
+        finally:
+            _release_machine_admission(tid)
         return (agent, tid, res)
 
-    results = []
-    with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        for agent, tid, res in ex.map(run_one, picked):
-            results.append((agent, tid, res))
-            if res == _RATELIMIT:
-                cooled.add(agent)
+    results = _run_parallel_batch(picked, run_one, max_workers)
+    for agent, _tid, res in results:
+        if res == _RATELIMIT:
+            cooled.add(agent)
 
     # ── COMMIT: reload FRESH under the lock so writes a supervisor (seed/heal/verify) made
     # during the unlocked run aren't clobbered; re-apply each result to the fresh task by id.

@@ -33,7 +33,7 @@ from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import submit_task_upsert  # noqa: E402
 from limen.capacity import select_lanes  # noqa: E402
-from limen.worktree_debt import worktree_debt_exceeded  # noqa: E402
+from limen.worktree_debt import worktree_debt_report  # noqa: E402
 
 # Useful, repo-agnostic but ACTIONABLE levers. The agent resolves the specifics in-repo.
 # (key, priority, title, context-template). {repo} is filled per product.
@@ -204,8 +204,7 @@ def census(tasks_path: Path) -> dict:
         "worktree_debt_gate_enabled": os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") == "1",
         "worktree_debt_readable": False,
         "worktree_debt_count": 0,
-        "worktree_debt_limit": None,
-        "worktree_debt_exceeded": False,
+        "worktree_debt_complete": False,
     }
     try:
         lf = load_limen_file(tasks_path)
@@ -247,11 +246,10 @@ def census(tasks_path: Path) -> dict:
         if t.labels and "generated" in t.labels and "build-out" in t.labels
     )
     try:
-        debt_exceeded, debt_report, limit = worktree_debt_exceeded()
+        debt_report = worktree_debt_report()
         report["worktree_debt_readable"] = True
         report["worktree_debt_count"] = int(debt_report.get("debt", 0))
-        report["worktree_debt_limit"] = limit
-        report["worktree_debt_exceeded"] = bool(debt_exceeded)
+        report["worktree_debt_complete"] = report["worktree_debt_count"] == 0
     except Exception:
         pass
     return report
@@ -284,16 +282,10 @@ def main() -> int:
     lf = load_limen_file(path)
     tasks = lf.tasks
 
-    if os.environ.get("LIMEN_WORKTREE_DEBT_GATE", "1") == "1":
-        debt_exceeded, report, limit = worktree_debt_exceeded()
-        if debt_exceeded:
-            print(
-                "lifecycle debt gate: "
-                f"{report['debt']} preserved worktree roots exceed cap {limit}; "
-                "generate no routine build-out until dirty/unpushed roots are landed, "
-                "reassigned, or preserved into explicit recovery tasks."
-            )
-            return 0
+    # NO normal-path estate scan and NO global stop on debt. The preserved-root count is available
+    # explicitly through ``--census``; classifying hundreds of roots here used to add ~51 seconds to
+    # every feed voice before it even checked whether the queue was already healthy. Per-task
+    # marginal admission owns launch safety, while this producer only keeps the routable queue fed.
 
     # Floor on ROUTABLE-BY-THE-FLEET open work, not total open. The dispatchable set is the same
     # selector heartbeat passes to dispatch; "any" is routable because route.py picks a live lane.

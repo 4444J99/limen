@@ -64,6 +64,40 @@ def test_reclaim_standing_grant_accepts_remote_receipt_loss_free_class_without_l
     assert reason == "standing-grant-2026-07-09"
 
 
+def test_debt_classifier_matches_accepted_reaper_for_remote_merged_receipt(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    from limen import worktree_debt as debt
+
+    root = tmp_path / "receipt-backed-clone"
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-qm", "init", "--allow-empty"], cwd=root, check=True)
+    receipts = {
+        root.name: {
+            "root": root.name,
+            "lane": "remote-merged",
+            "status": "merged_pr_preserved",
+            "pr_state": "MERGED",
+            "pr_url": "https://github.com/example/repo/pull/7",
+        }
+    }
+    now = time.time()
+
+    action, reaper_reason = reclaim.classify(root, now, 0, receipts)
+    debt_reason = debt._classify(root, now, 0, set(), receipts)
+    accepted, _accept_reason = reclaim.reclaim_accepted(root, action, reaper_reason, [])
+
+    assert (action, reaper_reason, accepted) == (
+        "remove-clone",
+        "receipt-remote-merged+clean+idle",
+        True,
+    )
+    assert debt_reason == reaper_reason
+    assert debt_reason in debt.REAPABLE_REASONS
+
+
 def test_reclaim_skips_antigravity_scratch_root_removal(tmp_path: Path) -> None:
     reclaim = load_reclaim_worktrees()
     scratch = tmp_path / "agy-scratch"
@@ -123,6 +157,32 @@ def test_reclaim_help_does_not_discover_targets(monkeypatch, capsys) -> None:
 
     assert reclaim.main() == 0
     assert "usage: reclaim-worktrees.py" in capsys.readouterr().out
+
+
+def test_persist_apply_receipt_records_finite_completion_in_log_and_marker(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    marker = tmp_path / "logs" / ".reclaim-last"
+    log = tmp_path / "logs" / "reclaim-worktrees.jsonl"
+    monkeypatch.setattr(reclaim, "MARKER", marker)
+    monkeypatch.setattr(reclaim, "LOG", log)
+    monkeypatch.setattr(reclaim.time, "time", lambda: 200.0)
+
+    completed = reclaim.persist_apply_receipt(
+        started_ts=100.0,
+        dirs=[(tmp_path / "one", 0), (tmp_path / "two", 0)],
+        removed=[("one", "remove-worktree:clean+merged+idle")],
+        skipped=[("two", "not-merged-to-default")],
+        failed=[],
+        deferred=[],
+        generated_reclaim={"failed": []},
+    )
+
+    event = json.loads(log.read_text(encoding="utf-8"))
+    assert completed == 200.0
+    assert event["ts"] == 100.0
+    assert event["completed_ts"] == 200.0
+    assert event["apply"] is True
+    assert marker.read_text(encoding="utf-8") == "200.0"
 
 
 def test_reclaim_acceptance_matches_clean_merged_worktree(tmp_path: Path) -> None:

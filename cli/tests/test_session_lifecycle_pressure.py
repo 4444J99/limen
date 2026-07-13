@@ -280,7 +280,6 @@ def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp
     pressure.run_worktree_debt = lambda: {
         "total": 2,
         "debt": 2,
-        "limit": 1,
         "by_reason": {"dirty": 1, "not-merged-to-default": 1},
     }
 
@@ -308,9 +307,11 @@ def test_session_lifecycle_pressure_summarizes_local_remote_without_raw_text(tmp
     pressure.write_outputs(snapshot, rendered)
 
     assert snapshot["worktrees"]["debt"] == 2
-    assert snapshot["worktrees"]["over_cap"] is True
+    assert snapshot["worktrees"]["debt_target"] == 0
+    assert snapshot["worktrees"]["complete"] is False  # exact-zero completion; any nonzero debt is open
     assert snapshot["remote"]["remote_branches_missing"] == 1
     assert "Lifecycle pressure" in rendered
+    assert "debt 2 (target 0)" in rendered
     assert "remote branches present/missing 1/1" in rendered
     assert pressure.OUT_JSON.exists()
     assert pressure.OUT_MD.exists()
@@ -352,7 +353,6 @@ def test_session_lifecycle_pressure_closes_raw_remote_missing_with_live_scanner_
     pressure.run_worktree_debt = lambda: {
         "total": 1,
         "debt": 0,
-        "limit": 12,
         "by_reason": {"owner-blocker": 1},
         "items": [{"name": "owner-blocked-root", "reason": "owner-blocker", "debt": False}],
     }
@@ -409,7 +409,6 @@ def test_session_lifecycle_pressure_counts_scanned_worktree_targets(tmp_path: Pa
     pressure.run_worktree_debt = lambda: {
         "total": 3,
         "debt": 0,
-        "limit": 12,
         "by_reason": {"clean+merged+idle": 3},
         "items": [
             {"name": "old-root", "path": str(old_root), "reason": "clean+merged+idle", "debt": False},
@@ -442,7 +441,6 @@ def test_session_lifecycle_pressure_closes_reclaimed_remote_missing_from_receipt
     pressure.run_worktree_debt = lambda: {
         "total": 0,
         "debt": 0,
-        "limit": 12,
         "by_reason": {},
         "items": [],
     }
@@ -1090,6 +1088,7 @@ def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_
     blockers.DOC_PATH = tmp_path / "docs" / "session-lifecycle-blockers.md"
     capability_root = tmp_path / "capabilities"
     blockers.DEFAULT_CAPABILITY_ROOTS = (capability_root,)
+    blockers.worktree_debt_report = lambda root: {"debt": 1, "total": 2, "items": []}
 
     blockers.PROMPT_INDEX.parent.mkdir(parents=True)
     blockers.PROMPT_INDEX.write_text(
@@ -1154,6 +1153,11 @@ def test_session_blockers_records_hooks_disk_and_credentials_without_values(tmp_
     assert "cloud-credential-handles-unconfigured" in ids
     assert "capability-substrate-not-resurfaced" in ids
     assert "local-lifecycle-disk-pressure" in ids
+    local_pressure = next(item for item in snapshot["blockers"] if item["id"] == "local-lifecycle-disk-pressure")
+    assert local_pressure["details"]["worktree_debt"] == 1
+    assert local_pressure["details"]["worktree_debt_target"] == 0
+    assert local_pressure["details"]["worktree_debt_complete"] is False
+    assert "worktree_debt_cap" not in local_pressure["details"]
     assert "session-pressure-hook-not-wired" not in ids
     assert snapshot["coverage"]["session_pressure_hook_wired"] is True
     assert snapshot["coverage"]["capability_substrate"]["skill_files"] == 1
@@ -1895,8 +1899,8 @@ def test_session_attack_paths_parks_cloud_runtime_until_deploy_task(tmp_path: Pa
     assert paths["remote-task-pr-receipt-errors"]["lane"] == "blocker"
 
 
-def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(tmp_path: Path):
-    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_under_cap")
+def test_session_attack_paths_parks_local_pressure_when_worktree_debt_zero(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_zero_debt")
     attack.ROOT = tmp_path
     attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
     attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
@@ -1906,11 +1910,11 @@ def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(
     attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
     attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
     attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
-    attack.worktree_debt_report = lambda root: {"total": 4, "debt": 2, "items": []}
+    attack.worktree_debt_report = lambda root: {"total": 4, "debt": 0, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
     attack.PROMPT_INDEX.write_text(
-        json.dumps({"sources": [], "worktree_report": {"debt": 2, "items": []}}), encoding="utf-8"
+        json.dumps({"sources": [], "worktree_report": {"debt": 0, "items": []}}), encoding="utf-8"
     )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
@@ -1922,7 +1926,7 @@ def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(
                         "category": "local_lean",
                         "status": "parked",
                         "route": "Keep visible, but drain only after preservation proof.",
-                        "details": {"worktree_debt": 2, "worktree_debt_cap": 12},
+                        "details": {"worktree_debt": 0, "worktree_debt_target": 0, "worktree_debt_complete": True},
                     },
                     {
                         "id": "worktree-lifecycle-debt",
@@ -1947,8 +1951,8 @@ def test_session_attack_paths_parks_local_pressure_when_worktree_debt_under_cap(
     assert ids_by_rank.index("worktree-lifecycle-debt") < ids_by_rank.index("local-lifecycle-disk-pressure")
 
 
-def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_over_cap(tmp_path: Path):
-    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_over_cap")
+def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_nonzero(tmp_path: Path):
+    attack = _load(ATTACK_PATHS_SCRIPT, "session_attack_paths_local_lean_nonzero_debt")
     attack.ROOT = tmp_path
     attack.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
     attack.PROMPT_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
@@ -1958,11 +1962,11 @@ def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_
     attack.DOC_PATH = tmp_path / "docs" / "session-attack-paths.md"
     attack.PRIVATE_INDEX = attack.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
     attack.PRESERVATION_RECEIPTS = tmp_path / "docs" / "worktree-preservation-receipts.json"
-    attack.worktree_debt_report = lambda root: {"total": 20, "debt": 13, "items": []}
+    attack.worktree_debt_report = lambda root: {"total": 11, "debt": 7, "items": []}
 
     attack.PROMPT_INDEX.parent.mkdir(parents=True)
     attack.PROMPT_INDEX.write_text(
-        json.dumps({"sources": [], "worktree_report": {"debt": 13, "items": []}}), encoding="utf-8"
+        json.dumps({"sources": [], "worktree_report": {"debt": 7, "items": []}}), encoding="utf-8"
     )
     attack.CODEX_INDEX.write_text(json.dumps({"session_count": 0, "families": []}), encoding="utf-8")
     attack.BLOCKER_INDEX.write_text(
@@ -1974,7 +1978,7 @@ def test_session_attack_paths_keep_local_pressure_actionable_when_worktree_debt_
                         "category": "local_lean",
                         "status": "parked",
                         "route": "Drain after preservation proof.",
-                        "details": {"worktree_debt": 13, "worktree_debt_cap": 12},
+                        "details": {"worktree_debt": 7, "worktree_debt_target": 0, "worktree_debt_complete": False},
                     }
                 ]
             }

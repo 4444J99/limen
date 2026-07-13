@@ -203,7 +203,13 @@ else
   rung "credential-wall (secrets homed)" live python3 "$ROOT/scripts/credential-wall.py" --check
 fi
 
-# 12+. Registry-declared fixed-point checks. Sensor ids and commands remain inside sensors.yaml;
+# 12. lifecycle closure — preserved worktree debt is a diagnostic during ordinary dispatch, but
+#     Omega is the exact-zero fixed point: no debt roots and no accepted-reaper residue. The scan is
+#     intentionally live/explicit (not a dispatch hot-path check), so offline CI reports SKIP.
+rung "worktree lifecycle (exact zero)" live python3 "$ROOT/scripts/worktree-debt.py" \
+  --strict --fail-on-debt --fail-reapable-over-cap
+
+# 13+. Registry-declared fixed-point checks. Sensor ids and commands remain inside sensors.yaml;
 #      omega consumes only generic {id,index,tier,label} metadata and therefore needs no edit when a
 #      sensor is added or renamed. ``rung`` owns offline handling, so every live check remains an
 #      explicit SKIP rather than a fake pass.

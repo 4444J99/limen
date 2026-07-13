@@ -9,7 +9,8 @@ macOS ``kern.memorystatus_vm_pressure_level``: 1 = normal, 2 = warn, 4 = critica
   * >= warn      -> throttle (dispatch continues at a reduced cap — a 16 GB host lives
                     at warn under normal load; a full idle beat here starved the fleet
                     for a night, 2026-07-08: 273 skipped beats with budget unused)
-  * >= critical  -> idle beat + shed running discretionary load (ollama)
+  * >= critical  -> block new local checkout work + shed discretionary load (ollama);
+                    off-box provider lanes remain eligible
 
 Fail-OPEN everywhere: a sensor fault reads as 'normal' and never blocks the beat.
 """
@@ -22,7 +23,7 @@ from . import params
 
 OK = "ok"
 THROTTLE = "throttle"  # >= warn: dispatch continues, cap divided by VITALS_THROTTLE_DIVISOR
-SHED = "shed"  # >= critical: the heartbeat should make this an idle beat
+SHED = "shed"  # >= critical: local admission stops; remote dispatch remains live
 
 # kernel level for "normal" — the fail-open value when the gauge can't be read.
 _NORMAL = 1

@@ -47,6 +47,7 @@ Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (
 
 from __future__ import annotations
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -413,6 +414,49 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None):
     return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"
 
 
+def persist_apply_receipt(
+    *,
+    started_ts,
+    dirs,
+    removed,
+    skipped,
+    failed,
+    deferred,
+    generated_reclaim,
+):
+    """Persist one strict apply receipt with a non-replayable completion timestamp."""
+    completed_ts = time.time()
+    if (
+        isinstance(started_ts, bool)
+        or not math.isfinite(float(started_ts))
+        or float(started_ts) <= 0
+        or not math.isfinite(completed_ts)
+        or completed_ts <= 0
+        or float(started_ts) > completed_ts
+    ):
+        raise ValueError("reclaim receipt timestamps must be finite, positive, and ordered")
+    MARKER.parent.mkdir(parents=True, exist_ok=True)
+    MARKER.write_text(str(completed_ts))
+    with LOG.open("a") as fh:
+        fh.write(
+            json.dumps(
+                {
+                    "ts": float(started_ts),
+                    "completed_ts": completed_ts,
+                    "apply": True,
+                    "scanned": len(dirs),
+                    "removed": [name for name, _ in removed],
+                    "skipped": dict(skipped),
+                    "failed": dict(failed),
+                    "deferred_over_cap": deferred,
+                    "generated_reclaim": generated_reclaim,
+                }
+            )
+            + "\n"
+        )
+    return completed_ts
+
+
 def main():
     if HELP:
         print(
@@ -496,24 +540,15 @@ def main():
 
     if APPLY:
         try:
-            MARKER.parent.mkdir(parents=True, exist_ok=True)
-            MARKER.write_text(str(now))
-            with LOG.open("a") as fh:
-                fh.write(
-                    json.dumps(
-                        {
-                            "ts": now,
-                            "apply": APPLY,
-                            "scanned": len(dirs),
-                            "removed": [n for n, _ in removed],
-                            "skipped": dict(skipped),
-                            "failed": dict(failed),
-                            "deferred_over_cap": deferred,
-                            "generated_reclaim": generated_reclaim,
-                        }
-                    )
-                    + "\n"
-                )
+            persist_apply_receipt(
+                started_ts=now,
+                dirs=dirs,
+                removed=removed,
+                skipped=skipped,
+                failed=failed,
+                deferred=deferred,
+                generated_reclaim=generated_reclaim,
+            )
         except Exception:
             pass  # logging must never break the beat
 

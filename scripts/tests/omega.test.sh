@@ -86,10 +86,14 @@ live = [r for r in d["rungs"] if r["tier"] == "live"]
 assert live and all(r["status"] == "SKIP" for r in live), [r["status"] for r in live]
 rows = {r["rung"]: r for r in d["rungs"]}
 assert rows["ask-lineage convergence"]["status"] == "SKIP", rows
+assert rows["worktree lifecycle (exact zero)"]["status"] == "SKIP", rows
 assert rows["arbitrary registry parity"]["status"] == "PASS", rows
 assert rows["arbitrary registry posture"]["status"] == "SKIP", rows
 print("  case1 stamp OK")
 PY
+grep -q -- '--strict --fail-on-debt --fail-reapable-over-cap' "$work/scripts/omega.sh" \
+  && check "strict" "strict" "case1 omega lifecycle inventory" \
+  || check "missing" "strict" "case1 omega lifecycle inventory"
 base_hash="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_hash"])' "$work/logs/omega.json")"
 
 # ── Case 1b: normalized contract identity ignores row order, but changes on a new rung ────────────

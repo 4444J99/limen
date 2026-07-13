@@ -373,13 +373,20 @@ def _positive_int(value: Any, default: int) -> int:
     return parsed if parsed > 0 else default
 
 
+def _host_local_ceiling() -> int:
+    return max(1, os.cpu_count() or 1)
+
+
 def async_probe_snapshot(enabled: bool, *, launchd: dict[str, Any], plist: dict[str, Any]) -> dict[str, Any]:
     if not enabled:
         return {"requested": False}
     loaded_env = launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
     plist_env = plist.get("env") if isinstance(plist.get("env"), dict) else {}
     lanes = str(loaded_env.get("LIMEN_DISPATCH_LANES") or plist_env.get("LIMEN_DISPATCH_LANES") or "auto")
-    max_runs = _positive_int(loaded_env.get("LIMEN_ASYNC_MAX") or plist_env.get("LIMEN_ASYNC_MAX"), 12)
+    max_runs = _positive_int(
+        loaded_env.get("LIMEN_ASYNC_MAX") or plist_env.get("LIMEN_ASYNC_MAX"),
+        _host_local_ceiling(),
+    )
     env = dict(os.environ)
     env["PYTHONPATH"] = f"{ROOT / 'cli' / 'src'}:{env.get('PYTHONPATH', '')}"
     env["LIMEN_DISPATCH_LANES"] = lanes
@@ -820,7 +827,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "- Refresh always-working reconciliation: `python3 scripts/always-working.py --write`",
         "- Verify async dispatch tests: `pytest -q cli/tests/test_async_dispatch.py`",
         "- Probe heartbeat: `python3 scripts/watchdog.py --dry-run`",
-        f"- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes {async_probe.get('lanes') or 'auto'} --per-lane 3 --max {async_probe.get('max') or 12} --dry-run`",
+        f"- Probe async dry-run: `PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes {async_probe.get('lanes') or 'auto'} --per-lane 3 --max {async_probe.get('max') or _host_local_ceiling()} --dry-run`",
         "",
     ]
     return "\n".join(lines)

@@ -404,8 +404,9 @@ def build_blocker_paths(blockers: dict[str, Any]) -> list[dict[str, Any]]:
             agent = "human/codex-prep"
         elif category == "local_lean":
             debt = maybe_int(details.get("worktree_debt"))
-            debt_cap = maybe_int(details.get("worktree_debt_cap"))
-            if debt is not None and debt_cap is not None and debt <= debt_cap:
+            # Completion is exact zero debt: only debt == 0 is parked (nothing to drain); any nonzero
+            # debt routes to the reaper/drain action. There is no tolerated count.
+            if debt == 0:
                 base = 34
                 lane = "parked"
             else:
