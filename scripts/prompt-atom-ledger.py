@@ -86,7 +86,10 @@ from limen.prompt_sources import (  # noqa: E402
     SOURCE_ADAPTER_RULES,
     SOURCE_ALIAS_BLOCKER_REASONS,
     SOURCE_FILE_SIGNATURE_FIELDS,
+    SOURCE_RECORD_SCHEMAS,
     SourcePathCustody,
+    agy_conversation_root_error,
+    agy_conversation_storage_error,
     inspect_source_path_custody,
     source_adapter_contract,
     source_contract_receipt_applies,
@@ -763,6 +766,15 @@ def active_scan_lanes(lifecycle: Any, rows: Sequence[dict[str, Any]]) -> set[str
         lanes.add("opencode")
     agy_root = getattr(lifecycle, "AGY_CLI_CONVERSATIONS", None)
     if agy_root is not None and Path(agy_root).is_dir():
+        home = getattr(lifecycle, "HOME", None)
+        root_error = (
+            agy_conversation_root_error(Path(home), Path(agy_root))
+            if home is not None
+            else "configured HOME is unavailable"
+        )
+        if root_error:
+            lanes.add("agy")
+            return lanes
         try:
             if next(Path(agy_root).rglob("*.db"), None) is not None:
                 lanes.add("agy")
@@ -3700,6 +3712,249 @@ def sqlite_cell_fingerprint(value: Any) -> Any:
     return {"kind": type(value).__name__, "sha256": digest(str(value))}
 
 
+def agy_steps_schema_error(connection: sqlite3.Connection) -> str | None:
+    """Validate the repository-owned Agy steps envelope without reading prompt bodies."""
+
+    schema = SOURCE_RECORD_SCHEMAS["agy-conversation-v1"]
+    try:
+        object_rows = connection.execute("SELECT type, sql FROM main.sqlite_schema WHERE name = 'steps'").fetchall()
+        if not object_rows:
+            return "missing required steps table"
+        if len(object_rows) != 1 or object_rows[0]["type"] != "table":
+            return "required steps object must be a concrete table"
+        create_sql = object_rows[0]["sql"]
+        if not isinstance(create_sql, str) or not re.match(r"^\s*CREATE\s+TABLE\b", create_sql, re.IGNORECASE):
+            return "required steps object must not be a virtual table"
+        table_rows = connection.execute("PRAGMA main.table_xinfo('steps')").fetchall()
+    except sqlite3.Error as exc:
+        return f"cannot inspect steps schema: {exc}"
+    if any(int(row["hidden"]) != 0 for row in table_rows):
+        return "steps schema contains hidden or generated columns"
+    names = [str(row["name"]) for row in table_rows]
+    if len(names) != len(set(names)):
+        return "steps schema has duplicate column names"
+    required = [str(name) for name in schema["required_columns"]]
+    missing = [name for name in required if name not in names]
+    if missing:
+        return "steps schema is missing required columns: " + ", ".join(missing)
+    unknown = sorted(set(names) - set(required))
+    if unknown:
+        return "steps schema has unsupported columns: " + ", ".join(unknown)
+    return None
+
+
+def _agy_json_prompt_candidate(value: Any) -> tuple[str | None, str | None]:
+    """Unwrap only exact, provider-neutral JSON prompt envelopes."""
+
+    if isinstance(value, str):
+        text = value.strip()
+        return (text or None), None
+    if not isinstance(value, dict):
+        return None, "unsupported structured prompt envelope"
+    fields = set(value)
+    if fields == {"prompt"} and isinstance(value.get("prompt"), str):
+        text = str(value["prompt"]).strip()
+        return (text or None), None
+    if fields == {"content", "role"} and value.get("role") in {"human", "operator", "user"}:
+        if not isinstance(value.get("content"), str):
+            return None, "structured prompt content must be a string"
+        text = str(value["content"]).strip()
+        return (text or None), None
+    return None, "unsupported structured prompt envelope"
+
+
+class AgyDuplicateJsonKeyError(ValueError):
+    """A structured Agy carrier repeated a key and is therefore ambiguous."""
+
+
+def _agy_unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, item in pairs:
+        if key in value:
+            raise AgyDuplicateJsonKeyError("duplicate JSON object key")
+        value[key] = item
+    return value
+
+
+def agy_json_nesting_error(text: str, *, maximum: int) -> str | None:
+    """Bound JSON container depth without counting brackets inside strings."""
+
+    stripped = text.lstrip()
+    if not stripped or stripped[0] not in "[{":
+        return None
+    depth = 0
+    in_string = False
+    escaped = False
+    for character in stripped:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+        elif character in "[{":
+            depth += 1
+            if depth > maximum:
+                return f"JSON nesting exceeds the bounded parser limit {maximum}"
+        elif character in "]}":
+            depth -= 1
+            if depth < 0:
+                return None
+    return None
+
+
+def agy_parse_json(text: str) -> tuple[Any, bool, str | None]:
+    """Parse one possible envelope without collapsing duplicate object keys."""
+
+    stripped = text.lstrip()
+    json_looking = bool(stripped) and stripped[0] in '[{"'
+    maximum_depth = int(SOURCE_RECORD_SCHEMAS["agy-conversation-v1"]["max_json_nesting_depth"])
+    nesting_error = agy_json_nesting_error(text, maximum=maximum_depth)
+    if nesting_error:
+        return None, True, nesting_error
+    try:
+        return json.loads(text, object_pairs_hook=_agy_unique_json_object), True, None
+    except AgyDuplicateJsonKeyError:
+        return None, True, "duplicate JSON object keys are ambiguous"
+    except RecursionError:
+        return None, True, "JSON nesting exceeds the bounded parser limit"
+    except json.JSONDecodeError:
+        if json_looking:
+            return None, True, "malformed or truncated JSON-looking carrier"
+        return None, False, None
+    except (TypeError, ValueError):
+        if json_looking:
+            return None, True, "malformed or truncated JSON-looking carrier"
+        return None, False, None
+
+
+def agy_binary_text_segments(value: bytes, *, maximum: int) -> tuple[list[str], str | None]:
+    """Extract bounded printable source segments without a minimum-length blind spot."""
+
+    decoded = value.decode("utf-8", errors="replace")
+    characters = [
+        character if character != "\ufffd" and (character in "\n\r\t" or character.isprintable()) else "\0"
+        for character in decoded
+    ]
+    segments: list[str] = []
+    for raw_segment in "".join(characters).split("\0"):
+        segment = raw_segment.strip()
+        if not segment:
+            continue
+        segments.append(segment)
+        if len(segments) > maximum:
+            return [], f"binary carrier exceeds bounded segment ceiling {maximum}"
+    return segments, None
+
+
+def agy_prompt_cell_candidates(
+    value: Any,
+    *,
+    column: str,
+    maximum: int,
+) -> tuple[list[tuple[str, int, str]], str | None]:
+    """Return bounded prompt candidates tied to exact source segments.
+
+    Text cells are one exact segment. Binary cells may contribute independently
+    grounded printable segments through the legacy bounded binary splitter; the
+    record adapter, not this helper, enforces exact-one cardinality.
+    """
+
+    if value is None:
+        return [], None
+    if isinstance(value, str):
+        segments = [value]
+    elif isinstance(value, bytes):
+        segments, segment_error = agy_binary_text_segments(value, maximum=maximum)
+        if segment_error:
+            return [], f"{column} {segment_error}"
+    else:
+        return [], f"{column} has unsupported SQLite value type"
+    if len(segments) > maximum:
+        return [], f"{column} exceeds bounded prompt-candidate ceiling {maximum}"
+
+    candidates: list[tuple[str, int, str]] = []
+    for ordinal, segment in enumerate(segments):
+        text = segment.strip()
+        if not text:
+            continue
+        structured, parsed, parse_error = agy_parse_json(text)
+        if parse_error:
+            return [], f"{column} contains an {parse_error}"
+        if parsed:
+            candidate, error = _agy_json_prompt_candidate(structured)
+        else:
+            candidate = text
+            error = None
+        if error:
+            return [], f"{column} contains an {error}"
+        if candidate:
+            candidates.append((column, ordinal, candidate))
+        if len(candidates) > maximum:
+            return [], f"{column} exceeds bounded prompt-candidate ceiling {maximum}"
+    return candidates, None
+
+
+def agy_nonprompt_cell_error(
+    value: Any,
+    *,
+    column: str,
+    maximum: int,
+) -> str | None:
+    """Reject a purported non-prompt row when any prompt carrier is visible."""
+
+    if value is None:
+        return None
+    if isinstance(value, str):
+        spans = [value]
+    elif isinstance(value, bytes):
+        spans, segment_error = agy_binary_text_segments(value, maximum=maximum)
+        if segment_error:
+            return f"{column} {segment_error}"
+    else:
+        return f"{column} has unsupported SQLite value type"
+    prompt_markers = ("# FLAME", "## FLAME", "Complete task ", "/goal")
+    structural_marker = re.compile(
+        r"(?:^|[\s,{])(?:prompt|instructions)\s*[:=]|"
+        r"(?:^|[\s,{])role\s*[:=]\s*(?:user|human|operator)|"
+        r"(?:^|[\s,{])type\s*[:=]\s*(?:user|human|operator|prompt)",
+        re.IGNORECASE,
+    )
+    for span in spans:
+        if any(marker in span for marker in prompt_markers) or structural_marker.search(span):
+            return "non-prompt step contains a prompt-bearing marker"
+        structured, parsed, parse_error = agy_parse_json(span)
+        if parse_error:
+            return parse_error
+        if not parsed:
+            continue
+        if structured_user_prompt_marker(structured):
+            return "non-prompt step contains a structured prompt-bearing marker"
+    return None
+
+
+def agy_unit_receipt(
+    *,
+    disposition: str,
+    contract_id: str,
+    contract_digest: str,
+    signature: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "version": SOURCE_ADAPTER_CONTRACT_VERSION,
+        "disposition": disposition,
+        "contract_id": contract_id,
+        "contract_digest": contract_digest,
+        "signature": signature,
+        "related_signatures": {},
+        "related_evidence": {},
+    }
+
+
 def scan_agy_conversations(
     lifecycle: Any,
     cursor: dict[str, Any],
@@ -3712,32 +3967,62 @@ def scan_agy_conversations(
     root = Path(lifecycle.AGY_CLI_CONVERSATIONS)
     coverage = {"agy-cli-conversations": empty_coverage()}
     counts = coverage["agy-cli-conversations"]
-    if not root.exists():
+    empty_result = {
+        "discovered": {},
+        "processed": {},
+        "adapted_unit_receipts": {},
+        "excluded_unit_receipts": {},
+        "errors": [],
+        "unsupported": [],
+        "pending_files": 0,
+        "attempted_files": 0,
+        "coverage": coverage,
+    }
+    if os.path.lexists(root) and root.is_symlink():
+        counts["errors"] += 1
         return [], {
-            "discovered": {},
-            "processed": {},
-            "errors": [],
-            "unsupported": [],
-            "pending_files": 0,
-            "attempted_files": 0,
-            "coverage": coverage,
+            **empty_result,
+            "errors": ["agy-cli-conversations: configured conversation root is a symlink"],
+        }
+    home = getattr(lifecycle, "HOME", None)
+    if home is None:
+        counts["errors"] += 1
+        return [], {
+            **empty_result,
+            "errors": ["agy-cli-conversations: configured HOME is unavailable for root custody"],
+        }
+    root_contract_error = agy_conversation_root_error(Path(home), root)
+    if root_contract_error:
+        counts["errors"] += 1
+        return [], {
+            **empty_result,
+            "errors": [f"agy-cli-conversations: {root_contract_error}"],
+        }
+    if not root.exists():
+        return [], empty_result
+    if not root.is_dir():
+        counts["errors"] += 1
+        return [], {
+            **empty_result,
+            "errors": ["agy-cli-conversations: configured conversation root is not a directory"],
         }
     root_escape = source_path_error(root, containment_root=root)
     if root_escape:
         counts["errors"] += 1
         return [], {
-            "discovered": {},
-            "processed": {},
+            **empty_result,
             "errors": [f"agy-cli-conversations:{root}: {root_escape}"],
-            "unsupported": [],
-            "pending_files": 0,
-            "attempted_files": 0,
-            "coverage": coverage,
         }
     cutoff = None if days is None else dt.datetime.now(dt.timezone.utc).timestamp() - days * 86400
     events: list[dict[str, Any]] = []
     discovered: dict[str, Any] = {}
     processed: dict[str, Any] = {}
+    adapted_unit_receipts: dict[str, Any] = {}
+    excluded_unit_receipts: dict[str, Any] = {}
+    prior_adapted_receipts = cursor.get("adapted_unit_receipts") or {}
+    prior_excluded_receipts = cursor.get("excluded_unit_receipts") or {}
+    adapter_contract = source_adapter_contract()
+    contract_digest = str(adapter_contract["digest"])
     errors: list[str] = []
     pending = 0
     attempted = 0
@@ -3761,9 +4046,21 @@ def scan_agy_conversations(
             counts["errors"] += 1
             errors.append(f"agy-cli-conversations:{path}: {escape}")
             continue
+        relative = path.relative_to(root)
+        if len(relative.parts) != 1:
+            counts["errors"] += 1
+            errors.append(
+                f"agy-cli-conversations:{path}: unsupported database path role; "
+                "conversation databases must be direct children of the configured root"
+            )
+            continue
+        storage_error = agy_conversation_storage_error(path)
+        if storage_error:
+            counts["errors"] += 1
+            errors.append(f"agy-cli-conversations:{path}: {storage_error}")
+            continue
         storage_signature = agy_storage_signature(path)
         if storage_signature is None:
-            counts["discovered"] += 1
             counts["errors"] += 1
             errors.append(f"agy-cli-conversations:{path}: source cannot be stat'ed")
             continue
@@ -3771,7 +4068,17 @@ def scan_agy_conversations(
         if cutoff is not None and source_mtime < cutoff:
             continue
         key = cursor_unit_key("agy-cli-conversations", path)
-        cached_signature = (cursor.get("files") or {}).get(key)
+        cached_file_signature = (cursor.get("files") or {}).get(key)
+        cached_adapted_receipt = prior_adapted_receipts.get(key) if isinstance(prior_adapted_receipts, dict) else None
+        cached_excluded_receipt = (
+            prior_excluded_receipts.get(key) if isinstance(prior_excluded_receipts, dict) else None
+        )
+        cached_receipt = cached_adapted_receipt or cached_excluded_receipt
+        cached_signature = (
+            cached_file_signature
+            if isinstance(cached_file_signature, dict)
+            else (cached_receipt.get("signature") if isinstance(cached_receipt, dict) else None)
+        )
         cache_generation_matches = bool(
             isinstance(cached_signature, dict)
             and all(cached_signature.get(field) == value for field, value in storage_signature.items())
@@ -3779,13 +4086,49 @@ def scan_agy_conversations(
         signature = dict(cached_signature) if cache_generation_matches else {**storage_signature, "content_sha256": ""}
         discovered[key] = signature
         counts["discovered"] += 1
-        if cache_generation_matches:
+        cached_adapted = bool(
+            cache_generation_matches
+            and cached_file_signature == cached_signature
+            and source_unit_receipt_matches(
+                cached_adapted_receipt,
+                disposition="adapted",
+                contract_id="agy-conversation-v1",
+                contract_digest=contract_digest,
+                source="agy-cli-conversations",
+                locator=str(path),
+                signature=signature,
+            )
+        )
+        cached_excluded = bool(
+            cache_generation_matches
+            and cached_file_signature is None
+            and source_unit_receipt_matches(
+                cached_excluded_receipt,
+                disposition="excluded",
+                contract_id="agy-conversation-nonprompt-v1",
+                contract_digest=contract_digest,
+                source="agy-cli-conversations",
+                locator=str(path),
+                signature=signature,
+            )
+        )
+        if cached_adapted or cached_excluded:
             if agy_storage_signature(path) != storage_signature:
                 counts["errors"] += 1
                 errors.append(f"{key}: database or WAL changed during cache validation; cursor not advanced")
                 continue
-            processed[key] = signature
-            counts["converged"] += 1
+            if agy_conversation_storage_error(path):
+                counts["errors"] += 1
+                errors.append(f"{key}: SQLite sidecar custody changed during cache validation; cursor not advanced")
+                continue
+            if cached_adapted:
+                processed[key] = signature
+                adapted_unit_receipts[key] = cached_adapted_receipt
+                counts["adapted"] += 1
+                counts["converged"] += 1
+            else:
+                excluded_unit_receipts[key] = cached_excluded_receipt
+                counts["excluded"] += 1
             continue
         if not budget.claim():
             pending += 1
@@ -3793,14 +4136,17 @@ def scan_agy_conversations(
             continue
         attempted += 1
         try:
-            connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
-        except sqlite3.Error as exc:
+            connection = sqlite3.connect(f"{path.resolve(strict=True).as_uri()}?mode=ro", uri=True)
+        except (OSError, sqlite3.Error) as exc:
             counts["errors"] += 1
             errors.append(f"{key}: {exc}")
             continue
         connection.row_factory = sqlite3.Row
         try:
             connection.execute("BEGIN")
+            schema_error = agy_steps_schema_error(connection)
+            if schema_error:
+                raise ValueError(schema_error)
             max_rows = active_limits.max_events_per_unit * 10
             record_count, source_bytes, limit_kind = bounded_sqlite_lengths(
                 connection,
@@ -3821,7 +4167,7 @@ def scan_agy_conversations(
                     f"{active_limits.max_source_bytes_per_unit}"
                 )
             rows = connection.execute(
-                "SELECT idx, step_type, step_payload, metadata, task_details, error_details, "
+                "SELECT idx, step_type, status, step_payload, metadata, task_details, error_details, "
                 "render_info FROM steps ORDER BY idx LIMIT ?",
                 (max_rows,),
             ).fetchall()
@@ -3832,6 +4178,7 @@ def scan_agy_conversations(
                         for column in (
                             "idx",
                             "step_type",
+                            "status",
                             "step_payload",
                             "metadata",
                             "task_details",
@@ -3851,9 +4198,13 @@ def scan_agy_conversations(
             continue
         db_events: list[dict[str, Any]] = []
         db_error: str | None = None
+        seen_indexes: set[int] = set()
+        prompt_columns = tuple(str(column) for column in SOURCE_RECORD_SCHEMAS["agy-conversation-v1"]["prompt_columns"])
+        max_candidates = int(SOURCE_RECORD_SCHEMAS["agy-conversation-v1"]["max_prompt_candidates_per_record"])
         for row in rows:
             step_type = row["step_type"]
             row_index = row["idx"]
+            status = row["status"]
             if (
                 isinstance(step_type, bool)
                 or not isinstance(step_type, int)
@@ -3861,37 +4212,54 @@ def scan_agy_conversations(
                 or isinstance(row_index, bool)
                 or not isinstance(row_index, int)
                 or row_index < 0
+                or isinstance(status, bool)
+                or not isinstance(status, int)
+                or status < 0
             ):
                 db_error = f"{key}: malformed step identity: exact non-negative integers required"
                 break
-            spans: list[str] = []
-            structured_values: list[Any] = []
-            for column in ("step_payload", "metadata", "task_details", "error_details", "render_info"):
-                value = row[column]
-                if isinstance(value, str):
-                    value_spans = [value]
-                else:
-                    value_spans = lifecycle.blob_text_spans(value)
-                spans.extend(value_spans)
-                for span in value_spans:
-                    try:
-                        structured_values.append(json.loads(span))
-                    except (TypeError, ValueError):
-                        pass
+            if row_index in seen_indexes:
+                db_error = f"{key}: malformed step identity: duplicate idx values are not allowed"
+                break
+            seen_indexes.add(row_index)
             if step_type != 14:
-                prompt_markers = ("# FLAME", "## FLAME", "Complete task ", "/goal")
-                hidden_prompt = any(any(marker in span for marker in prompt_markers) for span in spans)
-                hidden_prompt = hidden_prompt or any(
-                    structured_user_prompt_marker(value) for value in structured_values
-                )
-                if hidden_prompt:
-                    db_error = f"{key}: Agy step type {step_type} requires an explicit prompt adapter"
+                for column in prompt_columns:
+                    marker_error = agy_nonprompt_cell_error(
+                        row[column],
+                        column=column,
+                        maximum=max_candidates,
+                    )
+                    if marker_error:
+                        db_error = (
+                            f"{key}: Agy step type {step_type} requires an explicit prompt adapter; "
+                            "typed non-prompt exclusion rejected: "
+                            f"{marker_error}"
+                        )
+                        break
+                if db_error:
                     break
                 continue
-            text = lifecycle.agy_prompt_from_spans(spans)
-            if not text:
-                db_error = f"{key}: Agy prompt step could not be grounded in an exact source segment"
+            candidates: list[tuple[str, int, str]] = []
+            for column in prompt_columns:
+                cell_candidates, candidate_error = agy_prompt_cell_candidates(
+                    row[column],
+                    column=column,
+                    maximum=max_candidates,
+                )
+                if candidate_error:
+                    db_error = f"{key}: Agy prompt step has malformed carrier metadata: {candidate_error}"
+                    break
+                candidates.extend(cell_candidates)
+                if len(candidates) > max_candidates:
+                    db_error = f"{key}: Agy prompt step exceeds bounded prompt-candidate ceiling {max_candidates}"
+                    break
+            if db_error:
                 break
+            if len(candidates) != 1:
+                cardinality = "none" if not candidates else "multiple"
+                db_error = f"{key}: Agy prompt step has {cardinality} grounded source segments; exactly one is required"
+                break
+            carrier_column, carrier_ordinal, text = candidates[0]
             task_body, body_kind = lifecycle.normalize_task_body(text)
             provenance, authority = (
                 ("delegated_task_frame", "derived")
@@ -3904,8 +4272,9 @@ def scan_agy_conversations(
                     "session_ref": f"agy-cli-conversations:{path.stem}:{path}",
                     "event_ref": row_index,
                     "event_index": row_index,
-                    "text_index": 0,
+                    "text_index": carrier_ordinal,
                     "source_locator": f"{path}#step:{row['idx']}",
+                    "source_segment": carrier_column,
                     "timestamp": lifecycle.iso_from_ts(source_mtime),
                     "text": text,
                     "task_body": task_body if body_kind == "flame_with_task_body" else "",
@@ -3926,13 +4295,47 @@ def scan_agy_conversations(
             counts["errors"] += 1
             errors.append(f"{key}: database or WAL changed during scan; cursor not advanced")
             continue
+        if agy_conversation_storage_error(path):
+            counts["errors"] += 1
+            errors.append(f"{key}: SQLite sidecar custody changed during scan; cursor not advanced")
+            continue
         events.extend(db_events)
-        processed[key] = signature
-        counts["converged"] += 1
-        counts["scanned"] += 1
+        if db_events:
+            processed[key] = signature
+            adapted_unit_receipts[key] = agy_unit_receipt(
+                disposition="adapted",
+                contract_id="agy-conversation-v1",
+                contract_digest=contract_digest,
+                signature=signature,
+            )
+            counts["adapted"] += 1
+            counts["converged"] += 1
+            counts["scanned"] += 1
+        else:
+            excluded_unit_receipts[key] = agy_unit_receipt(
+                disposition="excluded",
+                contract_id="agy-conversation-nonprompt-v1",
+                contract_digest=contract_digest,
+                signature=signature,
+            )
+            counts["excluded"] += 1
+    final_root_error = agy_conversation_root_error(Path(home), root)
+    if final_root_error or not root.is_dir():
+        counts["errors"] += 1
+        counts["adapted"] = 0
+        counts["excluded"] = 0
+        counts["converged"] = 0
+        counts["scanned"] = 0
+        errors.append("agy-cli-conversations: conversation root custody changed during scan; cursor not advanced")
+        events = []
+        processed = {}
+        adapted_unit_receipts = {}
+        excluded_unit_receipts = {}
     return events, {
         "discovered": discovered,
         "processed": processed,
+        "adapted_unit_receipts": adapted_unit_receipts,
+        "excluded_unit_receipts": excluded_unit_receipts,
         "errors": errors,
         "unsupported": [],
         "pending_files": pending,
@@ -4040,6 +4443,8 @@ def scan_native_sources(
     events.extend(agy_events)
     files = dict(regular["files"])
     files.update(opencode_scan["processed"])
+    for key in agy_scan["discovered"]:
+        files.pop(key, None)
     files.update(agy_scan["processed"])
     discovered = dict(regular["discovered"])
     discovered.update(opencode_scan["discovered"])
@@ -4107,6 +4512,9 @@ def scan_native_sources(
     )
     adapter_gap_routes = build_adapter_gap_routes(adapter_gaps, policy)
     excluded_unit_receipts = dict(regular["excluded_unit_receipts"])
+    for key in agy_scan["discovered"]:
+        excluded_unit_receipts.pop(key, None)
+    excluded_unit_receipts.update(agy_scan.get("excluded_unit_receipts") or {})
     excluded_unit_receipts_digest = digest(excluded_unit_receipts)
     source_exclusion_counts = dict(
         sorted(
@@ -4119,6 +4527,9 @@ def scan_native_sources(
     )
     excluded_source_count = len(excluded_unit_receipts)
     adapted_unit_receipts = dict(regular["adapted_unit_receipts"])
+    for key in agy_scan["discovered"]:
+        adapted_unit_receipts.pop(key, None)
+    adapted_unit_receipts.update(agy_scan.get("adapted_unit_receipts") or {})
     adapted_unit_receipts_digest = digest(adapted_unit_receipts)
     source_adapter_counts = dict(
         sorted(

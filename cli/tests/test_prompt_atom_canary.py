@@ -119,11 +119,11 @@ def _write_agy_source(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path)
     connection.execute(
-        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, step_payload TEXT, metadata TEXT, "
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
         "task_details TEXT, error_details TEXT, render_info TEXT)"
     )
     connection.execute(
-        "INSERT INTO steps VALUES (1, 14, ?, NULL, NULL, NULL, NULL)",
+        "INSERT INTO steps VALUES (1, 14, 3, ?, NULL, NULL, NULL, NULL)",
         ("Complete task implement the isolated Agy canary request and verify its predicate.",),
     )
     connection.commit()

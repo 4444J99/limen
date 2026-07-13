@@ -14,6 +14,8 @@ from typing import Any
 SOURCE_ADAPTER_CONTRACT_VERSION = 1
 PROMPT_SOURCE_SCANNER_VERSION = 3
 SOURCE_FILE_SIGNATURE_FIELDS = ("ctime_ns", "device", "inode", "mtime_ns", "size")
+AGY_CONVERSATION_ROOT_SEGMENTS = (".gemini", "antigravity-cli", "conversations")
+AGY_SQLITE_SIDECAR_SUFFIXES = ("-wal", "-shm", "-journal")
 CLAUDE_PROJECT_MEMORY_ALIAS_ID = "claude-project-memory-alias-v1"
 SOURCE_ALIAS_BLOCKER_REASONS = (
     "alias_ancestor_symlink",
@@ -220,7 +222,74 @@ def inspect_source_path_custody(
     )
 
 
+def agy_conversation_root_error(home: Path, root: Path) -> str | None:
+    """Require the canonical Agy root and every fixed segment to remain direct."""
+
+    lexical_home = _absolute_lexical(home)
+    lexical_root = _absolute_lexical(root)
+    expected_root = lexical_home.joinpath(*AGY_CONVERSATION_ROOT_SEGMENTS)
+    if not os.path.lexists(lexical_home) and not os.path.lexists(lexical_root):
+        return None
+    if lexical_root != expected_root:
+        return "configured conversation root does not match its canonical HOME-relative role"
+    try:
+        current = lexical_home
+        for segment in AGY_CONVERSATION_ROOT_SEGMENTS:
+            current /= segment
+            if not os.path.lexists(current):
+                return None
+            current_stat = os.lstat(current)
+            if stat.S_ISLNK(current_stat.st_mode):
+                return "conversation root contains a symlink hop in its fixed path"
+            if not stat.S_ISDIR(current_stat.st_mode):
+                return "conversation root contains a non-directory fixed path segment"
+        resolved_home = lexical_home.resolve(strict=True)
+        resolved_root = lexical_root.resolve(strict=True)
+    except OSError as exc:
+        return f"conversation root cannot be resolved: {exc}"
+    if not _within(resolved_root, resolved_home):
+        return "conversation root escapes its configured HOME"
+    return None
+
+
+def agy_conversation_storage_error(path: Path) -> str | None:
+    """Reject non-regular database or sidecar leaves before SQLite opens them."""
+
+    try:
+        database_mode = path.lstat().st_mode
+    except OSError as exc:
+        return f"cannot inspect conversation database leaf: {exc}"
+    if not stat.S_ISREG(database_mode):
+        return "conversation database leaf is not a regular file"
+    for suffix in AGY_SQLITE_SIDECAR_SUFFIXES:
+        sidecar = Path(f"{path}{suffix}")
+        if not os.path.lexists(sidecar):
+            continue
+        custody = inspect_source_path_custody("agy-cli-conversations", sidecar, path.parent)
+        if custody.error:
+            return f"{sidecar.name}: {custody.error}"
+        try:
+            sidecar_mode = sidecar.lstat().st_mode
+        except OSError as exc:
+            return f"{sidecar.name}: cannot inspect SQLite sidecar: {exc}"
+        if not stat.S_ISREG(sidecar_mode):
+            return f"{sidecar.name}: SQLite sidecar is not a regular file"
+    return None
+
+
 SOURCE_ADAPTER_RULES: dict[str, dict[str, Any]] = {
+    "agy-conversation-v1": {
+        "source": "agy-cli-conversations",
+        "path": {
+            "root_segments": list(AGY_CONVERSATION_ROOT_SEGMENTS),
+            "relative_depth": 1,
+            "suffix": ".db",
+        },
+        "schema": "agy-conversation-v1",
+        "prompt_discriminator": {"column": "step_type", "exact_integer": 14},
+        "prompt_carrier": "exactly-one-grounded-source-segment",
+        "provenance": "provider-neutral",
+    },
     "codex-pasted-text-attachment-v1": {
         "source": "codex-attachments",
         "path": {
@@ -305,6 +374,16 @@ SOURCE_ADAPTER_RULES: dict[str, dict[str, Any]] = {
     },
 }
 SOURCE_EXCLUSION_RULES: dict[str, dict[str, Any]] = {
+    "agy-conversation-nonprompt-v1": {
+        "source": "agy-cli-conversations",
+        "path": {
+            "root_segments": list(AGY_CONVERSATION_ROOT_SEGMENTS),
+            "relative_depth": 1,
+            "suffix": ".db",
+        },
+        "schema": "agy-conversation-v1",
+        "predicate": "all rows have an exact non-prompt step discriminator and no prompt-bearing marker",
+    },
     "claude-file-history-snapshot-v1": {
         "source": "claude-file-history",
         "path": {"minimum_relative_depth": 1, "basename_regex": "[0-9a-fA-F]+@v[0-9]+"},
@@ -756,6 +835,20 @@ SOURCE_RECORD_SCHEMAS = {
     },
     "agy-conversation-v1": {
         "source": "agy-cli-conversations",
+        "table": "steps",
+        "required_columns": [
+            "idx",
+            "step_type",
+            "status",
+            "step_payload",
+            "metadata",
+            "task_details",
+            "error_details",
+            "render_info",
+        ],
+        "identity_columns": ["idx", "step_type", "status"],
+        "identity_type": "exact-nonnegative-integer",
+        "unique_index_column": "idx",
         "prompt_step_type": 14,
         "prompt_columns": [
             "step_payload",
@@ -764,7 +857,16 @@ SOURCE_RECORD_SCHEMAS = {
             "error_details",
             "render_info",
         ],
-        "unknown_prompt_markers": ["prompt", "instructions", "role:user", "type:user|human|prompt"],
+        "prompt_carrier_cardinality": "exactly-one-grounded-source-segment",
+        "nonprompt_exclusion_contract": "agy-conversation-nonprompt-v1",
+        "max_prompt_candidates_per_record": 64,
+        "max_json_nesting_depth": 128,
+        "unknown_prompt_markers": [
+            "prompt",
+            "instructions",
+            "role:user|human|operator",
+            "type:user|human|operator|prompt",
+        ],
         "unit_signature_fields": AGY_CONVERSATION_UNIT_SIGNATURE_FIELDS,
     },
 }
@@ -807,6 +909,7 @@ def source_adapter_contract() -> dict[str, Any]:
 
 def _relative_role_parts(source: str, locator: str) -> tuple[str, ...] | None:
     roots = {
+        "agy-cli-conversations": (".gemini", "antigravity-cli", "conversations"),
         "codex-attachments": (".codex", "attachments"),
         "claude-file-history": (".claude", "file-history"),
         "claude-plans": (".claude", "plans"),
@@ -974,6 +1077,8 @@ def source_contract_receipt_applies(
     prompt_suffixes = {".json", ".jsonl", ".md"}
 
     predicates = {
+        "agy-conversation-v1": lambda: len(relative) == 1 and suffix == ".db",
+        "agy-conversation-nonprompt-v1": lambda: len(relative) == 1 and suffix == ".db",
         "codex-pasted-text-attachment-v1": lambda: (
             len(relative) == 2
             and re.fullmatch(r"pasted-text-[1-9][0-9]*\.txt", path.name) is not None

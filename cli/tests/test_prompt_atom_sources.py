@@ -44,7 +44,7 @@ def _claude_memory_alias_fixture(module, tmp_path: Path, *, absolute: bool = Fal
     lifecycle = module.load_lifecycle_module()
     lifecycle.LOCAL_SOURCES = [("claude-projects", projects, ("*",))]
     lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
-    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
+    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
     lifecycle.HOME = tmp_path
     return lifecycle, projects, alias, target
 
@@ -1203,30 +1203,766 @@ def test_exact_all_rechecks_live_source_at_final_commit_boundary(tmp_path: Path,
 def _agy_database(path: Path, prompt: str) -> None:
     connection = sqlite3.connect(path)
     connection.execute(
-        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, step_payload TEXT, metadata TEXT, "
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
         "task_details TEXT, error_details TEXT, render_info TEXT)"
     )
     connection.execute(
-        "INSERT INTO steps VALUES (1, 14, ?, NULL, NULL, NULL, NULL)",
+        "INSERT INTO steps VALUES (1, 14, 3, ?, NULL, NULL, NULL, NULL)",
         (prompt,),
     )
     connection.commit()
     connection.close()
 
 
+def _agy_lifecycle(sources, root: Path):
+    lifecycle = sources.load_lifecycle_module()
+    lifecycle.AGY_CLI_CONVERSATIONS = root
+    segments = (".gemini", "antigravity-cli", "conversations")
+    if tuple(root.parts[-len(segments) :]) == segments:
+        lifecycle.HOME = root.parents[len(segments) - 1]
+    return lifecycle
+
+
+def _agy_limits(sources, *, source_bytes: int = 32 * 1024 * 1024, discovery: int = 100_000):
+    baseline = sources.runtime_limits({})
+    return sources.ResourceLimits(
+        max_source_bytes_per_unit=source_bytes,
+        max_events_per_unit=baseline.max_events_per_unit,
+        max_discovery_units=discovery,
+        max_classifier_input_bytes=baseline.max_classifier_input_bytes,
+        max_classifier_output_bytes=baseline.max_classifier_output_bytes,
+        max_classifier_stderr_bytes=baseline.max_classifier_stderr_bytes,
+        max_classifier_occurrences=baseline.max_classifier_occurrences,
+    )
+
+
+def test_agy_exact_short_prompt_is_provider_neutral_and_receipted(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "short.db"
+    _agy_database(database, "ship it")
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    key = sources.cursor_unit_key("agy-cli-conversations", database)
+    assert [(event["text"], event["provenance"], event["authority"]) for event in events] == [
+        ("ship it", "unknown_user_input", "unknown")
+    ]
+    assert events[0]["source_segment"] == "step_payload"
+    assert result["adapted_unit_receipts"][key]["contract_id"] == "agy-conversation-v1"
+    assert result["excluded_unit_receipts"] == {}
+
+
+def test_agy_short_binary_prompt_segment_is_not_lost_to_length_heuristics(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "binary-short.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload BLOB, metadata BLOB, "
+        "task_details BLOB, error_details BLOB, render_info BLOB)"
+    )
+    connection.execute(
+        "INSERT INTO steps VALUES (1, 14, 3, ?, NULL, NULL, NULL, NULL)",
+        (sqlite3.Binary(b"\x08\x01\x12\x02go"),),
+    )
+    connection.commit()
+    connection.close()
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert [event["text"] for event in events] == ["go"]
+    assert result["errors"] == []
+
+
+def test_agy_ambiguous_prompt_carriers_fail_closed_without_leaking_text(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "ambiguous.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    secrets = ("synthetic first private prompt", "synthetic second private prompt")
+    connection.execute(
+        "INSERT INTO steps VALUES (1, 14, 3, ?, ?, NULL, NULL, NULL)",
+        secrets,
+    )
+    connection.commit()
+    connection.close()
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["processed"] == {}
+    assert result["adapted_unit_receipts"] == {}
+    assert "multiple grounded source segments" in result["errors"][0]
+    redacted_result = json.dumps(result, sort_keys=True)
+    assert all(secret not in redacted_result for secret in secrets)
+
+
+def test_agy_structural_nonprompt_database_has_typed_idempotent_exclusion(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "nonprompt.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    connection.execute(
+        "INSERT INTO steps VALUES (1, 15, 3, ?, NULL, NULL, NULL, NULL)",
+        (json.dumps({"outcome": "synthetic tool result"}),),
+    )
+    connection.commit()
+    connection.close()
+    lifecycle = _agy_lifecycle(sources, root)
+
+    first_events, first = sources.scan_agy_conversations(
+        lifecycle,
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+    second_events, second = sources.scan_agy_conversations(
+        lifecycle,
+        {
+            "files": first["processed"],
+            "adapted_unit_receipts": first["adapted_unit_receipts"],
+            "excluded_unit_receipts": first["excluded_unit_receipts"],
+        },
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    key = sources.cursor_unit_key("agy-cli-conversations", database)
+    assert first_events == second_events == []
+    assert first["excluded_unit_receipts"][key]["contract_id"] == "agy-conversation-nonprompt-v1"
+    assert second["excluded_unit_receipts"] == first["excluded_unit_receipts"]
+    assert second["attempted_files"] == 0
+    assert second["coverage"]["agy-cli-conversations"]["excluded"] == 1
+
+
+def test_agy_typed_nonprompt_exclusion_validates_at_exact_all_scope(tmp_path: Path, monkeypatch):
+    sources = _load()
+    home = tmp_path / "home"
+    root = home / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "nonprompt.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    connection.execute("INSERT INTO steps VALUES (1, 15, 3, NULL, NULL, NULL, NULL, NULL)")
+    connection.commit()
+    connection.close()
+    lifecycle = _agy_lifecycle(sources, root)
+    lifecycle.HOME = home
+    lifecycle.LOCAL_SOURCES = []
+    lifecycle.OPENCODE_DB = home / ".local" / "share" / "opencode" / "missing.db"
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    paths = sources.LedgerPaths.for_root(tmp_path / "ledger")
+
+    events, proposal = sources.scan_native_sources(paths, days=None, max_files=1)
+    sources.update_ledger(paths, events=events, cursor=proposal)
+    cursor = sources.load_json_strict(paths.cursor)[0]
+
+    key = sources.cursor_unit_key("agy-cli-conversations", database)
+    assert events == []
+    assert cursor["scope"] == cursor["target_scope"] == "all"
+    assert cursor["files"] == {}
+    assert cursor["excluded_unit_receipts"][key]["contract_id"] == "agy-conversation-nonprompt-v1"
+    assert sources.check_ledger(paths, require_scope="all") == []
+
+
+def test_agy_exact_all_live_custody_rejects_root_symlink_swap(tmp_path: Path, monkeypatch):
+    sources = _load()
+    home = tmp_path / "home"
+    root = home / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "nonprompt.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    connection.execute("INSERT INTO steps VALUES (1, 15, 3, NULL, NULL, NULL, NULL, NULL)")
+    connection.commit()
+    connection.close()
+    lifecycle = _agy_lifecycle(sources, root)
+    lifecycle.HOME = home
+    lifecycle.LOCAL_SOURCES = []
+    lifecycle.OPENCODE_DB = home / ".local" / "share" / "opencode" / "missing.db"
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    paths = sources.LedgerPaths.for_root(tmp_path / "ledger")
+
+    events, proposal = sources.scan_native_sources(paths, days=None, max_files=1)
+    assert events == []
+    assert proposal["scope"] == "all"
+
+    custody = root.with_name("conversations-custody")
+    root.rename(custody)
+    root.symlink_to(custody, target_is_directory=True)
+
+    core = sys.modules["limen.prompt_corpus"]
+    errors = core.validate_live_source_custody(proposal)
+    assert "agy-cli-conversations: live conversation root changed to a symlink" in errors
+
+
+def test_agy_root_ancestor_symlink_fails_closed(tmp_path: Path):
+    sources = _load()
+    home = tmp_path / "home"
+    gemini = home / ".gemini"
+    gemini.mkdir(parents=True)
+    outside_cli = tmp_path / "outside-antigravity-cli"
+    outside_root = outside_cli / "conversations"
+    outside_root.mkdir(parents=True)
+    _agy_database(outside_root / "escaped.db", "synthetic escaped prompt")
+    (gemini / "antigravity-cli").symlink_to(outside_cli, target_is_directory=True)
+    root = gemini / "antigravity-cli" / "conversations"
+    lifecycle = sources.load_lifecycle_module()
+    lifecycle.HOME = home
+    lifecycle.AGY_CLI_CONVERSATIONS = root
+
+    events, result = sources.scan_agy_conversations(
+        lifecycle,
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["adapted_unit_receipts"] == {}
+    assert "conversation root contains a symlink hop" in result["errors"][0]
+
+
+@pytest.mark.parametrize("failure", ["noncanonical-absent", "broken-ancestor-symlink"])
+def test_agy_absent_root_only_closes_cleanly_for_canonical_direct_custody(tmp_path: Path, failure: str):
+    sources = _load()
+    home = tmp_path / "home"
+    home.mkdir()
+    if failure == "noncanonical-absent":
+        root = home / "missing-conversations"
+    else:
+        gemini = home / ".gemini"
+        gemini.mkdir()
+        (gemini / "antigravity-cli").symlink_to(tmp_path / "missing-target", target_is_directory=True)
+        root = gemini / "antigravity-cli" / "conversations"
+    lifecycle = sources.load_lifecycle_module()
+    lifecycle.HOME = home
+    lifecycle.AGY_CLI_CONVERSATIONS = root
+
+    events, result = sources.scan_agy_conversations(
+        lifecycle,
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["errors"]
+    expected = {
+        "noncanonical-absent": "does not match its canonical HOME-relative role",
+        "broken-ancestor-symlink": "contains a symlink hop",
+    }
+    assert expected[failure] in result["errors"][0]
+
+
+def test_agy_exact_all_live_custody_rejects_root_ancestor_symlink_swap(tmp_path: Path, monkeypatch):
+    sources = _load()
+    home = tmp_path / "home"
+    cli_root = home / ".gemini" / "antigravity-cli"
+    root = cli_root / "conversations"
+    root.mkdir(parents=True)
+    database = root / "nonprompt.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    connection.execute("INSERT INTO steps VALUES (1, 15, 3, NULL, NULL, NULL, NULL, NULL)")
+    connection.commit()
+    connection.close()
+    lifecycle = _agy_lifecycle(sources, root)
+    lifecycle.LOCAL_SOURCES = []
+    lifecycle.OPENCODE_DB = home / ".local" / "share" / "opencode" / "missing.db"
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+
+    events, proposal = sources.scan_native_sources(
+        SimpleNamespace(cursor=tmp_path / "missing-cursor.json"),
+        days=None,
+        max_files=1,
+    )
+    assert events == []
+    assert proposal["scope"] == "all"
+
+    custody = tmp_path / "antigravity-cli-custody"
+    cli_root.rename(custody)
+    cli_root.symlink_to(custody, target_is_directory=True)
+
+    core = sys.modules["limen.prompt_corpus"]
+    errors = core.validate_live_source_custody(proposal)
+    assert "agy-cli-conversations: live conversation root containment changed after the sealed scan" in errors
+
+
+@pytest.mark.parametrize(
+    "failure",
+    ["missing-status", "duplicate-index", "unknown-column", "view", "generated-column"],
+)
+def test_agy_malformed_step_envelopes_fail_closed(tmp_path: Path, failure: str):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / f"{failure}.db"
+    connection = sqlite3.connect(database)
+    if failure == "missing-status":
+        connection.execute(
+            "CREATE TABLE steps (idx INTEGER, step_type INTEGER, step_payload TEXT, metadata TEXT, "
+            "task_details TEXT, error_details TEXT, render_info TEXT)"
+        )
+        connection.execute("INSERT INTO steps VALUES (1, 14, 'prompt', NULL, NULL, NULL, NULL)")
+    elif failure == "duplicate-index":
+        connection.execute(
+            "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+            "task_details TEXT, error_details TEXT, render_info TEXT)"
+        )
+        connection.executemany(
+            "INSERT INTO steps VALUES (1, 14, 3, ?, NULL, NULL, NULL, NULL)",
+            [("first",), ("second",)],
+        )
+    elif failure == "unknown-column":
+        connection.execute(
+            "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+            "task_details TEXT, error_details TEXT, render_info TEXT, future_prompt_carrier TEXT)"
+        )
+        connection.execute("INSERT INTO steps VALUES (1, 15, 3, NULL, NULL, NULL, NULL, NULL, 'hidden prompt')")
+    elif failure == "view":
+        connection.execute(
+            "CREATE TABLE backing_steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, "
+            "metadata TEXT, task_details TEXT, error_details TEXT, render_info TEXT)"
+        )
+        connection.execute("INSERT INTO backing_steps VALUES (1, 14, 3, 'hidden prompt', NULL, NULL, NULL, NULL)")
+        connection.execute("CREATE VIEW steps AS SELECT * FROM backing_steps")
+    else:
+        connection.execute(
+            "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+            "task_details TEXT, error_details TEXT, "
+            "render_info TEXT GENERATED ALWAYS AS (NULL) VIRTUAL)"
+        )
+        connection.execute(
+            "INSERT INTO steps (idx, step_type, status, step_payload) VALUES (1, 14, 3, 'hidden prompt')"
+        )
+    connection.commit()
+    connection.close()
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["processed"] == {}
+    assert len(result["errors"]) == 1
+    expected = {
+        "missing-status": "missing required columns",
+        "duplicate-index": "duplicate idx",
+        "unknown-column": "unsupported columns",
+        "view": "must be a concrete table",
+        "generated-column": "hidden or generated columns",
+    }
+    assert expected[failure] in result["errors"][0]
+
+
+def test_agy_invalid_utf8_does_not_join_distinct_prompt_segments(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "invalid-utf8.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload BLOB, metadata BLOB, "
+        "task_details BLOB, error_details BLOB, render_info BLOB)"
+    )
+    connection.execute(
+        "INSERT INTO steps VALUES (1, 14, 3, ?, NULL, NULL, NULL, NULL)",
+        (sqlite3.Binary(b"first\xffsecond"),),
+    )
+    connection.commit()
+    connection.close()
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["adapted_unit_receipts"] == {}
+    assert "multiple grounded source segments" in result["errors"][0]
+    assert "firstsecond" not in json.dumps(result, sort_keys=True)
+
+
+@pytest.mark.parametrize("step_type", [14, 99], ids=("prompt-step", "nonprompt-step"))
+def test_agy_duplicate_json_keys_reject_adaptation_and_exclusion(tmp_path: Path, step_type: int):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / f"duplicate-json-{step_type}.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    secret_values = ("synthetic first value", "synthetic second value")
+    duplicate_json = f'{{"prompt":"{secret_values[0]}","prompt":"{secret_values[1]}"}}'
+    connection.execute(
+        "INSERT INTO steps VALUES (1, ?, 3, ?, NULL, NULL, NULL, NULL)",
+        (step_type, duplicate_json),
+    )
+    connection.commit()
+    connection.close()
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["adapted_unit_receipts"] == {}
+    assert result["excluded_unit_receipts"] == {}
+    assert "duplicate JSON object keys are ambiguous" in result["errors"][0]
+    redacted = json.dumps(result, sort_keys=True)
+    assert all(value not in redacted for value in secret_values)
+
+
+@pytest.mark.parametrize("step_type", [14, 99], ids=("prompt-step", "nonprompt-step"))
+def test_agy_deeply_nested_json_is_a_source_local_error(tmp_path: Path, step_type: int):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / f"deep-json-{step_type}.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    nested = "[" * 10_000 + '"synthetic nested value"' + "]" * 10_000
+    connection.execute(
+        "INSERT INTO steps VALUES (1, ?, 3, ?, NULL, NULL, NULL, NULL)",
+        (step_type, nested),
+    )
+    connection.commit()
+    connection.close()
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["adapted_unit_receipts"] == {}
+    assert result["excluded_unit_receipts"] == {}
+    assert "JSON nesting exceeds the bounded parser limit" in result["errors"][0]
+
+
+@pytest.mark.parametrize("step_type", [14, 99], ids=("prompt-step", "nonprompt-step"))
+@pytest.mark.parametrize(
+    "payload",
+    ['{"outcome":"synthetic"', '["synthetic"', '"synthetic'],
+    ids=("object", "array", "string"),
+)
+def test_agy_malformed_json_looking_carrier_fails_closed(
+    tmp_path: Path,
+    step_type: int,
+    payload: str,
+):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / f"malformed-json-{step_type}.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    connection.execute(
+        "INSERT INTO steps VALUES (1, ?, 3, ?, NULL, NULL, NULL, NULL)",
+        (step_type, payload),
+    )
+    connection.commit()
+    connection.close()
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["adapted_unit_receipts"] == {}
+    assert result["excluded_unit_receipts"] == {}
+    assert "malformed or truncated JSON-looking carrier" in result["errors"][0]
+
+
+def test_agy_json_depth_counter_ignores_brackets_inside_prompt_strings(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    prompt = "[" * 1_000 + "synthetic bracket prompt"
+    _agy_database(root / "quoted-brackets.db", json.dumps({"prompt": prompt}))
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert [event["text"] for event in events] == [prompt]
+    assert result["errors"] == []
+
+
+@pytest.mark.parametrize(
+    "marker",
+    ["prompt: ship it", "INSTRUCTIONS = ship it", "role:operator content:ship it", "type:operator ship it"],
+)
+def test_agy_plain_prompt_markers_reject_typed_nonprompt_exclusion(tmp_path: Path, marker: str):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "plain-marker.db"
+    connection = sqlite3.connect(database)
+    connection.execute(
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
+        "task_details TEXT, error_details TEXT, render_info TEXT)"
+    )
+    connection.execute(
+        "INSERT INTO steps VALUES (1, 99, 3, ?, NULL, NULL, NULL, NULL)",
+        (marker,),
+    )
+    connection.commit()
+    connection.close()
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["excluded_unit_receipts"] == {}
+    assert "explicit prompt adapter" in result["errors"][0]
+
+
+def test_agy_nested_database_path_role_fails_closed(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    nested = root / "nested"
+    nested.mkdir(parents=True)
+    _agy_database(nested / "conversation.db", "synthetic nested prompt")
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["adapted_unit_receipts"] == {}
+    assert result["excluded_unit_receipts"] == {}
+    assert result["attempted_files"] == 0
+    assert "unsupported database path role" in result["errors"][0]
+
+
+@pytest.mark.parametrize("leaf_kind", ["directory", "fifo"])
+def test_agy_nonregular_database_leaf_fails_before_sqlite_open(tmp_path: Path, leaf_kind: str):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    leaf = root / f"{leaf_kind}.db"
+    if leaf_kind == "directory":
+        leaf.mkdir()
+    else:
+        os.mkfifo(leaf)
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["adapted_unit_receipts"] == {}
+    assert result["excluded_unit_receipts"] == {}
+    assert result["attempted_files"] == 0
+    assert "database leaf is not a regular file" in result["errors"][0]
+
+
+@pytest.mark.parametrize("suffix", ["-wal", "-shm", "-journal"])
+def test_agy_nonregular_sqlite_sidecar_fails_before_sqlite_open(tmp_path: Path, suffix: str):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "conversation.db"
+    _agy_database(database, "synthetic direct prompt")
+    os.mkfifo(Path(f"{database}{suffix}"))
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert events == []
+    assert result["adapted_unit_receipts"] == {}
+    assert result["attempted_files"] == 0
+    assert "SQLite sidecar is not a regular file" in result["errors"][0]
+
+
+@pytest.mark.parametrize(
+    ("filename", "sibling_name"),
+    [
+        ("question?mode=ro&x=.db", "question"),
+        ("hash#fragment.db", "hash"),
+        ("percent%25.db", "percent%.db"),
+    ],
+    ids=("question", "fragment", "percent"),
+)
+def test_agy_sqlite_uri_escapes_reserved_filename_characters(
+    tmp_path: Path,
+    filename: str,
+    sibling_name: str,
+):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    candidate = root / filename
+    sibling = root / sibling_name
+    _agy_database(candidate, "correct reserved-path prompt")
+    _agy_database(sibling, "wrong sibling prompt")
+    old = time.time() - 10 * 86400
+    os.utime(sibling, (old, old))
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=1,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert [event["text"] for event in events] == ["correct reserved-path prompt"]
+    assert result["errors"] == []
+
+
+@pytest.mark.parametrize("failure", ["nested-path", "symlink-wal"])
+def test_agy_pre_custody_failure_returns_valid_partial_all_cursor(
+    tmp_path: Path,
+    monkeypatch,
+    failure: str,
+):
+    sources = _load()
+    home = tmp_path / "home"
+    root = home / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    if failure == "nested-path":
+        nested = root / "nested"
+        nested.mkdir()
+        _agy_database(nested / "conversation.db", "synthetic nested prompt")
+    else:
+        database = root / "conversation.db"
+        _agy_database(database, "synthetic direct prompt")
+        outside = tmp_path / "outside-wal"
+        outside.write_bytes(b"synthetic non-SQLite sidecar")
+        Path(f"{database}-wal").symlink_to(outside)
+    lifecycle = _agy_lifecycle(sources, root)
+    lifecycle.HOME = home
+    lifecycle.LOCAL_SOURCES = []
+    lifecycle.OPENCODE_DB = home / ".local" / "share" / "opencode" / "missing.db"
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+
+    events, proposal = sources.scan_native_sources(
+        SimpleNamespace(cursor=tmp_path / "missing-cursor.json"),
+        days=None,
+        max_files=1,
+    )
+
+    assert events == []
+    assert proposal["scope"] == "partial:all"
+    assert proposal["source_unit_count"] == 0
+    family = proposal["source_families"]["agy-cli-conversations"]
+    assert family["discovered"] == 0
+    assert family["errors"] == 1
+    assert all(family[field] == 0 for field in ("converged", "adapted", "excluded", "pending", "unsupported"))
+    assert proposal["adapter_gaps"] == ["agy-cli-conversations"]
+
+
+def test_agy_source_byte_discovery_and_symlink_bounds_fail_closed(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    _agy_database(root / "large.db", "x" * 256)
+    _agy_database(root / "second.db", "bounded second prompt")
+    outside = tmp_path / "outside.db"
+    _agy_database(outside, "outside prompt")
+    (root / "linked.db").symlink_to(outside)
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=3),
+        limits=_agy_limits(sources, source_bytes=64, discovery=2),
+    )
+
+    assert events == []
+    assert result["processed"] == {}
+    assert result["pending_files"] == 1
+    joined = "\n".join(result["errors"])
+    assert "database discovery exceeds bounded ceiling 2" in joined
+    assert "bounded ceiling is 64" in joined
+    assert "symlink hop" in joined
+
+
 def test_agy_conversation_adapter_obeys_shared_work_unit_cap(tmp_path: Path):
     sources = _load()
-    root = tmp_path / "agy"
-    root.mkdir()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
     _agy_database(root / "one.db", "First bounded prompt with enough material to parse.")
     _agy_database(root / "two.db", "Second bounded prompt with enough material to parse.")
-    lifecycle = SimpleNamespace(
-        AGY_CLI_CONVERSATIONS=root,
-        blob_text_spans=lambda value: [value] if isinstance(value, str) else [],
-        agy_prompt_from_spans=lambda spans: spans[0] if spans else None,
-        normalize_task_body=lambda text: ("", "direct"),
-        iso_from_ts=lambda value: str(value),
-    )
+    lifecycle = _agy_lifecycle(sources, root)
 
     events, result = sources.scan_agy_conversations(
         lifecycle,
@@ -1242,25 +1978,19 @@ def test_agy_conversation_adapter_obeys_shared_work_unit_cap(tmp_path: Path):
 
 def test_agy_wal_only_prompt_append_invalidates_cached_conversation(tmp_path: Path):
     sources = _load()
-    root = tmp_path / "agy"
-    root.mkdir()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
     database = root / "wal.db"
     writer = sqlite3.connect(database)
     assert writer.execute("PRAGMA journal_mode=WAL").fetchone()[0] == "wal"
     writer.execute("PRAGMA wal_autocheckpoint=0")
     writer.execute(
-        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, step_payload TEXT, metadata TEXT, "
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
         "task_details TEXT, error_details TEXT, render_info TEXT)"
     )
-    writer.execute("INSERT INTO steps VALUES (1, 14, 'first prompt', NULL, NULL, NULL, NULL)")
+    writer.execute("INSERT INTO steps VALUES (1, 14, 3, 'first prompt', NULL, NULL, NULL, NULL)")
     writer.commit()
-    lifecycle = SimpleNamespace(
-        AGY_CLI_CONVERSATIONS=root,
-        blob_text_spans=lambda value: [value] if isinstance(value, str) else [],
-        agy_prompt_from_spans=lambda spans: spans[0] if spans else None,
-        normalize_task_body=lambda text: ("", "direct"),
-        iso_from_ts=lambda value: str(value),
-    )
+    lifecycle = _agy_lifecycle(sources, root)
 
     first_events, first = sources.scan_agy_conversations(
         lifecycle,
@@ -1269,7 +1999,7 @@ def test_agy_wal_only_prompt_append_invalidates_cached_conversation(tmp_path: Pa
         budget=sources.ScanBudget(limit=1),
     )
     database_before = sources.file_signature(database)
-    writer.execute("INSERT INTO steps VALUES (2, 14, 'second prompt', NULL, NULL, NULL, NULL)")
+    writer.execute("INSERT INTO steps VALUES (2, 14, 3, 'second prompt', NULL, NULL, NULL, NULL)")
     writer.commit()
     assert sources.file_signature(database) == database_before
 
@@ -1289,25 +2019,19 @@ def test_agy_wal_only_prompt_append_invalidates_cached_conversation(tmp_path: Pa
 
 def test_agy_cache_hit_rechecks_wal_generation_before_convergence(tmp_path: Path, monkeypatch):
     sources = _load()
-    root = tmp_path / "agy"
-    root.mkdir()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
     database = root / "cache-race.db"
     writer = sqlite3.connect(database)
     assert writer.execute("PRAGMA journal_mode=WAL").fetchone()[0] == "wal"
     writer.execute("PRAGMA wal_autocheckpoint=0")
     writer.execute(
-        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, step_payload TEXT, metadata TEXT, "
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
         "task_details TEXT, error_details TEXT, render_info TEXT)"
     )
-    writer.execute("INSERT INTO steps VALUES (1, 14, 'first prompt', NULL, NULL, NULL, NULL)")
+    writer.execute("INSERT INTO steps VALUES (1, 14, 3, 'first prompt', NULL, NULL, NULL, NULL)")
     writer.commit()
-    lifecycle = SimpleNamespace(
-        AGY_CLI_CONVERSATIONS=root,
-        blob_text_spans=lambda value: [value] if isinstance(value, str) else [],
-        agy_prompt_from_spans=lambda spans: spans[0] if spans else None,
-        normalize_task_body=lambda text: ("", "direct"),
-        iso_from_ts=lambda value: str(value),
-    )
+    lifecycle = _agy_lifecycle(sources, root)
     _events, first = sources.scan_agy_conversations(
         lifecycle,
         {"files": {}},
@@ -1322,14 +2046,17 @@ def test_agy_cache_hit_rechecks_wal_generation_before_convergence(tmp_path: Path
         signature = real_signature(path)
         calls += 1
         if calls == 1:
-            writer.execute("INSERT INTO steps VALUES (2, 14, 'racing prompt', NULL, NULL, NULL, NULL)")
+            writer.execute("INSERT INTO steps VALUES (2, 14, 3, 'racing prompt', NULL, NULL, NULL, NULL)")
             writer.commit()
         return signature
 
     monkeypatch.setattr(sources, "agy_storage_signature", mutate_after_first_signature)
     events, result = sources.scan_agy_conversations(
         lifecycle,
-        {"files": first["processed"]},
+        {
+            "files": first["processed"],
+            "adapted_unit_receipts": first["adapted_unit_receipts"],
+        },
         days=None,
         budget=sources.ScanBudget(limit=1),
     )
@@ -1343,6 +2070,48 @@ def test_agy_cache_hit_rechecks_wal_generation_before_convergence(tmp_path: Path
     assert any("changed during cache validation" in error for error in result["errors"])
 
 
+def test_agy_cache_hit_rechecks_nonwal_sidecar_custody(tmp_path: Path, monkeypatch):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "cache-sidecar-race.db"
+    _agy_database(database, "synthetic cached prompt")
+    lifecycle = _agy_lifecycle(sources, root)
+    _events, first = sources.scan_agy_conversations(
+        lifecycle,
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+    real_signature = sources.agy_storage_signature
+    calls = 0
+
+    def add_fifo_after_initial_signature(path: Path):
+        nonlocal calls
+        signature = real_signature(path)
+        calls += 1
+        if calls == 1:
+            os.mkfifo(Path(f"{database}-shm"))
+        return signature
+
+    monkeypatch.setattr(sources, "agy_storage_signature", add_fifo_after_initial_signature)
+    events, result = sources.scan_agy_conversations(
+        lifecycle,
+        {
+            "files": first["processed"],
+            "adapted_unit_receipts": first["adapted_unit_receipts"],
+        },
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+    )
+
+    assert calls >= 2
+    assert events == []
+    assert result["processed"] == {}
+    assert result["adapted_unit_receipts"] == {}
+    assert any("sidecar custody changed during cache validation" in error for error in result["errors"])
+
+
 @pytest.mark.parametrize(
     "payload",
     [
@@ -1353,22 +2122,21 @@ def test_agy_cache_hit_rechecks_wal_generation_before_convergence(tmp_path: Path
 )
 def test_unknown_agy_prompt_step_is_an_explicit_source_error(tmp_path: Path, payload: dict):
     sources = _load()
-    root = tmp_path / "agy"
-    root.mkdir()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
     database = root / "future.db"
     connection = sqlite3.connect(database)
     connection.execute(
-        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, step_payload TEXT, metadata TEXT, "
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload TEXT, metadata TEXT, "
         "task_details TEXT, error_details TEXT, render_info TEXT)"
     )
     connection.execute(
-        "INSERT INTO steps VALUES (1, 99, ?, NULL, NULL, NULL, NULL)",
+        "INSERT INTO steps VALUES (1, 99, 3, ?, NULL, NULL, NULL, NULL)",
         (json.dumps(payload),),
     )
     connection.commit()
     connection.close()
-    lifecycle = sources.load_lifecycle_module()
-    lifecycle.AGY_CLI_CONVERSATIONS = root
+    lifecycle = _agy_lifecycle(sources, root)
 
     events, result = sources.scan_agy_conversations(
         lifecycle,
@@ -1389,30 +2157,30 @@ def test_unknown_agy_prompt_step_is_an_explicit_source_error(tmp_path: Path, pay
         {"role": "human", "content": "A hidden human prompt carried inside a bounded binary JSON value."},
         {"role": "operator", "content": "A hidden operator prompt carried inside a bounded binary JSON value."},
         {"prompt": "A hidden future prompt carried inside a bounded binary JSON value."},
+        {"prompt": "x"},
     ],
-    ids=("human-role", "operator-role", "prompt-field"),
+    ids=("human-role", "operator-role", "prompt-field", "short-prompt-field"),
 )
 def test_unknown_agy_binary_json_prompt_carrier_is_an_explicit_source_error(
     tmp_path: Path,
     payload: dict,
 ):
     sources = _load()
-    root = tmp_path / "agy"
-    root.mkdir()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
     database = root / "future-binary.db"
     connection = sqlite3.connect(database)
     connection.execute(
-        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, step_payload BLOB, metadata BLOB, "
+        "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload BLOB, metadata BLOB, "
         "task_details BLOB, error_details BLOB, render_info BLOB)"
     )
     connection.execute(
-        "INSERT INTO steps VALUES (1, 99, ?, NULL, NULL, NULL, NULL)",
+        "INSERT INTO steps VALUES (1, 99, 3, ?, NULL, NULL, NULL, NULL)",
         (sqlite3.Binary(json.dumps(payload).encode("utf-8")),),
     )
     connection.commit()
     connection.close()
-    lifecycle = sources.load_lifecycle_module()
-    lifecycle.AGY_CLI_CONVERSATIONS = root
+    lifecycle = _agy_lifecycle(sources, root)
 
     events, result = sources.scan_agy_conversations(
         lifecycle,
@@ -1439,6 +2207,9 @@ def test_unknown_agy_binary_json_prompt_carrier_is_an_explicit_source_error(
         ("step_type", float("nan")),
         ("step_type", 14.5),
         ("step_type", "14"),
+        ("status", float("inf")),
+        ("status", 3.5),
+        ("status", "3"),
     ],
     ids=(
         "idx-inf",
@@ -1449,29 +2220,31 @@ def test_unknown_agy_binary_json_prompt_carrier_is_an_explicit_source_error(
         "type-nan",
         "type-float",
         "type-string",
+        "status-inf",
+        "status-float",
+        "status-string",
     ),
 )
 def test_agy_step_identity_requires_exact_nonnegative_integers(tmp_path: Path, field: str, value):
     sources = _load()
-    root = tmp_path / "agy"
-    root.mkdir()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
     database = root / "bad-identity.db"
     connection = sqlite3.connect(database)
     connection.execute(
-        "CREATE TABLE steps (idx, step_type, step_payload TEXT, metadata TEXT, "
+        "CREATE TABLE steps (idx, step_type, status, step_payload TEXT, metadata TEXT, "
         "task_details TEXT, error_details TEXT, render_info TEXT)"
     )
-    identity = {"idx": 1, "step_type": 14}
+    identity = {"idx": 1, "step_type": 14, "status": 3}
     identity[field] = value
     connection.execute(
-        "INSERT INTO steps VALUES (?, ?, 'A grounded prompt long enough for exact source parsing.', "
+        "INSERT INTO steps VALUES (?, ?, ?, 'A grounded prompt long enough for exact source parsing.', "
         "NULL, NULL, NULL, NULL)",
-        (identity["idx"], identity["step_type"]),
+        (identity["idx"], identity["step_type"], identity["status"]),
     )
     connection.commit()
     connection.close()
-    lifecycle = sources.load_lifecycle_module()
-    lifecycle.AGY_CLI_CONVERSATIONS = root
+    lifecycle = _agy_lifecycle(sources, root)
 
     events, result = sources.scan_agy_conversations(
         lifecycle,
@@ -3403,7 +4176,7 @@ def _codex_attachment_fixture(
         ("codex-attachments", attachments, ("*",)),
     ]
     lifecycle.OPENCODE_DB = tmp_path / "missing-opencode.db"
-    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / "missing-agy"
+    lifecycle.AGY_CLI_CONVERSATIONS = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
     lifecycle.HOME = tmp_path
     return lifecycle, session, attachment
 

@@ -413,7 +413,9 @@ def fixed_failures(
         and isinstance(counts, dict)
         and any(int(counts.get(key) or 0) for key in expected_family_row)
     }
-    if active_families != {name: expected_family_row for name in REQUIRED_CANARY_FAMILIES}:
+    expected_families = {name: dict(expected_family_row) for name in REQUIRED_CANARY_FAMILIES}
+    expected_families["agy-cli-conversations"]["adapted"] = 1
+    if active_families != expected_families:
         failures.append("first_pass_required_family_coverage_mismatch")
     source_scope = public.get("source_scope") if isinstance(public.get("source_scope"), dict) else {}
     if source_scope.get("scope") != "all" or source_scope.get("target_scope") != "all":

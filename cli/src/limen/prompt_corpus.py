@@ -1693,9 +1693,36 @@ def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
                 if not consider("gemini-tmp", path, root):
                     break
     agy_root = Path(spec["agy_conversations_root"])
-    if agy_root.exists() and discovery_count <= ceiling:
+    agy_root_ready = False
+    if os.path.lexists(agy_root) and agy_root.is_symlink():
+        errors.append("agy-cli-conversations: live conversation root changed to a symlink")
+    elif agy_root.exists():
+        segments = tuple(source_contract_module.AGY_CONVERSATION_ROOT_SEGMENTS)
+        agy_home = agy_root
+        for _segment in segments:
+            agy_home = agy_home.parent
+        root_error = source_contract_module.agy_conversation_root_error(agy_home, agy_root)
+        if root_error:
+            errors.append("agy-cli-conversations: live conversation root containment changed after the sealed scan")
+        elif not agy_root.is_dir():
+            errors.append("agy-cli-conversations: live conversation root is no longer a directory")
+        else:
+            agy_root_ready = True
+    if agy_root_ready and discovery_count <= ceiling:
         roots_by_source["agy-cli-conversations"] = agy_root
         for path in agy_root.rglob("*.db"):
+            try:
+                relative = path.relative_to(agy_root)
+            except ValueError:
+                errors.append("agy-cli-conversations: live database escaped its conversation root")
+                continue
+            if len(relative.parts) != 1:
+                errors.append("agy-cli-conversations: live database path role changed after the sealed scan")
+                continue
+            storage_error = source_contract_module.agy_conversation_storage_error(path)
+            if storage_error:
+                errors.append("agy-cli-conversations: live database storage custody changed after the sealed scan")
+                continue
             if not consider("agy-cli-conversations", path, agy_root):
                 break
 
@@ -1922,8 +1949,11 @@ def validate_source_adapter_cursor(
     elif set(alias_blockers) - valid_alias_reasons:
         errors.append("source_alias_blocker_counts contains an unknown reason")
 
-    def signature_valid(value: Any) -> bool:
+    def related_signature_valid(value: Any) -> bool:
         return _file_signature_valid(value, strong=True)
+
+    def unit_signature_valid(key: Any, value: Any) -> bool:
+        return _cursor_unit_signature_valid(key, value, strong_file=True)
 
     def validate_group(
         receipts: dict[str, Any],
@@ -1938,7 +1968,7 @@ def validate_source_adapter_cursor(
             _, source, locator = key.split(":", 2)
             related = receipt.get("related_signatures", {})
             related_ok = isinstance(related, dict) and all(
-                isinstance(label, str) and signature_valid(signature) for label, signature in related.items()
+                isinstance(label, str) and related_signature_valid(signature) for label, signature in related.items()
             )
             related_evidence = receipt.get("related_evidence", {})
             contract_id = receipt.get("contract_id")
@@ -1948,7 +1978,7 @@ def validate_source_adapter_cursor(
                 or not isinstance(contract_id, str)
                 or contract_id not in valid_ids
                 or receipt.get("contract_digest") != expected["digest"]
-                or not signature_valid(receipt.get("signature"))
+                or not unit_signature_valid(key, receipt.get("signature"))
                 or not related_ok
                 or not isinstance(related_evidence, dict)
                 or not source_contract_module.source_contract_receipt_applies(
