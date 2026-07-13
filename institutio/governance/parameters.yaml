@@ -1244,6 +1244,12 @@ parameters:
     self_update: none
     owner: mail
     note: "Max obligations-ledger age before scripts/check-mail-answered.py fails: a ledger not rebuilt within this window means the C_MAIL beat/effector is not running (the 2026-06 silent-freeze failure mode)."
+  LIMEN_UMA_ROOT:
+    default: "~/Workspace/universal-mail--automation"
+    env: LIMEN_UMA_ROOT
+    self_update: none
+    owner: mail
+    note: "Checkout path of the universal-mail--automation engine (the C_MAIL effector). scripts/check-mail-tiers.py reads core/protocols.py from here to cross-check that every dangerous protocol class is held; absent (e.g. CI) → that cross-check advisory-skips, never fails."
   LIMEN_PRIVATE_MAIL_STORY:
     default: "$LIMEN_ROOT/.limen-private/mail-story"
     env: LIMEN_PRIVATE_MAIL_STORY

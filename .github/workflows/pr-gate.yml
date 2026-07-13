@@ -74,5 +74,8 @@ jobs:
       - name: Sensors-registry drift (SENSORS — beat sensors are declared data)
         run: python scripts/check-sensors.py
 
+      - name: Mail-tiers drift (MAIL-TIERS — send-tier decision is declared data)
+        run: python scripts/check-mail-tiers.py
+
       - name: Run API and CLI tests
         run: python -m pytest web/api/tests cli/tests -q

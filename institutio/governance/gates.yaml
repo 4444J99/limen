@@ -285,6 +285,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
+  check-mail-tiers:
+    command: "python3 scripts/check-mail-tiers.py"
+    paths: ["institutio/governance/mail-tiers.yaml", "scripts/check-mail-tiers.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: mail
+    note: "MAIL-TIERS registry drift: the correspondence organ's send-tier decision is declared data (mail-tiers.yaml), the fourth VIGILIA-shaped panel. Asserts schema, well-formed no_reply suppressors, the hold-covers-{legal,money,verify_first} safety invariant that makes auto-send safe by construction, and bracket-free SAFE templates; when the UMA checkout is present it cross-checks every dangerous protocol class is held."
 
   # ── GitHub estate (GITVS — the GitHub custodian) ────────────────────────────
   gitvs-parity:

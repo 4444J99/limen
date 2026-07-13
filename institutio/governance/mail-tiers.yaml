@@ -1,0 +1,125 @@
+# MAIL-TIERS registry — the correspondence organ's send-tier decision, as declared data.
+#
+# The fourth VIGILIA-shaped panel beside GATES (gates.yaml), PARAMETERS (parameters.yaml),
+# and SENSORS (sensors.yaml): given a reply-owed obligation, which tier governs it —
+# auto-send, hold, or never-a-reply. Before this file the tier logic lived only inside the
+# UMA scripts (core/protocols.py + inbox_sweep heuristics); a wrong tier was a code change
+# in a second repo, invisible here. Now it is one declared registry: adding a suppressor or
+# an armed intent is one entry, and a drifted copy is a red check (check-mail-tiers.py).
+#
+# THE METHOD IS SUBTRACTION, NOT DETECTION. The sender starts from every obligation the
+# cascade marked `requires_reply` and subtracts, first-match-wins, in this order:
+#   1. no_reply — structural bulk/marketing/transactional mail: reclassified out of "owed".
+#                 (This is the fix for the newsletter/CRM false-positives that made the
+#                 ledger read 11-owed when only ~4 were real — Apple "Hello Developer",
+#                 Socket Weekly, Google Cloud, a ticket receipt, a shows blast.)
+#   2. hold    — a reply IS owed, but it is high-stakes → DRAFT only, never auto-sent.
+#                Decided by the obligation's own cls/tags (legal/money/verify_first), so a
+#                dangerous class can never be miscategorised. This is the load-bearing safety.
+#   3. safe    — a reply is owed and low-stakes → auto-send WHEN ARMED (LIMEN_MAIL_SEND=1,
+#                declared in parameters.yaml, owner: mail), and ONLY if the composed draft is
+#                complete (bracket-free). Deliberately minimal; the armed set grows on trust.
+#
+# HONEST LIMIT: no_reply keys on the sender's ESP/role signals, which cleanly catch the
+# obvious newsletters while leaving a real recruiter's own mailbox (e.g. a named person at a
+# company domain) untouched. CRM-nurture sent FROM a real-looking domain (a "quick check-in"
+# blast) is a lower-confidence residual — it needs the header/body suppressor rows below and
+# still may slip through. That is a knowingly-open edge, not a solved one.
+#
+# Consumers: universal-mail--automation/send_drafts.py (the load-bearing gate — classifies
+# each obligation before any send), draft_writer.py (starter-vs-complete-template selection).
+# Drift-check: scripts/check-mail-tiers.py — schema, the hold-covers-dangerous invariant,
+# bracket-free safe templates, and (when UMA is present) class-parity vs core/protocols.py.
+
+schema_version: 0.1
+
+# ── Tier 1: NO-REPLY suppressors (subtract first) ──────────────────────────────────────
+# A real person never carries these; a bulk send always does. Match semantics (shared by
+# the enforcer and the sender): an obligation is suppressed if its sender address matches
+# ANY esp_domain (suffix match on the host) OR ANY role_localpart (the part before '@'),
+# OR its subject matches a subject_pattern AND a header_signal is present. Suffix `*` in an
+# esp_domain is a subdomain wildcard (`mg.*` ⇒ any `mg.<anything>` host).
+no_reply:
+  esp_domains:          # bulk/ESP sending infra — never a human's mailbox
+    - ccsend.com        # Constant Contact
+    - buytickets.at     # ticketing receipts
+    - careerbits.com    # recruiting-CRM nurture
+    - shared1.ccsend.com
+    - mg.*              # Mailgun subdomains
+    - sendgrid.net
+    - list-manage.com   # Mailchimp
+    - mailchimpapp.net
+    - e.*               # e.<brand>.com marketing streams
+    - email.*
+    - mail.*
+    - news.*
+    - newsletter.*
+    - marketing.*
+    - notifications.*
+  role_localparts:      # role/marketing mailboxes (superset of protocols._looks_human's list)
+    - noreply
+    - no-reply
+    - donotreply
+    - do-not-reply
+    - notification
+    - notifications
+    - newsletter
+    - digest
+    - marketing
+    - updates
+    - developer         # brand dev-relations blasts (Apple "Hello Developer")
+    - insideapple
+  subject_patterns:     # newsletter/digest titles (weak on their own — need a header_signal)
+    - '(?i)\bweekly\b'
+    - '(?i)\bdigest\b'
+    - '(?i)\bnewsletter\b'
+    - '(?i)this week in'
+    - '(?i)your (blueprint|tickets) for'
+  header_signals:       # a bulk send declares itself (used only to confirm a subject_pattern)
+    - List-Unsubscribe
+    - 'Precedence: bulk'
+    - 'Precedence: list'
+
+# ── Tier 2: HOLD (owed, but never auto-send) ───────────────────────────────────────────
+# Decided by the obligation's own cls/tags from core/protocols.py — SUBTRACT, don't detect.
+# The invariant check-mail-tiers.py enforces: tags ⊇ {legal, money} AND verify_first is true,
+# so every phishing-prone / legal / money class is held no matter how it is otherwise scored.
+# Real optionality (a specific job offer or interview) is held too — a wrong auto-pass burns
+# the opportunity — which the sender enforces by never treating precedent/exploration as safe.
+hold:
+  classes:              # explicit holds even if their tags were ever loosened
+    - legal-correspondence
+    - legal-sign
+    - registered-agent
+  tags:                 # any obligation carrying one of these tags is held
+    - legal
+    - money
+    - security
+  verify_first: true    # any phishing-prone class is held regardless of tags
+
+# ── Tier 3: SAFE (owed, low-stakes, auto-send WHEN ARMED) ──────────────────────────────
+# Deliberately minimal. Each intent maps to a COMPLETE, bracket-free template (not the
+# bracketed starter draft_writer emits, which is never auto-sendable). `{first_name}` is the
+# only interpolation; a square-bracket placeholder in any template fails the enforcer.
+safe:
+  armed_by: LIMEN_MAIL_SEND     # default off → nothing sends; this only NAMES the valve
+  intents:
+    - id: decline
+      when: "an explicit cold recruiter/sales pitch on a thread the user never started"
+      template: |
+        Hi {first_name},
+
+        Thanks for reaching out. I'm not pursuing this right now, but I appreciate you
+        thinking of me and I'll keep it in mind if that changes.
+
+        Best,
+        Anthony
+    - id: schedule-confirm
+      when: "the counterparty proposed a specific time the user has already agreed to"
+      template: |
+        Hi {first_name},
+
+        That time works — confirming. Talk then.
+
+        Best,
+        Anthony
