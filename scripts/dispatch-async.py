@@ -391,13 +391,47 @@ def harvest() -> int:
                 )
                 rf.unlink(missing_ok=True)
                 continue
-            t = byid.get(data.get("task_id"))
-            if t is not None and data.get("result") != "__notask__":
-                _apply_result(t, data.get("agent"), data.get("result"), now, track, charge_budget=False)
-                applied += 1
-            if data.get("task_id"):
-                _clear_running_markers(str(data.get("task_id")))
-            _archive_result_receipt(rf, raw, now, parsed=data, reason="harvested")
+            task_id = data.get("task_id")
+            t = byid.get(task_id) if isinstance(task_id, str) else None
+            expected_hash = data.get("execution_contract_hash")
+            agent = data.get("agent")
+            custody_ok = (
+                isinstance(task_id, str)
+                and bool(task_id)
+                and isinstance(agent, str)
+                and bool(agent)
+                and isinstance(expected_hash, str)
+                and re.fullmatch(r"[0-9a-f]{64}", expected_hash) is not None
+                and data.get("execution_started") is True
+                and "result" in data
+                and t is not None
+                and t.status == "dispatched"
+            )
+            if custody_ok:
+                try:
+                    custody_ok = execution_contract_hash(t) == expected_hash
+                except Exception:
+                    custody_ok = False
+            if custody_ok:
+                last = t.dispatch_log[-1] if t.dispatch_log else None
+                custody_ok = bool(
+                    last is not None
+                    and last.session_id == "async-reserve"
+                    and last.status == "dispatched"
+                    and last.agent == agent
+                )
+
+            if custody_ok:
+                if data["result"] != "__notask__":
+                    _apply_result(t, agent, data["result"], now, track, charge_budget=False)
+                    applied += 1
+                _clear_running_markers(task_id)
+                archive_reason = "harvested"
+            else:
+                # A receipt is untrusted input.  Task id alone is never custody: a stale worker or
+                # forged/legacy receipt must not mutate (or clear the marker of) a changed claim.
+                archive_reason = "harvest-fenced"
+            _archive_result_receipt(rf, raw, now, parsed=data, reason=archive_reason)
             rf.unlink(missing_ok=True)
         if applied:
             save_limen_file(TASKS, lf)
@@ -763,15 +797,22 @@ def recover_exact_task(
         if task_id in _result_task_ids():
             return {"status": "result_pending_harvest", "recovered_count": 0}
 
-        matching_markers: list[tuple[Path, int | None, float]] = []
+        matching_markers: list[tuple[Path, int, float]] = []
         for marker in RUNS.glob("*.running"):
             marker_task_id, marker_agent = _marker_task_agent(marker)
             if marker_task_id != task_id:
                 continue
             try:
-                info = _running_marker_info(marker)
-                pid = info.get("pid")
-                age_s = (now - info["started_at"]).total_seconds()  # type: ignore[operator]
+                marker_data = json.loads(marker.read_text(encoding="utf-8"))
+                if not isinstance(marker_data, dict):
+                    raise ValueError("marker JSON root is not an object")
+                started_raw = marker_data.get("started_at")
+                if not isinstance(started_raw, str):
+                    raise ValueError("marker started_at is not a string")
+                started_at = datetime.datetime.fromisoformat(started_raw)
+                if started_at.tzinfo is None or started_at.utcoffset() is None:
+                    raise ValueError("marker started_at is not timezone-aware")
+                age_s = (now - started_at).total_seconds()
             except Exception as exc:
                 return {
                     "status": "blocked",
@@ -792,46 +833,68 @@ def recover_exact_task(
                         "exact task marker agent does not match the async reservation owner",
                     ),
                 }
-            matching_markers.append((marker, pid if isinstance(pid, int) else None, age_s))
-        live_marker = next(
-            (pid for _marker, pid, _age in matching_markers if pid is not None and _pid_alive(pid)), None
-        )
-        if live_marker is not None:
-            return {"status": "already_running", "recovered_count": 0, "pid": live_marker}
+            pid = marker_data.get("pid")
+            if type(pid) is not int or pid <= 0:
+                return {
+                    "status": "blocked",
+                    "recovered_count": 0,
+                    "blocker": _targeted_recovery_blocker(
+                        "targeted-recovery-marker-pid-invalid",
+                        task_id,
+                        "exact task marker does not contain an explicit positive integer pid",
+                    ),
+                }
+            matching_markers.append((marker, pid, age_s))
+
+        if not matching_markers:
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-marker-required",
+                    task_id,
+                    "exact recovery requires a readable stale marker with an explicit dead pid",
+                ),
+            }
+        if len(matching_markers) != 1:
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-marker-ambiguous",
+                    task_id,
+                    "exact task has multiple running markers; worker custody is ambiguous",
+                ),
+            }
+
+        marker, pid, marker_age_s = matching_markers[0]
+        try:
+            pid_alive = _pid_alive(pid)
+        except Exception as exc:
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-pid-proof-unavailable",
+                    task_id,
+                    f"exact task pid liveness could not be proven: {exc}",
+                ),
+            }
+        if pid_alive:
+            return {"status": "already_running", "recovered_count": 0, "pid": pid}
 
         grace_s = max(1, _env_int("LIMEN_TARGETED_RECOVERY_GRACE", default_max_age_s()))
-        if matching_markers:
-            fresh_markers = [
-                marker
-                for marker, _pid, age_s in matching_markers
-                if age_s <= grace_s
-            ]
-            if fresh_markers:
-                return {
-                    "status": "blocked",
-                    "recovered_count": 0,
-                    "blocker": _targeted_recovery_blocker(
-                        "targeted-recovery-marker-grace-active",
-                        task_id,
-                        "exact task marker is not stale enough for safe orphan recovery",
-                    ),
-                }
-            markers_to_remove = [marker for marker, _pid, _age in matching_markers]
-        else:
-            stamp = task.updated or last.timestamp
-            # Markerless workers have no PID proof. Match the accepted reaper's full worker-timeout
-            # grace by default; tests/operators may lower it only through the explicit recovery knob.
-            age_s = (now - stamp).total_seconds() if stamp else 0
-            if age_s <= grace_s:
-                return {
-                    "status": "blocked",
-                    "recovered_count": 0,
-                    "blocker": _targeted_recovery_blocker(
-                        "targeted-recovery-grace-active",
-                        task_id,
-                        f"markerless claim is only {max(0, int(age_s))}s old; retry after {grace_s}s spawn grace",
-                    ),
-                }
+        if marker_age_s <= grace_s:
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-marker-grace-active",
+                    task_id,
+                    "exact task marker is not stale enough for safe orphan recovery",
+                ),
+            }
+        markers_to_remove = [marker]
 
         with _machine_admission_lock():
             live_leases = [lease for lease in _active_admission_leases() if lease.get("task_id") == task_id]
@@ -845,6 +908,23 @@ def recover_exact_task(
                     "exact claim still has a live machine-admission lease",
                 ),
             }
+
+        # Close the PID-reuse window after lease inspection.  A PID that is live now is not
+        # recoverable even if the first probe observed it absent.
+        try:
+            pid_alive = _pid_alive(pid)
+        except Exception as exc:
+            return {
+                "status": "blocked",
+                "recovered_count": 0,
+                "blocker": _targeted_recovery_blocker(
+                    "targeted-recovery-pid-proof-unavailable",
+                    task_id,
+                    f"exact task pid liveness could not be revalidated: {exc}",
+                ),
+            }
+        if pid_alive:
+            return {"status": "already_running", "recovered_count": 0, "pid": pid}
 
         # Result publishers take this same queue lock. Recheck immediately before mutation so a
         # result that won the lock is harvested, while a late publisher sees the reopened status

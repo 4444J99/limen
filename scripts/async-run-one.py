@@ -157,29 +157,46 @@ def _publish_result(
     with _queue_lock(TASKS) as got:
         if not got:
             return False
+        board_error = None
         try:
             board = load_limen_file(TASKS)
             current = next((candidate for candidate in board.tasks if candidate.id == task_id), None)
-            current_hash = execution_contract_hash(current) if current is not None else ""
         except Exception as exc:
             current = None
             current_hash = ""
-            out["publication_failure"] = _failure(
+            board_error = _failure(
                 "async-result-board-unreadable",
                 f"fresh board could not be verified before result publication: {exc}",
             )
+        else:
+            try:
+                current_hash = execution_contract_hash(current) if current is not None else ""
+            except Exception:
+                current_hash = ""
 
-        if execution_started and (
-            current is None or current.status != "dispatched" or current_hash != expected_hash
-        ):
+        last = current.dispatch_log[-1] if current is not None and current.dispatch_log else None
+        publication_safe = bool(
+            board_error is None
+            and current is not None
+            and current.status == "dispatched"
+            and current_hash == expected_hash
+            and last is not None
+            and last.session_id == "async-reserve"
+            and last.status == "dispatched"
+            and last.agent == agent
+        )
+        if not publication_safe:
             out["result"] = "__notask__"
-            out["publication_failure"] = _failure(
+            out["publication_failure"] = board_error or _failure(
                 "async-result-publication-fenced",
                 "task changed or was recovered before the worker could publish its result",
                 expected_hash=expected_hash,
                 actual_hash=current_hash,
                 actual_status=getattr(current, "status", None),
             )
+        elif not execution_started:
+            # Validation failures are diagnostic receipts, never task outcomes.
+            out["result"] = "__notask__"
 
         RUNS.mkdir(parents=True, exist_ok=True)
         tmp = _result_path(task_id).with_suffix(f".{os.getpid()}.tmp")
