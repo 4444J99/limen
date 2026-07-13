@@ -186,6 +186,34 @@ sensors:
         severity: silent
         escalation: "prompt atom reconciliation skipped or exceeded its bound"
 
+  bifrons-portal:
+    section: "heartbeat"
+    title: "metabolize the BIFRONS star<->contribution portal (absorb->map->prepare; never submits)"
+    gate: LIMEN_BIFRONS
+    default: "1"
+    source: [heartbeat]
+    owner: bifrons
+    cadence:
+      env: LIMEN_BEAT_BIFRONS
+      default: 24
+    timeout:
+      env: LIMEN_BIFRONS_TIMEOUT
+      default: 180
+    steps:
+      - command: "python3 scripts/bifrons-organ.py"
+        severity: silent
+        escalation: "BIFRONS portal beat skipped or exceeded its bound"
+      - command: "python3 scripts/bifrons-organ.py --check"
+        severity: advisory
+        escalation: "BIFRONS PORTAL.md drift — a re-render is owed"
+    omega_eligible:
+      - label: "bifrons portal render"
+        tier: det
+        command: "python3 scripts/bifrons-organ.py --check"
+      - label: "bifrons portal liveness"
+        tier: live
+        command: "python3 scripts/bifrons-organ.py --doctor"
+
   fable-balance:
     section: "0e"
     title: "refresh the weekly Fable balance meter + surface an over-cap / unaccepted Fable run"

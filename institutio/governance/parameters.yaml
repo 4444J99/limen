@@ -2054,6 +2054,30 @@ parameters:
     self_update: none
     owner: observatory
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for the OBSERVATORY loop. The runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_BIFRONS:
+    default: 1
+    env: LIMEN_BIFRONS
+    self_update: none
+    owner: bifrons
+    note: "Master on/off for the registry-declared BIFRONS star<->contribution portal sensor (bifrons-portal in sensors.yaml). Ships LIVE (1): the metabolize beat is read-only absorb + internal prepare — no send, no spend — so it runs unbidden per the aliveness law. 0 gates it dormant. The one external write (an upstream PR) rides the existing outbound-send valve, never a BIFRONS lever."
+  LIMEN_BEAT_BIFRONS:
+    default: 24
+    env: LIMEN_BEAT_BIFRONS
+    self_update: none
+    owner: bifrons
+    note: "Cadence (every N beats) of the BIFRONS portal beat declared in sensors.yaml. The generic scheduled runner resolves this override; metabolize.sh contains no sensor-specific cadence constant."
+  LIMEN_BIFRONS_TIMEOUT:
+    default: 180
+    env: LIMEN_BIFRONS_TIMEOUT
+    self_update: none
+    owner: bifrons
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the BIFRONS portal beat. The runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_BIFRONS_BUDGET:
+    default: 3
+    env: LIMEN_BIFRONS_BUDGET
+    self_update: none
+    owner: bifrons
+    note: "Max new stars/exchanges the BIFRONS beat absorbs + prepares per cycle (bounds gh-API usage; the effector is `organvm portal metabolize --budget N`). Small by design — the beat converges over many cycles rather than one heavy sweep."
   OBSERVATORY_APPLY:
     default: 0
     env: OBSERVATORY_APPLY
