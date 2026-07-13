@@ -2295,12 +2295,12 @@ def targeted_codex_attachment_parent_events(
     _records: list[dict[str, Any]],
     *,
     limits: ResourceLimits,
-) -> tuple[list[dict[str, Any]], str | None]:
+) -> tuple[list[dict[str, Any]], str | None, bool]:
     """Use the same byte-exact adapter for regular and oversized parent files."""
 
     signature = file_signature(path)
     if signature is None:
-        return [], "attachment parent cannot be stat'ed"
+        return [], "attachment parent cannot be stat'ed", True
     return bounded_codex_attachment_parent_events_from_path(
         lifecycle,
         path,
@@ -2315,7 +2315,7 @@ def bounded_codex_attachment_parent_events_from_path(
     signature: dict[str, Any],
     *,
     limits: ResourceLimits,
-) -> tuple[list[dict[str, Any]], str | None]:
+) -> tuple[list[dict[str, Any]], str | None, bool]:
     """Stream oversized JSONL parents under explicit byte, row, and candidate ceilings."""
 
     rule = SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]
@@ -2325,14 +2325,13 @@ def bounded_codex_attachment_parent_events_from_path(
     max_parent_records = int(rule["max_parent_records"])
     max_session_ids = int(rule["max_parent_session_ids"])
     if int(signature.get("size") or 0) > max_probe_bytes:
-        return [], f"attachment parent exceeds bounded byte ceiling {max_probe_bytes}"
+        return [], f"attachment parent exceeds bounded byte ceiling {max_probe_bytes}", True
 
-    attachment_marker = b"pasted text file: "
     session_ids: list[str] = []
     session_identity_error: str | None = None
     forked = False
     echo_hashes: set[str] = set()
-    echo_unknown = False
+    parent_completeness_unknown = False
     candidates: list[dict[str, Any]] = []
     candidate_bytes = 0
     record_index = 0
@@ -2341,8 +2340,6 @@ def bounded_codex_attachment_parent_events_from_path(
         with path.open("rb") as handle:
             while True:
                 parts: list[bytes] = []
-                marker_tail = b""
-                marker_seen = False
                 oversized = False
                 saw_data = False
                 record_bytes = 0
@@ -2353,11 +2350,8 @@ def bounded_codex_attachment_parent_events_from_path(
                     saw_data = True
                     bytes_read += len(chunk)
                     if bytes_read > max_probe_bytes:
-                        return [], f"attachment parent exceeds bounded byte ceiling {max_probe_bytes}"
+                        return [], f"attachment parent exceeds bounded byte ceiling {max_probe_bytes}", True
                     record_bytes += len(chunk)
-                    probe = marker_tail + chunk
-                    marker_seen = marker_seen or attachment_marker in probe
-                    marker_tail = probe[-(len(attachment_marker) - 1) :]
                     if not oversized and record_bytes <= max_record_bytes:
                         parts.append(chunk)
                     else:
@@ -2373,44 +2367,47 @@ def bounded_codex_attachment_parent_events_from_path(
                     return (
                         [],
                         f"attachment parent record count exceeds bounded ceiling {max_parent_records}",
+                        True,
                     )
                 current_index = record_index
                 record_index += 1
                 if oversized:
-                    if marker_seen:
-                        return [], "attachment parent envelope exceeds bounded record ceiling"
-                    # An unparsed record may be an authority-bearing transport
-                    # row regardless of JSON key order.  It can never coexist
-                    # with operator promotion.
-                    echo_unknown = True
+                    # Raw marker probes are not evidence of absence: JSON may
+                    # encode the same canonical text with escapes, and a late
+                    # field may carry a second session identity. Any row we do
+                    # not parse makes the complete parent provenance unknown.
+                    parent_completeness_unknown = True
                     continue
                 raw = b"".join(parts)
                 try:
                     obj = json.loads(raw.decode("utf-8", errors="strict"))
                 except (UnicodeError, ValueError):
-                    if marker_seen:
-                        return [], "attachment parent reference is in a malformed JSONL record"
-                    echo_unknown = True
+                    parent_completeness_unknown = True
                     continue
                 if not isinstance(obj, dict):
-                    if marker_seen:
-                        return [], "attachment parent reference record is not an object"
-                    echo_unknown = True
+                    parent_completeness_unknown = True
                     continue
                 payload = obj.get("payload")
                 if obj.get("type") == "session_meta" and not isinstance(payload, dict):
                     session_identity_error = "attachment parent session metadata is malformed"
+                    parent_completeness_unknown = True
                     continue
                 if obj.get("type") == "session_meta" and isinstance(payload, dict):
+                    identity_count = 0
                     for field in ("id", "session_id"):
                         value = payload.get(field)
                         if value is None:
                             continue
                         if not isinstance(value, str) or not value:
                             session_identity_error = "attachment parent session identity is malformed"
+                            parent_completeness_unknown = True
                             continue
+                        identity_count += 1
                         if value not in session_ids:
                             session_ids.append(value)
+                    if identity_count == 0:
+                        session_identity_error = "attachment parent session identity is malformed"
+                        parent_completeness_unknown = True
                     if len(session_ids) > max_session_ids:
                         session_identity_error = "attachment parent has too many session identities"
                     elif len(session_ids) > 1:
@@ -2430,9 +2427,7 @@ def bounded_codex_attachment_parent_events_from_path(
                     adapter_id=None,
                 )
                 if schema_error:
-                    if marker_seen:
-                        return [], "attachment parent does not match the canonical user-message schema"
-                    echo_unknown = True
+                    parent_completeness_unknown = True
                     continue
                 if (
                     obj.get("type") == "event_msg"
@@ -2455,7 +2450,7 @@ def bounded_codex_attachment_parent_events_from_path(
                         continue
                     candidate_bytes += len(text.encode("utf-8", errors="replace"))
                     if candidate_bytes > max_candidate_bytes:
-                        return [], f"attachment parent candidates exceed bounded ceiling {max_candidate_bytes}"
+                        return [], f"attachment parent candidates exceed bounded ceiling {max_candidate_bytes}", True
                     candidates.append(
                         {
                             "event_ref": event_ref,
@@ -2469,18 +2464,25 @@ def bounded_codex_attachment_parent_events_from_path(
                         return (
                             [],
                             f"attachment parent candidate count exceeds bounded ceiling {limits.max_events_per_unit}",
+                            True,
                         )
     except OSError:
-        return [], "attachment parent cannot be read"
+        return [], "attachment parent cannot be read", True
 
     if bytes_read != int(signature.get("size") or 0) or file_signature(path) != signature:
-        return [], "attachment parent changed during bounded read"
-    if not candidates:
-        return [], None
+        return [], "attachment parent changed during bounded read", True
     if session_identity_error:
-        return [], session_identity_error
+        return [], session_identity_error, parent_completeness_unknown
+    if parent_completeness_unknown and candidates:
+        return (
+            [],
+            "attachment parent completeness is unknown while attachment candidates exist; binding is fail-closed",
+            True,
+        )
+    if not candidates:
+        return [], None, parent_completeness_unknown
     if not session_ids:
-        return [], "attachment parent has no canonical session identity"
+        return [], "attachment parent has no canonical session identity", False
     file_session_id = session_ids[0]
     parent_events: list[dict[str, Any]] = []
     for candidate in candidates:
@@ -2490,7 +2492,7 @@ def bounded_codex_attachment_parent_events_from_path(
         if forked:
             task_body, body_kind = "", "session_context"
             provenance, authority = "continuation_summary", "derived"
-        elif echo_unknown or (echo_hashes and digest(text) not in echo_hashes):
+        elif echo_hashes and digest(text) not in echo_hashes:
             provenance, authority = "unknown_user_input", "unknown"
         parent_events.append(
             {
@@ -2509,7 +2511,7 @@ def bounded_codex_attachment_parent_events_from_path(
                 "_codex_attachment_parent": True,
             }
         )
-    return parent_events, None
+    return parent_events, None, False
 
 
 def collect_codex_attachment_parents(
@@ -2631,20 +2633,20 @@ def codex_attachment_receipt_parents(
         limits=limits,
     )
     if error or not supported:
-        file_events, event_error = bounded_codex_attachment_parent_events_from_path(
+        file_events, event_error, parent_completeness_unknown = bounded_codex_attachment_parent_events_from_path(
             lifecycle,
             parent_path,
             signature,
             limits=limits,
         )
     else:
-        file_events, event_error = targeted_codex_attachment_parent_events(
+        file_events, event_error, parent_completeness_unknown = targeted_codex_attachment_parent_events(
             lifecycle,
             parent_path,
             records,
             limits=limits,
         )
-    if event_error or file_signature(parent_path) != signature:
+    if parent_completeness_unknown or event_error or file_signature(parent_path) != signature:
         return []
     parents: dict[str, list[dict[str, Any]]] = {}
     collect_codex_attachment_parents(
@@ -2735,6 +2737,7 @@ def scan_regular_sources(
     errors: list[str] = []
     unsupported: list[str] = []
     codex_attachment_parents: dict[str, list[dict[str, Any]]] = {}
+    parent_completeness_unknown: set[str] = set()
     processed = 0
     pending = 0
     attempted = 0
@@ -2980,19 +2983,29 @@ def scan_regular_sources(
             )
             if source == "codex-sessions":
                 if error or not supported:
-                    targeted_parent_events, targeted_error = bounded_codex_attachment_parent_events_from_path(
+                    (
+                        targeted_parent_events,
+                        targeted_error,
+                        targeted_completeness_unknown,
+                    ) = bounded_codex_attachment_parent_events_from_path(
                         lifecycle,
                         path,
                         signature,
                         limits=active_limits,
                     )
                 else:
-                    targeted_parent_events, targeted_error = targeted_codex_attachment_parent_events(
+                    (
+                        targeted_parent_events,
+                        targeted_error,
+                        targeted_completeness_unknown,
+                    ) = targeted_codex_attachment_parent_events(
                         lifecycle,
                         path,
                         records,
                         limits=active_limits,
                     )
+                if targeted_completeness_unknown:
+                    parent_completeness_unknown.add(key)
                 if targeted_error:
                     error = targeted_error
                 if targeted_parent_events and file_signature(path) == signature:
@@ -3076,6 +3089,7 @@ def scan_regular_sources(
         "pending_files": pending,
         "errors": errors,
         "unsupported": unsupported,
+        "parent_completeness_unknown": sorted(parent_completeness_unknown),
         "unsupported_units": unsupported_units,
         "excluded_unit_receipts": excluded_unit_receipts,
         "excluded_file_keys": sorted(excluded_file_keys),

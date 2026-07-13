@@ -3326,7 +3326,7 @@ def test_codex_attachment_streams_parent_larger_than_the_regular_source_limit(tm
     assert "bounded ceiling" in " ".join(result["errors"])
 
 
-def test_codex_attachment_reordered_oversized_echo_is_regular_streaming_equivalent(
+def test_codex_attachment_reordered_oversized_echo_fails_closed_in_regular_and_streaming_modes(
     tmp_path: Path,
     monkeypatch,
 ):
@@ -3353,26 +3353,28 @@ def test_codex_attachment_reordered_oversized_echo_is_regular_streaming_equivale
     monkeypatch.setitem(rule, "max_parent_record_bytes", 1024)
     limits = sources.runtime_limits({})
 
-    regular_events, regular_error = sources.targeted_codex_attachment_parent_events(
+    regular_events, regular_error, regular_completeness_unknown = sources.targeted_codex_attachment_parent_events(
         lifecycle,
         session,
         rows,
         limits=limits,
     )
-    streaming_events, streaming_error = sources.bounded_codex_attachment_parent_events_from_path(
-        lifecycle,
-        session,
-        signature,
-        limits=limits,
+    streaming_events, streaming_error, streaming_completeness_unknown = (
+        sources.bounded_codex_attachment_parent_events_from_path(
+            lifecycle,
+            session,
+            signature,
+            limits=limits,
+        )
     )
 
-    assert regular_error == streaming_error is None
-    assert regular_events == streaming_events
-    assert len(regular_events) == 1
-    assert regular_events[0]["provenance"] == "unknown_user_input"
-    assert regular_events[0]["authority"] == "unknown"
+    assert regular_events == streaming_events == []
+    assert regular_error == streaming_error
+    assert regular_error is not None and "completeness is unknown" in regular_error
+    assert regular_completeness_unknown is streaming_completeness_unknown is True
 
     projections = []
+    session_key = sources.cursor_unit_key("codex-sessions", session)
     attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
     scan_rows = [
         {"source": "codex-sessions", "path": session},
@@ -3387,14 +3389,11 @@ def test_codex_attachment_reordered_oversized_echo_is_regular_streaming_equivale
             limits=sources.runtime_limits({"resource_limits": {"max_source_bytes_per_unit": max_source_bytes}}),
             rows=scan_rows,
         )
-        attachment_events = [event for event in events if event["source"] == "codex-attachments"]
-        assert len(attachment_events) == 1
-        projections.append(
-            (
-                {key: attachment_events[0][key] for key in ("session_ref", "timestamp", "provenance", "authority")},
-                result["adapted_unit_receipts"][attachment_key]["related_evidence"],
-            )
-        )
+        assert not [event for event in events if event["source"] == "codex-attachments"]
+        assert result["parent_completeness_unknown"] == [session_key]
+        assert result["unsupported"] == [attachment_key]
+        assert attachment_key not in result["adapted_unit_receipts"]
+        projections.append((result["errors"], result["unsupported"], result["parent_completeness_unknown"]))
     assert projections[0] == projections[1]
 
 
@@ -3440,7 +3439,7 @@ def test_codex_attachment_actual_bytes_reject_stale_signature_growth(tmp_path: P
     with session.open("ab") as handle:
         handle.write(b" " * 64)
 
-    events, error = sources.bounded_codex_attachment_parent_events_from_path(
+    events, error, parent_completeness_unknown = sources.bounded_codex_attachment_parent_events_from_path(
         lifecycle,
         session,
         stale_signature,
@@ -3449,6 +3448,7 @@ def test_codex_attachment_actual_bytes_reject_stale_signature_growth(tmp_path: P
 
     assert events == []
     assert error is not None and f"byte ceiling {byte_ceiling}" in error
+    assert parent_completeness_unknown is True
 
 
 def test_codex_attachment_streaming_parent_caps_fail_closed(tmp_path: Path, monkeypatch):
@@ -3459,7 +3459,7 @@ def test_codex_attachment_streaming_parent_caps_fail_closed(tmp_path: Path, monk
     rule = sources.SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]
     monkeypatch.setitem(rule, "max_parent_records", 1)
 
-    events, error = sources.bounded_codex_attachment_parent_events_from_path(
+    events, error, parent_completeness_unknown = sources.bounded_codex_attachment_parent_events_from_path(
         lifecycle,
         session,
         signature,
@@ -3468,10 +3468,11 @@ def test_codex_attachment_streaming_parent_caps_fail_closed(tmp_path: Path, monk
 
     assert events == []
     assert error is not None and "record count exceeds" in error
+    assert parent_completeness_unknown is True
 
     monkeypatch.setitem(rule, "max_parent_records", 100)
     monkeypatch.setitem(rule, "max_parent_probe_bytes", 1)
-    events, error = sources.bounded_codex_attachment_parent_events_from_path(
+    events, error, parent_completeness_unknown = sources.bounded_codex_attachment_parent_events_from_path(
         lifecycle,
         session,
         signature,
@@ -3479,6 +3480,7 @@ def test_codex_attachment_streaming_parent_caps_fail_closed(tmp_path: Path, monk
     )
     assert events == []
     assert error is not None and "byte ceiling" in error
+    assert parent_completeness_unknown is True
 
 
 def test_codex_attachment_malformed_parent_reference_fails_closed(tmp_path: Path):
@@ -3535,7 +3537,7 @@ def test_codex_attachment_malformed_parent_metadata_fails_closed(tmp_path: Path)
     assert "session metadata is malformed" in " ".join(result["errors"])
 
 
-def test_codex_attachment_malformed_transport_echo_downgrades_authority(tmp_path: Path):
+def test_codex_attachment_malformed_transport_echo_fails_parent_completeness_closed(tmp_path: Path):
     sources = _load()
     lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
     rows = [json.loads(line) for line in session.read_text(encoding="utf-8").splitlines()]
@@ -3562,11 +3564,156 @@ def test_codex_attachment_malformed_transport_echo_downgrades_authority(tmp_path
         ],
     )
 
-    attachment_events = [event for event in events if event["source"] == "codex-attachments"]
-    assert len(attachment_events) == 1
-    assert attachment_events[0]["provenance"] == "unknown_user_input"
-    assert attachment_events[0]["authority"] == "unknown"
-    assert result["coverage"]["codex-sessions"]["unsupported"] == 1
+    attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
+    session_key = sources.cursor_unit_key("codex-sessions", session)
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert result["parent_completeness_unknown"] == [session_key]
+    assert result["unsupported"] == [attachment_key]
+    assert attachment_key not in result["adapted_unit_receipts"]
+    assert "completeness is unknown" in " ".join(result["errors"])
+
+
+def _append_oversized_incomplete_codex_parent_row(
+    sources,
+    session: Path,
+    attachment: Path,
+    mutation: str,
+    *,
+    padding_size: int = 4096,
+) -> bytes:
+    if mutation == "hidden-second-session-meta":
+        row = {
+            "type": "session_meta",
+            "payload": {
+                "padding": "x" * padding_size,
+                "id": "fixture-hidden-second-thread",
+            },
+        }
+        encoded = json.dumps(row).encode("utf-8")
+        assert encoded.index(b"fixture-hidden-second-thread") > 1024
+    elif mutation == "unicode-escaped-second-reference":
+        reference = sources.codex_attachment_reference_line(attachment)
+        row = {
+            "timestamp": "2026-07-13T01:00:09Z",
+            "type": "response_item",
+            "payload": {
+                "type": "message",
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": reference},
+                    {"type": "input_text", "text": "x" * padding_size},
+                ],
+            },
+        }
+        serialized = json.dumps(row)
+        escaped_reference = "".join(f"\\u{ord(character):04x}" for character in reference)
+        serialized = serialized.replace(json.dumps(reference), f'"{escaped_reference}"', 1)
+        encoded = serialized.encode("utf-8")
+        assert b"pasted text file: " not in encoded
+    else:
+        raise AssertionError(f"unknown mutation fixture: {mutation}")
+    assert len(encoded) > 1024
+    with session.open("ab") as handle:
+        handle.write(encoded + b"\n")
+    return encoded
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["hidden-second-session-meta", "unicode-escaped-second-reference"],
+)
+def test_codex_attachment_unknown_parent_completeness_invalidates_cached_receipt(
+    tmp_path: Path,
+    monkeypatch,
+    mutation: str,
+):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rule = sources.SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]
+    monkeypatch.setitem(rule, "max_parent_record_bytes", 1024)
+    scan_rows = [
+        {"source": "codex-sessions", "path": session},
+        {"source": "codex-attachments", "path": attachment},
+    ]
+    _events, first = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=scan_rows,
+    )
+    attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
+    session_key = sources.cursor_unit_key("codex-sessions", session)
+    assert attachment_key in first["adapted_unit_receipts"]
+
+    _append_oversized_incomplete_codex_parent_row(sources, session, attachment, mutation)
+    signature = sources.file_signature(session)
+    assert signature is not None
+    parent_events, parent_error, parent_completeness_unknown = sources.bounded_codex_attachment_parent_events_from_path(
+        lifecycle,
+        session,
+        signature,
+        limits=sources.runtime_limits({}),
+    )
+    assert parent_events == []
+    assert parent_error is not None and "completeness is unknown" in parent_error
+    assert parent_completeness_unknown is True
+
+    events, second = sources.scan_regular_sources(
+        lifecycle,
+        first,
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=scan_rows,
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert second["parent_completeness_unknown"] == [session_key]
+    assert second["unsupported"] == [attachment_key]
+    assert attachment_key not in second["adapted_unit_receipts"]
+    assert attachment_key not in second["files"]
+    assert second["files"].get(session_key) != sources.file_signature(session)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["hidden-second-session-meta", "unicode-escaped-second-reference"],
+)
+def test_codex_attachment_unknown_parent_completeness_keeps_receipt_unresolved_and_all_scope_partial(
+    tmp_path: Path,
+    monkeypatch,
+    mutation: str,
+):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path)
+    rule = sources.SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]
+    _append_oversized_incomplete_codex_parent_row(
+        sources,
+        session,
+        attachment,
+        mutation,
+        padding_size=int(rule["max_parent_record_bytes"]) + 4096,
+    )
+    monkeypatch.setattr(sources, "load_lifecycle_module", lambda: lifecycle)
+    attachment_key = sources.cursor_unit_key("codex-attachments", attachment)
+    session_key = sources.cursor_unit_key("codex-sessions", session)
+
+    events, cursor = sources.scan_native_sources(
+        SimpleNamespace(cursor=tmp_path / "missing-cursor.json"),
+        days=None,
+        max_files=2,
+    )
+
+    assert not [event for event in events if event["source"] == "codex-attachments"]
+    assert cursor["scope"] == "partial:all"
+    assert cursor["target_scope"] == "all"
+    assert cursor["all_baseline_complete"] is False
+    assert {attachment_key, session_key}.issubset(cursor["unresolved_units"])
+    assert cursor["unsupported_units"][attachment_key] == sources.file_signature(attachment)
+    assert attachment_key not in cursor["adapted_unit_receipts"]
+    assert {"codex-attachments", "codex-sessions"}.issubset(cursor["adapter_gaps"])
+    assert "completeness is unknown" in " ".join(cursor["source_errors"])
+    assert sources.validate_source_adapter_cursor(cursor) == []
 
 
 def test_codex_attachment_parent_replay_invalidates_cached_receipt(tmp_path: Path):
