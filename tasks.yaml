@@ -136122,3 +136122,44 @@ tasks:
   depends_on: []
   created: '2026-07-13'
   dispatch_log: []
+- id: AW-SUBSTRATE-DISK-TEMP-62de1d1fbf43
+  title: Keep disk/temp/voice substrate from starving the swarm
+  description: substrate lifecycle predicate is failing
+  repo: organvm/limen
+  type: coordination
+  target_agent: codex
+  workstream: substrate
+  priority: critical
+  budget_cost: 1
+  status: open
+  labels:
+  - always-working
+  - receipt-first
+  - overnight-lane-switch
+  - substrate
+  urls: []
+  context: 'Receipt-first verdict: substrate lifecycle predicate is failing
+
+    Task: Reclaim ignored generated state, preserve or owner-route local-only payloads,
+    and keep Scratch as the active work substrate.
+
+    Predicate: python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py
+    --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py
+    --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py
+    --fail-on-debt --fail-reapable-over-cap
+
+    Receipt target: git:organvm/limen:docs/estate-custody-implementation-receipts.json
+
+    Stop condition: free disk is at target, temp writes are usable, worktree debt
+    is exactly zero, and reapable roots are zero
+
+    This is the single bounded alternate selected after generic dispatch was value-gated.'
+  predicate: python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py
+    --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py
+    --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py
+    --fail-on-debt --fail-reapable-over-cap
+  receipt_target: git:organvm/limen:docs/estate-custody-implementation-receipts.json
+  depends_on: []
+  created: '2026-07-13'
+  updated: '2026-07-13T09:53:58.840654Z'
+  dispatch_log: []
