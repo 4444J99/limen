@@ -409,3 +409,15 @@ sensors:
       - command: 'python3 scripts/session-walk-census.py --walk "${LIMEN_SESSION_WALK_CAP:-2}"'
         severity: silent
         escalation: "session walk skipped"
+
+  mail-answered:
+    section: "0m2"
+    title: "mail answered — the obligations ledger is fresh AND every reply-owed obligation has a draft (the C_MAIL effector is alive)"
+    gate: LIMEN_MAIL_ANSWERED_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    steps:
+      - command: "python3 scripts/check-mail-answered.py"
+        severity: advisory
+        escalation: "mail unanswered — stale ledger or a reply-owed obligation without a draft; the C_MAIL draft effector may be dark (the 2026-06 silent-freeze failure mode this sensor exists to catch)"

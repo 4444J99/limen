@@ -1250,6 +1250,24 @@ parameters:
     self_update: none
     owner: mail
     note: "Checkout path of the universal-mail--automation engine (the C_MAIL effector). scripts/check-mail-tiers.py reads core/protocols.py from here to cross-check that every dangerous protocol class is held; absent (e.g. CI) → that cross-check advisory-skips, never fails."
+  LIMEN_MAIL_SEND:
+    default: 0
+    env: LIMEN_MAIL_SEND
+    self_update: none
+    owner: mail
+    note: "The auto-send arm for send_drafts.py (the tiered fail-closed sender), the send analog of LIMEN_MAIL_DRAFTS. 0 (default) = DISARMED: the beat dry-runs the sender (logs would-sends, sends nothing). 1 = armed: send only opt-in SAFE-tier obligations with complete bracket-free text per mail-tiers.yaml; legal/money/personal HOLD is never sent, and absent a keyed SMTP credential it still fails closed. His valve — the safe set grows on trust."
+  LIMEN_MAIL_SEND_MAX:
+    default: 10
+    env: LIMEN_MAIL_SEND_MAX
+    self_update: none
+    owner: mail
+    note: "Safety cap on how many SAFE-tier replies send_drafts.py may send per run, so an armed run can never blast the whole ledger."
+  LIMEN_MAIL_ANSWERED_CHECK:
+    default: 1
+    env: LIMEN_MAIL_ANSWERED_CHECK
+    self_update: none
+    owner: mail
+    note: "Beat gate for the mail-answered sensor (scripts/check-mail-answered.py): 1 (default) surfaces a stale ledger or a reply-owed-without-draft in the beat log — the sensor that would have caught the 2026-06 silent freeze. 0 skips it."
   LIMEN_PRIVATE_MAIL_STORY:
     default: "$LIMEN_ROOT/.limen-private/mail-story"
     env: LIMEN_PRIVATE_MAIL_STORY

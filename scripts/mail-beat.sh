@@ -198,6 +198,15 @@ DRAFT_SAVE=""; [ "${LIMEN_MAIL_DRAFTS:-0}" = "1" ] && DRAFT_SAVE="--save"
 # shellcheck disable=SC2086  # DRAFT_SAVE is an intentional optional single flag
 run_tmp 180 "$PY" "$UMA_ROOT/draft_writer.py" --ledger "$LEDGER" $DRAFT_SAVE
 
+# 2c) SEND — the tiered, fail-closed auto-send leaf (SAFE tier only, when armed). Ships DISARMED:
+#     with LIMEN_MAIL_SEND unset, send_drafts.py DRY-RUNS (logs would-sends, sends nothing). Even
+#     armed it sends only opt-in SAFE-tier obligations with complete bracket-free text, per the
+#     declared mail-tiers.yaml registry — legal/money/personal HOLD is never sent. Guarded on the
+#     file so the beat is safe before the live UMA checkout carries send_drafts.py.
+if [ -f "$UMA_ROOT/send_drafts.py" ]; then
+  run_tmp 120 "$PY" "$UMA_ROOT/send_drafts.py" --ledger "$LEDGER" --max "${LIMEN_MAIL_SEND_MAX:-10}" || true
+fi
+
 # 3) STATUS — refresh the read-only UMA mail-status receipt (feeds the beat MAIL: census line).
 run_status || true
 
