@@ -140405,3 +140405,38 @@ tasks:
     status: open
     output: owner packet filed after an isolated verifier rewrote only the live generated
       dispatch receipt; no board/code/pause/Claude/external-volume state was touched.
+- id: JULES-SESSION-ABSENCE-PROBE-0714
+  title: Prove individual Jules session absence without trusting the capped catalog
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - jules
+  - dispatch-safety
+  - remote-catalog
+  urls: []
+  context: The live Jules session catalog is capped and non-exhaustive, while `jules
+    remote pull --session <id>` returns exit 0 even when its API payload says 404
+    NOT_FOUND. Add a bounded, read-only, session-specific probe used only for catalog
+    misses. It may populate confirmed_absent only on exact 404/NOT_FOUND evidence;
+    completed, active, failed, awaiting, malformed, timed-out, huge-output, unavailable,
+    and ambiguous responses remain present/unknown and must hold or follow their existing
+    recovery path. Never pass --apply, never infer from list length, and bound time
+    plus captured output.
+  predicate: PYTHONPATH=cli/src python3 -m pytest cli/tests/test_jules_remote.py cli/tests/test_recover.py
+    -q
+  receipt_target: github:organvm/limen:pull-request:JULES-SESSION-ABSENCE-PROBE-0714
+  depends_on: []
+  created: '2026-07-14'
+  updated: '2026-07-14T07:44:29.172242Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T07:44:29.172242Z'
+    agent: codex
+    session_id: jules-session-absence-proof-20260714
+    status: open
+    output: 'owner packet filed from a read-only live probe: exact missing session
+      returned API 404/NOT_FOUND inside an exit-0 CLI response; no remote or board
+      session state mutated.'
