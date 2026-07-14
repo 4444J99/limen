@@ -140440,3 +140440,199 @@ tasks:
     output: 'owner packet filed from a read-only live probe: exact missing session
       returned API 404/NOT_FOUND inside an exit-0 CLI response; no remote or board
       session state mutated.'
+- id: PROGRESS-HISTORICAL-SELECTION-0714
+  title: Compute historical progress deltas and dynamically rank next work
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - progress-universe
+  - history
+  - selection
+  urls: []
+  context: 'Persist content-addressed snapshots and compute arbitrary-window deltas
+    such as Thursday-to-today: arrivals, closures, reopened debt, aging, actual spend,
+    verified value, and ask-versus-outcome. Rank next work from live value, cost of
+    delay, dependency impact, confidence, provider headroom, and host pressure without
+    fixed lane/model tables.'
+  predicate: PYTHONPATH=cli/src python3 -m pytest cli/tests/test_progress_history_selection.py
+    -q
+  receipt_target: github:organvm/limen:pull-request:PROGRESS-HISTORICAL-SELECTION-0714
+  depends_on:
+  - PROGRESS-UNIVERSE-SOURCE-REGISTRY-0714
+  - PROGRESS-WORK-LOAN-JOURNAL-0714
+  - PROGRESS-PROMPT-WORK-LINEAGE-0714
+  created: '2026-07-14'
+  updated: '2026-07-14T07:51:34.804293Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T07:51:34.804293Z'
+    agent: codex
+    session_id: progress-universe-owner-packets-20260714
+    status: open
+    output: 'owner packet filed from independent #1012 truth audit; one bounded objective
+      with executable predicate and durable PR receipt.'
+- id: PROGRESS-UNIVERSE-SOURCE-REGISTRY-0714
+  title: Define the dynamic work-universe source registry
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - progress-universe
+  - source-registry
+  - truth
+  urls: []
+  context: Normalize board, prompt corpus, GitHub estate, lifecycle/worktrees, CI,
+    mail, financial, contribution, and owner-gate sources behind one runtime-discovered
+    contract. Every source reports owner, cursor, exhaustive flag, generated time,
+    content hash, semantic status, and normalized leaf count; capped, partial, failed,
+    stale, and unavailable sources become explicit coverage debt and can never claim
+    completeness.
+  predicate: PYTHONPATH=cli/src python3 -m pytest cli/tests/test_progress_source_registry.py
+    -q
+  receipt_target: github:organvm/limen:pull-request:PROGRESS-UNIVERSE-SOURCE-REGISTRY-0714
+  depends_on: []
+  created: '2026-07-14'
+  updated: '2026-07-14T07:51:34.804293Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T07:51:34.804293Z'
+    agent: codex
+    session_id: progress-universe-owner-packets-20260714
+    status: open
+    output: 'owner packet filed from independent #1012 truth audit; one bounded objective
+      with executable predicate and durable PR receipt.'
+- id: PROGRESS-INTERACTIVE-TUI-0714
+  title: Add a zoomable interactive terminal work-universe view
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - progress-universe
+  - tui
+  - visualization
+  urls: []
+  context: Build a terminal interface with keyboard zoom, cross-dimension filters,
+    watch mode, macro-to-leaf navigation, and receipt drill-down from the same content-addressed
+    snapshot used by JSON and plain-terminal output. The interface must display incomplete-source
+    and verification debt rather than hiding it behind progress bars.
+  predicate: PYTHONPATH=cli/src python3 -m pytest cli/tests/test_progress_tui.py -q
+  receipt_target: github:organvm/limen:pull-request:PROGRESS-INTERACTIVE-TUI-0714
+  depends_on:
+  - PROGRESS-UNIVERSE-SOURCE-REGISTRY-0714
+  created: '2026-07-14'
+  updated: '2026-07-14T07:51:34.804293Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T07:51:34.804293Z'
+    agent: codex
+    session_id: progress-universe-owner-packets-20260714
+    status: open
+    output: 'owner packet filed from independent #1012 truth audit; one bounded objective
+      with executable predicate and durable PR receipt.'
+- id: PROGRESS-WORK-LOAN-JOURNAL-0714
+  title: Make dispatch debit and earned credit a verified work-loan journal
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - progress-universe
+  - work-loan
+  - accounting
+  urls: []
+  context: Record requested, reserved, and actual runs, tokens, dollars, elapsed time,
+    and host use separately; join forecast value, collateral predicate, durable receipt
+    verification, actual outcome, and unrepaid debt. Integrate the journal with existing
+    dispatch scoring and reservation seams so work must justify capacity without creating
+    a second queue.
+  predicate: PYTHONPATH=cli/src python3 -m pytest cli/tests/test_work_loan_journal.py
+    -q
+  receipt_target: github:organvm/limen:pull-request:PROGRESS-WORK-LOAN-JOURNAL-0714
+  depends_on:
+  - PROGRESS-UNIVERSE-SOURCE-REGISTRY-0714
+  created: '2026-07-14'
+  updated: '2026-07-14T07:51:34.804293Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T07:51:34.804293Z'
+    agent: codex
+    session_id: progress-universe-owner-packets-20260714
+    status: open
+    output: 'owner packet filed from independent #1012 truth audit; one bounded objective
+      with executable predicate and durable PR receipt.'
+- id: PROGRESS-GITHUB-ESTATE-CENSUS-0714
+  title: Enumerate the whole accessible GitHub work estate
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - progress-universe
+  - github-estate
+  - census
+  urls: []
+  context: Page through every accessible repository and normalize pull-request, issue,
+    branch, check, and custody debt into the work-universe registry. Reconcile page
+    and repository totals exactly, preserve cursor/completeness evidence, and never
+    treat a capped or failed query as a complete estate.
+  predicate: PYTHONPATH=cli/src python3 -m pytest cli/tests/test_github_estate_census.py
+    -q
+  receipt_target: github:organvm/limen:pull-request:PROGRESS-GITHUB-ESTATE-CENSUS-0714
+  depends_on:
+  - PROGRESS-UNIVERSE-SOURCE-REGISTRY-0714
+  created: '2026-07-14'
+  updated: '2026-07-14T07:51:34.804293Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T07:51:34.804293Z'
+    agent: codex
+    session_id: progress-universe-owner-packets-20260714
+    status: open
+    output: 'owner packet filed from independent #1012 truth audit; one bounded objective
+      with executable predicate and durable PR receipt.'
+- id: PROGRESS-PROMPT-WORK-LINEAGE-0714
+  title: Join every prompt atom and correction to its work receipts
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  workstream: conductor
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - progress-universe
+  - prompt-lineage
+  - authority
+  urls: []
+  context: Project unresolved prompt atoms and corrections independently of board
+    migration, then join each atom to tasks, PRs, receipts, supersession, owner blockers,
+    and verified outcomes. Preserve private prompt bodies outside tracked output and
+    refuse an all-asks claim until the source corpus reports exact all/all authority.
+  predicate: PYTHONPATH=cli/src python3 -m pytest cli/tests/test_progress_prompt_lineage.py
+    -q
+  receipt_target: github:organvm/limen:pull-request:PROGRESS-PROMPT-WORK-LINEAGE-0714
+  depends_on:
+  - PROGRESS-UNIVERSE-SOURCE-REGISTRY-0714
+  created: '2026-07-14'
+  updated: '2026-07-14T07:51:34.804293Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T07:51:34.804293Z'
+    agent: codex
+    session_id: progress-universe-owner-packets-20260714
+    status: open
+    output: 'owner packet filed from independent #1012 truth audit; one bounded objective
+      with executable predicate and durable PR receipt.'
