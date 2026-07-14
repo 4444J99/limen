@@ -107639,7 +107639,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: failed
+  status: archived
   labels:
   - cifix
   - self-heal
@@ -107653,12 +107653,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/414 [auto-emitted\
     \ 2026-07-04 by self-heal so merge-drain can land it]"
-  predicate: test "$(gh pr view 414 --repo organvm/limen --json state --jq .state)"
-    = MERGED
+  predicate: test "$(gh pr view 414 --repo organvm/limen --json state,mergedAt --jq
+    '.state + ":" + (.mergedAt // "")')" = "CLOSED:"
   receipt_target: https://github.com/organvm/limen/pull/414
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-14T05:30:46.511524Z'
+  updated: '2026-07-14T06:54:53.672805Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: gemini
@@ -107737,6 +107737,45 @@ tasks:
     status: failed
     output: 'completed patch rejected: stale/reverse-tree result spanned roughly 158k
       diff lines and removed current control-plane safeguards; no PR opened'
+  - timestamp: '2026-07-14T06:54:05.867581Z'
+    agent: codex
+    session_id: heal-414-closeout-20260714
+    status: failed
+    output: 'normalized superseded closeout proof: PR #414 head 03883783 is stale
+      and must not merge; current main 1d383d04 contains merged redaction implementations
+      98d3591e and 8d3b79de; 4 focused tests, Ruff, dry-run, and shared-plus-stronger
+      semantic redaction probe passed'
+  - timestamp: '2026-07-14T06:54:15.289421Z'
+    agent: codex
+    session_id: heal-414-closeout-20260714
+    status: open
+    output: recovered only for bounded supersession closeout after rejecting unsafe
+      Jules reverse-tree result
+  - timestamp: '2026-07-14T06:54:24.750516Z'
+    agent: codex
+    session_id: heal-414-closeout-20260714
+    status: dispatched
+    output: 'claimed exact-head supersession verification for closed, unmerged PR
+      #414'
+  - timestamp: '2026-07-14T06:54:34.202370Z'
+    agent: codex
+    session_id: heal-414-closeout-20260714
+    status: in_progress
+    output: executing closed-state predicate and main-custody ancestry proof; PR will
+      never be merged
+  - timestamp: '2026-07-14T06:54:43.985752Z'
+    agent: codex
+    session_id: heal-414-closeout-20260714
+    status: done
+    output: 'predicate passed: PR #414 CLOSED and unmerged at head 03883783; current
+      main 1d383d04 contains semantic custody via merged 98d3591e and 8d3b79de; focused
+      tests 4 passed; no public comment posted'
+  - timestamp: '2026-07-14T06:54:53.672805Z'
+    agent: codex
+    session_id: heal-414-closeout-20260714
+    status: archived
+    output: 'archived superseded HEAL task: durable PR receipt is closed/unmerged
+      and current main is the stronger implementation'
 - id: HEAL-cifix-organvm-limen-415
   title: fix failing CI on organvm/limen#415
   repo: organvm/limen
