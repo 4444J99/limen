@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-07-14'
-      spent: 4
+      spent: 5
       per_agent:
-        jules: 0
+        jules: 1
         gemini: 0
         codex: 0
         opencode: 0
@@ -139892,7 +139892,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -139917,8 +139917,13 @@ tasks:
   receipt_target: git:organvm/limen:docs/product-ledger.md
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-14T03:30:14.914023Z'
-  dispatch_log: []
+  updated: '2026-07-14T04:32:51.070528Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T04:32:51.070528Z'
+    agent: jules
+    session_id: async-reserve:771d4637df59acb5322a54c38909b8de
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-1024
   title: Beat scheduled-sensor lane is dark (LIMEN_BEAT_DERIVE drift)
   repo: organvm/limen
