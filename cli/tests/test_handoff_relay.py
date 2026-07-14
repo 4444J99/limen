@@ -163,6 +163,43 @@ def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity(
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
+def test_dispatchable_next_skips_task_with_unavailable_explicit_mount(tmp_path):
+    mod = _load()
+    unavailable = tmp_path / "not-a-mount"
+    unavailable.mkdir()
+    tasks = [
+        _task(
+            "MOUNT-GATED",
+            priority="critical",
+            execution_requirements=[{"kind": "mount", "path": str(unavailable)}],
+        ),
+        _task("READY", priority="medium"),
+    ]
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 2, "health": "ok"}}}
+
+    assert mod._ostensible_next(tasks)["id"] == "MOUNT-GATED"
+    assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
+
+
+def test_dispatchable_next_fails_closed_on_raw_requirement_extra_key(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr("limen.runtime_requirements.os.path.ismount", lambda _path: True)
+    tasks = [
+        _task(
+            "MALFORMED",
+            priority="critical",
+            execution_requirements=[{"kind": "mount", "path": "/runtime/mounted", "unexpected": "value"}],
+        ),
+        _task("READY", priority="medium"),
+    ]
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 2, "health": "ok"}}}
+
+    assert mod._ostensible_next(tasks)["id"] == "MALFORMED"
+    assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
+
+
 def test_check_requires_fresh_truthful_schema(monkeypatch, tmp_path, capsys):
     mod = _load()
     _configure(mod, monkeypatch, tmp_path, _board([_task("READY")]))

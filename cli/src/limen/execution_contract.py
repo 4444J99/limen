@@ -17,7 +17,7 @@ import json
 from typing import Any, Mapping
 
 
-EXECUTION_CONTRACT_SCHEMA_VERSION = "limen-execution-contract.v1"
+EXECUTION_CONTRACT_SCHEMA_VERSION = "limen-execution-contract.v2"
 
 
 class ExecutionContractError(ValueError):
@@ -71,6 +71,26 @@ def _budget_cost(data: Mapping[str, Any]) -> int:
     return value
 
 
+def _execution_requirements(data: Mapping[str, Any]) -> list[dict[str, str]]:
+    value = data.get("execution_requirements", [])
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ExecutionContractError("execution contract field 'execution_requirements' must be a list")
+    requirements: list[dict[str, str]] = []
+    for item in value:
+        if not isinstance(item, Mapping) or set(item) != {"kind", "path"}:
+            raise ExecutionContractError(
+                "execution contract field 'execution_requirements' must contain kind/path objects"
+            )
+        kind = item.get("kind")
+        path = item.get("path")
+        if kind != "mount" or not isinstance(path, str) or not path:
+            raise ExecutionContractError("execution contract field 'execution_requirements' is invalid")
+        requirements.append({"kind": kind, "path": path})
+    return requirements
+
+
 def execution_contract_payload(task: Mapping[str, Any] | object) -> dict[str, Any]:
     """Return the strict, versioned canonical payload for one task execution."""
 
@@ -91,6 +111,7 @@ def execution_contract_payload(task: Mapping[str, Any] | object) -> dict[str, An
         "context": _string(data, "context", default=None, nullable=True),
         "predicate": _string(data, "predicate", default=None, nullable=True),
         "receipt_target": _string(data, "receipt_target", default=None, nullable=True),
+        "execution_requirements": _execution_requirements(data),
         "claude_tier": _string(data, "claude_tier", default=None, nullable=True),
         "depends_on": _string_list(data, "depends_on"),
     }

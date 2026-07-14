@@ -40,6 +40,7 @@ from limen.jules_remote import (
     task_jules_session_id,
 )
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
+from limen.runtime_requirements import task_execution_ready
 from limen.doctor import stale_tasks
 from limen.provider_selection import (
     catalog_hash,
@@ -864,12 +865,14 @@ def _restore_done_status(
 
 
 def _dispatchable(task: Task) -> bool:
-    """Open machine-work only. Human-gated or already-done work is never reserved."""
+    """Open, live-ready machine work only. Human-gated or done work is never reserved."""
     if task.status != "open":
         return False
     if _has_done_transition(task) or _has_pr_open_transition(task):
         return False
-    return "needs-human" not in (task.labels or [])
+    if "needs-human" in (task.labels or []):
+        return False
+    return task_execution_ready(task)
 
 
 def _entry_text(entry: DispatchLogEntry) -> str:
@@ -1536,7 +1539,16 @@ def _authoritative_remote_verification(task: Task) -> tuple[Task, dict[str, obje
     authoritative = by_id.get(task.id)
     if authoritative is None:
         raise RemoteExecutionError("verification child is absent from the authoritative task board")
-    fields = ("type", "repo", "target_agent", "predicate", "receipt_target", "labels", "depends_on")
+    fields = (
+        "type",
+        "repo",
+        "target_agent",
+        "predicate",
+        "receipt_target",
+        "execution_requirements",
+        "labels",
+        "depends_on",
+    )
     if any(getattr(authoritative, field) != getattr(task, field) for field in fields):
         raise RemoteExecutionError("verification child changed on the authoritative board before dispatch")
     return authoritative, verification_context_for_task(authoritative, by_id)

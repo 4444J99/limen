@@ -56,6 +56,7 @@ def test_legacy_board_remains_loadable_without_typed_fields() -> None:
     )
     assert board.tasks[0].predicate is None
     assert board.tasks[0].receipt_target is None
+    assert board.tasks[0].execution_requirements is None
 
 
 def test_cli_and_mcp_task_models_expose_optional_typed_fields() -> None:
@@ -63,6 +64,8 @@ def test_cli_and_mcp_task_models_expose_optional_typed_fields() -> None:
     for field in ("predicate", "receipt_target"):
         assert field in cli_fields
         assert cli_fields[field].is_required() is False
+    assert "execution_requirements" in cli_fields
+    assert cli_fields["execution_requirements"].is_required() is False
 
     # The MCP distribution is intentionally a separate install and its runtime
     # dependency is not present in the CLI test environment.  Parse its model
@@ -78,6 +81,9 @@ def test_cli_and_mcp_task_models_expose_optional_typed_fields() -> None:
         assert field in mcp_fields
         assert isinstance(mcp_fields[field].value, ast.Constant)
         assert mcp_fields[field].value.value is None
+    assert "execution_requirements" in mcp_fields
+    assert isinstance(mcp_fields["execution_requirements"].value, ast.Constant)
+    assert mcp_fields["execution_requirements"].value.value is None
 
     add_task = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "add_task")
     required_count = len(add_task.args.args) - len(add_task.args.defaults)

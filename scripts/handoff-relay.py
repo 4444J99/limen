@@ -22,11 +22,17 @@ import argparse
 import datetime as dt
 import json
 import os
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+CODE_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
+sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
+
+from limen.runtime_requirements import task_execution_ready  # noqa: E402
+
 HANDOFF = ROOT / "logs" / "handoff.json"
 TASKS = Path(os.environ.get("LIMEN_TASKS") or ROOT / "tasks.yaml")
 USAGE = ROOT / "logs" / "usage.json"
@@ -331,6 +337,8 @@ def _dispatchable_next(
         if agent_remaining is not None and cost > agent_remaining:
             continue
         if not _provider_available(agent, provider_headroom):
+            continue
+        if not task_execution_ready(task):
             continue
         candidates.append(task)
     if not candidates:

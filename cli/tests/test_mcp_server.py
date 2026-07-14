@@ -1,17 +1,39 @@
 import importlib.util
 import sys
+import types
 from pathlib import Path
 
-import pytest
 import yaml
 
 
 def _load_server():
-    # The mcp server imports the `mcp` runtime package (mcp.server.fastmcp). Core CI installs only
-    # cli[test], not the mcp/ package (it lints/compiles/type-checks the mcp source with
-    # --ignore-missing-imports but never installs its runtime), so skip rather than fail the whole
-    # suite when the runtime is absent — this test only means something where mcp is installed.
-    pytest.importorskip("mcp.server.fastmcp")
+    # Core CI installs cli[test], not the optional MCP runtime. The server only needs FastMCP's
+    # decorator behavior for these model/board tests, so provide a hermetic no-op implementation
+    # when the package is absent. This keeps the persistence and claim regressions executable in
+    # the core suite rather than silently skipping them.
+    try:
+        from mcp.server.fastmcp import FastMCP as _FastMCP  # noqa: F401
+    except ImportError:
+        mcp_package = types.ModuleType("mcp")
+        mcp_server_package = types.ModuleType("mcp.server")
+        fastmcp_module = types.ModuleType("mcp.server.fastmcp")
+
+        class FastMCP:
+            def __init__(self, _name):
+                pass
+
+            def tool(self):
+                return lambda function: function
+
+            def run(self):
+                pass
+
+        fastmcp_module.FastMCP = FastMCP
+        mcp_package.server = mcp_server_package
+        mcp_server_package.fastmcp = fastmcp_module
+        sys.modules["mcp"] = mcp_package
+        sys.modules["mcp.server"] = mcp_server_package
+        sys.modules["mcp.server.fastmcp"] = fastmcp_module
     # server.py imports its own package absolutely (`from limen_mcp.intake import …`), so the repo's
     # mcp/src must be importable even when limen_mcp isn't pip-installed — otherwise this test FAILS
     # (not skips) on any host that has the `mcp` runtime but not the limen_mcp package: the skip
@@ -90,6 +112,154 @@ def test_agent_claim_preserves_board_extensions_and_reserves_budget(tmp_path, mo
     assert task["depends_on"] == ["TASK-0"]
     assert task["custom_extension"] == {"keep": True}
     assert task["dispatch_log"][-1]["status"] == "dispatched"
+    assert "execution_requirements" not in task
     # normalize_selected_legacy_task derived the merged-PR fallback contract from the task's repo
     assert "gh pr list --repo organvm/limen" in task["predicate"]
     assert task["receipt_target"] == "github:organvm/limen:pull-request:TASK-1"
+
+
+def test_agent_claim_rejects_unavailable_runtime_without_mutating(tmp_path, monkeypatch):
+    server = _load_server()
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {
+                            "date": "2026-07-13",
+                            "spent": 4,
+                            "per_agent": {"opencode": 2},
+                        }
+                    }
+                },
+                "tasks": [
+                    {
+                        "id": "TASK-MOUNT",
+                        "title": "Wait for runtime",
+                        "repo": "organvm/limen",
+                        "target_agent": "any",
+                        "priority": "high",
+                        "budget_cost": 3,
+                        "status": "open",
+                        "created": "2026-07-13",
+                        "execution_requirements": [{"kind": "mount", "path": "/runtime/unavailable"}],
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    before = tasks.read_bytes()
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+    monkeypatch.setattr(server, "CIRCUIT_BREAKER_TRIPPED", False)
+    monkeypatch.setattr(server.runtime_requirements.os.path, "ismount", lambda _path: False)
+
+    result = server.agent_claim("TASK-MOUNT", "opencode")
+
+    assert "runtime requirements unavailable" in result
+    assert "cannot claim" in result
+    assert tasks.read_bytes() == before
+
+
+def test_agent_claim_accepts_available_explicit_mount(tmp_path, monkeypatch):
+    server = _load_server()
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {
+                            "date": "2026-07-13",
+                            "spent": 0,
+                            "per_agent": {"opencode": 0},
+                        }
+                    }
+                },
+                "tasks": [
+                    {
+                        "id": "TASK-MOUNT",
+                        "title": "Use available runtime",
+                        "repo": "organvm/limen",
+                        "target_agent": "any",
+                        "priority": "high",
+                        "budget_cost": 1,
+                        "status": "open",
+                        "created": "2026-07-13",
+                        "predicate": "python3 scripts/check.py",
+                        "receipt_target": "git:organvm/limen:logs/check.json",
+                        "execution_requirements": [{"kind": "mount", "path": "/runtime/available"}],
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+    monkeypatch.setattr(server, "CIRCUIT_BREAKER_TRIPPED", False)
+    monkeypatch.setattr(
+        server.runtime_requirements.os.path,
+        "ismount",
+        lambda path: path == "/runtime/available",
+    )
+
+    result = server.agent_claim("TASK-MOUNT", "opencode")
+
+    assert result == "opencode claimed task TASK-MOUNT (status=dispatched)"
+    saved = yaml.safe_load(tasks.read_text(encoding="utf-8"))
+    assert saved["tasks"][0]["status"] == "dispatched"
+    assert saved["portal"]["budget"]["track"]["spent"] == 1
+    assert saved["tasks"][0]["execution_requirements"] == [{"kind": "mount", "path": "/runtime/available"}]
+
+
+def test_mcp_save_preserves_execution_requirement_field_absence(tmp_path, monkeypatch):
+    server = _load_server()
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "tasks": [
+                    {
+                        "id": "LEGACY-ABSENT",
+                        "title": "Legacy absent field",
+                        "target_agent": "any",
+                        "created": "2026-07-13",
+                    },
+                    {
+                        "id": "EXPLICIT-NULL",
+                        "title": "Explicit null field",
+                        "target_agent": "any",
+                        "created": "2026-07-13",
+                        "execution_requirements": None,
+                    },
+                    {
+                        "id": "EXPLICIT-EMPTY",
+                        "title": "Explicit empty field",
+                        "target_agent": "any",
+                        "created": "2026-07-13",
+                        "execution_requirements": [],
+                    },
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+
+    server._save_data(server._load_data())
+
+    saved = yaml.safe_load(tasks.read_text(encoding="utf-8"))
+    by_id = {task["id"]: task for task in saved["tasks"]}
+    assert "execution_requirements" not in by_id["LEGACY-ABSENT"]
+    assert by_id["EXPLICIT-NULL"]["execution_requirements"] is None
+    assert by_id["EXPLICIT-EMPTY"]["execution_requirements"] == []
+    # Do not globally switch to exclude_none: established optional-field serialization stays intact.
+    assert "description" in by_id["LEGACY-ABSENT"]
+    assert by_id["LEGACY-ABSENT"]["description"] is None

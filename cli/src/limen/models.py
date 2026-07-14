@@ -1,6 +1,7 @@
 import re
+import os
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -59,6 +60,22 @@ class DispatchLogEntry(BaseModel):
         raise ValueError("dispatch event status must be canonical (legacy composite rows are read-only)")
 
 
+class ExecutionRequirement(BaseModel):
+    """A live control-host prerequisite that must clear before dispatch."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["mount"]
+    path: str = Field(min_length=1, max_length=4096)
+
+    @field_validator("path")
+    @classmethod
+    def validate_absolute_path(cls, value: str) -> str:
+        if "\x00" in value or not os.path.isabs(value):
+            raise ValueError("execution requirement path must be absolute")
+        return value
+
+
 class Task(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -85,6 +102,9 @@ class Task(BaseModel):
     # and keeper seams, and selected legacy work is normalized before dispatch.
     predicate: str | None = None
     receipt_target: str | None = None
+    # Optional live prerequisites. Missing/empty keeps legacy tasks dispatchable; an explicit
+    # requirement is evaluated dynamically by handoff and every dispatch selector.
+    execution_requirements: list[ExecutionRequirement] | None = None
     # Optional per-task Claude tier pin ("haiku"|"sonnet"|"opus"|"fable") — an escape hatch that
     # overrides the earned-tier ladder's class-based derivation for THIS task (the env
     # LIMEN_CLAUDE_MODEL still wins above it). Fable still requires LIMEN_FABLE_ACCEPTANCE.

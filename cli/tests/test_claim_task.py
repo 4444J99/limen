@@ -82,6 +82,35 @@ def test_claim_task_rejects_boolean_budget_without_mutating() -> None:
     assert data == before
 
 
+def test_claim_task_rejects_unavailable_runtime_without_mutating(monkeypatch) -> None:
+    claim = load_claim_module()
+    data = board()
+    data["tasks"][0]["execution_requirements"] = [{"kind": "mount", "path": "/runtime/unavailable"}]
+    before = copy.deepcopy(data)
+    monkeypatch.setattr(claim.runtime_requirements.os.path, "ismount", lambda _path: False)
+
+    with pytest.raises(SystemExit, match="runtime requirements blocked TASK-1"):
+        claim.claim_task(data, "TASK-1", "codex", "session-1")
+
+    assert data == before
+
+
+def test_claim_task_accepts_available_explicit_mount(monkeypatch) -> None:
+    claim = load_claim_module()
+    data = board()
+    data["tasks"][0]["execution_requirements"] = [{"kind": "mount", "path": "/runtime/available"}]
+    monkeypatch.setattr(
+        claim.runtime_requirements.os.path,
+        "ismount",
+        lambda path: path == "/runtime/available",
+    )
+
+    task = claim.claim_task(data, "TASK-1", "codex", "session-1")
+
+    assert task["status"] == "dispatched"
+    assert data["portal"]["budget"]["track"]["spent"] == 5
+
+
 def test_claim_task_fails_closed_when_legacy_owner_cannot_be_derived() -> None:
     claim = load_claim_module()
     data = board()
