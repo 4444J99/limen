@@ -186,6 +186,25 @@ if [ "${LIMEN_MAIL_SWEEP:-1}" = "1" ]; then
   fi
 fi
 
+# 1b) ARCHIVE Gmail noise over RAW IMAP — the one store Apple Mail cannot archive. The
+#     AppleScript sweep above only --flag-only-gmail (a label store: "move to All Mail" is a
+#     no-op that Gmail re-asserts on next sync). gmail_imap_sweep.py drops the \Inbox label
+#     via the X-GM-LABELS extension — a TRUE archive that sticks. Runs ONLY when the keyed
+#     credential is hydrated (GMAIL_APP_PASSWORD + GMAIL_USER, from creds-hydrate); a no-op
+#     otherwise. Reversible: drops only \Inbox (stays in All Mail), JSON receipt = undo
+#     manifest, starred/protected-sender gated. NEVER deletes, NEVER sends. Opt out with
+#     LIMEN_MAIL_GMAIL_ARCHIVE=0.
+if [ "${LIMEN_MAIL_SWEEP:-1}" = "1" ] && [ "${LIMEN_MAIL_GMAIL_ARCHIVE:-1}" = "1" ]; then
+  [ -f "$HOME/.limen.env" ] && { set -a; . "$HOME/.limen.env"; set +a; }
+  if [ -n "${GMAIL_APP_PASSWORD:-}" ] && [ -n "${GMAIL_USER:-}" ]; then
+    IMAP_USER="$GMAIL_USER" IMAP_PASS="$GMAIL_APP_PASSWORD" \
+      run_tmp 240 "$PY" "$UMA_ROOT/gmail_imap_sweep.py" --apply \
+      --limit "$SWEEP_LIMIT" --receipt "$LIMEN_ROOT/logs/gmail-archive-latest.json"
+  else
+    echo "mail-beat: Gmail IMAP archive SKIPPED — GMAIL_APP_PASSWORD/GMAIL_USER not hydrated; the Gmail inbox will NOT auto-clean (creds-hydrate --verify flags this; root cause: op:// item unreadable by the service account, Wall #320)"
+  fi
+fi
+
 # 2) BUILD the ledger from the receipts (keyless, derived, fail-open) — includes the
 #    propose-mode unsubscribe noise-killers.
 run_tmp 120 "$PY" "$UMA_ROOT/obligations_build.py" --out "$LEDGER"

@@ -263,6 +263,12 @@ DEFAULT_MAP: list[dict] = [
         "ref": "op://Private/gmail-app-pw-2026-06-06/password",
         "env": ["GMAIL_APP_PASSWORD"],
         "enabled": True,
+        # REQUIRED for the autonomous mail organ: without it the keyed IMAP path (draft-save
+        # AND gmail_imap_sweep archive) cannot authenticate, so nothing auto-cleans Gmail. A
+        # `required` lane that fails to materialize is a LOUD --verify failure (not a silent
+        # skip) — the beat log surfaces it every beat. If this is red, the op:// item is not
+        # readable by the service account (vault grant / field name — Wall #320, issue #261).
+        "required": True,
     },
     {
         # The Gmail ACCOUNT ADDRESS for the keyed mail lane — NOT a secret (it appears in every From: header),
@@ -277,6 +283,8 @@ DEFAULT_MAP: list[dict] = [
         "ref": "op://Private/gmail-app-pw-2026-06-06/username",
         "env": ["GMAIL_USER"],
         "enabled": True,
+        # REQUIRED alongside the app-password — the keyed path needs the account address too.
+        "required": True,
     },
     {
         # The ianva cloud-connector bearer token (the one re-auth a local gateway physically cannot fix —
@@ -812,6 +820,11 @@ def main() -> int:
     if args.verify:
         print(f"creds-hydrate --verify ({ENV_FILE}) — authenticating each materialized credential:")
         any_invalid = False
+        # A `required` lane that never materialized is a DEFECT — but only when the floor is
+        # OTHERWISE configured (hydration ran, materialized other creds, yet this required one
+        # failed to land → the op:// read is silently failing). On a truly EMPTY floor (fresh
+        # machine / CI, nothing set up yet) stay quiet: report "?" and exit 0, no false alarm.
+        floor_populated = any(_env_value(x) for e in cred_map for x in e.get("env", []))
         for e in cred_map:
             envs = e.get("env", [])
             sinks = _gh_sinks(e)
@@ -824,7 +837,18 @@ def main() -> int:
                 continue
             val = _env_value(envs[0]) if envs else None
             if not val:
-                print(f"  ? {e['lane']:28} {','.join(envs) or '(file only)'} — not materialized (run --apply)")
+                if e.get("required") and floor_populated:
+                    # A REQUIRED lane missing on a configured floor is a DEFECT, not a shrug: the
+                    # op:// read is failing silently (fail-open skip on --apply) and an organ
+                    # downstream is starving. Surface it as loud as a dead token so the beat log
+                    # flags it — never let a required credential rot green. (Root cause: the op://
+                    # item is not readable — vault grant / field name / item moved. Wall #320, #261.)
+                    print(f"  ✗ {e['lane']:28} {','.join(envs)} — REQUIRED, NOT materialized "
+                          f"(op:// read is failing → check {e.get('ref', 'the op:// item')} is readable)")
+                    any_invalid = True
+                else:
+                    tail = " (REQUIRED — will alarm once the floor is configured)" if e.get("required") else " (run --apply)"
+                    print(f"  ? {e['lane']:28} {','.join(envs) or '(file only)'} — not materialized{tail}")
                 continue
             state, detail = probe_cred(e, val)
             del val

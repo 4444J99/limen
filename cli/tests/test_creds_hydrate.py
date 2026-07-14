@@ -233,6 +233,29 @@ def test_verify_cli_no_creds_materialized_exits_zero(tmp_path):
     assert "not materialized" in r.stdout
 
 
+def test_verify_required_missing_on_populated_floor_exits_one(tmp_path):
+    """A `required` lane absent while the floor is OTHERWISE configured is a LOUD defect (exit 1) —
+    the silent-skip failure mode that let GMAIL_APP_PASSWORD rot green (op:// read fails, --apply
+    fail-open skips, --verify used to shrug '?'). Distinct from an EMPTY floor (fresh/CI), which
+    stays quiet at exit 0 (test above): this is the configured-but-broken case that must scream."""
+    env_file = tmp_path / ".limen.env"
+    env_file.write_text("CONFIGURED_KEY=present\n")  # floor populated — but NOT with the required key
+    map_file = tmp_path / "map.json"
+    map_file.write_text(
+        '[{"lane":"other","env":["CONFIGURED_KEY"]},'
+        '{"lane":"gmail req","ref":"op://V/I/password","env":["REQ_KEY"],"required":true}]'
+    )
+    r = subprocess.run(
+        [sys.executable, str(HYDRATE), "--verify"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        env={**os.environ, "LIMEN_ENV": str(env_file), "LIMEN_CREDS_MAP": str(map_file)},
+    )
+    assert r.returncode == 1
+    assert "REQUIRED, NOT materialized" in r.stdout
+
+
 # --- OP IS OPT-IN: the root-to-leaf fix for the 1Password Touch-ID prompt storm -------------------
 def test_op_read_is_opt_in_no_prompt_by_default(tmp_path, monkeypatch):
     """`op read` is OPT-IN. A default --apply (non-TTY, no --op, no service-account token) must NEVER

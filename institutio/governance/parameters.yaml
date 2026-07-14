@@ -1232,6 +1232,12 @@ parameters:
     self_update: none
     owner: mail
     note: "Max most-recent messages inbox_sweep.py reads per account each C_MAIL beat — bounds the AppleScript reads so the sweep is a couple of paged reads, not the whole inbox."
+  LIMEN_MAIL_GMAIL_ARCHIVE:
+    default: 1
+    env: LIMEN_MAIL_GMAIL_ARCHIVE
+    self_update: none
+    owner: mail
+    note: "Gate for the C_MAIL raw-IMAP Gmail archive (mail-beat.sh step 1b → gmail_imap_sweep.py --apply): drops the \\Inbox label over IMAP — the TRUE archive Apple Mail cannot do on a Gmail label store. Reversible (stays in All Mail, receipt = undo manifest, starred/protected gated; never deletes/sends). Runs ONLY when the keyed credential is hydrated (GMAIL_APP_PASSWORD + GMAIL_USER); a no-op that logs the skip otherwise. 0 disables it entirely."
   LIMEN_MAIL_DRAFTS:
     default: 0
     env: LIMEN_MAIL_DRAFTS
