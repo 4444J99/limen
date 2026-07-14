@@ -131997,9 +131997,13 @@ tasks:
     computed from the gauge''s absorbable number, model classes each tier unlocks
     (from the weights-library ledger), and a recommendation. Capex is derived, never
     vibed. Reference numbers at filing: absorba'
+  predicate: test "$(gh issue view 9 --repo organvm/manumissio --json state --jq .state)"
+    = OPEN && test "$(gh issue view 9 --repo organvm/manumissio --json labels --jq
+    '[.labels[].name] | index("blocked-on-spend") != null')" = true
+  receipt_target: https://github.com/organvm/manumissio/issues/9
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-13T13:45:36.653042Z'
+  updated: '2026-07-14T06:14:07.605661Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:20:01.158025Z'
     agent: agy
@@ -132037,6 +132041,13 @@ tasks:
     status: open
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head needs_human'
+  - timestamp: '2026-07-14T06:14:07.605661Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: open
+    output: 'ask-gate owner reconciliation: issue remains OPEN and explicitly blocked-on-spend
+      until its >=$200/mo two-month gauge fires; typed owner receipt normalized before
+      terminal routing.'
 - id: GH-organvm-manumissio-8
   title: 'Phase 2: ollama serve as an OpenAI-compatible endpoint adapter'
   repo: organvm/manumissio
@@ -133048,9 +133059,12 @@ tasks:
     (#123 DIRTY, #131 regressive, #149 garbage, #151-153 draft lifecycle checkpoints
     for merged PRs). 3 green PRs ready to merge: #138 (revenue-ship), #134 (typing),
     #133 (CI matrix). See dispatch log for full details.'
+  predicate: test "$(gh issue view 157 --repo organvm/universal-mail--automation --json
+    state,stateReason --jq '.state + ":" + .stateReason')" = CLOSED:COMPLETED
+  receipt_target: https://github.com/organvm/universal-mail--automation/issues/157
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-13T13:45:36.653042Z'
+  updated: '2026-07-14T06:14:07.606719Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -133125,6 +133139,12 @@ tasks:
     status: open
     output: 'heal-board: appended canonical dispatch_log head for task.status=open;
       preserved legacy head needs_human'
+  - timestamp: '2026-07-14T06:14:07.606719Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: open
+    output: 'ask-gate owner reconciliation: GitHub issue is CLOSED:COMPLETED; typed
+      owner receipt normalized before terminal routing.'
 - id: DISCOVER-organvm-arca
   title: Discover the latent value of organvm/arca
   repo: organvm/arca
