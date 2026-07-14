@@ -458,6 +458,13 @@ checks.
 - You are Claude. Read this file as part of your startup instructions.
 - You have access to the full filesystem — `$LIMEN_ROOT/tasks.yaml` is a regular file.
 - Support `limen` as a subagent: when asked, run the limen CLI or read/write tasks.yaml directly.
+- **Fleet launches never wait on permissions.** Limen-owned non-interactive Claude dispatch uses
+  `--permission-mode dontAsk` with an explicit file-mutation allowlist. Bash/network policy remains
+  owned by effective user/project/managed rules; Limen does not inject a blanket shell grant. A tool
+  outside that surface, or one matched by an ask or deny rule, must fail closed and let the
+  dispatcher cascade or owner-route it; it must never become an approval modal. Do not replace this with
+  `acceptEdits` or `auto` (both can prompt), or `bypassPermissions` (unsafe on the host). This fleet
+  contract does not change the operator's settings or any interactive/user-started Claude session.
 - **Tier subagent fan-out by job.** Task/Workflow subagents inherit the session model; pick each agent's tier by its job (`.claude/agents/` types, or an explicit `model`/`effort`) so trivial workers never ride Opus. Authority: `cli/src/limen/model_selection.py`; details in CLAUDE.md → Parallel Exploration & Fan-Out.
 - **Fable plans, cheaper tiers build.** Fable's role is PLAN-ONLY: it does the deep analysis, emits a build packet into a worktree, and hands off to a cheaper tier (Opus/Sonnet/Haiku) that builds; building on Fable is prohibited. It is acceptance-gated (`scripts/fable-allotment.py accept ...`, `LIMEN_FABLE_ACCEPTANCE=<receipt>`) AND live runtime-capped against actual weekly tokens burned (40% deliberate / 50% hard, `scripts/fable-allotment.py balance` → `logs/fable-allotment.json`, enforced in `cli/src/limen/model_selection.py`). Full doctrine + caps: `docs/fable-allotment.md`.
 
