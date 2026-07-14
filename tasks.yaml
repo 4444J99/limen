@@ -107536,7 +107536,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -107550,9 +107550,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/414 [auto-emitted\
     \ 2026-07-04 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 414 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/414
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-14T05:01:36.840106Z'
+  updated: '2026-07-14T05:30:46.511524Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: gemini
@@ -107613,6 +107616,24 @@ tasks:
     session_id: cli
     status: open
     output: Released stale claim after 24h; remote status absent
+  - timestamp: '2026-07-14T05:30:32.184961Z'
+    agent: codex
+    session_id: '10683683149900832991'
+    status: dispatched
+    output: 'corrected unsafe stale release: Jules session 10683683149900832991 is
+      directly pullable; capped catalog absence was not proof; legacy task normalized
+      from its existing PR URL'
+  - timestamp: '2026-07-14T05:30:39.232488Z'
+    agent: codex
+    session_id: '10683683149900832991'
+    status: in_progress
+    output: Jules session 10683683149900832991 completed; patch reviewed before landing
+  - timestamp: '2026-07-14T05:30:46.511524Z'
+    agent: codex
+    session_id: '10683683149900832991'
+    status: failed
+    output: 'completed patch rejected: stale/reverse-tree result spanned roughly 158k
+      diff lines and removed current control-plane safeguards; no PR opened'
 - id: HEAL-cifix-organvm-limen-415
   title: fix failing CI on organvm/limen#415
   repo: organvm/limen
@@ -139898,7 +139919,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - always-working
   - receipt-first
@@ -139923,7 +139944,7 @@ tasks:
   receipt_target: git:organvm/limen:docs/product-ledger.md
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-14T04:47:45.493672Z'
+  updated: '2026-07-14T05:31:00.969494Z'
   dispatch_log:
   - timestamp: '2026-07-14T04:32:51.070528Z'
     agent: jules
@@ -139934,6 +139955,17 @@ tasks:
     agent: jules
     session_id: '8253467673482010377'
     status: dispatched
+  - timestamp: '2026-07-14T05:30:53.627782Z'
+    agent: codex
+    session_id: '8253467673482010377'
+    status: in_progress
+    output: Jules session 8253467673482010377 completed; patch reviewed before landing
+  - timestamp: '2026-07-14T05:31:00.969494Z'
+    agent: codex
+    session_id: '8253467673482010377'
+    status: failed
+    output: 'completed patch rejected: generated-ledger refresh was bundled with unrelated
+      cleanup edits and did not perform the stated value-repo assignment; no PR opened'
 - id: GH-organvm-limen-1024
   title: Beat scheduled-sensor lane is dark (LIMEN_BEAT_DERIVE drift)
   repo: organvm/limen
