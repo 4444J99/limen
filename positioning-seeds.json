@@ -1,818 +1,887 @@
 {
-  "_comment": "Judgment layer for scripts/generate-positioning.py \u2014 per-repo inbound positioning. The deepest ladder level is the recruiter bridge (see docs/inbound-magnet-system.md). internal_anchor values are NEVER published; they render only into the .internal artifact. PUBLIC pages carry NO prices (tool-enforced).",
-  "frontdoor": {
-    "_contact_note": "Set `contact` to the inbound address you want on the public surface (a dedicated alias is wiser than a personal inbox \u2014 it gets indexed). When set, every CTA becomes a mailto: pre-tagged with the repo + door, so clicks land already-classified in your inbox triage. Empty = plain CTA text, nothing published. This is the one switch that turns the capture funnel live; it's your call which address.",
-    "contact": "contact@4444j99.dev",
-    "headline": "I build production systems that solve expensive problems.",
-    "subhead": "Not demos. Live platforms \u2014 tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:",
-    "door_client": {
-      "label": "Have a problem one of these solves? \u2014 Deploy it for your shop",
-      "blurb": "Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine."
-    },
-    "door_recruiter": {
-      "label": "Hiring someone who ships at this level? \u2014 Work with the builder",
-      "blurb": "Everything here is the portfolio. If you need a senior builder who owns systems end-to-end \u2014 data, infra, AI, deploy \u2014 this is the evidence."
-    },
-    "closing": "If any of this fits, reach out. This conversation starts at serious."
+ "_comment": "Judgment layer for scripts/generate-positioning.py — per-repo inbound positioning. The deepest ladder level is the recruiter bridge (see docs/inbound-magnet-system.md). internal_anchor values are NEVER published; they render only into the .internal artifact. PUBLIC pages carry NO prices (tool-enforced).",
+ "frontdoor": {
+  "_contact_note": "Set `contact` to the inbound address you want on the public surface (a dedicated alias is wiser than a personal inbox — it gets indexed). When set, every CTA becomes a mailto: pre-tagged with the repo + door, so clicks land already-classified in your inbox triage. Empty = plain CTA text, nothing published. This is the one switch that turns the capture funnel live; it's your call which address.",
+  "contact": "contact@4444j99.dev",
+  "headline": "I build production systems that solve expensive problems.",
+  "subhead": "Not demos. Live platforms — tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:",
+  "door_client": {
+   "label": "Have a problem one of these solves? — Deploy it for your shop",
+   "blurb": "Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine."
   },
-  "repos": {
-    "organvm/public-record-data-scrapper": {
-      "display_name": "50-State UCC Public-Records Intelligence Platform",
-      "what_it_is": "A production platform that collects UCC-1 filings from all 50 Secretary-of-State portals, enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0\u2013100 on financing likelihood with an A\u2013F health grade \u2014 delivered via dashboard, REST API, and CLI.",
-      "proof_signals": [
-        "3,399 passing tests",
-        "Terraform AWS (multi-AZ RDS, Redis, S3)",
-        "60+ collection agents",
-        "all 50 states",
-        "live deploy"
-      ],
-      "buyer": "MCA funders, ISOs, and brokers who buy financing leads constantly.",
-      "expensive_problem": "Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.",
-      "cost_of_not_having_it": "A single funded deal is worth a five-figure commission. Good data here pays for itself on the first conversion \u2014 and bad data burns your closers' hours on the dead numbers everyone else already called.",
-      "public_face": "the full platform \u2014 source, the 3,399 tests, the Terraform, all 60+ collection agents, the scoring method. Read every line.",
-      "private_operation": "the live, fed instance \u2014 fresh 50-state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Feed me leads",
-          "kind": "Data-as-a-Service",
-          "what_they_get": "You never touch the platform. We deliver scored, enriched, exclusive UCC leads on a recurring feed \u2014 your states, your filters. Beats every commodity list you buy today.",
-          "internal_anchor": "$3k\u2013$15k / mo by volume \u00b7 states \u00b7 exclusivity",
-          "cadence": "Recurring \u2014 the engine"
-        },
-        {
-          "level": 2,
-          "name": "Run it in my shop",
-          "kind": "White-label deploy",
-          "what_they_get": "The platform under your brand, on your infra (or our managed). You own the pipeline and stop renting lists forever.",
-          "internal_anchor": "$25k\u2013$75k setup + $2k\u2013$8k / mo managed",
-          "cadence": "Setup + recurring"
-        },
-        {
-          "level": 3,
-          "name": "Build it for my exact world",
-          "kind": "Custom",
-          "what_they_get": "Your states, scoring tuned to your underwriting, integration into your CRM / dialer (Salesforce, GHL, \u2026), your compliance vertical.",
-          "internal_anchor": "$40k\u2013$150k project",
-          "cadence": "Project + optional retainer"
-        },
-        {
-          "level": 4,
-          "name": "Build my whole data org",
-          "kind": "Fractional / retainer",
-          "what_they_get": "We become your data-infrastructure engine \u2014 this system, the next one, the next.",
-          "internal_anchor": "$10k\u2013$25k / mo retainer",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "Deploy this for your shop",
-      "cta_recruiter": "Work with the team that built this",
-      "recruiter_bridge_level": 4,
-      "seo_description": "50-state UCC public-records intelligence \u2014 fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.",
-      "search_topics": [
-        "merchant-cash-advance",
-        "mca-leads",
-        "ucc-filings",
-        "ucc-leads",
-        "lead-generation",
-        "alternative-lending",
-        "small-business-financing",
-        "public-records",
-        "data-enrichment",
-        "lead-scoring"
-      ]
+  "door_recruiter": {
+   "label": "Hiring someone who ships at this level? — Work with the builder",
+   "blurb": "Everything here is the portfolio. If you need a senior builder who owns systems end-to-end — data, infra, AI, deploy — this is the evidence."
+  },
+  "closing": "If any of this fits, reach out. This conversation starts at serious."
+ },
+ "repos": {
+  "organvm/public-record-data-scrapper": {
+   "display_name": "50-State UCC Public-Records Intelligence Platform",
+   "what_it_is": "A production platform that collects UCC-1 filings from all 50 Secretary-of-State portals, enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.",
+   "proof_signals": [
+    "3,399 passing tests",
+    "Terraform AWS (multi-AZ RDS, Redis, S3)",
+    "60+ collection agents",
+    "all 50 states",
+    "live deploy"
+   ],
+   "buyer": "MCA funders, ISOs, and brokers who buy financing leads constantly.",
+   "expensive_problem": "Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.",
+   "cost_of_not_having_it": "A single funded deal is worth a five-figure commission. Good data here pays for itself on the first conversion — and bad data burns your closers' hours on the dead numbers everyone else already called.",
+   "public_face": "the full platform — source, the 3,399 tests, the Terraform, all 60+ collection agents, the scoring method. Read every line.",
+   "private_operation": "the live, fed instance — fresh 50-state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Feed me leads",
+     "kind": "Data-as-a-Service",
+     "what_they_get": "You never touch the platform. We deliver scored, enriched, exclusive UCC leads on a recurring feed — your states, your filters. Beats every commodity list you buy today.",
+     "internal_anchor": "$3k–$15k / mo by volume · states · exclusivity",
+     "cadence": "Recurring — the engine"
     },
-    "organvm/peer-audited--behavioral-blockchain": {
-      "display_name": "Styx Peer-Audited Behavioral Market",
-      "what_it_is": "A production-grade enforcement layer for commitments with real financial stakes: Stripe FBO escrow, a double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.",
-      "proof_signals": [
-        "1,107 tests across workspaces",
-        "public pitch surface returns 200 OK",
-        "NestJS + Next.js + React Native + Tauri monorepo",
-        "Stripe escrow and double-entry ledger",
-        "CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates"
-      ],
-      "buyer": "Wellness operators, benefits teams, accountability programs, and regulated product teams that need commitments enforced without becoming the custodian of sensitive individual behavior data.",
-      "expensive_problem": "Accountability and corporate-wellness programs spend money on intent but do not create follow-through. The proof is usually self-reported, the incentives are weak, and holding personal health data creates liability.",
-      "cost_of_not_having_it": "Programs keep paying for participation theater: no real stake, no audited proof, no tamper-evident ledger, and no clean privacy boundary between sponsor and participant.",
-      "public_face": "the full Styx architecture: public pitch surface, escrow model, ledger discipline, peer-review engine, honeypot QA, CI gates, and deployment checklist. Read the source and the runbooks.",
-      "private_operation": "the deployed enforcement layer tuned to your program: funded pots, privacy boundaries, reviewer economics, compliance rules, and proof workflows wired into your existing engagement or benefits stack.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Run a commitment cohort",
-          "kind": "Managed pilot",
-          "what_they_get": "A bounded cohort with funded stakes, proof review, reviewer incentives, and aggregate engagement reporting without exposing individual health data to the sponsor.",
-          "internal_anchor": "$5k-$20k pilot by cohort size",
-          "cadence": "Pilot"
-        },
-        {
-          "level": 2,
-          "name": "Deploy it for my program",
-          "kind": "White-label deploy",
-          "what_they_get": "The Styx commitment market deployed under your brand with escrow, ledger, proof workflows, and policy guardrails configured to your program.",
-          "internal_anchor": "$30k-$90k setup + $3k-$12k / mo managed",
-          "cadence": "Setup + recurring"
-        },
-        {
-          "level": 3,
-          "name": "Build my audited incentive layer",
-          "kind": "Custom",
-          "what_they_get": "A domain-specific incentive and audit layer: your proofs, your economics, your compliance rules, your integrations, backed by the same ledger and review architecture.",
-          "internal_anchor": "$60k-$180k project",
-          "cadence": "Project + optional retainer"
-        },
-        {
-          "level": 4,
-          "name": "Own behavioral-market infrastructure",
-          "kind": "Strategic platform build",
-          "what_they_get": "A standing build-and-operate relationship for financial-stakes behavior systems: ledger, escrow, proofs, privacy, review economics, and deployment operations.",
-          "internal_anchor": "$15k-$40k / mo retainer",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "Deploy this for a commitment program",
-      "cta_recruiter": "Work with the team that built this",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests.",
-      "search_topics": [
-        "behavioral-economics",
-        "accountability",
-        "corporate-wellness",
-        "peer-review",
-        "fintech",
-        "stripe",
-        "escrow",
-        "double-entry-ledger",
-        "privacy",
-        "proof-of-completion",
-        "habit-tracking",
-        "incentive-design"
-      ]
+    {
+     "level": 2,
+     "name": "Run it in my shop",
+     "kind": "White-label deploy",
+     "what_they_get": "The platform under your brand, on your infra (or our managed). You own the pipeline and stop renting lists forever.",
+     "internal_anchor": "$25k–$75k setup + $2k–$8k / mo managed",
+     "cadence": "Setup + recurring"
     },
-    "organvm/universal-mail--automation": {
-      "display_name": "Autonomous Inbox-Triage & Draft System",
-      "what_it_is": "A production system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies \u2014 draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).",
-      "proof_signals": [
-        "400+ tests",
-        "Cloudflare Worker deploy (wrangler)",
-        "Gmail + Apple Mail, keyless",
-        "draft-only by design \u2014 composes replies, never sends",
-        "obligations ledger \u2014 every owed reply tracked"
-      ],
-      "buyer": "Founders, operators, and the people who run their comms \u2014 anyone drowning in multi-account email who will not (and should not) hand an AI the send button.",
-      "expensive_problem": "Obligations fall through the cracks \u2014 the escalation you missed, the reply you owed a week ago \u2014 while triage burns the most expensive hours of the day. Every 'AI email tool' wants send authority nobody sane will give it.",
-      "cost_of_not_having_it": "Missed and late replies quietly cost deals and relationships, and the hours spent sorting an inbox by hand are the ones you can least afford to spend that way.",
-      "public_face": "the full system \u2014 source, the 400+ tests, the protocol ladder, the safety verifiers, how every piece is built. Read all of it.",
-      "private_operation": "the running instance tuned to your accounts, your protocol rules, and your voice \u2014 the live sweep, the ledger, the drafts kept current. The code is open; the engine that quietly runs your inbox (and never once sends without you) is the service.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Run my inbox triage",
-          "kind": "Managed service",
-          "what_they_get": "We run the sweep against your accounts and hand you a triaged inbox plus ready-to-send drafts for everything you owe a reply. You press send; we do everything up to it.",
-          "internal_anchor": "$2k\u2013$6k / mo by volume \u00b7 accounts",
-          "cadence": "Recurring \u2014 the engine"
-        },
-        {
-          "level": 2,
-          "name": "Deploy it on my infra",
-          "kind": "White-label deploy",
-          "what_they_get": "The system under your brand, on your infrastructure (or our managed Worker). Your team owns the triage pipeline instead of renting another SaaS.",
-          "internal_anchor": "$15k\u2013$40k setup + $1.5k\u2013$5k / mo managed",
-          "cadence": "Setup + recurring"
-        },
-        {
-          "level": 3,
-          "name": "Build it for my stack",
-          "kind": "Custom",
-          "what_they_get": "Your protocol rules, your voice, integration into your CRM / helpdesk / ticketing, your compliance vertical \u2014 built to your exact workflow.",
-          "internal_anchor": "$25k\u2013$80k project",
-          "cadence": "Project + optional retainer"
-        },
-        {
-          "level": 4,
-          "name": "Run my comms ops",
-          "kind": "Fractional / retainer",
-          "what_they_get": "We become the engine behind your communications operation \u2014 this system, the next integration, the next surface.",
-          "internal_anchor": "$8k\u2013$20k / mo retainer",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "Run this on my inbox",
-      "cta_recruiter": "Work with the team that built this",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Autonomous inbox triage for Gmail + Apple Mail \u2014 classifies threads, tracks every owed reply, drafts voice-matched responses. Draft-only, never sends.",
-      "search_topics": [
-        "email-automation",
-        "inbox-zero",
-        "gmail-automation",
-        "email-triage",
-        "productivity",
-        "workflow-automation",
-        "cloudflare-workers",
-        "email-management"
-      ]
+    {
+     "level": 3,
+     "name": "Build it for my exact world",
+     "kind": "Custom",
+     "what_they_get": "Your states, scoring tuned to your underwriting, integration into your CRM / dialer (Salesforce, GHL, …), your compliance vertical.",
+     "internal_anchor": "$40k–$150k project",
+     "cadence": "Project + optional retainer"
     },
-    "organvm/a-i-chat--exporter": {
-      "display_name": "ChatGPT Conversation Exporter",
-      "what_it_is": "A browser userscript that exports your ChatGPT conversations into five portable formats \u2014 Markdown, HTML, JSON, PNG, and plain text \u2014 entirely in-browser. No account, no server, no data leaves your machine; it authenticates through your existing ChatGPT session and runs on chatgpt.com, chat.openai.com, and new.oaifree.com.",
-      "proof_signals": [
-        "170 tests across 16 suites",
-        "~5,900 lines of TypeScript",
-        "distributed on GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages",
-        "5 export formats",
-        "9-language UI",
-        "MIT-licensed \u00b7 549 commits, actively maintained"
-      ],
-      "buyer": "Researchers, writers, developers, and knowledge workers who live in ChatGPT and need their conversations out \u2014 into Obsidian or Notion, a RAG pipeline, version control, or a compliance archive.",
-      "expensive_problem": "ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download \u2014 the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.",
-      "cost_of_not_having_it": "Every lost thread is research you have to redo, context you can't feed your tools, and an archive you don't have the day a client, a court, or a coauthor asks for it.",
-      "public_face": "the entire userscript \u2014 every exporter, all 170 tests, the build, the localization. MIT-licensed; fork it, read it, ship it.",
-      "private_operation": "the maintained Pro build and the keyed bulk pipeline, kept working as ChatGPT's DOM shifts under it \u2014 plus the export engine built into your own product or workflow. The script is open; what you pay for is that it keeps working, at scale, the morning OpenAI changes everything.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Go Pro",
-          "kind": "Self-serve",
-          "what_they_get": "Bulk export, multi-conversation, and the premium formats \u2014 the product, today, no call required.",
-          "internal_anchor": "self-serve Pro via Lemon Squeezy (the product's own rail \u2014 see exporter pricing)",
-          "cadence": "Self-serve"
-        },
-        {
-          "level": 2,
-          "name": "Run it for my team",
-          "kind": "Managed",
-          "what_they_get": "We run bulk export across your team's accounts and hand back a clean, organized archive on a recurring basis \u2014 your formats, your destinations (Obsidian, Notion, a data lake).",
-          "internal_anchor": "$2k\u2013$8k / mo by volume \u00b7 seats",
-          "cadence": "Recurring"
-        },
-        {
-          "level": 3,
-          "name": "Build it into my product",
-          "kind": "Custom",
-          "what_they_get": "The export engine embedded in your app \u2014 your providers (Claude, Gemini), your formats, your branding. The hard part \u2014 surviving DOM churn across providers \u2014 already solved.",
-          "internal_anchor": "$25k\u2013$80k project",
-          "cadence": "Project + optional retainer"
-        },
-        {
-          "level": 4,
-          "name": "Run my data-portability layer",
-          "kind": "Fractional / retainer",
-          "what_they_get": "We own the moving-data-out problem across every AI tool your org uses \u2014 this exporter, the next provider, the next format \u2014 so your knowledge is never trapped.",
-          "internal_anchor": "$8k\u2013$18k / mo retainer",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "Build this into my product",
-      "cta_recruiter": "Work with the builder",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Export ChatGPT conversations to Markdown, HTML, JSON, PNG, or text \u2014 in-browser, no account, no server. Bulk export and your own provider integrations.",
-      "search_topics": [
-        "chatgpt",
-        "chatgpt-export",
-        "chatgpt-exporter",
-        "conversation-export",
-        "markdown-export",
-        "userscript",
-        "tampermonkey",
-        "data-portability",
-        "obsidian",
-        "notion",
-        "rag",
-        "ai-tools"
-      ]
-    },
-    "organvm/mirror-mirror": {
-      "awaiting_publish": true,
-      "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/mirror-mirror is currently PRIVATE \u2014 flip it public to render this onto the inbound surface (his hand: publishing source is an outward-facing identity change). Proof: ~42,800 lines TS, 152 source files, 60 feature components across a 40-tab app, 158 test files, Stripe + Lemon Squeezy billing, live on Netlify, Docker + Vercel + Netlify + Pages deploy.",
-      "display_name": "Virtual Try-On Platform for Beauty & Salons",
-      "what_it_is": "A 'phygital' beauty platform: hyper-realistic AR/3D virtual try-on, medical-grade skin diagnostics, AI style coaching, and salon booking in one app. Two modes \u2014 clients try on looks and book; stylists run a dashboard, manage consultations and proposals, and coordinate their team.",
-      "proof_signals": [
-        "~42,800 lines of TypeScript",
-        "158 test files",
-        "60 feature components across a 40-tab app",
-        "Stripe + Lemon Squeezy billing",
-        "live on Netlify",
-        "Docker + Vercel + Netlify + Pages deploy"
-      ],
-      "buyer": "Beauty brands, salon groups, and cosmetics companies who want virtual try-on and consultation inside their own customer experience \u2014 and the consumers and stylists who use it.",
-      "expensive_problem": "A salon visit costs hours and real money, and a wrong cut or color carries a six-to-eight-week regret cycle \u2014 so customers hesitate and bookings stall. A brand with no try-on misses the digital-first shopper entirely.",
-      "cost_of_not_having_it": "Every hesitant customer is a booking that doesn't happen and a consultation that drags; for a brand, it's the engagement and conversion a try-on experience would have captured \u2014 going to a competitor who has one.",
-      "public_face": "the full application \u2014 the try-on engine, the diagnostics, the 158 test suites, the billing integrations, every one of the 60 feature components. The whole build is readable.",
-      "private_operation": "the running, branded instance \u2014 your catalog, your salons, your booking flow, the try-on engine licensed into your app and kept current. The code is open; the live experience your customers actually touch is the product.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Use the platform",
-          "kind": "SaaS",
-          "what_they_get": "Clients try on looks and book; the subscription tier unlocks the premium try-on and diagnostics.",
-          "internal_anchor": "Mirror+ / Studio subscription (self-serve)",
-          "cadence": "Recurring"
-        },
-        {
-          "level": 2,
-          "name": "Run it for my salon",
-          "kind": "White-label",
-          "what_they_get": "The stylist dashboard, consultations, proposals, and booking under your brand, for your team.",
-          "internal_anchor": "$15k\u2013$50k setup + $2k\u2013$8k / mo",
-          "cadence": "Setup + recurring"
-        },
-        {
-          "level": 3,
-          "name": "Build try-on into my product",
-          "kind": "Custom / API",
-          "what_they_get": "The try-on engine licensed and embedded in your own app \u2014 your catalog, your AR filters, your branding.",
-          "internal_anchor": "$40k\u2013$150k project + license",
-          "cadence": "Project + license"
-        },
-        {
-          "level": 4,
-          "name": "Run my virtual-try-on org",
-          "kind": "Fractional / retainer",
-          "what_they_get": "We become the team behind your try-on and beauty-tech surface \u2014 this platform, the next integration, the next brand.",
-          "internal_anchor": "$10k\u2013$25k / mo retainer",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "Build try-on into my product",
-      "cta_recruiter": "Work with the builder",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Virtual try-on for beauty and salons \u2014 AR/3D try-on, medical-grade skin diagnostics, AI coaching, and booking. White-label it or embed the engine in your app.",
-      "search_topics": [
-        "virtual-try-on",
-        "augmented-reality",
-        "beauty-tech",
-        "ar",
-        "skincare",
-        "salon-software",
-        "cosmetics",
-        "face-tracking",
-        "react",
-        "saas",
-        "ai-coaching",
-        "booking"
-      ]
-    },
-    "organvm/the-invisible-ledger": {
-      "awaiting_publish": true,
-      "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/the-invisible-ledger is currently PRIVATE \u2014 flip it public to render (his hand). Proof: ~76,000 lines TS, 207 source files, 115 React components, 13 test suites (Vitest), Stripe checkout verified in code + tests, live on Netlify, Docker + GHCR + CI/CD, SHA-256 hash-chained audit log.",
-      "display_name": "Chain-of-Custody Operations Platform for Privacy-First Firms",
-      "what_it_is": "An operations dashboard for tax, wealth, and family-office firms whose clients are deliberately analog \u2014 air-gapped, courier-based, no cloud. It tracks every physical document from intake to vault with cryptographically-hashed custody events, routes by client psychographics, visualizes money flow, and runs anomaly detection and incident drills \u2014 so staff get mission-control visibility without ever putting a privacy-first client in the cloud.",
-      "proof_signals": [
-        "~76,000 lines of TypeScript",
-        "207 source files \u00b7 115 React components",
-        "13 test suites (Vitest)",
-        "Stripe checkout, verified in tests",
-        "live on Netlify",
-        "Docker + GHCR + CI/CD",
-        "SHA-256 hash-chained audit log"
-      ],
-      "buyer": "Boutique tax & accounting firms, family offices, and wealth/estate practices serving privacy-conscious, high-net-worth clients who refuse cloud storage.",
-      "expensive_problem": "When clients are air-gapped, custody lives in couriers, USB drives, and filing cabinets \u2014 and a single 'who touched this?' you can't answer, or one mishandled return, costs a relationship worth far more than any tooling. Off-the-shelf tools assume digital-native clients and solve none of it.",
-      "cost_of_not_having_it": "One unprovable custody chain or mishandled document can end a high-net-worth relationship; the hours staff spend tracking paper by hand are the expensive ones, and the regulatory exposure has no ceiling.",
-      "public_face": "the full platform \u2014 the custody tracker, the psychographic routing, the money-flow visualization, all 115 components and 13 test suites, the Stripe billing. Read the whole thing.",
-      "private_operation": "the running instance keyed to your firm \u2014 your offices, your clients, your compliance vertical, the hash-chained ledger kept current and your staff's mission control live. The code is open; the operating system of record for your custody is the service.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Run it for my firm",
-          "kind": "Managed SaaS",
-          "what_they_get": "The platform hosted and managed for your team \u2014 custody tracking, dashboards, compliance reports \u2014 per seat.",
-          "internal_anchor": "$49\u2013$199 / mo per tier (self-serve) \u2192 managed",
-          "cadence": "Recurring"
-        },
-        {
-          "level": 2,
-          "name": "Run it on my infra",
-          "kind": "White-label",
-          "what_they_get": "The platform under your brand, on your infrastructure \u2014 you own the custody pipeline instead of trusting a vendor's cloud.",
-          "internal_anchor": "$25k\u2013$75k setup + $3k\u2013$10k / mo",
-          "cadence": "Setup + recurring"
-        },
-        {
-          "level": 3,
-          "name": "Build it for my vertical",
-          "kind": "Custom",
-          "what_they_get": "Your compliance regime, your client psychographics, integration into your document and practice-management stack.",
-          "internal_anchor": "$40k\u2013$150k project",
-          "cadence": "Project + optional retainer"
-        },
-        {
-          "level": 4,
-          "name": "Run my operations-tech org",
-          "kind": "Fractional / retainer",
-          "what_they_get": "We become the engine behind your firm's operational software \u2014 this platform, the next compliance surface, the next integration.",
-          "internal_anchor": "$10k\u2013$25k / mo retainer",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "Run this for my firm",
-      "cta_recruiter": "Work with the builder",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Chain-of-custody operations platform for privacy-first tax, wealth, and family-office firms \u2014 hashed custody events, money-flow visualization, compliance reporting.",
-      "search_topics": [
-        "chain-of-custody",
-        "compliance",
-        "wealth-management",
-        "family-office",
-        "document-tracking",
-        "fintech",
-        "regtech",
-        "audit-trail",
-        "tax-software",
-        "react",
-        "typescript",
-        "saas"
-      ]
-    },
-    "organvm/domus-genoma": {
-      "awaiting_publish": true,
-      "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/domus-genoma is currently PRIVATE \u2014 flip it public to render (his hand). Proof: 8,106 lines (shell/Python/TS), 32 test files (BATS + pytest), 13 CI jobs, chezmoi provisioning + self-healing daemons + 1Password injection, tier catalog + Stripe infra (checkout endpoint pending). No public hosted demo \u2014 positioned honestly as a running framework, not a hosted SaaS.",
-      "display_name": "Declarative Dev-Environment Provisioning & Self-Healing Platform",
-      "what_it_is": "A productized provisioning platform built on chezmoi: declarative, templated configs that stand up an entire development environment across machines, with 1Password secret injection, self-healing daemons that detect and repair config drift, and a unified CLI. Three-tier licensing (personal, multi-machine, team) gated by JWT entitlements.",
-      "proof_signals": [
-        "8,106 lines (shell, Python, TypeScript)",
-        "32 test files (BATS + pytest)",
-        "13 CI jobs (ShellCheck, gitleaks, template validation, \u2026)",
-        "236 managed configs \u00b7 59 templates",
-        "self-healing daemons + drift detection",
-        "1Password secret injection \u00b7 zero secrets in Git"
-      ],
-      "buyer": "Engineering and platform teams running more than one machine who are bleeding hours to environment setup, fighting config drift, and risking secrets leaking into Git.",
-      "expensive_problem": "Standing up a new machine takes hours, configs silently drift between devices until something breaks, and secrets slip into Git history \u2014 and when it breaks there's no clean way back. Multiply that across a team and it's a standing tax on every engineer.",
-      "cost_of_not_having_it": "Hours per machine per engineer, the security liability of secrets in repos, and the downtime when a divergent environment finally breaks mid-deploy \u2014 recurring, and entirely avoidable.",
-      "public_face": "the entire framework \u2014 the chezmoi templates, the self-healing daemons, the CLI, all 32 test files, the 13 CI gates, the licensing server. Clone it and run it.",
-      "private_operation": "the managed, fleet-wide operation \u2014 cloud-synced config across every machine in your org, drift caught and healed automatically, secrets injected from your vault, kept running. The framework is open; standing it up and keeping your whole fleet self-healing is the service.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Run it on my machines",
-          "kind": "Self-serve",
-          "what_they_get": "The framework, free for a single machine; the paid tiers add cloud-sync and multi-machine.",
-          "internal_anchor": "Personal free \u00b7 Pro / Team tiers ($8 / $20 / mo, self-serve)",
-          "cadence": "Self-serve"
-        },
-        {
-          "level": 2,
-          "name": "Provision my team",
-          "kind": "Managed",
-          "what_they_get": "We stand up and manage cloud-synced, self-healing dev environments across your whole team's machines.",
-          "internal_anchor": "$10k\u2013$30k setup + $2k\u2013$6k / mo",
-          "cadence": "Setup + recurring"
-        },
-        {
-          "level": 3,
-          "name": "Build my internal developer platform",
-          "kind": "Custom",
-          "what_they_get": "Your stack, your secrets backend, your compliance constraints \u2014 provisioning and self-healing built to your org's exact shape.",
-          "internal_anchor": "$40k\u2013$120k project",
-          "cadence": "Project + optional retainer"
-        },
-        {
-          "level": 4,
-          "name": "Run my platform-engineering org",
-          "kind": "Fractional / retainer",
-          "what_they_get": "We become your platform-engineering team \u2014 dev environments, fleet health, the next internal tool.",
-          "internal_anchor": "$12k\u2013$25k / mo retainer",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "Provision my team's environments",
-      "cta_recruiter": "Hire the platform engineer who built this",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Declarative dev-environment provisioning on chezmoi \u2014 templated configs, 1Password secret injection, self-healing drift repair, cloud-sync across machines.",
-      "search_topics": [
-        "dotfiles",
-        "chezmoi",
-        "developer-tools",
-        "devops",
-        "platform-engineering",
-        "provisioning",
-        "self-healing",
-        "1password",
-        "configuration-management",
-        "cli",
-        "developer-experience",
-        "infrastructure-as-code"
-      ]
-    },
-    "organvm/portfolio": {
-      "display_name": "Portfolio & Case Studies \u2014 16 Production Systems",
-      "what_it_is": "A public portfolio site showcasing 16 completed production systems \u2014 each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.",
-      "proof_signals": [
-        "609 files \u00b7 Astro + TypeScript \u00b7 p5.js interactive visualizations",
-        "69 test files across the portfolio + content",
-        "16 case studies with architecture, decisions, and outcomes",
-        "Live demos & interactive diagrams",
-        "Netlify deployment + CI/CD",
-        "SEO-optimized content sites"
-      ],
-      "buyer": "Prospects who want to see the builder's decision-making process, architects and design teams evaluating a platform partner, companies studying real production systems.",
-      "expensive_problem": "A portfolio of demos and one-liners doesn't prove judgment. Seeing the tradeoffs, the decisions, the outcomes, and the architecture is the difference between 'built something' and 'ships production systems'.",
-      "cost_of_not_having_it": "Vague feature lists and cherry-picked metrics. Real diligence requires seeing how a builder thinks through constraints, scales, and failure modes.",
-      "public_face": "All 16 case studies, the architecture diagrams, the interactive demos, the decision trees, the deployed live systems.",
-      "private_operation": "The internal evaluation \u2014 which projects to feature, what to emphasize, how the portfolio evolves as new systems are built.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Learn from the portfolio",
-          "kind": "Self-serve",
-          "what_they_get": "Public access to the 16 case studies: architecture, decisions, scaled-to-production proof.",
-          "cadence": "Ongoing"
-        },
-        {
-          "level": 2,
-          "name": "Deep-dive workshop",
-          "kind": "2-day workshop",
-          "what_they_get": "Interactive walkthrough of decision trees across 3\u20134 case studies; apply the thinking to your constraints.",
-          "internal_anchor": "$15k\u2013$25k / workshop",
-          "cadence": "On demand"
-        },
-        {
-          "level": 3,
-          "name": "Hire for a production pilot",
-          "kind": "3-month engagement",
-          "what_they_get": "Dedicate the builder to your constraint set. Design one system to your exact shape, deploy it, handoff the code and runbook.",
-          "internal_anchor": "$50k\u2013$150k fixed",
-          "cadence": "One-time"
-        },
-        {
-          "level": 4,
-          "name": "Retain as platform director",
-          "kind": "Ongoing retainer",
-          "what_they_get": "Standing relationship: new systems, architecture reviews, on-call for scaling decisions, systems thinking as your company grows.",
-          "internal_anchor": "$20k\u2013$50k / mo retainer",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "Explore the case studies",
-      "cta_recruiter": "Study the builder's thinking",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Production portfolio: 16 systems, real architecture decisions, interactive visualizations, case studies on building software at scale.",
-      "search_topics": [
-        "portfolio",
-        "case-studies",
-        "system-design",
-        "architecture",
-        "production",
-        "astro",
-        "p5.js",
-        "interactive-design",
-        "web-development",
-        "systems-thinking",
-        "engineering-decisions",
-        "technical-writing"
-      ]
-    },
-    "organvm/limen": {
-      "display_name": "Self-Healing Agent Fleet Infrastructure",
-      "what_it_is": "A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that run autonomously on a heartbeat. The fleet maintains itself: monitors liveness, reaps stale work, syncs state, escalates failures. Built-in organs: proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, health monitoring.",
-      "proof_signals": [
-        "9-rung organ ladder (each self-* owns its own domain)",
-        "Heartbeat-driven autonomic loop (scripts/metabolize.sh)",
-        "Self-healing on regression (heal/ branch pattern)",
-        "Live: proprioception organ, VIGILIA federation, branch-reap, credential-wall",
-        "Zero manual upkeep \u2014 runs forever once seeded"
-      ],
-      "buyer": "Teams running 5+ agents who want infrastructure that fixes itself instead of paging on-call.",
-      "expensive_problem": "Every agent fleet needs: health checks, credential refresh, stale-work cleanup, state reconciliation, failure escalation. If manual, each system costs ~2h/week ops. If ignored, cascading failures ripple through the fleet.",
-      "cost_of_not_having_it": "One missed credential rotation = entire lane down for hours. One stale clone = 100GB leak. One diverged state = silent corruption. Manual fixes cost 10\u201320h/month + the incidents themselves (lost work, unhappy users).",
-      "public_face": "the full organ ladder \u2014 each self-* source, the beat loop, the escalation protocol, the federation dance. Read how proprioception sees itself; how VIGILIA heals divergence; how the credential organ stays valid.",
-      "private_operation": "your fleet breathing on its own \u2014 credentials auto-refresh, stale work auto-reaped, divergence auto-healed, health always visible. No ops work; everything Just Works until it doesn't, and then it fixes itself.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Health monitoring + alerting",
-          "kind": "Observability",
-          "what_they_get": "Real-time health dashboard for your fleet organs; alerts on liveness failure or divergence; historical trend data.",
-          "internal_anchor": "$1k\u2013$3k setup + $500/mo monitoring",
-          "cadence": "Setup + recurring"
-        },
-        {
-          "level": 2,
-          "name": "Self-healing deployed in my fleet",
-          "kind": "Autonomous ops",
-          "what_they_get": "The full organ ladder running on your heartbeat; automatic remediation of known failure modes; zero manual ops work.",
-          "internal_anchor": "$5k\u2013$15k wiring + $2k/mo ops backup",
-          "cadence": "Deploy once + retainer"
-        },
-        {
-          "level": 3,
-          "name": "Extend the ladder for my domain",
-          "kind": "Custom organs",
-          "what_they_get": "New self-* organs tailored to your infrastructure (e.g. self-capacity, self-optimizing); integrated into the heartbeat.",
-          "internal_anchor": "$25k\u2013$75k per organ",
-          "cadence": "Project + optional retainer"
-        },
-        {
-          "level": 4,
-          "name": "Own the fleet as your core platform",
-          "kind": "Strategic platform build",
-          "what_they_get": "We build your entire agent fleet infrastructure on the self-* ladder \u2014 you own a platform that scales forever with zero ops burden.",
-          "internal_anchor": "$50k\u2013$150k platform + $5k\u2013$20k / mo",
-          "cadence": "Build + ongoing partnership"
-        }
-      ],
-      "cta_client": "Adopt self-healing fleet ops",
-      "cta_recruiter": "Work with the team that built autonomic infrastructure",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Self-healing agent fleet \u2014 autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat.",
-      "search_topics": [
-        "agent-orchestration",
-        "autonomous-systems",
-        "fleet-management",
-        "self-healing",
-        "infrastructure-automation",
-        "zero-ops",
-        "heartbeat-driven",
-        "organ-architecture",
-        "agent-reliability"
-      ]
-    },
-    "organvm/session-meta": {
-      "awaiting_publish": true,
-      "_publish_note": "organvm/session-meta is currently PRIVATE. When you flip it public, it will render. Proof signals: Python-based (lang detected via API). Full architecture, test count, and systems description are needed \u2014 point me at the repo details when it goes public, and I'll draft the full seed.",
-      "display_name": "Session Metadata & History System",
-      "what_it_is": "[Pending full exploration] Session metadata and historical tracking system \u2014 likely a system for tracking and replaying agent sessions, managing session context, and providing session-level observability.",
-      "proof_signals": [
-        "Python codebase",
-        "[Awaiting public visibility for full proof signals]"
-      ],
-      "buyer": "[To be determined on public render]",
-      "expensive_problem": "[To be determined on public render]",
-      "cost_of_not_having_it": "[To be determined on public render]",
-      "public_face": "[To be populated]",
-      "private_operation": "[To be populated]",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Use it",
-          "kind": "Self-serve",
-          "what_they_get": "[Details pending]",
-          "cadence": "Ongoing"
-        },
-        {
-          "level": 2,
-          "name": "Integrate into your sessions",
-          "kind": "Integration",
-          "what_they_get": "[Details pending]",
-          "cadence": "One-time"
-        },
-        {
-          "level": 3,
-          "name": "Custom session layer",
-          "kind": "Consulting",
-          "what_they_get": "[Details pending]",
-          "cadence": "On demand"
-        },
-        {
-          "level": 4,
-          "name": "Operate at scale",
-          "kind": "Retainer",
-          "what_they_get": "[Details pending]",
-          "cadence": "Ongoing"
-        }
-      ],
-      "cta_client": "[Pending full details]",
-      "cta_recruiter": "[Pending full details]",
-      "recruiter_bridge_level": 3,
-      "seo_description": "[To be populated when public]",
-      "search_topics": [
-        "sessions",
-        "metadata",
-        "observability",
-        "history",
-        "tracking"
-      ]
-    },
-    "organvm/ianva": {
-      "display_name": "Single Gateway for MCP Across All Agents",
-      "what_it_is": "A unified MCP doorway that sits between your agents (Claude Code, Codex, Gemini, opencode, etc.) and every MCP server (Gmail, Sentry, Notion, GitHub, etc.). Each agent connects once; ianva handles all OAuth, auto-refresh, and server aggregation. Built on MCPHub with auto-refresh, Docker-optional, local + cloud faces.",
-      "proof_signals": [
-        "Wraps MCPHub with full OAuth 2.1 (PKCE, DCR, resource indicators)",
-        "Single-writer refresh + flock serialization (no race conditions)",
-        "4 faces: local HTTP, stdio via mcp-proxy, cloud HTTPS tunnel, discipline layer",
-        "Every MCP server authed once, forever \u2014 no re-prompts per agent",
-        "Tested with Claude Code, Codex, Gemini, agy, opencode, Copilot, Cline"
-      ],
-      "buyer": "Development teams and individual builders running multiple AI agents who need consistent MCP server access without re-authenticating per agent.",
-      "expensive_problem": "Every agent that touches MCP requires independent OAuth setup. With 6+ agents, you're authorizing the same servers 6+ times. Each agent has its own credential storage, refresh logic, and re-prompt on expiry \u2014 hours burned on auth flaps instead of building.",
-      "cost_of_not_having_it": "3\u20135 hours per agent per month wasted on MCP re-authorization, OAuth expiry surprises, and per-agent credential sync. For teams: per-agent divergence creates support burden. Build velocity drops 10\u201315% when half your energy goes to 'why won't this MCP server respond' instead of shipping.",
-      "public_face": "the full ianva stack \u2014 the MCPHub wrapper, the 4 faces, the auto-refresh logic, the flock serialization, the configuration system, the doctor + quickstart. Read every line; run `ianva doctor` and see it work.",
-      "private_operation": "your agents all talking to one ianva endpoint; token refresh silent in the background; new MCP servers added once and available to every agent immediately; no more per-agent re-auth dances. The engine that makes your toolchain feel cohesive instead of fragmented.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Unified MCP access across my agents",
-          "kind": "Standalone gateway",
-          "what_they_get": "Deploy ianva on your machine; configure once per MCP server; every agent auto-connects. OAuth, refresh, aggregation, all handled. One endpoint, infinite agents.",
-          "internal_anchor": "Self-hosted (free / sweat), or managed via us (optional retainer for ops)",
-          "cadence": "Deploy once, refresh automatic"
-        },
-        {
-          "level": 2,
-          "name": "Integrate ianva into my agent platform",
-          "kind": "Embedded gateway",
-          "what_they_get": "ianva as a library in your platform; agents register, ianva coordinates OAuth and server aggregation. You own the endpoint, ianva owns the mechanics.",
-          "internal_anchor": "$5k\u2013$15k integration + $1k\u2013$3k / mo ops",
-          "cadence": "Integration + recurring"
-        },
-        {
-          "level": 3,
-          "name": "Build my own agent fleet on ianva",
-          "kind": "White-label fleet operator",
-          "what_they_get": "ianva powers your end-to-end agent platform \u2014 credential management, MCP routing, auth, auto-refresh. You brand it, sell it, operate it.",
-          "internal_anchor": "$25k\u2013$75k platform build + $3k\u2013$10k / mo managed",
-          "cadence": "Build + recurring"
-        },
-        {
-          "level": 4,
-          "name": "Be our MCP infrastructure engine",
-          "kind": "Strategic partnership",
-          "what_they_get": "We build your MCP backbone \u2014 standardize auth across your org's N agents, handle the refresh/expiry/retry layer, own the compliance + audit trail. You focus on agent capability.",
-          "internal_anchor": "$10k\u2013$30k / mo retainer",
-          "cadence": "Ongoing partnership"
-        }
-      ],
-      "cta_client": "Unify your agents' MCP access",
-      "cta_recruiter": "Work with the team that built this",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Unified MCP gateway for multiple AI agents \u2014 single OAuth per server, auto-refresh, no re-prompts. Gateway for Claude Code, Codex, Gemini, opencode, Copilot, and Cline.",
-      "search_topics": [
-        "mcp",
-        "model-context-protocol",
-        "agent-tools",
-        "agent-orchestration",
-        "oauth-gateway",
-        "credential-management",
-        "mcp-server",
-        "multi-agent",
-        "ai-tools",
-        "api-gateway"
-      ]
-    },
-    "organvm/agentic-titan": {
-      "display_name": "Agentic Titan \u2014 Multi-Agent Coordinator",
-      "what_it_is": "A meta-agent orchestrator that reasons about which sub-agent (Claude, Codex, Gemini, opencode) fits a given task, dispatches to them, aggregates their outputs, and escalates disagreements. Prevents sub-agent thrashing; maximizes accuracy by agent specialization.",
-      "proof_signals": [
-        "Agent model-selection engine (cost vs. capability vs. latency)",
-        "Escalation ladder (Haiku \u2192 Sonnet \u2192 Opus on disagreement)",
-        "Output aggregation + consensus voting",
-        "Deployed across 5+ agent lanes in production"
-      ],
-      "buyer": "Teams running diverse agent fleets who need one orchestrator to route work optimally instead of trying all agents blindly.",
-      "expensive_problem": "Running a task through all agents = N \u00d7 cost + slow. Routing to the wrong agent = inaccurate or wasted spend. No orchestrator = manual triage per task.",
-      "cost_of_not_having_it": "Blind multi-agent dispatch burns 5\u201310\u00d7 compute. Repeated re-runs on wrong agents = 10\u201320h/week wasted. Inconsistent results erode confidence in the system.",
-      "public_face": "the orchestrator logic, the model-selection heuristics, the escalation protocol, the aggregation strategy.",
-      "private_operation": "your fleet working in concert \u2014 each agent specialized, one coordinator routing cleanly.",
-      "ladder": [
-        {
-          "level": 1,
-          "name": "Route my tasks across my agent lanes",
-          "kind": "Orchestration service",
-          "what_they_get": "One API; Titan handles agent selection + dispatch + output aggregation. You get answers, not agent headaches.",
-          "internal_anchor": "$1k\u2013$5k setup + $500\u2013$2k / mo usage-based",
-          "cadence": "Setup + recurring"
-        },
-        {
-          "level": 2,
-          "name": "Embed Titan in my platform",
-          "kind": "Library / integrated orchestrator",
-          "what_they_get": "Titan as a component in your agent platform; your rules for escalation + aggregation; your control.",
-          "internal_anchor": "$10k\u2013$25k integration",
-          "cadence": "Integration project"
-        },
-        {
-          "level": 3,
-          "name": "Customize Titan for my domain",
-          "kind": "Domain-specific orchestrator",
-          "what_they_get": "Titan tuned to your task types, agents, SLAs; proprietary escalation rules; domain knowledge baked in.",
-          "internal_anchor": "$25k\u2013$75k custom build",
-          "cadence": "Build project"
-        },
-        {
-          "level": 4,
-          "name": "Titan as my agent platform core",
-          "kind": "Strategic partnership",
-          "what_they_get": "We build your entire agent platform with Titan at the core \u2014 you run a fleet that Just Works, all coordination hidden.",
-          "internal_anchor": "$50k\u2013$150k + $10k\u2013$30k / mo retainer",
-          "cadence": "Build + ongoing"
-        }
-      ],
-      "cta_client": "Orchestrate my agent fleet",
-      "cta_recruiter": "Work with the team that built multi-agent coordination",
-      "recruiter_bridge_level": 4,
-      "seo_description": "Multi-agent orchestrator \u2014 route tasks across Claude, Codex, Gemini, agy, opencode. Model selection + escalation + output aggregation.",
-      "search_topics": [
-        "multi-agent",
-        "agent-orchestration",
-        "model-selection",
-        "task-routing",
-        "agent-coordination",
-        "ensemble-methods",
-        "llm-orchestration"
-      ]
+    {
+     "level": 4,
+     "name": "Build my whole data org",
+     "kind": "Fractional / retainer",
+     "what_they_get": "We become your data-infrastructure engine — this system, the next one, the next.",
+     "internal_anchor": "$10k–$25k / mo retainer",
+     "cadence": "Ongoing"
     }
+   ],
+   "cta_client": "Deploy this for your shop",
+   "cta_recruiter": "Work with the team that built this",
+   "recruiter_bridge_level": 4,
+   "seo_description": "50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.",
+   "search_topics": [
+    "merchant-cash-advance",
+    "mca-leads",
+    "ucc-filings",
+    "ucc-leads",
+    "lead-generation",
+    "alternative-lending",
+    "small-business-financing",
+    "public-records",
+    "data-enrichment",
+    "lead-scoring"
+   ]
+  },
+  "organvm/peer-audited--behavioral-blockchain": {
+   "display_name": "Styx Peer-Audited Behavioral Market",
+   "what_it_is": "A production-grade enforcement layer for commitments with real financial stakes: Stripe FBO escrow, a double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.",
+   "proof_signals": [
+    "1,107 tests across workspaces",
+    "public pitch surface returns 200 OK",
+    "NestJS + Next.js + React Native + Tauri monorepo",
+    "Stripe escrow and double-entry ledger",
+    "CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates"
+   ],
+   "buyer": "Wellness operators, benefits teams, accountability programs, and regulated product teams that need commitments enforced without becoming the custodian of sensitive individual behavior data.",
+   "expensive_problem": "Accountability and corporate-wellness programs spend money on intent but do not create follow-through. The proof is usually self-reported, the incentives are weak, and holding personal health data creates liability.",
+   "cost_of_not_having_it": "Programs keep paying for participation theater: no real stake, no audited proof, no tamper-evident ledger, and no clean privacy boundary between sponsor and participant.",
+   "public_face": "the full Styx architecture: public pitch surface, escrow model, ledger discipline, peer-review engine, honeypot QA, CI gates, and deployment checklist. Read the source and the runbooks.",
+   "private_operation": "the deployed enforcement layer tuned to your program: funded pots, privacy boundaries, reviewer economics, compliance rules, and proof workflows wired into your existing engagement or benefits stack.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Run a commitment cohort",
+     "kind": "Managed pilot",
+     "what_they_get": "A bounded cohort with funded stakes, proof review, reviewer incentives, and aggregate engagement reporting without exposing individual health data to the sponsor.",
+     "internal_anchor": "$5k-$20k pilot by cohort size",
+     "cadence": "Pilot"
+    },
+    {
+     "level": 2,
+     "name": "Deploy it for my program",
+     "kind": "White-label deploy",
+     "what_they_get": "The Styx commitment market deployed under your brand with escrow, ledger, proof workflows, and policy guardrails configured to your program.",
+     "internal_anchor": "$30k-$90k setup + $3k-$12k / mo managed",
+     "cadence": "Setup + recurring"
+    },
+    {
+     "level": 3,
+     "name": "Build my audited incentive layer",
+     "kind": "Custom",
+     "what_they_get": "A domain-specific incentive and audit layer: your proofs, your economics, your compliance rules, your integrations, backed by the same ledger and review architecture.",
+     "internal_anchor": "$60k-$180k project",
+     "cadence": "Project + optional retainer"
+    },
+    {
+     "level": 4,
+     "name": "Own behavioral-market infrastructure",
+     "kind": "Strategic platform build",
+     "what_they_get": "A standing build-and-operate relationship for financial-stakes behavior systems: ledger, escrow, proofs, privacy, review economics, and deployment operations.",
+     "internal_anchor": "$15k-$40k / mo retainer",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "Deploy this for a commitment program",
+   "cta_recruiter": "Work with the team that built this",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests.",
+   "search_topics": [
+    "behavioral-economics",
+    "accountability",
+    "corporate-wellness",
+    "peer-review",
+    "fintech",
+    "stripe",
+    "escrow",
+    "double-entry-ledger",
+    "privacy",
+    "proof-of-completion",
+    "habit-tracking",
+    "incentive-design"
+   ]
+  },
+  "organvm/universal-mail--automation": {
+   "display_name": "Autonomous Inbox-Triage & Draft System",
+   "what_it_is": "A production system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).",
+   "proof_signals": [
+    "400+ tests",
+    "Cloudflare Worker deploy (wrangler)",
+    "Gmail + Apple Mail, keyless",
+    "draft-only by design — composes replies, never sends",
+    "obligations ledger — every owed reply tracked"
+   ],
+   "buyer": "Founders, operators, and the people who run their comms — anyone drowning in multi-account email who will not (and should not) hand an AI the send button.",
+   "expensive_problem": "Obligations fall through the cracks — the escalation you missed, the reply you owed a week ago — while triage burns the most expensive hours of the day. Every 'AI email tool' wants send authority nobody sane will give it.",
+   "cost_of_not_having_it": "Missed and late replies quietly cost deals and relationships, and the hours spent sorting an inbox by hand are the ones you can least afford to spend that way.",
+   "public_face": "the full system — source, the 400+ tests, the protocol ladder, the safety verifiers, how every piece is built. Read all of it.",
+   "private_operation": "the running instance tuned to your accounts, your protocol rules, and your voice — the live sweep, the ledger, the drafts kept current. The code is open; the engine that quietly runs your inbox (and never once sends without you) is the service.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Run my inbox triage",
+     "kind": "Managed service",
+     "what_they_get": "We run the sweep against your accounts and hand you a triaged inbox plus ready-to-send drafts for everything you owe a reply. You press send; we do everything up to it.",
+     "internal_anchor": "$2k–$6k / mo by volume · accounts",
+     "cadence": "Recurring — the engine"
+    },
+    {
+     "level": 2,
+     "name": "Deploy it on my infra",
+     "kind": "White-label deploy",
+     "what_they_get": "The system under your brand, on your infrastructure (or our managed Worker). Your team owns the triage pipeline instead of renting another SaaS.",
+     "internal_anchor": "$15k–$40k setup + $1.5k–$5k / mo managed",
+     "cadence": "Setup + recurring"
+    },
+    {
+     "level": 3,
+     "name": "Build it for my stack",
+     "kind": "Custom",
+     "what_they_get": "Your protocol rules, your voice, integration into your CRM / helpdesk / ticketing, your compliance vertical — built to your exact workflow.",
+     "internal_anchor": "$25k–$80k project",
+     "cadence": "Project + optional retainer"
+    },
+    {
+     "level": 4,
+     "name": "Run my comms ops",
+     "kind": "Fractional / retainer",
+     "what_they_get": "We become the engine behind your communications operation — this system, the next integration, the next surface.",
+     "internal_anchor": "$8k–$20k / mo retainer",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "Run this on my inbox",
+   "cta_recruiter": "Work with the team that built this",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Autonomous inbox triage for Gmail + Apple Mail — classifies threads, tracks every owed reply, drafts voice-matched responses. Draft-only, never sends.",
+   "search_topics": [
+    "email-automation",
+    "inbox-zero",
+    "gmail-automation",
+    "email-triage",
+    "productivity",
+    "workflow-automation",
+    "cloudflare-workers",
+    "email-management"
+   ]
+  },
+  "organvm/a-i-chat--exporter": {
+   "display_name": "ChatGPT Conversation Exporter",
+   "what_it_is": "A browser userscript that exports your ChatGPT conversations into five portable formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it authenticates through your existing ChatGPT session and runs on chatgpt.com, chat.openai.com, and new.oaifree.com.",
+   "proof_signals": [
+    "170 tests across 16 suites",
+    "~5,900 lines of TypeScript",
+    "distributed on GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages",
+    "5 export formats",
+    "9-language UI",
+    "MIT-licensed · 549 commits, actively maintained"
+   ],
+   "buyer": "Researchers, writers, developers, and knowledge workers who live in ChatGPT and need their conversations out — into Obsidian or Notion, a RAG pipeline, version control, or a compliance archive.",
+   "expensive_problem": "ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.",
+   "cost_of_not_having_it": "Every lost thread is research you have to redo, context you can't feed your tools, and an archive you don't have the day a client, a court, or a coauthor asks for it.",
+   "public_face": "the entire userscript — every exporter, all 170 tests, the build, the localization. MIT-licensed; fork it, read it, ship it.",
+   "private_operation": "the maintained Pro build and the keyed bulk pipeline, kept working as ChatGPT's DOM shifts under it — plus the export engine built into your own product or workflow. The script is open; what you pay for is that it keeps working, at scale, the morning OpenAI changes everything.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Go Pro",
+     "kind": "Self-serve",
+     "what_they_get": "Bulk export, multi-conversation, and the premium formats — the product, today, no call required.",
+     "internal_anchor": "self-serve Pro via Lemon Squeezy (the product's own rail — see exporter pricing)",
+     "cadence": "Self-serve"
+    },
+    {
+     "level": 2,
+     "name": "Run it for my team",
+     "kind": "Managed",
+     "what_they_get": "We run bulk export across your team's accounts and hand back a clean, organized archive on a recurring basis — your formats, your destinations (Obsidian, Notion, a data lake).",
+     "internal_anchor": "$2k–$8k / mo by volume · seats",
+     "cadence": "Recurring"
+    },
+    {
+     "level": 3,
+     "name": "Build it into my product",
+     "kind": "Custom",
+     "what_they_get": "The export engine embedded in your app — your providers (Claude, Gemini), your formats, your branding. The hard part — surviving DOM churn across providers — already solved.",
+     "internal_anchor": "$25k–$80k project",
+     "cadence": "Project + optional retainer"
+    },
+    {
+     "level": 4,
+     "name": "Run my data-portability layer",
+     "kind": "Fractional / retainer",
+     "what_they_get": "We own the moving-data-out problem across every AI tool your org uses — this exporter, the next provider, the next format — so your knowledge is never trapped.",
+     "internal_anchor": "$8k–$18k / mo retainer",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "Build this into my product",
+   "cta_recruiter": "Work with the builder",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Export ChatGPT conversations to Markdown, HTML, JSON, PNG, or text — in-browser, no account, no server. Bulk export and your own provider integrations.",
+   "search_topics": [
+    "chatgpt",
+    "chatgpt-export",
+    "chatgpt-exporter",
+    "conversation-export",
+    "markdown-export",
+    "userscript",
+    "tampermonkey",
+    "data-portability",
+    "obsidian",
+    "notion",
+    "rag",
+    "ai-tools"
+   ]
+  },
+  "organvm/mirror-mirror": {
+   "awaiting_publish": true,
+   "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/mirror-mirror is currently PRIVATE — flip it public to render this onto the inbound surface (his hand: publishing source is an outward-facing identity change). Proof: ~42,800 lines TS, 152 source files, 60 feature components across a 40-tab app, 158 test files, Stripe + Lemon Squeezy billing, live on Netlify, Docker + Vercel + Netlify + Pages deploy.",
+   "display_name": "Virtual Try-On Platform for Beauty & Salons",
+   "what_it_is": "A 'phygital' beauty platform: hyper-realistic AR/3D virtual try-on, medical-grade skin diagnostics, AI style coaching, and salon booking in one app. Two modes — clients try on looks and book; stylists run a dashboard, manage consultations and proposals, and coordinate their team.",
+   "proof_signals": [
+    "~42,800 lines of TypeScript",
+    "158 test files",
+    "60 feature components across a 40-tab app",
+    "Stripe + Lemon Squeezy billing",
+    "live on Netlify",
+    "Docker + Vercel + Netlify + Pages deploy"
+   ],
+   "buyer": "Beauty brands, salon groups, and cosmetics companies who want virtual try-on and consultation inside their own customer experience — and the consumers and stylists who use it.",
+   "expensive_problem": "A salon visit costs hours and real money, and a wrong cut or color carries a six-to-eight-week regret cycle — so customers hesitate and bookings stall. A brand with no try-on misses the digital-first shopper entirely.",
+   "cost_of_not_having_it": "Every hesitant customer is a booking that doesn't happen and a consultation that drags; for a brand, it's the engagement and conversion a try-on experience would have captured — going to a competitor who has one.",
+   "public_face": "the full application — the try-on engine, the diagnostics, the 158 test suites, the billing integrations, every one of the 60 feature components. The whole build is readable.",
+   "private_operation": "the running, branded instance — your catalog, your salons, your booking flow, the try-on engine licensed into your app and kept current. The code is open; the live experience your customers actually touch is the product.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Use the platform",
+     "kind": "SaaS",
+     "what_they_get": "Clients try on looks and book; the subscription tier unlocks the premium try-on and diagnostics.",
+     "internal_anchor": "Mirror+ / Studio subscription (self-serve)",
+     "cadence": "Recurring"
+    },
+    {
+     "level": 2,
+     "name": "Run it for my salon",
+     "kind": "White-label",
+     "what_they_get": "The stylist dashboard, consultations, proposals, and booking under your brand, for your team.",
+     "internal_anchor": "$15k–$50k setup + $2k–$8k / mo",
+     "cadence": "Setup + recurring"
+    },
+    {
+     "level": 3,
+     "name": "Build try-on into my product",
+     "kind": "Custom / API",
+     "what_they_get": "The try-on engine licensed and embedded in your own app — your catalog, your AR filters, your branding.",
+     "internal_anchor": "$40k–$150k project + license",
+     "cadence": "Project + license"
+    },
+    {
+     "level": 4,
+     "name": "Run my virtual-try-on org",
+     "kind": "Fractional / retainer",
+     "what_they_get": "We become the team behind your try-on and beauty-tech surface — this platform, the next integration, the next brand.",
+     "internal_anchor": "$10k–$25k / mo retainer",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "Build try-on into my product",
+   "cta_recruiter": "Work with the builder",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Virtual try-on for beauty and salons — AR/3D try-on, medical-grade skin diagnostics, AI coaching, and booking. White-label it or embed the engine in your app.",
+   "search_topics": [
+    "virtual-try-on",
+    "augmented-reality",
+    "beauty-tech",
+    "ar",
+    "skincare",
+    "salon-software",
+    "cosmetics",
+    "face-tracking",
+    "react",
+    "saas",
+    "ai-coaching",
+    "booking"
+   ]
+  },
+  "organvm/the-invisible-ledger": {
+   "awaiting_publish": true,
+   "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/the-invisible-ledger is currently PRIVATE — flip it public to render (his hand). Proof: ~76,000 lines TS, 207 source files, 115 React components, 13 test suites (Vitest), Stripe checkout verified in code + tests, live on Netlify, Docker + GHCR + CI/CD, SHA-256 hash-chained audit log.",
+   "display_name": "Chain-of-Custody Operations Platform for Privacy-First Firms",
+   "what_it_is": "An operations dashboard for tax, wealth, and family-office firms whose clients are deliberately analog — air-gapped, courier-based, no cloud. It tracks every physical document from intake to vault with cryptographically-hashed custody events, routes by client psychographics, visualizes money flow, and runs anomaly detection and incident drills — so staff get mission-control visibility without ever putting a privacy-first client in the cloud.",
+   "proof_signals": [
+    "~76,000 lines of TypeScript",
+    "207 source files · 115 React components",
+    "13 test suites (Vitest)",
+    "Stripe checkout, verified in tests",
+    "live on Netlify",
+    "Docker + GHCR + CI/CD",
+    "SHA-256 hash-chained audit log"
+   ],
+   "buyer": "Boutique tax & accounting firms, family offices, and wealth/estate practices serving privacy-conscious, high-net-worth clients who refuse cloud storage.",
+   "expensive_problem": "When clients are air-gapped, custody lives in couriers, USB drives, and filing cabinets — and a single 'who touched this?' you can't answer, or one mishandled return, costs a relationship worth far more than any tooling. Off-the-shelf tools assume digital-native clients and solve none of it.",
+   "cost_of_not_having_it": "One unprovable custody chain or mishandled document can end a high-net-worth relationship; the hours staff spend tracking paper by hand are the expensive ones, and the regulatory exposure has no ceiling.",
+   "public_face": "the full platform — the custody tracker, the psychographic routing, the money-flow visualization, all 115 components and 13 test suites, the Stripe billing. Read the whole thing.",
+   "private_operation": "the running instance keyed to your firm — your offices, your clients, your compliance vertical, the hash-chained ledger kept current and your staff's mission control live. The code is open; the operating system of record for your custody is the service.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Run it for my firm",
+     "kind": "Managed SaaS",
+     "what_they_get": "The platform hosted and managed for your team — custody tracking, dashboards, compliance reports — per seat.",
+     "internal_anchor": "$49–$199 / mo per tier (self-serve) → managed",
+     "cadence": "Recurring"
+    },
+    {
+     "level": 2,
+     "name": "Run it on my infra",
+     "kind": "White-label",
+     "what_they_get": "The platform under your brand, on your infrastructure — you own the custody pipeline instead of trusting a vendor's cloud.",
+     "internal_anchor": "$25k–$75k setup + $3k–$10k / mo",
+     "cadence": "Setup + recurring"
+    },
+    {
+     "level": 3,
+     "name": "Build it for my vertical",
+     "kind": "Custom",
+     "what_they_get": "Your compliance regime, your client psychographics, integration into your document and practice-management stack.",
+     "internal_anchor": "$40k–$150k project",
+     "cadence": "Project + optional retainer"
+    },
+    {
+     "level": 4,
+     "name": "Run my operations-tech org",
+     "kind": "Fractional / retainer",
+     "what_they_get": "We become the engine behind your firm's operational software — this platform, the next compliance surface, the next integration.",
+     "internal_anchor": "$10k–$25k / mo retainer",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "Run this for my firm",
+   "cta_recruiter": "Work with the builder",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Chain-of-custody operations platform for privacy-first tax, wealth, and family-office firms — hashed custody events, money-flow visualization, compliance reporting.",
+   "search_topics": [
+    "chain-of-custody",
+    "compliance",
+    "wealth-management",
+    "family-office",
+    "document-tracking",
+    "fintech",
+    "regtech",
+    "audit-trail",
+    "tax-software",
+    "react",
+    "typescript",
+    "saas"
+   ]
+  },
+  "organvm/domus-genoma": {
+   "awaiting_publish": true,
+   "_publish_note": "VERIFIED 2026-06-25 (HIGH confidence). organvm/domus-genoma is currently PRIVATE — flip it public to render (his hand). Proof: 8,106 lines (shell/Python/TS), 32 test files (BATS + pytest), 13 CI jobs, chezmoi provisioning + self-healing daemons + 1Password injection, tier catalog + Stripe infra (checkout endpoint pending). No public hosted demo — positioned honestly as a running framework, not a hosted SaaS.",
+   "display_name": "Declarative Dev-Environment Provisioning & Self-Healing Platform",
+   "what_it_is": "A productized provisioning platform built on chezmoi: declarative, templated configs that stand up an entire development environment across machines, with 1Password secret injection, self-healing daemons that detect and repair config drift, and a unified CLI. Three-tier licensing (personal, multi-machine, team) gated by JWT entitlements.",
+   "proof_signals": [
+    "8,106 lines (shell, Python, TypeScript)",
+    "32 test files (BATS + pytest)",
+    "13 CI jobs (ShellCheck, gitleaks, template validation, …)",
+    "236 managed configs · 59 templates",
+    "self-healing daemons + drift detection",
+    "1Password secret injection · zero secrets in Git"
+   ],
+   "buyer": "Engineering and platform teams running more than one machine who are bleeding hours to environment setup, fighting config drift, and risking secrets leaking into Git.",
+   "expensive_problem": "Standing up a new machine takes hours, configs silently drift between devices until something breaks, and secrets slip into Git history — and when it breaks there's no clean way back. Multiply that across a team and it's a standing tax on every engineer.",
+   "cost_of_not_having_it": "Hours per machine per engineer, the security liability of secrets in repos, and the downtime when a divergent environment finally breaks mid-deploy — recurring, and entirely avoidable.",
+   "public_face": "the entire framework — the chezmoi templates, the self-healing daemons, the CLI, all 32 test files, the 13 CI gates, the licensing server. Clone it and run it.",
+   "private_operation": "the managed, fleet-wide operation — cloud-synced config across every machine in your org, drift caught and healed automatically, secrets injected from your vault, kept running. The framework is open; standing it up and keeping your whole fleet self-healing is the service.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Run it on my machines",
+     "kind": "Self-serve",
+     "what_they_get": "The framework, free for a single machine; the paid tiers add cloud-sync and multi-machine.",
+     "internal_anchor": "Personal free · Pro / Team tiers ($8 / $20 / mo, self-serve)",
+     "cadence": "Self-serve"
+    },
+    {
+     "level": 2,
+     "name": "Provision my team",
+     "kind": "Managed",
+     "what_they_get": "We stand up and manage cloud-synced, self-healing dev environments across your whole team's machines.",
+     "internal_anchor": "$10k–$30k setup + $2k–$6k / mo",
+     "cadence": "Setup + recurring"
+    },
+    {
+     "level": 3,
+     "name": "Build my internal developer platform",
+     "kind": "Custom",
+     "what_they_get": "Your stack, your secrets backend, your compliance constraints — provisioning and self-healing built to your org's exact shape.",
+     "internal_anchor": "$40k–$120k project",
+     "cadence": "Project + optional retainer"
+    },
+    {
+     "level": 4,
+     "name": "Run my platform-engineering org",
+     "kind": "Fractional / retainer",
+     "what_they_get": "We become your platform-engineering team — dev environments, fleet health, the next internal tool.",
+     "internal_anchor": "$12k–$25k / mo retainer",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "Provision my team's environments",
+   "cta_recruiter": "Hire the platform engineer who built this",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Declarative dev-environment provisioning on chezmoi — templated configs, 1Password secret injection, self-healing drift repair, cloud-sync across machines.",
+   "search_topics": [
+    "dotfiles",
+    "chezmoi",
+    "developer-tools",
+    "devops",
+    "platform-engineering",
+    "provisioning",
+    "self-healing",
+    "1password",
+    "configuration-management",
+    "cli",
+    "developer-experience",
+    "infrastructure-as-code"
+   ]
+  },
+  "organvm/portfolio": {
+   "display_name": "Portfolio & Case Studies — 16 Production Systems",
+   "what_it_is": "A public portfolio site showcasing 16 completed production systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.",
+   "proof_signals": [
+    "609 files · Astro + TypeScript · p5.js interactive visualizations",
+    "69 test files across the portfolio + content",
+    "16 case studies with architecture, decisions, and outcomes",
+    "Live demos & interactive diagrams",
+    "Netlify deployment + CI/CD",
+    "SEO-optimized content sites"
+   ],
+   "buyer": "Prospects who want to see the builder's decision-making process, architects and design teams evaluating a platform partner, companies studying real production systems.",
+   "expensive_problem": "A portfolio of demos and one-liners doesn't prove judgment. Seeing the tradeoffs, the decisions, the outcomes, and the architecture is the difference between 'built something' and 'ships production systems'.",
+   "cost_of_not_having_it": "Vague feature lists and cherry-picked metrics. Real diligence requires seeing how a builder thinks through constraints, scales, and failure modes.",
+   "public_face": "All 16 case studies, the architecture diagrams, the interactive demos, the decision trees, the deployed live systems.",
+   "private_operation": "The internal evaluation — which projects to feature, what to emphasize, how the portfolio evolves as new systems are built.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Learn from the portfolio",
+     "kind": "Self-serve",
+     "what_they_get": "Public access to the 16 case studies: architecture, decisions, scaled-to-production proof.",
+     "cadence": "Ongoing"
+    },
+    {
+     "level": 2,
+     "name": "Deep-dive workshop",
+     "kind": "2-day workshop",
+     "what_they_get": "Interactive walkthrough of decision trees across 3–4 case studies; apply the thinking to your constraints.",
+     "internal_anchor": "$15k–$25k / workshop",
+     "cadence": "On demand"
+    },
+    {
+     "level": 3,
+     "name": "Hire for a production pilot",
+     "kind": "3-month engagement",
+     "what_they_get": "Dedicate the builder to your constraint set. Design one system to your exact shape, deploy it, handoff the code and runbook.",
+     "internal_anchor": "$50k–$150k fixed",
+     "cadence": "One-time"
+    },
+    {
+     "level": 4,
+     "name": "Retain as platform director",
+     "kind": "Ongoing retainer",
+     "what_they_get": "Standing relationship: new systems, architecture reviews, on-call for scaling decisions, systems thinking as your company grows.",
+     "internal_anchor": "$20k–$50k / mo retainer",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "Explore the case studies",
+   "cta_recruiter": "Study the builder's thinking",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Production portfolio: 16 systems, real architecture decisions, interactive visualizations, case studies on building software at scale.",
+   "search_topics": [
+    "portfolio",
+    "case-studies",
+    "system-design",
+    "architecture",
+    "production",
+    "astro",
+    "p5.js",
+    "interactive-design",
+    "web-development",
+    "systems-thinking",
+    "engineering-decisions",
+    "technical-writing"
+   ]
+  },
+  "organvm/limen": {
+   "display_name": "Self-Healing Agent Fleet Infrastructure",
+   "what_it_is": "A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that run autonomously on a heartbeat. The fleet maintains itself: monitors liveness, reaps stale work, syncs state, escalates failures. Built-in organs: proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, health monitoring.",
+   "proof_signals": [
+    "9-rung organ ladder (each self-* owns its own domain)",
+    "Heartbeat-driven autonomic loop (scripts/metabolize.sh)",
+    "Self-healing on regression (heal/ branch pattern)",
+    "Live: proprioception organ, VIGILIA federation, branch-reap, credential-wall",
+    "Zero manual upkeep — runs forever once seeded"
+   ],
+   "buyer": "Teams running 5+ agents who want infrastructure that fixes itself instead of paging on-call.",
+   "expensive_problem": "Every agent fleet needs: health checks, credential refresh, stale-work cleanup, state reconciliation, failure escalation. If manual, each system costs ~2h/week ops. If ignored, cascading failures ripple through the fleet.",
+   "cost_of_not_having_it": "One missed credential rotation = entire lane down for hours. One stale clone = 100GB leak. One diverged state = silent corruption. Manual fixes cost 10–20h/month + the incidents themselves (lost work, unhappy users).",
+   "public_face": "the full organ ladder — each self-* source, the beat loop, the escalation protocol, the federation dance. Read how proprioception sees itself; how VIGILIA heals divergence; how the credential organ stays valid.",
+   "private_operation": "your fleet breathing on its own — credentials auto-refresh, stale work auto-reaped, divergence auto-healed, health always visible. No ops work; everything Just Works until it doesn't, and then it fixes itself.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Health monitoring + alerting",
+     "kind": "Observability",
+     "what_they_get": "Real-time health dashboard for your fleet organs; alerts on liveness failure or divergence; historical trend data.",
+     "internal_anchor": "$1k–$3k setup + $500/mo monitoring",
+     "cadence": "Setup + recurring"
+    },
+    {
+     "level": 2,
+     "name": "Self-healing deployed in my fleet",
+     "kind": "Autonomous ops",
+     "what_they_get": "The full organ ladder running on your heartbeat; automatic remediation of known failure modes; zero manual ops work.",
+     "internal_anchor": "$5k–$15k wiring + $2k/mo ops backup",
+     "cadence": "Deploy once + retainer"
+    },
+    {
+     "level": 3,
+     "name": "Extend the ladder for my domain",
+     "kind": "Custom organs",
+     "what_they_get": "New self-* organs tailored to your infrastructure (e.g. self-capacity, self-optimizing); integrated into the heartbeat.",
+     "internal_anchor": "$25k–$75k per organ",
+     "cadence": "Project + optional retainer"
+    },
+    {
+     "level": 4,
+     "name": "Own the fleet as your core platform",
+     "kind": "Strategic platform build",
+     "what_they_get": "We build your entire agent fleet infrastructure on the self-* ladder — you own a platform that scales forever with zero ops burden.",
+     "internal_anchor": "$50k–$150k platform + $5k–$20k / mo",
+     "cadence": "Build + ongoing partnership"
+    }
+   ],
+   "cta_client": "Adopt self-healing fleet ops",
+   "cta_recruiter": "Work with the team that built autonomic infrastructure",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat.",
+   "search_topics": [
+    "agent-orchestration",
+    "autonomous-systems",
+    "fleet-management",
+    "self-healing",
+    "infrastructure-automation",
+    "zero-ops",
+    "heartbeat-driven",
+    "organ-architecture",
+    "agent-reliability"
+   ]
+  },
+  "organvm/session-meta": {
+   "awaiting_publish": true,
+   "_publish_note": "organvm/session-meta is currently PRIVATE. When you flip it public, it will render. Proof signals: Python-based (lang detected via API). Full architecture, test count, and systems description are needed — point me at the repo details when it goes public, and I'll draft the full seed.",
+   "display_name": "Session Metadata & History System",
+   "what_it_is": "[Pending full exploration] Session metadata and historical tracking system — likely a system for tracking and replaying agent sessions, managing session context, and providing session-level observability.",
+   "proof_signals": [
+    "Python codebase",
+    "[Awaiting public visibility for full proof signals]"
+   ],
+   "buyer": "[To be determined on public render]",
+   "expensive_problem": "[To be determined on public render]",
+   "cost_of_not_having_it": "[To be determined on public render]",
+   "public_face": "[To be populated]",
+   "private_operation": "[To be populated]",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Use it",
+     "kind": "Self-serve",
+     "what_they_get": "[Details pending]",
+     "cadence": "Ongoing"
+    },
+    {
+     "level": 2,
+     "name": "Integrate into your sessions",
+     "kind": "Integration",
+     "what_they_get": "[Details pending]",
+     "cadence": "One-time"
+    },
+    {
+     "level": 3,
+     "name": "Custom session layer",
+     "kind": "Consulting",
+     "what_they_get": "[Details pending]",
+     "cadence": "On demand"
+    },
+    {
+     "level": 4,
+     "name": "Operate at scale",
+     "kind": "Retainer",
+     "what_they_get": "[Details pending]",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "[Pending full details]",
+   "cta_recruiter": "[Pending full details]",
+   "recruiter_bridge_level": 3,
+   "seo_description": "[To be populated when public]",
+   "search_topics": [
+    "sessions",
+    "metadata",
+    "observability",
+    "history",
+    "tracking"
+   ]
+  },
+  "organvm/ianva": {
+   "display_name": "Single Gateway for MCP Across All Agents",
+   "what_it_is": "A unified MCP doorway that sits between your agents (Claude Code, Codex, Gemini, opencode, etc.) and every MCP server (Gmail, Sentry, Notion, GitHub, etc.). Each agent connects once; ianva handles all OAuth, auto-refresh, and server aggregation. Built on MCPHub with auto-refresh, Docker-optional, local + cloud faces.",
+   "proof_signals": [
+    "Wraps MCPHub with full OAuth 2.1 (PKCE, DCR, resource indicators)",
+    "Single-writer refresh + flock serialization (no race conditions)",
+    "4 faces: local HTTP, stdio via mcp-proxy, cloud HTTPS tunnel, discipline layer",
+    "Every MCP server authed once, forever — no re-prompts per agent",
+    "Tested with Claude Code, Codex, Gemini, agy, opencode, Copilot, Cline"
+   ],
+   "buyer": "Development teams and individual builders running multiple AI agents who need consistent MCP server access without re-authenticating per agent.",
+   "expensive_problem": "Every agent that touches MCP requires independent OAuth setup. With 6+ agents, you're authorizing the same servers 6+ times. Each agent has its own credential storage, refresh logic, and re-prompt on expiry — hours burned on auth flaps instead of building.",
+   "cost_of_not_having_it": "3–5 hours per agent per month wasted on MCP re-authorization, OAuth expiry surprises, and per-agent credential sync. For teams: per-agent divergence creates support burden. Build velocity drops 10–15% when half your energy goes to 'why won't this MCP server respond' instead of shipping.",
+   "public_face": "the full ianva stack — the MCPHub wrapper, the 4 faces, the auto-refresh logic, the flock serialization, the configuration system, the doctor + quickstart. Read every line; run `ianva doctor` and see it work.",
+   "private_operation": "your agents all talking to one ianva endpoint; token refresh silent in the background; new MCP servers added once and available to every agent immediately; no more per-agent re-auth dances. The engine that makes your toolchain feel cohesive instead of fragmented.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Unified MCP access across my agents",
+     "kind": "Standalone gateway",
+     "what_they_get": "Deploy ianva on your machine; configure once per MCP server; every agent auto-connects. OAuth, refresh, aggregation, all handled. One endpoint, infinite agents.",
+     "internal_anchor": "Self-hosted (free / sweat), or managed via us (optional retainer for ops)",
+     "cadence": "Deploy once, refresh automatic"
+    },
+    {
+     "level": 2,
+     "name": "Integrate ianva into my agent platform",
+     "kind": "Embedded gateway",
+     "what_they_get": "ianva as a library in your platform; agents register, ianva coordinates OAuth and server aggregation. You own the endpoint, ianva owns the mechanics.",
+     "internal_anchor": "$5k–$15k integration + $1k–$3k / mo ops",
+     "cadence": "Integration + recurring"
+    },
+    {
+     "level": 3,
+     "name": "Build my own agent fleet on ianva",
+     "kind": "White-label fleet operator",
+     "what_they_get": "ianva powers your end-to-end agent platform — credential management, MCP routing, auth, auto-refresh. You brand it, sell it, operate it.",
+     "internal_anchor": "$25k–$75k platform build + $3k–$10k / mo managed",
+     "cadence": "Build + recurring"
+    },
+    {
+     "level": 4,
+     "name": "Be our MCP infrastructure engine",
+     "kind": "Strategic partnership",
+     "what_they_get": "We build your MCP backbone — standardize auth across your org's N agents, handle the refresh/expiry/retry layer, own the compliance + audit trail. You focus on agent capability.",
+     "internal_anchor": "$10k–$30k / mo retainer",
+     "cadence": "Ongoing partnership"
+    }
+   ],
+   "cta_client": "Unify your agents' MCP access",
+   "cta_recruiter": "Work with the team that built this",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Unified MCP gateway for multiple AI agents — single OAuth per server, auto-refresh, no re-prompts. Gateway for Claude Code, Codex, Gemini, opencode, Copilot, and Cline.",
+   "search_topics": [
+    "mcp",
+    "model-context-protocol",
+    "agent-tools",
+    "agent-orchestration",
+    "oauth-gateway",
+    "credential-management",
+    "mcp-server",
+    "multi-agent",
+    "ai-tools",
+    "api-gateway"
+   ]
+  },
+  "organvm/agentic-titan": {
+   "display_name": "Agentic Titan — Multi-Agent Coordinator",
+   "what_it_is": "A meta-agent orchestrator that reasons about which sub-agent (Claude, Codex, Gemini, opencode) fits a given task, dispatches to them, aggregates their outputs, and escalates disagreements. Prevents sub-agent thrashing; maximizes accuracy by agent specialization.",
+   "proof_signals": [
+    "Agent model-selection engine (cost vs. capability vs. latency)",
+    "Escalation ladder (Haiku → Sonnet → Opus on disagreement)",
+    "Output aggregation + consensus voting",
+    "Deployed across 5+ agent lanes in production"
+   ],
+   "buyer": "Teams running diverse agent fleets who need one orchestrator to route work optimally instead of trying all agents blindly.",
+   "expensive_problem": "Running a task through all agents = N × cost + slow. Routing to the wrong agent = inaccurate or wasted spend. No orchestrator = manual triage per task.",
+   "cost_of_not_having_it": "Blind multi-agent dispatch burns 5–10× compute. Repeated re-runs on wrong agents = 10–20h/week wasted. Inconsistent results erode confidence in the system.",
+   "public_face": "the orchestrator logic, the model-selection heuristics, the escalation protocol, the aggregation strategy.",
+   "private_operation": "your fleet working in concert — each agent specialized, one coordinator routing cleanly.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Route my tasks across my agent lanes",
+     "kind": "Orchestration service",
+     "what_they_get": "One API; Titan handles agent selection + dispatch + output aggregation. You get answers, not agent headaches.",
+     "internal_anchor": "$1k–$5k setup + $500–$2k / mo usage-based",
+     "cadence": "Setup + recurring"
+    },
+    {
+     "level": 2,
+     "name": "Embed Titan in my platform",
+     "kind": "Library / integrated orchestrator",
+     "what_they_get": "Titan as a component in your agent platform; your rules for escalation + aggregation; your control.",
+     "internal_anchor": "$10k–$25k integration",
+     "cadence": "Integration project"
+    },
+    {
+     "level": 3,
+     "name": "Customize Titan for my domain",
+     "kind": "Domain-specific orchestrator",
+     "what_they_get": "Titan tuned to your task types, agents, SLAs; proprietary escalation rules; domain knowledge baked in.",
+     "internal_anchor": "$25k–$75k custom build",
+     "cadence": "Build project"
+    },
+    {
+     "level": 4,
+     "name": "Titan as my agent platform core",
+     "kind": "Strategic partnership",
+     "what_they_get": "We build your entire agent platform with Titan at the core — you run a fleet that Just Works, all coordination hidden.",
+     "internal_anchor": "$50k–$150k + $10k–$30k / mo retainer",
+     "cadence": "Build + ongoing"
+    }
+   ],
+   "cta_client": "Orchestrate my agent fleet",
+   "cta_recruiter": "Work with the team that built multi-agent coordination",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Multi-agent orchestrator — route tasks across Claude, Codex, Gemini, agy, opencode. Model selection + escalation + output aggregation.",
+   "search_topics": [
+    "multi-agent",
+    "agent-orchestration",
+    "model-selection",
+    "task-routing",
+    "agent-coordination",
+    "ensemble-methods",
+    "llm-orchestration"
+   ]
+  },
+  "organvm/hospes": {
+   "awaiting_publish": true,
+   "_publish_note": "VERIFIED 2026-07-13 (HIGH confidence). organvm/hospes is PRIVATE and must stay private until (a) the co-host consents to publishing a shared venture and (b) guest-data policy review — publishing is a his-hand lever twice over. Proof: 97+ passing tests, done.sh executable goal predicate green, 13 entity schemas + state machine + permission matrix, 179-episode guest-network seed (168 unique guests), 18 existence-verified estate adapters, draft-only outreach with voice validation, approval dashboard.",
+   "display_name": "HOSPES — Guest Operations OS for Podcasts",
+   "what_it_is": "The invisible guest, production, and distribution desk installed around a podcast host: relationship-aware candidate intake, human approval (approve/reject/protect/note), draft-only outreach with voice validation, three-city studio routing, research and segment briefs, asset packages, and a commitments ledger — a deterministic engine with hard human gates, not an autonomous mailer.",
+   "proof_signals": [
+    "97+ passing tests incl. 16-case reply-triage suite (prompt-injection → REQUIRES_HUMAN)",
+    "executable goal predicate (done.sh) green: demo runs twice idempotently",
+    "13 entity JSON Schemas, 30+ state machine, C0–C5 relationship classes",
+    "guest network seed: 179 episodes → 168 unique guests from public RSS",
+    "18 adapter stubs to existing estate systems, every repo existence-verified",
+    "drafts only — sending is structurally human-gated"
+   ],
+   "buyer": "Working podcasters, podcast networks, and studio operators who book guests every week and hate the back office — starting with the hosts already in the founders' professional network.",
+   "expensive_problem": "Guest booking is a relationship business run out of inboxes: candidates evaporate, follow-ups die, promises get forgotten, and hosts burn social capital asking friends for favors because the professional route was never built.",
+   "cost_of_not_having_it": "Every dropped thread is a lost episode; every forgotten promise is a damaged relationship; every favor-ask spends reserve capital the show can never reclaim. A booked-out show runs on follow-through, and follow-through is exactly what ad-hoc inboxes do not do.",
+   "public_face": "the domain kernel — schemas, state machine, permission matrix, segment and visual doctrine, the approval dashboard, and the full test suite. The operating discipline is readable end to end.",
+   "private_operation": "the running desk: your show's DNA, your guest graph, your studio calendar, your drafts queue — operated as a managed service with human gates intact. The form is the lure; the operation is the moat.",
+   "ladder": [
+    {
+     "level": 1,
+     "name": "Run my guest desk",
+     "kind": "Managed service",
+     "what_they_get": "The full pipeline operated for one show: candidates, theses, routes, drafts for your approval, briefs, follow-through.",
+     "internal_anchor": "$1.5k–$4k / mo per show",
+     "cadence": "Recurring"
+    },
+    {
+     "level": 2,
+     "name": "Install it for my show",
+     "kind": "Setup + service",
+     "what_they_get": "Show DNA authored, guest graph seeded from your archive, dashboard and workflows installed for your producer.",
+     "internal_anchor": "$10k–$30k setup + $2k–$6k / mo",
+     "cadence": "Setup + recurring"
+    },
+    {
+     "level": 3,
+     "name": "Run my network or studio",
+     "kind": "Multi-tenant / license",
+     "what_they_get": "Cross-show tenancy, permissioned guest routing across shows, three-city studio utilization — the network moat.",
+     "internal_anchor": "$25k–$100k project + license",
+     "cadence": "Project + license"
+    },
+    {
+     "level": 4,
+     "name": "Be my production office",
+     "kind": "Fractional / retainer",
+     "what_they_get": "The institutional production office a major host would hire, installed around yours — booking, production, distribution, sponsor creative.",
+     "internal_anchor": "$8k–$20k / mo retainer",
+     "cadence": "Ongoing"
+    }
+   ],
+   "cta_client": "Install the guest desk for my show",
+   "cta_recruiter": "Work with the builder",
+   "recruiter_bridge_level": 4,
+   "seo_description": "Guest operations OS for podcasts — relationship-aware booking, human-gated outreach drafts, studio routing, episode briefs, and follow-through. Managed service or installed for your show.",
+   "search_topics": [
+    "podcast",
+    "guest-booking",
+    "podcast-production",
+    "crm",
+    "outreach",
+    "scheduling",
+    "python",
+    "state-machine",
+    "human-in-the-loop",
+    "media-operations"
+   ]
   }
+ }
 }
