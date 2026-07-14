@@ -49,6 +49,13 @@ back to `AGENTS.md` instead.
    individual ask/correction lineage, rank unresolved atoms by operator emphasis and systemic impact,
    prove completion from owner receipts, and keep sound in-flight execution moving within resource
    bounds while the corpus is refreshed. Do not require the human to restate settled intent.
+10. End every closeout and begin every autonomous initiative with one continuation capsule. Use the
+    canonical worktree launcher for repository-backed work; when no repository is the logical owner,
+    use an isolated owner-native workspace or remote receipt rather than manufacturing a fake
+    worktree. Its README fixes intent, authorities, prohibitions, predicates, and owner lineage; live
+    environment probes derive the lane and ending. The closeout must print one launch command and
+    make the capsule remotely durable. Never hard-code a future model, provider table, task count, or
+    desired terminal verdict into the capsule.
 
 ## Home-scope generated surfaces
 

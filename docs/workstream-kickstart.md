@@ -3,6 +3,18 @@
 Use this when a prompt has several real lanes and the right move is to split the work into a bounded,
 resumable surface instead of holding everything in the chat.
 
+For a closeout successor or a new autonomous initiative, use autonomous capsule mode:
+
+```bash
+workstream --autonomous --prompt-file /path/to/next-session.md limen next-epoch
+```
+
+Autonomous mode refuses a missing prompt. Its README is passed to Codex as the initial prompt and
+includes a live derive-not-force contract: re-probe remote/CI, task owners, handoff, provider
+headroom, mounts, host pressure, active sessions, and lifecycle custody; then derive `continue`,
+`switch`, `wait_relay`, `settled`, or `invalid`. It does not pin a future model, task count, duration,
+or desired ending.
+
 ```bash
 /Users/4jp/Workspace/limen/scripts/start-worktree-session.sh --shell --prompt "short objective and constraints" limen my-workstream
 ```
@@ -33,7 +45,8 @@ bash <repo>/.worktrees/<slug>/.limen-workstream/kickstart.sh
 ```
 
 The README contains the repo path, branch, base ref, origin URL, status at kickoff, prompt packet,
-first-five-minute checklist, and closeout rules. The `.limen-workstream/` directory is locally
+first-five-minute checklist, dynamic environment contract (in autonomous mode), and closeout rules.
+The `.limen-workstream/` directory is locally
 excluded so creating the workstream does not itself make the repo dirty.
 
 ## Current Leads
