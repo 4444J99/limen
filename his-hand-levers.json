@@ -522,6 +522,16 @@
       "note": "One-liner: printf '\\nexport LIMEN_LAUNCHAGENT_HEAL=1\\n' >> ~/.limen.env && launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat. The kickstart refreshes the heartbeat lane immediately (its shell sources ~/.limen.env at startup only); the metabolize lane picks the grant up on its own next pass either way. Verify after the next due beat: launchctl print gui/$(id -u)/com.limen.creds-hydrate exits 0 and logs/launch-agent-liveness.json shows green:true. creds-hydrate's write_env preserves unmanaged lines, so the grant survives hydration rewrites.",
       "discharged": "2026-07-14 — operator ran the append himself; `export LIMEN_LAUNCHAGENT_HEAL=1` verified present (once) in ~/.limen.env. Heartbeat lane applies on its next restart/reboot; the metabolize lane picks the grant up on its own next pass. Same morning he also restored + bootstrapped com.limen.creds-hydrate (ran clean, 4 hydrated).",
       "issue": 1046
+    },
+    {
+      "id": "L-REMOTE-REAP-APPLY",
+      "label": "Arm the remote-branch reaper's second dark gate: append `export LIMEN_REMOTE_REAP_APPLY=1` to ~/.limen.env. GITVS already observes the ~744 unresolved orphaned remote branches (institutio/github/estate.yaml resource `remote_branch`) and the effector scripts/reap-remote-branches.py (#901) is live in the reconcile loop — but it is DOUBLE-DARK by construction (remote deletes are irreversible): it no-ops unless BOTH `--apply` AND this env var are set. Arming is NOT a mass-delete switch: every deletion still requires a matching per-branch acceptance event in docs/remote-branch-reap-acceptance.jsonl (the shared reap_acceptance covenant) or the standing grant for the two machine-proved landed classes, plus the 24h grace window (LIMEN_REMOTE_REAP_GRACE_MIN=1440) and the per-run cap (LIMEN_REMOTE_REAP_MAX=100). Reversible: set back to 0; the acceptance ledger records every reap.",
+      "owner": "yours",
+      "cost": "~30 s once, reversible (one env line); deletions themselves remain covenant-gated per branch",
+      "gate": "remote branch deletion is not reflog-recoverable, and the auto-mode classifier denies the agent appending a persistence-arming env flag (Unauthorized Persistence) — this arming is deliberately your hand",
+      "unlocks": "the 744-branch remote-gap backlog starts draining on the reconcile cadence (receipts to docs/remote-branch-reap-acceptance.jsonl, currently 0 entries); lifecycle pressure's `remote branches unresolved` term can finally move toward zero",
+      "source_task": "GITVS remote_branch resource · limen PR #901 (reap-remote-branches.py) · registry-gap found 2026-07-14 (valve existed with no lever entry)",
+      "issue": 1053
     }
   ]
 }
