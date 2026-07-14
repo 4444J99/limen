@@ -47,6 +47,23 @@ sensors:
         severity: advisory
         escalation: "DEAD credential(s) above — re-mint into the op:// item, then they self-heal next beat"
 
+  creds-provision:
+    section: "0a1"
+    title: "CLAVIS — every required op-sourced secret is readable by the fleet service account"
+    gate: LIMEN_CREDS_PROVISION
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # The PROVISIONING predicate, sibling of creds-hydrate's consumption. creds-hydrate --verify
+    # catches a DEAD/absent materialized value; this catches the upstream cause — a secret sitting in
+    # a vault the service account cannot read, so it never materializes at all. Read-only. Stays red
+    # until the one-time `creds-provision bootstrap` homes every required secret in the SA-owned
+    # automation vault; then green forever. See institutio/governance/credentials.yaml, Wall #320.
+    steps:
+      - command: "python3 scripts/creds-provision.py check"
+        severity: advisory
+        escalation: "a REQUIRED secret is not SA-readable — the estate is not SA-homed; run `creds-provision bootstrap` (one owner-op seed, Wall #320)"
+
   identity-verify:
     section: "0a2"
     title: "verify personal-fact atoms present (personal-facts registry; sibling of creds — atoms don't rotate)"

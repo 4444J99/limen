@@ -71,8 +71,15 @@ organs:
     layer: autonomic
     home: limen (creds-hydrate.py, _load_limen_env, com.limen.creds-hydrate.plist)
     status: partial
-    role: "creds/secrets/env → don't break, don't re-ask. 1Password → ~/.limen.env → tools."
-    residual: "6 of 7 creds never minted/wired; Claude auth deliberately disabled; Gmail app-pw not in the map (op://Private/gmail-app-pw-2026-06-06 → GH secret GMAIL_APP_PASSWORD). Mostly his-lever mints + 2 wiring fixes."
+    role: "creds/secrets/env CONSUMPTION → don't break, don't re-ask. 1Password → ~/.limen.env → tools."
+    residual: "Consumption side. The upstream PROVISIONING (which vault the service account reads) is owned by the `clavis` organ below; creds-hydrate --verify (required-loud, PR #1061) surfaces a dead/absent materialized value; clavis check surfaces the vault-level cause."
+
+  - name: clavis
+    layer: autonomic
+    home: limen (scripts/creds-provision.py, institutio/governance/credentials.yaml, sensor 0a1)
+    status: partial
+    role: "credential + service-account PROVISIONING as code. Owns the fleet SA and the single vault it reads: every op-sourced secret must live in one SA-owned automation vault (1Password SA grants are IMMUTABLE, so one vault is the only stable shape). `check` = the forever-predicate (red until SA-homed); `bootstrap` = the one owner-op seed; `apply` = idempotent conformance."
+    residual: "The estate is not yet SA-homed: the fleet SA carries ZERO vault grants, so nothing hydrates from op (the floor coasts on a stale ~/.limen.env). One-time `creds-provision bootstrap` (owner op) mints the SA against the automation vault, migrates the secrets in, then the predicate is green forever. Homed Wall #320 (supersedes the mis-filed 'non-blocking' #288)."
 
   - name: authority
     layer: autonomic

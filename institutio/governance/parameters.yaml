@@ -2351,6 +2351,18 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Gate for the creds-hydrate beat sensor (institutio/governance/sensors.yaml section 0a): refresh ~/.limen.env from the op:// source of truth so a one-time login never repeats, then --verify each materialized cred against its service. Read by the beat-sensors runner via the SENSORS registry (was previously only an undeclared shell hardcode; declared here when the hand-wired blocks were derived away). 0 disables the hydration pass."
+  LIMEN_CREDS_PROVISION:
+    default: "1"               # ON — CLAVIS provisioning predicate each beat (sensor 0a1)
+    env: LIMEN_CREDS_PROVISION
+    self_update: none
+    owner: tabularius
+    note: "Gate for the CLAVIS creds-provision beat sensor (institutio/governance/sensors.yaml section 0a1): `creds-provision check` verifies every REQUIRED op-sourced secret in creds-hydrate DEFAULT_MAP resolves to an SA-readable vault (institutio/governance/credentials.yaml). The provisioning-side sibling of LIMEN_CREDS_HYDRATE: hydrate --verify catches a dead materialized value, this catches the upstream cause (a secret in a vault the service account cannot read). Read-only, advisory. 0 disables the pass."
+  LIMEN_CREDS_POLICY:
+    default: "institutio/governance/credentials.yaml"
+    env: LIMEN_CREDS_POLICY
+    self_update: none
+    owner: tabularius
+    note: "Path override for the CLAVIS credential-provisioning policy registry (scripts/creds-provision.py load_policy). Default is the in-repo credentials.yaml; overridden in tests to a nonexistent path to exercise the fail-open-to-defaults branch. Not a secret; declares the automation-vault name + service-account identity the provisioner enforces."
   LIMEN_BEAT_DERIVE:
     default: "1"               # ON — beat DERIVES its sensor loop from sensors.yaml; 0 = skip the sensor pass (escape hatch)
     env: LIMEN_BEAT_DERIVE
