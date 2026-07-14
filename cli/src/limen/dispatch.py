@@ -970,6 +970,26 @@ def _superseded_by_rebase_task(task: Task, tasks_by_id: dict[str, Task]) -> bool
     return False
 
 
+def _superseded_by_trunk_repair(task: Task, tasks_by_id: dict[str, Task]) -> bool:
+    """A live HEAL-mainred task supersedes any individual HEAL-cifix task for the same repo.
+
+    When main's trunk is red (HEAL-mainred-<repo> is active), individual PR CI-fix tasks
+    are redundant — fixing the root cause heals all PRs at once. Without this gate, two
+    agents can race: one fixing the trunk, another fixing one PR for the same root cause.
+    """
+    task_id = str(task.id or "")
+    prefix = "HEAL-cifix-"
+    if not task_id.startswith(prefix):
+        return False
+    suffix = task_id[len(prefix) :]
+    repo_slug = suffix.rsplit("-", 1)[0] if "-" in suffix else suffix
+    mainred_id = f"HEAL-mainred-{repo_slug}"
+    mainred = tasks_by_id.get(mainred_id)
+    if mainred is not None and str(mainred.status or "") in _ACTIVE_SUPERSEDER_STATUSES:
+        return True
+    return False
+
+
 def _routine_generated_buildout(task: Task) -> bool:
     labels = set(task.labels or [])
     return "generated" in labels and "build-out" in labels
@@ -4385,6 +4405,8 @@ def dispatch_tasks(
             continue
         if task_id is None and _superseded_by_rebase_task(t, id2):
             continue
+        if task_id is None and _superseded_by_trunk_repair(t, id2):
+            continue
         if task_id is None and chronic_dispatch_reason(t) is not None:
             continue
         if not _routine_generated_buildout_allowed(t):
@@ -4815,6 +4837,8 @@ def _select_parallel_reservations(
             if not _deps_met(t, id2):
                 continue
             if _superseded_by_rebase_task(t, id2):
+                continue
+            if _superseded_by_trunk_repair(t, id2):
                 continue
             if chronic_dispatch_reason(t) is not None:
                 continue

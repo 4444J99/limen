@@ -333,3 +333,83 @@ def test_stale_core_pr_emits_rebase_not_merged(tmp_path, monkeypatch):
     assert "stale-base" in t["labels"] and "core" in t["labels"]
     assert "REVERT" in t["context"] and "force-with-lease" in t["context"]
     assert "unique work" in t["context"], "the heal must preserve all unique work (absorb, not drop)"
+
+
+# ── TRUNK-REPAIR GATE (limen#895) ───────────────────────────────────────────────────────────────────
+# When a HEAL-mainred-{repo} task is active, self-heal must NOT emit individual HEAL-cifix tasks for
+# that same repo — the trunk-level repair addresses the root cause and heals all PRs at once.
+
+
+def test_skips_cifix_when_trunk_repair_active(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    # Pre-seed an active HEAL-mainred task for organvm/exporter (same repo as PR #54)
+    board = {
+        "version": "1.0",
+        "portal": {"name": "t"},
+        "tasks": [
+            {
+                "id": "HEAL-mainred-organvm-exporter",
+                "title": "Restore main to green — organvm/exporter CI is RED",
+                "repo": "organvm/exporter",
+                "status": "open",
+                "target_agent": "any",
+                "priority": "critical",
+                "labels": ["lifecycle", "ci", "mainred"],
+                "urls": [],
+                "context": "main CI is red",
+                "depends_on": [],
+                "created": "2026-07-12",
+                "dispatch_log": [],
+            }
+        ],
+    }
+    p.write_text(yaml.safe_dump(board, sort_keys=False))
+    rc = _run(m, monkeypatch, p)
+    assert rc == 0
+    doc = yaml.safe_load(p.read_text())
+    ids = {t["id"] for t in doc["tasks"]}
+    # PR #54 (organvm/exporter, CI-RED) must NOT get a cifix task — trunk repair covers it
+    assert "HEAL-cifix-organvm-exporter-54" not in ids, (
+        "must skip PR-level CI fix when trunk-level HEAL-mainred is active"
+    )
+    # The HEAL-mainred task must still be present
+    assert "HEAL-mainred-organvm-exporter" in ids
+    # Non-exporter PRs should still get their heal tasks
+    assert "HEAL-rebase-organvm-scale-6" in ids
+
+
+def test_emits_cifix_when_trunk_repair_done(tmp_path, monkeypatch):
+    """When the prior HEAL-mainred task is done (healed), a new CI-RED PR should still get a cifix."""
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    board = {
+        "version": "1.0",
+        "portal": {"name": "t"},
+        "tasks": [
+            {
+                "id": "HEAL-mainred-organvm-exporter",
+                "title": "Restore main to green — organvm/exporter CI is RED",
+                "repo": "organvm/exporter",
+                "status": "done",
+                "target_agent": "any",
+                "priority": "critical",
+                "labels": ["lifecycle", "ci", "mainred"],
+                "urls": [],
+                "context": "previous red episode healed",
+                "depends_on": [],
+                "created": "2026-07-11",
+                "dispatch_log": [],
+            }
+        ],
+    }
+    p.write_text(yaml.safe_dump(board, sort_keys=False))
+    rc = _run(m, monkeypatch, p)
+    assert rc == 0
+    doc = yaml.safe_load(p.read_text())
+    ids = {t["id"] for t in doc["tasks"]}
+    # PR #54 should get a cifix even though old HEAL-mainred exists — it's done
+    assert "HEAL-cifix-organvm-exporter-54" in ids, (
+        "must still emit PR-level CI fix when prior trunk-level HEAL is done"
+    )
+    assert "HEAL-mainred-organvm-exporter" in ids

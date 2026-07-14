@@ -2510,6 +2510,61 @@ def test_qa_report_derives_lifecycle_without_mutation_or_private_fields(tmp_path
     assert tasks_path.read_text() == before
 
 
+# ── _superseded_by_trunk_repair ─────────────────────────────────────────────────────────────────────
+
+
+def _make_task(id, **kw):
+    from limen.models import Task
+
+    return Task(id=id, title=id, target_agent="any", created=date(2026, 7, 12), **kw)
+
+
+def test_superseded_by_trunk_repair_same_repo():
+    """A HEAL-cifix task IS superseded when an active HEAL-mainred task exists for the same repo."""
+    from limen.dispatch import _superseded_by_trunk_repair
+
+    cifix = _make_task("HEAL-cifix-organvm-limen-123", repo="organvm/limen")
+    mainred = _make_task("HEAL-mainred-organvm-limen", status="open")
+
+    assert _superseded_by_trunk_repair(cifix, {mainred.id: mainred})
+
+
+def test_superseded_by_trunk_repair_not_for_done_mainred():
+    """A HEAL-cifix task is NOT superseded when the HEAL-mainred task is done (prior episode healed)."""
+    from limen.dispatch import _superseded_by_trunk_repair
+
+    cifix = _make_task("HEAL-cifix-organvm-limen-123")
+    mainred = _make_task("HEAL-mainred-organvm-limen", status="done")
+
+    assert not _superseded_by_trunk_repair(cifix, {mainred.id: mainred})
+
+
+def test_superseded_by_trunk_repair_no_mainred():
+    """No HEAL-mainred task → cifix is not superseded."""
+    from limen.dispatch import _superseded_by_trunk_repair
+
+    cifix = _make_task("HEAL-cifix-organvm-limen-123")
+    assert not _superseded_by_trunk_repair(cifix, {})
+
+
+def test_superseded_by_trunk_repair_non_cifix():
+    """Non-HEAL-cifix tasks are never superseded by trunk repair."""
+    from limen.dispatch import _superseded_by_trunk_repair
+
+    rebase = _make_task("HEAL-rebase-organvm-limen-123")
+    mainred = _make_task("HEAL-mainred-organvm-limen", status="open")
+    assert not _superseded_by_trunk_repair(rebase, {mainred.id: mainred})
+
+
+def test_superseded_by_trunk_repair_other_repo():
+    """A cifix for repo A is NOT superseded by a HEAL-mainred for repo B."""
+    from limen.dispatch import _superseded_by_trunk_repair
+
+    cifix = _make_task("HEAL-cifix-organvm-exporter-54")
+    mainred = _make_task("HEAL-mainred-organvm-limen", status="open")
+    assert not _superseded_by_trunk_repair(cifix, {mainred.id: mainred})
+
+
 # ── Marginal worktree-impact classification (binary, census-derived locality) ──
 
 

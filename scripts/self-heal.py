@@ -131,6 +131,11 @@ KINDS = {
     },
 }
 
+# Active states for a HEAL-mainred task — mirrors dispatch._ACTIVE_SUPERSEDER_STATUSES
+# and check-main-green._ACTIVE_STATES. When trunk repair is in one of these, individual
+# PR CI-fix tasks are redundant (limen#895).
+_MAINRED_ACTIVE_STATUSES = frozenset({"open", "dispatched", "in_progress", "needs_human", "failed_blocked"})
+
 
 def gh(args, timeout=60):
     return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
@@ -346,14 +351,23 @@ def main():
 
     # DRY-RUN: assess + report only. Zero writes; the queue-lock is never even touched.
     if a.dry_run:
-        existing = {t.id for t in load_limen_file(tasks_path).tasks} if tasks_path.exists() else set()
+        tasks = load_limen_file(tasks_path).tasks if tasks_path.exists() else []
+        tasks_by_id = {t.id: t for t in tasks}
         would, dup = [], 0
         for verdict, repo, num, url in sick:
             tid = task_id(KINDS[verdict]["slug"], repo, num)
-            if tid in existing:
+            if tid in tasks_by_id:
                 dup += 1
-            else:
-                would.append((tid, verdict, repo, num))
+                continue
+            # When main trunk is red, individual PR CI-fix tasks are redundant —
+            # the HEAL-mainred task will fix the root cause, healing all PRs at once.
+            if verdict == "CI-RED":
+                mainred_tid = f"HEAL-mainred-{repo.replace('/', '-').lower()}"
+                mt = tasks_by_id.get(mainred_tid)
+                if mt is not None and mt.status in _MAINRED_ACTIVE_STATUSES:
+                    dup += 1
+                    continue
+            would.append((tid, verdict, repo, num))
         print(
             f"[self-heal] DRY-RUN window={len(prs)}/{len(allprs)} ready={b['READY']} "
             f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
@@ -375,13 +389,19 @@ def main():
         return 0
     try:
         lf = load_limen_file(tasks_path)
-        existing = {t.id for t in lf.tasks}
+        tasks_by_id = {t.id: t for t in lf.tasks}
         emitted = []
         for verdict, repo, num, url in sick:
             tid = task_id(KINDS[verdict]["slug"], repo, num)
-            if tid in existing:
+            if tid in tasks_by_id:
                 continue
-            existing.add(tid)
+            # When main trunk is red, individual PR CI-fix tasks are redundant —
+            # the HEAL-mainred task will fix the root cause, healing all PRs at once.
+            if verdict == "CI-RED":
+                mainred_tid = f"HEAL-mainred-{repo.replace('/', '-').lower()}"
+                mt = tasks_by_id.get(mainred_tid)
+                if mt is not None and mt.status in _MAINRED_ACTIVE_STATUSES:
+                    continue
             lf.tasks.append(build_task(verdict, repo, num, url, stamp))
             emitted.append(tid)
         if emitted:
