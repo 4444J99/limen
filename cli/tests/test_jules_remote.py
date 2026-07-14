@@ -58,8 +58,9 @@ def _snapshot(
     available: bool = True,
     exhaustive: bool = False,
     confirmed_absent: frozenset[str] = frozenset(),
+    idle: bool = False,
 ) -> JulesRemoteSnapshot:
-    sessions = {} if status is None else {SID: JulesRemoteSession(SID, status)}
+    sessions = {} if status is None else {SID: JulesRemoteSession(SID, status, idle=idle)}
     return JulesRemoteSnapshot(
         available=available,
         sessions=sessions,
@@ -197,6 +198,62 @@ def test_remote_list_parser_classifies_shared_status_vocabulary() -> None:
     assert sessions["444444444444"].status == "unknown"
     assert sessions["555555555555"].status == "unknown"
     assert sessions["666666666666"].status == "completed"
+
+
+def _table_row(sid: str, desc: str, repo: str, last_active: str, status: str) -> str:
+    return f" {sid:<23} {desc:<59} {repo:<19} {last_active:<24} {status:<15}"
+
+
+def _table(rows: list[tuple[str, str, str, str, str]]) -> str:
+    # The header's Description column is deliberately WIDER than the rows' (the real CLI
+    # truncates descriptions by display width — its "…" is one code point — so header and
+    # row code-point offsets skew by several chars). Left-anchored slicing breaks on this;
+    # the parser must measure the tail columns from the right edge.
+    header = f" {'ID':<23} {'Description':<67} {'Repo':<19} {'Last active':<24} {'Status':<15}"
+    return "\n".join([header, *(_table_row(*row) for row in rows)])
+
+
+def test_headered_listing_reads_empty_status_cells_and_idleness() -> None:
+    """The 2026-07-14 forever-HOLD defect: with an EMPTY Status cell, split-on-whitespace
+    promoted the previous column ('1 day ago', or the repo) into the status slot → 'unknown'
+    → hold, forever. Header-anchored offsets read the empty cell as empty and derive idleness
+    from the CLI's own Last-active column."""
+    desc = "Implement this directly and open a pull request. Do NOT ask…"
+    listing = _table(
+        [
+            ("111111111111111111", desc, "organvm/limen", "1 day ago", ""),
+            ("222222222222222222", desc, "organvm/limen", "5h36m5s ago", "Completed"),
+            ("333333333333333333", desc, "organvm/limen", "1 day ago", "Awaiting User F"),
+            ("444444444444444444", desc, "organvm/limen", "just now", ""),
+            ("555555555555555555", desc, "organvm/limen", "1d4h ago", ""),
+        ]
+    )
+    sessions = parse_jules_remote_sessions(listing)
+
+    blank_idle = sessions["111111111111111111"]
+    assert blank_idle.status == "unknown", "empty Status must not inherit the repo/Last-active text"
+    assert blank_idle.idle is True
+    assert sessions["222222222222222222"].status == "completed"
+    assert sessions["222222222222222222"].idle is False, "5h36m5s is sub-day"
+    assert sessions["333333333333333333"].status == "awaiting_user_feedback", "CLI-truncated status still classifies"
+    assert sessions["444444444444444444"].idle is False
+    assert sessions["555555555555555555"].idle is True, "compact 1d4h form counts as a day idle"
+
+
+def test_idle_blank_status_routes_to_recovery_fresh_blank_holds() -> None:
+    idle_snapshot = _snapshot("unknown", idle=True)
+    assert classify_jules_claim(idle_snapshot, SID) == ("recover", "idle_no_status")
+    fresh_snapshot = _snapshot("unknown", idle=False)
+    assert classify_jules_claim(fresh_snapshot, SID) == ("hold", "unknown")
+
+
+def test_release_stale_routes_idle_blank_session_to_recovery(tmp_path: Path) -> None:
+    report, task = _apply(tmp_path / "tasks.yaml", _snapshot("unknown", idle=True))
+
+    assert task.status == "dispatched", "routing decision, not a mutation — recover.py owns the write"
+    assert report["recover_ready"] == ["STALE"]
+    assert report["released"] == []
+    assert report["candidates"][0]["remote_status"] == "idle_no_status"
 
 
 def test_remote_probe_completes_before_single_writer_lock(tmp_path: Path, monkeypatch) -> None:

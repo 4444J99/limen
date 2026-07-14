@@ -14,7 +14,21 @@ JULES_RECOVERY_STATES = frozenset(
         "awaiting_plan_approval",
     }
 )
-_LAST_ACTIVE_RE = re.compile(r"^(?:(?:\d+[dhms])+\s+ago|just now)$", re.IGNORECASE)
+_LAST_ACTIVE_RE = re.compile(
+    r"^(?:(?:\d+[dhms])+\s+ago|\d+\s+(?:second|minute|hour|day|week|month|year)s?\s+ago|just now)$",
+    re.IGNORECASE,
+)
+# The CLI's table header — used to anchor fixed-width column offsets. Split-on-whitespace
+# parsing cannot represent an EMPTY Status cell: the last populated column ("1 day ago", or
+# the repo) bled into the status slot and classified as "unknown", which held stale claims
+# forever (the 29-claim forever-HOLD defect, 2026-07-14).
+_HEADER_RE = re.compile(r"^\s*ID\s{2,}.*\bStatus\b")
+
+
+def _idle_at_least_a_day(last_active: str) -> bool:
+    """True when the Last-active cell shows >=1 day of inactivity ('1 day ago', '2 weeks ago',
+    '1d4h ago'); sub-day forms ('5h36m5s ago', 'just now') and blanks are False."""
+    return bool(re.search(r"\b\d+\s*(?:d\b|d\d|day|week|month|year)", last_active.strip().lower()))
 
 
 @dataclass(frozen=True)
@@ -22,6 +36,9 @@ class JulesRemoteSession:
     session_id: str
     status: str
     raw: str = ""
+    # >=1 day since the CLI's Last-active column moved — only derivable when the listing
+    # carries a header (fixed-width offsets); the legacy fallback leaves it False (hold-safe).
+    idle: bool = False
 
 
 @dataclass(frozen=True)
@@ -67,19 +84,44 @@ def classify_jules_remote_status(status: str) -> str:
 
 
 def parse_jules_remote_sessions(output: str) -> dict[str, JulesRemoteSession]:
+    lines = output.splitlines()
+    # Anchor the trailing column WIDTHS on the header when present: the CLI pads fixed-width
+    # columns, so a header-derived slice reads an EMPTY Status cell as empty instead of
+    # promoting the previous column ("1 day ago", or the repo) into it. Widths are measured
+    # from the RIGHT edge — the Description cell truncates by DISPLAY width (its "…" is one
+    # code point), so left-anchored offsets skew, while the tail columns (repo / Last active /
+    # Status) are ASCII and stay aligned from the end of the padded row.
+    status_width: int | None = None
+    last_active_width: int | None = None
+    for raw in lines:
+        if _HEADER_RE.match(raw):
+            status_start = raw.index("Status")
+            status_width = len(raw) - status_start
+            match = re.search(r"\bLast active\b", raw)
+            if match:
+                last_active_width = status_start - match.start()
+            break
     sessions: dict[str, JulesRemoteSession] = {}
-    for raw in output.splitlines():
+    for raw in lines:
         columns = re.split(r"\s{2,}", raw.strip())
         if not columns or not columns[0].isdigit():
             continue
         session_id = columns[0]
-        status_text = ""
-        if len(columns) >= 2 and not _LAST_ACTIVE_RE.fullmatch(columns[-1]):
-            status_text = columns[-1]
+        idle = False
+        if status_width is not None and len(raw) >= status_width:
+            status_text = raw[-status_width:].strip()
+            if last_active_width is not None and len(raw) >= status_width + last_active_width:
+                idle = _idle_at_least_a_day(raw[-(status_width + last_active_width) : -status_width])
+        else:
+            # legacy headerless output: last column unless it reads as a Last-active cell
+            status_text = ""
+            if len(columns) >= 2 and not _LAST_ACTIVE_RE.fullmatch(columns[-1]):
+                status_text = columns[-1]
         sessions[session_id] = JulesRemoteSession(
             session_id=session_id,
             status=classify_jules_remote_status(status_text),
             raw=raw,
+            idle=idle,
         )
     return sessions
 
@@ -148,13 +190,18 @@ def classify_jules_claim(snapshot: JulesRemoteSnapshot, session_id: str) -> tupl
         return "hold", "cli_unavailable"
     if not session_id:
         return "hold", "session_id_unavailable"
-    status = snapshot.status(session_id)
-    if status is None:
+    session = snapshot.sessions.get(session_id)
+    if session is None:
         if snapshot.proves_absent(session_id):
             return "release", "absent"
         return "hold", "absence_unconfirmed"
-    if status == "completed":
-        return "harvest", status
-    if status in JULES_RECOVERY_STATES:
-        return "recover", status
-    return "hold", status
+    if session.status == "completed":
+        return "harvest", session.status
+    if session.status in JULES_RECOVERY_STATES:
+        return "recover", session.status
+    if session.status == "unknown" and session.idle:
+        # The list shows this session with no recognizable Status and >=1 day idle. A finished
+        # session renders "Completed" (→ harvest above), so idle-with-no-status is dead work —
+        # route it to the recovery funnel instead of holding the claim forever.
+        return "recover", "idle_no_status"
+    return "hold", session.status
