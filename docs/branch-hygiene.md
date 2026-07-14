@@ -23,9 +23,10 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (254) — decide each
+## Live-work branches (268) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
+- `agent/codex-sessions-adapter-0713` — 4f56aa95 fix(prompt): adapt Codex session records exactly
 - `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-02T18-41-47Z` — eaca4510 capture: off-disk sync 2026-07-02T18:41:47Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-03T18-23-54Z` — b53f0abc capture: off-disk sync 2026-07-03T18:23:54Z (main behind origin → side ref, HEAD untouched)
@@ -33,6 +34,9 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `capture/main-2026-07-06T17-09-22Z` — e85f0909 capture: off-disk sync 2026-07-06T17:09:22Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-08T21-07-28Z` — 672c21c1 capture: off-disk sync 2026-07-08T21:07:28Z (main behind origin → side ref, HEAD untouched)
 - `chore/ruff-format-cli-tests` — bbd9874a heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
+- `codex/claude-permission-preflight-0713` — 2597ad48 fix(claude): preflight unattended permission conflicts
+- `codex/codex-attachments-gap-0713` — c33b9a4f fix(prompt): admit exact Codex attachment parents
+- `codex/progress-universe-0713` — 45a7aa40 docs(cli): document progress ledger command
 - `deepen/tao-te-ching-ch6-10` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
 - `discover-carrier-wave-zeitgeist-thesis-value` — fe4f7633 limen: discover corpus-mythicum, promote to ranked tier
 - `discover-limen-value-2026-06-22` — 7ad100f0 capture: autonomic off-disk sync 2026-06-23T13:19:40Z
@@ -44,6 +48,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `feat/bhagavad-gita-arcs-5-8` — 13a810c3 feat(studium): author metamorphoses books 2 and 3 arcs
 - `feat/censor-monthly-tier` — a89dd048 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
 - `feat/depends-on-sequencer` — b83a5d0b feat: seq-depends.py — append depends_on edges via the keeper (concern 11)
+- `feat/hospes-podcast-os-audit` — 4523e8db feat(hospes): register organvm/hospes as value repo, positioning seed awaiting_publish
 - `feat/outbound-valve-registry` — c281b297 feat: tiered outbound valve registry (concern 4) — all tiers coexist, configurable
 - `feat/receipt-classifier` — 45672027 feat: receipt-classifier.py — flag receipt-only diffs behind shipped-X claims (concern 9)
 - `feat/studium-deepen-bhagavad-gita` — b79d0fae studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
@@ -143,6 +148,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-cifix-organvm-limen-630-8039270a` — 51bfc3fa Make the financial organ's macro + micro face excellent
 - `limen/heal-cifix-organvm-limen-684-14d57417` — 97aff27a Deepen the contributions organ toward a usable institution
 - `limen/heal-cifix-organvm-limen-684-ccd3d442` — 97aff27a Deepen the contributions organ toward a usable institution
+- `limen/heal-cifix-organvm-limen-846-0b86dfb8` — 9346893c Finish single-writer status/result mutation conversion
 - `limen/heal-rebase-organvm-limen-375-ccfaf493` — 8ff5af35 Beowulf film companion (wyrd/heroic doom)
 - `limen/heal-rebase-organvm-limen-394-80d251b9` — 05596a46 Deepen the financial organ toward a usable institution
 - `limen/heal-rebase-organvm-limen-394-f450e381` — 05596a46 Deepen the financial organ toward a usable institution
@@ -173,12 +179,17 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-rebase-organvm-limen-630-d878401c` — f124ddd2 Make the financial organ's macro + micro face excellent
 - `limen/heal-rebase-organvm-limen-680-c1c9768f` — b8b2ea40 fix failing CI on organvm/limen#432
 - `limen/heal-rebase-organvm-limen-680-e0f6856e` — b8b2ea40 fix failing CI on organvm/limen#432
+- `limen/heal-rebase-organvm-limen-680-f8711abe` — b8b2ea40 fix failing CI on organvm/limen#432
 - `limen/heal-rebase-organvm-limen-682-04a48a4c` — 3dc7ad6a limen: harvest async receipt results
+- `limen/heal-rebase-organvm-limen-683-40b8fdbf` — 08e60a1f DISCOVER: latent value of organvm/cind-and-sol-foundation
+- `limen/heal-rebase-organvm-limen-683-45538f03` — 08e60a1f DISCOVER: latent value of organvm/cind-and-sol-foundation
 - `limen/heal-rebase-organvm-limen-684-0483d311` — 97aff27a Deepen the contributions organ toward a usable institution
 - `limen/heal-rebase-organvm-limen-684-aa986f4c` — 97aff27a Deepen the contributions organ toward a usable institution
 - `limen/heal-rebase-organvm-limen-696-99224303` — 42d75f7e fix failing CI on organvm/limen#375
+- `limen/heal-rebase-organvm-limen-696-c9240ec8` — 42d75f7e fix failing CI on organvm/limen#375
 - `limen/heal-rebase-organvm-limen-703-3cf56c8a` — 742f6330 handoff-relay.py: cross-session/cross-vendor warm-resume packet
 - `limen/heal-rebase-organvm-limen-814-004a5918` — 95b47a63 limen: guard worktree session launches
+- `limen/heal-rebase-organvm-limen-814-18b2fdb4` — 95b47a63 limen: guard worktree session launches
 - `limen/heal-rebase-stale-organvm-limen-434-180b7ce7` — b1a12a51 style: format cli.py
 - `limen/heal-rebase-stale-organvm-limen-434-8020d59d` — b1a12a51 style: format cli.py
 - `limen/heal-rebase-stale-organvm-limen-620-913107b3` — b79d6404 Build the first working vertical slice of the legal organ
@@ -191,6 +202,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/jules-aw-mail-historical-backlog-9f1d` — fd91625a Continue historical mail backlog in resumable batches
 - `limen/jules-aw-mail-historical-backlog-c97e` — a9797d4a Continue historical mail backlog in resumable batches
 - `limen/jules-aw-mail-historical-backlog-e50f` — 4cbf2f03 Continue historical mail backlog in resumable batches
+- `limen/jules-org-contributions-organ-deepen-0704-7930` — b035e97c Deepen the contributions organ toward a usable institution
 - `limen/org-artist-organ-face-0704-2152` — 0bf299b0 artist: polish macro and micro faces (ORG-artist-organ-face-0704)
 - `limen/org-artist-organ-face-0704-54ed` — f0ca6297 chore(artist): mark ORG-artist-organ-face-0704 as done
 - `limen/org-governance-organ-deepen-0628-0e39` — f23a6f66 limen: ruff-format test_dispatch_engine and test_session_lifecycle_pressure
@@ -263,8 +275,10 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `pr-669-governance-deepen` — 3dc75166 ci: declare async archive parameters
 - `pr-680` — b8b2ea40 fix failing CI on organvm/limen#432
 - `pr-682` — 9410ebc8 docs: add organvm/sovereign--ground--4444j99 to value-repos
+- `pr-703-temp` — f3c7605f handoff-relay.py: cross-session/cross-vendor warm-resume packet
 - `promote-domus-genoma` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
 - `rebase-630` — 51bfc3fa Make the financial organ's macro + micro face excellent
+- `rebase-814` — 94246f98 limen: guard worktree session launches
 - `refactor/armed-valve-derive` — e342c68f refactor(armed-valve): read sensor gates from the SENSORS registry, not just the shell
 - `registry-update` — c2490e09 docs(registry): credential CLOSED (keyless lane); Exporter funnel verified BUILT
 - `studium-beowulf-fitts-2-4` — cd8625b8 studium: author Beowulf fitts 2-4 music arcs and essays

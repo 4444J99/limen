@@ -1,28 +1,24 @@
-# Reclassify needs_human — 2026-06-23
+# Reclassify needs_human — 2026-07-14
 
-`needs_human` holds **37** tasks. By signal (not by hand-picked id) they split into:
+`needs_human` holds **98** tasks. By signal (not by hand-picked id) they split into:
 
-- **KEEP — 22** genuinely need your hand (secret / account / admin / merge gate / irreversible cutover / Cloudflare-credential-gated deploy).
-- **FLIP — 10** are fleet-buildable code/docs parked behind a false gate. `--apply` flips these to `open` so the fleet does them. Reversible.
+- **KEEP — 84** genuinely need your hand (secret / account / admin / merge gate / irreversible cutover / Cloudflare-credential-gated deploy).
+- **CHRONIC — 0** churned ≥3 reopens with zero PRs and carry no human atom — fleet debt. `--apply` parks these `failed_blocked` (honest terminal state; flipping them to `open` is the ping-pong that refills this queue). Reversible.
+- **FLIP — 0** are fleet-buildable code/docs parked behind a false gate. `--apply` flips these to `open` so the fleet does them. Reversible.
 - **STALE — 1** precondition already met — recommend close, don't re-queue.
-- **REVIEW — 4** one quick triage call (skip vs *kill* — kill is irreversible, never auto-flipped).
+- **REVIEW — 13** one quick triage call (skip vs *kill* — kill is irreversible, never auto-flipped).
 
-> `--apply` changes ONLY the FLIP bucket; KEEP / STALE / REVIEW are never auto-touched. Flipping `needs_human -> open` only lets the fleet *attempt* the work — fully reversible.
+> `--apply` changes ONLY the FLIP and CHRONIC buckets; KEEP / STALE / REVIEW are never auto-touched. Both flips are status-only + a provenance label — fully reversible.
 
 ## FLIP — fleet-buildable code/docs — no human-only signal
 
 | id | type | repo | title |
 |---|---|---|---|
-| `GH-meta-organvm-meta-organvm-superproject-6` | code | organvm/meta-organvm--superproject | Omega #15: Flip — portfolio validation page is LIVE |
-| `GH-organvm-ii-poiesis-organvm-ii-poiesis-superproject-2` | code | organvm/organvm-ii-poiesis--superproject | Add README for performance-sdk |
-| `GH-organvm-iii-ergon-sign-signal-voice-synth-3` | code | organvm/sign-signal--voice-synth | Implement Layer 1: Dialogue Looping Tracker (60 tasks) |
-| `GH-organvm-iv-taxis-organvm-iv-taxis-github-io-1` | code | organvm/organvm-iv-taxis.github.io | EV Activation Audit: ship-now — ORGAN-IV landing page live (HTTP 200) |
-| `GH-organvm-v-logos-organvm-v-logos-github-io-1` | code | organvm/organvm-v-logos.github.io | EV Activation Audit: ship-now — org landing page live (HTTP 200) |
-| `GH-organvm-vi-koinonia-organvm-vi-koinonia-github-io-1` | code | organvm/organvm-vi-koinonia.github.io | EV Activation Audit: ship-now — org landing page live (HTTP 200) |
-| `GH-organvm-vii-kerygma-organvm-vii-kerygma-github-io-1` | code | organvm/organvm-vii-kerygma.github.io | EV Activation Audit: ship-now — org landing page live (HTTP 200) |
-| `GH-organvm-vii-kerygma-organvm-vii-kerygma-superproject-5` | code | organvm/organvm-vii-kerygma--superproject | Epic: Kerygma Pipeline Activation (POSSE Distribution) |
-| `GH-organvm-vii-kerygma-organvm-vii-kerygma-superproject-2` | code | organvm/organvm-vii-kerygma--superproject | Add missing READMEs for kerygma-pipeline and kerygma-profiles |
-| `GH-organvm-i-theoria-atomic-substrata-1` | code | organvm/atomic-substrata | EV Activation Audit: ship-soon — UAKS pipeline operational but unrelea |
+
+## CHRONIC — reopened ≥3× with zero PRs, no human atom — fleet debt, park failed_blocked
+
+| id | type | repo | title |
+|---|---|---|---|
 
 ## STALE — precondition already satisfied (daemon already dispatching) — recommend close
 
@@ -34,10 +30,19 @@
 
 | id | type | repo | title |
 |---|---|---|---|
-| `GH-organvm-iv-taxis-organvm-iv-taxis-superproject-6` | code | organvm/organvm-iv-taxis--superproject | ACTIVATION AUDIT: skip |
-| `GH-organvm-iv-taxis-organvm-iv-taxis-superproject-5` | code | organvm/organvm-iv-taxis--superproject | ACTIVATION AUDIT: kill |
-| `GH-organvm-v-logos-organvm-v-logos-superproject-6` | code | organvm/organvm-v-logos--superproject | ACTIVATION AUDIT: kill |
-| `GH-organvm-vi-koinonia-organvm-vi-koinonia-superproject-3` | code | organvm/organvm-vi-koinonia--superproject | ACTIVATION AUDIT: kill |
+| `ASK-quicken-d2l` | ops | — | the D2L go-live click + cadence confirm (your login + judgment) |
+| `ASK-quicken-delete` | ops | — | approve the irreversible delete/clear (archived reversibly; purge is y |
+| `ORG-financial-organ-deepen-0703` | content | organvm/limen | Deepen the financial organ toward a usable institution |
+| `ASK-quicken-send` | ops | — | send the drafted message (never auto-send) |
+| `ASK-quicken-escalate-4a4c2aa8` | ops | — | finish stalled session 'Build alchemical synthesizer for audio sampl'  |
+| `ASK-quicken-escalate-e0f151ab` | ops | — | finish stalled session 'bash permission config investigation' (breathe |
+| `ASK-lane-starved-agy` | ops | — | Lane 'agy' starved: silent >42.5h with open queue + ok budget |
+| `ASK-lane-starved-gemini` | ops | — | Lane 'gemini' starved: silent >47.8h with open queue + ok budget |
+| `ASK-lane-starved-opencode` | ops | — | Lane 'opencode' starved: silent >42.4h with open queue + ok budget |
+| `ASK-quicken-escalate-6a48ce1d` | ops | — | finish stalled session 'Design movement ontology and workout composi'  |
+| `ASK-quicken-escalate-0bd3a5ed` | ops | — | finish stalled session 'Design movement ontology and workout composi'  |
+| `SOVEREIGN-0708-GPG-UID` | ops | organvm/limen | Add the later recourse.email UID to the current GPG identity |
+| `ASK-quicken-escalate-9feaa902` | ops | organvm/limen | finish stalled session 'Complete chat tasks with appropriate model a'  |
 
 ## KEEP — real human atom (secret/account/admin/merge-gate/cutover/credential-gated deploy)
 
@@ -65,6 +70,68 @@
 | `ASK-2-one-container-cutover` | code | — | Run the gated one-container cutover (container/migrate.sh S4-S13) unde |
 | `ASK-5-open-merge-gate` | code | — | Open the merge gate: parallel merge pass on the ~111 merge-ready PRs,  |
 | `ASK-20-container-relocate-state` | code | — | Extend container/manifest.tsv to relocate bulky agent state dirs (~/.c |
+| `REV-organvm-styx-revenue-ship-0623` | code | organvm/styx | Drive Styx to deploy-ready |
+| `REV-organvm-styx-revenue-readiness-0623` | code | organvm/styx | First-paying-customer readiness pass on Styx |
+| `ASK-quicken-login` | ops | — | one login/identity step (your hand: browser/OAuth/portal) |
+| `REVENUE-exporter-first-dollar` | ops | — | Drive live ChatGPT Exporter to first-$ rail (Sponsors + Pro tier) |
+| `GH-organvm-limen-265` | code | organvm/limen | needs-human (L-FLEET-CAPACITY): Re-mint the 3 fleet credentials — they |
+| `GH-organvm-limen-264` | code | organvm/limen | needs-human (L-MODEL-TIER): Stop the interactive Claude burn at the so |
+| `GH-organvm-limen-263` | code | organvm/limen | needs-human (L-IANVA-CLOUD): Stop the claude.ai connector 'needs authe |
+| `GH-organvm-limen-262` | code | organvm/limen | needs-human (L-IANVA-LOCAL): Kill the per-agent MCP re-auth for every  |
+| `GH-organvm-limen-260` | code | organvm/limen | needs-human (L-EDU-PERTERM): The per-term recapitulation ritual is aut |
+| `GH-organvm-limen-259` | code | organvm/limen | needs-human (L-ENC1102-GRADEBOOK): Resolve the ENC1102 D2L gradebook w |
+| `GH-organvm-limen-258` | code | organvm/limen | needs-human (L-ENC1101-GOLIVE): Take ENC1101 Summer 2026 (771624) live |
+| `GH-organvm-limen-257` | code | organvm/limen | needs-human (L-BRANCH-PROTECT-072): Branch-protection across the organ |
+| `GH-organvm-limen-255` | code | organvm/limen | needs-human (L-CONTAINER-CUTOVER): One-container cutover |
+| `GH-organvm-limen-254` | code | organvm/limen | needs-human (L-CLOUDFLARE-DEPLOY): Cloudflare deploy auth |
+| `GH-organvm-limen-253` | code | organvm/limen | needs-human (L-REVENUE-ACCT): Revenue first-dollar accounts |
+| `ASK-quicken-credential` | ops | — | land the credential/secret (your account/identity) |
+| `REV-organvm-a-i-chat--exporter-revenue-funding-0628` | code | organvm/a-i-chat--exporter | Stage the donation funnel for ChatGPT Exporter |
+| `REV-organvm-public-record-data-scrapper-revenue-ship-0628` | code | organvm/public-record-data-scrapper | Drive Public Record Data Scraper to deploy-ready |
+| `REV-organvm-a-i-chat--exporter-revenue-pro-tier-0628` | code | organvm/a-i-chat--exporter | Make the Pro-tier checkout merge-ready for ChatGPT Exporter |
+| `REV-organvm-universal-mail--automation-revenue-readiness-0628` | code | organvm/universal-mail--automation | First-paying-customer readiness pass on Universal Mail Automation |
+| `REV-organvm-the-invisible-ledger-revenue-readiness-0628` | code | organvm/the-invisible-ledger | First-paying-customer readiness pass on The Invisible Ledger |
+| `REV-organvm-a-i-chat--exporter-revenue-landing-0628` | code | organvm/a-i-chat--exporter | Ship a landing page for ChatGPT Exporter |
+| `REV-organvm-a-i-chat--exporter-revenue-launch-post-0628` | code | organvm/a-i-chat--exporter | Draft the build-in-public launch post for ChatGPT Exporter |
+| `REV-organvm-public-record-data-scrapper-revenue-readiness-0629` | code | organvm/public-record-data-scrapper | First-paying-customer readiness pass on Public Record Data Scraper |
+| `REV-organvm-universal-mail--automation-revenue-ship-0630` | code | organvm/universal-mail--automation | Drive Universal Mail Automation to deploy-ready |
+| `REV-organvm-the-invisible-ledger-revenue-ship-0630` | code | organvm/the-invisible-ledger | Drive The Invisible Ledger to deploy-ready |
+| `REV-organvm-mirror-mirror-revenue-readiness-0630` | code | organvm/mirror-mirror | First-paying-customer readiness pass on Mirror Mirror |
+| `GH-organvm-limen-535` | code | organvm/limen | needs-human (L-GCP-DEPLOY-SA): media-ark hosted go-live — a HUMAN HOST |
+| `GH-organvm-limen-534` | code | organvm/limen | needs-human (L-PII-SWEEP-CONTAIN): Contain the org-wide personal-data  |
+| `GH-organvm-limen-533` | code | organvm/limen | needs-human (L-SOCIAL-SEND): Pull the actual PUBLISH |
+| `GH-organvm-limen-532` | code | organvm/limen | needs-human (L-SOCIAL-OAUTH): Create the developer apps + mint first a |
+| `GH-organvm-limen-531` | code | organvm/limen | needs-human (L-TCC-PHOTOS-AUTOMATION): Grant Automation permission to  |
+| `GH-organvm-limen-530` | code | organvm/limen | needs-human (L-AUDIO-BLACKHOLE): FALLBACK ONLY |
+| `GH-organvm-limen-529` | code | organvm/limen | needs-human (L-TCC-RECORDER): Grant Screen Recording + Microphone perm |
+| `GH-organvm-limen-538` | code | organvm/limen | needs-human (L-STUDIO-GOLIVE): Take Object Lessons Studio public — the |
+| `GH-organvm-limen-563` | code | organvm/limen | needs-human (L-CARTRIDGE-REPOINT): Re-plug the chezmoi cartridge into  |
+| `ORG-governance-organ-deepen-0703` | content | organvm/limen | Deepen the governance organ toward a usable institution |
+| `ORG-governance-organ-selffeed-0703` | content | organvm/limen | Wire the governance organ to advance autonomously |
+| `REVIEW-peer-audited-726-thread-remediation-0707` | code | organvm/peer-audited--behavioral-blockchain | Address live review blockers on peer-audited#726 before merge |
+| `GH-organvm-limen-651` | code | organvm/limen | needs-human (L-FLEET-DISPATCH): The whole board is partitioned + route |
+| `GH-organvm-limen-657` | code | organvm/limen | needs-human (L-LAVREA-LAUNCH): Post the LAVREA launch kit under your o |
+| `REV-organvm-mirror-mirror-revenue-ship-0707` | code | organvm/mirror-mirror | Drive Mirror Mirror to deploy-ready |
+| `GH-organvm-limen-686` | code | organvm/limen | Add historical token tombstone audit to the credential wall |
+| `RETRO-0708-CODEX-BUDGET-RESET` | code | organvm/limen | Codex per-task budget reset + pre-dispatch uncached-token cap |
+| `GH-organvm-limen-719` | code | organvm/limen | L-ARCA-KEY-ESCROW: escrow the ARCA vault key off-machine (his-hand) |
+| `ASK-quicken-escalate-0305e50a` | ops | — | finish stalled session 'Audit Codex handoff and validate token-accou'  |
+| `GH-organvm-limen-791` | code | organvm/limen | needs-human (L-DAILY-ENGINE-PHONE-SETUP): Daily-engine phone setup |
+| `GH-organvm-limen-790` | code | organvm/limen | needs-human (L-ESTATE-MOUNT-4444J99): MOUNT the 4444J99 SSD to recover |
+| `GH-organvm-limen-789` | code | organvm/limen | needs-human (L-MONETA-LAUNCH): Post the MONETA Mint-as-a-Service launc |
+| `GH-organvm-limen-827` | code | organvm/limen | [his-hand] Arm the Fable interactive-guard settings snippet |
+| `REV-organvm-mirror-mirror-revenue-ship-0709` | code | organvm/mirror-mirror | Drive Mirror Mirror to deploy-ready |
+| `GH-organvm-limen-961` | code | organvm/limen | needs-human (L-OBSERVATORY-ACTIVATE): Activate OBSERVATORY (the legibi |
+| `GH-organvm-limen-960` | code | organvm/limen | needs-human (L-MAIL-AUTOMATION-GRANT): Grant macOS Automation permissi |
+| `GH-organvm-limen-934` | code | organvm/limen | needs-human (L-INTEGRATION-RENOVATE): install Renovate on organvm + tr |
+| `GH-organvm-limen-933` | code | organvm/limen | needs-human (L-INTEGRATION-CODERABBIT): install CodeRabbit on organvm  |
+| `GH-organvm-limen-928` | code | organvm/limen | needs-human (L-OPENCODE-AUTH): optionally authorize OpenCode catalog a |
+| `GH-organvm-limen-927` | code | organvm/limen | needs-human (L-IDENTITY-POPULATE): Populate the core personal-fact ato |
+| `GH-organvm-limen-926` | code | organvm/limen | needs-human (L-FABLE-GUARD-ARM): Arm the Fable interactive-guard setti |
+| `GH-organvm-limen-912` | code | organvm/limen | needs-human (L-STORAGE-DRAIN-PUSHED): Flip LIMEN_RECLAIM_PUSHED_OK=1 i |
+| `GH-organvm-limen-910` | code | organvm/limen | needs-human (L-LIMENBOT-INSTALL): Create + install the limen[bot] GitH |
+| `SOVEREIGN-0708-GPG-ESCROW` | ops | organvm/limen | Escrow the current GPG private material off-machine |
+| `SOVEREIGN-0708-GPG-DISCOVERABILITY` | ops | organvm/limen | Publish the current GPG public key to a discoverable surface |
 
 ---
-*Generated by `scripts/reclassify-needs-human.py`. Re-run `--apply` to flip the FLIP bucket, or say the word and I will.*
+*Generated by `scripts/reclassify-needs-human.py`. Re-run `--apply` to flip the FLIP bucket and park the CHRONIC bucket, or say the word and I will.*
