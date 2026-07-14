@@ -31,6 +31,7 @@ from limen.capacity import (
     ollama_model,
     select_lanes,
 )
+from limen.dispatch_ownership import ACTIVE_OWNER_STATUSES
 from limen.io import load_limen_file, save_limen_file, queue_lock as _queue_lock
 from limen.intake import IntakeContractError, normalize_selected_legacy_task, validate_intake_contract
 from limen.jules_remote import (
@@ -947,7 +948,7 @@ def chronic_dispatch_reason(task: Task) -> str | None:
     return None
 
 
-_ACTIVE_SUPERSEDER_STATUSES = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
+_ACTIVE_SUPERSEDER_STATUSES = ACTIVE_OWNER_STATUSES
 
 
 def _superseded_by_rebase_task(task: Task, tasks_by_id: dict[str, Task]) -> bool:

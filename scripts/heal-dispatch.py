@@ -15,6 +15,7 @@ between the verify pass and now). Dry-run by default; --apply to write.
 
 Usage:  python3 scripts/heal-dispatch.py [--apply]
 """
+
 import argparse
 import datetime
 import json
@@ -28,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _human_signals
 from limen.chronic import CHRONIC_FLEET_DEBT_LABEL, chronic_escalated_to_needs_human  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
 from limen.models import DispatchLogEntry  # noqa: E402
 
 from _human_signals import is_human_gated, lever_ids  # noqa: E402
@@ -73,7 +75,9 @@ def main():
     # (lever tag / registered lever / BLD2 / credential cluster — _human_signals, shared with
     # reclassify-needs-human.py so both sides of the truth loop agree — or the exact `needs-human`
     # label, heal-board's rule) stays on the human surface; everything else parks in failed_blocked
-    # (fleet debt; nothing recycles it). Reversible status flips. ([[no-never-happens-again]])
+    # (fleet debt; nothing recycles it). The active-owner predicate is re-checked on the freshly
+    # loaded board under the lock so a successor created after verification cannot be falsely parked.
+    # Reversible status flips. ([[no-never-happens-again]])
     chronic_ids = {x["id"] for x in verify.get("chronic", [])}
     levers = lever_ids(ROOT)
 
@@ -108,6 +112,8 @@ def main():
             # ones the loop below handles — stop them re-looping without polluting the human
             # surface. Idempotent (a parked task is neither open/failed nor chronic-listed again).
             if t.id in chronic_ids and t.status in ("open", "failed"):
+                if active_typed_pr_owner_id(t, lf.tasks) is not None:
+                    continue
                 park_chronic(t, "chronic (reopened ≥3×, never a PR)")
                 continue
             # SELF-MIGRATION: a task the machine previously escalated to needs_human for chronic
@@ -128,14 +134,20 @@ def main():
                            "(fleet-debt, not a human atom)"))
                 rehomed.append(t.id)
                 continue
-            if t.status != "dispatched":   # re-check fresh state under lock
+            if t.status != "dispatched":  # re-check fresh state under lock
                 continue
             if t.id in merged_ids:
                 t.status = "done"
                 t.updated = now
-                t.dispatch_log.append(DispatchLogEntry(
-                    timestamp=now, agent="limen", session_id="heal",
-                    status="done", output="heal-dispatch: PR merged → done"))
+                t.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id="heal",
+                        status="done",
+                        output="heal-dispatch: PR merged → done",
+                    )
+                )
                 merged_done.append(t.id)
             elif t.id in open_pr_ids:
                 # work produced an OPEN PR (awaiting merge) — mark done at the dispatch level
@@ -143,9 +155,15 @@ def main():
                 # itself is tracked separately (PR-close backlog), gated on CI/billing.
                 t.status = "done"
                 t.updated = now
-                t.dispatch_log.append(DispatchLogEntry(
-                    timestamp=now, agent="limen", session_id="heal",
-                    status="done", output="heal-dispatch: PR open (awaiting merge) → done"))
+                t.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id="heal",
+                        status="done",
+                        output="heal-dispatch: PR open (awaiting merge) → done",
+                    )
+                )
                 open_pr_done.append(t.id)
             elif t.id in closed_ids or t.id in nopr_ids:
                 # NO_PR: only reopen if STILL no PR url (daemon may have re-dispatched)
@@ -159,9 +177,15 @@ def main():
                 t.labels = [x for x in t.labels if not x.startswith("tried:")]
                 t.updated = now
                 why = "PR closed unmerged" if t.id in closed_ids else "dispatched but no PR (silent no-op)"
-                t.dispatch_log.append(DispatchLogEntry(
-                    timestamp=now, agent="limen", session_id="heal",
-                    status="open", output=f"heal-dispatch: {why} → reopened"))
+                t.dispatch_log.append(
+                    DispatchLogEntry(
+                        timestamp=now,
+                        agent="limen",
+                        session_id="heal",
+                        status="open",
+                        output=f"heal-dispatch: {why} → reopened",
+                    )
+                )
                 reopened.append(t.id)
 
         print(f"heal-dispatch: {len(merged_done)} merged→done, "

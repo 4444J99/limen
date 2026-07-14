@@ -167,3 +167,62 @@ def test_second_pass_is_a_fixed_point(tmp_path):
     r = subprocess.run([sys.executable, str(SCRIPT), "--apply"], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert (tmp_path / "tasks.yaml").read_text() == first, "re-run must change nothing (idempotent)"
+
+
+def test_chronic_active_receipt_owner_is_not_parked(tmp_path):
+    """A failed chronic attempt with an active typed PR receipt owner is NOT parked.
+
+    The active owner task is accountable for the leaf; the stale failed attempt is
+    historical — parking it would incorrectly surface fleet-debt onto the human surface
+    or loop a redundant path. The active-owner predicate is checked under the lock so a
+    successor created after verification cannot be falsely parked.
+    """
+    root = tmp_path
+    (root / "logs").mkdir()
+    created = "2026-07-14T00:00:00+00:00"
+    board = {
+        "tasks": [
+            {
+                "id": "past-comet",
+                "title": "historical failed attempt",
+                "created": created,
+                "status": "failed",
+                "target_agent": "codex",
+                "repo": "novel/harbor",
+                "predicate": 'test "$(gh pr view 88 --repo novel/harbor --json state --jq .state)" = MERGED',
+                "receipt_target": "https://github.com/novel/harbor/pull/88",
+                "dispatch_log": [{"timestamp": created, "agent": "limen", "session_id": "retry", "status": "open"}],
+            },
+            {
+                "id": "owner-lantern",
+                "title": "current PR owner",
+                "created": created,
+                "status": "open",
+                "type": "code",
+                "target_agent": "any",
+                "repo": "novel/harbor",
+                "predicate": 'test "$(gh pr view 88 --repo novel/harbor --json state --jq .state)" != OPEN',
+                "receipt_target": "github:NOVEL/harbor:pull-request:88",
+                "dispatch_log": [],
+            },
+        ]
+    }
+    (root / "tasks.yaml").write_text(yaml.safe_dump(board))
+    (root / "logs" / "dispatch-verify.json").write_text(
+        json.dumps(
+            {
+                "counts": {"CHRONIC": 1},
+                "detail": {},
+                "chronic": [{"id": "past-comet", "agent": "codex", "reopens": 3, "repo": "novel/harbor"}],
+            }
+        )
+    )
+    env = dict(os.environ, LIMEN_ROOT=str(root), LIMEN_TASKS=str(root / "tasks.yaml"))
+
+    result = subprocess.run([sys.executable, str(SCRIPT), "--apply"], env=env, capture_output=True, text=True)
+
+    assert result.returncode == 0, result.stderr
+    out = {task["id"]: task for task in yaml.safe_load((root / "tasks.yaml").read_text())["tasks"]}
+    assert out["past-comet"]["status"] == "failed", "active receipt owner protects the failed attempt"
+    assert out["owner-lantern"]["status"] == "open", "owner task is left untouched"
+    assert "0 chronic→parked" in result.stdout

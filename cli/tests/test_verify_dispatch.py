@@ -73,6 +73,74 @@ def test_chronic_tasks_excludes_inflight_dispatched_unless_no_pr_eligible(tmp_pa
     assert [c[0] for c in m.chronic_tasks([task], eligible_dispatched_ids={"ASYNC"})] == ["ASYNC"]
 
 
+def _failed_attempt(task_id="attempt-amber", receipt="https://github.com/Example/ledger/pull/731"):
+    return {
+        "id": task_id,
+        "status": "failed",
+        "target_agent": "codex",
+        "repo": "Example/ledger",
+        "receipt_target": receipt,
+        "dispatch_log": [{"status": "open"}, {"status": "open"}, {"status": "open"}],
+    }
+
+
+def _typed_owner(
+    task_id="owner-cobalt",
+    *,
+    status="open",
+    receipt="github:example/LEDGER:pull-request:731",
+):
+    return {
+        "id": task_id,
+        "status": status,
+        "type": "code",
+        "target_agent": "any",
+        "repo": "example/ledger",
+        "predicate": 'test "$(gh pr view 731 --repo example/ledger --json state --jq .state)" != OPEN',
+        "receipt_target": receipt,
+        "dispatch_log": [],
+    }
+
+
+def test_chronic_tasks_suppresses_failed_attempt_with_active_typed_pr_owner(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    original = _failed_attempt("historical-raven")
+    successor = _typed_owner("current-orchid")
+
+    assert m.chronic_tasks([original, successor]) == []
+
+
+def test_chronic_tasks_still_flags_failed_attempt_without_successor(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+
+    assert [row[0] for row in m.chronic_tasks([_failed_attempt("unowned-raven")])] == ["unowned-raven"]
+
+
+def test_chronic_tasks_still_flags_failed_attempt_with_wrong_receipt_owner(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    original = _failed_attempt("wrong-receipt-raven")
+    successor = _typed_owner("wrong-receipt-orchid", receipt="https://github.com/example/ledger/pull/997")
+
+    assert [row[0] for row in m.chronic_tasks([original, successor])] == ["wrong-receipt-raven"]
+
+
+def test_chronic_tasks_still_flags_failed_attempt_with_terminal_successor(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    original = _failed_attempt("terminal-owner-raven")
+    successor = _typed_owner("terminal-owner-orchid", status="done")
+
+    assert [row[0] for row in m.chronic_tasks([original, successor])] == ["terminal-owner-raven"]
+
+
+def test_chronic_tasks_still_flags_failed_attempt_with_untyped_successor(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    original = _failed_attempt("untyped-owner-raven")
+    successor = _typed_owner("untyped-owner-orchid")
+    successor.pop("predicate")
+
+    assert [row[0] for row in m.chronic_tasks([original, successor])] == ["untyped-owner-raven"]
+
+
 def test_classification_includes_async_running_marker(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
     now = datetime.datetime.now(datetime.timezone.utc)
