@@ -28,11 +28,23 @@ export LIMEN_ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 # Pin the daemon to its OWN python — a STABLE binary path (created with `venv --copies`) so a single
 # one-time macOS Full Disk Access grant on that ONE binary survives Homebrew python upgrades and lets the
 # usage organ read vendor app-data (~/.codex, ~/.claude, ~/.gemini) WITHOUT the recurring TCC consent
-# prompt. Structural, not best-effort: prepend the venv AND verify python3 resolves inside it. If the venv
-# is missing we fall back to system python but LOG it loudly — so the daemon never silently runs an
-# ungranted interpreter that re-triggers the prompt, and never dead-stops. ([[no-never-happens-again]])
+# prompt. Structural, not best-effort: prepend the venv AND verify python3 resolves inside it.
+# If the venv is missing or unhealthy, SELF-HEAL first (573 WARNs 2026-07-09→07-14 while the
+# prescribed remedy sat unrun — a sensor without an effector); only if the bootstrap fails do we
+# fall back to system python, LOGGED loudly, so the daemon never silently runs an ungranted
+# interpreter and never dead-stops. ([[no-never-happens-again]])
 LIMEN_VENV_PY="$LIMEN_ROOT/.venv/bin/python3"
-if [ -x "$LIMEN_VENV_PY" ]; then
+# Healthy = the pinned binary imports the limen package. A bare -x check passes a partial
+# bootstrap (venv created, pip failed) while every `python3 -m limen` beat step dies.
+venv_ok() { [ -x "$LIMEN_VENV_PY" ] && "$LIMEN_VENV_PY" -c "import limen, yaml" >/dev/null 2>&1; }
+if ! venv_ok; then
+  echo "$(date '+%F %T') INFO: pinned interpreter missing/unhealthy — bootstrapping $LIMEN_ROOT/.venv" \
+       >> "$LIMEN_ROOT/logs/heartbeat.out.log" 2>/dev/null || true
+  python3 -m venv --copies "$LIMEN_ROOT/.venv" >> "$LIMEN_ROOT/logs/heartbeat.out.log" 2>&1 || true
+  "$LIMEN_ROOT/.venv/bin/pip" install --quiet --editable "$LIMEN_ROOT/cli" pyyaml \
+       >> "$LIMEN_ROOT/logs/heartbeat.out.log" 2>&1 || true
+fi
+if venv_ok; then
   export PATH="$LIMEN_ROOT/.venv/bin:$PATH"; hash -r 2>/dev/null || true
   export LIMEN_PY="$LIMEN_VENV_PY"
 else

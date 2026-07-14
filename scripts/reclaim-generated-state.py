@@ -14,7 +14,6 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -96,6 +95,22 @@ def fmt_bytes(value: int | None) -> str:
     return f"{value} B"
 
 
+def _resolved(path: Path) -> Path:
+    try:
+        return path.resolve()
+    except OSError:
+        return path
+
+
+# The daemon's PINNED interpreters are runtime infrastructure, never generated debris:
+# heartbeat-loop.sh pins its python to $LIMEN_ROOT/.venv (a --copies venv whose stable binary
+# path holds the one-time macOS FDA/TCC grant and serves every `python3 -m limen` beat step),
+# and the editable limen install lives in cli/.venv. Both are git-ignored dirs named ".venv",
+# so without this exemption the reclaimer eats them and the loop's self-bootstrap would just
+# recreate them to be eaten again — the two organs fighting forever.
+PINNED_VENVS = frozenset({_resolved(ROOT / ".venv"), _resolved(ROOT / "cli" / ".venv")})
+
+
 def iter_git_roots(roots: list[Path]) -> list[Path]:
     found: list[Path] = []
     seen: set[Path] = set()
@@ -156,6 +171,8 @@ def generated_candidates(root: Path, *, timeout: int) -> list[Path]:
                 continue
             child = path / name
             if name in GENERATED_NAMES and is_ignored(root, child, timeout=timeout):
+                if _resolved(child) in PINNED_VENVS:
+                    continue  # pinned interpreter — skip entirely, never descend
                 candidates.append(child)
                 continue
             kept_dirs.append(name)
