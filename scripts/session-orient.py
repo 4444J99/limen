@@ -147,7 +147,7 @@ def section_board():
     if not counts:
         return ""
     parts = []
-    for k in ("open", "dispatched", "in_progress", "done", "needs_human"):
+    for k in ("open", "dispatched", "in_progress", "done", "needs_human", "failed_blocked"):
         if counts.get(k):
             parts.append(f"{counts[k]} {k}")
     return "**Board** — " + " · ".join(parts) if parts else ""

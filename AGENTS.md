@@ -227,7 +227,7 @@ Do not invent states.
 | `in_progress` | Actively being worked |
 | `done` | Completed successfully |
 | `failed` | Attempted, did not succeed — retryable |
-| `failed_blocked` | Stopped by an external blocker (billing / auth / infra) |
+| `failed_blocked` | Stopped by an external blocker (billing / auth / infra), or parked chronic fleet-debt (reopened ≥3×, never a PR — `scripts/heal-dispatch.py` parks these here, never in `needs_human`) |
 | `needs_human` | Cannot proceed without a human action |
 | `archived` | Closed and suppressed from active steering |
 
@@ -363,7 +363,8 @@ Choose the terminal state precisely:
 
 - `failed` — the attempt ran and did not succeed, but another attempt may fix it.
 - `failed_blocked` — an external system blocked progress (billing, auth, unavailable service,
-  broken dependency outside the repo).
+  broken dependency outside the repo), or the healer parked chronic fleet-debt there
+  (reopened ≥3×, never a PR — keep `needs_human` for genuinely human-gated atoms).
 - `needs_human` — the next required action is a real human decision or manual step.
 
 For `done`, include the evidence: predicate command, result, changed paths, PR/commit if any, and

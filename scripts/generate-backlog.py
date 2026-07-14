@@ -85,7 +85,7 @@ TEMPLATES = [
 ]
 
 # statuses that count as "this (repo,lever) is already being worked" — don't duplicate those.
-_ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+_ACTIVE = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
 
 
 def _org_repos() -> list[str]:

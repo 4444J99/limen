@@ -81,6 +81,20 @@ def test_chronic_needs_human_is_wasted(tmp_path: Path):
     assert recs["CHRONIC"]["sunk"] > 0
 
 
+def test_chronic_failed_blocked_is_wasted_nonchronic_not_weighed(tmp_path: Path):
+    # heal-dispatch now parks chronic fleet-debt in failed_blocked (off the human surface);
+    # the sunk-cost accounting must follow it there. A genuinely externally-blocked task
+    # (non-chronic) stays unweighed — it may still resolve.
+    tasks = [
+        _task("PARKED", "failed_blocked", reopens=3, attempts=3),
+        _task("EXT", "failed_blocked", attempts=1),
+    ]
+    recs = {r["task_id"]: r for r in _records(_run(tmp_path, tasks, "--backfill", "--print"))}
+    assert recs["PARKED"]["grade"] == "wasted", "chronic parked debt is sunk cost"
+    assert recs["PARKED"]["sunk"] > 0
+    assert "EXT" not in recs, "non-chronic failed_blocked is not yet weighable"
+
+
 def test_idempotent_append(tmp_path: Path):
     tasks = [_task("D1", "done", pr="o/r/pull/9"), _task("D2", "archived", labels=["cancelled"])]
     _run(tmp_path, tasks)  # first pass appends 2

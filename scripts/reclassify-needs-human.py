@@ -15,6 +15,10 @@ Classification is DERIVED from signals, never a pinned id list:
     daemon is already dispatching) -> recommend close, don't re-queue.
   * REVIEW: an `ACTIVATION AUDIT: skip|kill` decision — "kill" is irreversible, so NEVER auto-flip;
     a one-pass human/triage call.
+  * CHRONIC (report-only): the machine escalated it for chronic churn (reopened >=3x, never a PR —
+    the dispatch_log carries heal-dispatch's evidence). NEVER flipped to open: flipping is what fed
+    the reclassify<->heal-dispatch oscillation. heal-dispatch owns the write (re-homes these to
+    failed_blocked on its beat).
 
 Dry-run by default: prints the four buckets so every decision is visible. With --apply it flips ONLY
 the FLIP bucket `needs_human -> open`, lockless + atomic (re-read fresh under the limen save path,
@@ -31,6 +35,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.chronic import chronic_escalated_to_needs_human  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
@@ -108,6 +113,12 @@ def classify(task, dispatch_live: bool) -> str:
         return "KEEP"
     if task.id.startswith(_HUMAN_ID_PREFIXES):
         return "KEEP"
+    # Chronic fleet-debt is checked BEFORE the credential-keyword net: many chronic bodies carry
+    # noisy human-signal keywords, but the machine (not a human) parked them, and heal-dispatch
+    # will re-home them to failed_blocked — reporting them KEEP (or flipping them to open) would
+    # re-feed the oscillation. Report-only: --apply never touches CHRONIC.
+    if chronic_escalated_to_needs_human(task):
+        return "CHRONIC"
     if _REVIEW_SIGNAL.search(blob):
         return "REVIEW"
     if _HUMAN_SIGNALS.search(blob):
@@ -124,6 +135,8 @@ _REASON = {
     "FLIP": "fleet-buildable code/docs — no human-only signal",
     "STALE": "precondition already satisfied (daemon already dispatching) — recommend close",
     "REVIEW": "irreversible/ambiguous (skip-vs-kill) — one human triage pass",
+    "CHRONIC": "chronic fleet-debt (reopened ≥3×, never a PR) — heal-dispatch re-homes to "
+               "failed_blocked; never flipped to open",
 }
 
 
@@ -139,7 +152,7 @@ def main() -> int:
     dispatch_live = _dispatch_is_live()
     nh = [t for t in lf.tasks if t.status == "needs_human"]
 
-    buckets: dict[str, list] = {"KEEP": [], "FLIP": [], "STALE": [], "REVIEW": []}
+    buckets: dict[str, list] = {"KEEP": [], "FLIP": [], "STALE": [], "REVIEW": [], "CHRONIC": []}
     for t in nh:
         buckets[classify(t, dispatch_live)].append(t)
 
@@ -156,12 +169,14 @@ def main() -> int:
         f"- **STALE — {len(buckets['STALE'])}** precondition already met — recommend close, don't re-queue.",
         f"- **REVIEW — {len(buckets['REVIEW'])}** one quick triage call (skip vs *kill* — kill is "
         "irreversible, never auto-flipped).",
+        f"- **CHRONIC — {len(buckets['CHRONIC'])}** chronic fleet-debt (reopened ≥3×, never a PR) — "
+        "heal-dispatch re-homes these to `failed_blocked` on its beat; never flipped to open here.",
         "",
         "> `--apply` changes ONLY the FLIP bucket; KEEP / STALE / REVIEW are never auto-touched. "
         "Flipping `needs_human -> open` only lets the fleet *attempt* the work — fully reversible.",
         "",
     ]
-    for b in ("FLIP", "STALE", "REVIEW", "KEEP"):
+    for b in ("FLIP", "STALE", "REVIEW", "CHRONIC", "KEEP"):
         md += [f"## {b} — {_REASON[b]}", "", "| id | type | repo | title |", "|---|---|---|---|"]
         for t in buckets[b]:
             md.append(f"| `{t.id}` | {t.type} | {t.repo or '—'} | {(t.title or '')[:70]} |")
@@ -176,7 +191,7 @@ def main() -> int:
 
     # console -------------------------------------------------------------------------------------
     print(f"# reclassify-needs-human: {len(nh)} needs_human  (dispatch_live={dispatch_live})")
-    for b in ("KEEP", "FLIP", "STALE", "REVIEW"):
+    for b in ("KEEP", "FLIP", "STALE", "REVIEW", "CHRONIC"):
         print(f"  {b:6} {len(buckets[b]):2}  — {_REASON[b]}")
     flip_ids = [t.id for t in buckets["FLIP"]]
     print("\nFLIP -> open:")

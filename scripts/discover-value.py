@@ -42,7 +42,7 @@ from limen.tabularius import submit_task_upsert  # noqa: E402
 # Thinking lanes — discovery is reasoning work, so route it to the lanes that reason best, round-robin.
 _THINK_LANES = ["codex", "claude", "opencode"]
 # statuses that mean a repo is already getting attention — don't re-discover or double up.
-_ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+_ACTIVE = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
 _DISCOVER_PREFIX = "DISCOVER-"
 _DISPOSITION_SCHEMA = "limen.value_discovery_dispositions.v1"
 

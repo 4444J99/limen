@@ -40,7 +40,7 @@ _BUILD_STAGES = {"scaffold", "building", "maturing"}
 _ORGAN_LABELS = {"organ", "institution", "vltima"}
 
 # statuses that mean a (repo,lever) is already being worked — never duplicate those.
-_ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+_ACTIVE = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
 
 # Per-band institution levers. {pillar}/{organ}/{rival}/{macro}/{micro}/{domain_map}/{first_artifact}/
 # {home}/{repo} are filled per organ from organ-ladder.json. key = labels[0] (the per-(repo,lever)

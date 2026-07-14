@@ -85,8 +85,8 @@ def grade(t: dict) -> dict | None:
     """Weigh one task's return. None ⇒ not yet resolvable (still in flight / pending human)."""
     status = t.get("status")
     chronic = _is_chronic(t)
-    if status not in _RESOLVED and not (status == "needs_human" and chronic):
-        return None  # open / dispatched / in_progress / non-chronic needs_human → not yet weighable
+    if status not in _RESOLVED and not (status in ("needs_human", "failed_blocked") and chronic):
+        return None  # open / dispatched / in_progress / non-chronic needs_human/failed_blocked → not yet weighable
 
     pr = _pr_ref(t)
     cost = _positive_int(t.get("budget_cost"), 1)
@@ -102,8 +102,8 @@ def grade(t: dict) -> dict | None:
         g, note = "wasted", "cancelled/no-op — effort produced nothing"
     elif status == "archived":
         g, note = "marginal", "archived without a shippable PR artifact"
-    else:  # chronic needs_human
-        g, note = "wasted", "chronic — reopened, never a PR (escalated)"
+    else:  # chronic needs_human / chronic failed_blocked (parked fleet-debt)
+        g, note = "wasted", "chronic — reopened, never a PR (parked off the dispatch loop)"
 
     spent = cost * (attempts if _archived_reason(t) == "cancelled" else max(1, attempts))
     return {

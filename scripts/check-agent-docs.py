@@ -258,6 +258,18 @@ def main() -> int:
                 errors.append(f"CLAUDE.md '{heading}' lacks {label}")
         except ValueError as exc:
             errors.append(str(exc))
+    # 2026-07-14 standing correction: chronic fleet-debt (reopened ≥3×, never a PR) parks in
+    # failed_blocked, never needs_human — the human surface stays truthful. Bind the phrase so
+    # the Task States semantic can't silently drift back to escalating churn at the human.
+    try:
+        if "chronic fleet-debt" not in section(agents_text, "Task States"):
+            errors.append(
+                "AGENTS.md 'Task States' must bind failed_blocked to chronic fleet-debt "
+                "(heal-dispatch parks chronic churn there, not in needs_human)"
+            )
+    except ValueError as exc:
+        errors.append(str(exc))
+
     closeout_skill = ROOT / ".claude" / "skills" / "closeout" / "SKILL.md"
     if closeout_skill.exists():
         skill_text = closeout_skill.read_text(encoding="utf-8")

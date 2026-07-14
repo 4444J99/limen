@@ -48,7 +48,7 @@ _BUILD_STAGES = {"building", "deploy-ready"}
 _REVENUE_LABELS = {"revenue", "product", "ship-order"}
 
 # statuses that mean a (repo,lever) is already being worked — never duplicate those.
-_ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+_ACTIVE = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
 
 # Per-stage revenue levers. (key, priority, title, context-template). {product}/{repo}/{path} filled
 # per product. key = labels[0] (the per-(repo,lever) dedup handle); the win-class labels are appended.
