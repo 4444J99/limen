@@ -5,8 +5,8 @@ Two failure modes leak capacity:
   1. status==failed tasks just sit there. Re-open them at the TOP of the lane cascade
      (codex) so the dispatcher's per-task failover gives them a fresh run across lanes.
   2. status==dispatched jules tasks whose recorded session failed, stalled for
-     user feedback / plan approval, or is no longer in `jules remote list` (aged out / lost) are
-     orphaned — re-open so they re-dispatch fresh.
+     user feedback / plan approval, or is positively confirmed absent are orphaned — re-open so
+     they re-dispatch fresh. A miss in a non-exhaustive remote catalog is held, never reopened.
 
 Reversible (only flips status→open + target_agent + logs a heal entry); never deletes,
 never dispatches. Bounded by --limit. Run by the daemon's heal voice AND by supervision.
@@ -22,8 +22,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.jules_remote import (  # noqa: E402
-    JULES_RECOVERY_STATES,
     JulesRemoteSnapshot,
+    classify_jules_claim,
     coerce_jules_snapshot,
     probe_jules_remote_sessions,
     task_jules_session_id,
@@ -71,7 +71,10 @@ def main() -> int:
     selected_ids = set(args.task_ids or [])
 
     live: JulesRemoteSnapshot | None = None  # lazily fetched only if we have orphan candidates
-    reopened_failed, reopened_orphan, reopened_remote_failed, escalated_noop = [], [], [], []
+    reopened_failed: list[str] = []
+    reopened_orphan: list[str] = []
+    reopened_remote_failed: list[str] = []
+    escalated_noop: list[str] = []
 
     for t in lf.tasks:
         if selected_ids and t.id not in selected_ids:
@@ -128,10 +131,8 @@ def main() -> int:
                 continue
             if live is None:
                 live = coerce_jules_snapshot(live_jules_sessions())
-            if not live.available:
-                continue
-            remote_status = live.status(sid)
-            if remote_status in JULES_RECOVERY_STATES:
+            action, remote_status = classify_jules_claim(live, sid)
+            if action == "recover":
                 t.status = "open"
                 t.target_agent = CASCADE_TOP
                 t.updated = now
@@ -145,7 +146,7 @@ def main() -> int:
                     )
                 )
                 reopened_remote_failed.append(t.id)
-            elif remote_status is None:  # successful remote catalog proves session aged out / lost
+            elif action == "release":
                 t.status = "open"
                 t.updated = now
                 t.dispatch_log.append(

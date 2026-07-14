@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Mapping
 
 
@@ -28,18 +28,24 @@ class JulesRemoteSession:
 class JulesRemoteSnapshot:
     """One remote-list observation.
 
-    ``available`` distinguishes a successful empty catalog from a missing/broken CLI.  That
-    distinction is the release safety boundary: only a successful catalog may prove that a
-    recorded session is absent.
+    ``available`` means the provider answered; it does *not* mean a list response is exhaustive.
+    The Jules CLI currently exposes neither pagination nor an explicit completeness marker, so a
+    successful list miss is only ``unknown``.  Absence is authoritative only when an upstream
+    probe explicitly marks the whole catalog exhaustive or confirms the individual session absent.
     """
 
     available: bool
     sessions: Mapping[str, JulesRemoteSession]
     error: str = ""
+    exhaustive: bool = False
+    confirmed_absent: frozenset[str] = field(default_factory=frozenset)
 
     def status(self, session_id: str) -> str | None:
         session = self.sessions.get(session_id)
         return session.status if session is not None else None
+
+    def proves_absent(self, session_id: str) -> bool:
+        return session_id in self.confirmed_absent or (self.exhaustive and session_id not in self.sessions)
 
 
 def classify_jules_remote_status(status: str) -> str:
@@ -96,7 +102,14 @@ def probe_jules_remote_sessions(
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or f"exit {result.returncode}").strip()
         return JulesRemoteSnapshot(available=False, sessions={}, error=detail[:160])
-    return JulesRemoteSnapshot(available=True, sessions=parse_jules_remote_sessions(result.stdout or ""))
+    # `jules remote list --session` has no pagination/all-pages flag and emits no
+    # next-page or completeness metadata.  Never infer completeness from a row count: the
+    # provider may change its page size at any time.
+    return JulesRemoteSnapshot(
+        available=True,
+        sessions=parse_jules_remote_sessions(result.stdout or ""),
+        exhaustive=False,
+    )
 
 
 def task_jules_session_id(task: object) -> str:
@@ -117,6 +130,9 @@ def coerce_jules_snapshot(value: JulesRemoteSnapshot | Mapping[str, str]) -> Jul
         sessions={
             str(session_id): JulesRemoteSession(str(session_id), str(status)) for session_id, status in value.items()
         },
+        # A legacy mapping preserves known session statuses but carries no completeness evidence.
+        # Treat missing keys as unknown rather than preserving the old unsafe absent inference.
+        exhaustive=False,
     )
 
 
@@ -134,7 +150,9 @@ def classify_jules_claim(snapshot: JulesRemoteSnapshot, session_id: str) -> tupl
         return "hold", "session_id_unavailable"
     status = snapshot.status(session_id)
     if status is None:
-        return "release", "absent"
+        if snapshot.proves_absent(session_id):
+            return "release", "absent"
+        return "hold", "absence_unconfirmed"
     if status == "completed":
         return "harvest", status
     if status in JULES_RECOVERY_STATES:

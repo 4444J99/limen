@@ -11,7 +11,13 @@ import limen.jules_remote as jr
 import limen.dispatch as dispatch_module
 from limen.dispatch import release_stale_tasks
 from limen.io import load_limen_file, save_limen_file
-from limen.jules_remote import JulesRemoteSession, JulesRemoteSnapshot, parse_jules_remote_sessions
+from limen.jules_remote import (
+    JulesRemoteSession,
+    JulesRemoteSnapshot,
+    classify_jules_claim,
+    coerce_jules_snapshot,
+    parse_jules_remote_sessions,
+)
 from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task
 
 
@@ -46,9 +52,20 @@ def _write_stale_board(path: Path, *, target_agent: str = "jules") -> None:
     )
 
 
-def _snapshot(status: str | None, *, available: bool = True) -> JulesRemoteSnapshot:
+def _snapshot(
+    status: str | None,
+    *,
+    available: bool = True,
+    exhaustive: bool = False,
+    confirmed_absent: frozenset[str] = frozenset(),
+) -> JulesRemoteSnapshot:
     sessions = {} if status is None else {SID: JulesRemoteSession(SID, status)}
-    return JulesRemoteSnapshot(available=available, sessions=sessions)
+    return JulesRemoteSnapshot(
+        available=available,
+        sessions=sessions,
+        exhaustive=exhaustive,
+        confirmed_absent=confirmed_absent,
+    )
 
 
 def _apply(path: Path, snapshot: JulesRemoteSnapshot, *, target_agent: str = "jules"):
@@ -97,11 +114,47 @@ def test_awaiting_jules_session_routes_to_recovery_without_reopening(tmp_path: P
 
 
 def test_confirmed_absent_jules_session_is_reopened(tmp_path: Path) -> None:
-    report, task = _apply(tmp_path / "tasks.yaml", _snapshot(None))
+    report, task = _apply(tmp_path / "tasks.yaml", _snapshot(None, exhaustive=True))
 
     assert task.status == "open"
     assert report["released"] == ["STALE"]
     assert report["candidates"][0]["remote_status"] == "absent"
+
+
+def test_non_exhaustive_catalog_miss_holds_jules_claim(tmp_path: Path) -> None:
+    other_sid = "99999999999999999999"
+    snapshot = JulesRemoteSnapshot(
+        available=True,
+        sessions={other_sid: JulesRemoteSession(other_sid, "in_progress")},
+        exhaustive=False,
+    )
+
+    report, task = _apply(tmp_path / "tasks.yaml", snapshot)
+
+    assert task.status == "dispatched"
+    assert report["held"] == ["STALE"]
+    assert report["released"] == []
+    assert report["candidates"][0]["remote_status"] == "absence_unconfirmed"
+    assert report["remote_probe"]["catalog_exhaustive"] is False
+
+
+def test_session_specific_confirmed_absence_reopens_without_complete_catalog(tmp_path: Path) -> None:
+    report, task = _apply(
+        tmp_path / "tasks.yaml",
+        _snapshot(None, confirmed_absent=frozenset({SID})),
+    )
+
+    assert task.status == "open"
+    assert report["released"] == ["STALE"]
+    assert report["remote_probe"]["catalog_exhaustive"] is False
+    assert report["remote_probe"]["confirmed_absent_count"] == 1
+
+
+def test_legacy_mapping_preserves_statuses_but_cannot_prove_absence() -> None:
+    snapshot = coerce_jules_snapshot({"99999999999999999999": "completed"})
+
+    assert snapshot.exhaustive is False
+    assert classify_jules_claim(snapshot, SID) == ("hold", "absence_unconfirmed")
 
 
 def test_jules_cli_unavailable_holds_claim(tmp_path: Path) -> None:
@@ -187,3 +240,4 @@ def test_remote_probe_distinguishes_unavailable_from_confirmed_empty(monkeypatch
     assert unavailable.available is False
     assert empty.available is True
     assert empty.sessions == {}
+    assert empty.exhaustive is False

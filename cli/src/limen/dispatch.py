@@ -4928,6 +4928,8 @@ def _release_stale_probe_report(snapshot: JulesRemoteSnapshot | None, candidates
     return {
         "status": "available" if snapshot.available else "unavailable",
         "session_count": len(snapshot.sessions),
+        "catalog_exhaustive": snapshot.exhaustive,
+        "confirmed_absent_count": len(snapshot.confirmed_absent),
     }
 
 
