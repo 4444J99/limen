@@ -22,10 +22,10 @@ CHRONIC_EVIDENCE = "heal-dispatch: chronic (reopened ≥3×, never a PR) → esc
 LEGACY_EVIDENCE = "chronic (reopened >=3x, never a PR, fails all lanes) -> escalated out of dispatch loop"
 
 
-def _task(tid, status, *, labels=None, log=None):
+def _task(tid, status, *, title=None, labels=None, log=None):
     return {
         "id": tid,
-        "title": tid,
+        "title": title or tid,
         "created": CREATED,
         "status": status,
         "target_agent": "codex",
@@ -130,6 +130,24 @@ def test_needs_human_label_is_the_his_hand_opt_out(tmp_path):
     assert "chronic-fleet-debt" not in out["LBL2"]["labels"]
     # the "kept" write must never look like a machine escalation to the re-home predicate
     assert "escalat" not in out["LBL2"]["dispatch_log"][-1]["output"]
+
+
+def test_human_gated_chronic_stays_on_the_human_surface(tmp_path):
+    # the ownership rule (shared _human_signals, same as reclassify): a chronic task carrying a
+    # human marker is his hand — kept on / never re-homed off the human surface
+    out = _run(
+        tmp_path,
+        [
+            # freshly chronic from open, credential keyword in title → kept needs_human
+            _task("HG1", "open", title="wire the wrangler credential", log=[_entry("open")]),
+            # historical chronic escalation + human marker → NOT re-homed
+            _task("HG2", "needs_human", title="rotate the oauth token", log=[_entry("needs_human", CHRONIC_EVIDENCE)]),
+        ],
+        chronic_ids=["HG1"],
+    )
+    assert out["HG1"]["status"] == "needs_human", out["HG1"]
+    assert "chronic-fleet-debt" not in (out["HG1"].get("labels") or [])
+    assert out["HG2"]["status"] == "needs_human", out["HG2"]
 
 
 def test_second_pass_is_a_fixed_point(tmp_path):

@@ -2366,6 +2366,34 @@ parameters:
     owner: tabularius
     note: "Cadence (every N beats) of the sensor-canary rung in the heartbeat's scheduled derive lane — matches the gitvs precedent for a cheap audit pass. The generic scheduled runner resolves this override; heartbeat-loop.sh contains no sensor-specific cadence constant."
 
+  LIMEN_RECLASSIFY:
+    default: "1"
+    env: LIMEN_RECLASSIFY
+    self_update: none
+    owner: tabularius
+    note: "Gate for the needs_human-truth rung (sensors.yaml 0g6): scripts/reclassify-needs-human.py separates his real atoms from mislabeled fleet work on cadence. DRY by default — five visible buckets (KEEP/CHRONIC/FLIP/STALE/REVIEW) written to docs/RECLASSIFY-PROPOSAL.md, zero board writes. The flip/park effector is the separate safety valve LIMEN_RECLASSIFY_APPLY. Set 0 to silence."
+
+  LIMEN_BEAT_RECLASSIFY:
+    default: 12
+    env: LIMEN_BEAT_RECLASSIFY
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the needs_human reclassify rung in the heartbeat's scheduled derive lane. The generic scheduled runner resolves this override; heartbeat-loop.sh contains no sensor-specific cadence constant."
+
+  LIMEN_RECLASSIFY_TIMEOUT:
+    default: 60
+    env: LIMEN_RECLASSIFY_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-pass wall-clock bound (seconds) for the needs_human reclassify rung — one board read plus a proposal-doc write; 60s is generous headroom."
+
+  LIMEN_RECLASSIFY_APPLY:
+    default: "0"
+    env: LIMEN_RECLASSIFY_APPLY
+    self_update: none
+    owner: tabularius
+    note: "Arms the needs_human reclassify effector: 0 (default) reports the buckets only; 1 flips FLIP tasks needs_human->open and parks CHRONIC tasks needs_human->failed_blocked each cadence (status-only + provenance labels, idempotent, reversible; KEEP/STALE/REVIEW never auto-touched). Ships DARK — armed by lever L-RECLASSIFY-APPLY."
+
   LIMEN_PROMPT_ATOM_CONTROL:
     default: "0"
     env: LIMEN_PROMPT_ATOM_CONTROL

@@ -511,6 +511,16 @@
       "issue": 961
     },
     {
+      "id": "L-RECLASSIFY-APPLY",
+      "label": "Arm the needs_human truth drain: append `export LIMEN_RECLASSIFY_APPLY=1` to ~/.limen.env. The 0g6 sensor already runs the reclassifier DRY each cadence (five visible buckets → docs/RECLASSIFY-PROPOSAL.md); this one env line lets it also act — flip fleet-buildable tasks needs_human->open and park chronic fleet-debt needs_human->failed_blocked (status-only + provenance labels, idempotent, KEEP/STALE/REVIEW never auto-touched). The chronic INFLOW is already routed by ownership at the source (heal-dispatch + _human_signals) with no arming needed; this valve keeps the standing stock truthful without a manual --apply per drain. Reversible: set back to 0.",
+      "owner": "yours",
+      "cost": "~30 s once, reversible (one env line)",
+      "gate": "auto-mode classifier denies the agent appending a persistence-arming env flag (Unauthorized Persistence) — this arming is deliberately your hand",
+      "unlocks": "needs_human stays a truthful his-queue on cadence (no more 154→406 refills); armed-valve-audit flips this valve from SILENT-OFF to ARMED",
+      "source_task": "needs_human truth loop · limen PR (fix/needs-human-truth) · issue 829 lever 4/4",
+      "issue": 829
+    },
+    {
       "id": "L-LAUNCHAGENT-HEAL",
       "label": "Arm the launch-agent self-heal effector: append `export LIMEN_LAUNCHAGENT_HEAL=1` to ~/.limen.env. The 0g4 liveness sensor (live-wired in PR #1013) already detects the quarantined creds-hydrate organ every due beat; this single durable grant lets the beat auto-restore any down critical organ (mint / tunnel / credential organ / ianva gateway) from ~/Library/LaunchAgents.disabled quarantine — across quiesce and reboot, forever, with no per-incident approval.",
       "owner": "yours",

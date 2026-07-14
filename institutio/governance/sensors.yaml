@@ -342,6 +342,34 @@ sensors:
         tier: live                # reads the live daemon's voice stamps — offline omega SKIPs it visibly
         command: "python3 scripts/beat-sensors.py --canary"
 
+  reclassify-needs-human:
+    section: "0g6"
+    title: "needs_human truth — drain mislabeled fleet-buildable / chronic tasks from his queue"
+    gate: LIMEN_RECLASSIFY
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # The queue lied at 64% chronic fleet-debt (154→406 refill in 13h, 2026-07-13) until the
+    # chronic inflow was routed by ownership (heal-dispatch + scripts/_human_signals.py). This
+    # sensor keeps it truthful on cadence: DRY by default (five visible buckets →
+    # docs/RECLASSIFY-PROPOSAL.md); the flip/park effector is the safety valve below.
+    cadence:
+      env: LIMEN_BEAT_RECLASSIFY
+      default: 12
+    timeout:
+      env: LIMEN_RECLASSIFY_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/reclassify-needs-human.py"
+        args_when:
+          - env: LIMEN_RECLASSIFY_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "needs_human reclassify pass skipped or exceeded its bound"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"
