@@ -51,6 +51,8 @@ def _union_levers(ledger):
     for lev in list(his) + list(ledger_levers):
         if not isinstance(lev, dict):
             continue
+        if lev.get("discharged"):
+            continue
         lid = lev.get("id")
         if lid in seen:
             continue

@@ -79,9 +79,12 @@ def section_levers():
     """Open his-hand levers: count + the top few IDs (all PII-free in the registry)."""
     d = _read_json(ROOT / "his-hand-levers.json", {})
     levers = d.get("levers") if isinstance(d, dict) else (d if isinstance(d, list) else [])
-    if not isinstance(levers, list) or not levers:
+    if not isinstance(levers, list):
         return ""
-    ids = [str(lev.get("id") or lev.get("label", "?")) for lev in levers if isinstance(lev, dict)]
+    levers = [lev for lev in levers if isinstance(lev, dict) and not lev.get("discharged")]
+    if not levers:
+        return ""
+    ids = [str(lev.get("id") or lev.get("label", "?")) for lev in levers]
     head = ", ".join(ids[:4])
     more = f" +{len(ids) - 4} more" if len(ids) > 4 else ""
     return f"**His-hand levers** — {len(levers)} open · {head}{more} (detail: his-hand-levers.json)"

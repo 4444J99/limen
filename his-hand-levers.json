@@ -98,7 +98,8 @@
         "Until launchd lands, after any reboot/logout restart in one line: cd ianva && PYTHONPATH=$PWD/src python3 -m ianva.cli up  (binds :7666 in ~7s).",
         "Optional, later — populate upstreams (build-mcp-registry.py, or ~/.config/ianva/upstreams.json); the local face needs none, upstreams only matter for the cloud connector (see L-IANVA-CLOUD)."
       ],
-      "issue": 262
+      "issue": 262,
+      "discharged": "2026-07-10 (recorded 2026-07-14) — the one remaining flip was done: ~/Library/LaunchAgents/com.ianva.gateway.plist installed 7/10 17:57, service running since (launchctl: never exited), gateway listening on :7666 (verified 2026-07-14). Receipt: needs-human issue #262 CLOSED."
     },
     {
       "id": "L-IANVA-CLOUD",
@@ -511,16 +512,6 @@
       "issue": 961
     },
     {
-      "id": "L-RECLASSIFY-APPLY",
-      "label": "Arm the needs_human truth drain: append `export LIMEN_RECLASSIFY_APPLY=1` to ~/.limen.env. The 0g6 sensor already runs the reclassifier DRY each cadence (five visible buckets → docs/RECLASSIFY-PROPOSAL.md); this one env line lets it also act — flip fleet-buildable tasks needs_human->open and park chronic fleet-debt needs_human->failed_blocked (status-only + provenance labels, idempotent, KEEP/STALE/REVIEW never auto-touched). The chronic INFLOW is already routed by ownership at the source (heal-dispatch + _human_signals) with no arming needed; this valve keeps the standing stock truthful without a manual --apply per drain. Reversible: set back to 0.",
-      "owner": "yours",
-      "cost": "~30 s once, reversible (one env line)",
-      "gate": "auto-mode classifier denies the agent appending a persistence-arming env flag (Unauthorized Persistence) — this arming is deliberately your hand",
-      "unlocks": "needs_human stays a truthful his-queue on cadence (no more 154→406 refills); armed-valve-audit flips this valve from SILENT-OFF to ARMED",
-      "source_task": "needs_human truth loop · limen PR (fix/needs-human-truth) · issue 829 lever 4/4",
-      "issue": 829
-    },
-    {
       "id": "L-LAUNCHAGENT-HEAL",
       "label": "Arm the launch-agent self-heal effector: append `export LIMEN_LAUNCHAGENT_HEAL=1` to ~/.limen.env. The 0g4 liveness sensor (live-wired in PR #1013) already detects the quarantined creds-hydrate organ every due beat; this single durable grant lets the beat auto-restore any down critical organ (mint / tunnel / credential organ / ianva gateway) from ~/Library/LaunchAgents.disabled quarantine — across quiesce and reboot, forever, with no per-incident approval.",
       "owner": "yours",
@@ -529,7 +520,7 @@
       "unlocks": "recurrence immunity for the 2026-07-09 quiesce class; creds-hydrate auto-restores on the next due beat; armed-valve-audit flips this valve from SILENT-OFF to ARMED",
       "source_task": "sensor-lane live-wire · limen PR #1013 + #1020 · plan 2026-07-13",
       "note": "One-liner: printf '\\nexport LIMEN_LAUNCHAGENT_HEAL=1\\n' >> ~/.limen.env && launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat. The kickstart refreshes the heartbeat lane immediately (its shell sources ~/.limen.env at startup only); the metabolize lane picks the grant up on its own next pass either way. Verify after the next due beat: launchctl print gui/$(id -u)/com.limen.creds-hydrate exits 0 and logs/launch-agent-liveness.json shows green:true. creds-hydrate's write_env preserves unmanaged lines, so the grant survives hydration rewrites.",
-      "issue": 1046
+      "discharged": "2026-07-14 — operator ran the append himself; `export LIMEN_LAUNCHAGENT_HEAL=1` verified present (once) in ~/.limen.env. Heartbeat lane applies on its next restart/reboot; the metabolize lane picks the grant up on its own next pass. Same morning he also restored + bootstrapped com.limen.creds-hydrate (ran clean, 4 hydrated)."
     }
   ]
 }
