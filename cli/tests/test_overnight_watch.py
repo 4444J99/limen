@@ -36,6 +36,19 @@ def _fresh_module(tmp_path, monkeypatch, **env):
     return module
 
 
+def _minimal_ok_snapshot():
+    return {
+        "status": "ok",
+        "alerts": [],
+        "heartbeat": {},
+        "dispatch_control": {"allow_dispatch": True},
+        "worker_count": 0,
+        "heartbeat_child_count": 0,
+        "stale_tick_count": 0,
+        "log_age_sec": 0,
+    }
+
+
 def _launchd_output(*, state="active", async_env="1", lanes="auto"):
     return f"""
 state = {state}
@@ -213,6 +226,121 @@ def test_healthy_one_shot_writes_receipts(tmp_path, monkeypatch):
     assert module.RECEIPT_JSONL.exists()
     assert module.RECEIPT_MD.exists()
     assert not module.ALERT_PATH.exists()
+
+
+def test_pause_marker_exits_zero_with_blocked_receipt_before_expensive_work(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    module.PAUSE_MARKER.write_text("reason: integration drain\n", encoding="utf-8")
+    module.STATE_PATH.write_text(
+        json.dumps({"latest_tick": "2026-07-14T09:20:00+00:00", "stale_tick_count": 4}),
+        encoding="utf-8",
+    )
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("paused watch reached an expensive probe")
+
+    monkeypatch.setattr(module, "build_snapshot", forbidden)
+    monkeypatch.setattr(module, "heal", forbidden)
+    monkeypatch.setattr(module, "append_trial_observation", forbidden)
+    monkeypatch.setattr(module, "maybe_finalize_trial", forbidden)
+
+    assert module.run_once(dry_run=False, json_output=False) == 0
+
+    receipt = json.loads(module.RECEIPT_JSONL.read_text(encoding="utf-8").splitlines()[-1])
+    assert receipt["status"] == "blocked"
+    assert receipt["root"] == str(tmp_path.resolve())
+    assert receipt["pause_guard"] == {
+        "active": True,
+        "marker": "logs/AUTONOMY_PAUSED",
+        "source": "autonomy_pause",
+        "expensive_probes_run": 0,
+    }
+    assert receipt["dispatch_control"]["allow_dispatch"] is False
+    assert receipt["overnight_counts"]["dispatch_allowed"] is False
+    assert all(
+        receipt["overnight_counts"][key] == 0
+        for key in ("launched", "harvested", "reaped", "done", "failed", "no_op", "timed_out")
+    )
+    assert json.loads(module.STATE_PATH.read_text(encoding="utf-8"))["latest_tick"] == ("2026-07-14T09:20:00+00:00")
+    assert not module.TRIAL_OBSERVATION_PATH.exists()
+    assert "Status: `blocked`" in module.RECEIPT_MD.read_text(encoding="utf-8")
+
+
+def test_pause_marker_stops_attached_watch_without_sleeping(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    module.PAUSE_MARKER.write_text("reason: stop unattended work\n", encoding="utf-8")
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("paused attached watch entered its loop body")
+
+    monkeypatch.setattr(module, "build_snapshot", forbidden)
+    monkeypatch.setattr(module.time, "sleep", forbidden)
+
+    assert module.main(["--watch", "--interval", "999"]) == 0
+
+
+def test_pause_marker_blocks_new_unattended_trial(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    module.PAUSE_MARKER.write_text("reason: trial admission closed\n", encoding="utf-8")
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("paused watch started an unattended trial")
+
+    monkeypatch.setattr(module, "start_trial", forbidden)
+
+    assert module.main(["--start-trial"]) == 0
+    assert not module.TRIAL_WINDOW_PATH.exists()
+
+
+def test_missing_pause_marker_runs_normal_snapshot(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    calls = []
+
+    def fake_snapshot(**kwargs):
+        calls.append(kwargs)
+        return _minimal_ok_snapshot()
+
+    monkeypatch.setattr(module, "build_snapshot", fake_snapshot)
+
+    assert module.run_once(dry_run=True, json_output=False) == 0
+    assert calls == [{"refresh_handoff": False, "record_gate": False, "submit_lane_switch": False}]
+
+
+def test_existing_force_autonomy_override_runs_normal_snapshot(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch, LIMEN_FORCE_AUTONOMY=1)
+    module.PAUSE_MARKER.write_text("reason: overridden by governed escape hatch\n", encoding="utf-8")
+    calls = []
+
+    def fake_snapshot(**kwargs):
+        calls.append(kwargs)
+        return _minimal_ok_snapshot()
+
+    monkeypatch.setattr(module, "build_snapshot", fake_snapshot)
+
+    assert module.run_once(dry_run=True, json_output=False) == 0
+    assert len(calls) == 1
+
+
+def test_root_defaults_to_invoking_worktree_and_explicit_limen_root_wins(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("LIMEN_ROOT", raising=False)
+    spec = importlib.util.spec_from_file_location("overnight_watch_default_root", SCRIPT)
+    default_root_module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(default_root_module)
+
+    assert default_root_module.ROOT == SCRIPT.resolve().parents[1]
+    assert default_root_module.PAUSE_MARKER == SCRIPT.resolve().parents[1] / "logs" / "AUTONOMY_PAUSED"
+
+    explicit_root = tmp_path / "explicit-limen-root"
+    monkeypatch.setenv("LIMEN_ROOT", str(explicit_root))
+    spec = importlib.util.spec_from_file_location("overnight_watch_explicit_root", SCRIPT)
+    explicit_root_module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(explicit_root_module)
+
+    assert explicit_root_module.ROOT == explicit_root.resolve()
+    assert explicit_root_module.PAUSE_MARKER == explicit_root.resolve() / "logs" / "AUTONOMY_PAUSED"
 
 
 def test_repeated_tick_alerts_when_no_workers(tmp_path, monkeypatch):

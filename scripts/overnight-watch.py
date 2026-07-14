@@ -45,8 +45,9 @@ from limen.tabularius import pending_upsert_patches, submit_task_upsert  # noqa:
 from limen.worktree_debt import take_admission_snapshot  # noqa: E402
 
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
+ROOT = Path(os.environ.get("LIMEN_ROOT") or SOURCE_ROOT).expanduser().resolve()
 LOGS = ROOT / "logs"
+PAUSE_MARKER = LOGS / "AUTONOMY_PAUSED"
 TASKS_PATH = ROOT / "tasks.yaml"
 PRIVATE_SESSION_CORPUS = Path(
     os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
@@ -167,6 +168,25 @@ def run(args: list[str], timeout: int = 10) -> subprocess.CompletedProcess[str]:
         return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
     except Exception as exc:
         return subprocess.CompletedProcess(args, 1, "", str(exc))
+
+
+def autonomy_pause_active() -> bool:
+    """Return whether the repo-local autonomy pause must stop watch work.
+
+    ``LIMEN_FORCE_AUTONOMY=1`` is the existing governor/dispatch escape hatch.  The
+    watcher deliberately does not invent a second override.  An unreadable marker
+    path fails closed; a broken marker symlink is still a marker.
+    """
+
+    if os.environ.get("LIMEN_FORCE_AUTONOMY") == "1":
+        return False
+    try:
+        PAUSE_MARKER.lstat()
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return True
+    return True
 
 
 def tail_text(path: Path, nbytes: int = TAIL_BYTES) -> str:
@@ -4959,7 +4979,104 @@ def print_summary(snapshot: dict[str, Any]) -> None:
         print(f"  HEAL {json.dumps(action, sort_keys=True)}")
 
 
+def pause_guard_snapshot() -> dict[str, Any]:
+    """Build the cheap, counts-only receipt for an intentional autonomy pause."""
+
+    previous = load_json(STATE_PATH)
+    latest_tick = previous.get("latest_tick")
+    heartbeat: dict[str, Any] = {}
+    if latest_tick:
+        heartbeat["latest_tick"] = {
+            "timestamp": latest_tick,
+            "raw": "watch sampling skipped: autonomy paused",
+        }
+    next_command = "python3 scripts/autonomy-governor.py explain"
+    return {
+        "timestamp": iso_now(),
+        "root": str(ROOT),
+        "status": "blocked",
+        "pause_guard": {
+            "active": True,
+            "marker": "logs/AUTONOMY_PAUSED",
+            "source": "autonomy_pause",
+            "expensive_probes_run": 0,
+        },
+        "log_age_sec": None,
+        "heartbeat": heartbeat,
+        "launchd": {"ok": True, "state": "paused"},
+        "workers": [],
+        "worker_count": 0,
+        "heartbeat_children": [],
+        "heartbeat_child_count": 0,
+        "stale_tick_count": int(previous.get("stale_tick_count") or 0),
+        "thresholds": {
+            "max_log_age_sec": MAX_LOG_AGE_SEC,
+            "max_stale_ticks": MAX_STALE_TICKS,
+        },
+        "token_report": {},
+        "task_events": {},
+        "prompt_authority": {},
+        "handoff_relay": {
+            "ok": False,
+            "skipped": "autonomy_pause",
+            "refresh_returncode": None,
+            "check_returncode": None,
+        },
+        "value_gate": {
+            "action": "autonomy_paused",
+            "returncode": 0,
+            "skipped": True,
+        },
+        "dispatch_control": {
+            "allow_dispatch": False,
+            "exit_code": 0,
+            "reason": "autonomy pause marker is present",
+            "next_command": next_command,
+        },
+        "lane_switch": {"status": "skipped_autonomy_pause", "ticket_count": 0},
+        "overnight_counts": {
+            "launched": 0,
+            "harvested": 0,
+            "reaped": 0,
+            "done": 0,
+            "failed": 0,
+            "no_op": 0,
+            "timed_out": 0,
+            "stale_handoff": False,
+            "gate_action": "autonomy_paused",
+            "gate_exit": 0,
+            "dispatch_allowed": False,
+            "lane_switch_status": "skipped_autonomy_pause",
+            "lane_switch_task": "",
+            "lane_switch_ticket_count": 0,
+            "lane_switch_blocker": "",
+            "next_command": next_command,
+        },
+        "plist_drift": [],
+        "throughput": {"suppressed": "governor-paused"},
+        "alerts": [],
+    }
+
+
+def stop_for_autonomy_pause(*, dry_run: bool, json_output: bool) -> int | None:
+    """Write one blocked receipt and exit zero before any expensive watch probe."""
+
+    if not autonomy_pause_active():
+        return None
+    snapshot = pause_guard_snapshot()
+    if not dry_run:
+        write_receipts(snapshot)
+    if json_output:
+        print(json.dumps(snapshot, indent=2, sort_keys=True))
+    else:
+        print_summary(snapshot)
+    return 0
+
+
 def run_once(*, dry_run: bool, json_output: bool) -> int:
+    paused_rc = stop_for_autonomy_pause(dry_run=dry_run, json_output=json_output)
+    if paused_rc is not None:
+        return paused_rc
     snapshot = build_snapshot(
         refresh_handoff=not dry_run,
         record_gate=not dry_run,
@@ -5039,6 +5156,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.start_trial:
+        paused_rc = stop_for_autonomy_pause(dry_run=False, json_output=args.json)
+        if paused_rc is not None:
+            return paused_rc
         try:
             marker, changed = start_trial()
         except TrialContractError as exc:
@@ -5100,6 +5220,9 @@ def main(argv: list[str] | None = None) -> int:
 
     samples = 0
     while True:
+        paused_rc = stop_for_autonomy_pause(dry_run=args.dry_run, json_output=args.json)
+        if paused_rc is not None:
+            return paused_rc
         rc = run_once(dry_run=args.dry_run, json_output=args.json)
         if rc:
             return rc

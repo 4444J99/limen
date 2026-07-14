@@ -9,6 +9,17 @@ Default mode is one-shot:
 python3 scripts/overnight-watch.py
 ```
 
+The entrypoint resolves its root from explicit `LIMEN_ROOT`, otherwise from the
+checkout that owns the invoked script. Before a normal sample, attached
+`--watch` sample, or `--start-trial`, it checks that root's
+`logs/AUTONOMY_PAUSED`. When the marker is present, the process writes one
+counts-only `blocked` receipt with zero probes and exits successfully; it does
+not inspect the board/corpus, heal services, append a trial observation, or
+enter/continue the attached loop. The only bypass is the existing governed
+escape hatch, `LIMEN_FORCE_AUTONOMY=1`; the watcher defines no separate pause
+override. Explicit `--finalize-trial` and read-only `--check-trial` remain
+available while paused so an operator can close or inspect existing custody.
+
 It writes:
 
 - `logs/overnight-watch.jsonl` append-only receipts
