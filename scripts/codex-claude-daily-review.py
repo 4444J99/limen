@@ -814,7 +814,7 @@ def render_markdown(review: dict[str, Any]) -> str:
         "## Evidence Commands",
         "",
         f"- Daily review: `python3 scripts/codex-claude-daily-review.py --date {review['date']} --until {review['window']['until']} --generated-at {review['snapshot_at']} --write`",
-        f"- Codex accounting: `python3 scripts/codex-token-accounting.py <daily-files> --since-hours 0 --limit-sessions 0 --max-phases 100000 --no-write --json`",
+        "- Codex accounting: `python3 scripts/codex-token-accounting.py <daily-files> --since-hours 0 --limit-sessions 0 --max-phases 100000 --no-write --json`",
         "- Claude transcript guard: `python3 scripts/claude-workflow-guard.py audit-transcript <filtered-session.jsonl>`",
         f"- Value context: `python3 scripts/session-value-review.py --since {review['window']['since']} --until {review['window']['until']}`",
         f"- Private JSON snapshot: `{private_json}`",
