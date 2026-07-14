@@ -42,6 +42,10 @@ limen dispatch --agent jules --limit 100 --live
 # Check the board and budget
 limen status
 
+# Inspect partial board progress, source readiness, and work-loan metadata
+limen progress
+limen progress --view workstream --scope financial --all
+
 # Harvest results from completed dispatches
 limen harvest
 ```
@@ -65,6 +69,7 @@ Mounts `./tasks.yaml` into the API container.
 | `limen doctor` | `--agent` (default jules), `--json-output`, `--report-file` | Report local readiness for dispatch and stale-claim recovery. |
 | `limen qa` | `--agent` (default jules), `--json-output`, `--report-file` | Report QA lifecycle gates and steering queues without mutating tasks. |
 | `limen status` | `--agent`, `--status` | Show the task board. |
+| `limen progress` | `--view`, `--scope`, `--level`, `--all`, `--json-output`, `--report-file`, `--ascii` | Inspect the partial board-progress and source-coverage lens. |
 | `limen harvest` | `--agent` | Check for completed dispatches and update task states. |
 | `limen workstream` | `--from`, `--prompt`, `--prompt-file`, `--codex`, `--shell` | Create/reuse a repo worktree plus a private `.limen-workstream/README.md` and `kickstart.sh`. |
 

@@ -16,6 +16,7 @@ from limen.doctor import (
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.harvest import harvest_results
 from limen.io import load_limen_file, load_limen_text
+from limen.progress import build_progress_snapshot, render_progress
 from limen.status import print_status
 
 
@@ -181,6 +182,84 @@ def status(agent, status):
     print_status(limen, agent_filter=agent, status_filter=status)
 
 
+@main.command()
+@click.option(
+    "--view",
+    type=click.Choice(["workstream", "origin", "horizon", "agent", "repo", "status"]),
+    default="workstream",
+    show_default=True,
+    help="Macro grouping and micro drill-down dimension.",
+)
+@click.option(
+    "--scope",
+    default=None,
+    help="Show one value from --view (for example financial or past).",
+)
+@click.option(
+    "--level",
+    type=click.Choice(["macro", "micro", "all"]),
+    default="all",
+    show_default=True,
+    help="Zoom level.",
+)
+@click.option(
+    "--limit",
+    default=50,
+    type=click.IntRange(min=0),
+    show_default=True,
+    help="Micro rows to print.",
+)
+@click.option("--all", "show_all", is_flag=True, help="Print every matching active debt leaf.")
+@click.option("--ascii", "ascii_only", is_flag=True, help="Use ASCII progress bars.")
+@click.option(
+    "--json-output",
+    "json_output",
+    is_flag=True,
+    help="Print the bounded machine-readable board and source-coverage lens.",
+)
+@click.option(
+    "--report-file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write the bounded board and source-coverage lens to a JSON receipt.",
+)
+def progress(view, scope, level, limit, show_all, ascii_only, json_output, report_file):
+    """Filter the partial task-board projection and source-coverage lens.
+
+    Dark, stale, partial, capped, unavailable, failed, or incomplete source
+    contracts remain visible as coverage debt.  Source-owned leaves are not
+    imported.  Origin and horizon are explicit metadata only; Limen never
+    guesses whether a task is a human prompt, obligation, recommendation, or
+    past/present/future work from title resemblance.
+    """
+
+    root = resolve_root()
+    tasks_path = resolve_tasks_path(root)
+    if not tasks_path.exists():
+        click.echo("tasks.yaml not found", err=True)
+        raise click.ClickException("cannot build board-progress lens")
+    limen = load_limen_file(tasks_path)
+    snapshot = build_progress_snapshot(limen, root)
+    if report_file:
+        output = Path(report_file).expanduser()
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(snapshot, indent=2) + "\n", encoding="utf-8")
+    if json_output:
+        click.echo(json.dumps(snapshot, indent=2))
+        return
+    click.echo(
+        render_progress(
+            snapshot,
+            view=view,
+            scope=scope,
+            level=level,
+            limit=None if show_all else limit,
+            ascii_only=ascii_only,
+        ),
+        nl=False,
+    )
+
+
 def _open_prs_via_gh(limit: int = 200):
     """Enumerate open PRs in the current repo via `gh pr list` → list[workstream.PullRequest].
 
@@ -229,7 +308,11 @@ def _open_prs_via_gh(limit: int = 200):
 
 
 @main.command()
-@click.option("--scope", default=None, help="Show only one channel (accepts an alias, e.g. 'revenue').")
+@click.option(
+    "--scope",
+    default=None,
+    help="Show only one channel (accepts an alias, e.g. 'revenue').",
+)
 @click.option(
     "--emit",
     default=None,
@@ -242,7 +325,12 @@ def _open_prs_via_gh(limit: int = 200):
     is_flag=True,
     help="Project OPEN PRs (via gh) by channel instead of the task board — makes PR sprawl legible.",
 )
-@click.option("--json-output", "json_output", is_flag=True, help="Machine-readable roster + per-channel counts.")
+@click.option(
+    "--json-output",
+    "json_output",
+    is_flag=True,
+    help="Machine-readable roster + per-channel counts.",
+)
 def channels(scope, emit, prs_mode, json_output):
     """Project the board by workstream channel — the purpose partition above vendor lanes.
 
@@ -259,7 +347,10 @@ def channels(scope, emit, prs_mode, json_output):
 
     if prs_mode:
         if emit:
-            click.echo("--emit projects the task board, not PRs; drop --prs or --emit", err=True)
+            click.echo(
+                "--emit projects the task board, not PRs; drop --prs or --emit",
+                err=True,
+            )
             sys.exit(2)
         prs = _open_prs_via_gh()
         if json_output:
@@ -307,17 +398,42 @@ def harvest(agent):
     is_flag=True,
     help="Require a prompt, embed the live derive-not-force contract, and start Codex with the README.",
 )
-@click.option("--codex", "launch_codex", is_flag=True, help="Open Codex in the worktree after creating the packet.")
 @click.option(
-    "--shell", "launch_shell", is_flag=True, help="Open a login shell in the worktree after creating the packet."
+    "--codex",
+    "launch_codex",
+    is_flag=True,
+    help="Open Codex in the worktree after creating the packet.",
 )
-@click.option("--from", "from_ref", default=None, help="Branch or ref to create the worktree branch from.")
-@click.option("--prompt", "prompt_text", default=None, help="Inline prompt packet for .limen-workstream/README.md.")
 @click.option(
-    "--prompt-file", default=None, type=click.Path(exists=True), help="Prompt packet file to embed in README.md."
+    "--shell",
+    "launch_shell",
+    is_flag=True,
+    help="Open a login shell in the worktree after creating the packet.",
+)
+@click.option(
+    "--from",
+    "from_ref",
+    default=None,
+    help="Branch or ref to create the worktree branch from.",
+)
+@click.option(
+    "--prompt",
+    "prompt_text",
+    default=None,
+    help="Inline prompt packet for .limen-workstream/README.md.",
+)
+@click.option(
+    "--prompt-file",
+    default=None,
+    type=click.Path(exists=True),
+    help="Prompt packet file to embed in README.md.",
+)
+@click.option(
+    "--no-readme",
+    is_flag=True,
+    help="Create/reuse the worktree without writing the private kickoff packet.",
 )
 @click.option("--workstream", "workstream_handle", default=None, help="Pin the capsule to one purpose channel.")
-@click.option("--no-readme", is_flag=True, help="Create/reuse the worktree without writing the private kickoff packet.")
 @click.argument("repo")
 @click.argument("slug")
 def workstream(
@@ -365,7 +481,11 @@ def workstream(
 
 
 @main.command()
-@click.option("--verify", is_flag=True, help="Prove the fold reproduces the board byte-for-byte (exit 1 if not).")
+@click.option(
+    "--verify",
+    is_flag=True,
+    help="Prove the fold reproduces the board byte-for-byte (exit 1 if not).",
+)
 @click.option(
     "--emit-events",
     "emit_events",
@@ -407,7 +527,9 @@ def materialize(verify, emit_events):
         # canonical serialization = exactly what save_limen_file writes (mode=json, exclude_none,
         # sort_keys=False). Compare against the snapshot we loaded from — not a fresh read.
         rebuilt_bytes = yaml.dump(
-            rebuilt.model_dump(mode="json", exclude_none=True), sort_keys=False, default_flow_style=False
+            rebuilt.model_dump(mode="json", exclude_none=True),
+            sort_keys=False,
+            default_flow_style=False,
         )
         identical = rebuilt_bytes == on_disk
         click.echo(
@@ -452,7 +574,11 @@ def observatory_doctor(offline):
 
 
 @observatory.command("run")
-@click.option("--apply/--dry-run", default=False, help="Default: dry-run (proposes; writes no lever/task)")
+@click.option(
+    "--apply/--dry-run",
+    default=False,
+    help="Default: dry-run (proposes; writes no lever/task)",
+)
 def observatory_run(apply):
     """Run the whole loop (collect → analyze → reconcile → brief) for one beat."""
     from limen.observatory import executive as obs_exec
