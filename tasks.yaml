@@ -100370,7 +100370,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: needs_human
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -100386,9 +100386,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/384 [auto-emitted\
     \ 2026-07-04 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 384 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/384
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-13T15:02:32.221627Z'
+  updated: '2026-07-14T06:19:43.255710Z'
   dispatch_log:
   - timestamp: '2026-07-06T15:18:06.974367Z'
     agent: jules
@@ -100472,6 +100475,33 @@ tasks:
     status: needs_human
     output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
       \ stop re-looping"
+  - timestamp: '2026-07-14T06:18:53.382754Z'
+    agent: codex
+    session_id: '15653622372813215097'
+    status: open
+    output: 'corrected bug-induced needs_human: Jules session 15653622372813215097
+      is directly pullable even though absent from the capped catalog; pull returned
+      no diff (0 patch bytes/lines/files); existing PR receipt is OPEN at e37847dd790b0a994dba8e1016988e18abbe8d67;
+      machine owner HEAL-rebase-organvm-limen-384 now holds the residual'
+  - timestamp: '2026-07-14T06:19:10.782573Z'
+    agent: codex
+    session_id: '15653622372813215097'
+    status: dispatched
+    output: 'corrected unsafe stale release: session 15653622372813215097 is directly
+      pullable; capped catalog absence was not proof of remote absence'
+  - timestamp: '2026-07-14T06:19:28.284684Z'
+    agent: codex
+    session_id: '15653622372813215097'
+    status: in_progress
+    output: Jules session 15653622372813215097 directly pulled and reviewed; result
+      contains no diff (0 patch bytes/lines/files)
+  - timestamp: '2026-07-14T06:19:43.255710Z'
+    agent: codex
+    session_id: '15653622372813215097'
+    status: failed
+    output: completed remote attempt produced no diff (0 patch bytes/lines/files);
+      PR remains OPEN at e37847dd790b0a994dba8e1016988e18abbe8d67 and conflict-dirty/red;
+      residual owner HEAL-rebase-organvm-limen-384
 - id: HEAL-cifix-organvm-limen-385
   title: fix failing CI on organvm/limen#385
   repo: organvm/limen
@@ -106705,7 +106735,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -106725,7 +106755,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/405
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-13T01:01:43.008679Z'
+  updated: '2026-07-14T06:19:18.629288Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:08:51.491276Z'
     agent: gemini
@@ -106783,6 +106813,19 @@ tasks:
     agent: jules
     session_id: '17833062018854546088'
     status: dispatched
+  - timestamp: '2026-07-14T06:19:01.179537Z'
+    agent: codex
+    session_id: '17833062018854546088'
+    status: in_progress
+    output: Jules session 17833062018854546088 directly pulled for review despite
+      catalog truncation; result contains no diff (0 patch bytes/lines/files)
+  - timestamp: '2026-07-14T06:19:18.629288Z'
+    agent: codex
+    session_id: '17833062018854546088'
+    status: failed
+    output: completed remote attempt produced no diff (0 patch bytes/lines/files);
+      PR remains OPEN at 21b10df2f2422e8e3ad281b1268549de27c68692 and conflict-dirty/red;
+      residual owner HEAL-rebase-organvm-limen-405
 - id: HEAL-cifix-organvm-limen-406
   title: fix failing CI on organvm/limen#406
   repo: organvm/limen
@@ -106790,7 +106833,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: needs_human
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -106806,9 +106849,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/406 [auto-emitted\
     \ 2026-07-04 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 406 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/406
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-13T15:02:32.221627Z'
+  updated: '2026-07-14T06:19:45.909328Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:15:49.677029Z'
     agent: codex
@@ -106880,6 +106926,33 @@ tasks:
     status: needs_human
     output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
       \ stop re-looping"
+  - timestamp: '2026-07-14T06:18:55.969782Z'
+    agent: codex
+    session_id: '15336966600402723206'
+    status: open
+    output: 'corrected bug-induced needs_human: Jules session 15336966600402723206
+      is directly pullable even though absent from the capped catalog; pull returned
+      no diff (0 patch bytes/lines/files); existing PR receipt is OPEN at 41bd5a66b4c40294c213cf49ccd3eecffac982db;
+      machine owner HEAL-rebase-organvm-limen-406 now holds the residual'
+  - timestamp: '2026-07-14T06:19:13.431701Z'
+    agent: codex
+    session_id: '15336966600402723206'
+    status: dispatched
+    output: 'corrected unsafe stale release: session 15336966600402723206 is directly
+      pullable; capped catalog absence was not proof of remote absence'
+  - timestamp: '2026-07-14T06:19:30.972910Z'
+    agent: codex
+    session_id: '15336966600402723206'
+    status: in_progress
+    output: Jules session 15336966600402723206 directly pulled and reviewed; result
+      contains no diff (0 patch bytes/lines/files)
+  - timestamp: '2026-07-14T06:19:45.909328Z'
+    agent: codex
+    session_id: '15336966600402723206'
+    status: failed
+    output: completed remote attempt produced no diff (0 patch bytes/lines/files);
+      PR remains OPEN at 41bd5a66b4c40294c213cf49ccd3eecffac982db and conflict-dirty/red;
+      residual owner HEAL-rebase-organvm-limen-406
 - id: HEAL-cifix-organvm-limen-407
   title: fix failing CI on organvm/limen#407
   repo: organvm/limen
@@ -107098,7 +107171,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: needs_human
+  status: failed
   labels:
   - cifix
   - self-heal
@@ -107114,9 +107187,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/409 [auto-emitted\
     \ 2026-07-04 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 409 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/409
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-13T15:02:32.221627Z'
+  updated: '2026-07-14T06:19:48.559499Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: codex
@@ -107199,6 +107275,33 @@ tasks:
     status: needs_human
     output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 escalated,\
       \ stop re-looping"
+  - timestamp: '2026-07-14T06:18:58.577975Z'
+    agent: codex
+    session_id: '18196565025242638533'
+    status: open
+    output: 'corrected bug-induced needs_human: Jules session 18196565025242638533
+      is directly pullable even though absent from the capped catalog; pull returned
+      no diff (0 patch bytes/lines/files); existing PR receipt is OPEN at 86690a1fa6bc1e4d36256c7f4b78eee869a1b8ce;
+      machine owner HEAL-rebase-organvm-limen-409 now holds the residual'
+  - timestamp: '2026-07-14T06:19:16.017729Z'
+    agent: codex
+    session_id: '18196565025242638533'
+    status: dispatched
+    output: 'corrected unsafe stale release: session 18196565025242638533 is directly
+      pullable; capped catalog absence was not proof of remote absence'
+  - timestamp: '2026-07-14T06:19:33.623421Z'
+    agent: codex
+    session_id: '18196565025242638533'
+    status: in_progress
+    output: Jules session 18196565025242638533 directly pulled and reviewed; result
+      contains no diff (0 patch bytes/lines/files)
+  - timestamp: '2026-07-14T06:19:48.559499Z'
+    agent: codex
+    session_id: '18196565025242638533'
+    status: failed
+    output: completed remote attempt produced no diff (0 patch bytes/lines/files);
+      PR remains OPEN at 86690a1fa6bc1e4d36256c7f4b78eee869a1b8ce and conflict-dirty/red;
+      residual owner HEAL-rebase-organvm-limen-409
 - id: HEAL-cifix-organvm-limen-410
   title: fix failing CI on organvm/limen#410
   repo: organvm/limen
@@ -140081,3 +140184,153 @@ tasks:
   created: '2026-07-14'
   updated: '2026-07-14T04:00:43.500121Z'
   dispatch_log: []
+- id: HEAL-rebase-organvm-limen-384
+  title: terminally reconcile conflict/supersession on organvm/limen#384
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  - semantic-supersession-audited
+  urls:
+  - https://github.com/organvm/limen/pull/384
+  context: 'PR organvm/limen#384 is OPEN and conflict-dirty at exact head e37847dd790b0a994dba8e1016988e18abbe8d67.
+    Terminally reconcile this existing PR without replaying its stale tree. Semantic
+    audit: 10 script-path deltas are absorbed on main; the social-kernel objective
+    landed through merged PRs #469/#489 and the CI repair through merged PR #487.
+    Recheck the exact head and original intent; if no unique current delta survives,
+    close the PR as superseded and record successor receipts #469, #487, #489; if
+    a unique safe delta survives, rebase only that delta onto current main, push to
+    the SAME PR branch, and land it through merge policy. Do not open a replacement
+    PR.'
+  predicate: test "$(gh pr view 384 --repo organvm/limen --json state --jq .state)"
+    != OPEN
+  receipt_target: https://github.com/organvm/limen/pull/384
+  depends_on: []
+  created: '2026-07-14'
+  updated: '2026-07-14T06:18:43.786868Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T06:18:43.786868Z'
+    agent: codex
+    session_id: codex-jules-release-reconcile-20260714
+    status: open
+    output: owner route created after remote-aware Jules reconciliation; exact PR
+      head=e37847dd790b0a994dba8e1016988e18abbe8d67; semantic successor proof recorded
+      in task context
+- id: HEAL-rebase-organvm-limen-405
+  title: terminally reconcile conflict/supersession on organvm/limen#405
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  - semantic-supersession-audited
+  urls:
+  - https://github.com/organvm/limen/pull/405
+  context: 'PR organvm/limen#405 is OPEN and conflict-dirty at exact head 21b10df2f2422e8e3ad281b1268549de27c68692.
+    Terminally reconcile this existing PR without replaying its stale tree. Semantic
+    audit: capacity-fill code is successor-owned by merged PR #672 and the ledger/docs
+    by merged PR #474. Recheck the exact head and original intent; if no unique current
+    delta survives, close the PR as superseded and record successor receipts #474,
+    #672; if a unique safe delta survives, rebase only that delta onto current main,
+    push to the SAME PR branch, and land it through merge policy. Do not open a replacement
+    PR.'
+  predicate: test "$(gh pr view 405 --repo organvm/limen --json state --jq .state)"
+    != OPEN
+  receipt_target: https://github.com/organvm/limen/pull/405
+  depends_on: []
+  created: '2026-07-14'
+  updated: '2026-07-14T06:18:43.787094Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T06:18:43.787094Z'
+    agent: codex
+    session_id: codex-jules-release-reconcile-20260714
+    status: open
+    output: owner route created after remote-aware Jules reconciliation; exact PR
+      head=21b10df2f2422e8e3ad281b1268549de27c68692; semantic successor proof recorded
+      in task context
+- id: HEAL-rebase-organvm-limen-406
+  title: terminally reconcile conflict/supersession on organvm/limen#406
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  - semantic-supersession-audited
+  urls:
+  - https://github.com/organvm/limen/pull/406
+  context: 'PR organvm/limen#406 is OPEN and conflict-dirty at exact head 41bd5a66b4c40294c213cf49ccd3eecffac982db.
+    Terminally reconcile this existing PR without replaying its stale tree. Semantic
+    audit: capacity-fill code/ledger/docs are successor-owned by merged PRs #672/#474/#477;
+    its unique generator is obsolete under dynamic-provider, typed-intake, and TABVLARIVS
+    doctrine (#750/#978). Recheck the exact head and original intent; if no unique
+    current delta survives, close the PR as superseded and record successor receipts
+    #474, #477, #672, #750, #978; if a unique safe delta survives, rebase only that
+    delta onto current main, push to the SAME PR branch, and land it through merge
+    policy. Do not open a replacement PR.'
+  predicate: test "$(gh pr view 406 --repo organvm/limen --json state --jq .state)"
+    != OPEN
+  receipt_target: https://github.com/organvm/limen/pull/406
+  depends_on: []
+  created: '2026-07-14'
+  updated: '2026-07-14T06:18:43.787158Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T06:18:43.787158Z'
+    agent: codex
+    session_id: codex-jules-release-reconcile-20260714
+    status: open
+    output: owner route created after remote-aware Jules reconciliation; exact PR
+      head=41bd5a66b4c40294c213cf49ccd3eecffac982db; semantic successor proof recorded
+      in task context
+- id: HEAL-rebase-organvm-limen-409
+  title: terminally reconcile conflict/supersession on organvm/limen#409
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  - semantic-supersession-audited
+  urls:
+  - https://github.com/organvm/limen/pull/409
+  context: 'PR organvm/limen#409 is OPEN and conflict-dirty at exact head 86690a1fa6bc1e4d36256c7f4b78eee869a1b8ce.
+    Terminally reconcile this existing PR without replaying its stale tree. Semantic
+    audit: capacity-fill code/ledger/docs are successor-owned by merged PRs #672/#474/#477;
+    the dated lane checkup remains preserved in the PR receipt. Recheck the exact
+    head and original intent; if no unique current delta survives, close the PR as
+    superseded and record successor receipts #474, #477, #672; if a unique safe delta
+    survives, rebase only that delta onto current main, push to the SAME PR branch,
+    and land it through merge policy. Do not open a replacement PR.'
+  predicate: test "$(gh pr view 409 --repo organvm/limen --json state --jq .state)"
+    != OPEN
+  receipt_target: https://github.com/organvm/limen/pull/409
+  depends_on: []
+  created: '2026-07-14'
+  updated: '2026-07-14T06:18:43.787208Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T06:18:43.787208Z'
+    agent: codex
+    session_id: codex-jules-release-reconcile-20260714
+    status: open
+    output: owner route created after remote-aware Jules reconciliation; exact PR
+      head=86690a1fa6bc1e4d36256c7f4b78eee869a1b8ce; semantic successor proof recorded
+      in task context
