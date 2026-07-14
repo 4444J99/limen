@@ -17,6 +17,7 @@ shell blocks, the beat runs one `beat-sensors.py --run`. Adding a sensor is one 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import signal
@@ -308,7 +309,13 @@ def iter_omega(sensors: dict):
 
 
 def list_omega(registry: Path = REGISTRY) -> int:
-    """Emit stable TSV contract metadata; execution still stays inside the registry runner."""
+    """Emit stable TSV contract metadata; execution still stays inside the registry runner.
+
+    The final field is a JSON scalar so the optional timeout keeps its type across
+    the shell boundary: a bounded check emits a positive integer and an unbounded
+    check emits ``null``.  In particular, never serialize Python's ``None`` text;
+    it is neither a typed value nor parseable by the Omega contract hasher.
+    """
     for sensor_id, index, sensor, check in iter_omega(load_sensors(registry)):
         timeout = _positive_int(check.get("timeout"), fallback=_positive_int(sensor.get("timeout")))
         fields = (
@@ -317,7 +324,7 @@ def list_omega(registry: Path = REGISTRY) -> int:
             str(check.get("tier", "det")),
             str(check.get("label", sensor_id)),
             str(check["command"]),
-            str(timeout),
+            json.dumps(timeout),
         )
         if any("\t" in field or "\n" in field for field in fields):
             print(f"beat-sensors: invalid tab/newline in omega metadata for {sensor_id}", file=sys.stderr)

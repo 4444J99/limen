@@ -44,6 +44,7 @@ if "--list-omega" in sys.argv:
     rows = [
         "arbitrary.future.id\t0\tdet\tarbitrary registry parity\tpython3 scripts/future.py --check\t30",
         "arbitrary.future.id\t1\tlive\tarbitrary registry posture\tpython3 scripts/future.py --live\t45",
+        "independently.renamed.no-timeout.v47\t0\tdet\trenamed no-timeout contract\tpython3 scripts/no-timeout.py --check\tnull",
     ]
     mode = os.environ.get("OMEGA_TEST_SENSOR_MODE")
     if mode == "reverse":
@@ -52,6 +53,8 @@ if "--list-omega" in sys.argv:
         rows.append("new.sensor.id\t0\tdet\tnew registry contract\tpython3 scripts/new.py\t60")
     elif mode == "command":
         rows[0] = "arbitrary.future.id\t0\tdet\tarbitrary registry parity\tpython3 scripts/renamed.py --check\t30"
+    elif mode == "timeout-metadata":
+        rows[2] = "independently.renamed.no-timeout.v47\t0\tdet\trenamed no-timeout contract\tpython3 scripts/no-timeout.py --check\t17"
     print("\n".join(rows))
     raise SystemExit(0)
 if "--run-omega" in sys.argv:
@@ -89,6 +92,7 @@ assert rows["ask-lineage convergence"]["status"] == "SKIP", rows
 assert rows["worktree lifecycle (exact zero)"]["status"] == "SKIP", rows
 assert rows["arbitrary registry parity"]["status"] == "PASS", rows
 assert rows["arbitrary registry posture"]["status"] == "SKIP", rows
+assert rows["renamed no-timeout contract"]["status"] == "PASS", rows
 print("  case1 stamp OK")
 PY
 grep -q -- '--strict --fail-on-debt --fail-reapable-over-cap' "$work/scripts/omega.sh" \
@@ -113,6 +117,13 @@ if [ "$command_hash" != "$base_hash" ]; then
   check "changed" "changed" "case1b command changes hash"
 else
   check "unchanged" "changed" "case1b command changes hash"
+fi
+OMEGA_TEST_SENSOR_MODE=timeout-metadata bash "$work/scripts/omega.sh" --offline --quiet >/dev/null
+timeout_hash="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["contract_hash"])' "$work/logs/omega.json")"
+if [ "$timeout_hash" != "$base_hash" ]; then
+  check "changed" "changed" "case1b optional-timeout metadata changes hash"
+else
+  check "unchanged" "changed" "case1b optional-timeout metadata changes hash"
 fi
 
 # ── Case 1c: strict rejects the same otherwise-green offline run because live rungs SKIP ──────────

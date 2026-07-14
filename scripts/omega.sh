@@ -112,7 +112,13 @@ for raw in sensor_path.read_text(encoding="utf-8").splitlines():
     parts = raw.split("\t", 5)
     if len(parts) != 6:
         raise SystemExit(f"invalid omega sensor row: {raw!r}")
-    sensor_id, check_index, tier, label, command, timeout = parts
+    sensor_id, check_index, tier, label, command, timeout_token = parts
+    try:
+        timeout = json.loads(timeout_token)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"invalid omega sensor timeout {timeout_token!r}: {exc}") from exc
+    if timeout is not None and (type(timeout) is not int or timeout <= 0):
+        raise SystemExit(f"invalid omega sensor timeout: {timeout!r}")
     rows.append(
         {
             "check_index": int(check_index),
@@ -120,7 +126,7 @@ for raw in sensor_path.read_text(encoding="utf-8").splitlines():
             "label": label,
             "tier": tier,
             "command": command,
-            "timeout": int(timeout),
+            "timeout": timeout,
         }
     )
 normalized = json.dumps(

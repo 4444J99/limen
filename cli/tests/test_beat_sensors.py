@@ -228,6 +228,41 @@ sensors:
     assert calls == [("python3 scripts/arbitrary.py check", {"timeout": 7, "quiet": False})]
 
 
+def test_renamed_omega_capability_without_timeout_is_typed_and_executes(tmp_path, monkeypatch, capsys):
+    m = _mod()
+    registry = tmp_path / "no-timeout-capability.yaml"
+    registry.write_text(
+        """\
+sensors:
+  independently.renamed.no-timeout.v47:
+    section: heartbeat
+    title: independently renamed future sensor
+    gate: null
+    source: [metabolize]
+    steps:
+      - command: "python3 scripts/arbitrary.py beat"
+        severity: silent
+        escalation: skipped
+    omega_eligible:
+      - label: independently renamed fixed point
+        tier: det
+        command: "python3 scripts/arbitrary.py verify"
+""",
+        encoding="utf-8",
+    )
+
+    assert m.list_omega(registry) == 0
+    assert capsys.readouterr().out == (
+        "independently.renamed.no-timeout.v47\t0\tdet\tindependently renamed fixed point\t"
+        "python3 scripts/arbitrary.py verify\tnull\n"
+    )
+
+    calls = []
+    monkeypatch.setattr(m, "_run_command", lambda command, **kwargs: calls.append((command, kwargs)) or 0)
+    assert m.run_omega("independently.renamed.no-timeout.v47", 0, registry=registry) == 0
+    assert calls == [("python3 scripts/arbitrary.py verify", {"timeout": None, "quiet": False})]
+
+
 def test_command_timeout_kills_the_bounded_process_group():
     m = _mod()
     command = f"{sys.executable} -c 'import time; time.sleep(5)'"
