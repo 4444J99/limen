@@ -25,7 +25,7 @@ cat .data/mint.key.json   # the PRIVATE JWK → becomes the MINT_PRIVATE_JWK dep
 Dashboard flow (version-proof): **Create Service → GitHub `organvm/limen` → Dockerfile, work dir `moneta`, port `8787`**, then set env/secrets:
 ```
 PORT=8787
-MINT_PRICE_USD=9                       # canonical price — CONFIRM ($19 vs $9 mismatch with the exporter site)
+MINT_PRICE_USD=19                      # canonical price — $19, RESOLVED 2026-07-14: the exporter site's public Pro tier ($19 one-time, site/index.html) is the promise the buyer clicked; the live launchd deploy runs $19 (reserved orders quote at open time, so pooled buyers pay what the site showed them)
 MINT_RETURN_URL_BASE=https://chatgpt.com/
 MINT_PRIVATE_JWK=<production private JWK from step 0 — as a SECRET>
 MINT_BTC_ADDRESS=<step (c) — the human lever>
