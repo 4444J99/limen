@@ -12,6 +12,32 @@ ROOT = Path(__file__).resolve().parents[2]
 USAGE = ROOT / "scripts" / "usage-telemetry.py"
 
 
+def test_help_is_read_only(tmp_path):
+    limen_root = tmp_path / "limen"
+    home = tmp_path / "home"
+    usage_path = limen_root / "logs" / "usage.json"
+    usage_path.parent.mkdir(parents=True)
+    home.mkdir()
+    sentinel = b'{"sentinel":"leave these exact bytes alone"}\n'
+    usage_path.write_bytes(sentinel)
+
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["LIMEN_ROOT"] = str(limen_root)
+    proc = subprocess.run(
+        [sys.executable, str(USAGE), "--help"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    assert "usage:" in proc.stdout
+    assert "logs/usage.json" in proc.stdout
+    assert usage_path.read_bytes() == sentinel
+
+
 def test_claude_rate_limit_in_recent_transcript_marks_lane_down(tmp_path):
     limen_root = tmp_path / "limen"
     home = tmp_path / "home"

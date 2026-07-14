@@ -12,6 +12,7 @@ available real signal and writes logs/usage.json for board.py + the portal:
 
 READ-ONLY w.r.t. tasks.yaml (writes ONLY logs/usage.json) → never races the daemon.
 """
+import argparse
 import datetime
 import json
 import math
@@ -458,7 +459,17 @@ def _read_opencode_clock() -> dict | None:
     return None
 
 
-def main():
+def _parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Emit real per-vendor usage telemetry to logs/usage.json."
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    # Parse before touching runtime state so informational CLI actions such as --help are
+    # side-effect free. A no-argument invocation retains the historical write behavior.
+    _parse_args(argv)
     data = load_tasks_data()
     tasks = data.get("tasks", [])
     budget = (data.get("portal") or {}).get("budget") or {}
