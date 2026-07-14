@@ -20,6 +20,9 @@ CREATED = "2026-06-20T00:00:00+00:00"
 # the evidence strings historical escalations wrote (current heal-dispatch + the legacy manual one)
 CHRONIC_EVIDENCE = "heal-dispatch: chronic (reopened ≥3×, never a PR) → escalated, stop re-looping"
 LEGACY_EVIDENCE = "chronic (reopened >=3x, never a PR, fails all lanes) -> escalated out of dispatch loop"
+# recover.py's old repeated-no-op escalation — the same fleet-debt class, historically routed to
+# needs_human; the broadened predicate re-homes these stragglers too.
+RECOVER_NOOP_EVIDENCE = "recover: repeated no-op failures (2) -> needs_human; stop fresh cascade"
 
 
 def _task(tid, status, *, title=None, labels=None, log=None):
@@ -86,15 +89,17 @@ def test_chronic_dispatched_no_pr_parks(tmp_path):
 
 
 def test_needs_human_with_chronic_evidence_is_rehomed(tmp_path):
-    # the self-migration: both the current evidence string and the legacy variant re-home
+    # the self-migration: current + legacy chronic strings AND recover.py's repeated-no-op string
+    # (same fleet-debt class) all re-home off the human surface.
     out = _run(
         tmp_path,
         [
             _task("MIG1", "needs_human", log=[_entry("needs_human", CHRONIC_EVIDENCE)]),
             _task("MIG2", "needs_human", log=[_entry("needs_human", LEGACY_EVIDENCE)]),
+            _task("MIG3", "needs_human", log=[_entry("needs_human", RECOVER_NOOP_EVIDENCE)]),
         ],
     )
-    for tid in ("MIG1", "MIG2"):
+    for tid in ("MIG1", "MIG2", "MIG3"):
         assert out[tid]["status"] == "failed_blocked", out[tid]
         assert "chronic-fleet-debt" in out[tid]["labels"]
 

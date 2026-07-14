@@ -30,6 +30,7 @@ from limen.jules_remote import (  # noqa: E402
 )
 from limen.models import DispatchLogEntry  # noqa: E402
 from limen.dispatch import _has_done_transition, _restore_done_status  # noqa: E402
+from limen.chronic import CHRONIC_FLEET_DEBT_LABEL  # noqa: E402
 
 CASCADE_TOP = "codex"
 NOOP_RECOVERY_ESCALATION_THRESHOLD = 2
@@ -95,17 +96,25 @@ def main() -> int:
         if t.status == "failed":
             repeated_noop_count = _repeated_noop_failure_count(t)
             if repeated_noop_count:
-                t.status = "needs_human"
+                # Repeated no-ops are the FLEET's inability (it keeps producing nothing), not a human
+                # atom — park in failed_blocked (which nothing recycles: recover reopens `failed`, not
+                # `failed_blocked`), NOT needs_human, so the human surface stays truthful. Same
+                # fleet-debt class heal-dispatch parks chronic churn in (see limen.chronic); tagged so
+                # it reads as debt. Historical needs_human no-op dumps are re-homed by heal-dispatch's
+                # self-migration, whose predicate now also matches the "repeated no-op failures" string.
+                t.status = "failed_blocked"
                 t.updated = now
+                if CHRONIC_FLEET_DEBT_LABEL not in (t.labels or []):
+                    t.labels = list(t.labels or []) + [CHRONIC_FLEET_DEBT_LABEL]
                 t.dispatch_log.append(
                     DispatchLogEntry(
                         timestamp=now,
                         agent="limen",
                         session_id="heal",
-                        status="needs_human",
+                        status="failed_blocked",
                         output=(
                             f"recover: repeated no-op failures ({repeated_noop_count}) "
-                            "-> needs_human; stop fresh cascade"
+                            "-> failed_blocked (fleet-debt, off the human surface)"
                         ),
                     )
                 )

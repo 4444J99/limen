@@ -20,9 +20,13 @@ CHRONIC_FLEET_DEBT_LABEL = "chronic-fleet-debt"
 #   current: "heal-dispatch: chronic (reopened ≥3×, never a PR) → escalated, stop re-looping"
 #            "heal-dispatch: dispatched with no PR and chronic (reopened ≥3×) → escalated, …"
 #   legacy:  "chronic (reopened >=3x, never a PR, fails all lanes) -> escalated out of dispatch loop"
+#   recover: "recover: repeated no-op failures (N) -> needs_human; stop fresh cascade" — the SAME
+#            fleet-debt class (the fleet keeps producing nothing), routed to needs_human by the old
+#            recover.py path; matching it lets heal-dispatch's self-migration re-home those stragglers
+#            to failed_blocked too, so recover no-ops can't leak onto the human surface either.
 # Deliberately does NOT match the his-hand opt-out write ("→ needs_human (kept: needs-human label)"),
-# which contains no "escalat" — a labeled task must never be re-homed off the human surface.
-CHRONIC_ESCALATION_RE = re.compile(r"chronic.*escalat", re.IGNORECASE | re.DOTALL)
+# which contains neither "escalat" nor "no-op" — a labeled task must never be re-homed off the surface.
+CHRONIC_ESCALATION_RE = re.compile(r"chronic.*escalat|repeated no-op failures", re.IGNORECASE | re.DOTALL)
 
 
 def _entry_field(entry, name: str):

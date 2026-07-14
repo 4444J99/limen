@@ -427,9 +427,9 @@ def test_recover_escalates_repeated_noop_failures(tmp_path, monkeypatch):
 
     assert module.main() == 0
     task = load_limen_file(tasks_path).tasks[0]
-    assert task.status == "needs_human"
+    assert task.status == "failed_blocked"  # fleet debt (repeated no-op), off the human surface
     assert task.target_agent == "codex"
-    assert task.labels == ["noop", "tried:codex"]
-    assert task.dispatch_log[-1].status == "needs_human"
+    assert task.labels == ["noop", "tried:codex", "chronic-fleet-debt"]
+    assert task.dispatch_log[-1].status == "failed_blocked"
     assert "repeated no-op failures (2)" in task.dispatch_log[-1].output
-    assert "stop fresh cascade" in task.dispatch_log[-1].output
+    assert "failed_blocked" in task.dispatch_log[-1].output
