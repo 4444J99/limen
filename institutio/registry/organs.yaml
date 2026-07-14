@@ -105,10 +105,10 @@ organs:
 
   - name: correspondence
     layer: somatic
-    home: "limen (scripts/mail-beat.sh = C_MAIL effector; institutio/governance/mail-tiers.yaml = tier registry; scripts/check-mail-answered.py = the mail-answered sensor) + universal-mail--automation (obligations_build/draft_writer/send_drafts)"
+    home: "limen (scripts/mail-beat.sh = C_MAIL effector; institutio/governance/mail-tiers.yaml = tier registry; scripts/check-mail-answered.py = the mail-answered sensor; scripts/creds-hydrate.py = the keyed gmail lanes) + universal-mail--automation (obligations_build/draft_writer/send_drafts; IMAPProvider.append/create_draft = the headless draft path)"
     status: partial
-    role: "The inbound mail voice: sweep → obligations ledger → tiered draft → fail-closed SAFE-tier send. Answers reply-owed mail so the operator is never the default send button."
-    residual: "Sender ships DISARMED (LIMEN_MAIL_SEND=0); SAFE tier is opt-in and currently empty (grows on trust). Open distance (IF-MAIL): the keyed headless send/draft path that designs out the TCC grant (lever L-MAIL-AUTOMATION-GRANT #960); drafts still persist via the Apple-Mail path."
+    role: "The inbound mail voice: sweep → obligations ledger → tiered draft (headless via keyed IMAP APPEND) → fail-closed SAFE-tier send. Answers reply-owed mail so the operator is never the default send button."
+    residual: "Sender ships DISARMED (LIMEN_MAIL_SEND=0); SAFE tier is opt-in and currently empty (grows on trust) — arming is the operator's valve. The keyed headless draft path is BUILT (UMA #168 + creds-hydrate gmail lanes, 2026-07-14): it designs out the macOS TCC grant for Gmail drafts, downgrading lever L-MAIL-AUTOMATION-GRANT #960 to an optional fallback (non-Gmail accounts only). status→full once a SAFE intent is deliberately opted in and armed."
 
   # ----------------------------------------------------------------- FACE
   - name: face

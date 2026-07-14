@@ -92,15 +92,19 @@ measures the **distance from ideal** at a moment in time, and carries a **status
   and (for the narrow SAFE tier, when armed) sent — with the tier decision as **declared data**
   (`mail-tiers.yaml`, the 4th VIGILIA panel) and a paired sensor red until the loop closes. Legal /
   money / personal mail **never** auto-sends; the operator is never the default send button.
-- **Distance:** the half-organ is most of the way there. Effector (`scripts/mail-beat.sh`),
-  done-predicate (`scripts/check-mail-answered.py`, now the `mail-answered` beat sensor), the tier
-  **registry** (`institutio/governance/mail-tiers.yaml` + `check-mail-tiers.py`, PR #1010), and the
-  fail-closed **sender** (UMA `send_drafts.py`, PR #166, ships DISARMED) all exist and are wired into
-  the beat (disarmed). Remaining distance: the SAFE tier is opt-in and currently empty (grows on
-  trust); the keyed headless send/draft path that designs out the TCC grant (lever
-  L-MAIL-AUTOMATION-GRANT #960) is unbuilt; drafts still persist via the Apple-Mail path.
-- **Status:** PARTIAL (2026-07-13) — registry + sender + sensor shipped disarmed and wired; SAFE-send
-  opt-in and the keyed path are the open distance.
+- **Distance:** nearly closed. Effector (`scripts/mail-beat.sh`), done-predicate
+  (`scripts/check-mail-answered.py`, now the `mail-answered` beat sensor), the tier **registry**
+  (`institutio/governance/mail-tiers.yaml` + `check-mail-tiers.py`, PR #1010), the fail-closed
+  **sender** (UMA `send_drafts.py`, PR #166, ships DISARMED), and now the **keyed headless path**
+  (UMA `IMAPProvider.append`/`create_draft` + `draft_writer._select_saver`, PR #168; the
+  `creds-hydrate.py` gmail lanes routing `GMAIL_APP_PASSWORD` + `GMAIL_USER` into `~/.limen.env`,
+  2026-07-14) all exist and are wired into the beat. The keyed path **designs out the macOS TCC
+  Automation grant** for Gmail drafts — lever `L-MAIL-AUTOMATION-GRANT` #960 is downgraded from
+  required to *optional fallback* (non-Gmail accounts only). Remaining distance: the SAFE tier is
+  opt-in and currently empty (grows on trust); actual sending stays DISARMED (`LIMEN_MAIL_SEND=0`) —
+  arming is the operator's valve.
+- **Status:** PARTIAL (2026-07-14) — registry + sender + sensor + keyed headless path shipped and
+  wired; the only open distance is opt-in SAFE-send arming, which is deliberately the operator's valve.
 - **Owner:** Claude + mail.
 
 ### IF-LEDGER-OF-IDEALS — this ledger (self)

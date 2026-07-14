@@ -248,18 +248,35 @@ DEFAULT_MAP: list[dict] = [
         "enabled": False,
     },
     {
-        # The Gmail app-password for the autonomous mail lane (C_MAIL keyless drafts/sweep). The secret
+        # The Gmail app-password for the autonomous mail lane (C_MAIL keyless drafts/sends). The secret
         # ALREADY EXISTS in 1Password — nothing to mint. Registered here as the credential's canonical HOME
-        # so it never resurfaces as a "generate a credential" chat/lever again. enabled=False because its
-        # real CONSUMER is a CI secret, not a local subprocess: the deploy target is the GitHub Actions
-        # secret GMAIL_APP_PASSWORD on organvm/domus, landed once via `op read <ref> | gh secret set
-        # GMAIL_APP_PASSWORD -R organvm/domus` (value streams op→gh, never on screen). Flip to True only if
-        # a local lane is ever switched to read GMAIL_APP_PASSWORD from ~/.limen.env directly.
+        # so it never resurfaces as a "generate a credential" chat/lever again.
+        # ENABLED 2026-07-14: the pre-written condition on line "flip to True only if a local lane reads
+        # GMAIL_APP_PASSWORD from ~/.limen.env directly" is now SATISFIED — the keyed headless draft path
+        # (UMA draft_writer._select_saver → IMAPProvider.create_draft, and send_drafts._smtp_creds) reads
+        # GMAIL_APP_PASSWORD from the env this lane hydrates. This designs out the macOS TCC Automation grant
+        # (lever L-MAIL-AUTOMATION-GRANT #960) for draft-save: a beat persists drafts to [Gmail]/Drafts over
+        # IMAP with no GUI tap. The separate domus gh_secret lane above still lands the CI secret. SENDING
+        # stays disarmed (LIMEN_MAIL_SEND=0) regardless — this only enables headless drafts.
         # See L-GMAIL-CRED / issue #261, the Wall index #320, memory: gmail-mutation-cascade-avenues.
         "lane": "gmail (C_MAIL app-password)",
         "ref": "op://Private/gmail-app-pw-2026-06-06/password",
         "env": ["GMAIL_APP_PASSWORD"],
-        "enabled": False,
+        "enabled": True,
+    },
+    {
+        # The Gmail ACCOUNT ADDRESS for the keyed mail lane — NOT a secret (it appears in every From: header),
+        # but the keyed path needs it: draft_writer._select_saver and send_drafts._smtp_creds both require a
+        # user (IMAP_USER/GMAIL_USER) alongside the app-password, or they fail closed and fall back to the
+        # TCC-gated AppleScript path. Routed from the SAME 1Password item's `username` field so the address
+        # never lands as a hardcode in this PUBLIC file (derive-never-pin + PII-clean): only the op:// ref is
+        # in code; the value materializes solely into ~/.limen.env on the daemon. Fail-open: if the item has
+        # no username field, the lane simply doesn't hydrate (surfaced by --verify in the beat log, never a
+        # chat task) and the keyed path stays dormant — nothing breaks. [[gmail-mutation-cascade-avenues]]
+        "lane": "gmail (C_MAIL account address)",
+        "ref": "op://Private/gmail-app-pw-2026-06-06/username",
+        "env": ["GMAIL_USER"],
+        "enabled": True,
     },
     {
         # The ianva cloud-connector bearer token (the one re-auth a local gateway physically cannot fix —
