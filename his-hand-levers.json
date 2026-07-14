@@ -532,6 +532,16 @@
       "unlocks": "the 744-branch remote-gap backlog starts draining on the reconcile cadence (receipts to docs/remote-branch-reap-acceptance.jsonl, currently 0 entries); lifecycle pressure's `remote branches unresolved` term can finally move toward zero",
       "source_task": "GITVS remote_branch resource · limen PR #901 (reap-remote-branches.py) · registry-gap found 2026-07-14 (valve existed with no lever entry)",
       "issue": 1053
+    },
+    {
+      "id": "L-DAILY-ENGINE-PHONE-LEAVES",
+      "label": "Install the two daily-engine phone entry points (one sit-down, same device): (1) Files app → iCloud Drive → DailyEngine → tap 'Snap the Plate.shortcut' → Add Shortcut, then put it on the Home Screen / Action Button — one tap photographs the plate and the local watcher assesses + logs the meal ($0, photos never leave the Mac). (2) Shortcuts → Automation → Time of Day (~9:30 PM, Run Immediately) → Find Health Samples (Steps, Today) → Calculate Statistics (Sum) → Save File → iCloud Drive/DailyEngine/steps (Ask Where to Save: Off, Overwrite: On) — the beat ingests the drop; no URL, no LAN IP to rot. Full recipes: engine README §One-time iOS Shortcuts.",
+      "owner": "yours",
+      "cost": "~2 min once, durable",
+      "gate": "personal-device install — the agent cannot tap an iPhone; everything server-side (watcher, local vision, steps ingest, falsifiable checks) is live and proven end-to-end as of 2026-07-14",
+      "unlocks": "the food and steps lanes go from built-armed-unused to ambient-live: plate photos and daily step counts land in the day-log with zero forms, zero menus, zero further taps",
+      "source_task": "daily-engine leaf build 2026-07-14 (organvm/daily-engine PRs #9–#12)",
+      "issue": 1057
     }
   ]
 }
