@@ -12,11 +12,12 @@ from typing import Any
 
 
 SOURCE_ADAPTER_CONTRACT_VERSION = 1
-PROMPT_SOURCE_SCANNER_VERSION = 3
+PROMPT_SOURCE_SCANNER_VERSION = 4
 SOURCE_FILE_SIGNATURE_FIELDS = ("ctime_ns", "device", "inode", "mtime_ns", "size")
 AGY_CONVERSATION_ROOT_SEGMENTS = (".gemini", "antigravity-cli", "conversations")
 AGY_SQLITE_SIDECAR_SUFFIXES = ("-wal", "-shm", "-journal")
 CLAUDE_PROJECT_MEMORY_ALIAS_ID = "claude-project-memory-alias-v1"
+CLAUDE_SUBAGENT_SESSION_ALIAS_ID = "claude-subagent-session-alias-v1"
 SOURCE_ALIAS_BLOCKER_REASONS = (
     "alias_ancestor_symlink",
     "alias_changed",
@@ -105,13 +106,12 @@ def inspect_source_path_custody(
     *,
     isolated_home: Path | None = None,
 ) -> SourcePathCustody:
-    """Resolve direct files and one exact Claude memory alias without arbitrary link traversal.
+    """Resolve direct files and exact Claude aliases without arbitrary link traversal.
 
     The declared root itself remains trusted and may be a configured symlink, matching
-    the pre-existing scanner contract. Below that root, only a leaf
-    ``claude-projects/<project>/<name>.md`` alias whose link text names the exact
-    ``memory/<name>.md`` sibling is admissible. The target and every target ancestor
-    below the root must be non-symlinks.
+    the pre-existing scanner contract. Below that root, the only admissible aliases are
+    the exact project-memory mirror and Claude's same-project, cross-session subagent
+    mirror. The target and every target ancestor below the root must be non-symlinks.
     """
 
     lexical_root = _absolute_lexical(containment_root)
@@ -159,20 +159,59 @@ def inspect_source_path_custody(
         direct_stat = os.stat(lexical_path) if path_is_declared_root else leaf_stat
         return SourcePathCustody(relative=relative, unit_signature=_signature_from_stat(direct_stat))
 
-    alias_error = "source path contains a symlink hop outside the approved Claude project-memory alias contract"
-    if source != "claude-projects" or len(relative.parts) != 2 or lexical_path.suffix.lower() != ".md":
-        return _blocked_source_path("alias_wrong_role", alias_error)
-
-    expected_target = lexical_path.parent / "memory" / lexical_path.name
+    alias_error = "source path contains a symlink hop outside the approved Claude alias contracts"
     try:
         link_text = os.readlink(lexical_path)
     except OSError as exc:
         return _blocked_source_path("alias_changed", f"source path contains a changed symlink hop: {exc}")
     link_path = Path(link_text)
-    if not link_path.is_absolute() and ".." in link_path.parts:
-        return _blocked_source_path("alias_target_mismatch", alias_error)
     claimed_target = _absolute_lexical(link_path if link_path.is_absolute() else lexical_path.parent / link_path)
-    if claimed_target != expected_target:
+
+    memory_alias = bool(
+        source == "claude-projects" and len(relative.parts) == 2 and lexical_path.suffix.lower() == ".md"
+    )
+    subagent_alias = bool(
+        source == "claude-projects"
+        and len(relative.parts) in {4, 5}
+        and relative.parts[2] == "subagents"
+        and (
+            (len(relative.parts) == 4 and lexical_path.suffix.lower() in {".json", ".jsonl"})
+            or (len(relative.parts) == 5 and not lexical_path.suffix)
+        )
+    )
+    if memory_alias:
+        expected_target = lexical_path.parent / "memory" / lexical_path.name
+        if not link_path.is_absolute() and ".." in link_path.parts:
+            return _blocked_source_path("alias_target_mismatch", alias_error)
+        if claimed_target != expected_target:
+            return _blocked_source_path("alias_target_mismatch", alias_error)
+        alias_contract_id = CLAUDE_PROJECT_MEMORY_ALIAS_ID
+        related_label = "memory_target"
+        target_must_be_directory = False
+    elif subagent_alias:
+        if not link_path.is_absolute():
+            return _blocked_source_path("alias_target_mismatch", alias_error)
+        try:
+            target_relative = claimed_target.relative_to(lexical_root)
+        except ValueError:
+            return _blocked_source_path("alias_outside_root", alias_error)
+        if not (
+            len(target_relative.parts) == len(relative.parts)
+            and target_relative.parts[0] == relative.parts[0]
+            and target_relative.parts[1] != relative.parts[1]
+            and target_relative.parts[2:] == relative.parts[2:]
+        ):
+            return _blocked_source_path("alias_target_mismatch", alias_error)
+        expected_target = claimed_target
+        alias_contract_id = CLAUDE_SUBAGENT_SESSION_ALIAS_ID
+        related_label = "subagent_target"
+        target_must_be_directory = len(relative.parts) == 5
+    else:
+        return _blocked_source_path("alias_wrong_role", alias_error)
+
+    if not _within(expected_target, lexical_root):
+        return _blocked_source_path("alias_outside_root", alias_error)
+    if expected_target == lexical_path:
         return _blocked_source_path("alias_target_mismatch", alias_error)
 
     try:
@@ -188,10 +227,14 @@ def inspect_source_path_custody(
             if current == expected_target:
                 target_stat = current_stat
             current = current.parent
-        if target_stat is None or not stat.S_ISREG(target_stat.st_mode):
+        target_type_ok = bool(
+            target_stat is not None
+            and (stat.S_ISDIR(target_stat.st_mode) if target_must_be_directory else stat.S_ISREG(target_stat.st_mode))
+        )
+        if not target_type_ok:
             return _blocked_source_path(
                 "alias_target_not_regular",
-                "source path contains a symlink hop whose target is not a regular file",
+                "source path contains a symlink hop whose target has the wrong filesystem type",
             )
         resolved_target = expected_target.resolve(strict=True)
     except OSError as exc:
@@ -204,21 +247,23 @@ def inspect_source_path_custody(
     if resolved_home is not None and not _within(resolved_target, resolved_home):
         return _blocked_source_path("alias_isolated_home_escape", "source path escapes isolated source home")
 
+    assert target_stat is not None
     target_signature = _signature_from_stat(target_stat)
     target_locator_sha256 = hashlib.sha256(str(expected_target).encode("utf-8", errors="replace")).hexdigest()
     link_target_sha256 = hashlib.sha256(os.fsencode(link_text)).hexdigest()
+    related_detail = {
+        "locator_sha256": target_locator_sha256,
+        "link_target_sha256": link_target_sha256,
+    }
+    if alias_contract_id == CLAUDE_SUBAGENT_SESSION_ALIAS_ID:
+        related_detail["target_locator"] = str(expected_target)
     return SourcePathCustody(
         relative=relative,
         unit_signature=_signature_from_stat(leaf_stat),
-        alias_contract_id=CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+        alias_contract_id=alias_contract_id,
         alias_target=expected_target,
-        related_signatures={"memory_target": target_signature},
-        related_evidence={
-            "memory_target": {
-                "locator_sha256": target_locator_sha256,
-                "link_target_sha256": link_target_sha256,
-            }
-        },
+        related_signatures={related_label: target_signature},
+        related_evidence={related_label: related_detail},
     )
 
 
@@ -313,10 +358,112 @@ SOURCE_ADAPTER_RULES: dict[str, dict[str, Any]] = {
         "parent_byte_accounting": "cumulative-actual-read",
         "max_probe_bytes": 1048576,
         "max_parent_probe_bytes": 536870912,
-        "max_parent_record_bytes": 1048576,
+        "max_parent_record_bytes": 16777216,
         "max_parent_candidate_bytes": 16777216,
         "max_parent_records": 100000,
         "max_parent_session_ids": 16,
+    },
+    "opencode-assistant-task-v1": {
+        "source": "opencode-db",
+        "storage": {
+            "parent_table": "message",
+            "child_table": "part",
+            "relationship": [
+                "message.id=part.message_id",
+                "message.session_id=part.session_id",
+            ],
+        },
+        "parent": {
+            "role": "assistant",
+            "message_keysets": [
+                [
+                    "agent",
+                    "cost",
+                    "mode",
+                    "modelID",
+                    "parentID",
+                    "path",
+                    "providerID",
+                    "role",
+                    "time",
+                    "tokens",
+                ],
+                [
+                    "agent",
+                    "cost",
+                    "finish",
+                    "mode",
+                    "modelID",
+                    "parentID",
+                    "path",
+                    "providerID",
+                    "role",
+                    "time",
+                    "tokens",
+                ],
+            ],
+        },
+        "part": {
+            "type": "tool",
+            "tool": "task",
+            "keys": ["callID", "state", "tool", "type"],
+            "identity_field": "callID",
+        },
+        "state": {
+            "running_keys": ["input", "metadata", "status", "time", "title"],
+            "completed_keys": ["input", "metadata", "output", "status", "time", "title"],
+            "metadata_keysets": [
+                ["model", "parentSessionId", "sessionId"],
+                ["model", "parentSessionId", "sessionId", "truncated"],
+                ["model", "outputPath", "parentSessionId", "sessionId", "truncated"],
+            ],
+            "time_keysets": {
+                "running": ["start"],
+                "completed": ["end", "start"],
+            },
+        },
+        "input": {
+            "keysets": [
+                ["description", "prompt", "subagent_type"],
+                ["command", "description", "prompt", "subagent_type"],
+            ],
+            "text_field": "prompt",
+        },
+        "child_session": {
+            "id": "state.metadata.sessionId",
+            "parent_id": "part.session_id",
+            "agent": "state.input.subagent_type",
+            "model": {
+                "id": "state.metadata.model.modelID",
+                "providerID": "state.metadata.model.providerID",
+            },
+        },
+        "body_kind": "delegated_task_frame",
+        "provenance": "delegated_task_frame",
+        "authority": "derived",
+    },
+    "codex-session-jsonl-v2": {
+        "source": "codex-sessions",
+        "path": {
+            "relative_depth": 4,
+            "calendar_segments": ["YYYY", "MM", "DD"],
+            "basename_regex": r"rollout-.+\.jsonl",
+        },
+        "schema": "codex-session-jsonl-v2",
+        "canonical_identity": "one-id-or-one-filename-bound-id",
+        "compacted_history_authority": "derived-continuation-context",
+        "media": {
+            "primary": "response_item:message:user:input_image",
+            "transport": "event_msg:user_message:local_images",
+            "binding": "nearest-preceding-exact-text-and-cardinality",
+            "encoding": "data:image/png;base64",
+            "occurrence": "digest-only-nontext-input",
+        },
+        "max_probe_bytes": 536870912,
+        "max_record_bytes": 16777216,
+        "max_records": 100000,
+        "max_compacted_history_items": 256,
+        "max_media_bytes": 16777216,
     },
     "claude-remote-task-command-v1": {
         "source": "claude-projects",
@@ -408,6 +555,22 @@ SOURCE_EXCLUSION_RULES: dict[str, dict[str, Any]] = {
             "containment": "same-declared-source-root",
         },
     },
+    CLAUDE_SUBAGENT_SESSION_ALIAS_ID: {
+        "source": "claude-projects",
+        "path": {
+            "relative_depth": 4,
+            "segment_2": "subagents",
+            "suffixes": [".json", ".jsonl"],
+        },
+        "alias": {
+            "kind": "leaf-symlink",
+            "target": "<same-project>/<different-session>/subagents/<same-basename>",
+            "target_type": "regular-file",
+            "ancestor_symlinks": "reject",
+            "target_symlinks": "reject",
+            "containment": "same-declared-source-root",
+        },
+    },
     "claude-project-memory-mirror-v1": {
         "source": "claude-projects",
         "path": {"relative_depth": 2, "suffix": ".md"},
@@ -473,6 +636,12 @@ SOURCE_RECEIPT_EVIDENCE_RULES = {
         "identity": ["locator_sha256", "link_target_sha256"],
         "target_type": "non-symlink-regular-file",
     },
+    CLAUDE_SUBAGENT_SESSION_ALIAS_ID: {
+        "related_label": "subagent_target",
+        "related_locator": "<same-project>/<different-session>/subagents/<same-basename>",
+        "identity": ["locator_sha256", "link_target_sha256"],
+        "target_type": "non-symlink-regular-file",
+    },
 }
 SOURCE_AUTHORITY_RULES = {
     "claude-project-main-session-v1": {
@@ -504,6 +673,18 @@ CODEX_USER_CONTENT_BLOCK_KEYSETS = {
     "input_text": ("text", "type"),
     "input_image": ("detail", "image_url", "type"),
 }
+CODEX_COMPACTED_PAYLOAD_KEYSETS = (
+    ("first_window_id", "message", "previous_window_id", "replacement_history", "window_id", "window_number"),
+    ("message", "replacement_history", "window_id"),
+    ("message", "replacement_history"),
+)
+CODEX_COMPACTED_MESSAGE_KEYSETS = CODEX_RESPONSE_USER_PAYLOAD_KEYSETS
+CODEX_COMPACTION_ITEM_KEYSETS = (
+    ("encrypted_content", "id", "internal_chat_message_metadata_passthrough", "type"),
+    ("encrypted_content", "id", "type"),
+    ("encrypted_content", "metadata", "type"),
+    ("encrypted_content", "type"),
+)
 CODEX_EVENT_USER_PAYLOAD_KEYSETS = (
     ("images", "local_images", "message", "text_elements", "type"),
     ("local_images", "message", "text_elements", "type"),
@@ -657,6 +838,94 @@ CLAUDE_WORKFLOW_PROGRESS_KEYS = (
     "toolCalls",
     "type",
 )
+CLAUDE_DERIVED_TOOL_RESULT_PROMPT_KEYSETS = (
+    (
+        "agentId",
+        "canReadOutputFile",
+        "description",
+        "isAsync",
+        "outputFile",
+        "prompt",
+        "resolvedModel",
+        "status",
+    ),
+    (
+        "agentId",
+        "agentType",
+        "content",
+        "prompt",
+        "resolvedModel",
+        "status",
+        "toolStats",
+        "totalDurationMs",
+        "totalTokens",
+        "totalToolUseCount",
+        "usage",
+    ),
+    (
+        "agentId",
+        "agentType",
+        "content",
+        "prompt",
+        "resolvedModel",
+        "status",
+        "totalDurationMs",
+        "totalTokens",
+        "totalToolUseCount",
+        "usage",
+    ),
+    (
+        "description",
+        "outputFile",
+        "prompt",
+        "sessionUrl",
+        "status",
+        "taskId",
+    ),
+    (
+        "agentId",
+        "agentType",
+        "content",
+        "prompt",
+        "resolvedModel",
+        "status",
+        "toolStats",
+        "totalDurationMs",
+        "totalTokens",
+        "totalToolUseCount",
+        "usage",
+        "worktreeBranch",
+        "worktreePath",
+    ),
+)
+CLAUDE_DERIVED_TOOL_RESULT_TEXT_FIELDS = (
+    "agentId",
+    "agentType",
+    "description",
+    "outputFile",
+    "prompt",
+    "resolvedModel",
+    "sessionUrl",
+    "status",
+    "taskId",
+    "worktreeBranch",
+    "worktreePath",
+)
+CLAUDE_DERIVED_TOOL_RESULT_INTEGER_FIELDS = (
+    "totalDurationMs",
+    "totalTokens",
+    "totalToolUseCount",
+)
+CLAUDE_DERIVED_TOOL_RESULT_JOB_KEYS = (
+    "cron",
+    "durable",
+    "humanSchedule",
+    "id",
+    "prompt",
+    "recurring",
+)
+CLAUDE_EXIT_PLAN_ALLOWED_PROMPT_INPUT_KEYS = ("allowedPrompts", "plan", "planFilePath")
+CLAUDE_EXIT_PLAN_ALLOWED_PROMPT_KEYS = ("prompt", "tool")
 CLAUDE_TASK_KEYSETS = (
     ("activeForm", "blockedBy", "blocks", "description", "id", "status", "subject"),
     ("blockedBy", "blocks", "description", "id", "status", "subject"),
@@ -699,6 +968,43 @@ OPENCODE_USER_MESSAGE_KEYS = (
     "summary",
     "time",
 )
+OPENCODE_ASSISTANT_MESSAGE_KEYSETS = (
+    ("agent", "cost", "mode", "modelID", "parentID", "path", "providerID", "role", "time", "tokens"),
+    (
+        "agent",
+        "cost",
+        "finish",
+        "mode",
+        "modelID",
+        "parentID",
+        "path",
+        "providerID",
+        "role",
+        "time",
+        "tokens",
+    ),
+)
+OPENCODE_TASK_TOOL_PART_KEYS = ("callID", "state", "tool", "type")
+OPENCODE_TASK_TOOL_STATE_KEYSETS = {
+    "running": ("input", "metadata", "status", "time", "title"),
+    "completed": ("input", "metadata", "output", "status", "time", "title"),
+}
+OPENCODE_TASK_TOOL_INPUT_KEYSETS = (
+    ("description", "prompt", "subagent_type"),
+    ("command", "description", "prompt", "subagent_type"),
+)
+OPENCODE_TASK_TOOL_METADATA_KEYSETS = (
+    ("model", "parentSessionId", "sessionId"),
+    ("model", "parentSessionId", "sessionId", "truncated"),
+    ("model", "outputPath", "parentSessionId", "sessionId", "truncated"),
+)
+OPENCODE_TASK_TOOL_TIME_KEYSETS = {
+    "running": ("start",),
+    "completed": ("end", "start"),
+}
+OPENCODE_USER_SUMMARY_KEYS = ("diffs",)
+OPENCODE_USER_SUMMARY_DIFF_KEYS = ("additions", "deletions", "file", "patch", "status")
+OPENCODE_USER_SUMMARY_MAX_BYTES = 512 * 1024 * 1024
 OPENCODE_UNIT_SIGNATURE_FIELDS = (
     "content_sha256",
     "db_ctime_ns",
@@ -751,9 +1057,41 @@ SOURCE_RECORD_SCHEMAS = {
             "media_fields_require_adapter_when_nonempty": ["images", "local_images"],
         },
     },
+    "codex-session-jsonl-v2": {
+        "source": "codex-sessions",
+        "record_keys": CODEX_USER_RECORD_KEYS,
+        "canonical_identity": "one-id-or-one-filename-bound-id",
+        "response_item": {
+            "payload_keysets": CODEX_RESPONSE_USER_PAYLOAD_KEYSETS,
+            "content_block_keysets": CODEX_USER_CONTENT_BLOCK_KEYSETS,
+            "text_block": "input_text",
+            "media_block": {
+                "type": "input_image",
+                "detail": "high",
+                "encoding": "data:image/png;base64",
+                "atomization": "nontext-occurrence-only",
+            },
+        },
+        "event_msg": {
+            "payload_keysets": CODEX_EVENT_USER_PAYLOAD_KEYSETS,
+            "local_image_role": "transport-reference",
+            "image_placeholder_regex": r"\[Image #[1-9][0-9]*\]",
+            "binding": "nearest-preceding-exact-text-and-cardinality",
+        },
+        "compacted": {
+            "payload_keysets": CODEX_COMPACTED_PAYLOAD_KEYSETS,
+            "message": "exact-empty-string",
+            "replacement_message_keysets": CODEX_COMPACTED_MESSAGE_KEYSETS,
+            "compaction_item_keysets": CODEX_COMPACTION_ITEM_KEYSETS,
+            "user_authority": "derived-continuation-context",
+            "developer_role": "non-operator-context",
+        },
+    },
     "claude-project-jsonl-v1": {
         "source": "claude-projects",
         "suffix": ".jsonl",
+        "max_probe_bytes": 67108864,
+        "max_records": 100000,
         "allowed_types": CLAUDE_PROJECT_JSONL_TYPES,
         "user_content_block_types": CLAUDE_USER_CONTENT_BLOCK_TYPES,
         "user_content_block_keysets": CLAUDE_USER_CONTENT_BLOCK_KEYSETS,
@@ -780,6 +1118,40 @@ SOURCE_RECORD_SCHEMAS = {
             "exact_same_file_operator_hash": "transport_echo",
             "unmatched": "unknown_user_input",
             "derived_path_unmatched": "delegated_task_frame",
+        },
+        "derived_tool_result_prompt": {
+            "record_marker": "sourceToolAssistantUUID",
+            "object_field": "toolUseResult",
+            "exact_keysets": CLAUDE_DERIVED_TOOL_RESULT_PROMPT_KEYSETS,
+            "text_fields": CLAUDE_DERIVED_TOOL_RESULT_TEXT_FIELDS,
+            "integer_fields": CLAUDE_DERIVED_TOOL_RESULT_INTEGER_FIELDS,
+            "boolean_fields": ["canReadOutputFile", "isAsync"],
+            "list_fields": ["content"],
+            "object_fields": ["toolStats", "usage"],
+            "prompt_field": "prompt",
+            "provenance": "delegated_task_frame",
+            "authority": "derived",
+        },
+        "derived_tool_result_jobs": {
+            "record_marker": "sourceToolAssistantUUID",
+            "object_field": "toolUseResult",
+            "exact_object_keys": ["jobs"],
+            "exact_job_keys": CLAUDE_DERIVED_TOOL_RESULT_JOB_KEYS,
+            "prompt_field": "prompt",
+            "provenance": "delegated_task_frame",
+            "authority": "derived",
+        },
+        "exit_plan_allowed_prompts": {
+            "tool_name": "ExitPlanMode",
+            "exact_input_keys": CLAUDE_EXIT_PLAN_ALLOWED_PROMPT_INPUT_KEYS,
+            "exact_item_keys": CLAUDE_EXIT_PLAN_ALLOWED_PROMPT_KEYS,
+            "prompt_field": "prompt",
+            "provenance": "delegated_task_frame",
+            "authority": "derived",
+        },
+        "attachment_prompt_value_shapes": {
+            "hook_additional_context": ["string", "list[string]"],
+            "queued_command": ["string", "list[text-block]"],
         },
     },
     "claude-subagent-metadata-v1": {
@@ -831,8 +1203,22 @@ SOURCE_RECORD_SCHEMAS = {
         "source": "opencode-db",
         "message_keys": OPENCODE_USER_MESSAGE_KEYS,
         "part_keysets": OPENCODE_USER_PART_KEYSETS,
+        "excluded_summary": {
+            "keys": OPENCODE_USER_SUMMARY_KEYS,
+            "diff_keys": OPENCODE_USER_SUMMARY_DIFF_KEYS,
+            "max_bytes": OPENCODE_USER_SUMMARY_MAX_BYTES,
+            "diff_field_types": {
+                "additions": "integer",
+                "deletions": "integer",
+                "file": "text",
+                "patch": "text",
+                "status": "text",
+            },
+            "disposition": "provider-generated-patch-context",
+        },
         "unit_signature_fields": OPENCODE_UNIT_SIGNATURE_FIELDS,
     },
+    "opencode-assistant-task-v1": SOURCE_ADAPTER_RULES["opencode-assistant-task-v1"],
     "agy-conversation-v1": {
         "source": "agy-cli-conversations",
         "table": "steps",
@@ -911,10 +1297,12 @@ def _relative_role_parts(source: str, locator: str) -> tuple[str, ...] | None:
     roots = {
         "agy-cli-conversations": (".gemini", "antigravity-cli", "conversations"),
         "codex-attachments": (".codex", "attachments"),
+        "codex-sessions": (".codex", "sessions"),
         "claude-file-history": (".claude", "file-history"),
         "claude-plans": (".claude", "plans"),
         "claude-projects": (".claude", "projects"),
         "claude-tasks": (".claude", "tasks"),
+        "opencode-db": (".local", "share", "opencode"),
     }
     root = roots.get(source)
     if root is None:
@@ -983,6 +1371,56 @@ def source_contract_receipt_applies(
             and isinstance(target_signature, dict)
             and isinstance(detail, dict)
             and set(detail) == {"link_target_sha256", "locator_sha256"}
+            and detail.get("locator_sha256") == expected_locator_sha
+            and all(
+                isinstance(detail.get(field), str) and re.fullmatch(r"[0-9a-f]{64}", str(detail[field])) is not None
+                for field in ("link_target_sha256", "locator_sha256")
+            )
+        )
+
+    def subagent_alias_evidence_valid() -> bool:
+        detail = evidence.get("subagent_target")
+        target_signature = related.get("subagent_target")
+        if not isinstance(detail, dict) or not isinstance(target_signature, dict):
+            return False
+        target_locator = detail.get("target_locator")
+        if not isinstance(target_locator, str) or not target_locator:
+            return False
+        source_parts = path.parts
+        target_path = PurePath(target_locator)
+        target_parts = target_path.parts
+        marker = (".claude", "projects")
+        source_indexes = [
+            index
+            for index in range(len(source_parts) - len(marker) + 1)
+            if tuple(source_parts[index : index + len(marker)]) == marker
+        ]
+        target_indexes = [
+            index
+            for index in range(len(target_parts) - len(marker) + 1)
+            if tuple(target_parts[index : index + len(marker)]) == marker
+        ]
+        if len(source_indexes) != 1 or len(target_indexes) != 1:
+            return False
+        source_relative = source_parts[source_indexes[0] + len(marker) :]
+        target_relative = target_parts[target_indexes[0] + len(marker) :]
+        if not (
+            source_parts[: source_indexes[0]] == target_parts[: target_indexes[0]]
+            and len(source_relative) == 4
+            and len(target_relative) == 4
+            and source_relative[0] == target_relative[0]
+            and source_relative[1] != target_relative[1]
+            and source_relative[2:] == target_relative[2:]
+            and source_relative[2] == "subagents"
+            and path.suffix.lower() in {".json", ".jsonl"}
+            and target_path.suffix.lower() == path.suffix.lower()
+        ):
+            return False
+        expected_locator_sha = hashlib.sha256(target_locator.encode("utf-8", errors="replace")).hexdigest()
+        return bool(
+            set(related) == {"subagent_target"}
+            and set(evidence) == {"subagent_target"}
+            and set(detail) == {"link_target_sha256", "locator_sha256", "target_locator"}
             and detail.get("locator_sha256") == expected_locator_sha
             and all(
                 isinstance(detail.get(field), str) and re.fullmatch(r"[0-9a-f]{64}", str(detail[field])) is not None
@@ -1084,6 +1522,18 @@ def source_contract_receipt_applies(
             and re.fullmatch(r"pasted-text-[1-9][0-9]*\.txt", path.name) is not None
             and set(related) == {"parent_session"}
         ),
+        "opencode-assistant-task-v1": lambda: (
+            len(relative) == 1
+            and re.fullmatch(r"opencode\.db#session:[0-9a-f]{24}", relative[0]) is not None
+            and set(related) == set()
+        ),
+        "codex-session-jsonl-v2": lambda: (
+            len(relative) == 4
+            and re.fullmatch(r"20[0-9]{2}", relative[0]) is not None
+            and re.fullmatch(r"(?:0[1-9]|1[0-2])", relative[1]) is not None
+            and re.fullmatch(r"(?:0[1-9]|[12][0-9]|3[01])", relative[2]) is not None
+            and re.fullmatch(r"rollout-.+\.jsonl", relative[3]) is not None
+        ),
         "claude-file-history-snapshot-v1": lambda: (
             len(relative) >= 1 and re.fullmatch(r"[0-9a-fA-F]+@v[0-9]+", path.name) is not None
         ),
@@ -1091,6 +1541,12 @@ def source_contract_receipt_applies(
         "claude-project-memory-v1": lambda: len(relative) == 3 and relative[1] == "memory" and suffix == ".md",
         CLAUDE_PROJECT_MEMORY_ALIAS_ID: lambda: (
             len(relative) == 2 and suffix == ".md" and set(related) == {"memory_target"}
+        ),
+        CLAUDE_SUBAGENT_SESSION_ALIAS_ID: lambda: (
+            len(relative) == 4
+            and relative[2] == "subagents"
+            and suffix in {".json", ".jsonl"}
+            and set(related) == {"subagent_target"}
         ),
         "claude-project-memory-mirror-v1": lambda: (
             len(relative) == 2 and suffix == ".md" and set(related) == {"memory_sibling"}
@@ -1118,6 +1574,8 @@ def source_contract_receipt_applies(
         return mirror_evidence_valid()
     if contract_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
         return memory_alias_evidence_valid()
+    if contract_id == CLAUDE_SUBAGENT_SESSION_ALIAS_ID:
+        return subagent_alias_evidence_valid()
     if contract_id == "codex-pasted-text-attachment-v1":
         return codex_attachment_evidence_valid()
     return not evidence

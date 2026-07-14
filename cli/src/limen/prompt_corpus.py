@@ -602,6 +602,9 @@ def atoms_from_event(
     task_body = str(event.get("task_body") or "")
     body_kind = str(occurrence.get("body_kind") or "direct")
     atom_text = task_body if task_body.strip() else str(occurrence.get("raw_text") or "")
+    if body_kind in {"nontext_context", "nontext_input"}:
+        occurrence["excluded_reason"] = "nontext_prompt_input"
+        return []
     if body_kind in {"flame_scaffold", "session_context"} and not task_body.strip():
         occurrence["excluded_reason"] = "derived_context_without_actionable_body"
         return []
@@ -1654,6 +1657,16 @@ def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
             custody = source_contract_module.inspect_source_path_custody(source, path, root)
             if custody.error is not None:
                 raise ValueError(custody.error)
+            if (
+                custody.alias_contract_id
+                == getattr(
+                    source_contract_module,
+                    "CLAUDE_SUBAGENT_SESSION_ALIAS_ID",
+                    "",
+                )
+                and path.is_dir()
+            ):
+                return True
             if custody.alias_contract_id is None and not path.is_file():
                 return True
             discovery_count += 1
@@ -1802,6 +1815,38 @@ def validate_live_source_custody(cursor: dict[str, Any]) -> list[str]:
                     or target_receipt.get("signature") != related.get("memory_target")
                 ):
                     errors.append("claude-projects: project-memory alias target lacks independent custody")
+        if isinstance(receipt, dict) and receipt.get("contract_id") == getattr(
+            source_contract_module, "CLAUDE_SUBAGENT_SESSION_ALIAS_ID", ""
+        ):
+            custody = custody_by_locator.get(locator)
+            related = receipt.get("related_signatures") or {}
+            evidence = receipt.get("related_evidence") or {}
+            detail = evidence.get("subagent_target") if isinstance(evidence, dict) else None
+            target_locator = detail.get("target_locator") if isinstance(detail, dict) else None
+            if (
+                custody is None
+                or custody.error is not None
+                or custody.alias_contract_id != receipt.get("contract_id")
+                or custody.related_signatures != related
+                or custody.related_evidence != evidence
+                or not isinstance(target_locator, str)
+            ):
+                errors.append("claude-projects: live subagent-session alias changed after the sealed scan")
+            else:
+                target_key = f"scan-v{scanner_version}:{source}:{target_locator}"
+                target_receipt = excluded.get(target_key) or adapted.get(target_key)
+                target_signature = files.get(target_key)
+                if target_signature is None and isinstance(target_receipt, dict):
+                    target_signature = target_receipt.get("signature")
+                if (
+                    target_key not in source_units
+                    or target_signature != related.get("subagent_target")
+                    or (
+                        isinstance(target_receipt, dict)
+                        and target_receipt.get("contract_id") == receipt.get("contract_id")
+                    )
+                ):
+                    errors.append("claude-projects: subagent-session alias target lacks independent custody")
         if isinstance(receipt, dict) and receipt.get("contract_id") == "codex-pasted-text-attachment-v1":
             related = receipt.get("related_signatures") or {}
             evidence = receipt.get("related_evidence") or {}
@@ -1995,6 +2040,11 @@ def validate_source_adapter_cursor(
     validate_group(excluded, disposition="excluded", valid_ids=set(expected["exclusion_ids"]))
     validate_group(adapted, disposition="adapted", valid_ids=set(expected["adapter_ids"]))
     alias_contract_id = getattr(source_contract_module, "CLAUDE_PROJECT_MEMORY_ALIAS_ID", "")
+    subagent_alias_contract_id = getattr(
+        source_contract_module,
+        "CLAUDE_SUBAGENT_SESSION_ALIAS_ID",
+        "",
+    )
     scanner_version = _int_or_zero(cursor.get("scanner_version"))
     source_unit_set = set(source_units)
     for key, receipt in excluded.items():
@@ -2018,6 +2068,40 @@ def validate_source_adapter_cursor(
             )
         ):
             errors.append(f"{key}: project-memory alias target lacks independent custody")
+
+    parsed_files = cursor.get("files")
+    parsed_files = parsed_files if isinstance(parsed_files, dict) else {}
+    unresolved_set = set(unresolved)
+    for key, receipt in excluded.items():
+        if not isinstance(receipt, dict) or receipt.get("contract_id") != subagent_alias_contract_id:
+            continue
+        parts = key.split(":", 2)
+        if len(parts) != 3:
+            continue
+        source = parts[1]
+        evidence = receipt.get("related_evidence") or {}
+        detail = evidence.get("subagent_target") if isinstance(evidence, dict) else None
+        target_locator = detail.get("target_locator") if isinstance(detail, dict) else None
+        if not isinstance(target_locator, str):
+            errors.append(f"{key}: subagent-session alias target lacks independent custody")
+            continue
+        target_key = f"scan-v{scanner_version}:{source}:{target_locator}"
+        target_receipt = excluded.get(target_key) or adapted.get(target_key)
+        target_signature = parsed_files.get(target_key)
+        if target_signature is None and isinstance(target_receipt, dict):
+            target_signature = target_receipt.get("signature")
+        related = receipt.get("related_signatures") or {}
+        target_is_pending = target_key in unresolved_set
+        if target_key not in source_unit_set or (
+            not target_is_pending
+            and (
+                target_signature != related.get("subagent_target")
+                or (
+                    isinstance(target_receipt, dict) and target_receipt.get("contract_id") == subagent_alias_contract_id
+                )
+            )
+        ):
+            errors.append(f"{key}: subagent-session alias target lacks independent custody")
 
     files = cursor.get("files")
     if not isinstance(files, dict):
@@ -2813,7 +2897,11 @@ def _prompt_authority_error_reason(value: Any) -> str:
         return "containment_violation"
     if "could not be grounded" in error:
         return "prompt_grounding_failed"
-    if "requires an explicit prompt adapter" in error or "unknown opencode user-bearing" in error:
+    if (
+        "requires an explicit prompt adapter" in error
+        or "requires an explicit content adapter" in error
+        or "unknown opencode user-bearing" in error
+    ):
         return "adapter_missing"
     if any(
         marker in error

@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import contextlib
 import datetime as dt
 import hashlib
@@ -14,10 +16,12 @@ import re
 import shlex
 import signal
 import sqlite3
+import struct
 import subprocess
 import sys
 import threading
 import time
+import zlib
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -52,6 +56,16 @@ from limen.prompt_sources import (  # noqa: E402
     AGY_CONVERSATION_UNIT_SIGNATURE_FIELDS,
     AGY_HISTORY_KEYSETS,
     CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+    CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+    CLAUDE_DERIVED_TOOL_RESULT_INTEGER_FIELDS,
+    CLAUDE_DERIVED_TOOL_RESULT_JOB_KEYS,
+    CLAUDE_DERIVED_TOOL_RESULT_PROMPT_KEYSETS,
+    CLAUDE_DERIVED_TOOL_RESULT_TEXT_FIELDS,
+    CLAUDE_EXIT_PLAN_ALLOWED_PROMPT_INPUT_KEYS,
+    CLAUDE_EXIT_PLAN_ALLOWED_PROMPT_KEYS,
+    CODEX_COMPACTED_MESSAGE_KEYSETS,
+    CODEX_COMPACTED_PAYLOAD_KEYSETS,
+    CODEX_COMPACTION_ITEM_KEYSETS,
     CODEX_HISTORY_KEYSETS,
     CODEX_BYTE_RANGE_KEYS,
     CODEX_EVENT_USER_PAYLOAD_KEYSETS,
@@ -78,8 +92,17 @@ from limen.prompt_sources import (  # noqa: E402
     GEMINI_NONUSER_RECORD_KEYSETS,
     GEMINI_SET_KEYSETS,
     GEMINI_USER_RECORD_KEYSETS,
+    OPENCODE_ASSISTANT_MESSAGE_KEYSETS,
+    OPENCODE_TASK_TOOL_INPUT_KEYSETS,
+    OPENCODE_TASK_TOOL_METADATA_KEYSETS,
+    OPENCODE_TASK_TOOL_PART_KEYS,
+    OPENCODE_TASK_TOOL_STATE_KEYSETS,
+    OPENCODE_TASK_TOOL_TIME_KEYSETS,
     OPENCODE_USER_MESSAGE_KEYS,
     OPENCODE_USER_PART_KEYSETS,
+    OPENCODE_USER_SUMMARY_DIFF_KEYS,
+    OPENCODE_USER_SUMMARY_KEYS,
+    OPENCODE_USER_SUMMARY_MAX_BYTES,
     OPENCODE_UNIT_SIGNATURE_FIELDS,
     PROMPT_SOURCE_SCANNER_VERSION,
     SOURCE_ADAPTER_CONTRACT_VERSION,
@@ -968,7 +991,10 @@ def source_unit_signature(
     )
     if custody.error is not None:
         return None
-    if custody.alias_contract_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+    if custody.alias_contract_id in {
+        CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+        CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+    }:
         return custody.unit_signature
     return file_signature(path)
 
@@ -1008,7 +1034,9 @@ def source_exclusion_candidate_id(
     if custody.error is not None or relative is None:
         return None
     if custody.alias_contract_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
-        return CLAUDE_PROJECT_MEMORY_ALIAS_ID
+        return custody.alias_contract_id
+    if custody.alias_contract_id == CLAUDE_SUBAGENT_SESSION_ALIAS_ID:
+        return custody.alias_contract_id if path.is_file() else None
     parts = relative.parts
     suffix = path.suffix.lower()
 
@@ -1070,7 +1098,10 @@ def confirm_source_exclusion(
         return None
     related: dict[str, dict[str, Any]] = {}
     related_evidence: dict[str, dict[str, str]] = {}
-    if candidate_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+    if candidate_id in {
+        CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+        CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+    }:
         custody = source_path_custody(lifecycle, source, path)
         if (
             custody.error is not None
@@ -1113,7 +1144,10 @@ def current_exclusion_related_signatures(
     path: Path,
     candidate_id: str,
 ) -> dict[str, dict[str, Any]] | None:
-    if candidate_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+    if candidate_id in {
+        CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+        CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+    }:
         custody = source_path_custody(lifecycle, source, path)
         if custody.error is not None or custody.alias_contract_id != candidate_id:
             return None
@@ -1130,7 +1164,10 @@ def current_exclusion_related_evidence(
     path: Path,
     candidate_id: str,
 ) -> dict[str, dict[str, Any]] | None:
-    if candidate_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+    if candidate_id in {
+        CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+        CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+    }:
         custody = source_path_custody(lifecycle, source, path)
         if custody.error is not None or custody.alias_contract_id != candidate_id:
             return None
@@ -1182,6 +1219,17 @@ def native_source_adapter_candidate_id(
     if source == "codex-attachments":
         if len(relative.parts) == 2 and re.fullmatch(r"pasted-text-[1-9][0-9]*\.txt", path.name):
             return "codex-pasted-text-attachment-v1"
+        return None
+    if source == "codex-sessions":
+        parts = relative.parts
+        if (
+            len(parts) == 4
+            and re.fullmatch(r"20[0-9]{2}", parts[0])
+            and re.fullmatch(r"(?:0[1-9]|1[0-2])", parts[1])
+            and re.fullmatch(r"(?:0[1-9]|[12][0-9]|3[01])", parts[2])
+            and re.fullmatch(r"rollout-.+\.jsonl", parts[3])
+        ):
+            return "codex-session-jsonl-v2"
         return None
     if source != "claude-projects" or path.suffix.lower() != ".json":
         return None
@@ -1259,7 +1307,44 @@ def canonical_file_session_id(source: str, path: Path, records: list[dict[str, A
                     candidates.append(value)
     if not candidates:
         return None
-    return next((value for value in candidates if value in path.name), candidates[0])
+    path_matches = [value for value in candidates if value in path.name]
+    if len(path_matches) == 1:
+        return path_matches[0]
+    if len(candidates) == 1:
+        return candidates[0]
+    return None
+
+
+def codex_session_identity_error(path: Path, records: list[dict[str, Any]]) -> str | None:
+    """Require one canonical file identity while permitting exact resume metadata."""
+
+    candidates: list[str] = []
+    for obj in records:
+        if obj.get("type") != "session_meta":
+            continue
+        payload = obj.get("payload")
+        if not isinstance(payload, dict):
+            return "Codex session metadata is malformed"
+        identity_count = 0
+        for key in ("id", "session_id"):
+            if key not in payload:
+                continue
+            value = payload.get(key)
+            if not isinstance(value, str) or not value:
+                return "Codex session identity is malformed"
+            identity_count += 1
+            if value not in candidates:
+                candidates.append(value)
+        if identity_count == 0:
+            return "Codex session identity is malformed"
+    if not candidates:
+        return "Codex session has no canonical identity"
+    if len(candidates) == 1:
+        return None
+    path_matches = [value for value in candidates if value in path.name]
+    if len(path_matches) != 1:
+        return "Codex session identity is ambiguous"
+    return None
 
 
 def codex_file_is_forked(source: str, records: list[dict[str, Any]]) -> bool:
@@ -1353,6 +1438,127 @@ def claude_assistant_prompt_fields(name: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys((*CLAUDE_ASSISTANT_PROMPT_FIELDS["*"], *CLAUDE_ASSISTANT_PROMPT_FIELDS.get(name, ()))))
 
 
+def claude_exit_plan_allowed_prompts(tool_input: Any) -> list[str] | None:
+    """Return only the exact, provider-emitted ExitPlanMode permission prompts."""
+
+    if not isinstance(tool_input, dict) or tuple(sorted(tool_input)) != tuple(
+        sorted(CLAUDE_EXIT_PLAN_ALLOWED_PROMPT_INPUT_KEYS)
+    ):
+        return None
+    if not isinstance(tool_input.get("plan"), str) or not isinstance(tool_input.get("planFilePath"), str):
+        return None
+    allowed = tool_input.get("allowedPrompts")
+    if not isinstance(allowed, list):
+        return None
+    prompts: list[str] = []
+    for item in allowed:
+        if (
+            not isinstance(item, dict)
+            or tuple(sorted(item)) != tuple(sorted(CLAUDE_EXIT_PLAN_ALLOWED_PROMPT_KEYS))
+            or not isinstance(item.get("prompt"), str)
+            or not item["prompt"].strip()
+            or not isinstance(item.get("tool"), str)
+            or not item["tool"].strip()
+        ):
+            return None
+        prompts.append(str(item["prompt"]))
+    return prompts
+
+
+def claude_derived_tool_result_prompt(obj: dict[str, Any]) -> str | None:
+    """Extract the exact delegated prompt echoed by a Claude subagent result."""
+
+    marker = obj.get("sourceToolAssistantUUID")
+    result = obj.get("toolUseResult")
+    allowed_keysets = {tuple(sorted(keyset)) for keyset in CLAUDE_DERIVED_TOOL_RESULT_PROMPT_KEYSETS}
+    if (
+        not isinstance(marker, str)
+        or not marker
+        or not isinstance(result, dict)
+        or tuple(sorted(result)) not in allowed_keysets
+    ):
+        return None
+    for field in CLAUDE_DERIVED_TOOL_RESULT_TEXT_FIELDS:
+        if field in result and not isinstance(result.get(field), str):
+            return None
+    for field in CLAUDE_DERIVED_TOOL_RESULT_INTEGER_FIELDS:
+        if field in result and (isinstance(result.get(field), bool) or not isinstance(result.get(field), int)):
+            return None
+    for field in ("canReadOutputFile", "isAsync"):
+        if field in result and not isinstance(result.get(field), bool):
+            return None
+    if "content" in result and not isinstance(result.get("content"), list):
+        return None
+    for field in ("toolStats", "usage"):
+        if field in result and not isinstance(result.get(field), dict):
+            return None
+    prompt = result.get("prompt")
+    return prompt if isinstance(prompt, str) and prompt.strip() else None
+
+
+def claude_derived_tool_result_job_prompts(obj: dict[str, Any]) -> list[str] | None:
+    """Extract prompts from the exact provider-emitted durable-job result envelope."""
+
+    marker = obj.get("sourceToolAssistantUUID")
+    result = obj.get("toolUseResult")
+    if (
+        not isinstance(marker, str)
+        or not marker
+        or not isinstance(result, dict)
+        or set(result) != {"jobs"}
+        or not isinstance(result.get("jobs"), list)
+    ):
+        return None
+    prompts: list[str] = []
+    for job in result["jobs"]:
+        if (
+            not isinstance(job, dict)
+            or tuple(sorted(job)) != tuple(sorted(CLAUDE_DERIVED_TOOL_RESULT_JOB_KEYS))
+            or any(not isinstance(job.get(field), str) for field in ("cron", "humanSchedule", "id", "prompt"))
+            or any(not isinstance(job.get(field), bool) for field in ("durable", "recurring"))
+            or not job["id"].strip()
+            or not job["prompt"].strip()
+        ):
+            return None
+        prompts.append(str(job["prompt"]))
+    return prompts
+
+
+def claude_attachment_prompt_texts(attachment: dict[str, Any]) -> list[str] | None:
+    """Parse exact textual attachment envelopes; media remains an explicit gap."""
+
+    attachment_type = attachment.get("type")
+    if attachment_type == "goal_status":
+        condition = attachment.get("condition")
+        return [condition] if isinstance(condition, str) and condition.strip() else None
+    if attachment_type not in {"hook_additional_context", "queued_command"}:
+        return []
+    field = "content" if attachment_type == "hook_additional_context" else "prompt"
+    value = attachment.get(field)
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if not isinstance(value, list):
+        return None
+    if attachment_type == "hook_additional_context":
+        return (
+            [item for item in value if isinstance(item, str) and item.strip()]
+            if all(isinstance(item, str) for item in value)
+            else None
+        )
+    texts: list[str] = []
+    for block in value:
+        if (
+            not isinstance(block, dict)
+            or set(block) != {"text", "type"}
+            or block.get("type") != "text"
+            or not isinstance(block.get("text"), str)
+        ):
+            return None
+        if block["text"].strip():
+            texts.append(str(block["text"]))
+    return texts
+
+
 def claude_assistant_prompt_texts(obj: dict[str, Any]) -> list[str]:
     message = obj.get("message")
     content = message.get("content") if isinstance(message, dict) else None
@@ -1371,6 +1577,10 @@ def claude_assistant_prompt_texts(obj: dict[str, Any]) -> list[str]:
             value = tool_input.get(field)
             if isinstance(value, str) and value.strip():
                 texts.append(value)
+        if name == "ExitPlanMode":
+            nested = claude_exit_plan_allowed_prompts(tool_input)
+            if nested is not None:
+                texts.extend(nested)
     return texts
 
 
@@ -1417,12 +1627,8 @@ def prompt_texts_for(lifecycle: Any, source: str, obj: dict[str, Any]) -> list[s
     if source == "claude-projects" and obj.get("type") == "attachment":
         attachment = obj.get("attachment")
         if isinstance(attachment, dict):
-            if attachment.get("type") == "queued_command":
-                return lifecycle.text_from_content(attachment.get("prompt"))
-            if attachment.get("type") == "goal_status":
-                return lifecycle.text_from_content(attachment.get("condition"))
-            if attachment.get("type") == "hook_additional_context":
-                return lifecycle.text_from_content(attachment.get("content"))
+            texts = claude_attachment_prompt_texts(attachment)
+            return texts or []
         return []
     if source == "claude-projects" and obj.get("type") == "assistant":
         return claude_assistant_prompt_texts(obj)
@@ -1465,16 +1671,22 @@ def prompt_texts_for(lifecycle: Any, source: str, obj: dict[str, Any]) -> list[s
             if not isinstance(message, dict) or message.get("role") not in (None, "user"):
                 return []
             content = message.get("content")
+            texts: list[str] = []
             if isinstance(content, str):
-                return [content] if content.strip() else []
-            if isinstance(content, list):
-                texts: list[str] = []
+                if content.strip():
+                    texts.append(content)
+            elif isinstance(content, list):
                 for block in content:
                     if not isinstance(block, dict) or block.get("type") != "text":
                         continue
                     texts.extend(lifecycle.text_from_content(block.get("text")))
-                return texts
-            return []
+            derived_prompt = claude_derived_tool_result_prompt(obj)
+            if derived_prompt is not None:
+                texts.append(derived_prompt)
+            derived_job_prompts = claude_derived_tool_result_job_prompts(obj)
+            if derived_job_prompts is not None:
+                texts.extend(derived_job_prompts)
+            return texts
     parser_source = "gemini-tmp-agy" if source == "gemini-tmp" else source
     return lifecycle.prompt_texts(parser_source, obj)
 
@@ -1483,6 +1695,8 @@ def strict_json_records(
     path: Path,
     *,
     limits: ResourceLimits | None = None,
+    max_source_bytes: int | None = None,
+    max_records: int | None = None,
 ) -> tuple[list[dict[str, Any]], str | None, bool]:
     """Read one supported JSON source atomically or return a closed error.
 
@@ -1492,15 +1706,17 @@ def strict_json_records(
     """
 
     active_limits = limits or runtime_limits({})
+    byte_ceiling = max_source_bytes or active_limits.max_source_bytes_per_unit
+    record_ceiling = max_records or active_limits.max_events_per_unit
     is_jsonl = path.suffix == ".jsonl" or path.name == "history.jsonl"
     if not is_jsonl and path.suffix != ".json":
         return [], None, False
     try:
         size = path.stat().st_size
-        if size > active_limits.max_source_bytes_per_unit:
+        if size > byte_ceiling:
             return (
                 [],
-                f"{path}: source is {size} bytes; bounded ceiling is {active_limits.max_source_bytes_per_unit}",
+                f"{path}: source is {size} bytes; bounded ceiling is {byte_ceiling}",
                 True,
             )
         if is_jsonl:
@@ -1509,10 +1725,10 @@ def strict_json_records(
                 for line_number, line in enumerate(handle, start=1):
                     if not line.strip():
                         continue
-                    if len(rows) >= active_limits.max_events_per_unit:
+                    if len(rows) >= record_ceiling:
                         return (
                             [],
-                            f"{path}: record count exceeds bounded ceiling {active_limits.max_events_per_unit}",
+                            f"{path}: record count exceeds bounded ceiling {record_ceiling}",
                             True,
                         )
                     try:
@@ -1529,14 +1745,81 @@ def strict_json_records(
     if isinstance(value, dict):
         return [value], None, True
     if isinstance(value, list) and all(isinstance(row, dict) for row in value):
-        if len(value) > active_limits.max_events_per_unit:
+        if len(value) > record_ceiling:
             return (
                 [],
-                f"{path}: record count exceeds bounded ceiling {active_limits.max_events_per_unit}",
+                f"{path}: record count exceeds bounded ceiling {record_ceiling}",
                 True,
             )
         return list(value), None, True
     return [], f"{path}: JSON source is not an object or object array", True
+
+
+def strict_codex_session_records(
+    lifecycle: Any,
+    path: Path,
+    signature: dict[str, Any],
+) -> tuple[list[dict[str, Any]], str | None, bool]:
+    """Stream one canonical Codex rollout under its provider-specific ceilings.
+
+    Non-prompt rows become empty positional sentinels after validation. This
+    preserves exact event indexes without retaining large assistant/tool bodies
+    in memory, while every user-bearing row is schema-checked before custody can
+    advance.
+    """
+
+    rule = SOURCE_ADAPTER_RULES["codex-session-jsonl-v2"]
+    max_probe_bytes = int(rule["max_probe_bytes"])
+    max_record_bytes = int(rule["max_record_bytes"])
+    max_records = int(rule["max_records"])
+    expected_size = int(signature.get("size") or 0)
+    if expected_size > max_probe_bytes:
+        return [], f"{path}: Codex session exceeds bounded byte ceiling {max_probe_bytes}", True
+
+    records: list[dict[str, Any]] = []
+    bytes_read = 0
+    try:
+        with path.open("rb") as handle:
+            while True:
+                raw = handle.readline(max_record_bytes + 1)
+                if not raw:
+                    break
+                bytes_read += len(raw)
+                if len(raw) > max_record_bytes:
+                    return [], f"{path}: Codex record exceeds bounded byte ceiling {max_record_bytes}", True
+                if not raw.strip():
+                    continue
+                if len(records) >= max_records:
+                    return [], f"{path}: Codex record count exceeds bounded ceiling {max_records}", True
+                record_number = len(records) + 1
+                try:
+                    obj = json.loads(raw.decode("utf-8", errors="strict"))
+                except (UnicodeError, ValueError, RecursionError) as exc:
+                    return [], f"{path}:{record_number}: malformed JSON: {exc}", True
+                if not isinstance(obj, dict):
+                    return [], f"{path}:{record_number}: JSONL row is not an object", True
+                schema_error = native_record_schema_error(
+                    lifecycle,
+                    "codex-sessions",
+                    path,
+                    [obj],
+                    adapter_id="codex-session-jsonl-v2",
+                    file_complete=False,
+                )
+                if schema_error:
+                    detail = schema_error.split(":1: ", 1)[-1]
+                    return [], f"{path}:{record_number}: {detail}", True
+                keep = bool(obj.get("type") in {"compacted", "session_meta"} or contains_codex_user_marker(obj))
+                records.append(obj if keep else {})
+    except OSError as exc:
+        return [], f"{path}: unreadable Codex session: {exc}", True
+
+    if bytes_read != expected_size or file_signature(path) != signature:
+        return [], f"{path}: Codex session changed during bounded read", True
+    identity_error = codex_session_identity_error(path, records)
+    if identity_error:
+        return [], f"{path}: {identity_error}", True
+    return records, None, True
 
 
 def strict_native_records(
@@ -1557,6 +1840,8 @@ def strict_native_records(
 
     active_limits = limits or runtime_limits({})
     adapter_id = native_source_adapter_candidate_id(lifecycle, source, path)
+    if adapter_id == "codex-session-jsonl-v2":
+        return strict_codex_session_records(lifecycle, path, signature)
     if adapter_id == "claude-remote-task-command-v1":
         adapter_limit = int(SOURCE_ADAPTER_RULES[adapter_id]["max_probe_bytes"])
         try:
@@ -1565,7 +1850,14 @@ def strict_native_records(
             return [], f"{path}: unreadable JSON source: {exc}", True
         if size > adapter_limit:
             return [], f"{path}: remote task metadata exceeds adapter ceiling {adapter_limit}", True
-    records, error, supported = strict_json_records(path, limits=active_limits)
+    source_schema = SOURCE_RECORD_SCHEMAS.get("claude-project-jsonl-v1", {})
+    source_specific_limits = bool(source == "claude-projects" and path.suffix.lower() == ".jsonl")
+    records, error, supported = strict_json_records(
+        path,
+        limits=active_limits,
+        max_source_bytes=(int(source_schema["max_probe_bytes"]) if source_specific_limits else None),
+        max_records=(int(source_schema["max_records"]) if source_specific_limits else None),
+    )
     if error or not supported:
         return records, error, supported
     if adapter_id != "claude-remote-task-command-v1":
@@ -1640,6 +1932,219 @@ def unhandled_prompt_field(
     return None
 
 
+def _codex_turn_metadata_valid(value: Any) -> bool:
+    return bool(
+        isinstance(value, dict)
+        and set(value) == {"turn_id"}
+        and isinstance(value.get("turn_id"), str)
+        and value.get("turn_id")
+    )
+
+
+def codex_image_block_schema_error(block: dict[str, Any]) -> str | None:
+    if tuple(sorted(block)) != CODEX_USER_CONTENT_BLOCK_KEYSETS["input_image"]:
+        return "unknown Codex input-image schema"
+    if block.get("detail") != "high":
+        return "unknown Codex input-image detail schema"
+    image_url = block.get("image_url")
+    prefix = "data:image/png;base64,"
+    if not isinstance(image_url, str) or not image_url.startswith(prefix) or len(image_url) == len(prefix):
+        return "unknown Codex input-image data schema"
+    max_media_bytes = int(SOURCE_ADAPTER_RULES["codex-session-jsonl-v2"]["max_media_bytes"])
+    max_encoded_bytes = ((max_media_bytes + 2) // 3) * 4
+    if len(image_url) - len(prefix) > max_encoded_bytes:
+        return f"Codex input image exceeds bounded byte ceiling {max_media_bytes}"
+    return None
+
+
+def codex_event_text_elements_error(payload: dict[str, Any]) -> str | None:
+    message = payload.get("message")
+    elements = payload.get("text_elements")
+    if not isinstance(message, str) or not isinstance(elements, list):
+        return "unknown Codex event text-element schema"
+    message_bytes = message.encode("utf-8")
+    previous_end = 0
+    for element in elements:
+        byte_range = element.get("byte_range") if isinstance(element, dict) else None
+        if (
+            not isinstance(element, dict)
+            or tuple(sorted(element)) != CODEX_TEXT_ELEMENT_KEYS
+            or not isinstance(element.get("placeholder"), str)
+            or not isinstance(byte_range, dict)
+            or tuple(sorted(byte_range)) != CODEX_BYTE_RANGE_KEYS
+            or any(
+                isinstance(byte_range.get(field), bool) or not isinstance(byte_range.get(field), int)
+                for field in CODEX_BYTE_RANGE_KEYS
+            )
+        ):
+            return "unknown Codex event text-element schema"
+        start = int(byte_range["start"])
+        end = int(byte_range["end"])
+        if start < previous_end or end < start or end > len(message_bytes):
+            return "invalid Codex event text-element range"
+        try:
+            exact_placeholder = message_bytes[start:end].decode("utf-8", errors="strict")
+        except UnicodeError:
+            return "invalid Codex event text-element range"
+        if exact_placeholder != element["placeholder"]:
+            return "Codex event text-element does not match message bytes"
+        previous_end = end
+    return None
+
+
+def codex_compacted_schema_error(record: dict[str, Any]) -> str | None:
+    payload = record.get("payload")
+    if not isinstance(payload, dict) or tuple(sorted(payload)) not in CODEX_COMPACTED_PAYLOAD_KEYSETS:
+        return "unknown Codex compacted payload schema"
+    if payload.get("message") != "":
+        return "Codex compacted message must be the exact empty transport field"
+
+    payload_keys = tuple(sorted(payload))
+    if len(payload_keys) == 6:
+        uuid_pattern = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+        if any(
+            not isinstance(payload.get(field), str) or re.fullmatch(uuid_pattern, str(payload[field])) is None
+            for field in ("first_window_id", "previous_window_id", "window_id")
+        ):
+            return "unknown Codex compacted window identity schema"
+        window_number = payload.get("window_number")
+        if isinstance(window_number, bool) or not isinstance(window_number, int) or window_number < 0:
+            return "unknown Codex compacted window number schema"
+    elif "window_id" in payload:
+        window_id = payload.get("window_id")
+        if isinstance(window_id, bool) or not isinstance(window_id, int) or window_id < 0:
+            return "unknown Codex compacted legacy window schema"
+
+    history = payload.get("replacement_history")
+    maximum = int(SOURCE_ADAPTER_RULES["codex-session-jsonl-v2"]["max_compacted_history_items"])
+    if not isinstance(history, list) or not history or len(history) > maximum:
+        return f"Codex compacted history exceeds bounded item ceiling {maximum}"
+    compaction_items = 0
+    allowed_messages = set(CODEX_COMPACTED_MESSAGE_KEYSETS)
+    allowed_compactions = set(CODEX_COMPACTION_ITEM_KEYSETS)
+    for item in history:
+        if not isinstance(item, dict):
+            return "unknown Codex compacted history item schema"
+        item_type = item.get("type")
+        if item_type == "message":
+            if tuple(sorted(item)) not in allowed_messages or item.get("role") not in {"user", "developer"}:
+                return "unknown Codex compacted message schema"
+            metadata = item.get("internal_chat_message_metadata_passthrough")
+            if metadata is not None and not _codex_turn_metadata_valid(metadata):
+                return "unknown Codex compacted message metadata schema"
+            content = item.get("content")
+            if not isinstance(content, list):
+                return "unknown Codex compacted message content schema"
+            for block in content:
+                if not isinstance(block, dict):
+                    return "unknown Codex compacted content block schema"
+                block_type = block.get("type")
+                expected_keys = CODEX_USER_CONTENT_BLOCK_KEYSETS.get(str(block_type))
+                if expected_keys is None or tuple(sorted(block)) != expected_keys:
+                    return "Codex compacted content requires an explicit adapter"
+                if block_type == "input_text":
+                    if not isinstance(block.get("text"), str):
+                        return "unknown Codex compacted input-text schema"
+                    continue
+                if item.get("role") != "user":
+                    return "Codex compacted developer media requires an explicit adapter"
+                image_error = codex_image_block_schema_error(block)
+                if image_error:
+                    return image_error
+            continue
+        if item_type == "compaction":
+            compaction_items += 1
+            if tuple(sorted(item)) not in allowed_compactions:
+                return "unknown Codex compaction item schema"
+            if not isinstance(item.get("encrypted_content"), str) or not item.get("encrypted_content"):
+                return "unknown Codex encrypted compaction schema"
+            if "id" in item and (not isinstance(item.get("id"), str) or not item.get("id")):
+                return "unknown Codex compaction identity schema"
+            for field in ("metadata", "internal_chat_message_metadata_passthrough"):
+                if field in item and not _codex_turn_metadata_valid(item.get(field)):
+                    return "unknown Codex compaction metadata schema"
+            continue
+        return "unknown Codex compacted history item type"
+    if compaction_items != 1:
+        return "Codex compacted history must contain exactly one compaction item"
+    return None
+
+
+def codex_media_pairing_error(records: list[dict[str, Any]]) -> str | None:
+    """Bind local-image transport references to one nearby canonical data image turn."""
+
+    primaries: list[tuple[int, tuple[str, ...], int]] = []
+    for index, record in enumerate(records):
+        payload = record.get("payload")
+        if not (
+            record.get("type") == "response_item"
+            and isinstance(payload, dict)
+            and payload.get("type") == "message"
+            and payload.get("role") == "user"
+        ):
+            continue
+        content = payload.get("content")
+        if not isinstance(content, list):
+            continue
+        texts = tuple(
+            str(block["text"])
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "input_text" and isinstance(block.get("text"), str)
+        )
+        media_count = sum(1 for block in content if isinstance(block, dict) and block.get("type") == "input_image")
+        if media_count:
+            primaries.append((index, texts, media_count))
+
+    paired: Counter[int] = Counter()
+    for index, record in enumerate(records):
+        payload = record.get("payload")
+        if not (
+            record.get("type") == "event_msg" and isinstance(payload, dict) and payload.get("type") == "user_message"
+        ):
+            continue
+        local_images = payload.get("local_images")
+        if not isinstance(local_images, list) or not local_images:
+            continue
+        for locator in local_images:
+            if not isinstance(locator, str) or not locator or "\x00" in locator:
+                return "Codex user-media transport locator is malformed"
+            candidate = Path(locator)
+            if (
+                not candidate.is_absolute()
+                or ".." in candidate.parts
+                or str(candidate.expanduser().absolute()) != locator
+            ):
+                return "Codex user-media transport locator is not canonical"
+        elements = payload.get("text_elements")
+        if not isinstance(elements, list):
+            return "Codex user-media transport has malformed text elements"
+        image_placeholders = [
+            element
+            for element in elements
+            if isinstance(element, dict)
+            and re.fullmatch(r"\[Image #[1-9][0-9]*\]", str(element.get("placeholder") or ""))
+        ]
+        if len(image_placeholders) != len(local_images):
+            return "Codex user-media transport cardinality does not match image placeholders"
+        message = payload.get("message")
+        candidates = [
+            primary
+            for primary in primaries
+            if primary[0] < index
+            and index - primary[0] <= 2
+            and isinstance(message, str)
+            and message in primary[1]
+            and primary[2] == len(local_images)
+        ]
+        if not candidates:
+            return "Codex user media has no exact canonical primary binding"
+        primary = max(candidates, key=lambda item: item[0])
+        paired[primary[0]] += 1
+    if any(paired[index] != 1 for index, _texts, _count in primaries):
+        return "Codex primary user media does not have exactly one transport binding"
+    return None
+
+
 def native_record_schema_error(
     lifecycle: Any,
     source: str,
@@ -1647,6 +2152,7 @@ def native_record_schema_error(
     records: list[dict[str, Any]],
     *,
     adapter_id: str | None,
+    file_complete: bool = True,
 ) -> str | None:
     """Reject structurally unknown Claude containers before advancing a cursor."""
 
@@ -1667,8 +2173,16 @@ def native_record_schema_error(
                 and isinstance(payload, dict)
                 and payload.get("type") == "user_message"
             )
-            if contains_codex_user_marker(record) and not (is_response_user or is_event_user):
+            is_compacted = record.get("type") == "compacted"
+            if contains_codex_user_marker(record) and not (is_response_user or is_event_user or is_compacted):
                 return f"{path}:{index + 1}: unknown Codex user-bearing record schema"
+            if is_compacted:
+                if tuple(sorted(record)) != CODEX_USER_RECORD_KEYS or not isinstance(record.get("timestamp"), str):
+                    return f"{path}:{index + 1}: unknown Codex compacted record envelope"
+                compacted_error = codex_compacted_schema_error(record)
+                if compacted_error:
+                    return f"{path}:{index + 1}: {compacted_error}"
+                continue
             if not isinstance(payload, dict):
                 continue
             has_user_role = payload.get("role") == "user"
@@ -1703,8 +2217,11 @@ def native_record_schema_error(
                     expected_keys = CODEX_USER_CONTENT_BLOCK_KEYSETS.get(str(block_type))
                     if expected_keys is None or tuple(sorted(block)) != expected_keys:
                         return f"{path}:{index + 1}: Codex user content requires an explicit content adapter"
-                    if block_type != "input_text":
-                        return f"{path}:{index + 1}: Codex user media requires an explicit content adapter"
+                    if block_type == "input_image":
+                        image_error = codex_image_block_schema_error(block)
+                        if image_error:
+                            return f"{path}:{index + 1}: {image_error}"
+                        continue
                     if not isinstance(block.get("text"), str):
                         return f"{path}:{index + 1}: unknown Codex input-text schema"
                 continue
@@ -1717,26 +2234,19 @@ def native_record_schema_error(
                     media = payload.get(media_field, [])
                     if media is not None and not isinstance(media, list):
                         return f"{path}:{index + 1}: unknown Codex event user-media schema"
-                    if media:
+                    if media_field == "images" and media:
                         return f"{path}:{index + 1}: Codex user media requires an explicit content adapter"
-                elements = payload.get("text_elements")
-                if not isinstance(elements, list):
-                    return f"{path}:{index + 1}: unknown Codex event text-element schema"
-                for element in elements:
-                    byte_range = element.get("byte_range") if isinstance(element, dict) else None
                     if (
-                        not isinstance(element, dict)
-                        or tuple(sorted(element)) != CODEX_TEXT_ELEMENT_KEYS
-                        or not isinstance(element.get("placeholder"), str)
-                        or not isinstance(byte_range, dict)
-                        or tuple(sorted(byte_range)) != CODEX_BYTE_RANGE_KEYS
-                        or any(
-                            isinstance(byte_range.get(field), bool) or not isinstance(byte_range.get(field), int)
-                            for field in CODEX_BYTE_RANGE_KEYS
-                        )
+                        media_field == "local_images"
+                        and media
+                        and not all(isinstance(value, str) and value for value in media)
                     ):
-                        return f"{path}:{index + 1}: unknown Codex event text-element schema"
-        return None
+                        return f"{path}:{index + 1}: unknown Codex event local-image schema"
+                elements_error = codex_event_text_elements_error(payload)
+                if elements_error:
+                    return f"{path}:{index + 1}: {elements_error}"
+        pairing_error = codex_media_pairing_error(records) if file_complete else None
+        return f"{path}: {pairing_error}" if pairing_error else None
     if source == "codex-history":
         allowed = set(CODEX_HISTORY_KEYSETS)
         for index, record in enumerate(records):
@@ -1831,6 +2341,12 @@ def native_record_schema_error(
                     return f"{path}:{index + 1}: unknown Claude project JSONL record schema"
                 if record_type == "user":
                     message = record.get("message")
+                    message_content = message.get("content") if isinstance(message, dict) else None
+                    if isinstance(message_content, list) and any(
+                        isinstance(block, dict) and block.get("type") in {"document", "image"}
+                        for block in message_content
+                    ):
+                        return f"{path}:{index + 1}: Claude user media requires an explicit content adapter"
                     if (
                         not isinstance(message, dict)
                         or set(message) != {"content", "role"}
@@ -1843,6 +2359,19 @@ def native_record_schema_error(
                         for block in content:
                             if isinstance(block, dict) and block.get("type") == "tool_result":
                                 opaque_prompt_subtrees.add(id(block.get("content")))
+                    tool_result = record.get("toolUseResult")
+                    if isinstance(tool_result, dict) and "prompt" in tool_result:
+                        if claude_derived_tool_result_prompt(record) is None:
+                            return f"{path}:{index + 1}: unknown Claude derived tool-result prompt schema"
+                        handled_prompt_fields.add((id(tool_result), "prompt"))
+                        for field in ("content", "toolStats", "usage"):
+                            if field in tool_result:
+                                opaque_prompt_subtrees.add(id(tool_result.get(field)))
+                    if isinstance(tool_result, dict) and "jobs" in tool_result:
+                        if claude_derived_tool_result_job_prompts(record) is None:
+                            return f"{path}:{index + 1}: unknown Claude derived tool-result jobs schema"
+                        for job in tool_result["jobs"]:
+                            handled_prompt_fields.add((id(job), "prompt"))
                 if record_type == "assistant":
                     message = record.get("message")
                     content = message.get("content") if isinstance(message, dict) else None
@@ -1865,6 +2394,12 @@ def native_record_schema_error(
                         if any(field in tool_input and not isinstance(tool_input.get(field), str) for field in fields):
                             return f"{path}:{index + 1}: unknown Claude assistant prompt-field schema"
                         handled_prompt_fields.update((id(tool_input), field) for field in fields if field in tool_input)
+                        if "allowedPrompts" in tool_input:
+                            allowed_prompts = claude_exit_plan_allowed_prompts(tool_input)
+                            if name != "ExitPlanMode" or allowed_prompts is None:
+                                return f"{path}:{index + 1}: unknown Claude allowed-prompts schema"
+                            for item in tool_input["allowedPrompts"]:
+                                handled_prompt_fields.add((id(item), "prompt"))
                 if record_type == "attachment":
                     attachment = record.get("attachment")
                     if not isinstance(attachment, dict) or attachment.get("type") not in CLAUDE_ATTACHMENT_TYPES:
@@ -1878,12 +2413,12 @@ def native_record_schema_error(
                         field in attachment and field not in prompt_fields for field in CLAUDE_UNEXPECTED_PROMPT_FIELDS
                     ):
                         return f"{path}:{index + 1}: unknown Claude attachment prompt-carrier schema"
-                    if any(
-                        field in attachment and not isinstance(attachment.get(field), str) for field in prompt_fields
-                    ):
+                    if prompt_fields and claude_attachment_prompt_texts(attachment) is None:
+                        if attachment_type == "queued_command" and isinstance(attachment.get("prompt"), list):
+                            return (
+                                f"{path}:{index + 1}: Claude queued-command media requires an explicit content adapter"
+                            )
                         return f"{path}:{index + 1}: unknown Claude attachment prompt-field schema"
-                    if attachment.get("type") == "queued_command" and not content_valid(attachment.get("prompt")):
-                        return f"{path}:{index + 1}: unknown Claude queued-command schema"
                     if attachment.get("type") == "goal_status" and (
                         set(attachment) - set(CLAUDE_GOAL_STATUS_KEYS)
                         or not isinstance(attachment.get("condition"), str)
@@ -2009,6 +2544,8 @@ def _discover_candidate(
             rows.source_alias_blocker_counts[str(custody.blocker_reason)] += 1
         return True
     try:
+        if custody.alias_contract_id == CLAUDE_SUBAGENT_SESSION_ALIAS_ID and path.is_dir():
+            return True
         if custody.alias_contract_id is None and not path.is_file():
             return True
         source_mtime = (
@@ -2247,9 +2784,12 @@ def normalize_codex_file_events(
         digest(str(event.get("text") or "")) for event in events if event.get("provenance") == "transport_echo"
     }
     for event in events:
+        media_primary = bool(event.pop("_codex_media_primary", False))
         if event.get("provenance") != "operator_typed":
             continue
-        unmatched_effective_input = bool(echo_hashes) and digest(str(event.get("text") or "")) not in echo_hashes
+        unmatched_effective_input = bool(
+            not media_primary and echo_hashes and digest(str(event.get("text") or "")) not in echo_hashes
+        )
         if forked:
             event["body_kind"] = "session_context"
             event["task_body"] = ""
@@ -2306,6 +2846,149 @@ def codex_attachment_reference_paths(lifecycle: Any, text: str) -> list[str]:
     return targets
 
 
+def codex_png_descriptor(block: dict[str, Any]) -> tuple[str | None, str | None]:
+    """Validate one bounded inline PNG and return a private digest-only occurrence."""
+
+    schema_error = codex_image_block_schema_error(block)
+    if schema_error:
+        return None, schema_error
+    prefix = "data:image/png;base64,"
+    encoded = str(block["image_url"])[len(prefix) :]
+    try:
+        payload = base64.b64decode(encoded, validate=True)
+    except (binascii.Error, ValueError):
+        return None, "Codex input image is not strict base64"
+    maximum = int(SOURCE_ADAPTER_RULES["codex-session-jsonl-v2"]["max_media_bytes"])
+    if not payload or len(payload) > maximum:
+        return None, f"Codex input image exceeds bounded byte ceiling {maximum}"
+    if not payload.startswith(b"\x89PNG\r\n\x1a\n"):
+        return None, "Codex input image is not a canonical PNG"
+
+    offset = 8
+    width: int | None = None
+    height: int | None = None
+    saw_iend = False
+    chunk_index = 0
+    while offset < len(payload):
+        if offset + 12 > len(payload):
+            return None, "Codex input PNG is truncated"
+        length = struct.unpack(">I", payload[offset : offset + 4])[0]
+        chunk_type = payload[offset + 4 : offset + 8]
+        chunk_end = offset + 12 + length
+        if chunk_end > len(payload) or re.fullmatch(rb"[A-Za-z]{4}", chunk_type) is None:
+            return None, "Codex input PNG has a malformed chunk"
+        chunk_data = payload[offset + 8 : offset + 8 + length]
+        expected_crc = struct.unpack(">I", payload[offset + 8 + length : chunk_end])[0]
+        actual_crc = zlib.crc32(chunk_data, zlib.crc32(chunk_type)) & 0xFFFFFFFF
+        if actual_crc != expected_crc:
+            return None, "Codex input PNG has a corrupt chunk"
+        if chunk_index == 0:
+            if chunk_type != b"IHDR" or length != 13:
+                return None, "Codex input PNG has no canonical IHDR"
+            width, height = struct.unpack(">II", chunk_data[:8])
+            if width <= 0 or height <= 0:
+                return None, "Codex input PNG dimensions are malformed"
+        elif chunk_type == b"IHDR":
+            return None, "Codex input PNG repeats IHDR"
+        if chunk_type == b"IEND":
+            if length != 0 or chunk_end != len(payload):
+                return None, "Codex input PNG has a malformed IEND"
+            saw_iend = True
+            offset = chunk_end
+            break
+        offset = chunk_end
+        chunk_index += 1
+    if not saw_iend or width is None or height is None or offset != len(payload):
+        return None, "Codex input PNG is incomplete"
+    media_hash = hashlib.sha256(payload).hexdigest()
+    return (
+        f"codex-input-image-v1:sha256={media_hash};bytes={len(payload)};width={width};height={height};detail=high",
+        None,
+    )
+
+
+def codex_prompt_items_for(
+    lifecycle: Any,
+    obj: dict[str, Any],
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Extract exact text and digest-only media occurrences from one Codex row."""
+
+    payload = obj.get("payload")
+    if (
+        obj.get("type") == "response_item"
+        and isinstance(payload, dict)
+        and payload.get("type") == "message"
+        and payload.get("role") == "user"
+    ):
+        items: list[dict[str, Any]] = []
+        for block_index, block in enumerate(payload.get("content") or []):
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "input_text":
+                text = block.get("text")
+                if isinstance(text, str) and text.strip():
+                    items.append({"text_index": block_index, "text": text})
+                continue
+            if block.get("type") == "input_image":
+                descriptor, error = codex_png_descriptor(block)
+                if error:
+                    return [], error
+                items.append(
+                    {
+                        "text_index": block_index,
+                        "text": descriptor,
+                        "body_kind": "nontext_input",
+                        "media_primary": True,
+                    }
+                )
+        return items, None
+    if obj.get("type") == "event_msg" and isinstance(payload, dict) and payload.get("type") == "user_message":
+        message = payload.get("message")
+        return ([{"text_index": 0, "text": message}] if isinstance(message, str) and message.strip() else []), None
+    if obj.get("type") == "compacted" and isinstance(payload, dict):
+        items = []
+        item_index = 0
+        for history_item in payload.get("replacement_history") or []:
+            if not isinstance(history_item, dict) or history_item.get("type") != "message":
+                continue
+            if history_item.get("role") != "user":
+                continue
+            for block in history_item.get("content") or []:
+                if not isinstance(block, dict):
+                    continue
+                if block.get("type") == "input_text":
+                    text = block.get("text")
+                    if isinstance(text, str) and text.strip():
+                        items.append(
+                            {
+                                "text_index": item_index,
+                                "text": text,
+                                "body_kind": "session_context",
+                                "provenance": "continuation_summary",
+                                "authority": "derived",
+                            }
+                        )
+                elif block.get("type") == "input_image":
+                    descriptor, error = codex_png_descriptor(block)
+                    if error:
+                        return [], error
+                    items.append(
+                        {
+                            "text_index": item_index,
+                            "text": descriptor,
+                            "body_kind": "nontext_context",
+                            "provenance": "continuation_summary",
+                            "authority": "derived",
+                        }
+                    )
+                item_index += 1
+        return items, None
+    return [
+        {"text_index": index, "text": text}
+        for index, text in enumerate(prompt_texts_for(lifecycle, "codex-sessions", obj))
+    ], None
+
+
 def regular_file_events(
     lifecycle: Any,
     source: str,
@@ -2322,14 +3005,30 @@ def regular_file_events(
     path_authority = claude_project_path_authority(lifecycle, source, path)
     file_events: list[dict[str, Any]] = []
     for event_index, obj in enumerate(records):
-        texts = prompt_texts_for(lifecycle, source, obj)
-        for text_index, text in enumerate(texts):
-            if adapter_id == "claude-remote-task-command-v1":
+        if source == "codex-sessions":
+            prompt_items, prompt_error = codex_prompt_items_for(lifecycle, obj)
+            if prompt_error:
+                return [], f"{path}:{event_index + 1}: {prompt_error}"
+        else:
+            prompt_items = [
+                {"text_index": text_index, "text": text}
+                for text_index, text in enumerate(prompt_texts_for(lifecycle, source, obj))
+            ]
+        for item in prompt_items:
+            text_index = int(item["text_index"])
+            text = str(item["text"])
+            if "body_kind" in item:
+                task_body, body_kind = "", str(item["body_kind"])
+            elif adapter_id == "claude-remote-task-command-v1":
                 task_body, body_kind = "", "direct"
             else:
                 task_body, body_kind = lifecycle.normalize_task_body(text)
-            provenance, authority = provenance_for(source, obj, body_kind)
-            if path_authority == "derived" or adapter_id:
+            provenance, authority = (
+                (str(item["provenance"]), str(item["authority"]))
+                if "provenance" in item and "authority" in item
+                else provenance_for(source, obj, body_kind)
+            )
+            if path_authority == "derived" or (adapter_id and adapter_id != "codex-session-jsonl-v2"):
                 provenance, authority = "delegated_task_frame", "derived"
             elif path_authority == "unknown" and provenance == "operator_typed":
                 provenance, authority = "unknown_user_input", "unknown"
@@ -2365,6 +3064,7 @@ def regular_file_events(
                         if source == "codex-sessions" and _codex_canonical_parent_record(obj)
                         else {}
                     ),
+                    **({"_codex_media_primary": True} if item.get("media_primary") else {}),
                 }
             )
             if len(file_events) > limits.max_events_per_unit:
@@ -2501,8 +3201,6 @@ def bounded_codex_attachment_parent_events_from_path(
                         parent_completeness_unknown = True
                     if len(session_ids) > max_session_ids:
                         session_identity_error = "attachment parent has too many session identities"
-                    elif len(session_ids) > 1:
-                        session_identity_error = "attachment parent session identity is ambiguous"
                     forked = bool(
                         forked
                         or payload.get("forked_from_id")
@@ -2516,6 +3214,7 @@ def bounded_codex_attachment_parent_events_from_path(
                     path,
                     [obj],
                     adapter_id=None,
+                    file_complete=False,
                 )
                 if schema_error:
                     parent_completeness_unknown = True
@@ -2562,8 +3261,6 @@ def bounded_codex_attachment_parent_events_from_path(
 
     if bytes_read != int(signature.get("size") or 0) or file_signature(path) != signature:
         return [], "attachment parent changed during bounded read", True
-    if session_identity_error:
-        return [], session_identity_error, parent_completeness_unknown
     if parent_completeness_unknown and candidates:
         return (
             [],
@@ -2572,9 +3269,17 @@ def bounded_codex_attachment_parent_events_from_path(
         )
     if not candidates:
         return [], None, parent_completeness_unknown
-    if not session_ids:
+    if session_identity_error:
+        return [], session_identity_error, parent_completeness_unknown
+    path_matches = [value for value in session_ids if value in path.name]
+    if len(session_ids) == 1:
+        file_session_id = session_ids[0]
+    elif len(path_matches) == 1:
+        file_session_id = path_matches[0]
+    elif not session_ids:
         return [], "attachment parent has no canonical session identity", False
-    file_session_id = session_ids[0]
+    else:
+        return [], "attachment parent session identity is ambiguous", False
     parent_events: list[dict[str, Any]] = []
     for candidate in candidates:
         text = str(candidate["text"])
@@ -2843,6 +3548,14 @@ def scan_regular_sources(
     )
     source_alias_blocker_counts: Counter[str] = Counter(getattr(active_rows, "source_alias_blocker_counts", {}))
     has_codex_attachment_rows = any(str(row["source"]) == "codex-attachments" for row in active_rows)
+    codex_session_proves_parent_completeness = bool(
+        int(SOURCE_ADAPTER_RULES["codex-session-jsonl-v2"]["max_probe_bytes"])
+        <= int(SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]["max_parent_probe_bytes"])
+        and int(SOURCE_ADAPTER_RULES["codex-session-jsonl-v2"]["max_record_bytes"])
+        <= int(SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]["max_parent_record_bytes"])
+        and int(SOURCE_ADAPTER_RULES["codex-session-jsonl-v2"]["max_records"])
+        <= int(SOURCE_ADAPTER_RULES["codex-pasted-text-attachment-v1"]["max_parent_records"])
+    )
     for source, error in getattr(active_rows, "discovery_errors", []):
         coverage_row(coverage, source)["errors"] += 1
         errors.append(error)
@@ -2930,7 +3643,10 @@ def scan_regular_sources(
                     excluded_unit_receipts.pop(key, None)
                     counts["errors"] += 1
                     errors.append(f"{source}:{path}: source changed during cached exclusion validation")
-                    if exclusion_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+                    if exclusion_id in {
+                        CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+                        CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+                    }:
                         source_alias_blocker_counts["alias_changed"] += 1
                     continue
                 exclusion_counts[exclusion_id] += 1
@@ -2969,7 +3685,10 @@ def scan_regular_sources(
             if confirmed is None:
                 excluded_unit_receipts.pop(key, None)
                 adapted_unit_receipts.pop(key, None)
-                if exclusion_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+                if exclusion_id in {
+                    CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+                    CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+                }:
                     counts["errors"] += 1
                     errors.append(f"{source}:{path}: approved alias changed during exclusion classification")
                     source_alias_blocker_counts["alias_changed"] += 1
@@ -2980,7 +3699,11 @@ def scan_regular_sources(
                 continue
             confirmed_id, related_signatures, related_evidence = confirmed
             related_changed = bool(
-                exclusion_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID
+                exclusion_id
+                in {
+                    CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+                    CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+                }
                 and (
                     current_exclusion_related_signatures(lifecycle, source, path, exclusion_id) != related_signatures
                     or current_exclusion_related_evidence(lifecycle, source, path, exclusion_id) != related_evidence
@@ -2989,7 +3712,10 @@ def scan_regular_sources(
             if source_unit_signature(lifecycle, source, path) != signature or related_changed:
                 counts["errors"] += 1
                 errors.append(f"{source}:{path}: source changed during exclusion classification")
-                if exclusion_id == CLAUDE_PROJECT_MEMORY_ALIAS_ID:
+                if exclusion_id in {
+                    CLAUDE_PROJECT_MEMORY_ALIAS_ID,
+                    CLAUDE_SUBAGENT_SESSION_ALIAS_ID,
+                }:
                     source_alias_blocker_counts["alias_changed"] += 1
                 continue
             excluded_unit_receipts[key] = {
@@ -3062,6 +3788,32 @@ def scan_regular_sources(
                 counts["errors"] += 1
                 errors.append(f"{source}:{path}: source changed during cached adapter validation")
                 continue
+            if adapter_id == "codex-session-jsonl-v2" and has_codex_attachment_rows:
+                (
+                    targeted_parent_events,
+                    targeted_error,
+                    targeted_completeness_unknown,
+                ) = bounded_codex_attachment_parent_events_from_path(
+                    lifecycle,
+                    path,
+                    signature,
+                    limits=active_limits,
+                )
+                if targeted_completeness_unknown:
+                    parent_completeness_unknown.add(key)
+                if targeted_error:
+                    files.pop(key, None)
+                    adapted_unit_receipts.pop(key, None)
+                    counts["errors"] += 1
+                    errors.append(f"{source}:{targeted_error}")
+                    continue
+                collect_codex_attachment_parents(
+                    lifecycle,
+                    parent_path=path,
+                    parent_signature=signature,
+                    file_events=targeted_parent_events,
+                    parents=codex_attachment_parents,
+                )
             adapter_counts[adapter_id] += 1
             counts["adapted"] += 1
             counts["converged"] += 1
@@ -3149,8 +3901,17 @@ def scan_regular_sources(
                 signature,
                 limits=active_limits,
             )
-            if source == "codex-sessions":
-                if error or not supported:
+            if source == "codex-sessions" and has_codex_attachment_rows:
+                if (
+                    adapter_id == "codex-session-jsonl-v2"
+                    and codex_session_proves_parent_completeness
+                    and not error
+                    and supported
+                ):
+                    targeted_parent_events = []
+                    targeted_error = None
+                    targeted_completeness_unknown = False
+                elif error or not supported:
                     (
                         targeted_parent_events,
                         targeted_error,
@@ -3174,7 +3935,7 @@ def scan_regular_sources(
                     )
                 if targeted_completeness_unknown:
                     parent_completeness_unknown.add(key)
-                if targeted_error:
+                if targeted_error and not error:
                     error = targeted_error
                 if targeted_parent_events and source_unit_signature(lifecycle, source, path) == signature:
                     collect_codex_attachment_parents(
@@ -3210,6 +3971,20 @@ def scan_regular_sources(
                         adapter_id=adapter_id,
                         limits=active_limits,
                     )
+                    if (
+                        source == "codex-sessions"
+                        and adapter_id == "codex-session-jsonl-v2"
+                        and codex_session_proves_parent_completeness
+                        and has_codex_attachment_rows
+                        and not error
+                    ):
+                        collect_codex_attachment_parents(
+                            lifecycle,
+                            parent_path=path,
+                            parent_signature=signature,
+                            file_events=file_events,
+                            parents=codex_attachment_parents,
+                        )
                     supported = True
         if not supported:
             counts["unsupported"] += 1
@@ -3394,6 +4169,236 @@ def opencode_integrity_error(connection: sqlite3.Connection, *, step_ceiling: in
     return None
 
 
+def opencode_user_summary_schema_error(
+    connection: sqlite3.Connection,
+    *,
+    session_id: str,
+    step_ceiling: int,
+) -> str | None:
+    """Validate the exact provider-generated patch-summary envelope in SQLite.
+
+    The summary can be much larger than the user prompt.  Keep it outside the
+    prompt projection only after proving its canonical shape without returning
+    patch bodies to Python.
+    """
+
+    progress = {"steps": 0}
+
+    def bounded_progress() -> int:
+        progress["steps"] += 1_000
+        return int(progress["steps"] > step_ceiling)
+
+    connection.set_progress_handler(bounded_progress, 1_000)
+    try:
+        summary_rows = connection.execute(
+            "SELECT id, json_extract(data, '$.role') AS role, "
+            "json_type(data, '$.summary') AS summary_type, "
+            "length(CAST(json_extract(data, '$.summary') AS BLOB)) AS summary_bytes "
+            "FROM message WHERE session_id=? AND json_valid(data) "
+            "AND json_extract(data, '$.role')='user' "
+            "AND json_type(data, '$.summary') IS NOT NULL",
+            (session_id,),
+        ).fetchall()
+        expected_diff_types = {
+            "additions": "integer",
+            "deletions": "integer",
+            "file": "text",
+            "patch": "text",
+            "status": "text",
+        }
+        if set(expected_diff_types) != set(OPENCODE_USER_SUMMARY_DIFF_KEYS):
+            raise RuntimeError("OpenCode summary field-type contract drift")
+        allowed_placeholders = ", ".join("?" for _ in OPENCODE_USER_SUMMARY_DIFF_KEYS)
+        exact_key_checks = " OR ".join(
+            "(SELECT COUNT(*) FROM json_each(d.value) AS field WHERE field.key=?) != 1"
+            for _ in OPENCODE_USER_SUMMARY_DIFF_KEYS
+        )
+        type_checks = " OR ".join(
+            f"COALESCE(json_type(d.value, '$.{field}'), 'missing') != ?" for field in OPENCODE_USER_SUMMARY_DIFF_KEYS
+        )
+        invalid_diff_query = (
+            "SELECT 1 FROM message AS m, json_each(m.data, '$.summary.diffs') AS d "
+            "WHERE m.id=? AND (d.type != 'object' "
+            "OR (SELECT COUNT(*) FROM json_each(d.value)) != ? "
+            f"OR EXISTS (SELECT 1 FROM json_each(d.value) AS field WHERE field.key NOT IN ({allowed_placeholders})) "
+            f"OR {exact_key_checks} OR {type_checks}) LIMIT 1"
+        )
+        for row in summary_rows:
+            if row["role"] != "user" or row["summary_type"] != "object":
+                return "OpenCode summary is not canonical user patch context"
+            if int(row["summary_bytes"] or 0) > OPENCODE_USER_SUMMARY_MAX_BYTES:
+                return f"OpenCode summary exceeds hard byte ceiling {OPENCODE_USER_SUMMARY_MAX_BYTES}"
+            summary_keys = connection.execute(
+                "SELECT COUNT(*) AS total, "
+                "SUM(CASE WHEN key=? THEN 1 ELSE 0 END) AS expected, "
+                "SUM(CASE WHEN key!=? THEN 1 ELSE 0 END) AS unexpected "
+                "FROM message AS m, json_each(m.data, '$.summary') WHERE m.id=?",
+                (OPENCODE_USER_SUMMARY_KEYS[0], OPENCODE_USER_SUMMARY_KEYS[0], row["id"]),
+            ).fetchone()
+            if (
+                int(summary_keys["total"] or 0) != len(OPENCODE_USER_SUMMARY_KEYS)
+                or int(summary_keys["expected"] or 0) != 1
+                or int(summary_keys["unexpected"] or 0) != 0
+            ):
+                return "OpenCode summary has an unknown provider patch-context schema"
+            summary_data = connection.execute(
+                "SELECT json_type(data, '$.summary.diffs') AS diffs_type FROM message WHERE id=?",
+                (row["id"],),
+            ).fetchone()
+            if summary_data is None or summary_data["diffs_type"] != "array":
+                return "OpenCode summary diffs is not a canonical array"
+            invalid_diff = connection.execute(
+                invalid_diff_query,
+                (
+                    row["id"],
+                    len(OPENCODE_USER_SUMMARY_DIFF_KEYS),
+                    *OPENCODE_USER_SUMMARY_DIFF_KEYS,
+                    *OPENCODE_USER_SUMMARY_DIFF_KEYS,
+                    *(expected_diff_types[field] for field in OPENCODE_USER_SUMMARY_DIFF_KEYS),
+                ),
+            ).fetchone()
+            if invalid_diff is not None:
+                return "OpenCode summary contains an unknown provider diff schema"
+    except sqlite3.OperationalError as exc:
+        if "interrupted" in str(exc).lower():
+            return "OpenCode summary validation exceeds bounded step ceiling"
+        raise
+    finally:
+        connection.set_progress_handler(None, 0)
+    return None
+
+
+def opencode_assistant_task_event(
+    lifecycle: Any,
+    connection: sqlite3.Connection,
+    *,
+    path: Path,
+    session_id: str,
+    message: sqlite3.Row,
+    message_data: dict[str, Any],
+    part: sqlite3.Row,
+    part_data: dict[str, Any],
+    event_index: int,
+    text_index: int,
+    seen_call_ids: set[str],
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Adapt one exact OpenCode task-tool call into a derived prompt event."""
+
+    if set(message_data) not in [set(keyset) for keyset in OPENCODE_ASSISTANT_MESSAGE_KEYSETS]:
+        return None, "OpenCode task-tool parent requires an explicit assistant-message adapter"
+    if message_data.get("role") != "assistant":
+        return None, "OpenCode task-tool parent is not a canonical assistant message"
+    if set(part_data) != set(OPENCODE_TASK_TOOL_PART_KEYS):
+        return None, "OpenCode task-tool part has an unknown envelope"
+    call_id = part_data.get("callID")
+    if not isinstance(call_id, str) or not call_id.strip():
+        return None, "OpenCode task-tool callID must be a non-empty string"
+    if call_id in seen_call_ids:
+        return None, "OpenCode task-tool callID is duplicated within its session"
+    seen_call_ids.add(call_id)
+    state = part_data.get("state")
+    if not isinstance(state, dict):
+        return None, "OpenCode task-tool state is not an object"
+    status = state.get("status")
+    expected_state_keys = OPENCODE_TASK_TOOL_STATE_KEYSETS.get(status)
+    if expected_state_keys is None or set(state) != set(expected_state_keys):
+        return None, "OpenCode task-tool state requires an explicit status adapter"
+    input_data = state.get("input")
+    if not isinstance(input_data, dict) or set(input_data) not in [
+        set(keyset) for keyset in OPENCODE_TASK_TOOL_INPUT_KEYSETS
+    ]:
+        return None, "OpenCode task-tool input has an unknown schema"
+    for field in ("description", "prompt", "subagent_type"):
+        if not isinstance(input_data.get(field), str) or not str(input_data[field]).strip():
+            return None, f"OpenCode task-tool {field} must be a non-empty string"
+    if "command" in input_data and (
+        not isinstance(input_data.get("command"), str) or not str(input_data["command"]).strip()
+    ):
+        return None, "OpenCode task-tool command must be a non-empty string"
+    metadata = state.get("metadata")
+    if not isinstance(metadata, dict) or set(metadata) not in [
+        set(keyset) for keyset in OPENCODE_TASK_TOOL_METADATA_KEYSETS
+    ]:
+        return None, "OpenCode task-tool metadata has an unknown schema"
+    for field in ("parentSessionId", "sessionId"):
+        if not isinstance(metadata.get(field), str) or not str(metadata[field]).strip():
+            return None, f"OpenCode task-tool metadata {field} must be a non-empty string"
+    if metadata["parentSessionId"] != session_id:
+        return None, "OpenCode task-tool metadata does not name its canonical parent session"
+    if "truncated" in metadata and not isinstance(metadata.get("truncated"), bool):
+        return None, "OpenCode task-tool truncated metadata must be boolean"
+    if "outputPath" in metadata and (
+        not isinstance(metadata.get("outputPath"), str) or not str(metadata["outputPath"]).strip()
+    ):
+        return None, "OpenCode task-tool outputPath metadata must be a non-empty string"
+    metadata_model = metadata.get("model")
+    if not isinstance(metadata_model, dict) or set(metadata_model) != {"modelID", "providerID"}:
+        return None, "OpenCode task-tool metadata model has an unknown schema"
+    if any(
+        not isinstance(metadata_model.get(field), str) or not str(metadata_model[field]).strip()
+        for field in ("modelID", "providerID")
+    ):
+        return None, "OpenCode task-tool metadata model fields must be non-empty strings"
+    time_data = state.get("time")
+    expected_time_keys = OPENCODE_TASK_TOOL_TIME_KEYSETS[status]
+    if not isinstance(time_data, dict) or set(time_data) != set(expected_time_keys):
+        return None, "OpenCode task-tool time has an unknown schema"
+    for field in expected_time_keys:
+        if isinstance(time_data.get(field), bool) or not isinstance(time_data.get(field), int):
+            return None, "OpenCode task-tool time fields must be exact integers"
+    if status == "completed" and time_data["end"] < time_data["start"]:
+        return None, "OpenCode task-tool completion precedes its start"
+    if not isinstance(state.get("title"), str):
+        return None, "OpenCode task-tool title must be a string"
+    if status == "completed" and not isinstance(state.get("output"), str):
+        return None, "OpenCode completed task-tool output must be a string"
+    required_session_columns = {"id", "parent_id", "agent", "model"}
+    session_columns = {str(row["name"]) for row in connection.execute("PRAGMA main.table_xinfo('session')").fetchall()}
+    if not required_session_columns.issubset(session_columns):
+        return None, "OpenCode task-tool child relationship fields are unavailable"
+    child = connection.execute(
+        "SELECT id, parent_id, agent, model FROM session WHERE id=?",
+        (metadata["sessionId"],),
+    ).fetchone()
+    if child is None or child["parent_id"] != session_id:
+        return None, "OpenCode task-tool child session is not canonically parented"
+    if child["agent"] != input_data["subagent_type"]:
+        return None, "OpenCode task-tool child session agent does not match its input"
+    try:
+        child_model = json.loads(child["model"]) if child["model"] else None
+    except (TypeError, ValueError):
+        child_model = None
+    if not isinstance(child_model, dict) or set(child_model) != {"id", "providerID", "variant"}:
+        return None, "OpenCode task-tool child session model has an unknown schema"
+    if any(
+        not isinstance(child_model.get(field), str) or not str(child_model[field]).strip()
+        for field in ("id", "providerID", "variant")
+    ):
+        return None, "OpenCode task-tool child session model fields must be non-empty strings"
+    if child_model["id"] != metadata_model["modelID"] or child_model["providerID"] != metadata_model["providerID"]:
+        return None, "OpenCode task-tool child session model does not match its metadata"
+    text = str(input_data["prompt"]).strip()
+    task_body, normalized_kind = lifecycle.normalize_task_body(text)
+    return (
+        {
+            "source": "opencode-db",
+            "session_ref": f"opencode-db:{child['id']}:{path}",
+            "event_ref": str(part["id"]),
+            "event_index": event_index,
+            "text_index": text_index,
+            "source_locator": f"{path}#{part['id']}",
+            "source_segment": "state.input.prompt",
+            "timestamp": lifecycle.iso_from_epoch_ms(part["time_created"]),
+            "text": text,
+            "task_body": task_body if normalized_kind == "flame_with_task_body" else "",
+            "body_kind": "delegated_task_frame",
+            "provenance": "delegated_task_frame",
+            "authority": "derived",
+        },
+        None,
+    )
+
+
 def scan_opencode(
     lifecycle: Any,
     cursor: dict[str, Any],
@@ -3406,10 +4411,14 @@ def scan_opencode(
     path = Path(lifecycle.OPENCODE_DB)
     coverage = {"opencode-db": empty_coverage()}
     counts = coverage["opencode-db"]
+    adapter_contract = source_adapter_contract()
+    adapter_contract_digest = str(adapter_contract["digest"])
+    prior_adapted_receipts = cursor.get("adapted_unit_receipts") or {}
     if not path.exists():
         return [], {
             "discovered": {},
             "processed": {},
+            "adapted_unit_receipts": {},
             "errors": [],
             "unsupported": [],
             "pending_files": 0,
@@ -3423,6 +4432,7 @@ def scan_opencode(
         return [], {
             "discovered": {},
             "processed": {},
+            "adapted_unit_receipts": {},
             "errors": [f"opencode-db:{path}: {escape}"],
             "unsupported": [],
             "pending_files": 0,
@@ -3436,6 +4446,7 @@ def scan_opencode(
         return [], {
             "discovered": {},
             "processed": {},
+            "adapted_unit_receipts": {},
             "errors": [f"opencode-db:{path}: source cannot be stat'ed"],
             "unsupported": [],
             "pending_files": 0,
@@ -3453,6 +4464,7 @@ def scan_opencode(
         return [], {
             "discovered": {},
             "processed": {},
+            "adapted_unit_receipts": {},
             "errors": [f"opencode-db:{path}: {exc}"],
             "unsupported": [],
             "pending_files": 0,
@@ -3463,6 +4475,7 @@ def scan_opencode(
     events: list[dict[str, Any]] = []
     discovered: dict[str, Any] = {}
     processed: dict[str, Any] = {}
+    adapted_unit_receipts: dict[str, Any] = {}
     errors: list[str] = []
     pending = 0
     attempted = 0
@@ -3489,9 +4502,10 @@ def scan_opencode(
             errors.append(f"opencode-db: session discovery exceeds bounded ceiling {active_limits.max_discovery_units}")
         for session in sessions:
             session_id = str(session["id"])
+            unit_locator = f"{path}#session:{digest(session_id)[:24]}"
             unit_key = cursor_unit_key(
                 "opencode-db",
-                f"{path}#session:{digest(session_id)[:24]}",
+                unit_locator,
             )
             base_unit_signature = {
                 **database_signature,
@@ -3510,12 +4524,30 @@ def scan_opencode(
             counts["discovered"] += 1
             if cache_generation_matches:
                 processed[unit_key] = unit_signature
+                cached_receipt = prior_adapted_receipts.get(unit_key)
+                if source_unit_receipt_matches(
+                    cached_receipt,
+                    disposition="adapted",
+                    contract_id="opencode-assistant-task-v1",
+                    contract_digest=adapter_contract_digest,
+                    source="opencode-db",
+                    locator=unit_locator,
+                    signature=unit_signature,
+                ):
+                    adapted_unit_receipts[unit_key] = cached_receipt
+                    counts["adapted"] += 1
                 counts["converged"] += 1
                 continue
             max_rows = active_limits.max_events_per_unit * 10
+            projected_message_data = (
+                "CASE WHEN json_valid(data) AND json_extract(data, '$.role')='user' "
+                "AND json_type(data, '$.summary') IS NOT NULL "
+                "THEN json_remove(data, '$.summary') ELSE data END"
+            )
             message_count, message_bytes, message_limit = bounded_sqlite_lengths(
                 connection,
-                "SELECT COALESCE(length(CAST(data AS BLOB)), 0) FROM message WHERE session_id=? LIMIT ?",
+                "SELECT COALESCE(length(CAST((" + projected_message_data + ") AS BLOB)), 0) "
+                "FROM message WHERE session_id=? LIMIT ?",
                 (session_id,),
                 max_rows=max_rows,
                 max_bytes=active_limits.max_source_bytes_per_unit,
@@ -3549,8 +4581,18 @@ def scan_opencode(
                     f"{active_limits.max_source_bytes_per_unit}"
                 )
                 continue
+            summary_schema_error = opencode_user_summary_schema_error(
+                connection,
+                session_id=session_id,
+                step_ceiling=max(100_000, active_limits.max_events_per_unit * 10_000),
+            )
+            if summary_schema_error:
+                counts["errors"] += 1
+                errors.append(f"{unit_key}: {summary_schema_error}")
+                continue
             messages = connection.execute(
-                "SELECT id, time_created, data FROM message WHERE session_id=? ORDER BY time_created, id",
+                "SELECT id, time_created, " + projected_message_data + " AS data "
+                "FROM message WHERE session_id=? ORDER BY time_created, id",
                 (session_id,),
             ).fetchall()
             part_rows = connection.execute(
@@ -3585,6 +4627,21 @@ def scan_opencode(
                 # per-session content comparison; unrelated sessions retain
                 # custody without consuming bounded parse work units.
                 processed[unit_key] = unit_signature
+                cached_receipt = prior_adapted_receipts.get(unit_key)
+                if source_unit_receipt_matches(
+                    cached_receipt,
+                    disposition="adapted",
+                    contract_id="opencode-assistant-task-v1",
+                    contract_digest=adapter_contract_digest,
+                    source="opencode-db",
+                    locator=unit_locator,
+                    signature=cached_signature,
+                ):
+                    adapted_unit_receipts[unit_key] = {
+                        **cached_receipt,
+                        "signature": unit_signature,
+                    }
+                    counts["adapted"] += 1
                 counts["converged"] += 1
                 continue
             if not budget.claim():
@@ -3594,6 +4651,8 @@ def scan_opencode(
             attempted += 1
             session_events: list[dict[str, Any]] = []
             session_error: str | None = None
+            session_adapted = False
+            seen_call_ids: set[str] = set()
             for event_index, message in enumerate(messages):
                 try:
                     data = json.loads(message["data"]) if message["data"] else {}
@@ -3620,10 +4679,41 @@ def scan_opencode(
                 if session_error:
                     break
                 if data.get("role") != "user":
-                    if opencode_message_is_unknown_user_carrier(data) or any(
-                        structured_user_prompt_marker(part) for part in part_objects
-                    ):
+                    for text_index, (part, part_data) in enumerate(zip(parts, part_objects, strict=True)):
+                        if part_data.get("type") == "tool" and part_data.get("tool") == "task":
+                            task_event, task_error = opencode_assistant_task_event(
+                                lifecycle,
+                                connection,
+                                path=path,
+                                session_id=session_id,
+                                message=message,
+                                message_data=data,
+                                part=part,
+                                part_data=part_data,
+                                event_index=event_index,
+                                text_index=text_index,
+                                seen_call_ids=seen_call_ids,
+                            )
+                            if task_error:
+                                session_error = f"{unit_key}: {task_error}"
+                                break
+                            if task_event is not None:
+                                session_events.append(task_event)
+                                session_adapted = True
+                            continue
+                        if structured_user_prompt_marker(part_data):
+                            session_error = f"{unit_key}: unknown OpenCode user-bearing message or part schema"
+                            break
+                    if session_error:
+                        break
+                    if opencode_message_is_unknown_user_carrier(data):
                         session_error = f"{unit_key}: unknown OpenCode user-bearing message or part schema"
+                        break
+                    if len(session_events) > active_limits.max_events_per_unit:
+                        session_error = (
+                            f"{unit_key}: prompt occurrence count exceeds bounded ceiling "
+                            f"{active_limits.max_events_per_unit}"
+                        )
                         break
                     continue
                 schema_error = opencode_user_schema_error(data, part_objects)
@@ -3664,6 +4754,17 @@ def scan_opencode(
                 continue
             events.extend(session_events)
             processed[unit_key] = unit_signature
+            if session_adapted:
+                adapted_unit_receipts[unit_key] = {
+                    "version": SOURCE_ADAPTER_CONTRACT_VERSION,
+                    "disposition": "adapted",
+                    "contract_id": "opencode-assistant-task-v1",
+                    "contract_digest": adapter_contract_digest,
+                    "signature": unit_signature,
+                    "related_signatures": {},
+                    "related_evidence": {},
+                }
+                counts["adapted"] += 1
             counts["converged"] += 1
             counts["scanned"] += 1
     except (sqlite3.Error, ValueError) as exc:
@@ -3675,13 +4776,16 @@ def scan_opencode(
     if final_database_signature != database_signature:
         events = []
         processed = {}
+        adapted_unit_receipts = {}
         counts["converged"] = 0
         counts["scanned"] = 0
+        counts["adapted"] = 0
         counts["errors"] += 1
         errors.append("opencode-db: database or WAL changed during scan; cursor not advanced")
     return events, {
         "discovered": discovered,
         "processed": processed,
+        "adapted_unit_receipts": adapted_unit_receipts,
         "container_signature": database_signature if final_database_signature == database_signature else None,
         "errors": errors,
         "unsupported": [],
@@ -4458,7 +5562,7 @@ def scan_native_sources(
         opencode_scan["coverage"],
         agy_scan["coverage"],
     )
-    raw_prior_unresolved_units = loaded_cursor.get("unresolved_units")
+    raw_prior_unresolved_units = [] if source_cache_reset else loaded_cursor.get("unresolved_units")
     prior_unresolved_set = set(raw_prior_unresolved_units) if isinstance(raw_prior_unresolved_units, list) else set()
     missing_prior_unresolved: set[str] = set()
     if effective_days is None:
@@ -4468,7 +5572,7 @@ def scan_native_sources(
             parts = key.split(":", 2) if isinstance(key, str) else []
             source = parts[1] if len(parts) == 3 and parts[0].startswith("scan-v") else "unknown"
             missing_obligation_sources.add(source)
-        prior_families = loaded_cursor.get("source_families")
+        prior_families = {} if source_cache_reset else loaded_cursor.get("source_families")
         prior_families = prior_families if isinstance(prior_families, dict) else {}
         for source, prior_counts in prior_families.items():
             if not isinstance(source, str) or not isinstance(prior_counts, dict):
@@ -4527,6 +5631,9 @@ def scan_native_sources(
     )
     excluded_source_count = len(excluded_unit_receipts)
     adapted_unit_receipts = dict(regular["adapted_unit_receipts"])
+    for key in opencode_scan["discovered"]:
+        adapted_unit_receipts.pop(key, None)
+    adapted_unit_receipts.update(opencode_scan.get("adapted_unit_receipts") or {})
     for key in agy_scan["discovered"]:
         adapted_unit_receipts.pop(key, None)
     adapted_unit_receipts.update(agy_scan.get("adapted_unit_receipts") or {})
