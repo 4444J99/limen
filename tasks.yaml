@@ -107536,7 +107536,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -107552,7 +107552,7 @@ tasks:
     \ 2026-07-04 by self-heal so merge-drain can land it]"
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-12T00:22:10.410510Z'
+  updated: '2026-07-14T05:01:36.840106Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: gemini
@@ -107608,6 +107608,11 @@ tasks:
     agent: jules
     session_id: '10683683149900832991'
     status: dispatched
+  - timestamp: '2026-07-14T05:01:36.840106Z'
+    agent: limen
+    session_id: cli
+    status: open
+    output: Released stale claim after 24h; remote status absent
 - id: HEAL-cifix-organvm-limen-415
   title: fix failing CI on organvm/limen#415
   repo: organvm/limen
