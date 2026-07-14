@@ -32,9 +32,7 @@ def _run(script: Path, *args: str, env: dict[str, str], cwd: Path) -> None:
         timeout=30,
     )
     assert result.returncode == 0, (
-        f"{script.name} exited {result.returncode}\n"
-        f"stdout:\n{result.stdout}\n"
-        f"stderr:\n{result.stderr}"
+        f"{script.name} exited {result.returncode}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
     )
 
 
