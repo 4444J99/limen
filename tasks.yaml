@@ -137820,12 +137820,13 @@ tasks:
   context: "Session 0bd3a5ed-3d61-4334-b557-8a4e02422765 ('Design movement ontology\
     \ and workout composition system') re-stalled after 2 guardrailed breathes \u2014\
     \ the identical continuation will not move it. Parked purpose (last prompt): \"\
-    are the tasks done?\". Resume by hand or with a NEW instruction: claude --resume\
-    \ 0bd3a5ed-3d61-4334-b557-8a4e02422765   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson).\
-    \ Auto-escalated by QUICKEN."
+    bro fucking do it all what the fuck are you doing\". Resume by hand or with a\
+    \ NEW instruction: claude --resume 0bd3a5ed-3d61-4334-b557-8a4e02422765   (cwd\
+    \ /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson). Auto-escalated\
+    \ by QUICKEN."
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-07-13T14:45:37.065494Z'
+  updated: '2026-07-14T05:18:07.970235Z'
   dispatch_log: []
 - id: HEAL-cifix-organvm-session-meta-106
   title: fix failing CI on organvm/session-meta#106
