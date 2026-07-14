@@ -131982,7 +131982,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: failed_blocked
   labels:
   - blocked-on-spend
   - hardware
@@ -132003,7 +132003,7 @@ tasks:
   receipt_target: https://github.com/organvm/manumissio/issues/9
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-14T06:14:07.605661Z'
+  updated: '2026-07-14T06:15:54.184036Z'
   dispatch_log:
   - timestamp: '2026-07-09T22:20:01.158025Z'
     agent: agy
@@ -132048,6 +132048,24 @@ tasks:
     output: 'ask-gate owner reconciliation: issue remains OPEN and explicitly blocked-on-spend
       until its >=$200/mo two-month gauge fires; typed owner receipt normalized before
       terminal routing.'
+  - timestamp: '2026-07-14T06:15:40.347748Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: dispatched
+    output: owner reconciliation claim only; no provider execution launched.
+  - timestamp: '2026-07-14T06:15:47.205794Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: in_progress
+    output: verified the live issue remains OPEN with blocked-on-spend owner state
+      and the hardware gauge is not yet met.
+  - timestamp: '2026-07-14T06:15:54.184036Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: failed_blocked
+    output: 'external business gate: hardware dossier sleeps until the owner issue
+      gauge reaches >=$200/mo absorbable for two consecutive months; next action is
+      the issue-defined gauge check.'
 - id: GH-organvm-manumissio-8
   title: 'Phase 2: ollama serve as an OpenAI-compatible endpoint adapter'
   repo: organvm/manumissio
@@ -133049,7 +133067,7 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: open
+  status: archived
   labels:
   - noop
   - reclassified-from-needs-human
@@ -133064,7 +133082,7 @@ tasks:
   receipt_target: https://github.com/organvm/universal-mail--automation/issues/157
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-14T06:14:07.606719Z'
+  updated: '2026-07-14T06:16:21.891621Z'
   dispatch_log:
   - timestamp: '2026-07-10T01:51:52.187290Z'
     agent: jules
@@ -133145,6 +133163,26 @@ tasks:
     status: open
     output: 'ask-gate owner reconciliation: GitHub issue is CLOSED:COMPLETED; typed
       owner receipt normalized before terminal routing.'
+  - timestamp: '2026-07-14T06:16:01.096437Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: dispatched
+    output: owner reconciliation claim only; no provider execution launched.
+  - timestamp: '2026-07-14T06:16:08.017342Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: in_progress
+    output: verified the durable GitHub owner issue is CLOSED with stateReason=COMPLETED.
+  - timestamp: '2026-07-14T06:16:14.935507Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: done
+    output: 'predicate passed: organvm/universal-mail--automation#157 is CLOSED:COMPLETED.'
+  - timestamp: '2026-07-14T06:16:21.891621Z'
+    agent: codex
+    session_id: ask-gate-terminal-reconcile-20260714
+    status: archived
+    output: terminal owner receipt archived after the completion predicate passed.
 - id: DISCOVER-organvm-arca
   title: Discover the latent value of organvm/arca
   repo: organvm/arca
