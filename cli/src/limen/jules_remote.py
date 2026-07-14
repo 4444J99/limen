@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import json
 import os
 import re
+import selectors
+import signal
 import subprocess
-from dataclasses import dataclass, field
-from typing import Mapping
+import time
+from contextlib import suppress
+from dataclasses import dataclass, field, replace
+from typing import Callable, Iterable, Mapping, Sequence
 
 
 JULES_RECOVERY_STATES = frozenset(
@@ -23,6 +28,14 @@ _LAST_ACTIVE_RE = re.compile(
 # the repo) bled into the status slot and classified as "unknown", which held stale claims
 # forever (the 29-claim forever-HOLD defect, 2026-07-14).
 _HEADER_RE = re.compile(r"^\s*ID\s{2,}.*\bStatus\b")
+_SESSION_ID_RE = re.compile(r"\d{12,64}")
+_NOT_FOUND_ENVELOPE_RE = re.compile(
+    rb"\AError: api error: status 404, content:\s*(\{.*\})\s*\Z",
+    re.DOTALL,
+)
+JULES_SESSION_PROBE_TIMEOUT = 10.0
+JULES_SESSION_PROBE_TOTAL_TIMEOUT = 45.0
+JULES_SESSION_PROBE_OUTPUT_LIMIT = 64 * 1024
 
 
 def _idle_at_least_a_day(last_active: str) -> bool:
@@ -42,6 +55,33 @@ class JulesRemoteSession:
 
 
 @dataclass(frozen=True)
+class JulesSessionAbsenceProbe:
+    """A bounded observation for one exact session ID.
+
+    Only ``confirmed_absent`` is release authority. Every other outcome is deliberately
+    non-authoritative and therefore keeps the claim held.
+    """
+
+    session_id: str
+    outcome: str
+
+    @property
+    def confirmed_absent(self) -> bool:
+        return self.outcome == "confirmed_absent"
+
+
+@dataclass(frozen=True)
+class _BoundedCommandResult:
+    returncode: int | None
+    output: bytes = b""
+    failure: str = ""
+
+
+SessionProbeRunner = Callable[[Sequence[str], float, int], _BoundedCommandResult]
+SessionAbsenceProbe = Callable[..., JulesSessionAbsenceProbe]
+
+
+@dataclass(frozen=True)
 class JulesRemoteSnapshot:
     """One remote-list observation.
 
@@ -56,6 +96,7 @@ class JulesRemoteSnapshot:
     error: str = ""
     exhaustive: bool = False
     confirmed_absent: frozenset[str] = field(default_factory=frozenset)
+    absence_probe_outcomes: Mapping[str, str] = field(default_factory=dict)
 
     def status(self, session_id: str) -> str | None:
         session = self.sessions.get(session_id)
@@ -151,6 +192,186 @@ def probe_jules_remote_sessions(
         available=True,
         sessions=parse_jules_remote_sessions(result.stdout or ""),
         exhaustive=False,
+    )
+
+
+def _terminate_process_group(process: subprocess.Popen[bytes]) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except OSError:
+        with suppress(OSError):
+            process.terminate()
+    try:
+        process.wait(timeout=0.5)
+        return
+    except subprocess.TimeoutExpired:
+        pass
+    with suppress(OSError):
+        os.killpg(process.pid, signal.SIGKILL)
+    with suppress(OSError):
+        process.kill()
+    with suppress(subprocess.TimeoutExpired):
+        process.wait(timeout=1.0)
+
+
+def _run_bounded_command(
+    command: Sequence[str],
+    timeout: float,
+    output_limit: int,
+) -> _BoundedCommandResult:
+    """Run one read-only probe with a wall-clock and combined-output hard bound."""
+
+    if timeout <= 0 or output_limit <= 0:
+        return _BoundedCommandResult(returncode=None, failure="invalid_probe_limits")
+    try:
+        process = subprocess.Popen(
+            list(command),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+    except OSError:
+        return _BoundedCommandResult(returncode=None, failure="cli_unavailable")
+    if process.stdout is None:  # pragma: no cover - invariant for stdout=PIPE
+        _terminate_process_group(process)
+        return _BoundedCommandResult(returncode=None, failure="pipe_unavailable")
+
+    chunks: list[bytes] = []
+    size = 0
+    deadline = time.monotonic() + timeout
+    selector = selectors.DefaultSelector()
+    selector.register(process.stdout, selectors.EVENT_READ)
+    failure = ""
+    try:
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                failure = "timeout"
+                break
+            events = selector.select(timeout=min(remaining, 0.1))
+            if not events:
+                if process.poll() is not None:
+                    break
+                continue
+            chunk = os.read(process.stdout.fileno(), min(65_536, output_limit + 1))
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > output_limit:
+                failure = "output_truncated"
+                break
+            chunks.append(chunk)
+    finally:
+        selector.close()
+
+    if failure:
+        _terminate_process_group(process)
+        return _BoundedCommandResult(returncode=process.returncode, failure=failure)
+    try:
+        returncode = process.wait(timeout=max(0.1, deadline - time.monotonic()))
+    except subprocess.TimeoutExpired:
+        _terminate_process_group(process)
+        return _BoundedCommandResult(returncode=process.returncode, failure="timeout")
+    return _BoundedCommandResult(returncode=returncode, output=b"".join(chunks))
+
+
+def _is_exact_not_found_response(output: bytes) -> bool:
+    """Accept only the Jules API's complete structured 404/NOT_FOUND envelope."""
+
+    match = _NOT_FOUND_ENVELOPE_RE.fullmatch(output)
+    if match is None:
+        return False
+    try:
+        payload = json.loads(match.group(1).decode("utf-8", errors="strict"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    if not isinstance(payload, dict) or set(payload) != {"error"}:
+        return False
+    error = payload.get("error")
+    return (
+        isinstance(error, dict)
+        and type(error.get("code")) is int
+        and error.get("code") == 404
+        and error.get("status") == "NOT_FOUND"
+    )
+
+
+def probe_jules_remote_session_absence(
+    session_id: str,
+    *,
+    binary: str | None = None,
+    timeout: float = JULES_SESSION_PROBE_TIMEOUT,
+    output_limit: int = JULES_SESSION_PROBE_OUTPUT_LIMIT,
+    runner: SessionProbeRunner | None = None,
+) -> JulesSessionAbsenceProbe:
+    """Probe one catalog miss without applying or materializing its patch.
+
+    The Jules CLI currently exits zero for API errors, so exit status is not treated as evidence.
+    The command is authoritative only when its entire bounded response is the structured
+    404/NOT_FOUND envelope from an exact ``--session`` pull. Successful pulls, other API errors,
+    malformed output, transport failures, timeouts, and output overflow all remain unknown.
+    """
+
+    if _SESSION_ID_RE.fullmatch(session_id) is None:
+        return JulesSessionAbsenceProbe(session_id=session_id, outcome="invalid_session_id")
+    executable = binary or os.environ.get("LIMEN_JULES_BIN", "jules")
+    command = (executable, "remote", "pull", "--session", session_id)
+    result = (runner or _run_bounded_command)(command, timeout, output_limit)
+    if result.failure:
+        return JulesSessionAbsenceProbe(session_id=session_id, outcome=result.failure)
+    if _is_exact_not_found_response(result.output):
+        return JulesSessionAbsenceProbe(session_id=session_id, outcome="confirmed_absent")
+    return JulesSessionAbsenceProbe(session_id=session_id, outcome="response_unconfirmed")
+
+
+def probe_jules_remote_session_absences(
+    snapshot: JulesRemoteSnapshot,
+    session_ids: Iterable[str],
+    *,
+    binary: str | None = None,
+    per_probe_timeout: float = JULES_SESSION_PROBE_TIMEOUT,
+    total_timeout: float = JULES_SESSION_PROBE_TOTAL_TIMEOUT,
+    output_limit: int = JULES_SESSION_PROBE_OUTPUT_LIMIT,
+    probe: SessionAbsenceProbe | None = None,
+) -> JulesRemoteSnapshot:
+    """Attach authoritative absence evidence for missing sessions within one total budget."""
+
+    if not snapshot.available or snapshot.exhaustive:
+        return snapshot
+    candidates = tuple(
+        dict.fromkeys(
+            str(session_id)
+            for session_id in session_ids
+            if str(session_id) not in snapshot.sessions and str(session_id) not in snapshot.confirmed_absent
+        )
+    )
+    if not candidates:
+        return snapshot
+
+    confirmed_absent = set(snapshot.confirmed_absent)
+    outcomes = dict(snapshot.absence_probe_outcomes)
+    deadline = time.monotonic() + max(0.0, total_timeout)
+    probe_one = probe or probe_jules_remote_session_absence
+    for index, session_id in enumerate(candidates):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            for unprobed in candidates[index:]:
+                outcomes.setdefault(unprobed, "budget_exhausted")
+            break
+        result = probe_one(
+            session_id,
+            binary=binary,
+            timeout=min(per_probe_timeout, remaining),
+            output_limit=output_limit,
+        )
+        outcomes[session_id] = result.outcome
+        if result.confirmed_absent:
+            confirmed_absent.add(session_id)
+    return replace(
+        snapshot,
+        confirmed_absent=frozenset(confirmed_absent),
+        absence_probe_outcomes=outcomes,
     )
 
 

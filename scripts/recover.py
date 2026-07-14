@@ -18,6 +18,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
@@ -25,6 +26,7 @@ from limen.jules_remote import (  # noqa: E402
     JulesRemoteSnapshot,
     classify_jules_claim,
     coerce_jules_snapshot,
+    probe_jules_remote_session_absences,
     probe_jules_remote_sessions,
     task_jules_session_id,
 )
@@ -55,8 +57,9 @@ def _repeated_noop_failure_count(task) -> int:
     return 0
 
 
-def live_jules_sessions() -> JulesRemoteSnapshot:
-    return probe_jules_remote_sessions()
+def live_jules_sessions(session_ids: Iterable[str] = ()) -> JulesRemoteSnapshot:
+    snapshot = probe_jules_remote_sessions()
+    return probe_jules_remote_session_absences(snapshot, session_ids)
 
 
 def main() -> int:
@@ -70,6 +73,14 @@ def main() -> int:
     lf = load_limen_file(path)
     now = datetime.datetime.now(datetime.timezone.utc)
     selected_ids = set(args.task_ids or [])
+    jules_session_ids = [
+        task_jules_session_id(task)
+        for task in lf.tasks
+        if (not selected_ids or task.id in selected_ids)
+        and task.status == "dispatched"
+        and task.target_agent == "jules"
+        and not _has_done_transition(task)
+    ]
 
     live: JulesRemoteSnapshot | None = None  # lazily fetched only if we have orphan candidates
     reopened_failed: list[str] = []
@@ -139,7 +150,7 @@ def main() -> int:
             if not sid:
                 continue
             if live is None:
-                live = coerce_jules_snapshot(live_jules_sessions())
+                live = coerce_jules_snapshot(live_jules_sessions(jules_session_ids))
             action, remote_status = classify_jules_claim(live, sid)
             if action == "recover":
                 t.status = "open"

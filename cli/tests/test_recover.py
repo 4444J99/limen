@@ -50,7 +50,7 @@ def _write_dispatched_claim(tasks_path: Path, *, target_agent: str = "jules") ->
 
 def _run_recover_with_snapshot(tasks_path: Path, monkeypatch, snapshot: JulesRemoteSnapshot):
     module = _load_recover(f"recover_uut_{id(snapshot)}")
-    monkeypatch.setattr(module, "live_jules_sessions", lambda: snapshot)
+    monkeypatch.setattr(module, "live_jules_sessions", lambda _session_ids=(): snapshot)
     monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
     assert module.main() == 0
     return load_limen_file(tasks_path).tasks[0]
@@ -98,6 +98,33 @@ def test_recover_reopens_only_confirmed_absent_session(tmp_path, monkeypatch):
 
     assert task.status == "open"
     assert task.target_agent == "jules"
+    assert "orphaned" in task.dispatch_log[-1].output
+
+
+def test_recover_populates_session_specific_absence_for_catalog_miss(tmp_path, monkeypatch):
+    tasks_path = tmp_path / "tasks.yaml"
+    _write_dispatched_claim(tasks_path)
+    module = _load_recover("recover_session_absence_probe")
+    catalog = JulesRemoteSnapshot(available=True, sessions={}, exhaustive=False)
+    monkeypatch.setattr(module, "probe_jules_remote_sessions", lambda: catalog)
+
+    def enrich(snapshot, session_ids):
+        assert snapshot is catalog
+        assert tuple(session_ids) == (SID,)
+        return JulesRemoteSnapshot(
+            available=True,
+            sessions={},
+            exhaustive=False,
+            confirmed_absent=frozenset({SID}),
+            absence_probe_outcomes={SID: "confirmed_absent"},
+        )
+
+    monkeypatch.setattr(module, "probe_jules_remote_session_absences", enrich)
+    monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
+
+    assert module.main() == 0
+    task = load_limen_file(tasks_path).tasks[0]
+    assert task.status == "open"
     assert "orphaned" in task.dispatch_log[-1].output
 
 
@@ -152,7 +179,11 @@ def test_recover_reopens_failed_jules_remote_session(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location("recover_uut", SCRIPT)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    monkeypatch.setattr(module, "live_jules_sessions", lambda: {"16647959386662614769": "failed"})
+    monkeypatch.setattr(
+        module,
+        "live_jules_sessions",
+        lambda _session_ids=(): {"16647959386662614769": "failed"},
+    )
     monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
 
     assert module.main() == 0
@@ -191,7 +222,11 @@ def test_recover_reopens_jules_session_awaiting_feedback(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location("recover_uut_feedback", SCRIPT)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    monkeypatch.setattr(module, "live_jules_sessions", lambda: {"15175913208909090857": "awaiting_user_feedback"})
+    monkeypatch.setattr(
+        module,
+        "live_jules_sessions",
+        lambda _session_ids=(): {"15175913208909090857": "awaiting_user_feedback"},
+    )
     monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
 
     assert module.main() == 0
@@ -230,7 +265,11 @@ def test_recover_reopens_jules_session_awaiting_plan_approval(tmp_path, monkeypa
     spec = importlib.util.spec_from_file_location("recover_uut_plan_approval", SCRIPT)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    monkeypatch.setattr(module, "live_jules_sessions", lambda: {"10569058041124478902": "awaiting_plan_approval"})
+    monkeypatch.setattr(
+        module,
+        "live_jules_sessions",
+        lambda _session_ids=(): {"10569058041124478902": "awaiting_plan_approval"},
+    )
     monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
 
     assert module.main() == 0
@@ -288,7 +327,7 @@ def test_recover_task_id_limits_remote_reopen(tmp_path, monkeypatch):
     monkeypatch.setattr(
         module,
         "live_jules_sessions",
-        lambda: {
+        lambda _session_ids=(): {
             "10569058041124478902": "awaiting_plan_approval",
             "14435689243703333273": "awaiting_plan_approval",
         },

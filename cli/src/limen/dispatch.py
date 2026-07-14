@@ -37,6 +37,7 @@ from limen.jules_remote import (
     JulesRemoteSnapshot,
     classify_jules_claim,
     probe_jules_remote_sessions,
+    probe_jules_remote_session_absences,
     task_jules_session_id,
 )
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
@@ -5056,7 +5057,17 @@ def _release_stale_snapshot(
 ) -> JulesRemoteSnapshot | None:
     if not any(task.target_agent == "jules" and not _has_done_transition(task) for task in candidates):
         return None
-    return supplied if supplied is not None else probe_jules_remote_sessions()
+    if supplied is not None:
+        # A supplied snapshot is explicit caller evidence (and the hermetic test seam). Do not
+        # unexpectedly shell out after accepting it; callers may attach confirmed_absent evidence.
+        return supplied
+    snapshot = probe_jules_remote_sessions()
+    session_ids = [
+        task_jules_session_id(task)
+        for task in candidates
+        if task.target_agent == "jules" and not _has_done_transition(task)
+    ]
+    return probe_jules_remote_session_absences(snapshot, session_ids)
 
 
 def _release_stale_probe_report(snapshot: JulesRemoteSnapshot | None, candidates: list[Task]) -> dict[str, Any]:
@@ -5066,11 +5077,16 @@ def _release_stale_probe_report(snapshot: JulesRemoteSnapshot | None, candidates
         # The only no-snapshot Jules case is a prior-done transition, which does not require a
         # remote lookup to restore its terminal invariant.
         return {"status": "not_required", "session_count": 0}
+    outcome_counts: dict[str, int] = {}
+    for outcome in snapshot.absence_probe_outcomes.values():
+        outcome_counts[outcome] = outcome_counts.get(outcome, 0) + 1
     return {
         "status": "available" if snapshot.available else "unavailable",
         "session_count": len(snapshot.sessions),
         "catalog_exhaustive": snapshot.exhaustive,
         "confirmed_absent_count": len(snapshot.confirmed_absent),
+        "session_probe_count": len(snapshot.absence_probe_outcomes),
+        "session_probe_outcomes": outcome_counts,
     }
 
 
