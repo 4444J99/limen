@@ -13,6 +13,8 @@ Fail-open on the beat: a missing `organvm`/`alchemia` CLI, an empty portal, or a
 degrades to rendering from existing state — the organ shows its dust honestly and still exits 0,
 never gating the beat. The render is stamped from portal state (not the clock), so re-runs against an
 unchanged portal are byte-identical — the idempotent fixed point the closeout discipline demands.
+The explicit `--doctor` predicate is stricter: it exits 0 only when both the portal store and engine
+CLI are reachable.
 
   python3 scripts/bifrons-organ.py            # metabolize one beat + render organs/observation/bifrons/PORTAL.md
   python3 scripts/bifrons-organ.py --no-beat  # render only (skip the effector cycle)
@@ -28,6 +30,7 @@ import os
 import shutil
 import sqlite3
 import subprocess
+from contextlib import closing
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
@@ -65,29 +68,34 @@ def metabolize_estate() -> dict:
 def portal_counts() -> dict:
     """Read the shared portal store (read-only). Absent store -> empty counts (fail-open)."""
     counts = {
-        "external_repo": 0, "dossier": 0, "resonance_edge": 0,
-        "transmutation_proposal": 0, "backflow_signal": 0,
+        "external_repo": 0,
+        "dossier": 0,
+        "resonance_edge": 0,
+        "transmutation_proposal": 0,
+        "backflow_signal": 0,
     }
     by_state: dict[str, int] = {}
     if not PORTAL_DB.exists():
-        return {"counts": counts, "by_state": by_state, "present": False}
+        return {"counts": counts, "by_state": by_state, "present": False, "status": "absent"}
     try:
-        conn = sqlite3.connect(f"file:{PORTAL_DB}?mode=ro", uri=True)
-        conn.row_factory = sqlite3.Row
-        for table in counts:
+        with closing(sqlite3.connect(f"file:{PORTAL_DB}?mode=ro", uri=True)) as conn:
+            conn.row_factory = sqlite3.Row
+            # Opening a SQLite connection is lazy: corrupt or unreadable files can fail only on the
+            # first schema read. Probe the store before suppressing optional-table errors below.
+            conn.execute("SELECT 1 FROM sqlite_schema LIMIT 1").fetchone()
+            for table in counts:
+                try:
+                    counts[table] = conn.execute(f"SELECT COUNT(*) n FROM {table}").fetchone()["n"]  # noqa: S608
+                except sqlite3.OperationalError:
+                    pass
             try:
-                counts[table] = conn.execute(f"SELECT COUNT(*) n FROM {table}").fetchone()["n"]  # noqa: S608
+                for row in conn.execute("SELECT state, COUNT(*) n FROM exchange GROUP BY state"):
+                    by_state[row["state"]] = row["n"]
             except sqlite3.OperationalError:
                 pass
-        try:
-            for row in conn.execute("SELECT state, COUNT(*) n FROM exchange GROUP BY state"):
-                by_state[row["state"]] = row["n"]
-        except sqlite3.OperationalError:
-            pass
-        conn.close()
     except sqlite3.Error:
-        return {"counts": counts, "by_state": by_state, "present": False}
-    return {"counts": counts, "by_state": by_state, "present": True}
+        return {"counts": counts, "by_state": by_state, "present": False, "status": "unreadable"}
+    return {"counts": counts, "by_state": by_state, "present": True, "status": "present"}
 
 
 def run_beat() -> str:
@@ -170,11 +178,12 @@ def doctor() -> int:
     """Liveness (omega live tier): the portal store is reachable and the engine CLI resolves."""
     portal = portal_counts()
     cli = bool(shutil.which("organvm"))
-    print(f"bifrons doctor: portal_store={'present' if portal['present'] else 'absent'}  "
-          f"engine_cli={'yes' if cli else 'no'}  "
-          f"stars={portal['counts']['external_repo']}")
-    # Fail-open: a not-yet-populated portal on a fresh host is not a defect.
-    return 0
+    print(
+        f"bifrons doctor: portal_store={portal['status']}  "
+        f"engine_cli={'yes' if cli else 'no'}  "
+        f"stars={portal['counts']['external_repo']}"
+    )
+    return 0 if portal["present"] and cli else 1
 
 
 def main() -> int:
