@@ -140373,3 +140373,35 @@ tasks:
     output: owner route created after remote-aware Jules reconciliation; exact PR
       head=86690a1fa6bc1e4d36256c7f4b78eee869a1b8ce; semantic successor proof recorded
       in task context
+- id: VERIFY-DISPATCH-ROOT-ISOLATION-0714
+  title: Keep dispatch verification receipts inside the invoking worktree
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - control-plane
+  - worktree-isolation
+  - receipt-safety
+  urls: []
+  context: An isolated Conductor verification run with LIMEN_ROOT and LIMEN_TASKS
+    unset resolved ROOT to ~/Workspace/limen and rewrote the live generated dispatch
+    receipt. Make verify-dispatch and heal-dispatch derive their default root from
+    the invoking repository/worktree while preserving an explicit LIMEN_ROOT override.
+    The acceptance test must prove isolated receipts and locks stay in the worktree
+    and a sentinel in the home live checkout remains byte-identical.
+  predicate: PYTHONPATH=cli/src python3 -m pytest cli/tests/test_dispatch_script_root_isolation.py
+    -q
+  receipt_target: github:organvm/limen:pull-request:VERIFY-DISPATCH-ROOT-ISOLATION-0714
+  depends_on: []
+  created: '2026-07-14'
+  updated: '2026-07-14T07:43:44.009628Z'
+  dispatch_log:
+  - timestamp: '2026-07-14T07:43:44.009628Z'
+    agent: codex
+    session_id: conductor-root-isolation-20260714
+    status: open
+    output: owner packet filed after an isolated verifier rewrote only the live generated
+      dispatch receipt; no board/code/pause/Claude/external-volume state was touched.
