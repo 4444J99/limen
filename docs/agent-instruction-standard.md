@@ -56,6 +56,9 @@ back to `AGENTS.md` instead.
     environment probes derive the lane and ending. The closeout must print one launch command and
     make the capsule remotely durable. Never hard-code a future model, provider table, task count, or
     desired terminal verdict into the capsule.
+11. Apply `AGENTS.md` → Bounded Composition to campaigns, CI, generated artifacts, and handoffs.
+    Aggregate entrypoints are thin fan-in layers over independently runnable modules with finite
+    retries, bounded output, and durable receipts; they never duplicate successful children.
 
 ## Home-scope generated surfaces
 

@@ -281,6 +281,24 @@ closure receipts above. If context, value, resource, provider, or human gates re
 the successor capsule and its launch command before ending. A closeout without that command is
 incomplete; a new autonomous session without a capsule must create one before broad execution.
 
+## Bounded Composition
+
+A long-running campaign or whole-repo gate may exist only as a thin orchestrator over independently
+owned, bounded units. Every unit declares its inputs, owner, predicate, execution profile, finite
+retry policy, bounded-output policy, and durable receipt. The aggregate preserves completed receipts,
+resumes from them, and reports counts plus links; it never reruns successful children or emits their
+full logs.
+
+Apply the same rule to artifacts: README files are indexes over cohesive modules, not concatenated
+prompts, reports, transcripts, or append-only scrawl. Split on semantic ownership and independently
+testable interfaces, not an arbitrary line count. A file repeatedly changed for unrelated reasons has
+already exposed a missing module boundary.
+
+CI must shard module predicates and run eligible shards in parallel. The final integration gate checks
+the shard receipts plus only genuine cross-module seams. Each shard has an execution-profile timeout,
+finite transient retry policy, output cap, and stable receipt; no unbounded wait, retry, or log stream
+is a valid verification strategy.
+
 ## Task States
 
 The canonical state set lives in code — `VALID_STATUSES` in `mcp/src/limen_mcp/server.py` — and

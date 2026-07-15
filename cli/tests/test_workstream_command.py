@@ -45,10 +45,13 @@ def test_workstream_command_writes_private_kickstart_packet(tmp_path: Path, monk
     assert result.exit_code == 0, result.output
     wt = repo / ".worktrees" / "demo-packet"
     readme = wt / ".limen-workstream" / "README.md"
+    intent = wt / ".limen-workstream" / "intent.md"
     kickstart = wt / ".limen-workstream" / "kickstart.sh"
     assert readme.exists()
+    assert intent.exists()
     assert kickstart.exists()
-    assert "Ship a bounded packet." in readme.read_text(encoding="utf-8")
+    assert "Ship a bounded packet." in intent.read_text(encoding="utf-8")
+    assert "Ship a bounded packet." not in readme.read_text(encoding="utf-8")
     assert "bash " in result.output and "kickstart.sh" in result.output
     assert ".limen-workstream" not in _git("status", "--short", cwd=wt).stdout
 
@@ -101,18 +104,52 @@ def test_autonomous_workstream_requires_prompt_and_launches_with_dynamic_readme(
 
     assert result.exit_code == 0, result.output
     wt = repo / ".worktrees" / "next-epoch"
-    readme = wt / ".limen-workstream" / "README.md"
-    kickstart = wt / ".limen-workstream" / "kickstart.sh"
+    capsule = wt / ".limen-workstream"
+    readme = capsule / "README.md"
+    manifest = capsule / "manifest.md"
+    intent = capsule / "intent.md"
+    runtime = capsule / "runtime.md"
+    closeout = capsule / "closeout.md"
+    kickstart = capsule / "kickstart.sh"
     readme_text = readme.read_text(encoding="utf-8")
+    manifest_text = manifest.read_text(encoding="utf-8")
+    intent_text = intent.read_text(encoding="utf-8")
+    runtime_text = runtime.read_text(encoding="utf-8")
     kickstart_text = kickstart.read_text(encoding="utf-8")
-    assert "Derive the next safe leaf from live receipts." in readme_text
-    assert "Autonomous capsule: `yes`" in readme_text
-    assert "## Dynamic Environment Contract" in readme_text
-    assert "Reality determines the state" in readme_text
-    assert "Workstream: `substrate`" in readme_text
-    assert 'exec codex "$(cat ' in kickstart_text
+    assert "Derive the next safe leaf from live receipts." in intent_text
+    assert "Derive the next safe leaf from live receipts." not in readme_text
+    assert "Autonomous: `yes`" in manifest_text
+    assert "Runtime decision contract" in runtime_text
+    assert "Reality determines the state" in runtime_text
+    assert "Workstream: `substrate`" in manifest_text
+    for module in (manifest, intent, runtime, closeout):
+        assert module.exists()
+        assert module.name in readme_text
+    assert "IFS= read -r -d '' capsule_prompt" in kickstart_text
+    assert 'exec codex "$capsule_prompt"' in kickstart_text
     assert str(readme) in kickstart_text
     assert ".limen-workstream" not in _git("status", "--short", cwd=wt).stdout
+
+    capsule_files = (readme, manifest, intent, runtime, closeout, kickstart)
+    bytes_before = {path: path.read_bytes() for path in capsule_files}
+    mtimes_before = {path: path.stat().st_mtime_ns for path in capsule_files}
+    repeated = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--autonomous",
+            "--workstream",
+            "substrate",
+            "--prompt",
+            "Derive the next safe leaf from live receipts.",
+            str(repo),
+            "Next Epoch",
+        ],
+    )
+    assert repeated.exit_code == 0, repeated.output
+    assert "capsule index:" in repeated.output and "(unchanged)" in repeated.output
+    assert {path: path.read_bytes() for path in capsule_files} == bytes_before
+    assert {path: path.stat().st_mtime_ns for path in capsule_files} == mtimes_before
 
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
@@ -131,5 +168,10 @@ def test_autonomous_workstream_requires_prompt_and_launches_with_dynamic_readme(
     launched = subprocess.run(["bash", str(kickstart)], cwd=wt, env=env, text=True, capture_output=True)
     assert launched.returncode == 0, launched.stderr
     launched_prompt = prompt_capture.read_text(encoding="utf-8")
-    assert "Derive the next safe leaf from live receipts." in launched_prompt
-    assert "## Dynamic Environment Contract" in launched_prompt
+    assert launched_prompt == readme_text
+    assert "intent.md" in launched_prompt
+
+    runtime.unlink()
+    invalid = subprocess.run(["bash", str(kickstart)], cwd=wt, env=env, text=True, capture_output=True)
+    assert invalid.returncode == 2
+    assert "invalid capsule: missing or empty module" in invalid.stderr

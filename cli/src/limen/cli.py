@@ -396,7 +396,7 @@ def harvest(agent):
 @click.option(
     "--autonomous",
     is_flag=True,
-    help="Require a prompt, embed the live derive-not-force contract, and start Codex with the README.",
+    help="Require a prompt, render the modular live contract, and start Codex with the README index.",
 )
 @click.option(
     "--codex",
@@ -420,13 +420,13 @@ def harvest(agent):
     "--prompt",
     "prompt_text",
     default=None,
-    help="Inline prompt packet for .limen-workstream/README.md.",
+    help="Inline prompt packet for .limen-workstream/intent.md.",
 )
 @click.option(
     "--prompt-file",
     default=None,
     type=click.Path(exists=True),
-    help="Prompt packet file to embed in README.md.",
+    help="Prompt packet file to copy into intent.md.",
 )
 @click.option(
     "--no-readme",
@@ -448,7 +448,7 @@ def workstream(
     repo,
     slug,
 ):
-    """Create/reuse a repo worktree plus a private kickoff README and kickstart command."""
+    """Create/reuse a repo worktree plus a modular kickoff capsule and command."""
     root = resolve_limen_repo_root()
     script = root / "scripts" / "start-worktree-session.sh"
     args = ["bash", str(script)]
