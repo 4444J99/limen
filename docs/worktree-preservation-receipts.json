@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-07-14T17:30:00Z",
+ "generated_utc": "2026-07-15T12:47:27Z",
  "receipts": [
   {
    "branch": "pr-110-branch",
@@ -4169,6 +4169,350 @@
    "evidence_updated_utc": "2026-07-14T17:30:00Z",
    "evidence": "Branch already on remote (up-to-date); opened draft PR #30. Status clean.",
    "next_action": "No local-only source preservation remains. Review, merge, or supersede the draft PR; reclaim the local checkout only through the accepted reaper after normal operator acceptance."
+  },
+  {
+   "root": "heal-cifix-organvm-a-i-council--coliseum-179-16c5ab05",
+   "lane": "documented-residue",
+   "status": "documented_non_source_residue",
+   "classification": "documented non-source residue",
+   "branch": "limen/heal-cifix-organvm-a-i-council--coliseum-179-16c5ab05",
+   "head": "26608215c1a02072f9419d652190fe746f5642b1",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "untracked_files": [
+     "frontend/tsconfig.tsbuildinfo"
+    ],
+    "tracked_modifications": [],
+    "ancestor_of_origin_main": true,
+    "commits_ahead": 0,
+    "porcelain_lines": [
+     "?? frontend/tsconfig.tsbuildinfo"
+    ],
+    "repo": "organvm/a-i-council--coliseum",
+    "residue_classification": "TypeScript incremental build artifact (tsconfig.tsbuildinfo), not source code"
+   },
+   "next_action": "Reclaim only through the accepted reaper once the worktree lifecycle campaign clears it."
+  },
+  {
+   "root": "heal-cifix-organvm-a-i-council--coliseum-179-9d294f8a",
+   "lane": "documented-residue",
+   "status": "documented_non_source_residue",
+   "classification": "documented non-source residue",
+   "branch": "limen/heal-cifix-organvm-a-i-council--coliseum-179-9d294f8a",
+   "head": "26608215c1a02072f9419d652190fe746f5642b1",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "untracked_files": [
+     "frontend/tsconfig.tsbuildinfo"
+    ],
+    "tracked_modifications": [],
+    "ancestor_of_origin_main": true,
+    "commits_ahead": 0,
+    "porcelain_lines": [
+     "?? frontend/tsconfig.tsbuildinfo"
+    ],
+    "repo": "organvm/a-i-council--coliseum",
+    "residue_classification": "TypeScript incremental build artifact (tsconfig.tsbuildinfo), not source code"
+   },
+   "next_action": "Reclaim only through the accepted reaper once the worktree lifecycle campaign clears it."
+  },
+  {
+   "root": "heal-cifix-organvm-community-hub-9-b78c10e5",
+   "lane": "documented-residue",
+   "status": "documented_non_source_residue",
+   "classification": "documented non-source residue",
+   "branch": "limen/heal-cifix-organvm-community-hub-9-b78c10e5",
+   "head": "9e56118f48aadccc9e7d0a201fcfef516f498ea3",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "untracked_files": [
+     "uv.lock"
+    ],
+    "tracked_modifications": [],
+    "ancestor_of_origin_main": true,
+    "commits_ahead": 0,
+    "porcelain_lines": [
+     "?? uv.lock"
+    ],
+    "repo": "organvm/community-hub",
+    "residue_classification": "Python uv lock file (uv.lock), not source code \u2014 dependency lock files are non-source residue"
+   },
+   "next_action": "Reclaim only through the accepted reaper once the worktree lifecycle campaign clears it."
+  },
+  {
+   "root": "heal-cifix-organvm-my--father-mother-21-7bcbbfea",
+   "lane": "documented-residue",
+   "status": "documented_non_source_residue",
+   "classification": "documented non-source residue",
+   "branch": "limen/heal-cifix-organvm-my--father-mother-21-7bcbbfea",
+   "head": "6549c325be755d11ae5cc738dde944e04bfa7242",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "untracked_files": [
+     "uv.lock"
+    ],
+    "tracked_modifications": [],
+    "ancestor_of_origin_main": true,
+    "commits_ahead": 0,
+    "porcelain_lines": [
+     "?? uv.lock"
+    ],
+    "repo": "organvm/my--father-mother",
+    "residue_classification": "Python uv lock file (uv.lock), not source code \u2014 dependency lock files are non-source residue"
+   },
+   "next_action": "Reclaim only through the accepted reaper once the worktree lifecycle campaign clears it."
+  },
+  {
+   "root": "heal-cifix-organvm-organvm-engine-109-d6a542c2",
+   "lane": "documented-residue",
+   "status": "documented_non_source_residue",
+   "classification": "documented non-source residue",
+   "branch": "limen/heal-cifix-organvm-organvm-engine-109-d6a542c2",
+   "head": "a5bc13a42dc16988b8bcf4bd1493d0d9971aad31",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "untracked_files": [
+     "logs/"
+    ],
+    "tracked_modifications": [],
+    "ancestor_of_origin_main": true,
+    "commits_ahead": 0,
+    "porcelain_lines": [
+     "?? logs/"
+    ],
+    "repo": "organvm/organvm-engine",
+    "residue_classification": "logs/ directory contains only runtime log files, not source code"
+   },
+   "next_action": "Reclaim only through the accepted reaper once the worktree lifecycle campaign clears it."
+  },
+  {
+   "root": "heal-cifix-organvm-organvm-ontologia-13-5364f697",
+   "lane": "documented-residue",
+   "status": "documented_non_source_residue",
+   "classification": "documented non-source residue",
+   "branch": "limen/heal-cifix-organvm-organvm-ontologia-13-5364f697",
+   "head": "94fa36c01d8b23fa1437e5ec087001964692edf4",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "untracked_files": [
+     "logs/"
+    ],
+    "tracked_modifications": [],
+    "ancestor_of_origin_main": true,
+    "commits_ahead": 0,
+    "porcelain_lines": [
+     "?? logs/"
+    ],
+    "repo": "organvm/organvm-ontologia",
+    "residue_classification": "logs/ directory contains only runtime log files, not source code"
+   },
+   "next_action": "Reclaim only through the accepted reaper once the worktree lifecycle campaign clears it."
+  },
+  {
+   "root": "heal-cifix-organvm-public-process-30-2b47c833",
+   "lane": "documented-residue",
+   "status": "documented_non_source_residue",
+   "classification": "documented non-source residue",
+   "branch": "limen/heal-cifix-organvm-public-process-30-2b47c833",
+   "head": "0aad1b2faebc0a68c98352e04241fd06ddd54590",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "untracked_files": [
+     "logs/"
+    ],
+    "tracked_modifications": [],
+    "ancestor_of_origin_main": true,
+    "commits_ahead": 0,
+    "porcelain_lines": [
+     "?? logs/"
+    ],
+    "repo": "organvm/public-process",
+    "residue_classification": "logs/ directory contains only runtime log files, not source code"
+   },
+   "next_action": "Reclaim only through the accepted reaper once the worktree lifecycle campaign clears it."
+  },
+  {
+   "root": "heal-cifix-organvm-public-process-33-319b4349",
+   "lane": "documented-residue",
+   "status": "documented_non_source_residue",
+   "classification": "documented non-source residue",
+   "branch": "limen/heal-cifix-organvm-public-process-33-319b4349",
+   "head": "5657ca12c9d07439a335ad9148204a778902ba7d",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "untracked_files": [
+     "logs/"
+    ],
+    "tracked_modifications": [],
+    "ancestor_of_origin_main": true,
+    "commits_ahead": 0,
+    "porcelain_lines": [
+     "?? logs/"
+    ],
+    "repo": "organvm/public-process",
+    "residue_classification": "logs/ directory contains only runtime log files, not source code"
+   },
+   "next_action": "Reclaim only through the accepted reaper once the worktree lifecycle campaign clears it."
+  },
+  {
+   "root": "heal-cifix-organvm-growth-auditor-14-87e185fb",
+   "lane": "remote-pr-open",
+   "status": "open_pr_preserved",
+   "classification": "remote-pr-open",
+   "branch": "limen/heal-cifix-organvm-growth-auditor-14-87e185fb",
+   "head": "30f94c1dcb75983f5a33488d10f7e38961cc4ac4",
+   "pr_url": "https://github.com/organvm/growth-auditor/pull/31",
+   "pr_number": 31,
+   "pr_state": "OPEN",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "repo": "organvm/growth-auditor",
+    "tree_clean": true,
+    "pushed": true,
+    "push_result": "branch already on remote or pushed successfully",
+    "pr_opened": true
+   },
+   "next_action": "Reclaim only through the accepted reaper once the PR is reviewed, merged, or closed with receipts."
+  },
+  {
+   "root": "heal-cifix-organvm-growth-auditor-16-203e2158",
+   "lane": "remote-pr-open",
+   "status": "open_pr_preserved",
+   "classification": "remote-pr-open",
+   "branch": "pr-16",
+   "head": "d11c870027c8567e02d888225925bd1c450772bc",
+   "pr_url": "https://github.com/organvm/growth-auditor/pull/32",
+   "pr_number": 32,
+   "pr_state": "OPEN",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "repo": "organvm/growth-auditor",
+    "tree_clean": true,
+    "pushed": true,
+    "push_result": "branch already on remote or pushed successfully",
+    "pr_opened": true
+   },
+   "next_action": "Reclaim only through the accepted reaper once the PR is reviewed, merged, or closed with receipts."
+  },
+  {
+   "root": "heal-cifix-organvm-growth-auditor-16-abe0a1a2",
+   "lane": "remote-pr-open",
+   "status": "open_pr_preserved",
+   "classification": "remote-pr-open",
+   "branch": "limen/heal-cifix-organvm-growth-auditor-16-abe0a1a2",
+   "head": "c05a27d6a897c02b7ef5ecb35e3b77850a5a54cc",
+   "pr_url": "https://github.com/organvm/growth-auditor/pull/33",
+   "pr_number": 33,
+   "pr_state": "OPEN",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "repo": "organvm/growth-auditor",
+    "tree_clean": true,
+    "pushed": true,
+    "push_result": "branch already on remote or pushed successfully",
+    "pr_opened": true
+   },
+   "next_action": "Reclaim only through the accepted reaper once the PR is reviewed, merged, or closed with receipts."
+  },
+  {
+   "root": "heal-cifix-organvm-growth-auditor-16-f8bc94cb",
+   "lane": "remote-pr-open",
+   "status": "open_pr_preserved",
+   "classification": "remote-pr-open",
+   "branch": "limen/heal-cifix-organvm-growth-auditor-16-f8bc94cb",
+   "head": "63c2ce939e8adb11c26b3ceaa55efb94ab786286",
+   "pr_url": "https://github.com/organvm/growth-auditor/pull/34",
+   "pr_number": 34,
+   "pr_state": "OPEN",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "repo": "organvm/growth-auditor",
+    "tree_clean": true,
+    "pushed": true,
+    "push_result": "branch already on remote or pushed successfully",
+    "pr_opened": true
+   },
+   "next_action": "Reclaim only through the accepted reaper once the PR is reviewed, merged, or closed with receipts."
+  },
+  {
+   "root": "heal-cifix-organvm-growth-auditor-17-05e37ea2",
+   "lane": "remote-pr-open",
+   "status": "open_pr_preserved",
+   "classification": "remote-pr-open",
+   "branch": "limen/heal-cifix-organvm-growth-auditor-17-05e37ea2",
+   "head": "f869971c5adc3d6c6f2451624ddc83b4f76ba6d2",
+   "pr_url": "https://github.com/organvm/growth-auditor/pull/35",
+   "pr_number": 35,
+   "pr_state": "OPEN",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "repo": "organvm/growth-auditor",
+    "tree_clean": true,
+    "pushed": true,
+    "push_result": "branch already on remote or pushed successfully",
+    "pr_opened": true
+   },
+   "next_action": "Reclaim only through the accepted reaper once the PR is reviewed, merged, or closed with receipts."
+  },
+  {
+   "root": "heal-cifix-organvm-growth-auditor-17-8da83fa9",
+   "lane": "remote-pr-open",
+   "status": "open_pr_preserved",
+   "classification": "remote-pr-open",
+   "branch": "limen/heal-cifix-organvm-growth-auditor-17-8da83fa9",
+   "head": "051208ea39745a8833fb1933c11ad46227571ca7",
+   "pr_url": "https://github.com/organvm/growth-auditor/pull/36",
+   "pr_number": 36,
+   "pr_state": "OPEN",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "repo": "organvm/growth-auditor",
+    "tree_clean": true,
+    "pushed": true,
+    "push_result": "branch already on remote or pushed successfully",
+    "pr_opened": true
+   },
+   "next_action": "Reclaim only through the accepted reaper once the PR is reviewed, merged, or closed with receipts."
+  },
+  {
+   "root": "heal-cifix-organvm-limen-388-3f07b6de",
+   "lane": "remote-pr-open",
+   "status": "open_pr_preserved",
+   "classification": "remote-pr-open",
+   "branch": "limen/jules-org-consulting-organ-face-0628-f5ee",
+   "head": "33b8a141623a24f261ba151bb8717d37de75b789",
+   "pr_url": "https://github.com/organvm/limen/pull/1070",
+   "pr_number": 1070,
+   "pr_state": "OPEN",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "repo": "organvm/limen",
+    "tree_clean": true,
+    "pushed": true,
+    "push_result": "new branch pushed successfully",
+    "pr_opened": true
+   },
+   "next_action": "Reclaim only through the accepted reaper once the PR is reviewed, merged, or closed with receipts."
+  },
+  {
+   "root": "heal-cifix-organvm-limen-403-06ee30f8",
+   "lane": "remote-pr-open",
+   "status": "open_pr_preserved",
+   "classification": "remote-pr-open",
+   "branch": "limen/jules-gen-organvm-limen-typing-0627-3681",
+   "head": "f7f12b18c5e79d2a72bf687b461c7a132ec97465",
+   "pr_url": "https://github.com/organvm/limen/pull/1071",
+   "pr_number": 1071,
+   "pr_state": "OPEN",
+   "evidence_updated_utc": "2026-07-15T12:47:27Z",
+   "evidence": {
+    "repo": "organvm/limen",
+    "tree_clean": true,
+    "pushed": true,
+    "push_result": "new branch pushed successfully",
+    "pr_opened": true
+   },
+   "next_action": "Reclaim only through the accepted reaper once the PR is reviewed, merged, or closed with receipts."
   }
  ],
  "schema": 1
