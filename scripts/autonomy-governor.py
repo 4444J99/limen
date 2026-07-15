@@ -8,11 +8,13 @@ single local switch:
   mode=observe  -> telemetry/status only, no queue mutation or dispatch
   mode=dispatch -> full conductor loop, still subject to usage health gates
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -65,7 +67,7 @@ def usage_dead_lanes() -> set[str]:
 
 
 def _marker_owner_merged(marker: Path) -> bool:
-    """True iff the pause marker's ``owner:`` branch has a MERGED PR on GitHub.
+    """True iff the pause marker's release PR merged — via ``pr:`` line or ``owner:`` branch.
 
     A stale "integration drain" marker whose owner PR already merged is the exact 21h-freeze
     incident (2026-07-10, owner codex/dynamic-routing-closeout-20260710, PR #921 merged the next
@@ -90,20 +92,50 @@ def _marker_owner_merged(marker: Path) -> bool:
     except OSError:
         pass
     try:
-        owner = next(
-            (ln.split(":", 1)[1].strip() for ln in marker.read_text().splitlines()
-             if ln.strip().startswith("owner:")),
-            "",
-        )
+        lines = marker.read_text().splitlines()
     except OSError:
         return False
-    if not owner:
+
+    def _field(name: str) -> str:
+        return next(
+            (ln.split(":", 1)[1].strip() for ln in lines if ln.strip().startswith(f"{name}:")),
+            "",
+        )
+
+    owner = _field("owner")
+    # An explicit ``pr:`` line names the release PR directly (e.g. ``pr: 1036`` or
+    # ``pr: organvm/limen#1036``). The 2026-07-15 freeze recurrence: the marker's owner said
+    # ``manual/overnight-watch-pause-guard-20260714`` but the guard merged from branch
+    # ``agent/overnight-watch-pause-guard`` — the --head search can never match a hand-written
+    # owner label, so the beat stayed paused after its release predicate was already satisfied.
+    pr_match = re.search(r"(\d+)\s*$", _field("pr"))
+    pr_number = pr_match.group(1) if pr_match else ""
+    if not owner and not pr_number:
         return False
     try:
         MARKER_RECHECK_STAMP.parent.mkdir(parents=True, exist_ok=True)
         MARKER_RECHECK_STAMP.write_text(str(now))
     except OSError:
         pass
+    if pr_number:
+        try:
+            proc = subprocess.run(
+                ["gh", "pr", "view", pr_number, "--json", "state"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return False
+        if proc.returncode == 0:
+            try:
+                if str(json.loads(proc.stdout).get("state")) == "MERGED":
+                    return True
+            except ValueError:
+                pass
+        if not owner:
+            return False
     try:
         proc = subprocess.run(
             ["gh", "pr", "list", "--head", owner, "--state", "merged", "--json", "number", "--limit", "1"],
