@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-15'
-      spent: 4
+      spent: 22
       per_agent:
-        jules: 0
-        gemini: 0
-        codex: 0
+        jules: 8
+        gemini: 2
+        codex: 3
         opencode: 0
-        agy: 0
-        claude: 0
+        agy: 3
+        claude: 2
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -109228,7 +109228,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -109243,9 +109243,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/412 [auto-emitted\
     \ 2026-07-04 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 412 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/412
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:54:41.017379Z'
     agent: opencode
@@ -109305,6 +109308,11 @@ tasks:
     status: open
     output: "recover: jules session 12321581671647115633 is idle_no_status \u2192\
       \ reopened"
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: jules
+    session_id: async-reserve:0e4d4d2470b209e15a0a1241f354283b
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-413
   title: fix failing CI on organvm/limen#413
   repo: organvm/limen
@@ -112814,7 +112822,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -112828,9 +112836,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/624 [auto-emitted\
     \ 2026-07-05 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 624 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/624
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:47:48.255717Z'
     agent: gemini
@@ -112871,6 +112882,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 5323224028870637233 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: jules
+    session_id: async-reserve:a240690737df8edd92c19b6c902ea854
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-625
   title: fix failing CI on organvm/limen#625
   repo: organvm/limen
@@ -113008,7 +113024,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -113023,9 +113039,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/630 [auto-emitted\
     \ 2026-07-05 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 630 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/630
   depends_on: []
   created: '2026-07-05'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-08T14:39:59.050705Z'
     agent: jules
@@ -113077,6 +113096,11 @@ tasks:
     status: open
     output: "recover: jules session 12829372060937422465 is idle_no_status \u2192\
       \ reopened"
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: jules
+    session_id: async-reserve:97c194841c4d1ff853b93f32c264b385
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-media-ark-34
   title: fix failing CI on organvm/media-ark#34
   repo: organvm/media-ark
@@ -120682,7 +120706,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -120696,9 +120720,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/677 [auto-emitted\
     \ 2026-07-07 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 677 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/677
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:17:56.380680Z'
     agent: limen
@@ -120736,6 +120763,11 @@ tasks:
     status: open
     output: "recover: jules session 12644411757063264491 is idle_no_status \u2192\
       \ reopened"
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: jules
+    session_id: async-reserve:cf710babb71307002db65b8d481955af
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-limen-678
   title: fix failing CI on organvm/limen#678
   repo: organvm/limen
@@ -120743,7 +120775,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -120758,9 +120790,12 @@ tasks:
     \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
     \ one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/678 [auto-emitted\
     \ 2026-07-07 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 678 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/678
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:59:56.506897Z'
     agent: opencode
@@ -120813,6 +120848,11 @@ tasks:
     status: open
     output: "recover: jules session 16012879838843853539 is idle_no_status \u2192\
       \ reopened"
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: jules
+    session_id: async-reserve:5ca180e39e77f3724fd726a05b4da459
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-system-governance-framework-49
   title: fix failing CI on organvm/system-governance-framework#49
   repo: organvm/system-governance-framework
@@ -123154,7 +123194,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -123168,9 +123208,12 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/limen/pull/436 [auto-emitted 2026-07-07
     by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 436 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/436
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:13:04.279954Z'
     agent: gemini
@@ -123211,6 +123254,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 4109976206161346631 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: jules
+    session_id: async-reserve:f5afb15f3673e19dbe02f82833dccf4c
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-ESTATE-CUSTODY
   title: Make external SSDs the durable estate and the laptop a hot cache
   description: estate doctrine exists; implementation receipt is not complete
@@ -128794,7 +128842,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -128809,9 +128857,12 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/limen/pull/486 [auto-emitted 2026-07-08
     by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 486 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/486
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -128854,6 +128905,11 @@ tasks:
     status: open
     output: "recover: jules session 18127472802836097950 is idle_no_status \u2192\
       \ reopened"
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: jules
+    session_id: async-reserve:c4433e68c2732c768d3d3857438f7105
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-492
   title: rebase/resolve conflicts on organvm/limen#492
   repo: organvm/limen
@@ -136670,7 +136726,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -136680,10 +136736,19 @@ tasks:
     test coverage and add a focused, PASSING test suite for it. Run the repo's own
     test command and confirm green. No placeholder tests. [auto-generated 2026-07-09
     to keep the stream endless]
+  predicate: test "$(gh pr list --repo organvm/session-meta --state merged --search
+    'GEN-organvm-session-meta-test-coverage-0709 in:body' --json number --jq length)"
+    -gt 0
+  receipt_target: github:organvm/session-meta:pull-request:GEN-organvm-session-meta-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T01:55:24.231897Z'
-  dispatch_log: []
+  updated: '2026-07-15T16:02:31.992111Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: agy
+    session_id: async-reserve:79bf39294330eadbec8deff1aaab0c2d
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-peer-audited--behavioral-blockchain-test-coverage-0709
   title: Raise test coverage in organvm/peer-audited--behavioral-blockchain
   repo: organvm/peer-audited--behavioral-blockchain
@@ -136692,7 +136757,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -136702,10 +136767,19 @@ tasks:
     with little or no test coverage and add a focused, PASSING test suite for it.
     Run the repo's own test command and confirm green. No placeholder tests. [auto-generated
     2026-07-09 to keep the stream endless]
+  predicate: test "$(gh pr list --repo organvm/peer-audited--behavioral-blockchain
+    --state merged --search 'GEN-organvm-peer-audited--behavioral-blockchain-test-coverage-0709
+    in:body' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/peer-audited--behavioral-blockchain:pull-request:GEN-organvm-peer-audited--behavioral-blockchain-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T01:55:24.233499Z'
-  dispatch_log: []
+  updated: '2026-07-15T16:02:31.992111Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: claude
+    session_id: async-reserve:e6e8e4519d87dba935c45287e26255ae
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-manumissio-ci-green-0709
   title: Make organvm/manumissio CI green
   repo: organvm/manumissio
@@ -136714,7 +136788,7 @@ tasks:
   workstream: contributions
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -136735,7 +136809,7 @@ tasks:
   receipt_target: github:organvm/manumissio:pull-request:GEN-organvm-manumissio-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-12T23:23:09.392681Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-12T22:11:25Z'
     agent: codex
@@ -136752,6 +136826,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: gemini
+    session_id: async-reserve:0b81c7764a28d47c5d7df15147bf6be4
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-portfolio-ci-green-0709
   title: Make organvm/portfolio CI green
   repo: organvm/portfolio
@@ -136760,7 +136839,7 @@ tasks:
   workstream: contributions
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - ci-green
   - generated
@@ -136779,13 +136858,18 @@ tasks:
   receipt_target: github:organvm/portfolio:pull-request:GEN-organvm-portfolio-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-12T22:11:25Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-12T22:11:25Z'
     agent: codex
     session_id: 019f56fa-0c8e-7400-8d2e-886fa3b0ce0b
     status: open
     output: 'ask-gate-migration-2026-07-12: parents:normalize; receipt=github:organvm/portfolio:pull-request:GEN-organvm-portfolio-ci-green-0709'
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: codex
+    session_id: async-reserve:196fce1b413316a1fe411687bbffbc06
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709
   title: Make organvm/peer-audited--behavioral-blockchain CI green
   repo: organvm/peer-audited--behavioral-blockchain
@@ -142281,7 +142365,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -142302,7 +142386,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/846
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-13T01:01:43.008679Z'
+  updated: '2026-07-15T16:02:31.992111Z'
   dispatch_log:
   - timestamp: '2026-07-13T00:16:08.439534Z'
     agent: gemini
@@ -142315,6 +142399,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on gemini; reopened to asynchronous lane
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: jules
+    session_id: async-reserve:15dd7563374deb7fef43c52fb1ddc458
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-observation-organ-firstslice-0712
   title: Build the first working vertical slice of the observation organ
   repo: organvm/limen
@@ -142429,7 +142518,7 @@ tasks:
   workstream: substrate
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cloud-offload
   - remote-execution
@@ -142465,8 +142554,13 @@ tasks:
   depends_on:
   - FIX-dynamic-worktree-admission-0712
   created: '2026-07-12'
-  updated: '2026-07-13T01:52:42.422082Z'
-  dispatch_log: []
+  updated: '2026-07-15T16:02:31.992111Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: codex
+    session_id: async-reserve:2c0510d3576e4ad07a346ae20b2215ce
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-125
   title: fix failing CI on organvm/mirror-mirror#125
   repo: organvm/mirror-mirror
@@ -142653,7 +142747,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -142678,7 +142772,13 @@ tasks:
   receipt_target: https://github.com/organvm/a-i-chat--exporter/pull/121
   depends_on: []
   created: '2026-07-13'
-  dispatch_log: []
+  updated: '2026-07-15T16:02:31.992111Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: agy
+    session_id: async-reserve:2d06554e44a4c0fa51c81a63673c7945
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-SUBSTRATE-DISK-TEMP-62de1d1fbf43
   title: Keep disk/temp/voice substrate from starving the swarm
   description: substrate lifecycle predicate is failing
@@ -142748,7 +142848,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -142772,7 +142872,13 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/187
   depends_on: []
   created: '2026-07-13'
-  dispatch_log: []
+  updated: '2026-07-15T16:02:31.992111Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: claude
+    session_id: async-reserve:a77433e7a2495debc11df58a5d6d599a
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-215
   title: rebase/resolve conflicts on organvm/domus-genoma#215
   repo: organvm/domus-genoma
@@ -142780,7 +142886,7 @@ tasks:
   target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -142804,7 +142910,13 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/215
   depends_on: []
   created: '2026-07-13'
-  dispatch_log: []
+  updated: '2026-07-15T16:02:31.992111Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: gemini
+    session_id: async-reserve:0db16c57f61609737b8ff2a8e2407294
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: SUBSTRATE-DOMUS-LIMEN-PATH-0713
   title: Repair declarative Limen CLI PATH ownership in Domus
   description: Noninteractive shell resolution currently selects the stale /opt/homebrew
@@ -142817,7 +142929,7 @@ tasks:
   workstream: substrate
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - origin:system-debt
   - horizon:present
@@ -142833,8 +142945,13 @@ tasks:
   receipt_target: git:organvm/domus-genoma:dot_zshenv.tmpl
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-15T11:55:02.905047Z'
-  dispatch_log: []
+  updated: '2026-07-15T16:02:31.992111Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: codex
+    session_id: async-reserve:77be7debdbbed606887197aba28999dd
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
   origin: system_debt
   horizon: present
   value_case: Restores the advertised Limen CLI and progress ledger without creating
@@ -142960,7 +143077,7 @@ tasks:
   target_agent: agy
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/hospes/issues/3
@@ -142975,8 +143092,13 @@ tasks:
   receipt_target: https://github.com/organvm/hospes/issues/3
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-14T04:00:43.500121Z'
-  dispatch_log: []
+  updated: '2026-07-15T16:02:31.992111Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:02:31.992111Z'
+    agent: agy
+    session_id: async-reserve:1ac40725e7fe9c4cecd1e3a42578a546
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-384
   title: terminally reconcile conflict/supersession on organvm/limen#384
   repo: organvm/limen
@@ -143635,3 +143757,59 @@ tasks:
   horizon: present
   value_case: Makes estate completion provable without a 1000-result blind spot and
     gives every remaining PR a durable owner, predicate, and merge condition.
+- id: HEAL-cifix-organvm-limen-1101
+  title: fix failing CI on organvm/limen#1101
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1101
+  context: "PR organvm/limen#1101 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1101\
+    \ [auto-emitted 2026-07-15 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1101 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1101
+  depends_on: []
+  created: '2026-07-15'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1102
+  title: fix failing CI on organvm/limen#1102
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1102
+  context: "PR organvm/limen#1102 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1102\
+    \ [auto-emitted 2026-07-15 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1102 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1102
+  depends_on: []
+  created: '2026-07-15'
+  dispatch_log: []
