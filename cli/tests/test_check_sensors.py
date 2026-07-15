@@ -104,14 +104,14 @@ def test_derive_fallback_matches_panel_default():
         )
 
 
-def test_prompt_corpus_sensor_is_dark_manual_only_and_default_aligned():
-    """Do not let the unmeasured corpus drain become heartbeat or Omega work by configuration drift."""
+def test_prompt_corpus_sensor_is_armed_and_default_aligned():
+    """Sensor is armed (default=1) after the agy steps-schema fix (2026-07-15). Gate and parameter panel must stay in sync."""
     registry = yaml.safe_load((ROOT / "institutio/governance/sensors.yaml").read_text(encoding="utf-8"))
     panel = yaml.safe_load((ROOT / "institutio/governance/parameters.yaml").read_text(encoding="utf-8"))
     sensor = registry["sensors"]["prompt-corpus-control"]
     parameter = panel["parameters"]["LIMEN_PROMPT_ATOM_CONTROL"]
 
-    assert str(sensor["default"]) == str(parameter["default"]) == "0"
+    assert str(sensor["default"]) == str(parameter["default"]) == "1"
     assert not sensor.get("omega_eligible")
     assert "prompt-atom-ledger.py --scan" in sensor["steps"][0]["command"]
     assert (

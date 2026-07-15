@@ -4839,10 +4839,11 @@ def agy_steps_schema_error(connection: sqlite3.Connection) -> str | None:
     if len(names) != len(set(names)):
         return "steps schema has duplicate column names"
     required = [str(name) for name in schema["required_columns"]]
+    admitted = [str(name) for name in schema.get("admitted_columns", [])]
     missing = [name for name in required if name not in names]
     if missing:
         return "steps schema is missing required columns: " + ", ".join(missing)
-    unknown = sorted(set(names) - set(required))
+    unknown = sorted(set(names) - set(required) - set(admitted))
     if unknown:
         return "steps schema has unsupported columns: " + ", ".join(unknown)
     return None

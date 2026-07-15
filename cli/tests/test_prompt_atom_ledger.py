@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import hashlib
 import json
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -3272,3 +3273,74 @@ def test_check_cursor_state_flags_unbound_checkpoint(tmp_path: Path):
 
     errors = ledger.check_cursor_state(paths)
     assert any("not bound" in error for error in errors)
+
+
+# ---------------------------------------------------------------------------
+# agy steps schema validation tests
+# ---------------------------------------------------------------------------
+
+_AGY_OLD_COLUMNS = "idx INTEGER, step_type INTEGER, status INTEGER, step_payload BLOB, metadata BLOB, task_details BLOB, error_details BLOB, render_info BLOB"
+_AGY_NEW_COLUMNS = _AGY_OLD_COLUMNS + ", has_subtrajectory INTEGER, permissions BLOB, step_format INTEGER"
+
+
+def _make_agy_db(tmp_path: Path, create_sql: str) -> sqlite3.Connection:
+    db_path = tmp_path / "test.db"
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    conn.execute(create_sql)
+    conn.commit()
+    return conn
+
+
+def test_agy_steps_schema_evolved_11_columns_passes(tmp_path: Path):
+    ledger = _load_ledger_script()
+    conn = _make_agy_db(tmp_path, f"CREATE TABLE steps ({_AGY_NEW_COLUMNS})")
+    assert ledger.agy_steps_schema_error(conn) is None
+    conn.close()
+
+
+def test_agy_steps_schema_legacy_8_columns_passes(tmp_path: Path):
+    ledger = _load_ledger_script()
+    conn = _make_agy_db(tmp_path, f"CREATE TABLE steps ({_AGY_OLD_COLUMNS})")
+    assert ledger.agy_steps_schema_error(conn) is None
+    conn.close()
+
+
+def test_agy_steps_schema_unknown_12th_column_fails(tmp_path: Path):
+    ledger = _load_ledger_script()
+    conn = _make_agy_db(tmp_path, f"CREATE TABLE steps ({_AGY_NEW_COLUMNS}, surprise TEXT)")
+    error = ledger.agy_steps_schema_error(conn)
+    assert error is not None and "surprise" in error
+    conn.close()
+
+
+def test_agy_steps_schema_prompt_extraction_byte_identical(tmp_path: Path):
+    """Prompt extraction from step_type=14 row is byte-identical with or without admitted columns."""
+    payload = b'{"prompt": "hello world"}'
+    insert_cols = "idx, step_type, status, step_payload, metadata, task_details, error_details, render_info"
+    insert_sql = f"INSERT INTO steps ({insert_cols}) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    insert_row = (0, 14, 1, payload, None, None, None, None)
+
+    def _make_conn(name: str, create_sql: str) -> sqlite3.Connection:
+        db_path = tmp_path / name
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        conn.execute(create_sql)
+        conn.execute(insert_sql, insert_row)
+        conn.commit()
+        return conn
+
+    conn_old = _make_conn("old.db", f"CREATE TABLE steps ({_AGY_OLD_COLUMNS})")
+    conn_new = _make_conn("new.db", f"CREATE TABLE steps ({_AGY_NEW_COLUMNS})")
+
+    def _extract(conn: sqlite3.Connection) -> bytes:
+        rows = conn.execute(
+            "SELECT idx, step_type, status, step_payload, metadata, task_details, error_details, render_info "
+            "FROM steps WHERE step_type = 14"
+        ).fetchall()
+        assert rows, "expected one row"
+        return bytes(rows[0]["step_payload"])
+
+    assert _extract(conn_old) == _extract(conn_new)
+    conn_old.close()
+    conn_new.close()

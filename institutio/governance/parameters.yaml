@@ -2419,11 +2419,11 @@ parameters:
     note: "Arms the needs_human reclassify effector: 0 (default) reports the buckets only; 1 flips FLIP tasks needs_human->open and parks CHRONIC tasks needs_human->failed_blocked each cadence (status-only + provenance labels, idempotent, reversible; KEEP/STALE/REVIEW never auto-touched). Ships DARK — armed by lever L-RECLASSIFY-APPLY."
 
   LIMEN_PROMPT_ATOM_CONTROL:
-    default: "0"
+    default: "1"
     env: LIMEN_PROMPT_ATOM_CONTROL
     self_update: none
     owner: tabularius
-    note: "DARK gate for the registry-derived prompt-corpus control sensor. The 2026-07-14 canary proved the cursor deadlock fixed (unresolved 20,487 -> 566, merges clean); arming is blocked solely on the agy steps-schema adapter gap (501 units make the beat command exit 1 on source_errors). Flip this default and the matching sensors.yaml consumer default together once a bounded pass exits 0. Deep predicate: python3 scripts/prompt-atom-ledger.py --check --require-scope all. Cheap coherence probe: python3 scripts/prompt-atom-ledger.py --check-cursor."
+    note: "ARMED 2026-07-15 (PR fix/agy-steps-schema-v2). agy steps schema admitted 3 vendor-drift columns; 567 unsupported-columns units resolved; canary: unbounded pass 219.9s exit-0, bounded pass 198.9s exit-0, --check-cursor PASS. Deep predicate: python3 scripts/prompt-atom-ledger.py --check --require-scope all. Cheap coherence probe: python3 scripts/prompt-atom-ledger.py --check-cursor."
 
   LIMEN_BEAT_PROMPT_ATOMS:
     default: 4

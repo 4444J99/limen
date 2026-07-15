@@ -1243,6 +1243,11 @@ SOURCE_RECORD_SCHEMAS = {
             "error_details",
             "render_info",
         ],
+        "admitted_columns": [
+            "has_subtrajectory",
+            "permissions",
+            "step_format",
+        ],
         "identity_columns": ["idx", "step_type", "status"],
         "identity_type": "exact-nonnegative-integer",
         "unique_index_column": "idx",

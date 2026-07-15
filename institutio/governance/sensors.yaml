@@ -187,10 +187,10 @@ sensors:
     section: "heartbeat"
     title: "incrementally reconcile prompt occurrences into the ask-atom control plane"
     gate: LIMEN_PROMPT_ATOM_CONTROL
-    default: "0"
+    default: "1"
     source: [heartbeat]
     owner: tabularius
-    note: "DARK — canary 2026-07-14 (PR fix/prompt-corpus-missing-source-exclusion) drained the 20,487-unit obligation deadlock (unresolved 20,487 -> 566, zero stale-version orphans; unbounded pass 186.9s, bounded pass 153.7s, cursor advances and merges cleanly; probe: python3 scripts/prompt-atom-ledger.py --check-cursor). Arming is blocked on one atom: 501 agy conversations carry a newer SQLite steps schema (has_subtrajectory, permissions, step_format) the adapter fail-closed rejects, so the beat command exits 1 on source_errors. Extend the agy adapter, prove a clean exit-0 bounded pass, then flip this default and the parameter-panel default together."
+    note: "ARMED 2026-07-15 (PR fix/agy-steps-schema-v2). agy steps schema extended to admit 3 vendor-drift columns (has_subtrajectory, permissions, step_format); 567 unsupported-columns units resolved; canary: unbounded pass 219.9s (567 schema errors → 0), bounded pass 198.9s exit-0, --check-cursor PASS. Prior note: 2026-07-14 canary (PR fix/prompt-corpus-missing-source-exclusion) drained 20,487-unit obligation deadlock (unresolved 20,487 -> 566, zero stale-version orphans; probe: python3 scripts/prompt-atom-ledger.py --check-cursor)."
     cadence:
       env: LIMEN_BEAT_PROMPT_ATOMS
       default: 4
