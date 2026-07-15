@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-15'
-      spent: 26
+      spent: 33
       per_agent:
-        jules: 11
-        gemini: 2
-        codex: 4
+        jules: 14
+        gemini: 3
+        codex: 6
         opencode: 0
-        agy: 3
+        agy: 4
         claude: 2
         github_actions: 1
         ollama: 3
@@ -128941,7 +128941,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -128956,9 +128956,12 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/limen/pull/492 [auto-emitted 2026-07-08
     by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 492 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/492
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:34:41.872727Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -128999,6 +129002,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 310523849679850654 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-15T16:34:41.872727Z'
+    agent: jules
+    session_id: async-reserve:f0d62baab2dfe9c3b35198eddd021475
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-516
   title: rebase/resolve conflicts on organvm/limen#516
   repo: organvm/limen
@@ -129065,7 +129073,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -129080,9 +129088,12 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/limen/pull/590 [auto-emitted 2026-07-08
     by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 590 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/590
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T16:34:41.872727Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -129124,6 +129135,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 1662712002405923819 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-15T16:34:41.872727Z'
+    agent: jules
+    session_id: async-reserve:0b0e6f8479c1daf373358b0a4d9db6f0
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-617
   title: rebase/resolve conflicts on organvm/limen#617
   repo: organvm/limen
@@ -136706,7 +136722,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -136716,10 +136732,19 @@ tasks:
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
     own test command and confirm green. No placeholder tests. [auto-generated 2026-07-09
     to keep the stream endless]
+  predicate: test "$(gh pr list --repo organvm/my-knowledge-base --state merged --search
+    'GEN-organvm-my-knowledge-base-test-coverage-0709 in:body' --json number --jq
+    length)" -gt 0
+  receipt_target: github:organvm/my-knowledge-base:pull-request:GEN-organvm-my-knowledge-base-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-10T01:55:24.127907Z'
-  dispatch_log: []
+  updated: '2026-07-15T16:34:41.872727Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:34:41.872727Z'
+    agent: agy
+    session_id: async-reserve:ce949272247de3f7b1a5f15b979925d8
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-manumissio-test-coverage-0709
   title: Raise test coverage in organvm/manumissio
   repo: organvm/manumissio
@@ -136815,7 +136840,7 @@ tasks:
   title: Make organvm/manumissio CI green
   repo: organvm/manumissio
   type: code
-  target_agent: gemini
+  target_agent: jules
   workstream: contributions
   priority: high
   budget_cost: 1
@@ -136825,6 +136850,7 @@ tasks:
   - generated
   - build-out
   - noop
+  - slow
   urls: []
   context: Inspect the latest FAILING checks on organvm/manumissio's default branch,
     fix the root cause (lint / types / failing test / config), and confirm the checks
@@ -136840,7 +136866,7 @@ tasks:
   receipt_target: github:organvm/manumissio:pull-request:GEN-organvm-manumissio-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T16:02:31.992111Z'
+  updated: '2026-07-15T16:34:41.872727Z'
   dispatch_log:
   - timestamp: '2026-07-12T22:11:25Z'
     agent: codex
@@ -136860,6 +136886,17 @@ tasks:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: gemini
     session_id: async-reserve:0b81c7764a28d47c5d7df15147bf6be4
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T16:33:52.914691Z'
+    agent: gemini
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on gemini; reopened to asynchronous lane
+  - timestamp: '2026-07-15T16:34:41.872727Z'
+    agent: jules
+    session_id: async-reserve:7f9127df4555ef9c62947cb2dbf37366
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-portfolio-ci-green-0709
@@ -136889,7 +136926,7 @@ tasks:
   receipt_target: github:organvm/portfolio:pull-request:GEN-organvm-portfolio-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T16:02:31.992111Z'
+  updated: '2026-07-15T16:34:41.872727Z'
   dispatch_log:
   - timestamp: '2026-07-12T22:11:25Z'
     agent: codex
@@ -136899,6 +136936,16 @@ tasks:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: codex
     session_id: async-reserve:196fce1b413316a1fe411687bbffbc06
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T16:33:33.215756Z'
+    agent: codex
+    session_id: async-reap-stale
+    status: open
+    output: 'dispatch-async: stale worker marker older than 2100s reaped; task reopened'
+  - timestamp: '2026-07-15T16:34:41.872727Z'
+    agent: codex
+    session_id: async-reserve:be39e1154447eb6d6dcddf5d0c1b9bae
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709
@@ -142523,7 +142570,7 @@ tasks:
   target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -142547,7 +142594,13 @@ tasks:
   receipt_target: https://github.com/organvm/manumissio/pull/24
   depends_on: []
   created: '2026-07-12'
-  dispatch_log: []
+  updated: '2026-07-15T16:34:41.872727Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T16:34:41.872727Z'
+    agent: gemini
+    session_id: async-reserve:d6f7b5537d9fa84ad9d100a6dafe19ec
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: SUBSTRATE-REMOTE-EXECUTOR-0712
   title: Build provider-neutral cloud execution and terminal harvesting
   description: Make the laptop a thin control plane by routing eligible pushed repo
@@ -142894,7 +142947,7 @@ tasks:
   target_agent: codex
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -142919,7 +142972,7 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/187
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-15T16:18:06.471423Z'
+  updated: '2026-07-15T16:34:41.872727Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: claude
@@ -142932,6 +142985,11 @@ tasks:
     status: open
     route_to: codex
     output: claude lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-15T16:34:41.872727Z'
+    agent: codex
+    session_id: async-reserve:b426d41f8131ad3a9c4ab39858d898a7
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-215
   title: rebase/resolve conflicts on organvm/domus-genoma#215
   repo: organvm/domus-genoma
@@ -143191,7 +143249,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/384
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-15T16:18:42.265936Z'
+  updated: '2026-07-15T16:33:52.914691Z'
   dispatch_log:
   - timestamp: '2026-07-14T06:18:43.786868Z'
     agent: codex
@@ -143205,6 +143263,10 @@ tasks:
     session_id: async-reserve:ec9930a31ee60149894a2001c7a462c5
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T16:33:52.914691Z'
+    agent: jules
+    session_id: '8758134765437853101'
+    status: dispatched
 - id: HEAL-rebase-organvm-limen-405
   title: terminally reconcile conflict/supersession on organvm/limen#405
   repo: organvm/limen
@@ -143246,15 +143308,16 @@ tasks:
   title: terminally reconcile conflict/supersession on organvm/limen#406
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: github_actions
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - semantic-supersession-audited
+  - tried:jules
   urls:
   - https://github.com/organvm/limen/pull/406
   context: 'PR organvm/limen#406 is OPEN and conflict-dirty at exact head 41bd5a66b4c40294c213cf49ccd3eecffac982db.
@@ -143271,7 +143334,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/406
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-15T16:18:42.265936Z'
+  updated: '2026-07-15T16:33:52.914691Z'
   dispatch_log:
   - timestamp: '2026-07-14T06:18:43.787158Z'
     agent: codex
@@ -143285,6 +143348,12 @@ tasks:
     session_id: async-reserve:b6c3bc7817b214e5bd685ae44b6b2006
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T16:33:52.914691Z'
+    agent: jules
+    session_id: cli
+    status: open
+    route_to: github_actions
+    output: remote/service lane failed; reopened to healthy fleet cascade
 - id: HEAL-rebase-organvm-limen-409
   title: terminally reconcile conflict/supersession on organvm/limen#409
   repo: organvm/limen
@@ -143886,10 +143955,267 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/1102
   depends_on: []
   created: '2026-07-15'
-  updated: '2026-07-15T16:18:42.265936Z'
+  updated: '2026-07-15T16:33:52.914691Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:18:42.265936Z'
     agent: jules
     session_id: async-reserve:b63a3a6dc1c47098d4252ef8cc0a9e65
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T16:33:52.914691Z'
+    agent: jules
+    session_id: '14416367222181086016'
+    status: dispatched
+- id: GH-organvm-limen-1110
+  title: "L-CLOUD-IOS-FILES \u2014 optional 2-min iPhone Files check of Drive + Dropbox\
+    \ (the one non-automatable trust gate)"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1110
+  context: 'GitHub issue organvm/limen#1110. **His-hand lever, OPTIONAL** (registered
+    in `his-hand-levers.json`). The 2026-06-15 cloud-integrity audit found Google
+    Drive signed-in on iPhone but broken in Apple Files. Every other trust gate of
+    the storage-rails registry (`institutio/governance/storage-roles.yaml`, #1095)
+    is machine-proven; phone-side reachability is the one gate only a device check
+    can prove. **The check (~2 min, whenever cus'
+  predicate: test "$(gh issue view 1110 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1110
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.934364Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1109
+  title: "L-CLOUD-EGRESS-CONSENT \u2014 approve the cloud-custody egress list + arm\
+    \ HORREVM (one decision, ~1 min after #1108)"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1109
+  context: "GitHub issue organvm/limen#1109. **His-hand lever** (registered in `his-hand-levers.json`).\
+    \ The data-egress decision for HORREVM custody \u2014 what may leave the machine\
+    \ to Google Drive / Dropbox: **ONLY ciphertext + one plaintext no-secrets recovery\
+    \ card:** - `~/.arca-vault/*.enc` mirror \u2192 Drive (519MB, already AES-256-CBC\
+    \ sealed, same Keychain key + escrow as today) - sealed session-corpus **inventory**\
+    \ (8.5MB) \u2192 Drive (NOT the 11G"
+  predicate: test "$(gh issue view 1109 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1109
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.937826Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1108
+  title: "HORREVM rclone.conf \u2014 two OAuth consents mint the headless cloud-custody\
+    \ config (op://Limen-Automation/rclone.conf)"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - credential
+  urls:
+  - https://github.com/organvm/limen/issues/1108
+  context: "GitHub issue organvm/limen#1108. **Credential atom (Wall #320 class).**\
+    \ HORREVM custody (PR2 of the storage-rails organ, follows #1095) drives rclone\
+    \ headlessly against `gdrive:` + `dropbox:`. The entire `rclone.conf` is ONE op\
+    \ item hydrated by the credential organ's file sink \u2014 no desktop apps, no\
+    \ GCP project, no Dropbox app key. **The one-time human mint (~7 min, the organ\
+    \ physically cannot click a browser consent):** 1. `rclon"
+  predicate: test "$(gh issue view 1108 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1108
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.939593Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1107
+  title: "prompt-corpus: stored source cursor is not bound to the current private\
+    \ checkpoint (drift class #5) \u2014 blocks all/all authority scan + overni"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1107
+  context: "GitHub issue organvm/limen#1107. ## What `prompt-atom-ledger.py --scan\
+    \ --all --write` fails closed with: FAIL: cannot scan prompt sources: stored source\
+    \ cursor is not bound to the current private checkpoint `--check-cursor` confirms.\
+    \ The binding check (`prompt-atom-ledger.py` ~L5647\u20135657) requires the private\
+    \ snapshot marker's `source_cursor_digest` == digest of the stored cursor AND\
+    \ `journal_signatures.cursor` == the cursor path"
+  predicate: test "$(gh issue view 1107 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1107
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.942047Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1094
+  title: prompt-atom ledger writes a 568MB full-atom projection into tracked docs/
+    (uncommittable)
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1094
+  context: "GitHub issue organvm/limen#1094. ## What The ledger's `--write` pass emits\
+    \ `docs/prompt-atom-ledger.json` containing the FULL `unresolved_atoms` array\
+    \ (738,547 atom records, `unresolved_atoms_truncated: 0`) \u2014 568MB on disk\
+    \ as of the 2026-07-15 canary. The path lives in the tracked docs tree but exceeds\
+    \ GitHub's 100MB hard cap, so it can never land; it sits permanently untracked,\
+    \ looking like loose work in every closeout sweep. Th"
+  predicate: test "$(gh issue view 1094 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1094
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.944249Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1090
+  title: 'needs-human (L-REVENUE-ACCT): Create Ko-fi account + Lemon Squeezy store,
+    complete KYC, paste LEMONSQUEEZY_STORE_ID + KO_FI_SLUG'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1090
+  context: "GitHub issue organvm/limen#1090. ## L-REVENUE-ACCT \u2014 Revenue account\
+    \ setup and credential slots **Ko-fi slug already live:** `4444j99` (FUNDING.yml\
+    \ on organvm/a-i-chat--exporter, PR #79 on remote master). Ko-fi page exists at\
+    \ ko-fi.com/4444j99. **Remaining atoms:** 1. Create a Lemon Squeezy store (the\
+    \ Pro-tier checkout rail for a-i-chat--exporter uses `LEMONSQUEEZY_STORE_ID`)\
+    \ 2. Complete KYC / payout setup on both platforms 3. Pa"
+  predicate: test "$(gh issue view 1090 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1090
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.946425Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1087
+  title: "needs-human (L-BACKBLAZE-EXCLUDE): Backblaze exclusions \u2014 one Settings-pane\
+    \ visit ends the post-reboot r\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1087
+  context: "GitHub issue organvm/limen#1087. **Owner:** Anthony (human-gated lever\
+    \ `L-BACKBLAZE-EXCLUDE`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Backblaze exclusions\
+    \ \u2014 one Settings-pane visit ends the post-reboot re-crawl storms. 2026-07-15:\
+    \ bztransmit pinned a core at ~95% re-crawling regenera"
+  predicate: test "$(gh issue view 1087 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1087
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.949420Z'
+  dispatch_log: []
+- id: GH-organvm-domus-genoma-303
+  title: 'tests/test_agent_surface_healthcheck.py: 7 tests fail on master (module
+    lacks check_* functions)'
+  repo: organvm/domus-genoma
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/domus-genoma/issues/303
+  context: "GitHub issue organvm/domus-genoma#303. Found while landing #302 (failures\
+    \ are identical on pristine `origin/master` \u2014 not introduced by that diff).\
+    \ `python3 -m pytest tests/test_agent_surface_healthcheck.py -q` \u2192 **7 failed,\
+    \ 4 passed**, all `AttributeError: module 'agent_surface_healthcheck' has no attribute\
+    \ 'check_...'` \u2014 the tests expect `check_schema_local_only_exception`, `check_sources_missing`,\
+    \ `check_chezmoiignore_intact`, etc."
+  predicate: test "$(gh issue view 303 --repo organvm/domus-genoma --json state --jq
+    .state)" = CLOSED
+  receipt_target: https://github.com/organvm/domus-genoma/issues/303
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.950851Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1079
+  title: merge lanes don't honor AUTONOMY_PAUSED prohibitions (governance gap, 2026-07-15
+    incident)
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1079
+  context: "GitHub issue organvm/limen#1079. ## Incident 2026-07-15T13:07:26Z: an\
+    \ operator-requested pause marker (`logs/AUTONOMY_PAUSED`, owner_surface `work/next-autonomous-epoch-20260714`\
+    \ continuation capsule) prohibited \"dispatch, merge, rebase, PR mutation, worktree\
+    \ reclaim, or Claude-lane action before explicit resume.\" An interactive closeout\
+    \ session's merge-gate loops (pattern: `merge-policy.sh <PR#>` \u2192 `gh pr merge\
+    \ --squash`) did no"
+  predicate: test "$(gh issue view 1079 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1079
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.953116Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1074
+  title: "pr-gate runs the full 3,055-test suite on content-only PRs \u2014 scope\
+    \ the pytest step via the GATES resolver"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1074
+  context: 'GitHub issue organvm/limen#1074. Diagnosed 2026-07-15 while landing PR
+    #1066 (a 3-file docs/yaml diff in organs/consulting/): its pr-gate ran 13 minutes
+    and then FAILED on an unrelated trunk-red test (`test_agy_source_byte_discovery_and_symlink_bounds_fail_closed`,
+    healed by #1073). A content PR paid the full `pytest web/api/tests cli/tests`
+    bill (3,055 tests, 12m11s) and inherited a cli failure it could not have caused.
+    The cure'
+  predicate: test "$(gh issue view 1074 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1074
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T16:25:12.954303Z'
+  dispatch_log: []
