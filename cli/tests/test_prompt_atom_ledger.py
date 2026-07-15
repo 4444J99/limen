@@ -3361,3 +3361,117 @@ def test_agy_steps_schema_prompt_extraction_byte_identical(tmp_path: Path):
     assert _extract(conn_old) == _extract(conn_new)
     conn_old.close()
     conn_new.close()
+
+
+# ---------------------------------------------------------------------------
+# agy step-payload proto envelope tests (agy-step-payload-proto-v1)
+# ---------------------------------------------------------------------------
+
+
+def _wire_varint(value: int) -> bytes:
+    out = bytearray()
+    while True:
+        byte = value & 0x7F
+        value >>= 7
+        if value:
+            out.append(byte | 0x80)
+        else:
+            out.append(byte)
+            return bytes(out)
+
+
+def _wire_field(field: int, wire: int) -> bytes:
+    return _wire_varint((field << 3) | wire)
+
+
+def _wire_len(field: int, payload: bytes) -> bytes:
+    return _wire_field(field, 2) + _wire_varint(len(payload)) + payload
+
+
+def _wire_int(field: int, value: int) -> bytes:
+    return _wire_field(field, 0) + _wire_varint(value)
+
+
+def _agy_proto_prompt_payload(text: str, *, annotated: str | None = "same") -> bytes:
+    body = _wire_len(2, text.encode("utf-8"))
+    if annotated is not None:
+        copy = text if annotated == "same" else annotated
+        body += _wire_len(3, _wire_len(1, copy.encode("utf-8")))
+    return _wire_int(1, 14) + _wire_int(4, 3) + _wire_len(19, body)
+
+
+def test_agy_proto_prompt_payload_yields_exactly_one_candidate():
+    """The live agy CLI writes protobuf step payloads: prompt at field 19.2 with an
+    identical annotated copy at 19.3.1, surrounded by printable wire noise that the
+    legacy segment scraper would misread (a stray '0' parses as a JSON scalar)."""
+    ledger = _load_ledger_script()
+    payload = _agy_proto_prompt_payload("# FLAME — kernel\n\nComplete task 42")
+    candidates, error = ledger.agy_prompt_cell_candidates(payload, column="step_payload", maximum=64)
+    assert error is None
+    assert candidates == [("step_payload", 0, "# FLAME — kernel\n\nComplete task 42")]
+
+
+def test_agy_proto_payload_without_prompt_message_is_not_a_carrier():
+    ledger = _load_ledger_script()
+    metadata_blob = _wire_int(1, 14) + _wire_len(12, b"63a91ff5-2e98-4093-a794-b546d9d70daf")
+    candidates, error = ledger.agy_prompt_cell_candidates(metadata_blob, column="metadata", maximum=64)
+    assert error is None
+    assert candidates == []
+
+
+def test_agy_proto_nonprompt_step_with_prompt_message_fails_closed():
+    ledger = _load_ledger_script()
+    payload = _wire_int(1, 23) + _wire_len(19, _wire_len(2, b"smuggled prompt"))
+    error = ledger.agy_nonprompt_cell_error(payload, column="step_payload", maximum=64)
+    assert error == "non-prompt step contains a structured prompt-bearing carrier"
+
+
+def test_agy_proto_nonprompt_step_quoting_markers_is_clean():
+    """Assistant/tool steps legitimately quote '# FLAME' and 'Complete task' text;
+    the structural field-19 discriminant must not false-positive on quotes."""
+    ledger = _load_ledger_script()
+    payload = _wire_int(1, 23) + _wire_len(5, _wire_len(2, b"# FLAME quoted\nComplete task 7 done"))
+    error = ledger.agy_nonprompt_cell_error(payload, column="step_payload", maximum=64)
+    assert error is None
+
+
+def test_agy_proto_annotated_copy_divergence_fails_closed():
+    ledger = _load_ledger_script()
+    payload = _agy_proto_prompt_payload("real prompt", annotated="tampered copy")
+    candidates, error = ledger.agy_prompt_cell_candidates(payload, column="step_payload", maximum=64)
+    assert candidates == []
+    assert error is not None and "annotated prompt copy diverges" in error
+
+
+def test_agy_proto_multiple_prompt_texts_fail_closed():
+    ledger = _load_ledger_script()
+    body = _wire_len(2, b"one") + _wire_len(2, b"two")
+    payload = _wire_int(1, 14) + _wire_len(19, body)
+    candidates, error = ledger.agy_prompt_cell_candidates(payload, column="step_payload", maximum=64)
+    assert candidates == []
+    assert error is not None and "exactly one is required" in error
+
+
+def test_agy_proto_empty_prompt_text_fails_closed():
+    ledger = _load_ledger_script()
+    payload = _wire_int(1, 14) + _wire_len(19, _wire_len(2, b"  "))
+    candidates, error = ledger.agy_prompt_cell_candidates(payload, column="step_payload", maximum=64)
+    assert candidates == []
+    assert error is not None and "empty" in error
+
+
+def test_agy_legacy_json_envelope_still_extracts():
+    """JSON-era payloads must be untouched: they do not wire-parse (0x7B is an
+    invalid group tag), so they take the legacy segment contract unchanged."""
+    ledger = _load_ledger_script()
+    payload = b'{"prompt": "legacy hello"}'
+    candidates, error = ledger.agy_prompt_cell_candidates(payload, column="step_payload", maximum=64)
+    assert error is None
+    assert candidates == [("step_payload", 0, "legacy hello")]
+
+
+def test_agy_wire_parse_rejects_truncation_and_overrun():
+    ledger = _load_ledger_script()
+    whole = _agy_proto_prompt_payload("prompt body")
+    for broken in (whole[:-3], whole + b"\xff", _wire_field(2, 3) + b"junk"):
+        assert ledger.agy_proto_envelope_fields(broken) is None

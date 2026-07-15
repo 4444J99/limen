@@ -2106,9 +2106,11 @@ def test_agy_short_binary_prompt_segment_is_not_lost_to_length_heuristics(tmp_pa
         "CREATE TABLE steps (idx INTEGER, step_type INTEGER, status INTEGER, step_payload BLOB, metadata BLOB, "
         "task_details BLOB, error_details BLOB, render_info BLOB)"
     )
+    # Field number zero makes this non-wire-parseable, so it exercises the legacy
+    # segment contract; exact wire payloads belong to agy-step-payload-proto-v1.
     connection.execute(
         "INSERT INTO steps VALUES (1, 14, 3, ?, NULL, NULL, NULL, NULL)",
-        (sqlite3.Binary(b"\x08\x01\x12\x02go"),),
+        (sqlite3.Binary(b"\x00go"),),
     )
     connection.commit()
     connection.close()

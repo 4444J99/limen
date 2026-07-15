@@ -4957,6 +4957,147 @@ def agy_binary_text_segments(value: bytes, *, maximum: int) -> tuple[list[str], 
     return segments, None
 
 
+AGY_PROTO_ENVELOPE = SOURCE_RECORD_SCHEMAS["agy-conversation-v1"]["binary_payload_envelope"]
+
+
+def agy_wire_parse(buffer: bytes, *, depth: int = 0) -> tuple[list[tuple[int, int, Any]] | None, str | None]:
+    """Strict bounded protobuf wire walk: the WHOLE buffer must parse or nothing does.
+
+    Returns ``(fields, None)`` on an exact parse — each field as
+    ``(field_number, wire_type, value)`` with varint values as int, length-delimited
+    payloads as bytes, and fixed32/64 as None — or ``(None, reason)`` on any anomaly
+    (unknown wire type, group encoding, truncation, overrun, field zero, depth).
+    Fail-closed by construction: callers treat a failed parse as "not this envelope"
+    and fall back to the legacy segment contract, never to a permissive guess.
+    """
+
+    if depth > int(AGY_PROTO_ENVELOPE["max_wire_depth"]):
+        return None, "wire nesting exceeds the bounded envelope depth"
+    fields: list[tuple[int, int, Any]] = []
+    index, size = 0, len(buffer)
+    while index < size:
+        tag = shift = 0
+        start = index
+        while True:
+            if index >= size or index - start > 5:
+                return None, "truncated field tag"
+            byte = buffer[index]
+            index += 1
+            tag |= (byte & 0x7F) << shift
+            shift += 7
+            if not byte & 0x80:
+                break
+        field_number, wire_type = tag >> 3, tag & 7
+        if field_number == 0:
+            return None, "field number zero is invalid"
+        if wire_type == 0:
+            value = shift = 0
+            start = index
+            while True:
+                if index >= size or index - start > 10:
+                    return None, "truncated varint value"
+                byte = buffer[index]
+                index += 1
+                value |= (byte & 0x7F) << shift
+                shift += 7
+                if not byte & 0x80:
+                    break
+            fields.append((field_number, 0, value))
+        elif wire_type == 2:
+            length = shift = 0
+            start = index
+            while True:
+                if index >= size or index - start > 5:
+                    return None, "truncated length prefix"
+                byte = buffer[index]
+                index += 1
+                length |= (byte & 0x7F) << shift
+                shift += 7
+                if not byte & 0x80:
+                    break
+            if index + length > size:
+                return None, "length-delimited field overruns the buffer"
+            fields.append((field_number, 2, bytes(buffer[index : index + length])))
+            index += length
+        elif wire_type == 5:
+            if index + 4 > size:
+                return None, "fixed32 field overruns the buffer"
+            index += 4
+            fields.append((field_number, 5, None))
+        elif wire_type == 1:
+            if index + 8 > size:
+                return None, "fixed64 field overruns the buffer"
+            index += 8
+            fields.append((field_number, 1, None))
+        else:
+            return None, f"unsupported wire type {wire_type}"
+    return fields, None
+
+
+def _agy_wire_messages(fields: list[tuple[int, int, Any]], field_number: int) -> list[bytes]:
+    return [value for number, wire_type, value in fields if number == field_number and wire_type == 2]
+
+
+def _agy_wire_exact_varint(fields: list[tuple[int, int, Any]], field_number: int) -> int | None:
+    values = [value for number, wire_type, value in fields if number == field_number and wire_type == 0]
+    return values[0] if len(values) == 1 else None
+
+
+def _agy_wire_text(value: bytes) -> str | None:
+    try:
+        text = value.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    if all(character in "\n\r\t" or character.isprintable() for character in text):
+        return text
+    return None
+
+
+def agy_proto_prompt_text(
+    fields: list[tuple[int, int, Any]],
+) -> tuple[str | None, str | None]:
+    """Extract the exactly-one prompt text from a parsed step-payload envelope.
+
+    The registered envelope (``agy-step-payload-proto-v1``) carries the prompt
+    message at field 19 with the text at field 2 and an annotated copy at
+    field 3 → field 1 that must be byte-identical when present. Any deviation
+    from exactly-one at each rung fails closed.
+    """
+
+    prompt_messages = _agy_wire_messages(fields, int(AGY_PROTO_ENVELOPE["prompt_message_field"]))
+    if len(prompt_messages) != 1:
+        return None, f"prompt envelope carries {len(prompt_messages)} prompt messages; exactly one is required"
+    message_fields, message_error = agy_wire_parse(prompt_messages[0], depth=1)
+    if message_error or message_fields is None:
+        return None, f"prompt message is not exact wire format: {message_error}"
+    texts = _agy_wire_messages(message_fields, int(AGY_PROTO_ENVELOPE["prompt_text_field"]))
+    if len(texts) != 1:
+        return None, f"prompt message carries {len(texts)} text fields; exactly one is required"
+    text = _agy_wire_text(texts[0])
+    if text is None:
+        return None, "prompt text is not printable UTF-8"
+    if not text.strip():
+        return None, "prompt text is empty"
+    annotated = _agy_wire_messages(message_fields, int(AGY_PROTO_ENVELOPE["annotated_copy_message_field"]))
+    if annotated:
+        annotated_fields, annotated_error = agy_wire_parse(annotated[0], depth=2)
+        if annotated_error or annotated_fields is None:
+            return None, f"annotated prompt copy is not exact wire format: {annotated_error}"
+        copies = _agy_wire_messages(annotated_fields, int(AGY_PROTO_ENVELOPE["annotated_copy_text_field"]))
+        if len(copies) != 1 or _agy_wire_text(copies[0]) != text:
+            return None, "annotated prompt copy diverges from the prompt text"
+    return text, None
+
+
+def agy_proto_envelope_fields(value: bytes) -> list[tuple[int, int, Any]] | None:
+    """Return parsed fields iff the whole cell is the registered proto envelope."""
+
+    fields, error = agy_wire_parse(value)
+    if error or not fields:
+        return None
+    return fields
+
+
 def agy_prompt_cell_candidates(
     value: Any,
     *,
@@ -4975,6 +5116,16 @@ def agy_prompt_cell_candidates(
     if isinstance(value, str):
         segments = [value]
     elif isinstance(value, bytes):
+        envelope_fields = agy_proto_envelope_fields(value)
+        if envelope_fields is not None:
+            # Registered proto envelope: the prompt carrier is structural (field 19),
+            # so segment scraping never runs — its printable noise is not grounded text.
+            if not _agy_wire_messages(envelope_fields, int(AGY_PROTO_ENVELOPE["prompt_message_field"])):
+                return [], None
+            text, envelope_error = agy_proto_prompt_text(envelope_fields)
+            if envelope_error or text is None:
+                return [], f"{column} {envelope_error}"
+            return [(column, 0, text)], None
         segments, segment_error = agy_binary_text_segments(value, maximum=maximum)
         if segment_error:
             return [], f"{column} {segment_error}"
@@ -5018,6 +5169,15 @@ def agy_nonprompt_cell_error(
     if isinstance(value, str):
         spans = [value]
     elif isinstance(value, bytes):
+        envelope_fields = agy_proto_envelope_fields(value)
+        if envelope_fields is not None:
+            # Registered proto envelope: prompt presence is the structural field-19
+            # fact. Assistant/tool steps legitimately QUOTE prompt-marker text in
+            # their output strings, so marker heuristics do not apply to an exact
+            # parse — a failed parse still takes the full legacy marker contract.
+            if _agy_wire_messages(envelope_fields, int(AGY_PROTO_ENVELOPE["prompt_message_field"])):
+                return "non-prompt step contains a structured prompt-bearing carrier"
+            return None
         spans, segment_error = agy_binary_text_segments(value, maximum=maximum)
         if segment_error:
             return f"{column} {segment_error}"
