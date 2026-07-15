@@ -54,7 +54,7 @@ from pydantic import BaseModel
 from limen.intake import validate_intake_contract
 from limen.io import BoardCollapseError, load_limen_file, queue_lock, save_limen_file
 from limen.materialize import EV_BOARD_META, EV_BOARD_ORDER, EV_TASK_UPSERT, Event, fold
-from limen.models import LimenFile, Task
+from limen.models import VALID_STATUSES, LimenFile, Task
 
 # --- ticket intents (a superset of materialize's Event tags, plus the status convenience) --------
 INTENT_UPSERT = "task.upsert"  # create-or-merge a task field-set (patch may be full or partial)
@@ -188,6 +188,45 @@ def submit_task_upsert(
         intent=INTENT_UPSERT,
         task_id=tid,
         patch=fields,
+    )
+    return submit_ticket(board_path, ticket)
+
+
+def submit_task_status(
+    board_path: Path,
+    task_id: str,
+    *,
+    status: str,
+    agent: str,
+    session_id: str = "unknown",
+    output: str | None = None,
+    patch: dict[str, Any] | None = None,
+    now: datetime | None = None,
+) -> Path:
+    """One-line producer for status/result writers.
+
+    A dispatcher/harvester that used to mutate ``task.status`` and append a dispatch log can hand
+    the transition to TABVLARIVS instead. The optional ``patch`` is a field-level delta folded with
+    the status; it must not carry a conflicting status.
+    """
+    if not task_id:
+        raise ValueError("task status requires a task_id")
+    if status not in VALID_STATUSES:
+        raise ValueError(f"status must be one of {', '.join(sorted(VALID_STATUSES))}")
+    fields = dict(patch or {})
+    if "status" in fields and fields["status"] != status:
+        raise ValueError("status patch conflicts with status argument")
+    fields["status"] = status
+    now = now or datetime.now(timezone.utc)
+    ticket = Ticket(
+        ticket_id=new_ticket_id(session_id, now),
+        timestamp=now,
+        agent=agent,
+        session_id=session_id,
+        intent=INTENT_STATUS,
+        task_id=task_id,
+        patch=fields,
+        log={"status": status, "output": output},
     )
     return submit_ticket(board_path, ticket)
 

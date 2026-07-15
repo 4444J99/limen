@@ -50,7 +50,7 @@ archived ticket files are the append-only event log the board projects from.
 | Piece | Where | Role |
 |-------|-------|------|
 | Engine | `cli/src/limen/tabularius.py` | `Ticket`, `submit_ticket()`, `submit_task_upsert()`, `drain_once()`, the fold/validate/seal + quarantine |
-| Producer API | `cli/src/limen/tabularius.py` → `submit_task_upsert()` | the one-line conversion target: a writer swaps `save_limen_file` for this call per NEW task (validates up front, then hands the keeper an upsert ticket) |
+| Producer API | `cli/src/limen/tabularius.py` → `submit_task_upsert()`, `submit_task_status()` | the one-line conversion target: a writer swaps `save_limen_file` for a keeper ticket per NEW task or status/result transition |
 | Beat organ | `scripts/tabularius-organ.py` | thin per-beat wrapper (like `heal-board.py`); `--check`/`--dry-run`; writes the liveness stamp |
 | Beat wiring | `scripts/heartbeat-loop.sh` | runs after `heal-board` (fold onto a *healthy* board), before the body's own mutation |
 | Projection preservation | `limen.tabularius.preserve_board_projection()` | keeper-owned commit/push of the current `tasks.yaml` projection, under the queue lock, with a temporary git index so a push failure cannot strand the live checkout ahead |
@@ -58,7 +58,7 @@ archived ticket files are the append-only event log the board projects from.
 | Proprioception | `scripts/organ-health.py` | a TABVLARIVS rung, green when `logs/tabularius-organ-state.json` is fresh |
 | Keeper gate | `institutio/governance/parameters.yaml` → `LIMEN_TABVLARIVS` | master kill-switch for the keeper (default ON) |
 | Cutover gate | `institutio/governance/parameters.yaml` → `LIMEN_TICKETS_PRODUCE` | flips converted writers from direct-write to producer (default **OFF** — a merge changes nothing live; the flip is the deliberate, revertible cutover) |
-| Tests | `cli/tests/test_tabularius.py` | 16 tests: end-to-end submit→drain, ordering, quarantine, lock-deferral, collapse-guard, projection preservation, **and the producer≡direct-write identity invariant** |
+| Tests | `cli/tests/test_tabularius.py` | focused tests: end-to-end submit→drain, ordering, quarantine, lock-deferral, collapse-guard, projection preservation, status-ticket validation, **and the producer≡direct-write identity invariant** |
 
 ### Safety invariants (each inherited from a shipped precedent)
 
@@ -95,7 +95,7 @@ archived ticket files are the append-only event log the board projects from.
      it only ever emits brand-new ids. The rest (`generate-backlog`, `generate-revenue-backlog`,
      `generate-organ-backlog`, `generate-positioning`, `discover-value`, `ingest-coverage`) are the
      same one-line swap against the proven template.
-  2. **CLI harvest/dispatch result-apply** → emit a ticket instead of mutating the blob.
+  2. **CLI harvest/dispatch result-apply** → emit a `submit_task_status()` ticket instead of mutating the blob.
   3. **MCP server** — replace the raw `yaml.dump` + git-push with a ticket append (removes the worst
      offender: no lock, no atomic write, no collapse-guard, and its own drifted duplicate models).
   4. **FastAPI + Worker endpoints** — enqueue a ticket and return; the keeper projects. This is the
@@ -135,6 +135,7 @@ above it is autonomous.
       after producing tickets, so CI still commits the projection but the writer is the keeper.
       `scripts/task-writer-audit.py` now reports 22 legacy direct writer calls (down from 29).
 - [x] Step 2.2 owner-recorded — the status/result writer tier is no longer an implicit side channel.
+      `submit_task_status()` is the keeper API for status/result transitions, and
       `scripts/task-writer-audit.py` now writes the tracked receipt
       `docs/tabularius-writer-audit.md`, with every remaining direct writer mapped to a bounded owner
       packet and zero unclassified rows. This does **not** mean the direct writers are burned down; it
@@ -158,6 +159,9 @@ above it is autonomous.
 - [ ] Step 2.2E — `TAB-CREATION-FALLBACKS` and `TAB-MAINTENANCE-BOARD-FALLBACKS`: remove/gate legacy
       fallback branches or explicitly move board-maintenance writers into the Tabularius/io allowlist.
       Predicate: `python3 scripts/task-writer-audit.py`.
+- [ ] Step 2.2F — `TAB-HUMAN-ATOM-STATUS-WRITERS`: convert dispatch-continuity and routine-freshness
+      `needs_human` atom refreshes to keeper-owned status/upsert tickets. Predicate:
+      `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q`.
 - [ ] Step 2.3 — MCP server → ticket producer (retire the raw write + duplicate models).
 - [ ] Step 2.4 — live API/Worker tier (needs the consistency decision above; website-sensitive).
 - [ ] Step 3 — flip SSOT to the event log; add an archive→`events.jsonl` compactor + a standing

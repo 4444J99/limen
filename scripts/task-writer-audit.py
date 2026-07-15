@@ -41,6 +41,12 @@ OWNER_PACKETS = {
         "predicate": "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q",
         "disposition": "convert harvest/Jules landing result application to task.status tickets",
     },
+    "TAB-HUMAN-ATOM-STATUS-WRITERS": {
+        "tier": "human-atom-status",
+        "owner": "codex-integrator",
+        "predicate": "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q",
+        "disposition": "convert continuity/routine needs_human atom upserts to keeper-owned status/upsert tickets",
+    },
     "TAB-STATUS-ASYNC-HEAL": {
         "tier": "status-result",
         "owner": "codex-integrator",
@@ -152,9 +158,7 @@ def direct_writer_calls(path: Path) -> list[dict[str, object]]:
         if not isinstance(node, ast.Call):
             continue
         name = call_name(node.func)
-        if name in {"save_limen_file", "atomic_write_text"} and node.args and looks_like_board_arg(
-            node.args[0], names
-        ):
+        if name in {"save_limen_file", "atomic_write_text"} and node.args and looks_like_board_arg(node.args[0], names):
             rows.append({"path": rel(path), "line": getattr(node, "lineno", None), "call": name})
             continue
         if name.endswith(".write_text") and isinstance(node.func, ast.Attribute):
@@ -168,6 +172,8 @@ def owner_packet(path: str) -> str:
         return "TAB-STATUS-DISPATCH-RESULTS"
     if path in {"cli/src/limen/harvest.py", "scripts/jules-land.py"}:
         return "TAB-STATUS-HARVEST-RESULTS"
+    if path in {"scripts/dispatch-continuity-check.py", "scripts/routine-freshness-audit.py"}:
+        return "TAB-HUMAN-ATOM-STATUS-WRITERS"
     if path in {"scripts/dispatch-async.py", "scripts/heal-dispatch.py"}:
         return "TAB-STATUS-ASYNC-HEAL"
     if path in {"scripts/quicken.py", "scripts/rewrite-owners.py", "scripts/route.py", "scripts/self-improve.py"}:
@@ -261,10 +267,7 @@ def main() -> int:
     OUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_doc(rows)
     if rows:
-        print(
-            f"task-writer-audit: {len(rows)} legacy direct writer call(s); "
-            f"see {rel(OUT)} and {rel(DOC_OUT)}"
-        )
+        print(f"task-writer-audit: {len(rows)} legacy direct writer call(s); see {rel(OUT)} and {rel(DOC_OUT)}")
         for row in rows[:20]:
             print(f"  {row['path']}:{row['line']} {row['call']}")
         return 1

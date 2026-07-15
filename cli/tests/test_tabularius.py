@@ -35,6 +35,7 @@ from limen.tabularius import (
     pending_count,
     preserve_board_projection,
     submit_ticket,
+    submit_task_status,
     task_state_sha256,
 )
 
@@ -166,6 +167,43 @@ def test_status_ticket_sets_status_and_appends_dispatch_log(tmp_path):
     assert len(t1.dispatch_log) == 1
     entry = t1.dispatch_log[0]
     assert entry.agent == "claude" and entry.status == "done" and entry.output == "shipped PR #999"
+
+
+def test_submit_task_status_emits_status_ticket(tmp_path):
+    board = _seed_board(tmp_path)
+    submit_task_status(
+        board,
+        "T-1",
+        status="failed",
+        agent="codex",
+        session_id="sess-status",
+        output="predicate failed",
+        patch={"priority": "high"},
+        now=_NOW,
+    )
+
+    result = drain_once(board)
+
+    assert result.applied == 1 and result.wrote is True
+    t1 = {t.id: t for t in load_limen_file(board).tasks}["T-1"]
+    assert t1.status == "failed"
+    assert t1.priority == "high"
+    assert len(t1.dispatch_log) == 1
+    assert t1.dispatch_log[0].agent == "codex"
+    assert t1.dispatch_log[0].session_id == "sess-status"
+    assert t1.dispatch_log[0].status == "failed"
+    assert t1.dispatch_log[0].output == "predicate failed"
+
+
+def test_submit_task_status_rejects_invalid_or_conflicting_status(tmp_path):
+    import pytest
+
+    board = _seed_board(tmp_path)
+    with pytest.raises(ValueError, match="status must be one of"):
+        submit_task_status(board, "T-1", status="completed", agent="codex")
+    with pytest.raises(ValueError, match="conflicts"):
+        submit_task_status(board, "T-1", status="done", agent="codex", patch={"status": "failed"})
+    assert pending_count(board) == 0
 
 
 def test_partial_patch_preserves_other_fields(tmp_path):
