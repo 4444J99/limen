@@ -96,9 +96,12 @@ def main() -> int:
     ap.add_argument("--quiet", action="store_true", help="only print on a problem")
     ap.add_argument(
         "--under",
-        default=".claude",
-        help="path prefix whose drift makes this fail non-zero (default: .claude). "
-        "Drift outside it is reported but non-fatal. Empty string = any drift fails.",
+        default=".claude,.local/share/codex",
+        help="comma-separated path prefixes whose drift makes this fail non-zero "
+        "(default: .claude,.local/share/codex — the split-owned codex config is "
+        "modify_-managed per the config-ownership constitution, so an app clobber "
+        "of an owner atom surfaces as fatal drift here). "
+        "Drift outside them is reported but non-fatal. Empty string = any drift fails.",
     )
     args = ap.parse_args()
 
@@ -149,8 +152,12 @@ def main() -> int:
             print(f"  chezmoi-drift: OK — pipeline healthy, cartridge current, no managed target drifted ({source})")
         return 0
 
-    prefix = args.under.strip().lstrip("/")
-    fatal = [(c, p) for c, p in drifted if not prefix or p.lstrip("/").startswith(prefix)]
+    prefixes = [p.strip().lstrip("/") for p in args.under.split(",") if p.strip()]
+    fatal = [
+        (c, p)
+        for c, p in drifted
+        if not prefixes or any(p.lstrip("/").startswith(pre) for pre in prefixes)
+    ]
     other = [(c, p) for c, p in drifted if (c, p) not in fatal]
 
     label = {"M": "modified-locally", "A": "added-locally", "D": "deleted-locally"}

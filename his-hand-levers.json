@@ -197,7 +197,8 @@
       "unlocks": "Stripe/subscription path + Anthropic & GitHub autopay; likely clears the gemini project suspension behind L-FLEET-CAPACITY; NEW blast radius observed 2026-07-09: (a) organvm PRIVATE-repo Actions CI is billing-blocked (\"recent account payments have failed\") — the heal lane cannot reach green CI on mirror-mirror / session-meta / the-invisible-ledger (4 heals parked failed_blocked on this); (b) the Anthropic monthly spend limit is hit and cannot re-arm on a frozen card — subagent fan-out died mid-cycle. Each new symptom raises what this one phone call unlocks.",
       "source_task": "billing-lock root (life-os-mandate: card-0186 fraud-hold)",
       "gate": "a phone call only you can place to your bank — never automatable",
-      "issue": 182
+      "issue": 182,
+      "note": " NEW DOWNSTREAM INSTANCE observed 2026-07-15: GitHub Actions on PRIVATE repos is billing-blocked -- every domus-genoma CI job dies at startup with 'The job was not started because recent account payments have failed or your spending limit needs to be increased' (public repos like limen unaffected: free minutes). Same billing-lock class as the Stripe/subscription locks this root lever already owns; clearing the hold should restore private-repo CI. Until then domus-genoma merges ride local gates (template validation + pytest run locally, e.g. PR #302)."
     },
     {
       "id": "L-AGENT-BASH-PROMPT",
@@ -352,7 +353,7 @@
     },
     {
       "id": "L-CARTRIDGE-REPOINT",
-      "label": "Re-plug the chezmoi cartridge into its real source. The host-is-factory invariant is currently BROKEN: `chezmoi source-path` points at a scratch local `dummy-remote`, not `organvm/domus-genoma`, so every `chezmoi verify/status/health` green is meaningless -- it validates the wrong source. The always-on beat guard (scripts/cartridge-connected.py + metabolize step 0c, shipped in limen PR #560) now flags this every beat instead of by accident. Reconnection is gated on you because it needs your identity config and an irreversible apply.",
+      "label": "Bring the chezmoi cartridge current and bless the apply. GROUND TRUTH CORRECTED 2026-07-15: `chezmoi source-path` now points at the REAL organvm/domus-genoma checkout (~/Workspace/domus-genoma) -- the dummy-remote disconnection is healed. What remains: the checkout is PARKED on limen/gen-organvm-domus-genoma-security-0626-5961 (ahead 6 / behind 27, dirty), and `chezmoi status` is WEDGED on the stale allowed_signers.tmpl strict-key error -- already fixed nil-safe on origin/master (aeea31ef, `index . \"ssh_signing_key_literal\"`), so the UNPARK ALONE UN-WEDGES; your identity data is NOT a precondition for the un-wedge (only for a faithful full apply). The beat guards (cartridge-connected 0c, chezmoi-drift 0c') surface this every beat. Gated on you for the irreversible apply.",
       "owner": "yours",
       "cost": "~15 min once the prereqs land; the apply is irreversible (touches the live home).",
       "gate": "needs your chezmoi identity config (is_work, git identity, signing-key reference) which cannot be fabricated for you, AND blesses an irreversible `chezmoi apply` that runs run_once/cleanup scripts against the live home.",
@@ -363,7 +364,7 @@
         "You: populate ~/.config/chezmoi/chezmoi.toml [data] with your identity (is_work, git identity, signing-key reference) -- deliberately un-defaulted per .chezmoidata.toml.",
         "You: `chezmoi init organvm/domus-genoma && chezmoi apply` -- irreversible; runs run_once/cleanup scripts against the live home. The beat guard flips to green the moment the source is the real cartridge."
       ],
-      "note": "The disconnection SELF-SURFACES every beat via the guard (metabolize 0c) -- this lever exists so the human-gated re-point lives in the registry, not recall-only memory. Nothing here sends/deletes/spends without you. See memory [[host-is-factory-system-is-cartridge]], [[build-the-repeatable-process-not-the-one-off]], [[his-hand-tasks-hang-in-permanent-registry]].",
+      "note": "The disconnection SELF-SURFACES every beat via the guard (metabolize 0c) -- this lever exists so the human-gated re-point lives in the registry, not recall-only memory. Nothing here sends/deletes/spends without you. See memory [[host-is-factory-system-is-cartridge]], [[build-the-repeatable-process-not-the-one-off]], [[his-hand-tasks-hang-in-permanent-registry]]. NARROWED 2026-07-15: the config-ownership constitution (domus-genoma PR #302 -- .chezmoidata/config-ownership.json + codex config.toml modify_ + check-config-ownership.py) is landed-not-activated behind this lever; its --prove-diff is GREEN on the live file (0 changed paths), so the codex part of the apply is a no-op diff. Unpark preserves the 6 ahead-commits (patch-id/receipt triage per worktree-triage-divergence-heal).",
       "issue": 563
     },
     {

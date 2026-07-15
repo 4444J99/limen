@@ -107,6 +107,27 @@ measures the **distance from ideal** at a moment in time, and carries a **status
   wired; the only open distance is opt-in SAFE-send arming, which is deliberately the operator's valve.
 - **Owner:** Claude + mail.
 
+### IF-CONFIG-OWNERSHIP — every host config path has one declared owner
+- **Ideal form:** a config-ownership constitution at the OWNER (`domus-genoma`
+  `.chezmoidata/config-ownership.json`) declares app / cartridge / SPLIT / operator per host
+  config path; SPLIT files get a `modify_` (owner atoms asserted, app blocks preserved
+  verbatim); every `.chezmoiignore` abdication carries a declared owner (deliberate
+  record-only sources via `source_is_record`); `check-config-ownership.py` (predicates A–F +
+  `--prove-diff`) holds it in CI. An app can never silently destroy an owner atom again
+  (~/.codex/config.toml clobber, 2026-07-14), and a dead template can never hide behind its
+  own ignore line again (predicates C/F — the founding defect lived 2026-06-03 → 2026-07-15).
+- **Distance:** constitution (15 declarations) + codex `modify_` + parity check landed via
+  domus-genoma PR #302 (30 tests; `--prove-diff` GREEN on the live file with 0 changed paths,
+  so activation is a no-op diff). limen side: `chezmoi-drift.py` default scope broadened to
+  `.claude,.local/share/codex` so an owner-atom clobber is fatal in the beat. LOCAL activation
+  (`chezmoi apply`) waits on the live-source unpark (`L-CARTRIDGE-REPOINT` #563). Narrowing
+  finding recorded on the lever: master's nil-safe `allowed_signers` (`aeea31ef`) means unpark
+  alone un-wedges — identity-data population is NOT a precondition for the un-wedge (still
+  needed for a faithful full apply). Successors tracked in the registry itself: gemini
+  `settings.json` split→modify promotion; codex `hooks.json` reconcile→template.
+- **Status:** PARTIAL — landed-not-activated.
+- **Owner:** domus-genoma CI (parity) + lever `L-CARTRIDGE-REPOINT` (activation) + Claude (proof run).
+
 ### IF-LEDGER-OF-IDEALS — this ledger (self)
 - **Ideal form:** every Claude-originated ideal is a tracked named param here; the ledger is
   linked from memory and the autopoiesis heartbeat references it (closing the self-loop).
