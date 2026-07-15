@@ -47,7 +47,14 @@ never *joining a downline*.
 2. **Opt-in invite** — move an interested person to the capture form
    ("personalized free plan" — the real deliverable, gated by email).
 3. **Plan delivery** — send the personalized plan; set the check-in
-   expectation (weekly, opt-out anytime).
+   expectation (weekly, opt-out anytime). The plan itself is now
+   generated-then-personalized: the daily engine turns the form answers into
+   a predicate-checked week-one packet in two commands (see `plan_generator`
+   in the instance config), the Field Ops surface renders it for review (see
+   `plan_surface`), and the cover sheet's "Coach notes / personalization"
+   section is where Rob's voice goes. Red-flagged intakes never reach the
+   generator — they refuse straight to the Track-1 personal conversation.
+   Rob still fires the send.
 4. **Check-in cadence** — the {{CRM_PLATFORM}}-driven warm loop: celebrate progress,
    surface obstacles, no pitch until the lead raises the buying question or
    completes 2+ check-ins.

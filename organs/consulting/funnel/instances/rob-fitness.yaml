@@ -7,7 +7,8 @@ instance: "rob-fitness"
 engagement: "organs/consulting/engagements/rob.yaml"
 niche: "fitness"
 operating_floor: "organs/consulting/funnel/ROB-BODI-OPERATING-FLOOR.md"
-plan_generator: "organvm/daily-engine (private) — instances/rob-fitness/INTEGRATION.md: intake -> state seed -> predicate-checked free-plan card set (L2), open/log/review check-in loop (L3), gate-proposed coach-disposed progressions (VIP)"
+plan_generator: "organvm/daily-engine (private) — instances/rob-fitness/INTEGRATION.md. The L2 lane is SHIPPED as two commands with the routing law built in: tools/intake_from_form.py (capture-form answers -> intake; field-7 red flags and missing consent REFUSE with nothing emitted — the disqualify-gracefully branch stays a personal conversation) then tools/render_week.py (intake -> week-one.md coach packet + week-one.json; refused entirely if any check fails on any day). L3 open/log/review loop and gate-proposed coach-disposed progressions (VIP) as specced."
+plan_surface: "organvm/gamified-coach-interface Field Ops terminal (live: https://organvm.github.io/gamified-coach-interface/v3/) renders week-one.json — committed demo is SYNTHETIC; real client packets load by drag-drop and render in-browser only (nothing uploaded, nothing stored; client data never enters any repo)."
 
 channels:
   content:

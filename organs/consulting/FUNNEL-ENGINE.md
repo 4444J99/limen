@@ -56,7 +56,12 @@ into the BODi funnel). The engine generalizes that design to every niche.
 
 - **Distribution rail:** `organvm/social-automation` — POSSE backend already built
 - **Gamified client surface:** `organvm/gamified-coach-interface` — the Legion
-  Command Center engine, already ported fitness → chess once, designed to port
+  Command Center engine, already ported fitness → chess once, designed to port.
+  Its Field Ops terminal now renders the daily-engine week-one packet (the L2
+  deliverable) live; real client packets load in-browser only, never committed
+- **Plan generator:** `organvm/daily-engine` (private) — capture-form answers →
+  refusal-gated intake → predicate-checked week-one packet, two commands (see
+  `funnel/instances/rob-fitness.yaml` `plan_generator` / `plan_surface`)
 - **HR product:** the Styx three-repo constellation (product + theory + art)
 - **Rob's content corpus:** `4444J99/hokage-chess` docs + the 30 open limen
   board atoms (MP / FWS / CWS / RB series)
