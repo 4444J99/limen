@@ -34,6 +34,12 @@ parameters:
     self_update: none
     owner: vigilia
     note: "Throttle window for the marker auto-clear gh check — at most one `gh pr list` per this many seconds while a pause marker is present, so rapid current_mode() callers (dispatch admission) don't hammer GitHub."
+  LIMEN_AUTONOMY_MARKER_AUTOMERGE:
+    default: "1"
+    env: LIMEN_AUTONOMY_MARKER_AUTOMERGE
+    self_update: none
+    owner: vigilia
+    note: "When 1 (default), the governor COMPLETES a PR-owned pause release instead of merely checking it: a marker whose owner:/pr: names one identifiable PR, whose release_predicate declares the merge, and whose prohibitions do NOT mention merge gets merge-policy.sh run on that PR and, on CLEARED (exit 0), a head-pinned squash merge — so a pause can never deadly-embrace the paused beat that would have merged its own release (the 2026-07-15 endless-watcher incident: sessions babysat the pause-owner PR by hand because merge-drain lives inside the paused heartbeat). Operator pauses (merge in prohibitions, or owner_surface:-only identity) are structurally ineligible and never touched. 0 = check-only (pre-2026-07-15 behavior). Follows the LIMEN_AUTONOMY_MARKER_AUTOCLEAR / LIMEN_MERGE_DRAIN default-on precedent; the five-clause discriminator is the safety, and its worst failure mode is staying paused."
 
   # --- the institution names ITSELF as the first parameter ---------------------
   INSTITVTIO_NOMEN:

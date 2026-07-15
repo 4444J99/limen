@@ -127,3 +127,122 @@ def test_marker_pr_line_unmerged_stays_paused(tmp_path):
     proc = run_governor_with_gh(tmp_path, body, "mode")
     assert proc.stdout.strip() == "paused"
     assert (logs / "AUTONOMY_PAUSED").exists()
+
+
+# ── pause-release COMPLETION (the deadly-embrace fix, 2026-07-15) ──────────────────────────────
+# A PR-owned marker (owner:/pr: identity + release_predicate declares the merge + no merge
+# prohibition) gets its release performed by the governor: merge-policy CLEARED → head-pinned
+# squash. Operator pauses are structurally ineligible. Every ambiguity stays paused.
+
+OPERATOR_MARKER = (
+    "reason: operator requested a safe restart and a study interval\n"
+    "owner_surface: work/next-autonomous-epoch continuation capsule\n"
+    "release_predicate: operator has restarted, studied the receipts, and explicitly resumes\n"
+    "prohibitions: no dispatch, merge, rebase, PR mutation, worktree reclaim\n"
+)
+
+PR_OWNED_MARKER = (
+    "reason: integration drain\nowner: codex/some-release-branch\nrelease_predicate: the drain PR is merged into main\n"
+)
+
+LOGGING_GH = """echo "$*" >> "$GH_LOG"
+case "$*" in
+  *"--state merged"*) echo "[]" ;;
+  *"--state open"*) echo '[{"number":7}]' ;;
+  *"pr merge 7"*) exit 0 ;;
+  *"pr view 7 --json state"*) echo '{"state":"MERGED"}' ;;
+  *) echo "[]" ;;
+esac
+"""
+
+TWO_OPEN_GH = LOGGING_GH.replace("'[{\"number\":7}]'", '\'[{"number":7},{"number":8}]\'')
+
+CLEARED_POLICY = (
+    'echo "VERDICT: CLEARED — ok"\necho "MERGE-HEAD: abc123 (use gh pr merge --match-head-commit abc123)"\nexit 0\n'
+)
+HOLD_POLICY = 'echo "VERDICT: HOLD — checks running"\nexit 2\n'
+
+
+def run_governor_completion(tmp_path, gh_body, policy_body, *args, extra_env=None):
+    bin_dir = _fake_gh(tmp_path, gh_body)
+    policy = bin_dir / "policy"
+    policy.write_text("#!/bin/bash\n" + policy_body)
+    policy.chmod(0o755)
+    env = {
+        "LIMEN_ROOT": str(tmp_path),
+        "PATH": f"{bin_dir}:/usr/bin:/bin",
+        "LIMEN_AUTONOMY_MARKER_RECHECK_SECS": "0",
+        "LIMEN_MERGE_POLICY_BIN": str(policy),
+        "GH_LOG": str(tmp_path / "gh.log"),
+    }
+    env.update(extra_env or {})
+    return subprocess.run([sys.executable, str(GOVERNOR), *args], capture_output=True, text=True, env=env)
+
+
+def _seed_pause(tmp_path, marker_text):
+    logs = tmp_path / "logs"
+    logs.mkdir(exist_ok=True)
+    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    (logs / "AUTONOMY_PAUSED").write_text(marker_text)
+    return logs
+
+
+def _gh_log(tmp_path):
+    log = tmp_path / "gh.log"
+    return log.read_text() if log.exists() else ""
+
+
+def test_operator_marker_is_never_touched(tmp_path):
+    logs = _seed_pause(tmp_path, OPERATOR_MARKER)
+    proc = run_governor_completion(tmp_path, LOGGING_GH, CLEARED_POLICY, "mode")
+    assert proc.stdout.strip() == "paused"
+    assert (logs / "AUTONOMY_PAUSED").exists()
+    assert _gh_log(tmp_path) == ""  # owner_surface: is not owner: — gh is never even consulted
+
+
+def test_pr_owned_marker_completes_release(tmp_path):
+    logs = _seed_pause(tmp_path, PR_OWNED_MARKER)
+    proc = run_governor_completion(tmp_path, LOGGING_GH, CLEARED_POLICY, "mode")
+    assert proc.stdout.strip() == "dispatch"
+    assert not (logs / "AUTONOMY_PAUSED").exists()
+    assert "pr merge 7 --squash --match-head-commit abc123" in _gh_log(tmp_path)
+    assert "completed pause release" in proc.stderr
+
+
+def test_pr_owned_marker_stays_paused_on_hold(tmp_path):
+    logs = _seed_pause(tmp_path, PR_OWNED_MARKER)
+    proc = run_governor_completion(tmp_path, LOGGING_GH, HOLD_POLICY, "mode")
+    assert proc.stdout.strip() == "paused"
+    assert (logs / "AUTONOMY_PAUSED").exists()
+    assert "pr merge" not in _gh_log(tmp_path)
+
+
+def test_ambiguity_battery_stays_paused(tmp_path):
+    cases = [
+        # release_predicate does not declare the merge
+        (PR_OWNED_MARKER.replace("the drain PR is merged into main", "operator review complete"), LOGGING_GH, None),
+        # prohibitions forbid merging even with a PR identity
+        (PR_OWNED_MARKER + "prohibitions: no merge until the operator resumes\n", LOGGING_GH, None),
+        # owner branch resolves to two open PRs
+        (PR_OWNED_MARKER, TWO_OPEN_GH, None),
+        # the valve is off
+        (PR_OWNED_MARKER, LOGGING_GH, {"LIMEN_AUTONOMY_MARKER_AUTOMERGE": "0"}),
+    ]
+    for i, (marker, gh_body, extra_env) in enumerate(cases):
+        case_dir = tmp_path / f"case{i}"
+        case_dir.mkdir()
+        logs = _seed_pause(case_dir, marker)
+        proc = run_governor_completion(case_dir, gh_body, CLEARED_POLICY, "mode", extra_env=extra_env)
+        assert proc.stdout.strip() == "paused", f"case {i}: {proc.stdout} {proc.stderr}"
+        assert (logs / "AUTONOMY_PAUSED").exists(), f"case {i}"
+        assert "pr merge" not in _gh_log(case_dir), f"case {i}"
+
+
+def test_throttle_bounds_the_completion_attempt(tmp_path):
+    _seed_pause(tmp_path, PR_OWNED_MARKER)
+    extra = {"LIMEN_AUTONOMY_MARKER_RECHECK_SECS": "10000"}
+    run_governor_completion(tmp_path, LOGGING_GH, HOLD_POLICY, "mode", extra_env=extra)
+    first = _gh_log(tmp_path).count("\n")
+    proc = run_governor_completion(tmp_path, LOGGING_GH, HOLD_POLICY, "mode", extra_env=extra)
+    assert proc.stdout.strip() == "paused"
+    assert _gh_log(tmp_path).count("\n") == first  # second call throttled — zero new gh reads

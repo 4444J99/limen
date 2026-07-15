@@ -240,6 +240,11 @@ gates:
     paths: ["scripts/handoff-relay.py", "scripts/heartbeat-loop.sh", "scripts/metabolize.sh", "scripts/hooks/session-closeout.sh", "cli/tests/test_handoff_relay.py"]
     owner: continuity
     note: "The warm-resume packet carries authoritative budget/provider/next truth and refreshes across heartbeat, metabolize, and SessionEnd seams."
+  autonomy-governor-test:
+    command: "python3 -m pytest cli/tests/test_autonomy_governor.py -q"
+    paths: ["scripts/autonomy-governor.py", "cli/tests/test_autonomy_governor.py"]
+    owner: vigilia
+    note: "Pause-release completion stays fail-closed: operator markers (merge-prohibiting / owner_surface-only) are never merged or cleared; PR-owned markers complete via merge-policy CLEARED -> head-pinned squash; every ambiguity keeps the estate paused."
 
   # ── session/docs/board predicates ───────────────────────────────────────────
   session-orient:
