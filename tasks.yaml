@@ -136818,13 +136818,14 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: failed_blocked
   labels:
   - test-coverage
   - generated
   - build-out
   - tried:agy
   - slow
+  - chronic-fleet-debt
   urls: []
   context: Find the largest source module in organvm/my-knowledge-base with little
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -136836,7 +136837,7 @@ tasks:
   receipt_target: github:organvm/my-knowledge-base:pull-request:GEN-organvm-my-knowledge-base-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T17:43:16.604961Z'
+  updated: '2026-07-15T18:56:07.393576Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:34:41.872727Z'
     agent: agy
@@ -136870,6 +136871,12 @@ tasks:
     status: open
     route_to: jules
     output: timeout on gemini; reopened to asynchronous lane
+  - timestamp: '2026-07-15T18:56:07.393576Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: GEN-organvm-manumissio-test-coverage-0709
   title: Raise test coverage in organvm/manumissio
   repo: organvm/manumissio
@@ -137141,12 +137148,13 @@ tasks:
   workstream: contributions
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed_blocked
   labels:
   - ci-green
   - generated
   - build-out
   - slow
+  - chronic-fleet-debt
   urls: []
   context: Inspect the latest FAILING checks on organvm/peer-audited--behavioral-blockchain's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -137163,7 +137171,7 @@ tasks:
   receipt_target: github:organvm/peer-audited--behavioral-blockchain:pull-request:GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T17:26:35.899963Z'
+  updated: '2026-07-15T18:56:07.393576Z'
   dispatch_log:
   - timestamp: '2026-07-12T22:11:25Z'
     agent: codex
@@ -137190,6 +137198,18 @@ tasks:
     agent: jules
     session_id: '11420885643222444112'
     status: dispatched
+  - timestamp: '2026-07-15T18:43:14.580592Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 11420885643222444112 is awaiting_plan_approval\
+      \ \u2192 reopened"
+  - timestamp: '2026-07-15T18:56:07.393576Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: GEN-organvm-limen-ci-green-0709
   title: Make organvm/limen CI green
   repo: organvm/limen
@@ -144609,4 +144629,32 @@ tasks:
   depends_on: []
   created: '2026-07-15'
   updated: '2026-07-15T18:12:36.681124Z'
+  dispatch_log: []
+- id: ASK-quicken-escalate-9c934372
+  title: finish stalled session 'Complete chat tasks with appropriate model a' (breathed
+    2x, still stalling)
+  repo: organvm/limen
+  type: ops
+  target_agent: human
+  priority: high
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - quicken-residue
+  - quicken-escalate
+  - needs-human
+  urls: []
+  context: "Session 9c934372-c107-4e1d-9d6d-72920d4b9270 ('Complete chat tasks with\
+    \ appropriate model assignments') re-stalled after 2 guardrailed breathes \u2014\
+    \ the identical continuation will not move it. Parked purpose (last prompt): \"\
+    Resume and FINISH your original purpose \u2014 you stalled at a decision and have\
+    \ been sitting. Decide every open step via th\". Resume by hand or with a NEW\
+    \ instruction: claude --resume 9c934372-c107-4e1d-9d6d-72920d4b9270   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/bright-cooking-kahn).\
+    \ Auto-escalated by QUICKEN."
+  predicate: test "$(gh issue list --repo organvm/limen --state closed --search 'ASK-quicken-escalate-9c934372
+    in:title' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/limen:issue:ASK-quicken-escalate-9c934372
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T19:11:24.345362Z'
   dispatch_log: []
