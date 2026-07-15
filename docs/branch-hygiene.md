@@ -9,11 +9,12 @@ They are *unfulfilled intentions* (memory: empty-branch-is-a-todo), so they are 
 auto-deleted** — this is their git-tracked location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
-## Merged-but-advanced (8) — has commits ADDED after the PR merged
+## Merged-but-advanced (9) — has commits ADDED after the PR merged
 
 These heads had a MERGED PR but the local branch has newer commits not on `main`.
 Push them as a follow-up PR, or delete if the extra commits are throwaway.
 
+- `chore/mail-keyed-path` — 132602a5 fix(mail): make the required Gmail credential fail LOUD + wire the Gmail IMAP archiver into the beat
 - `chore/pii-containment-limen-scrub` — 59a109c8 chore(security): correct PII-containment doctrine — surgical-by-default, no unique work deleted
 - `docs/cred-durability-lever` — b37c9ec2 docs(levers): L-FLEET-CAPACITY owns the live-checkout-drift heal inline — no phantom 'tracked separately'
 - `docs/pii-doctrine-correction` — 24efc964 chore(security): record PII-containment as EXECUTED (process-and-redact)
@@ -23,7 +24,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (268) — decide each
+## Live-work branches (269) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `agent/codex-sessions-adapter-0713` — 4f56aa95 fix(prompt): adapt Codex session records exactly
@@ -47,6 +48,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `docs/reap-acceptance-0709-final2-20260709115636` — cdef6573 docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
 - `feat/bhagavad-gita-arcs-5-8` — 13a810c3 feat(studium): author metamorphoses books 2 and 3 arcs
 - `feat/censor-monthly-tier` — a89dd048 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
+- `feat/clavis-credential-provisioning` — 028faaa9 feat(clavis): credential-provisioning organ — own the service account + its one vault as code
 - `feat/depends-on-sequencer` — b83a5d0b feat: seq-depends.py — append depends_on edges via the keeper (concern 11)
 - `feat/hospes-podcast-os-audit` — 4523e8db feat(hospes): register organvm/hospes as value repo, positioning seed awaiting_publish
 - `feat/outbound-valve-registry` — c281b297 feat: tiered outbound valve registry (concern 4) — all tiers coexist, configurable
