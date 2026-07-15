@@ -201,6 +201,12 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Live-main commit deny matrix (hermetic fixture); transcribed when the hook landed on main in parallel with PR1."
+  pytest-scope-guard-test:
+    command: "bash scripts/tests/pytest-scope-guard.test.sh"
+    paths: ["scripts/hooks/pytest-scope-guard.sh", "scripts/tests/pytest-scope-guard.test.sh"]
+    scoped: false
+    owner: verify
+    note: "Full-suite-pytest deny matrix (hermetic fixture): the scoped-verification law made mechanical after the 2026-07-15 host-thrash incident (two concurrent full cli suites from one session)."
   trusted-bash-hook-test:
     command: "bash scripts/tests/allow-trusted-cd-git.test.sh"
     paths: ["scripts/hooks/allow-trusted-cd-git.sh", "scripts/tests/allow-trusted-cd-git.test.sh"]

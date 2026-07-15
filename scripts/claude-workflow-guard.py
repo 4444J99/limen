@@ -13,6 +13,7 @@ It gives the conductor three fail-closed checks:
 
 Read-only. It writes no repo state unless --out is supplied.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,6 +21,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -32,6 +34,67 @@ FABLE_ACCEPTANCE_RE = re.compile(
     r"fable-allotment\.py\s+accept|LIMEN_FABLE_ACCEPTANCE|fableAcceptance|fable-acceptance",
     re.IGNORECASE,
 )
+
+# pytest at command position, in any of its shapes (mirrors scripts/hooks/pytest-scope-guard.sh).
+_PYTEST_CMD_RE = re.compile(
+    r"(?:^|[;&|(]\s*|`\s*)\s*(?:command\s+)?"
+    r"(?:env\s+(?:-u\s+\S+\s+|[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*)?"
+    r"(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
+    r"(?:uv\s+run\s+(?:--\S+\s+)*)?"
+    r"(?:\S*python3?(?:\.\d+)?\s+-m\s+)?"
+    r"(?:\S*/)?pytest\b"
+)
+_VERIFY_WRAPPER_RE = re.compile(r"verify\.py|verify-scoped\.sh|verify-whole\.sh")
+_PYTEST_SUITE_ROOTS = {"tests", "cli/tests", "web/api/tests"}
+_PYTEST_VALUE_FLAGS = {
+    "-k",
+    "-m",
+    "-p",
+    "-o",
+    "-W",
+    "-c",
+    "-n",
+    "--tb",
+    "--maxfail",
+    "--durations",
+    "--ignore",
+    "--deselect",
+    "--rootdir",
+    "--confcutdir",
+}
+
+
+def _full_suite_pytest(cmd: str) -> bool:
+    """Transcript-side heuristic for the scoped-verification law: a pytest invocation whose
+    positional args are suite roots (or absent) is a full collection. The PreToolUse hook
+    (scripts/hooks/pytest-scope-guard.sh) is the enforcement, with filesystem resolution;
+    this audit is the backstop for shapes the hook structurally misses (heredocs, nested
+    shells, daemon lanes). No cwd, no filesystem — suite roots by name only, advisory-grade.
+    2026-07-15 host-thrash incident: two concurrent full cli suites from one session."""
+    if not cmd or "pytest" not in cmd or _VERIFY_WRAPPER_RE.search(cmd):
+        return False
+    for m in _PYTEST_CMD_RE.finditer(cmd):
+        tail = re.split(r"\d*>|<|;|\||&", cmd[m.end() :], maxsplit=1)[0]
+        try:
+            tokens = shlex.split(tail)
+        except ValueError:
+            continue
+        paths, skip = [], False
+        for tok in tokens:
+            if skip:
+                skip = False
+                continue
+            if tok.startswith("-"):
+                skip = tok in _PYTEST_VALUE_FLAGS
+                continue
+            paths.append(tok.rstrip("/"))
+        if any(".py" in os.path.basename(p.split("::")[0]) or "::" in p for p in paths):
+            continue
+        if not paths:
+            return True
+        if all(p in _PYTEST_SUITE_ROOTS or p.endswith(("/cli/tests", "/web/api/tests")) for p in paths):
+            return True
+    return False
 
 
 def _model_selection() -> Any:
@@ -174,13 +237,9 @@ def _workflow_violations(
     fable_agents = sum(1 for m in models if _FABLE in m.lower())
 
     if opus_agents > max_opus_agents and os.environ.get("LIMEN_ALLOW_OPUS_FANOUT") != "1":
-        violations.append(
-            f"{name}: Opus fanout blocked ({opus_agents} Opus agents; max {max_opus_agents})"
-        )
+        violations.append(f"{name}: Opus fanout blocked ({opus_agents} Opus agents; max {max_opus_agents})")
     if fable_agents > max_fable_agents and os.environ.get("LIMEN_ALLOW_FABLE_FANOUT") != "1":
-        violations.append(
-            f"{name}: Fable fanout blocked ({fable_agents} Fable agents; max {max_fable_agents})"
-        )
+        violations.append(f"{name}: Fable fanout blocked ({fable_agents} Fable agents; max {max_fable_agents})")
 
     scan_parts = [
         wf.get("args"),
@@ -191,19 +250,17 @@ def _workflow_violations(
     ]
     for p in progress:
         if isinstance(p, dict):
-            scan_parts.extend([
-                p.get("label"),
-                p.get("promptPreview"),
-                p.get("resultPreview"),
-                p.get("lastToolSummary"),
-            ])
+            scan_parts.extend(
+                [
+                    p.get("label"),
+                    p.get("promptPreview"),
+                    p.get("resultPreview"),
+                    p.get("lastToolSummary"),
+                ]
+            )
     scan = "\n".join(_as_text(x) for x in scan_parts)
     fable_acceptance_ok = _structured_fable_acceptance(wf.get("fableAcceptance"))
-    if (
-        fable_agents
-        and not fable_acceptance_ok
-        and os.environ.get("LIMEN_ALLOW_UNACCEPTED_FABLE") != "1"
-    ):
+    if fable_agents and not fable_acceptance_ok and os.environ.get("LIMEN_ALLOW_UNACCEPTED_FABLE") != "1":
         violations.append(f"{name}: Fable run lacks written acceptance command")
     if BAD_TARGET_RE.search(scan):
         violations.append(f"{name}: undefined PR target detected")
@@ -295,8 +352,10 @@ def _iter_jsonl(path: Path):
 
 
 def _billable_usage(usage: dict[str, Any]) -> int:
-    return int(usage.get("input_tokens", 0)) + int(usage.get("output_tokens", 0)) + int(
-        usage.get("cache_creation_input_tokens", 0)
+    return (
+        int(usage.get("input_tokens", 0))
+        + int(usage.get("output_tokens", 0))
+        + int(usage.get("cache_creation_input_tokens", 0))
     )
 
 
@@ -347,6 +406,7 @@ def audit_transcript(
     opus_billable = 0
     fable_billable = 0
     user_unbounded: list[dict[str, Any]] = []
+    full_suite_pytest: list[dict[str, Any]] = []
     models: dict[str, int] = {}
     # A fan-out of subagents each riding the expensive tier is the exact shape of the
     # verify-studio-launch incident (6 trivial verifiers on Opus). Count subagent transcripts
@@ -388,13 +448,15 @@ def audit_transcript(
                 fable_subagent_files.add(str(path))
             content = msg.get("content") or []
             if isinstance(content, list):
-                agent_calls += sum(
-                    1
-                    for item in content
-                    if isinstance(item, dict)
-                    and item.get("type") == "tool_use"
-                    and item.get("name") in {"Agent", "Workflow"}
-                )
+                for item in content:
+                    if not isinstance(item, dict) or item.get("type") != "tool_use":
+                        continue
+                    if item.get("name") in {"Agent", "Workflow"}:
+                        agent_calls += 1
+                    elif item.get("name") == "Bash":
+                        bash_cmd = str((item.get("input") or {}).get("command") or "")
+                        if _full_suite_pytest(bash_cmd):
+                            full_suite_pytest.append({"path": str(path), "line": line_no, "command": bash_cmd[:200]})
             usage = msg.get("usage") or {}
             if not usage:
                 continue
@@ -411,23 +473,11 @@ def audit_transcript(
 
     violations: list[str] = []
     if total_billable > max_billable_tokens and os.environ.get("LIMEN_ALLOW_EXPENSIVE_SESSION") != "1":
-        violations.append(
-            f"billable token budget exceeded ({total_billable} > {max_billable_tokens})"
-        )
-    if (
-        opus_billable > max_opus_billable_tokens
-        and os.environ.get("LIMEN_ALLOW_OPUS_SESSION_BURN") != "1"
-    ):
-        violations.append(
-            f"Opus billable budget exceeded ({opus_billable} > {max_opus_billable_tokens})"
-        )
-    if (
-        fable_billable > max_fable_billable_tokens
-        and os.environ.get("LIMEN_ALLOW_FABLE_SESSION_BURN") != "1"
-    ):
-        violations.append(
-            f"Fable billable budget exceeded ({fable_billable} > {max_fable_billable_tokens})"
-        )
+        violations.append(f"billable token budget exceeded ({total_billable} > {max_billable_tokens})")
+    if opus_billable > max_opus_billable_tokens and os.environ.get("LIMEN_ALLOW_OPUS_SESSION_BURN") != "1":
+        violations.append(f"Opus billable budget exceeded ({opus_billable} > {max_opus_billable_tokens})")
+    if fable_billable > max_fable_billable_tokens and os.environ.get("LIMEN_ALLOW_FABLE_SESSION_BURN") != "1":
+        violations.append(f"Fable billable budget exceeded ({fable_billable} > {max_fable_billable_tokens})")
     if agent_calls > max_agent_calls and os.environ.get("LIMEN_ALLOW_AGENT_FANOUT") != "1":
         violations.append(f"agent/workflow fanout exceeded ({agent_calls} > {max_agent_calls})")
     expensive_subagents = len(expensive_subagent_files)
@@ -438,13 +488,17 @@ def audit_transcript(
         )
     fable_subagents = len(fable_subagent_files)
     if fable_subagents > max_fable_agents and os.environ.get("LIMEN_ALLOW_FABLE_FANOUT") != "1":
-        violations.append(
-            f"Fable subagent fanout ({fable_subagents} subagents on {_FABLE}; max {max_fable_agents})"
-        )
+        violations.append(f"Fable subagent fanout ({fable_subagents} subagents on {_FABLE}; max {max_fable_agents})")
     if fable_billable and not fable_acceptance_seen and os.environ.get("LIMEN_ALLOW_UNACCEPTED_FABLE") != "1":
         violations.append("Fable run lacks written acceptance command")
     if user_unbounded and os.environ.get("LIMEN_ALLOW_UNBOUNDED_GOAL") != "1":
         violations.append(f"unbounded goal phrase detected ({len(user_unbounded)} occurrence(s))")
+    if full_suite_pytest and os.environ.get("LIMEN_ALLOW_FULL_PYTEST") != "1":
+        violations.append(
+            f"full-suite pytest invoked directly ({len(full_suite_pytest)} call(s)) — "
+            "scoped-verification law: run scripts/verify-scoped.sh "
+            "(2026-07-15 host-thrash incident; the PreToolUse hook is the gate, this audit is the backstop)"
+        )
 
     return {
         "ok": not violations,
@@ -464,12 +518,14 @@ def audit_transcript(
         "fableTier": _FABLE,
         "modelsBillable": models,
         "unboundedGoalEvidence": user_unbounded[:10],
+        "fullSuitePytestCalls": len(full_suite_pytest),
+        "fullSuitePytestEvidence": full_suite_pytest[:10],
         "violations": violations,
     }
 
 
 def verify_claimed_merged(wf: dict[str, Any]) -> dict[str, Any]:
-    merged = ((wf.get("result") or {}).get("merged") or [])
+    merged = (wf.get("result") or {}).get("merged") or []
     ok: list[dict[str, Any]] = []
     bad: list[dict[str, Any]] = []
     for item in merged:
@@ -526,9 +582,17 @@ def main(argv: list[str] | None = None) -> int:
 
     at = sub.add_parser("audit-transcript")
     at.add_argument("session_or_jsonl")
-    at.add_argument("--max-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_CLAUDE_SESSION_TOKENS", "2000000")))
-    at.add_argument("--max-opus-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_OPUS_SESSION_TOKENS", "750000")))
-    at.add_argument("--max-fable-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_FABLE_SESSION_TOKENS", "1000000")))
+    at.add_argument(
+        "--max-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_CLAUDE_SESSION_TOKENS", "2000000"))
+    )
+    at.add_argument(
+        "--max-opus-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_OPUS_SESSION_TOKENS", "750000"))
+    )
+    at.add_argument(
+        "--max-fable-billable-tokens",
+        type=int,
+        default=int(os.environ.get("LIMEN_MAX_FABLE_SESSION_TOKENS", "1000000")),
+    )
     at.add_argument("--max-agent-calls", type=int, default=int(os.environ.get("LIMEN_MAX_AGENT_CALLS", "8")))
     at.add_argument("--max-opus-agents", type=int, default=1)
     at.add_argument("--max-fable-agents", type=int, default=1)

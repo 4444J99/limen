@@ -104,6 +104,9 @@ bash scripts/tests/heal-convergence.test.sh
 step "Verify the worktree-commit-guard hook (live-main commit deny matrix, hermetic fixture)"
 bash scripts/tests/worktree-commit-guard.test.sh
 
+step "Verify the pytest-scope-guard hook (full-suite pytest deny matrix, hermetic fixture)"
+bash scripts/tests/pytest-scope-guard.test.sh
+
 step "Verify the ask-gate predicate (intake asks are predicate-shaped, bounded, owned)"
 bash scripts/tests/ask-gate.test.sh
 # Fixture rung only (--task-file cases — deterministic); the live intake-window audit

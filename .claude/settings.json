@@ -23,7 +23,8 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" || true" }
+          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" || true" },
+          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/pytest-scope-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/pytest-scope-guard.sh\" || true" }
         ]
       }
     ],

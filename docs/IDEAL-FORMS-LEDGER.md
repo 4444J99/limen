@@ -128,6 +128,26 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 - **Status:** PARTIAL — landed-not-activated.
 - **Owner:** domus-genoma CI (parity) + lever `L-CARTRIDGE-REPOINT` (activation) + Claude (proof run).
 
+### IF-HOST-PRESSURE — exogenous load never stacks unseen
+- **Ideal form:** every host-pressure axis — memory, CPU load, the backup crawler, test fan-out —
+  has an executable gauge and a mechanical valve; no stack of individually-legitimate loads can
+  thrash the host because each is gated where it starts, and the gauges themselves are watched.
+- **Distance:** incident 2026-07-15 (16 GB host: swap 6.4/7.2 GiB, load 5.7, 24 min after reboot)
+  had three stacked loads, all invisible to the armed VITALS memory gate: (a) Backblaze
+  `bztransmit` re-crawling ~748 worktree roots / 61 GiB of regenerable state at 95 % CPU,
+  (b) one session running FULL `pytest tests/` twice concurrently — the scoped-verification law
+  was prose-only, and (c) ~10 claude bg-spare processes tipping RAM into the swap spiral.
+  Three forms close it: **(1)** `scripts/hooks/pytest-scope-guard.sh` + the `pytest-scope` audit
+  in `claude-workflow-guard.py` (this branch) make the scoped-verification law mechanical;
+  **(2)** a VITALS load-average axis + `host-pressure-stale` sensor rung (branch
+  `feat/vitals-load-axis`) gives the throttle/shed valve a CPU gauge and watches the gauge;
+  **(3)** the Backblaze exclusion estate — lever `L-BACKBLAZE-EXCLUDE` + verify sensor
+  `backblaze-exclusions` (branch `feat/backblaze-exclusion-estate`) — retires the crawl storm;
+  the pane click is the one his-hand atom, and the sensor is its completion predicate.
+- **Status:** PARTIAL — form 1 shipped here; forms 2–3 land in their own branches.
+- **Owner:** Claude (forms 1–2, sensor of 3) + Anthony (the Backblaze pane click, filed as
+  `L-BACKBLAZE-EXCLUDE`).
+
 ### IF-LEDGER-OF-IDEALS — this ledger (self)
 - **Ideal form:** every Claude-originated ideal is a tracked named param here; the ledger is
   linked from memory and the autopoiesis heartbeat references it (closing the self-loop).

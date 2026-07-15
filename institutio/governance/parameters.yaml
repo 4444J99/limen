@@ -1575,6 +1575,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Break-glass for scripts/hooks/worktree-commit-guard.sh: 1 disables the PreToolUse deny of git commit in the live checkout on main. Mirrors the LIMEN_ALLOW_OPUS_FANOUT escape-hatch precedent; leave 0 — the deny is the charter's no-direct-main-commit rule made mechanical."
+  LIMEN_ALLOW_FULL_PYTEST:
+    default: "0"
+    env: LIMEN_ALLOW_FULL_PYTEST
+    self_update: none
+    owner: verify
+    note: "Break-glass for scripts/hooks/pytest-scope-guard.sh AND the pytest-scope audit in scripts/claude-workflow-guard.py: 1 disables the PreToolUse deny of full-suite pytest outside verify.py and waives the SessionEnd violation. Mirrors LIMEN_ALLOW_LIVE_COMMIT; leave 0 — the deny is the charter's scoped-verification rule made mechanical (2026-07-15 host-thrash incident)."
   LIMEN_INSIGHTS_ARCHIVE:
     default: "~/Workspace/organvm/claude-runtime-state/usage-data/snapshots"
     env: LIMEN_INSIGHTS_ARCHIVE
