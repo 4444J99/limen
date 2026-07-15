@@ -5145,6 +5145,15 @@ def scan_agy_conversations(
         errors.append(
             f"agy-cli-conversations: database discovery exceeds bounded ceiling {active_limits.max_discovery_units}"
         )
+        # The candidate iterator has no ordering contract.  Processing the first bounded subset
+        # would therefore let filesystem enumeration order decide whether this family emits prompt
+        # events before reporting the overflow.  Once limit + 1 is observed, fail the whole family
+        # closed while preserving the hard traversal bound.
+        return [], {
+            **empty_result,
+            "errors": errors,
+            "pending_files": pending,
+        }
     for path in sorted(database_paths):
         escape = source_path_error(path, containment_root=root)
         if escape:

@@ -2766,15 +2766,38 @@ def test_agy_pre_custody_failure_returns_valid_partial_all_cursor(
     assert proposal["adapter_gaps"] == ["agy-cli-conversations"]
 
 
-def test_agy_source_byte_discovery_and_symlink_bounds_fail_closed(tmp_path: Path):
+@pytest.mark.parametrize(
+    "candidate_order",
+    [
+        ("large.db", "second.db", "linked.db"),
+        ("second.db", "linked.db", "large.db"),
+    ],
+)
+def test_agy_discovery_overflow_fails_closed_independent_of_candidate_order(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    candidate_order: tuple[str, ...],
+):
     sources = _load()
     root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
     root.mkdir(parents=True)
-    _agy_database(root / "large.db", "x" * 256)
-    _agy_database(root / "second.db", "bounded second prompt")
+    large = root / "large.db"
+    second = root / "second.db"
+    linked = root / "linked.db"
+    _agy_database(large, "x" * 256)
+    _agy_database(second, "bounded second prompt")
     outside = tmp_path / "outside.db"
     _agy_database(outside, "outside prompt")
-    (root / "linked.db").symlink_to(outside)
+    linked.symlink_to(outside)
+    candidates = {path.name: path for path in (large, second, linked)}
+    original_rglob = Path.rglob
+
+    def ordered_rglob(path: Path, pattern: str):
+        if path == root and pattern == "*.db":
+            return iter(candidates[name] for name in candidate_order)
+        return original_rglob(path, pattern)
+
+    monkeypatch.setattr(Path, "rglob", ordered_rglob)
 
     events, result = sources.scan_agy_conversations(
         _agy_lifecycle(sources, root),
@@ -2785,12 +2808,57 @@ def test_agy_source_byte_discovery_and_symlink_bounds_fail_closed(tmp_path: Path
     )
 
     assert events == []
+    assert result["discovered"] == {}
     assert result["processed"] == {}
+    assert result["adapted_unit_receipts"] == {}
+    assert result["excluded_unit_receipts"] == {}
+    assert result["attempted_files"] == 0
     assert result["pending_files"] == 1
-    joined = "\n".join(result["errors"])
-    assert "database discovery exceeds bounded ceiling 2" in joined
-    assert "bounded ceiling is 64" in joined
-    assert "symlink hop" in joined
+    assert result["errors"] == ["agy-cli-conversations: database discovery exceeds bounded ceiling 2"]
+
+
+def test_agy_source_byte_limit_fails_closed(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    _agy_database(root / "large.db", "x" * 256)
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        limits=_agy_limits(sources, source_bytes=64, discovery=2),
+    )
+
+    assert events == []
+    assert result["processed"] == {}
+    assert result["attempted_files"] == 1
+    assert result["pending_files"] == 0
+    assert "bounded ceiling is 64" in "\n".join(result["errors"])
+
+
+def test_agy_symlink_hop_fails_closed(tmp_path: Path):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    outside = tmp_path / "outside.db"
+    _agy_database(outside, "outside prompt")
+    (root / "linked.db").symlink_to(outside)
+
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root),
+        {"files": {}, "adapted_unit_receipts": {}, "excluded_unit_receipts": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=1),
+        limits=_agy_limits(sources, source_bytes=64, discovery=2),
+    )
+
+    assert events == []
+    assert result["processed"] == {}
+    assert result["attempted_files"] == 0
+    assert result["pending_files"] == 0
+    assert "symlink hop" in "\n".join(result["errors"])
 
 
 def test_agy_conversation_adapter_obeys_shared_work_unit_cap(tmp_path: Path):
