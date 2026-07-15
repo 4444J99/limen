@@ -530,3 +530,18 @@ sensors:
       - command: "python3 scripts/check-mail-answered.py"
         severity: advisory
         escalation: "mail unanswered — stale ledger or a reply-owed obligation without a draft; the C_MAIL draft effector may be dark (the 2026-06 silent-freeze failure mode this sensor exists to catch)"
+
+  backblaze-exclusions:
+    section: "0p"
+    title: "backblaze exclusions live — regenerable fleet state is out of the crawl set (L-BACKBLAZE-EXCLUDE completion predicate)"
+    gate: LIMEN_BACKBLAZE_EXCLUSIONS
+    default: "1"
+    source: [metabolize]
+    owner: substrate
+    cadence:
+      env: LIMEN_BEAT_BACKBLAZE
+      default: 24
+    steps:
+      - command: "python3 scripts/backblaze-exclusions.py --check"
+        severity: advisory
+        escalation: "Backblaze is still crawling regenerable fleet trees — pull L-BACKBLAZE-EXCLUDE (System Settings → Backblaze → Exclusions; the missing folders are listed above); this rung self-clears the beat after Save (2026-07-15 host-thrash incident, IF-HOST-PRESSURE form 3)"

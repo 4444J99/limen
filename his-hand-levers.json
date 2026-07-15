@@ -543,6 +543,17 @@
       "unlocks": "the food and steps lanes go from built-armed-unused to ambient-live: plate photos and daily step counts land in the day-log with zero forms, zero menus, zero further taps",
       "source_task": "daily-engine leaf build 2026-07-14 (organvm/daily-engine PRs #9–#12)",
       "issue": 1057
+    },
+    {
+      "id": "L-BACKBLAZE-EXCLUDE",
+      "label": "Backblaze exclusions — one Settings-pane visit ends the post-reboot re-crawl storms. 2026-07-15: bztransmit pinned a core at ~95% re-crawling regenerable fleet state after a reboot, stacking onto test fan-out to thrash the 16 GB host (swap 6.4/7.2 GiB, load 5.7). The pane excludes exact FOLDERS (no globs), so add each folder below — every one is regenerable (worktrees re-cut from origin, venvs rebuild from lockfiles, ollama models re-pull); nothing durable leaves the backup set. Backblaze pane → Settings → Exclusions → Add Folder: /Users/4jp/Workspace/limen/.claude/worktrees · /Users/4jp/Workspace/limen/.venv · /Users/4jp/Workspace/limen/cli/.venv · /Users/4jp/.ollama/models (optionally ~/Library/Caches — often covered by Backblaze's internal defaults already). /Volumes/Scratch needs nothing: it carries no .bzvol.",
+      "owner": "yours",
+      "cost": "~3 min once, reversible in the same pane",
+      "gate": "the Backblaze preferences pane is GUI-only and writes root-context state (/Library/Backblaze.bzpkg/bzdata/bzinfo.xml) — his hand by construction; the VERIFY side is fully automated (beat sensor `backblaze-exclusions`, scripts/backblaze-exclusions.py --check, reads the world-readable bzinfo.xml and self-clears next beat after Save — no report-back needed)",
+      "unlocks": "post-reboot bztransmit re-crawls skip the regenerable trees (the worktree estate alone is hundreds of thousands of small files — file count, not GiB, is what pins the crawler); one of the three stacked loads in the 2026-07-15 thrash is permanently retired; the substrate-storage-pressure backblaze-scope bucket ledgers green",
+      "note": "REQUIRED_EXCLUDES in scripts/backblaze-exclusions.py is the single source of truth — extend the estate there and the sensor re-opens this lever's escalation automatically. Do NOT hand-edit bzinfo.xml; the pane owns it.",
+      "source_task": "IF-HOST-PRESSURE form 3 (docs/IDEAL-FORMS-LEDGER.md) — 2026-07-15 host-thrash incident; PRs #1083 (form 1) + #1085 (form 2)",
+      "issue": 1087
     }
   ]
 }

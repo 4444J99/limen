@@ -2084,6 +2084,18 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Cadence (every N beats) of the GitHub estate sensor declared in sensors.yaml. The generic scheduled runner resolves this environment override; heartbeat-loop.sh contains no sensor-specific cadence constant."
+  LIMEN_BACKBLAZE_EXCLUSIONS:
+    default: "1"
+    env: LIMEN_BACKBLAZE_EXCLUSIONS
+    self_update: none
+    owner: substrate
+    note: "Gate for the backblaze-exclusions beat sensor (institutio/governance/sensors.yaml section 0p): scripts/backblaze-exclusions.py --check reads the world-readable bzinfo.xml and verifies every REQUIRED_EXCLUDES entry is a live bzdirfilter — the completion predicate for lever L-BACKBLAZE-EXCLUDE (2026-07-15 host-thrash incident, IF-HOST-PRESSURE form 3). Read-only, advisory, fail-open on an unreadable/unrecognized file. 0 disables the pass."
+  LIMEN_BEAT_BACKBLAZE:
+    default: 24
+    env: LIMEN_BEAT_BACKBLAZE
+    self_update: none
+    owner: substrate
+    note: "Cadence (every N beats) of the backblaze-exclusions sensor. Exclusions change at most once (a pane visit), so a slow cadence is honest — the rung exists to close the lever and to catch a future estate extension, not to poll."
   LIMEN_GITVS:
     default: 1
     env: LIMEN_GITVS

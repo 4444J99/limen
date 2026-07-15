@@ -87,6 +87,13 @@ BUCKETS = (
         "owner": "agy conductor",
         "gate": "preserve conversations/brain before eviction; scratch handled separately",
     },
+    {
+        "id": "backblaze-scope",
+        "path": "~/Workspace/limen/.claude/worktrees",
+        "class": "regenerable-fleet-state",
+        "owner": "L-BACKBLAZE-EXCLUDE + scripts/backblaze-exclusions.py",
+        "gate": "excluded from the Backblaze crawl set (beat sensor backblaze-exclusions green) before growth is tolerated; worktree-debt owns deletion — this bucket tracks crawl exposure, not disk reclaim (2026-07-15 host-thrash incident)",
+    },
 )
 
 
@@ -251,7 +258,9 @@ def build_snapshot() -> dict[str, Any]:
         gate = str(bucket["gate"])
         evidence: dict[str, Any] = {}
         if bucket["id"] == "opencode-db" and opencode_intake.get("archive_status") == "verified":
-            gate = "external archive and private intake verified; local retention decision remains; never delete outright"
+            gate = (
+                "external archive and private intake verified; local retention decision remains; never delete outright"
+            )
             evidence["opencode_intake"] = opencode_intake
         rows.append(
             {
