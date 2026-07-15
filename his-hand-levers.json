@@ -554,6 +554,17 @@
       "note": "REQUIRED_EXCLUDES in scripts/backblaze-exclusions.py is the single source of truth — extend the estate there and the sensor re-opens this lever's escalation automatically. Do NOT hand-edit bzinfo.xml; the pane owns it.",
       "source_task": "IF-HOST-PRESSURE form 3 (docs/IDEAL-FORMS-LEDGER.md) — 2026-07-15 host-thrash incident; PRs #1083 (form 1) + #1085 (form 2)",
       "issue": 1087
+    },
+    {
+      "id": "L-REVENUE-ACCT",
+      "label": "Create Ko-fi account + Lemon Squeezy store, complete KYC, wire LEMONSQUEEZY_STORE_ID into creds-hydrate. Ko-fi slug (4444j99) is ALREADY LIVE on organvm/a-i-chat--exporter (FUNDING.yml, remote master PR #79; ko-fi.com/4444j99 active). Remaining atoms: (1) Create a Lemon Squeezy store account at lemonsqueezy.com, complete KYC/payout setup (bank or PayPal), obtain LEMONSQUEEZY_STORE_ID. (2) Mint the credential into `op://Personal/Lemon Squeezy Store ID/credential` (or any op:// path you choose — update the creds-hydrate lane's `ref` to match). LEMONSQUEEZY_STORE_ID is NOT a secret (it appears in public checkout URLs), but the creds-hydrate lane declared below routes it as an env-var for the site build so placeholders never ship. The deployed exporter site (chatgpt-exporter-e08.pages.dev) reads this at build time via VITE_LEMONSQUEEZY_STORE_ID; the MONETA BTC mint is the live sovereign rail and does not require this.",
+      "owner": "yours",
+      "cost": "~15–30 min (LS account + KYC); Ko-fi already done",
+      "gate": "vendor account creation + KYC (identity/banking) — the fleet cannot sign up for a payments account on your behalf",
+      "unlocks": "the Pro-tier Lemon Squeezy MoR checkout rail on a-i-chat--exporter; first non-tip fiat conversion path beyond the sovereign BTC mint",
+      "source_task": "p0-revenue lane wire 2026-07-15",
+      "note": "Ko-fi slug 4444j99 is ALREADY live (FUNDING.yml on organvm/a-i-chat--exporter, PR #79). The exporter Pages site (chatgpt-exporter-e08.pages.dev) is DEPLOYED and returning 200. The CLAVIS slot (scripts/creds-hydrate.py lane 'lemonsqueezy') is wired pending=true; it will materialize LEMONSQUEEZY_STORE_ID into ~/.limen.env the moment the op:// item exists. KO_FI_SLUG is a public identifier, not a secret — not a creds-hydrate lane (already hardcoded in FUNDING.yml as `ko_fi: 4444j99`). The exporter build reads LEMONSQUEEZY_STORE_ID via build-site.mjs; the baked placeholder text shows until the env var lands.",
+      "issue": 1090
     }
   ]
 }

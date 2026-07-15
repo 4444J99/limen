@@ -317,6 +317,25 @@ DEFAULT_MAP: list[dict] = [
         "env": ["ELEVEN_API_KEY"],
         "enabled": False,
     },
+    {
+        # PENDING VENDOR MINT — Lemon Squeezy store ID for the a-i-chat--exporter Pro-tier checkout
+        # rail. LEMONSQUEEZY_STORE_ID is NOT a secret (it appears in public checkout URLs), but the
+        # site build reads it as an env-var so placeholders never ship to production. Declared here as
+        # a pending slot so the beat surfaces its absence via --verify (required=False, so the absence
+        # is a warn not a hard failure) rather than needing a human-authored env file edit.
+        # Human atom: create a Lemon Squeezy store at lemonsqueezy.com, complete KYC/payout setup,
+        # then mint the Store ID into `op://Personal/Lemon Squeezy Store ID/credential`. The organ
+        # lands it into ~/.limen.env (LEMONSQUEEZY_STORE_ID) on the next beat. Homed on lever
+        # L-REVENUE-ACCT / issue #1090. Ko-fi slug (4444j99) is a PUBLIC identifier — already live in
+        # FUNDING.yml — and does NOT need a creds-hydrate lane. [[revenue-ship-order]] [[demand-before-rails]]
+        "lane": "lemonsqueezy (exporter pro-tier checkout store id)",
+        "ref": "op://Personal/Lemon Squeezy Store ID/credential",
+        "env": ["LEMONSQUEEZY_STORE_ID", "VITE_LEMONSQUEEZY_STORE_ID"],
+        "enabled": True,
+        # Not required: the MONETA BTC mint is the live rail; LS is the next MoR layer.
+        # --verify silently skips (warn-level) until the op:// item is created.
+        "required": False,
+    },
 ]
 
 
