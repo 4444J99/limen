@@ -1104,3 +1104,83 @@ def test_worktree_debt_cli_strict_fails_closed_on_incomplete_inventory(tmp_path:
     assert result.returncode == 2
     assert "worktree lifecycle inventory incomplete" in result.stderr
     assert "git worktree inventory failed" in result.stderr
+
+
+# ── --trend tests (IF-AMALGAMATION distance_metric) ───────────────────────────────────────────────
+
+
+def test_trend_append_and_stable(tmp_path: Path) -> None:
+    """Single sample is always stable (no trend to measure)."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("wdt", ROOT / "scripts" / "worktree-debt.py")
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+
+    trend_path = tmp_path / "debt-trend.jsonl"
+    ledger = mod._append_trend(100, "2026-07-15T01:00:00Z", trend_path)
+    assert len(ledger) == 1
+    assert ledger[0] == {"stamp": "2026-07-15T01:00:00Z", "debt": 100}
+    assert not mod._trend_rising(ledger, 10)
+
+
+def test_trend_rising_detected(tmp_path: Path) -> None:
+    """Strictly ascending window is flagged as rising."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("wdt", ROOT / "scripts" / "worktree-debt.py")
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+
+    trend_path = tmp_path / "debt-trend.jsonl"
+    stamps = ["2026-07-15T0{}:00:00Z".format(i) for i in range(1, 6)]
+    for i, s in enumerate(stamps):
+        mod._append_trend(100 + i * 10, s, trend_path)
+    ledger = [json.loads(ln) for ln in trend_path.read_text().splitlines() if ln.strip()]
+    assert mod._trend_rising(ledger, 5)
+
+
+def test_trend_flat_not_rising(tmp_path: Path) -> None:
+    """Flat (equal) sequence is not rising."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("wdt", ROOT / "scripts" / "worktree-debt.py")
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+
+    trend_path = tmp_path / "debt-trend.jsonl"
+    for _ in range(4):
+        mod._append_trend(300, None, trend_path)
+    ledger = [json.loads(ln) for ln in trend_path.read_text().splitlines() if ln.strip()]
+    assert not mod._trend_rising(ledger, 4)
+
+
+def test_trend_cli_stable_exits_zero(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """--trend with a single sample exits 0 and prints 'stable'."""
+    _isolate(tmp_path, monkeypatch)
+    trend_path = tmp_path / "logs" / "debt-trend.jsonl"
+    env = os.environ.copy()
+    env["LIMEN_ROOT"] = str(tmp_path)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "worktree-debt.py"),
+            "--trend",
+            "--stamp",
+            "2026-07-15T10:00:00Z",
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    assert trend_path.exists()
+    records = [json.loads(ln) for ln in trend_path.read_text().splitlines() if ln.strip()]
+    assert len(records) == 1
+    assert records[0]["stamp"] == "2026-07-15T10:00:00Z"
+    assert "stable" in result.stdout

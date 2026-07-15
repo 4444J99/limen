@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
@@ -12,12 +13,49 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.worktree_debt import worktree_debt_report  # noqa: E402
 from limen.worktree_roots import WorktreeInventoryError  # noqa: E402
 
+ROOT = Path(os.environ.get("LIMEN_ROOT", str(Path(__file__).resolve().parents[1])))
+LOGS = ROOT / "logs"
+DEBT_TREND = LOGS / "debt-trend.jsonl"
+
+# Default window for the rising-trend check (number of trailing samples).
+_TREND_WINDOW_DEFAULT = 10
+
 
 def int_env(name: str, default: int) -> int:
     try:
         return int(os.environ.get(name, str(default)))
     except (TypeError, ValueError):
         return default
+
+
+def _append_trend(debt: int, stamp: str | None, trend_path: Path) -> list[dict]:
+    """Append one {stamp, debt} record to the trend JSONL and return the full ledger."""
+    ts = stamp or datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    entry = {"stamp": ts, "debt": debt}
+    trend_path.parent.mkdir(parents=True, exist_ok=True)
+    with trend_path.open("a") as fh:
+        fh.write(json.dumps(entry) + "\n")
+    # Re-read the full ledger so the caller can window it.
+    ledger: list[dict] = []
+    for line in trend_path.read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(rec.get("debt"), int):
+            ledger.append(rec)
+    return ledger
+
+
+def _trend_rising(ledger: list[dict], window: int) -> bool:
+    """Return True when the trailing `window` debt values are strictly rising."""
+    tail = ledger[-window:]
+    if len(tail) < 2:
+        return False
+    return all(tail[i]["debt"] < tail[i + 1]["debt"] for i in range(len(tail) - 1))
 
 
 def main() -> int:
@@ -42,6 +80,26 @@ def main() -> int:
         "--fail-reapable-over-cap",
         action="store_true",
         help="exit non-zero when reapable roots exceed LIMEN_WORKTREE_REAPABLE_MAX",
+    )
+    parser.add_argument(
+        "--trend",
+        action="store_true",
+        help=(
+            "append the debt scalar (+ timestamp) to logs/debt-trend.jsonl and exit nonzero "
+            "when the trailing window of samples is strictly rising (IF-AMALGAMATION distance_metric)"
+        ),
+    )
+    parser.add_argument(
+        "--stamp",
+        default=None,
+        help="ISO-8601 UTC timestamp to record with --trend (default: current time)",
+    )
+    parser.add_argument(
+        "--trend-window",
+        type=int,
+        default=_TREND_WINDOW_DEFAULT,
+        metavar="N",
+        help=f"trailing sample count for rising-trend check (default: {_TREND_WINDOW_DEFAULT})",
     )
     args = parser.parse_args()
 
@@ -80,6 +138,20 @@ def main() -> int:
         return 1
     if args.fail_reapable_over_cap and report["reapable"] > reapable_limit:
         return 1
+
+    if args.trend:
+        ledger = _append_trend(report["debt"], args.stamp, DEBT_TREND)
+        rising = _trend_rising(ledger, args.trend_window)
+        window_tail = ledger[-args.trend_window :]
+        tail_vals = [r["debt"] for r in window_tail]
+        status = "RISING" if rising else "stable"
+        print(
+            f"debt-trend: appended debt={report['debt']} to {DEBT_TREND} "
+            f"({len(ledger)} samples) | window={args.trend_window} tail={tail_vals} | {status}"
+        )
+        if rising:
+            return 1
+
     return 0
 
 
