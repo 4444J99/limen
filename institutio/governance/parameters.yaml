@@ -2835,3 +2835,23 @@ parameters:
     self_update: none
     owner: continuity
     note: "Maximum residue rows retained in the census artifact and ledger (newest first). A cap, not a filter — raise it if the estate ever carries more unwalked sessions than this."
+
+  # --- await-pr: the one sanctioned synchronous PR-gate waiter -------------------
+  LIMEN_AWAIT_PR_TIMEOUT:
+    default: 1200
+    env: LIMEN_AWAIT_PR_TIMEOUT
+    self_update: none
+    owner: verify
+    note: "Hard deadline (seconds) for scripts/await-pr.sh, the ONE sanctioned synchronous waiter on a PR merge gate (2026-07-15 endless-watcher incident: sessions hand-rolled unbounded background poll loops that outlived them). 20 min covers a full pr-gate run; anything longer belongs to the beat's merge rung (scripts/merge-drain.py via scripts/drain.sh), not a longer wait."
+  LIMEN_AWAIT_PR_INTERVAL:
+    default: 45
+    env: LIMEN_AWAIT_PR_INTERVAL
+    self_update: none
+    owner: verify
+    note: "Poll interval (seconds) between merge-policy.sh runs inside scripts/await-pr.sh. 45 s keeps a full 20-min wait under ~30 GitHub reads while every poll prints a loud one-liner."
+  LIMEN_MERGE_POLICY_BIN:
+    default: ""                # empty = scripts/merge-policy.sh; set only in tests
+    env: LIMEN_MERGE_POLICY_BIN
+    self_update: none
+    owner: merge-policy
+    note: "Test seam: overrides the merge-policy predicate binary consumed by scripts/await-pr.sh (and the governor's pause-release completion). Empty (the default) resolves to scripts/merge-policy.sh; tests point it at a scripted-verdict stub so the verdict matrix is hermetic. Never set on the live host."

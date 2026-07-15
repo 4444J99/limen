@@ -252,6 +252,17 @@ def main() -> int:
             "the BLOCKED-once protocol ('BLOCKED: <atom>' stated once, filed, never looped on)",
         ),
         ("Engage the Real Problem First", "The registry owns the answer", "the registry-owns-the-answer rule"),
+        (
+            "Merge & Branch Protocol",
+            "scripts/await-pr.sh",
+            "the sanctioned-waiter rule (never hand-roll a background PR poll loop; "
+            "scripts/await-pr.sh is the one bounded, loud waiter)",
+        ),
+        (
+            "Closeout Definition",
+            "merge-drain",
+            "the green-pending-PR-is-homed rule (the beat's merge rung owns it; cite it and end)",
+        ),
     ]:
         try:
             if phrase not in section(claude_text, heading):

@@ -61,6 +61,7 @@ ruff-format' mcp/src/limen_mcp/server.py
 expect merge-policy-change 'syntax-changed
 diff-hygiene
 merge-policy-test
+await-pr-test
 check-params
 check-gates' scripts/merge-policy.sh
 

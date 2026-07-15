@@ -139,6 +139,11 @@ gates:
     paths: ["scripts/merge-policy.sh", "scripts/tests/merge-policy.test.sh", "institutio/governance/gates.yaml"]
     owner: merge-policy
     note: "Verdict-matrix regression for the self-merge predicate; gates.yaml is implicated because deploy_triggers feed the verdict (PR3)."
+  await-pr-test:
+    command: "bash scripts/tests/await-pr.test.sh"
+    paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh", "scripts/merge-policy.sh"]
+    owner: verify
+    note: "The one sanctioned PR-gate waiter stays bounded and loud: CLEARED/FAILED/TIMEOUT/REFUSED-PAUSED verdict matrix, CI-red terminal (never waited out), single-instance lock, pause-marker refusal (2026-07-15 endless-watcher incident)."
   verify-resolver-test:
     command: "bash scripts/tests/verify-resolver.test.sh"
     paths: ["scripts/verify.py", "scripts/tests/verify-resolver.test.sh", "institutio/governance/gates.yaml"]
