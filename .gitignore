@@ -59,3 +59,5 @@ docs/positioning/*.internal.md
 # studium convergence logs are GENERATED and captured local worktree home paths (PII);
 # never track them in this public repo (studium re-derives them locally each run).
 studium/_converged/converge-log.jsonl
+.codex/worktrees/
+docs/prompt-atom-ledger.json
