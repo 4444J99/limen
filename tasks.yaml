@@ -120820,7 +120820,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - cifix
   - self-heal
@@ -120840,7 +120840,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/678
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-15T16:18:06.471423Z'
+  updated: '2026-07-15T18:08:30.808950Z'
   dispatch_log:
   - timestamp: '2026-07-09T18:59:56.506897Z'
     agent: opencode
@@ -120902,6 +120902,11 @@ tasks:
     agent: jules
     session_id: '13379016385084422588'
     status: dispatched
+  - timestamp: '2026-07-15T18:08:30.808950Z'
+    agent: jules
+    session_id: https://github.com/organvm/limen/pull/1117
+    status: done
+    output: 'jules-land: landed session 13379016385084422588 as PR'
 - id: HEAL-cifix-organvm-system-governance-framework-49
   title: fix failing CI on organvm/system-governance-framework#49
   repo: organvm/system-governance-framework
@@ -144548,4 +144553,59 @@ tasks:
   depends_on: []
   created: '2026-07-15'
   updated: '2026-07-15T17:15:41.089287Z'
+  dispatch_log: []
+- id: ORG-observation-organ-kernel-0715
+  title: Map the VLTIMA 5-primitive kernel to the observation organ
+  repo: organvm/limen
+  type: content
+  target_agent: any
+  priority: critical
+  budget_cost: 2
+  status: open
+  labels:
+  - organ-kernel
+  - pillar:observation
+  - organ
+  - institution
+  - vltima
+  - generated
+  urls: []
+  context: "In organvm/limen, author organs/observation/ + cli/src/limen/observatory/KERNEL.md:\
+    \ map the domain-neutral kernel (Member - Mandate - Standing - Standard - Governance)\
+    \ onto the observation domain (Member=a repo/public surface (ours or a comparable\
+    \ winner's); Mandate=a legibility/traction gap to close; Standing=drift/gap state;\
+    \ Standard=the priority formula (explanatory_strength \xD7 controllability \xD7\
+    \ similarity \xD7 EV \xF7 activation_cost) + the confounder-honesty rule (stars\
+    \ are a signal, never truth); Governance=human-gated experiment proposal (dry\
+    \ by default; --apply arms)). State the organ's purpose as an institutional prosthesis,\
+    \ its MACRO deployment (GITVS's legibility twin: the same observe\u2192diff\u2192\
+    reconcile loop run on how the world understands/trusts/uses/circulates an estate\
+    \ \u2014 any operator studies why comparable winners get adopted, proves their\
+    \ own surfaces are true, and gets ONE reversible experiment/day instead of a vanity-trend\
+    \ dashboard) and its MICRO deployment (Anthony's activation deficit: study daily\
+    \ GitHub winners vs matched CONTROLS, score transferable mechanisms against the\
+    \ estate, reconcile the estate's own claim-drift (the 105/116/171 numbers) via\
+    \ the face-ownership.json/VVLTVS loop, and hand up one reversible activation experiment\
+    \ for the hero repo (value-repos rank 1)). Generic + nameless underneath, his\
+    \ instance on top. One PR, no lorem. CONSTRAINT: Convergence, not greenfield:\
+    \ reuses GITVS gh-helpers, the JSONL keeper discipline, value-repos/revenue-ladder/estate-ledger\
+    \ as ground truth, face-ownership.json/VVLTVS as the internal-legibility sensor.\
+    \ The imported ChatGPT spec's greenfield stack (organvm/observatory repo + DuckDB\
+    \ + Astro + Playwright) is overruled by codebase idiom (in-repo organ + JSONL\
+    \ + Next.js); Playwright website capture is the one recorded phase-3 residual.\
+    \ Working handle OBSERVATORY \u2014 final name via nomenclator (INDEX\xB7NOMINVM).\
+    \ VERIFIED 2026-07-12: full vertical slice complete \u2014 17 engine modules,\
+    \ 60 hermetic tests (44 scaffold + 16 capture/synthesis/interpret), doctor --offline\
+    \ green, ruff clean, beat wiring wired (observatory-beat.py + sensors.yaml + parameters.yaml\
+    \ + L-OBSERVATORY-ACTIVATE lever), CLI integrated as `limen observatory` subcommand.\
+    \ Ships DARK behind LIMEN_OBSERVATORY=0. Next step: arm L-OBSERVATORY-ACTIVATE\
+    \ and fire the first live beat.. [organ-backlog 2026-07-15: rank 15, maturity\
+    \ 28% stage scaffold \u2014 convert idle fleet capacity into institutional weight\
+    \ (VLTIMA).]"
+  predicate: test "$(gh pr list --repo organvm/limen --state merged --search 'ORG-observation-organ-kernel-0715
+    in:body' --json number --jq length)" -gt 0
+  receipt_target: github:organvm/limen:pull-request:ORG-observation-organ-kernel-0715
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T18:12:36.681124Z'
   dispatch_log: []
