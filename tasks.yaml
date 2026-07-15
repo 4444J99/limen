@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-15'
-      spent: 39
+      spent: 44
       per_agent:
-        jules: 17
-        gemini: 5
-        codex: 6
+        jules: 20
+        gemini: 6
+        codex: 7
         opencode: 0
         agy: 5
         claude: 2
@@ -120737,7 +120737,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/677
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-15T16:45:08.331905Z'
+  updated: '2026-07-15T17:04:41.408102Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:17:56.380680Z'
     agent: limen
@@ -120791,6 +120791,10 @@ tasks:
     session_id: async-reserve:c08a2f8146a7569a418e062e449f9a9d
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T17:04:41.408102Z'
+    agent: jules
+    session_id: '5306048292946145574'
+    status: dispatched
 - id: HEAL-cifix-organvm-limen-678
   title: fix failing CI on organvm/limen#678
   repo: organvm/limen
@@ -129263,7 +129267,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -129277,9 +129281,12 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/limen/pull/619 [auto-emitted 2026-07-08
     by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 619 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/619
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T17:05:35.682731Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:21:45.810854Z'
     agent: gemini
@@ -129321,6 +129328,11 @@ tasks:
     status: open
     output: "recover: jules session 18105814730490867234 is idle_no_status \u2192\
       \ reopened"
+  - timestamp: '2026-07-15T17:05:35.682731Z'
+    agent: jules
+    session_id: async-reserve:e749703cfe3c7ea6acd1c0a5915588e1
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-stale-organvm-limen-620
   title: "rebase organvm/limen#620 onto current base \u2014 stale base touches the\
     \ daemon body"
@@ -129458,7 +129470,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -129473,9 +129485,12 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/limen/pull/622 [auto-emitted 2026-07-08
     by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 622 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/622
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-15T17:05:35.682731Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -129517,6 +129532,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 1009450525087488106 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-15T17:05:35.682731Z'
+    agent: jules
+    session_id: async-reserve:fb3596032624d746613cbc63c7a31d6f
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-623
   title: rebase/resolve conflicts on organvm/limen#623
   repo: organvm/limen
@@ -136739,7 +136759,7 @@ tasks:
   title: Raise test coverage in organvm/my-knowledge-base
   repo: organvm/my-knowledge-base
   type: code
-  target_agent: agy
+  target_agent: gemini
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -136748,6 +136768,7 @@ tasks:
   - test-coverage
   - generated
   - build-out
+  - tried:agy
   urls: []
   context: Find the largest source module in organvm/my-knowledge-base with little
     or no test coverage and add a focused, PASSING test suite for it. Run the repo's
@@ -136759,7 +136780,7 @@ tasks:
   receipt_target: github:organvm/my-knowledge-base:pull-request:GEN-organvm-my-knowledge-base-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T16:45:08.331905Z'
+  updated: '2026-07-15T17:05:35.682731Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:34:41.872727Z'
     agent: agy
@@ -136774,6 +136795,17 @@ tasks:
   - timestamp: '2026-07-15T16:45:08.331905Z'
     agent: agy
     session_id: async-reserve:3eecf76166b0d83ed594a352e1f1854a
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T17:04:41.408102Z'
+    agent: agy
+    session_id: cli
+    status: open
+    route_to: gemini
+    output: agy lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-15T17:05:35.682731Z'
+    agent: gemini
+    session_id: async-reserve:c95991b020666a59ff502118c5fb691c
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-manumissio-test-coverage-0709
@@ -136815,7 +136847,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -136832,7 +136864,7 @@ tasks:
   receipt_target: github:organvm/session-meta:pull-request:GEN-organvm-session-meta-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T16:18:06.471423Z'
+  updated: '2026-07-15T17:05:35.682731Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: agy
@@ -136845,6 +136877,11 @@ tasks:
     status: open
     route_to: gemini
     output: agy lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-15T17:05:35.682731Z'
+    agent: codex
+    session_id: async-reserve:1a8bee7899a980ad6e5dbd38fd4471e8
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-peer-audited--behavioral-blockchain-test-coverage-0709
   title: Raise test coverage in organvm/peer-audited--behavioral-blockchain
   repo: organvm/peer-audited--behavioral-blockchain
@@ -136998,7 +137035,7 @@ tasks:
   title: Make organvm/peer-audited--behavioral-blockchain CI green
   repo: organvm/peer-audited--behavioral-blockchain
   type: code
-  target_agent: codex
+  target_agent: jules
   workstream: contributions
   priority: high
   budget_cost: 1
@@ -137007,6 +137044,7 @@ tasks:
   - ci-green
   - generated
   - build-out
+  - slow
   urls: []
   context: Inspect the latest FAILING checks on organvm/peer-audited--behavioral-blockchain's
     default branch, fix the root cause (lint / types / failing test / config), and
@@ -137023,7 +137061,7 @@ tasks:
   receipt_target: github:organvm/peer-audited--behavioral-blockchain:pull-request:GEN-organvm-peer-audited--behavioral-blockchain-ci-green-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T16:18:42.265936Z'
+  updated: '2026-07-15T17:05:35.682731Z'
   dispatch_log:
   - timestamp: '2026-07-12T22:11:25Z'
     agent: codex
@@ -137033,6 +137071,17 @@ tasks:
   - timestamp: '2026-07-15T16:18:42.265936Z'
     agent: codex
     session_id: async-reserve:0d416606372d48f41b4adc8331f3fec2
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T17:04:41.408102Z'
+    agent: codex
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on codex; reopened to asynchronous lane
+  - timestamp: '2026-07-15T17:05:35.682731Z'
+    agent: jules
+    session_id: async-reserve:ae36bb155fcb84ee58d9822f23588ec4
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-limen-ci-green-0709
@@ -143051,15 +143100,16 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#215
   repo: organvm/domus-genoma
   type: code
-  target_agent: jules
+  target_agent: github_actions
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - tried:jules
   urls:
   - https://github.com/organvm/domus-genoma/pull/215
   context: 'PR organvm/domus-genoma#215 is CONFLICTING with its base branch and merge-drain
@@ -143079,7 +143129,7 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/215
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-15T16:45:08.331905Z'
+  updated: '2026-07-15T17:04:41.408102Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: gemini
@@ -143097,6 +143147,12 @@ tasks:
     session_id: async-reserve:21e76647f2f884e0dc4533661e1ba717
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-15T17:04:41.408102Z'
+    agent: jules
+    session_id: cli
+    status: open
+    route_to: github_actions
+    output: remote/service lane failed; reopened to healthy fleet cascade
 - id: SUBSTRATE-DOMUS-LIMEN-PATH-0713
   title: Repair declarative Limen CLI PATH ownership in Domus
   description: Noninteractive shell resolution currently selects the stale /opt/homebrew
