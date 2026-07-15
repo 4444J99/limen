@@ -15,23 +15,23 @@ portal:
       claude: 100
     track:
       date: '2026-07-15'
-      spent: 35
+      spent: 43
       per_agent:
-        jules: 20
-        gemini: 6
-        codex: 0
-        opencode: 0
-        agy: 5
+        jules: 23
+        gemini: 7
+        codex: 2
+        opencode: 1
+        agy: 6
         claude: 0
         github_actions: 1
         ollama: 3
       per_agent_reset:
         jules: '2026-07-15T12:55:20.864137+00:00'
         gemini: '2026-07-15T12:55:20.864137+00:00'
-        codex: '2026-07-15T18:27:05.810179+00:00'
+        codex: '2026-07-15T23:36:53.622105+00:00'
         opencode: '2026-07-15T12:55:20.864137+00:00'
         agy: '2026-07-15T12:55:20.864137+00:00'
-        claude: '2026-07-15T18:27:05.810179+00:00'
+        claude: '2026-07-15T23:36:53.622105+00:00'
   agents:
     opencode:
       status: idle
@@ -136918,7 +136918,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -136934,7 +136934,7 @@ tasks:
   receipt_target: github:organvm/manumissio:pull-request:GEN-organvm-manumissio-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T17:26:09.550519Z'
+  updated: '2026-07-15T23:38:42.621858Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:45:08.331905Z'
     agent: gemini
@@ -136947,6 +136947,11 @@ tasks:
     status: open
     output: 'dispatch-async: markerless async reservation older than 2100s reaped;
       task reopened'
+  - timestamp: '2026-07-15T23:38:42.621858Z'
+    agent: codex
+    session_id: async-reserve:8569ab83de24ead2529dfd820552bbcf
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-session-meta-test-coverage-0709
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
@@ -137005,7 +137010,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -137021,7 +137026,7 @@ tasks:
   receipt_target: github:organvm/peer-audited--behavioral-blockchain:pull-request:GEN-organvm-peer-audited--behavioral-blockchain-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-15T16:43:00.759048Z'
+  updated: '2026-07-15T23:38:42.621858Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: claude
@@ -137034,6 +137039,11 @@ tasks:
     status: open
     output: 'dispatch-async: markerless async reservation older than 2100s reaped;
       task reopened'
+  - timestamp: '2026-07-15T23:38:42.621858Z'
+    agent: opencode
+    session_id: async-reserve:b44644888ed93ec3b45bdf114131897c
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-manumissio-ci-green-0709
   title: Make organvm/manumissio CI green
   repo: organvm/manumissio
@@ -142823,7 +142833,7 @@ tasks:
   target_agent: agy
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -142847,7 +142857,7 @@ tasks:
   receipt_target: https://github.com/organvm/manumissio/pull/24
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-15T17:26:09.550519Z'
+  updated: '2026-07-15T23:38:42.621858Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:34:41.872727Z'
     agent: gemini
@@ -142860,6 +142870,11 @@ tasks:
     status: open
     output: 'dispatch-async: markerless async reservation older than 2100s reaped;
       task reopened'
+  - timestamp: '2026-07-15T23:38:42.621858Z'
+    agent: agy
+    session_id: async-reserve:c673873d45e29f46c69f5a16b62c9488
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: SUBSTRATE-REMOTE-EXECUTOR-0712
   title: Build provider-neutral cloud execution and terminal harvesting
   description: Make the laptop a thin control plane by routing eligible pushed repo
@@ -142870,7 +142885,7 @@ tasks:
   workstream: substrate
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cloud-offload
   - remote-execution
@@ -142907,7 +142922,7 @@ tasks:
   depends_on:
   - FIX-dynamic-worktree-admission-0712
   created: '2026-07-12'
-  updated: '2026-07-15T17:26:09.550519Z'
+  updated: '2026-07-15T23:38:42.621858Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: codex
@@ -142931,6 +142946,11 @@ tasks:
     status: open
     output: 'dispatch-async: markerless async reservation older than 2100s reaped;
       task reopened'
+  - timestamp: '2026-07-15T23:38:42.621858Z'
+    agent: jules
+    session_id: async-reserve:537235d51606469bdb54ea99d9e0b94a
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-mirror-mirror-125
   title: fix failing CI on organvm/mirror-mirror#125
   repo: organvm/mirror-mirror
@@ -143117,7 +143137,7 @@ tasks:
   target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -143143,7 +143163,7 @@ tasks:
   receipt_target: https://github.com/organvm/a-i-chat--exporter/pull/121
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-15T17:15:03.382208Z'
+  updated: '2026-07-15T23:38:42.621858Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: agy
@@ -143160,6 +143180,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-15T23:38:42.621858Z'
+    agent: gemini
+    session_id: async-reserve:323061672e29258fe4ab4fe82664b542
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-SUBSTRATE-DISK-TEMP-62de1d1fbf43
   title: Keep disk/temp/voice substrate from starving the swarm
   description: substrate lifecycle predicate is failing
@@ -143229,7 +143254,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -143255,7 +143280,7 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/187
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-15T17:26:35.899963Z'
+  updated: '2026-07-15T23:38:42.621858Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: claude
@@ -143279,6 +143304,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on codex; reopened to asynchronous lane
+  - timestamp: '2026-07-15T23:38:42.621858Z'
+    agent: jules
+    session_id: async-reserve:a9d92c4ad5e62c180ca8d44b98893c55
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-domus-genoma-215
   title: rebase/resolve conflicts on organvm/domus-genoma#215
   repo: organvm/domus-genoma
@@ -143286,7 +143316,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -143312,7 +143342,7 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/215
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-15T17:04:41.408102Z'
+  updated: '2026-07-15T23:38:42.621858Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: gemini
@@ -143336,6 +143366,11 @@ tasks:
     status: open
     route_to: github_actions
     output: remote/service lane failed; reopened to healthy fleet cascade
+  - timestamp: '2026-07-15T23:38:42.621858Z'
+    agent: jules
+    session_id: async-reserve:056858c0cb118eb4b9b41781a0e2c821
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: SUBSTRATE-DOMUS-LIMEN-PATH-0713
   title: Repair declarative Limen CLI PATH ownership in Domus
   description: Noninteractive shell resolution currently selects the stale /opt/homebrew
@@ -143348,7 +143383,7 @@ tasks:
   workstream: substrate
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - origin:system-debt
   - horizon:present
@@ -143365,7 +143400,7 @@ tasks:
   receipt_target: git:organvm/domus-genoma:dot_zshenv.tmpl
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-15T17:15:03.382208Z'
+  updated: '2026-07-15T23:38:42.621858Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: codex
@@ -143382,6 +143417,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-15T23:38:42.621858Z'
+    agent: codex
+    session_id: async-reserve:f342696d031c3f996018c68ac7fd0f86
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
   origin: system_debt
   horizon: present
   value_case: Restores the advertised Limen CLI and progress ledger without creating
