@@ -352,3 +352,93 @@ def test_reclaim_keeps_pushed_unmerged_when_pushed_ok_off(tmp_path: Path, monkey
 
     assert action == "skip"
     assert reason == "not-merged-to-default"
+
+
+# ── dead-gitdir orphan sweep (prune-race debris) ──────────────────────────────────────────────
+def _dead_gitdir_orphan(tmp_path: Path, name: str = "agy-conversation-adapter-0713") -> Path:
+    """A checkout whose .git pointer targets a gitdir that no longer exists (prune-race orphan)."""
+    d = tmp_path / name
+    d.mkdir()
+    (d / "src.py").write_text("work\n", encoding="utf-8")  # real content ⇒ not a generated-log-shell
+    (d / ".git").write_text(f"gitdir: /nonexistent/.git/worktrees/{name}\n", encoding="utf-8")
+    return d
+
+
+def test_orphan_detector_finds_dead_gitdir_and_ignores_live(tmp_path: Path) -> None:
+    reclaim = load_reclaim_worktrees()
+    assert reclaim.orphan_gitdir_name(_dead_gitdir_orphan(tmp_path, "wt-name")) == "wt-name"
+    # a pointer to a gitdir that DOES exist is a registered worktree, not an orphan
+    live = tmp_path / "live"
+    live.mkdir()
+    gd = tmp_path / "realgitdir"
+    gd.mkdir()
+    (live / ".git").write_text(f"gitdir: {gd}\n", encoding="utf-8")
+    assert reclaim.orphan_gitdir_name(live) is None
+
+
+def test_reclaim_quarantines_dead_gitdir_orphan_under_throwaway_when_armed(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    monkeypatch.setattr(reclaim, "ORPHAN_SWEEP", True)
+    orphan = _dead_gitdir_orphan(tmp_path)
+    action, reason = reclaim.classify(orphan, time.time(), 0, source="dispatch-root")
+    assert (action, reason) == ("quarantine-orphan", reclaim.ORPHAN_REASON)
+
+
+def test_quarantine_orphan_moves_and_never_deletes(tmp_path: Path, monkeypatch) -> None:
+    # LOAD-BEARING: an orphan is PRESERVED by move, never destroyed — the fix for "could this delete
+    # work that never walked its lifecycle". After the sweep the source is gone but every byte, walked
+    # or not, survives in quarantine, and a receipt records where it went.
+    reclaim = load_reclaim_worktrees()
+    qroot = tmp_path / "quarantine"
+    monkeypatch.setattr(reclaim, "ORPHAN_QUARANTINE", str(qroot))
+    monkeypatch.setattr(reclaim, "ORPHAN_QUARANTINE_LOG", tmp_path / "orphan-quarantine.jsonl")
+    orphan = _dead_gitdir_orphan(tmp_path, "wt-unwalked")
+    (orphan / "uncommitted.txt").write_text("work that was never pushed\n", encoding="utf-8")
+
+    ok, dest = reclaim.quarantine_orphan(orphan, "20260715T000000Z")
+
+    assert ok is True
+    assert not orphan.exists()  # removed from the worktree root (debt resolved)
+    moved = Path(dest)
+    assert moved.exists()  # but PRESERVED — nothing deleted
+    assert (moved / "uncommitted.txt").read_text(encoding="utf-8") == "work that was never pushed\n"
+    assert (moved / "src.py").exists()
+    receipt = json.loads((tmp_path / "orphan-quarantine.jsonl").read_text(encoding="utf-8").strip())
+    assert receipt["recoverable"] == "moved-not-deleted" and receipt["to"] == dest
+
+
+def test_quarantine_orphan_refuses_when_destination_unwritable(tmp_path: Path, monkeypatch) -> None:
+    # Fail-closed: if quarantine can't be prepared, the orphan is LEFT in place, never half-removed.
+    reclaim = load_reclaim_worktrees()
+    monkeypatch.setattr(reclaim, "ORPHAN_QUARANTINE", str(tmp_path / "afile" / "under"))
+    (tmp_path / "afile").write_text("not a dir\n", encoding="utf-8")  # mkdir under a file → OSError
+    orphan = _dead_gitdir_orphan(tmp_path, "wt-keep")
+    ok, reason = reclaim.quarantine_orphan(orphan, "20260715T000000Z")
+    assert ok is False
+    assert orphan.exists()  # untouched
+
+
+def test_reclaim_skips_orphan_when_sweep_disarmed(tmp_path: Path, monkeypatch) -> None:
+    # DEFAULT posture: unarmed, a dead-gitdir orphan is conservatively kept as not-a-git-dir.
+    reclaim = load_reclaim_worktrees()
+    monkeypatch.setattr(reclaim, "ORPHAN_SWEEP", False)
+    orphan = _dead_gitdir_orphan(tmp_path)
+    assert reclaim.classify(orphan, time.time(), 0, source="dispatch-root") == ("skip", "not-a-git-dir")
+
+
+def test_reclaim_skips_orphan_under_interactive_source_even_when_armed(tmp_path: Path, monkeypatch) -> None:
+    # SAFETY: only THROWAWAY roots are orphan-eligible; interactive/registered cells are never reaped.
+    reclaim = load_reclaim_worktrees()
+    monkeypatch.setattr(reclaim, "ORPHAN_SWEEP", True)
+    orphan = _dead_gitdir_orphan(tmp_path)
+    assert reclaim.classify(orphan, time.time(), 0, source="claude-worktrees") == ("skip", "not-a-git-dir")
+
+
+def test_reclaim_keeps_orphan_active_under_min_age(tmp_path: Path, monkeypatch) -> None:
+    # A fresh orphan (age < min-age) could still be mid-run debris — keep it until idle.
+    reclaim = load_reclaim_worktrees()
+    monkeypatch.setattr(reclaim, "ORPHAN_SWEEP", True)
+    orphan = _dead_gitdir_orphan(tmp_path)
+    action, reason = reclaim.classify(orphan, time.time(), 100, source="dispatch-root")
+    assert action == "skip"
+    assert reason.startswith("orphan-active")

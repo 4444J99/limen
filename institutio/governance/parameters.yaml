@@ -628,6 +628,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Pushed-reap escape hatch — DEFAULT OFF. The standing policy is merge-before-reap (pushed preservation is not closure), so a clean, idle, pushed-but-unmerged worktree is KEPT as not-merged-to-default (enacted by test_reclaim_keeps_clean_pushed_unmerged_branch). Set 1 to flip that class to reapable: reachable_from_remote ⇒ every byte is on origin and re-cloneable, so removing the local checkout loses zero work and the branch + its PR/babysitting lifecycle continue on origin. This is the opt-in lever that drains the pushed-but-unmerged backlog (the dominant boot-disk pin — hundreds of roots) toward the free-space target; classified clean+pushed+idle under the standing grant. Enabling it is an operator policy decision (it overrides merge-before-reap), homed as a lever, not defaulted on. The unpushed/dirty/active guardrails are unchanged — unpreserved work is NEVER reaped."
+  LIMEN_RECLAIM_ORPHANS:
+    default: "0"
+    env: LIMEN_RECLAIM_ORPHANS
+    self_update: none
+    owner: continuity
+    note: "Dead-gitdir orphan sweep — DEFAULT OFF (observable-first). A worktree checkout under a THROWAWAY root (dispatch/scratch) whose `.git` pointer targets a superproject gitdir that no longer exists is prune-race debris: `git worktree prune` (clone-maintenance.sh) reaped the gitdir while the worktree's volume (Scratch) was briefly unmounted, and the checkout returned orphaned on remount — classified not-a-git-dir, uncleanable by the git-dependent loss-free gates, and the dominant cause of the 2026-07-15 worktree-debt tripling (372/537 roots). Set 1 to arm the sweep. CRITICAL: it does NOT delete — because git is dead on the checkout, the reaper cannot prove the orphan walked its lifecycle (merged/pushed), so it PRESERVES it by MOVE into an off-worktree quarantine (LIMEN_ORPHAN_QUARANTINE), reversible, losing nothing walked-or-not, which resolves the debt. Deleting a quarantined orphan is a SEPARATE proof-gated step (branch provably on origin, or an operator grace). Confined to throwaway roots only — never .claude/worktrees, repo-local, or registered cells. The prune GUARD in clone-maintenance.sh stops new orphans being manufactured; this quarantines the existing backlog."
+  LIMEN_ORPHAN_QUARANTINE:
+    default: ""
+    env: LIMEN_ORPHAN_QUARANTINE
+    self_update: none
+    owner: continuity
+    note: "Off-worktree MOVE target for orphans preserved by the LIMEN_RECLAIM_ORPHANS sweep — a quarantine, not a delete. Empty (default) → a `_limen-orphan-quarantine` sibling of the worktree root on the SAME volume (an instant rename that clears the debt without freeing the volume; data preserved). Set to a path on a backup volume (e.g. /Volumes/Archive4T/limen-orphan-quarantine) to also free the working volume — a cross-volume copy that still never deletes until the move is complete. Must never point under a worktree root (that would re-create the debt)."
   LIMEN_CLONE_REAP_STANDING_ACCEPTANCE:
     default: "1"
     env: LIMEN_CLONE_REAP_STANDING_ACCEPTANCE

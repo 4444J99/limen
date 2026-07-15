@@ -27,16 +27,30 @@ FREE_GIB="$(disk_free_gib "$WS")"; [ -n "$FREE_GIB" ] || FREE_GIB=999999
 PRESSURE=0; [ "$FREE_GIB" -le "$FREE_FLOOR" ] 2>/dev/null && PRESSURE=1
 echo "── clone-maintenance: disk ${PCT}% used, ${FREE_GIB}GiB free (floor ${FREE_FLOOR}GiB, high-water ${HIGH}% info) → pressure=$([ "$PRESSURE" = 1 ] && echo ON || echo off) ──"
 
+# ── PRUNE GUARD (prune-race prevention). `git worktree prune` reaps the admin gitdir of any
+# worktree whose checkout dir looks GONE — but a worktree on an UNMOUNTED external volume (Scratch)
+# looks gone though it isn't, and pruning it ORPHANS the checkout on remount (the not-a-git-dir
+# debris that tripled worktree debt on 2026-07-15). Skip prune whenever the configured worktree
+# volume is offline; deferring prune is data-safe (it only cleans stale refs, never touches data).
+prune_safe=1
+wr="$(PYTHONPATH="$ROOT/cli/src" python3 -c 'from limen.worktree_roots import effective_worktree_root as e; print(e())' 2>/dev/null || true)"
+case "$wr" in
+  /Volumes/*)
+    vol="/$(printf '%s' "$wr" | cut -d/ -f2-3)"   # /Volumes/<Name>
+    { [ -d "$vol" ] && [ -w "$vol" ]; } || prune_safe=0 ;;
+esac
+[ "$prune_safe" = 1 ] || echo "  prune GUARD: worktree volume '$wr' offline — SKIPPING 'git worktree prune' this pass (prevents orphaning)."
+
 echo "── clone hygiene: worktree prune + gc --auto (data-safe) ──"
 n=0
 while IFS= read -r g; do
   d="$(dirname "$g")"
   case "$d" in *.limen-worktrees*|*.home-cartridge*) continue;; esac
-  git -C "$d" worktree prune 2>/dev/null || true
+  [ "$prune_safe" = 1 ] && { git -C "$d" worktree prune 2>/dev/null || true; }
   git -C "$d" gc --auto --quiet 2>/dev/null || true
   n=$((n+1))
 done < <(find "$WS" -maxdepth 3 -name .git -type d 2>/dev/null)
-echo "  hygiene pass over $n repo(s)."
+echo "  hygiene pass over $n repo(s)$([ "$prune_safe" = 1 ] || echo ' (prune skipped — worktree volume offline)')."
 
 # ── node_modules census (REGENERABLE build cache, not data; reversible via reinstall) ──
 # The single biggest creep source the fleet leaves behind (per-dispatch worktree builds).

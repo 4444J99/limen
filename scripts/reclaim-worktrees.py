@@ -42,7 +42,16 @@ Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (
      LIMEN_RECLAIM_CLAUDE_AGE_H (24), LIMEN_RECLAIM_REPO_LOCAL_WT, LIMEN_RECLAIM_REPO_LOCAL_AGE_H,
      LIMEN_RECLAIM_AGY_SCRATCH, LIMEN_AGY_SCRATCH_ROOT, LIMEN_AGY_SCRATCH_MIN_IDLE_H,
      LIMEN_RECLAIM_REGISTERED_WT, LIMEN_RECLAIM_REGISTERED_AGE_H, LIMEN_RECLAIM_MAIN_REPOS,
-     LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30).
+     LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30),
+     LIMEN_RECLAIM_ORPHANS (0 — observable-first arm for the dead-gitdir orphan sweep),
+     LIMEN_ORPHAN_QUARANTINE (off-worktree MOVE target for preserved orphans).
+
+Dead-gitdir orphan sweep (LIMEN_RECLAIM_ORPHANS=1): a checkout under a THROWAWAY root whose `.git`
+pointer targets a superproject gitdir that no longer exists (prune-race debris — `git worktree prune`
+fired while its volume was unmounted) is, past min-age, PRESERVED — MOVED into an off-worktree
+quarantine (LIMEN_ORPHAN_QUARANTINE), never deleted. Because git is dead on the checkout the sweep
+cannot prove it walked its lifecycle, so it must not destroy it; the reversible move resolves the debt
+while losing nothing. Deleting a quarantined orphan is a SEPARATE proof-gated step. Default OFF.
 """
 
 from __future__ import annotations
@@ -322,6 +331,120 @@ PUSHED_OK = os.environ.get("LIMEN_RECLAIM_PUSHED_OK", "0") != "0"
 # pre-accepted for removal without a per-root ledger event.
 STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "receipt-remote-merged+clean+idle", "clean+pushed+idle"}
 
+# ── DEAD-GITDIR ORPHAN SWEEP (LIMEN_RECLAIM_ORPHANS, declared in parameters.yaml). DEFAULT OFF —
+# observable-first. A worktree checkout whose `.git` pointer targets a superproject gitdir that no
+# longer exists is prune-race debris: `git worktree prune` (clone-maintenance.sh) reaps the gitdir
+# whenever the worktree's volume (Scratch) is briefly unmounted, and the checkout returns orphaned
+# on remount. Because git is DEAD on such a checkout, the reaper CANNOT prove it walked its lifecycle
+# (merged/pushed) — so it must NEVER be deleted. The sweep therefore does NOT reap orphans: it
+# PRESERVES them by MOVE into an off-worktree quarantine (reversible, loses nothing — walked or not),
+# which resolves the debt without destroying data. Actual deletion of a quarantined orphan is a
+# SEPARATE, proof-gated step (branch provably on origin, or a long operator grace) — out of scope of
+# this autonomous sweep. Confined to THROWAWAY roots, past min-age, only when armed.
+ORPHAN_SWEEP = os.environ.get("LIMEN_RECLAIM_ORPHANS", "0") != "0"
+ORPHAN_REASON = "orphan-dead-gitdir+throwaway+idle"
+# Off-worktree quarantine root (a MOVE target, not a delete). Default: a sibling of the worktree
+# root on the same volume (an instant rename, off the worktree-scan path). Override to a backup
+# volume (e.g. /Volumes/Archive4T/...) to also free the working volume. NEVER under a worktree root.
+ORPHAN_QUARANTINE = os.environ.get("LIMEN_ORPHAN_QUARANTINE", "")
+ORPHAN_QUARANTINE_LOG = LIMEN_ROOT / "logs" / "orphan-quarantine.jsonl"
+if ORPHAN_SWEEP:
+    STANDING_ACCEPTANCE_REASONS = STANDING_ACCEPTANCE_REASONS | {ORPHAN_REASON}
+# Only THROWAWAY creation roots are eligible for orphan reap — never interactive/registered cells
+# (.claude/worktrees, repo-local, registered) which may hold hand-dev work.
+_THROWAWAY_SOURCE_PREFIXES = ("dispatch-root", "dispatch-clone-cache", "legacy-dispatch-root", "agy-scratch")
+
+
+def _is_throwaway_source(source: str) -> bool:
+    return any((source or "").startswith(p) for p in _THROWAWAY_SOURCE_PREFIXES)
+
+
+def orphan_gitdir_name(d: Path) -> str | None:
+    """If d/.git is a worktree pointer whose target gitdir no longer exists, return the pointer's
+    worktree-admin name (the dead gitdir's basename). Else None. This is the dead-gitdir orphan
+    signal — distinct from a plain non-git directory (which has no gitdir pointer at all)."""
+    gitfile = d / ".git"
+    try:
+        if not gitfile.is_file():
+            return None
+        text = gitfile.read_text(errors="replace").strip()
+    except OSError:
+        return None
+    if not text.startswith("gitdir:"):
+        return None
+    gitdir = text.split("gitdir:", 1)[1].strip()
+    if not gitdir or Path(gitdir).exists():
+        return None  # gitdir alive ⇒ a registered worktree, not an orphan
+    return Path(gitdir).name
+
+
+def orphan_branch_on_origin(name: str) -> bool:
+    """Best-effort: is a remote branch present whose last path-segment matches this orphan's
+    worktree-admin name? git derives the admin name from the branch, so a match is evidence the
+    committed work is preserved on origin. Recorded in the quarantine receipt (annotation only — the
+    quarantine MOVE preserves everything regardless, so no reap decision rides on this)."""
+    if not name:
+        return False
+    r = git(["for-each-ref", "--format=%(refname:short)", "refs/remotes/origin"], LIMEN_ROOT)
+    if r.returncode != 0:
+        return False
+    segs = {ref.rsplit("/", 1)[-1] for ref in r.stdout.split() if ref}
+    return name in segs
+
+
+def orphan_quarantine_root() -> Path:
+    """Where preserved orphans are MOVED to. Explicit override wins; else a sibling of the worktree
+    root (same volume ⇒ instant rename, and OUTSIDE the worktree-scan path so it clears the debt)."""
+    if ORPHAN_QUARANTINE:
+        return Path(ORPHAN_QUARANTINE).expanduser()
+    try:
+        from limen.worktree_roots import effective_worktree_root
+
+        return effective_worktree_root().parent / "_limen-orphan-quarantine"
+    except Exception:
+        return Path(HOME) / "Workspace" / "_limen-orphan-quarantine"
+
+
+def quarantine_orphan(d: Path, stamp: str) -> tuple[bool, str]:
+    """PRESERVE, never delete: MOVE a dead-gitdir orphan out of the worktree roots into quarantine.
+    Reversible; loses nothing (walked lifecycle or not). Returns (ok, dest-or-reason). Refuses if the
+    destination would land under a worktree root (which would re-create the debt) or is unwritable."""
+    qroot = orphan_quarantine_root()
+    try:
+        if d.resolve() in _SELF_GUARD:  # never move the live checkout
+            return False, "self/live-checkout"
+        qroot.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        return False, f"quarantine-unwritable:{str(e)[:80]}"
+    dest = qroot / f"{stamp}-{d.name}"
+    if dest.exists():
+        dest = qroot / f"{stamp}-{d.name}-{d.stat().st_ino}"
+    try:
+        branch_on_origin = orphan_branch_on_origin(orphan_gitdir_name(d) or d.name)
+        shutil.move(str(d), str(dest))
+    except Exception as e:  # fail open — a move error leaves the orphan in place, never half-gone
+        return False, f"quarantine-move-failed:{str(e)[:80]}"
+    try:
+        ORPHAN_QUARANTINE_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with ORPHAN_QUARANTINE_LOG.open("a") as fh:
+            fh.write(
+                json.dumps(
+                    {
+                        "ts": time.time(),
+                        "root": d.name,
+                        "from": str(d),
+                        "to": str(dest),
+                        "reason": ORPHAN_REASON,
+                        "branch_on_origin": bool(branch_on_origin),
+                        "recoverable": "moved-not-deleted",
+                    }
+                )
+                + "\n"
+            )
+    except OSError:
+        pass  # receipt logging must never fail the beat; the move already preserved the data
+    return True, str(dest)
+
 
 def reclaim_accepted(path: Path, action: str, reason: str, acceptance_events) -> tuple[bool, str]:
     if STANDING_ACCEPTANCE and reason in STANDING_ACCEPTANCE_REASONS:
@@ -377,8 +500,9 @@ def superproject(cwd) -> str | None:
     return None
 
 
-def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None):
-    """Return (action, reason). action in {remove-worktree, remove-clone, remove-residue, skip}."""
+def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, source: str = ""):
+    """Return (action, reason). action in {remove-worktree, remove-clone, remove-residue,
+    quarantine-orphan, skip}. quarantine-orphan MOVES (never deletes) a dead-gitdir orphan."""
     preservation_receipts = preservation_receipts or {}
     try:
         if d.resolve() in _SELF_GUARD:
@@ -390,6 +514,18 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None):
     if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
         if is_generated_log_shell(d):
             return "remove-residue", "generated-log-shell"
+        # Dead-gitdir orphan (prune-race debris): only under a throwaway root, past min-age, armed.
+        # git is dead here, so the loss-free gates below cannot prove it walked its lifecycle — which
+        # is exactly why the action is quarantine (a reversible MOVE that preserves everything),
+        # NEVER a delete. Deletion of a quarantined orphan is a separate, proof-gated step.
+        if ORPHAN_SWEEP and _is_throwaway_source(source) and orphan_gitdir_name(d) is not None:
+            try:
+                age_h = (now - d.stat().st_mtime) / 3600.0
+            except OSError:
+                return "skip", "not-a-git-dir"
+            if age_h >= min_age_h:
+                return "quarantine-orphan", ORPHAN_REASON
+            return "skip", f"orphan-active(<{min_age_h:g}h)"
         return "skip", "not-a-git-dir"
     age_h = (now - d.stat().st_mtime) / 3600.0
     if age_h < min_age_h:
@@ -477,6 +613,7 @@ def main():
             print(f"reclaim: ran < {EVERY_MIN}min ago — skip (set --force to override)")
             return 0
     now = time.time()
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))  # quarantine dest prefix
     generated_reclaim = (
         reclaim_generated_payloads(targets) if APPLY else {"enabled": False, "cleaned": [], "failed": []}
     )
@@ -501,11 +638,11 @@ def main():
         return 0
     preservation_receipts = load_preservation_receipts()
     reclaim_acceptance = load_reclaim_acceptance()
-    dirs = [(target.path, target.min_age_h) for target in targets]
+    dirs = [(target.path, target.min_age_h, target.source) for target in targets]
     removed, skipped, failed, deferred = [], [], [], []
     would_reclaim = []
-    for d, min_age_h in dirs:
-        action, reason = classify(d, now, min_age_h, preservation_receipts)
+    for d, min_age_h, source in dirs:
+        action, reason = classify(d, now, min_age_h, preservation_receipts, source=source)
         if action == "skip":
             skipped.append((d.name, reason))
             continue
@@ -531,6 +668,11 @@ def main():
                 r = git(["worktree", "remove", "--force", str(d)], base)
                 if r.returncode != 0:
                     failed.append((d.name, r.stderr.strip()[:120]))
+                    continue
+            elif action == "quarantine-orphan":
+                ok, dest = quarantine_orphan(d, stamp)  # PRESERVE by MOVE — never a delete
+                if not ok:
+                    failed.append((d.name, dest))
                     continue
             else:
                 shutil.rmtree(d)
