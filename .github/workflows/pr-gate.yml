@@ -9,12 +9,26 @@ name: PR Gate
 # reported). This gate runs on EVERY pull request (no path filter) so it can be
 # required without bricking content PRs.
 #
-# It covers exactly the regressions that twice took main red and wedged the
-# daemon (PRs #192 and #25ce902): red tests, lint/compile breakage, naming-canon
-# violations, and — critically — a torn/corrupt tasks.yaml write that fails to
-# parse. The heavier dashboard/worker matrix stays in ci.yml (path-filtered,
-# informational); the merge organ still requires all checks green before it
-# auto-merges, so non-required ci.yml jobs remain a real gate for the organ.
+# Scoped since issue #1048: the job derives its work from the GATES registry
+# (institutio/governance/gates.yaml) via scripts/verify.py --changed — a diff
+# pays exactly the gates it implicates instead of the full ~13-min matrix, so
+# one broken test on main no longer blocks every unrelated PR fleet-wide. The
+# registered gates cover exactly the regressions that twice took main red and
+# wedged the daemon (PRs #192 and #25ce902): red tests, lint/compile breakage,
+# naming-canon violations, and a torn/corrupt tasks.yaml write (tasks-parse).
+#
+# Fail-closed: LIMEN_VERIFY_REQUIRE_BASE=1 (pull_request runs only) hard-fails
+# when the merge-base cannot resolve or the changed set is empty — a required
+# check must never green by verifying nothing — and a deploy-trigger diff
+# escalates to the whole matrix (verify-whole.sh). Gates whose ci_job mirror
+# lives in another workflow (web-build → ci.yml:web, worker-check →
+# ci.yml:worker, moneta-tests → moneta.yml) defer to it: those workflows run on
+# the same PR, and the merge organ requires ALL rollup checks green, so a red
+# mirror still holds the merge. scripts/check-gates.py (selected whenever this
+# file changes) holds the registry↔workflow estate in parity.
+#
+# LIMEN_PRGATE_SCOPED=0 is the escape hatch back to the full literal matrix —
+# flip the job-level default in a one-line PR if the resolver misbehaves.
 on:
   pull_request:
   workflow_dispatch:
@@ -26,8 +40,14 @@ concurrency:
 jobs:
   pr-gate:
     runs-on: ubuntu-latest
+    env:
+      LIMEN_PRGATE_SCOPED: "1"
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Full history so verify.py --changed always resolves the merge-base;
+          # on a shallow clone resolution can fail and the run would fail closed.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
@@ -37,45 +57,32 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ruff -r web/api/requirements.txt -e "cli[test]"
+          python -m pip install ruff pyyaml -r web/api/requirements.txt -e "cli[test]"
 
-      - name: Lint Python with ruff
-        run: python -m ruff check cli/src cli/tests web/api mcp ianva
-
-      - name: Format check Python with ruff
-        run: python -m ruff format --check cli/src cli/tests web/api mcp ianva
-
-      - name: Compile Python modules
-        run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
-
-      - name: tasks.yaml parses and loads (guards torn/corrupt queue writes)
+      - name: Verify implicated gates (GATES registry, scoped — issue #1048)
+        if: env.LIMEN_PRGATE_SCOPED != '0'
+        env:
+          LIMEN_VERIFY_NO_LOCK: "1"
+          LIMEN_VERIFY_REQUIRE_BASE: ${{ github.event_name == 'pull_request' && '1' || '0' }}
         run: |
+          python scripts/verify.py --changed \
+            --base "origin/${GITHUB_BASE_REF:-main}" \
+            --skip-ci-covered pr-gate.yml:pr-gate
+
+      - name: Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)
+        if: env.LIMEN_PRGATE_SCOPED == '0'
+        run: |
+          python -m ruff check cli/src cli/tests web/api mcp ianva
+          python -m ruff format --check cli/src cli/tests web/api mcp ianva
+          python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
           python -c "import yaml; yaml.safe_load(open('tasks.yaml')); print('tasks.yaml: valid YAML')"
           PYTHONPATH=cli/src python -c "from pathlib import Path; from limen.io import load_limen_file; lf = load_limen_file(Path('tasks.yaml')); print(f'tasks.yaml: loadable, {len(lf.tasks)} tasks')"
-
-      - name: Validate naming canon (NOMENCLATOR · INDEX·NOMINVM)
-        run: python scripts/nomenclator.py
-
-      - name: No-hardcode gate (VIGILIA parameter panel ratchet)
-        run: python scripts/check-params.py
-
-      - name: Gate-registry drift (GATES — registry vs workflows vs consumers)
-        run: python scripts/check-gates.py
-
-      - name: Personal-facts registry drift (PERSONA-FEDERATA — registry self-coherence)
-        run: python scripts/check-personal-facts.py
-
-      - name: Fact-wall (form-fillers may only consume homed personal-fact classes)
-        run: python scripts/fact-wall.py --check
-
-      - name: Test-hygiene gate (env-isolation conftest + no new direct os.environ writes)
-        run: python scripts/check-test-hygiene.py
-
-      - name: Sensors-registry drift (SENSORS — beat sensors are declared data)
-        run: python scripts/check-sensors.py
-
-      - name: Mail-tiers drift (MAIL-TIERS — send-tier decision is declared data)
-        run: python scripts/check-mail-tiers.py
-
-      - name: Run API and CLI tests
-        run: python -m pytest web/api/tests cli/tests -q
+          python scripts/nomenclator.py
+          python scripts/check-params.py
+          python scripts/check-gates.py
+          python scripts/check-personal-facts.py
+          python scripts/fact-wall.py --check
+          python scripts/check-test-hygiene.py
+          python scripts/check-sensors.py
+          python scripts/check-mail-tiers.py
+          python -m pytest web/api/tests cli/tests -q

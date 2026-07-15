@@ -562,6 +562,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Escalation target verify.py --changed exec's when a --require-base run touches deploy-trigger paths. Default is the real whole matrix; the hardening test points it at a marker script to assert escalation without paying the matrix."
+  LIMEN_PRGATE_SCOPED:
+    default: "1"
+    env: LIMEN_PRGATE_SCOPED
+    self_update: none
+    owner: continuity
+    note: "pr-gate.yml job switch (issue #1048): 1 (default) runs the registry-scoped resolver step (verify.py --changed --require-base --skip-ci-covered); 0 is the escape hatch back to the full literal matrix, preserved in-workflow for rollback via a one-line PR."
   LIMEN_PUSH_GUARD:
     default: "on"
     env: LIMEN_PUSH_GUARD
