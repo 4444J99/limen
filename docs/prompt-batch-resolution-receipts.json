@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generated_at": "2026-07-10T07:01:21Z",
+  "generated_at": "2026-07-15T15:55:44Z",
   "disposition_contract": {
     "allowed": [
       "unassessed",
@@ -96884,6 +96884,51 @@
           "evidence": "Current worktree-debt scan has no root by this name; only redacted prompt batch metadata remains for this root.",
           "next_action": "Do not recreate or delegate broad work from this historical root name. Rehydrate only if a later owner packet names a live repo, branch or PR, and predicate."
         }
+      ]
+    },
+    {
+      "generated_at": "2026-07-15T15:55:44Z",
+      "batch": "prompt-batch-critical-owner-blocker-001",
+      "band": "critical",
+      "lane": "owner-blocker",
+      "status": "owner-recorded",
+      "classification": "rank-1 owner-blocker batch: unique owner-record commit ported and merged (row 1 done); preserved STYX surface-packets graft remains behind its standing operator gate (row 2 blocked)",
+      "roots": [
+        {
+          "root": "feat-gcp-sa-organ",
+          "repo": "organvm/limen",
+          "status": "owner_commit_needs_packet",
+          "disposition": "done",
+          "outcome_receipt": {
+            "subject": "feat-gcp-sa-organ",
+            "subject_hash": "c44ab6518a41e1a2310753de8d8abba1bdf1084a0f86c875a3b4204fc17f0c29",
+            "owner": "organvm/limen",
+            "result": "pass",
+            "kind": "github_pr",
+            "ref": "https://github.com/organvm/limen/pull/1100",
+            "commit_sha": "47655e030fad7913affda8cbb0ae42014282cb39",
+            "state": "merged",
+            "reachable": true,
+            "predicate": "gh pr view 1100 -R organvm/limen --json state,mergeCommit => MERGED @47655e03; git diff f20bb66 origin/main -- organs/media/NEXT.md non-empty pre-merge, empty post-merge (0a4f21f owner-record delta fully ported)"
+          }
+        },
+        {
+          "root": "peer-audited--behavioral-blockchain",
+          "repo": "organvm/peer-audited--behavioral-blockchain",
+          "status": "private_patch_preserved",
+          "disposition": "blocked",
+          "blocked_on": "STYX surface-packets merge — a standing operator separate-gate (autonomy-governor policy separate_gates); pr-744 'Merge STYX surface-packets' is OPEN on organvm/peer-audited--behavioral-blockchain",
+          "evidence": [
+            "gh pr view 744 -R organvm/peer-audited--behavioral-blockchain --json state => OPEN",
+            "private patch preserved: .limen-private/session-corpus/lifecycle/worktree-preserve/20260704T184747Z-peer-audited--behavioral-blockchain/receipt.json (sha256 ba4b7ecc412b5508...)",
+            "no session-mintable terminal outcome: the merge decision is the operator's named gate; the preserved patch stays custody-held until pr-744 resolves"
+          ]
+        }
+      ],
+      "evidence": [
+        "row 1 port: PR #1100 (heal/port-mediark-owner-record-0a4f21f) squash-merged 2026-07-15T15:54:35Z via await-pr.sh --merge under merge-policy CLEARED",
+        "row 1 provenance: preservation receipt 2026-07-03T054000Z-feat-gcp-sa-organ (PR #544 merged through f20bb66; unique HEAD 0a4f21f touched only organs/media/NEXT.md)",
+        "row 2 custody: preservation receipt 20260704T184747Z-peer-audited--behavioral-blockchain (42MB pr-744 graft, patch.diff sha256-verified)"
       ]
     }
   ]
