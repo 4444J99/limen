@@ -123,3 +123,28 @@ safe:
 
         Best,
         Anthony
+
+# ── Send-mode: the switchable HOLD-send boundary (his settings, all built) ──────────────
+# LOAD-BEARING INVARIANT, true in EVERY mode below and never softened: the BEAT auto-sender
+# (send_drafts.py, armed by LIMEN_MAIL_SEND) transmits SAFE-tier obligations ONLY — HOLD
+# (legal/money/security) is never auto-sent on a beat. `send_mode` governs the SEPARATE,
+# explicit KEYED FIRE (`send_drafts.py --fire-obligation … --fire`): whether the operator's
+# one-key command may push a HOLD-tier or ad-hoc reply (e.g. one with PDF attachments)
+# through the system's own SMTP rail, or whether HOLD always leaves from the operator's
+# client. The rail exists either way (smtplib → smtp.gmail.com:465, keyed on the app-pw); the
+# mode only decides what the explicit fire is permitted to transmit. Declared here (SSOT),
+# overridable at runtime by LIMEN_MAIL_HOLD_SEND (parameters.yaml). Fail-closed default:
+# safe_only. check-mail-tiers.py (check F) asserts the enum + the fail-closed default.
+#
+#   safe_only   the keyed fire may transmit ONLY SAFE-tier obligations; a HOLD/ad-hoc target
+#               is refused — the system never transmits legal/money mail, it stays in the
+#               operator's own client. The most conservative mode; the default.
+#   keyed_all   the keyed fire may transmit ANY tier on an explicit --fire (incl. a HOLD reply
+#               with attachments). Nothing auto-fires; the operator turns the one key.
+#   per_matter  HOLD is draft-only UNLESS the obligation carries `send_ok: true`, which opts
+#               that one thread/matter into keyed fire. Legal stays client-side by default.
+send_mode:
+  mode: safe_only                              # fail-closed default; switch via LIMEN_MAIL_HOLD_SEND
+  modes: [safe_only, keyed_all, per_matter]    # the valid enum (check-mail-tiers.py F asserts membership)
+  arm: LIMEN_MAIL_HOLD_SEND                     # runtime override knob — NAMES the switch, never itself sends
+  invariant: "the beat auto-sender transmits SAFE-tier only in EVERY mode; send_mode governs only the explicit keyed fire"

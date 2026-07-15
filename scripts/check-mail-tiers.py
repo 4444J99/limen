@@ -17,6 +17,10 @@ and its load-bearing safety invariants hold:
   E uma-parity  — ADVISORY, only when core/protocols.py is reachable (LIMEN_UMA_ROOT or the default
                   UMA checkout): every protocol class tagged legal/money/security or verify_first is
                   covered by hold. Absent (e.g. CI) → a skip note, never a failure.
+  F send-mode   — the switchable HOLD-send boundary (send_mode) is a valid enum: send_mode.modes is
+                  exactly {safe_only, keyed_all, per_matter}, send_mode.mode is one of them, and
+                  send_mode.arm names the runtime override env var. A mode other than the fail-closed
+                  default 'safe_only' is a note (the keyed fire may transmit beyond SAFE), never a fail.
 
   python3 scripts/check-mail-tiers.py     # gate (CI): exit 1 on any drift
 """
@@ -36,6 +40,8 @@ REGISTRY = ROOT / "institutio" / "governance" / "mail-tiers.yaml"
 DANGEROUS_TAGS = {"legal", "money"}
 ALLOWED_INTERPOLATIONS = {"{first_name}"}
 INTERP_RX = re.compile(r"\{[^}]*\}")
+SEND_MODES = {"safe_only", "keyed_all", "per_matter"}
+SEND_MODE_DEFAULT = "safe_only"
 
 _failures: list[str] = []
 _notes: list[str] = []
@@ -146,7 +152,10 @@ def main() -> int:
                     fail("D", f"safe intent {iid!r} template has a square-bracket placeholder — never auto-sendable")
                 for token in INTERP_RX.findall(tmpl):
                     if token not in ALLOWED_INTERPOLATIONS:
-                        fail("D", f"safe intent {iid!r} uses interpolation {token!r} (only {sorted(ALLOWED_INTERPOLATIONS)} allowed)")
+                        fail(
+                            "D",
+                            f"safe intent {iid!r} uses interpolation {token!r} (only {sorted(ALLOWED_INTERPOLATIONS)} allowed)",
+                        )
 
     # E — UMA class parity (advisory; skipped when UMA is absent)
     uma_path = _uma_protocols_path()
@@ -167,6 +176,26 @@ def main() -> int:
                 if dangerous and not (tags & hold_tags) and p.get("cls") not in hold_classes:
                     fail("E", f"protocol class {p.get('cls')!r} is dangerous (tags={sorted(tags)}) but not held")
 
+    # F — send_mode: the switchable HOLD-send boundary is a valid enum with a fail-closed default.
+    send_mode = reg.get("send_mode")
+    if not isinstance(send_mode, dict):
+        fail("F", "send_mode block missing or not a mapping (the switchable HOLD-send policy)")
+    else:
+        declared = send_mode.get("modes")
+        if not isinstance(declared, list) or set(declared) != SEND_MODES:
+            fail("F", f"send_mode.modes must be exactly {sorted(SEND_MODES)} (got {declared!r})")
+        mode = send_mode.get("mode")
+        if mode not in SEND_MODES:
+            fail("F", f"send_mode.mode {mode!r} not in {sorted(SEND_MODES)}")
+        elif mode != SEND_MODE_DEFAULT:
+            _notes.append(
+                f"F: send_mode.mode is {mode!r} (not the fail-closed default {SEND_MODE_DEFAULT!r}) "
+                "— the explicit keyed fire may transmit beyond the SAFE tier"
+            )
+        arm = send_mode.get("arm")
+        if not isinstance(arm, str) or not arm.strip():
+            fail("F", "send_mode.arm must name the runtime override env var (e.g. LIMEN_MAIL_HOLD_SEND)")
+
     for note in _notes:
         print(f"check-mail-tiers: note — {note}")
     if _failures:
@@ -174,7 +203,10 @@ def main() -> int:
         for f in _failures:
             print(f"  {f}")
         return 1
-    print("check-mail-tiers: OK — no_reply/hold/safe declared, hold covers legal+money+verify_first, safe templates bracket-free")
+    print(
+        "check-mail-tiers: OK — no_reply/hold/safe declared, hold covers legal+money+verify_first, "
+        "safe templates bracket-free, send_mode enum valid (fail-closed default)"
+    )
     return 0
 
 

@@ -1268,6 +1268,12 @@ parameters:
     self_update: none
     owner: mail
     note: "Safety cap on how many SAFE-tier replies send_drafts.py may send per run, so an armed run can never blast the whole ledger."
+  LIMEN_MAIL_HOLD_SEND:
+    default: "safe_only"
+    env: LIMEN_MAIL_HOLD_SEND
+    self_update: none
+    owner: mail
+    note: "The switchable HOLD-send boundary for the explicit KEYED FIRE (send_drafts.py --fire-obligation … --fire) — the runtime override of mail-tiers.yaml send_mode. One of: safe_only (default — the system transmits SAFE-tier only; HOLD/legal stays in the operator's client), keyed_all (the operator's explicit --fire may transmit any tier, incl. a HOLD reply with attachments), per_matter (HOLD is draft-only unless the obligation carries send_ok:true). INVARIANT in every value: the beat auto-sender (LIMEN_MAIL_SEND) never transmits HOLD — this knob governs ONLY the explicit keyed fire, and --fire (or LIMEN_MAIL_SEND=1) still gates the actual transmission. Not itself a send arm."
   LIMEN_MAIL_ANSWERED_CHECK:
     default: 1
     env: LIMEN_MAIL_ANSWERED_CHECK
