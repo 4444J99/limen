@@ -364,16 +364,18 @@ gates:
     command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest cli/tests -q"
     paths: ["cli/**"]
     tier: heavy
+    serialize: true
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Env-scrubbed: ambient persona tokens must not leak into test behavior."
+    note: "Env-scrubbed: ambient persona tokens must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing)."
   pytest-api:
     command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest web/api/tests -q"
     paths: ["web/api/**", "cli/**"]
     tier: heavy
+    serialize: true
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "web/api imports limen — a cli change implicates the API suite too."
+    note: "web/api imports limen — a cli change implicates the API suite too. Serialized machine-wide with pytest-cli (same 2026-07-15 rationale)."
 
   # ── node/web estate (the host-exhausting gates; serialized machine-wide) ────
   web-build:
