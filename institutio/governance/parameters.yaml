@@ -550,6 +550,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Opt-out of the verify-whole.sh machine-wide lock for single-purpose runners (CI), where serialization is already guaranteed by the runner itself."
+  LIMEN_VERIFY_REQUIRE_BASE:
+    default: "0"
+    env: LIMEN_VERIFY_REQUIRE_BASE
+    self_update: none
+    owner: continuity
+    note: "CI fail-closed switch for verify.py --changed (issue #1048): when 1, an unresolvable merge-base or an empty changed set is a hard error instead of the silent local-modifications fallback — a required check must never green by verifying nothing — and a deploy-trigger diff escalates to the whole matrix."
+  LIMEN_VERIFY_WHOLE_CMD:
+    default: "scripts/verify-whole.sh"
+    env: LIMEN_VERIFY_WHOLE_CMD
+    self_update: none
+    owner: continuity
+    note: "Escalation target verify.py --changed exec's when a --require-base run touches deploy-trigger paths. Default is the real whole matrix; the hardening test points it at a marker script to assert escalation without paying the matrix."
   LIMEN_PUSH_GUARD:
     default: "on"
     env: LIMEN_PUSH_GUARD

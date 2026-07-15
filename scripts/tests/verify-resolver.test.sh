@@ -13,6 +13,9 @@ set -euo pipefail
 #     check-gates drift predicate (the gate did not exist before the registry).
 #   - gates.yaml implicates merge-policy-test (deploy_triggers feed the verdict matrix),
 #     and merge-policy.sh implicates check-gates (ratchet F reads it for literal regexes).
+#   - The scoped pr-gate rewrite (issue #1048) registered the three steps pr-gate had
+#     hand-wired outside the registry — nomenclator, tasks-parse, ruff-format — plus
+#     verify-ci-hardening-test (the resolver's own CI fail-closed contract).
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERIFY="$ROOT/scripts/verify.py"
@@ -36,8 +39,10 @@ diff-hygiene' docs/some-note.md
 
 expect cli-change 'syntax-changed
 diff-hygiene
+tasks-parse
 check-params
 ruff-lint
+ruff-format
 pytest-cli
 pytest-api' cli/src/limen/io.py
 
@@ -45,11 +50,13 @@ expect api-change 'syntax-changed
 diff-hygiene
 check-params
 ruff-lint
+ruff-format
 pytest-api' web/api/main.py
 
 expect mcp-change 'syntax-changed
 diff-hygiene
-ruff-lint' mcp/src/limen_mcp/server.py
+ruff-lint
+ruff-format' mcp/src/limen_mcp/server.py
 
 expect merge-policy-change 'syntax-changed
 diff-hygiene
@@ -64,7 +71,17 @@ check-params' scripts/enactment-audit.py
 
 expect board-change 'syntax-changed
 diff-hygiene
-task-board' tasks.yaml
+task-board
+tasks-parse' tasks.yaml
+
+expect organs-change 'syntax-changed
+diff-hygiene
+nomenclator' organs/consulting/FUNNEL-ENGINE.md
+
+expect naming-roll-change 'syntax-changed
+diff-hygiene
+nomenclator
+web-build' spec/index-nominum/roll.yaml
 
 expect charter-change 'syntax-changed
 diff-hygiene
@@ -92,6 +109,7 @@ moneta-tests' moneta/src/mint.ts
 
 expect spec-change 'syntax-changed
 diff-hygiene
+nomenclator
 web-build' spec/contracts/readiness.schema.json
 
 expect params-change 'syntax-changed
@@ -107,13 +125,16 @@ check-gates' institutio/governance/gates.yaml
 expect resolver-change 'syntax-changed
 diff-hygiene
 verify-resolver-test
+verify-ci-hardening-test
 check-params
 check-gates' scripts/verify.py
 
 expect mixed-change 'syntax-changed
 diff-hygiene
+tasks-parse
 check-params
 ruff-lint
+ruff-format
 pytest-cli
 pytest-api
 moneta-tests' cli/src/limen/io.py moneta/src/mint.ts

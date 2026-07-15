@@ -144,6 +144,11 @@ gates:
     paths: ["scripts/verify.py", "scripts/tests/verify-resolver.test.sh", "institutio/governance/gates.yaml"]
     owner: verify
     note: "Selection-equivalence fixtures — the resolver must implicate exactly the registered gates."
+  verify-ci-hardening-test:
+    command: "bash scripts/tests/verify-ci-hardening.test.sh"
+    paths: ["scripts/verify.py", "scripts/tests/verify-ci-hardening.test.sh"]
+    owner: verify
+    note: "CI fail-closed contract (issue #1048): --require-base hard-fails an unresolvable merge-base or empty diff (a required check must never green by verifying nothing), deploy-trigger diffs escalate to the whole matrix, and ci_job-covered gates defer instead of running."
   enactment-test:
     command: "bash scripts/tests/enactment-audit.test.sh"
     paths: ["scripts/enactment-audit.py", "scripts/tests/enactment-audit.test.sh"]
@@ -232,6 +237,12 @@ gates:
     paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "scripts/check-agent-docs.py"]
     owner: docs
     note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist."
+  nomenclator:
+    command: "python3 scripts/nomenclator.py"
+    paths: ["spec/**", "organs/**", "organ-ladder.json", "scripts/nomenclator.py", "scripts/heartbeat-loop.sh"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: nomenclator
+    note: "NOMENCLATOR · INDEX·NOMINVM naming canon — validates the roll (spec/index-nominum) and the estate surfaces it scans for unenrolled names; ran unregistered in pr-gate until the scoped rewrite (issue #1048)."
   removal-acceptance:
     command: "python3 scripts/check-removal-acceptance.py"
     paths: ["scripts/check-removal-acceptance.py", "scripts/reap_acceptance.py"]
@@ -247,7 +258,13 @@ gates:
     command: "python3 scripts/validate-task-board.py"
     paths: ["tasks.yaml", "scripts/validate-task-board.py"]
     owner: board
-    note: "Task-board statuses match the canonical vocabulary (pr-gate separately guards parse/load)."
+    note: "Task-board statuses match the canonical vocabulary (tasks-parse guards parse/load)."
+  tasks-parse:
+    command: "python3 -c \"import yaml; yaml.safe_load(open('tasks.yaml'))\" && PYTHONPATH=cli/src python3 -c \"from pathlib import Path; from limen.io import load_limen_file; load_limen_file(Path('tasks.yaml'))\""
+    paths: ["tasks.yaml", "cli/src/limen/io.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: board
+    note: "tasks.yaml parses as YAML and loads via limen.io — the torn/corrupt queue-write guard that is pr-gate's founding reason (PRs #192, #25ce902); ran unregistered in pr-gate until the scoped rewrite (issue #1048)."
   worktree-debt:
     command: "python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap"
     paths: ["scripts/worktree-debt.py", "cli/src/limen/worktree_debt.py", "cli/src/limen/worktree_roots.py", "scripts/reclaim-worktrees.py"]
@@ -316,6 +333,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
     note: "Lint the whole Python estate whenever any Python surface changes."
+  ruff-format:
+    command: "python3 -m ruff format --check cli/src cli/tests web/api mcp ianva"
+    paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: verify
+    note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048)."
   pytest-cli:
     command: "env -u LIMEN_API_TOKEN -u LIMEN_OWNER_TOKEN -u LIMEN_CLIENT_TOKEN python3 -m pytest cli/tests -q"
     paths: ["cli/**"]

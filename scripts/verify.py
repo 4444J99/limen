@@ -12,6 +12,15 @@ being two scripts and become two selections over the same data:
                                      then the serialized tail under the machine-wide
                                      flock verify-whole.sh also holds. Skips are named.
                                      Exit 0 ⟺ every implicated gate passed.
+                                     CI hardening (issue #1048): --require-base (or env
+                                     LIMEN_VERIFY_REQUIRE_BASE=1) fails CLOSED — an
+                                     unresolvable merge-base or an empty changed set is a
+                                     hard error, never the silent local fallback, and a
+                                     deploy-trigger diff escalates to the whole matrix
+                                     (LIMEN_VERIFY_WHOLE_CMD, default verify-whole.sh).
+                                     --skip-ci-covered CI_JOB defers gates whose ci_job
+                                     mirror lives in a different workflow job (they run
+                                     there on the same PR; merge-policy holds on any red).
   verify.py --explain [PATH...]      selection only, no execution — which gates these
                                      paths implicate (default: the changed set).
   verify.py --print-files SET        expand a file_set over tracked files (consumed by
@@ -69,16 +78,19 @@ def git(*args: str) -> str:
     ).stdout
 
 
+def resolve_merge_base(base: str | None) -> str:
+    for candidate in ([base] if base else ["origin/main", "main"]):
+        try:
+            return git("merge-base", candidate, "HEAD").strip()
+        except subprocess.CalledProcessError:
+            continue
+    return ""
+
+
 def changed_set(base: str | None) -> list[str]:
     """Branch diff vs merge-base + staged + unstaged + untracked, existing-or-tracked only."""
     paths: set[str] = set()
-    merge_base = ""
-    for candidate in ([base] if base else ["origin/main", "main"]):
-        try:
-            merge_base = git("merge-base", candidate, "HEAD").strip()
-            break
-        except subprocess.CalledProcessError:
-            continue
+    merge_base = resolve_merge_base(base)
     if merge_base:
         paths.update(git("diff", "--name-only", merge_base, "HEAD").splitlines())
     paths.update(git("diff", "--name-only").splitlines())
@@ -163,19 +175,54 @@ def run_gate(gate_id: str, gate: dict, registry: dict, changed: list[str]) -> bo
     return True
 
 
-def cmd_changed(registry: dict, base: str | None) -> int:
+def cmd_changed(
+    registry: dict,
+    base: str | None,
+    *,
+    require_base: bool = False,
+    skip_ci_covered: str | None = None,
+) -> int:
+    if require_base and not resolve_merge_base(base):
+        print(
+            f"require-base: no merge-base resolves against {base or 'origin/main'} — "
+            "refusing to fail open (fetch enough history or fix --base).",
+            file=sys.stderr,
+        )
+        return 1
     changed = changed_set(base)
     if not changed:
+        if require_base:
+            print(
+                "require-base: base resolved but the changed set is empty — a real PR diff "
+                "is never empty, so this is a resolution anomaly; refusing to fail open.",
+                file=sys.stderr,
+            )
+            return 1
         print("No changes vs the base and no local modifications — nothing to verify.")
         return 0
     print(f"Changed paths ({len(changed)}):")
     for p in changed:
         print(f"  {p}")
 
+    if require_base and deploy_hits(registry, changed):
+        whole = os.environ.get("LIMEN_VERIFY_WHOLE_CMD") or str(
+            ROOT / "scripts" / "verify-whole.sh"
+        )
+        print(f"deploy-trigger paths in the diff — escalating to the whole matrix: {whole}")
+        sys.stdout.flush()
+        os.execv("/bin/bash", ["bash", whole])
+
     gates = registry.get("gates") or {}
     selected, skipped = select(registry, changed)
     for gate_id, reason in skipped:
         print(f"skipped: {gate_id} ({reason})")
+    if skip_ci_covered:
+        deferred = [
+            g for g in selected if gates[g].get("ci_job") and gates[g]["ci_job"] != skip_ci_covered
+        ]
+        selected = [g for g in selected if g not in deferred]
+        for gate_id in deferred:
+            print(f"deferred: {gate_id} (covered by {gates[gate_id]['ci_job']})")
 
     tiers = {"cheap": [], "heavy": [], "serialized": []}
     for gate_id in selected:
@@ -229,6 +276,19 @@ def main() -> int:
     mode.add_argument("--full", action="store_true")
     parser.add_argument("--base", default=None)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--require-base",
+        action="store_true",
+        help="fail closed: merge-base must resolve and the changed set must be non-empty "
+        "(also via LIMEN_VERIFY_REQUIRE_BASE=1); deploy-trigger diffs escalate to the whole matrix",
+    )
+    parser.add_argument(
+        "--skip-ci-covered",
+        metavar="CI_JOB",
+        default=None,
+        help="defer selected gates whose ci_job mirror is a different workflow job than CI_JOB "
+        "(e.g. pr-gate.yml:pr-gate) — they run in their own workflow on the same PR",
+    )
     args = parser.parse_args()
 
     if args.full:
@@ -236,7 +296,12 @@ def main() -> int:
 
     registry = load_registry()
     if args.changed:
-        return cmd_changed(registry, args.base)
+        return cmd_changed(
+            registry,
+            args.base,
+            require_base=args.require_base or os.environ.get("LIMEN_VERIFY_REQUIRE_BASE") == "1",
+            skip_ci_covered=args.skip_ci_covered,
+        )
     if args.explain is not None:
         paths = args.explain or changed_set(args.base)
         selected, _ = select(registry, paths)
