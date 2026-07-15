@@ -387,6 +387,37 @@ sensors:
         severity: silent
         escalation: "needs_human reclassify pass skipped or exceeded its bound"
 
+  orphan-watcher:
+    section: "0g7"
+    title: "orphan watchers — no session-spawned PR poll shell outlives its session"
+    gate: LIMEN_ORPHAN_WATCHER_CHECK
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: tabularius
+    # The 2026-07-15 endless-watcher incident: four concurrent session background shells
+    # hand-rolling `gh pr`/merge-policy poll loops (one silent-on-FAIL, a 28-min stall), and
+    # nothing audited what a dead session left running. Detection is read-only every visit;
+    # the reap effector is the armed valve (house law: sensor without effector = defect — the
+    # effector is named here, dry until armed). Sanctioned alternatives the escalation points
+    # at: scripts/await-pr.sh (bounded, loud) or the merge rung (scripts/merge-drain.py via
+    # scripts/drain.sh).
+    cadence:
+      env: LIMEN_BEAT_ORPHAN_WATCHER
+      default: 4
+    timeout:
+      env: LIMEN_ORPHAN_WATCHER_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/orphan-watchers.py --check"
+        args_when:
+          - env: LIMEN_ORPHAN_WATCHER_REAP
+            default: "0"
+            equals: "1"
+            args: ["--reap"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "orphan PR-watcher shell(s) above — a session hand-rolled a poll loop and died; use scripts/await-pr.sh or hand off to the merge rung (arm LIMEN_ORPHAN_WATCHER_REAP=1 to auto-reap)"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"

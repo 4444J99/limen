@@ -272,9 +272,31 @@ def section_omega() -> str:
     return line
 
 
+def section_autonomy() -> str:
+    """Surface a live autonomy pause so a session honors it — the marker's prohibitions bind
+    interactive sessions too (2026-07-15 endless-watcher incident: sessions armed auto-merge
+    watchers while the marker prohibited merges, because orientation never showed it).
+    Silent when no marker exists."""
+    marker = ROOT / "logs" / "AUTONOMY_PAUSED"
+    try:
+        lines = marker.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ""
+
+    def field(name: str) -> str:
+        return next((ln.split(":", 1)[1].strip() for ln in lines if ln.strip().startswith(f"{name}:")), "")
+
+    line = f"**Autonomy** — PAUSED: {(field('reason') or 'see logs/AUTONOMY_PAUSED')[:140]}"
+    prohibitions = field("prohibitions")
+    if prohibitions:
+        line += f"\n  prohibitions (bind THIS session too): {prohibitions[:140]}"
+    return line
+
+
 def main():
     sections = (
         section_north_star,
+        section_autonomy,
         section_omega,
         section_handoff,
         section_levers,

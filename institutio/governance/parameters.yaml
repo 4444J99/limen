@@ -2353,6 +2353,38 @@ parameters:
     owner: tabularius
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for the liveness pass. Sized to the founding incident: the 2026-07-09 quiesce restore walked 4 down agents in ≈264 s with --apply armed — gitvs's 120 would kill a multi-agent restore mid-flight. The runner kills the whole command group on overrun and the beat continues fail-open."
 
+  # --- orphan-watcher sensor (0g7): dead sessions' PR poll shells --------------
+  LIMEN_ORPHAN_WATCHER_CHECK:
+    default: "1"               # ON — detection is read-only; only the reap valve mutates
+    env: LIMEN_ORPHAN_WATCHER_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the orphan-watcher sensor (scripts/orphan-watchers.py --check, sensors.yaml 0g7): the 2026-07-15 endless-watcher incident — sessions hand-rolled background PR poll loops (shell-snapshot zsh + `gh pr`/merge-policy + sleep) that outlived their sessions, and nothing audited them. Each visit surfaces every ORPHAN watcher (parent session gone, age at/above LIMEN_ORPHAN_WATCHER_MIN_AGE) loudly and journals it to logs/session-lifecycle.jsonl. Set 0 to silence."
+  LIMEN_ORPHAN_WATCHER_REAP:
+    default: "0"               # OFF (SAFE-OFF) — the reap effector; off is the design until trust is earned
+    env: LIMEN_ORPHAN_WATCHER_REAP
+    self_update: none
+    owner: tabularius
+    note: "The armed effector for the orphan-watcher sensor: when 1, an orphaned watcher shell is TERM->grace->KILL reaped (its own process group only when it leads one) and every kill is journaled. OFF by default — detection earns trust first (the launch-agent-heal precedent); the age floor LIMEN_ORPHAN_WATCHER_MIN_AGE sits above await-pr's deadline so a healthy sanctioned wait can never be reaped."
+  LIMEN_BEAT_ORPHAN_WATCHER:
+    default: 4
+    env: LIMEN_BEAT_ORPHAN_WATCHER
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the orphan-watcher sensor in both beat lanes. 4 follows the launch-agent-liveness precedent for a cheap local ps scan — watchers are 13-30 min creatures, so every ~4 beats catches an orphan within its natural lifetime."
+  LIMEN_ORPHAN_WATCHER_TIMEOUT:
+    default: 60
+    env: LIMEN_ORPHAN_WATCHER_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for the orphan-watcher sensor pass — one local ps read plus at most a few TERM/KILL rounds (2 s grace each); 60 is generous."
+  LIMEN_ORPHAN_WATCHER_MIN_AGE:
+    default: 1800
+    env: LIMEN_ORPHAN_WATCHER_MIN_AGE
+    self_update: none
+    owner: tabularius
+    note: "Age floor (seconds of ps etime) below which a parentless watcher shell is spared. 1800 sits deliberately ABOVE scripts/await-pr.sh's 1200 s deadline (LIMEN_AWAIT_PR_TIMEOUT): a healthy sanctioned wait can never be classified reapable; only a poll shell that outlived both its session and the sanctioned deadline qualifies."
+
   LIMEN_CRITICAL_AGENTS_FILE:
     default: ""                # empty = spec/critical-launch-agents.json; also the --agents-file flag
     env: LIMEN_CRITICAL_AGENTS_FILE

@@ -33,6 +33,17 @@ if [ -n "$HANDOFF_ROOT" ] && [ -f "$HANDOFF_ROOT/scripts/handoff-relay.py" ] \
   fi
 fi
 
+# Watcher audit — surface any surviving background PR poll shells loudly before this session
+# ends (2026-07-15 endless-watcher incident: bespoke pollers outlived their sessions unseen).
+# Runs for EVERY session — the live watchers came from non-worktree sessions, so this must
+# precede the worktree-only early exit below. Read-only, fail-open, never blocks session end.
+if [ -n "$HANDOFF_ROOT" ] && [ -f "$HANDOFF_ROOT/scripts/orphan-watchers.py" ] \
+  && command -v python3 >/dev/null 2>&1; then
+  if command -v timeout >/dev/null 2>&1; then TOW="timeout 10"; else TOW=""; fi
+  (cd "$HANDOFF_ROOT" && LIMEN_ROOT="$HANDOFF_ROOT" $TOW python3 scripts/orphan-watchers.py \
+    --session-end --sid "${CLAUDE_SESSION_ID:-unknown}") 1>&2 || true
+fi
+
 case "$CWD" in
   */.claude/worktrees/*|*/.worktrees/*|*/.limen-worktrees/*) : ;;
   *) exit 0 ;;                       # not an isolation worktree — nothing for closeout to do
