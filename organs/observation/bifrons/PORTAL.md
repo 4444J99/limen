@@ -23,6 +23,6 @@ _No exchanges yet — the portal store is empty or unreachable (honest dust)._
 
 ## Proof of life
 
-- Portal store: `absent` (`~/.organvm/bifrons/portal.db`).
+- Portal store: `present` (`~/.organvm/bifrons/portal.db`).
 - Engine loop: `organvm portal metabolize` (bounded, idempotent, never submits).
 - Outbound feeds SPECVLVM + `organvm/contrib/LEDGER.yaml` `source: starred` — not a rebuild.

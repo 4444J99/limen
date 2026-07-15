@@ -9,7 +9,7 @@ They are *unfulfilled intentions* (memory: empty-branch-is-a-todo), so they are 
 auto-deleted** — this is their git-tracked location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
-## Merged-but-advanced (9) — has commits ADDED after the PR merged
+## Merged-but-advanced (7) — has commits ADDED after the PR merged
 
 These heads had a MERGED PR but the local branch has newer commits not on `main`.
 Push them as a follow-up PR, or delete if the extra commits are throwaway.
@@ -19,12 +19,10 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `docs/cred-durability-lever` — b37c9ec2 docs(levers): L-FLEET-CAPACITY owns the live-checkout-drift heal inline — no phantom 'tracked separately'
 - `docs/pii-doctrine-correction` — 24efc964 chore(security): record PII-containment as EXECUTED (process-and-redact)
 - `feat/vigilia-nohardcode-gate` — b94e1242 feat(vigilia): wire organ-health VIGILIA rung + heartbeat stamp (build #4)
-- `fix/ianva-secret-redaction` — c67b9889 fix(ianva): write enableBearerAuth explicitly — loopback /mcp was 401ing every agent
 - `worktree-fix-macos-fork-oslog-crash` — 414ded13 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
-- `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-linear-conjuring-bear` — 92c21f2e chore(gitignore): ignore .wrangler/ cache at any depth, not just web/worker
 
-## Live-work branches (269) — decide each
+## Live-work branches (271) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `agent/codex-sessions-adapter-0713` — 4f56aa95 fix(prompt): adapt Codex session records exactly
@@ -72,6 +70,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `fix/dispatch-admission-ci-768` — 96f6c10b Merge remote-tracking branch 'origin/main' into fix/dispatch-admission-ci-768
 - `fix/fork-safety-predicate` — 09b6eb0c style(fork-safety): ruff format the predicate + its test
 - `fix/heartbeat-refresh-web-wedge` — 0a512024 fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
+- `fix/ianva-secret-redaction` — c67b9889 fix(ianva): write enableBearerAuth explicitly — loopback /mcp was 401ing every agent
 - `heal-pr-621` — af456827 Build the first working vertical slice of the health organ
 - `heal/608-declare-param` — a63e6db7 chore(governance): declare LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC for preserve_workspace()
 - `heal/ci-ruff-semicolons` — 04b05097 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
@@ -293,6 +292,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `work/workstream-agent-launcher-20260629` — a66424e0 chore: execute dynamic-substrate fanout executor packet
 - `worktree-feat+opencode-tier-ladder` — bf7f2091 feat(dispatch): opencode multi-model tier ladder (free floor / Zen subscription rung)
 - `worktree-fluttering-twirling-abelson` — c2c54884 Redact circle-personal business intel from public consulting organ
+- `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 - `worktree-jolly-knitting-lovelace` — 1e239934 feat(hooks): arm the session-orientation organ in committed project settings
 - `worktree-parsed-finding-fern` — 6f171f83 docs(hishand): register L-STUDIO-GOLIVE — clip studio go-live atoms to the durable registry (#538)
 
