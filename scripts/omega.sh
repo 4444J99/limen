@@ -174,10 +174,15 @@ rung "armed-valve (no silent-off)" det python3 "$ROOT/scripts/armed-valve-audit.
 # 4. ask-gate — every intake-window ask is predicate-shaped/bounded/owned (no SPLIT verdicts).
 rung "ask-gate (intake predicate-shaped)" det python3 "$ROOT/scripts/ask-gate.py" --audit --since 7 --check --top 0
 
-# 5. ask-lineage convergence has a manual predicate, but its heartbeat sensor remains DARK until a
-#    measured first-pass + idempotent-no-op canary proves the host-safe activation gate. It is not
-#    Omega-eligible before then; report the missing proof explicitly instead of running it here.
-skip_rung "ask-lineage convergence" det "prompt-corpus sensor is dark pending a measured bounded canary"
+# 5. ask-lineage convergence — the prompt-corpus control plane is coherent and can advance:
+#    cursor checkpoint-bound, scanner version current, no unresolved obligation orphaned on a
+#    stale scan-version key (the merge-deadlock class, fixed 2026-07-14). The rung goes live
+#    automatically when the sensor arms; until then it reports the one remaining atom.
+if [[ "${LIMEN_PROMPT_ATOM_CONTROL:-0}" == "1" ]]; then
+  rung "ask-lineage convergence" det python3 "$ROOT/scripts/prompt-atom-ledger.py" --check-cursor
+else
+  skip_rung "ask-lineage convergence" det "prompt-corpus sensor dark: agy steps-schema adapter gap keeps the beat command exit-1 (see sensors.yaml prompt-corpus-control)"
+fi
 
 # 6. ship-gate — every product-facing done-claim resolves to a reachable external artifact.
 rung "ship-gate (products reachable)" live python3 "$ROOT/scripts/ship-gate.py" --check

@@ -2417,7 +2417,7 @@ parameters:
     env: LIMEN_PROMPT_ATOM_CONTROL
     self_update: none
     owner: tabularius
-    note: "DARK gate for the registry-derived prompt-corpus control sensor. Keep 0 until a bounded manual canary proves a healthy first pass and a cheap idempotent second pass without host pressure; activation must change this default and the matching sensors.yaml consumer default together. Manual predicate: python3 scripts/prompt-atom-ledger.py --check --require-scope all."
+    note: "DARK gate for the registry-derived prompt-corpus control sensor. The 2026-07-14 canary proved the cursor deadlock fixed (unresolved 20,487 -> 566, merges clean); arming is blocked solely on the agy steps-schema adapter gap (501 units make the beat command exit 1 on source_errors). Flip this default and the matching sensors.yaml consumer default together once a bounded pass exits 0. Deep predicate: python3 scripts/prompt-atom-ledger.py --check --require-scope all. Cheap coherence probe: python3 scripts/prompt-atom-ledger.py --check-cursor."
 
   LIMEN_BEAT_PROMPT_ATOMS:
     default: 4
@@ -2434,11 +2434,11 @@ parameters:
     note: "Recent-source discovery horizon for ordinary prompt-atom heartbeat drains. Once an all-history cursor exists, prior atoms remain preserved and only changed/new sources are rescanned."
 
   LIMEN_PROMPT_ATOM_TIMEOUT:
-    default: 180
+    default: 300
     env: LIMEN_PROMPT_ATOM_TIMEOUT
     self_update: none
     owner: tabularius
-    note: "Process-group timeout for one incremental prompt-atom heartbeat drain. A timeout preserves append-only journals and fails open at the beat. The dark sensor is not an Omega rung until its measured activation gate is satisfied."
+    note: "Process-group timeout for one incremental prompt-atom heartbeat drain. A timeout preserves append-only journals and fails open at the beat. Raised 180->300 at 2026-07-14 activation: the measured bounded pass (169.6s) sat just under 180 while the all-history custody model re-stats the whole estate each pass."
 
   LIMEN_PROMPT_ATOM_MAX_FILES:
     default: 80

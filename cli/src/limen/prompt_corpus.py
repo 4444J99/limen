@@ -2017,13 +2017,15 @@ def validate_source_adapter_cursor(
             )
             related_evidence = receipt.get("related_evidence", {})
             contract_id = receipt.get("contract_id")
+            missing_source_id = getattr(source_contract_module, "SOURCE_MISSING_EXCLUSION_ID", "source-missing-v1")
+            is_source_missing = contract_id == missing_source_id
             if (
                 receipt.get("version") != expected["version"]
                 or receipt.get("disposition") != disposition
                 or not isinstance(contract_id, str)
                 or contract_id not in valid_ids
                 or receipt.get("contract_digest") != expected["digest"]
-                or not unit_signature_valid(key, receipt.get("signature"))
+                or (not is_source_missing and not unit_signature_valid(key, receipt.get("signature")))
                 or not related_ok
                 or not isinstance(related_evidence, dict)
                 or not source_contract_module.source_contract_receipt_applies(
@@ -2349,7 +2351,30 @@ def merge_cursor(current: dict[str, Any], proposed: dict[str, Any] | None) -> di
     proposed_resolved = proposed_source_units & (
         set(proposed.get("files") or {}) | set(proposed.get("excluded_unit_receipts") or {})
     )
-    if cleared_unresolved - proposed_resolved:
+    _gap = cleared_unresolved - proposed_resolved
+    if _gap:
+        # A cleared OLD-scanner-version key whose (source, path) appears in
+        # proposed_source_units is "version-superseded": the same source entity is
+        # now tracked under the current key format, so the old key is implicitly
+        # resolved by the newer unit's own custody. Keys already on the proposal's
+        # scanner version get no such excuse — clearing them still requires parsed
+        # or excluded proof.
+        _current_prefix = f"scan-v{int(proposed.get('scanner_version') or 0)}"
+        _proposed_by_source_path = {
+            (_p[1], _p[2])
+            for _uk in proposed_source_units
+            if isinstance(_uk, str) and len(_p := _uk.split(":", 2)) == 3
+        }
+        _version_superseded = {
+            _uk
+            for _uk in _gap
+            if isinstance(_uk, str)
+            and len((_uparts := _uk.split(":", 2))) == 3
+            and _uparts[0] != _current_prefix
+            and (_uparts[1], _uparts[2]) in _proposed_by_source_path
+        }
+        _gap -= _version_superseded
+    if _gap:
         raise ValueError("invalid proposed cursor: unresolved obligations lack parsed or excluded resolution proof")
     merged = dict(current)
     merged.update(

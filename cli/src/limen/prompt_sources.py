@@ -520,7 +520,18 @@ SOURCE_ADAPTER_RULES: dict[str, dict[str, Any]] = {
         "authority": "derived",
     },
 }
+SOURCE_MISSING_EXCLUSION_ID = "source-missing-v1"
+
 SOURCE_EXCLUSION_RULES: dict[str, dict[str, Any]] = {
+    SOURCE_MISSING_EXCLUSION_ID: {
+        # Wildcard: applies to any source whose tracked path has been reclaimed
+        # from disk. The source_contract_receipt_applies function handles this
+        # contract_id specially — it bypasses the source/path-role checks that
+        # apply to on-disk exclusions and validates only the observed_missing_at
+        # evidence field.
+        "source": "*",
+        "reason": "source path no longer exists on disk",
+    },
     "agy-conversation-nonprompt-v1": {
         "source": "agy-cli-conversations",
         "path": {
@@ -1323,6 +1334,16 @@ def source_contract_receipt_applies(
     related_evidence: dict[str, Any] | None = None,
 ) -> bool:
     """Validate the source and structural path role claimed by a private receipt."""
+
+    if contract_id == SOURCE_MISSING_EXCLUSION_ID:
+        evidence = related_evidence or {}
+        observed = evidence.get("observed_missing_at")
+        return bool(
+            isinstance(evidence, dict)
+            and set(evidence) == {"observed_missing_at"}
+            and isinstance(observed, str)
+            and observed
+        )
 
     rule = SOURCE_ADAPTER_RULES.get(contract_id) or SOURCE_EXCLUSION_RULES.get(contract_id)
     if not isinstance(rule, dict) or rule.get("source") != source:

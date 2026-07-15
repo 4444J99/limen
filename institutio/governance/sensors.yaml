@@ -190,13 +190,13 @@ sensors:
     default: "0"
     source: [heartbeat]
     owner: tabularius
-    note: "DARK pending a measured bounded canary: run the command manually, prove a healthy first pass plus a cheap idempotent second pass, then change both this consumer default and the parameter-panel default together. It is deliberately not Omega-eligible while dark."
+    note: "DARK — canary 2026-07-14 (PR fix/prompt-corpus-missing-source-exclusion) drained the 20,487-unit obligation deadlock (unresolved 20,487 -> 566, zero stale-version orphans; unbounded pass 186.9s, bounded pass 153.7s, cursor advances and merges cleanly; probe: python3 scripts/prompt-atom-ledger.py --check-cursor). Arming is blocked on one atom: 501 agy conversations carry a newer SQLite steps schema (has_subtrajectory, permissions, step_format) the adapter fail-closed rejects, so the beat command exits 1 on source_errors. Extend the agy adapter, prove a clean exit-0 bounded pass, then flip this default and the parameter-panel default together."
     cadence:
       env: LIMEN_BEAT_PROMPT_ATOMS
       default: 4
     timeout:
       env: LIMEN_PROMPT_ATOM_TIMEOUT
-      default: 180
+      default: 300
     steps:
       - command: 'python3 scripts/prompt-atom-ledger.py --scan --days "${LIMEN_PROMPT_ATOM_DAYS:-2}" --max-files "${LIMEN_PROMPT_ATOM_MAX_FILES:-80}" --write'
         quiet_output: true

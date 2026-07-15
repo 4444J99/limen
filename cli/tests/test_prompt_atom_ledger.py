@@ -2836,3 +2836,439 @@ def test_outcome_history_is_revision_linked_monotonic_and_terminal(tmp_path: Pat
     else:
         raise AssertionError("terminal outcome was rolled back")
     assert paths.outcome_journal.read_bytes() == terminal_bytes
+
+
+# --- source-missing exclusion receipt tests ---
+
+
+def _source_missing_receipt(corpus) -> dict:
+    """Build a minimal valid source-missing exclusion receipt."""
+    contract = corpus.current_source_adapter_contract()
+    return {
+        "version": contract["version"],
+        "disposition": "excluded",
+        "contract_id": "source-missing-v1",
+        "contract_digest": contract["digest"],
+        "related_signatures": {},
+        "related_evidence": {"observed_missing_at": "2026-07-14T12:00:00+00:00"},
+    }
+
+
+def _source_missing_cursor_proposal(corpus, key: str, *, base_revision: int = 0, current: dict) -> dict:
+    """Build a minimal scan proposal that resolves one missing-source key."""
+    contract = corpus.current_source_adapter_contract()
+    receipt = _source_missing_receipt(corpus)
+    receipts = {key: receipt}
+    source_units = sorted([key])
+    unresolved = []
+    return {
+        "base_revision": base_revision,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scanner_version": contract["scanner_version"],
+        "scope": "partial:all",
+        "target_scope": "all",
+        "all_baseline_complete": False,
+        "source_manifest_digest": corpus.digest({"test": 1}),
+        "all_source_manifest_digest": None,
+        "source_unit_count": len(source_units),
+        "source_units": source_units,
+        "source_units_digest": corpus.digest(source_units),
+        "source_adapter_contract": contract,
+        "excluded_source_count": len(receipts),
+        "source_exclusion_counts": {"source-missing-v1": 1},
+        "excluded_unit_receipts": receipts,
+        "excluded_unit_receipts_digest": corpus.digest(receipts),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 0,
+        "unresolved_units": unresolved,
+        "unresolved_units_digest": corpus.digest(unresolved),
+        "source_errors": [],
+        "pending_files": 0,
+        "files": {},
+    }
+
+
+def test_source_missing_receipt_passes_validate_source_adapter_cursor():
+    """validate_source_adapter_cursor accepts source-missing-v1 receipts without a file signature."""
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    key = "scan-v2:agy-cli-conversations:/home/.gemini/antigravity-cli/conversations/gone.db"
+    receipt = _source_missing_receipt(corpus)
+    receipts = {key: receipt}
+    source_units = sorted([key])
+    cursor = {
+        "scanner_version": contract["scanner_version"],
+        "scope": "partial:all",
+        "target_scope": "all",
+        "all_baseline_complete": False,
+        "source_manifest_digest": corpus.digest({"test": 1}),
+        "all_source_manifest_digest": None,
+        "source_unit_count": len(source_units),
+        "source_units": source_units,
+        "source_units_digest": corpus.digest(source_units),
+        "source_adapter_contract": contract,
+        "excluded_source_count": 1,
+        "source_exclusion_counts": {"source-missing-v1": 1},
+        "excluded_unit_receipts": receipts,
+        "excluded_unit_receipts_digest": corpus.digest(receipts),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 0,
+        "unresolved_units": [],
+        "unresolved_units_digest": corpus.digest([]),
+        "source_errors": [],
+        "pending_files": 0,
+        "files": {},
+        "source_families": {
+            "agy-cli-conversations": {
+                "discovered": 1,
+                "converged": 0,
+                "adapted": 0,
+                "excluded": 1,
+                "pending": 0,
+                "errors": 0,
+                "unsupported": 0,
+            }
+        },
+    }
+
+    errors = corpus.validate_source_adapter_cursor(cursor)
+    assert errors == [], f"Unexpected validation errors: {errors}"
+
+
+def test_merge_cursor_accepts_source_missing_exclusion_for_vanished_paths():
+    """merge_cursor accepts a proposal that resolves unresolved units via source-missing receipts."""
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    gone_key = "scan-v2:agy-cli-conversations:/home/.gemini/antigravity-cli/conversations/gone.db"
+
+    unresolved_list = [gone_key]
+    current = {
+        "revision": 3,
+        "scanner_version": contract["scanner_version"],
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "excluded_source_count": 0,
+        "source_exclusion_counts": {},
+        "excluded_unit_receipts": {},
+        "excluded_unit_receipts_digest": corpus.digest({}),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 1,
+        "unresolved_units": unresolved_list,
+        "unresolved_units_digest": corpus.digest(unresolved_list),
+        "files": {},
+    }
+
+    proposed = _source_missing_cursor_proposal(corpus, gone_key, base_revision=3, current=current)
+
+    merged = corpus.merge_cursor(current, proposed)
+
+    assert merged["unresolved_unit_count"] == 0
+    assert merged["unresolved_units"] == []
+    assert gone_key in merged["excluded_unit_receipts"]
+    assert merged["excluded_unit_receipts"][gone_key]["contract_id"] == "source-missing-v1"
+    assert gone_key in merged["source_units"]
+
+
+def test_merge_cursor_source_missing_is_idempotent():
+    """A second proposal for already-resolved source-missing keys is a no-op (no errors)."""
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    gone_key = "scan-v2:agy-cli-conversations:/home/.gemini/antigravity-cli/conversations/gone2.db"
+
+    unresolved_list = [gone_key]
+    current = {
+        "revision": 1,
+        "scanner_version": contract["scanner_version"],
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "excluded_source_count": 0,
+        "source_exclusion_counts": {},
+        "excluded_unit_receipts": {},
+        "excluded_unit_receipts_digest": corpus.digest({}),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 1,
+        "unresolved_units": unresolved_list,
+        "unresolved_units_digest": corpus.digest(unresolved_list),
+        "files": {},
+    }
+    proposed = _source_missing_cursor_proposal(corpus, gone_key, base_revision=1, current=current)
+    merged1 = corpus.merge_cursor(current, proposed)
+    assert merged1["unresolved_unit_count"] == 0
+
+    # Second proposal: gone_key already gone from unresolved, already in excluded.
+    # Build a fresh proposal against the merged state.
+    proposed2 = _source_missing_cursor_proposal(corpus, gone_key, base_revision=merged1["revision"], current=merged1)
+    # gone_key is no longer in merged1["unresolved_units"], so cleared_unresolved is empty.
+    merged2 = corpus.merge_cursor(merged1, proposed2)
+    assert merged2["unresolved_unit_count"] == 0
+    assert gone_key in merged2["excluded_unit_receipts"]
+
+
+def test_existing_path_is_not_excluded_as_source_missing(tmp_path: Path):
+    """A unit key whose path EXISTS is not resolved by the source-missing path."""
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+
+    existing_file = tmp_path / "real_file.db"
+    existing_file.write_bytes(b"data")
+    existing_key = f"scan-v2:agy-cli-conversations:{existing_file}"
+
+    gone_key = "scan-v2:agy-cli-conversations:/definitely/does/not/exist/nowhere.db"
+    unresolved_list = sorted([existing_key, gone_key])
+    current = {
+        "revision": 0,
+        "scanner_version": contract["scanner_version"],
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "excluded_source_count": 0,
+        "source_exclusion_counts": {},
+        "excluded_unit_receipts": {},
+        "excluded_unit_receipts_digest": corpus.digest({}),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 2,
+        "unresolved_units": unresolved_list,
+        "unresolved_units_digest": corpus.digest(unresolved_list),
+        "files": {},
+    }
+
+    # Build a proposal that resolves only the gone key (not the existing one).
+    receipt = _source_missing_receipt(corpus)
+    receipts = {gone_key: receipt}
+    source_units = sorted([gone_key])
+    proposed = {
+        "base_revision": 0,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scanner_version": contract["scanner_version"],
+        "scope": "partial:all",
+        "target_scope": "all",
+        "all_baseline_complete": False,
+        "source_manifest_digest": corpus.digest({"test": 2}),
+        "all_source_manifest_digest": None,
+        "source_unit_count": len(source_units),
+        "source_units": source_units,
+        "source_units_digest": corpus.digest(source_units),
+        "source_adapter_contract": contract,
+        "excluded_source_count": len(receipts),
+        "source_exclusion_counts": {"source-missing-v1": 1},
+        "excluded_unit_receipts": receipts,
+        "excluded_unit_receipts_digest": corpus.digest(receipts),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 1,
+        "unresolved_units": [existing_key],
+        "unresolved_units_digest": corpus.digest([existing_key]),
+        "source_errors": [],
+        "pending_files": 0,
+        "files": {},
+    }
+
+    merged = corpus.merge_cursor(current, proposed)
+
+    # The existing-path key stays unresolved; only gone_key is resolved.
+    assert existing_key in merged["unresolved_units"]
+    assert gone_key not in merged["unresolved_units"]
+    assert gone_key in merged["excluded_unit_receipts"]
+    assert existing_key not in merged["excluded_unit_receipts"]
+
+
+def test_merge_cursor_accepts_version_superseded_cleared_keys(tmp_path: Path):
+    """A cleared old-version key whose (source, path) is tracked under a newer
+    scan-version key in the proposal is version-superseded — accepted without
+    an explicit receipt."""
+    corpus = _load()
+    contract = corpus.current_source_adapter_contract()
+    scanner_version = contract["scanner_version"]
+
+    path = tmp_path / "conv.db"
+    path.write_bytes(b"data")
+    old_key = f"scan-v{scanner_version - 1}:agy-cli-conversations:{path}"
+    new_key = f"scan-v{scanner_version}:agy-cli-conversations:{path}"
+    current = {
+        "revision": 0,
+        "scanner_version": scanner_version,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "pending_files": 0,
+        "source_errors": [],
+        "source_adapter_contract": contract,
+        "excluded_source_count": 0,
+        "source_exclusion_counts": {},
+        "excluded_unit_receipts": {},
+        "excluded_unit_receipts_digest": corpus.digest({}),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 1,
+        "unresolved_units": [old_key],
+        "unresolved_units_digest": corpus.digest([old_key]),
+        "files": {},
+    }
+    source_units = [new_key]
+    proposed = {
+        "base_revision": 0,
+        "base_cursor_digest": corpus.cursor_digest(current),
+        "scanner_version": scanner_version,
+        "scope": "partial:all",
+        "target_scope": "all",
+        "all_baseline_complete": False,
+        "source_manifest_digest": corpus.digest({"test": 3}),
+        "all_source_manifest_digest": None,
+        "source_unit_count": len(source_units),
+        "source_units": source_units,
+        "source_units_digest": corpus.digest(source_units),
+        "source_adapter_contract": contract,
+        "excluded_source_count": 0,
+        "source_exclusion_counts": {},
+        "excluded_unit_receipts": {},
+        "excluded_unit_receipts_digest": corpus.digest({}),
+        "adapted_source_count": 0,
+        "source_adapter_counts": {},
+        "adapted_unit_receipts": {},
+        "adapted_unit_receipts_digest": corpus.digest({}),
+        "unsupported_source_count": 0,
+        "unsupported_units": {},
+        "unsupported_units_digest": corpus.digest({}),
+        "unresolved_unit_count": 1,
+        "unresolved_units": [new_key],
+        "unresolved_units_digest": corpus.digest([new_key]),
+        "source_errors": [],
+        "pending_files": 0,
+        "files": {},
+    }
+
+    merged = corpus.merge_cursor(current, proposed)
+
+    # The old-version key is superseded by the new-version key; no receipt required.
+    assert old_key not in merged["unresolved_units"]
+    assert new_key in merged["unresolved_units"]
+
+    # A CURRENT-version key gets no supersession excuse: clearing it without
+    # parsed or excluded proof must still be rejected.
+    current_same = dict(current)
+    current_same["unresolved_units"] = [new_key]
+    current_same["unresolved_units_digest"] = corpus.digest([new_key])
+    proposed_same = dict(proposed)
+    proposed_same["base_cursor_digest"] = corpus.cursor_digest(current_same)
+    proposed_same["unresolved_unit_count"] = 0
+    proposed_same["unresolved_units"] = []
+    proposed_same["unresolved_units_digest"] = corpus.digest([])
+    with pytest.raises(ValueError, match="lack parsed or excluded resolution proof"):
+        corpus.merge_cursor(current_same, proposed_same)
+
+
+def _load_ledger_script():
+    spec = importlib.util.spec_from_file_location("prompt_atom_ledger_script", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _write_checkpointed_cursor(corpus, paths, cursor: dict) -> None:
+    paths.private_dir.mkdir(parents=True, exist_ok=True)
+    paths.cursor.write_text(json.dumps(cursor), encoding="utf-8")
+    marker = {
+        "source_cursor_digest": corpus.cursor_digest(cursor),
+        "journal_signatures": {"cursor": corpus._path_signature(paths.cursor)},
+    }
+    paths.private_snapshot.write_text(json.dumps(marker), encoding="utf-8")
+
+
+def test_check_cursor_state_passes_on_coherent_cursor(tmp_path: Path):
+    corpus = _load()
+    ledger = _load_ledger_script()
+    paths = _paths(corpus, tmp_path)
+    key = f"scan-v{ledger.SCANNER_VERSION}:agy-cli-conversations:/tmp/live.db"
+    cursor = {
+        "revision": 1,
+        "scanner_version": ledger.SCANNER_VERSION,
+        "unresolved_units": [key],
+        "files": {},
+    }
+    _write_checkpointed_cursor(corpus, paths, cursor)
+
+    assert ledger.check_cursor_state(paths) == []
+
+
+def test_check_cursor_state_flags_orphaned_scan_version_keys(tmp_path: Path):
+    corpus = _load()
+    ledger = _load_ledger_script()
+    paths = _paths(corpus, tmp_path)
+    orphan = f"scan-v{ledger.SCANNER_VERSION - 1}:agy-cli-conversations:/tmp/gone.db"
+    cursor = {
+        "revision": 1,
+        "scanner_version": ledger.SCANNER_VERSION,
+        "unresolved_units": [orphan],
+        "files": {},
+    }
+    _write_checkpointed_cursor(corpus, paths, cursor)
+
+    errors = ledger.check_cursor_state(paths)
+    assert any("orphaned" in error for error in errors)
+
+
+def test_check_cursor_state_flags_unbound_checkpoint(tmp_path: Path):
+    corpus = _load()
+    ledger = _load_ledger_script()
+    paths = _paths(corpus, tmp_path)
+    cursor = {
+        "revision": 1,
+        "scanner_version": ledger.SCANNER_VERSION,
+        "unresolved_units": [],
+        "files": {},
+    }
+    _write_checkpointed_cursor(corpus, paths, cursor)
+    # Mutate the cursor after the checkpoint marker was sealed.
+    cursor["revision"] = 2
+    paths.cursor.write_text(json.dumps(cursor), encoding="utf-8")
+
+    errors = ledger.check_cursor_state(paths)
+    assert any("not bound" in error for error in errors)

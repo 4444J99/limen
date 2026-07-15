@@ -109,6 +109,7 @@ from limen.prompt_sources import (  # noqa: E402
     SOURCE_ADAPTER_RULES,
     SOURCE_ALIAS_BLOCKER_REASONS,
     SOURCE_FILE_SIGNATURE_FIELDS,
+    SOURCE_MISSING_EXCLUSION_ID,
     SOURCE_RECORD_SCHEMAS,
     SourcePathCustody,
     agy_conversation_root_error,
@@ -5564,11 +5565,52 @@ def scan_native_sources(
     )
     raw_prior_unresolved_units = [] if source_cache_reset else loaded_cursor.get("unresolved_units")
     prior_unresolved_set = set(raw_prior_unresolved_units) if isinstance(raw_prior_unresolved_units, list) else set()
+    # For receipt emission purposes, always read the full prior unresolved set from the
+    # loaded cursor — even on a cache reset — so we can emit exclusion receipts for
+    # keys that are cleared by a scanner-version bump (version-superseded) or by path
+    # reclamation (source-missing). Without receipts, merge_cursor rejects every proposal
+    # for any cleared key that cannot be proven resolved.
+    _raw_all_prior = loaded_cursor.get("unresolved_units")
+    _all_prior_unresolved_set = set(_raw_all_prior) if isinstance(_raw_all_prior, list) else set()
+    # Build a (source, path) lookup from the current discovered keys so we can detect
+    # which prior unresolved keys are covered by a newly-keyed (version-superseded)
+    # entry in the proposed manifest. Those do not need source-missing receipts —
+    # merge_cursor handles them via its own version-superseded exception.
+    _discovered_by_source_path: set[tuple[str, str]] = set()
+    for _dk in discovered:
+        if isinstance(_dk, str):
+            _dp = _dk.split(":", 2)
+            if len(_dp) == 3:
+                _discovered_by_source_path.add((_dp[1], _dp[2]))
+    # Partition prior unresolved OLD-scanner-version keys. After a version bump a key
+    # can never be rediscovered under its recorded form, so each old key is either
+    # version-superseded (its (source, path) reappears under the current key format —
+    # merge_cursor's own exception resolves it, no receipt needed) or source-missing
+    # (the pair is gone entirely: reclaimed path, or a deleted virtual key such as
+    # opencode-db#session:... — resolved below with an exclusion receipt). Same-version
+    # units that vanish keep the fail-closed "previously tracked source obligations are
+    # unavailable" error instead — a missing volume must surface as an error, never as
+    # a silent exclusion.
+    _current_scan_prefix = f"scan-v{SCANNER_VERSION}"
+    _missing_source_keys_early: set[str] = set()
+    _version_superseded_keys_early: set[str] = set()
+    for _key in _all_prior_unresolved_set - set(discovered):
+        if not isinstance(_key, str):
+            continue
+        _parts = _key.split(":", 2)
+        if len(_parts) != 3 or not _parts[0].startswith("scan-v") or _parts[0] == _current_scan_prefix:
+            continue
+        if (_parts[1], _parts[2]) in _discovered_by_source_path:
+            _version_superseded_keys_early.add(_key)
+        else:
+            _missing_source_keys_early.add(_key)
     missing_prior_unresolved: set[str] = set()
     if effective_days is None:
         missing_obligation_sources: set[str] = set()
         missing_prior_unresolved = prior_unresolved_set - set(discovered)
-        for key in sorted(missing_prior_unresolved):
+        # Keys already resolved by the missing-source path or by a version-superseded
+        # newer-key do not represent genuine "source unavailable" obligations — exclude them.
+        for key in sorted(missing_prior_unresolved - _missing_source_keys_early - _version_superseded_keys_early):
             parts = key.split(":", 2) if isinstance(key, str) else []
             source = parts[1] if len(parts) == 3 and parts[0].startswith("scan-v") else "unknown"
             missing_obligation_sources.add(source)
@@ -5619,17 +5661,6 @@ def scan_native_sources(
     for key in agy_scan["discovered"]:
         excluded_unit_receipts.pop(key, None)
     excluded_unit_receipts.update(agy_scan.get("excluded_unit_receipts") or {})
-    excluded_unit_receipts_digest = digest(excluded_unit_receipts)
-    source_exclusion_counts = dict(
-        sorted(
-            Counter(
-                str(receipt.get("contract_id") or "unknown")
-                for receipt in excluded_unit_receipts.values()
-                if isinstance(receipt, dict)
-            ).items()
-        )
-    )
-    excluded_source_count = len(excluded_unit_receipts)
     adapted_unit_receipts = dict(regular["adapted_unit_receipts"])
     for key in opencode_scan["discovered"]:
         adapted_unit_receipts.pop(key, None)
@@ -5648,6 +5679,44 @@ def scan_native_sources(
         )
     )
     adapted_source_count = len(adapted_unit_receipts)
+    # Emit source-missing exclusion receipts for the pre-computed missing keys.
+    # These paths have been reclaimed from disk and will never re-enter discovery;
+    # without receipts, merge_cursor's invariant rejects every future proposal.
+    _now_utc = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    _missing_source_keys = _missing_source_keys_early
+    for _key in sorted(_missing_source_keys):
+        if _key not in excluded_unit_receipts:
+            excluded_unit_receipts[_key] = {
+                "version": SOURCE_ADAPTER_CONTRACT_VERSION,
+                "disposition": "excluded",
+                "contract_id": SOURCE_MISSING_EXCLUSION_ID,
+                "contract_digest": adapter_contract["digest"],
+                "related_signatures": {},
+                "related_evidence": {"observed_missing_at": _now_utc},
+            }
+    # Remove resolved missing-source keys and version-superseded keys from the
+    # "unresolved" pool so they do not re-appear in unresolved_units on future scans.
+    # Version-superseded keys are covered by the newer-version key in discovered;
+    # they need not be tracked separately.
+    missing_prior_unresolved -= _missing_source_keys
+    missing_prior_unresolved -= _version_superseded_keys_early
+    # Count missing-source units as "discovered" in source_coverage so the
+    # family totals stay consistent with source_unit_count (validator invariant).
+    for _key in sorted(_missing_source_keys):
+        _parts = _key.split(":", 2)
+        _src = _parts[1] if len(_parts) == 3 and _parts[0].startswith("scan-v") else "unknown"
+        coverage_row(source_coverage, _src)["discovered"] += 1
+    excluded_unit_receipts_digest = digest(excluded_unit_receipts)
+    source_exclusion_counts = dict(
+        sorted(
+            Counter(
+                str(receipt.get("contract_id") or "unknown")
+                for receipt in excluded_unit_receipts.values()
+                if isinstance(receipt, dict)
+            ).items()
+        )
+    )
+    excluded_source_count = len(excluded_unit_receipts)
     for counts in source_coverage.values():
         counts["excluded"] = 0
         counts["adapted"] = 0
@@ -5659,7 +5728,9 @@ def scan_native_sources(
         parts = key.split(":", 2)
         source = parts[1] if len(parts) == 3 and parts[0].startswith("scan-v") else "unknown"
         coverage_row(source_coverage, source)["adapted"] += 1
-    source_units = sorted(discovered)
+    # Include missing-source keys in source_units so merge_cursor's invariant
+    # sees them as resolved (they are now in excluded_unit_receipts too).
+    source_units = sorted(set(discovered) | _missing_source_keys)
     source_unit_count = len(source_units)
     source_units_digest = digest(source_units)
     unsupported_source_count = len(unsupported_units)
@@ -5679,6 +5750,8 @@ def scan_native_sources(
     else:
         preserved_unresolved = set(prior_unresolved_set)
         preserved_unresolved -= set(discovered)
+        preserved_unresolved -= _missing_source_keys
+        preserved_unresolved -= _version_superseded_keys_early
         unresolved_units = sorted(preserved_unresolved | current_unresolved_units)
     unresolved_unit_count = len(unresolved_units)
     unresolved_units_digest = digest(unresolved_units)
@@ -5790,6 +5863,52 @@ def scan_native_sources(
     return events, updated
 
 
+def check_cursor_state(paths: LedgerPaths) -> list[str]:
+    """Cheap read-only source-cursor coherence probe (seconds, no journal replay).
+
+    Proves the ask-lineage control plane can converge: the cursor parses and is
+    shape-valid, it is bound to the current private checkpoint, its scanner
+    version is current, and no unresolved obligation is orphaned on a stale
+    scan-version key (the merge-deadlock class fixed by the version-superseded
+    exception — a fresh drain pass clears them, and this probe fails until it has).
+    """
+
+    errors: list[str] = []
+    loaded_cursor, cursor_read_errors = load_json_strict(paths.cursor)
+    if cursor_read_errors:
+        return ["stored source cursor unreadable: " + "; ".join(cursor_read_errors)]
+    if not loaded_cursor:
+        return ["stored source cursor is empty; run a scan first"]
+    shape_errors = validate_cursor_shape(loaded_cursor, role="stored")
+    if shape_errors:
+        return ["invalid stored source cursor: " + "; ".join(shape_errors)]
+    marker, marker_errors = load_json_strict(paths.private_snapshot)
+    if (
+        marker_errors
+        or not marker
+        or marker.get("source_cursor_digest") != cursor_digest(loaded_cursor)
+        or ((marker.get("journal_signatures") or {}).get("cursor")) != _path_signature(paths.cursor)
+    ):
+        errors.append("stored source cursor is not bound to the current private checkpoint")
+    if loaded_cursor.get("scanner_version") != SCANNER_VERSION:
+        errors.append(
+            f"cursor scanner_version {loaded_cursor.get('scanner_version')} != current {SCANNER_VERSION};"
+            " next scan will reset the source cache"
+        )
+    current_prefix = f"scan-v{SCANNER_VERSION}:"
+    orphaned = [
+        key
+        for key in (loaded_cursor.get("unresolved_units") or [])
+        if isinstance(key, str) and not key.startswith(current_prefix)
+    ]
+    if orphaned:
+        errors.append(
+            f"{len(orphaned)} unresolved obligations are orphaned on stale scan-version keys"
+            " (run an unbounded drain pass to resolve them)"
+        )
+    return errors
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scan", action="store_true", help="scan changed native source files")
@@ -5815,6 +5934,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--write", action="store_true", help="append journals and refresh projections")
     parser.add_argument("--check", action="store_true", help="verify journal/projection convergence")
+    parser.add_argument(
+        "--check-cursor",
+        action="store_true",
+        help="cheap read-only cursor coherence probe (checkpoint binding, scanner version, no orphaned obligations)",
+    )
     parser.add_argument("--require-scope", choices=("all",), help="fail unless source scope matches")
     parser.add_argument("--root", type=Path, default=Path(os.environ.get("LIMEN_ROOT", REPO)))
     parser.add_argument("--private-root", type=Path)
@@ -5842,6 +5966,15 @@ def main() -> int:
         public_seal=args.public_seal.resolve() if args.public_seal else None,
         policy=args.policy.resolve() if args.policy else None,
     )
+    if args.check_cursor:
+        errors = check_cursor_state(paths)
+        if errors:
+            for error in errors:
+                print(f"FAIL: {error}")
+            return 1
+        print("prompt-atom-cursor: PASS")
+        return 0
+
     if args.check:
         errors = check_ledger(paths, require_scope=args.require_scope)
         if errors:
