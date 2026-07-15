@@ -1,7 +1,7 @@
 # Session Value Review
 
-Generated: `2026-07-10T06:50:56+00:00`
-Window: `2026-07-09T18:50:51+00:00` to `2026-07-10T06:50:51+00:00` (12.0h)
+Generated: `2026-07-15T16:00:45+00:00`
+Window: `2026-07-15T04:00:44+00:00` to `2026-07-15T16:00:44+00:00` (12.0h)
 
 ## Verdict
 
@@ -11,34 +11,32 @@ Window: `2026-07-09T18:50:51+00:00` to `2026-07-10T06:50:51+00:00` (12.0h)
 
 - Action: `continue_prompt_sweep` (exit `0`).
 - Reason: Prompt-batch receipt movement is still producing durable lifecycle evidence.
-- Follow-up pressure: `25` follow-up roots vs `416` merged/routed roots; consecutive pressure reports `0`.
+- Follow-up pressure: `0` follow-up roots vs `0` merged/routed roots; consecutive pressure reports `0`.
 - No-receipt pressure: `false`; consecutive reports `0`; high-motion `false`.
-- Maintenance commits: `25`; value commits: `355`; custody-only: `false`.
-- Open review batches: `12`; no durable progress: `false`.
+- Maintenance commits: `3`; value commits: `27`; custody-only: `false`.
+- Open review batches: `292`; no durable progress: `false`.
 - Next commands: `python3 scripts/prompt-batch-review-ledger.py --write`.
 
 ## Measured Output
 
-- Commits landed: `380`; files touched: `903`; insertions/deletions: `102715` / `20183`.
-- Prompt batch receipts: `188`; batches/hour: `15.67`.
-- Sessions recorded: `4553`; prompt events recorded: `25767`; prompt events/hour: `2147.25`.
-- Merged-root evidence: `99`; follow-up roots: `25`; absent owner routes: `317`.
-- Commit mix: `other` 355, `task_board` 21, `receipt_refresh` 4.
-- Receipt lane mix: `hash-review` 79, `legacy-session-review` 71, `historical-worktree-review` 30, `remote-proof` 5, `family` 2, `remote-close` 1.
-- Current corpus queue: `280` recorded, `12` open, `17` parked secret.
-- Current queue status mix: `needs-owner-route` 12, `non-source-recorded` 6, `owner-recorded` 271, `parked-secret` 17, `superseded-recorded` 3.
+- Commits landed: `30`; files touched: `117`; insertions/deletions: `9191` / `1777`.
+- Prompt batch receipts: `1`; batches/hour: `0.08`.
+- Sessions recorded: `0`; prompt events recorded: `0`; prompt events/hour: `0.0`.
+- Merged-root evidence: `0`; follow-up roots: `0`; absent owner routes: `0`.
+- Commit mix: `other` 26, `task_board` 3, `direct_engineering` 1.
+- Receipt lane mix: `owner-blocker` 1.
+- Current corpus queue: `292` recorded, `292` open, `17` parked secret.
+- Current queue status mix: `non-source-recorded` 15, `owner-recorded` 274, `parked-secret` 17, `superseded-recorded` 3.
 
 ## Value
 
-- Resolved 188 prompt-corpus batches covering 4553 sessions and 25767 prompt events into durable metadata receipts.
-- Linked 99 roots to already-merged PR evidence instead of leaving them as ambiguous session residue.
-- Left the current redacted queue measurable: 280 recorded batches and 12 open review batches.
-- Landed 380 commits with 903 file touches and 102715 insertions.
+- Resolved 1 prompt-corpus batches covering 0 sessions and 0 prompt events into durable metadata receipts.
+- Left the current redacted queue measurable: 292 recorded batches and 292 open review batches.
+- Landed 30 commits with 117 file touches and 9191 insertions.
 
 ## Critique
 
-- 25 roots still require follow-up review of an open/closed/live branch, so recording was not the same thing as finishing the downstream work.
-- 317 roots were routed to owner repos with no exact branch or PR; that is useful closure only if later runs do not rehydrate them without new evidence.
+- Throughput was modest for a long session; the review loop likely spent meaningful time on route discovery and verification rather than pure batch burn-down.
 
 ## Next-Run Controls
 
@@ -50,61 +48,42 @@ Window: `2026-07-09T18:50:51+00:00` to `2026-07-10T06:50:51+00:00` (12.0h)
 
 | Time | Commit | Kind | Subject |
 |---|---|---|---|
-| `2026-07-10T06:36:36+00:00` | `d1fc7aa` | `other` | limen: resolve low hash batch 061 |
-| `2026-07-10T06:36:46+00:00` | `3aa2809` | `other` | limen: resolve low hash batch 062 |
-| `2026-07-10T06:37:48+00:00` | `9ad6d53` | `other` | limen: resolve low hash batch 063 |
-| `2026-07-10T06:37:58+00:00` | `4f59aa0` | `other` | limen: resolve low hash batch 064 |
-| `2026-07-10T06:38:08+00:00` | `e9a2ae0` | `other` | limen: resolve low hash batch 065 |
-| `2026-07-10T06:38:18+00:00` | `f03e18c` | `other` | limen: resolve low hash batch 066 |
-| `2026-07-10T06:38:27+00:00` | `9103cdb` | `other` | limen: resolve low hash batch 067 |
-| `2026-07-10T06:39:24+00:00` | `93308d3` | `other` | limen: resolve low hash batch 068 |
-| `2026-07-10T06:39:34+00:00` | `2892904` | `other` | limen: resolve low hash batch 069 |
-| `2026-07-10T06:39:43+00:00` | `83cddc7` | `other` | limen: resolve low hash batch 070 |
-| `2026-07-10T06:39:53+00:00` | `580d142` | `other` | limen: resolve low hash batch 071 |
-| `2026-07-10T06:40:03+00:00` | `ce1856c` | `other` | limen: resolve low hash batch 072 |
-| `2026-07-10T06:40:31+00:00` | `5577f50` | `other` | limen: resolve low hash batch 073 |
-| `2026-07-10T06:40:41+00:00` | `db2d7af` | `other` | limen: resolve low hash batch 074 |
-| `2026-07-10T06:40:51+00:00` | `b56fc43` | `other` | limen: resolve low hash batch 075 |
-| `2026-07-10T06:41:01+00:00` | `55ffed5` | `other` | limen: resolve low hash batch 076 |
-| `2026-07-10T06:41:11+00:00` | `0498e43` | `other` | limen: resolve low hash batch 077 |
-| `2026-07-10T06:42:15+00:00` | `23c524e` | `other` | limen: resolve low hash batch 078 |
-| `2026-07-10T06:42:45+00:00` | `79e6853` | `other` | limen: mark repeated no-op recoveries needs human |
-| `2026-07-10T06:43:22+00:00` | `f4b761c` | `other` | limen: refresh prompt review status |
+| `2026-07-15T13:37:03+00:00` | `4c9c120` | `other` | fix(governor): marker autoclear honors an explicit pr: line — end the hand-written-owner freeze class (#1069) |
+| `2026-07-15T14:04:15+00:00` | `c0015e6` | `other` | feat(funnel): the rob-fitness L2 lane is shipped — organ records the generated-then-personalized path (#1066) |
+| `2026-07-15T14:10:35+00:00` | `9a4225d` | `other` | heal(worktree): dead-gitdir orphan QUARANTINE (preserve-not-delete) + prune-race guard (#1076) |
+| `2026-07-15T14:16:09+00:00` | `d137efa` | `other` | heal(arca): chunk >90MB ciphertext into GitHub-safe parts + retry unpushed seals (#1068) |
+| `2026-07-15T14:19:09+00:00` | `15ec482` | `other` | fix(verify): fail-closed CI mode for the resolver + register pr-gate's unregistered steps (#1077) |
+| `2026-07-15T14:22:18+00:00` | `ed75c3c` | `other` | fix(prompt-corpus): materialize empty journals — zero-outcome control plane can arm the overnight trial (#1075) |
+| `2026-07-15T14:48:30+00:00` | `493f6d5` | `other` | feat(config-ownership): IF-CONFIG-OWNERSHIP + codex scope in chezmoi-drift + lever ground-truth (#1080) |
+| `2026-07-15T14:48:41+00:00` | `383cee7` | `other` | fix(ci): pr-gate derives per-diff scoping from the GATES registry (#1048) (#1081) |
+| `2026-07-15T14:55:17+00:00` | `b8d0def` | `other` | feat(verify): await-pr.sh — the one sanctioned bounded PR-gate waiter (#1082) |
+| `2026-07-15T14:56:50+00:00` | `9b1ec00` | `other` | docs(governance): disclosure-audit entry — application-pipeline public-HEAD exposure + same-session heal (0715) (#1089) |
+| `2026-07-15T15:02:31+00:00` | `5d49211` | `other` | fix(prompt-corpus): register the agy protobuf step-payload envelope (drift class #4) (#1084) |
+| `2026-07-15T15:09:28+00:00` | `2abf0a1` | `direct_engineering` | docs: prompt-atom ledger views + branch-hygiene reap ledger (canary 2026-07-15) (#1093) |
+| `2026-07-15T15:09:32+00:00` | `20d47f0` | `other` | feat(sensors): orphan-watcher — no session-spawned PR poll shell outlives its session (#1086) |
+| `2026-07-15T15:13:10+00:00` | `75528bc` | `other` | chore(gitignore): ignore codex worktree roots + the derived prompt-atom ledger index (#1096) |
+| `2026-07-15T15:14:19+00:00` | `90994b2` | `other` | feat(substrate): Backblaze exclusion estate — IF-HOST-PRESSURE form 3 (#1088) |
+| `2026-07-15T15:37:32+00:00` | `0471204` | `other` | feat(verify): pytest-scope-guard — the scoped-verification law made mechanical (#1083) |
+| `2026-07-15T15:51:04+00:00` | `80c5760` | `other` | fix(governor): complete PR-owned pause releases — the deadly-embrace fix (#1097) |
+| `2026-07-15T15:53:39+00:00` | `a20556e` | `other` | logs: overnight-watch daemon state 2026-07-15 (#1098) |
+| `2026-07-15T15:54:35+00:00` | `47655e0` | `other` | heal(media): port owner-record update from preserved 0a4f21f — media-ark atoms operator-cleared (#1100) |
+| `2026-07-15T15:57:52+00:00` | `fe8dcc6` | `other` | heal(prompt-corpus): resolution receipt for rank-1 owner-blocker batch — row 1 done via PR #1100, row 2 blocked on the STYX operator gate (#1105) |
 
 ## Batch Receipts
 
 | Time | Batch | Lane | Sessions | Events | Root Statuses |
 |---|---|---|---:|---:|---|
-| `2026-07-10T06:38:01+00:00` | `prompt-batch-low-hash-review-065` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:38:10+00:00` | `prompt-batch-low-hash-review-066` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:38:20+00:00` | `prompt-batch-low-hash-review-067` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:39:16+00:00` | `prompt-batch-low-hash-review-068` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:39:26+00:00` | `prompt-batch-low-hash-review-069` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:39:36+00:00` | `prompt-batch-low-hash-review-070` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:39:46+00:00` | `prompt-batch-low-hash-review-071` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:39:56+00:00` | `prompt-batch-low-hash-review-072` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:40:23+00:00` | `prompt-batch-low-hash-review-073` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:40:34+00:00` | `prompt-batch-low-hash-review-074` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:40:44+00:00` | `prompt-batch-low-hash-review-075` | `hash-review` | 25 | 26 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:40:54+00:00` | `prompt-batch-low-hash-review-076` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:41:04+00:00` | `prompt-batch-low-hash-review-077` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:42:08+00:00` | `prompt-batch-low-hash-review-078` | `hash-review` | 25 | 25 | `codex_session_sensitive_context_recorded` 25 |
-| `2026-07-10T06:50:44+00:00` | `prompt-batch-critical-remote-proof-001` | `remote-proof` | 3 | 264 | `historical_absent_unpushed_source_missing` 2, `historical_absent_not_merged_source_missing` 1 |
-| `2026-07-10T06:50:44+00:00` | `prompt-batch-high-remote-proof-001` | `remote-proof` | 25 | 108 | `historical_absent_clean_merged_idle` 23, `historical_absent_not_merged_source_missing` 2 |
-| `2026-07-10T06:50:44+00:00` | `prompt-batch-high-remote-proof-002` | `remote-proof` | 25 | 90 | `historical_absent_clean_merged_idle` 18, `historical_absent_unpushed_source_missing` 5, `historical_absent_not_merged_source_missing` 2 |
-| `2026-07-10T06:50:44+00:00` | `prompt-batch-high-remote-proof-003` | `remote-proof` | 25 | 51 | `historical_absent_clean_merged_idle` 25 |
-| `2026-07-10T06:50:44+00:00` | `prompt-batch-high-remote-close-001` | `remote-close` | 5 | 20 | `historical_absent_open_pr_hint` 5 |
-| `2026-07-10T06:50:44+00:00` | `prompt-batch-high-remote-proof-004` | `remote-proof` | 6 | 23 | `historical_absent_clean_merged_idle` 6 |
+| `2026-07-15T15:55:44+00:00` | `prompt-batch-critical-owner-blocker-001` | `owner-blocker` | 0 | 0 | `owner_commit_needs_packet` 1, `private_patch_preserved` 1 |
 
 ## Next Queue Slice
 
 | Batch | Status | Lane | Sessions | Events |
 |---|---|---|---:|---:|
-| `prompt-batch-critical-observe-001` | `needs-owner-route` | `observe` | 25 | 2337 |
-| `prompt-batch-critical-preserve-001` | `needs-owner-route` | `preserve` | 11 | 44 |
-| `prompt-batch-high-observe-001` | `needs-owner-route` | `observe` | 25 | 1327 |
-| `prompt-batch-high-observe-002` | `needs-owner-route` | `observe` | 4 | 149 |
-| `prompt-batch-medium-observe-001` | `needs-owner-route` | `observe` | 25 | 229 |
+| `prompt-batch-critical-owner-blocker-001` | `owner-recorded` | `owner-blocker` | 8 | 812 |
+| `prompt-batch-critical-remote-pr-open-001` | `owner-recorded` | `remote-pr-open` | 5 | 2547 |
+| `prompt-batch-critical-preserve-001` | `owner-recorded` | `preserve` | 11 | 44 |
+| `prompt-batch-critical-historical-worktree-review-001` | `owner-recorded` | `historical-worktree-review` | 19 | 3085 |
+| `prompt-batch-critical-stalled-review-001` | `owner-recorded` | `stalled-review` | 25 | 105 |
 
 ## Commands
 

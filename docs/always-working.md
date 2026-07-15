@@ -1,6 +1,6 @@
 # Always-Working Reconciliation
 
-Generated: `2026-07-12T06:58:35+00:00`
+Generated: `2026-07-15T16:04:18+00:00`
 Status: `needs-work`
 Required open: `5`
 Blocked: `1`
@@ -21,8 +21,8 @@ Done from receipt: `5`
 - Status: `assigned_from_existing_work`
 - Verdict: substrate lifecycle predicate is failing
 - Lane fit: `codex-local`
-- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
-- Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
+- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap`
+- Receipt target: `git:organvm/limen:docs/estate-custody-implementation-receipts.json`
 
 ## Workstreams
 
@@ -31,10 +31,10 @@ Done from receipt: `5`
 | 0 | `SUBSTRATE-DISK-TEMP` | `assigned_from_existing_work` | substrate lifecycle predicate is failing |
 | 5 | `ESTATE-CUSTODY` | `done_from_receipt` | run-and-gun laptop cache and external estate custody have implementation receipts |
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | visible profile README is current; GitHub sidebar bio/link needs profile-settings scope |
-| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.9%, PRs 13.8%, issues 11.4%, reviews 0.9% |
+| 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 73.6%, PRs 14.3%, issues 11.3%, reviews 0.9% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `done_from_receipt` | credential wall and historical token tombstone receipt are present |
-| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 135 active flagged non-deleted messages require classification |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 84159 indexed non-deleted messages remain for future batches |
+| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | 144 active flagged non-deleted messages require classification |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | 500 historical messages atomized in this bounded batch; 85058 indexed non-deleted messages remain for future batches |
 | 40 | `REPO-BOIL-UP` | `assigned_from_existing_work` | broad repo surface ledger exists, but it is stale for current boil-up work |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `assigned_from_existing_work` | value repo product ledger exists, but it is stale for current funded-lane steering |
@@ -45,11 +45,11 @@ Done from receipt: `5`
 ### SUBSTRATE-DISK-TEMP
 
 - Lane fit: `codex-local`
-- Repo/root: `~/Workspace/limen`
+- Repo/root: `organvm/limen`
 - Task: Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.
-- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-over-cap`
-- Receipt target: `~/Workspace/limen/logs/cvstos-organ-state.json`
-- Stop condition: free disk is at target, temp writes are usable, and reclaimable worktree debt is owner-routed
+- Predicate: `python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap`
+- Receipt target: `git:organvm/limen:docs/estate-custody-implementation-receipts.json`
+- Stop condition: free disk is at target, temp writes are usable, worktree debt is exactly zero, and reapable roots are zero
 - Existing receipts:
   - `~/Workspace/limen/logs/heartbeat.out.log`
   - `~/Workspace/limen/logs/reclaim-generated-state.jsonl`
@@ -71,10 +71,10 @@ Done from receipt: `5`
 ### PUBLIC-FACE-PROFILE
 
 - Lane fit: `codex-integrator`
-- Repo/root: `~/Workspace/organvm/4444J99`
+- Repo/root: `4444J99/4444J99`
 - Task: Project the existing positioning/frontdoor and current metrics onto the profile README; fix stale counts and dead links.
 - Predicate: `python3 scripts/test_sync_readme.py && python3 scripts/sync-readme.py --check`
-- Receipt target: `~/Workspace/organvm/4444J99/README.md`
+- Receipt target: `git:4444J99/4444J99:README.md`
 - Stop condition: profile README has current metrics, live links, and evidence-backed top-engineer positioning
 - Existing receipts:
   - `~/Workspace/limen/docs/positioning/_frontdoor.md`
@@ -86,10 +86,10 @@ Done from receipt: `5`
 ### PUBLIC-FACE-CONTRIBUTION-BALANCE
 
 - Lane fit: `codex-conductor`
-- Repo/root: `~/Workspace/limen`
+- Repo/root: `organvm/limen`
 - Task: Use the live contribution balance as a value gate: route the next public work to substantive PR review first, then real issue criteria and PR packaging, before more commit-heavy implementation churn.
 - Predicate: `python3 scripts/github-contribution-balance.py --login 4444J99 --json`
-- Receipt target: `~/Workspace/limen/docs/always-working.md`
+- Receipt target: `git:organvm/limen:docs/always-working.md`
 - Stop condition: reviews/issues/PRs have owner receipts and commit-only churn is no longer the next public action
 - Existing receipts:
   - `~/Workspace/limen/docs/github-contribution-balance.md`
@@ -101,10 +101,10 @@ Done from receipt: `5`
 ### MAIL-ACTIVE-FLAGGED
 
 - Lane fit: `local-codex-or-opencode`
-- Repo/root: `~/Workspace/limen`
+- Repo/root: `organvm/limen`
 - Task: Use existing mail-story atoms and UMA obligations to classify the active flagged set; draft/park, never send.
 - Predicate: `python3 scripts/mail-story-ledger.py --scope flagged --write`
-- Receipt target: `~/Workspace/limen/docs/mail-story-ledger.md`
+- Receipt target: `git:organvm/limen:docs/mail-story-ledger.md`
 - Stop condition: flagged set has classified atoms, obligations, and needs-human buckets
 - Existing receipts:
   - `~/Workspace/limen/docs/mail-story-ledger.md`
@@ -116,10 +116,10 @@ Done from receipt: `5`
 ### REPO-BOIL-UP
 
 - Lane fit: `agy-or-opencode-readonly`
-- Repo/root: `~/Workspace/limen`
+- Repo/root: `organvm/limen`
 - Task: Harvest existing repo-surface and consolidation receipts, then assign only missing classifications.
 - Predicate: `python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write`
-- Receipt target: `~/Workspace/limen/docs/repo-surface-ledger.md`
+- Receipt target: `git:organvm/limen:docs/repo-surface-ledger.md`
 - Stop condition: all discovered roots are classified or recorded with blocker/gate
 - Existing receipts:
   - `~/Workspace/limen/docs/repo-surface-ledger.md`
@@ -131,10 +131,10 @@ Done from receipt: `5`
 ### VALUE-REPOS
 
 - Lane fit: `jules-or-opencode-repo-specific`
-- Repo/root: `organvm/a-i-chat--exporter,organvm/my-knowledge-base,organvm/public-record-data-scrapper,organvm/peer-audited--behavioral-blockchain,organvm/mirror-mirror`
+- Repo/root: `organvm/limen`
 - Task: Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.
 - Predicate: `python3 scripts/product-ledger.py --write`
-- Receipt target: `~/Workspace/limen/docs/product-ledger.md`
+- Receipt target: `git:organvm/limen:docs/product-ledger.md`
 - Stop condition: top value repo has shipped PR, open PR with predicate, owner task, or blocker
 - Existing receipts:
   - `~/Workspace/limen/value-repos.json`

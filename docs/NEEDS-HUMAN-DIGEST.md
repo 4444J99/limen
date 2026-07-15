@@ -33,3 +33,8 @@ essay-pipeline, tab-bookmark-manager, narratological-algorithmic-lenses, card-tr
 **Action:** Restore GitHub-hosted Actions eligibility for this private repository, or route its CI through an approved self-hosted runner.
 **Why:** Current push run `29212555132` ended before any job step. GitHub attached its generic payment/spending-limit annotation to check `86702633586`. The workflow requests `ubuntu-latest`, while the live repository and organization runner inventories both report zero self-hosted runners. This is not an organization-wide Actions outage: public `organvm/limen` jobs are running normally. The blocked predicate specifically requires a successful `manumissio` main-branch CI run.
 **Repo:** organvm/manumissio (private repository; do not generalize this receipt to public `organvm` repositories)
+
+## 6. Private-repo GitHub-hosted Actions gate — organvm/hospes
+**Action:** Restore GitHub-hosted Actions eligibility for this private repository, route its CI through an approved self-hosted runner, or explicitly approve making the repository public.
+**Why:** PR #2 run `29223993577` ended before any job step. GitHub attached its generic payment/spending-limit annotation to check `86734422666`. The workflow requests `ubuntu-latest`, while the live repository and organization runner inventories both report zero self-hosted runners. The blocked predicate specifically requires a successful `.github/workflows/ci.yml` run before the core slice is promoted.
+**Repo:** organvm/hospes (private repository; requires owner approval to make public or add runners)
