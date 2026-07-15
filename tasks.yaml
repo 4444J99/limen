@@ -143402,7 +143402,7 @@ tasks:
   workstream: prompt-corpus
   priority: high
   budget_cost: 1
-  status: open
+  status: done
   labels:
   - origin:ci-failure
   - horizon:present
@@ -143421,8 +143421,15 @@ tasks:
   receipt_target: git:organvm/limen:scripts/prompt-atom-ledger.py
   depends_on: []
   created: '2026-07-15'
-  updated: '2026-07-15T12:16:56.587963Z'
-  dispatch_log: []
+  updated: '2026-07-15T13:26:03.056748Z'
+  dispatch_log:
+  - timestamp: '2026-07-15T13:26:03.056748Z'
+    agent: codex
+    session_id: closeout-next-autonomous-epoch-20260715
+    status: done
+    output: Merged https://github.com/organvm/limen/pull/1065 at a669aefd16d60f9de3c31b2473f2251a23fb6e5e;
+      exact head a3d1d73741b35b6c57d3af72e140d106f19ddf0f; focused 10 passed, full
+      source file 272 passed, all six required remote checks green.
   origin: system_debt
   horizon: present
   value_case: Removes a nondeterministic whole-repo CI gate that can leave a correct
@@ -143463,3 +143470,168 @@ tasks:
   horizon: present
   value_case: Prevents repeated approval interruptions across the fleet while keeping
     authority and security gates explicit and fail-closed.
+- id: GH-organvm-limen-1064
+  title: 'prompt-corpus: agy steps-schema adapter gap (has_subtrajectory/permissions/step_format)
+    blocks arming prompt-corpus-control'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1064
+  context: "GitHub issue organvm/limen#1064. ## Blocker 501 agy conversations under\
+    \ ~/.gemini/antigravity-cli/conversations/ carry a newer SQLite `steps` schema\
+    \ with columns `has_subtrajectory`, `permissions`, `step_format`. The fail-closed\
+    \ adapter (`agy_steps_schema_error`) rejects them, every unit lands in `source_errors`,\
+    \ and `prompt-atom-ledger.py --scan --write` exits 1 on any `source_errors` \u2014\
+    \ so the `prompt-corpus-control` sensor cann"
+  predicate: test "$(gh issue view 1064 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1064
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T13:09:54.932907Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1057
+  title: "needs-human (L-DAILY-ENGINE-PHONE-LEAVES): Install the two daily-engine\
+    \ phone entry points (one sit-down, same d\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1057
+  context: "GitHub issue organvm/limen#1057. **Owner:** Anthony (human-gated lever\
+    \ `L-DAILY-ENGINE-PHONE-LEAVES`). Surfaced once, never nagged, never auto-pulled.\
+    \ This issue is the lever's permanent, individually-closeable home in the graph\
+    \ \u2014 the registry `his-hand-levers.json` is its source of truth. Install the\
+    \ two daily-engine phone entry points (one sit-down, same device): (1) Files app\
+    \ \u2192 iCloud Drive \u2192 DailyEngine \u2192 tap 'Snap the Plate."
+  predicate: test "$(gh issue view 1057 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1057
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T13:09:54.935247Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1053
+  title: 'needs-human (L-REMOTE-REAP-APPLY): Arm the remote-branch reaper''s second
+    dark gate'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1053
+  context: "GitHub issue organvm/limen#1053. **Owner:** Anthony (human-gated lever\
+    \ `L-REMOTE-REAP-APPLY`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Arm the remote-branch\
+    \ reaper's second dark gate: append `export LIMEN_REMOTE_REAP_APPLY=1` to ~/.limen.env.\
+    \ GITVS already observes the ~744 unresolved"
+  predicate: test "$(gh issue view 1053 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1053
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T13:09:54.936140Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1048
+  title: "pr-gate: derive per-diff scoping from gates.yaml \u2014 a one-line registry\
+    \ stamp pays the full matrix (~13 min)"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1048
+  context: "GitHub issue organvm/limen#1048. Observed 2026-07-14: PR #1047 (one-line\
+    \ `his-hand-levers.json` stamp) sat ~13 minutes in the required `pr-gate` check,\
+    \ because pr-gate is a serial monolith (ruff \xD75 trees \u2192 py_compile \u2192\
+    \ full tasks.yaml parse \u2192 6 registry predicates \u2192 full pytest \u2192\
+    \ \u2026) with zero diff-awareness. Every PR pays the whole matrix. This is the\
+    \ CI twin of the defect the charter already fixed locally: `scripts/verify-scoped"
+  predicate: test "$(gh issue view 1048 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1048
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T13:09:54.936982Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1046
+  title: 'needs-human (L-LAUNCHAGENT-HEAL): Arm the launch-agent self-heal effector'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1046
+  context: "GitHub issue organvm/limen#1046. **Owner:** Anthony (human-gated lever\
+    \ `L-LAUNCHAGENT-HEAL`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Arm the launch-agent\
+    \ self-heal effector: append `export LIMEN_LAUNCHAGENT_HEAL=1` to ~/.limen.env.\
+    \ The 0g4 liveness sensor (live-wired in PR #1013) alr"
+  predicate: test "$(gh issue view 1046 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1046
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T13:09:54.937850Z'
+  dispatch_log: []
+- id: GITVS-UNCAPPED-PR-DEBT-0715
+  title: Add an uncapped exact owner-route predicate for the whole PR estate
+  description: Extend GITVS with a paginated per-repository PR-debt census and a machine
+    check that fails unless every live open PR is typed as preservation, fresh active-owner
+    custody, or an actionable owner route with predicate and merge condition. Replace
+    stale owner aliases and cover accessible private repositories; do not use GitHub
+    search because it truncates at 1000.
+  repo: organvm/limen
+  type: code
+  target_agent: codex
+  workstream: governance
+  priority: critical
+  budget_cost: 1
+  status: open
+  labels:
+  - origin:closeout-gap
+  - horizon:present
+  - work-loan:underwritten
+  - operator-paused
+  urls:
+  - https://github.com/organvm/limen
+  context: Live GraphQL census at 2026-07-15T13:00:35Z covered 308/308 repositories
+    and 1068/1068 open PRs. The tracked ledger reported 203/1030 because repo enumeration
+    omitted 104 accessible private repositories and configured stale aliases. estate-closeout-audit.py
+    uses gh search prs and cannot be exact above 1000. Reuse gitvs.py paginated owner
+    graph; preserve active Claude ownership and never mutate PRs while the restart-study
+    pause marker exists.
+  predicate: LIMEN_GITVS_OWNERS=organvm,4444J99,a-organvm,organvm-i-theoria,organvm-ii-poiesis,organvm-iii-ergon,organvm-iv-taxis,organvm-v-logos,organvm-vi-koinonia,organvm-vii-kerygma,meta-organvm
+    python3 scripts/gitvs.py pr-debt --check --json
+  receipt_target: git:organvm/limen:docs/github-pr-debt-ledger.json
+  depends_on: []
+  created: '2026-07-15'
+  updated: '2026-07-15T13:26:03.056748Z'
+  dispatch_log: []
+  origin: system_debt
+  horizon: present
+  value_case: Makes estate completion provable without a 1000-result blind spot and
+    gives every remaining PR a durable owner, predicate, and merge condition.
