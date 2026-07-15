@@ -258,16 +258,23 @@ def atomic_write_text(path: Path, text: str, *, mode: int = 0o600) -> None:
 
 
 def append_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> int:
+    """Append rows; ALWAYS materialize the journal file, even for zero rows.
+
+    A legitimately-empty journal must be a real 0600 file, not an absent path:
+    `_path_signature` seals every journal's exact (size, mtime) into the public
+    snapshot, and consumers that cross-check those signatures against `lstat`
+    (overnight-watch's prompt-authority trial sources) cannot represent
+    "absent" — so a zero-outcome control plane could never arm a trial.
+    """
     material = [canonical_json(row) + "\n" for row in rows]
-    if not material:
-        return 0
     path.parent.mkdir(parents=True, exist_ok=True)
     fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
     os.chmod(path, 0o600)
     with os.fdopen(fd, "a", encoding="utf-8") as handle:
-        handle.writelines(material)
-        handle.flush()
-        os.fsync(handle.fileno())
+        if material:
+            handle.writelines(material)
+            handle.flush()
+            os.fsync(handle.fileno())
     return len(material)
 
 

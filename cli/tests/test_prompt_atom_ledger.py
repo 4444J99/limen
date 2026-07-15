@@ -3275,6 +3275,23 @@ def test_check_cursor_state_flags_unbound_checkpoint(tmp_path: Path):
     assert any("not bound" in error for error in errors)
 
 
+def test_append_jsonl_zero_rows_materializes_empty_journal(tmp_path):
+    """A legitimately-empty journal is a real 0600 file — sealed signatures and the
+    overnight-trial's lstat cross-check cannot represent an absent path."""
+    module = _load()
+    journal = tmp_path / "nested" / "prompt-atom-outcomes.jsonl"
+    appended = module.append_jsonl(journal, [])
+    assert appended == 0
+    assert journal.is_file()
+    assert journal.stat().st_size == 0
+    assert (journal.stat().st_mode & 0o777) == 0o600
+    # appending real rows to the materialized file still works and preserves mode
+    appended = module.append_jsonl(journal, [{"a": 1}])
+    assert appended == 1
+    assert journal.stat().st_size > 0
+    assert (journal.stat().st_mode & 0o777) == 0o600
+
+
 # ---------------------------------------------------------------------------
 # agy steps schema validation tests
 # ---------------------------------------------------------------------------
