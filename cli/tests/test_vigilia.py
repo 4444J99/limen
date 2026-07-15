@@ -67,6 +67,7 @@ def test_vitals_beat_gate_sheds_only_at_critical(monkeypatch):
     monkeypatch.setattr(params, "_load_panel", lambda: {})  # use code defaults (warn 2, crit 4)
     shed_calls = []
     monkeypatch.setattr(vitals, "shed_ollama", lambda: shed_calls.append(True) or ["llama3"])
+    monkeypatch.setattr(vitals, "read_load", lambda: 0.0)  # pin the load axis — memory only here
 
     monkeypatch.setattr(vitals, "read_pressure", lambda: 1)
     g = vitals.beat_gate(shed=True)
@@ -79,6 +80,48 @@ def test_vitals_beat_gate_sheds_only_at_critical(monkeypatch):
     monkeypatch.setattr(vitals, "read_pressure", lambda: 4)
     g = vitals.beat_gate(shed=True)
     assert g["action"] == "shed" and g["shed_ollama"] == ["llama3"]
+
+
+@pytest.mark.parametrize(
+    "per_core,expected",
+    [
+        (0.0, vitals.OK),
+        (1.49, vitals.OK),
+        (1.5, vitals.THROTTLE),
+        (2.9, vitals.THROTTLE),
+        (3.0, vitals.SHED),
+        (7.0, vitals.SHED),
+    ],
+)
+def test_vitals_assess_load(per_core, expected, monkeypatch):
+    monkeypatch.setattr(params, "_load_panel", lambda: {})  # code defaults: warn 1.5, crit 3.0
+    assert vitals.assess_load(per_core) == expected
+
+
+def test_vitals_read_load_fail_open(monkeypatch):
+    def boom():
+        raise OSError("no loadavg")
+
+    monkeypatch.setattr(vitals.os, "getloadavg", boom)
+    assert vitals.read_load() == 0.0  # normal — never blocks the beat
+
+
+def test_vitals_beat_gate_combines_axes_by_max_severity(monkeypatch):
+    monkeypatch.setattr(params, "_load_panel", lambda: {})
+    monkeypatch.setattr(vitals, "shed_ollama", lambda: ["llama3"])
+
+    # memory ok + load critical -> SHED (a CPU-only storm sheds too; 2026-07-15 incident shape)
+    monkeypatch.setattr(vitals, "read_pressure", lambda: 1)
+    monkeypatch.setattr(vitals, "read_load", lambda: 5.0)
+    g = vitals.beat_gate(shed=True)
+    assert g["action"] == "shed" and g["memory_action"] == "ok" and g["load_action"] == "shed"
+    assert g["shed_ollama"] == ["llama3"] and g["load_per_core"] == 5.0
+
+    # memory warn + load ok -> THROTTLE (load axis never masks the memory axis)
+    monkeypatch.setattr(vitals, "read_pressure", lambda: 2)
+    monkeypatch.setattr(vitals, "read_load", lambda: 0.2)
+    g = vitals.beat_gate(shed=True)
+    assert g["action"] == "throttle" and g["load_action"] == "ok"
 
 
 def test_heartbeat_vitals_preserves_remote_dispatch_and_throttles_both_local_modes():

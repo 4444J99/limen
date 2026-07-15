@@ -531,6 +531,18 @@ sensors:
         severity: advisory
         escalation: "mail unanswered — stale ledger or a reply-owed obligation without a draft; the C_MAIL draft effector may be dark (the 2026-06 silent-freeze failure mode this sensor exists to catch)"
 
+  host-pressure-stale:
+    section: "0o"
+    title: "host-pressure gauge is alive — the VITALS throttle/shed valve is not flying blind"
+    gate: LIMEN_HOST_PRESSURE_STALE
+    default: "1"
+    source: [metabolize]
+    owner: vitals
+    steps:
+      - command: "python3 scripts/host-pressure-stale.py"
+        severity: advisory
+        escalation: "VITALS gauge silent past VITALS_STALE_BEATS worst-case beats — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia beat` and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
+
   backblaze-exclusions:
     section: "0p"
     title: "backblaze exclusions live — regenerable fleet state is out of the crawl set (L-BACKBLAZE-EXCLUDE completion predicate)"

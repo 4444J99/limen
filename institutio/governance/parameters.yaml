@@ -177,6 +177,30 @@ parameters:
     self_update: none
     owner: vitals
     note: "Kill switch for the critical-pressure ollama shed. 1=shed loaded models at >=critical; 0=record only."
+  VITALS_LOAD_WARN_PER_CORE:
+    default: 1.5
+    env: LIMEN_VITALS_LOAD_WARN
+    self_update: none
+    owner: vitals
+    note: "Second VITALS axis (2026-07-15 host-thrash incident: Backblaze crawl + concurrent full pytest suites pinned CPU while the memory gauge alone couldn't see the storm coming). 1-min load average per core >= this: THROTTLE. Deliberately loose so memory stays the primary gauge and load only catches CPU-only storms — the 2026-07-08 starved-fleet night (273 skipped beats) is the precedent against tight thresholds."
+  VITALS_LOAD_CRIT_PER_CORE:
+    default: 3.0
+    env: LIMEN_VITALS_LOAD_CRIT
+    self_update: none
+    owner: vitals
+    note: "1-min load average per core >= this: SHED — block new local checkout work; off-box provider lanes remain eligible. Combined with the memory axis by max severity (either gauge can throttle/shed; neither can mask the other)."
+  VITALS_STALE_BEATS:
+    default: 3
+    env: LIMEN_VITALS_STALE_BEATS
+    self_update: none
+    owner: vitals
+    note: "host-pressure-stale sensor threshold: the vitals record in logs/vigilia/status.json is stale after this many worst-case beats (x LIMEN_LOOP_MAX seconds, the heartbeat's adaptive ceiling). A silent gauge means the throttle/shed valve is flying blind — that is the alarm, not the pressure itself."
+  LIMEN_HOST_PRESSURE_STALE:
+    default: "1"
+    env: LIMEN_HOST_PRESSURE_STALE
+    self_update: none
+    owner: vitals
+    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when the VITALS record hasn't been written within VITALS_STALE_BEATS worst-case beats while LIMEN_VIGILIA=1. Watches the watcher; the effector remains the existing THROTTLE/SHED path. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
 
   # --- CONTINUITY: make hand-recovery automatic (build order #1) ----------------
   CONTINUITY_MIN_SUMMARY_CHARS:
