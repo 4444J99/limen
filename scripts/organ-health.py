@@ -481,6 +481,7 @@ def _registry():
         # from-heartbeat drift check; green when its per-beat artifact is fresh.
         dict(
             key="continuity",
+            rung="CONTINUITY",
             voice="continuity",
             what="per-lane dispatch continuity (no silent lane while queue+budget exist)",
             probe=lambda: _json_field_ts(LOGS / "dispatch-continuity.json", "generated"),
@@ -501,6 +502,7 @@ def _registry():
         # per-beat census stamp is fresh.
         dict(
             key="session-walk",
+            rung="SESSION_WALK",
             voice="session-walk",
             gate="LIMEN_SESSION_WALK",
             gate_default="1",
@@ -734,6 +736,11 @@ def render_html(v):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    if "--help" in argv or "-h" in argv:
+        print("usage: organ-health.py [--strict] [--help]")
+        print("  Writes logs/organ-health.json + organ-health.html.")
+        print("  --strict  exit 1 when a default-ON safety organ is deployed OFF (dark-disabled)")
+        return 0
     strict = "--strict" in argv
     view = build()
     LOGS.mkdir(parents=True, exist_ok=True)
