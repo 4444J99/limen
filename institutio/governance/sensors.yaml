@@ -557,3 +557,31 @@ sensors:
       - command: "python3 scripts/backblaze-exclusions.py --check"
         severity: advisory
         escalation: "Backblaze is still crawling regenerable fleet trees — pull L-BACKBLAZE-EXCLUDE (System Settings → Backblaze → Exclusions; the missing folders are listed above); this rung self-clears the beat after Save (2026-07-15 host-thrash incident, IF-HOST-PRESSURE form 3)"
+
+  cloud-storage-doctor:
+    section: "heartbeat"
+    title: "HORREVM — every storage rail matches its declared role (iCloud caught-up; Dropbox/Drive/OneDrive quiet; Archive4T mounted; Backblaze observed read-only)"
+    gate: LIMEN_CLOUD_STORAGE
+    default: "1"
+    source: [heartbeat]
+    owner: horrevm
+    # Pure sensor, no effector by design — its escalation path IS the pairing: advisory severity
+    # surfaces drift in the beat log; the mutations (adoption, baseline edits) are operator decisions
+    # recorded in institutio/governance/storage-roles.yaml, never doctor actions.
+    cadence:
+      env: LIMEN_BEAT_CLOUD_STORAGE
+      default: 24
+    timeout:
+      env: LIMEN_CLOUD_STORAGE_TIMEOUT
+      default: 180
+    steps:
+      - command: "python3 scripts/cloud-storage-doctor.py --check"
+        severity: advisory
+        escalation: "storage rail drifted from its declared role (logs/cloud-storage-health.json) — see docs/storage-endgame.md; NEVER terminal-delete under ~/Library/CloudStorage or ~/Library/Mobile Documents"
+    omega_eligible:
+      - label: "storage-roles registry parity"
+        tier: det
+        command: "python3 scripts/cloud-storage-doctor.py --doctor"
+      - label: "storage rails posture"
+        tier: live
+        command: "python3 scripts/cloud-storage-doctor.py --check"

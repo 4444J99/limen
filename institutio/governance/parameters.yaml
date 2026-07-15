@@ -790,6 +790,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Maximum storage usage percentage before substrate-ledger marks a root constrained."
+  LIMEN_CLOUD_STORAGE:
+    default: 1
+    env: LIMEN_CLOUD_STORAGE
+    self_update: none
+    owner: horrevm
+    note: "Master on/off for the HORREVM storage-rails doctor sensor (cloud-storage-doctor in sensors.yaml). Ships LIVE (1): pure read-only sensor — no mutation, no send, no spend — so it runs unbidden per the aliveness law. Verifies actual state vs institutio/governance/storage-roles.yaml declarations (the 2026-06-15 endgame roles, finally executable)."
+  LIMEN_BEAT_CLOUD_STORAGE:
+    default: 24
+    env: LIMEN_BEAT_CLOUD_STORAGE
+    self_update: none
+    owner: horrevm
+    note: "Cadence (every N beats) of the HORREVM storage-rails doctor declared in sensors.yaml. The generic scheduled runner resolves this override; the beat sources contain no sensor-specific constant."
+  LIMEN_CLOUD_STORAGE_TIMEOUT:
+    default: 180
+    env: LIMEN_CLOUD_STORAGE_TIMEOUT
+    self_update: none
+    owner: horrevm
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the HORREVM doctor. Internal probe budgets (brctl 20s, fileproviderctl 30s, du 45s, pluginkit/ps 15s, tmutil 20s) sum under this bound; overrun is killed and the beat continues fail-open."
   LIMEN_SUBSTRATE_CONFIG:
     default: "$LIMEN_ROOT/config/substrate.json"
     env: LIMEN_SUBSTRATE_CONFIG

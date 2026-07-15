@@ -41,3 +41,4 @@ names:
   - {display: ARCA,          domain: arca,          register: classical, note: "arca · the encrypted private vault (organvm/arca, PR#720)"}
   - {display: LAVREA,        domain: lavrea,        register: classical, note: "laurea · the computed-laurels proof organ (4444J99/laurea, #645); u→v"}
   - {display: A-MAVS-OLEVM,  domain: a-mavs-olevm,  register: classical, note: "the artist/poiesis organ (organ-ladder rank 7) — already in canon form"}
+  - {display: HORREVM,       domain: horrevm,       register: classical, note: "horreum · the granary — storage-rails roles registry + doctor (institutio/governance/storage-roles.yaml + scripts/cloud-storage-doctor.py); canon form derived via nomenclator --check 2026-07-15; u→v"}
