@@ -15,9 +15,9 @@ portal:
       claude: 100
     track:
       date: '2026-07-16'
-      spent: 42
+      spent: 45
       per_agent:
-        jules: 24
+        jules: 27
         gemini: 7
         codex: 0
         opencode: 1
@@ -129765,7 +129765,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -129779,9 +129779,12 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/limen/pull/625 [auto-emitted 2026-07-08
     by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 625 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/625
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-16T05:47:54.268604Z'
   dispatch_log:
   - timestamp: '2026-07-10T09:28:01.497532Z'
     agent: opencode
@@ -129814,6 +129817,11 @@ tasks:
     status: open
     output: "recover: jules session 14186111844175879143 is idle_no_status \u2192\
       \ reopened"
+  - timestamp: '2026-07-16T05:47:54.268604Z'
+    agent: jules
+    session_id: async-reserve:31f052cf2eda0a2660167ea3ebfe1fee
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-626
   title: rebase/resolve conflicts on organvm/limen#626
   repo: organvm/limen
@@ -129905,7 +129913,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -129920,9 +129928,12 @@ tasks:
     to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
     open a new PR. PR: https://github.com/organvm/limen/pull/627 [auto-emitted 2026-07-08
     by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 627 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/627
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-16T05:47:54.268604Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -129964,6 +129975,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: jules session 8337198388116458935 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-16T05:47:54.268604Z'
+    agent: jules
+    session_id: async-reserve:ad447c3c05c9f14a99a96ea62c85b588
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-628
   title: rebase/resolve conflicts on organvm/limen#628
   repo: organvm/limen
@@ -143170,7 +143186,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - rebase
   - self-heal
@@ -143197,7 +143213,7 @@ tasks:
   receipt_target: https://github.com/organvm/a-i-chat--exporter/pull/121
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-16T00:22:37.821684Z'
+  updated: '2026-07-16T05:47:54.268604Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: agy
@@ -143225,6 +143241,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on gemini; reopened to asynchronous lane
+  - timestamp: '2026-07-16T05:47:54.268604Z'
+    agent: jules
+    session_id: async-reserve:d132aaf9c6dd124370dbc00ed53e052d
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-SUBSTRATE-DISK-TEMP-62de1d1fbf43
   title: Keep disk/temp/voice substrate from starving the swarm
   description: substrate lifecycle predicate is failing
@@ -143561,7 +143582,7 @@ tasks:
   receipt_target: git:organvm/limen:docs/product-ledger.md
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-16T05:36:26.177639Z'
+  updated: '2026-07-16T05:46:40.134173Z'
   dispatch_log:
   - timestamp: '2026-07-14T04:32:51.070528Z'
     agent: jules
@@ -143593,6 +143614,10 @@ tasks:
     session_id: async-reserve:843ac454004886f074a35ca80f340bc1
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-16T05:46:40.134173Z'
+    agent: jules
+    session_id: '7577463586506632086'
+    status: dispatched
 - id: GH-organvm-limen-1024
   title: Beat scheduled-sensor lane is dark (LIMEN_BEAT_DERIVE drift)
   repo: organvm/limen
