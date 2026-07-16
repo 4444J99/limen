@@ -435,7 +435,7 @@ sensors:
       - command: "python3 scripts/disk-capacity.py --check"
         args_when:
           - env: LIMEN_DISK_CAPACITY_APPLY
-            default: "0"
+            default: "1"
             equals: "1"
             args: ["--apply"]
             armed_valve_type: safety

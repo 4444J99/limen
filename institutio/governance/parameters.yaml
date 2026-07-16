@@ -3063,11 +3063,11 @@ parameters:
     note: "Per-run timeout (seconds) for the disk-capacity sensor. The check is a single df(1) call; 30s is generous headroom for a slow volume or a busy CI runner."
 
   LIMEN_DISK_CAPACITY_APPLY:
-    default: "0"               # OFF (DARK) — the effector. Arms removal of gitignored heal-probe artifacts + heartbeat error-log truncation.
+    default: "1"               # ARMED — the effector. Arms removal of gitignored heal-probe artifacts + heartbeat error-log truncation.
     env: LIMEN_DISK_CAPACITY_APPLY
     self_update: none
     owner: tabularius
-    note: "Arms the disk-capacity effector (scripts/disk-capacity.py --apply, sensor 0g7 args_when). When 1, the beat removes every git-check-ignored .heal-probe-*.yaml artifact under LIMEN_ROOT (gitignored transient probes; always safe to delete) and truncates logs/heartbeat.err.log when it exceeds LIMEN_DISK_LOG_CAP_MB (default 50 MiB), writing a receipt to logs/disk-capacity-apply.json. OFF by default — arm in the daemon env (~/.limen.env) once the --check advisory has been seen green."
+    note: "Arms the disk-capacity effector (scripts/disk-capacity.py --apply, sensor 0g7 args_when). When 1 (default), the beat removes every git-check-ignored .heal-probe-*.yaml artifact under LIMEN_ROOT (gitignored transient probes; always safe to delete) and truncates logs/heartbeat.err.log when it exceeds LIMEN_DISK_LOG_CAP_MB (default 50 MiB), writing a receipt to logs/disk-capacity-apply.json. Shipped dark; armed 2026-07-16 — /System/Volumes/Data at 87% vs 80% threshold. Set 0 to disarm."
 
   LIMEN_DISK_LOG_CAP_MB:
     default: 50
