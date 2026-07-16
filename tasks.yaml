@@ -144918,7 +144918,7 @@ tasks:
   title: fix failing CI on organvm/hospes#8
   repo: organvm/hospes
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -144946,7 +144946,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#385
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -144978,7 +144978,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#386
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -145010,7 +145010,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#401
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -145042,7 +145042,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#404
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -145074,7 +145074,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#407
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -145106,7 +145106,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#408
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -145138,7 +145138,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#410
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -145170,7 +145170,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#412
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
