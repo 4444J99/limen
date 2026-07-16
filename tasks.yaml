@@ -145408,7 +145408,7 @@ tasks:
     \ \u2014 bound the watch-loop's memory"
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -145433,7 +145433,7 @@ tasks:
     \ not bound on the list path"
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: codex
   priority: medium
   budget_cost: 1
   status: open
@@ -145459,7 +145459,7 @@ tasks:
     has no FL dataset'
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: medium
   budget_cost: 1
   status: open
@@ -145485,7 +145485,7 @@ tasks:
     api_keys table 004 already created'
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: agy
   priority: medium
   budget_cost: 1
   status: open
@@ -145510,7 +145510,7 @@ tasks:
     joins the set)'
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
