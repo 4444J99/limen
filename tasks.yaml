@@ -15,13 +15,13 @@ portal:
       claude: 100
     track:
       date: '2026-07-16'
-      spent: 5
+      spent: 6
       per_agent:
         jules: 0
         gemini: 0
         codex: 0
         opencode: 1
-        agy: 0
+        agy: 1
         claude: 0
         github_actions: 1
         ollama: 3
@@ -145315,7 +145315,7 @@ tasks:
   workstream: mail-active
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - always-working
   - receipt-first
@@ -145341,7 +145341,7 @@ tasks:
   receipt_target: git:organvm/limen:docs/mail-story-ledger.md
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T15:02:03.618145Z'
+  updated: '2026-07-16T15:56:12.842162Z'
   dispatch_log:
   - timestamp: '2026-07-16T14:38:41.757128Z'
     agent: opencode
@@ -145352,3 +145352,50 @@ tasks:
     agent: opencode
     session_id: https://github.com/organvm/limen/pull/1136
     status: dispatched
+  - timestamp: '2026-07-16T15:56:12.842162Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
+- id: AW-REPO-BOIL-UP-4e0395acddca
+  title: Reconcile local, nested, archive, and GitHub repo boil-up receipts
+  description: broad repo surface ledger exists, but it is stale for current boil-up
+    work
+  repo: organvm/limen
+  type: coordination
+  target_agent: agy
+  workstream: repo-boil-up
+  priority: high
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - always-working
+  - receipt-first
+  - overnight-lane-switch
+  - repo-boil-up
+  urls: []
+  context: 'Receipt-first verdict: broad repo surface ledger exists, but it is stale
+    for current boil-up work
+
+    Task: Run python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth
+    6 --write. Harvest existing repo-surface and consolidation receipts, then assign
+    only missing classifications.
+
+    Predicate: scripts/verify-scoped.sh
+
+    Receipt target: git:organvm/limen:docs/repo-surface-ledger.md
+
+    Stop condition: all discovered roots are classified or recorded with blocker/gate
+
+    This is the single bounded alternate selected after generic dispatch was value-gated.'
+  predicate: scripts/verify-scoped.sh
+  receipt_target: git:organvm/limen:docs/repo-surface-ledger.md
+  depends_on: []
+  created: '2026-07-16'
+  updated: '2026-07-16T16:41:18.511058Z'
+  dispatch_log:
+  - timestamp: '2026-07-16T16:41:18.511058Z'
+    agent: agy
+    session_id: async-reserve:639b687d10342061124068aed2fd19f5
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
