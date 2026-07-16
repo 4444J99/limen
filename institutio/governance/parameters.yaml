@@ -2799,6 +2799,24 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Optional operator override. It is usable only when the exact value is present and code-capable in the current `opencode models --verbose` catalog; blank derives from live capabilities."
+  LIMEN_CODEX_TIER_SELECT:
+    default: "1"
+    env: LIMEN_CODEX_TIER_SELECT
+    self_update: none
+    owner: dispatch
+    note: "Enable per-task tier derivation for the Codex lane. 1 (default) derives haiku->o4-mini, opus/fable->o3 via _claude_tier_for; 0 disables derivation (provider Auto, prior behaviour). Per-tier overrides via LIMEN_CODEX_MODEL_<TIER>."
+  LIMEN_GEMINI_MODEL:
+    default: ""
+    env: LIMEN_GEMINI_MODEL
+    self_update: none
+    owner: dispatch
+    note: "Blanket operator override for the Gemini agent model. Nonblank wins over all per-task tier derivation. Blank enables tier derivation (see LIMEN_GEMINI_TIER_SELECT)."
+  LIMEN_GEMINI_TIER_SELECT:
+    default: "1"
+    env: LIMEN_GEMINI_TIER_SELECT
+    self_update: none
+    owner: dispatch
+    note: "Enable per-task tier derivation for the Gemini lane. 1 (default) derives haiku/sonnet->gemini-2.5-flash, opus/fable->gemini-2.5-pro via _claude_tier_for; 0 disables derivation (bare invocation, prior behaviour). Per-tier overrides via LIMEN_GEMINI_MODEL_<TIER>."
   LIMEN_OPENCODE_CATALOG_TIMEOUT:
     default: 30
     env: LIMEN_OPENCODE_CATALOG_TIMEOUT

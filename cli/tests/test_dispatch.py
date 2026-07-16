@@ -1696,6 +1696,165 @@ def test_agent_argv_threads_task_into_dynamic_opencode_selector(monkeypatch) -> 
     assert argv == ["run", "-m", "fixture/runtime-output"]
 
 
+def test_codex_tier_derived_from_task_classes(monkeypatch) -> None:
+    """opus-class task -> o3; haiku (plain) task -> o4-mini."""
+    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
+    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "1")
+    monkeypatch.delenv("LIMEN_CODEX_MODEL_OPUS", raising=False)
+    monkeypatch.delenv("LIMEN_CODEX_MODEL_HAIKU", raising=False)
+    # Patch fable acceptance so opus class -> "opus" not "fable fallback"
+    monkeypatch.setattr(D, "_claude_fable_acceptance_present", lambda: False)
+
+    opus_task = Task(
+        id="CODEX-OPUS",
+        title="synthesis task",
+        labels=["synthesis"],
+        target_agent="codex",
+        created=date(2026, 7, 15),
+    )
+    haiku_task = Task(
+        id="CODEX-HAIKU",
+        title="simple coding task",
+        target_agent="codex",
+        created=date(2026, 7, 15),
+    )
+
+    assert D._codex_model(opus_task) == "o3"
+    assert D._codex_model(haiku_task) == "o4-mini"
+
+
+def test_codex_model_env_override_wins(monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_CODEX_MODEL", "custom-override")
+    task = Task(id="CODEX-OVERRIDE", title="any task", target_agent="codex", created=date(2026, 7, 15))
+    assert D._codex_model(task) == "custom-override"
+
+
+def test_codex_model_per_tier_env_override(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
+    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "1")
+    monkeypatch.setenv("LIMEN_CODEX_MODEL_OPUS", "my-opus-model")
+    monkeypatch.setattr(D, "_claude_fable_acceptance_present", lambda: False)
+
+    opus_task = Task(
+        id="CODEX-PER-TIER",
+        title="synthesis override",
+        labels=["synthesis"],
+        target_agent="codex",
+        created=date(2026, 7, 15),
+    )
+    assert D._codex_model(opus_task) == "my-opus-model"
+
+
+def test_codex_tier_disabled_returns_none(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
+    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "0")
+    task = Task(id="CODEX-DISABLED", title="any task", target_agent="codex", created=date(2026, 7, 15))
+    assert D._codex_model(task) is None
+
+
+def test_codex_tier_fail_open_on_exception(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
+    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "1")
+
+    def boom(task):
+        raise RuntimeError("simulated failure")
+
+    monkeypatch.setattr(D, "_claude_tier_for", boom)
+    task = Task(id="CODEX-FAIL", title="any task", target_agent="codex", created=date(2026, 7, 15))
+    assert D._codex_model(task) is None
+
+
+def test_gemini_tier_derived_from_task_classes(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_GEMINI_MODEL", raising=False)
+    monkeypatch.setenv("LIMEN_GEMINI_TIER_SELECT", "1")
+    monkeypatch.delenv("LIMEN_GEMINI_MODEL_OPUS", raising=False)
+    monkeypatch.delenv("LIMEN_GEMINI_MODEL_HAIKU", raising=False)
+    monkeypatch.setattr(D, "_claude_fable_acceptance_present", lambda: False)
+
+    opus_task = Task(
+        id="GEMINI-OPUS",
+        title="synthesis task",
+        labels=["synthesis"],
+        target_agent="gemini",
+        created=date(2026, 7, 15),
+    )
+    haiku_task = Task(
+        id="GEMINI-HAIKU",
+        title="simple coding task",
+        target_agent="gemini",
+        created=date(2026, 7, 15),
+    )
+
+    assert D._gemini_model(opus_task) == "gemini-2.5-pro"
+    assert D._gemini_model(haiku_task) == "gemini-2.5-flash"
+
+
+def test_gemini_model_env_override_wins(monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_GEMINI_MODEL", "custom-gemini")
+    task = Task(id="GEMINI-OVERRIDE", title="any task", target_agent="gemini", created=date(2026, 7, 15))
+    assert D._gemini_model(task) == "custom-gemini"
+
+
+def test_gemini_tier_disabled_returns_none(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_GEMINI_MODEL", raising=False)
+    monkeypatch.setenv("LIMEN_GEMINI_TIER_SELECT", "0")
+    task = Task(id="GEMINI-DISABLED", title="any task", target_agent="gemini", created=date(2026, 7, 15))
+    assert D._gemini_model(task) is None
+
+
+def test_agent_argv_codex_threads_task_into_tier_selector(monkeypatch) -> None:
+    observed: list[Task | None] = []
+    task = Task(
+        id="CODEX-ARGV",
+        title="task evidence reaches codex selector",
+        target_agent="codex",
+        created=date(2026, 7, 15),
+    )
+
+    def select(current: Task | None = None) -> str:
+        observed.append(current)
+        return "o3"
+
+    monkeypatch.setattr(D, "_codex_model", select)
+    argv = D._agent_argv("codex", task)
+
+    assert observed == [task]
+    assert "-m" in argv
+    assert argv[argv.index("-m") + 1] == "o3"
+
+
+def test_agent_argv_gemini_injects_model_before_prompt(monkeypatch) -> None:
+    task = Task(
+        id="GEMINI-ARGV",
+        title="model injected before -p",
+        target_agent="gemini",
+        created=date(2026, 7, 15),
+    )
+
+    monkeypatch.setattr(D, "_gemini_model", lambda t=None: "gemini-2.5-pro")
+    argv = D._agent_argv("gemini", task)
+
+    assert "-m" in argv
+    assert "-p" in argv
+    m_idx = argv.index("-m")
+    p_idx = argv.index("-p")
+    assert m_idx < p_idx, f"-m ({m_idx}) must appear before -p ({p_idx}) in {argv}"
+    assert argv[m_idx + 1] == "gemini-2.5-pro"
+
+
+def test_agent_argv_gemini_no_model_when_tier_select_off(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_GEMINI_MODEL", raising=False)
+    monkeypatch.setenv("LIMEN_GEMINI_TIER_SELECT", "0")
+    task = Task(
+        id="GEMINI-ARGV-OFF",
+        title="no model injected when tier off",
+        target_agent="gemini",
+        created=date(2026, 7, 15),
+    )
+    argv = D._agent_argv("gemini", task)
+    assert "-m" not in argv
+
+
 def test_dispatch_event_records_dynamic_selection_receipt() -> None:
     import datetime
 

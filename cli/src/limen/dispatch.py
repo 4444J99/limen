@@ -2258,7 +2258,7 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
         if model:
             flags += ["-m", model]
     elif agent == "codex":
-        model = _codex_model()
+        model = _codex_model(task)
         if model:
             flags += ["-m", model]
     elif agent == "claude":
@@ -2275,6 +2275,11 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
         model = ollama_model()
         if model:
             flags += [model]
+    elif agent == "gemini":
+        model = _gemini_model(task)
+        if model:
+            idx = flags.index("-p")
+            flags[idx:idx] = ["-m", model]
     return flags
 
 
@@ -4685,14 +4690,96 @@ def _accel_limit(limen: LimenFile, agent: str, base_limit: int, now: datetime) -
         return base_limit
 
 
-def _codex_model() -> str | None:
-    """Return only an explicit Codex model override.
+_CODEX_TIER_MODELS_DEFAULT: dict[str, str] = {
+    "haiku": "o4-mini",
+    "sonnet": "o4-mini",
+    "opus": "o3",
+    "fable": "o3",
+}
 
-    Codex does not expose a capability-rich live catalog that Limen can rank honestly, so the bare
-    CLI invocation delegates selection to provider Auto.  A configured override remains available
-    for an operator-owned exception; Limen never synthesizes a fallback model name from meter state.
-    """
-    return os.environ.get("LIMEN_CODEX_MODEL") or None
+_GEMINI_TIER_MODELS_DEFAULT: dict[str, str] = {
+    "haiku": "gemini-2.5-flash",
+    "sonnet": "gemini-2.5-flash",
+    "opus": "gemini-2.5-pro",
+    "fable": "gemini-2.5-pro",
+}
+
+
+def _codex_model(task: "Task | None" = None) -> str | None:
+    """Derive the Codex model for THIS task. Order:
+      1. LIMEN_CODEX_MODEL --- blanket operator pin, always wins;
+      2. LIMEN_CODEX_TIER_SELECT != "1" -> None (provider Auto, old behaviour);
+      3. derive tier via _claude_tier_for(task) (same class->tier semantics);
+      4. LIMEN_CODEX_MODEL_<TIER> per-tier env override -> _CODEX_TIER_MODELS_DEFAULT[tier];
+      5. Record selection; return model.
+    Fail-open to None on any exception --- never block the lane."""
+    env = os.environ.get("LIMEN_CODEX_MODEL")
+    if env:
+        _record_model_selection(
+            task, profile={"tier": "override", "source": "codex_override"}, selected_model=env, source="codex_override"
+        )
+        return env
+    if os.environ.get("LIMEN_CODEX_TIER_SELECT", "1") != "1":
+        _record_model_selection(
+            task,
+            profile={"tier": None, "source": "codex_tier_disabled"},
+            selected_model=None,
+            source="codex_tier_disabled",
+        )
+        return None
+    try:
+        tier = _claude_tier_for(task)
+        per_tier_env = f"LIMEN_CODEX_MODEL_{tier.upper()}"
+        model = os.environ.get(per_tier_env) or _CODEX_TIER_MODELS_DEFAULT.get(tier)
+        _record_model_selection(
+            task,
+            profile={"tier": tier, "source": "codex_tier_derived"},
+            selected_model=model,
+            source="codex_tier_derived",
+        )
+        return model
+    except Exception:
+        return None
+
+
+def _gemini_model(task: "Task | None" = None) -> str | None:
+    """Derive the Gemini model for THIS task. Order:
+      1. LIMEN_GEMINI_MODEL --- blanket operator pin, always wins;
+      2. LIMEN_GEMINI_TIER_SELECT != "1" -> None (bare invocation, old behaviour);
+      3. derive tier via _claude_tier_for(task) (same class->tier semantics);
+      4. LIMEN_GEMINI_MODEL_<TIER> per-tier env override -> _GEMINI_TIER_MODELS_DEFAULT[tier];
+      5. Record selection; return model.
+    Fail-open to None on any exception --- never block the lane."""
+    env = os.environ.get("LIMEN_GEMINI_MODEL")
+    if env:
+        _record_model_selection(
+            task,
+            profile={"tier": "override", "source": "gemini_override"},
+            selected_model=env,
+            source="gemini_override",
+        )
+        return env
+    if os.environ.get("LIMEN_GEMINI_TIER_SELECT", "1") != "1":
+        _record_model_selection(
+            task,
+            profile={"tier": None, "source": "gemini_tier_disabled"},
+            selected_model=None,
+            source="gemini_tier_disabled",
+        )
+        return None
+    try:
+        tier = _claude_tier_for(task)
+        per_tier_env = f"LIMEN_GEMINI_MODEL_{tier.upper()}"
+        model = os.environ.get(per_tier_env) or _GEMINI_TIER_MODELS_DEFAULT.get(tier)
+        _record_model_selection(
+            task,
+            profile={"tier": tier, "source": "gemini_tier_derived"},
+            selected_model=model,
+            source="gemini_tier_derived",
+        )
+        return model
+    except Exception:
+        return None
 
 
 # ─── Claude-lane earned-tier ladder (haiku-first-with-cheap-verify) ──────────

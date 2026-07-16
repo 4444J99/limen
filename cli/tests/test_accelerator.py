@@ -186,6 +186,7 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
 # ── codex provider-auto selection ───────────────────────────────────────────────────────────────
 def test_codex_uses_provider_auto_without_override(monkeypatch):
     monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
+    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "0")
     assert D._codex_model() is None
     argv = D._agent_argv("codex")
     assert "-m" not in argv, f"bare invocation must delegate to provider Auto: {argv}"
