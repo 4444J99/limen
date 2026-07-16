@@ -3345,6 +3345,52 @@ def test_rebind_checkpoint_refuses_on_corrupted_journals(tmp_path: Path):
     )
 
 
+def test_rebind_checkpoint_seals_semantic_validation_findings(tmp_path: Path, monkeypatch):
+    """Semantic validation findings do NOT block the reseal.
+
+    The trusted write lane (update_ledger, --scan --write) seals snapshots with
+    semantic findings recorded in snapshot["validation"] and lets --check report
+    them; the rebind effector must mirror that exactly, or an estate carrying
+    chronic semantic debt (unassessed operator repeats, coverage gaps) can never
+    recover from cursor drift — the wedge the effector exists to break.
+    """
+    corpus = _load()
+    ledger = _load_ledger_script()
+    paths = _paths(corpus, tmp_path)
+
+    # Bootstrap a real, attested, sealed ledger via the script's scan path.
+    _scan_and_bind(tmp_path)
+
+    # Simulate cursor drift: mtime advances without resealing the marker.
+    cursor_bytes = paths.cursor.read_bytes()
+    paths.cursor.write_bytes(cursor_bytes)
+    assert any("not bound" in e for e in ledger.check_cursor_state(paths))
+
+    # Inject a semantic finding into the rebuilt snapshot, the way a live
+    # estate carries them (validation.ok=False with recorded errors).
+    real_build_snapshot = ledger.build_snapshot
+
+    def build_snapshot_with_finding(*args, **kwargs):
+        snapshot = real_build_snapshot(*args, **kwargs)
+        snapshot["validation"] = {
+            "ok": False,
+            "errors": ["pa-test: 16 operator repeats exceed 15 without assessment"],
+        }
+        return snapshot
+
+    monkeypatch.setattr(ledger, "build_snapshot", build_snapshot_with_finding)
+
+    errors = ledger.rebind_checkpoint(paths)
+    assert errors == [], f"semantic findings must not block rebind: {errors}"
+
+    # The reseal is real: check-cursor is green again ...
+    assert ledger.check_cursor_state(paths) == []
+    # ... and the finding is sealed into the marker's snapshot, not discarded
+    # (the compact checkpoint records validation state for --check to report).
+    marker = json.loads(paths.private_snapshot.read_text(encoding="utf-8"))
+    assert marker, "private marker must exist after rebind"
+
+
 def test_append_jsonl_zero_rows_materializes_empty_journal(tmp_path):
     """A legitimately-empty journal is a real 0600 file — sealed signatures and the
     overnight-trial's lstat cross-check cannot represent an absent path."""

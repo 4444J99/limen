@@ -6048,8 +6048,16 @@ def rebind_checkpoint(paths: LedgerPaths) -> list[str]:
     This is the recovery effector for the "cursor not bound to current private
     checkpoint" error: it replays the trusted rebuild logic that --check uses
     read-only and atomically rewrites the marker + public projections when, and
-    only when, journals load without errors and the rebuilt snapshot validates.
-    No force flag; bad journals refuse unconditionally.
+    only when, the cursor is readable/shape-valid and the journals load without
+    errors.  No force flag; corrupt journals refuse unconditionally.
+
+    Semantic validation findings (e.g. "operator repeats exceed limit without
+    assessment", "operator occurrence lacks atom coverage") do NOT block the
+    reseal: the trusted write lane (update_ledger, the --scan --write path)
+    seals snapshots with those findings recorded in snapshot["validation"] and
+    lets --check report them — this effector mirrors that exactly.  A stricter
+    gate here would wedge recovery on any estate carrying chronic semantic
+    debt, which is precisely the estate that needs the effector.
 
     Root-cause of the drift: the beat (or any scan from another worktree) can
     write the shared cursor file after the marker was sealed, advancing its
@@ -6082,9 +6090,8 @@ def rebind_checkpoint(paths: LedgerPaths) -> list[str]:
         journal_errors=[],
         evidence_root=paths.root,
     )
-    if not (snapshot.get("validation") or {}).get("ok"):
-        errs = (snapshot.get("validation") or {}).get("errors") or ["validation failed"]
-        return ["rebuilt snapshot failed validation: " + "; ".join(str(e) for e in errs)]
+    # Semantic validation findings stay recorded in snapshot["validation"]
+    # (exactly as update_ledger seals them); --check remains their reporter.
 
     public = public_projection(snapshot)
     seal = prompt_authority_seal(snapshot, public=public)
@@ -6186,7 +6193,8 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help=(
             "recovery effector: rebuild and atomically reseal the private checkpoint from the live cursor and "
-            "journals; refuses if journals contain errors or the rebuilt snapshot fails validation"
+            "journals; refuses if the cursor or journals are corrupt; semantic validation findings are sealed "
+            "and recorded exactly as --scan --write does (reported by --check)"
         ),
     )
     parser.add_argument("--require-scope", choices=("all",), help="fail unless source scope matches")
