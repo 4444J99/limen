@@ -143277,7 +143277,7 @@ tasks:
   workstream: substrate
   priority: critical
   budget_cost: 1
-  status: open
+  status: failed_blocked
   labels:
   - always-working
   - receipt-first
@@ -143308,7 +143308,7 @@ tasks:
   execution_requirements: []
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-16T03:29:16.309664Z'
+  updated: '2026-07-16T12:13:30.116248Z'
   dispatch_log:
   - timestamp: '2026-07-14T06:00:38.993879Z'
     agent: codex
@@ -143328,6 +143328,12 @@ tasks:
       \ per its own runbook: #1036 guard merged+proven 0.15s fast-exit, watch agent\
       \ re-bootstrapped). Lane remains codex-owned; this entry only records the cleared\
       \ mount blocker."
+  - timestamp: '2026-07-16T12:13:30.116248Z'
+    agent: claude
+    session_id: fix-aw-1130
+    status: failed_blocked
+    output: 'superseded: packet predicate was a mutating chain failing _is_narrow_verification;
+      re-authored as AW-SUBSTRATE-DISK-TEMP-9272c720590f with narrow pytest predicate'
 - id: HEAL-rebase-organvm-domus-genoma-187
   title: rebase/resolve conflicts on organvm/domus-genoma#187
   repo: organvm/domus-genoma
