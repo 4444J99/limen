@@ -108,7 +108,7 @@ def _owner_item(
     target_agent="codex",
     status="assigned_from_existing_work",
     priority=10,
-    predicate="python3 scripts/product-ledger.py --write",
+    predicate="python3 scripts/verify.py --changed",
     receipt_target="git:organvm/limen:docs/product-ledger.md",
 ):
     return {
@@ -441,7 +441,7 @@ def test_value_gate_switch_blocks_generic_dispatch_without_watch_alert(tmp_path,
     assert snapshot["dispatch_control"]["allow_dispatch"] is False
     assert snapshot["dispatch_control"]["exit_code"] == 10
     assert snapshot["lane_switch"]["status"] == "would_submit"
-    assert snapshot["lane_switch"]["packet"]["predicate"] == "python3 scripts/product-ledger.py --write"
+    assert snapshot["lane_switch"]["packet"]["predicate"] == "python3 scripts/verify.py --changed"
     assert snapshot["lane_switch"]["packet"]["receipt_target"] == "git:organvm/limen:docs/product-ledger.md"
     assert snapshot["overnight_counts"]["lane_switch_ticket_count"] == 0
     assert not (module.LOGS / "tickets").exists()
@@ -813,6 +813,128 @@ def test_lane_switch_surfaces_named_execution_contract_mismatch(tmp_path, monkey
     assert result["status"] == "blocked"
     assert result["blocker"]["id"] == "overnight-owner-execution-contract-mismatch"
     assert result["targeted_launch_count"] == 0
+
+
+def test_lane_switch_skips_capability_refused_packet_and_selects_next(tmp_path, monkeypatch):
+    """Regression for the 2026-07-16 zero-launch wedge.
+
+    The substrate owner packet (local codex lane, self-modifying organvm/limen repo, mutating
+    ``--apply`` predicate chain) can never pass ``agent_can_run_task`` — the dispatcher refused it
+    silently every beat and the lane wedged on ``overnight-owner-targeted-zero-launch``.  The watch
+    must apply the same capability predicate at selection time: skip the unlaunchable packet with a
+    named ``capability`` gate and proceed to the next launchable one.
+    """
+
+    module = _fresh_module(tmp_path, monkeypatch)
+    refused = _owner_item(
+        item_id="LOCAL-SELF-REPO",
+        priority=1,
+        predicate="python3 scripts/reclaim-generated-state.py --apply && python3 scripts/cvstos-organ.py --check",
+    )
+    launchable = _owner_item(item_id="NEXT-OK", priority=2)
+    _prepare_lane_switch(module, monkeypatch, items=[refused, launchable])
+    expected = module.owner_task_from_item(launchable)
+
+    def fake_run(args, timeout=10):
+        if str(module.TABULARIUS_SCRIPT) in [str(arg) for arg in args]:
+            from limen.tabularius import drain_once
+
+            assert drain_once(module.TASKS_PATH).applied == 1
+            return _CP(args, rc=0)
+        if str(module.DISPATCH_ASYNC_SCRIPT) in [str(arg) for arg in args]:
+            from limen.io import load_limen_file, save_limen_file
+            from limen.models import DispatchLogEntry
+
+            board = load_limen_file(module.TASKS_PATH)
+            task = next(task for task in board.tasks if task.id == expected.id)
+            reservation_id = "async-reserve:" + "c" * 32
+            task.status = "dispatched"
+            task.dispatch_log.append(
+                DispatchLogEntry(
+                    timestamp=module.utc_now(),
+                    agent=task.target_agent,
+                    session_id=reservation_id,
+                    status="dispatched",
+                )
+            )
+            save_limen_file(module.TASKS_PATH, board)
+            marker = module.ASYNC_RUNS / f"exact__{expected.target_agent}.running"
+            marker.write_text(
+                json.dumps(
+                    {
+                        "task_id": expected.id,
+                        "agent": expected.target_agent,
+                        "reservation_id": reservation_id,
+                        "pid": os.getpid(),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            receipt = {
+                "schema_version": "limen-targeted-dispatch.v1",
+                "targeted_only": True,
+                "task_id": expected.id,
+                "launched": [[expected.target_agent, expected.id]],
+                "launched_count": 1,
+                "reservation_id": reservation_id,
+                "status": "launched",
+            }
+            return _CP(args, rc=0, stdout=json.dumps(receipt))
+        return _CP(args, rc=1, stderr="unexpected command")
+
+    monkeypatch.setattr(module, "run", fake_run)
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 10}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "launched", result
+    assert result["packet"]["task_id"] == expected.id
+    capability_skips = [entry for entry in result["skipped"] if entry.get("gate") == "capability"]
+    assert len(capability_skips) == 1
+    assert capability_skips[0]["task_id"].startswith("AW-LOCAL-SELF-REPO-")
+
+
+def test_lane_switch_zero_launch_blocker_carries_dispatcher_named_refusal(tmp_path, monkeypatch):
+    """When the dispatcher names its refusal, the lane blocker must surface it, never a bare count."""
+
+    module = _fresh_module(tmp_path, monkeypatch)
+    item = _owner_item(item_id="NAMED-REFUSAL")
+    _prepare_lane_switch(module, monkeypatch, items=[item])
+
+    def fake_run(args, timeout=10):
+        if str(module.TABULARIUS_SCRIPT) in [str(arg) for arg in args]:
+            from limen.tabularius import drain_once
+
+            assert drain_once(module.TASKS_PATH).applied == 1
+            return _CP(args, rc=0)
+        if str(module.DISPATCH_ASYNC_SCRIPT) in [str(arg) for arg in args]:
+            receipt = {
+                "schema_version": "limen-targeted-dispatch.v1",
+                "targeted_only": True,
+                "task_id": module.owner_task_from_item(item).id,
+                "launched": [],
+                "launched_count": 0,
+                "status": "zero_launch",
+                "blocker": {
+                    "id": "targeted-agent-capability-refused",
+                    "reason": "lane codex cannot run this exact task under the dispatch capability contract",
+                },
+            }
+            return _CP(args, rc=10, stdout=json.dumps(receipt))
+        return _CP(args, rc=1)
+
+    monkeypatch.setattr(module, "run", fake_run)
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 10}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "blocked"
+    assert result["blocker"]["id"] == "overnight-owner-targeted-zero-launch"
+    assert "targeted-agent-capability-refused" in result["blocker"]["reason"]
 
 
 def test_lane_switch_self_heals_drifted_owner_contract_via_keeper(tmp_path, monkeypatch):

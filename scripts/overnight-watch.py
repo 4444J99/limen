@@ -37,6 +37,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SOURCE_ROOT / "cli" / "src"))
 
 from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
+from limen.dispatch import agent_can_run_task  # noqa: E402
 from limen.execution_contract import execution_contract_hash, execution_contract_payload  # noqa: E402
 from limen.intake import validate_intake_contract  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
@@ -1056,6 +1057,11 @@ def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str
             ),
         }
     launched_count = int(receipt.get("launched_count") or 0) if receipt else 0
+    named_refusal = (
+        f"; dispatcher blocker {dispatch_blocker.get('id')}: {str(dispatch_blocker.get('reason') or '')[:200]}"
+        if dispatch_blocker.get("id")
+        else ""
+    )
     return {
         "status": "blocked",
         "owner_state": current_state,
@@ -1064,7 +1070,7 @@ def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str
             "overnight-owner-targeted-zero-launch",
             (
                 f"exact owner packet {task.id} produced no durable targeted launch "
-                f"(exit {dispatched.returncode}, launched {launched_count})"
+                f"(exit {dispatched.returncode}, launched {launched_count}){named_refusal}"
             ),
             owner=str(task.repo or "organvm/limen"),
             failed_predicate=str(task.predicate or ""),
@@ -1229,6 +1235,25 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
         provider_ok, provider_reason = _provider_gate(task.target_agent, usage)
         if not provider_ok:
             base["skipped"].append({"task_id": task.id, "gate": "provider", "reason": provider_reason[:300]})
+            continue
+        # The dispatcher checks agent_can_run_task against the queue-locked board row before any
+        # reservation; selecting a packet that predicate refuses can only ever produce a targeted
+        # zero-launch (the 2026-07-16 wedge: local lane + self-modifying repo + non-narrow
+        # predicate).  Apply the same predicate here — board row when present, compiled packet
+        # otherwise — and skip with a named gate so the lane proceeds to the next launchable packet.
+        capability_task = next((row for row in board.tasks if row.id == task.id), task)
+        if not agent_can_run_task(task.target_agent, capability_task):
+            base["skipped"].append(
+                {
+                    "task_id": task.id,
+                    "gate": "capability",
+                    "reason": (
+                        f"lane {task.target_agent} cannot launch this packet under the dispatch "
+                        "capability contract (agent_can_run_task); a local lane requires an "
+                        "isolated narrow-verification predicate for a self-modifying repo packet"
+                    )[:300],
+                }
+            )
             continue
         if canonical_agent(task.target_agent) in LOCAL_CHECKOUT_AGENTS:
             if local_admission is None:

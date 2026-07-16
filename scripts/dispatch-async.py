@@ -1096,6 +1096,84 @@ def _execution_contract_blocker(lf, task_id: str, expected_hash: str) -> dict[st
     }
 
 
+def _targeted_zero_launch_blocker(task_id: str, lanes: list[str]) -> dict[str, object]:
+    """Name the gate that refused an exact-task launch so a targeted zero-launch is never silent.
+
+    The overnight lane switch (and any exact-task conductor) needs the true refusing predicate to
+    route around an unlaunchable packet.  A bare ``launched 0`` wedged the 2026-07-16 overnight
+    lane in a WATCH_ALERT loop on a packet the capability contract can never launch (local lane +
+    self-modifying repo + non-narrow predicate) because the receipt carried no blocker.  This is
+    read-only: it re-walks the deterministic reservation filters and names the first refusal; the
+    runtime-only gates (usage remaining, lane slots, worktree admission) stay attributed as such.
+    """
+
+    try:
+        lf = load_limen_file(TASKS)
+    except Exception as exc:
+        return {
+            "id": "targeted-zero-launch-board-unreadable",
+            "task_id": task_id,
+            "reason": str(exc)[:300],
+        }
+    task = next((candidate for candidate in lf.tasks if candidate.id == task_id), None)
+    if task is None:
+        return {
+            "id": "targeted-task-missing",
+            "task_id": task_id,
+            "reason": f"exact task {task_id} is not on the board",
+        }
+    if not _dispatchable(task):
+        return {
+            "id": "targeted-task-not-dispatchable",
+            "task_id": task_id,
+            "reason": f"exact task {task_id} status is {task.status}; not in a dispatchable state",
+        }
+    if task.target_agent not in lanes and task.target_agent != "any":
+        return {
+            "id": "targeted-lane-mismatch",
+            "task_id": task_id,
+            "reason": f"exact task targets {task.target_agent}; requested lanes {lanes}",
+        }
+    agent = task.target_agent if task.target_agent != "any" else (lanes[0] if lanes else "")
+    if agent and not agent_can_run_task(agent, task):
+        return {
+            "id": "targeted-agent-capability-refused",
+            "task_id": task_id,
+            "reason": (
+                f"lane {agent} cannot run exact task {task_id} under the dispatch capability "
+                "contract (agent_can_run_task); a local lane requires an isolated "
+                "narrow-verification predicate for a self-modifying repo task"
+            ),
+        }
+    id2 = {candidate.id: candidate for candidate in lf.tasks}
+    if not _deps_met(task, id2):
+        return {
+            "id": "targeted-deps-unmet",
+            "task_id": task_id,
+            "reason": f"exact task {task_id} has unmet dependencies {list(task.depends_on or [])}",
+        }
+    if not _routine_generated_buildout_allowed(task):
+        return {
+            "id": "targeted-buildout-gated",
+            "task_id": task_id,
+            "reason": f"exact task {task_id} is a routine generated buildout the value tier gates",
+        }
+    if task_id in _claimed_task_ids() and not _task_claim_artifacts_are_nonce_fenced(task_id):
+        return {
+            "id": "targeted-already-claimed",
+            "task_id": task_id,
+            "reason": f"exact task {task_id} already has a live claim artifact",
+        }
+    return {
+        "id": "targeted-zero-launch-unattributed",
+        "task_id": task_id,
+        "reason": (
+            f"exact task {task_id} passes the deterministic filters; a runtime gate "
+            "(usage remaining, lane slots, or worktree admission) refused this beat"
+        ),
+    }
+
+
 def _targeted_recovery_blocker(blocker_id: str, task_id: str, reason: str) -> dict[str, object]:
     return {"id": blocker_id, "task_id": task_id, "reason": reason[:500]}
 
@@ -1816,6 +1894,9 @@ def main() -> int:
         f"{[t for _, t in launched]}"
     )
     exact_launch = len(launched) == 1 and launched[0][1] == a.task_id
+    if a.targeted_only and a.task_id and reserve_allowed and not launched and not reservation_blocker:
+        # A silent targeted zero-launch is a defect (sensor without a named effector): attribute it.
+        reservation_blocker.update(_targeted_zero_launch_blocker(a.task_id, lanes))
     launched_reservation_id = None
     if exact_launch and not a.dry_run and a.task_id:
         try:

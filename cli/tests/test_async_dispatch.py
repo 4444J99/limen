@@ -353,6 +353,83 @@ def test_exact_contract_is_revalidated_under_queue_lock_before_reservation(tmp_p
     assert blocker["actual_hash"] == execution_contract_hash(current)
 
 
+def test_targeted_zero_launch_blocker_names_capability_refusal(tmp_path):
+    """Regression for the 2026-07-16 silent zero-launch wedge.
+
+    A local lane may not run a mutating predicate against the self-modifying repo
+    (``agent_can_run_task`` → ``_isolated_safe_task`` → narrow verification).  The dispatcher
+    filtered the exact task silently — ``launched 0``, ``blocker: null`` — so the overnight lane
+    could not route around it.  The named blocker must attribute the refusal.
+    """
+
+    da = _load(tmp_path, n_open=1)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    task = lf.tasks[0]
+    task.repo = "organvm/limen"
+    task.predicate = "python3 scripts/reclaim-generated-state.py --apply"
+    task.receipt_target = "git:organvm/limen:docs/receipts.json"
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+
+    picked = da.reserve_and_launch(["codex"], 1, 1, True, task_id="T0", admission_checked=True)
+    blocker = da._targeted_zero_launch_blocker("T0", ["codex"])
+
+    assert picked == []
+    assert blocker["id"] == "targeted-agent-capability-refused"
+    assert "T0" in str(blocker["reason"])
+
+
+def test_targeted_zero_launch_receipt_carries_named_blocker(tmp_path, monkeypatch, capsys):
+    """main() must publish the named refusal in the targeted JSON receipt, never blocker: null."""
+
+    da = _load(tmp_path, n_open=1)
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    task = lf.tasks[0]
+    task.repo = "organvm/limen"
+    task.predicate = "python3 scripts/reclaim-generated-state.py --apply"
+    task.receipt_target = "git:organvm/limen:docs/receipts.json"
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    contract_hash = _contract_hash(tmp_path, "T0")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "dispatch-async.py",
+            "--lanes",
+            "codex",
+            "--per-lane",
+            "1",
+            "--local-per-lane",
+            "1",
+            "--max",
+            "1",
+            "--task-id",
+            "T0",
+            "--execution-contract-hash",
+            contract_hash,
+            "--targeted-only",
+            "--json-output",
+            "--dry-run",
+        ],
+    )
+
+    rc = da.main()
+    out = capsys.readouterr().out
+    receipt = json.loads([line for line in out.splitlines() if line.startswith("{")][-1])
+
+    assert rc == 10
+    assert receipt["status"] == "zero_launch"
+    assert receipt["blocker"]["id"] == "targeted-agent-capability-refused"
+
+
+def test_targeted_zero_launch_blocker_names_missing_and_terminal_tasks(tmp_path):
+    da = _load(tmp_path, n_open=1)
+    assert da._targeted_zero_launch_blocker("NOPE", ["codex"])["id"] == "targeted-task-missing"
+    lf = load_limen_file(tmp_path / "tasks.yaml")
+    lf.tasks[0].status = "done"
+    save_limen_file(tmp_path / "tasks.yaml", lf)
+    assert da._targeted_zero_launch_blocker("T0", ["codex"])["id"] == "targeted-task-not-dispatchable"
+
+
 def test_inflight_markers_consume_slots(tmp_path):
     da = _load(tmp_path, n_open=6)
     for i in range(4):
