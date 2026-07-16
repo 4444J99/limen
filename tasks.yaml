@@ -15,12 +15,12 @@ portal:
       claude: 100
     track:
       date: '2026-07-16'
-      spent: 6
+      spent: 7
       per_agent:
         jules: 0
         gemini: 0
         codex: 2
-        opencode: 0
+        opencode: 1
         agy: 0
         claude: 0
         github_actions: 1
@@ -145315,7 +145315,7 @@ tasks:
   workstream: mail-active
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -145341,5 +145341,10 @@ tasks:
   receipt_target: git:organvm/limen:docs/mail-story-ledger.md
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T14:36:21.263150Z'
-  dispatch_log: []
+  updated: '2026-07-16T14:38:41.757128Z'
+  dispatch_log:
+  - timestamp: '2026-07-16T14:38:41.757128Z'
+    agent: opencode
+    session_id: async-reserve:7c6457782f58cae333b6bd03cce5e3f5
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
