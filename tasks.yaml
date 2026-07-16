@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-16'
-      spent: 5
+      spent: 6
       per_agent:
         jules: 0
         gemini: 0
-        codex: 1
+        codex: 2
         opencode: 0
         agy: 0
         claude: 0
@@ -145265,7 +145265,7 @@ tasks:
   workstream: contribution-balance
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -145292,5 +145292,10 @@ tasks:
   receipt_target: git:organvm/limen:docs/always-working.md
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T13:49:46.136520Z'
-  dispatch_log: []
+  updated: '2026-07-16T13:52:04.654325Z'
+  dispatch_log:
+  - timestamp: '2026-07-16T13:52:04.654325Z'
+    agent: codex
+    session_id: async-reserve:a7e23c98197cb3d27f05a906870b16b4
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
