@@ -203,3 +203,81 @@ lands, P1's disposition moves to `implemented` there; P2/P3 stay `proposed` unti
 - Refresh packets: `python3 scripts/insight-cross-vendor-ingest.py` (writes `logs/insight-cross-vendor/`).
 - Claude lineage refresh: `python3 scripts/insight-cadence.py --once`.
 - Whole-system predicate: `scripts/verify-whole.sh`.
+
+---
+
+## Addendum — 2026-07-16: D-gap-1 and D-gap-2 Classified
+
+*This addendum closes the two data gaps named as residuals in the report above. The ingest script
+(`scripts/insight-cross-vendor-ingest.py`) was extended in PR #1126 with bounded, PII-safe
+classification passes for both. The packets in `logs/insight-cross-vendor/` were re-run and now
+carry the `classification` sub-field on the affected signals.*
+
+### D-gap-1 — OpenCode abandon classification
+
+The 971 rapid-abandon (<30s) sessions break down by structure — no text read, token/message
+presence only:
+
+| Class | Count | % of abandons | Interpretation |
+|---|---:|---:|---|
+| `aborted_after_content` | 518 | 53% | Messages written, no model response — provider dropped the call |
+| `completed_fast` | 451 | 46% | Tokens present (avg 32.5K input / 580 output) — model ran, returned quickly |
+| `empty_shell` | 2 | <1% | No messages at all — session opened and closed immediately |
+
+**What this changes about the economics conclusion:**
+
+The original report hypothesized that the 55% rapid-abandon rate was mostly empty/errored no-ops
+("cheap to lose"). The classification refutes that: **99% of rapid-abandons had user content** (only
+2 of 971 were empty shells), and **46% actually reached the model** (451 completed_fast sessions with
+non-trivial token counts). The remaining 53% (518 sessions) show the pattern of a provider that
+accepted the prompt but dropped the response — the user sent input, the model was not called.
+
+**Revised economics verdict:** The free-tier win is partially valid but materially overstated. The
+451 completed-fast sessions are genuine low-cost model calls. The 518 aborted-after-content sessions
+represent dropped provider calls where the user paid time but got no output — those are friction
+events, not no-ops. The 6,035 error-parts (~3.4/session) likely reflect these same provider drops
+surfaced as in-session error messages. "Free tier is a win" holds for cost, not for reliability —
+roughly half of rapid-abandon sessions were dropped requests on a flaky provider, not empty throwaways.
+The consolidation opportunity (finding 2) is reinforced: if OpenCode's bulk lane drops ~500 sessions/month
+to provider flakiness, the marginal value of that lane falls.
+
+**Limits of this classification:** The 30s cutoff is a heuristic; a fast model call could also show
+as <30s. The `completed_fast` count may include model invocations that returned errors (not completions).
+Token presence is a sufficient proxy for "model was reached," not a sufficient proxy for "model
+delivered useful output."
+
+### D-gap-2 — Claude tool-error classification
+
+1,793 `is_error:true` events across 500 sessions, classified by context-window substring scan
+(3-line window; counts only):
+
+| Class | Count | % of errors |
+|---|---:|---:|
+| `network_timeout_mcp` | 495 | 27.6% |
+| `other` (unclassified) | 437 | 24.4% |
+| `parse_decode` | 256 | 14.3% |
+| `bash_exit_nonzero` | 190 | 10.6% |
+| `file_not_found_race` | 161 | 9.0% |
+| `interrupt_cancel` | 122 | 6.8% |
+| `permission_denied` | 132 | 7.4% |
+
+**What this changes about the Claude tool-error follow-up:**
+
+The original report listed four root-cause hypotheses (permission/allowlist, file-state races,
+network/MCP, speculative-cheap). The classification resolves the ordering: **network/MCP is the
+dominant class (28%)**, not permissions (7.4%). The charter's root-to-leaf-permission discipline
+addresses only the 7.4% permission class — valid and shipping, but not the largest driver. The
+top-two classes together (network_timeout_mcp + unclassified, 52%) suggest the real floor is
+environmental instability, not behavior choices.
+
+The `parse_decode` class (14.3%) is unexpectedly large — these likely reflect MCP tool responses
+that don't parse, which would be a second form of the same network/MCP instability.
+
+**Follow-up shape:** The actionable sensor is a MCP-bridge stability signal, not (primarily) a
+permission-allowlist audit. The permission rate (132 events, 7.4%) is low enough that the existing
+charter allowlist discipline is proportionate to it. The 437 unclassified errors remain a residual
+data gap — a one-time manual spot-check of 10–20 representative events would close that class.
+
+**Limits:** Context-window substring scan is approximate. A keyword on a nearby line for an
+unrelated reason will misclassify. The 3-line window may miss error text that appears further from
+the `is_error` flag. Counts are a floor from the 500-session sample cap.

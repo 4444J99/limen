@@ -153,12 +153,92 @@ def _ingest_claude(window_start: datetime) -> dict:
             except OSError:
                 pass
 
+    # D-gap-2: classify tool errors by kind (context-window substring scan; counts only)
+    # Runs a second pass only when errors were found; bounded to same MAX_SESSIONS set
+    error_class: dict[str, int] = {
+        "permission_denied": 0,
+        "file_not_found_race": 0,
+        "network_timeout_mcp": 0,
+        "bash_exit_nonzero": 0,
+        "parse_decode": 0,
+        "interrupt_cancel": 0,
+        "other": 0,
+    }
+    PERMISSION_PAT = (
+        "permission denied", "permissiondenied", "eperm", "operation not permitted",
+        "permission_error", "permission-error", "allowlist", "allow_list",
+        "not allowed", "not permitted", "denied",
+    )
+    FILE_PAT = (
+        "no such file", "enoent", "file not found", "not found", "does not exist",
+        "cannot find", "no_such_file",
+    )
+    NETWORK_PAT = (
+        "timeout", "timed out", "econnrefused", "econnreset", "network", "etimedout",
+        "connection refused", "connection reset", "socket", "mcp",
+        "fetch failed", "failed to fetch",
+    )
+    BASH_EXIT_PAT = ("exit code", "exit status", "exited with", "non-zero", "error code", "returned")
+    PARSE_PAT = ("parse error", "json", "invalid", "syntax error", "unexpected token", "decode")
+    INTERRUPT_PAT = ("interrupt", "cancelled", "canceled", "abort", "sigint", "killed")
+    CONTEXT_WIN = 3
+
+    if error_count > 0:
+        sessions_classified = 0
+        for proj_dir2 in project_dirs:
+            if sessions_classified >= MAX_SESSIONS:
+                break
+            if not proj_dir2.is_dir():
+                continue
+            try:
+                dir_mtime2 = datetime.fromtimestamp(proj_dir2.stat().st_mtime, tz=timezone.utc)
+                if dir_mtime2 < window_start:
+                    continue
+            except OSError:
+                continue
+            for jsonl_path2 in proj_dir2.glob("*.jsonl"):
+                if sessions_classified >= MAX_SESSIONS:
+                    break
+                try:
+                    mtime2 = datetime.fromtimestamp(jsonl_path2.stat().st_mtime, tz=timezone.utc)
+                    if mtime2 < window_start:
+                        continue
+                    sessions_classified += 1
+                    lines2: list[str] = []
+                    with jsonl_path2.open(encoding="utf-8", errors="replace") as fh2:
+                        for raw_line2 in fh2:
+                            lines2.append(raw_line2.lower())
+                    for idx, line2 in enumerate(lines2):
+                        if '"is_error": true' not in line2 and '"is_error":true' not in line2:
+                            continue
+                        start2 = max(0, idx - CONTEXT_WIN)
+                        end2 = min(len(lines2), idx + CONTEXT_WIN + 1)
+                        ctx = " ".join(lines2[start2:end2])
+                        if any(p in ctx for p in PERMISSION_PAT):
+                            error_class["permission_denied"] += 1
+                        elif any(p in ctx for p in FILE_PAT):
+                            error_class["file_not_found_race"] += 1
+                        elif any(p in ctx for p in NETWORK_PAT):
+                            error_class["network_timeout_mcp"] += 1
+                        elif any(p in ctx for p in BASH_EXIT_PAT):
+                            error_class["bash_exit_nonzero"] += 1
+                        elif any(p in ctx for p in PARSE_PAT):
+                            error_class["parse_decode"] += 1
+                        elif any(p in ctx for p in INTERRUPT_PAT):
+                            error_class["interrupt_cancel"] += 1
+                        else:
+                            error_class["other"] += 1
+                except OSError:
+                    pass
+
     friction_signals = []
     if error_count > 0:
         friction_signals.append({
             "signal": "tool_errors",
             "count": error_count,
             "description": f"{error_count} tool_result errors across {sessions_seen} sessions in window",
+            # D-gap-2 classification (counts only; no text stored)
+            "classification": error_class,
         })
     if correction_count > 0:
         friction_signals.append({
@@ -334,6 +414,39 @@ def _ingest_opencode(window_start: datetime) -> dict:
         )
         abandoned_count = int(cur.fetchone()[0] or 0)
 
+        # D-gap-1: classify rapid-abandon sessions (bounded; structure only, no text)
+        # empty_shell    = <30s AND no messages at all
+        # completed_fast = <30s AND tokens_input>0 OR tokens_output>0 (model was called)
+        # aborted_after_content = remainder (has messages but zero tokens — user typed, no response)
+        cur.execute(
+            """
+            SELECT COUNT(*) FROM session s
+            WHERE s.time_created >= ?
+            AND (s.time_updated - s.time_created) < 30000
+            AND NOT EXISTS (SELECT 1 FROM message m WHERE m.session_id = s.id LIMIT 1)
+            LIMIT 1
+            """,
+            (window_ms,),
+        )
+        abandon_empty_shell = int(cur.fetchone()[0] or 0)
+
+        cur.execute(
+            """
+            SELECT COUNT(*) FROM session s
+            WHERE s.time_created >= ?
+            AND (s.time_updated - s.time_created) < 30000
+            AND (s.tokens_output > 0 OR s.tokens_input > 0)
+            LIMIT 1
+            """,
+            (window_ms,),
+        )
+        abandon_completed_fast = int(cur.fetchone()[0] or 0)
+
+        # aborted_after_content = the remainder (has messages, no tokens)
+        abandon_aborted_after_content = abandoned_count - abandon_empty_shell - abandon_completed_fast
+        # clamp to 0 in case of overlap edge cases
+        abandon_aborted_after_content = max(0, abandon_aborted_after_content)
+
         # Model distribution (bounded to top-10)
         cur.execute(
             """
@@ -371,6 +484,12 @@ def _ingest_opencode(window_start: datetime) -> dict:
             "signal": "rapid_abandon_sessions",
             "count": abandoned_count,
             "description": f"{abandoned_count} sessions updated within 30s of creation (rapid abandon)",
+            # D-gap-1 classification (counts only; no text stored)
+            "classification": {
+                "empty_shell": abandon_empty_shell,
+                "aborted_after_content": abandon_aborted_after_content,
+                "completed_fast": abandon_completed_fast,
+            },
         })
 
     notable_patterns = []
@@ -383,9 +502,19 @@ def _ingest_opencode(window_start: datetime) -> dict:
             notable_patterns.append(f"top_model: {top_model} ({model_dist[top_model]} sessions)")
     if sessions_seen > 0 and zero_cost_count / sessions_seen > 0.5:
         notable_patterns.append("MAJORITY of sessions have zero cost — check provider connectivity")
+    if abandoned_count > 0:
+        pct_empty = 100 * abandon_empty_shell / abandoned_count
+        notable_patterns.append(
+            f"abandon_classification: empty_shell={abandon_empty_shell} ({pct_empty:.0f}%),"
+            f" completed_fast={abandon_completed_fast},"
+            f" aborted_after_content={abandon_aborted_after_content}"
+        )
 
     quality_notes.append(f"All queries bounded with LIMIT; window filter on time_created >= {window_ms}")
     quality_notes.append("Data field (JSON blob) not parsed — pattern match only for error detection")
+    quality_notes.append(
+        "D-gap-1 classification: token/message presence only; no message text read (PII firewall)"
+    )
 
     return {
         "vendor": "opencode",
