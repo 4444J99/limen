@@ -3275,6 +3275,76 @@ def test_check_cursor_state_flags_unbound_checkpoint(tmp_path: Path):
     assert any("not bound" in error for error in errors)
 
 
+def _scan_and_bind(tmp_path: Path) -> None:
+    """Bootstrap a properly sealed ledger in tmp_path via the script's real scan path."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--scan",
+            "--unbounded",
+            "--days",
+            "0",
+            "--write",
+            "--root",
+            str(tmp_path),
+            "--source-home",
+            str(tmp_path),  # empty dir → no real sources → attested empty scan
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"scan failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_rebind_checkpoint_restores_bound_cursor(tmp_path: Path):
+    """Unbound cursor + valid journals → rebind succeeds and --check-cursor goes green."""
+    corpus = _load()
+    ledger = _load_ledger_script()
+    paths = _paths(corpus, tmp_path)
+
+    # Bootstrap a real, attested, sealed ledger via the script's scan path.
+    _scan_and_bind(tmp_path)
+
+    # Simulate cursor drift: write the same content back (advancing mtime) without
+    # resealing the marker.  This is what the beat does after an overnight scan.
+    cursor_bytes = paths.cursor.read_bytes()
+    paths.cursor.write_bytes(cursor_bytes)
+
+    # Confirm it is unbound before rebind (mtime advanced).
+    assert any("not bound" in e for e in ledger.check_cursor_state(paths))
+
+    errors = ledger.rebind_checkpoint(paths)
+    assert errors == [], errors
+
+    # After rebind, check-cursor must be green.
+    assert ledger.check_cursor_state(paths) == []
+
+
+def test_rebind_checkpoint_refuses_on_corrupted_journals(tmp_path: Path):
+    """Corrupted journals → rebind refuses with a clear error."""
+    corpus = _load()
+    ledger = _load_ledger_script()
+    paths = _paths(corpus, tmp_path)
+
+    # Bootstrap a real, attested, sealed ledger via the script's scan path.
+    _scan_and_bind(tmp_path)
+
+    # Simulate cursor drift so rebind has work to do.
+    cursor_bytes = paths.cursor.read_bytes()
+    paths.cursor.write_bytes(cursor_bytes)
+    assert any("not bound" in e for e in ledger.check_cursor_state(paths))
+
+    # Corrupt the event journal with invalid JSONL.
+    paths.event_journal.write_text("not-valid-json\n", encoding="utf-8")
+
+    errors = ledger.rebind_checkpoint(paths)
+    assert errors, "rebind should have refused on corrupted journals"
+    assert any("journals" in e or "error" in e.lower() or "malformed" in e.lower() for e in errors), (
+        f"unexpected error messages: {errors}"
+    )
+
+
 def test_append_jsonl_zero_rows_materializes_empty_journal(tmp_path):
     """A legitimately-empty journal is a real 0600 file — sealed signatures and the
     overnight-trial's lstat cross-check cannot represent an absent path."""

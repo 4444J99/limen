@@ -34,9 +34,12 @@ if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
 from limen.prompt_corpus import (  # noqa: E402
+    _json_bytes,
     _path_signature,
     LedgerPaths,
+    atomic_write_bytes,
     attest_source_scan,
+    build_snapshot,
     check_ledger,
     cursor_digest,
     current_source_scanner_code_digest,
@@ -44,12 +47,18 @@ from limen.prompt_corpus import (  # noqa: E402
     load_event_journal,
     load_json_strict,
     load_jsonl,
+    load_jsonl_strict,
     load_policy,
     occurrence_from_event,
+    private_marker,
+    prompt_authority_seal,
+    public_projection,
     read_raw_object,
+    render_markdown,
     structural_segments,
     update_ledger,
     validate_cursor_shape,
+    validate_raw_references,
     validate_source_adapter_cursor,
 )
 from limen.prompt_sources import (  # noqa: E402
@@ -6033,6 +6042,69 @@ def scan_native_sources(
     return events, updated
 
 
+def rebind_checkpoint(paths: LedgerPaths) -> list[str]:
+    """Rebuild and write the private checkpoint from the live cursor and journals.
+
+    This is the recovery effector for the "cursor not bound to current private
+    checkpoint" error: it replays the trusted rebuild logic that --check uses
+    read-only and atomically rewrites the marker + public projections when, and
+    only when, journals load without errors and the rebuilt snapshot validates.
+    No force flag; bad journals refuse unconditionally.
+
+    Root-cause of the drift: the beat (or any scan from another worktree) can
+    write the shared cursor file after the marker was sealed, advancing its
+    mtime and digest.  _path_signature hashes size/mtime/mode, so any write to
+    source-cursor.json — even an idempotent-content write — breaks the binding.
+    """
+    loaded_cursor, cursor_read_errors = load_json_strict(paths.cursor)
+    if cursor_read_errors:
+        return ["stored source cursor unreadable: " + "; ".join(cursor_read_errors)]
+    if not loaded_cursor:
+        return ["stored source cursor is empty; run a scan first to initialize it"]
+    shape_errors = validate_cursor_shape(loaded_cursor, role="stored")
+    if shape_errors:
+        return ["invalid stored source cursor shape: " + "; ".join(shape_errors)]
+
+    policy = load_policy(paths.policy)
+    occurrence_rows, atom_rows, event_errors = load_event_journal(paths.event_journal)
+    outcome_rows, outcome_errors = load_jsonl_strict(paths.outcome_journal)
+    raw_errors = validate_raw_references(paths, occurrence_rows, verify_content=True)
+    all_journal_errors = [*event_errors, *outcome_errors, *raw_errors]
+    if all_journal_errors:
+        return ["journals contain errors; refusing to rebind: " + "; ".join(str(e) for e in all_journal_errors)]
+
+    snapshot = build_snapshot(
+        occurrence_rows,
+        atom_rows,
+        outcome_rows,
+        policy,
+        loaded_cursor,
+        journal_errors=[],
+        evidence_root=paths.root,
+    )
+    if not (snapshot.get("validation") or {}).get("ok"):
+        errs = (snapshot.get("validation") or {}).get("errors") or ["validation failed"]
+        return ["rebuilt snapshot failed validation: " + "; ".join(str(e) for e in errs)]
+
+    public = public_projection(snapshot)
+    seal = prompt_authority_seal(snapshot, public=public)
+    markdown = render_markdown(public, policy)
+    next_marker = private_marker(snapshot, public, seal, paths=paths)
+
+    public_bytes = _json_bytes(public)
+    seal_bytes = _json_bytes(seal)
+    marker_bytes = _json_bytes(next_marker)
+    markdown_bytes = markdown.encode("utf-8")
+
+    paths.private_dir.mkdir(parents=True, exist_ok=True)
+    atomic_write_bytes(paths.public_snapshot, public_bytes, mode=0o644)
+    atomic_write_bytes(paths.public_seal, seal_bytes, mode=0o644)
+    atomic_write_bytes(paths.public_markdown, markdown_bytes, mode=0o644)
+    # Write the marker last: a crash before this line leaves check_ledger red.
+    atomic_write_bytes(paths.private_snapshot, marker_bytes, mode=0o600)
+    return []
+
+
 def check_cursor_state(paths: LedgerPaths) -> list[str]:
     """Cheap read-only source-cursor coherence probe (seconds, no journal replay).
 
@@ -6109,6 +6181,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="cheap read-only cursor coherence probe (checkpoint binding, scanner version, no orphaned obligations)",
     )
+    parser.add_argument(
+        "--rebind-checkpoint",
+        action="store_true",
+        help=(
+            "recovery effector: rebuild and atomically reseal the private checkpoint from the live cursor and "
+            "journals; refuses if journals contain errors or the rebuilt snapshot fails validation"
+        ),
+    )
     parser.add_argument("--require-scope", choices=("all",), help="fail unless source scope matches")
     parser.add_argument("--root", type=Path, default=Path(os.environ.get("LIMEN_ROOT", REPO)))
     parser.add_argument("--private-root", type=Path)
@@ -6136,6 +6216,15 @@ def main() -> int:
         public_seal=args.public_seal.resolve() if args.public_seal else None,
         policy=args.policy.resolve() if args.policy else None,
     )
+    if args.rebind_checkpoint:
+        errors = rebind_checkpoint(paths)
+        if errors:
+            for error in errors:
+                print(f"FAIL: {error}")
+            return 1
+        print("prompt-atom-checkpoint: rebound")
+        return 0
+
     if args.check_cursor:
         errors = check_cursor_state(paths)
         if errors:
