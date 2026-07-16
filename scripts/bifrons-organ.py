@@ -13,8 +13,10 @@ Fail-open on the beat: a missing `organvm`/`alchemia` CLI, an empty portal, or a
 degrades to rendering from existing state — the organ shows its dust honestly and still exits 0,
 never gating the beat. The render is stamped from portal state (not the clock), so re-runs against an
 unchanged portal are byte-identical — the idempotent fixed point the closeout discipline demands.
-The explicit `--doctor` predicate is stricter: it exits 0 only when both the portal store and engine
-CLI are reachable.
+The explicit `--doctor` predicate is stricter: it exits 0 only when the portal store is reachable,
+the engine CLI resolves, AND the alchemia intake module is importable (a broken alchemia shim that
+is on PATH but fails on import means the absorption pipeline is dead — a liveness probe that cannot
+see a dead pipeline is the defect, not the store).
 
   python3 scripts/bifrons-organ.py            # metabolize one beat + render organs/observation/bifrons/PORTAL.md
   python3 scripts/bifrons-organ.py --no-beat  # render only (skip the effector cycle)
@@ -65,8 +67,31 @@ def metabolize_estate() -> dict:
     return {"snapshots": len(snapshots), "beat_logs": len(beat_logs), "latest": latest}
 
 
+def _alchemia_ok() -> bool:
+    """Return True iff the alchemia Python module is importable (not just on PATH).
+
+    The alchemia shim at /opt/homebrew/bin/alchemia can exist while the package is not pip-installed
+    — in that case every `alchemia stars sync` call dies with ModuleNotFoundError, silently swallowed
+    by the engine's fail-open subprocess wrapper. This probe catches that gap.
+    """
+    try:
+        subprocess.run(  # noqa: S603
+            [shutil.which("alchemia") or "alchemia", "--help"],
+            check=True, capture_output=True, timeout=10,
+        )
+        return True
+    except (OSError, subprocess.CalledProcessError, subprocess.SubprocessError):
+        return False
+
+
 def portal_counts() -> dict:
-    """Read the shared portal store (read-only). Absent store -> empty counts (fail-open)."""
+    """Read the shared portal store (read-only). Absent store -> empty counts (fail-open).
+
+    Stars absorbed = ``exchange`` table rows (the spine seeded by alchemia on each new star; also the
+    only table guaranteed present in a freshly-initialised engine-only store). The alchemia intake
+    tables (``external_repo``, ``dossier``) are also queried when present — they exist only after
+    alchemia has successfully run at least once.
+    """
     counts = {
         "external_repo": 0,
         "dossier": 0,
@@ -76,7 +101,8 @@ def portal_counts() -> dict:
     }
     by_state: dict[str, int] = {}
     if not PORTAL_DB.exists():
-        return {"counts": counts, "by_state": by_state, "present": False, "status": "absent"}
+        return {"counts": counts, "by_state": by_state, "present": False, "status": "absent",
+                "exchange_rows": 0}
     try:
         with closing(sqlite3.connect(f"file:{PORTAL_DB}?mode=ro", uri=True)) as conn:
             conn.row_factory = sqlite3.Row
@@ -88,14 +114,19 @@ def portal_counts() -> dict:
                     counts[table] = conn.execute(f"SELECT COUNT(*) n FROM {table}").fetchone()["n"]  # noqa: S608
                 except sqlite3.OperationalError:
                     pass
+            # exchange is the engine-side spine; seed rows = absorbed stars (set by alchemia).
+            exchange_rows = 0
             try:
+                exchange_rows = conn.execute("SELECT COUNT(*) n FROM exchange").fetchone()["n"]
                 for row in conn.execute("SELECT state, COUNT(*) n FROM exchange GROUP BY state"):
                     by_state[row["state"]] = row["n"]
             except sqlite3.OperationalError:
                 pass
     except sqlite3.Error:
-        return {"counts": counts, "by_state": by_state, "present": False, "status": "unreadable"}
-    return {"counts": counts, "by_state": by_state, "present": True, "status": "present"}
+        return {"counts": counts, "by_state": by_state, "present": False, "status": "unreadable",
+                "exchange_rows": 0}
+    return {"counts": counts, "by_state": by_state, "present": True, "status": "present",
+            "exchange_rows": exchange_rows}
 
 
 def run_beat() -> str:
@@ -175,15 +206,23 @@ def write_signal(estate: dict, portal: dict, beat: str) -> None:
 
 
 def doctor() -> int:
-    """Liveness (omega live tier): the portal store is reachable and the engine CLI resolves."""
+    """Liveness (omega live tier): portal store reachable + engine CLI resolves + alchemia intact.
+
+    A passing liveness probe while alchemia is broken means absorption is silently dead — the organ
+    shows 0 stars absorbed every beat but the sensor never fires. This probe checks all three legs:
+    the store file, the engine CLI, and the alchemia module (functional, not just on PATH).
+    """
     portal = portal_counts()
     cli = bool(shutil.which("organvm"))
+    alch = _alchemia_ok()
     print(
         f"bifrons doctor: portal_store={portal['status']}  "
         f"engine_cli={'yes' if cli else 'no'}  "
-        f"stars={portal['counts']['external_repo']}"
+        f"alchemia={'ok' if alch else 'BROKEN (module not importable — absorption dead)'}  "
+        f"exchange_rows={portal['exchange_rows']}  "
+        f"stars(external_repo_table)={portal['counts']['external_repo']}"
     )
-    return 0 if portal["present"] and cli else 1
+    return 0 if portal["present"] and cli and alch else 1
 
 
 def main() -> int:
