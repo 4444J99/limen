@@ -144871,7 +144871,7 @@ tasks:
     self-repo + mutating predicates'
   repo: organvm/limen
   type: code
-  target_agent: ollama
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
