@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# mail-send — limen shim into the UMA interactive send lane (mail_send.py).
+#
+# THE headless CLI email sender (operator directive 2026-07-16: sends happen from
+# the CLI — never a browser, never a GUI, never a draft parked on the operator).
+# Distinct from the autonomic send_drafts.py lane, which stays tier-locked and
+# disarmed; here the human invocation is the authorization. Every send is
+# server-verified against [Gmail]/Sent Mail (non-zero exit if unverified).
+#
+# Usage: scripts/mail-send --self-test
+#        scripts/mail-send --to a@b.c --subject "…" --body-file body.txt
+#        scripts/mail-send --reply-to-search "subject fragment" --body-file body.txt
+#        scripts/mail-send --from-draft "subject fragment"
+# Full docs: universal-mail--automation/CLAUDE.md § Sending mail (interactive lane).
+set -euo pipefail
+
+UMA="${UMA_ROOT:-$HOME/Workspace/universal-mail--automation}"
+[ -f "$UMA/mail_send.py" ] || { echo "mail-send: $UMA/mail_send.py not found (set UMA_ROOT?)" >&2; exit 3; }
+
+# Credentials: prefer the tool's own config home; fall back to the credential
+# organ's env sink (only the two GMAIL_ vars — never the whole fleet env).
+if [ -f "$HOME/.config/mail_automation/credentials.env" ]; then
+  set -a; . "$HOME/.config/mail_automation/credentials.env"; set +a
+elif [ -f "$HOME/.limen.env" ]; then
+  eval "$(grep -E '^GMAIL_(USER|APP_PASSWORD)=' "$HOME/.limen.env" | sed 's/^/export /')"
+fi
+
+exec python3 "$UMA/mail_send.py" "$@"
