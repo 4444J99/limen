@@ -164,6 +164,14 @@ asserts the `AGENTS.md` **Task States** table equals it exactly, and forbids the
 token in all three docs. **Exit 0 ⟺ docs and code agree.** This is the autopoietic guarantee:
 the instruction files can no longer silently drift from the code.
 
+**Check M (added 2026-07-15):** The four cross-agent session-discipline rules — (1) derive/no-menu,
+(2) bounded CI waits and scoped verification, (3) durable homing, (4) no-stall/BLOCKED-once — must
+be present in the `AGENTS.md` **`## Session Discipline`** section (the canonical shared layer), and
+the home-scope Layer-1 `AGENTS.md.tmpl` must carry a matching summary that defers to that section
+rather than diverging. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) extend or cite these rules;
+they must not define divergent versions. Phrase assertions: `scripts/verify-scoped.sh`,
+`scripts/await-pr.sh`, `BLOCKED: <atom>`, `his-hand-levers.json`, `registry already owns the answer`.
+
 ---
 
 ## Decision record: 2026-06-26 instruction critique

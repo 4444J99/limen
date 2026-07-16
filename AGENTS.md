@@ -83,6 +83,38 @@ human gates: irreversible deletion of personal data, credential or account actio
 public identity claims, legal/medical/financial commitments, or product/values decisions that cannot
 be derived from existing doctrine.
 
+## Session Discipline
+
+Four cross-agent disciplines enforced by `scripts/check-agent-docs.py` (check M). Each is stated
+once here — the canonical shared layer. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) extend
+or cite these; they must not contradict them.
+
+**1. Derive answers — never present option menus when a registry already owns the answer.**
+A registry or charter that already owns the answer is the authority; query it and proceed. Do not
+ask the operator to choose between options the system can resolve, and do not guess at a fact a
+registry already holds. Options are a decision forced by a genuine human-gated lever, not a
+default delivery posture.
+
+**2. Bounded CI waits and scoped verification.**
+`scripts/verify-scoped.sh` is the default pre-push gate; it runs only the gates implicated by the
+diff. Never run the full test suite as a default local gate — scope it. Never hand-roll a
+background poll loop on a PR gate; the one sanctioned synchronous waiter is
+`scripts/await-pr.sh`. Polling non-required checks or running unimplicated gates is waste and
+masks genuine failures.
+
+**3. Durable homing — all state in git-tracked homes; no local orphan files.**
+Every work product, task, blocker, and human-gated atom must land in a git-tracked durable home
+before the session ends: a merged PR, an open PR with a named owner, a pushed plan/task, or an
+explicit blocker in its registry owner. Local-only state (checked-out files, scratch notes,
+stray branches) is not done. Human-gated atoms file in `his-hand-levers.json` or the credential
+organ; they are never recited back in a closeout.
+
+**4. No-stall — proceed on reversible actions; BLOCKED-once protocol for genuine gates.**
+Reversible work proceeds without a confirmation gate. When a genuine external blocker is hit,
+state it exactly once (`BLOCKED: <atom>`), file the atom in its registry owner, and keep driving
+every other reversible lane to its verified end. Never loop on, poll, or re-surface a filed gate.
+The litmus: am I destroying, sending, spending, or irreversibly leaking? If no, proceed.
+
 ## Prompt Corpus as the Control Plane
 
 The human's prompt history is durable operating input, not disposable conversation context. Before
