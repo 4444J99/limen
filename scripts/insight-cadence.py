@@ -314,6 +314,38 @@ def _gather_insights():
     except OSError:
         pass
 
+    # 9. cross-vendor friction signals (OpenCode, Antigravity, Cline, Codex, Claude).
+    # Reads packet files written by scripts/insight-cross-vendor-ingest.py.
+    # Fails open: if no packets exist, no insights are generated from this source.
+    cross_vendor_dir = LOGS / "insight-cross-vendor"
+    for packet_path in sorted(cross_vendor_dir.glob("*.json")) if cross_vendor_dir.is_dir() else []:
+        if packet_path.name == "run-manifest.json":
+            continue
+        try:
+            packet = json.loads(packet_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        vendor = packet.get("vendor", packet_path.stem)
+        for sig in packet.get("friction_signals", []):
+            signal_key = sig.get("signal", "unknown")
+            count = sig.get("count", 0)
+            desc = sig.get("description", "")
+            # Threshold: only surface signals with count >= 1 (all of them), but tag
+            # high-count signals as warning vs. info
+            severity = "warning" if count >= 5 else "info"
+            insights.append(
+                {
+                    "id": _gen_id(f"cross-vendor-{vendor}", signal_key),
+                    "severity": severity,
+                    "title": f"[{vendor}] {signal_key}: {count}",
+                    "detail": desc,
+                    "owner": "insight-cadence",
+                    "source": f"insight-cross-vendor/{vendor}.json",
+                    "suggested_action": f"Review {vendor} session logs for {signal_key} pattern",
+                    "healable": True,
+                }
+            )
+
     # ensure at least one insight for tests if none found
     if not insights:
         insights.append(

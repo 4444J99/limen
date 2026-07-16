@@ -61,3 +61,5 @@ docs/positioning/*.internal.md
 studium/_converged/converge-log.jsonl
 .codex/worktrees/
 docs/prompt-atom-ledger.json
+# cross-vendor raw extraction packets (PII-risk; generated locally, fed to synthesis pass)
+logs/insight-cross-vendor/
