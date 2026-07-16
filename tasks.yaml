@@ -145403,3 +145403,129 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/limen/pull/1145
     status: dispatched
+- id: GH-organvm-limen-1148
+  title: "overnight-watch.py grew to 3.1 GiB RSS in ~50 min (com.limen.overnight-watch)\
+    \ \u2014 bound the watch-loop's memory"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1148
+  context: "GitHub issue organvm/limen#1148. Observed 2026-07-16 ~12:30 PM during\
+    \ the bztransmit host-thrash recurrence: the launchd-managed `com.limen.overnight-watch`\
+    \ instance (started 11:45 AM, elapsed 51:46, CPU only 1:12 \u2014 mostly sleeping\
+    \ in its watch loop) held **3.1 GiB RSS** and sat in stuck (disk-wait) state.\
+    \ A 'low-cost receipt writer' (its own docstring) holding a fifth of physical\
+    \ RAM on the 16 GB host is a leak or an unbounded a"
+  predicate: test "$(gh issue view 1148 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1148
+  depends_on: []
+  created: '2026-07-16'
+  updated: '2026-07-16T17:00:33.849749Z'
+  dispatch_log: []
+- id: GH-organvm-public-record-data-scrapper-348
+  title: "GET /api/prospects returns empty for an org that has rows \u2014 RLS GUC\
+    \ not bound on the list path"
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/public-record-data-scrapper/issues/348
+  context: "GitHub issue organvm/public-record-data-scrapper#348. Reproduced 2026-07-16\
+    \ on a fresh local stack (migrations through 022, JWT per DEMO_RUNBOOK \xA71.6):\
+    \ 1. `POST /api/discovery/run` (`state: CA`) \u2192 `inserted: 4` \u2014 write\
+    \ path OK, rows land with the caller's `org_id`. 2. `GET /api/prospects?limit=5`\
+    \ with the same token \u2192 `{\"prospects\": [], \"pagination\": {\"total\":\
+    \ 0}}`. 3. Direct superuser `psql`: `SELECT org_id, count(*) FROM prospects GROUP\
+    \ BY org_id`"
+  predicate: test "$(gh issue view 348 --repo organvm/public-record-data-scrapper
+    --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/public-record-data-scrapper/issues/348
+  depends_on: []
+  created: '2026-07-16'
+  updated: '2026-07-16T17:00:33.851241Z'
+  dispatch_log: []
+- id: GH-organvm-public-record-data-scrapper-347
+  title: 'Discovery channel drift: SBA CKAN returns 404 for all states; Socrata registry
+    has no FL dataset'
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/public-record-data-scrapper/issues/347
+  context: "GitHub issue organvm/public-record-data-scrapper#347. Live run of `POST\
+    \ /api/discovery/run` on 2026-07-16 (fresh local stack, migrations through 022):\
+    \ - `sba-7a-loans`: **`SBA CKAN returned HTTP 404` for every state** \u2014 the\
+    \ upstream FOIA dataset URL has moved or changed shape. The channel currently\
+    \ contributes nothing anywhere. - `socrata-building-permits`: `no building-permit\
+    \ dataset registered for state 'FL' (have: NY, CA)` \u2014 the registry covers\
+    \ on"
+  predicate: test "$(gh issue view 347 --repo organvm/public-record-data-scrapper
+    --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/public-record-data-scrapper/issues/347
+  depends_on: []
+  created: '2026-07-16'
+  updated: '2026-07-16T17:00:33.851892Z'
+  dispatch_log: []
+- id: GH-organvm-public-record-data-scrapper-346
+  title: 'Migration chain broken on every database: 023_api_keys collides with the
+    api_keys table 004 already created'
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/public-record-data-scrapper/issues/346
+  context: "GitHub issue organvm/public-record-data-scrapper#346. `023_api_keys.sql`\
+    \ uses `CREATE TABLE IF NOT EXISTS api_keys` \u2014 but `004_multitenancy.sql`\
+    \ already creates `api_keys` (old shape: `is_active`, `scopes`, `key_hash VARCHAR(255)`,\
+    \ no `revoked_at\\`/`role`). The CREATE silently no-ops, then 023's partial index\
+    \ fails: ``` \u2717 Migration 023 failed: column \"revoked_at\" does not exist\
+    \ ``` Reproduced 2026-07-16 on a fresh Postgres 16 database: migrations 001"
+  predicate: test "$(gh issue view 346 --repo organvm/public-record-data-scrapper
+    --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/public-record-data-scrapper/issues/346
+  depends_on: []
+  created: '2026-07-16'
+  updated: '2026-07-16T17:00:33.852474Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1137
+  title: 'publication-policy: durable repo ledger + beat audit rung (application-pipeline
+    joins the set)'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1137
+  context: "GitHub issue organvm/limen#1137. The publication-policy engine (`scripts/publication-policy.py`)\
+    \ already ships an `audit` subcommand that consumes a ledger of `{repo, visibility,\
+    \ class}` and emits dispositions \u2014 but no durable ledger file exists and\
+    \ no beat rung feeds it. The heartbeat only runs `--verify` (rule-table self-soundness,\
+    \ heartbeat-loop.sh:613-618). Root-cause follow-through from `organs/governance/DISCLOSURE-AUDIT.md"
+  predicate: test "$(gh issue view 1137 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1137
+  depends_on: []
+  created: '2026-07-16'
+  updated: '2026-07-16T17:00:33.854204Z'
+  dispatch_log: []
