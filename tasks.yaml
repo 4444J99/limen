@@ -142906,7 +142906,7 @@ tasks:
   workstream: substrate
   priority: critical
   budget_cost: 1
-  status: open
+  status: needs_human
   labels:
   - cloud-offload
   - remote-execution
@@ -142943,7 +142943,7 @@ tasks:
   depends_on:
   - FIX-dynamic-worktree-admission-0712
   created: '2026-07-12'
-  updated: '2026-07-16T00:22:12.237842Z'
+  updated: '2026-07-16T01:36:45.010226Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: codex
@@ -142978,6 +142978,12 @@ tasks:
     status: open
     output: 'dispatch-async: markerless async reservation older than 2100s reaped;
       task reopened'
+  - timestamp: '2026-07-16T01:36:45.010226Z'
+    agent: limen
+    session_id: heal
+    status: needs_human
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 needs_human\
+      \ (kept: human-gated)"
 - id: HEAL-cifix-organvm-mirror-mirror-125
   title: fix failing CI on organvm/mirror-mirror#125
   repo: organvm/mirror-mirror
