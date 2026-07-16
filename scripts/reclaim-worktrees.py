@@ -341,7 +341,7 @@ STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "receipt-remote-merged+clean
 # which resolves the debt without destroying data. Actual deletion of a quarantined orphan is a
 # SEPARATE, proof-gated step (branch provably on origin, or a long operator grace) — out of scope of
 # this autonomous sweep. Confined to THROWAWAY roots, past min-age, only when armed.
-ORPHAN_SWEEP = os.environ.get("LIMEN_RECLAIM_ORPHANS", "0") != "0"
+ORPHAN_SWEEP = os.environ.get("LIMEN_RECLAIM_ORPHANS", "1") != "0"
 ORPHAN_REASON = "orphan-dead-gitdir+throwaway+idle"
 # Off-worktree quarantine root (a MOVE target, not a delete). Default: a sibling of the worktree
 # root on the same volume (an instant rename, off the worktree-scan path). Override to a backup
