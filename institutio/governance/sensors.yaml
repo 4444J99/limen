@@ -418,6 +418,34 @@ sensors:
         severity: advisory
         escalation: "orphan PR-watcher shell(s) above — a session hand-rolled a poll loop and died; use scripts/await-pr.sh or hand off to the merge rung (arm LIMEN_ORPHAN_WATCHER_REAP=1 to auto-reap)"
 
+  disk-capacity:
+    section: "0g8"
+    title: "disk capacity — /System/Volumes/Data must stay below threshold; heal-probe artifacts + heartbeat err log reaped when armed"
+    gate: LIMEN_DISK_CAPACITY
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_DISK_CAPACITY
+      default: 4
+    timeout:
+      env: LIMEN_DISK_CAPACITY_TIMEOUT
+      default: 30
+    steps:
+      - command: "python3 scripts/disk-capacity.py --check"
+        args_when:
+          - env: LIMEN_DISK_CAPACITY_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "disk capacity BREACHED — arm LIMEN_DISK_CAPACITY_APPLY=1 so the beat removes gitignored probes and truncates the heartbeat error log"
+    omega_eligible:
+      - label: "disk capacity below threshold"
+        tier: det
+        command: "python3 scripts/disk-capacity.py --check"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"

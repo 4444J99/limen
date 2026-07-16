@@ -2953,3 +2953,46 @@ parameters:
     self_update: none
     owner: merge-policy
     note: "Test seam: overrides the merge-policy predicate binary consumed by scripts/await-pr.sh (and the governor's pause-release completion). Empty (the default) resolves to scripts/merge-policy.sh; tests point it at a scripted-verdict stub so the verdict matrix is hermetic. Never set on the live host."
+
+  # --- disk-capacity sensor (sensors.yaml 0g7) ------------------------------------
+  LIMEN_DISK_CAPACITY:
+    default: "1"               # ON — assert /System/Volumes/Data stays below capacity threshold each beat
+    env: LIMEN_DISK_CAPACITY
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the disk-capacity sensor (scripts/disk-capacity.py --check, sensor 0g7 in sensors.yaml). Closes the disk-full silent-failure root cause: the fleet stalled with no beat-visible signal when the host ran out of space. Green ⟺ /System/Volumes/Data percent-used < LIMEN_DISK_CAPACITY_THRESHOLD (default 80%). Fail-open when the volume is absent (CI / non-macOS). The armed effector is LIMEN_DISK_CAPACITY_APPLY. Set 0 to silence."
+
+  LIMEN_DISK_CAPACITY_THRESHOLD:
+    default: 80
+    env: LIMEN_DISK_CAPACITY_THRESHOLD
+    self_update: none
+    owner: tabularius
+    note: "Percent-used high-water mark for /System/Volumes/Data checked by disk-capacity.py --check. Breaching this threshold exits non-zero and surfaces the escalation in the beat log. Default 80 leaves room before genuine space-out; lower for earlier warnings, raise if the host routinely saturates purgeable space (the APFS df%-lies precedent) without real impact. Override via env or --threshold flag."
+
+  LIMEN_BEAT_DISK_CAPACITY:
+    default: 4
+    env: LIMEN_BEAT_DISK_CAPACITY
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the disk-capacity sensor (sensors.yaml 0g7) in the scheduled metabolize derive lane. 4 follows the launch-agent-liveness precedent for a cheap check guarding a critical infrastructure invariant. The generic scheduled runner resolves this override."
+
+  LIMEN_DISK_CAPACITY_TIMEOUT:
+    default: 30
+    env: LIMEN_DISK_CAPACITY_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for the disk-capacity sensor. The check is a single df(1) call; 30s is generous headroom for a slow volume or a busy CI runner."
+
+  LIMEN_DISK_CAPACITY_APPLY:
+    default: "0"               # OFF (DARK) — the effector. Arms removal of gitignored heal-probe artifacts + heartbeat error-log truncation.
+    env: LIMEN_DISK_CAPACITY_APPLY
+    self_update: none
+    owner: tabularius
+    note: "Arms the disk-capacity effector (scripts/disk-capacity.py --apply, sensor 0g7 args_when). When 1, the beat removes every git-check-ignored .heal-probe-*.yaml artifact under LIMEN_ROOT (gitignored transient probes; always safe to delete) and truncates logs/heartbeat.err.log when it exceeds LIMEN_DISK_LOG_CAP_MB (default 50 MiB), writing a receipt to logs/disk-capacity-apply.json. OFF by default — arm in the daemon env (~/.limen.env) once the --check advisory has been seen green."
+
+  LIMEN_DISK_LOG_CAP_MB:
+    default: 50
+    env: LIMEN_DISK_LOG_CAP_MB
+    self_update: none
+    owner: tabularius
+    note: "Size cap in MiB for logs/heartbeat.err.log checked by disk-capacity.py --apply. When the log exceeds this, the effector truncates it to zero. Default 50 MiB; raise if the heartbeat emits legitimate high-volume stderr that should be preserved longer, lower for tighter disk hygiene."
