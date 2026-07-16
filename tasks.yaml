@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-16'
-      spent: 43
+      spent: 42
       per_agent:
-        jules: 23
+        jules: 24
         gemini: 7
-        codex: 2
+        codex: 0
         opencode: 1
         agy: 6
         claude: 0
@@ -28,10 +28,10 @@ portal:
       per_agent_reset:
         jules: '2026-07-15T12:55:20.864137+00:00'
         gemini: '2026-07-15T12:55:20.864137+00:00'
-        codex: '2026-07-15T23:36:53.622105+00:00'
+        codex: '2026-07-16T04:41:57.556027+00:00'
         opencode: '2026-07-15T12:55:20.864137+00:00'
         agy: '2026-07-15T12:55:20.864137+00:00'
-        claude: '2026-07-15T23:36:53.622105+00:00'
+        claude: '2026-07-16T04:41:57.556027+00:00'
   agents:
     opencode:
       status: idle
@@ -143536,7 +143536,7 @@ tasks:
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -143561,7 +143561,7 @@ tasks:
   receipt_target: git:organvm/limen:docs/product-ledger.md
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-16T03:29:16.309664Z'
+  updated: '2026-07-16T05:36:26.177639Z'
   dispatch_log:
   - timestamp: '2026-07-14T04:32:51.070528Z'
     agent: jules
@@ -143588,6 +143588,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-16T05:36:26.177639Z'
+    agent: jules
+    session_id: async-reserve:843ac454004886f074a35ca80f340bc1
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-1024
   title: Beat scheduled-sensor lane is dark (LIMEN_BEAT_DERIVE drift)
   repo: organvm/limen
