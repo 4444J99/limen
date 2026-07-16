@@ -281,3 +281,40 @@ data gap — a one-time manual spot-check of 10–20 representative events would
 **Limits:** Context-window substring scan is approximate. A keyword on a nearby line for an
 unrelated reason will misclassify. The 3-line window may miss error text that appears further from
 the `is_error` flag. Counts are a floor from the 500-session sample cap.
+
+---
+
+## Addendum — 2026-07-16: Outcomes (claims vs. artifacts)
+
+*30-day forensic audit. Window: 2026-06-16 → 2026-07-16. Source: dispatch_log board counts,
+artifact spot-checks (PRs, merge receipts, worktree diffs). PII-clean: counts, PR numbers, script
+names only.*
+
+### Consolidated Lane Table
+
+| Lane | 30d volume (board entries) | Board done / failed | Verified artifacts | Failure root cause | Verdict |
+|---|---:|---:|---|---|---|
+| **jules** | ~285 | 275 / 10 | PRs merged (sampled green) | Low; failures are genuine edge cases | Net-positive — reliable bulk code lane |
+| **opencode** | ~250 | 57 / 193 | 8 of 10 sampled dones artifact-verified (merged PRs) | 95.4% of failures are one class: HEAL-rebase no-op loop; free-tier model unfit for conflict work | Net-positive at $0 — assignment mismatch, not lane failure |
+| **claude** | ~660 board entries | 22 board-done; 82 co-authored merged PRs (interactive lane); 7 of 8 sampled closeout claims artifact-verified | 82 merged PRs verified; 555 "failed→X" entries are routing events; 112 of 134 real-failed are no-op reclassifications | Routing events miscounted as failures | Net-positive; board counts undercount real output |
+| **codex** | ~326 board entries | 23 / 303 | Alpha-omega session `019f56fa` (49.3h): PRs #976–#984, #1060 verified merged; 12 concurrent sessions; ~905M input tokens | Board failures are no-ops + routing; direct lane ships verified PRs | Net-positive; board done/failed ratio misleads — direct-lane artifact rate is the signal |
+| **agy** | ~276 | 6 / 270 | 2 verified merged PRs: limen #574, mirror-mirror #99; 83% of "done" entries are no-op completions | Auth healthy; 83% no-op completion rate is a data-quality artifact of the agy CLI's session model, not a failure mode | Low-volume, verified output exists; no alarm |
+| **gemini** | ~9 | 1 / 8 | ZERO verified artifacts; sole "done" was a misfiled worktree dump subsequently undone | Two root causes: (1) trustedFolders gap [FIXED 2026-07-16: live file + domus-genoma PR #305]; (2) suspended GCP billing project [lever L-CARD-FRAUD-HOLD] | Blocked — cannot produce real output until billing is cleared |
+
+### Synthesis: Assignment, Not Laziness
+
+The estate's failure pattern is **ASSIGNMENT** — unrunnable or ill-fitting packets fed to lanes
+that fail silently — not lane capability gaps. Every lane that received correctly-scoped, runnable
+packets produced verified merged artifacts. The lanes that show high failure rates were assigned
+work they could not structurally complete (opencode on conflict-rebase work; gemini on any work
+while GCP is suspended).
+
+### Fixes Landed
+
+| Fix | PR | What it closes |
+|---|---|---|
+| Named refusals | #1129 | Lanes now emit a structured refusal (not a silent failure) when a packet is unrunnable |
+| Re-authored packets | #1132 | Conflict-rebase class re-authored for lanes that can handle it; opencode HEAL-rebase no-op loop addressed at the packet level |
+| Tier derivation | #1128 | `dispatch._claude_tier_for` derives the correct model tier from packet class; no more free-tier model on conflict work |
+| Outcome-derived lane-fitness routing | in flight | Route each packet class to the lane with the lowest observed failure rate for that class; derives from the 30d artifact audit above |
+| gemini trustedFolders | #305 (domus-genoma) | Template renders byte-identical to the verified live file; local gates green |
