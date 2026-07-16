@@ -336,6 +336,23 @@ DEFAULT_MAP: list[dict] = [
         # --verify silently skips (warn-level) until the op:// item is created.
         "required": False,
     },
+    {
+        # FILE sink — HORREVM custody (scripts/horrevm-custody.py): the ENTIRE rclone.conf is one
+        # op:// item (config-is-cartridge), hydrated atomically 0600 into rclone's default path.
+        # Contains the gdrive: (scope drive.file) + dropbox: remotes with their OAuth refresh
+        # tokens; rclone self-refreshes access tokens from it, so hydration is the only plumbing.
+        # Human atom: `rclone authorize "drive"` + `rclone authorize "dropbox"` (one browser
+        # consent each), paste the assembled conf into `op://Limen-Automation/rclone.conf` —
+        # homed as credential-labelled issue #1108 + Wall #320, never recited in chat. Until the
+        # item exists this lane warn-skips (required=False) and horrevm-custody prints PARKED on
+        # L-CLOUD-EGRESS-CONSENT (#1109). [[credential-durability-organ]] [[sovereign-cash-intake]]
+        "lane": "rclone (HORREVM cloud custody config)",
+        "ref": "op://Limen-Automation/rclone.conf/notesPlain",
+        "env": [],
+        "file": {"path": "~/.config/rclone/rclone.conf", "template": "{value}"},
+        "enabled": True,
+        "required": False,
+    },
 ]
 
 

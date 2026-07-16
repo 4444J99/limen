@@ -613,3 +613,42 @@ sensors:
       - label: "storage rails posture"
         tier: live
         command: "python3 scripts/cloud-storage-doctor.py --check"
+
+  horrevm-custody:
+    section: "heartbeat"
+    title: "HORREVM custody — arca-sealed ciphertext shipped to Drive/Dropbox and proven restorable (dark until L-CLOUD-EGRESS-CONSENT)"
+    gate: LIMEN_HORREVM
+    default: "1"
+    source: [heartbeat]
+    owner: horrevm
+    # Seal-then-ship rides the heartbeat (arca seals every metabolize beat; custody self-throttles
+    # to >=20h between pushes, so <=1-beat vault staleness is accepted by design). Dry-run until the
+    # operator arms LIMEN_HORREVM_APPLY=1 via the lever — the ONLY egress consent switch. A 240s
+    # bound may truncate the FIRST bulk push; rclone copy is incremental per file, so successive
+    # beats converge — fail-open, never wedged.
+    cadence:
+      env: LIMEN_BEAT_HORREVM
+      default: 4
+    timeout:
+      env: LIMEN_HORREVM_TIMEOUT
+      default: 240
+    steps:
+      - command: "python3 scripts/horrevm-custody.py --push"
+        args_when:
+          - env: LIMEN_HORREVM_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "HORREVM custody push skipped or exceeded its bound"
+      - command: "python3 scripts/horrevm-custody.py --status"
+        severity: advisory
+        escalation: "custody rail unproven or stale (logs/horrevm.json) — pull L-CLOUD-EGRESS-CONSENT (issue #1109) to consent + arm, or re-consent a dead token via the same lever; NEVER install a File Provider desktop app"
+    omega_eligible:
+      - label: "custody config parity"
+        tier: det
+        command: "python3 scripts/horrevm-custody.py --doctor"
+      - label: "custody freshness"
+        tier: live
+        command: "python3 scripts/horrevm-custody.py --status"

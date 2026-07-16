@@ -28,6 +28,9 @@
 #   arca.sh backup             — sweep all stores, push what changed (default; beat-wired)
 #   arca.sh restore <store> [dest]  — decrypt a store to <dest> (default ~/arca-restore/)
 #   arca.sh status             — manifest vs local: what's covered, what's stale
+#   arca.sh seal <src> <out.enc>    — one-off envelope: tar+encrypt any file/dir, roundtrip
+#                                     verified; no vault/manifest/git (HORREVM custody lane)
+#   arca.sh unseal <in.enc> <dest>  — decrypt a one-off envelope, extract into <dest>
 #
 # Config (env): ARCA_WORKSPACE, ARCA_REPO, ARCA_VAULT_DIR, ARCA_KEY_SERVICE, ARCA_MAX_MB,
 # ARCA_CHUNK_MB. Exit 0 ⟺ every store is backed up current (or nothing to do). Idempotent:
@@ -191,9 +194,43 @@ cmd_status() {
   done
 }
 
+cmd_seal() {
+  # One envelope for the whole estate: HORREVM custody payloads reuse the exact backup
+  # cipher + key so L-ARCA-KEY-ESCROW stays the single escrow liability (no rclone crypt).
+  local src="${1:?usage: arca.sh seal <src> <out.enc>}"
+  local out="${2:?usage: arca.sh seal <src> <out.enc>}"
+  [ -e "$src" ] || die "seal source $src does not exist"
+  local key tmp parent name
+  key=$(vault_key); tmp=$(mktemp -d)
+  parent=$(cd "$(dirname "$src")" && pwd); name=$(basename "$src")
+  tar -C "$parent" -cf "$tmp/payload.tar" "$name"
+  ARCA_KEY="$key" openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+    -in "$tmp/payload.tar" -out "$out" -pass env:ARCA_KEY
+  ARCA_KEY="$key" openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+    -in "$out" -out "$tmp/roundtrip.tar" -pass env:ARCA_KEY
+  cmp -s "$tmp/payload.tar" "$tmp/roundtrip.tar" \
+    || die "roundtrip verify FAILED for $name — ciphertext untrusted"
+  rm -rf "$tmp"
+  log "sealed $name → $out ($(stat -f%z "$out") bytes, roundtrip verified)"
+}
+
+cmd_unseal() {
+  local in="${1:?usage: arca.sh unseal <in.enc> <dest>}"
+  local dest="${2:?usage: arca.sh unseal <in.enc> <dest>}"
+  [ -f "$in" ] || die "no ciphertext at $in"
+  local key tmp; key=$(vault_key); tmp=$(mktemp -d); mkdir -p "$dest"
+  ARCA_KEY="$key" openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+    -in "$in" -out "$tmp/payload.tar" -pass env:ARCA_KEY
+  tar -C "$dest" -xf "$tmp/payload.tar"
+  rm -rf "$tmp"
+  log "unsealed $(basename "$in") → $dest"
+}
+
 case "$CMD" in
   backup)  cmd_backup ;;
   restore) shift; cmd_restore "$@" ;;
   status)  cmd_status ;;
-  *) die "unknown verb '$CMD' (backup|restore|status)" ;;
+  seal)    shift; cmd_seal "$@" ;;
+  unseal)  shift; cmd_unseal "$@" ;;
+  *) die "unknown verb '$CMD' (backup|restore|status|seal|unseal)" ;;
 esac

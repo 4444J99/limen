@@ -565,6 +565,29 @@
       "source_task": "p0-revenue lane wire 2026-07-15",
       "note": "Ko-fi slug 4444j99 is ALREADY live (FUNDING.yml on organvm/a-i-chat--exporter, PR #79). The exporter Pages site (chatgpt-exporter-e08.pages.dev) is DEPLOYED and returning 200. The CLAVIS slot (scripts/creds-hydrate.py lane 'lemonsqueezy') is wired pending=true; it will materialize LEMONSQUEEZY_STORE_ID into ~/.limen.env the moment the op:// item exists. KO_FI_SLUG is a public identifier, not a secret \u2014 not a creds-hydrate lane (already hardcoded in FUNDING.yml as `ko_fi: 4444j99`). The exporter build reads LEMONSQUEEZY_STORE_ID via build-site.mjs; the baked placeholder text shows until the env var lands.",
       "issue": 1090
+    },
+    {
+      "id": "L-CLOUD-EGRESS-CONSENT",
+      "label": "Consent + arm HORREVM cloud custody (~7 min once, three atoms): (1) OAuth: run `rclone authorize \"drive\"` and `rclone authorize \"dropbox\"` — one browser consent each (if the Workspace admin console blocks third-party OAuth, allowlist rclone; you ARE the admin) — then put the WHOLE assembled rclone.conf (remotes `gdrive:` scope drive.file + `dropbox:`) into `op://Limen-Automation/rclone.conf` (notesPlain); the credential organ hydrates it to ~/.config/rclone/rclone.conf every beat (credential home: issue #1108, Wall #320). (2) Approve the egress list — ONLY ciphertext plus the zero-secret RECOVERY-CARD.md: the ~/.arca-vault mirror, the sealed session-corpus inventory, the sealed continuity kernel; explicitly NOT raw corpus, ~/.limen.env, plaintext private stores, or key material. (3) Arm the valve yourself: append `export LIMEN_HORREVM_APPLY=1` to ~/.limen.env (persistence-arming env writes are classifier-gated — this one line is genuinely your hand).",
+      "owner": "yours",
+      "cost": "~7 min once",
+      "gate": "OAuth browser consent + egress-list approval + persistence-arming env write — the three atoms the fleet cannot perform",
+      "unlocks": "HORREVM custody Stages 1-2: gates A+B go green, first real push ships (gdrive second-vendor ciphertext offsite covering the GitHub-lost-AND-Mac-lost correlated failure; dropbox break-glass kernel reachable from any borrowed browser), the freshness clock starts, and storage-roles.yaml flips gdrive/dropbox to adopted",
+      "source_task": "HORREVM PR2 (feat/horrevm-custody) 2026-07-15",
+      "issue": 1109,
+      "added": "2026-07-15",
+      "note": "Until pulled, everything is SAFE-OFF by design: horrevm-custody prints PARKED and exits 0; no File Provider desktop app is ever part of this (app presence = drift per storage-roles.yaml)."
+    },
+    {
+      "id": "L-CLOUD-IOS-FILES",
+      "label": "OPTIONAL iPhone Files visibility check (~2 min): after L-CLOUD-EGRESS-CONSENT Stage 2, open Files on the iPhone and confirm the Drive/Dropbox `limen-custody/` folders are reachable via their iOS apps (browser-first custody works without this; it is the one trust gate no script can run).",
+      "owner": "yours",
+      "cost": "~2 min, optional",
+      "gate": "physical iPhone in hand — non-automatable by definition",
+      "unlocks": "the last `proven: null` manual trust gate in storage-roles.yaml flips to a dated proof",
+      "source_task": "HORREVM PR2 (feat/horrevm-custody) 2026-07-15",
+      "issue": 1110,
+      "added": "2026-07-15"
     }
   ]
 }

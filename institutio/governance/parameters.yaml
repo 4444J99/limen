@@ -808,6 +808,48 @@ parameters:
     self_update: none
     owner: horrevm
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for the HORREVM doctor. Internal probe budgets (brctl 20s, fileproviderctl 30s, du 45s, pluginkit/ps 15s, tmutil 20s) sum under this bound; overrun is killed and the beat continues fail-open."
+  LIMEN_HORREVM:
+    default: 1
+    env: LIMEN_HORREVM
+    self_update: none
+    owner: horrevm
+    note: "Master on/off for the HORREVM custody sensor (horrevm-custody in sensors.yaml) — the strategic-use half: arca-sealed ciphertext to Drive/Dropbox via headless rclone. Ships LIVE (1) but DARK: with no rclone.conf it prints PARKED on L-CLOUD-EGRESS-CONSENT and exits 0; real egress additionally requires LIMEN_HORREVM_APPLY=1."
+  LIMEN_BEAT_HORREVM:
+    default: 4
+    env: LIMEN_BEAT_HORREVM
+    self_update: none
+    owner: horrevm
+    note: "Cadence (every N beats) of the HORREVM custody sensor. Probes are cheap every run; actual pushes self-throttle to >=20h inside the script, so a 4-beat cadence costs probes only."
+  LIMEN_HORREVM_TIMEOUT:
+    default: 240
+    env: LIMEN_HORREVM_TIMEOUT
+    self_update: none
+    owner: horrevm
+    note: "Per-run timeout (seconds) for the HORREVM custody sensor. May truncate the FIRST bulk push; rclone copy is incremental per file, so successive beats converge fail-open."
+  LIMEN_HORREVM_APPLY:
+    default: 0
+    env: LIMEN_HORREVM_APPLY
+    self_update: none
+    owner: horrevm
+    note: "The egress safety valve (armed_valve_type: safety in sensors.yaml): 0 = dry-run (prints the exact copy plan, writes nothing remote), 1 = real rclone copy of the approved ciphertext payload set. Armed ONLY by the operator via L-CLOUD-EGRESS-CONSENT (issue #1109) — persistence-arming env writes are classifier-gated, so the lever hands him the one-liner."
+  LIMEN_HORREVM_MAX_AGE_DAYS:
+    default: 7
+    env: LIMEN_HORREVM_MAX_AGE_DAYS
+    self_update: none
+    owner: horrevm
+    note: "Freshness bound for `horrevm-custody.py --status`: once armed, a rail whose last verified push is older than this many days exits 1 (advisory escalation in the beat). PARKED/dry-run states always exit 0."
+  LIMEN_HORREVM_DRIVE_BUDGET_GB:
+    default: 5
+    env: LIMEN_HORREVM_DRIVE_BUDGET_GB
+    self_update: none
+    owner: horrevm
+    note: "Hard payload cap (GB) for the gdrive custody rail ($0-capex law: never grow into a paid tier). Push is refused over-cap or when remote free < 2x payload."
+  LIMEN_HORREVM_DROPBOX_BUDGET_GB:
+    default: 1
+    env: LIMEN_HORREVM_DROPBOX_BUDGET_GB
+    self_update: none
+    owner: horrevm
+    note: "Hard payload cap (GB) for the dropbox break-glass rail (kernel + recovery card only; free-tier 2GB ceiling stays untouched)."
   LIMEN_SUBSTRATE_CONFIG:
     default: "$LIMEN_ROOT/config/substrate.json"
     env: LIMEN_SUBSTRATE_CONFIG
