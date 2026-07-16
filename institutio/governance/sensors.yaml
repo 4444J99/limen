@@ -458,6 +458,28 @@ sensors:
         severity: silent
         escalation: "continuity skipped"
 
+  lane-fitness-refresh:
+    section: "0h2"
+    title: "lane-fitness refresh — recompute per-(agent, task_class) conversion fitness from dispatch_log into logs/lane-fitness.json"
+    gate: LIMEN_LANE_FITNESS
+    default: "1"
+    source: [metabolize]
+    owner: dispatch
+    # dispatch._lane_fitness consults logs/lane-fitness.json at reservation time (fail-open). Without
+    # a beat-wired refresh the file goes stale and the fitness signal either never seeds (cold start)
+    # or anchors on history from a previous run. Reading tasks.yaml dispatch_log only; PII-clean;
+    # runs in seconds. Cadence 4 keeps the table current without paying per-beat I/O on every cycle.
+    cadence:
+      env: LIMEN_BEAT_LANE_FITNESS
+      default: 4
+    timeout:
+      env: LIMEN_LANE_FITNESS_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/lane-fitness.py --write"
+        severity: silent
+        escalation: "lane-fitness refresh skipped or exceeded its bound — dispatch continues fail-open"
+
   ask-gate:
     section: "0i"
     title: "ask gate — every intake-window ask carries one done-predicate, or gets split"

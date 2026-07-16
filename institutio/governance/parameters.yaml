@@ -1604,6 +1604,24 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Rolling window (in days) lane-fitness.py uses when counting dispatch_log attempts. Entries older than this are excluded, so the fitness table stays current with recent fleet behavior rather than anchoring on stale history. Derive-not-pin."
+  LIMEN_LANE_FITNESS:
+    default: "1"
+    env: LIMEN_LANE_FITNESS
+    self_update: none
+    owner: dispatch
+    note: "Beat-wire the lane-fitness table refresh (sensor 0h2). When 1, `python3 scripts/lane-fitness.py --write` runs on cadence (LIMEN_BEAT_LANE_FITNESS) so logs/lane-fitness.json stays current and dispatch._lane_fitness always has a fresh signal. Fail-open: a missing/stale ledger leaves dispatch behavior unchanged. Set 0 to silence the refresh rung."
+  LIMEN_BEAT_LANE_FITNESS:
+    default: 4                  # beats between refreshes; cheap I/O, no external calls
+    env: LIMEN_BEAT_LANE_FITNESS
+    self_update: none
+    owner: dispatch
+    note: "Beat cadence for the lane-fitness-refresh sensor. Every N metabolize beats, lane-fitness.py --write recomputes the per-(agent, task_class) conversion table from dispatch_log. 4 beats keeps the signal fresh without per-beat tasks.yaml reads."
+  LIMEN_LANE_FITNESS_TIMEOUT:
+    default: 60                 # seconds; tasks.yaml read + json write in-process is well under 10s
+    env: LIMEN_LANE_FITNESS_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Hard timeout (s) for the beat-wired lane-fitness.py --write run. The computation reads tasks.yaml and writes logs/lane-fitness.json; 60s is a generous ceiling for any reasonable fleet size."
     # --- LANE FLOORS (route proactive fill): ensure every healthy lane gets a daily minimum ---
   LIMEN_LANE_FLOORS:
     default: "1"                 # 1=enabled (under-floor lanes get a 0.5× load boost in _pick_local); 0=disabled
