@@ -380,7 +380,7 @@ sensors:
       - command: "python3 scripts/reclassify-needs-human.py"
         args_when:
           - env: LIMEN_RECLASSIFY_APPLY
-            default: "0"
+            default: "1"
             equals: "1"
             args: ["--apply"]
             armed_valve_type: safety

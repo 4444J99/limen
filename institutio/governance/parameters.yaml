@@ -2540,11 +2540,11 @@ parameters:
     note: "Per-pass wall-clock bound (seconds) for the needs_human reclassify rung — one board read plus a proposal-doc write; 60s is generous headroom."
 
   LIMEN_RECLASSIFY_APPLY:
-    default: "0"
+    default: "1"
     env: LIMEN_RECLASSIFY_APPLY
     self_update: none
     owner: tabularius
-    note: "Arms the needs_human reclassify effector: 0 (default) reports the buckets only; 1 flips FLIP tasks needs_human->open and parks CHRONIC tasks needs_human->failed_blocked each cadence (status-only + provenance labels, idempotent, reversible; KEEP/STALE/REVIEW never auto-touched). Ships DARK — armed by lever L-RECLASSIFY-APPLY."
+    note: "Arms the needs_human reclassify effector: 0 reports the buckets only; 1 (default) flips FLIP tasks needs_human->open and parks CHRONIC tasks needs_human->failed_blocked each cadence (status-only + provenance labels, idempotent, reversible; KEEP/STALE/REVIEW never auto-touched). Shipped dark 07-14; armed 2026-07-15 by the operator-approved whole-machine heal plan (P1.4). Set 0 to disarm."
 
   LIMEN_PROMPT_ATOM_CONTROL:
     default: "1"
