@@ -1543,7 +1543,26 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
-  # --- LANE FLOORS (route proactive fill): ensure every healthy lane gets a daily minimum ---
+  # --- LANE FITNESS (dispatch proactive reroute): per-(agent, class) conversion evidence ---
+  LIMEN_FITNESS_MIN_N:
+    default: 5                  # minimum dispatch_log attempts before a pair is judged fit/unfit
+    env: LIMEN_FITNESS_MIN_N
+    self_update: none
+    owner: dispatch
+    note: "Minimum attempted entries in dispatch_log (within the rolling window) before a (agent, task_class) pair is classified as fit or unfit by lane-fitness.py. Below this threshold the pair is unknown (null). Env-overridable; derive-not-pin."
+  LIMEN_FITNESS_UNFIT_RATE:
+    default: 0.25               # conversion rate below which a (agent, class) pair is marked unfit
+    env: LIMEN_FITNESS_UNFIT_RATE
+    self_update: none
+    owner: dispatch
+    note: "Fraction of dispatch_log 'done' outcomes required before a (agent, task_class) pair is NOT marked unfit. Below this rate (with >= LIMEN_FITNESS_MIN_N attempts) the pair is deprioritized at pick time via lane-fitness.py. Fail-open: missing ledger keeps today's behavior exactly. Derive-not-pin."
+  LIMEN_FITNESS_WINDOW_DAYS:
+    default: 30                 # rolling window in days for dispatch_log entries
+    env: LIMEN_FITNESS_WINDOW_DAYS
+    self_update: none
+    owner: dispatch
+    note: "Rolling window (in days) lane-fitness.py uses when counting dispatch_log attempts. Entries older than this are excluded, so the fitness table stays current with recent fleet behavior rather than anchoring on stale history. Derive-not-pin."
+    # --- LANE FLOORS (route proactive fill): ensure every healthy lane gets a daily minimum ---
   LIMEN_LANE_FLOORS:
     default: "1"                 # 1=enabled (under-floor lanes get a 0.5× load boost in _pick_local); 0=disabled
     env: LIMEN_LANE_FLOORS

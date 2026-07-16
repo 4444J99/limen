@@ -1483,6 +1483,7 @@ _PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "backlog": 4
 _GIT_PLUMBING_LOCK = threading.Lock()
 _MODEL_SELECTION_RECEIPTS: dict[str, dict[str, Any]] = {}
 _REMOTE_SUBMISSION_RECEIPTS: dict[str, dict[str, Any]] = {}
+_LANE_ROUTING_RECEIPTS: dict[str, dict[str, Any]] = {}
 
 
 def _record_model_selection(
@@ -4618,6 +4619,33 @@ def _ledger_lanes() -> dict[str, dict[str, list[str]]]:
         return {}
 
 
+def _lane_fitness() -> dict[str, dict[str, dict]]:
+    """logs/lane-fitness.json per-(agent, task_class) fitness map — fail-open to {}."""
+    try:
+        root = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen")))
+        return json.loads((root / "logs" / "lane-fitness.json").read_text()).get("pairs", {}) or {}
+    except Exception:
+        return {}
+
+
+def _fitness_unfit(agent: str, task: Task, fitness: dict[str, dict[str, dict]]) -> bool:
+    """True when the fitness table marks this (agent, task_class) pair as unfit.
+
+    Conservative: only fires when ALL of the task's classes that have fitness evidence are
+    individually marked unfit (fit=False). A mix of unfit + fit/unknown classes → not deprioritized.
+    Fail-open: returns False when fitness is empty or agent absent."""
+    if not fitness:
+        return False
+    agent_data = fitness.get(agent)
+    if not agent_data:
+        return False
+    classes = _task_classes(task)
+    evidenced = [agent_data[c] for c in classes if c in agent_data and agent_data[c].get("fit") is not None]
+    if not evidenced:
+        return False
+    return all(d.get("fit") is False for d in evidenced)
+
+
 def _task_classes(task: Task) -> set[str]:
     """A task's work-classes — its type plus every label — the key the ledger grades a lane on."""
     return {c for c in ([getattr(task, "type", None)] + list(getattr(task, "labels", []) or [])) if c}
@@ -4904,6 +4932,7 @@ def _select_parallel_reservations(
     spent_daily = track.spent
     id2 = {t.id: t for t in limen.tasks}
     ledger_lanes = _ledger_lanes()
+    lane_fitness = _lane_fitness()
     value_repos = _value_tier_repos()
     for agent in agents:
         cap = limen.portal.budget.per_agent.get(agent)
@@ -4932,7 +4961,40 @@ def _select_parallel_reservations(
             if not _routine_generated_buildout_allowed(t):
                 continue
             raw_cands.append(t)
-        cands = sort_value_gate_candidates(raw_cands, value_repos)
+        # FITNESS REROUTE: deprioritize tasks where every evidenced class is unfit for this agent.
+        # Fail-open: missing/empty ledger → keep all candidates at equal priority (today's behavior).
+        if lane_fitness:
+            fit_cands = [t for t in raw_cands if not _fitness_unfit(agent, t, lane_fitness)]
+            deferred = [t for t in raw_cands if _fitness_unfit(agent, t, lane_fitness)]
+            for t in deferred:
+                classes = _task_classes(t)
+                evidenced = [lane_fitness.get(agent, {}).get(c) for c in classes if c in lane_fitness.get(agent, {})]
+                reason_parts = [
+                    f"rate={d.get('rate', 0):.2f},n={d.get('attempted')}"
+                    for d in evidenced
+                    if d and d.get("fit") is False
+                ]
+                _LANE_ROUTING_RECEIPTS[t.id] = {
+                    "agent": agent,
+                    "task_classes": sorted(classes),
+                    "source": "lane_fitness_reroute",
+                    "reason": f"unfit ({'; '.join(reason_parts)})" if reason_parts else "unfit",
+                }
+        else:
+            fit_cands = raw_cands
+            deferred = []
+            _LANE_ROUTING_RECEIPTS.setdefault(
+                f"__absent_{agent}",
+                {
+                    "agent": agent,
+                    "source": "lane_fitness_absent",
+                },
+            )
+        # Deferred (unfit) tasks sorted last — still dispatched if no fit candidates fill budget.
+        ordered_raw = sort_value_gate_candidates(fit_cands, value_repos) + sort_value_gate_candidates(
+            deferred, value_repos
+        )
+        cands = ordered_raw
         # FRONT-LOAD: base picks by priority, then an ACCELERATION TAIL (only when the lane is
         # under-spending toward its reset cliff) drawn ONLY from work-classes the ledger says this
         # lane lands — so expiring budget converts to shipped value, never to junk.
