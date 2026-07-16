@@ -37,11 +37,19 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SOURCE_ROOT / "cli" / "src"))
 
 from limen.capacity import LOCAL_CHECKOUT_AGENTS, canonical_agent  # noqa: E402
-from limen.execution_contract import execution_contract_hash  # noqa: E402
+from limen.execution_contract import execution_contract_hash, execution_contract_payload  # noqa: E402
 from limen.intake import validate_intake_contract  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
-from limen.tabularius import pending_upsert_patches, submit_task_upsert  # noqa: E402
+from limen.tabularius import (  # noqa: E402
+    INTENT_UPSERT,
+    Ticket,
+    new_ticket_id,
+    pending_upsert_patches,
+    submit_task_upsert,
+    submit_ticket,
+    task_state_sha256,
+)
 from limen.worktree_debt import take_admission_snapshot  # noqa: E402
 
 
@@ -848,6 +856,84 @@ def _active_owner_outcome(task: Task, owner_state: str) -> dict[str, Any]:
     }
 
 
+# Execution-contract fields the keeper may safely realign on an open owner-packet task whose
+# board row drifted from the freshly-compiled always-working packet.  Lifecycle fields
+# (status/created/updated/dispatch_log) are never touched here; a live (dispatched/in_progress)
+# task is never realigned — only an ``open`` packet the watch itself owns.
+_OWNER_CONTRACT_RECONCILE_FIELDS = (
+    "target_agent",
+    "execution_requirements",
+    "predicate",
+    "receipt_target",
+    "priority",
+    "workstream",
+    "repo",
+    "type",
+    "labels",
+    "context",
+    "budget_cost",
+    "urls",
+    "claude_tier",
+    "depends_on",
+)
+
+
+def _owner_contract_reconcile_ticket(task: Task) -> dict[str, Any]:
+    """Self-heal one wedged owner packet: realign the drifted board row to the compiled packet.
+
+    The overnight lane re-selects the highest-priority owner packet every beat.  If the board row
+    for that packet id acquired a different execution contract from another writer (e.g. a mount
+    requirement, or a target-agent flip from a failed run + heal), every beat recomputes the packet
+    contract, the dispatcher re-reads the drifted board row, the hashes disagree, and the lane
+    wedges forever on ``targeted-execution-contract-mismatch``.  The always-working packet is
+    authoritative for an ``AW-*`` owner packet, so submit exactly one keeper upsert ticket that
+    folds the packet's execution-owned fields back onto the board row, guarded by a ``task_sha256``
+    precondition so a concurrent daemon write is never clobbered.  The keeper (single writer) lands
+    it next drain and the following beat re-selects with matching contracts.  A ``dispatched`` or
+    ``in_progress`` row is deliberately left alone — realigning a claimed contract is unsafe.
+    """
+
+    try:
+        board = load_limen_file(TASKS_PATH)
+    except Exception as exc:
+        return {"status": "unavailable", "reason": f"board unreadable: {exc}"[:300]}
+    current = next((row for row in board.tasks if row.id == task.id), None)
+    if current is None:
+        return {"status": "absent", "reason": "board row disappeared before reconcile"}
+    if current.status != "open":
+        return {
+            "status": "unsafe",
+            "reason": f"board row is {current.status}; only an open owner packet is realigned",
+        }
+    if execution_contract_hash(current) == execution_contract_hash(task):
+        return {"status": "already_aligned", "reason": "board row already matches the packet"}
+    packet_payload = execution_contract_payload(task)
+    board_payload = execution_contract_payload(current)
+    patch = {
+        field: packet_payload[field]
+        for field in _OWNER_CONTRACT_RECONCILE_FIELDS
+        if field in packet_payload and packet_payload[field] != board_payload.get(field)
+    }
+    if not patch:
+        return {"status": "no_delta", "reason": "no execution-owned field drift to realign"}
+    fields = current.model_dump(mode="json", exclude_none=True)
+    ticket = Ticket(
+        ticket_id=new_ticket_id("overnight-owner-contract-reconcile"),
+        timestamp=utc_now(),
+        agent=os.environ.get("LIMEN_AGENT", "github_actions"),
+        session_id="overnight-owner-contract-reconcile",
+        intent=INTENT_UPSERT,
+        task_id=task.id,
+        patch=patch,
+        precondition={"status": "open", "task_sha256": task_state_sha256(fields)},
+    )
+    try:
+        path = submit_ticket(TASKS_PATH, ticket)
+    except Exception as exc:
+        return {"status": "submit_failed", "reason": str(exc)[:300]}
+    return {"status": "reconcile_submitted", "ticket_name": path.name, "fields": sorted(patch)}
+
+
 def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str, Any]:
     """Drain/launch one exact packet, or return a named fail-closed blocker."""
 
@@ -943,10 +1029,24 @@ def _drain_and_dispatch_one_owner_task(task: Task, owner_state: str) -> dict[str
         }
     dispatch_blocker = receipt.get("blocker") if isinstance(receipt.get("blocker"), dict) else {}
     if dispatch_blocker.get("id") == "targeted-execution-contract-mismatch":
+        # Sensor-with-effector: the drift between the compiled owner packet and its (open) board row
+        # is deterministic, so a bare blocker would re-wedge the lane every beat.  Realign the row to
+        # the authoritative packet through the keeper's single-writer ticket lane; the next beat then
+        # re-selects with matching contracts.  Only fall through to the fail-closed blocker when the
+        # self-heal cannot safely apply (row now claimed, disappeared, or the keeper rejected it).
+        reconcile = _owner_contract_reconcile_ticket(task)
+        if reconcile.get("status") == "reconcile_submitted":
+            return {
+                "status": "reconciled",
+                "owner_state": current_state,
+                "targeted_launch_count": 0,
+                "reconcile": reconcile,
+            }
         return {
             "status": "blocked",
             "owner_state": current_state,
             "targeted_launch_count": 0,
+            "reconcile": reconcile,
             "blocker": _named_lane_blocker(
                 "overnight-owner-execution-contract-mismatch",
                 str(dispatch_blocker.get("reason") or "selected owner execution contract changed before reserve"),
@@ -1242,6 +1342,21 @@ def apply_lane_switch_control(dispatch: dict[str, Any], lane_switch: dict[str, A
                 "exit_code": 10,
                 "reason": f"generic dispatch remains closed; bounded owner packet {task_id} selected",
                 "next_command": str(lane_switch.get("next_command") or ""),
+            }
+        )
+        return result
+    if lane_switch.get("status") == "reconciled":
+        # The lane self-healed a wedged owner packet through the keeper this beat; it is progress,
+        # not a stop.  Keep generic dispatch closed and re-select next beat with matching contracts.
+        task_id = str((lane_switch.get("packet") or {}).get("task_id") or "owner packet")
+        result.update(
+            {
+                "exit_code": 10,
+                "reason": (
+                    f"generic dispatch remains closed; owner packet {task_id} contract realigned "
+                    "through the keeper — re-select next beat"
+                ),
+                "next_command": "PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
             }
         )
         return result
@@ -1571,7 +1686,8 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
                 )[:500],
             }
         )
-    elif gate_rc >= 20 and lane_status not in LANE_SWITCH_GOOD_STATUSES:
+    elif gate_rc >= 20 and lane_status not in LANE_SWITCH_GOOD_STATUSES and lane_status != "reconciled":
+        # A self-healed lane (reconciled this beat via the keeper) is progress, not a gate stop.
         alerts.append(
             {
                 "id": "session-value-gate-stop",

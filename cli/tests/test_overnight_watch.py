@@ -815,6 +815,82 @@ def test_lane_switch_surfaces_named_execution_contract_mismatch(tmp_path, monkey
     assert result["targeted_launch_count"] == 0
 
 
+def test_lane_switch_self_heals_drifted_owner_contract_via_keeper(tmp_path, monkeypatch):
+    """A deterministic contract drift on an *open* owner-packet board row must self-heal.
+
+    Regression for the 2026-07-16 overnight wedge: an ``AW-*`` owner-packet board row acquired an
+    execution field (a ``/Volumes/Scratch`` mount) the compiled always-working packet never carries.
+    ``_owner_task_id`` does not hash ``execution_requirements``, so the same id mapped to two
+    execution contracts and the lane wedged on ``targeted-execution-contract-mismatch`` every beat.
+    The fix realigns the row to the authoritative packet through one keeper ticket and reports a
+    ``reconciled`` (progress) outcome instead of a permanent blocker.
+    """
+
+    module = _fresh_module(tmp_path, monkeypatch)
+    item = _owner_item(item_id="DRIFT")
+    _prepare_lane_switch(module, monkeypatch, items=[item])
+    packet_task = module.owner_task_from_item(item)
+
+    # Seed the board with the SAME owner-packet id but a drifted execution contract (a mount the
+    # packet lacks), status open — exactly the wedge shape.
+    board = json.loads(module.TASKS_PATH.read_text(encoding="utf-8"))
+    drifted = packet_task.model_dump(mode="json", exclude_none=True)
+    drifted["execution_requirements"] = [{"kind": "mount", "path": "/Volumes/Scratch"}]
+    board["tasks"] = [drifted]
+    module.TASKS_PATH.write_text(json.dumps(board) + "\n", encoding="utf-8")
+
+    from limen.execution_contract import execution_contract_hash
+    from limen.io import load_limen_file
+
+    board_task = next(t for t in load_limen_file(module.TASKS_PATH).tasks if t.id == packet_task.id)
+    assert execution_contract_hash(board_task) != execution_contract_hash(packet_task)
+
+    def fake_run(args, timeout=10):
+        if str(module.DISPATCH_ASYNC_SCRIPT) in [str(arg) for arg in args]:
+            receipt = {
+                "schema_version": "limen-targeted-dispatch.v1",
+                "targeted_only": True,
+                "task_id": packet_task.id,
+                "launched": [],
+                "launched_count": 0,
+                "status": "contract_mismatch",
+                "blocker": {
+                    "id": "targeted-execution-contract-mismatch",
+                    "reason": "exact task changed between owner selection and queue-locked reservation",
+                },
+            }
+            return _CP(args, rc=10, stdout=json.dumps(receipt))
+        return _CP(args, rc=0)
+
+    monkeypatch.setattr(module, "run", fake_run)
+
+    result = module.lane_switch_snapshot(
+        {"value_gate": {"returncode": 20}, "handoff_relay": {"ok": True}},
+        submit=True,
+    )
+
+    assert result["status"] == "reconciled", result
+    assert "blocker" not in result
+    assert result["reconcile"]["status"] == "reconcile_submitted"
+    assert "execution_requirements" in result["reconcile"]["fields"]
+
+    # Exactly one keeper ticket landed; draining it realigns the board row to the packet.
+    from limen.tabularius import drain_once
+
+    inbox = module.LOGS / "tickets" / "inbox"
+    assert len(list(inbox.glob("*.json"))) == 1
+    assert drain_once(module.TASKS_PATH).applied == 1
+    healed = next(t for t in load_limen_file(module.TASKS_PATH).tasks if t.id == packet_task.id)
+    assert healed.execution_requirements == []
+    assert execution_contract_hash(healed) == execution_contract_hash(packet_task)
+
+    # The dispatch control turns a reconciled lane into progress (exit 10), not a stop (exit 20),
+    # and raises no gate-stop alert.
+    dispatch = {"allow_dispatch": False, "exit_code": 20, "reason": "gate stopped"}
+    controlled = module.apply_lane_switch_control(dispatch, {**result, "requested": True})
+    assert controlled["exit_code"] == 10
+
+
 def test_lane_switch_dispatched_without_worker_receipt_fails_closed(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     item = _owner_item(item_id="ORPHAN")
