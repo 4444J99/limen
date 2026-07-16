@@ -145209,16 +145209,17 @@ tasks:
   description: substrate lifecycle predicate is failing
   repo: organvm/limen
   type: coordination
-  target_agent: codex
+  target_agent: jules
   workstream: substrate
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - always-working
   - receipt-first
   - overnight-lane-switch
   - substrate
+  - slow
   urls: []
   context: 'Receipt-first verdict: substrate lifecycle predicate is failing
 
@@ -145241,10 +145242,16 @@ tasks:
   receipt_target: git:organvm/limen:logs/reclaim-generated-state.jsonl
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T13:04:36.895961Z'
+  updated: '2026-07-16T13:41:46.480397Z'
   dispatch_log:
   - timestamp: '2026-07-16T13:04:36.895961Z'
     agent: codex
     session_id: async-reserve:fba1ab88380b2207d20ad8141baea0b0
     status: dispatched
     output: 'dispatch-async: reserved before detached worker launch'
+  - timestamp: '2026-07-16T13:41:46.480397Z'
+    agent: codex
+    session_id: cli
+    status: open
+    route_to: jules
+    output: timeout on codex; reopened to asynchronous lane
