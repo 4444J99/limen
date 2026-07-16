@@ -123281,12 +123281,13 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed_blocked
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - chronic-fleet-debt
   urls:
   - https://github.com/organvm/limen/pull/436
   context: 'PR organvm/limen#436 is CONFLICTING with its base branch and merge-drain
@@ -123300,7 +123301,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/436
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-15T16:18:06.471423Z'
+  updated: '2026-07-16T17:30:03.144604Z'
   dispatch_log:
   - timestamp: '2026-07-10T08:13:04.279954Z'
     agent: gemini
@@ -123350,6 +123351,17 @@ tasks:
     agent: jules
     session_id: '8176505272185582362'
     status: dispatched
+  - timestamp: '2026-07-16T17:25:38.588277Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 8176505272185582362 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-16T17:30:03.144604Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: AW-ESTATE-CUSTODY
   title: Make external SSDs the durable estate and the laptop a hot cache
   description: estate doctrine exists; implementation receipt is not complete
@@ -128933,13 +128945,14 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed_blocked
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
   - tried:jules
+  - chronic-fleet-debt
   urls:
   - https://github.com/organvm/limen/pull/486
   context: 'PR organvm/limen#486 is CONFLICTING with its base branch and merge-drain
@@ -128953,7 +128966,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/486
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-15T16:18:06.471423Z'
+  updated: '2026-07-16T17:30:03.144604Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -129005,6 +129018,17 @@ tasks:
     agent: jules
     session_id: '9538762138410718271'
     status: dispatched
+  - timestamp: '2026-07-16T17:25:38.588277Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 9538762138410718271 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-16T17:30:03.144604Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: HEAL-rebase-organvm-limen-492
   title: rebase/resolve conflicts on organvm/limen#492
   repo: organvm/limen
@@ -145367,7 +145391,7 @@ tasks:
   workstream: repo-boil-up
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: done
   labels:
   - always-working
   - receipt-first
@@ -145392,7 +145416,7 @@ tasks:
   receipt_target: git:organvm/limen:docs/repo-surface-ledger.md
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T16:49:42.453360Z'
+  updated: '2026-07-16T17:30:03.144604Z'
   dispatch_log:
   - timestamp: '2026-07-16T16:41:18.511058Z'
     agent: agy
@@ -145403,6 +145427,11 @@ tasks:
     agent: agy
     session_id: https://github.com/organvm/limen/pull/1145
     status: dispatched
+  - timestamp: '2026-07-16T17:30:03.144604Z'
+    agent: limen
+    session_id: heal
+    status: done
+    output: "heal-dispatch: PR merged \u2192 done"
 - id: GH-organvm-limen-1148
   title: "overnight-watch.py grew to 3.1 GiB RSS in ~50 min (com.limen.overnight-watch)\
     \ \u2014 bound the watch-loop's memory"
@@ -145528,4 +145557,38 @@ tasks:
   depends_on: []
   created: '2026-07-16'
   updated: '2026-07-16T17:00:33.854204Z'
+  dispatch_log: []
+- id: HEAL-rebase-stale-organvm-limen-1147
+  title: "rebase organvm/limen#1147 onto current base \u2014 stale base touches the\
+    \ daemon body"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - stale-base
+  - core
+  urls:
+  - https://github.com/organvm/limen/pull/1147
+  context: "PR organvm/limen#1147 is MERGEABLE + green BUT its base is STALE and its\
+    \ diff touches CORE daemon files (cli/src/limen, scripts/*.py|sh, mcp/src, web/api,\
+    \ container). Merging as-is would silently REVERT newer code on the base \u2014\
+    \ the #111 failure mode. Check out the PR branch and REBASE it onto the CURRENT\
+    \ base (git fetch origin && git rebase origin/<base>). During the rebase, KEEP\
+    \ every change that is genuinely this PR's own work and DROP any hunk that would\
+    \ revert a file the PR did not intend to change (especially core files it only\
+    \ carries because it branched old). Push --force-with-lease to the SAME PR branch;\
+    \ confirm it reports MERGEABLE, current with base, and green. Do NOT open a new\
+    \ PR and do NOT drop any unique work \u2014 absorb the branch toward current ideal\
+    \ form. PR: https://github.com/organvm/limen/pull/1147 [auto-emitted 2026-07-16\
+    \ by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1147 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1147
+  depends_on: []
+  created: '2026-07-16'
   dispatch_log: []
