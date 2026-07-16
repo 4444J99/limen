@@ -120769,12 +120769,13 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed_blocked
   labels:
   - cifix
   - self-heal
   - ci-red
   - slow
+  - chronic-fleet-debt
   urls:
   - https://github.com/organvm/limen/pull/677
   context: "PR organvm/limen#677 has FAILING CI checks and merge-drain correctly refuses\
@@ -120788,7 +120789,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/677
   depends_on: []
   created: '2026-07-07'
-  updated: '2026-07-15T17:04:41.408102Z'
+  updated: '2026-07-16T18:23:03.315477Z'
   dispatch_log:
   - timestamp: '2026-07-10T07:17:56.380680Z'
     agent: limen
@@ -120846,6 +120847,17 @@ tasks:
     agent: jules
     session_id: '5306048292946145574'
     status: dispatched
+  - timestamp: '2026-07-16T18:17:06.977069Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 5306048292946145574 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-16T18:23:03.315477Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: HEAL-cifix-organvm-limen-678
   title: fix failing CI on organvm/limen#678
   repo: organvm/limen
@@ -129036,13 +129048,14 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed_blocked
   labels:
   - rebase
   - self-heal
   - conflict
   - tried:opencode
   - slow
+  - chronic-fleet-debt
   urls:
   - https://github.com/organvm/limen/pull/492
   context: 'PR organvm/limen#492 is CONFLICTING with its base branch and merge-drain
@@ -129056,7 +129069,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/492
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-15T16:43:51.805798Z'
+  updated: '2026-07-16T18:23:03.315477Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -129106,6 +129119,17 @@ tasks:
     agent: jules
     session_id: '4924735104506127680'
     status: dispatched
+  - timestamp: '2026-07-16T18:17:06.977069Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 4924735104506127680 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-16T18:23:03.315477Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: HEAL-rebase-organvm-limen-516
   title: rebase/resolve conflicts on organvm/limen#516
   repo: organvm/limen
