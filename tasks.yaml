@@ -143262,12 +143262,10 @@ tasks:
     --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py
     --fail-on-debt --fail-reapable-over-cap
   receipt_target: git:organvm/limen:docs/estate-custody-implementation-receipts.json
-  execution_requirements:
-  - kind: mount
-    path: /Volumes/Scratch
+  execution_requirements: []
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-15T12:41:42.374340Z'
+  updated: '2026-07-16T03:29:16.309664Z'
   dispatch_log:
   - timestamp: '2026-07-14T06:00:38.993879Z'
     agent: codex
@@ -143534,7 +143532,7 @@ tasks:
     steering
   repo: organvm/limen
   type: coordination
-  target_agent: codex
+  target_agent: jules
   workstream: revenue-value-repos
   priority: medium
   budget_cost: 1
@@ -143563,7 +143561,7 @@ tasks:
   receipt_target: git:organvm/limen:docs/product-ledger.md
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-14T11:23:52.546282Z'
+  updated: '2026-07-16T03:29:16.309664Z'
   dispatch_log:
   - timestamp: '2026-07-14T04:32:51.070528Z'
     agent: jules
