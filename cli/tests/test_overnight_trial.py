@@ -1124,12 +1124,28 @@ def test_safe_git_executor_neutralizes_repo_signature_helpers(tmp_path, monkeypa
         f"signed-fixture@example.invalid {public_key[0]} {public_key[1]}\n",
         encoding="utf-8",
     )
-    git("config", "format.pretty", "%G?")
-    git("config", "log.showSignature", "true")
+    # Probe for gpg.ssh.program capability (added in git 2.34.0).  On older runners
+    # the helper is never invoked and the "B" assertion would be vacuously wrong.
+    version_out = subprocess.run(
+        [trusted_git, "--version"], capture_output=True, text=True, check=True
+    ).stdout  # e.g. "git version 2.34.1" or "git version 2.34.0 (Apple Git-156)"
+    # The version token is always the third word ("git version X.Y.Z [...]")
+    version_parts = version_out.split()
+    try:
+        major, minor = (int(x) for x in version_parts[2].split(".")[:2])
+    except (IndexError, ValueError):
+        major, minor = 0, 0
+    if (major, minor) < (2, 34):
+        pytest.skip(f"gpg.ssh.program not supported by {version_out.strip()} (requires git >= 2.34)")
+
     git("config", "gpg.ssh.allowedSignersFile", str(allowed_signers))
     git("config", "gpg.ssh.program", str(helper))
-    uncontrolled = git("log", "-1", check=False)
-    assert uncontrolled.stdout.strip() == "B"
+    # Pass --format=%G? explicitly; relying on format.pretty config alone is fragile
+    # across git versions and is the defect that caused empty output on CI runners.
+    uncontrolled = git("log", "-1", "--format=%G?", check=False)
+    assert uncontrolled.stdout.strip() == "B", (
+        f"expected 'B' (bad sig via custom helper), got {uncontrolled.stdout!r}; stderr: {uncontrolled.stderr!r}"
+    )
     assert helper_marker.is_file()
     helper_marker.unlink()
 
