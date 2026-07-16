@@ -3075,3 +3075,34 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Size cap in MiB for logs/heartbeat.err.log checked by disk-capacity.py --apply. When the log exceeds this, the effector truncates it to zero. Default 50 MiB; raise if the heartbeat emits legitimate high-volume stderr that should be preserved longer, lower for tighter disk hygiene."
+
+  LIMEN_RELATIONSHIP_REVIEW:
+    default: "1"
+    env: LIMEN_RELATIONSHIP_REVIEW
+    self_update: none
+    owner: tabularius
+    note: "Gate for the relationship-review-delta beat sensor (weekly review-due detector for the relationship-pipeline slugs). ON by default: it is read-only (a bounded, immutable sqlite count of chat.db) and fails open, so it cannot red the beat or leak. Its only public output is a PII-clean count; per-person detail lands only in the sealed _people-private estate."
+  LIMEN_BEAT_RELATIONSHIP_REVIEW:
+    default: 168
+    env: LIMEN_BEAT_RELATIONSHIP_REVIEW
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the relationship-review-delta sensor. 168 ≈ weekly at the 60s beat floor. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only); heartbeat-loop.sh carries no sensor-specific cadence constant."
+  LIMEN_RELATIONSHIP_REVIEW_TIMEOUT:
+    default: 300
+    env: LIMEN_RELATIONSHIP_REVIEW_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for the relationship-review-delta sensor. The work is a handful of read-only sqlite COUNT queries; 300s is generous headroom if chat.db is large or the volume is slow."
+  LIMEN_RELATIONSHIP_REVIEW_NOTIFY:
+    default: "1"
+    env: LIMEN_RELATIONSHIP_REVIEW_NOTIFY
+    self_update: none
+    owner: tabularius
+    note: "Safety-valve arg for the relationship-review-delta effector (--notify). When 1, review-due detections append to the sealed private log ~/Workspace/_people-private/review-due.jsonl (ARCA-sealed, never public). ON by default because the write target is private-only; set 0 to run detection without recording."
+  LIMEN_RELATIONSHIP_REVIEW_THRESHOLD:
+    default: 20
+    env: LIMEN_RELATIONSHIP_REVIEW_THRESHOLD
+    self_update: none
+    owner: tabularius
+    note: "How many NEW inbound messages since a person's last review make a delta dice-up worth running (relationship-review-delta.py). Default 20 — a meaningful wave, not a single text. Raise to reduce noise, lower to trigger sooner."

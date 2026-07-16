@@ -652,3 +652,27 @@ sensors:
       - label: "custody freshness"
         tier: live
         command: "python3 scripts/horrevm-custody.py --status"
+
+  relationship-review-delta:
+    section: heartbeat
+    title: "relationship review-due detector — surface (PII-clean count) when a person's new inbound volume since their last review warrants a delta dice-up"
+    gate: LIMEN_RELATIONSHIP_REVIEW
+    default: "1"
+    source: [heartbeat]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_RELATIONSHIP_REVIEW
+      default: 168
+    timeout:
+      env: LIMEN_RELATIONSHIP_REVIEW_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/relationship-review-delta.py"
+        args_when:
+          - env: LIMEN_RELATIONSHIP_REVIEW_NOTIFY
+            default: "1"
+            equals: "1"
+            args: ["--notify"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "relationship review-due detector skipped or exceeded its bound (read-only chat.db count; fails open)"
