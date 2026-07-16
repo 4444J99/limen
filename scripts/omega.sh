@@ -176,12 +176,12 @@ rung "ask-gate (intake predicate-shaped)" det python3 "$ROOT/scripts/ask-gate.py
 
 # 5. ask-lineage convergence — the prompt-corpus control plane is coherent and can advance:
 #    cursor checkpoint-bound, scanner version current, no unresolved obligation orphaned on a
-#    stale scan-version key (the merge-deadlock class, fixed 2026-07-14). The rung goes live
-#    automatically when the sensor arms; until then it reports the one remaining atom.
-if [[ "${LIMEN_PROMPT_ATOM_CONTROL:-0}" == "1" ]]; then
+#    stale scan-version key (the merge-deadlock class, fixed 2026-07-14). The sensor default is 1
+#    (armed since PR fix/agy-steps-schema-v2); the rung runs unless LIMEN_PROMPT_ATOM_CONTROL=0.
+if [[ "${LIMEN_PROMPT_ATOM_CONTROL:-1}" == "1" ]]; then
   rung "ask-lineage convergence" det python3 "$ROOT/scripts/prompt-atom-ledger.py" --check-cursor
 else
-  skip_rung "ask-lineage convergence" det "prompt-corpus sensor dark: agy steps-schema adapter gap keeps the beat command exit-1 (see sensors.yaml prompt-corpus-control)"
+  skip_rung "ask-lineage convergence" det "prompt-corpus sensor manually disabled (LIMEN_PROMPT_ATOM_CONTROL=0)"
 fi
 
 # 6. ship-gate — every product-facing done-claim resolves to a reachable external artifact.

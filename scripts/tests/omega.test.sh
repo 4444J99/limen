@@ -34,6 +34,11 @@ write_stubs() {
   done
   printf '#!/usr/bin/env python3\nimport sys; sys.exit(%s)\n' "$ask_rc" > "$work/scripts/ask-gate.py"
   chmod +x "$work/scripts/ask-gate.py"
+  # Stub for prompt-atom-ledger.py --check-cursor (ask-lineage convergence rung).
+  # The rung is now live by default (LIMEN_PROMPT_ATOM_CONTROL defaults to 1); the stub
+  # exits 0 so the test exercises the PASS path without a real private corpus.
+  printf '#!/usr/bin/env python3\nimport sys; print("prompt-atom-cursor: PASS"); sys.exit(0)\n' > "$work/scripts/prompt-atom-ledger.py"
+  chmod +x "$work/scripts/prompt-atom-ledger.py"
   printf '#!/usr/bin/env bash\nexit 0\n' > "$work/scripts/no-tasks-on-me.sh"
   chmod +x "$work/scripts/no-tasks-on-me.sh"
   cat > "$work/scripts/beat-sensors.py" <<'PY'
@@ -88,7 +93,8 @@ assert all({"rung", "tier", "status"} <= set(r) for r in d["rungs"]), "rung shap
 live = [r for r in d["rungs"] if r["tier"] == "live"]
 assert live and all(r["status"] == "SKIP" for r in live), [r["status"] for r in live]
 rows = {r["rung"]: r for r in d["rungs"]}
-assert rows["ask-lineage convergence"]["status"] == "SKIP", rows
+# ask-lineage is now a det rung (sensor armed, LIMEN_PROMPT_ATOM_CONTROL defaults to 1).
+assert rows["ask-lineage convergence"]["status"] == "PASS", rows
 assert rows["worktree lifecycle (exact zero)"]["status"] == "SKIP", rows
 assert rows["arbitrary registry parity"]["status"] == "PASS", rows
 assert rows["arbitrary registry posture"]["status"] == "SKIP", rows
