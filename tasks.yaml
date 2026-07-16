@@ -144853,3 +144853,29 @@ tasks:
   created: '2026-07-15'
   updated: '2026-07-15T19:11:24.345362Z'
   dispatch_log: []
+- id: GH-organvm-limen-1130
+  title: 'always-working owner packets are capability-unlaunchable: local lanes +
+    self-repo + mutating predicates'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - censor
+  urls:
+  - https://github.com/organvm/limen/issues/1130
+  context: 'GitHub issue organvm/limen#1130. Surfaced during the 2026-07-16 overnight
+    zero-launch wedge (PR #1129 made the refusal named and non-wedging; this issue
+    owns the remaining authoring defect). 4 of 5 open always-working owner packets
+    can never launch on their assigned lanes: | packet | lane | why refused | |---|---|---|
+    | AW-SUBSTRATE-DISK-TEMP-62de1d1fbf43 | codex (local) | mutating `--apply` predicate
+    chain on self-repo `organvm/'
+  predicate: test "$(gh issue view 1130 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1130
+  depends_on: []
+  created: '2026-07-16'
+  updated: '2026-07-16T06:18:19.270096Z'
+  dispatch_log: []
