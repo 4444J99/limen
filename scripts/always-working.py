@@ -727,8 +727,8 @@ def mail_receipts() -> list[dict[str, Any]]:
             "assignment_packet": {
                 "lane_fit": "local-codex-or-opencode",
                 "repo": "organvm/limen",
-                "task": "Use existing mail-story atoms and UMA obligations to classify the active flagged set; draft/park, never send.",
-                "predicate": "python3 scripts/mail-story-ledger.py --scope flagged --write",
+                "task": "Run python3 scripts/mail-story-ledger.py --scope flagged --write. Use existing mail-story atoms and UMA obligations to classify the active flagged set; draft/park, never send.",
+                "predicate": "python3 -m pytest cli/tests/test_mail_story_ledger.py -q",
                 "receipt_target": "git:organvm/limen:docs/mail-story-ledger.md",
                 "stop_condition": "flagged set has classified atoms, obligations, and needs-human buckets",
             },
@@ -800,8 +800,8 @@ def repo_surface_receipt() -> dict[str, Any]:
         "assignment_packet": {
             "lane_fit": "agy-or-opencode-readonly",
             "repo": "organvm/limen",
-            "task": "Harvest existing repo-surface and consolidation receipts, then assign only missing classifications.",
-            "predicate": "python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write",
+            "task": "Run python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write. Harvest existing repo-surface and consolidation receipts, then assign only missing classifications.",
+            "predicate": "scripts/verify-scoped.sh",
             "receipt_target": "git:organvm/limen:docs/repo-surface-ledger.md",
             "stop_condition": "all discovered roots are classified or recorded with blocker/gate",
         },
@@ -1106,11 +1106,11 @@ def contribution_balance_receipt() -> dict[str, Any]:
             "lane_fit": "codex-conductor",
             "repo": "organvm/limen",
             "task": (
-                "Use the live contribution balance as a value gate: route the next public work to "
+                f"Run python3 scripts/github-contribution-balance.py --login {CONTRIBUTION_BALANCE_LOGIN} --json and use the live contribution balance as a value gate: route the next public work to "
                 "substantive PR review first, then real issue criteria and PR packaging, before more "
                 "commit-heavy implementation churn."
             ),
-            "predicate": f"python3 scripts/github-contribution-balance.py --login {CONTRIBUTION_BALANCE_LOGIN} --json",
+            "predicate": "python3 -m pytest cli/tests/test_github_contribution_balance.py -q",
             "receipt_target": "git:organvm/limen:docs/always-working.md",
             "stop_condition": "reviews/issues/PRs have owner receipts and commit-only churn is no longer the next public action",
         },
@@ -1305,9 +1305,9 @@ def substrate_receipt() -> dict[str, Any]:
         "assignment_packet": {
             "lane_fit": "codex-local",
             "repo": "organvm/limen",
-            "task": "Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.",
-            "predicate": "python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap",
-            "receipt_target": "git:organvm/limen:docs/estate-custody-implementation-receipts.json",
+            "task": "Run the full disk-relief pass in a worktree: python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap. Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.",
+            "predicate": "python3 -m pytest cli/tests/test_substrate_storage_pressure.py -q",
+            "receipt_target": "git:organvm/limen:logs/reclaim-generated-state.jsonl",
             "stop_condition": "free disk is at target, temp writes are usable, worktree debt is exactly zero, and reapable roots are zero",
         },
     }
