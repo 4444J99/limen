@@ -15,22 +15,22 @@ portal:
       claude: 100
     track:
       date: '2026-07-16'
-      spent: 45
+      spent: 5
       per_agent:
-        jules: 27
-        gemini: 7
-        codex: 0
-        opencode: 1
-        agy: 6
+        jules: 0
+        gemini: 0
+        codex: 1
+        opencode: 0
+        agy: 0
         claude: 0
         github_actions: 1
         ollama: 3
       per_agent_reset:
-        jules: '2026-07-15T12:55:20.864137+00:00'
-        gemini: '2026-07-15T12:55:20.864137+00:00'
+        jules: '2026-07-16T13:04:36.895961+00:00'
+        gemini: '2026-07-16T13:04:36.895961+00:00'
         codex: '2026-07-16T09:57:51.762793+00:00'
-        opencode: '2026-07-15T12:55:20.864137+00:00'
-        agy: '2026-07-15T12:55:20.864137+00:00'
+        opencode: '2026-07-16T13:04:36.895961+00:00'
+        agy: '2026-07-16T13:04:36.895961+00:00'
         claude: '2026-07-16T09:57:51.762793+00:00'
   agents:
     opencode:
@@ -145204,3 +145204,47 @@ tasks:
   depends_on: []
   created: '2026-07-16'
   dispatch_log: []
+- id: AW-SUBSTRATE-DISK-TEMP-9272c720590f
+  title: Keep disk/temp/voice substrate from starving the swarm
+  description: substrate lifecycle predicate is failing
+  repo: organvm/limen
+  type: coordination
+  target_agent: codex
+  workstream: substrate
+  priority: critical
+  budget_cost: 1
+  status: dispatched
+  labels:
+  - always-working
+  - receipt-first
+  - overnight-lane-switch
+  - substrate
+  urls: []
+  context: 'Receipt-first verdict: substrate lifecycle predicate is failing
+
+    Task: Run the full disk-relief pass in a worktree: python3 scripts/reclaim-generated-state.py
+    --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py
+    --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py
+    --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap.
+    Reclaim ignored generated state, preserve or owner-route local-only payloads,
+    and keep Scratch as the active work substrate.
+
+    Predicate: python3 -m pytest cli/tests/test_substrate_storage_pressure.py -q
+
+    Receipt target: git:organvm/limen:logs/reclaim-generated-state.jsonl
+
+    Stop condition: free disk is at target, temp writes are usable, worktree debt
+    is exactly zero, and reapable roots are zero
+
+    This is the single bounded alternate selected after generic dispatch was value-gated.'
+  predicate: python3 -m pytest cli/tests/test_substrate_storage_pressure.py -q
+  receipt_target: git:organvm/limen:logs/reclaim-generated-state.jsonl
+  depends_on: []
+  created: '2026-07-16'
+  updated: '2026-07-16T13:04:36.895961Z'
+  dispatch_log:
+  - timestamp: '2026-07-16T13:04:36.895961Z'
+    agent: codex
+    session_id: async-reserve:fba1ab88380b2207d20ad8141baea0b0
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
