@@ -181,7 +181,7 @@ rung "ask-gate (intake predicate-shaped)" det python3 "$ROOT/scripts/ask-gate.py
 if [[ "${LIMEN_PROMPT_ATOM_CONTROL:-1}" == "1" ]]; then
   rung "ask-lineage convergence" det python3 "$ROOT/scripts/prompt-atom-ledger.py" --check-cursor
 else
-  skip_rung "ask-lineage convergence" det "prompt-corpus sensor manually disabled (LIMEN_PROMPT_ATOM_CONTROL=0)"
+  skip_rung "ask-lineage convergence" det "prompt-corpus sensor dark: source cursor not bound to private checkpoint — reseal via prompt-atom-ledger.py --scan"
 fi
 
 # 6. ship-gate — every product-facing done-claim resolves to a reachable external artifact.

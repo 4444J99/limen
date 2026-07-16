@@ -190,7 +190,7 @@ sensors:
     default: "1"
     source: [heartbeat]
     owner: tabularius
-    note: "ARMED 2026-07-15 (PR fix/agy-steps-schema-v2). agy steps schema extended to admit 3 vendor-drift columns (has_subtrajectory, permissions, step_format); 567 unsupported-columns units resolved; canary: unbounded pass 219.9s (567 schema errors → 0), bounded pass 198.9s exit-0, --check-cursor PASS. Prior note: 2026-07-14 canary (PR fix/prompt-corpus-missing-source-exclusion) drained 20,487-unit obligation deadlock (unresolved 20,487 -> 566, zero stale-version orphans; probe: python3 scripts/prompt-atom-ledger.py --check-cursor)."
+    note: "ARMED 2026-07-15 (PR fix/agy-steps-schema-v2). agy steps schema extended to admit 3 vendor-drift columns (has_subtrajectory, permissions, step_format); 567 unsupported-columns units resolved; canary: unbounded pass 219.9s (567 schema errors → 0), bounded pass 198.9s exit-0, --check-cursor PASS. Prior note: 2026-07-14 canary (PR fix/prompt-corpus-missing-source-exclusion) drained 20,487-unit obligation deadlock (unresolved 20,487 -> 566, zero stale-version orphans; probe: python3 scripts/prompt-atom-ledger.py --check-cursor). Dark condition (when LIMEN_PROMPT_ATOM_CONTROL=0): source cursor not bound to private checkpoint — reseal via python3 scripts/prompt-atom-ledger.py --scan. agy columns (has_subtrajectory/permissions/step_format) are already admitted in cli/src/limen/prompt_sources.py; the skip reason is cursor-checkpoint unbind in prompt-atom-ledger, not the schema adapter gap."
     cadence:
       env: LIMEN_BEAT_PROMPT_ATOMS
       default: 4

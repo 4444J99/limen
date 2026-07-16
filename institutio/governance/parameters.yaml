@@ -2431,6 +2431,13 @@ parameters:
     owner: tabularius
     note: "Beat gate for the heal-convergence report (scripts/heal-convergence.py --check) run each beat by metabolize.sh section 0g (RETRO-0708-HEAL-RECEIPT-OUTCOME; retro findings 1-2). CHRONIC rung: open heal PRs (title-prefixed '[limen HEAL-') grouped by (repo, failing check); >=3 PRs older than 48h on the SAME check = the healer is re-spending capacity on a wall (growth-auditor #16-#22 / theoria #492-#500 class) -> exit 1. COVERAGE rung: archived heal receipts must carry the {outcome: already_green|fixed|gave_up, failing_checks} field derived MECHANICALLY post-run by async-run-one.py (gh pr view of the target PR - never agent prose), reported as a ratio so the 855-emitted-vs-384-receipts gap class is a number. verify-whole runs the fixture test (fixture PRs + fixture clock - deterministic); live counts stay beat-side. Set 0 to silence."
 
+  LIMEN_CHRONIC_RECEIPTS:
+    default: "scripts/heal-chronic-receipts.json"  # git-tracked exemption registry for billing-blocked heal groups
+    env: LIMEN_CHRONIC_RECEIPTS
+    self_update: none
+    owner: tabularius
+    note: "Path to the chronic-receipt registry (scripts/heal-chronic-receipts.json) read by scripts/heal-convergence.py. Each entry exempts a (repo, check) chronic group from the exit-1 gate when CI is externally blocked (e.g. billing hold under L-CARD-FRAUD-HOLD). Entries must carry repo, check, lever, issue, and reason. Set to an alternate path to override."
+
   LIMEN_FORK_SAFETY_CHECK:
     default: "1"               # ON — prove the macOS 26.6 atfork/os_log crash stays fixed each beat
     env: LIMEN_FORK_SAFETY_CHECK

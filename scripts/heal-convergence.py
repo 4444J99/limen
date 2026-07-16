@@ -18,6 +18,14 @@ Two rungs:
     derived mechanically by async-run-one.py post-run). Reported as a ratio so
     the 855-emitted-vs-384-receipts class of gap is a number, not a vibe.
 
+Chronic receipts (exemptions):
+  A chronic group whose CI is externally blocked (billing hold, suspended project,
+  etc.) can be parked with a receipt entry in ``scripts/heal-chronic-receipts.json``.
+  Each entry must carry ``repo``, ``check``, ``lever`` (lever id in his-hand-levers.json),
+  ``issue`` (limen issue #), and ``reason``.  A matching group is printed as EXEMPT and
+  excluded from the exit-1 gate while the underlying lever remains open.
+  Override the path via ``LIMEN_CHRONIC_RECEIPTS``.
+
 Exit codes: 0 = no chronic group; 1 = chronic non-convergence (with --check).
 Stamps logs/heal-convergence.json. Fixture-testable: --prs-file bypasses gh.
 
@@ -39,6 +47,10 @@ SCRIPT_ROOT = Path(__file__).resolve().parent.parent
 ROOT = Path(os.environ.get("LIMEN_ROOT", SCRIPT_ROOT))
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
 RECEIPT_ARCHIVE = ROOT / ".limen-private" / "async-runs" / "archive"
+CHRONIC_RECEIPTS_FILE = Path(os.environ.get(
+    "LIMEN_CHRONIC_RECEIPTS",
+    str(SCRIPT_ROOT / "scripts" / "heal-chronic-receipts.json"),
+))
 
 
 def gh(args, timeout=60):
@@ -84,6 +96,23 @@ def chronic_groups(prs, chronic_count, chronic_hours, now=None):
     return {k: v for k, v in groups.items() if len(v) >= chronic_count}
 
 
+def load_chronic_receipts(receipts_file=None):
+    """Load exemption receipts from the git-tracked registry.
+
+    Returns a dict keyed by (repo, check) → receipt entry.
+    Missing or malformed file is silently treated as empty (fail-open for the sensor).
+    """
+    path = Path(receipts_file) if receipts_file else CHRONIC_RECEIPTS_FILE
+    if not path.exists():
+        return {}
+    try:
+        entries = json.loads(path.read_text()) or []
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"  (chronic receipts load warning: {exc})", file=sys.stderr)
+        return {}
+    return {(e["repo"], e["check"]): e for e in entries if "repo" in e and "check" in e}
+
+
 def receipt_coverage(archive_dir):
     """(with_outcome, without_outcome) across archived HEAL receipts."""
     with_o = without = 0
@@ -110,6 +139,8 @@ def main(argv=None):
     ap.add_argument("--cap", type=int, default=40, help="max open heal PRs to assess per run")
     ap.add_argument("--prs-file", help="fixture JSON [{repo,number,url,createdAt,failing_checks}] — bypasses gh")
     ap.add_argument("--receipts-dir", default=str(RECEIPT_ARCHIVE))
+    ap.add_argument("--chronic-receipts", default=None,
+                    help="path to heal-chronic-receipts.json (default: scripts/heal-chronic-receipts.json)")
     ap.add_argument("--now", help="fixture clock (ISO-8601) for deterministic tests")
     ap.add_argument("--stamp", default=str(ROOT / "logs" / "heal-convergence.json"))
     args = ap.parse_args(argv)
@@ -118,11 +149,22 @@ def main(argv=None):
     now = datetime.datetime.fromisoformat(args.now.replace("Z", "+00:00")) if args.now else None
     chronic = chronic_groups(prs, args.chronic_count, args.chronic_hours, now=now)
     with_o, without = receipt_coverage(args.receipts_dir)
+    exemptions = load_chronic_receipts(args.chronic_receipts)
+
+    # Partition chronic groups into exempted (lever-homed, receipt present) and active.
+    exempt = {k: v for k, v in chronic.items() if k in exemptions}
+    active = {k: v for k, v in chronic.items() if k not in exemptions}
 
     payload = dict(
         timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         open_heal_prs=len(prs),
-        chronic=[dict(repo=r, check=c, prs=[p["url"] for p in v]) for (r, c), v in sorted(chronic.items())],
+        chronic=[dict(repo=r, check=c, prs=[p["url"] for p in v]) for (r, c), v in sorted(active.items())],
+        chronic_exempt=[
+            dict(repo=r, check=c, prs=[p["url"] for p in v], **{
+                k2: exemptions[(r, c)].get(k2) for k2 in ("lever", "issue", "reason")
+            })
+            for (r, c), v in sorted(exempt.items())
+        ],
         receipts_with_outcome=with_o,
         receipts_without_outcome=without,
     )
@@ -133,14 +175,19 @@ def main(argv=None):
     except OSError as exc:
         print(f"  (stamp skipped: {exc})", file=sys.stderr)
 
-    for (repo, check), v in sorted(chronic.items()):
+    for (repo, check), v in sorted(exempt.items()):
+        e = exemptions[(repo, check)]
+        print(f"  EXEMPT {repo} · check '{check}' — {len(v)} open heal PRs (lever {e.get('lever')} / "
+              f"issue #{e.get('issue')}): {e.get('reason', '—')}")
+    for (repo, check), v in sorted(active.items()):
         print(f"  CHRONIC {repo} · check '{check}' — {len(v)} open heal PRs > {args.chronic_hours}h: "
               + ", ".join(f"#{p['number']}" for p in v))
     total = with_o + without
     cov = f"{with_o}/{total}" if total else "0/0"
-    print(f"heal-convergence: {len(prs)} open heal PRs, {len(chronic)} chronic group(s), receipt outcome coverage {cov}")
+    print(f"heal-convergence: {len(prs)} open heal PRs, {len(active)} chronic group(s) active, "
+          f"{len(exempt)} exempt, receipt outcome coverage {cov}")
 
-    if args.check and chronic:
+    if args.check and active:
         print("heal-convergence: RED — the healer is re-spending capacity on a wall; "
               "fix the named check or park the repo with a chronic receipt", file=sys.stderr)
         return 1
