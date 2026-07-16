@@ -137365,7 +137365,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i--skills#27
   repo: organvm/a-i--skills
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -137394,7 +137394,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i--skills#34
   repo: organvm/a-i--skills
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -137423,7 +137423,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#49
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -137502,7 +137502,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#54
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -137595,7 +137595,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#115
   repo: organvm/a-i-chat--exporter
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -137830,7 +137830,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#173
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -137925,7 +137925,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#184
   repo: organvm/domus-genoma
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -138047,7 +138047,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/domus-genoma#230
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -138202,7 +138202,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--theoria#471
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -138232,7 +138232,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--theoria#477
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -138262,7 +138262,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/dot-github--theoria#483
   repo: organvm/dot-github--theoria
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -138292,7 +138292,7 @@ tasks:
   title: fix failing CI on organvm/growth-auditor#18
   repo: organvm/growth-auditor
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -138405,7 +138405,7 @@ tasks:
   title: "In My Head MVP \u2014 message read back in your voice (audio + video export)"
   repo: organvm/in-my-head
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 2
   status: open
@@ -138436,7 +138436,7 @@ tasks:
   title: "Reading styles \u2014 arrive at the ideal form of a delivery persona"
   repo: organvm/vox
   type: research
-  target_agent: claude
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -139695,7 +139695,7 @@ tasks:
   title: fix failing CI on organvm/manumissio#18
   repo: organvm/manumissio
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -140978,7 +140978,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/organvm-engine#144
   repo: organvm/organvm-engine
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -141008,7 +141008,7 @@ tasks:
   title: fix failing CI on organvm/organvm-iii-ergon.github.io#7
   repo: organvm/organvm-iii-ergon.github.io
   type: code
-  target_agent: opencode
+  target_agent: agy
   priority: high
   budget_cost: 1
   status: open
@@ -141034,7 +141034,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/organvm-ontologia#13
   repo: organvm/organvm-ontologia
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -141064,7 +141064,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/petasum-super-petasum#150
   repo: organvm/petasum-super-petasum
   type: code
-  target_agent: claude
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -141201,7 +141201,7 @@ tasks:
   title: fix failing CI on organvm/session-meta#106
   repo: organvm/session-meta
   type: code
-  target_agent: gemini
+  target_agent: codex
   priority: high
   budget_cost: 1
   status: open
@@ -141226,7 +141226,7 @@ tasks:
   title: rebase/resolve conflicts on organvm/the-invisible-ledger#31
   repo: organvm/the-invisible-ledger
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -141718,7 +141718,7 @@ tasks:
     only when ranked.
   repo: organvm/daily-engine
   type: research
-  target_agent: opencode
+  target_agent: agy
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -141892,7 +141892,7 @@ tasks:
     only when ranked.
   repo: organvm/pages--theoria-copy--kerygma
   type: research
-  target_agent: agy
+  target_agent: claude
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -142274,7 +142274,7 @@ tasks:
     only when ranked.
   repo: organvm/studium-generale
   type: research
-  target_agent: claude
+  target_agent: gemini
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -142455,7 +142455,7 @@ tasks:
     only when ranked.
   repo: organvm/micro-tato
   type: research
-  target_agent: gemini
+  target_agent: codex
   workstream: contributions
   priority: medium
   budget_cost: 1
@@ -142982,7 +142982,7 @@ tasks:
   title: fix failing CI on organvm/mirror-mirror#125
   repo: organvm/mirror-mirror
   type: code
-  target_agent: codex
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
@@ -143441,7 +143441,7 @@ tasks:
     a noninteractive regression without applying the cartridge to the live host.
   repo: organvm/domus-genoma
   type: code
-  target_agent: codex
+  target_agent: agy
   workstream: substrate
   priority: high
   budget_cost: 1
