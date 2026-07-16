@@ -20,7 +20,6 @@ def require(rel: str, needle: str, errors: list[str]) -> None:
 
 def main() -> int:
     errors: list[str] = []
-    dispatch_py = read("cli/src/limen/dispatch.py")
     async_py = read("scripts/dispatch-async.py")
     heartbeat = read("scripts/heartbeat-loop.sh")
 

@@ -384,7 +384,6 @@ def summarize_codex(
         }
         sessions.append(compact)
 
-    session_ids = {str(session.get("session_id")) for session in sessions}
     aggregate = empty_usage()
     for session in sessions:
         for key in USAGE_KEYS:
