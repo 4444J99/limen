@@ -4,7 +4,7 @@ Limen is a UMA wrapper for mail-story evidence. Classification, crosswalk, and r
 
 ## Snapshot
 
-- Generated: `2026-07-10T02:00:15Z`
+- Generated: `2026-07-16T14:55:43Z`
 - Wrapper schema: `limen.mail_story.wrapper.v1`
 - Source receipt schema: `uma.mail.status.v1`
 - Source status: `open`
@@ -22,7 +22,7 @@ Limen is a UMA wrapper for mail-story evidence. Classification, crosswalk, and r
 - Historical crosswalk available: `true`
 - Historical source messages: `41415`
 - Historical reconciled: `true`
-- Next queue count: `8`
+- Next queue count: `0`
 - Blocker count: `0`
 
 ## Terminal Status Counts
