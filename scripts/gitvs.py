@@ -748,6 +748,68 @@ def parity(estate: dict) -> list[str]:
     return fails
 
 
+def _facts_rows() -> list[dict] | None:
+    """The per-repo census facts (written by observe()); None when no census has run."""
+    try:
+        return json.loads(FACTS.read_text(encoding="utf-8"))["repos"]
+    except Exception:
+        return None
+
+
+def visibility_drift(rows: list[dict], estate: dict) -> tuple[list[str], list[str]]:
+    """Class G, pure: desired (class) visibility − observed. 'any' is exempt; a desired-public repo
+    still private whose row carries publish_candidate is CITED (homed with the publish-wave lever,
+    the GitOps direction: the registry is desired-state, the effector converges reality); every
+    other mismatch — including a desired-private repo observed public (leak posture) — is drift."""
+    fails: list[str] = []
+    cites: list[str] = []
+    classes = estate.get("classes") or {}
+    overrides = estate.get("repo_overrides") or {}
+    for row in rows:
+        full = str(row.get("full_name") or "")
+        cls_name = classify_repo(full, estate, facts=row)
+        desired = (classes.get(cls_name) or {}).get("visibility") if cls_name else None
+        if desired not in ("public", "private"):
+            continue  # 'any' is exempt; unclassed is rung J's finding
+        observed = "private" if row.get("private") else "public"
+        if desired == observed:
+            continue
+        if desired == "public" and (overrides.get(full) or {}).get("publish_candidate"):
+            cites.append(
+                f"[G visibility-drift] {full}: desired public, observed private — publish-wave pending (lever-gated)"
+            )
+        else:
+            fails.append(f"[G visibility-drift] {full}: class '{cls_name}' demands {desired}, observed {observed}")
+    return fails, cites
+
+
+def seo_floor_gaps(rows: list[dict], estate: dict) -> list[str]:
+    """Class K, pure: public repos below their class's declared SEO floor — metadata only
+    (description/topics/homepage from the census facts; the README standard is the seo-audit
+    organ's deeper rung). Forks/archived are exempt by their fact classes carrying no seo block."""
+    classes = estate.get("classes") or {}
+    gaps: list[str] = []
+    for row in rows:
+        if row.get("private"):
+            continue
+        full = str(row.get("full_name") or "")
+        cls = classes.get(classify_repo(full, estate, facts=row) or "") or {}
+        seo = cls.get("seo")
+        if not isinstance(seo, dict):
+            continue
+        missing: list[str] = []
+        if seo.get("description") == "required" and not str(row.get("description") or "").strip():
+            missing.append("description")
+        floor = int(seo.get("topics_min") or 0)
+        if (row.get("topics_count") or 0) < floor:
+            missing.append(f"topics<{floor}")
+        if seo.get("homepage") == "required" and not str(row.get("homepage") or "").strip():
+            missing.append("homepage")
+        if missing:
+            gaps.append(f"{full}: {','.join(missing)}")
+    return gaps
+
+
 def _homed_levers() -> set[str]:
     """Lever ids present (and open) in his-hand-levers.json — so the doctor can CITE a homed atom
     (App un-installed → L-LIMENBOT-INSTALL) instead of counting it as a failure. Absent file → empty."""
@@ -792,9 +854,18 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
     elif not c:
         fails.append("[C orphaned-branch] a provably-landed local branch lingers past the grace window")
 
-    # ── Live classes (A/D/E/F/G) — need gh; SKIP offline, cite a homed atom instead of failing. ──
+    # ── Live classes (A/D/E/F/G/J/K/M) — need gh; SKIP offline, cite a homed atom instead of failing. ──
     if offline:
-        for tag in ("A protection", "D permission-over-grant", "E rate-limit", "F app-installed", "G visibility"):
+        for tag in (
+            "A protection",
+            "D permission-over-grant",
+            "E rate-limit",
+            "F app-installed",
+            "G visibility",
+            "J unclassified",
+            "K seo-floor",
+            "M org-namespace",
+        ):
             skips.append(f"[{tag}] live rung — offline")
         return _verdict(fails, cites, skips, "offline")
 
@@ -838,9 +909,57 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
                 f"{owed} owed (envisioned — detail in the census ledger; $0-labor harness pending §3 D2)"
             )
 
-    # A/D/G are per-repo posture rungs — the census surfaces the inputs; the full per-301-repo
+    # ── The publication rungs (G/J/K) — per-repo, over the census facts the Lens just wrote. ──
+    ratchets = estate.get("ratchets") or {}
+    rows = _facts_rows()
+
+    # G — visibility drift (armed by the visibility_gate_armed ratchet; the taxonomy defused the
+    # latent glob flip, so desired-state is finally truthful enough to assert).
+    if not ratchets.get("visibility_gate_armed"):
+        skips.append("[G visibility-drift] ratchet visibility_gate_armed=false — arms with the decision registry")
+    elif rows is None:
+        skips.append("[G visibility-drift] no census facts (run census online first)")
+    else:
+        g_fails, g_cites = visibility_drift(rows, estate)
+        fails += g_fails
+        cites += g_cites
+
+    # J — unclassified: the decision registry is TOTAL; a repo in no class is a missing judgment.
+    if rows is None:
+        skips.append("[J unclassified] no census facts")
+    else:
+        unclassed = [
+            str(r.get("full_name")) for r in rows if (classify_repo(str(r.get("full_name")), estate, facts=r)) is None
+        ]
+        if unclassed:
+            head = ", ".join(unclassed[:5]) + ("…" if len(unclassed) > 5 else "")
+            fails.append(f"[J unclassified] {len(unclassed)} repo(s) in no class — judge them: {head}")
+
+    # K — SEO floor (metadata half): cited-owed until the seo_drift_gates ratchet arms post-backfill.
+    if rows is None:
+        skips.append("[K seo-floor] no census facts")
+    else:
+        gaps = seo_floor_gaps(rows, estate)
+        if gaps:
+            msg = f"[K seo-floor] {len(gaps)} public repo(s) below their class SEO floor (description/topics/homepage)"
+            if ratchets.get("seo_drift_gates"):
+                fails.append(msg)
+            else:
+                cites.append(msg + " — owed; the repo-metadata effector converges it, ratchet arms post-backfill")
+
+    # M — org namespaces: reserved orgs are declared; an unexpected org is a judgment owed.
+    expected = ((estate.get("expected_orgs") or {}).get("list")) or []
+    observed_orgs = sorted((led.get("app_estate") or {}).get("by_org") or {})
+    if expected and observed_orgs:
+        unexpected = sorted(set(observed_orgs) - set(expected))
+        if unexpected:
+            cites.append(
+                f"[M org-namespace] unexpected org(s): {', '.join(unexpected)} — add to expected_orgs or lever a deletion"
+            )
+
+    # A/D are per-repo posture rungs — the census surfaces the inputs; the full per-repo
     # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.
-    for tag in ("A protection-missing", "D permission-over-grant", "G visibility-drift"):
+    for tag in ("A protection-missing", "D permission-over-grant"):
         skips.append(f"[{tag}] per-repo posture rung — arms with the reconcile layer (PR B)")
 
     return _verdict(fails, cites, skips, "live")

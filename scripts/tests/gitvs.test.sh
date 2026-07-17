@@ -279,6 +279,46 @@ else
   echo "  MISMATCH (case17 classify precedence): got:"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
 fi
 
+# ── Case 18: the G/K pure rungs — drift, candidate-cite, any-exempt, seo floor (no gh needed) ──
+out="$(python3 - <<PY
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("gitvs", "$GITVS")
+g = importlib.util.module_from_spec(spec); sys.modules["gitvs"] = g
+spec.loader.exec_module(g)
+estate = {
+    "classes": {
+        "priv": {"match": [], "visibility": "private"},
+        "anyc": {"match": ["**"], "match_facts": {"fork": True}, "visibility": "any"},
+        "pub": {"match": ["o/**"], "visibility": "public",
+                 "seo": {"description": "required", "topics_min": 2, "homepage": "required"}},
+    },
+    "repo_overrides": {
+        "o/candidate": {"class": "pub", "why": "wave", "publish_candidate": True},
+        "o/leak": {"class": "priv", "why": "vault"},
+    },
+}
+rows = [
+    {"full_name": "o/candidate", "private": True},                       # desired pub, cand -> CITE
+    {"full_name": "o/leak", "private": False},                           # desired priv, public -> FAIL
+    {"full_name": "o/fork", "private": True, "fork": True},              # any -> exempt
+    {"full_name": "o/ok", "private": False, "description": "d", "topics_count": 3, "homepage": "h"},
+    {"full_name": "o/bare", "private": False, "description": "", "topics_count": 0, "homepage": ""},
+]
+fails, cites = g.visibility_drift(rows, estate)
+gaps = g.seo_floor_gaps(rows, estate)
+print(len(fails), len(cites), len(gaps))
+print("leak" in fails[0], "candidate" in cites[0])
+print(gaps[0].startswith("o/bare:") and "description" in gaps[0] and "topics<2" in gaps[0] and "homepage" in gaps[0])
+PY
+)"
+if [ "$out" = "1 1 1
+True True
+True" ]; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case18 G/K pure rungs): got:"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "gitvs.test.sh: PASS ($pass checks)"

@@ -591,5 +591,5 @@ human_atoms:
 ratchets:
   setup_rulesets_derives_checks: false     # ARM when setup-rulesets.py reads classes[].required_checks
   session_pressure_derives_remote: false   # ARM when session-lifecycle-pressure.py delegates remote-branch counts to the census ledger
-  visibility_gate_armed: false             # ARM (predicate PR) once the 307-decision overrides land — class G then diffs desired visibility per repo
+  visibility_gate_armed: true              # ARMED with the decision registry (308/308 classified) — class G diffs desired visibility per repo; pending lever-gated flips are CITED, never failed
   seo_drift_gates: false                   # ARM post-backfill — class K (SEO floor) flips from cited-owed to a red predicate
