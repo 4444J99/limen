@@ -652,6 +652,30 @@ sensors:
         severity: advisory
         escalation: "Backblaze is still crawling regenerable fleet trees and the self-heal could not land — run `python3 scripts/backblaze-exclusions.py --apply` (bzinfo.xml is user-owned, 2026-07-16 ground truth); if the file went root-owned again, the fallback is the Backblaze pane → Settings → Exclusions (2026-07-15/16 host-thrash incidents, IF-HOST-PRESSURE form 3)"
 
+  host-relief:
+    section: "0q"
+    title: "host-relief — SHED has hands: bloated com.limen agents restarted, root hogs escalated with the exact command (IF-HOST-PRESSURE form 4)"
+    gate: LIMEN_HOST_RELIEF
+    default: "1"
+    source: [metabolize]
+    owner: substrate
+    cadence:
+      env: LIMEN_BEAT_HOST_RELIEF
+      default: 1
+    timeout:
+      env: LIMEN_HOST_RELIEF_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/host-relief.py --check"
+        args_when:
+          - env: LIMEN_HOST_RELIEF_APPLY
+            default: "1"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "host-relief could not land a kickstart — read the report above and logs/vigilia/relief-state.json; if a root-owned hog is named, run the printed sudo one-liner (2026-07-16 thrash: bztransmit held 8.6 GiB; IF-HOST-PRESSURE form 4)"
+
   cloud-storage-doctor:
     section: "heartbeat"
     title: "HORREVM — every storage rail matches its declared role (iCloud caught-up; Dropbox/Drive/OneDrive quiet; Archive4T mounted; Backblaze observed read-only)"

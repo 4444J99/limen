@@ -189,6 +189,24 @@ parameters:
     self_update: none
     owner: vitals
     note: "1-min load average per core >= this: SHED — block new local checkout work; off-box provider lanes remain eligible. Combined with the memory axis by max severity (either gauge can throttle/shed; neither can mask the other)."
+  VITALS_SWAP_WARN_RATIO:
+    default: 0.75
+    env: LIMEN_VITALS_SWAP_WARN
+    self_update: none
+    owner: vitals
+    note: "Third VITALS axis (2026-07-16 host-thrash incident: swap 17.3/18 GiB, 94 MB free RAM, while the jetsam gauge reported only 'warn' for hours). Swap USED >= this ratio x physical RAM: THROTTLE. Cold swap stock with a modest swap estate stays ok — the ratio is against RAM, not the swap file."
+  VITALS_SWAP_TOTAL_CRIT_RATIO:
+    default: 1.0
+    env: LIMEN_VITALS_SWAP_CRIT
+    self_update: none
+    owner: vitals
+    note: "Swap TOTAL allocated >= this ratio x physical RAM: SHED. macOS grows the swap estate on demand, so the estate reaching RAM size is the OS's own overcommit declaration (18 GiB > 16 GiB during the 2026-07-16 thrash; the healthy same-day baseline 12 GiB < 16 stays green)."
+  VITALS_WARN_SUSTAIN_BEATS:
+    default: 3
+    env: LIMEN_VITALS_WARN_SUSTAIN
+    self_update: none
+    owner: vitals
+    note: "A combined-axis 'warn' that persists this many consecutive gate beats escalates to SHED — 2026-07-16 sat at warn for hours while swap filled; sustained warn IS critical. Streak persists in logs/vigilia/vitals-streak.json, counts only on the gate path (beat_gate(shed=True)) at most once per 60 s, resets on ok. 0 disables the escalation."
   VITALS_STALE_BEATS:
     default: 3
     env: LIMEN_VITALS_STALE_BEATS
@@ -200,7 +218,61 @@ parameters:
     env: LIMEN_HOST_PRESSURE_STALE
     self_update: none
     owner: vitals
-    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when the VITALS record hasn't been written within VITALS_STALE_BEATS worst-case beats while LIMEN_VIGILIA=1. Watches the watcher; the effector remains the existing THROTTLE/SHED path. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when the VITALS record hasn't been written within VITALS_STALE_BEATS worst-case beats while LIMEN_VIGILIA=1. Watches the watcher; a silent gauge also fires one onset-deduped notification (scripts/_notify.py, IF-HOST-PRESSURE form 4). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+  VITALS_RSS_CEILING_MB:
+    default: 1024
+    env: LIMEN_VITALS_RSS_CEILING_MB
+    self_update: none
+    owner: substrate
+    note: "host-relief per-agent RSS ceiling: a running com.limen.* launchd agent over this is a relief candidate (kickstart -k restart) when the VITALS gate says shed. 2026-07-16 precedent: com.limen.overnight-watch at 3.1 GiB restarted to ~105 MB."
+  VITALS_ROOT_HOG_MB:
+    default: 4096
+    env: LIMEN_VITALS_ROOT_HOG_MB
+    self_update: none
+    owner: substrate
+    note: "host-relief escalation threshold for root-owned processes the fleet cannot touch: over this RSS while the gate is not ok, one onset-deduped notification carries the pre-formed `sudo kill <pid>` one-liner (2026-07-16: bztransmit -updatebackupstats at 8.6 GiB). Observation + escalation only — host-relief never signals foreign processes itself."
+  LIMEN_HOST_RELIEF:
+    default: "1"
+    env: LIMEN_HOST_RELIEF
+    self_update: none
+    owner: substrate
+    note: "Gate for the host-relief beat sensor (institutio/governance/sensors.yaml section 0q): the SHED effector census — bloated com.limen agents, root hogs, onset notifications. 0 disables the pass (IF-HOST-PRESSURE form 4)."
+  LIMEN_HOST_RELIEF_APPLY:
+    default: "1"
+    env: LIMEN_HOST_RELIEF_APPLY
+    self_update: none
+    owner: substrate
+    note: "Arms the host-relief effector: 1 (default — operator directive 2026-07-16: the machine relieves what it owns, never a hand chore) appends --apply so over-ceiling com.limen agents are actually kickstarted when the gate says shed. 0 reverts the rung to report-only. Foreign/root processes are never touched at any setting — only escalated."
+  LIMEN_BEAT_HOST_RELIEF:
+    default: 1
+    env: LIMEN_BEAT_HOST_RELIEF
+    self_update: none
+    owner: substrate
+    note: "Cadence (every N beats) of the host-relief sensor. Default every beat: the census is one ps + one launchctl list, and pressure is a per-beat condition."
+  LIMEN_HOST_RELIEF_TIMEOUT:
+    default: 60
+    env: LIMEN_HOST_RELIEF_TIMEOUT
+    self_update: none
+    owner: substrate
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for host-relief. The runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_NOTIFY:
+    default: "1"
+    env: LIMEN_NOTIFY
+    self_update: none
+    owner: vitals
+    note: "Kill switch for the scripts/_notify.py escalation path (macOS display notification, onset-deduped via logs/vigilia/relief-state.json). 0 keeps the dedup bookkeeping but never calls osascript — also how hermetic tests stay silent."
+  LIMEN_WATCH_RSS_MB:
+    default: 512
+    env: LIMEN_WATCH_RSS_MB
+    self_update: none
+    owner: substrate
+    note: "overnight-watch.py --watch self-bound: peak RSS above this exits clean after receipts (launchd/StartInterval respawns fresh at ~100 MB). Issue #1148: one tick accumulated 3.1 GiB. 0 disables."
+  LIMEN_WATCH_WALL_S:
+    default: 240
+    env: LIMEN_WATCH_WALL_S
+    self_update: none
+    owner: substrate
+    note: "overnight-watch.py per-tick wall-clock bound (SIGALRM, exit 0 fail-open): a one-shot receipt tick that runs longer than this is wedged, not working — 2026-07-16: one tick ran 51 minutes under an I/O storm. 0 disables."
 
   # --- CONTINUITY: make hand-recovery automatic (build order #1) ----------------
   CONTINUITY_MIN_SUMMARY_CHARS:
@@ -2808,6 +2880,31 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Throttle window (seconds) for check-main-green.py's `gh run list` call. Within the window the cached verdict (logs/main-green.json) is reused so a RED trunk still surfaces every beat without re-querying GitHub each tick. Also settable via --throttle. Default 1800 (30 min)."
+
+  LIMEN_CI_JAM_RERUN:
+    default: "1"               # ARMED (organ-tended precedent): jam recovery reruns fire by default
+    env: LIMEN_CI_JAM_RERUN
+    self_update: none
+    owner: tabularius
+    note: "Recovery valve for the CI-jam class (2026-07-17 billing outage: every job dies in 3-4 s with zero steps — the runner never started). When a RED main classifies as ci-jam-billing/ci-jam-infra, check-main-green.py attempts one bounded `gh run rerun --failed` per jammed run (main + fresh jammed PR heads) per beat with per-run exponential backoff, so the first beat after the outage ends re-greens CI with zero hands and merge-drain lands the green PRs. 0 = classify + notify only, never rerun."
+  LIMEN_CI_JAM_BACKOFF_S:
+    default: "1800"            # base backoff between rerun attempts on one run id (~one per beat)
+    env: LIMEN_CI_JAM_BACKOFF_S
+    self_update: none
+    owner: tabularius
+    note: "Base of the per-run exponential rerun backoff in check-main-green.py's jam recovery: attempt N waits min(BACKOFF_S * 2^(N-1), BACKOFF_MAX_S) after attempt N-1. Deliberately no hard attempt cap — recovery must still fire if the outage ends days later; the growing delay keeps API spam logarithmic while it persists."
+  LIMEN_CI_JAM_BACKOFF_MAX_S:
+    default: "14400"           # backoff ceiling (4 h): worst-case recovery lag after a long outage
+    env: LIMEN_CI_JAM_BACKOFF_MAX_S
+    self_update: none
+    owner: tabularius
+    note: "Ceiling of the jam-recovery rerun backoff. 4 h bounds the worst-case lag between billing being restored and the rerun that re-greens CI, at ~6 attempts/day/run during a persistent outage."
+  LIMEN_CI_JAM_RERUN_CAP:
+    default: "6"               # max distinct run ids rerun per beat (the trunk run + jammed PR heads)
+    env: LIMEN_CI_JAM_RERUN_CAP
+    self_update: none
+    owner: tabularius
+    note: "Per-beat bound on how many distinct jammed runs check-main-green.py will attempt to rerun (the red main run first, then fresh jammed PR-head runs from the wedge scan). Keeps a fleet-wide jam from turning one beat into an API storm; the rotating freshness window covers the rest over subsequent beats."
 
   LIMEN_MAIN_GREEN_WORKFLOW:
     default: "ci.yml"          # the workflow that runs on push:[main] and mirrors pr-gate's suite

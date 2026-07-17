@@ -19,6 +19,7 @@ SCRIPT = ROOT / "scripts" / "host-pressure-stale.py"
 def run_stale(tmp_path: Path, env: dict | None = None):
     child_env = os.environ.copy()
     child_env["LIMEN_ROOT"] = str(tmp_path)
+    child_env["LIMEN_NOTIFY"] = "0"  # dedup bookkeeping only — hermetic runs never pop notifications
     child_env.pop("LIMEN_VIGILIA", None)
     child_env.pop("LIMEN_VITALS_STALE_BEATS", None)
     child_env.pop("LIMEN_LOOP_MAX", None)

@@ -151,20 +151,24 @@ measures the **distance from ideal** at a moment in time, and carries a **status
   `bztransmit` re-crawling ~748 worktree roots / 61 GiB of regenerable state at 95 % CPU,
   (b) one session running FULL `pytest tests/` twice concurrently — the scoped-verification law
   was prose-only, and (c) ~10 claude bg-spare processes tipping RAM into the swap spiral.
-  Three forms close it: **(1)** `scripts/hooks/pytest-scope-guard.sh` + the `pytest-scope` audit
+  Four forms close it: **(1)** `scripts/hooks/pytest-scope-guard.sh` + the `pytest-scope` audit
   in `claude-workflow-guard.py` (this branch) make the scoped-verification law mechanical;
   **(2)** a VITALS load-average axis + `host-pressure-stale` sensor rung (branch
   `feat/vitals-load-axis`) gives the throttle/shed valve a CPU gauge and watches the gauge;
   **(3)** the Backblaze exclusion estate — sensor `backblaze-exclusions` + the `--apply`
-  effector — retires the crawl storm. 2026-07-16 recurrence (a `bztransmit -updatebackupstats`
-  pass held 8.6 GiB → swap 17.3/18 GiB) proved bzinfo.xml is USER-owned, falsifying the 7/15
-  "pane click is his hand by construction" premise: the estate is organ-owned
-  (`LIMEN_BACKBLAZE_APPLY`, armed by default per operator directive 2026-07-16), lever
-  `L-BACKBLAZE-EXCLUDE` retired, and the missed Workspace worktree pools joined
-  REQUIRED_EXCLUDES.
-- **Status:** SHIPPED — all three forms mechanical; the pane returns only as a fallback if
-  Backblaze ever re-roots bzinfo.xml (the sensor's escalation names it).
-- **Owner:** Claude (all three forms).
+  effector (PR #1147: bzinfo.xml proved USER-owned, retiring lever `L-BACKBLAZE-EXCLUDE`;
+  exclusions are organ-tended) — retires the crawl storm; **(4)** the closed pressure loop
+  (2026-07-16 recurrence: swap 17.3/18 GiB and 94 MB free RAM while jetsam reported only
+  'warn' for hours, every relief step manual) — a VITALS swap/starvation axis with
+  sustained-warn escalation, the `host-relief` effector rung (restarts over-ceiling
+  `com.limen` agents via kickstart; escalates untouchable root hogs with the pre-formed
+  `sudo kill` one-liner), onset-deduped macOS notifications (`scripts/_notify.py`, also
+  wired into `host-pressure-stale`), and RSS/wall-clock self-bounds in `overnight-watch.py`
+  (issue #1148: one tick wedged 51 min at 3.1 GiB).
+- **Status:** SHIPPED — all four forms mechanical; the operator is no longer the sensor of
+  last resort. The only human residue is the pre-formed root-kill one-liner, pushed by
+  notification when it exists.
+- **Owner:** Claude (all four forms).
 
 ### IF-LEDGER-OF-IDEALS — this ledger (self)
 - **Ideal form:** every Claude-originated ideal is a tracked named param here; the ledger is

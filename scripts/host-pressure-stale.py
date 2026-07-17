@@ -11,7 +11,10 @@ VIGILIA is on (LIMEN_VIGILIA unset counts as on — the heartbeat's own default)
 
 The alarm is the staleness, not the pressure: the effector for pressure itself remains
 the existing THROTTLE/SHED path in heartbeat-loop.sh. Exit 0 = gauge alive (or VIGILIA
-deliberately off). Exit 1 = gauge silent. Read-only; advisory severity in the registry.
+deliberately off). Exit 1 = gauge silent — and since 2026-07-16 (IF-HOST-PRESSURE
+form 4) a silent gauge also fires ONE onset-deduped macOS notification via
+scripts/_notify.py: a blind valve was exactly the 7/15 gap, and an advisory line in a
+log no one is reading is not an alarm. Read-only otherwise; advisory in the registry.
 """
 
 from __future__ import annotations
@@ -22,12 +25,24 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import _notify  # noqa: E402
+
+STALE_KEY = "vitals-stale"
+
 
 def _root() -> Path:
     env = os.environ.get("LIMEN_ROOT")
     if env:
         return Path(env).expanduser()
     return Path(__file__).resolve().parents[1]
+
+
+def _stale(message: str) -> int:
+    print(message)
+    _notify.notify_once(_root(), STALE_KEY, message)
+    return 1
 
 
 def main() -> int:
@@ -41,8 +56,7 @@ def main() -> int:
 
     status_path = _root() / "logs" / "vigilia" / "status.json"
     if not status_path.exists():
-        print(f"host-pressure-stale: STALE — {status_path} absent while VIGILIA on")
-        return 1
+        return _stale(f"host-pressure-stale: STALE — {status_path} absent while VIGILIA on")
 
     try:
         ts_raw = json.loads(status_path.read_text()).get("ts") or ""
@@ -50,18 +64,17 @@ def main() -> int:
         if ts.tzinfo is None:
             ts = ts.replace(tzinfo=timezone.utc)
     except Exception as exc:
-        print(f"host-pressure-stale: STALE — unreadable ts in {status_path} ({exc})")
-        return 1
+        return _stale(f"host-pressure-stale: STALE — unreadable ts in {status_path} ({exc})")
 
     age_s = (datetime.now(timezone.utc) - ts).total_seconds()
     if age_s > budget_s:
-        print(
+        return _stale(
             f"host-pressure-stale: STALE — vitals record is {age_s / 60:.0f} min old "
             f"(budget {budget_s / 60:.0f} min = {stale_beats:g} x LIMEN_LOOP_MAX); "
             "the throttle/shed valve is flying blind"
         )
-        return 1
 
+    _notify.clear_condition(_root(), STALE_KEY)
     print(f"host-pressure-stale: ok — vitals record {age_s / 60:.1f} min old (budget {budget_s / 60:.0f} min)")
     return 0
 

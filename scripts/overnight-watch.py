@@ -5262,6 +5262,41 @@ def run_once(*, dry_run: bool, json_output: bool) -> int:
     return 0
 
 
+def _rss_mb() -> float:
+    """This process's peak RSS in MB (fail-open 0.0). macOS reports bytes, Linux KiB."""
+    try:
+        import resource
+
+        divisor = 1024 * 1024 if sys.platform == "darwin" else 1024
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / divisor
+    except Exception:
+        return 0.0
+
+
+def _arm_wall_clock_bound() -> int:
+    """Bound any single tick's wall clock (IF-HOST-PRESSURE form 4, issue #1148).
+
+    2026-07-16: one launchd one-shot tick wedged for 51 minutes at 3.1 GiB under an
+    I/O storm. The bound exits 0 (fail-open — a wedged monitor must never redden
+    launchd); StartInterval respawns a fresh process within 5 minutes. Returns the
+    bound in seconds (0 = disabled); callers re-arm per tick via signal.alarm().
+    """
+    wall_s = int(os.environ.get("LIMEN_WATCH_WALL_S", "240") or 0)
+    if wall_s <= 0:
+        return 0
+
+    def _wall_timeout(signum, frame):  # noqa: ARG001 — signal handler signature
+        print(
+            f"overnight-watch: wall-clock bound {wall_s}s hit — exiting fail-open; "
+            "launchd StartInterval respawns fresh (2026-07-16 wedged-tick incident)",
+            file=sys.stderr,
+        )
+        os._exit(0)
+
+    signal.signal(signal.SIGALRM, _wall_timeout)
+    return wall_s
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="inspect without writing receipts")
@@ -5356,18 +5391,37 @@ def main(argv: list[str] | None = None) -> int:
             print(f"overnight-watch: trial receipt FAIL - {error}", file=sys.stderr)
         return 1
 
-    if not args.watch:
-        return run_once(dry_run=args.dry_run, json_output=args.json)
+    wall_s = _arm_wall_clock_bound()
 
+    if not args.watch:
+        if wall_s:
+            signal.alarm(wall_s)
+        rc = run_once(dry_run=args.dry_run, json_output=args.json)
+        signal.alarm(0)
+        return rc
+
+    rss_cap_mb = float(os.environ.get("LIMEN_WATCH_RSS_MB", "512") or 0)
     samples = 0
     while True:
         paused_rc = stop_for_autonomy_pause(dry_run=args.dry_run, json_output=args.json)
         if paused_rc is not None:
             return paused_rc
+        if wall_s:
+            signal.alarm(wall_s)
         rc = run_once(dry_run=args.dry_run, json_output=args.json)
+        signal.alarm(0)
         if rc:
             return rc
         samples += 1
+        rss_mb = _rss_mb()
+        if rss_cap_mb and rss_mb > rss_cap_mb:
+            # Self-bound (issue #1148): a low-cost receipt writer holding this much
+            # heap is accumulation — exit clean; the next invocation starts at ~100 MB.
+            print(
+                f"overnight-watch: RSS {rss_mb:.0f} MB > cap {rss_cap_mb:.0f} MB — "
+                "exiting after receipts; launchd/StartInterval respawns fresh"
+            )
+            return 0
         if args.max_samples and samples >= args.max_samples:
             return 0
         time.sleep(max(1, args.interval))
