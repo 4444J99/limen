@@ -854,6 +854,16 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
     if parity_only:
         return _verdict(fails, cites, skips, "parity-only")
 
+    # SPLIT — owed form-twin/eviction work: every override row carrying split: is CITED until the
+    # hygiene predicate (scripts/check-split-hygiene.py) retires the row — owned, never a memory chore.
+    owed_splits = sorted(
+        f"{repo} → {', '.join((row.get('split') or {}).get('into') or [])}"
+        for repo, row in (estate.get("repo_overrides") or {}).items()
+        if isinstance(row, dict) and row.get("split")
+    )
+    if owed_splits:
+        cites.append(f"[SPLIT owed] {len(owed_splits)} registered: " + "; ".join(owed_splits))
+
     homed = _homed_levers()
 
     # ── Class B — homeless secret (delegate to the offline-safe credential-wall predicate). ──

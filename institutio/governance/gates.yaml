@@ -356,6 +356,11 @@ gates:
     paths: ["scripts/seo-audit.py", "scripts/repo-metadata-sync.py", "scripts/generate-seo-backlog.py", "institutio/github/seo-seeds.yaml", "positioning-seeds.json"]
     owner: gitvs
     note: "The seo-seeds overlay's own drift predicate (deterministic, offline): row discipline (owner/note, ≤350-char price-clean descriptions, ≤20 valid topics) and the no-dual-registry rule (a repo seeded in positioning-seeds.json may not also carry an seo-seeds row — the positioning seed wins)."
+  split-hygiene-test:
+    command: "bash scripts/tests/split-hygiene.test.sh"
+    paths: ["scripts/check-split-hygiene.py", "scripts/tests/split-hygiene.test.sh", "docs/repo-split-protocol.md", "scripts/publish-sweep.py"]
+    owner: gitvs
+    note: "Regression for the form-twin split predicate: a proper fresh-history twin passes; a branch-copy twin (shared commit SHAs — the fork leak) must red P1; a file outside form-manifest.yaml paths must red P3. The protocol is docs/repo-split-protocol.md; owed splits are the doctor's [SPLIT owed] citation."
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:
