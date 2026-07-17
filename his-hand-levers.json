@@ -545,17 +545,6 @@
       "issue": 1057
     },
     {
-      "id": "L-BACKBLAZE-EXCLUDE",
-      "label": "Backblaze exclusions \u2014 one Settings-pane visit ends the post-reboot re-crawl storms. 2026-07-15: bztransmit pinned a core at ~95% re-crawling regenerable fleet state after a reboot, stacking onto test fan-out to thrash the 16 GB host (swap 6.4/7.2 GiB, load 5.7). The pane excludes exact FOLDERS (no globs), so add each folder below \u2014 every one is regenerable (worktrees re-cut from origin, venvs rebuild from lockfiles, ollama models re-pull); nothing durable leaves the backup set. Backblaze pane \u2192 Settings \u2192 Exclusions \u2192 Add Folder: /Users/4jp/Workspace/limen/.claude/worktrees \u00b7 /Users/4jp/Workspace/limen/.venv \u00b7 /Users/4jp/Workspace/limen/cli/.venv \u00b7 /Users/4jp/.ollama/models (optionally ~/Library/Caches \u2014 often covered by Backblaze's internal defaults already). /Volumes/Scratch needs nothing: it carries no .bzvol.",
-      "owner": "yours",
-      "cost": "~3 min once, reversible in the same pane",
-      "gate": "the Backblaze preferences pane is GUI-only and writes root-context state (/Library/Backblaze.bzpkg/bzdata/bzinfo.xml) \u2014 his hand by construction; the VERIFY side is fully automated (beat sensor `backblaze-exclusions`, scripts/backblaze-exclusions.py --check, reads the world-readable bzinfo.xml and self-clears next beat after Save \u2014 no report-back needed)",
-      "unlocks": "post-reboot bztransmit re-crawls skip the regenerable trees (the worktree estate alone is hundreds of thousands of small files \u2014 file count, not GiB, is what pins the crawler); one of the three stacked loads in the 2026-07-15 thrash is permanently retired; the substrate-storage-pressure backblaze-scope bucket ledgers green",
-      "note": "REQUIRED_EXCLUDES in scripts/backblaze-exclusions.py is the single source of truth \u2014 extend the estate there and the sensor re-opens this lever's escalation automatically. Do NOT hand-edit bzinfo.xml; the pane owns it.",
-      "source_task": "IF-HOST-PRESSURE form 3 (docs/IDEAL-FORMS-LEDGER.md) \u2014 2026-07-15 host-thrash incident; PRs #1083 (form 1) + #1085 (form 2)",
-      "issue": 1087
-    },
-    {
       "id": "L-REVENUE-ACCT",
       "label": "Create Ko-fi account + Lemon Squeezy store, complete KYC, wire LEMONSQUEEZY_STORE_ID into creds-hydrate. Ko-fi slug (4444j99) is ALREADY LIVE on organvm/a-i-chat--exporter (FUNDING.yml, remote master PR #79; ko-fi.com/4444j99 active). Remaining atoms: (1) Create a Lemon Squeezy store account at lemonsqueezy.com, complete KYC/payout setup (bank or PayPal), obtain LEMONSQUEEZY_STORE_ID. (2) Mint the credential into `op://Personal/Lemon Squeezy Store ID/credential` (or any op:// path you choose \u2014 update the creds-hydrate lane's `ref` to match). LEMONSQUEEZY_STORE_ID is NOT a secret (it appears in public checkout URLs), but the creds-hydrate lane declared below routes it as an env-var for the site build so placeholders never ship. The deployed exporter site (chatgpt-exporter-e08.pages.dev) reads this at build time via VITE_LEMONSQUEEZY_STORE_ID; the MONETA BTC mint is the live sovereign rail and does not require this.",
       "owner": "yours",

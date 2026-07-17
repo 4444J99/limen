@@ -2222,7 +2222,13 @@ parameters:
     env: LIMEN_BACKBLAZE_EXCLUSIONS
     self_update: none
     owner: substrate
-    note: "Gate for the backblaze-exclusions beat sensor (institutio/governance/sensors.yaml section 0p): scripts/backblaze-exclusions.py --check reads the world-readable bzinfo.xml and verifies every REQUIRED_EXCLUDES entry is a live bzdirfilter — the completion predicate for lever L-BACKBLAZE-EXCLUDE (2026-07-15 host-thrash incident, IF-HOST-PRESSURE form 3). Read-only, advisory, fail-open on an unreadable/unrecognized file. 0 disables the pass."
+    note: "Gate for the backblaze-exclusions beat sensor (institutio/governance/sensors.yaml section 0p): scripts/backblaze-exclusions.py verifies every REQUIRED_EXCLUDES entry is a live bzdirfilter in bzinfo.xml (2026-07-15/16 host-thrash incidents, IF-HOST-PRESSURE form 3). Advisory, fail-open on an unreadable/unrecognized file. Mutation is the separate registry-classified valve LIMEN_BACKBLAZE_APPLY. 0 disables the pass."
+  LIMEN_BACKBLAZE_APPLY:
+    default: "1"
+    env: LIMEN_BACKBLAZE_APPLY
+    self_update: none
+    owner: substrate
+    note: "Arms the backblaze-exclusions self-heal effector: 1 (default — operator directive 2026-07-16: the exclusion estate is organ-tended, never a pane chore; bzinfo.xml proved user-owned, retiring lever L-BACKBLAZE-EXCLUDE) appends --apply so the daily rung inserts any missing REQUIRED_EXCLUDES bzdirfilter (timestamped backup alongside + XML validation + atomic replace; idempotent no-op when green; blocked-not-torn if the file is ever re-rooted). 0 reverts the rung to report-only."
   LIMEN_BEAT_BACKBLAZE:
     default: 24
     env: LIMEN_BEAT_BACKBLAZE

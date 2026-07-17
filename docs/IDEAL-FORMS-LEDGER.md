@@ -141,12 +141,16 @@ measures the **distance from ideal** at a moment in time, and carries a **status
   in `claude-workflow-guard.py` (this branch) make the scoped-verification law mechanical;
   **(2)** a VITALS load-average axis + `host-pressure-stale` sensor rung (branch
   `feat/vitals-load-axis`) gives the throttle/shed valve a CPU gauge and watches the gauge;
-  **(3)** the Backblaze exclusion estate — lever `L-BACKBLAZE-EXCLUDE` + verify sensor
-  `backblaze-exclusions` (branch `feat/backblaze-exclusion-estate`) — retires the crawl storm;
-  the pane click is the one his-hand atom, and the sensor is its completion predicate.
-- **Status:** PARTIAL — form 1 shipped here; forms 2–3 land in their own branches.
-- **Owner:** Claude (forms 1–2, sensor of 3) + Anthony (the Backblaze pane click, filed as
-  `L-BACKBLAZE-EXCLUDE`).
+  **(3)** the Backblaze exclusion estate — sensor `backblaze-exclusions` + the `--apply`
+  effector — retires the crawl storm. 2026-07-16 recurrence (a `bztransmit -updatebackupstats`
+  pass held 8.6 GiB → swap 17.3/18 GiB) proved bzinfo.xml is USER-owned, falsifying the 7/15
+  "pane click is his hand by construction" premise: the estate is organ-owned
+  (`LIMEN_BACKBLAZE_APPLY`, armed by default per operator directive 2026-07-16), lever
+  `L-BACKBLAZE-EXCLUDE` retired, and the missed Workspace worktree pools joined
+  REQUIRED_EXCLUDES.
+- **Status:** SHIPPED — all three forms mechanical; the pane returns only as a fallback if
+  Backblaze ever re-roots bzinfo.xml (the sensor's escalation names it).
+- **Owner:** Claude (all three forms).
 
 ### IF-LEDGER-OF-IDEALS — this ledger (self)
 - **Ideal form:** every Claude-originated ideal is a tracked named param here; the ledger is

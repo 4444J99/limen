@@ -91,7 +91,7 @@ BUCKETS = (
         "id": "backblaze-scope",
         "path": "~/Workspace/limen/.claude/worktrees",
         "class": "regenerable-fleet-state",
-        "owner": "L-BACKBLAZE-EXCLUDE + scripts/backblaze-exclusions.py",
+        "owner": "scripts/backblaze-exclusions.py --apply (organ-owned; lever L-BACKBLAZE-EXCLUDE retired 2026-07-16)",
         "gate": "excluded from the Backblaze crawl set (beat sensor backblaze-exclusions green) before growth is tolerated; worktree-debt owns deletion — this bucket tracks crawl exposure, not disk reclaim (2026-07-15 host-thrash incident)",
     },
 )

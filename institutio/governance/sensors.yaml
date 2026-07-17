@@ -595,7 +595,7 @@ sensors:
 
   backblaze-exclusions:
     section: "0p"
-    title: "backblaze exclusions live — regenerable fleet state is out of the crawl set (L-BACKBLAZE-EXCLUDE completion predicate)"
+    title: "backblaze exclusions live — regenerable fleet state is out of the crawl set (organ-owned since 2026-07-16; lever L-BACKBLAZE-EXCLUDE retired)"
     gate: LIMEN_BACKBLAZE_EXCLUSIONS
     default: "1"
     source: [metabolize]
@@ -605,8 +605,14 @@ sensors:
       default: 24
     steps:
       - command: "python3 scripts/backblaze-exclusions.py --check"
+        args_when:
+          - env: LIMEN_BACKBLAZE_APPLY
+            default: "1"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
         severity: advisory
-        escalation: "Backblaze is still crawling regenerable fleet trees — pull L-BACKBLAZE-EXCLUDE (System Settings → Backblaze → Exclusions; the missing folders are listed above); this rung self-clears the beat after Save (2026-07-15 host-thrash incident, IF-HOST-PRESSURE form 3)"
+        escalation: "Backblaze is still crawling regenerable fleet trees and the self-heal could not land — run `python3 scripts/backblaze-exclusions.py --apply` (bzinfo.xml is user-owned, 2026-07-16 ground truth); if the file went root-owned again, the fallback is the Backblaze pane → Settings → Exclusions (2026-07-15/16 host-thrash incidents, IF-HOST-PRESSURE form 3)"
 
   cloud-storage-doctor:
     section: "heartbeat"
