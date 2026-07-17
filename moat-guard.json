@@ -1,0 +1,38 @@
+{
+  "_comment": "THE MOAT BOUNDARY REGISTRY — the concrete, machine-checkable version of positioning-seeds.json's prose public_face/private_operation split. For each public repo, `leak_patterns` are literal-VALUE signatures (curated data, not type/interface names) that must NOT appear in the public tree: the calibration and source-map a competitor would steal. scripts/moat-audit.py greps each repo's clone (origin/main) for these and fails closed if any is present. Adding a repo's crown jewels = one entry here. The interfaces/types/architecture stay public (the lure); only the tuned VALUES are guarded. See docs positioning-seeds.json for the prose boundary this enforces.",
+  "clone_root": "~/Workspace",
+  "repos": {
+    "organvm/public-record-data-scrapper": {
+      "note": "UCC/MCA lead-intelligence platform. Crown jewels: the discovery source-map (which public datasets yield MCA signal) and the curated funder/secured-party dictionaries, then the scoring/underwriting calibration. Interfaces + architecture stay public.",
+      "scan_paths": ["server/services", "scripts/scrapers"],
+      "_pattern_note": "POSIX ERE, single-line (git grep -E is line-oriented; no \\b, no \\s\\S). Each targets a VALUE/data line, not a type/interface, so after the calibration moves to a private module the public tree goes clean while the public interfaces survive.",
+      "leak_patterns": [
+        {
+          "name": "sba-ckan-source-id",
+          "regex": "0ff8e8e9-b967-4f4e-987c-6ac78c575087",
+          "why": "The SBA 7(a) FOIA CKAN package id — a curated discovery source-map entry (which public dataset yields the 'capital-secured' growth signal)."
+        },
+        {
+          "name": "socrata-dataset-source-map",
+          "regex": "resource/(ipu4-2q9a|xnhu-aczu|ryhf-m453|3syk-w9eu)",
+          "why": "Socrata building-permit dataset ids (NYC/LA/Orlando/Austin) — the curated 'which portals yield permit growth-signal' source-map."
+        },
+        {
+          "name": "curated-mca-funder-dictionary",
+          "regex": "'(KAPITUS|ONDECK|KABBAGE|BLUEVINE|CAN CAPITAL)'",
+          "why": "The hand-curated MCA lender/funder name dictionary (KNOWN_FUNDERS / lender list) — competitive market intelligence, not commodity code."
+        },
+        {
+          "name": "qualification-credit-box-bands",
+          "regex": "minAdbByTier:[[:space:]]*\\{",
+          "why": "The QualificationService DEFAULT_RULES tier-band VALUES (the object literal, not the Record<> type) — the calibrated credit box. The type stays public; the numeric values must inject from private calibration."
+        },
+        {
+          "name": "scoring-risk-modifier-tables",
+          "regex": "(INDUSTRY_RISK_MODIFIERS|STATE_MODIFIERS):[[:space:]]*Record<string, number>[[:space:]]*=[[:space:]]*\\{",
+          "why": "ScoringService industry/state risk-modifier table VALUES (the populated literal declaration) — hard-won calibration multipliers."
+        }
+      ]
+    }
+  }
+}

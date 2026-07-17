@@ -2211,6 +2211,30 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Path to the GITVS estate registry (the desired-state resource graph). Overridable so scripts/tests/gitvs.test.sh can point the parity predicate at drift fixtures; production reads the committed institutio/github/estate.yaml."
+  LIMEN_MOAT_GUARD:
+    default: "moat-guard.json"
+    env: LIMEN_MOAT_GUARD
+    self_update: none
+    owner: moat-audit
+    note: "Path to the moat boundary registry (per-public-repo leak-value patterns). Overridable so scripts/tests/moat-audit.test.sh points the predicate at fixture registries; production reads the committed moat-guard.json. See scripts/moat-audit.py."
+  LIMEN_VALUE_REPOS:
+    default: "value-repos.json"
+    env: LIMEN_VALUE_REPOS
+    self_update: none
+    owner: moat-audit
+    note: "Override for the value-tier repo list consumed by scripts/moat-audit.py; production reads the committed value-repos.json. Test/fixture seam only."
+  LIMEN_POSITIONING_SEEDS:
+    default: "positioning-seeds.json"
+    env: LIMEN_POSITIONING_SEEDS
+    self_update: none
+    owner: moat-audit
+    note: "Override for the positioning seeds registry consumed by scripts/moat-audit.py lure-readiness; production reads the committed positioning-seeds.json. Test/fixture seam only."
+  LIMEN_POSITIONING_DIR:
+    default: "docs/positioning"
+    env: LIMEN_POSITIONING_DIR
+    self_update: none
+    owner: moat-audit
+    note: "Override for the published positioning-page directory scanned by scripts/moat-audit.py lure-readiness; production reads docs/positioning. Test/fixture seam only."
   LIMEN_BEAT_GITVS:
     default: 8
     env: LIMEN_BEAT_GITVS
