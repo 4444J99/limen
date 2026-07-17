@@ -6,11 +6,15 @@ toward it. The two directions carry ASYMMETRIC gates (autonomy is derived from r
 
   DEMOTE  desired private, observed public  — the standing leak-posture auto-guard. Reversible and
           protective: executes under --apply alone (the reconcile loop's LIMEN_GITVS_APPLY arming).
-  PUBLISH desired public, observed private — irreversible exposure (history included). Triple-gated:
-          (1) DOUBLE-DARK: --apply AND LIMEN_VISIBILITY_APPLY=1 (the reap-remote-branches precedent);
-          (2) a released lever: a his-hand-levers.json row with id L-PORTAL-PUBLISH-*, status
-              "released", whose `unlocks` list names the repo (the wave list is HIS sanction);
-          (3) a green + fresh publish-sweep receipt (scripts/publish-sweep.py — history swept).
+  PUBLISH desired public, observed private — irreversible exposure (history included). The
+          build-in-public directive (2026-07-17) is the STANDING sanction — no per-repo lever (he
+          will not click 90 gates; his directive IS the authorization). Gated on the REAL safety,
+          evaluated loudest-first:
+          (1) a green + fresh publish-sweep receipt (scripts/publish-sweep.py — FULL history swept);
+          (2) DOUBLE-DARK: --apply AND LIMEN_VISIBILITY_APPLY=1 (the reap-remote-branches precedent).
+          A `publish_candidate: true` override row is desired-public-pending-sweep (its
+          operation_private class is nominally private; the green sweep — not a class flip —
+          authorizes the flip).
 
 Every action (and every held plan row) appends to logs/visibility-actions.jsonl. Fail-open, bounded
 (LIMEN_VISIBILITY_MAX per run), offline → skip. Registered as the `repo` resource delegate effector
@@ -18,7 +22,7 @@ in estate.yaml — reconcile dispatches it; the gates above live HERE, never in 
 
   python3 scripts/apply-visibility.py            # dry plan
   python3 scripts/apply-visibility.py --check    # sensor idiom: exit 0 ⟺ no actionable drift
-  python3 scripts/apply-visibility.py --apply    # demote executes; publish needs its triple gate
+  python3 scripts/apply-visibility.py --apply    # demote executes; publish needs sweep-green + double-dark
 """
 
 from __future__ import annotations
@@ -49,34 +53,19 @@ def _module(name: str, filename: str):
     return mod
 
 
-def _released_wave_repos(levers_path: Path) -> set[str]:
-    """Repos sanctioned by a RELEASED publish-wave lever (id L-PORTAL-PUBLISH-*, status released,
-    unlocks = the repo list). The lever file is his registry — this script only reads it."""
-    try:
-        data = json.loads(levers_path.read_text(encoding="utf-8"))
-    except Exception:
-        return set()
-    levers = data.get("levers", data) if isinstance(data, dict) else data
-    out: set[str] = set()
-    for lv in levers if isinstance(levers, list) else []:
-        if (
-            isinstance(lv, dict)
-            and str(lv.get("id") or "").startswith("L-PORTAL-PUBLISH-")
-            and str(lv.get("status") or "").strip().lower() == "released"
-            and isinstance(lv.get("unlocks"), list)
-        ):
-            out.update(str(r) for r in lv["unlocks"] if isinstance(r, str))
-    return out
-
-
 def _plan(estate: dict, rows: list[dict], gitvs) -> list[dict]:
-    """Drift rows: (repo, direction) where desired class visibility ≠ observed."""
+    """Drift rows: (repo, direction) where desired class visibility ≠ observed. A `publish_candidate`
+    override is desired-public-pending-sweep, even when its class (operation_private) is nominally
+    private — build-in-public: the green sweep, not the class, authorizes the flip."""
     classes = estate.get("classes") or {}
+    overrides = estate.get("repo_overrides") or {}
     plan: list[dict] = []
     for row in rows:
         full = str(row.get("full_name") or "")
         cls_name = gitvs.classify_repo(full, estate, facts=row)
         desired = (classes.get(cls_name) or {}).get("visibility") if cls_name else None
+        if (overrides.get(full) or {}).get("publish_candidate"):
+            desired = "public"  # publish_candidate ⇒ desired-public (green sweep is the gate)
         if desired not in ("public", "private"):
             continue
         observed = "private" if row.get("private") else "public"
@@ -116,10 +105,9 @@ def _log(entry: dict) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Converge repo visibility toward the estate registry.")
-    ap.add_argument("--apply", action="store_true", help="execute (demote auto; publish triple-gated)")
+    ap.add_argument("--apply", action="store_true", help="execute (demote auto; publish: sweep-green + double-dark)")
     ap.add_argument("--check", action="store_true", help="exit 0 ⟺ no actionable drift")
     ap.add_argument("--facts", help="(test seam) census-facts JSON path override")
-    ap.add_argument("--levers", help="(test seam) levers JSON path override")
     args = ap.parse_args(argv)
 
     gitvs = _module("gitvs", "gitvs.py")
@@ -144,7 +132,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     armed_publish = bool(args.apply) and os.environ.get("LIMEN_VISIBILITY_APPLY") == "1"
-    wave = _released_wave_repos(Path(args.levers) if args.levers else ROOT / "his-hand-levers.json")
     cap = int(os.environ.get("LIMEN_VISIBILITY_MAX", "10"))
     done = 0
     mode = "APPLY" if args.apply else "plan (dry)"
@@ -163,10 +150,8 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(f"   · would demote {repo} → private (auto under --apply)")
             continue
-        # publish — the triple gate, evaluated loudest-first.
-        if repo not in wave:
-            print(f"   ~ held  publish {repo} — no released L-PORTAL-PUBLISH-* lever names it")
-            continue
+        # publish — build-in-public: the directive is the standing sanction (no per-repo lever).
+        # Gated on the REAL safety, loudest-first: a green+fresh sweep receipt, then double-dark arming.
         ok, why = publish_sweep.receipt_fresh_green(repo)
         if not ok:
             print(f"   ~ held  publish {repo} — sweep receipt: {why}")
@@ -177,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
         result = _flip(repo, "public")
         done += 1
         _log({**p, "result": result, "mode": "apply", "receipt": why})
-        print(f"   ✓ publish {repo} → public ({result}) — lever-released, sweep green")
+        print(f"   ✓ publish {repo} → public ({result}) — sweep green, directive-armed")
     return 0
 
 

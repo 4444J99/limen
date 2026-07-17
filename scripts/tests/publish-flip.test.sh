@@ -5,8 +5,9 @@
 # (class-G effector). The assertions that must never regress:
 #   1. a secret that exists ONLY IN HISTORY (deleted at HEAD) reds the sweep — a flip publishes history;
 #   2. a clean repo greens the sweep, and the receipt drives receipt_fresh_green;
-#   3. apply-visibility HOLDS a publish at every missing gate: no released lever → held; lever but no
-#      receipt → held; lever+receipt but dark (no LIMEN_VISIBILITY_APPLY) → held. Offline throughout.
+#   3. apply-visibility gates a publish on the REAL safety (per-repo lever RETIRED — build-in-public
+#      directive is the standing sanction): no receipt → held; green receipt but dark (no
+#      LIMEN_VISIBILITY_APPLY) → held; green receipt + armed → proceeds to the flip. Offline throughout.
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -81,25 +82,21 @@ cat > "$FACTS" <<'JSON'
 {"repos": [{"full_name": "test/clean", "private": true}]}
 JSON
 
-run_apply() { LIMEN_GITVS_ESTATE="$FIX" python3 "$APPLY" --apply --facts "$FACTS" --levers "$1" 2>&1; }
+run_apply() { LIMEN_GITVS_ESTATE="$FIX" python3 "$APPLY" --apply --facts "$FACTS" 2>&1; }
 
-# 3a. no released lever → held
-echo '{"levers": []}' > "$work/levers-none.json"
-out="$(run_apply "$work/levers-none.json")"
-echo "$out" | grep -q "held  publish test/clean — no released" && ok || bad "no-lever must hold" "$out"
-
-# 3b. released lever but no receipt → held
-cat > "$work/levers-rel.json" <<'JSON'
-{"levers": [{"id": "L-PORTAL-PUBLISH-WAVE-1", "status": "released", "unlocks": ["test/clean"]}]}
-JSON
+# 3a. no sweep receipt → held (lever RETIRED — the receipt is the gate, not a lever)
 rm -f "$ROOT/logs/publish-sweeps/test__clean.json"
-out="$(run_apply "$work/levers-rel.json")"
+out="$(run_apply)"
 echo "$out" | grep -q "held  publish test/clean — sweep receipt: no receipt" && ok || bad "no-receipt must hold" "$out"
 
-# 3c. lever + green receipt but DARK (no LIMEN_VISIBILITY_APPLY) → held
+# 3b. green receipt but DARK (no LIMEN_VISIBILITY_APPLY) → held
 python3 "$SWEEP" --repo test/clean --clone-from "$work/clean" >/dev/null 2>&1
-out="$(run_apply "$work/levers-rel.json")"
+out="$(run_apply)"
 echo "$out" | grep -q "held  publish test/clean — dark" && ok || bad "dark gate must hold" "$out"
+
+# 3c. green receipt + ARMED (double-dark) → proceeds to the flip WITHOUT any lever (offline → skipped)
+out="$(LIMEN_VISIBILITY_APPLY=1 LIMEN_GITVS_ESTATE="$FIX" python3 "$APPLY" --apply --facts "$FACTS" 2>&1)"
+echo "$out" | grep -q "publish test/clean → public" && ok || bad "armed+green must proceed to flip (no lever)" "$out"
 rm -f "$ROOT/logs/publish-sweeps/test__clean.json" "$ROOT/logs/publish-sweeps/test__dirty.json"
 
 echo
