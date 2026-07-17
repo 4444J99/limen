@@ -2283,6 +2283,36 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Star floor for the classify rule R7: a public repo with at least this many stars is proposed into the portal_public SEO lure tier even when it is not value-tier/seeded (traction is a discovered signal, never assumed)."
+  LIMEN_VISIBILITY_APPLY:
+    default: 0
+    env: LIMEN_VISIBILITY_APPLY
+    self_update: none
+    owner: gitvs
+    note: "Second half of the DOUBLE-DARK gate on apply-visibility.py's PUBLISH direction (a private→public flip exposes full git history — irreversible). Even at 1 a publish still requires a released L-PORTAL-PUBLISH-* lever naming the repo AND a green fresh publish-sweep receipt. The protective DEMOTE direction (leak-posture auto-guard, reversible) ignores this gate and runs under --apply alone."
+  LIMEN_VISIBILITY_MAX:
+    default: 10
+    env: LIMEN_VISIBILITY_MAX
+    self_update: none
+    owner: gitvs
+    note: "Per-run action cap for apply-visibility.py — bounds any single reconcile beat's blast radius; the wave converges over multiple beats instead of one mass mutation."
+  LIMEN_SWEEP_MAX:
+    default: 5
+    env: LIMEN_SWEEP_MAX
+    self_update: none
+    owner: gitvs
+    note: "Publish-sweep candidates cloned + scanned per --candidates run. Full-history clones are the expensive step; 37 candidates converge over ~8 runs."
+  LIMEN_SWEEP_MAX_BLOB_KB:
+    default: 512
+    env: LIMEN_SWEEP_MAX_BLOB_KB
+    self_update: none
+    owner: gitvs
+    note: "Per-blob scan cap for publish-sweep.py (HEAD content + history blobs). Secrets live in text; larger blobs are counted as skipped_large in the receipt, never silently ignored."
+  LIMEN_SWEEP_FRESH_DAYS:
+    default: 7
+    env: LIMEN_SWEEP_FRESH_DAYS
+    self_update: none
+    owner: gitvs
+    note: "Receipt freshness window apply-visibility.py enforces: a publish-sweep receipt older than this cannot sanction a flip — the repo may have changed since it was swept."
   LIMEN_OBSERVATORY:
     default: 0
     env: LIMEN_OBSERVATORY

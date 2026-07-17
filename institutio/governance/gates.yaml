@@ -346,6 +346,11 @@ gates:
     paths: ["scripts/sync-marketplace-config.py", "scripts/tests/sync-marketplace-config.test.sh", "institutio/github/estate.yaml"]
     owner: gitvs
     note: "Safety regression for the GITVS config-push effector: the DOUBLE-DARK gate holds (--apply without LIMEN_MARKETPLACE_APPLY opens no PR), a missing conductor config source reddens, and the real estate's active integrations are all satisfied at the root."
+  publish-flip-test:
+    command: "bash scripts/tests/publish-flip.test.sh"
+    paths: ["scripts/publish-sweep.py", "scripts/apply-visibility.py", "scripts/tests/publish-flip.test.sh", "scripts/publication-policy.py"]
+    owner: gitvs
+    note: "Safety regression for the private→public flip pipeline: a history-only secret (deleted at HEAD) must red the sweep — a flip publishes history; a clean repo must green it; and apply-visibility must HOLD a publish at every missing gate (no released L-PORTAL-PUBLISH-* lever / no green+fresh sweep receipt / dark without LIMEN_VISIBILITY_APPLY)."
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:

@@ -73,11 +73,12 @@ resource_types:
     desired: ["visibility", "archived", "default_branch", "app_installed", "topics", "description", "homepage"]
     observe: "gh api /repos/{owner}/{repo}"
     effector:
+      - {kind: delegate, argv: [python3, scripts/apply-visibility.py, --apply]}
       - {kind: file-atom, target: L-REPO-SETTINGS}
       - {kind: manual}
     status: active
     owner: gitvs
-    note: "The 301-repo body; desired-state bucketed by the `classes` globs below."
+    note: "The 308-repo body; desired-state bucketed by the `classes` globs + repo_overrides below. The visibility effector self-gates ASYMMETRICALLY (autonomy from reversibility): demote-to-private is the standing leak-posture auto-guard; publish is triple-gated IN the script (double-dark LIMEN_VISIBILITY_APPLY + a released L-PORTAL-PUBLISH-* lever naming the repo + a green fresh publish-sweep receipt) — the flip exposes history, so publish-sweep.py scans every reachable blob first."
   branch_protection:
     identity: derived
     desired: ["required_checks", "enforce_admins", "required_pull_request_reviews"]
