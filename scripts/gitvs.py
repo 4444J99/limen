@@ -67,6 +67,13 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 REQUIRED_RESOURCE_FIELDS = ("identity", "desired", "observe", "effector", "status", "owner", "note")
 VALID_STATUS = {"active", "envisioned"}
 REQUIRED_CLASS_FIELDS = ("match", "visibility", "branch_protection", "required_checks", "owner", "note")
+VALID_VISIBILITY = {"public", "private", "any"}
+VALID_MATCH_FACT_KEYS = {"fork", "archived", "private"}      # census-fact keys a class may match on
+VALID_PUBLISH_ELIGIBLE = {"never", "form_twin"}
+VALID_SEO_KEYS = {"description", "topics_min", "homepage", "readme"}
+VALID_SEO_REQ = {"required", "optional"}
+# The ONE sanctioned per-repo block: each row is a durable human judgment (class + why required).
+VALID_OVERRIDE_KEYS = {"class", "why", "publish_candidate", "split", "oversize"}
 REQUIRED_INTEGRATION_FIELDS = (
     "category",
     "app_slug",
@@ -605,6 +612,85 @@ def parity(estate: dict) -> list[str]:
             for chk in checks or []:
                 if chk not in job_ids:
                     fails.append(f"class '{name}': required_check '{chk}' names no .github/workflows job")
+        vis = cls.get("visibility")
+        if "visibility" in cls and vis not in VALID_VISIBILITY:
+            fails.append(f"class '{name}': visibility '{vis}' not in {sorted(VALID_VISIBILITY)}")
+        mf = cls.get("match_facts")
+        if mf is not None and (
+            not isinstance(mf, dict)
+            or not mf
+            or set(mf) - VALID_MATCH_FACT_KEYS
+            or not all(isinstance(v, bool) for v in mf.values())
+        ):
+            fails.append(
+                f"class '{name}': match_facts must be a non-empty mapping of {sorted(VALID_MATCH_FACT_KEYS)} → bool"
+            )
+        seo = cls.get("seo")
+        if seo is not None:
+            if not isinstance(seo, dict) or set(seo) - VALID_SEO_KEYS:
+                fails.append(f"class '{name}': seo keys must be within {sorted(VALID_SEO_KEYS)}")
+            else:
+                for k in ("description", "homepage"):
+                    if k in seo and seo[k] not in VALID_SEO_REQ:
+                        fails.append(f"class '{name}': seo.{k} must be one of {sorted(VALID_SEO_REQ)}")
+                tm = seo.get("topics_min")
+                if tm is not None and (isinstance(tm, bool) or not isinstance(tm, int) or tm < 0):
+                    fails.append(f"class '{name}': seo.topics_min must be a non-negative integer")
+                rd = seo.get("readme")
+                if rd is not None and not (isinstance(rd, str) and rd):
+                    fails.append(f"class '{name}': seo.readme must be a non-empty string")
+        pe = cls.get("publish_eligible")
+        if pe is not None and pe not in VALID_PUBLISH_ELIGIBLE:
+            fails.append(f"class '{name}': publish_eligible '{pe}' not in {sorted(VALID_PUBLISH_ELIGIBLE)}")
+
+    # repo_overrides — the ONE sanctioned per-repo block: each row is a durable human judgment.
+    # A row must name a declared class and carry a non-empty why; publish_candidate is only
+    # meaningful on a private-visibility class (a public repo has nothing left to publish).
+    overrides = estate.get("repo_overrides")
+    if overrides is not None:
+        if not isinstance(overrides, dict):
+            fails.append("estate: repo_overrides must be a mapping")
+        else:
+            for repo, row in overrides.items():
+                where = f"override '{repo}'"
+                if not isinstance(row, dict):
+                    fails.append(f"{where}: not a mapping")
+                    continue
+                unknown = set(row) - VALID_OVERRIDE_KEYS
+                if unknown:
+                    fails.append(f"{where}: unknown key(s) {sorted(unknown)}")
+                cls_name = str(row.get("class") or "")
+                target_cls = classes.get(cls_name)
+                if not isinstance(target_cls, dict):
+                    fails.append(f"{where}: class '{cls_name}' names no declared class")
+                if not str(row.get("why") or "").strip():
+                    fails.append(f"{where}: 'why' is required (a judgment without a rationale is not durable)")
+                if row.get("publish_candidate") and isinstance(target_cls, dict):
+                    if target_cls.get("visibility") != "private":
+                        fails.append(f"{where}: publish_candidate requires a private-visibility class")
+                split = row.get("split")
+                if split is not None:
+                    into = split.get("into") if isinstance(split, dict) else None
+                    ok = (
+                        isinstance(split, dict)
+                        and str(split.get("why") or "").strip()
+                        and isinstance(into, list)
+                        and into
+                        and all(isinstance(x, str) and x for x in into)
+                    )
+                    if not ok:
+                        fails.append(f"{where}: split must be {{into: [non-empty strings], why: non-empty}}")
+
+    # expected_orgs — reserved namespaces are declared data; an unexpected org is drift (doctor rung).
+    eo = estate.get("expected_orgs")
+    if eo is not None:
+        listed = eo.get("list") if isinstance(eo, dict) else None
+        if not isinstance(listed, list) or not listed or not all(isinstance(o, str) and o for o in listed):
+            fails.append("estate: expected_orgs.list must be a non-empty list of owner names")
+        else:
+            for field in ("owner", "note"):
+                if field not in eo:
+                    fails.append(f"expected_orgs: missing '{field}'")
 
     # integrations (the ecosystem registry) — the same field discipline; an `active` integration must
     # carry a config-push effector script that exists (the wiring-integrity law extended to the App plane).

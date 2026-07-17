@@ -183,6 +183,102 @@ open(sys.argv[1], "w").write(yaml.safe_dump(d))
 PY
 expect 1 "must be a list" "case10 scalar integration effector reddens"
 
+# ── Case 11: a valid repo_overrides row (declared class + why) passes ──
+FIX="$work/override-ok.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["repo_overrides"] = {"organvm/example": {"class": "governed_public", "why": "judgment recorded"}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 0 "drift == ∅" "case11 valid override row passes"
+
+# ── Case 12: an override naming an undeclared class → red ──
+FIX="$work/override-badclass.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["repo_overrides"] = {"organvm/example": {"class": "no_such_class", "why": "x"}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "names no declared class" "case12 unknown override class reddens"
+
+# ── Case 13: an override without a why → red (judgment must be durable) ──
+FIX="$work/override-nowhy.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["repo_overrides"] = {"organvm/example": {"class": "governed_public"}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "'why' is required" "case13 override missing why reddens"
+
+# ── Case 14: publish_candidate on a public-visibility class → red ──
+FIX="$work/override-pubcand.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["repo_overrides"] = {"organvm/example": {"class": "governed_public", "why": "x", "publish_candidate": True}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "publish_candidate requires a private-visibility class" "case14 publish_candidate on public class reddens"
+
+# ── Case 15: match_facts with a non-census key → red ──
+FIX="$work/badfacts.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["classes"]["governed_public"]["match_facts"] = {"is_cool": True}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "match_facts" "case15 unknown match_facts key reddens"
+
+# ── Case 16: a malformed seo block (negative topics_min) → red ──
+FIX="$work/badseo.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["classes"]["governed_public"]["seo"] = {"description": "required", "topics_min": -3}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "topics_min" "case16 malformed seo block reddens"
+
+# ── Case 17: classify_repo precedence — override > match_facts > glob (pure function, no gh) ──
+FIX="$work/classify.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["classes"] = {
+    "special": {"match": [], "visibility": "private", "branch_protection": "exempt",
+                 "required_checks": [], "owner": "gitvs", "note": "override-only"},
+    "forks": {"match": ["**"], "match_facts": {"fork": True}, "visibility": "any",
+               "branch_protection": "exempt", "required_checks": [], "owner": "gitvs", "note": "facts"},
+    "governed_public": d["classes"]["governed_public"],
+}
+d["repo_overrides"] = {"organvm/judged": {"class": "special", "why": "judgment"}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+out="$(LIMEN_GITVS_ESTATE="$FIX" python3 - <<PY
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("gitvs", "$GITVS")
+g = importlib.util.module_from_spec(spec); sys.modules["gitvs"] = g
+spec.loader.exec_module(g)
+e = g.load_estate()
+print(g.classify_repo("organvm/judged", e, facts={"fork": True}))          # override wins over facts
+print(g.classify_repo("organvm/somefork", e, facts={"fork": True}))       # facts win over glob
+print(g.classify_repo("organvm/plain", e, facts={"fork": False}))         # glob floor
+print(g.classify_repo("organvm/plain", e))                                 # factless: fact classes skipped
+PY
+)"
+if [ "$out" = "special
+forks
+governed_public
+governed_public" ]; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case17 classify precedence): got:"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "gitvs.test.sh: PASS ($pass checks)"

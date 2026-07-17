@@ -14,8 +14,17 @@
 # once the ratchet arms; session-lifecycle-pressure.py reads the census ledger's branches block.
 #
 # Identity is ALWAYS derived at run-time from the git remote owner/repo ("names are outputs"); NO
-# individual repo, branch, or PR is enumerated here. Classes are GLOBS (`**` crosses slashes, `*`
-# does not — the check-gates.py glob semantics). First-match-wins, most-specific first.
+# individual repo, branch, or PR is enumerated here — with ONE sanctioned exception: `repo_overrides`,
+# the durable per-repo publication judgments (each row a human decision with a required `why:`).
+# Everything pattern-derivable stays a glob; an override exists only where judgment was applied.
+# Classes are GLOBS (`**` crosses slashes, `*` does not — the check-gates.py glob semantics), plus
+# optional `match_facts` (diffed against the census facts: fork/archived/private). First-match-wins,
+# most-specific first; an explicit override row outranks every class.
+#
+# THIS FILE IS WORLD-READABLE (organvm/limen is public). Private repo NAMES are accepted precedent
+# (value-repos.json already names them); rationale text is the leak surface — keep every `why:` terse
+# and clinical. Sensitive rationale lives in the gitignored overlay institutio/github/estate.private.yaml
+# (shallow-merged into repo_overrides at load time when present; arca-sealed for durability).
 #
 # Field discipline (parameters.yaml / gates.yaml): `owner` and `note` are REQUIRED on every class,
 # budget, and resource type. scripts/gitvs.py doctor --parity-only is this registry's OWN drift
@@ -61,7 +70,7 @@ app:
 resource_types:
   repo:
     identity: derived
-    desired: ["visibility", "archived", "default_branch", "app_installed", "topics"]
+    desired: ["visibility", "archived", "default_branch", "app_installed", "topics", "description", "homepage"]
     observe: "gh api /repos/{owner}/{repo}"
     effector:
       - {kind: file-atom, target: L-REPO-SETTINGS}
@@ -225,8 +234,69 @@ classes:
     secret_hygiene: enforced
     stale_branch_grace_min: 60             # reuses the reap-branches grace default
     archive_policy: never
+    seo: {description: required, topics_min: 5, homepage: required, readme: portal}
     owner: gitvs
     note: "The live daemon body: strictest posture. required_checks mirror the ci.yml / pr-gate.yml job ids."
+  contrib_fork:
+    match: ["**"]
+    match_facts: {fork: true}
+    visibility: any                        # forks mirror upstream; G-exempt
+    branch_protection: exempt
+    required_checks: []
+    app_installed: optional
+    secret_hygiene: enforced
+    stale_branch_grace_min: null
+    archive_policy: reap_after_stale
+    owner: gitvs
+    note: "Contribution/symbiote staging forks (contrib--*). No SEO demand — the lure is the upstream PR, not the fork."
+  frozen:
+    match: ["**"]
+    match_facts: {archived: true}
+    visibility: any                        # live-archived repos keep whatever visibility they froze with; G-exempt
+    branch_protection: exempt
+    required_checks: []
+    app_installed: optional
+    secret_hygiene: enforced
+    stale_branch_grace_min: null
+    archive_policy: frozen
+    owner: gitvs
+    note: "GitHub-archived (fact-matched, not name-matched). Read-only; a leaked secret is STILL a red predicate."
+  vault_private:
+    match: []                              # membership ONLY via repo_overrides — never name-guessable
+    visibility: private
+    branch_protection: exempt
+    required_checks: []                    # private-repo Actions are billed; CI posture is per-repo judgment
+    app_installed: optional
+    secret_hygiene: enforced
+    stale_branch_grace_min: null
+    archive_policy: never
+    publish_eligible: never
+    owner: gitvs
+    note: "Actual private data (vaults, matters, people, raw session corpora). Never publishes; never a form twin."
+  operation_private:
+    match: []                              # membership ONLY via repo_overrides
+    visibility: private
+    branch_protection: required
+    required_checks: []                    # private-repo Actions are billed; CI posture is per-repo judgment
+    app_installed: required
+    secret_hygiene: enforced
+    stale_branch_grace_min: 1440
+    archive_policy: never
+    publish_eligible: form_twin
+    owner: gitvs
+    note: "Secret sauce — the OPERATION half of publish-the-form. A public FORM twin may exist (split: rows); the operation itself stays the moat."
+  portal_public:
+    match: ["4444J99/**"]                  # the profile repo + personal surface; organvm portal repos join via repo_overrides
+    visibility: public
+    branch_protection: required
+    required_checks: ["pr-gate"]
+    app_installed: required
+    secret_hygiene: enforced
+    stale_branch_grace_min: 1440
+    archive_policy: never
+    seo: {description: required, topics_min: 5, homepage: required, readme: portal}
+    owner: gitvs
+    note: "The SEO lure tier (value repos ∪ positioning-seeded ∪ star leaders): full portal-v1 README standard + rich metadata; every repo an inbound edge."
   governed_public:
     match: ["organvm/**"]
     visibility: public
@@ -236,8 +306,9 @@ classes:
     secret_hygiene: enforced
     stale_branch_grace_min: 1440
     archive_policy: reap_after_stale
+    seo: {description: required, topics_min: 3, homepage: optional, readme: minimal}
     owner: gitvs
-    note: "The 301-repo body: App installed; default branch protected on CI, not on human review (blanket review is lever #257)."
+    note: "The public long-tail floor: App installed; branch protected on CI, not on human review (blanket review is lever #257). Private repos no longer fall here — overrides + fact classes above outrank this glob (the class-G latent-flip bug is defused by data, not code)."
   archived:
     match: ["**"]                          # catch-all floor
     visibility: any
@@ -249,6 +320,21 @@ classes:
     archive_policy: frozen
     owner: gitvs
     note: "Read-only tail: no protection expected, but a leaked secret is STILL a red predicate."
+
+# ── per-repo publication judgments — the ONE sanctioned per-repo block ─────────────────────────
+# One row per human decision: `class` (must name a class above) + a REQUIRED terse `why:`. Optional:
+# `publish_candidate: true` (private repo proposed for the lever-gated publish wave — the flip is
+# NEVER auto; publication-policy: public_safe → PUBLISH, his_lever), `split: {into: [...], why: ...}`
+# (owed form-twin/eviction work, cited by the doctor like status: envisioned), `oversize: true`
+# (history-asset review owed). Sensitive rationale → estate.private.yaml (gitignored overlay).
+# Rows land by PR from `gitvs.py classify --emit-overrides` output — never auto-written.
+repo_overrides: {}
+
+# ── expected orgs — reserved namespaces are declared, an unexpected org is drift ────────────────
+expected_orgs:
+  list: [4444J99, a-organvm, meta-organvm, organvm, organvm-i-theoria, organvm-ii-poiesis, organvm-iii-ergon, organvm-iv-taxis, organvm-v-logos, organvm-vi-koinonia, organvm-vii-kerygma]
+  owner: gitvs
+  note: "The nine empty orgs are reserved namespaces ($0 — they hold the names). An org observed on /user/orgs but absent here is cited drift; org deletion is lever-only, never proposed by the engine."
 
 # ── ecosystem integrations — the free third-party Apps GITVS harnesses as $0 labor (§3) ─────────
 # "Everything GitHub" is not only the resources we OWN; it is the ecosystem of free/OSS-tier Apps we
@@ -385,3 +471,5 @@ human_atoms:
 ratchets:
   setup_rulesets_derives_checks: false     # ARM when setup-rulesets.py reads classes[].required_checks
   session_pressure_derives_remote: false   # ARM when session-lifecycle-pressure.py delegates remote-branch counts to the census ledger
+  visibility_gate_armed: false             # ARM (predicate PR) once the 307-decision overrides land — class G then diffs desired visibility per repo
+  seo_drift_gates: false                   # ARM post-backfill — class K (SEO floor) flips from cited-owed to a red predicate
