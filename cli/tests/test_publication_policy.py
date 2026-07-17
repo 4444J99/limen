@@ -103,6 +103,14 @@ def test_owner_phone_when_configured():
         # credential-NAMED files: a values-free POLICY registry is public; a store / unknown stays secret
         ("institutio/governance/credentials.yaml", "automation_vault: X\nservice_account:\n  name: y", "public_safe"),
         ("config/secrets.json", "api_key: 'ghp_ABCD1234ABCD1234ABCD'", "secret"),
+        # env-example VARIANTS (.local infix) are placeholders, not secrets; bare .env.local is NOT exempt
+        (".env.local.example", None, "public_safe"),
+        # PLACEHOLDER secret shapes (docs that DOCUMENT key patterns) are not live credentials
+        ("references/secret-patterns.md", "example ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "public_safe"),
+        ("skills/x/SKILL.md", 'api_key = "your_api_key_here"', "public_safe"),
+        ("doc.md", 'api_key: "actual-secret-value"', "public_safe"),
+        # …but a real high-entropy token stays a hard secret, even in a documentation file
+        ("references/secret-patterns.md", "leaked gho_Zx7Kq2Wm9Bn4Vc6Rt1Yp3Lf8Hs5Jd0Gg", "secret"),
     ],
 )
 def test_classify(path, text, cls):
@@ -111,6 +119,16 @@ def test_classify(path, text, cls):
 
 def test_secret_shape_in_content():
     assert pp.classify("random.txt", "token=ghp_ABCD1234ABCD1234ABCD")[0] == "secret"
+
+
+def test_has_live_secret_excludes_placeholders_keeps_real():
+    # placeholders / documentation → not live
+    assert not pp._has_live_secret("ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    assert not pp._has_live_secret('api_key = "your_api_key_here"')
+    assert not pp._has_live_secret('api_key: "actual-secret-value"')
+    # real high-entropy tokens → live (catch never blunted)
+    assert pp._has_live_secret("token gho_Zx7Kq2Wm9Bn4Vc6Rt1Yp3Lf8Hs5Jd0Gg")
+    assert pp._has_live_secret("key=AIzaSyC08Pb1Vk9mQ2rTx7Lz3Hn6Wd4Fg8Jp")
 
 
 def test_fixture_path_helper():

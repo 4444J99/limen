@@ -26,7 +26,7 @@ mkrepo() { # $1=dir  $2=dirty|clean
   git init -q "$1" && cd "$1"
   git -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
   if [ "$2" = dirty ]; then
-    echo 'api_key: "plantedfixturesecretvalue0001"' > config.txt   # planted FIXTURE, not a real cred
+    echo 'token: gho_Km3Xp9Qw2Zt6Bn8Vr4Ly7Hd1Fc5Js0Gg' > config.txt   # planted high-entropy live-shape (synthetic)
     git add config.txt && git -c user.email=t@t -c user.name=t commit -q -m "add config"
     git rm -q config.txt && git -c user.email=t@t -c user.name=t commit -q -m "remove config"
   fi

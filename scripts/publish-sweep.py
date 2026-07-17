@@ -164,10 +164,11 @@ def _history_secret_hits(clone: Path, pp) -> tuple[list[dict], int, int]:
                 continue
             scanned += 1
             text = body.decode("utf-8", errors="replace")
-            if pp._SECRET_RX.search(text):
-                # A secret SHAPE on a test/fixture path is a planted fixture (a scrubber's own mock),
-                # not a live credential — real secrets never live in the tree. Path-scoped exemption
-                # only; a shape match on any other path is a hard hit. Unknown path → treat as real.
+            if pp._has_live_secret(text):
+                # A live-secret shape (non-placeholder). On a test/fixture path it is a planted fixture
+                # (a scrubber's own mock), not a live credential — real secrets never live in the tree.
+                # Documentation of key patterns (`ghp_xxxx…`, `your_api_key_here`) is a placeholder and
+                # is excluded by _has_live_secret. Path-scoped exemption only; unknown path → treat real.
                 if path and pp._is_fixture_path(path):
                     continue
                 if len(hits) < 50:
