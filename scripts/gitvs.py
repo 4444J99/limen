@@ -58,6 +58,10 @@ ROOT = SCRIPT_DIR.parent.resolve()
 ESTATE = Path(os.environ.get("LIMEN_GITVS_ESTATE") or (ROOT / "institutio" / "github" / "estate.yaml"))
 LEDGER = ROOT / "docs" / "github-estate-ledger.json"
 STAMP = ROOT / "logs" / "gitvs.json"
+# Per-repo census FACTS (names + visibility + SEO signals, private repos included) live in the
+# gitignored runtime sink, NEVER the git-tracked ledger: private repo names stay out of the public
+# tree, and volatile fields (size, pushed_at) never churn the ledger's idempotent fixed point.
+FACTS = ROOT / "logs" / "gitvs-census-facts.json"
 WORKFLOWS = ROOT / ".github" / "workflows"
 
 REQUIRED_RESOURCE_FIELDS = ("identity", "desired", "observe", "effector", "status", "owner", "note")
@@ -164,9 +168,21 @@ def owners(estate: dict) -> list[str]:
     return derived or ["organvm"]
 
 
-def classify_repo(repo: str, estate: dict) -> str | None:
-    """First-match-wins bucket of an owner/repo into a class name (most-specific class first in the file)."""
+def classify_repo(repo: str, estate: dict, facts: dict | None = None) -> str | None:
+    """First-match-wins bucket of an owner/repo into a class name. Precedence: an explicit
+    `repo_overrides` row (durable per-repo human judgment, `why:` required by parity) wins; then
+    fact-matched classes (`match_facts` diffed against the census facts — skipped when no facts are
+    in hand, e.g. offline parity contexts); then the class globs (most-specific class first)."""
+    row = (estate.get("repo_overrides") or {}).get(repo)
+    if isinstance(row, dict) and row.get("class"):
+        return str(row["class"])
     for name, cls in (estate.get("classes") or {}).items():
+        mf = cls.get("match_facts")
+        if mf:
+            if not isinstance(facts, dict):
+                continue
+            if not all(bool(facts.get(k)) == bool(v) for k, v in mf.items()):
+                continue
         for glob in cls.get("match") or []:
             if fnmatch.fnmatch(repo, glob):
                 return name
@@ -292,6 +308,50 @@ def _org_app_estate(token: str | None, online: bool) -> dict:
     return out
 
 
+def _owner_repos(owner: str, token: str | None) -> list[dict] | None:
+    """Enumerate ALL repos of an owner with per-repo census facts. Tries the org route first —
+    /orgs/{owner}/repos?type=all surfaces the private repos the cascade token can see (the /users
+    route is structurally public-only, the census blindness this Lens fix removes) — then falls back
+    to /users/{owner}/repos for personal accounts. None ⟺ both routes failed (fail-open)."""
+    jq = (
+        ".[] | {full_name, private, fork, archived, size, description, homepage, "
+        "stars: .stargazers_count, topics_count: ((.topics // []) | length), pushed_at}"
+    )
+    for route in (f"/orgs/{owner}/repos?type=all", f"/users/{owner}/repos"):
+        r = _gh(
+            ["api", route, "--paginate", "-X", "GET", "-F", "per_page=100", "--jq", jq],
+            token,
+            timeout=180,
+        )
+        if r.returncode != 0 or not (r.stdout or "").strip():
+            continue
+        rows: list[dict] = []
+        for ln in r.stdout.splitlines():
+            ln = ln.strip()
+            if not ln:
+                continue
+            try:
+                row = json.loads(ln)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, dict) and row.get("full_name"):
+                rows.append(row)
+        if rows:
+            return rows
+    return None
+
+
+def _write_census_facts(rows: list[dict]) -> None:
+    """The per-repo facts sink (logs/, gitignored — see the FACTS note). Deterministic (sorted by
+    full_name, sorted keys) so downstream consumers (classify, seo-audit) read a stable shape."""
+    try:
+        FACTS.parent.mkdir(parents=True, exist_ok=True)
+        body = {"schema": "limen.gitvs_census_facts.v1", "repos": sorted(rows, key=lambda r: r["full_name"])}
+        FACTS.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n")
+    except Exception as e:  # observability must never break the beat
+        print(f"[gitvs] note: census-facts write skipped ({str(e)[:80]})")
+
+
 def observe(estate: dict) -> dict:
     """Build the actual-state ledger. Every block is fail-open: a gh/parse failure degrades to null,
     never raises; `online` records whether the live rungs ran. Counts + names only (the _scrub firewall —
@@ -342,33 +402,41 @@ def observe(estate: dict) -> dict:
             led["app"]["installed"] = n > 0
             led["app"]["installations"] = n
 
-    # Repo census by class (bounded: one search-count per owner).
+    # Repo census by class — the FULL estate (org route; private repos included when the token can
+    # see them). Aggregate counts land in the public ledger; per-repo facts go to the gitignored
+    # FACTS sink only (private names never enter the git-tracked ledger).
     if online:
         total = 0
         by_class: dict[str, int] = {}
+        vis = {"public": 0, "private": 0}
+        fork_n = archived_n = 0
+        facts_all: list[dict] = []
+        complete = True
         for owner in owner_list:
-            r = _gh(
-                [
-                    "api",
-                    f"/users/{owner}/repos",
-                    "--paginate",
-                    "-X",
-                    "GET",
-                    "-F",
-                    "per_page=100",
-                    "--jq",
-                    ".[].full_name",
-                ],
-                token,
-                timeout=90,
-            )
-            names = [ln.strip() for ln in (r.stdout or "").splitlines() if ln.strip()] if r.returncode == 0 else []
-            for full in names:
+            rows = _owner_repos(owner, token)
+            if rows is None:
+                complete = False
+                continue
+            for row in rows:
+                full = str(row["full_name"])
                 total += 1
-                cls = classify_repo(full, estate) or "unclassed"
+                cls = classify_repo(full, estate, facts=row) or "unclassed"
+                row["class"] = cls
                 by_class[cls] = by_class.get(cls, 0) + 1
+                vis["private" if row.get("private") else "public"] += 1
+                fork_n += 1 if row.get("fork") else 0
+                archived_n += 1 if row.get("archived") else 0
+                facts_all.append(row)
         if total:
-            led["repos"] = {"total": total, "by_class": dict(sorted(by_class.items()))}
+            led["repos"] = {
+                "total": total,
+                "complete": complete,
+                "by_class": dict(sorted(by_class.items())),
+                "by_visibility": vis,
+                "forks": fork_n,
+                "archived": archived_n,
+            }
+            _write_census_facts(facts_all)
 
     # Rate-limit headroom (class E).
     if online:
