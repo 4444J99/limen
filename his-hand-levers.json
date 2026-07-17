@@ -198,7 +198,8 @@
       "unlocks": "the testament goes live on your feed as an inbound lure; every reach-out it draws is auto-classified into the inbound-lead lane and gets a SAFE first-touch ack when the send valve is armed",
       "source_task": "opportunity-inbound lane build (PR C); the staged post lives in 4444J99/hokage-chess",
       "gate": "publishing to your own public feed is your identity — never automatable; the draft is staged, the push is your click",
-      "note": "INVARIANT: nothing here sends, spends, or deletes. The post is staged, not posted; the inbound lane it feeds only ever drafts/acks by email, never cold-outreaches. Pairs with L-POSITIONING-ACTIVATE's LinkedIn email-first step (mirror InMail to Gmail; 'fastest: contact@4444j99.dev'; Open-To-Work recruiters-only)."
+      "note": "INVARIANT: nothing here sends, spends, or deletes. The post is staged, not posted; the inbound lane it feeds only ever drafts/acks by email, never cold-outreaches. Pairs with L-POSITIONING-ACTIVATE's LinkedIn email-first step (mirror InMail to Gmail; 'fastest: contact@4444j99.dev'; Open-To-Work recruiters-only).",
+      "issue": 1188
     },
     {
       "id": "L-CARD-FRAUD-HOLD",
@@ -609,7 +610,7 @@
       "gate": "fill unlocks with the sanctioned repo list; set status: released",
       "unlocks": [],
       "source_task": "publication-engine lane (PRs #1152-#1156)",
-      "issue": null
+      "issue": 1189
     },
     {
       "id": "L-RSA-OFFBOARD",
@@ -620,7 +621,7 @@
       "gate": "seal + verify receipt, then delete the repo",
       "unlocks": [],
       "source_task": "publication-engine lane (estate decision commit)",
-      "issue": null
+      "issue": 1190
     },
     {
       "id": "L-SEO-METADATA",
@@ -631,7 +632,7 @@
       "gate": "review the dry plan; set LIMEN_REPO_METADATA_APPLY=1 in the runtime env",
       "unlocks": [],
       "source_task": "publication-engine lane (SEO organ)",
-      "issue": null
+      "issue": 1191
     }
   ]
 }
