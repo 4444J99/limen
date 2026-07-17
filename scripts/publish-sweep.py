@@ -62,8 +62,12 @@ def _gitvs():
 
 
 def _git(clone: Path, *args: str, timeout: int = 300) -> subprocess.CompletedProcess:
+    # errors="replace": a full-history / HEAD-blob sweep reads real repo content, which includes
+    # binary blobs (images, archives). Strict UTF-8 decoding crashed the whole sweep on the first
+    # non-UTF-8 byte (limen HEAD, 2026-07-17). Secrets/PII shapes are ASCII, so replacing the
+    # undecodable bytes preserves every match while making the gate robust to binary.
     return subprocess.run(
-        ["git", "-C", str(clone), *args], capture_output=True, text=True, timeout=timeout
+        ["git", "-C", str(clone), *args], capture_output=True, text=True, errors="replace", timeout=timeout
     )
 
 

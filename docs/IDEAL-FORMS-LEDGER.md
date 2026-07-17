@@ -36,6 +36,20 @@ measures the **distance from ideal** at a moment in time, and carries a **status
 - **Status:** PARTIAL — merge daemon live (`merge-policy.sh`); no monotonic-debt predicate yet.
 - **Owner:** Claude (predicate) + merge daemon.
 
+### IF-PUBLICATION-ESTATE — every repo's visibility is a judged, enforced decision
+- **Ideal form:** the whole GitHub estate carries its publication policy as declared data — every
+  repo classified (vault / operation / portal / floor) with a `why:`, visibility drift a red
+  predicate, private→public flips history-swept + lever-gated, the public tail converging to an
+  SEO standard by beat, mixed repos split by the fresh-history protocol. Zero unclassified, zero
+  unswept flips, zero hand-maintained lists.
+- **Distance:** engine SHIPPED (PRs #1152–#1159, 2026-07-16): 308/308 classified (108 judgment
+  rows), rungs G/J/K/M armed, flip pipeline + SEO organ + split protocol live-dark. Residual is
+  ENACTMENT — the armed valves (`LIMEN_SEO_BACKLOG_APPLY`, L-SEO-METADATA, L-PORTAL-PUBLISH-WAVE-1)
+  and the owed splits (session-meta, hospes transcripts), all lever/registry-homed; SEO baseline
+  6/166 passing.
+- **Status:** SHIPPED (engine) / OPEN (enactment).
+- **Owner:** GITVS + publication-policy organs; his hand for the three levers.
+
 ### IF-LIVE-TREE-COHERENCE — the live checkout never drifts
 - **Ideal form:** the live daemon checkout is always `≡ origin/main`; capture/sync keeps it
   fast-forwarded; no ahead/behind divergence, no stranded local commits.

@@ -1,24 +1,21 @@
 {
- "_comment": "THE VALUE TIER — the ONLY repos the autonomous fleet may spend a token on, ranked by time-to-an-actual-dollar (goal: real income before August 2026). Everything NOT listed here gets ZERO auto-generated/auto-mined work. This is Anthony's priorities — edit freely; add a repo to fund it with fleet effort, remove one to starve it. Fail-closed: if this list is empty, the generator produces nothing rather than flooding all repos.",
- "ranked_by": "time-to-dollar",
- "repos": [
-  "organvm/a-i-chat--exporter",
-  "organvm/my-knowledge-base",
-  "organvm/public-record-data-scrapper",
-  "organvm/peer-audited--behavioral-blockchain",
-  "organvm/mirror-mirror",
-  "organvm/universal-mail--automation",
-  "organvm/the-invisible-ledger",
-  "organvm/domus-genoma",
-  "organvm/styx",
-  "organvm/limen",
-  "4444J99/limen",
-  "organvm/session-meta",
-  "4444J99/session-meta",
-  "organvm/portfolio",
-  "organvm/manumissio",
-  "organvm/cind-and-sol-foundation",
-  "organvm/sovereign--ground--4444j99",
-  "organvm/hospes"
- ]
+  "_comment": "THE VALUE TIER \u2014 the ONLY repos the autonomous fleet may spend a token on, ranked by time-to-an-actual-dollar (goal: real income before August 2026). Everything NOT listed here gets ZERO auto-generated/auto-mined work. This is Anthony's priorities \u2014 edit freely; add a repo to fund it with fleet effort, remove one to starve it. Fail-closed: if this list is empty, the generator produces nothing rather than flooding all repos.",
+  "ranked_by": "time-to-dollar",
+  "repos": [
+    "organvm/a-i-chat--exporter",
+    "organvm/my-knowledge-base",
+    "organvm/public-record-data-scrapper",
+    "organvm/peer-audited--behavioral-blockchain",
+    "organvm/mirror-mirror",
+    "organvm/universal-mail--automation",
+    "organvm/the-invisible-ledger",
+    "organvm/domus-genoma",
+    "organvm/limen",
+    "organvm/session-meta",
+    "organvm/portfolio",
+    "organvm/manumissio",
+    "organvm/cind-and-sol-foundation",
+    "organvm/sovereign--ground--4444j99",
+    "organvm/hospes"
+  ]
 }
