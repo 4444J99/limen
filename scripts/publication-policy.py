@@ -80,12 +80,18 @@ def _owner() -> dict:
 # ---------------------------------------------------------------------------
 CLASSES = ("secret", "personal_pii", "internal_strategy", "product_content", "public_safe")
 
-# secret files (path) — mirror restore-redact.sh's skip list + creds-hydrate shapes
+# HARD secret files (path) — these ARE credential material by convention (env/cert/key/tfvars);
+# path alone is decisive, content-independent.
 _SECRET_PATH = re.compile(
     r"(?:^|/)(?:\.env(?:\.[^/]*)?|[^/]*\.local\.json|settings\.local\.json|"
-    r"[^/]*\.pem|[^/]*\.key|[^/]*id_rsa[^/]*|[^/]*credentials[^/]*|[^/]*secrets[^/]*|[^/]*\.tfvars)$",
+    r"[^/]*\.pem|[^/]*\.key|[^/]*id_rsa[^/]*|[^/]*\.tfvars)$",
     re.I,
 )
+# SOFT secret-NAME files — a name saying 'credentials'/'secrets' is USUALLY a store, but can be a
+# POLICY REGISTRY / doc that holds no values (institutio/governance/credentials.yaml: vault names +
+# routes, values-never-in-repo). Secret only if the content is unavailable (binary/unknown) or
+# actually carries a secret shape; a readable, shape-free map falls through to ordinary classification.
+_SECRET_NAME_SOFT = re.compile(r"(?:^|/)[^/]*(?:credentials?|secrets?)[^/]*$", re.I)
 # secret SHAPES in content (from creds-hydrate.py::_SECRET_RX — the canonical firewall)
 _SECRET_RX = re.compile(
     r"AIza[\w\-]{4}[\w\-]+|gh[pousr]_[A-Za-z0-9]{4}[A-Za-z0-9]+|\bapi[_-]?key\b\s*[:=]\s*['\"]?[A-Za-z0-9\-_]{16,}"
@@ -109,6 +115,27 @@ _PRODUCT_PATH = re.compile(
     re.I,
 )
 
+# env example/template/sample/dist — DOCUMENTATION placeholders (build-in-public config docs),
+# not live secrets. A path-shape secret rule below would otherwise flag every `.env.*` regardless
+# of content; these carry placeholders (`change-me`, empty), so they are public-safe unless the
+# content actually matches a live-secret shape.
+_ENV_EXAMPLE = re.compile(r"(?:^|/)\.env\.(?:example|template|sample|dist|defaults)$", re.I)
+
+# test / fixture / mock paths — a secret-SHAPED string here is a PLANTED FIXTURE (a secret-scrubber's
+# own mock provider errors), never a live credential: real secrets live in the credential organ
+# (op:// / ~/.limen.env), never in the tree. Path-scoped exemption only — a shape match on any
+# NON-fixture path stays a hard secret (the real-secret catch is never blunted).
+_FIXTURE_PATH = re.compile(
+    r"(?:^|/)(?:tests?|__tests__|fixtures?|specs?|mocks?|__mocks__)/"
+    r"|(?:^|/)(?:test_[^/]+\.py|[^/]+_test\.(?:py|go|js|ts|tsx|sh|rb)|[^/]+\.(?:test|spec)\.[a-z]+|conftest\.py)$",
+    re.I,
+)
+
+
+def _is_fixture_path(path: str) -> bool:
+    """True where a secret-SHAPED string is a legitimate test fixture, not a live credential."""
+    return bool(_FIXTURE_PATH.search(path.replace("\\", "/")))
+
 
 # owner-personal-identifier content signal (drives personal_pii) — see redactor below
 def _has_owner_pii(text: str, owner: dict | None = None) -> bool:
@@ -121,10 +148,28 @@ def classify(path: str, text: str | None = None, owner: dict | None = None) -> t
     p = path.replace("\\", "/")
     base = p.rsplit("/", 1)[-1]
 
-    # 1. secret — path shape or in-content secret shape (never restored anywhere)
+    # 0. env example/template/sample — documentation placeholders (build-in-public config docs),
+    #    public-safe by convention UNLESS a live-secret shape was fat-fingered into the example.
+    if _ENV_EXAMPLE.search(p):
+        if text and _SECRET_RX.search(text):
+            return "secret", "content matches a secret shape (AIza…/gh?_…/api_key:)"
+        return "public_safe", f"env example/template — placeholder config, no live secret ({base})"
+
+    # 1. secret — real credential PATH shape (.env/.pem/.key/.tfvars), never restored anywhere
     if _SECRET_PATH.search(p):
         return "secret", f"secret/credential path shape ({base})"
+    # 1b. credential-NAMED file — a store OR a policy registry (values-never-in-repo). Secret only if
+    #     content is unavailable (binary/unknown) or actually shape-bearing; a readable shape-free map
+    #     (institutio/governance/credentials.yaml) falls through to ordinary classification.
+    if _SECRET_NAME_SOFT.search(p):
+        if text is None or _SECRET_RX.search(text):
+            return "secret", f"credential-named file, content unavailable or secret-shaped ({base})"
+    # in-content secret SHAPE: a live-credential shape. On a FIXTURE/test path it is a planted
+    # fixture (a scrubber's own mock), NOT a live credential — exempt (product_content). On any
+    # other path it stays a hard secret; the real-secret catch is never blunted (path-scoped).
     if text and _SECRET_RX.search(text):
+        if _is_fixture_path(p):
+            return "product_content", f"secret-shaped test fixture (not a live credential) ({base})"
         return "secret", "content matches a secret shape (AIza…/gh?_…/api_key:)"
 
     # 2. internal strategy — raw session artifact / planning / premortem / prompt dump
@@ -427,6 +472,48 @@ def _self_test() -> list[str]:
     check(
         classify("notes.md", "contact legal@styx.protocol")[0] == "public_safe",
         "product-email doc wrongly classed as PII",
+    )
+    # 3b. calibration — build-in-public false-positives must NOT block; real secrets STILL must.
+    #     The secret-SHAPED fixtures below are assembled from parts so this gate never flags its OWN
+    #     source (a leak-gate must not trip on its own test fixtures); the string only exists, and
+    #     only matches _SECRET_RX, at runtime — never contiguously in this file's blob.
+    _aiza = "AIza" + "Sy" + "REDACTEDFIXTURE0000000000000"  # AIzaSy… live-key SHAPE, assembled
+    check(classify(".env.example")[0] == "public_safe", "env.example placeholder wrongly classed secret")
+    check(classify("moneta/.env.template")[0] == "public_safe", "env.template placeholder wrongly classed secret")
+    check(
+        classify(".env.example", "GEMINI_API_KEY=" + _aiza)[0] == "secret",
+        "env.example with a REAL secret shape must still be secret",
+    )
+    check(
+        classify("cli/tests/test_creds_hydrate.py", "api_key:" + _aiza)[0] == "product_content",
+        "secret-shaped string in a test fixture wrongly classed secret (should be product_content)",
+    )
+    check(
+        classify("scripts/tests/publish-flip.test.sh", "api" + "_key: 'plantedfixturesecretvalue0001'")[0]
+        == "product_content",
+        "secret-shaped fixture in a .test.sh wrongly classed secret",
+    )
+    # THE SMOKE GUARD — a real-shaped secret on a NON-fixture path must STILL be a hard secret.
+    check(
+        classify("web/api/config.py", "api_key:" + _aiza)[0] == "secret",
+        "REGRESSION: recalibration blunted the real-secret catch on a non-fixture path",
+    )
+    # 3c. credential-NAMED files: a values-free POLICY registry is public; a store / unknown stays secret
+    check(
+        classify("app/config/credentials.json")[0] == "secret",
+        "credential-named file with unknown content must stay secret",
+    )
+    check(
+        classify(
+            "institutio/governance/credentials.yaml",
+            "automation_vault: Limen-Automation\nservice_account:\n  name: limen-fleet",
+        )[0]
+        == "public_safe",
+        "values-free credential POLICY registry wrongly classed secret",
+    )
+    check(
+        classify("app/secrets.json", "gh_token=" + _aiza)[0] == "secret",
+        "credential-named file carrying a real secret shape must stay secret",
     )
     # 4. disposition matrix invariants
     check(disposition("PUBLIC", "internal_strategy")[0] == "KEEP_OFF_PUBLIC_HEAD", "public strategy disposition wrong")

@@ -111,7 +111,8 @@ def test_hydrate_write_env_idempotent(tmp_path, monkeypatch):
 def test_scrub_redacts_key_shapes():
     """A provider error must never carry a live key into our logs."""
     mod = _hydrate_module()
-    s = mod._scrub("Consumer 'api_key:AIzaSyCO8P_ooVY6dCYzNm7rPK15WdRrPYR63F0' suspended; ghp_abcd1234EFGH5678ijkl")
+    # obviously-synthetic key SHAPES (matches _SECRET_RX so the scrubber must redact them) — never a real credential
+    s = mod._scrub("Consumer 'api_key:AIzaSyFAKEFIXTURE0000000000000000000000' suspended; ghp_abcd1234EFGH5678ijkl")
     assert "AIzaSy" not in s and "ghp_abcd1234" not in s and "api_key:AIza" not in s
     assert "<redacted>" in s
 

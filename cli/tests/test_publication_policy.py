@@ -90,6 +90,19 @@ def test_owner_phone_when_configured():
         ("data/leads.csv", None, "public_safe"),
         ("notes.md", "reach me at <owner-email>", "personal_pii"),
         ("notes.md", "contact legal@styx.protocol for terms", "public_safe"),
+        # calibration: env-example/template are build-in-public config DOCS (placeholders), not secrets
+        (".env.example", None, "public_safe"),
+        ("moneta/.env.template", None, "public_safe"),
+        # a REAL secret shape fat-fingered into an example must STILL be secret
+        (".env.example", "GEMINI_API_KEY=ghp_ABCD1234ABCD1234ABCD", "secret"),
+        # a secret SHAPE on a fixture/test path is a planted fixture (scrubber mock), not a live cred
+        ("cli/tests/test_creds.py", "token=ghp_ABCD1234ABCD1234ABCD", "product_content"),
+        ("scripts/tests/x.test.sh", "api_key: 'ghp_ABCD1234ABCD1234ABCD'", "product_content"),
+        # …but the SAME shape on a NON-fixture source path stays a hard secret (catch not blunted)
+        ("web/api/config.py", "token=ghp_ABCD1234ABCD1234ABCD", "secret"),
+        # credential-NAMED files: a values-free POLICY registry is public; a store / unknown stays secret
+        ("institutio/governance/credentials.yaml", "automation_vault: X\nservice_account:\n  name: y", "public_safe"),
+        ("config/secrets.json", "api_key: 'ghp_ABCD1234ABCD1234ABCD'", "secret"),
     ],
 )
 def test_classify(path, text, cls):
@@ -98,6 +111,12 @@ def test_classify(path, text, cls):
 
 def test_secret_shape_in_content():
     assert pp.classify("random.txt", "token=ghp_ABCD1234ABCD1234ABCD")[0] == "secret"
+
+
+def test_fixture_path_helper():
+    assert pp._is_fixture_path("cli/tests/test_x.py")
+    assert pp._is_fixture_path("scripts/tests/publish-flip.test.sh")
+    assert not pp._is_fixture_path("web/api/config.py")
 
 
 # --- disposition matrix ------------------------------------------------------

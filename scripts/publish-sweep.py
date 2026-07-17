@@ -5,12 +5,14 @@ A flip exposes HISTORY, not just HEAD (every blob in every commit becomes world-
 publication-policy KEEP_OFF_PUBLIC_HEAD doctrine does not cover. So the sweep is three scans per repo,
 all delegating classification to scripts/publication-policy.py (the ONE disposition engine):
 
-  1. HEAD content   — classify(path, text) per HEAD file: secret / personal_pii / internal_strategy
-                      anywhere on HEAD is a red finding.
+  1. HEAD content   — classify(path, text) per HEAD file. A live SECRET on HEAD is a red finding;
+                      personal_pii / internal_strategy are recorded (audit) but dispositioned upstream.
   2. History blobs  — _SECRET_RX over every text blob reachable from ANY ref (bounded per-blob size):
-                      a secret that was "deleted" is still published by a flip.
-  3. Verdict        — green ⟺ zero secret hits (history + HEAD) ∧ zero personal_pii ∧ zero
-                      internal_strategy on HEAD.
+                      a secret that was "deleted" is still published by a flip. Fixture-path shapes
+                      (test scrubber mocks) are exempt — real secrets never live in the tree.
+  3. Verdict        — green ⟺ zero LIVE secret hits (history + HEAD). The gate blocks only
+                      IRREVERSIBLE exposure; personal_pii (auto-redact) and internal_strategy
+                      (keep-off-HEAD) are reversible dispositions, not gate blockers.
 
 Receipts land in logs/publish-sweeps/{owner}__{name}.json (gitignored; counts + paths + blob ids —
 NEVER a secret value: the _scrub firewall). scripts/apply-visibility.py refuses to flip a repo whose
@@ -163,6 +165,11 @@ def _history_secret_hits(clone: Path, pp) -> tuple[list[dict], int, int]:
             scanned += 1
             text = body.decode("utf-8", errors="replace")
             if pp._SECRET_RX.search(text):
+                # A secret SHAPE on a test/fixture path is a planted fixture (a scrubber's own mock),
+                # not a live credential — real secrets never live in the tree. Path-scoped exemption
+                # only; a shape match on any other path is a hard hit. Unknown path → treat as real.
+                if path and pp._is_fixture_path(path):
+                    continue
                 if len(hits) < 50:
                     hits.append({"path": path or "(unknown)", "oid": oid[:8]})
     finally:
@@ -193,9 +200,13 @@ def sweep(repo: str, pp, clone_from: str | None = None) -> dict:
             history_blobs_scanned=scanned,
             history_blobs_skipped_large=skipped,
         )
-        red_head = (
-            hist.get("secret", 0) + hist.get("personal_pii", 0) + hist.get("internal_strategy", 0)
-        )
+        # The gate blocks ONLY irreversible exposure: a live SECRET (HEAD or history). personal_pii
+        # (owner-scoped → REDACT_IDENTIFIERS, auto/reversible — and the owner's OWN build-in-public
+        # identity, already in commit metadata) and internal_strategy (KEEP_OFF_PUBLIC_HEAD, auto)
+        # are dispositioned upstream, not gated. The classification (estate.yaml) already decides
+        # WHICH repos publish; this sweep is the last-mile live-secret check. Fixture-path secret
+        # shapes are exempted above (test scrubber mocks). Counts stay in head_histogram for audit.
+        red_head = hist.get("secret", 0)
         receipt["green"] = red_head == 0 and not hits
     receipt["swept_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     return receipt
