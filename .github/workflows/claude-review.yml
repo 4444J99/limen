@@ -1,0 +1,58 @@
+name: Claude Review
+
+# The Claude lane of the multi-agent PR-review engine (estate.yaml integrations.claude-review).
+# Auto-reviews every non-draft PR on open/ready and answers @claude mentions for ping-pong
+# (comment → fix → push → re-review). This file at the conductor root is the live config AND the
+# fan-out template: scripts/sync-marketplace-config.py copies it per-repo (double-dark gated).
+#
+# COST GUARD: private repos burn PAID Actions minutes + API tokens — the job requires the Actions
+# variable LIMEN_CLAUDE_REVIEW=on there (repo- or org-level) until account billing clears (#182).
+# Public repos review unconditionally (hosted minutes are free).
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: >-
+      (github.event.repository.private == false || vars.LIMEN_CLAUDE_REVIEW == 'on') &&
+      (
+        (github.event_name == 'pull_request' &&
+         github.event.pull_request.draft == false &&
+         github.actor != 'dependabot[bot]' &&
+         github.actor != 'renovate[bot]') ||
+        (github.event_name != 'pull_request' && contains(github.event.comment.body, '@claude'))
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # On pull_request events run the automation review prompt; on @claude mention events the
+          # empty prompt selects the action's interactive (tag) mode — that is the ping-pong lane.
+          prompt: >-
+            ${{ github.event_name == 'pull_request' &&
+            'Review this pull request as one voice in a multi-agent review panel. Focus on real
+            correctness bugs, security issues, and regressions — not style. Post your findings as a
+            PR review with inline comments where possible; keep it terse and factual; if the diff is
+            clean say so in one line. Never push commits in this mode.' || '' }}

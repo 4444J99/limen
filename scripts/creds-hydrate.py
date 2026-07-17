@@ -217,6 +217,19 @@ DEFAULT_MAP: list[dict] = [
         "enabled": True,
     },
     {
+        # CI-SECRET sink (ORG-level) — the multi-agent PR-review engine: claude-review.yml (fanned out
+        # across the estate via sync-marketplace-config.py) reads secrets.ANTHROPIC_API_KEY in every
+        # repo. ONE org secret with visibility=all lands it estate-wide — never a 307-repo fan-out,
+        # never a paste. gh_secret-only: presence-guarded, so once set the beat never touches op again.
+        # ARMING: mint an API key at console.anthropic.com into the op:// item below (a vendor act
+        # gated behind the card hold #182 — the Anthropic spend limit is frozen on the same card);
+        # until then --apply prints an honest SKIP each beat, which is the owed-work signal.
+        "lane": "anthropic (org CI review key)",
+        "ref": "op://Personal/Anthropic API Key/credential",
+        "gh_secret": {"org": "organvm", "name": "ANTHROPIC_API_KEY", "visibility": "all"},
+        "enabled": True,
+    },
+    {
         # CI-SECRET sink — the a-i-chat--exporter Cloudflare Pages deploy (GitHub Actions) needs
         # CLOUDFLARE_API_TOKEN as a repo secret. The token ALREADY EXISTS (the cloudflare lane above owns
         # op://Personal/Cloudflare API Token/credential); the exporter repo correctly DEFERS — it expects
@@ -369,14 +382,23 @@ def load_map() -> list[dict]:
 
 
 def _gh_sinks(entry: dict) -> list[dict]:
-    """gh_secret may be a single {repo,name} dict OR a LIST of them — one op:// value fanned out to
-    every repo's CI secret (e.g. the shared GCP deploy SA landed on each repo that deploys to that
-    project). Normalize to a list; empty when the entry has no CI-secret sink. Backward-compatible: a
-    lone dict becomes a one-element list, so every existing single-sink entry behaves identically."""
+    """gh_secret may be a single sink dict OR a LIST of them — one op:// value fanned out to every
+    CI-secret sink (e.g. the shared GCP deploy SA landed on each repo that deploys to that project).
+    A sink is {"repo": "owner/repo", "name": N} (repo secret) or {"org": O, "name": N,
+    "visibility": "all|private"} (ORG-level Actions secret — one secret every repo inherits, the
+    307-repo fan-out the review engine needs). Normalize to a list; empty when the entry has no
+    CI-secret sink. Backward-compatible: a lone dict becomes a one-element list."""
     g = entry.get("gh_secret")
     if not g:
         return []
     return list(g) if isinstance(g, list) else [g]
+
+
+def _sink_ref(s: dict) -> str:
+    """Human label for a CI-secret sink — names only, never a value."""
+    if s.get("org"):
+        return f"gh-org:{s['org']}:{s['name']}"
+    return f"gh:{s['repo']}:{s['name']}"
 
 
 def have_op() -> bool:
@@ -505,6 +527,59 @@ def gh_secret_set(repo: str, name: str, value: str, timeout: int = 30) -> bool:
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return False
     return r.returncode == 0
+
+
+def gh_org_secret_present(org: str, name: str, timeout: int = 15) -> bool | None:
+    """Is an ORG-level Actions secret already SET? Names only, never a value. None = unknown (fail-open).
+    Needs admin:org on the gh keyring token."""
+    if not have_gh():
+        return None
+    try:
+        r = subprocess.run(
+            ["gh", "secret", "list", "--org", org],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            stdin=subprocess.DEVNULL,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return None
+    if r.returncode != 0:
+        return None
+    names = {ln.split()[0] for ln in (r.stdout or "").splitlines() if ln.split()}
+    return name in names
+
+
+def gh_org_secret_set(org: str, name: str, value: str, visibility: str = "all", timeout: int = 30) -> bool:
+    """Set an ORG-level Actions secret (value via STDIN, never argv/logged). visibility 'all' means
+    every repo in the org inherits it — ONE secret instead of a 307-repo fan-out."""
+    if not have_gh():
+        return False
+    try:
+        r = subprocess.run(
+            ["gh", "secret", "set", name, "--org", org, "--visibility", visibility],
+            input=value,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return False
+    return r.returncode == 0
+
+
+def gh_sink_present(s: dict, timeout: int = 15) -> bool | None:
+    """Presence for either sink shape (repo or org)."""
+    if s.get("org"):
+        return gh_org_secret_present(s["org"], s["name"], timeout)
+    return gh_secret_present(s["repo"], s["name"], timeout)
+
+
+def gh_sink_set(s: dict, value: str, timeout: int = 30) -> bool:
+    """Set for either sink shape (repo or org)."""
+    if s.get("org"):
+        return gh_org_secret_set(s["org"], s["name"], value, str(s.get("visibility") or "all"), timeout)
+    return gh_secret_set(s["repo"], s["name"], value, timeout)
 
 
 def _ensure_env_file() -> None:
@@ -868,7 +943,7 @@ def main() -> int:
                 # A CI-secret sink isn't probeable here — the value isn't materialized on this floor and
                 # GitHub never returns a secret's value. Presence/landing is reported by --apply. Neutral,
                 # network-free, never fails the beat.
-                label = ", ".join(f"gh:{s['repo']}:{s['name']}" for s in sinks)
+                label = ", ".join(_sink_ref(s) for s in sinks)
                 print(f"  · {e['lane']:28} CI-secret {label} — managed on --apply (value not readable back)")
                 continue
             val = _env_value(envs[0]) if envs else None
@@ -909,7 +984,7 @@ def main() -> int:
             envs = e.get("env", [])
             sinks = _gh_sinks(e)
             if not envs and sinks:
-                label = ", ".join(f"gh:{s['repo']}:{s['name']}" for s in sinks)
+                label = ", ".join(_sink_ref(s) for s in sinks)
                 print(f"  · {e['lane']:28} {ref_display(e['ref'])} -> {label} (CI secret — checked on --apply)")
                 continue
             present = all(_env_has(k) for k in envs) if envs else False
@@ -958,7 +1033,7 @@ def main() -> int:
         sinks = _gh_sinks(e)
         targets = ", ".join(envs) + (f" + {fspec['path']}" if fspec else "")
         for s in sinks:
-            targets += (" + " if targets else "") + f"gh:{s['repo']}:{s['name']}"
+            targets += (" + " if targets else "") + _sink_ref(s)
         source = f"`{' '.join(dcmd)}` (op:// fallback)" if dcmd else ref_display(ref)
         if not apply:
             print(f"  plan: {e['lane']:28} {source} -> {targets}")
@@ -966,8 +1041,8 @@ def main() -> int:
         # gh_secret-ONLY entry (no env/file): if the CI secret is already set, skip — no value read, no
         # re-push, and crucially NO 1Password touch. The organ keeps it landed without a per-beat biometric
         # prompt; it only reads+sets when the secret is ABSENT (and op is permitted / the value derivable).
-        if sinks and not envs and not fspec and all(gh_secret_present(s["repo"], s["name"]) is True for s in sinks):
-            label = ", ".join(f"gh:{s['repo']}:{s['name']}" for s in sinks)
+        if sinks and not envs and not fspec and all(gh_sink_present(s) is True for s in sinks):
+            label = ", ".join(_sink_ref(s) for s in sinks)
             print(f"  ✓ {e['lane']:28} -> {label} (already set)")
             hydrated += 1
             continue
@@ -988,7 +1063,7 @@ def main() -> int:
         for k in envs:
             write_env(k, val)
         wrote_file = write_tool_file(fspec, val) if fspec else None
-        gh_results = [(s, gh_secret_set(s["repo"], s["name"], val)) for s in sinks]
+        gh_results = [(s, gh_sink_set(s, val)) for s in sinks]
         del val  # drop the secret from memory promptly
         parts = []
         if envs:
@@ -996,7 +1071,7 @@ def main() -> int:
         if wrote_file:
             parts.append(wrote_file)
         for s, ok in gh_results:
-            parts.append(f"gh:{s['repo']}:{s['name']}" + ("" if ok else " (set FAILED)"))
+            parts.append(_sink_ref(s) + ("" if ok else " (set FAILED)"))
         print(f"  ✓ {e['lane']:28} -> {' + '.join(parts)}")
         hydrated += 1
 
