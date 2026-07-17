@@ -109,6 +109,12 @@ _RUNG_BADGE = {"protocol": ("protocol", "#2ecc71"),
                "precedent": ("precedent", "#4a86e8"),
                "exploration": ("review", "#8a93a6")}
 
+# Warm inbound leads get a first-class badge on the face (the limen-side of the opportunity lane):
+# a recruiter/client/LinkedIn reach-out the UMA inbound-lead protocols classified. Just the door,
+# never a name — the row already carries the PII-clean provenance below it.
+_INBOUND_DOORS = {"inbound-lead-hire": "hire", "inbound-lead-deploy": "deploy",
+                  "inbound-linkedin": "linkedin"}
+
 
 def _esc(s):
     return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
@@ -153,6 +159,8 @@ def render_html(v):
         occ = o.get("occurrences", 1)
         occ_s = f'<span class="occ">×{occ}</span>' if occ > 1 else ""
         reply = '<span class="tag reply">reply</span>' if o.get("requires_reply") else ""
+        door = _INBOUND_DOORS.get(o.get("cls"))
+        warm = f'<span class="tag warm">🎯 warm lead · {door}</span>' if door else ""
         accts = ", ".join(a.split("@")[-1] for a in o.get("accounts", []))
         samples = o.get("sample_subjects", [])
         sample_s = (f'<div class="samples">{_esc(" · ".join(samples[:3]))}</div>'
@@ -167,7 +175,7 @@ def render_html(v):
           <td class="pri" style="color:{color}">{_esc(o.get('priority',''))}</td>
           <td>
             <b>{_esc(o.get('title',''))}</b> {occ_s}
-            <span class="rung" style="background:{rung_color}">{rung_label}</span> {reply}
+            <span class="rung" style="background:{rung_color}">{rung_label}</span> {reply} {warm}
             <div class="next">{_esc(o.get('next_step',''))}</div>
             {sample_s}
             {draft}
@@ -220,6 +228,7 @@ def render_html(v):
  .occ{{color:#e67e22;font-weight:700;font-size:13px;margin-left:2px}}
  .tag{{font-size:11px;border-radius:5px;padding:1px 6px;margin-left:3px}}
  .tag.reply{{background:#4a86e8;color:#fff}}
+ .tag.warm{{background:#e67e22;color:#fff}}
  .next{{color:#c9d1d9;font-size:13px;margin-top:3px}}
  .samples{{color:#6e7681;font-size:11.5px;margin-top:3px;font-style:italic}}
  .prov{{color:#6e7681;font-size:11px;margin-top:2px}}

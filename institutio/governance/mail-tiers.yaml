@@ -43,7 +43,9 @@ no_reply:
   esp_domains:          # bulk/ESP sending infra — never a human's mailbox
     - ccsend.com        # Constant Contact
     - buytickets.at     # ticketing receipts
-    - careerbits.com    # recruiting-CRM nurture
+    # (careerbits.com removed 2026-07-16: recruiting-CRM mail is now lead-classified upstream by the
+    #  UMA inbound-lead protocols — suppressing it here would swallow a real inbound lead. See the
+    #  opportunity-inbound lane: sensors.yaml `opportunity-pipeline`, scripts/opportunity-review-delta.py.)
     - shared1.ccsend.com
     - mg.*              # Mailgun subdomains
     - sendgrid.net
@@ -105,12 +107,51 @@ safe:
   armed_by: LIMEN_MAIL_SEND     # default off → nothing sends; this only NAMES the valve
   intents:
     - id: decline
-      when: "an explicit cold recruiter/sales pitch on a thread the user never started"
+      # RE-SCOPED 2026-07-16: was "cold recruiter/sales pitch". Recruiter/hiring pitches are now a
+      # first-class OPPORTUNITY (inbound-lead-hire → inbound-ack-hire below), so decline must NOT
+      # swallow them. It now covers vendor/sales pitches ONLY — someone selling a product or service,
+      # never someone offering work. A hiring/recruiting reach-out is engaged, not declined.
+      when: "an explicit cold SALES/VENDOR pitch (someone selling a product or service) on a thread the user never started — NOT a recruiter, hiring manager, or client offering work (those are inbound leads, not declines)"
       template: |
         Hi {first_name},
 
-        Thanks for reaching out. I'm not pursuing this right now, but I appreciate you
+        Thanks for reaching out. This isn't a fit for us right now, but I appreciate you
         thinking of me and I'll keep it in mind if that changes.
+
+        Best,
+        Anthony
+    - id: inbound-ack-hire
+      # SAFE first-touch acknowledgement for a recruiter/hiring reach-out (inbound-lead-hire). The
+      # UMA inbound-lead protocol stamps safe_intent: inbound-ack-hire on the first-touch lead; this is
+      # the complete, bracket-free reply the armed sender may auto-send. Professional-direct: thank,
+      # signal interest, pull the conversation to email, and ask for the concrete facts (JD, comp,
+      # process) so the next step is a real one — while declining to complete an external ATS/portal form.
+      when: "a first-touch recruiter or hiring reach-out (inbound-lead-hire): thank, signal interest, and route the conversation to email with the facts we need to evaluate it"
+      template: |
+        Hi {first_name},
+
+        Thanks for reaching out — I'm interested and happy to take a closer look. Email is my
+        fastest channel, so the quickest way forward is to send me the details here: the job
+        description, the compensation range, and a rough shape of the process (rounds, timeline).
+        If you're representing a client, it helps to know the end client as well.
+
+        One note: I don't fill out external ATS or portal forms up front — let's keep this in
+        email and I'll get you whatever you need. Looking forward to it.
+
+        Best,
+        Anthony
+    - id: inbound-ack-deploy
+      # SAFE first-touch acknowledgement for a client/build reach-out (inbound-lead-deploy). Same
+      # professional-direct shape: thank, ask which engagement depth fits, and make email the next step.
+      when: "a first-touch client or build/deploy reach-out (inbound-lead-deploy): thank, ask which engagement depth fits, and make email the next step"
+      template: |
+        Hi {first_name},
+
+        Thanks for reaching out — this sounds like something I'd be glad to help with. To point
+        you in the right direction, it helps to know which kind of engagement fits: a focused
+        one-off build, an ongoing retainer, or an advisory/architecture role. Email is my fastest
+        channel, so if you reply here with the shape of the work and your timeline, I'll come back
+        with concrete next steps.
 
         Best,
         Anthony

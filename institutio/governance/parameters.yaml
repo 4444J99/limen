@@ -3137,3 +3137,28 @@ parameters:
     self_update: none
     owner: tabularius
     note: "How many NEW inbound messages since a person's last review make a delta dice-up worth running (relationship-review-delta.py). Default 20 — a meaningful wave, not a single text. Raise to reduce noise, lower to trigger sooner."
+
+  LIMEN_OPPORTUNITY_PIPELINE:
+    default: "1"
+    env: LIMEN_OPPORTUNITY_PIPELINE
+    self_update: none
+    owner: mail
+    note: "Gate for the opportunity-pipeline beat sensor (inbound-lead review-due detector for the UMA inbound-lead-hire/deploy/linkedin classes). ON by default: it is read-only over obligations-ledger.json and fails open, so it cannot red the beat or leak. Its only public output is a PII-clean count (logs/opportunity-status.json); per-lead detail lands only in the sealed _people-private/opportunities estate."
+  LIMEN_BEAT_OPPORTUNITY_PIPELINE:
+    default: 12
+    env: LIMEN_BEAT_OPPORTUNITY_PIPELINE
+    self_update: none
+    owner: mail
+    note: "Cadence (every N beats) of the opportunity-pipeline sensor. 12 beats keeps warm inbound leads moving faster than the weekly relationship cadence. Resolved by the generic scheduled runner (beat-sensors.py --run --source heartbeat --scheduled-only); heartbeat-loop.sh carries no sensor-specific cadence constant."
+  LIMEN_OPPORTUNITY_PIPELINE_TIMEOUT:
+    default: 300
+    env: LIMEN_OPPORTUNITY_PIPELINE_TIMEOUT
+    self_update: none
+    owner: mail
+    note: "Per-run timeout (seconds) for the opportunity-pipeline sensor. The work is a ledger read plus (when application-pipeline is present) one bounded opportunity_sync.py subprocess; 300s is generous headroom."
+  LIMEN_OPPORTUNITY_NOTIFY:
+    default: "1"
+    env: LIMEN_OPPORTUNITY_NOTIFY
+    self_update: none
+    owner: mail
+    note: "Safety-valve arg for the opportunity-pipeline effector (--notify). When 1, review-due detections append COUNT-ONLY events to the sealed private log ~/Workspace/_people-private/opportunities/review-due.jsonl (ARCA-sealed, never public) and push a count-only line through the existing notify cascade. ON by default because both write targets are private/count-only; set 0 to run detection without recording."

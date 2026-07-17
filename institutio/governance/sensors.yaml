@@ -704,3 +704,27 @@ sensors:
             armed_valve_type: safety
         severity: silent
         escalation: "relationship review-due detector skipped or exceeded its bound (read-only chat.db count; fails open)"
+
+  opportunity-pipeline:
+    section: heartbeat
+    title: "inbound-opportunity review-due detector — surface (PII-clean count) when an inbound lead (hire/deploy/linkedin) owes a human move: ball on us >24h, a stalled interview/offer, a LinkedIn row with no reply path, or a portal/ATS form demanded"
+    gate: LIMEN_OPPORTUNITY_PIPELINE
+    default: "1"
+    source: [heartbeat]
+    owner: mail
+    cadence:
+      env: LIMEN_BEAT_OPPORTUNITY_PIPELINE
+      default: 12
+    timeout:
+      env: LIMEN_OPPORTUNITY_PIPELINE_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/opportunity-review-delta.py"
+        args_when:
+          - env: LIMEN_OPPORTUNITY_NOTIFY
+            default: "1"
+            equals: "1"
+            args: ["--notify"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "opportunity sync skipped or exceeded its bound (reads obligations-ledger.json; fails open)"
