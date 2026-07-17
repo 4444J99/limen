@@ -129810,15 +129810,16 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#625
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed_blocked
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
+  - chronic-fleet-debt
   urls:
   - https://github.com/organvm/limen/pull/625
   context: 'PR organvm/limen#625 is CONFLICTING with its base branch and merge-drain
@@ -129832,7 +129833,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/625
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-16T06:08:38.053283Z'
+  updated: '2026-07-17T23:27:55.747819Z'
   dispatch_log:
   - timestamp: '2026-07-10T09:28:01.497532Z'
     agent: opencode
@@ -129874,6 +129875,17 @@ tasks:
     agent: jules
     session_id: '6259519290355349722'
     status: dispatched
+  - timestamp: '2026-07-17T23:23:31.452137Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 6259519290355349722 is idle_no_status \u2192 reopened"
+  - timestamp: '2026-07-17T23:27:55.747819Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: HEAL-rebase-organvm-limen-626
   title: rebase/resolve conflicts on organvm/limen#626
   repo: organvm/limen
@@ -129962,16 +129974,17 @@ tasks:
   title: rebase/resolve conflicts on organvm/limen#627
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: failed_blocked
   labels:
   - rebase
   - self-heal
   - conflict
   - slow
   - tried:jules
+  - chronic-fleet-debt
   urls:
   - https://github.com/organvm/limen/pull/627
   context: 'PR organvm/limen#627 is CONFLICTING with its base branch and merge-drain
@@ -129985,7 +129998,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/627
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-16T06:08:38.053283Z'
+  updated: '2026-07-17T23:27:55.747819Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:16:23.453596Z'
     agent: opencode
@@ -130036,6 +130049,18 @@ tasks:
     agent: jules
     session_id: '13886804258063295907'
     status: dispatched
+  - timestamp: '2026-07-17T23:23:31.452137Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 13886804258063295907 is idle_no_status \u2192\
+      \ reopened"
+  - timestamp: '2026-07-17T23:27:55.747819Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: HEAL-rebase-organvm-limen-628
   title: rebase/resolve conflicts on organvm/limen#628
   repo: organvm/limen
@@ -142792,10 +142817,10 @@ tasks:
   title: fix failing CI on organvm/limen#846
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - cifix
   - self-heal
@@ -142816,7 +142841,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/846
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-15T16:18:06.471423Z'
+  updated: '2026-07-17T23:23:31.452137Z'
   dispatch_log:
   - timestamp: '2026-07-13T00:16:08.439534Z'
     agent: gemini
@@ -142838,6 +142863,12 @@ tasks:
     agent: jules
     session_id: '15840542929899559212'
     status: dispatched
+  - timestamp: '2026-07-17T23:23:31.452137Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 15840542929899559212 is idle_no_status \u2192\
+      \ reopened"
 - id: ORG-observation-organ-firstslice-0712
   title: Build the first working vertical slice of the observation organ
   repo: organvm/limen
@@ -143765,10 +143796,10 @@ tasks:
   title: terminally reconcile conflict/supersession on organvm/limen#384
   repo: organvm/limen
   type: code
-  target_agent: jules
+  target_agent: codex
   priority: high
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - rebase
   - self-heal
@@ -143790,7 +143821,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/384
   depends_on: []
   created: '2026-07-14'
-  updated: '2026-07-15T16:33:52.914691Z'
+  updated: '2026-07-17T23:23:31.452137Z'
   dispatch_log:
   - timestamp: '2026-07-14T06:18:43.786868Z'
     agent: codex
@@ -143808,6 +143839,11 @@ tasks:
     agent: jules
     session_id: '8758134765437853101'
     status: dispatched
+  - timestamp: '2026-07-17T23:23:31.452137Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 8758134765437853101 is idle_no_status \u2192 reopened"
 - id: HEAL-rebase-organvm-limen-405
   title: terminally reconcile conflict/supersession on organvm/limen#405
   repo: organvm/limen
@@ -145615,4 +145651,103 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/1147
   depends_on: []
   created: '2026-07-16'
+  dispatch_log: []
+- id: COVENANT-ARM-GUARD-PR6
+  title: 'Covenant PR 6: build+open feat/arm-covenant-guard (the wall) after pause
+    release + PRs 1195/1196/1198/1199/1200 merge'
+  repo: organvm/limen
+  type: code
+  target_agent: claude
+  priority: high
+  budget_cost: 2
+  status: open
+  labels:
+  - covenant
+  - record-keeper
+  urls: []
+  context: "Record-Keeper Covenant arming PR \u2014 sequenced LAST by design: lane\
+    \ before wall, nothing arms by merge. Preconditions: autonomy pause released AND\
+    \ covenant PRs #1195 #1196 #1198 #1199 #1200 merged. One concern: open feat/arm-covenant-guard\
+    \ per the arming sequence in docs/record-keeper-covenant.md (full plan at ~/.claude/plans/memory-md-is-one-file-cryptic-finch.md).\
+    \ The PR ships the covenant-write-guard PreToolUse hook with its hermetic test,\
+    \ stages the exact .claude/settings.json JSON \u2014 hook block plus autoMemoryEnabled\
+    \ false (verified: stops auto-memory writes while recall keeps loading MEMORY.md)\
+    \ plus permissions.deny on Write/Edit of the memory dir \u2014 flips covenant.yaml\
+    \ memory.enforcement.armed to true, and files lever L-COVENANT-ARM recording the\
+    \ operator's two ordered flips: LIMEN_MEMORIA=1 with a probe-ticket drain proof\
+    \ strictly before wall arming after soak. The settings edit is the self-mod boundary:\
+    \ stage the exact JSON and hand the operator one copy-paste if the harness blocks\
+    \ the edit."
+  predicate: python3 scripts/check-covenant.py
+  receipt_target: github:organvm/limen:pull-request:feat/arm-covenant-guard
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-17T16:19:08.997629Z'
+  dispatch_log: []
+- id: GOV-land-pr-1203-publish-sweep-doc-exception
+  title: "Rebase & land PR #1203 \u2014 publication_policy doc/placeholder secret-exception\
+    \ (publish-sweep false-positive on teaching-docs)"
+  description: 'A completed autonomous session reported this ''solved at root'', but
+    PR #1203 is OPEN and CONFLICTING/DIRTY as of 2026-07-17: the publication_policy._real_secret_in()
+    primitive is absent from main, so publish-sweep still classes secret-TEACHING
+    skill docs (organvm/_agent, organvm/_agent-ontology) as secrets-in-history. Rebase
+    fix/pubpolicy-doc-secret-false-positive onto current main, resolve conflicts in
+    scripts/publication-policy.py + scripts/publish-sweep.py, get CI green, then land
+    per merge-policy. This is the one genuine open residual surfaced by the workstream
+    decomposition of the 8 completed sessions.'
+  repo: organvm/limen
+  type: code
+  target_agent: claude
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: done
+  labels:
+  - governance
+  - publish-sweep
+  - false-closeout-residual
+  urls: []
+  predicate: test "$(gh pr view 1203 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1203
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-17T23:18:17.439460Z'
+  dispatch_log:
+  - timestamp: '2026-07-17T23:18:17.439460Z'
+    agent: claude
+    session_id: workstream-decomp-e1ab5757
+    status: done
+    output: "SUPERSEDED \u2014 main's _has_live_secret() already handles the teaching-doc\
+      \ false-positive (placeholder-aware); PR #1203 closed (redundant + its _DOC_EXT\
+      \ path-leniency would suppress the 37 real personal_pii findings on organvm/_agent).\
+      \ Real residual filed as GOV-organvm-agent-publish-containment."
+- id: GOV-organvm-agent-publish-containment
+  title: 'Contain organvm/_agent before publish: 37 personal-PII + 13 internal-strategy
+    + 1 history secret (mcpServers.json)'
+  description: 'Fresh publish-sweep --repo organvm/_agent is RED (50 head findings
+    + 1 history hit). NOT the teaching-doc false-positive (handled on main by _has_live_secret);
+    these are real: 37 personal_pii + 13 internal_strategy .md/.txt, plus a possible
+    live secret in history at oid 46dfb836 (_agent.claudebrain/global/mcpServers.json).
+    Redact PII keeping substance, contain internal-strategy paths, purge/rotate the
+    history secret. Surfaced by the closeout-reconciliation of the deferred-blocker
+    session; #1203 closed as superseded.'
+  repo: organvm/_agent
+  type: code
+  target_agent: claude
+  workstream: governance
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - governance
+  - publication-hygiene
+  - containment
+  urls: []
+  predicate: python3 -c "import json,sys;sys.exit(0 if json.load(open('logs/publish-sweeps/organvm___agent.json'))['green']
+    else 1)"
+  receipt_target: git:organvm/limen:logs/publish-sweeps/organvm___agent.json
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-17T23:18:17.441094Z'
   dispatch_log: []
