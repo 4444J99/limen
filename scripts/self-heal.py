@@ -129,6 +129,27 @@ KINDS = {
             "unique work. PR: {url}"
         ),
     },
+    # REVIEW-FEEDBACK — the ping-pong half of the multi-agent review engine (estate.yaml
+    # integrations, category review). NOT an assess() verdict: assess stays verbatim-identical to
+    # merge-drain.assess (one shared verdict), and this is a post-assess RECLASSIFICATION of READY
+    # PRs that sit green+mergeable while review threads wait on our reply.
+    "REVIEW-FEEDBACK": {
+        "slug": "review",
+        "priority": "normal",
+        "labels": ["review", "self-heal", "review-feedback"],
+        "title": "address review feedback on {repo}#{num}",
+        "context": (
+            "PR {repo}#{num} is green and mergeable BUT carries unresolved review threads (or a "
+            "standing CHANGES_REQUESTED review) from the multi-agent review engine — the ping-pong "
+            "is waiting on our half. Check out the PR branch and read EVERY unresolved thread. For "
+            "each one: fix the code and push to the SAME branch, or reply with a short factual "
+            "reason why not. Then reply on each thread and RESOLVE it; if a reviewer holds "
+            "CHANGES_REQUESTED, re-request review (post '@claude' / '/gemini review' to re-summon "
+            "those agents). Never resolve a thread without either a fix or a reply, and do NOT "
+            "open a new PR — once threads are resolved and CI is green, merge-drain lands it. "
+            "PR: {url}"
+        ),
+    },
 }
 
 # Active states for a HEAL-mainred task — mirrors dispatch._ACTIVE_SUPERSEDER_STATUSES
@@ -139,6 +160,31 @@ _MAINRED_ACTIVE_STATUSES = frozenset({"open", "dispatched", "in_progress", "need
 
 def gh(args, timeout=60):
     return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+
+
+def review_feedback(repo, num):
+    """True ⟺ the PR carries unresolved review threads or a standing CHANGES_REQUESTED review —
+    the ping-pong signal from the multi-agent review engine. One GraphQL read; fail-OPEN (False)
+    so a hiccup never spawns phantom heal tasks. Kept OUTSIDE assess(): that block stays
+    verbatim-identical to merge-drain.assess, and REVIEW-FEEDBACK is a post-assess
+    reclassification only self-heal performs."""
+    try:
+        owner, name = repo.split("/", 1)
+        q = (
+            "query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){"
+            "reviewThreads(first:100){nodes{isResolved}}"
+            "reviews(last:20){nodes{state}}}}}"
+        )
+        r = gh(["api", "graphql", "-f", f"query={q}", "-F", f"o={owner}", "-F", f"r={name}", "-F", f"n={num}"])
+        if r.returncode != 0:
+            return False
+        d = json.loads(r.stdout or "{}")["data"]["repository"]["pullRequest"]
+        unresolved = sum(1 for t in (d.get("reviewThreads") or {}).get("nodes") or [] if not t.get("isResolved"))
+        states = [s.get("state") for s in (d.get("reviews") or {}).get("nodes") or []]
+        changes_requested = bool(states) and states[-1] == "CHANGES_REQUESTED"
+        return unresolved > 0 or changes_requested
+    except Exception:
+        return False
 
 
 def assess(pr):
@@ -337,11 +383,18 @@ def main():
     chronic = live_chronic_groups()
     frozen = []
     sick = []
+    review_fb = 0
     for repo, num, url, verdict, failing_checks in rows:
         chronic_hits = sorted(check for check in failing_checks if (repo, check) in chronic)
         if verdict == "CI-RED" and failing_checks and len(chronic_hits) == len(failing_checks):
             frozen.append((repo, num, chronic_hits))
             continue
+        # The ping-pong reclassification: a READY PR (green+mergeable) sitting on unresolved review
+        # threads is waiting on OUR reply — one extra GraphQL read, READY PRs only (bounded by the
+        # scan window), post-assess so the shared verdict block stays verbatim.
+        if verdict == "READY" and review_feedback(repo, num):
+            verdict = "REVIEW-FEEDBACK"
+            review_fb += 1
         if verdict in KINDS:
             sick.append((verdict, repo, num, url))
     sick = sick[:limit]
@@ -372,6 +425,7 @@ def main():
             f"[self-heal] DRY-RUN window={len(prs)}/{len(allprs)} ready={b['READY']} "
             f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
             f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']} "
+            f"review-feedback={review_fb} "
             f"chronic-frozen={len(frozen)} | would-emit={len(would)} already-queued={dup}"
         )
         print("| heal task id (would emit) | kind | repo | pr |")
@@ -416,7 +470,7 @@ def main():
     summary = (
         f"[self-heal] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} ci-red={b['CI-RED']} "
         f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} stale-core={b['STALE-CORE']} "
-        f"stale-base={b['STALE-BASE']} chronic-frozen={len(frozen)} "
+        f"stale-base={b['STALE-BASE']} review-feedback={review_fb} chronic-frozen={len(frozen)} "
         f"| emitted={len(emitted)} (limit={limit})"
     )
     print(summary)

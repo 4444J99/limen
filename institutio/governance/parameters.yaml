@@ -2499,6 +2499,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "PRIVATE repo whose newest completed Actions run the billing canary reads for the account-billing block annotation. The conductor (private since 2026-07-16) is the natural canary: its CI runs every PR, so a billing wall surfaces within one beat."
+  LIMEN_REVIEW_GATE:
+    default: 0
+    env: LIMEN_REVIEW_GATE
+    self_update: none
+    owner: gitvs
+    note: "Merge half of the multi-agent review engine: 1 makes merge-policy.sh HOLD on unresolved review threads (fail-open on GraphQL errors). Ships DARK — flip conductor-first only after self-heal's REVIEW-FEEDBACK heal tasks demonstrably drain threads; estate-wide bot threads nobody resolves would otherwise jam every merge."
   LIMEN_OBSERVATORY:
     default: 0
     env: LIMEN_OBSERVATORY

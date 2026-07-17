@@ -87,6 +87,57 @@ def detect_checks(repo):
     return names
 
 
+_COPILOT_AVAILABLE = {}
+
+
+def copilot_available(org):
+    """One cached probe per org: does it hold ANY Copilot seat? (/orgs/{org}/copilot/billing
+    .seat_breakdown.total > 0 — a 200 alone is NOT enough; the endpoint answers 200 with 0 seats
+    while Copilot is unconfigured.) Gate for the copilot-review ruleset: no seat → clean no-op.
+    Individual Copilot Pro (restored free 2026-07-17, #1186) is NOT an org Business seat — this
+    stays a no-op unless org seats ever exist (docs/github-estate-runbook.md)."""
+    if org not in _COPILOT_AVAILABLE:
+        data = gh_json(["api", f"/orgs/{org}/copilot/billing"], t=20, default=None)
+        total = ((data or {}).get("seat_breakdown") or {}).get("total") or 0
+        _COPILOT_AVAILABLE[org] = total > 0
+    return _COPILOT_AVAILABLE[org]
+
+
+def ensure_copilot_review(repo):
+    """Idempotently ensure the `copilot-review` repo RULESET (rulesets, not classic protection —
+    automatic Copilot code review only exists there) requesting Copilot review on default-branch
+    PRs. required_approving_review_count stays 0 so merge-drain is never blocked on an approval.
+    Arms itself on the next --apply after the Copilot seat lands; until then a one-line skip."""
+    org = repo.split("/", 1)[0]
+    if not copilot_available(org):
+        print("      · copilot-review ruleset skipped — no org Copilot Business seat (individual Pro doesn't count; see runbook)")
+        return
+    existing = gh_json(["api", f"/repos/{repo}/rulesets"], default=[]) or []
+    rid = next((r.get("id") for r in existing if r.get("name") == "copilot-review"), None)
+    body = {
+        "name": "copilot-review",
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+        "rules": [{
+            "type": "pull_request",
+            "parameters": {
+                "automatic_copilot_code_review_enabled": True,
+                "required_approving_review_count": 0,
+                "dismiss_stale_reviews_on_push": False,
+                "require_code_owner_review": False,
+                "require_last_push_approval": False,
+                "required_review_thread_resolution": False,
+            },
+        }],
+    }
+    method, path = ("PUT", f"/repos/{repo}/rulesets/{rid}") if rid else ("POST", f"/repos/{repo}/rulesets")
+    r = subprocess.run(["gh", "api", "-X", method, path, "--input", "-"],
+                       input=json.dumps(body), capture_output=True, text=True, timeout=45)
+    ok = r.returncode == 0
+    print(f"      {'✓ copilot-review ruleset ensured' if ok else '✗ copilot-review ruleset: ' + r.stderr.strip()[:60]}")
+
+
 def main():
     repos = target_repos()
     print(f"=== ruleset plan — {len(repos)} repos with open PRs "
@@ -130,6 +181,8 @@ def main():
             print(f"      {'✓ protected + auto-merge on' if ok else '✗ ' + r.stderr.strip()[:70]}")
         else:
             print("      ✓ allow_auto_merge set (no protection — no CI to gate on)")
+        # The review engine's Copilot lane — a ruleset, orthogonal to the classic protection above.
+        ensure_copilot_review(repo)
 
     print(f"\n{len(repos)-len(no_ci)} repos gateable via CI; {len(no_ci)} have no CI "
           f"(auto-merge moot — they merge on creation).")

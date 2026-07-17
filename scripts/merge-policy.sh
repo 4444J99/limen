@@ -153,6 +153,23 @@ fi
 if [ "$failing" -gt 0 ]; then
   echo "VERDICT: HOLD — $failing CI check(s) failing. Fix before merge."; exit 2
 fi
+# --- optional review gate (LIMEN_REVIEW_GATE=1; DEFAULT OFF) ---
+# The merge half of the multi-agent review engine: HOLD while unresolved review threads remain.
+# Ships dark — 300 repos of unresolved bot threads would jam the estate; flip conductor-first once
+# self-heal's REVIEW-FEEDBACK tasks demonstrably drain threads. Fail-OPEN on any read error: the
+# gate is advisory until proven, and a GraphQL hiccup must never freeze the merge lane.
+if [ "${LIMEN_REVIEW_GATE:-0}" = "1" ]; then
+  nwo=$(printf '%s' "$url" | sed -E 's#https://github.com/([^/]+/[^/]+)/pull/.*#\1#')
+  if [ -n "$nwo" ] && [ "$nwo" != "$url" ]; then
+    unresolved=$(gh api graphql \
+      -f query='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){reviewThreads(first:100){nodes{isResolved}}}}}' \
+      -F o="${nwo%%/*}" -F r="${nwo##*/}" -F n="$PR" \
+      --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved|not)] | length' 2>/dev/null || true)
+    if [ -n "$unresolved" ] && [ "$unresolved" -gt 0 ] 2>/dev/null; then
+      echo "VERDICT: HOLD — $unresolved unresolved review thread(s) (LIMEN_REVIEW_GATE=1). Address + resolve them (self-heal's REVIEW-FEEDBACK tasks own the loop), then re-run."; exit 2
+    fi
+  fi
+fi
 # Past the not-mergeable states: only an explicitly mergeable state may proceed toward CLEARED.
 case "$mss" in
   CLEAN|UNSTABLE|HAS_HOOKS) : ;;  # GitHub will permit the merge
