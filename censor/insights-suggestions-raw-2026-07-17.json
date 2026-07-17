@@ -1,0 +1,332 @@
+[
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "claude_md_addition",
+  "text": "Add a top-level Closeout Definition section: 'A closeout means ZERO open/dangling items. Never end a closeout with caveats. Ensure every owner records remaining work, verify idempotent fixed point, commit loose work, then archive.'"
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "claude_md_addition",
+  "text": "Add Definition of Done section: 'When asked to define done or a goal, deliver an EXECUTABLE predicate (script/test), not hand-maintained prose. Done-criteria must be self-verifying and runnable.'"
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "claude_md_addition",
+  "text": "Add Never Over-Claim Completion section: 'Do not declare work done until verified: run all tests/CI gates locally, confirm loops/drivers actually run, check no regressions from merges. Reconcile branches against authoritative GitHub data, not heuristics.'"
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "claude_md_addition",
+  "text": "Add Edits Policy section: 'Prefer minimal in-place edits during closeouts; do not create new files unless asked. Be mindful of case-insensitive filesystems to prevent silent overwrites.'"
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "feature_to_try",
+  "text": "Create a custom Skill (reusable /closeout command) that captures your verify->close-gaps->archive->handoff pattern, eliminating the need to re-type 'close gaps and closeout cleanly' five times per session."
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "feature_to_try",
+  "text": "Use Hooks (PostToolUse Edit|Write matchers) to auto-run CI gate checks (npm run lint) before commits, catching lint/type/accessibility failures locally before push."
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "feature_to_try",
+  "text": "Explicitly request Task Agents for parallel codebase exploration, launching focused subagents per domain to avoid token-limit blowups in long sessions."
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "usage_pattern",
+  "text": "Fix permission prompts root-to-leaf by adding broad rule patterns instead of single exact commands (e.g., all Python invocations in repo) to prevent 10+ repeated re-prompts."
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "usage_pattern",
+  "text": "Avoid token-limit blowups by requesting concise summaries from agents, avoiding full file dumps, and breaking giant closeouts into staged sub-tasks with checkpoints."
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "usage_pattern",
+  "text": "Make closeouts demonstrably terminal by proving an idempotent fixed point (re-run verification shows zero changes), then archive—never list open items as caveats."
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "horizon",
+  "text": "Executable Done-Predicates as North Star: Write a machine-checkable 'definition of done' predicate at session start that Claude runs to gate its own completion claims."
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "horizon",
+  "text": "Parallel Multi-Source Recon Swarm: Dispatch N independent Agent workers per search domain, each returning a structured JSON packet {found, not_found, confidence}, then auto-merge into single ground-truth report."
+ },
+ {
+  "snap": "2026-06-23-150735",
+  "bucket": "horizon",
+  "text": "Self-Healing Green-CI Iteration Loop: In an isolated worktree, run full CI gate matrix locally (lint, types, tests, build, accessibility, deploy), fixing root-to-leaf and re-running until all pass end-to-end."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "claude_md_addition",
+  "text": "A closeout means ZERO dangling items. Never end a /closeout with 'but here's what's still open' caveats. If gaps exist, close them first, then confirm the closeout is a terminal, idempotent fixed point verified by green predicate runs."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "claude_md_addition",
+  "text": "Never declare work 'done' or 'fully achieved' until verified against ground truth (live git state, passing tests, running loop). Do not over-claim completion."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "claude_md_addition",
+  "text": "When defining 'done' or completion criteria, express it as an executable predicate (a runnable check), not hand-maintained prose."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "claude_md_addition",
+  "text": "For Python and recurring shell commands, apply broad root-to-leaf allow rules rather than allowlisting single exact commands, to avoid repeated permission prompts."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "claude_md_addition",
+  "text": "When a bridge/browser/connectivity check reports blocked, attempt the documented bootstrap that forces reconnection instead of passively re-reporting the blocked status."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "feature_to_try",
+  "text": "Custom Skills: Reusable markdown-defined prompts you invoke with a single /command. Formalizing /closeout as a skill with executable predicate gates baked in would prevent recurring caveat/premature-done friction."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "feature_to_try",
+  "text": "Hooks: Shell commands that auto-run at lifecycle events. A pre-commit hook running lint/type/a11y checks would catch these locally before push."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "feature_to_try",
+  "text": "Task Agents: Focused subagents for parallel exploration and complex system understanding. Leaning on Agent explicitly for exploration will speed ground-truth gathering."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "usage_pattern",
+  "text": "Establish ground truth before claiming done: Make read-only ground-truth checks the mandatory first step of any completion or closeout, then require green predicates before reporting success."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "usage_pattern",
+  "text": "Resolve blockers actively, not passively: Convert passive 'status: blocked' reports into an attempted bootstrap or fix. When a documented recovery path exists, attempt it before reporting."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "usage_pattern",
+  "text": "Fix permissions at the root: When a permission prompt recurs, broaden the allow rule instead of patching one command."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "horizon",
+  "text": "Predicate-Driven Autonomous Closeout Loops: Define completion as an executable predicate that the agent runs until it reaches a green, idempotent fixed point."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "horizon",
+  "text": "Parallel Multi-Agent Ground-Truth Sweeps: For root-cause hunts, launch parallel sub-agents that each independently establish ground truth from live sources (git, GitHub, filesystem, logs)."
+ },
+ {
+  "snap": "2026-07-03-093418",
+  "bucket": "horizon",
+  "text": "Isolated Worktree Test-Iteration Pipelines: Build and prove risky changes inside an isolated git worktree so the live fleet is never disrupted, then iterate against tests until every gate is green before merging."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "claude_md_addition",
+  "text": "When a task is complete and predicates are green, state 'CLOSEOUT COMPLETE — idempotent fixed point reached, zero dangling items' and STOP. Do not re-recite residual/caveat items as open work."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "claude_md_addition",
+  "text": "Define 'done' only as an executable predicate that exits green. Before declaring anything done, re-verify against live ground truth (git/GitHub/deploy state), not a cached or prior status."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "claude_md_addition",
+  "text": "At human-gated authorization gates (merge approval, installing launchd agents, PII visibility flips), do NOT stall or loop — clearly state 'BLOCKED: human authorization required for X' once, then continue driving reversible work."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "claude_md_addition",
+  "text": "Never guess or ask about decisions that a registry/source-of-truth already owns. Query the registry directly instead of using AskUserQuestion."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "claude_md_addition",
+  "text": "All work must happen in the isolated worktree, never the main checkout. Verify the current worktree/branch before committing."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "feature_to_try",
+  "text": "Custom Skills: You invoke /closeout constantly (7+ goals) but Claude keeps stalling — a hardened SKILL.md would encode the 'verify live, run predicate, stop when green' loop deterministically."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "feature_to_try",
+  "text": "Hooks: Claude committed to wrong checkout and hit lint/type/CI blockers repeatedly; a PreToolUse hook on commit can assert worktree isolation and run lint before every commit."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "feature_to_try",
+  "text": "MCP Servers: You hit repeated 'Not logged in', Chrome-bridge-blocked, and PR/CI friction — a GitHub MCP server gives reliable live PR/deploy status without shelling out and stalling."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "usage_pattern",
+  "text": "Break the closeout stall loop: Explicitly tell Claude to stop looping and treat repeated resume prompts as a signal the task is genuinely done."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "usage_pattern",
+  "text": "Force browser/auth bootstrap instead of passive status checks: Tell Claude to actively bootstrap blocked bridges rather than passively reporting them blocked."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "usage_pattern",
+  "text": "Parallelize recon with Task Agents up front: Explicitly request parallel exploration agents at session start for discovery/verification."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "horizon",
+  "text": "Predicate-Driven Autonomous Closeout Loops: Imagine a closeout that only terminates when a green executable predicate proves zero dangling items."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "horizon",
+  "text": "Parallel Recon Agents For Ground-Truth Sweeps: Spawn multiple recon agents that fan out across every remote, local checkout, and log source simultaneously."
+ },
+ {
+  "snap": "2026-07-09-060726",
+  "bucket": "horizon",
+  "text": "Self-Healing CI-To-Merge Pipelines: Point Claude at a red build to autonomously diagnose root cause, fix each, and verify all CI gates pass locally before pushing."
+ },
+ {
+  "snap": "2026-07-15-095331",
+  "bucket": "claude_md_addition",
+  "text": "green→'closeout complete, idempotent fixed point'+STOP no re-open. Never AskUserQuestion for charter/registry/constitution-answered decisions."
+ },
+ {
+  "snap": "2026-07-15-095331",
+  "bucket": "claude_md_addition",
+  "text": "Private/personal data in encrypted git-tracked location never local-only; correct isolated worktree always, verify path."
+ },
+ {
+  "snap": "2026-07-15-095331",
+  "bucket": "claude_md_addition",
+  "text": "Blocked browser→documented bootstrap first; closeout recipe both gate predicates, no residual recitation."
+ },
+ {
+  "snap": "2026-07-15-095331",
+  "bucket": "claude_md_addition",
+  "text": "Ruff format+check --fix hook on Edit/Write; task agents for fleet audits; drive all reversible work before presenting human gates."
+ },
+ {
+  "snap": "2026-07-15-095331",
+  "bucket": "claude_md_addition",
+  "text": "Measurement-first live ground truth; self-terminating predicate-driven closeout subagent."
+ },
+ {
+  "snap": "2026-07-15-095331",
+  "bucket": "feature_to_try",
+  "text": "Tightened /closeout SKILL.md verify-green-then-terminate; pre-commit ruff hook; parallel recon agents for fleet audits."
+ },
+ {
+  "snap": "2026-07-15-095331",
+  "bucket": "usage_pattern",
+  "text": "Closeout stall loop break; human-gated decision handling reversible-first; ground truth before acting."
+ },
+ {
+  "snap": "2026-07-15-095331",
+  "bucket": "horizon",
+  "text": "Self-terminating autonomous closeout loops; human-gate batching w/ single approval manifest; parallel self-healing PR fleet manager w/ launchd."
+ },
+ {
+  "snap": "2026-07-15-231623",
+  "bucket": "claude_md_addition",
+  "text": "Derive via ideal-forms, AskUserQuestion only for genuinely irreducible destructive/irreversible; never wait/poll non-required CI, merge on required only."
+ },
+ {
+  "snap": "2026-07-15-231623",
+  "bucket": "claude_md_addition",
+  "text": "All durable state in git-tracked/chezmoi source never local-only; no 'no actionable path' stall, proceed+flag true blockers."
+ },
+ {
+  "snap": "2026-07-15-231623",
+  "bucket": "claude_md_addition",
+  "text": "Ship recipe scoped tests→PR→required checks→merge→closeout predicates; ruff hook on Edit/Write w/ $CLAUDE_FILE_PATHS; nine-builder fleet pattern for cross-repo."
+ },
+ {
+  "snap": "2026-07-15-231623",
+  "bucket": "claude_md_addition",
+  "text": "/ship skill codifying ship-and-closeout; kill CI-wait by required-checks-only+background monitor; durable-homing as explicit closeout predicate."
+ },
+ {
+  "snap": "2026-07-15-231623",
+  "bucket": "claude_md_addition",
+  "text": "Overnight PR pipeline w/ launchd sentinel+morning digest; parallel adversarial-review swarm per-lens unanimous PASS; test-driven self-healing effectors."
+ },
+ {
+  "snap": "2026-07-15-231623",
+  "bucket": "feature_to_try",
+  "text": "More skills beyond /closeout (/ship); pre-commit ruff hook; orchestrated cross-repo agent fleets."
+ },
+ {
+  "snap": "2026-07-15-231623",
+  "bucket": "usage_pattern",
+  "text": "Codify ship-and-closeout loop as skill; kill CI-wait friction; enforce durable homing before done."
+ },
+ {
+  "snap": "2026-07-15-231623",
+  "bucket": "horizon",
+  "text": "Fleet-orchestrated overnight PR pipelines; parallel adversarial review swarm; test-driven self-healing effectors."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "claude_md_addition",
+  "text": "Derive from first principles+charter before asking, ask only for missing external info; never block deliverable on slow/non-required CI."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "claude_md_addition",
+  "text": "Config/statusline/personal-data to durable git-tracked/chezmoi source; triage/review-window scope from last HUMAN review point not last automated run, sanity-check counts."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "claude_md_addition",
+  "text": "Codify closeout+PR-heal-and-merge+adversarial-audit as skills; ruff auto-format hook silent on Edit/Write; parallel agents per repo/branch for cross-repo tranches."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "claude_md_addition",
+  "text": "Closeout treats only required checks as gating; derive via ideal-forms before AskUserQuestion; triage anchor last-human-review+count plausibility."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "claude_md_addition",
+  "text": "Scoped path-aware gate system mapping diffs to minimal test sets+async CI polling; charter/ideal-forms as derivation layer+pre-action self-check subagent."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "claude_md_addition",
+  "text": "Launchd daemons+sanctioned-waiter+idempotency guards+sentinel auto-resume."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "feature_to_try",
+  "text": "Skills for closeout/PR-heal-and-merge/adversarial-audit; pre-commit ruff hook; parallel agents per repo/branch."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "usage_pattern",
+  "text": "Stop polling slow CI; derive don't ask; confirm scope before triage."
+ },
+ {
+  "snap": "2026-07-17-092139",
+  "bucket": "horizon",
+  "text": "Fast-path CI gates; self-deriving agents that stop asking; overnight self-healing agent fleet."
+ }
+]
