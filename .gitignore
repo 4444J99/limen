@@ -63,3 +63,5 @@ studium/_converged/converge-log.jsonl
 docs/prompt-atom-ledger.json
 # cross-vendor raw extraction packets (PII-risk; generated locally, fed to synthesis pass)
 logs/insight-cross-vendor/
+# sensitive publication-judgment rationale (shallow-merged into repo_overrides at load; arca-sealed)
+institutio/github/estate.private.yaml

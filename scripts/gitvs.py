@@ -62,6 +62,11 @@ STAMP = ROOT / "logs" / "gitvs.json"
 # gitignored runtime sink, NEVER the git-tracked ledger: private repo names stay out of the public
 # tree, and volatile fields (size, pushed_at) never churn the ledger's idempotent fixed point.
 FACTS = ROOT / "logs" / "gitvs-census-facts.json"
+# The classify receipt (per-repo proposals + rationale + path histograms — private names included):
+# a gitignored RECEIPT, never the durable record. The durable record is estate.yaml's repo_overrides,
+# landed by PR from `classify --emit-overrides` output — registry edits are never auto-written.
+DECISIONS = ROOT / "logs" / "estate-decisions.json"
+_GB_KB = 1_048_576  # REST `size` is KB; above 1 GB is an oversize annotation (classify R9)
 WORKFLOWS = ROOT / ".github" / "workflows"
 
 REQUIRED_RESOURCE_FIELDS = ("identity", "desired", "observe", "effector", "status", "owner", "note")
@@ -153,10 +158,24 @@ def _token_path() -> str:
 
 # ── the Estate (desired-state) ─────────────────────────────────────────────────────────────────
 def load_estate() -> dict:
+    """The public registry, plus the gitignored private overlay (estate.private.yaml) when present.
+    The overlay may ONLY deepen repo_overrides (sensitive rationale rows — arca-sealed for
+    durability); it can never touch classes/resources, so CI (which never has the overlay) and a
+    hydrated live tree evaluate the same policy surface."""
     try:
-        return yaml.safe_load(ESTATE.read_text(encoding="utf-8")) or {}
+        estate = yaml.safe_load(ESTATE.read_text(encoding="utf-8")) or {}
     except Exception:
         return {}
+    overlay = ESTATE.parent / "estate.private.yaml"
+    if overlay.exists():
+        try:
+            priv = yaml.safe_load(overlay.read_text(encoding="utf-8")) or {}
+            merged = {**(estate.get("repo_overrides") or {}), **(priv.get("repo_overrides") or {})}
+            if merged:
+                estate["repo_overrides"] = merged
+        except Exception:
+            pass  # a broken overlay never breaks policy evaluation of the public registry
+    return estate
 
 
 def owners(estate: dict) -> list[str]:
@@ -973,6 +992,195 @@ def reconcile(estate: dict, *, apply: bool) -> int:
     return 0
 
 
+# ── the Classifier: propose per-repo publication decisions (rules R1–R9) ─────────────────────────
+def _pubpolicy():
+    """Import publication-policy.py's pure classify() (the reap-branches importlib pattern).
+    None on failure — the caller degrades to registry-only rules, never raises."""
+    try:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "publication_policy", str(SCRIPT_DIR / "publication-policy.py")
+        )
+        pp = importlib.util.module_from_spec(spec)
+        sys.modules["publication_policy"] = pp
+        spec.loader.exec_module(pp)
+        return pp
+    except Exception:
+        return None
+
+
+def _tree_paths(repo: str, token: str | None, cap: int) -> list[str] | None:
+    """HEAD tree paths (no clone, no content — path shapes are publication-policy's cheap decisive
+    signal). Truncation by `cap` or GitHub's own trees cap is fine: this is sampling, not audit."""
+    r = _gh(
+        ["api", f"/repos/{repo}/git/trees/HEAD?recursive=1", "--jq", ".tree[].path"],
+        token,
+        timeout=60,
+    )
+    if r.returncode != 0:
+        return None
+    paths = [ln.strip() for ln in (r.stdout or "").splitlines() if ln.strip()]
+    return paths[:cap]
+
+
+def _path_histogram(repo: str, token: str | None, pp, cap: int) -> tuple[dict[str, int], int]:
+    """Content-class histogram over sampled tree paths (publication-policy taxonomy, path-only)."""
+    paths = _tree_paths(repo, token, cap)
+    if paths is None or pp is None:
+        return {}, 0
+    hist: dict[str, int] = {}
+    for p in paths:
+        c, _ = pp.classify(p)
+        hist[c] = hist.get(c, 0) + 1
+    return dict(sorted(hist.items())), len(paths)
+
+
+def _registry_repo_set(path: Path, key: str = "repos") -> set[str]:
+    """owner/repo membership from a JSON registry (value-repos.json list / positioning-seeds map)."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        block = data.get(key) or []
+        if isinstance(block, dict):
+            return {str(k) for k in block}
+        return {str(r) for r in block if isinstance(r, str)}
+    except Exception:
+        return set()
+
+
+def classify_estate(
+    estate: dict, *, fresh: bool, sample_max: int, emit: bool, only: str | None
+) -> int:
+    """Propose a publication class per repo (R1–R9 over census facts + path sampling). Writes the
+    gitignored receipt (DECISIONS); --emit-overrides prints ready-to-paste registry rows. The
+    PROPOSAL engine — the durable decision is the estate.yaml row a human-reviewed PR lands."""
+    if fresh or not FACTS.exists():
+        print("[gitvs] classify: refreshing census facts …")
+        observe(estate)
+    try:
+        rows = json.loads(FACTS.read_text(encoding="utf-8"))["repos"]
+    except Exception:
+        print("[gitvs] classify: no census facts (run `gitvs.py census` online first)")
+        return 1
+
+    pp = _pubpolicy()
+    token = _token()
+    value = _registry_repo_set(ROOT / "value-repos.json")
+    seeded = _registry_repo_set(ROOT / "positioning-seeds.json")
+    stars_floor = int(os.environ.get("LIMEN_GITVS_PORTAL_STARS", "3"))
+    overrides = estate.get("repo_overrides") or {}
+
+    decisions: list[dict] = []
+    rule_counts: dict[str, int] = {}
+    for row in rows:
+        full = str(row["full_name"])
+        if only and full != only:
+            continue
+        private = bool(row.get("private"))
+        d: dict = {
+            "repo": full,
+            "visibility": "private" if private else "public",
+            "current_class": row.get("class") or classify_repo(full, estate, facts=row) or "unclassed",
+            "publish_candidate": False,
+            "oversize": bool((row.get("size") or 0) > _GB_KB),
+        }
+        if full in overrides:
+            d.update(
+                proposed_class=str(overrides[full].get("class")),
+                rule="R1",
+                rationale="explicit override row — settled judgment",
+            )
+        elif row.get("fork"):
+            d.update(proposed_class="contrib_fork", rule="R2", rationale="fork (census fact)")
+        elif row.get("archived"):
+            d.update(proposed_class="frozen", rule="R3", rationale="archived (census fact)")
+        elif private:
+            hist, n = _path_histogram(full, token, pp, sample_max)
+            d["path_histogram"] = hist
+            d["paths_sampled"] = n
+            risky = hist.get("internal_strategy", 0) + hist.get("personal_pii", 0) + hist.get("secret", 0)
+            clean = hist.get("public_safe", 0) + hist.get("product_content", 0)
+            if n and risky / n >= 0.05:
+                d.update(
+                    proposed_class="vault_private",
+                    rule="R4",
+                    rationale=f"{risky}/{n} sampled paths signal strategy/PII/secret material",
+                )
+            elif full in value or full in seeded:
+                d.update(
+                    proposed_class="operation_private",
+                    rule="R5",
+                    rationale="value-tier/seeded product — the operation is the moat; form-twin eligible",
+                )
+            elif n and clean / n >= 0.95:
+                d.update(
+                    proposed_class="operation_private",
+                    rule="R6",
+                    publish_candidate=True,
+                    rationale=f"{clean}/{n} sampled paths public-safe/product — publish-wave candidate (lever-gated)",
+                )
+            else:
+                d.update(
+                    proposed_class="private_unreviewed",
+                    rule="HOLD",
+                    rationale=f"insufficient signal ({n} paths sampled) — held private pending judgment",
+                )
+        elif full in value or full in seeded or (row.get("stars") or 0) >= stars_floor:
+            d.update(
+                proposed_class="portal_public",
+                rule="R7",
+                rationale="value-tier/seeded/star leader — the SEO lure tier",
+            )
+        else:
+            d.update(
+                proposed_class="governed_public",
+                rule="R8",
+                rationale="public long-tail floor (glob — no row needed)",
+            )
+        rule_counts[d["rule"]] = rule_counts.get(d["rule"], 0) + 1
+        decisions.append(d)
+
+    decisions.sort(key=lambda x: x["repo"])
+    try:
+        DECISIONS.parent.mkdir(parents=True, exist_ok=True)
+        DECISIONS.write_text(
+            json.dumps(
+                {"schema": "limen.estate_decisions.v1", "rows": decisions}, indent=2, sort_keys=True
+            )
+            + "\n"
+        )
+    except Exception as e:
+        print(f"[gitvs] note: decisions receipt write skipped ({str(e)[:80]})")
+
+    needs_row = [
+        d
+        for d in decisions
+        if d["rule"] != "R1"
+        and (
+            d["proposed_class"] in ("vault_private", "operation_private")
+            or (d["proposed_class"] == "portal_public" and d["current_class"] != "portal_public")
+            or d["publish_candidate"]
+            or d["oversize"]
+        )
+    ]
+    print(
+        f"[gitvs] classify: {len(decisions)} repos → "
+        + ", ".join(f"{k}={v}" for k, v in sorted(rule_counts.items()))
+        + f"; {len(needs_row)} need an override row → {DECISIONS.relative_to(ROOT)}"
+    )
+    if emit:
+        print("# paste into estate.yaml repo_overrides (curate the why lines — this file is public):")
+        for d in needs_row:
+            extras = ""
+            if d["publish_candidate"]:
+                extras += ", publish_candidate: true"
+            if d["oversize"]:
+                extras += ", oversize: true"
+            why = str(d["rationale"]).replace('"', "'")
+            print(f'  {d["repo"]}: {{class: {d["proposed_class"]}, why: "{why}"{extras}}}')
+    return 0
+
+
 # ── entry ────────────────────────────────────────────────────────────────────────────────────────
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="GITVS — the GitHub custodian: one resource graph, one loop.")
@@ -991,6 +1199,11 @@ def main(argv: list[str] | None = None) -> int:
     prc.add_argument(
         "--check", action="store_true", help="report-only alias (the metabolize sensor idiom); never mutates"
     )
+    pk = sub.add_parser("classify", help="propose per-repo publication classes (R1–R9) → the decisions receipt")
+    pk.add_argument("--fresh", action="store_true", help="re-run the census before classifying")
+    pk.add_argument("--sample-max", type=int, default=2000, help="tree-path sample cap per private repo")
+    pk.add_argument("--emit-overrides", action="store_true", help="print ready-to-paste repo_overrides YAML")
+    pk.add_argument("--repo", help="classify a single owner/repo only")
     args = ap.parse_args(argv)
 
     estate = load_estate()
@@ -1016,6 +1229,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "reconcile":
         # --check is the report-only sensor idiom; --apply mutates. Report wins if both are given (safety).
         return reconcile(estate, apply=bool(args.apply) and not bool(args.check))
+
+    if args.cmd == "classify":
+        return classify_estate(
+            estate,
+            fresh=bool(args.fresh),
+            sample_max=int(args.sample_max),
+            emit=bool(args.emit_overrides),
+            only=args.repo,
+        )
 
     return 2
 

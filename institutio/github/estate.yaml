@@ -297,6 +297,18 @@ classes:
     seo: {description: required, topics_min: 5, homepage: required, readme: portal}
     owner: gitvs
     note: "The SEO lure tier (value repos ∪ positioning-seeded ∪ star leaders): full portal-v1 README standard + rich metadata; every repo an inbound edge."
+  private_unreviewed:
+    match: ["**"]
+    match_facts: {private: true}
+    visibility: private                    # safe holding posture — matches current state, ZERO flip demand
+    branch_protection: exempt
+    required_checks: []
+    app_installed: optional
+    secret_hygiene: enforced
+    stale_branch_grace_min: null
+    archive_policy: never
+    owner: gitvs
+    note: "Private repos pending publication judgment — the safe default (a private repo never flips by omission). The doctor cites the count as owed judgment; classify proposals + override rows migrate repos to vault_private / operation_private / the publish wave."
   governed_public:
     match: ["organvm/**"]
     visibility: public
@@ -328,7 +340,115 @@ classes:
 # (owed form-twin/eviction work, cited by the doctor like status: envisioned), `oversize: true`
 # (history-asset review owed). Sensitive rationale → estate.private.yaml (gitignored overlay).
 # Rows land by PR from `gitvs.py classify --emit-overrides` output — never auto-written.
-repo_overrides: {}
+repo_overrides:
+  organvm/4444J99.github.io: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/_agent: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/_agent-health: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/_agent-ontology: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/_diagnostics: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/_dot-config: {class: vault_private, why: "raw config/state corpus — private"}
+  organvm/_limen: {class: vault_private, why: "raw state mirror — private"}
+  organvm/a-i--skills: {class: portal_public, why: "star leader — the estate's traffic head"}
+  organvm/a-i-chat--exporter: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/a-mavs-olevm: {class: governed_public, why: "history-asset strip review owed (~1 GB public tree)", oversize: true}
+  organvm/advocata: {class: operation_private, why: "law-firm OS — private operation"}
+  organvm/agent-runtime: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/agentic-titan: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/anon-hookup-now: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/arca: {class: vault_private, why: "the sealed vault — ciphertext home"}
+  organvm/atomic-substrata: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/bound: {class: vault_private, why: "raw corpus w/ secret-shaped paths — private"}
+  organvm/brainstorm-20260423: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
+  organvm/browser-state: {class: vault_private, why: "personal browser corpus — private data"}
+  organvm/call-function--ontological: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/carrier-wave--zeitgeist-thesis: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/cind-and-sol-foundation: {class: operation_private, why: "foundation operation — private"}
+  organvm/claude-runtime-state: {class: vault_private, why: "runtime state mirror — private"}
+  organvm/collaboratory: {class: operation_private, why: "collaboratory constellation — private operation"}
+  organvm/commerce--meta: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/composition-1-2: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/content-engine--asset-amplifier--a-organvm-legacy: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/contrib: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--anthropic-skills: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--clyra-gait: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--dbt-mcp: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--grafana-k6: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--indeedeng-iwf: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--ipqwery-ipapi-py: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--jairus-dagster-sdlc: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--langchain-langgraph: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--m13v-summarize-recent-commit: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--openai-agents-python: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--primeinc-github-stars: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/contrib--temporal-sdk-python: {class: operation_private, why: "contribution staging lane (prepare-never-submit)"}
+  organvm/custodia-securitatis: {class: vault_private, why: "credential inventories — private data"}
+  organvm/daily-engine: {class: operation_private, why: "personal daily engine — private operation"}
+  organvm/digital-income-organism-inquiry: {class: vault_private, why: "inquiry corpus — internal strategy"}
+  organvm/domus-genoma: {class: operation_private, why: "the config cartridge — host/factory operation; strategy+secret-shaped paths never publish raw"}
+  organvm/edu-organism: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/enterprise-plugin: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/euro-trip-2026: {class: vault_private, why: "personal travel — private data"}
+  organvm/generative-abstract-environments-studies: {class: vault_private, why: "studies corpus — internal strategy"}
+  organvm/gens: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/glyph-cascade: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/glyph-cascade-tapes: {class: vault_private, why: "session recordings corpus — private data"}
+  organvm/growth-auditor: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/hokage-chess--4444j99: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/hospes: {class: operation_private, why: "guest-ops engine; transcripts are vault-class", split: {into: ["organvm/arca"], why: "extract transcripts to the vault; engine stays private"}}
+  organvm/in-my-head: {class: vault_private, why: "personal notes — private data"}
+  organvm/knowledge-corpus: {class: vault_private, why: "distilled corpus — internal strategy"}
+  organvm/manumissio: {class: operation_private, why: "sovereign inference operation — private by design"}
+  organvm/materia-collider: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/md-summoning: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/mesh: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/meta-organvm--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm/micro-tato: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/mirror-mirror: {class: operation_private, why: "seeded value product — wave candidate (sweep decides)", publish_candidate: true}
+  organvm/my-knowledge-base: {class: operation_private, why: "value-tier knowledge operation; secret-shaped paths — sweep before any form twin"}
+  organvm/narratological-algorithmic-lenses: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/netmode: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/object-lessons: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/opencode-plans: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
+  organvm/organvm-corpvs-testamentvm: {class: vault_private, why: "testament corpus — internal strategy"}
+  organvm/organvm-i-theoria--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm/organvm-ii-poiesis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm/organvm-iii-ergon--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm/organvm-iv-taxis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm/organvm-mcp-server: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/organvm-v-logos--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm/organvm-vi-koinonia--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm/organvm-vii-kerygma--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  organvm/palimpsest: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/payrail: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/peer-audited--behavioral-blockchain: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/persona-fleet: {class: vault_private, why: "persona corpus — private data"}
+  organvm/personal: {class: vault_private, why: "personal memory store — private data"}
+  organvm/portfolio: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/portvs: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/process-environment-enactment-20260609173021: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
+  organvm/prompt-registry-archive: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
+  organvm/public-record-data-scrapper: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/quaestor: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/quick-fire--all-command: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/relationship-pipeline: {class: vault_private, why: "personal-relations data — private"}
+  organvm/render-second-amendment: {class: vault_private, why: "held for content-policy review (rationale in private overlay)", oversize: true}
+  organvm/scale-threshold-emergence: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/select-or-left-or-right-or: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/session-meta: {class: vault_private, why: "4.4 GB raw session corpus; value is mined, never published", oversize: true, split: {into: ["organvm/arca"], why: "evict sealed corpus to the vault; slim/archive the residue"}}
+  organvm/session-stone-sanitized-019ea761-bff5-7841-b772-f2d85475092e-20260609175059: {class: vault_private, why: "session archive — private data"}
+  organvm/sign-signal--voice-synth: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/sovereign--ground: {class: vault_private, why: "ground corpus — internal strategy"}
+  organvm/sovereign--ground--4444j99: {class: vault_private, why: "ground corpus — internal strategy"}
+  organvm/speculum-opencode: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
+  organvm/speech-score-engine: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/studium-generale: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/system-system--system: {class: vault_private, why: "system corpus — internal strategy"}
+  organvm/the-invisible-ledger: {class: operation_private, why: "financial ledger operation — private"}
+  organvm/universal-mail--automation: {class: portal_public, why: "traction/value lure — portal tier"}
+  organvm/vox: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/vox--architectura-gubernatio: {class: vault_private, why: "design-provenance corpus — internal strategy"}
+  organvm/vox--publica: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
+  organvm/workspace--superproject: {class: vault_private, why: "superproject state mirror — private state"}
 
 # ── expected orgs — reserved namespaces are declared, an unexpected org is drift ────────────────
 expected_orgs:

@@ -2277,6 +2277,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for GitHub estate reconciliation and by each delegate/reap adapter it dispatches. The runner kills the full command group on overrun and the beat continues fail-open."
+  LIMEN_GITVS_PORTAL_STARS:
+    default: 3
+    env: LIMEN_GITVS_PORTAL_STARS
+    self_update: none
+    owner: gitvs
+    note: "Star floor for the classify rule R7: a public repo with at least this many stars is proposed into the portal_public SEO lure tier even when it is not value-tier/seeded (traction is a discovered signal, never assumed)."
   LIMEN_OBSERVATORY:
     default: 0
     env: LIMEN_OBSERVATORY
