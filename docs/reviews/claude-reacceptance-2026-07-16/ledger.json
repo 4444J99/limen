@@ -1,6 +1,6 @@
 {
   "schema": "limen.reacceptance_ledger.v2",
-  "refreshed_at": "2026-07-17T05:38:42Z",
+  "refreshed_at": "2026-07-17T08:25:15Z",
   "scope": {
     "review_gate_app_slug": null,
     "boundary": {
@@ -13274,6 +13274,26 @@
       }
     },
     {
+      "id": "remedy:organvm/daily-engine#28",
+      "kind": "pull_request",
+      "status": "repair_required",
+      "attempt_ids": [],
+      "owner_surface": "organvm/daily-engine",
+      "repository": "organvm/daily-engine",
+      "pull_request": 28,
+      "exact_head": "712bf59a7b79f2d8dc4628ea88cf0ab44ce61c88",
+      "remote": {
+        "url": "https://github.com/organvm/daily-engine/pull/28",
+        "state": "OPEN",
+        "draft": true,
+        "head_sha": "712bf59a7b79f2d8dc4628ea88cf0ab44ce61c88",
+        "merge_commit": null,
+        "merged_at": null,
+        "closed_at": null,
+        "review_gate_check": null
+      }
+    },
+    {
       "id": "remedy:organvm/public-record-data-scrapper#354",
       "kind": "pull_request",
       "status": "repair_required",
@@ -13287,6 +13307,46 @@
         "state": "OPEN",
         "draft": true,
         "head_sha": "07935fa03a3d26ea5fd109c63192edb1960b44e0",
+        "merge_commit": null,
+        "merged_at": null,
+        "closed_at": null,
+        "review_gate_check": null
+      }
+    },
+    {
+      "id": "remedy:organvm/public-record-data-scrapper#355",
+      "kind": "pull_request",
+      "status": "repair_required",
+      "attempt_ids": [],
+      "owner_surface": "organvm/public-record-data-scrapper",
+      "repository": "organvm/public-record-data-scrapper",
+      "pull_request": 355,
+      "exact_head": "b677ab46ecb5fd9da30d03e506bd5e44f9edb318",
+      "remote": {
+        "url": "https://github.com/organvm/public-record-data-scrapper/pull/355",
+        "state": "OPEN",
+        "draft": true,
+        "head_sha": "b677ab46ecb5fd9da30d03e506bd5e44f9edb318",
+        "merge_commit": null,
+        "merged_at": null,
+        "closed_at": null,
+        "review_gate_check": null
+      }
+    },
+    {
+      "id": "remedy:organvm/public-record-data-scrapper#356",
+      "kind": "pull_request",
+      "status": "repair_required",
+      "attempt_ids": [],
+      "owner_surface": "organvm/public-record-data-scrapper",
+      "repository": "organvm/public-record-data-scrapper",
+      "pull_request": 356,
+      "exact_head": "e4e96c77f58aaf0adb806ca1c5e0207a07f1dbf1",
+      "remote": {
+        "url": "https://github.com/organvm/public-record-data-scrapper/pull/356",
+        "state": "OPEN",
+        "draft": true,
+        "head_sha": "e4e96c77f58aaf0adb806ca1c5e0207a07f1dbf1",
         "merge_commit": null,
         "merged_at": null,
         "closed_at": null,
@@ -15053,15 +15113,15 @@
       "receipt": null
     }
   },
-  "evidence_digest": "sha256:e132064474755b362b38247716cc3e731fc09ab336264513af69d923b3692ebe",
+  "evidence_digest": "sha256:d95fbb656809ae957d4b8f2d4686c3161a664f820d3d52a40c64d1787bc46ddf",
   "refresh_history": [
     {
-      "refreshed_at": "2026-07-17T05:38:33Z",
-      "evidence_digest": "sha256:e132064474755b362b38247716cc3e731fc09ab336264513af69d923b3692ebe"
+      "refreshed_at": "2026-07-17T08:25:05Z",
+      "evidence_digest": "sha256:d95fbb656809ae957d4b8f2d4686c3161a664f820d3d52a40c64d1787bc46ddf"
     },
     {
-      "refreshed_at": "2026-07-17T05:38:42Z",
-      "evidence_digest": "sha256:e132064474755b362b38247716cc3e731fc09ab336264513af69d923b3692ebe"
+      "refreshed_at": "2026-07-17T08:25:15Z",
+      "evidence_digest": "sha256:d95fbb656809ae957d4b8f2d4686c3161a664f820d3d52a40c64d1787bc46ddf"
     }
   ],
   "completion_gates": {
@@ -15140,9 +15200,9 @@
     "reverted": 0,
     "superseded": 0,
     "attempts": 0,
-    "remedies": 10,
+    "remedies": 13,
     "accepted_remedies": 0,
-    "repair_required_remedies": 10,
+    "repair_required_remedies": 13,
     "findings": 208,
     "current_p1": 28,
     "current_p2": 180,
