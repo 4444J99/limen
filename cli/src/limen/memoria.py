@@ -99,6 +99,20 @@ class MemoryTicket(BaseModel):
             )
         return value
 
+    @field_validator("desc")
+    @classmethod
+    def _validate_desc(cls, value: str) -> str:
+        """Strip embedded newlines from desc so it never corrupts the single-line MEMORY.md index.
+
+        The index format is `- [<title>](<slug>.md) — <desc>` — a single line. An embedded `\n` or
+        `\r\n` would split that line verbatim into MEMORY.md, corrupting the index in a way that
+        persists across re-drains (the marker still matches the broken line). Replace any run of
+        newline characters with a single space so the line remains intact. Matches the safety intent
+        of the slug validator, but strips rather than rejects so programmatic callers with accidental
+        newlines don't lose the ticket entirely.
+        """
+        return re.sub(r"[\r\n]+", " ", value).strip()
+
 
 def new_ticket_id(session_id: str = "unknown", now: datetime | None = None) -> str:
     """A sortable, collision-free ticket id: `<utc-timestamp>-<session>-<rand>` — the same shape as

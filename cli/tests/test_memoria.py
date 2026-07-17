@@ -247,3 +247,30 @@ def test_organ_memory_pass_noop_when_flag_off(memdir: Path, tmp_path: Path):
     assert after == before
     assert not (memdir / "would-fold.md").exists()
     assert len(list((memdir / ".covenant-inbox").glob("*.json"))) == 1
+
+def test_desc_newlines_stripped_at_construction():
+    """MemoryTicket.desc must not contain embedded newlines — they would corrupt the MEMORY.md index.
+
+    A programmatic caller can trivially construct a desc with '\n'; the @field_validator must strip
+    (not reject) so the ticket still lands and the index line stays a single line.
+    """
+    t = _ticket("check-desc", desc="first line\nsecond line")
+    assert "\n" not in t.desc
+    assert t.desc == "first line second line"
+
+    t2 = _ticket("check-desc-cr", desc="first\r\nsecond")
+    assert "\r" not in t2.desc
+    assert "\n" not in t2.desc
+    assert t2.desc == "first second"
+
+
+def test_desc_newline_does_not_corrupt_index(memdir: Path):
+    """An embedded newline in desc must not produce a multi-line corruption in MEMORY.md."""
+    submit_memory_ticket(_ticket("multi-line-desc", desc="line one\nline two"))
+    drain_memory_once()
+    index = _read(memdir / "MEMORY.md")
+    # MEMORY.md must contain exactly one index line for this slug — no embedded newline
+    matching_lines = [l for l in index.splitlines() if "multi-line-desc.md" in l]
+    assert len(matching_lines) == 1
+    assert "line one" in matching_lines[0]
+    assert "line two" in matching_lines[0]
