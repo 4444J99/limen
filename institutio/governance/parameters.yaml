@@ -4567,6 +4567,18 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Master gate for TABVLARIVS (scripts/tabularius-organ.py), the single-writer record-keeper. Each beat it drains logs/tickets/inbox, folds each worker's ticket onto the healed board under the queue lock, and seals via the collapse-guarded atomic write. Idempotent: an empty inbox is an instant no-op, so it is safe every beat while no producers exist. Set 0 to silence the rung. The single-writer principle that dissolves the ~32-writer torn-write class — sibling of LIMEN_BOARD_HEAL."
+  LIMEN_MEMORIA:
+    default: "0"               # DARK — merged off; the operator flips it after the lane is proven (lane before wall)
+    env: LIMEN_MEMORIA
+    self_update: none
+    owner: tabularius
+    note: "memory record-keeper drain gate (MEMORIA lane); merged dark, human-flipped after the lane is proven — lane before wall. When 1, scripts/tabularius-organ.py additionally drains the memory ticket inbox (<memdir>/.covenant-inbox) into MEMORY.md + its atoms, as the single writer of the memory dir. Off = the memory drain is skipped entirely (silent). The single-writer principle applied to memory, sibling of LIMEN_TABVLARIVS."
+  LIMEN_ALLOW_COVENANT_WRITE:
+    default: "0"               # break-glass off by default; the covenant write guard (PR 6) honors 1
+    env: LIMEN_ALLOW_COVENANT_WRITE
+    self_update: none
+    owner: tabularius
+    note: "break-glass escape hatch for the covenant write guard (PR 6); declared ahead of arming. When 1, a session may write the memory dir directly, bypassing the single-writer covenant. No-op in this PR (limen.memoria reads it but has no guard to bypass yet); PR 6's write-guard hook honors it."
   LIMEN_TICKETS_PRODUCE:
     default: "0"               # SAFE CODE DEFAULT — a bare manual script run stays legacy (no surprise); the FLEET opts in (see below)
     env: LIMEN_TICKETS_PRODUCE
