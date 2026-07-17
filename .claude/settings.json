@@ -7,7 +7,45 @@
       "mcp__claude_ai_Google_Drive__search_files",
       "mcp__claude_ai_Gmail__search_threads",
       "mcp__claude_ai_Gmail__get_thread",
-      "mcp__claude_ai_Google_Calendar__list_events"
+      "mcp__claude_ai_Google_Calendar__list_events",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git rebase *)",
+      "Bash(git pull *)",
+      "Bash(git worktree *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh pr edit *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh pr checkout *)",
+      "Bash(gh pr ready *)",
+      "Bash(gh run watch *)",
+      "Bash(gh run rerun *)",
+      "Bash(gh issue create *)",
+      "Bash(gh issue comment *)",
+      "Bash(gh issue edit *)",
+      "Bash(bash scripts/verify-scoped.sh *)",
+      "Bash(bash scripts/merge-policy.sh *)",
+      "Bash(scripts/merge-policy.sh *)",
+      "Bash(bash scripts/tests/*)",
+      "Bash(python3 scripts/gitvs.py *)",
+      "Bash(python3 scripts/beat-sensors.py *)",
+      "Bash(python3 scripts/check-params.py)",
+      "Bash(python3 scripts/check-sensors.py)",
+      "Bash(python3 -m py_compile *)",
+      "Bash(python3 -m pytest *)",
+      "Bash(python3 -m ruff *)",
+      "Bash(mkdir *)",
+      "Bash(chmod +x *)",
+      "mcp__claude_ai_Gmail__get_message",
+      "mcp__claude_ai_Gmail__list_drafts",
+      "mcp__claude_ai_Gmail__list_labels",
+      "mcp__claude-in-chrome__read_page",
+      "mcp__claude-in-chrome__find"
     ]
   },
   "hooks": {
@@ -15,7 +53,10 @@
       {
         "matcher": "startup|resume",
         "hooks": [
-          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-orient.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-orient.sh\" || true" }
+          {
+            "type": "command",
+            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-orient.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-orient.sh\" || true"
+          }
         ]
       }
     ],
@@ -23,8 +64,14 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" || true" },
-          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/pytest-scope-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/pytest-scope-guard.sh\" || true" }
+          {
+            "type": "command",
+            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/worktree-commit-guard.sh\" || true"
+          },
+          {
+            "type": "command",
+            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/pytest-scope-guard.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/pytest-scope-guard.sh\" || true"
+          }
         ]
       }
     ],
@@ -32,15 +79,24 @@
       {
         "matcher": "Write|Edit",
         "hooks": [
-          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/lint-edited-file.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/lint-edited-file.sh\" || true" }
+          {
+            "type": "command",
+            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/lint-edited-file.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/lint-edited-file.sh\" || true"
+          }
         ]
       }
     ],
     "SessionEnd": [
       {
         "hooks": [
-          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-closeout.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-closeout.sh\" || true" },
-          { "type": "command", "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-lifecycle-pressure.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-lifecycle-pressure.sh\" || true" }
+          {
+            "type": "command",
+            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-closeout.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-closeout.sh\" || true"
+          },
+          {
+            "type": "command",
+            "command": "LIMEN_ROOT=\"${LIMEN_ROOT:-$HOME/Workspace/limen}\"; [ -x \"$LIMEN_ROOT/scripts/hooks/session-lifecycle-pressure.sh\" ] && \"$LIMEN_ROOT/scripts/hooks/session-lifecycle-pressure.sh\" || true"
+          }
         ]
       }
     ]
