@@ -498,6 +498,10 @@ checks.
 
 ## Agent-Specific Notes
 
+### Claude
+- **TABVLARIVS & MEMORIA:** submit task and memory transitions as tickets via `tabularius-ticket.py`
+  or `memory-ticket.py`. Memory is keeper-owned — never Write MEMORY.md or memory atoms; submit a memory ticket.
+
 **Reserved tiers bind every lane, not just Claude** (`LIMEN_RESERVED_TIERS`): a written
 `fable-allotment.py accept …` receipt before the run starts, audited by
 `scripts/check-reserved-tier.py`.
