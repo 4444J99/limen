@@ -132,7 +132,7 @@ def owner_attestation_payload(
     gate_key: str,
     owner: str,
     binding_digest: str,
-    predicate_command: str,
+    predicate: Any,
     receipt: Any,
 ) -> dict[str, Any]:
     """Build the complete payload an owner key must sign.
@@ -147,6 +147,10 @@ def owner_attestation_payload(
         raise ValueError("owner must be a non-empty canonical string")
     if not isinstance(binding_digest, str) or not SHA256_DIGEST.fullmatch(binding_digest):
         raise ValueError("binding_digest must be a SHA-256 digest")
+    canonical_predicate = _canonical_json_value(predicate, label="owner predicate")
+    if not isinstance(canonical_predicate, dict):
+        raise ValueError("owner predicate must be an object")
+    predicate_command = canonical_predicate.get("command")
     if (
         not isinstance(predicate_command, str)
         or not predicate_command
@@ -157,13 +161,18 @@ def owner_attestation_payload(
     identity = receipt_identity(receipt)
     if identity is None:
         raise ValueError("receipt needs a durable HTTPS URL or owner-bound SHA-256 digest")
+    canonical_receipt = _canonical_json_value(receipt, label="owner receipt")
+    if not isinstance(canonical_receipt, dict):
+        raise ValueError("owner receipt must be an object")
     return {
         "schema": OWNER_ATTESTATION_PAYLOAD_SCHEMA,
         "gate_key": gate_key,
         "owner": owner,
         "owner_binding_digest": binding_digest,
         "predicate_command": predicate_command,
+        "predicate": canonical_predicate,
         "receipt_identity": identity,
+        "receipt": canonical_receipt,
     }
 
 
@@ -176,7 +185,9 @@ def canonical_owner_attestation_payload(payload: Mapping[str, Any]) -> bytes:
         "owner",
         "owner_binding_digest",
         "predicate_command",
+        "predicate",
         "receipt_identity",
+        "receipt",
     }
     if set(payload) != required or payload.get("schema") != OWNER_ATTESTATION_PAYLOAD_SCHEMA:
         raise ValueError("owner attestation payload has an invalid shape")
@@ -188,8 +199,8 @@ def canonical_owner_attestation_payload(payload: Mapping[str, Any]) -> bytes:
         gate_key=str(payload.get("gate_key") or ""),
         owner=str(payload.get("owner") or ""),
         binding_digest=str(payload.get("owner_binding_digest") or ""),
-        predicate_command=str(payload.get("predicate_command") or ""),
-        receipt=identity,
+        predicate=payload.get("predicate"),
+        receipt=payload.get("receipt"),
     )
     if rebuilt != dict(payload):
         raise ValueError("owner attestation payload is not canonical")
@@ -564,7 +575,7 @@ def owner_gate_attestation_errors(
             gate_key=gate_key,
             owner=str(owner or ""),
             binding_digest=binding_digest,
-            predicate_command=str(command or ""),
+            predicate=predicate,
             receipt=owner_evidence.get("receipt"),
         )
     except ValueError as exc:

@@ -162,20 +162,24 @@ def _attested_evidence(
     evidence: dict[str, object] = {
         "owner": requirement["owner"],
         "predicate": {
+            "schema": "limen.fixture.owner_predicate.v1",
             "status": "verified",
             "result": "passed",
             "command": requirement["predicate_command"],
+            "verified_at": "2026-07-17T04:00:00Z",
         },
         "receipt": {
+            "schema": "limen.fixture.owner_receipt.v1",
             "status": "verified",
             "url": f"https://receipts.example.invalid/{gate_key}",
+            "verified_at": "2026-07-17T04:00:00Z",
         },
     }
     payload = owner_attestation_payload(
         gate_key=gate_key,
         owner=str(evidence["owner"]),
         binding_digest=owner_binding_digest(binding_value),
-        predicate_command=str(evidence["predicate"]["command"]),  # type: ignore[index]
+        predicate=evidence["predicate"],
         receipt=evidence["receipt"],
     )
     evidence["attestation"] = {
@@ -300,6 +304,33 @@ def test_receipt_url_and_predicate_command_tampering_invalidate_attestation():
     )
     assert any("predicate command does not match" in error for error in errors)
     assert any("payload does not match current evidence" in error for error in errors)
+
+
+def test_predicate_and_receipt_metadata_tampering_invalidates_attestation():
+    scope = _scope()
+    gate_key = "session_value_verified"
+    binding_value = {"attempt_ids": ["attempt:1"], "durable_value": ["attempt:1"]}
+    evidence = _attested_evidence(scope, gate_key, binding_value)
+    mutations = [
+        ("predicate", "status", "failed"),
+        ("predicate", "result", "failed"),
+        ("predicate", "schema", "limen.attacker.predicate.v1"),
+        ("predicate", "verified_at", "2026-07-17T05:00:00Z"),
+        ("receipt", "status", "failed"),
+        ("receipt", "schema", "limen.attacker.receipt.v1"),
+        ("receipt", "verified_at", "2026-07-17T05:00:00Z"),
+    ]
+
+    for section, field, value in mutations:
+        tampered = copy.deepcopy(evidence)
+        tampered[section][field] = value  # type: ignore[index]
+        errors = owner_gate_attestation_errors(
+            scope=scope,
+            gate_key=gate_key,
+            owner_evidence=tampered,
+            binding_value=binding_value,
+        )
+        assert any("payload does not match current evidence" in error for error in errors), (section, field, errors)
 
 
 def test_fake_signature_and_binding_value_are_rejected():
