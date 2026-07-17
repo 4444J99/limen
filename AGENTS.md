@@ -85,9 +85,9 @@ be derived from existing doctrine.
 
 ## Session Discipline
 
-Four cross-agent disciplines enforced by `scripts/check-agent-docs.py` (check M). Each is stated
-once here — the canonical shared layer. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) extend
-or cite these; they must not contradict them.
+Cross-agent disciplines enforced by `scripts/check-agent-docs.py` (checks M and N). Each is
+stated once here — the canonical shared layer. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`)
+extend or cite these; they must not contradict them.
 
 **1. Derive answers — never present option menus when a registry already owns the answer.**
 A registry or charter that already owns the answer is the authority; query it and proceed. Do not
@@ -114,6 +114,41 @@ Reversible work proceeds without a confirmation gate. When a genuine external bl
 state it exactly once (`BLOCKED: <atom>`), file the atom in its registry owner, and keep driving
 every other reversible lane to its verified end. Never loop on, poll, or re-surface a filed gate.
 The litmus: am I destroying, sending, spending, or irreversibly leaking? If no, proceed.
+
+### Standing Corrections (from insights reports 2026-06-23 → 2026-07-17)
+
+Six recurring failures distilled from six insights reports into lane-neutral rules. Enforced by
+check N (`scripts/check-agent-docs.py`). These bind every agent lane equally.
+
+**N-a. Done is an executable predicate, never prose.**
+No agent claims completion until the owning predicate or tests pass on live state. Motion, related
+PRs, and prose assertions are not completion proof; a satisfied predicate plus a durable receipt
+is the only valid evidence.
+
+**N-b. Closeouts are terminal — reach the idempotent fixed point, state it once, stop.**
+File residual work with its durable owner (registry, board, lever) before closing; never hand it
+back as a list. A closeout that recites open items or continues past the terminal statement has
+failed the fixed-point test.
+
+**N-c. Derive before asking — a fact the registry owns is never re-asked.**
+A decision already answered by charter, registry, or precedent is queried and applied, not
+re-raised for operator confirmation. Presenting a menu of alternatives when a registry-derived
+answer exists is a derivation failure, not a delivery.
+
+**N-d. Durable homing applies to all produced state.**
+Config, data, docs, and receipts produced in a session land in their git-tracked owner before the
+session ends. No produced state lives in local-only files, in-memory scratch, or orphan branches
+without a named remote receipt.
+
+**N-e. Active unblocking — attempt the documented bootstrap before reporting blocked.**
+When a bridge, auth, or gate is blocked, attempt its documented bootstrap path once. No passive
+re-report of a known-blocked status is acceptable; reversible work in other lanes proceeds
+regardless. Only a genuinely irreducible external atom surfaces as `BLOCKED: <atom>`.
+
+**N-f. Triage windows anchor at the last human review point.**
+Triage windows start at the last human review, not the last automated run. Item counts are
+sanity-checked against the live board before any triage proceeds; a count mismatch stops the
+triage until the discrepancy is resolved.
 
 ## Prompt Corpus as the Control Plane
 

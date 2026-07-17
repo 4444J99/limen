@@ -51,6 +51,11 @@ Checks (exit 0 iff all pass):
      section), and the home-scope Layer-1 AGENTS.md template defers to that shared layer rather
      than diverging.
 
+  N. The six standing corrections from insights reports 2026-06-23 → 2026-07-17 are present in
+     AGENTS.md under the ``### Standing Corrections`` subsection of ``## Session Discipline``:
+     (a) predicate-not-prose done, (b) terminal closeout / fixed-point, (c) derive-before-asking,
+     (d) durable-homing for all produced state, (e) active-unblocking, (f) triage-window anchor.
+
 Run directly (``scripts/check-agent-docs.py``) or via ``scripts/verify-whole.sh``.
 """
 
@@ -395,6 +400,50 @@ def main() -> int:
                     f"(the home-scope Layer-1 template must defer to the shared-layer disciplines; "
                     f"fix: ensure the Session Discipline summary block is present)"
                 )
+
+    # N. Six standing corrections from insights reports 2026-06-23 → 2026-07-17 must be present
+    # in the AGENTS.md ## Session Discipline section (### Standing Corrections subsection).
+    try:
+        discipline_section = section(agents_text, "Session Discipline")
+        for phrase, label in [
+            (
+                "owning predicate or tests pass on live state",
+                "N-a predicate-not-prose done rule "
+                "(no agent claims completion until the owning predicate or tests pass on live state)",
+            ),
+            (
+                "File residual work with its durable owner",
+                "N-b terminal-closeout / fixed-point rule "
+                "(file residual work with its durable owner; never hand it back as a list)",
+            ),
+            (
+                "A decision already answered by charter, registry, or precedent is queried and applied",
+                "N-c derive-before-asking rule "
+                "(a decision already answered by charter, registry, or precedent is queried and applied)",
+            ),
+            (
+                "Config, data, docs, and receipts produced in a session land in their git-tracked owner",
+                "N-d durable-homing-for-all-produced-state rule "
+                "(config, data, docs, and receipts produced in a session land in their git-tracked owner)",
+            ),
+            (
+                "attempt its documented bootstrap path once",
+                "N-e active-unblocking rule "
+                "(when a bridge/auth/gate is blocked, attempt its documented bootstrap path once)",
+            ),
+            (
+                "Triage windows start at the last human review",
+                "N-f triage-window-anchor rule "
+                "(triage windows start at the last human review, not the last automated run)",
+            ),
+        ]:
+            if phrase not in discipline_section:
+                errors.append(
+                    f"AGENTS.md 'Session Discipline' lacks {label} "
+                    f"(fix: add the phrase to the ### Standing Corrections subsection)"
+                )
+    except ValueError as exc:
+        errors.append(str(exc))
 
     if errors:
         print("Agent-instruction doc drift detected:")
