@@ -185,6 +185,34 @@ else
 fi
 echo
 
+# ── 4b. Gatekeeper — a REGISTERED-but-rejected ClaudeCode.app stub ("damaged, move to Trash"). ──
+# ROOT (3×: 2026-06-24, 2026-07-04, 2026-07-17): an older CLI shipped a URL-handler/TCC helper stub at
+# ~/.local/share/claude/ClaudeCode.app whose bundle seal is inconsistent ("code has no resources but
+# signature indicates they must be present") — Gatekeeper renders that as "ClaudeCode.app is damaged and
+# can't be opened." The dialog's own "Move to Trash" button RESEEDS the loop (LaunchServices keeps the
+# trashed copy registered). Steady state for CLI 2.1.190+ is ZERO ClaudeCode.app registrations.
+# scripts/heal-claude-lsregister.sh is the effector; this block is its sensor. Agent-curable. [[macos-tcc-gatekeeper-dialogs-solved]]
+LSREG="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Support/lsregister"
+stub_bad=""
+if [ -x "$LSREG" ]; then
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    case "$p" in "$HOME"/.local/share/claude/*|"$HOME"/.Trash/*) : ;; *) continue ;; esac
+    out="$(codesign --verify --strict "$p" 2>&1 || true)"
+    case "$out" in *'code has no resources but signature indicates they must be present'*) stub_bad="$stub_bad $p" ;; esac
+  done <<EOF
+$("$LSREG" -dump 2>/dev/null | grep -oE '/[^ ()]*ClaudeCode\.app' | sort -u)
+EOF
+fi
+if [ -z "$stub_bad" ]; then
+  green "Gatekeeper: no registered-but-rejected ClaudeCode.app stub (no 'damaged, move to Trash' reseed loop)"
+else
+  red "Gatekeeper: LaunchServices-registered ClaudeCode.app fails its code seal → 'damaged, move to Trash' every launch:$stub_bad"
+  cure "LIMEN_CLAUDE_LSREGISTER_HEAL=1 bash scripts/heal-claude-lsregister.sh   # unregister + remove the stub, sweep ~/.Trash, re-verify count 0"
+  note "Never click 'Move to Trash' on the dialog — it reseeds the loop (LaunchServices keeps the trashed copy registered). The healer is the only convergent cure."
+fi
+echo
+
 if [ "$gaps" -eq 0 ]; then
   echo "ALL CLEAR — no recurring permission dialog remains. (re-run anytime to confirm it stays so)"
   exit 0

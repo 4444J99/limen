@@ -2737,6 +2737,13 @@ parameters:
     owner: tabularius
     note: "The effector for the launch-agent liveness invariant (scripts/launch-agent-liveness.py --apply, sensor section 0g4, gated by when_env). When 1, the beat re-bootstraps + kickstarts any critical organ in spec/critical-launch-agents.json that is down — restoring a plist from ~/Library/LaunchAgents.disabled/ if a quiesce quarantined it. This is the SINGLE durable human grant that closes the sensor-without-effector defect: arm once and the daemon keeps the mint / tunnel / credential organ alive across quiesce + reboot forever, without a per-incident approval. OFF by default because it re-enables persistent launchd services (an authorization, not a default). Owner arms it in the daemon env (~/.limen.env)."
 
+  LIMEN_CLAUDE_LSREGISTER_HEAL:
+    default: "0"               # OFF — the effector. Arm once to auto-clear the malformed ClaudeCode.app stub.
+    env: LIMEN_CLAUDE_LSREGISTER_HEAL
+    self_update: none
+    owner: tabularius
+    note: "The effector for the recurring macOS Gatekeeper 'ClaudeCode.app is damaged, move it to Trash' dialog (scripts/heal-claude-lsregister.sh, sensed by dialogs-silenced.sh section 4b, beat-wired on the heartbeat hygiene cadence beside heal-claude-update-marker.sh). Dry-run by default (reports the cure, mutates nothing). When 1, the beat unregisters + removes ONLY the exact-malformed-seal ClaudeCode.app stub (codesign 'code has no resources but signature indicates they must be present') under ~/.local/share/claude or ~/.Trash and sweeps reseeded Trash copies, returning LaunchServices registrations to the steady state of ZERO; never touches /Applications, the versions/ dir, or the resolved CLI symlink. macOS-only; fails OPEN off-darwin. Arm once in the daemon env (~/.limen.env) so occurrence #4 self-heals without a per-incident approval. Set 0 to silence."
+
   LIMEN_BEAT_LAUNCHAGENT_LIVENESS:
     default: 4
     env: LIMEN_BEAT_LAUNCHAGENT_LIVENESS
