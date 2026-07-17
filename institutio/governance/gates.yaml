@@ -351,6 +351,11 @@ gates:
     paths: ["scripts/publish-sweep.py", "scripts/apply-visibility.py", "scripts/tests/publish-flip.test.sh", "scripts/publication-policy.py"]
     owner: gitvs
     note: "Safety regression for the private→public flip pipeline: a history-only secret (deleted at HEAD) must red the sweep — a flip publishes history; a clean repo must green it; and apply-visibility must HOLD a publish at every missing gate (no released L-PORTAL-PUBLISH-* lever / no green+fresh sweep receipt / dark without LIMEN_VISIBILITY_APPLY)."
+  seo-registry-parity:
+    command: "python3 scripts/seo-audit.py --doctor"
+    paths: ["scripts/seo-audit.py", "scripts/repo-metadata-sync.py", "scripts/generate-seo-backlog.py", "institutio/github/seo-seeds.yaml", "positioning-seeds.json"]
+    owner: gitvs
+    note: "The seo-seeds overlay's own drift predicate (deterministic, offline): row discipline (owner/note, ≤350-char price-clean descriptions, ≤20 valid topics) and the no-dual-registry rule (a repo seeded in positioning-seeds.json may not also carry an seo-seeds row — the positioning seed wins)."
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:

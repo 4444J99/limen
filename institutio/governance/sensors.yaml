@@ -155,6 +155,44 @@ sensors:
         tier: live
         command: "python3 scripts/gitvs.py doctor"
 
+  seo-drift:
+    section: "heartbeat"
+    title: "SEO drift — public-portal surface: audit sweep -> metadata drift check -> bounded task filing (dry until armed)"
+    gate: LIMEN_SEO_DRIFT
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_SEO
+      default: 24
+    timeout:
+      env: LIMEN_SEO_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/seo-audit.py --sweep"
+        quiet_output: true
+        severity: silent
+        escalation: "seo audit sweep skipped or exceeded its bound"
+      - command: "python3 scripts/repo-metadata-sync.py --check"
+        severity: advisory
+        escalation: "repo metadata drift above — the effector converges it once lever L-SEO-METADATA arms LIMEN_REPO_METADATA_APPLY=1 (rides the github-estate-reconcile beat)"
+      - command: "python3 scripts/generate-seo-backlog.py"
+        args_when:
+          - env: LIMEN_SEO_BACKLOG_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "seo backlog generation skipped or exceeded its bound"
+    omega_eligible:
+      - label: "seo registry parity"
+        tier: det
+        command: "python3 scripts/seo-audit.py --doctor"
+      - label: "seo estate posture"
+        tier: live
+        command: "python3 scripts/seo-audit.py --check"
+
   observatory-run:
     section: "heartbeat"
     title: "run the OBSERVATORY legibility-and-traction loop (ships dark; armed by L-OBSERVATORY-ACTIVATE)"

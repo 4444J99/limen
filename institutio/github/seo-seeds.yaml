@@ -1,0 +1,21 @@
+# SEO-SEEDS — the thin judgment overlay for repo metadata (description / topics / homepage).
+#
+# Layer 2 of repo-metadata-sync.py's resolution: positioning-seeds.json (the curated value repos)
+# WINS above this file; deterministic derivation (README first paragraph + name/language tokens,
+# fill-gaps-never-overwrite) covers everything below it. A row lands here ONLY where human judgment
+# improves on derivation — drafted by `repo-metadata-sync.py --suggest`, curated by hand, landed by
+# PR (the SEO-<slug>-seed fleet tasks author these).
+#
+# Row discipline (held by `seo-audit.py --doctor`, wired as the seo-registry-parity gate):
+#   description ≤350 chars, buyer-search phrase first, NO price/currency tokens;
+#   topics ≤20, each ^[a-z0-9][a-z0-9-]{0,34}$; owner + note REQUIRED;
+#   a repo may not appear in BOTH this file and positioning-seeds.json (the positioning seed wins).
+
+schema_version: 0.1
+
+defaults:
+  homepage: "https://github.com/organvm"   # the portal edge every homepage-gap repo points into
+  owner: seo
+  note: "Defaults for the derivation layer; per-repo judgment rows below."
+
+repos: {}

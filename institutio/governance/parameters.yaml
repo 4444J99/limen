@@ -2313,6 +2313,54 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Receipt freshness window apply-visibility.py enforces: a publish-sweep receipt older than this cannot sanction a flip — the repo may have changed since it was swept."
+  LIMEN_SEO_DRIFT:
+    default: "1"
+    env: LIMEN_SEO_DRIFT
+    self_update: none
+    owner: gitvs
+    note: "Master on/off for the seo-drift beat sensor (audit sweep -> metadata drift check -> bounded backlog filing). All three steps are read-only/dry until their own valves arm; 0 disables the pass."
+  LIMEN_BEAT_SEO:
+    default: 24
+    env: LIMEN_BEAT_SEO
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N beats) of the seo-drift sensor. Metadata and READMEs move on human timescales; a slow cadence is honest."
+  LIMEN_SEO_TIMEOUT:
+    default: 300
+    env: LIMEN_SEO_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Per-run timeout (seconds) for the seo-drift sensor steps; the runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_SEO_BACKLOG_APPLY:
+    default: "0"
+    env: LIMEN_SEO_BACKLOG_APPLY
+    self_update: none
+    owner: gitvs
+    note: "Armed valve for generate-seo-backlog.py task filing on the beat: 0 (default) prints the plan; 1 appends bounded SEO-* tasks to the board (floor/cap/dedup guarded). Arming order: this first (tasks flow), then L-SEO-METADATA (metadata writes), then the publish wave."
+  LIMEN_SEO_FLOOR:
+    default: 6
+    env: LIMEN_SEO_FLOOR
+    self_update: none
+    owner: gitvs
+    note: "Keep at least this many open seo-class tasks on the board; the generator tops up to it."
+  LIMEN_SEO_MAX:
+    default: 6
+    env: LIMEN_SEO_MAX
+    self_update: none
+    owner: gitvs
+    note: "Hard cap on SEO tasks generated per run (anti-flood)."
+  LIMEN_REPO_METADATA_APPLY:
+    default: 0
+    env: LIMEN_REPO_METADATA_APPLY
+    self_update: none
+    owner: gitvs
+    note: "Second half of the DOUBLE-DARK gate on repo-metadata-sync.py (description/topics/homepage writes — outward-facing but reversible). Armed by lever L-SEO-METADATA. Seeds win over live values; derivation fills gaps and never overwrites a human-set value."
+  LIMEN_REPO_METADATA_MAX:
+    default: 25
+    env: LIMEN_REPO_METADATA_MAX
+    self_update: none
+    owner: gitvs
+    note: "Repos mutated per repo-metadata-sync run — the ~45-repo gap converges over a couple of beats instead of one mass write, gentle on the rate limit."
   LIMEN_OBSERVATORY:
     default: 0
     env: LIMEN_OBSERVATORY

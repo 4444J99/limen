@@ -74,6 +74,7 @@ resource_types:
     observe: "gh api /repos/{owner}/{repo}"
     effector:
       - {kind: delegate, argv: [python3, scripts/apply-visibility.py, --apply]}
+      - {kind: delegate, argv: [python3, scripts/repo-metadata-sync.py, --apply]}
       - {kind: file-atom, target: L-REPO-SETTINGS}
       - {kind: manual}
     status: active

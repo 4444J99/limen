@@ -483,7 +483,23 @@ def observe(estate: dict) -> dict:
 
     # Cross-org app estate — the full 'what apps are on ALL my orgs' inventory (governed living fact).
     led["app_estate"] = _org_app_estate(token, online)
+
+    # SEO posture summary — fail-open read of the seo-audit sweep artifact (counts only; the
+    # per-repo detail stays in the runtime sink so the ledger fixed point never churns on it).
+    led["seo"] = _seo_summary()
     return led
+
+
+def _seo_summary() -> dict:
+    try:
+        body = json.loads((ROOT / "logs" / "seo-audit.json").read_text(encoding="utf-8"))
+        return {
+            "audited": body.get("audited"),
+            "passing": body.get("passing"),
+            "failing": len(body.get("failing") or []),
+        }
+    except Exception:
+        return {"audited": None, "passing": None, "failing": None}
 
 
 def write_ledger(led: dict) -> None:

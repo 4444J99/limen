@@ -621,6 +621,17 @@
       "unlocks": [],
       "source_task": "publication-engine lane (estate decision commit)",
       "issue": null
+    },
+    {
+      "id": "L-SEO-METADATA",
+      "label": "Arm the repo-metadata effector: setting LIMEN_REPO_METADATA_APPLY=1 (with LIMEN_GITVS_APPLY=1 so the reconcile beat dispatches it) lets repo-metadata-sync.py write description/topics/homepage on governed public repos — outward-facing but reversible. Seeds (positioning-seeds.json, seo-seeds.yaml) win; derivation only fills gaps, never overwrites a human-set value; bounded 25 repos/run. Review one dry plan first: python3 scripts/repo-metadata-sync.py",
+      "owner": "him",
+      "cost": "5 min review + one env flip",
+      "status": "needs_human",
+      "gate": "review the dry plan; set LIMEN_REPO_METADATA_APPLY=1 in the runtime env",
+      "unlocks": [],
+      "source_task": "publication-engine lane (SEO organ)",
+      "issue": null
     }
   ]
 }
