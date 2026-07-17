@@ -210,7 +210,7 @@
       "source_task": "billing-lock root (life-os-mandate: card-0186 fraud-hold)",
       "gate": "a phone call only you can place to your bank — never automatable",
       "issue": 182,
-      "note": " NEW DOWNSTREAM INSTANCE observed 2026-07-15: GitHub Actions on PRIVATE repos is billing-blocked -- every domus-genoma CI job dies at startup with 'The job was not started because recent account payments have failed or your spending limit needs to be increased' (public repos like limen unaffected: free minutes). Same billing-lock class as the Stripe/subscription locks this root lever already owns; clearing the hold should restore private-repo CI. Until then domus-genoma merges ride local gates (template validation + pytest run locally, e.g. PR #302). | HEAL-PR VERDICTS 2026-07-16 (local-gates-only; Actions billing-blocked throughout): PR #181 LOCAL-GATES-GREEN -- applies cleanly to master (5 behind, no file overlap); shellcheck/shfmt/yamllint/ruff/json all PASS; also fixes pre-existing ruff E501 in dot_local/bin/executable_mail-triage.tmpl:698 that currently fails on master. Merge first. PR #187 FAILS-LOCALLY on that same pre-existing E501 (file not touched by #187); otherwise fully rebased on current master and green. Path: merge #181, then rebase #187 (or apply the 3-line classify_message reformat on its branch). PR #183 STALE-BASE-VETO -- 4/4 changed files conflict with current master (GitHub: CONFLICTING/DIRTY); needs a fresh HEAL-rebase dispatch by the healer organ; do not merge as-is. Ordered runbook: merge #181 -> rebase+merge #187 -> healer re-heals #183. Local-tooling gaps (honesty): BATS tests, node --test server tests (most relevant to #187), doc-lint/ai-config-parity not runnable locally. Pre-existing master fact: 7 pytest failures in tests/test_agent_surface_healthcheck.py (AttributeError: no attribute check_chezmoiignore) are on domus-genoma master, not introduced by any of these PRs. | GEMINI TRUSTFOLDERS FIXED 2026-07-16: domus-genoma PR #305 (gemini trustedFolders template; local gates = template renders byte-identical to the verified live file) closes the trustedFolders gap alongside PR #304. One-click runbook for the trusted-folders class: merge #304 -> merge #305 (both local-gates-green; Actions billing-blocked, rides local gates per this lever's note)."
+      "note": " NEW DOWNSTREAM INSTANCE observed 2026-07-15: GitHub Actions on PRIVATE repos is billing-blocked -- every domus-genoma CI job dies at startup with 'The job was not started because recent account payments have failed or your spending limit needs to be increased' (public repos like limen unaffected: free minutes). Same billing-lock class as the Stripe/subscription locks this root lever already owns; clearing the hold should restore private-repo CI. Until then domus-genoma merges ride local gates (template validation + pytest run locally, e.g. PR #302). | HEAL-PR VERDICTS 2026-07-16 (local-gates-only; Actions billing-blocked throughout): PR #181 LOCAL-GATES-GREEN -- applies cleanly to master (5 behind, no file overlap); shellcheck/shfmt/yamllint/ruff/json all PASS; also fixes pre-existing ruff E501 in dot_local/bin/executable_mail-triage.tmpl:698 that currently fails on master. Merge first. PR #187 FAILS-LOCALLY on that same pre-existing E501 (file not touched by #187); otherwise fully rebased on current master and green. Path: merge #181, then rebase #187 (or apply the 3-line classify_message reformat on its branch). PR #183 STALE-BASE-VETO -- 4/4 changed files conflict with current master (GitHub: CONFLICTING/DIRTY); needs a fresh HEAL-rebase dispatch by the healer organ; do not merge as-is. Ordered runbook: merge #181 -> rebase+merge #187 -> healer re-heals #183. Local-tooling gaps (honesty): BATS tests, node --test server tests (most relevant to #187), doc-lint/ai-config-parity not runnable locally. Pre-existing master fact: 7 pytest failures in tests/test_agent_surface_healthcheck.py (AttributeError: no attribute check_chezmoiignore) are on domus-genoma master, not introduced by any of these PRs. | GEMINI TRUSTFOLDERS FIXED 2026-07-16: domus-genoma PR #305 (gemini trustedFolders template; local gates = template renders byte-identical to the verified live file) closes the trustedFolders gap alongside PR #304. One-click runbook for the trusted-folders class: merge #304 -> merge #305 (both local-gates-green; Actions billing-blocked, rides local gates per this lever's note). GITHUB SETTINGS AFTER THE CALL (2026-07-17, docs/github-estate-runbook.md): (1) github.com → organvm → Settings → Billing → retry the failed payment; (2) Billing → Spending limits → set Actions to $25 (matches estate.yaml orgs.canonical.actions_spending_limit_usd / LIMEN_ACTIONS_BUDGET); (3) private-repo Actions unblocks — verify with `python3 scripts/gitvs.py usage --check` (billing canary). DONE 2026-07-17: payment observed succeeding (canary green) and the $25 Actions budget was set by machine via the Budgets API. The enterprise was emptied by machine the same day (#1185 closed); Copilot Pro restored FREE 2026-07-17 (maintainer program, #1186 closed); the one remaining purchase: L-ORG-TEAM-UPGRADE (#1202)."
     },
     {
       "id": "L-AGENT-BASH-PROMPT",
@@ -498,24 +498,6 @@
       "issue": 928
     },
     {
-      "id": "L-INTEGRATION-CODERABBIT",
-      "label": "Install CodeRabbit (AI PR review) on the organvm org — extend the EXISTING organvm-i-theoria install to organvm (or organvm/limen) at https://github.com/apps/coderabbitai. Free for public repos. The machine half is done: .coderabbit.yaml is committed at the conductor root and scripts/sync-marketplace-config.py fans it out; gitvs.py doctor class I cites this lever until CodeRabbit is observed installed on organvm.",
-      "owner": "yours",
-      "cost": "~2 min one-time (authorize the app on organvm); REVERSIBLE (uninstall)",
-      "unlocks": "AI review on every organvm/limen PR; the GITVS coderabbit integration goes green",
-      "source_task": "GITVS §3 integrations (institutio/github/estate.yaml integrations.coderabbit)",
-      "issue": 933
-    },
-    {
-      "id": "L-INTEGRATION-RENOVATE",
-      "label": "Install Renovate (dependency automation) on the organvm org — extend the EXISTING organvm-i-theoria install to organvm at https://github.com/apps/renovate. Free. The machine half is done: renovate.json is committed at the conductor root. Coexistence: trim .github/dependabot.yml to security-only (or remove) when Renovate goes live to avoid duplicate dependency PRs (noted in renovate.json). gitvs.py doctor class I cites this lever until Renovate is observed installed on organvm.",
-      "owner": "yours",
-      "cost": "~2 min authorize + a 1-line dependabot.yml trim; REVERSIBLE",
-      "unlocks": "grouped, scheduled dependency PRs on organvm/limen; the GITVS renovate integration goes green",
-      "source_task": "GITVS §3 integrations (institutio/github/estate.yaml integrations.renovate)",
-      "issue": 934
-    },
-    {
       "id": "L-OBSERVATORY-ACTIVATE",
       "label": "Activate OBSERVATORY (the legibility-and-traction organ): set LIMEN_OBSERVATORY=1 in ~/.limen.env to run its daily loop (collect trending winners vs matched controls → score transferable mechanisms → reconcile our own claim-drift → one reversible experiment for the hero repo). Ships dark; runs DRY (proposals only) until OBSERVATORY_APPLY=1 is separately armed. Reversible: set back to 0.",
       "owner": "yours",
@@ -633,6 +615,20 @@
       "unlocks": [],
       "source_task": "publication-engine lane (SEO organ)",
       "issue": 1191
+    },
+    {
+      "id": "L-ORG-TEAM-UPGRADE",
+      "label": "Upgrade the `organvm` org to Team (~$4/mo) — the ONE surviving atom of the old enterprise-cancel lever (#1185, closed with receipts). The Enterprise half is DONE by machine (2026-07-17): all 8 shell orgs were removed from the meta-organvm enterprise via scripted same-origin form posts (0 organizations, 0 consumed licenses, every org standalone on the free plan, names kept; gitvs doctor class J green, verified live). Team on organvm arms private-repo rulesets/branch-protection (#257). Optional, unforced: delete the now-empty meta-organvm enterprise container.",
+      "owner": "yours",
+      "cost": "$4/mo; ~1 min checkout; REVERSIBLE (downgrade any time)",
+      "unlocks": "private-repo rulesets/branch protection (#257); required merge checks on the 105 private repos",
+      "source_task": "GITVS estate (institutio/github/estate.yaml orgs.canonical plan_ok); docs/github-estate-runbook.md step 3",
+      "gate": "org billing checkout — a purchase; only the org owner can buy; never automatable",
+      "steps": [
+        "github.com → organvm → Settings → Billing and plans → Compare plans → Team (monthly)",
+        "Done when `gh api /orgs/organvm --jq .plan.name` prints 'team'"
+      ],
+      "issue": 1202
     }
   ]
 }

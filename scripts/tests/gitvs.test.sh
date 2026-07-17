@@ -319,6 +319,29 @@ else
   echo "  MISMATCH (case18 G/K pure rungs): got:"; echo "$out" | sed 's/^/    /'; fail=$((fail+1))
 fi
 
+# ── Case 19: a well-formed `orgs:` (ACCOUNT-layer) row passes ──
+FIX="$work/orgsok.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["orgs"] = {"reserved": {
+    "match": ["organvm-*"], "plan_ok": ["free"], "repos": 0,
+    "owner": "gitvs", "note": "name-reservation shells",
+}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 0 "drift == ∅" "case19 valid orgs row passes"
+
+# ── Case 20: an `orgs:` row missing plan_ok / with a malformed plan_ok → red (schema discipline) ──
+FIX="$work/orgsbad.yaml"; valid_estate "$FIX"
+python3 - "$FIX" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+d["orgs"] = {"reserved": {"match": ["organvm-*"], "plan_ok": "free", "repos": 0, "owner": "gitvs", "note": "bad"}}
+open(sys.argv[1], "w").write(yaml.safe_dump(d))
+PY
+expect 1 "plan_ok must be a non-empty string list" "case20 malformed orgs row reddens"
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "gitvs.test.sh: PASS ($pass checks)"

@@ -334,6 +334,51 @@ def _org_app_estate(token: str | None, online: bool) -> dict:
     return out
 
 
+def _org_class(org: str, estate: dict) -> tuple[str | None, dict | None]:
+    """First-match-wins bucket of an org login into an `orgs:` registry row — the classify_repo
+    analogue, one level up (the ACCOUNT layer)."""
+    for name, row in (estate.get("orgs") or {}).items():
+        if not isinstance(row, dict):
+            continue
+        for glob in row.get("match") or []:
+            if fnmatch.fnmatch(org, glob):
+                return name, row
+    return None, None
+
+
+def _org_posture(estate: dict, online: bool) -> dict:
+    """The ACCOUNT-layer Lens: every org the owner belongs to, with its live billing plan and repo
+    counts (gh api /orgs/{o}). User-scoped keyring auth (the _org_app_estate contract — the per-org
+    App token structurally cannot see the user's other orgs). Pure observation: the policy diff
+    against the `orgs:` registry is doctor class L. Fail-open; deterministic (sorted)."""
+    out: dict = {"by_org": None}
+    if not online or not (estate.get("orgs") or {}):
+        return out
+    r = _gh_user(["api", "/user/orgs", "--paginate", "--jq", ".[].login"], timeout=45)
+    if r.returncode != 0:
+        return out
+    by_org: dict[str, dict] = {}
+    for o in sorted({s.strip() for s in (r.stdout or "").splitlines() if s.strip()}):
+        ri = _gh_user(
+            ["api", f"/orgs/{o}", "--jq", "{plan: .plan.name, private: .total_private_repos, public: .public_repos}"],
+            timeout=30,
+        )
+        if ri.returncode != 0:
+            continue
+        try:
+            row = json.loads(ri.stdout or "{}")
+        except json.JSONDecodeError:
+            continue
+        cls, _ = _org_class(o, estate)
+        by_org[o] = {
+            "plan": row.get("plan"),
+            "repos": int(row.get("private") or 0) + int(row.get("public") or 0),
+            "class": cls,
+        }
+    out["by_org"] = by_org
+    return out
+
+
 def _owner_repos(owner: str, token: str | None) -> list[dict] | None:
     """Enumerate ALL repos of an owner with per-repo census facts. Tries the org route first —
     /orgs/{owner}/repos?type=all surfaces the private repos the cascade token can see (the /users
@@ -487,6 +532,9 @@ def observe(estate: dict) -> dict:
     # SEO posture summary — fail-open read of the seo-audit sweep artifact (counts only; the
     # per-repo detail stays in the runtime sink so the ledger fixed point never churns on it).
     led["seo"] = _seo_summary()
+
+    # Org posture — the ACCOUNT layer (billing plan + repo custody per org; class L's input).
+    led["orgs"] = _org_posture(estate, online)
     return led
 
 
@@ -761,6 +809,20 @@ def parity(estate: dict) -> list[str]:
             for field in ("owner", "note"):
                 if field not in budget:
                     fails.append(f"budget '{bname}': missing '{field}'")
+
+    # `orgs:` (the ACCOUNT layer) — the same field discipline; plan_ok must be a non-empty string list.
+    for oname, org_row in (estate.get("orgs") or {}).items():
+        if not isinstance(org_row, dict):
+            fails.append(f"org-class '{oname}': not a mapping")
+            continue
+        for field in ("match", "plan_ok", "repos", "owner", "note"):
+            if field not in org_row:
+                fails.append(f"org-class '{oname}': missing '{field}'")
+        pok = org_row.get("plan_ok")
+        if pok is not None and (
+            not isinstance(pok, list) or not pok or not all(isinstance(p, str) and p for p in pok)
+        ):
+            fails.append(f"org-class '{oname}': plan_ok must be a non-empty string list")
     return fails
 
 
@@ -890,6 +952,7 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
             "G visibility",
             "J unclassified",
             "K seo-floor",
+            "L org-posture",
             "M org-namespace",
         ):
             skips.append(f"[{tag}] live rung — offline")
@@ -982,6 +1045,37 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool) -> int:
             cites.append(
                 f"[M org-namespace] unexpected org(s): {', '.join(unexpected)} — add to expected_orgs or lever a deletion"
             )
+
+    # L — org posture (the ACCOUNT layer): every org's live plan + repo custody vs the `orgs:`
+    # registry. An empty org riding a paid plan, or repos held outside the canonical org,
+    # is drift → cite the account-purchase atom when homed (account billing is never machine-run).
+    orgs_reg = estate.get("orgs") or {}
+    orgs_led = (led.get("orgs") or {}).get("by_org")
+    if orgs_reg:
+        if orgs_led is None:
+            skips.append("[L org-posture] could not read /user/orgs (user-scoped)")
+        else:
+            drifts: list[str] = []
+            for org, ob in sorted(orgs_led.items()):
+                _, row = _org_class(org, estate)
+                if not row:
+                    drifts.append(f"{org}: unclassed (no `orgs:` row)")
+                    continue
+                plan_ok = [str(p) for p in (row.get("plan_ok") or [])]
+                if plan_ok and str(ob.get("plan")) not in plan_ok:
+                    drifts.append(f"{org}: plan '{ob.get('plan')}' not in {plan_ok}")
+                ceiling = row.get("repos")
+                if isinstance(ceiling, int) and (ob.get("repos") or 0) > ceiling:
+                    drifts.append(f"{org}: holds {ob.get('repos')} repo(s), declared {ceiling}")
+            if drifts:
+                atom = (estate.get("human_atoms") or {}).get("enterprise_cancel", {}).get(
+                    "lever", "L-ORG-TEAM-UPGRADE"
+                )
+                more = f"; +{len(drifts) - 4} more" if len(drifts) > 4 else ""
+                line = f"[L org-posture] {len(drifts)} org(s) off account policy ({'; '.join(drifts[:4])}{more}) → {atom}"
+                (cites if atom in homed else fails).append(
+                    line + (" (owned, open)" if atom in homed else " (UNHOMED)")
+                )
 
     # A/D are per-repo posture rungs — the census surfaces the inputs; the full per-repo
     # assertion arms with the reconcile layer (bounded rotating window). Reported SKIP, never faked.
