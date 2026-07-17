@@ -2463,6 +2463,36 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Repos mutated per repo-metadata-sync run — the ~45-repo gap converges over a couple of beats instead of one mass write, gentle on the rate limit."
+  LIMEN_GH_USAGE:
+    default: "1"
+    env: LIMEN_GH_USAGE
+    self_update: none
+    owner: gitvs
+    note: "Gate for the github-actions-usage beat sensor (the Meter: scripts/gitvs.py usage --check). Projects monthly NET Actions spend against budgets.actions_spend and reads the account-billing canary (the literal 'payments have failed' run annotation that used to be re-diagnosed in chat every session). Advisory, fail-open offline. 0 disables the pass."
+  LIMEN_BEAT_GH_USAGE:
+    default: 24
+    env: LIMEN_BEAT_GH_USAGE
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N beats) of the github-actions-usage sensor. Spend moves daily, not per-beat — a slow cadence is honest; the omega rung re-runs it live on demand."
+  LIMEN_GH_USAGE_TIMEOUT:
+    default: 120
+    env: LIMEN_GH_USAGE_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Per-run timeout (seconds) for the github-actions-usage sensor, resolved by the generic scheduled runner; overrun kills the command group and the beat continues fail-open."
+  LIMEN_ACTIONS_BUDGET:
+    default: 25
+    env: LIMEN_ACTIONS_BUDGET
+    self_update: none
+    owner: gitvs
+    note: "Monthly NET Actions spend ceiling (USD) for gitvs.py usage --check. Empty/unset ⇒ derived from estate.yaml budgets.actions_spend.monthly_net_usd_max (the registry owns the default; this env is the operator override). Mirrors orgs.canonical.actions_spending_limit_usd — the GitHub-side spending limit is his-hand (the runbook step 2)."
+  LIMEN_BILLING_CANARY_REPO:
+    default: "organvm/limen"
+    env: LIMEN_BILLING_CANARY_REPO
+    self_update: none
+    owner: gitvs
+    note: "PRIVATE repo whose newest completed Actions run the billing canary reads for the account-billing block annotation. The conductor (private since 2026-07-16) is the natural canary: its CI runs every PR, so a billing wall surfaces within one beat."
   LIMEN_OBSERVATORY:
     default: 0
     env: LIMEN_OBSERVATORY

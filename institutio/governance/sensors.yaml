@@ -155,6 +155,28 @@ sensors:
         tier: live
         command: "python3 scripts/gitvs.py doctor"
 
+  github-actions-usage:
+    section: "heartbeat"
+    title: "Actions spend telemetry — projected monthly net within budget AND the account-billing canary green"
+    gate: LIMEN_GH_USAGE
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_GH_USAGE
+      default: 24
+    timeout:
+      env: LIMEN_GH_USAGE_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/gitvs.py usage --check"
+        severity: advisory
+        escalation: "Actions spend over budget or the account-billing canary is red — read docs/github-actions-usage.json; roots: L-CARD-FRAUD-HOLD (#182) then L-ORG-TEAM-UPGRADE (docs/github-estate-runbook.md)"
+    omega_eligible:
+      - label: "GitHub Actions budget"
+        tier: live
+        command: "python3 scripts/gitvs.py usage --check"
+
   seo-drift:
     section: "heartbeat"
     title: "SEO drift — public-portal surface: audit sweep -> metadata drift check -> bounded task filing (dry until armed)"

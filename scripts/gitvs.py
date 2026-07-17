@@ -35,6 +35,7 @@ Env: LIMEN_ROOT, LIMEN_OFFLINE, LIMEN_GITVS_OWNERS (owners to enumerate; default
 from __future__ import annotations
 
 import argparse
+import calendar
 import fnmatch
 import json
 import os
@@ -42,6 +43,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -1420,6 +1422,146 @@ def classify_estate(
     return 0
 
 
+# ── the Meter: Actions spend telemetry + the account-billing canary ─────────────────────────────
+USAGE_DOC = ROOT / "docs" / "github-actions-usage.json"
+USAGE_STAMP = ROOT / "logs" / "gh-usage.json"
+BILLING_BLOCK_PHRASES = ("payments have failed", "spending limit")
+
+
+def _usage_month(org: str, year: int, month: int) -> dict | None:
+    """One month's enhanced-billing usage report, rolled up by product + the top Actions repos by
+    minutes. User-scoped keyring auth (_gh_user) — account billing is structurally invisible to the
+    App token. None ⟺ endpoint unreadable (fail-open, never a faked verdict)."""
+    r = _gh_user(
+        ["api", f"/organizations/{org}/settings/billing/usage?year={year}&month={month}"],
+        timeout=60,
+    )
+    if r.returncode != 0:
+        return None
+    try:
+        items = (json.loads(r.stdout or "{}")).get("usageItems") or []
+    except json.JSONDecodeError:
+        return None
+    by_product: dict[str, dict[str, float]] = {}
+    actions_minutes_by_repo: dict[str, float] = {}
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        product = str(it.get("product") or "?")
+        row = by_product.setdefault(product, {"quantity": 0.0, "gross_usd": 0.0, "net_usd": 0.0})
+        row["quantity"] += float(it.get("quantity") or 0)
+        row["gross_usd"] += float(it.get("grossAmount") or 0)
+        row["net_usd"] += float(it.get("netAmount") or 0)
+        if product == "actions":
+            repo = str(it.get("repositoryName") or "?")
+            actions_minutes_by_repo[repo] = actions_minutes_by_repo.get(repo, 0.0) + float(it.get("quantity") or 0)
+    top = sorted(actions_minutes_by_repo.items(), key=lambda kv: (-kv[1], kv[0]))[:10]
+    return {
+        "by_product": {k: {f: round(x, 2) for f, x in v.items()} for k, v in sorted(by_product.items())},
+        "actions_top_repos_minutes": {k: round(v) for k, v in top},
+        "gross_usd_total": round(sum(v["gross_usd"] for v in by_product.values()), 2),
+        "net_usd_total": round(sum(v["net_usd"] for v in by_product.values()), 2),
+    }
+
+
+def _billing_canary(repo: str) -> tuple[bool | None, str]:
+    """True ⟺ the newest completed Actions run on `repo` did NOT die on the account-billing wall
+    (the literal 'recent account payments have failed / spending limit' job annotation — the exact
+    text every blocked session used to re-diagnose in chat). A NORMAL CI failure stays green: this
+    canary reads only the billing block. None ⟺ unreadable (SKIP, never a faked verdict)."""
+    r = _gh_user(
+        [
+            "api",
+            f"/repos/{repo}/actions/runs?per_page=1&status=completed",
+            "--jq",
+            "{id: .workflow_runs[0].id, conclusion: .workflow_runs[0].conclusion}",
+        ],
+        timeout=30,
+    )
+    if r.returncode != 0:
+        return None, "runs unreadable"
+    try:
+        run = json.loads(r.stdout or "{}")
+    except json.JSONDecodeError:
+        return None, "runs unparseable"
+    run_id, conclusion = run.get("id"), run.get("conclusion")
+    if not run_id:
+        return None, "no completed runs"
+    if conclusion != "failure":
+        return True, f"newest run {run_id} concluded '{conclusion}'"
+    rj = _gh_user(["api", f"/repos/{repo}/actions/runs/{run_id}/jobs", "--jq", ".jobs[].id"], timeout=30)
+    job_ids = [j.strip() for j in (rj.stdout or "").splitlines() if j.strip()] if rj.returncode == 0 else []
+    for jid in job_ids[:5]:
+        ra = _gh_user(["api", f"/repos/{repo}/check-runs/{jid}/annotations", "--jq", ".[].message"], timeout=30)
+        text = (ra.stdout or "") if ra.returncode == 0 else ""
+        if any(p in text for p in BILLING_BLOCK_PHRASES):
+            return False, f"run {run_id}: account-billing block annotation present"
+    return True, f"newest run {run_id} failed, but not on the billing wall"
+
+
+def usage(estate: dict, *, check: bool, print_json: bool) -> int:
+    """The Meter: projected monthly NET Actions spend vs the declared budget AND the billing canary.
+    Exit 0 ⟺ within budget and no account-billing block; offline/unreadable → SKIP exit 0 (the
+    fail-open sibling-organ contract). Writes the durable doc + volatile stamp (the census idiom)."""
+    if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
+        print("[gitvs] usage: SKIP (offline)")
+        return 0
+    now = datetime.now(timezone.utc)
+    org = owners(estate)[0]
+    month_data = _usage_month(org, now.year, now.month)
+    if month_data is None:
+        print(f"[gitvs] usage: SKIP (billing usage endpoint unreadable for {org} — needs the user-scoped keyring token)")
+        return 0
+    canary_repo = os.environ.get("LIMEN_BILLING_CANARY_REPO") or "organvm/limen"
+    canary_green, canary_detail = _billing_canary(canary_repo)
+    budget_default = ((estate.get("budgets") or {}).get("actions_spend") or {}).get("monthly_net_usd_max", 25)
+    try:
+        budget = float(os.environ.get("LIMEN_ACTIONS_BUDGET") or budget_default)
+    except ValueError:
+        budget = float(budget_default)
+    days_in_month = calendar.monthrange(now.year, now.month)[1]
+    projected = round(month_data["net_usd_total"] / max(now.day, 1) * days_in_month, 2)
+    doc = {
+        "schema": "limen.github_actions_usage.v1",
+        "org": org,
+        "month": f"{now.year:04d}-{now.month:02d}",
+        "as_of_day": now.day,
+        **month_data,
+        "net_usd_projected_month_end": projected,
+        "budget_net_usd": budget,
+        "billing_canary": {"repo": canary_repo, "green": canary_green, "detail": canary_detail},
+    }
+    try:
+        USAGE_DOC.parent.mkdir(parents=True, exist_ok=True)
+        USAGE_DOC.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n")
+        USAGE_STAMP.parent.mkdir(parents=True, exist_ok=True)
+        USAGE_STAMP.write_text(
+            json.dumps(
+                {"month": doc["month"], "net": doc["net_usd_total"], "projected": projected, "canary": canary_green},
+                sort_keys=True,
+            )
+            + "\n"
+        )
+    except Exception as e:  # observability must never break the beat
+        print(f"[gitvs] note: usage doc write skipped ({str(e)[:80]})")
+    if print_json:
+        print(json.dumps(doc, indent=2, sort_keys=True))
+    fails: list[str] = []
+    if projected > budget:
+        fails.append(f"projected ${projected} exceeds budget ${budget}")
+    if canary_green is False:
+        fails.append(f"billing canary RED on {canary_repo} ({canary_detail}) → L-CARD-FRAUD-HOLD (#182)")
+    if check and fails:
+        print(f"✗ gitvs usage: {'; '.join(fails)} — see {USAGE_DOC.relative_to(ROOT)}")
+        return 1
+    canary_word = "green" if canary_green else ("RED" if canary_green is False else "unreadable")
+    print(
+        f"✓ gitvs usage: net MTD ${doc['net_usd_total']}, projected ${projected} vs budget ${budget}, "
+        f"canary {canary_word} → {USAGE_DOC.relative_to(ROOT)}"
+    )
+    return 0
+
+
 # ── entry ────────────────────────────────────────────────────────────────────────────────────────
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="GITVS — the GitHub custodian: one resource graph, one loop.")
@@ -1443,6 +1585,11 @@ def main(argv: list[str] | None = None) -> int:
     pk.add_argument("--sample-max", type=int, default=2000, help="tree-path sample cap per private repo")
     pk.add_argument("--emit-overrides", action="store_true", help="print ready-to-paste repo_overrides YAML")
     pk.add_argument("--repo", help="classify a single owner/repo only")
+    pu = sub.add_parser("usage", help="Actions spend telemetry + the account-billing canary (the Meter)")
+    pu.add_argument(
+        "--check", action="store_true", help="exit 1 when projected spend exceeds budget or the canary is red"
+    )
+    pu.add_argument("--print", action="store_true", help="print the usage doc JSON to stdout too")
     args = ap.parse_args(argv)
 
     estate = load_estate()
@@ -1477,6 +1624,9 @@ def main(argv: list[str] | None = None) -> int:
             emit=bool(args.emit_overrides),
             only=args.repo,
         )
+
+    if args.cmd == "usage":
+        return usage(estate, check=bool(args.check), print_json=bool(args.print))
 
     return 2
 

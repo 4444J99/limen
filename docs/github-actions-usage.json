@@ -1,0 +1,39 @@
+{
+  "actions_top_repos_minutes": {
+    "a-i-chat--exporter": 485,
+    "domus-genoma": 877,
+    "dot-github--theoria": 5357,
+    "limen": 38633,
+    "organvm-corpvs-testamentvm": 396,
+    "organvm-engine": 457,
+    "peer-audited--behavioral-blockchain": 1431,
+    "portfolio": 346,
+    "public-record-data-scrapper": 299,
+    "universal-mail--automation": 648
+  },
+  "as_of_day": 17,
+  "billing_canary": {
+    "detail": "newest run 29590159090 concluded 'success'",
+    "green": true,
+    "repo": "organvm/limen"
+  },
+  "budget_net_usd": 25.0,
+  "by_product": {
+    "actions": {
+      "gross_usd": 343.74,
+      "net_usd": 0.0,
+      "quantity": 54911.69
+    },
+    "git_lfs": {
+      "gross_usd": 0.7,
+      "net_usd": 0.0,
+      "quantity": 7417.69
+    }
+  },
+  "gross_usd_total": 344.44,
+  "month": "2026-07",
+  "net_usd_projected_month_end": 0.0,
+  "net_usd_total": 0.0,
+  "org": "organvm",
+  "schema": "limen.github_actions_usage.v1"
+}

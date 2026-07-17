@@ -634,7 +634,11 @@ budgets:
   actions_minutes:
     budget: unlimited_public
     owner: gitvs
-    note: "Public repos = free unlimited; the durable fix was account-level billing (#182/#265)."
+    note: "Public repos = free unlimited; private-repo minutes now BILL (the conductor went private 2026-07-16) — metered by actions_spend below; the durable fix was account-level billing (#182/#265)."
+  actions_spend:
+    monthly_net_usd_max: 25                # mirrors orgs.canonical.actions_spending_limit_usd; env override LIMEN_ACTIONS_BUDGET
+    owner: gitvs
+    note: "Projected monthly NET Actions spend ceiling — the gitvs.py usage --check predicate (beat sensor github-actions-usage). The $0 relief for private heavy lanes is the self-hosted runner (scripts/runner-install.sh); this budget is the net under it."
   token_cascade:
     expected: "app > pat > gh"             # gh-app-token.sh --which should resolve to `app` once the App is born
     owner: gitvs
