@@ -2,7 +2,7 @@ name: Conductor Report
 
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "17 */6 * * *"   # pure observability — 6-hourly is honest; hourly burned ~24× the paid private-repo minutes
   workflow_dispatch:
 
 permissions:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   conductor-report:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:

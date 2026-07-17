@@ -86,7 +86,7 @@ permissions:
 
 jobs:
   deterministic-compute:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}   # the 37k-min/mo whale — one variable flip routes it to the $0 self-hosted lane
     timeout-minutes: 45
     env:
       LIMEN_REQUEST_ID: ${{ inputs.request_id }}

@@ -28,9 +28,15 @@ on:
       - ".github/workflows/**"
   workflow_dispatch:
 
+# One live run per ref: a superseded push cancels its stale run instead of burning
+# paid private-repo minutes to completion (pr-gate.yml already does this; CI did not).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   python:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -108,7 +114,7 @@ jobs:
 
   verify:
     needs: [python, worker, web]
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -138,7 +144,7 @@ jobs:
           LIMEN_VERIFY_LIVE: "0"
 
   python-311:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -159,7 +165,7 @@ jobs:
         run: python -m pytest web/api/tests cli/tests -q
 
   worker:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -185,7 +191,7 @@ jobs:
         run: scripts/probe-local-worker.sh
 
   web:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
 

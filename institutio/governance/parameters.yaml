@@ -2271,6 +2271,36 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Space-separated CORE repos reap-clones.py never removes even when they are a clean pushed mirror (the operator lives in them / the conductor needs them local)."
+  LIMEN_RUNS_ON:
+    default: ""
+    env: LIMEN_RUNS_ON
+    self_update: none
+    owner: gitvs
+    note: "GitHub Actions org/repo VARIABLE (vars context, not a shell env) that routes fleet workflows' runs-on. Unset/empty ⇒ 'ubuntu-latest' (hosted). 'self-hosted' flips ci.yml/limen-agent/limen-warp-oz/auto-scale/conductor-report to the $0 Mac runner lane (scripts/runner-install.sh) — PRIVATE repos only; pr-gate deliberately stays hosted (merge-critical). Declared here so the flip is registry-visible, though GitHub resolves it, not the shell."
+  LIMEN_RUNNER_ORG:
+    default: "organvm"
+    env: LIMEN_RUNNER_ORG
+    self_update: none
+    owner: gitvs
+    note: "Org whose runner estate scripts/runner-install.sh administers (registration token, default runner-group hardening: allows_public_repositories=false — the fork-PR code-exec invariant)."
+  LIMEN_RUNNER_DIR:
+    default: "~/Workspace/_actions-runner"
+    env: LIMEN_RUNNER_DIR
+    self_update: none
+    owner: gitvs
+    note: "Install directory for the self-hosted Actions runner (outside every repo/worktree so reclaim sweeps never touch it)."
+  LIMEN_RUNNER_NAME:
+    default: "limen-mac"
+    env: LIMEN_RUNNER_NAME
+    self_update: none
+    owner: gitvs
+    note: "Registered name of this Mac's org runner; runner-install.sh is idempotent on it (already-registered ⇒ no-op)."
+  LIMEN_RUNNER_LABELS:
+    default: "self-hosted,macOS,ARM64"
+    env: LIMEN_RUNNER_LABELS
+    self_update: none
+    owner: gitvs
+    note: "Labels the runner registers with. Reference them ONLY from private-repo workflows — a public repo's fork PRs would execute arbitrary code on this host."
   LIMEN_GITVS_OWNERS:
     default: ""
     env: LIMEN_GITVS_OWNERS

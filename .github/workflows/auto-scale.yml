@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   auto-scale:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
         with:
