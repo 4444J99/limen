@@ -45,11 +45,11 @@ from limen.reacceptance_contract import (
     _expected_row_ids,
     _finding_manifest_digest,
     _id_map,
+    _legacy_v1_rows_digest,
     _lineage_digest,
     _output_digest,
     _parse_timestamp,
     _scope_cutoff_digest,
-    _semantic_normalize,
     _source_reference_manifest_digest,
     _strict_json_dumps,
     _string_ids,
@@ -78,14 +78,39 @@ def _evidence_reference_present(evidence: dict[str, Any]) -> bool:
 def _evidence_identity(evidence: Any) -> tuple[str, ...] | None:
     if not isinstance(evidence, dict):
         return None
+    identity: list[str] = []
     url = evidence.get("url")
     if isinstance(url, str) and url.startswith(("https://", "http://")):
-        return ("url", url)
+        identity.extend(("url", url))
     digest = evidence.get("digest")
     owner = evidence.get("owner")
     if isinstance(digest, str) and SHA256_DIGEST.fullmatch(digest) and isinstance(owner, str) and owner.strip():
-        return ("digest", owner, digest)
-    return None
+        identity.extend(("digest", owner, digest))
+    return tuple(identity) or None
+
+
+def _evidence_identity_atoms(evidence: Any) -> frozenset[tuple[str, ...]]:
+    if not isinstance(evidence, dict):
+        return frozenset()
+    atoms: set[tuple[str, ...]] = set()
+    url = evidence.get("url")
+    if isinstance(url, str) and url.startswith(("https://", "http://")):
+        atoms.add(("url", url))
+    digest = evidence.get("digest")
+    owner = evidence.get("owner")
+    if isinstance(digest, str) and SHA256_DIGEST.fullmatch(digest) and isinstance(owner, str) and owner.strip():
+        atoms.add(("digest", owner, digest))
+    return frozenset(atoms)
+
+
+def _receipt_identity_collides(receipts: Iterable[Any]) -> bool:
+    seen: set[tuple[str, ...]] = set()
+    for receipt in receipts:
+        atoms = _evidence_identity_atoms(receipt)
+        if not atoms or seen.intersection(atoms):
+            return True
+        seen.update(atoms)
+    return False
 
 
 def _verified_receipt_errors(
@@ -1228,7 +1253,7 @@ def _finding_errors(
 def _owner_binding_digest(value: Any) -> str:
     try:
         encoded = _strict_json_dumps(
-            _semantic_normalize(value),
+            value,
             sort_keys=True,
             separators=(",", ":"),
             ensure_ascii=False,
@@ -1524,7 +1549,7 @@ def _derive_completion_gates(
                 or len(copy_ids) != len(set(copy_ids))
                 or len(custody_ids) != len(set(custody_ids))
                 or any(identity is None for identity in receipt_identities)
-                or len(receipt_identities) != len(set(receipt_identities))
+                or _receipt_identity_collides(copies)
             ):
                 privacy_blockers.append("private_copies_not_independently_custodied")
             if (
@@ -1624,6 +1649,14 @@ def _derive_completion_gates(
         second = _parse_timestamp(last_two[1].get("refreshed_at"))
         if first is None or second is None or second <= first:
             continuation_blockers.append("refresh_order_invalid")
+        elif (
+            as_of is None
+            or first > as_of + dt.timedelta(minutes=5)
+            or second > as_of + dt.timedelta(minutes=5)
+            or as_of - first > OWNER_EVIDENCE_MAX_AGE
+            or as_of - second > OWNER_EVIDENCE_MAX_AGE
+        ):
+            continuation_blockers.append("refresh_events_stale")
         receipts = continuation.get("refresh_receipts") if isinstance(continuation, dict) else None
         if not isinstance(receipts, list) or len(receipts) != 2:
             continuation_blockers.append("owner_refresh_receipts_required")
@@ -1645,9 +1678,7 @@ def _derive_completion_gates(
                     if receipt.get("refreshed_at") != refresh.get("refreshed_at"):
                         continuation_blockers.append("owner_refresh_time_mismatch")
                     receipt_identities.append(_evidence_identity(receipt))
-            if any(identity is None for identity in receipt_identities) or len(receipt_identities) != len(
-                set(receipt_identities)
-            ):
+            if any(identity is None for identity in receipt_identities) or _receipt_identity_collides(receipts):
                 continuation_blockers.append("owner_refresh_receipts_not_distinct")
     if isinstance(continuation, dict):
         continuation_binding = {
@@ -1717,6 +1748,21 @@ def validate_document(document: dict[str, Any], scope: dict[str, Any]) -> list[s
     actual_counts = {kind: sum(row.get("kind") == kind for row in rows.values()) for kind in expected_counts}
     if actual_counts != expected_counts:
         errors.append(f"row denominator mismatch: expected {expected_counts}, got {actual_counts}")
+    legacy_rows: list[dict[str, Any]] = []
+    for row_id, row in rows.items():
+        legacy = row.get("legacy_v1")
+        if not isinstance(legacy, dict):
+            errors.append(f"row {row_id} must embed its complete frozen legacy_v1 payload")
+            continue
+        if (
+            legacy.get("id") != row_id
+            or legacy.get("kind") != row.get("kind")
+            or legacy.get("session") != row.get("session")
+        ):
+            errors.append(f"row {row_id} legacy_v1 identity does not match")
+        legacy_rows.append(legacy)
+    if len(legacy_rows) == len(rows) and _legacy_v1_rows_digest(legacy_rows) != scope["legacy_v1_rows_digest"]:
+        errors.append("embedded legacy_v1 rows do not match the frozen v1 denominator digest")
 
     attempts_raw = document.get("attempts")
     attempts, attempt_id_errors = _id_map(attempts_raw, label="attempts")
@@ -1730,12 +1776,8 @@ def validate_document(document: dict[str, Any], scope: dict[str, Any]) -> list[s
                 known_effect_owners=scope["known_side_effect_owners"],
             )
         )
-    attempt_receipts = [
-        identity
-        for attempt in attempts.values()
-        if (identity := _evidence_identity(attempt.get("receipt"))) is not None
-    ]
-    if len(attempt_receipts) != len(set(attempt_receipts)):
+    attempt_receipt_values = [attempt.get("receipt") for attempt in attempts.values()]
+    if attempt_receipt_values and _receipt_identity_collides(attempt_receipt_values):
         errors.append("attempt execution receipts must be unique across the registry")
     trajectory_identities = [
         (
@@ -1746,15 +1788,13 @@ def validate_document(document: dict[str, Any], scope: dict[str, Any]) -> list[s
     ]
     if any(not session or identity is None for session, identity in trajectory_identities):
         errors.append("attempt trajectory identities must bind an executor session and owner receipt")
-    elif len(trajectory_identities) != len(set(trajectory_identities)):
-        errors.append("attempt trajectory identities must be unique across the registry")
-    spend_receipts = [
-        _evidence_identity(attempt.get("spend", {}).get("receipt")) if isinstance(attempt.get("spend"), dict) else None
+    spend_receipt_values = [
+        attempt.get("spend", {}).get("receipt") if isinstance(attempt.get("spend"), dict) else None
         for attempt in attempts.values()
     ]
-    if any(identity is None for identity in spend_receipts):
+    if any(not _evidence_identity_atoms(receipt) for receipt in spend_receipt_values):
         errors.append("attempt spend receipts must be owner-addressable")
-    elif len(spend_receipts) != len(set(spend_receipts)):
+    elif _receipt_identity_collides(spend_receipt_values):
         errors.append("attempt spend receipts must be unique across the registry")
     receipt_roles = {
         "source": [attempt.get("source_receipt") for attempt in attempts.values()],
@@ -1773,17 +1813,15 @@ def validate_document(document: dict[str, Any], scope: dict[str, Any]) -> list[s
             for attempt in attempts.values()
         ],
     }
-    all_attempt_receipt_identities: list[tuple[str, ...]] = []
+    all_attempt_receipts: list[Any] = []
     for role, receipts in receipt_roles.items():
-        identities = [_evidence_identity(receipt) for receipt in receipts]
-        if any(identity is None for identity in identities):
+        if any(not _evidence_identity_atoms(receipt) for receipt in receipts):
             errors.append(f"attempt {role} receipts must be owner-addressable")
             continue
-        concrete_identities = [identity for identity in identities if identity is not None]
-        all_attempt_receipt_identities.extend(concrete_identities)
-        if len(concrete_identities) != len(set(concrete_identities)):
+        all_attempt_receipts.extend(receipts)
+        if _receipt_identity_collides(receipts):
             errors.append(f"attempt {role} receipts must be unique across the registry")
-    if len(all_attempt_receipt_identities) != len(set(all_attempt_receipt_identities)):
+    if all_attempt_receipts and _receipt_identity_collides(all_attempt_receipts):
         errors.append("attempt evidence receipts cannot be reused across roles or attempts")
 
     remedies_raw = document.get("remedies")

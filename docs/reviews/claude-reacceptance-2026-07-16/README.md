@@ -20,6 +20,9 @@ work:
 - `scope.json` binds every row to the frozen redacted source atom through a
   row-anchored manifest digest. Editing both a row and its attempt cannot
   substitute unrelated lineage.
+- Every row embeds its complete v1 payload, and every validation recomputes
+  the frozen v1 denominator digest. Migration-time checks alone cannot stand
+  in for release-time proof.
 - `owner_evidence` feeds five typed adapters. `completion_gates` is derived
   from those adapters and cannot be asserted manually.
 - Owner-adapter and effect-owner evidence is authenticated against
@@ -52,6 +55,12 @@ python3 scripts/reacceptance-ledger.py --require-release-ready
 
 # Read GitHub, preserve adjudicated registries, and write only when explicit.
 python3 scripts/reacceptance-ledger.py --refresh --write
+
+# After explicitly editing attempts/remedies/coverage/owner evidence, rederive
+# those registries, perform a fresh owner read, and reset fixed-point history
+# to one live refresh. A second ordinary refresh is still required.
+python3 scripts/reacceptance-ledger.py \
+  --refresh --accept-edited-registries --write
 ```
 
 The tracked snapshot is structurally valid and honestly not release-ready:

@@ -262,6 +262,14 @@ def main(
     parser.add_argument("--output", type=Path, help="write destination for refresh or migration")
     parser.add_argument("--write", action="store_true", help="explicitly write refresh or migration output")
     parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument(
+        "--accept-edited-registries",
+        action="store_true",
+        help=(
+            "with --refresh, re-derive explicitly edited attempts/remedies/coverage/owner evidence, "
+            "then perform a fresh owner read and reset fixed-point history"
+        ),
+    )
     parser.add_argument("--scope", type=Path, default=scope_path)
     parser.add_argument(
         "--previous",
@@ -273,6 +281,8 @@ def main(
     try:
         scope = load_scope(args.scope)
         if args.migrate_v1 is not None:
+            if args.accept_edited_registries:
+                raise LedgerError("--accept-edited-registries requires --refresh")
             if args.previous is not None:
                 raise LedgerError("--previous cannot be combined with --migrate-v1")
             destination = args.output or ledger_path
@@ -296,7 +306,12 @@ def main(
             destination = args.output or ledger_path
             compare_digest = _destination_precondition(destination) if args.write else None
             previous, _previous_digest = load_json_snapshot(previous_path)
-            document = build_document(scope, previous_document=previous, workers=args.workers)
+            document = build_document(
+                scope,
+                previous_document=previous,
+                workers=args.workers,
+                accept_edited_registries=args.accept_edited_registries,
+            )
             errors = validate_document(document, scope)
             if errors:
                 raise LedgerError("; ".join(errors))
@@ -309,8 +324,10 @@ def main(
             )
             return 0
 
-        if args.write or args.output or args.previous:
-            raise LedgerError("--write/--output/--previous require --refresh or --migrate-v1")
+        if args.write or args.output or args.previous or args.accept_edited_registries:
+            raise LedgerError(
+                "--write/--output/--previous/--accept-edited-registries require --refresh or --migrate-v1"
+            )
         if args.require_release_ready is not None:
             return _check_mode(
                 Path(args.require_release_ready),

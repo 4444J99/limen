@@ -23,7 +23,6 @@ from urllib.parse import urlsplit
 from limen.reacceptance_contract import (
     COMPLETION_GATE_KEYS,
     SHA256_DIGEST,
-    _semantic_normalize,
     _strict_json_dumps,
 )
 
@@ -72,9 +71,9 @@ def _canonical_json_value(value: Any, *, label: str) -> Any:
 
 
 def owner_binding_digest(value: Any) -> str:
-    """Return the same semantic binding digest used by the ledger owner gates."""
+    """Return the exact canonical binding digest used by ledger owner gates."""
 
-    encoded = _canonical_bytes(_semantic_normalize(value))
+    encoded = _canonical_bytes(value)
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 

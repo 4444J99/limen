@@ -23,6 +23,10 @@ identity, finite numeric token and cost spend, at least one owner output, a
 no-replay effect inventory, an executable predicate, an owner surface, a
 derived value classification, and durable receipts. Motion-only,
 unverifiable, and failed attempts receive zero credit.
+When a receipt carries both a URL and an owner-native digest, both identities
+are authoritative: neither may be reused behind a different value of the
+other. The same independence rule applies to private custody copies and
+fixed-point refresh receipts.
 
 Every observed effect is also crosswalked back to its frozen historical row.
 Its terminal outcome must come from the row/effect owner frozen in
@@ -74,7 +78,9 @@ The five gates are computed from owner evidence:
    public history or publicly reachable private material; and
 5. a durable continuation capsule exists, two ordered complete refreshes have
    the same normalized evidence digest, and two distinct fresh owner receipts
-   attest those exact refreshes.
+   attest those exact refreshes. Both refresh events themselves must be fresh,
+   and their exact timestamps are covered by the continuation owner's
+   signature rather than normalized away.
 
 `summary.release_ready` is derived. It is true only when all 105 rows and all
 208 findings are terminal, every registered remedy is terminal, review debt is

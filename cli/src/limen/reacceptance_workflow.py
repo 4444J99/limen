@@ -75,6 +75,31 @@ def _finalize_document(
     return document
 
 
+def normalize_edited_prior(
+    document: dict[str, Any],
+    *,
+    scope: dict[str, Any],
+) -> dict[str, Any]:
+    """Re-derive an explicitly edited registry before one fresh owner read.
+
+    Frozen scope and schema may not be edited.  The caller must discard this
+    synthetic history and publish only the subsequent live refresh, so a local
+    normalization can never count as one half of the two-refresh fixed point.
+    """
+
+    if document.get("schema") != SCHEMA:
+        raise LedgerError("edited registry schema does not match reacceptance v2")
+    if document.get("scope") != _document_scope(scope):
+        raise LedgerError("edited registry cannot change the frozen campaign scope")
+    normalized = copy.deepcopy(document)
+    normalized["refreshed_at"] = utc_now()
+    normalized = _finalize_document(normalized, scope=scope)
+    errors = validate_document(normalized, scope)
+    if errors:
+        raise LedgerError("edited registries are invalid: " + "; ".join(errors))
+    return normalized
+
+
 def build_live_release_candidate(
     scope: dict[str, Any],
     *,
@@ -355,10 +380,15 @@ def build_document(
     previous_document: dict[str, Any],
     workers: int = 8,
     refreshed_at: str | None = None,
+    accept_edited_registries: bool = False,
 ) -> dict[str, Any]:
     previous_errors = validate_document(previous_document, scope)
+    reset_history = False
     if previous_errors:
-        raise LedgerError("cannot refresh invalid prior ledger: " + "; ".join(previous_errors))
+        if not accept_edited_registries:
+            raise LedgerError("cannot refresh invalid prior ledger: " + "; ".join(previous_errors))
+        previous_document = normalize_edited_prior(previous_document, scope=scope)
+        reset_history = True
     rows = [_base_row("session", identifier) for identifier in sorted(scope["sessions"])]
     rows.extend(_base_row("workflow", identifier) for identifier in sorted(scope["workflows"]))
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, workers)) as executor:
@@ -389,5 +419,5 @@ def build_document(
     return _finalize_document(
         document,
         scope=scope,
-        previous_history=previous_document.get("refresh_history"),
+        previous_history=[] if reset_history else previous_document.get("refresh_history"),
     )

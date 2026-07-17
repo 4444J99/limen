@@ -37,6 +37,15 @@ FINDING_URLS = [
 ]
 
 
+def fixture_legacy_rows():
+    rows = [
+        {"id": f"session:{SESSION_ID}", "kind": "session", "session": SESSION_ID},
+        {"id": f"workflow:{WORKFLOW_ID}", "kind": "workflow", "session": None},
+    ]
+    rows.extend({"id": row_id, "kind": "pull_request", "session": None} for row_id in PR_IDS)
+    return rows
+
+
 def _digest_urls(urls):
     return "sha256:" + hashlib.sha256("\n".join(sorted(urls)).encode()).hexdigest()
 
@@ -86,7 +95,7 @@ def scope():
             },
         },
         "source_reference_manifest_digest": MODULE._source_reference_manifest_digest(source_references),
-        "legacy_v1_rows_digest": "sha256:" + "f" * 64,
+        "legacy_v1_rows_digest": MODULE._legacy_v1_rows_digest(fixture_legacy_rows()),
         "owner_attestation_requirements": copy.deepcopy(OWNER_FIXTURES._scope()["owner_attestation_requirements"]),
         "findings": {
             "p1": 1,
@@ -278,6 +287,9 @@ def base_document():
         )
         row["side_effects"]["observed"] = copy.deepcopy(scope()["known_side_effects"].get(row_id, []))
         rows.append(row)
+    legacy_by_id = {row["id"]: row for row in fixture_legacy_rows()}
+    for row in rows:
+        row["legacy_v1"] = copy.deepcopy(legacy_by_id[row["id"]])
     findings = [
         {
             "id": MODULE._finding_id(FINDING_URLS[0]),
@@ -750,6 +762,26 @@ def test_migration_preserves_real_frozen_105_rows_and_208_finding_urls():
     assert MODULE.validate_document(migrated, real_scope) == []
 
 
+def test_release_validation_requires_every_embedded_legacy_v1_payload():
+    document = ready_document()
+    document["rows"][0].pop("legacy_v1")
+    sync_document(document)
+
+    errors = MODULE.validate_document(document, scope())
+
+    assert any("must embed its complete frozen legacy_v1 payload" in error for error in errors)
+
+
+def test_embedded_legacy_v1_payload_must_match_the_frozen_digest():
+    document = ready_document()
+    document["rows"][0]["legacy_v1"]["receipt"] = {"status": "fabricated"}
+    sync_document(document)
+
+    errors = MODULE.validate_document(document, scope())
+
+    assert any("do not match the frozen v1 denominator digest" in error for error in errors)
+
+
 def test_external_remedy_and_many_to_many_coverage_can_make_campaign_reachable():
     document = ready_document()
 
@@ -900,6 +932,38 @@ def test_semantic_fixed_point_requires_two_ordered_equal_normalized_digests():
     assert "two_refreshes_required" in document["completion_gates"]["continuation_fixed_point"]["blockers"]
 
 
+def test_fixed_point_rejects_stale_refresh_events_even_when_semantics_match():
+    document = ready_document()
+    stale_times = ("2001-01-01T00:00:00Z", "2001-01-01T00:01:00Z")
+    for refresh, receipt_value, stale_time in zip(
+        document["refresh_history"],
+        document["owner_evidence"]["continuation"]["refresh_receipts"],
+        stale_times,
+        strict=True,
+    ):
+        refresh["refreshed_at"] = stale_time
+        receipt_value["refreshed_at"] = stale_time
+    sync_document(document, stable=True)
+
+    assert MODULE.validate_document(document, scope()) == []
+    gate = document["completion_gates"]["continuation_fixed_point"]
+    assert gate["status"] == "failed"
+    assert "refresh_events_stale" in gate["blockers"]
+    assert "owner_adapter_attestation_invalid" in gate["blockers"]
+
+
+def test_refresh_receipts_with_shared_owner_digest_are_not_independent():
+    document = ready_document()
+    receipts = document["owner_evidence"]["continuation"]["refresh_receipts"]
+    for receipt_value in receipts:
+        receipt_value.update(owner="refresh_owner", digest="sha256:" + "9" * 64)
+    sync_document(document, stable=True)
+
+    assert MODULE.validate_document(document, scope()) == []
+    gate = document["completion_gates"]["continuation_fixed_point"]
+    assert "owner_refresh_receipts_not_distinct" in gate["blockers"]
+
+
 def test_structural_check_and_release_ready_have_distinct_exit_codes(tmp_path):
     document = base_document()
     path = tmp_path / "ledger.json"
@@ -931,6 +995,66 @@ def test_structural_check_and_release_ready_have_distinct_exit_codes(tmp_path):
     assert "structurally_valid=true release_ready=false" in structural.stdout
     assert release.returncode == 3
     assert "campaign incomplete" in release.stderr
+
+
+def test_explicit_edited_registry_normalization_rederives_and_resets_history():
+    document = base_document()
+    document["remedies"].append(
+        {
+            "id": "remedy:example/remedies#100",
+            "kind": "pull_request",
+            "status": "repair_required",
+            "attempt_ids": [],
+            "owner_surface": "example/remedies",
+            "repository": "example/remedies",
+            "pull_request": 100,
+            "exact_head": HEAD,
+        }
+    )
+    assert any("summary must be derived" in error for error in MODULE.validate_document(document, scope()))
+
+    normalized = MODULE.normalize_edited_prior(document, scope=scope())
+
+    assert MODULE.validate_document(normalized, scope()) == []
+    assert normalized["summary"]["remedies"] == 1
+    assert normalized["summary"]["repair_required_remedies"] == 1
+    assert len(normalized["refresh_history"]) == 1
+
+
+def test_accept_edited_registries_publishes_one_fresh_live_refresh(monkeypatch):
+    document = base_document()
+    document["remedies"].append(
+        {
+            "id": "remedy:example/remedies#100",
+            "kind": "pull_request",
+            "status": "repair_required",
+            "attempt_ids": [],
+            "owner_surface": "example/remedies",
+            "repository": "example/remedies",
+            "pull_request": 100,
+            "exact_head": HEAD,
+        }
+    )
+    prior_rows = {row["id"]: copy.deepcopy(row) for row in document["rows"]}
+    monkeypatch.setattr(
+        MODULE._workflow,
+        "_pr_row",
+        lambda item, *, known_side_effects: copy.deepcopy(prior_rows[f"pull_request:{item[0]}#{item[1]}"]),
+    )
+    monkeypatch.setattr(MODULE._workflow, "_refresh_remedy", lambda value: copy.deepcopy(value))
+
+    refreshed = MODULE._workflow.build_document(
+        scope(),
+        previous_document=document,
+        workers=1,
+        refreshed_at=T2,
+        accept_edited_registries=True,
+    )
+
+    assert MODULE.validate_document(refreshed, scope()) == []
+    assert refreshed["summary"]["remedies"] == 1
+    assert len(refreshed["refresh_history"]) == 1
+    assert refreshed["refresh_history"][0]["refreshed_at"] == T2
 
 
 def test_release_check_requires_recomputed_live_gates(monkeypatch, tmp_path):
@@ -1331,6 +1455,18 @@ def test_renamed_attempt_cannot_reuse_role_specific_owner_receipts():
         assert any(f"attempt {role} receipts must be unique" in error for error in errors)
 
 
+def test_attempt_receipts_cannot_reuse_owner_digest_behind_different_urls():
+    document = ready_document()
+    shared_identity = {"owner": "trajectory_owner", "digest": "sha256:" + "7" * 64}
+    document["attempts"][0]["source_receipt"].update(shared_identity)
+    document["attempts"][0]["spend"]["receipt"].update(shared_identity)
+    sync_document(document)
+
+    errors = MODULE.validate_document(document, scope())
+
+    assert any("attempt evidence receipts cannot be reused across roles or attempts" in error for error in errors)
+
+
 def test_two_private_copies_require_distinct_owner_receipts():
     document = ready_document()
     copies = document["owner_evidence"]["privacy"]["private_copy_receipts"]
@@ -1487,6 +1623,18 @@ def test_private_copy_digests_must_match_the_frozen_content_manifest():
     assert MODULE.validate_document(document, scope()) == []
     gate = document["completion_gates"]["privacy_containment_terminal"]
     assert "private_copy_manifest_mismatch" in gate["blockers"]
+
+
+def test_private_copy_receipts_with_shared_owner_digest_are_not_independent():
+    document = ready_document()
+    copies = document["owner_evidence"]["privacy"]["private_copy_receipts"]
+    for copy_receipt in copies:
+        copy_receipt.update(owner="privacy_copy_owner", digest="sha256:" + "8" * 64)
+    sync_document(document)
+
+    assert MODULE.validate_document(document, scope()) == []
+    gate = document["completion_gates"]["privacy_containment_terminal"]
+    assert "private_copies_not_independently_custodied" in gate["blockers"]
 
 
 def test_review_check_counts_reject_json_booleans():

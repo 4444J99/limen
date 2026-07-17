@@ -64,6 +64,7 @@ _owner_binding_digest = _policy._owner_binding_digest
 migrate_v1_document = _workflow.migrate_v1_document
 build_document = _workflow.build_document
 _finalize_document = _workflow._finalize_document
+normalize_edited_prior = _workflow.normalize_edited_prior
 _finding_id = _workflow._finding_id
 _refresh_findings = _workflow._refresh_findings
 
