@@ -98,4 +98,12 @@ else
   printf 'set LIMEN_CLOSEOUT_RUN_LIFECYCLE_TESTS=1 to run the slower lifecycle pytest tranche\n'
 fi
 
+step "Reconcile closeout claims (claimed-done vs ground truth)"
+if [[ "${LIMEN_SESSION_CLOSEOUT:-0}" == "1" ]]; then
+  python3 scripts/reconcile-closeouts.py --check
+else
+  python3 scripts/reconcile-closeouts.py --doctor >/dev/null \
+    && printf '  (closeout-reconcile dark; classifier OK — set LIMEN_SESSION_CLOSEOUT=1 to enforce --check)\n'
+fi
+
 printf '\nFast closeout verification passed\n'

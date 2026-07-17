@@ -562,6 +562,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional pinned Git summary line for the session-orientation verifier. Blank means read live git state; predicates set this only to avoid confusing live dirty-state changes with generator non-determinism."
+  LIMEN_SESSION_CLOSEOUT:
+    default: "0"
+    env: LIMEN_SESSION_CLOSEOUT
+    self_update: none
+    owner: censor
+    note: "Dark gate for the closeout-reconciliation sensor (scripts/reconcile-closeouts.py). When 1, the beat runs --check (probe every claimed-done outcome vs GitHub/board ground truth) and closeout-fast enforces it; default 0 ships the organ dark (classifier self-test only). Arming is a separate lever."
   LIMEN_ORIENT_NO_WRITE:
     default: "0"
     env: LIMEN_ORIENT_NO_WRITE
