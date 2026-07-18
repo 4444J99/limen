@@ -101,6 +101,17 @@ bash scripts/tests/heal-convergence.test.sh
 # Fixture rungs only here (fixture PRs + fixture clock + fixture receipts — deterministic);
 # the live open-heal-PR count and chronic gate run in the beat via metabolize.sh step 0g.
 
+step "Verify the correspondence drain-trend sensor (rising reply_owed/needs_human trips; flat-at-floor converges)"
+bash scripts/tests/check-correspondence-drain-trend.test.sh
+# Fixture JSONL series (span derived from the rows — deterministic); the live drain-trend gate
+# runs in the beat via metabolize.sh (sensors.yaml 0m4), one point per ledger rebuild.
+
+step "Verify the correspondence drain-trend PRODUCER (_append_trend: one point per beat, deduped + capped + fail-open)"
+python3 scripts/tests/correspondence-drain-trend-append.test.py
+
+step "Verify the stale-awaiting-them nudge (INTERNALDATE parse + a reply older than the threshold flips awaiting-them → needs-human)"
+python3 scripts/tests/correspondence-await-stale.test.py
+
 step "Verify the worktree-commit-guard hook (live-main commit deny matrix, hermetic fixture)"
 bash scripts/tests/worktree-commit-guard.test.sh
 

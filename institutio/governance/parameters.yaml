@@ -1514,6 +1514,48 @@ parameters:
     self_update: none
     owner: mail
     note: "SENT-state truth gate for correspondence-walk.py: 1 (default) opens one read-only IMAP connection and flips a reply-owed row to `awaiting-them` when a reply already exists in [Gmail]/Sent Mail (answered by the operator, a peer agent, or another channel — the out-of-band send the ledger's requires_reply is blind to). Fail-open: no creds / no UMA / connect error ⇒ skipped, never suppresses a genuine reply-owed row. 0 disables the check (ledger-only dispositions)."
+  LIMEN_CORRESPONDENCE_AWAIT_STALE_DAYS:
+    default: 14
+    env: LIMEN_CORRESPONDENCE_AWAIT_STALE_DAYS
+    self_update: none
+    owner: mail
+    note: "Age threshold (days) for the stale-awaiting-them nudge in correspondence-walk.py::_disposition: when the SENT-state check finds our last reply to a thread is older than this and the counterparty has not answered, the row flips from a silent, ageless `awaiting-them` to a `needs-human` nudge (follow up or drop). A stale nudge is NOT recorded as answered, so it keeps surfacing until the operator acts, and a growing pile auto-reddens the drain-trend sensor's needs_human signal. 0 disables the nudge (awaiting-them behaves exactly as before). Needs the SENT-state check active (LIMEN_CORRESPONDENCE_SENT_CHECK=1 + IMAP creds); with no date available the row stays awaiting-them, fail-open."
+  LIMEN_CORRESPONDENCE_DRAIN_TREND:
+    default: 1
+    env: LIMEN_CORRESPONDENCE_DRAIN_TREND
+    self_update: none
+    owner: mail
+    note: "Beat gate for the correspondence drain-trend sensor (scripts/check-correspondence-drain-trend.py --check): 1 (default) goes red in the beat log when reply_owed or needs_human is RISING across a day-plus window, or a HOLD draft is persistently missing — the loop-closure the fixed-point snapshot can't see (is the ledger draining, or stalled at a high plateau?). Flat-at-floor reads as converged, never red. 0 skips it."
+  LIMEN_CORRESPONDENCE_TREND_FILE:
+    default: "$LIMEN_ROOT/logs/correspondence-drain-trend.jsonl"
+    env: LIMEN_CORRESPONDENCE_TREND_FILE
+    self_update: none
+    owner: mail
+    note: "Path override for the append-only drain-trend series (counts-only, gitignored) that correspondence-walk.py::_append_trend writes one point-per-ledger-rebuild to and check-correspondence-drain-trend.py reads. Default lives under logs/; overridable for tests/alt hosts."
+  LIMEN_CORRESPONDENCE_TREND_MAX_ROWS:
+    default: 2000
+    env: LIMEN_CORRESPONDENCE_TREND_MAX_ROWS
+    self_update: none
+    owner: mail
+    note: "Soft cap on the append-only drain-trend series length: correspondence-walk.py keeps only the last N points so the beat-read tail stays cheap (the series is one point per ledger rebuild, ~one per beat)."
+  LIMEN_CORRESPONDENCE_TREND_WINDOW:
+    default: 8
+    env: LIMEN_CORRESPONDENCE_TREND_WINDOW
+    self_update: none
+    owner: mail
+    note: "How many most-recent drain-trend points check-correspondence-drain-trend.py assesses for slope (default 8 beats). The verdict is a DIRECTION over this window, never an absolute reply_owed floor."
+  LIMEN_CORRESPONDENCE_TREND_MIN_POINTS:
+    default: 3
+    env: LIMEN_CORRESPONDENCE_TREND_MIN_POINTS
+    self_update: none
+    owner: mail
+    note: "Minimum drain-trend points before a slope is judgeable: below this the sensor reports insufficient-history and exits 0 (never reds a cold-started series)."
+  LIMEN_CORRESPONDENCE_TREND_STALE_HOURS:
+    default: 24
+    env: LIMEN_CORRESPONDENCE_TREND_STALE_HOURS
+    self_update: none
+    owner: mail
+    note: "The drain-trend window must span at least this many hours before a rising reply_owed/needs_human counts as a real stall (not a brief inflow spike). Below this span the sensor reports too-fresh and exits 0."
   LIMEN_MAIL_SENT_MAILBOX:
     default: "[Gmail]/Sent Mail"
     env: LIMEN_MAIL_SENT_MAILBOX

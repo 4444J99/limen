@@ -46,12 +46,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import imaplib
 import importlib.util
 import json
 import os
 import re
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -60,6 +62,11 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
 LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-ledger.json"))
 STATUS_JSON = LOGS / "correspondence-dispositions.json"
+# The append-only drain-trend series: the counts-only MEMORY the snapshot above lacks, so a sensor
+# can answer "is reply_owed draining across beats?" without a human reading it. One point per ledger
+# rebuild (deduped by ledger_generated_at), soft-capped so the beat-read tail stays cheap.
+TREND_JSONL = LOGS / "correspondence-drain-trend.jsonl"
+TREND_MAX_ROWS = int(os.environ.get("LIMEN_CORRESPONDENCE_TREND_MAX_ROWS", "2000"))
 MAX_AGE_HOURS = float(os.environ.get("LIMEN_MAIL_LEDGER_MAX_AGE_HOURS", "12"))
 
 # The UMA checkout supplies the ONE tier truth (tier_of / _ob_key / load_tiers) and the send
@@ -163,9 +170,38 @@ def _norm_subject(subject: str) -> str:
     return s.strip()
 
 
+# Reason marker for a stale awaiting-them row flipped to a needs-human nudge. A module constant (not
+# a magic string) so the status tally can count stale nudges without re-deriving the reason text.
+STALE_NUDGE_PREFIX = "awaiting them "
+
+
+def _parse_internaldate(fetch_data) -> datetime | None:
+    """Parse the UTC datetime out of an IMAP FETCH (INTERNALDATE) response — PURE + offline-testable
+    (no live IMAP). imaplib.Internaldate2tuple locates the INTERNALDATE "..." token itself and returns
+    a local time.struct_time; time.mktime → epoch → an aware UTC datetime. Accepts the raw bytes line
+    or a fetch tuple element. Returns None on any shape it can't parse (fail-open)."""
+    parts = fetch_data if isinstance(fetch_data, (list, tuple)) else [fetch_data]
+    for part in parts:
+        raw = part
+        if isinstance(part, tuple) and part:
+            raw = part[0]
+        if isinstance(raw, str):
+            raw = raw.encode("utf-8", "replace")
+        if not isinstance(raw, (bytes, bytearray)):
+            continue
+        try:
+            t = imaplib.Internaldate2tuple(bytes(raw))
+        except Exception:  # noqa: BLE001 — unparseable ⇒ try the next part, else None
+            t = None
+        if t:
+            return datetime.fromtimestamp(time.mktime(t), tz=timezone.utc)
+    return None
+
+
 def _make_answered_checker(sd):
-    """Build a callable ob->bool that detects an ALREADY-SENT reply in [Gmail]/Sent Mail, reusing
-    ONE IMAP connection across rows. Returns (checker, provider) or (None, None).
+    """Build a callable ob->(datetime|None) that detects an ALREADY-SENT reply in [Gmail]/Sent Mail
+    and returns WHEN it was sent, reusing ONE IMAP connection across rows. Returns (checker, provider)
+    or (None, None).
 
     This is the SENT-state truth the ledger lacks: obligations_build sets requires_reply purely by
     classification (blind to whether a reply already went out — the operator's, a peer agent's, or
@@ -195,26 +231,39 @@ def _make_answered_checker(sd):
         _log_clean(f"sent-check disabled ({type(exc).__name__}) — dispositions from ledger only")
         return None, None
 
-    def _answered(ob: dict) -> bool:
+    def _answered(ob: dict) -> datetime | None:
+        """The newest [Gmail]/Sent reply TO this recipient with the same subject stem, as its
+        INTERNALDATE (aware UTC) — or None if no reply / any error (fail-open). The datetime is
+        truthy, so a caller needing only a bool still works; _disposition uses the date to age
+        a thread where the ball has sat on the counterparty too long."""
         to = _recipient_addr(ob)
         stem = _norm_subject((ob.get("sample_subjects") or [""])[0])
         if not to or not stem:
-            return False
+            return None
         try:  # a reply already exists in Sent TO this recipient with the same subject stem
             code, data = conn.uid("search", None, "TO", f'"{to}"', "SUBJECT", f'"{stem}"')
-            return code == "OK" and bool(data) and bool(data[0].split())
-        except Exception:  # noqa: BLE001 — fail-open per row (BAD search ⇒ leave held)
-            return False
+            if code != "OK" or not data or not data[0].split():
+                return None
+            newest = data[0].split()[-1]  # UIDs ascend ⇒ the last is the most-recent reply
+            fcode, fdata = conn.uid("fetch", newest, "(INTERNALDATE)")
+            if fcode != "OK" or not fdata:
+                return None
+            return _parse_internaldate(fdata)
+        except Exception:  # noqa: BLE001 — fail-open per row (BAD search/fetch ⇒ not-answered)
+            return None
 
     return _answered, prov
 
 
-def _disposition(ob: dict, tiers, sent_keys: set, sd, answered_fn=None) -> tuple[str, str, bool]:
+def _disposition(ob: dict, tiers, sent_keys: set, sd, answered_fn=None,
+                 now: datetime | None = None, stale_days: int = 0) -> tuple[str, str, bool]:
     """Pure-ish disposition for one reply-owed obligation. Returns (disposition, reason, draft_missing).
 
     draft_missing marks a HOLD row that still lacks a composed draft — the one non-terminal
     residue the done-predicate sensor fails on (mirrors check-mail-answered's undrafted rule).
-    answered_fn (optional) is the SENT-state checker — its only impurity, and it fails open."""
+    answered_fn (optional) is the SENT-state checker (ob -> datetime|None) — its only impurity, and
+    it fails open. now/stale_days age an out-of-band-answered thread: a reply older than stale_days
+    (stale_days>0) flips awaiting-them → a needs-human nudge (follow up or drop)."""
     # UMA unavailable ⇒ we cannot classify or trust idempotency ⇒ fail-open to needs-human.
     if sd is None:
         return "needs-human", "UMA tier logic unavailable — cannot classify safely", True
@@ -226,8 +275,19 @@ def _disposition(ob: dict, tiers, sent_keys: set, sd, answered_fn=None) -> tuple
 
     # 1b. SENT-state truth: a reply already exists in [Gmail]/Sent Mail — answered by the operator,
     #     a peer agent, or another channel (the out-of-band send the ledger is blind to). Ball on them.
-    if answered_fn is not None and answered_fn(ob):
-        return "awaiting-them", "reply already in [Gmail]/Sent — thread answered out-of-band", False
+    #     If that reply is older than stale_days, the ball has sat on them too long: flip to a
+    #     needs-human nudge (follow up or drop) instead of a silent, ageless awaiting-them. A stale
+    #     nudge is NOT recorded as answered upstream, so it keeps surfacing until the operator acts.
+    if answered_fn is not None:
+        sent_at = answered_fn(ob)
+        if sent_at is not None:
+            ref = now or datetime.now(timezone.utc)
+            age_days = (ref - sent_at).days
+            if stale_days and age_days > stale_days:
+                return ("needs-human",
+                        f"{STALE_NUDGE_PREFIX}{age_days}d — we replied {sent_at:%Y-%m-%d}, no response; follow up or drop",
+                        False)
+            return "awaiting-them", "reply already in [Gmail]/Sent — thread answered out-of-band", False
 
     cls = ob.get("cls", "")
     # 2. LinkedIn / noreply relay — structurally unsendable in place.
@@ -312,6 +372,47 @@ def _write_status(status: dict) -> None:
         STATUS_JSON.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     except OSError:
         _log_clean("could not write logs/correspondence-dispositions.json (fail-open)")
+
+
+def _append_trend(status: dict) -> None:
+    """Append ONE counts-only point per new ledger snapshot to logs/correspondence-drain-trend.jsonl —
+    the append-only memory the disposition SNAPSHOT lacks, so check-correspondence-drain-trend.py can
+    answer "is reply_owed draining across beats?" without a human reading it.
+
+    Deduped by ledger_generated_at: re-running the walk on the SAME ledger adds nothing (matching the
+    walk's own fixed-point contract), so the series is one point per beat, not per invocation. Soft-
+    capped to the last TREND_MAX_ROWS. Counts only — never a name/subject; this face publishes. Fail-
+    open at every step: a read/write error is noted, never fatal (it runs on the live beat)."""
+    point = {
+        "timestamp": status.get("generated_at"),
+        "ledger_generated_at": status.get("ledger_generated_at"),
+        "reply_owed": status.get("reply_owed"),
+        "terminal": status.get("terminal"),
+        "needs_human": status.get("needs_human"),
+        "draft_missing": status.get("non_terminal"),
+        "fixed_point": status.get("fixed_point"),
+    }
+    try:
+        LOGS.mkdir(parents=True, exist_ok=True)
+        lines = []
+        try:
+            lines = [ln for ln in TREND_JSONL.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        except OSError:
+            lines = []
+        # Dedup: skip when the last point is the SAME ledger rebuild (a re-walk, not a new beat). A
+        # None ledger stamp is never deduped (would collapse distinct unstamped runs into one).
+        if lines and point["ledger_generated_at"] is not None:
+            try:
+                if json.loads(lines[-1]).get("ledger_generated_at") == point["ledger_generated_at"]:
+                    return
+            except ValueError:
+                pass  # a torn last line ⇒ just append a fresh point
+        lines.append(json.dumps(point))
+        if len(lines) > TREND_MAX_ROWS:
+            lines = lines[-TREND_MAX_ROWS:]
+        TREND_JSONL.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except OSError:
+        _log_clean("could not append logs/correspondence-drain-trend.jsonl (fail-open)")
 
 
 def _record_answered_keys(keys: set[str]) -> None:
@@ -400,11 +501,19 @@ def main(argv: list[str] | None = None) -> int:
         draft_missing = 0
         needs_human = 0
         answered_this_run: set[str] = set()   # drain signal → audit/answered_keys.json
+        stale_awaiting = 0                     # awaiting-them rows aged past the stale threshold → nudge
+        # Age a thread where the ball has sat on them too long. 0 (or an unparseable value) disables
+        # the nudge — awaiting-them then behaves exactly as before. Same clock for every row this walk.
+        stale_days = _int_env("LIMEN_CORRESPONDENCE_AWAIT_STALE_DAYS", 14)
+        walk_now = datetime.now(timezone.utc)
 
         for ob in reply_owed:
-            disp, reason, missing = _disposition(ob, tiers, sent_keys, sd, answered_fn)
+            disp, reason, missing = _disposition(ob, tiers, sent_keys, sd, answered_fn,
+                                                 now=walk_now, stale_days=stale_days)
             key = sd._ob_key(ob) if sd is not None else f"?|?|{(ob.get('sample_subjects') or [''])[0][:40]}"
             by_disposition[disp] += 1
+            if disp == "needs-human" and reason.startswith(STALE_NUDGE_PREFIX):
+                stale_awaiting += 1
             # A row answered out-of-band (a reply already in [Gmail]/Sent) is terminal — record its
             # canonical key so obligations_build retires it and reply_owed drains. Only when sd is
             # real (never the "?|?|" placeholder, which would poison the set with a non-canonical key).
@@ -479,6 +588,7 @@ def main(argv: list[str] | None = None) -> int:
             "terminal": terminal,
             "non_terminal": draft_missing,
             "needs_human": needs_human,
+            "stale_awaiting": stale_awaiting,   # awaiting-them threads aged past the nudge threshold
             "by_disposition": by_disposition,
             "fixed_point": fixed_point,
             "uma_available": sd is not None,
@@ -490,6 +600,7 @@ def main(argv: list[str] | None = None) -> int:
             "drain_notes": drain_notes,
         }
         _write_status(status)
+        _append_trend(status)   # append one drain-trend point per ledger rebuild (convergence memory)
         _write_sidecar(rows_pii)
 
         if answered_prov is not None:

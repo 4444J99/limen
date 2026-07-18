@@ -724,6 +724,18 @@ sensors:
         severity: advisory
         escalation: "correspondence not walked to terminal — stale ledger, an un-walked reply-owed row, or a HOLD row lacking a composed draft; the correspondence-walk effector (mail-beat.sh 2d) may be dark"
 
+  correspondence-drain-trend:
+    section: "0m4"
+    title: "correspondence drain-trend — reply_owed is DRAINING across beats, not stalled at a high plateau (the loop-closure the fixed-point snapshot can't see)"
+    gate: LIMEN_CORRESPONDENCE_DRAIN_TREND
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    steps:
+      - command: "python3 scripts/check-correspondence-drain-trend.py --check"
+        severity: advisory
+        escalation: "correspondence NOT draining — reply_owed or needs_human is rising across a day-plus window, or a HOLD draft is persistently missing; the ledger is re-owing faster than the walk clears it"
+
   host-pressure-stale:
     section: "0o"
     title: "host-pressure gauge is alive — the VITALS throttle/shed valve is not flying blind"
