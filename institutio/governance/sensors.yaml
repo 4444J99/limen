@@ -506,6 +506,60 @@ sensors:
         tier: det
         command: "python3 scripts/disk-capacity.py --check"
 
+  dialogs-silenced:
+    section: "0g8b"
+    title: "dialogs silenced — the agent-curable macOS dialog estate self-heals (hook-drift + cask + lsregister-stub) then verifies"
+    # Replaces the three hand-wired hygiene hooks in heartbeat-loop.sh with ONE registry-derived sensor:
+    # each armed LIMEN_*_HEAL effector runs on the hygiene cadence, then --agent-curable-only verifies
+    # the beat-healable estate is silent. The human-gated classes (settings.json self-mod, firewall)
+    # stay levers (L-DIALOGS-HEAL cites the three deliverable valves so an unarmed host reads PARKED,
+    # not SILENT-OFF). See docs plan + [[macos-tcc-gatekeeper-dialogs-solved]].
+    gate: LIMEN_DIALOGS_SILENCED
+    default: "1"
+    source: [heartbeat]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_DIALOGS
+      default: 8                # the hygiene cadence (C_HYGIENE) the three effectors rode as hand-wired hooks
+    timeout:
+      env: LIMEN_DIALOGS_TIMEOUT
+      default: 120
+    steps:
+      - command: "bash scripts/heal-hook-drift.sh"
+        args_when:
+          - env: LIMEN_HOOK_DRIFT_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_HOOK_DRIFT_HEAL); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "PreToolUse trust hook drifted (class 1b) — arm LIMEN_HOOK_DRIFT_HEAL=1 so the beat reinstalls the canonical hook, else the compound-cd guard re-prompts every fleet job"
+      - command: "bash scripts/heal-claude-cask.sh"
+        args_when:
+          - env: LIMEN_CASK_DUPLICATE_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_CASK_DUPLICATE_HEAL); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "duplicate Homebrew claude-code cask (class 4) — arm LIMEN_CASK_DUPLICATE_HEAL=1 so the beat uninstalls it, else brew re-quarantines it every upgrade"
+      - command: "bash scripts/heal-claude-lsregister.sh"
+        args_when:
+          - env: LIMEN_CLAUDE_LSREGISTER_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_CLAUDE_LSREGISTER_HEAL); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "malformed ClaudeCode.app stub registered (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat unregisters + removes it, else 'damaged, move to Trash' recurs every launch"
+      - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
+        severity: advisory
+        escalation: "an agent-curable dialog class still prompts after the heal pass — arm the matching LIMEN_*_HEAL valve (lever L-DIALOGS-HEAL) so it self-cures"
+    omega_eligible:
+      - label: "dialogs silenced (agent-curable)"
+        tier: live
+        command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"

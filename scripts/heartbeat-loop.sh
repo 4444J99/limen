@@ -541,7 +541,12 @@ while true; do
   REAP_CLONES_ARG=""; [ "${LIMEN_REAP_CLONES_APPLY:-1}" = "1" ] && REAP_CLONES_ARG="--apply"
   due_voice hygiene "$HYG_CAD" && timeout "${LIMEN_REAP_CLONES_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reap-clones.py" $REAP_CLONES_ARG 2>&1 | tail -3 || true
   due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true
-  due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/heal-claude-lsregister.sh" 2>&1 | tail -1 || true
+  # heal-claude-lsregister.sh / heal-hook-drift.sh / heal-claude-cask.sh are NO LONGER hand-wired here:
+  # they run as the registry-derived `dialogs-silenced` sensor (institutio/governance/sensors.yaml 0g8b)
+  # on the scheduled heartbeat derive lane above (beat-sensors.py --run --source heartbeat
+  # --scheduled-only, cadence LIMEN_BEAT_DIALOGS=8 == this hygiene cadence), then verified by
+  # dialogs-silenced.sh --agent-curable-only. Hand-wiring them too would double-run; adding a new dialog
+  # effector is now one sensors.yaml step, not a shell line here.
   due_voice hygiene "$HYG_CAD" && stamp hygiene
   python3 "$LIMEN_ROOT/scripts/emit-tick.py" 2>&1 | tail -1 || true   # tick voice — every beat
   stamp tick

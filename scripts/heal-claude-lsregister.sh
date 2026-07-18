@@ -45,6 +45,7 @@ fi
 
 ARMED=0
 [ "${LIMEN_CLAUDE_LSREGISTER_HEAL:-0}" = 1 ] && ARMED=1
+[ "${1:-}" = "--apply" ] && ARMED=1   # the sensor-injected arm (args_when on the dialogs-silenced valve)
 
 # Every ClaudeCode.app path LaunchServices currently has registered.
 enumerate() {

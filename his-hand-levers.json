@@ -267,6 +267,22 @@
       "issue": 289
     },
     {
+      "id": "L-DIALOGS-HEAL",
+      "label": "Arm the three AGENT-CURABLE dialog effectors so the recurring macOS dialog estate self-heals on the beat, unattended, without a per-incident approval. The effectors already ship (heal-hook-drift.sh / heal-claude-cask.sh / heal-claude-lsregister.sh) and run every hygiene cadence as the registry-derived `dialogs-silenced` sensor (sensors.yaml 0g8b) — but DRY-RUN until armed. Arming flips them from detect-and-report to cure.",
+      "owner": "yours",
+      "cost": "one paste into ~/.limen.env (~20s), then the agent-curable dialog estate self-heals forever",
+      "unlocks": "the beat auto-cures the three agent-curable dialog classes the moment they recur — a drifted PreToolUse trust hook (1b), a duplicate Homebrew claude-code cask (4), and a malformed ClaudeCode.app lsregister stub (4b, the 'damaged, move to Trash' loop) — with no dialog, no click, and no chat task",
+      "gate": "writing LIMEN_*=1 into the persistence env (~/.limen.env) is classifier-blocked for the agent (the self-arming boundary; see memory persistence-arming-env-is-classifier-gated) — the one-time paste is yours; every branch, sensor, verify, and merge around it is automated",
+      "steps": [
+        "Append three lines to ~/.limen.env:  LIMEN_HOOK_DRIFT_HEAL=1   and   LIMEN_CASK_DUPLICATE_HEAL=1   and   LIMEN_CLAUDE_LSREGISTER_HEAL=1",
+        "Reload the daemon so it re-sources the env: launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat  (or just wait — the next scheduled beat picks it up)",
+        "Verify: bash scripts/dialogs-silenced.sh --agent-curable-only prints ALL CLEAR (agent-curable), and python3 scripts/armed-valve-audit.py --check shows the three valves ARMED. Until you arm them they read PARKED (this lever cites them), never SILENT-OFF."
+      ],
+      "source_task": "dialogs-silenced self-healing organ · R3 (sensors.yaml 0g8b; effectors heal-hook-drift.sh / heal-claude-cask.sh / heal-claude-lsregister.sh; PRs #1206 + #1212)",
+      "note": "The three deliverable valves default OFF because each authorizes an unattended HOST MUTATION (reinstall a hook / uninstall a cask / unregister an app). Off, the beat still DETECTS + reports (advisory); armed, it CURES — the sensor-without-effector defect closed for the whole agent-curable estate. Sibling levers cover the human-gated classes no effector can touch: settings.json self-mod (L-AGENT-BASH-PROMPT #183) and the firewall sudo (L-FIREWALL-PROMPT #289). scripts/dialogs-silenced.sh is the single predicate over the whole estate; --agent-curable-only is the omega rung. See memory: macos-tcc-gatekeeper-dialogs-solved.",
+      "issue": 289
+    },
+    {
       "id": "L-TCC-RECORDER",
       "label": "Grant Screen Recording + Microphone permission to the media-recorder binary (organs/media/tools/recorder) on first capture — the one human step for native system-audio recording.",
       "owner": "yours",

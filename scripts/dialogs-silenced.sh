@@ -14,9 +14,25 @@
 # Exit 0  ⟺  every recurring dialog class is silenced (the done-predicate).
 set -uo pipefail
 
-gaps=0
+# --agent-curable-only: count ONLY the classes that have a shipped beat effector (1b hook-drift,
+# 4 gatekeeper-cask, 4b lsregister-stub) toward the exit status. Human-gated classes (defaultMode /
+# ask-list / hook-wiring self-mod, 1Password, firewall) and the effectorless quarantined-binary case
+# still PRINT as advisory but do not fail this mode. This is the form the omega fixed point
+# (scripts/omega.sh) holds against: the bare predicate can never reach exit 0 while a self-mod class
+# exists, but the agent-curable estate can — so the beat can drive THAT half to a durable HOLDS.
+AGENT_ONLY=0
+case "${1:-}" in
+  --agent-curable-only) AGENT_ONLY=1 ;;
+  "") : ;;
+  -h|--help) echo "usage: $0 [--agent-curable-only]"; exit 0 ;;
+  *) echo "usage: $0 [--agent-curable-only]" >&2; exit 2 ;;
+esac
+
+gaps=0            # every dialog class that still prompts (the bare predicate)
+curable_gaps=0    # subset with a shipped beat effector (drives the omega rung + --agent-curable-only)
 green(){ printf '  \033[32m✓\033[0m %s\n' "$1"; }
 red(){   printf '  \033[31m✗\033[0m %s\n' "$1"; gaps=$((gaps+1)); }
+redx(){  printf '  \033[31m✗\033[0m %s\n' "$1"; gaps=$((gaps+1)); curable_gaps=$((curable_gaps+1)); }
 cure(){  printf '      ↳ %s\n' "$1"; }
 note(){  printf '      · %s\n' "$1"; }
 
@@ -55,11 +71,11 @@ for hf in allow-trusted-cd-git.sh insights-capture.sh; do
   canon="$ROOT/scripts/hooks/$hf"; live="$HOME/.claude/hooks/$hf"
   [ -f "$canon" ] || continue
   if [ ! -f "$live" ]; then
-    red "Hook drift: $live is MISSING (repo canonical exists)"
-    cure "install -m 755 $canon $live"
+    redx "Hook drift: $live is MISSING (repo canonical exists)"
+    cure "LIMEN_HOOK_DRIFT_HEAL=1 bash scripts/heal-hook-drift.sh   # effector; or by hand: install -m 755 $canon $live"
   elif [ "$(shasum -a 256 < "$canon" | cut -d' ' -f1)" != "$(shasum -a 256 < "$live" | cut -d' ' -f1)" ]; then
-    red "Hook drift: $live differs from repo canonical scripts/hooks/$hf"
-    cure "install -m 755 $canon $live"
+    redx "Hook drift: $live differs from repo canonical scripts/hooks/$hf"
+    cure "LIMEN_HOOK_DRIFT_HEAL=1 bash scripts/heal-hook-drift.sh   # effector; or by hand: install -m 755 $canon $live"
     note "Run from the MAIN checkout — comparing against a stale worktree copy will false-red."
   else
     green "Hook parity: $hf live == repo canonical"
@@ -168,8 +184,8 @@ echo
 # re-seeds it forever, silently defeating DISABLE_AUTOUPDATER (which only stops the native updater).
 # The sanctioned install is the native ~/.local/bin/claude (deliberate updates). Agent-curable.
 if command -v brew >/dev/null 2>&1 && brew list --cask 2>/dev/null | grep -qx 'claude-code'; then
-  red "Gatekeeper: duplicate Homebrew cask 'claude-code' installed → quarantined per upgrade, prompts on first exec"
-  cure "brew uninstall --cask claude-code   # native ~/.local/bin/claude is the one sanctioned install"
+  redx "Gatekeeper: duplicate Homebrew cask 'claude-code' installed → quarantined per upgrade, prompts on first exec"
+  cure "LIMEN_CASK_DUPLICATE_HEAL=1 bash scripts/heal-claude-cask.sh   # effector; or by hand: brew uninstall --cask claude-code (native ~/.local/bin/claude is the sanctioned install)"
   note "Never click Open/Allow on the dialog — futile vs version churn; never brew-install claude in provisioning."
 else
   quarantined=""
@@ -207,11 +223,25 @@ fi
 if [ -z "$stub_bad" ]; then
   green "Gatekeeper: no registered-but-rejected ClaudeCode.app stub (no 'damaged, move to Trash' reseed loop)"
 else
-  red "Gatekeeper: LaunchServices-registered ClaudeCode.app fails its code seal → 'damaged, move to Trash' every launch:$stub_bad"
+  redx "Gatekeeper: LaunchServices-registered ClaudeCode.app fails its code seal → 'damaged, move to Trash' every launch:$stub_bad"
   cure "LIMEN_CLAUDE_LSREGISTER_HEAL=1 bash scripts/heal-claude-lsregister.sh   # unregister + remove the stub, sweep ~/.Trash, re-verify count 0"
   note "Never click 'Move to Trash' on the dialog — it reseeds the loop (LaunchServices keeps the trashed copy registered). The healer is the only convergent cure."
 fi
 echo
+
+if [ "$AGENT_ONLY" = 1 ]; then
+  if [ "$curable_gaps" -eq 0 ]; then
+    if [ "$gaps" -eq 0 ]; then
+      echo "ALL CLEAR (agent-curable) — every beat-healable dialog class is silenced (and no human-gated class prompts either)."
+    else
+      printf 'ALL CLEAR (agent-curable) — every beat-healable dialog class is silenced. (%s human-gated advisory item(s) above are not beat-curable and do not gate this mode.)\n' "$gaps"
+    fi
+    exit 0
+  fi
+  printf '%s agent-curable class(es) still prompt — the beat effector cures each on its next armed hygiene tick.\n' "$curable_gaps"
+  echo "Arm the matching LIMEN_*_HEAL valve(s) in ~/.limen.env (homed as lever L-DIALOGS-HEAL), or run the cure shown above by hand."
+  exit 1
+fi
 
 if [ "$gaps" -eq 0 ]; then
   echo "ALL CLEAR — no recurring permission dialog remains. (re-run anytime to confirm it stays so)"
