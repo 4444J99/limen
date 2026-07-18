@@ -1,6 +1,22 @@
 {
   "_doc": "Durable item-granularity GitHub universe sweep ledger. Keys are <repo>#<number>. New open items seed as disposition queued; retroactive previously unseen closed items seed as reopen-candidate. Later engagement may promote rows to evolving, distilled, merged, or superseded:<durable-receipt>. Ledger dispositions MUST NOT include closed or dismissed \u2014 GitHub state is reference data only, never terminal forgetting. Automatic task emission remains gated by value-repos.json: unranked repos are recorded here and fed into discovery/ranking, not directly budgeted into dev work.",
   "items": {
+    "4444J99/4444J99#1": {
+      "comments": 0,
+      "created_at": "2026-07-07T21:52:12Z",
+      "disposition": "queued",
+      "first_seen": "2026-07-18T15:24:27Z",
+      "kind": "issue",
+      "last_seen": "2026-07-18T15:24:27Z",
+      "number": 1,
+      "priority": 10,
+      "reaction_count": 0,
+      "repo": "4444J99/4444J99",
+      "state": "open",
+      "title": "Own stale GitHub sidebar metadata and profile-settings scope gate",
+      "updated_at": "2026-07-07T21:52:12Z",
+      "url": "https://github.com/4444J99/4444J99/issues/1"
+    },
     "organvm/.github#1": {
       "comments": 2,
       "created_at": "2026-02-26T19:46:27Z",
