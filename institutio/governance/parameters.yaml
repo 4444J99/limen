@@ -2379,6 +2379,12 @@ parameters:
     self_update: none
     owner: moat-audit
     note: "Override for the positioning seeds registry consumed by scripts/moat-audit.py lure-readiness; production reads the committed positioning-seeds.json. Test/fixture seam only."
+  LIMEN_PROFILE_OUT:
+    default: "_profile-build"
+    env: LIMEN_PROFILE_OUT
+    self_update: none
+    owner: profile
+    note: "Build root for the 4444J99 profile engine (scripts/profile-visuals.py, follow-harvest-organ.py, sync-readme.py, profile-verify.py via scripts/profile-build.sh). Assets land in <out>/assets, README at <out>/README.md. The self-updating workflow (scripts/templates/profile-workflow.yml) sets it to the profile repo checkout; local runs default to _profile-build."
   LIMEN_POSITIONING_DIR:
     default: "docs/positioning"
     env: LIMEN_POSITIONING_DIR
