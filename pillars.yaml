@@ -63,6 +63,8 @@ pillars:
     name: Portal
     role: The outward stakeholder face (Hermeneus).
     owner: stakeholder-portal
+    url: https://stakeholder-portal-ten.vercel.app
+    last_validated: "2026-07-18"  # live, 200 OK, rendering real content (Next.js SSR)
   - id: views
     name: Local views
     role: Where you already look — corpus / money / omni / obligations / pillars faces + the heartbeat.
