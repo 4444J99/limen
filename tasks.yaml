@@ -60194,11 +60194,11 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 one login/identity step (your hand: browser/OAuth/portal).\
-    \ Unblocks: Build Philip Glass tracker prototype. Auto-hung by QUICKEN (finish-not-park);\
-    \ refreshes each beat until you act."
+    \ Unblocks: exercise app launch. Auto-hung by QUICKEN (finish-not-park); refreshes\
+    \ each beat until you act."
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-07-01T23:27:29.299035Z'
+  updated: '2026-07-18T00:41:03.279532Z'
   dispatch_log: []
 - id: GEN-organvm-limen-simplify-0624-refactor-dispatch
   title: "Reduce complexity in organvm/limen \u2014 refactor dispatch.py"
@@ -145782,7 +145782,7 @@ tasks:
     \ before any publish"
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -145909,7 +145909,7 @@ tasks:
     tables'
   repo: organvm/public-record-data-scrapper
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: medium
   budget_cost: 1
   status: open
@@ -145934,7 +145934,8 @@ tasks:
     \ classify precedent, not inbound-lead"
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: any
+  target_agent: codex
+  workstream: correspondence
   priority: medium
   budget_cost: 1
   status: open
@@ -145959,7 +145960,8 @@ tasks:
     inboxes'
   repo: organvm/universal-mail--automation
   type: code
-  target_agent: any
+  target_agent: opencode
+  workstream: correspondence
   priority: medium
   budget_cost: 1
   status: open
