@@ -1436,19 +1436,20 @@ def load_ticks() -> list[tuple[dt.datetime, dict[str, Any]]]:
     cutoff = utc_now() - dt.timedelta(days=THROUGHPUT_BASELINE_DAYS)
     out: list[tuple[dt.datetime, dict[str, Any]]] = []
     try:
-        lines = TICKS_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
+        handle = TICKS_PATH.open("r", encoding="utf-8", errors="replace")
     except OSError:
         return out
-    for line in lines:
-        try:
-            rec = json.loads(line)
-        except ValueError:
-            continue
-        if not isinstance(rec, dict):
-            continue
-        ts = parse_iso(rec.get("ts"))
-        if ts and ts >= cutoff:
-            out.append((ts, rec))
+    with handle:
+        for line in handle:
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(rec, dict):
+                continue
+            ts = parse_iso(rec.get("ts"))
+            if ts and ts >= cutoff:
+                out.append((ts, rec))
     return out
 
 

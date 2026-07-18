@@ -145,6 +145,21 @@ def test_insufficient_windows_not_evaluable(tmp_path, monkeypatch):
     assert result["evaluable"] is False
 
 
+def test_load_ticks_streams_file_instead_of_reading_whole_ledger(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    _seed_ticks(module, _HEALTHY, open_count=50)
+    original_read_text = Path.read_text
+
+    def guarded_read_text(path_obj, *args, **kwargs):
+        if path_obj == module.TICKS_PATH:
+            raise AssertionError("load_ticks should stream lines, not Path.read_text().splitlines()")
+        return original_read_text(path_obj, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", guarded_read_text)
+    ticks = module.load_ticks()
+    assert len(ticks) == len(_HEALTHY)
+
+
 def test_collapse_becomes_an_alert(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     monkeypatch.setattr(module, "governor_mode", lambda: "dispatch")

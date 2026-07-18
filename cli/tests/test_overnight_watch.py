@@ -279,6 +279,28 @@ def test_pause_marker_stops_attached_watch_without_sleeping(tmp_path, monkeypatc
     assert module.main(["--watch", "--interval", "999"]) == 0
 
 
+def test_watch_self_recycles_when_rss_cap_is_exceeded(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch, LIMEN_WATCH_RSS_MB=512)
+    calls = {"run_once": 0}
+
+    monkeypatch.setattr(module, "stop_for_autonomy_pause", lambda **_kwargs: None)
+
+    def fake_run_once(*, dry_run, json_output):
+        calls["run_once"] += 1
+        return 0
+
+    monkeypatch.setattr(module, "run_once", fake_run_once)
+    monkeypatch.setattr(module, "_rss_mb", lambda: 600.0)
+
+    def forbidden_sleep(*_args, **_kwargs):
+        raise AssertionError("watch loop should recycle before sleeping once RSS cap is exceeded")
+
+    monkeypatch.setattr(module.time, "sleep", forbidden_sleep)
+
+    assert module.main(["--watch", "--interval", "999"]) == 0
+    assert calls["run_once"] == 1
+
+
 def test_pause_marker_blocks_new_unattended_trial(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     module.PAUSE_MARKER.write_text("reason: trial admission closed\n", encoding="utf-8")
