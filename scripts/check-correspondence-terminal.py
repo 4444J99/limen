@@ -29,6 +29,30 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LEDGER = Path(os.environ.get("LIMEN_OBLIGATIONS_LEDGER", ROOT / "obligations-ledger.json"))
 DISPOSITIONS = Path(os.environ.get("LIMEN_CORRESPONDENCE_DISPOSITIONS", ROOT / "logs" / "correspondence-dispositions.json"))
 MAX_AGE_HOURS = float(os.environ.get("LIMEN_MAIL_LEDGER_MAX_AGE_HOURS", "12"))
+UMA_ROOT = Path(os.environ.get("UMA_ROOT", Path.home() / "Workspace" / "universal-mail--automation"))
+
+
+def _resolve_ob_key():
+    """The ONE canonical key builder — imported from the UMA checkout (draft_writer._ob_key), the
+    exact function the walk and obligations_build use. Importing (never re-deriving) is load-bearing:
+    if the sensor's key shape ever drifts from the walk's, un_walked false-fails FOREVER and the
+    AUTONOMY_PAUSED release predicate never clears. Fail-open: if UMA is absent/unimportable, fall
+    back to the historical inline derivation so the sensor still runs (degraded, never crashing)."""
+    try:
+        import sys
+        if str(UMA_ROOT) not in sys.path:
+            sys.path.insert(0, str(UMA_ROOT))
+        from draft_writer import _ob_key  # noqa: PLC0415 — deliberate runtime import from the UMA checkout
+        return _ob_key
+    except Exception:  # noqa: BLE001 — a broken/absent UMA must never crash the predicate
+        def _fallback(o: dict) -> str:
+            mids = o.get("message_ids") or []
+            tail = mids[0] if mids else (o.get("sample_subjects") or [""])[0][:40]
+            return f"{o.get('cls')}|{o.get('domain')}|{tail}"
+        return _fallback
+
+
+_ob_key = _resolve_ob_key()
 
 
 def _parse_ts(raw: str) -> datetime | None:
@@ -72,9 +96,7 @@ def main() -> int:
     reply_owed_keys = set()
     for o in obligations:
         if isinstance(o, dict) and o.get("requires_reply"):
-            mids = o.get("message_ids") or []
-            tail = mids[0] if mids else (o.get("sample_subjects") or [""])[0][:40]
-            reply_owed_keys.add(f"{o.get('cls')}|{o.get('domain')}|{tail}")
+            reply_owed_keys.add(_ob_key(o))   # canonical key (shared w/ the walk), never re-derived
 
     rows = disp.get("rows") or []
     disposed_keys = {r.get("ob_key") for r in rows if isinstance(r, dict)}

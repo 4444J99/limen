@@ -314,6 +314,31 @@ def _write_status(status: dict) -> None:
         _log_clean("could not write logs/correspondence-dispositions.json (fail-open)")
 
 
+def _record_answered_keys(keys: set[str]) -> None:
+    """Persist the _ob_keys of rows answered out-of-band (disposition sent/awaiting-them) to UMA's
+    audit/answered_keys.json — the offline drain signal obligations_build.build() reads to RETIRE
+    those rows so reply_owed falls instead of re-materializing every beat. UNION with the existing
+    set: receipts persist, so a key must stay recorded until its own receipt ages out. The file is
+    gitignored (it holds _ob_keys); a missing/torn file starts empty. Fail-open at every step — a
+    write error is noted, never fatal, so the beat never reds and the drain simply no-ops that run."""
+    if not keys:
+        return
+    path = UMA_ROOT / "audit" / "answered_keys.json"
+    try:
+        existing: set[str] = set()
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                existing = set(data)
+        except (OSError, ValueError):
+            existing = set()
+        merged = sorted(existing | keys)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        _log_clean("could not write audit/answered_keys.json (fail-open)")
+
+
 def _emit_notify(title: str, msg: str) -> None:
     """Push a COUNT-ONLY line through the EXISTING notify cascade (notify-events._emit → macOS + ntfy),
     the same effector opportunity-review-delta uses. Fail-open: unimportable/erroring ⇒ skip silently,
@@ -374,11 +399,17 @@ def main(argv: list[str] | None = None) -> int:
         by_disposition = {d: 0 for d in DISPOSITIONS}
         draft_missing = 0
         needs_human = 0
+        answered_this_run: set[str] = set()   # drain signal → audit/answered_keys.json
 
         for ob in reply_owed:
             disp, reason, missing = _disposition(ob, tiers, sent_keys, sd, answered_fn)
             key = sd._ob_key(ob) if sd is not None else f"?|?|{(ob.get('sample_subjects') or [''])[0][:40]}"
             by_disposition[disp] += 1
+            # A row answered out-of-band (a reply already in [Gmail]/Sent) is terminal — record its
+            # canonical key so obligations_build retires it and reply_owed drains. Only when sd is
+            # real (never the "?|?|" placeholder, which would poison the set with a non-canonical key).
+            if disp in ("sent", "awaiting-them") and sd is not None:
+                answered_this_run.add(key)
             if missing:
                 draft_missing += 1
             if disp == "needs-human":
@@ -422,6 +453,14 @@ def main(argv: list[str] | None = None) -> int:
                     cnote = _contact_discovery("linkedin-com--inbound")
                     if cnote:
                         drain_notes.append(cnote)
+
+        # Persist the drain signal for build's retire step — unconditional (SENT-detection runs on
+        # every walk, not only --drain). Count-only note; the keys live in the gitignored audit file,
+        # never the committed logs face.
+        if answered_this_run:
+            _record_answered_keys(answered_this_run)
+            drain_notes.append(
+                f"drain: recorded {len(answered_this_run)} answered key(s) → obligations_build retires them next build")
 
         if args.drain and fire_armed:
             drain_notes.append(
