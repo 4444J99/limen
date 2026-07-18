@@ -1,7 +1,10 @@
-# setup-rulesets.py — dry-run merge-gate contract
+# setup-rulesets.py — live merge-gate contract
 
-**Updated:** 2026-07-18 · **Status:** TARGET CONTRACT — temporary classic protection is live;
-the queue ruleset is applied only after the `merge_group` workflow lands.
+**Updated:** 2026-07-18 · **Status:** LIVE FOR USER/AUTHENTICATED AGENT PRs — the no-bypass queue
+ruleset, classic protection, auto-merge, and branch-retention settings are active and verified.
+Actions-created pull requests remain blocked by the owning organization policy; the exact live
+evidence and owner-routed gate are recorded in
+[`concurrency-rail-live-receipt.json`](concurrency-rail-live-receipt.json).
 
 ## Limen's concurrency rail
 
@@ -89,8 +92,7 @@ cd ~/Workspace/limen
 python3 scripts/setup-rulesets.py --repo organvm/limen
 ```
 
-Explicit targeted apply, only after the workflow change is merged and the operator authorizes the
-repository-setting mutation:
+Explicit targeted apply:
 
 ```bash
 cd ~/Workspace/limen
@@ -109,6 +111,8 @@ remote mutation without the exact `--apply` token.
 - Auto-merge:
   `gh api -X PATCH /repos/organvm/limen -F allow_auto_merge=false`
 
-On 2026-07-18, temporary classic `pr-gate` protection with `enforce_admins:true` was applied before
-the code rollout to block the still-deployed legacy Contents writers. It must not be weakened before
-the target ruleset is installed and read-back verified.
+On 2026-07-18, PR #1247 merged the queue-aware workflow and repository integration rail. Ruleset
+`19147990` was then installed and read-back verified with an active GraphQL merge queue. Classic
+`pr-gate` protection remains `strict:false` and `enforce_admins:true`; the active ruleset now owns
+the no-bypass pull-request edge. The closeout receipt PR itself is the real queue exercise and
+becomes terminal only when GitHub records its successful `merge_group` run and merged exact head.

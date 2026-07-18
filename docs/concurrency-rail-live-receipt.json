@@ -1,0 +1,158 @@
+{
+  "blocking_atoms": [
+    {
+      "code": "organization_disallows_actions_pull_requests",
+      "failed_predicate": "repos/organvm/limen/actions/permissions/workflow has can_approve_pull_request_reviews=true",
+      "http_status": 409,
+      "next_command": "gh api -X PUT orgs/organvm/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true",
+      "owner": "github:organvm:actions-workflow-policy",
+      "scope_note": "This is an organization-wide security setting, so the direct session did not broaden the repository-scoped authorization."
+    },
+    {
+      "code": "live_owner_token_not_materialized_locally",
+      "failed_predicate": "authenticated live mutation-shaped request returns the typed HTTP 409 board_mutation_deferred receipt",
+      "next_command": "Materialize the existing Worker owner token through the credential-wall owner, then rerun only the authenticated readiness and negative-mutation probes.",
+      "owner": "credential-wall:limen-runtime-owner-token",
+      "scope_note": "Cloudflare retains the encrypted LIMEN_API_TOKEN secret, but no promptless local source exposed the matching value. No secret was read, printed, replaced, or copied."
+    }
+  ],
+  "generated_utc": "2026-07-18T17:39:09Z",
+  "policy": {
+    "actions": {
+      "can_approve_pull_request_reviews": false,
+      "default_workflow_permissions": "read",
+      "repository_override_blocked_by_organization": true
+    },
+    "classic": {
+      "enforce_admins": true,
+      "required_contexts": [
+        "pr-gate"
+      ],
+      "required_pull_request_reviews": null,
+      "restrictions": null,
+      "strict": false
+    },
+    "graphql_queue": {
+      "id": "MQ_kwDOStELdc4AA4pG",
+      "url": "https://github.com/organvm/limen/queue/main"
+    },
+    "repository": {
+      "allow_auto_merge": true,
+      "delete_branch_on_merge": false
+    },
+    "ruleset": {
+      "bypass_actors": [],
+      "conditions": {
+        "exclude": [],
+        "include": [
+          "~DEFAULT_BRANCH"
+        ]
+      },
+      "enforcement": "active",
+      "id": 19147990,
+      "merge_queue": {
+        "grouping_strategy": "HEADGREEN",
+        "max_builds": 4,
+        "max_merges": 1,
+        "merge_method": "SQUASH",
+        "min_entries": 1,
+        "min_wait_minutes": 0,
+        "timeout_minutes": 60
+      },
+      "name": "limen-default-merge-queue",
+      "pull_request": {
+        "allowed_merge_methods": [
+          "squash"
+        ],
+        "required_approvals": 0
+      },
+      "rule_types": [
+        "pull_request",
+        "merge_queue"
+      ],
+      "target": "branch"
+    }
+  },
+  "queue": {
+    "owner_pull_request": {
+      "head_ref": "work/concurrency-closeout-reap-20260719",
+      "identity": "the unique GitHub pull request in organvm/limen whose head ref is work/concurrency-closeout-reap-20260719",
+      "repository": "organvm/limen"
+    },
+    "terminal_predicate": "The owner pull request is MERGED at its unchanged exact head, its pr-gate merge_group run completed successfully, and its merge commit is an ancestor of origin/main.",
+    "verdict_if_terminal_predicate_fails": "not_terminal",
+    "verdict_if_terminal_predicate_passes": "pass"
+  },
+  "recovery_lifecycle": {
+    "active_owner": {
+      "dirty_status_entries": 61,
+      "head_oid": "e77500e6b4bd24eb17a5237ba28a444f36f7c0ea",
+      "pid": 68627,
+      "root": "codex-runaway-prevention-20260717",
+      "state": "running",
+      "touch_policy": "never touch while the owner process is present"
+    },
+    "clean_recovery_roots": [
+      {
+        "earliest_reap_utc": "2026-07-19T12:09:20Z",
+        "head_oid": "d7449e0b0f283432bdaaa62b4fa927b24bbeecd9",
+        "root": "runaway-recovery-20260718-120912"
+      },
+      {
+        "earliest_reap_utc": "2026-07-19T14:13:31Z",
+        "head_oid": "0aa219ad0ea1916f76f1954da9f5cf39d5184202",
+        "root": "runaway-prevention-recovery-20260718-120912"
+      }
+    ],
+    "continuation_receipt": "docs/continuations/concurrency-closeout-reap-20260719/workstream.json"
+  },
+  "repo": "organvm/limen",
+  "schema": "limen.concurrent_integration_live.v1",
+  "source": {
+    "head_oid": "bd4f1c44a299dd188819e614ad8dba9f9926fbe2",
+    "main_contains_merge": true,
+    "merge_commit_oid": "4dbe86998518892a83827d5814e250c817f4b2bb",
+    "pr": 1247
+  },
+  "terminality": {
+    "current": "conditional",
+    "rule": "This tracked receipt becomes terminal when its owner pull request satisfies queue.terminal_predicate; the GitHub pull request and merge_group run are the terminal remote evidence."
+  },
+  "verdict": "blocked",
+  "worker": {
+    "deployment": {
+      "deployed_at": "2026-07-18T17:34:42.876773Z",
+      "deployment_id": "e5449db1-3afe-41d8-8509-8ebc261d78cb",
+      "percentage": 100,
+      "source": "wrangler",
+      "source_commit": "4dbe86998518892a83827d5814e250c817f4b2bb",
+      "version_id": "886f4161-b673-404b-ad6c-531063173aef",
+      "version_number": 19
+    },
+    "health": {
+      "access": "read_only",
+      "branch": "main",
+      "configured": true,
+      "http_status": 200,
+      "mode": "github",
+      "mutation_owner": "tabularius",
+      "mutation_route": "tabularius_ticket",
+      "path": "tasks.yaml",
+      "repo": "organvm/limen",
+      "writable": false
+    },
+    "live_negative_probe": {
+      "authenticated_probe": "blocked_by_credential_wall",
+      "board_blob_sha_after": "8ae2e930738c4ae0fb2c7a8e9d12d403e090d5fa",
+      "board_blob_sha_before": "8ae2e930738c4ae0fb2c7a8e9d12d403e090d5fa",
+      "board_unchanged": true,
+      "unauthenticated_http_status": 401
+    },
+    "public_status": {
+      "cold_read_elapsed_seconds": 38,
+      "http_status": 200,
+      "surface": "public"
+    },
+    "url": "https://limen-runtime.ivixivi.workers.dev"
+  }
+}
