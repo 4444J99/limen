@@ -1,8 +1,14 @@
 import SurfaceNav from "../surface-nav";
 import { formatDate, getCorpusCommandCenterData } from "../lib/data";
 import CorpusCommandCenterClient from "./corpus-command-center-client";
+import type { Metadata } from "next";
 
 export const dynamic = "force-static";
+
+export const metadata: Metadata = {
+  title: "Corpus",
+  description: "Corpus Command Center — prompt atlas coverage, cluster stats, and Aug 1 readiness gate.",
+};
 
 export default function CorpusCommandCenterPage() {
   const data = getCorpusCommandCenterData();

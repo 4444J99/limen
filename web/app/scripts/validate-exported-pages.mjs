@@ -193,3 +193,35 @@ for (const needle of ['"body_preview"', '"body_object"', '"private_source_path"'
 }
 console.log("Exported page persona/runtime checks verified");
 assertLabels("insights.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
+
+// Assert every exported page has a non-empty, unique <title> tag.
+// This catches regressions where a route loses its per-route metadata.
+const exportedPages = [
+  "index.html",
+  "qa.html",
+  "client.html",
+  "public.html",
+  "internal.html",
+  "insights.html",
+  "corpus.html",
+  "observatory.html",
+];
+
+function extractTitle(html) {
+  const m = html.match(/<title>([^<]*)<\/title>/);
+  return m ? m[1].trim() : "";
+}
+
+const seenTitles = new Map();
+for (const page of exportedPages) {
+  const html = readHtml(page);
+  const title = extractTitle(html);
+  if (!title) {
+    fail(`${page} has an empty <title>`);
+  }
+  if (seenTitles.has(title)) {
+    fail(`${page} has duplicate <title> "${title}" (already seen in ${seenTitles.get(title)})`);
+  }
+  seenTitles.set(title, page);
+}
+console.log(`Page title uniqueness verified: ${exportedPages.length} pages, ${seenTitles.size} unique titles`);

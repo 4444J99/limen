@@ -1,7 +1,13 @@
 import SurfaceNav from "../surface-nav";
 import { formatDate, getObservatoryBriefData } from "../lib/data";
+import type { Metadata } from "next";
 
 export const dynamic = "force-static";
+
+export const metadata: Metadata = {
+  title: "Observatory",
+  description: "Observatory — daily brief on GitHub legibility gaps, transferable winner mechanisms, and active experiments.",
+};
 
 function confounderLabel(c: string | { name?: string; discount?: number }): string {
   if (typeof c === "string") return c;
