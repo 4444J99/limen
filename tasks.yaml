@@ -145751,3 +145751,231 @@ tasks:
   created: '2026-07-17'
   updated: '2026-07-17T23:18:17.441094Z'
   dispatch_log: []
+- id: GH-organvm-limen-1202
+  title: "needs-human (L-ORG-TEAM-UPGRADE): Upgrade the `organvm` org to Team (~$4/mo)\
+    \ \u2014 the ONE surviving atom o\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1202
+  context: "GitHub issue organvm/limen#1202. **Owner:** Anthony (human-gated lever\
+    \ `L-ORG-TEAM-UPGRADE`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Upgrade the `organvm`\
+    \ org to Team (~$4/mo) \u2014 the ONE surviving atom of the old L-ENTERPRISE-CANCEL.\
+    \ The Enterprise half is DONE by machine (2026-07-17)"
+  predicate: test "$(gh issue view 1202 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1202
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.134127Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1197
+  title: "publish-sweep: secrets in git history of 2 publish-candidates \u2014 scrub\
+    \ before any publish"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1197
+  context: "GitHub issue organvm/limen#1197. The publication-engine `publish-sweep.py\
+    \ --candidates` recon (2026-07-17) flagged secret-shaped strings in the **git\
+    \ history** (not just HEAD) of two private repos: - `organvm/_agent` \u2014 2\
+    \ history secret hits - `organvm/_agent-ontology` \u2014 1 history secret hit\
+    \ Latent while private, but they hard-block any private\u2192public flip (a flip\
+    \ publishes full history). Remediation before publish: identify + **r"
+  predicate: test "$(gh issue view 1197 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1197
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.136294Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1191
+  title: 'needs-human (L-SEO-METADATA): Arm the repo-metadata effector'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1191
+  context: "GitHub issue organvm/limen#1191. **Owner:** Anthony (human-gated lever\
+    \ `L-SEO-METADATA`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Arm the repo-metadata\
+    \ effector: setting LIMEN_REPO_METADATA_APPLY=1 (with LIMEN_GITVS_APPLY=1 so the\
+    \ reconcile beat dispatches it) lets repo-metadata-sync."
+  predicate: test "$(gh issue view 1191 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1191
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.137014Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1190
+  title: "needs-human (L-RSA-OFFBOARD): Offboard organvm/render-second-amendment (2.1\
+    \ GB, vault_private, over\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1190
+  context: "GitHub issue organvm/limen#1190. **Owner:** Anthony (human-gated lever\
+    \ `L-RSA-OFFBOARD`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Offboard organvm/render-second-amendment\
+    \ (2.1 GB, vault_private, oversize): relocate to sealed cold storage (arca.sh\
+    \ seal \u2192 organvm/arca or B2), verify the"
+  predicate: test "$(gh issue view 1190 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1190
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.138162Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1189
+  title: 'needs-human (L-PORTAL-PUBLISH-WAVE-1): Release publish wave 1'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1189
+  context: "GitHub issue organvm/limen#1189. **Owner:** Anthony (human-gated lever\
+    \ `L-PORTAL-PUBLISH-WAVE-1`). Surfaced once, never nagged, never auto-pulled.\
+    \ This issue is the lever's permanent, individually-closeable home in the graph\
+    \ \u2014 the registry `his-hand-levers.json` is its source of truth. Release publish\
+    \ wave 1: the estate registry holds 37 private repos judged publish-wave candidates\
+    \ (repo_overrides rows with publish_candidate: tru"
+  predicate: test "$(gh issue view 1189 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1189
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.138952Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1188
+  title: "needs-human (L-LINKEDIN-TESTAMENT): Publish the refreshed LinkedIn testament\
+    \ post \u2014 one click, your identity"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1188
+  context: "GitHub issue organvm/limen#1188. **Owner:** Anthony (human-gated lever\
+    \ `L-LINKEDIN-TESTAMENT`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Publish the refreshed\
+    \ LinkedIn testament post \u2014 one click, your identity. The post is drafted\
+    \ and staged in 4444J99/hokage-chess; it is a public stat"
+  predicate: test "$(gh issue view 1188 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1188
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.139657Z'
+  dispatch_log: []
+- id: GH-organvm-public-record-data-scrapper-361
+  title: 'moat: extend the calibration seam to the discovery source-map and scoring
+    tables'
+  repo: organvm/public-record-data-scrapper
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/public-record-data-scrapper/issues/361
+  context: "GitHub issue organvm/public-record-data-scrapper#361. Follow-on to the\
+    \ calibration seam merged in #360 (funder dictionary \u2192 private-injectable\
+    \ `server/services/calibration/funderIntel.ts`). Two proprietary-value groups\
+    \ still live hardcoded in the public tree and should move onto the same seam:\
+    \ **1. Discovery source-map** \u2014 the curated dataset IDs + per-source signal\
+    \ weights in `server/services/discovery-channels/SBALoansChannel.ts` and `SocrataBuildi"
+  predicate: test "$(gh issue view 361 --repo organvm/public-record-data-scrapper
+    --json state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/public-record-data-scrapper/issues/361
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.140561Z'
+  dispatch_log: []
+- id: GH-organvm-universal-mail-automation-177
+  title: "sweep receipts carry no snippet \u2014 organic leads with neutral subjects\
+    \ classify precedent, not inbound-lead"
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/universal-mail--automation/issues/177
+  context: "GitHub issue organvm/universal-mail--automation#177. obligations_build\
+    \ derives from receipt rows (sender/subject/label only). An organic recruiter\
+    \ thread with a neutral subject (\"Your background and a Python Developer opening\
+    \ with our client\" \u2014 the live JPMC lane, 2026-07-17) carries its protocol\
+    \ tokens (Engagement/Contract-to-Hire/recruiting language) in the BODY, so derive()\
+    \ lands it on the precedent rung and opportunity_sync never ingests it. Fix"
+  predicate: test "$(gh issue view 177 --repo organvm/universal-mail--automation --json
+    state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/universal-mail--automation/issues/177
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.141269Z'
+  dispatch_log: []
+- id: GH-organvm-universal-mail-automation-173
+  title: 'mail_send: HEADER_SCAN_WINDOW=100 too small for reply-to-search on high-volume
+    inboxes'
+  repo: organvm/universal-mail--automation
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/universal-mail--automation/issues/173
+  context: 'GitHub issue organvm/universal-mail--automation#173. Hit in production
+    2026-07-16: --reply-to-search subject fragments could not find a 10-day-old thread
+    because the client-side subject scan only covers the newest 100 All Mail messages
+    (GitHub-notification volume pushes real threads out of the window in hours). Workaround
+    used: resolve the RFC Message-ID via server-side SEARCH and pass <Message-ID>
+    (no window limit). Fix: make the window env-tunable'
+  predicate: test "$(gh issue view 173 --repo organvm/universal-mail--automation --json
+    state --jq .state)" = CLOSED
+  receipt_target: https://github.com/organvm/universal-mail--automation/issues/173
+  depends_on: []
+  created: '2026-07-17'
+  updated: '2026-07-18T00:25:31.142047Z'
+  dispatch_log: []
