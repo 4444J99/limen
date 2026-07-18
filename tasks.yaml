@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-18'
-      spent: 5
+      spent: 4
       per_agent:
         jules: 0
         gemini: 0
-        codex: 1
+        codex: 0
         opencode: 0
         agy: 0
         claude: 0
@@ -28,10 +28,10 @@ portal:
       per_agent_reset:
         jules: '2026-07-18T00:04:38.135196+00:00'
         gemini: '2026-07-18T00:04:38.135196+00:00'
-        codex: '2026-07-18T12:09:19.867214+00:00'
+        codex: '2026-07-18T17:18:57.901609+00:00'
         opencode: '2026-07-18T00:04:38.135196+00:00'
         agy: '2026-07-18T00:04:38.135196+00:00'
-        claude: '2026-07-18T12:09:19.867214+00:00'
+        claude: '2026-07-18T17:18:57.901609+00:00'
   agents:
     opencode:
       status: idle
@@ -145986,7 +145986,7 @@ tasks:
   description: visible GitHub profile README is missing or stale
   repo: 4444J99/4444J99
   type: coordination
-  target_agent: agy
+  target_agent: codex
   workstream: public-face
   priority: critical
   budget_cost: 1
@@ -146016,7 +146016,7 @@ tasks:
   receipt_target: git:4444J99/4444J99:README.md
   depends_on: []
   created: '2026-07-18'
-  updated: '2026-07-18T14:27:58.516488Z'
+  updated: '2026-07-18T17:26:45.317760Z'
   dispatch_log:
   - timestamp: '2026-07-18T14:18:44.218842Z'
     agent: codex
@@ -146082,4 +146082,292 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/311
   depends_on: []
   created: '2026-07-18'
+  dispatch_log: []
+- id: GH-organvm-limen-1245
+  title: 'profile engine: deferred follow-ups (calendar-cache, amalgamation, breadth)'
+  repo: organvm/limen
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1245
+  context: 'GitHub issue organvm/limen#1245. Follow-ups deferred from the profile
+    GitHub-native redesign (PR #1235). Homed here so they aren''t lost. ## 1. Calendar-days
+    cache (durable fix for style drift during API outages) GitHub''s contribution-calendar
+    GraphQL 504s / hits resource limits frequently on this high-activity account.
+    `scripts/profile-visuals.py` degrades by *preserving* the committed calendar SVGs
+    (heatmap/snake/streak). But wh'
+  predicate: test "$(gh issue view 1245 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1245
+  depends_on: []
+  created: '2026-07-18'
+  updated: '2026-07-18T15:49:04.452273Z'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-677
+  title: rebase/resolve conflicts on organvm/limen#677
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/677
+  context: 'PR organvm/limen#677 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/677
+    [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 677 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/677
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-678
+  title: rebase/resolve conflicts on organvm/limen#678
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/678
+  context: 'PR organvm/limen#678 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/678
+    [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 678 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/678
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-679
+  title: rebase/resolve conflicts on organvm/limen#679
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/679
+  context: 'PR organvm/limen#679 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/679
+    [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 679 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/679
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-695
+  title: rebase/resolve conflicts on organvm/limen#695
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/695
+  context: 'PR organvm/limen#695 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/695
+    [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 695 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/695
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-rebase-organvm-limen-825
+  title: rebase/resolve conflicts on organvm/limen#825
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - rebase
+  - self-heal
+  - conflict
+  urls:
+  - https://github.com/organvm/limen/pull/825
+  context: 'PR organvm/limen#825 is CONFLICTING with its base branch and merge-drain
+    correctly refuses to merge it. FIRST check the PR''s ORIGINAL diff (merge-base..head)
+    against its declared title/body intent: a branch generated from a broken tree
+    can carry mass deletions it never declared, and branch-side deletions the declaration
+    does not name are POISON to restore from base, never intent to preserve (session-meta#148
+    ate ingest/ + 3 test suites this way). Then check out the PR branch, rebase it
+    onto the current base (or merge base in), resolve every conflict preserving the
+    PR''s declared intent, push to the SAME PR branch, and confirm it reports MERGEABLE
+    with green CI. After resolving, verify diff-vs-base matches the declared intent;
+    if nothing genuine survives (all absorbed or superseded on base), close the PR
+    as superseded instead of pushing. Do not open a new PR. PR: https://github.com/organvm/limen/pull/825
+    [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]'
+  predicate: test "$(gh pr view 825 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/825
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: GH-organvm-limen-1264
+  title: "worker: cold-isolate board parse can blow the CPU budget (Cloudflare 1102)\
+    \ \u2014 needs a persistent parsed-board cache"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - censor
+  urls:
+  - https://github.com/organvm/limen/issues/1264
+  context: "GitHub issue organvm/limen#1264. Pre-existing debt, improved but not eliminated\
+    \ by #1249: a cold limen-runtime isolate fetches tasks.yaml (5.3MB) raw and YAML.parses\
+    \ it in one request. Warm isolates serve the sha-keyed module cache (~0.39s observed),\
+    \ but the first request per isolate intermittently exceeds the free-plan CPU budget\
+    \ \u2192 503 error 1102 (observed live 2026-07-18, and as deploy.yml probe failures\
+    \ at 16:21/16:52 UTC). Co"
+  predicate: test "$(gh issue view 1264 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1264
+  depends_on: []
+  created: '2026-07-18'
+  updated: '2026-07-18T17:17:15.510105Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1261
+  title: "needs-human (L-TOKENS-SIGNOFF): Approve web/tokens/organvm-tokens.* as the\
+    \ estate design language \u2014 t\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1261
+  context: "GitHub issue organvm/limen#1261. **Owner:** Anthony (human-gated lever\
+    \ `L-TOKENS-SIGNOFF`). Surfaced once, never nagged, never auto-pulled. This issue\
+    \ is the lever's permanent, individually-closeable home in the graph \u2014 the\
+    \ registry `his-hand-levers.json` is its source of truth. Approve web/tokens/organvm-tokens.*\
+    \ as the estate design language \u2014 the portfolio-led design-token layer (primitives\
+    \ + semantic aliases + utility/editori"
+  predicate: test "$(gh issue view 1261 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1261
+  depends_on: []
+  created: '2026-07-18'
+  updated: '2026-07-18T17:17:15.513704Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1260
+  title: "process: copilot CLI lane works in the LIVE checkout root \u2014 1.4GB scratch\
+    \ + clones outside worktree isolation"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - censor
+  urls:
+  - https://github.com/organvm/limen/issues/1260
+  context: "GitHub issue organvm/limen#1260. Observed 2026-07-18 ~11:39\u201312:47\
+    \ local: a live copilot CLI session (--yolo, session c070b645-b848-47f3-b775-f5f8b90400e6)\
+    \ deposited untracked working state into /Users/4jp/Workspace/limen (the LIVE\
+    \ checkout): .copilot-work/ (15M), issue_backlog_work/ (684M, repo copy), peer-audited--behavioral-blockchain/\
+    \ (684M, repo clone), plus peer_audit_*.json / issue_backlog_*.json / two generator\
+    \ .py scripts"
+  predicate: test "$(gh issue view 1260 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1260
+  depends_on: []
+  created: '2026-07-18'
+  updated: '2026-07-18T17:17:15.515716Z'
+  dispatch_log: []
+- id: GH-organvm-limen-1258
+  title: "needs-human (L-URL-HIERARCHY-SIGNOFF): Approve the declared URL map (institutio/identity/url-map.yaml)\
+    \ \u2014 the\u2026"
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1258
+  context: "GitHub issue organvm/limen#1258. **Owner:** Anthony (human-gated lever\
+    \ `L-URL-HIERARCHY-SIGNOFF`). Surfaced once, never nagged, never auto-pulled.\
+    \ This issue is the lever's permanent, individually-closeable home in the graph\
+    \ \u2014 the registry `his-hand-levers.json` is its source of truth. Approve the\
+    \ declared URL map (institutio/identity/url-map.yaml) \u2014 the intended 4444j99.dev\
+    \ hostname hierarchy. Four entries are proposed (apex 444"
+  predicate: test "$(gh issue view 1258 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1258
+  depends_on: []
+  created: '2026-07-18'
+  updated: '2026-07-18T17:17:15.517243Z'
   dispatch_log: []
