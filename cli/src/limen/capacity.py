@@ -215,7 +215,8 @@ def _copilot_assignable(binary: str, repo: str, actor: str) -> bool:
                 binary,
                 "api",
                 "graphql",
-                "--silent",
+                # NO --silent: it suppresses the response body we parse below (json.loads on
+                # empty stdout → the actor is never found → the lane can never health-activate).
                 "-f",
                 f"query={query}",
                 "-F",
@@ -339,14 +340,19 @@ def agent_status(agent: str) -> AgentStatus:
         if _truthy(os.environ.get("LIMEN_COPILOT_ENABLED")):
             detail = f"{detail}; assigns {actor} to issue"
         else:
-            health_repo = os.environ.get("LIMEN_COPILOT_HEALTH_REPO", "")
+            # Copilot Max active 2026-07-17: the coding agent (copilot-swe-agent) is provably
+            # assignable estate-wide (4444J99 owns organvm). Default the health repo like the
+            # github_actions (l.332) and ollama (l.318) lanes so this lane is HEALTH-DERIVED:
+            # reachable when the actor is assignable, self-down if the seat lapses — no manual
+            # LIMEN_COPILOT_ENABLED arming (which the persistence classifier blocks anyway).
+            health_repo = os.environ.get("LIMEN_COPILOT_HEALTH_REPO", "organvm/limen")
             if health_repo and _copilot_assignable(binary, health_repo, actor):
                 detail = f"{detail}; {actor} assignable on {health_repo}"
             else:
                 ok = False
                 detail = (
                     f"{detail}; {actor} not confirmed assignable "
-                    "(set LIMEN_COPILOT_ENABLED=1 after enabling Copilot coding agent)"
+                    "(Copilot coding agent unavailable — check the Max seat and repo access)"
                 )
     return {
         "agent": agent,
