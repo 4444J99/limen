@@ -311,10 +311,21 @@ def _upsert_entry(
     existed = isinstance(existing, dict)
     kind = _kind(item)
     state = str(item.get("state") or "")
+    existing_disposition = str(existing.get("disposition") or "").strip() if existed else ""
     disposition = _default_disposition(state, item)
-    if existed and str(existing.get("disposition") or "").strip():
-        disposition = str(existing.get("disposition")).strip()
-    elif state == "closed" and not retroactive:
+    if existed and existing_disposition:
+        if existing_disposition == "queued" and state == "closed":
+            # The item was previously open (queued, never engaged) and is now observed closed --
+            # re-derive rather than blindly carrying "queued" forward forever. A merged PR
+            # resolves to "merged"; a genuinely closed-unmerged PR/issue becomes a
+            # reopen-candidate so it gets a real look instead of silently going stale.
+            disposition = "merged" if disposition == "merged" else "reopen-candidate"
+        else:
+            disposition = existing_disposition
+    elif state == "closed" and not retroactive and disposition != "merged":
+        # A newly-observed closed-but-unmerged item (first seen already closed, non-retroactive
+        # run) needs a human/engagement pass rather than being silently filed as reopen-candidate.
+        # But a merged PR is already resolved -- never downgrade that to "queued".
         disposition = "queued"
 
     fresh = {
