@@ -15,11 +15,11 @@ portal:
       claude: 100
     track:
       date: '2026-07-18'
-      spent: 6
+      spent: 5
       per_agent:
         jules: 0
         gemini: 0
-        codex: 2
+        codex: 1
         opencode: 0
         agy: 0
         claude: 0
@@ -145990,7 +145990,7 @@ tasks:
   workstream: public-face
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - always-working
   - overnight-lane-switch
@@ -146016,7 +146016,7 @@ tasks:
   receipt_target: git:4444J99/4444J99:README.md
   depends_on: []
   created: '2026-07-18'
-  updated: '2026-07-18T15:16:32.211002Z'
+  updated: '2026-07-18T14:27:58.516488Z'
   dispatch_log:
   - timestamp: '2026-07-18T14:18:44.218842Z'
     agent: codex
@@ -146029,11 +146029,6 @@ tasks:
     status: open
     route_to: claude
     output: codex lane failed; reopened to healthy fleet cascade
-  - timestamp: '2026-07-18T15:16:32.211002Z'
-    agent: codex
-    session_id: async-reserve:f07b8b42dd8fa1c819f95f27a417dc5a
-    status: dispatched
-    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-1227
   title: 'needs-human (L-CLOSEOUT-OBSERVE-ARM): Arm the closeout-reconciliation organ
     to OBSERVE live'
