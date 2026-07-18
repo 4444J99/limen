@@ -83,6 +83,13 @@ export interface ReadinessData {
   counts: Record<string, number>;
   budget: Record<string, number>;
   checks: { id: string; status: "pass" | "warn" | "fail"; detail: string }[];
+  mutation: {
+    status: "available" | "deferred";
+    owner: string;
+    code?: string;
+    route?: string;
+    next_action?: string;
+  };
   next_actions: string[];
 }
 

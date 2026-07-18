@@ -753,7 +753,13 @@ parameters:
     env: LIMEN_PUSH_GUARD
     self_update: none
     owner: continuity
-    note: "DATA_ONLY push guard (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main). When on (default), the autonomic direct-push lanes (scripts/capture.sh, scripts/continuation-beat.py) refuse to stage SOURCE (code/config that belongs behind pr-gate) onto a repo's `main` when that repo has .github/workflows/pr-gate.yml — so no uncommitted .py in the live checkout ever reaches protected main un-CI'd. Refused source is left on disk (reversible) and surfaced; route it via PR. `off` disables the guard. Non-main branches and ungated repos are unaffected either way."
+    note: "Legacy source-classification guard retained for compatibility. Default-branch safety no longer depends on it: capture preserves the actual remote default through a stable off-branch custody ref, continuation publishes it through a preservation PR, and neither path pushes the default branch even when this diagnostic source filter is off."
+  LIMEN_CAPTURE_GIT_TIMEOUT:
+    default: 60
+    env: LIMEN_CAPTURE_GIT_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Absolute wall-clock bound in seconds for each capture.sh remote Git operation. timeout or gtimeout is preferred; the portable alarm fallback preserves the same finite bound when coreutils is absent."
   LIMEN_RECLAIM:
     default: "1"
     env: LIMEN_RECLAIM
@@ -1965,7 +1971,7 @@ parameters:
     env: LIMEN_RELEASE_BRANCH
     self_update: none
     owner: limen-daemon
-    note: "Release branch that sync-release.sh and live-root-gate.py compare the live daemon checkout against. Changing it changes convergence evidence only; branch switches remain human-gated."
+    note: "Release branch that sync-release.sh and live-root-gate.py compare the live daemon checkout against. sync-release resolves origin's actual default independently: an override may select convergence evidence but can never reclassify, commit, or push the actual default branch as parked work."
   LIMEN_SYNC_RECEIPT_GLOBS:
     default: "docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json"
     env: LIMEN_SYNC_RECEIPT_GLOBS

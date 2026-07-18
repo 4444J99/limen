@@ -115,6 +115,75 @@ def test_scaled_limit_headroom(tmp_path):
     assert m.scaled_limit(10, tmp_path) == 10, "no usage.json → base limit (fail-open)"
 
 
+# ── MERGE-QUEUE CAPABILITY ─────────────────────────────────────────────────────────────────────
+
+
+def _gh_graphql(payload, rc=0, calls=None):
+    def f(args):
+        if calls is not None:
+            calls.append(args)
+        return _R(json.dumps(payload) if not isinstance(payload, str) else payload, rc=rc)
+
+    return f
+
+
+def test_merge_queue_capability_active_is_live_and_branch_specific():
+    m = _load()
+    calls = []
+    got = m.merge_queue_capability(
+        "organvm/limen",
+        "main",
+        _gh_graphql({"data": {"repository": {"mergeQueue": {"id": "MQ_kwDO"}}}}, calls=calls),
+    )
+
+    assert got == "active"
+    argv = calls[0]
+    assert argv[:2] == ["api", "graphql"]
+    assert "owner=organvm" in argv
+    assert "repo=limen" in argv
+    assert "branch=main" in argv
+    assert "mergeQueue(branch:$branch){id}" in argv[argv.index("-f") + 1]
+
+
+def test_merge_queue_capability_clean_null_is_absent():
+    m = _load()
+    got = m.merge_queue_capability(
+        "organvm/limen",
+        "main",
+        _gh_graphql({"data": {"repository": {"mergeQueue": None}}}),
+    )
+    assert got == "absent"
+
+
+def test_merge_queue_capability_ambiguity_is_unknown():
+    m = _load()
+    unknowns = [
+        (_gh_graphql("", rc=1), "API failure"),
+        (_gh_graphql("not-json"), "malformed JSON"),
+        (_gh_graphql({"errors": [{"message": "field unavailable"}]}), "GraphQL error"),
+        (_gh_graphql({"data": {"repository": None}}), "repository unavailable"),
+        (_gh_graphql({"data": {"repository": {}}}), "partial payload"),
+        (_gh_graphql({"data": {"repository": {"mergeQueue": {}}}}), "partial queue object"),
+    ]
+    for gh_fn, label in unknowns:
+        assert m.merge_queue_capability("organvm/limen", "main", gh_fn) == "unknown", label
+    assert m.merge_queue_capability("invalid", "main", _gh_graphql({})) == "unknown"
+    assert m.merge_queue_capability("organvm/limen", "", _gh_graphql({})) == "unknown"
+
+
+def test_merge_queue_capability_is_cached_per_bounded_process():
+    m = _load()
+    calls = []
+    gh_fn = _gh_graphql(
+        {"data": {"repository": {"mergeQueue": {"id": "MQ_cached"}}}},
+        calls=calls,
+    )
+
+    assert m.merge_queue_capability("organvm/limen", "main", gh_fn) == "active"
+    assert m.merge_queue_capability("organvm/limen", "main", gh_fn) == "active"
+    assert len(calls) == 1
+
+
 # ── STALE-BASE GATE (the #111 guard) ────────────────────────────────────────────────────────────
 
 

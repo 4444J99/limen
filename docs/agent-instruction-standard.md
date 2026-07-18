@@ -60,6 +60,11 @@ back to `AGENTS.md` instead.
 11. Apply `AGENTS.md` → Bounded Composition to campaigns, CI, generated artifacts, and handoffs.
     Aggregate entrypoints are thin fan-in layers over independently runnable modules with finite
     retries, bounded output, and durable receipts; they never duplicate successful children.
+12. Treat concurrent sessions as the normal operating condition. Each mutation lane owns an
+    isolated worktree and immutable PR head; moving `main` is integrated by the repository merge
+    queue and its synthetic `merge_group`, not by repeatedly rewriting every branch and rerunning
+    successful head CI. Direct `main` writers yield to active integration. The executable contract
+    is `AGENTS.md` → Session Discipline rule 5 plus `docs/concurrent-integration.md`.
 
 ## Home-scope generated surfaces
 

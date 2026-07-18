@@ -7,14 +7,26 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: tabularius-board-publication
+  cancel-in-progress: false
 
 jobs:
   auto-scale:
     runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      LIMEN_ROOT: ${{ github.workspace }}
+      LIMEN_TASKS: ${{ github.workspace }}/tasks.yaml
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: main
 
       - uses: actions/setup-python@v6
         with:
@@ -24,22 +36,23 @@ jobs:
       - name: Install Python dependencies
         run: python -m pip install pyyaml requests pydantic
 
+      - name: Preflight board publication
+        id: board-preflight
+        run: |
+          set +e
+          python scripts/tabularius-organ.py --preflight
+          rc=$?
+          set -e
+          if [ "$rc" -eq 0 ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          elif [ "$rc" -eq 75 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            exit "$rc"
+          fi
+
       - name: Run Auto-Scaler
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.board-preflight.outputs.ready == 'true'
         run: |
           python scripts/auto-scale.py
-          python scripts/tabularius-organ.py
-
-      - name: Commit changes
-        run: |
-          if git diff --quiet -- tasks.yaml; then
-            echo "No changes to commit"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tasks.yaml
-          git commit -m "chore: auto-scale tasks.yaml to 100-task depth"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          python scripts/tabularius-organ.py --require-published

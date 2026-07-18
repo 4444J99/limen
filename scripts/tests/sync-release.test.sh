@@ -29,6 +29,7 @@ echo "v1" > docs/branch-hygiene.md
 echo "task" > tasks.yaml
 git add -A && git commit -q -m "main v1"
 git push -q -u origin main
+git --git-dir="$tmp/origin.git" symbolic-ref HEAD refs/heads/main
 
 # park on a work branch: a unique work commit already on origin + uncommitted tracked dirt
 git checkout -q -b codex/work
@@ -63,4 +64,21 @@ if git -C "$tmp/live" show origin/codex/work:tasks.yaml 2>/dev/null | grep -q ta
   echo "FAIL: daemon-owned tasks.yaml was wrongly committed to the branch"; echo "$out"; exit 1
 fi
 
-echo "PASS: preserve-then-unpark — dirt pushed to origin, work commit intact, HEAD rested on release + ff, tasks.yaml not committed"
+# A mutable release override must never reclassify the actual default branch as
+# a parked topic branch and push it. Give the override a real remote target so
+# the refusal is proving the default-branch guard, not an incidental fetch
+# failure.
+git -C "$tmp/live" branch release-alt main
+git -C "$tmp/live" push -q origin release-alt
+main_before="$(git --git-dir="$tmp/origin.git" rev-parse refs/heads/main)"
+echo "must-stay-local" >> "$tmp/live/docs/branch-hygiene.md"
+override_out="$(LIMEN_ROOT="$tmp/live" LIMEN_RELEASE_BRANCH=release-alt bash "$script" 2>&1)"
+main_after="$(git --git-dir="$tmp/origin.git" rev-parse refs/heads/main)"
+[ "$main_before" = "$main_after" ] \
+  || { echo "FAIL: release override moved the actual default branch"; echo "$override_out"; exit 1; }
+grep -q "REFUSED.*origin's default branch" <<<"$override_out" \
+  || { echo "FAIL: release override did not fail closed"; echo "$override_out"; exit 1; }
+grep -q "must-stay-local" "$tmp/live/docs/branch-hygiene.md" \
+  || { echo "FAIL: release override consumed default-branch dirt"; echo "$override_out"; exit 1; }
+
+echo "PASS: preserve-then-unpark + mutable release override cannot write the actual default branch"

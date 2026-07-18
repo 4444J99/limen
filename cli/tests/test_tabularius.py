@@ -112,7 +112,7 @@ def test_missing_inbox_is_noop(tmp_path):
     assert result.wrote is False and "empty" in result.note
 
 
-def test_tabularius_preserves_board_projection_without_stranding_local_commit(tmp_path):
+def test_tabularius_publishes_board_pr_branch_without_moving_main_or_local_index(tmp_path):
     origin = tmp_path / "origin.git"
     subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
     repo = tmp_path / "repo"
@@ -125,17 +125,302 @@ def test_tabularius_preserves_board_projection_without_stranding_local_commit(tm
 
     submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done", "output": "ok"}))
     assert drain_once(board).wrote is True
-    result = preserve_board_projection(board)
+    base = _git(repo, "rev-parse", "HEAD")
+    result = preserve_board_projection(board, manage_pr=False)
 
     assert result.pushed is True
-    assert _git(repo, "status", "--porcelain", "--", "tasks.yaml") == ""
+    assert result.branch == tabularius.BOARD_PUBLICATION_BRANCH
+    assert _git(repo, "rev-parse", "HEAD") == base
+    assert _git(repo, "status", "--porcelain", "--", "tasks.yaml")
+    assert _git(repo, "ls-remote", "origin", "refs/heads/main").split()[0] == base
     remote_board = subprocess.run(
-        ["git", "--git-dir", str(origin), "show", "main:tasks.yaml"],
+        [
+            "git",
+            "--git-dir",
+            str(origin),
+            "show",
+            f"{tabularius.BOARD_PUBLICATION_BRANCH}:tasks.yaml",
+        ],
         capture_output=True,
         text=True,
         check=True,
     ).stdout
     assert "status: done" in remote_board
+
+
+def test_tabularius_coalesces_newer_local_board_while_publication_pr_is_open(tmp_path, monkeypatch):
+    origin = tmp_path / "origin.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
+    repo = tmp_path / "repo"
+    subprocess.run(["git", "clone", "-q", str(origin), str(repo)], check=True)
+    _git(repo, "switch", "-c", "main")
+    board = repo / "tasks.yaml"
+    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
+    _commit_all(repo, "base")
+    _git(repo, "push", "-u", "origin", "main")
+    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done", "output": "ok"}))
+    assert drain_once(board).wrote is True
+    first = preserve_board_projection(board, manage_pr=False)
+    assert first.pushed is True
+
+    submit_ticket(
+        board,
+        _ticket(
+            INTENT_STATUS,
+            task_id="T-2",
+            ts=datetime(2026, 7, 2, 12, 1, tzinfo=timezone.utc),
+            log={"status": "failed", "output": "later"},
+        ),
+    )
+    assert drain_once(board).wrote is True
+    monkeypatch.setattr(tabularius, "_repository_slug", lambda _repo: ("organvm/limen", ""))
+    monkeypatch.setattr(
+        tabularius,
+        "_open_publication_pr",
+        lambda _repo, _slug, _branch: (
+            {
+                "number": 77,
+                "headRefOid": first.commit,
+                "baseRefName": "main",
+                "isDraft": False,
+                "state": "OPEN",
+                "autoMergeRequest": {"enabledAt": "2026-07-18T00:00:00Z"},
+                "mergeStateStatus": "CLEAN",
+                "statusCheckRollup": [{"name": "pr-gate"}],
+            },
+            "",
+        ),
+    )
+    result = preserve_board_projection(board)
+
+    assert result.deferred is True
+    assert result.reason == "publication-in-flight"
+    assert result.published is False
+    assert result.pr_number == 77
+    assert (
+        _git(
+            repo,
+            "ls-remote",
+            "origin",
+            f"refs/heads/{tabularius.BOARD_PUBLICATION_BRANCH}",
+        ).split()[0]
+        == first.commit
+    )
+    assert _git(repo, "status", "--porcelain", "--", "tasks.yaml")
+
+
+def test_tabularius_publication_fast_forwards_and_joins_advanced_main(tmp_path):
+    origin = tmp_path / "origin.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
+    repo = tmp_path / "repo"
+    subprocess.run(["git", "clone", "-q", str(origin), str(repo)], check=True)
+    _git(repo, "switch", "-c", "main")
+    board = repo / "tasks.yaml"
+    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
+    _commit_all(repo, "base")
+    _git(repo, "push", "-u", "origin", "main")
+
+    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done"}))
+    assert drain_once(board).wrote is True
+    first = preserve_board_projection(board, manage_pr=False)
+    assert first.pushed is True
+
+    peer = tmp_path / "peer"
+    subprocess.run(["git", "clone", "-q", str(origin), str(peer)], check=True)
+    _git(peer, "switch", "main")
+    (peer / "code.txt").write_text("concurrent code\n")
+    _commit_all(peer, "advance main")
+    _git(peer, "push", "origin", "main")
+    advanced_main = _git(peer, "rev-parse", "HEAD")
+
+    submit_ticket(
+        board,
+        _ticket(
+            INTENT_STATUS,
+            task_id="T-2",
+            ts=datetime(2026, 7, 2, 12, 1, tzinfo=timezone.utc),
+            log={"status": "done"},
+        ),
+    )
+    assert drain_once(board).wrote is True
+    second = preserve_board_projection(board, manage_pr=False)
+
+    assert second.pushed is True
+    assert (
+        subprocess.run(
+            ["git", "--git-dir", str(origin), "merge-base", "--is-ancestor", first.commit, second.commit]
+        ).returncode
+        == 0
+    )
+    assert (
+        subprocess.run(
+            ["git", "--git-dir", str(origin), "merge-base", "--is-ancestor", advanced_main, second.commit]
+        ).returncode
+        == 0
+    )
+    assert _git(repo, "rev-parse", "HEAD") != advanced_main
+    assert _git(repo, "status", "--porcelain", "--", "tasks.yaml")
+
+
+def test_publication_pr_is_verified_at_exact_remote_head(tmp_path, monkeypatch):
+    seen: list[list[str]] = []
+    monkeypatch.setattr(tabularius, "_open_publication_pr", lambda *_args: (None, ""))
+
+    def fake_gh(_repo: Path, args: list[str]):
+        seen.append(args)
+        return subprocess.CompletedProcess(
+            ["gh", *args],
+            0,
+            "https://github.com/organvm/limen/pull/77\n",
+            "",
+        )
+
+    monkeypatch.setattr(tabularius, "_gh", fake_gh)
+    monkeypatch.setattr(
+        tabularius,
+        "_gh_json",
+        lambda *_args: (
+            {
+                "number": 77,
+                "state": "OPEN",
+                "headRefOid": "abc123",
+                "baseRefName": "main",
+                "isDraft": False,
+                "autoMergeRequest": None,
+                "mergeStateStatus": "CLEAN",
+                "statusCheckRollup": [],
+            },
+            "",
+        ),
+    )
+
+    number, error = tabularius._ensure_publication_pr(
+        tmp_path,
+        slug="organvm/limen",
+        base_branch="main",
+        publication_branch=tabularius.BOARD_PUBLICATION_BRANCH,
+        expected_head="abc123",
+    )
+
+    assert (number, error) == (77, "")
+    create = seen[0]
+    assert create[:2] == ["pr", "create"]
+    assert create[create.index("--head") + 1] == tabularius.BOARD_PUBLICATION_BRANCH
+    assert "--admin" not in create
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected"),
+    [
+        ({"state": "CLOSED"}, "pr-not-open"),
+        ({"isDraft": True}, "pr-is-draft"),
+        ({"baseRefName": "release"}, "pr-base-mismatch"),
+        ({"headRefOid": "other"}, "pr-head-mismatch"),
+    ],
+)
+def test_publication_pr_rejects_non_exact_custody(overrides, expected):
+    pr = {
+        "number": 77,
+        "state": "OPEN",
+        "headRefOid": "abc123",
+        "baseRefName": "main",
+        "isDraft": False,
+    }
+    pr.update(overrides)
+    assert tabularius._publication_pr_error(pr, expected_head="abc123", base_branch="main") == expected
+
+
+def test_full_publication_diff_rejects_inherited_non_board_paths(tmp_path):
+    repo = tmp_path / "repo"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    board = repo / "tasks.yaml"
+    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
+    _commit_all(repo, "base")
+    base = _git(repo, "rev-parse", "HEAD")
+    board.write_text(board.read_text().replace("status: open", "status: done", 1))
+    (repo / "code.txt").write_text("must not ride the board branch\n")
+    _commit_all(repo, "mixed publication")
+    head = _git(repo, "rev-parse", "HEAD")
+
+    error = tabularius._publication_diff_error(
+        repo,
+        base_sha=base,
+        head_sha=head,
+        rel_board="tasks.yaml",
+    )
+
+    assert error == "publication-non-board-paths:code.txt"
+
+
+def test_exact_head_auto_merge_has_no_admin_or_direct_fallback(tmp_path, monkeypatch):
+    success = subprocess.CompletedProcess(["gh"], 0, "", "")
+    monkeypatch.setattr(tabularius, "_gh", lambda _repo, args: success)
+    seen: list[list[str]] = []
+
+    def record(_repo, args):
+        seen.append(args)
+        return success
+
+    monkeypatch.setattr(tabularius, "_gh", record)
+    assert tabularius._arm_publication_pr(tmp_path, "organvm/limen", 77, "abc123") == ""
+    assert seen == [
+        [
+            "pr",
+            "merge",
+            "77",
+            "--repo",
+            "organvm/limen",
+            "--auto",
+            "--squash",
+            "--match-head-commit",
+            "abc123",
+        ]
+    ]
+    assert "--admin" not in seen[0]
+    assert "--merge" not in seen[0]
+    assert "--rebase" not in seen[0]
+    assert "--squash" in seen[0]
+
+
+def test_preflight_defers_before_producer_when_exact_board_pr_is_open(tmp_path, monkeypatch):
+    origin = tmp_path / "origin.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True)
+    repo = tmp_path / "repo"
+    subprocess.run(["git", "clone", "-q", str(origin), str(repo)], check=True)
+    _git(repo, "switch", "-c", "main")
+    board = repo / "tasks.yaml"
+    save_limen_file(board, _board([_task(f"T-{i}", status="open") for i in range(6)]))
+    _commit_all(repo, "base")
+    _git(repo, "push", "-u", "origin", "main")
+    submit_ticket(board, _ticket(INTENT_STATUS, task_id="T-1", log={"status": "done"}))
+    assert drain_once(board).wrote is True
+    publication = preserve_board_projection(board, manage_pr=False)
+    assert publication.pushed
+    monkeypatch.setattr(tabularius, "_repository_slug", lambda _repo: ("organvm/limen", ""))
+    monkeypatch.setattr(
+        tabularius,
+        "_open_publication_pr",
+        lambda *_args: (
+            {
+                "number": 77,
+                "headRefOid": publication.commit,
+                "baseRefName": "main",
+                "isDraft": False,
+                "state": "OPEN",
+                "autoMergeRequest": {"enabledAt": "2026-07-18T00:00:00Z"},
+                "mergeStateStatus": "CLEAN",
+                "statusCheckRollup": [{"name": "pr-gate"}],
+            },
+            "",
+        ),
+    )
+
+    result = tabularius.board_publication_preflight(board)
+
+    assert result.published is True
+    assert result.deferred is True
+    assert result.reason == "publication-in-flight"
+    assert result.pr_number == 77
 
 
 # --- the core lifecycle: submit → drain → board updated → archived -------------------------------

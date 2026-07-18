@@ -23,8 +23,15 @@ degrades to "start at 0", never raising into the heartbeat. ([[no-never-happens-
 import fnmatch
 import json
 import os
+import subprocess
+import sys
 import tempfile
+from functools import lru_cache
 from pathlib import Path
+
+QUEUE_ACTIVE = "active"
+QUEUE_ABSENT = "absent"
+QUEUE_UNKNOWN = "unknown"
 
 
 def enumerate_open_prs(owners, gh_fn, max_total=500, want_url=True, author="@me"):
@@ -122,6 +129,94 @@ def scaled_limit(base, root, lo=50.0, span=25.0, max_mult=3.0):
     return int(round(base * mult))
 
 
+# ── MERGE-QUEUE CAPABILITY ─────────────────────────────────────────────────────────────────────
+# A queue is branch-specific live repository state. Never infer it from mergeStateStatus, local
+# configuration, workflow files, or a remembered plan: GitHub's Repository.mergeQueue field is the
+# authority. The result is deliberately tri-state so an API/schema/auth failure cannot accidentally
+# relax the stale-base guard.
+
+_MERGE_QUEUE_QUERY = """
+query($owner:String!,$repo:String!,$branch:String!){
+  repository(owner:$owner,name:$repo){
+    mergeQueue(branch:$branch){id}
+  }
+}
+""".strip()
+
+
+@lru_cache(maxsize=64)
+def merge_queue_capability(repo, branch, gh_fn):
+    """Return ``active``, ``absent``, or ``unknown`` for ``repo``'s target ``branch``.
+
+    ``active`` requires a positive GraphQL MergeQueue object. A clean ``null`` means the queue is
+    absent. Transport failures, GraphQL errors, malformed/partial payloads, missing repository
+    access, and invalid inputs are ``unknown`` so callers preserve their non-queue safety policy.
+    Results are cached only for the current bounded process so a drain beat pays one live probe per
+    repository/branch instead of one GraphQL request per pull request.
+    """
+    if not repo or "/" not in repo or not branch:
+        return QUEUE_UNKNOWN
+    owner, name = repo.split("/", 1)
+    if not owner or not name:
+        return QUEUE_UNKNOWN
+    try:
+        result = gh_fn(
+            [
+                "api",
+                "graphql",
+                "-f",
+                f"query={_MERGE_QUEUE_QUERY}",
+                "-F",
+                f"owner={owner}",
+                "-F",
+                f"repo={name}",
+                "-F",
+                f"branch={branch}",
+            ]
+        )
+        if getattr(result, "returncode", 1) != 0:
+            return QUEUE_UNKNOWN
+        payload = json.loads(getattr(result, "stdout", "") or "")
+    except Exception:
+        return QUEUE_UNKNOWN
+
+    if not isinstance(payload, dict) or payload.get("errors"):
+        return QUEUE_UNKNOWN
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        return QUEUE_UNKNOWN
+    repository = data.get("repository")
+    if not isinstance(repository, dict) or "mergeQueue" not in repository:
+        return QUEUE_UNKNOWN
+    queue = repository["mergeQueue"]
+    if queue is None:
+        return QUEUE_ABSENT
+    if isinstance(queue, dict) and queue.get("id"):
+        return QUEUE_ACTIVE
+    return QUEUE_UNKNOWN
+
+
+def _gh_subprocess(args):
+    return subprocess.run(
+        ["gh", *args],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+def _main(argv):
+    if len(argv) == 4 and argv[1] == "merge-queue-capability":
+        print(merge_queue_capability(argv[2], argv[3], _gh_subprocess))
+        return 0
+    print(
+        "usage: _pr_scan.py merge-queue-capability OWNER/REPO BRANCH",
+        file=sys.stderr,
+    )
+    return 2
+
+
 # ── STALE-BASE GATE ───────────────────────────────────────────────────────────────────────────
 # A PR that is mergeable + CI-green can STILL be poison: if it branched from an old base, merging it
 # silently REVERTS work that landed on the base since — under an innocent title. That is exactly the
@@ -209,3 +304,7 @@ def stale_base_verdict(repo, paths, base, head, gh_fn, generic_max=None):
         return None if behind == 0 else "STALE-CORE"
     # generic PR: only flag when it branched FAR behind base. Unverifiable (-1) stays available.
     return "STALE-BASE" if behind >= generic_max else None
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main(sys.argv))

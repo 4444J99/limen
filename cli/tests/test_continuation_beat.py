@@ -121,3 +121,131 @@ def test_session_value_gate_blocks_continuation_lane_switch(tmp_path, monkeypatc
     assert result["lane_switch"] is True
     assert result["action"] == "switch_to_packetization"
     assert result["next_command"] == "python3 scripts/prompt-packet-ledger.py --write"
+
+
+def test_receipt_refresh_does_not_churn_timestamp_without_new_evidence(tmp_path, monkeypatch):
+    root = tmp_path / "limen"
+    photos = tmp_path / "photos"
+    portvs = tmp_path / "portvs"
+    (root / "docs").mkdir(parents=True)
+    photos.mkdir()
+    portvs.mkdir()
+    receipt_path = root / "docs" / "worktree-preservation-receipts.json"
+    receipt_path.write_text(json.dumps({"receipts": [{"root": "lane"}]}), encoding="utf-8")
+    module = _load(monkeypatch, root, photos, portvs)
+    monkeypatch.setattr(
+        module,
+        "pr_view",
+        lambda *args, **kwargs: {
+            "number": 7,
+            "state": "OPEN",
+            "isDraft": True,
+            "headRefName": "work/lane",
+            "headRefOid": "abc123",
+            "url": "https://example.test/pull/7",
+        },
+    )
+    times = iter(["2026-07-18T00:00:00Z", "2026-07-18T00:01:00Z"])
+    monkeypatch.setattr(module, "utc_now", lambda: next(times))
+    rows = [
+        {
+            "name": "lane",
+            "path": str(tmp_path / "missing-worktree"),
+            "repo": "organvm/example",
+            "branch": "work/lane",
+            "url": "https://example.test/pull/7",
+        }
+    ]
+
+    first = module.update_pr_receipts(rows, apply=True)
+    first_bytes = receipt_path.read_bytes()
+    second = module.update_pr_receipts(rows, apply=True)
+
+    assert first["updated"] == 1
+    assert second["updated"] == 0
+    assert receipt_path.read_bytes() == first_bytes
+
+
+def test_merged_pr_custody_clears_exact_retry_ref_then_clean_beat_is_fixed_point(tmp_path, monkeypatch):
+    root = tmp_path / "limen"
+    photos = tmp_path / "photos"
+    portvs = tmp_path / "portvs"
+    remote = tmp_path / "remote.git"
+    photos.mkdir()
+    portvs.mkdir()
+
+    def git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["git", *args],
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+
+    git(tmp_path, "init", "--bare", str(remote))
+    git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
+    git(tmp_path, "clone", str(remote), str(root))
+    git(root, "config", "user.name", "Test")
+    git(root, "config", "user.email", "test@example.invalid")
+    (root / "README.md").write_text("seed\n", encoding="utf-8")
+    git(root, "add", "README.md")
+    git(root, "commit", "-m", "seed")
+    git(root, "push", "-u", "origin", "main")
+
+    module = _load(monkeypatch, root, photos, portvs)
+    path = "foo-receipts.json"
+    branch = module._main_preservation_branch([path])
+    local_ref = f"refs/limen/continuation-beat/{branch.rsplit('/', 1)[-1]}"
+    local_custody = git(root, "rev-parse", "HEAD").stdout.strip()
+    git(root, "checkout", "-b", branch)
+    (root / path).write_text('{"settled": true}\n', encoding="utf-8")
+    git(root, "add", path)
+    git(root, "commit", "-m", "preserve receipt")
+    custody = git(root, "rev-parse", "HEAD").stdout.strip()
+    git(root, "push", "origin", f"HEAD:refs/heads/{branch}")
+    git(root, "checkout", "main")
+    git(root, "update-ref", local_ref, local_custody)
+    pr = {"head": "0" * 40, "state": "OPEN", "merged_at": None}
+
+    def merged_gh(cwd, *args, timeout=120):
+        assert args[:2] == ("pr", "list")
+        return subprocess.CompletedProcess(
+            args,
+            0,
+            json.dumps(
+                [
+                    {
+                        "number": 7,
+                        "url": "https://example.test/pull/7",
+                        "headRefOid": pr["head"],
+                        "state": pr["state"],
+                        "mergedAt": pr["merged_at"],
+                    }
+                ]
+            ),
+            "",
+        )
+
+    monkeypatch.setattr(module, "gh", merged_gh)
+
+    unverified = module.commit_paths(root, [path], "beat: unsettled", apply=True)
+    assert unverified["deferred"] is True
+    assert unverified["reason"] == "preservation-pr-head-unverified"
+    assert module.git(root, "rev-parse", "--verify", local_ref).stdout.strip() == local_custody
+
+    pr.update(
+        {
+            "head": custody,
+            "state": "MERGED",
+            "merged_at": "2026-07-18T00:00:00Z",
+        }
+    )
+    settled = module.commit_paths(root, [path], "beat: settled", apply=True)
+    fixed_point = module.commit_paths(root, [path], "beat: settled", apply=True)
+
+    assert settled["custody_verified"] is True
+    assert settled["custody_ref_cleared"] is True
+    assert settled["settled"] is True
+    assert module.git(root, "rev-parse", "--verify", local_ref).returncode != 0
+    assert fixed_point == {"changed": False}

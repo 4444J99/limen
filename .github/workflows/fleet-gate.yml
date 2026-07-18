@@ -1,10 +1,8 @@
 name: Fleet Gate
 
-# Backstop for Option-1 pre-push gates: if a direct-to-main push from the
-# autonomic fleet sneaks through without pre-push ruff + check-params, this
-# workflow fires on the push itself, runs the fast-gates, and auto-opens a
-# heal PR when they fail — so ruff/param debt never lingers on trunk and the
-# PR queue never stalls on debt it didn't introduce.
+# Post-integration backstop: every merge-queue result on main triggers the
+# fast gates. If drift still appears, this workflow opens an isolated heal PR;
+# it is not a direct-push repair lane and has no default-branch exception.
 #
 # Option-2 per issue #578 — lightweight, no path filter so it fires on EVERY
 # push to main.
@@ -67,5 +65,5 @@ jobs:
             --head "$BRANCH" \
             --base main \
             --title "heal: auto-fix ruff and check-params violations" \
-            --body "Auto-opened by Fleet Gate workflow [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) after a direct-to-main push introduced ruff or check-params violations." \
+            --body "Auto-opened by Fleet Gate workflow [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) after post-integration ruff or check-params drift." \
             --label heal

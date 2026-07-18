@@ -1,0 +1,78 @@
+version: 1
+protected_repository: organvm/limen
+protected_branch: main
+remote_enforcement:
+  ruleset: limen-default-merge-queue
+  required_rules: [pull_request, merge_queue]
+  bypass_actors: []
+
+# Every production source containing a git-push, GitHub Contents PUT, or literal
+# default-ref sink must be classified here. `scripts/direct-main-writer-audit.py`
+# fails when a sink appears, disappears, or changes count without review.
+surfaces:
+  .github/workflows/auto-scale.yml:
+    disposition: board-projection-pr
+    expected: {}
+  .github/workflows/fleet-gate.yml:
+    disposition: generated-topic-branch-pr
+    expected: {git_push: 1}
+  .github/workflows/operate.yml:
+    disposition: board-projection-pr
+    expected: {}
+  cli/src/limen/dispatch.py:
+    disposition: isolated-task-branch-pr
+    expected: {push_literal: 2}
+  cli/src/limen/jules_landing_custody.py:
+    disposition: isolated-jules-branch-pr
+    expected: {push_literal: 1}
+  cli/src/limen/tabularius.py:
+    disposition: stable-board-projection-pr
+    expected: {push_literal: 1}
+  mcp/src/limen_mcp/server.py:
+    disposition: repository-mutations-deferred-to-tabularius
+    expected: {}
+  scripts/arca.sh:
+    disposition: external-encrypted-vault-upstream
+    expected: {git_push: 1}
+  scripts/capture.sh:
+    disposition: main-to-stable-custody-ref-topic-branches-explicit
+    expected: {git_push: 3}
+  scripts/cells.sh:
+    disposition: isolated-cell-topic-branch
+    expected: {git_push: 2}
+  scripts/check-main-green.py:
+    disposition: read-only-main-ref-probe
+    expected: {default_ref_literal: 2}
+  scripts/continuation-beat.py:
+    disposition: main-to-preservation-pr-topic-branches-explicit
+    expected: {git_push: 2, push_literal: 1}
+  scripts/dialogs-silenced.sh:
+    disposition: permission-policy-string-only
+    expected: {git_push: 2}
+  scripts/link-health.py:
+    disposition: generated-topic-branch-pr
+    expected: {contents_put: 1}
+  scripts/reap-remote-branches.py:
+    disposition: nondefault-branch-deletion-only
+    expected: {git_push: 3, push_literal: 1}
+  scripts/reap_acceptance.py:
+    disposition: receipt-string-only
+    expected: {git_push: 1}
+  scripts/ship-docs.sh:
+    disposition: generated-topic-branch-pr
+    expected: {git_push: 1}
+  scripts/sync-marketplace-config.py:
+    disposition: generated-topic-branch-pr
+    expected: {contents_put: 1}
+  scripts/sync-release.sh:
+    disposition: parked-topic-branch-only-actual-default-refused
+    expected: {git_push: 2}
+  scripts/worktree-pr-receipts.py:
+    disposition: nondefault-worktree-branch-pr-default-refused
+    expected: {git_push: 1}
+  web/api/main.py:
+    disposition: github-storage-read-only-before-side-effects
+    expected: {}
+  web/worker/src/index.js:
+    disposition: github-storage-read-only
+    expected: {}

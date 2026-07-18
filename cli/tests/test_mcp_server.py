@@ -3,6 +3,7 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
 import yaml
 
 
@@ -338,3 +339,63 @@ def test_mcp_save_preserves_execution_requirement_field_absence(tmp_path, monkey
     # Do not globally switch to exclude_none: established optional-field serialization stays intact.
     assert "description" in by_id["LEGACY-ABSENT"]
     assert by_id["LEGACY-ABSENT"]["description"] is None
+
+
+def test_repository_backed_mcp_mutations_fail_closed_without_touching_checkout(tmp_path, monkeypatch):
+    server = _load_server()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    tasks = repo / "tasks.yaml"
+    tasks.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {
+                            "date": "2026-07-18",
+                            "spent": 0,
+                            "per_agent": {"opencode": 0},
+                        }
+                    }
+                },
+                "tasks": [
+                    {
+                        "id": "TASK-1",
+                        "title": "Keeper-owned task",
+                        "repo": "organvm/limen",
+                        "target_agent": "any",
+                        "status": "open",
+                        "created": "2026-07-18",
+                        "predicate": "python3 scripts/check.py",
+                        "receipt_target": "git:organvm/limen:logs/check.json",
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+    monkeypatch.setattr(server, "CIRCUIT_BREAKER_TRIPPED", False)
+
+    actions = [
+        lambda: server.add_task(
+            "A new keeper-owned task",
+            "organvm/limen",
+            "python3 scripts/check.py",
+            "git:organvm/limen:logs/new-check.json",
+        ),
+        lambda: server.update_task_status("TASK-1", "done"),
+        lambda: server.agent_claim("TASK-1", "opencode"),
+    ]
+    before = tasks.read_bytes()
+    for action in actions:
+        with pytest.raises(server.BoardMutationDeferred) as raised:
+            action()
+        assert raised.value.code == "board_mutation_deferred"
+        assert raised.value.retryable is True
+        assert raised.value.owner == "tabularius"
+        assert "projection PR" in str(raised.value)
+        assert tasks.read_bytes() == before

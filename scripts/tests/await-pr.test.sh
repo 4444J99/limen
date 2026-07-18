@@ -4,7 +4,8 @@
 # The waiter must stay bounded and loud: CLEARED/FAILED/TIMEOUT/REFUSED-PAUSED verdicts map to
 # distinct exit codes, CI-red and BLOCKED are terminal (never waited out), a merge-prohibiting
 # pause marker refuses BEFORE the first poll, the per-PR lock admits exactly one live waiter, and
-# --merge invokes gh with --squash --match-head-commit bound to merge-policy's MERGE-HEAD sha.
+# --merge obeys merge-policy's exact-head mode: direct uses one squash merge; queue uses one
+# method-free --auto enqueue and does not report success until GitHub reports actual MERGED state.
 # Deterministic + idempotent: exit 0 ⟺ all cases pass. (2026-07-15 endless-watcher incident.)
 set -euo pipefail
 
@@ -15,6 +16,7 @@ waiter="$here/../await-pr.sh"
 stubdir="$(mktemp -d)"
 trap 'rm -rf "$stubdir"' EXIT
 SEQ="$stubdir/seq"; COUNT="$stubdir/count"; GHLOG="$stubdir/gh.log"
+GHSEQ="$stubdir/gh-seq"; GHCOUNT="$stubdir/gh-count"
 
 # --- stub merge-policy: replay one scripted verdict token per call; the last token repeats ---
 cat > "$stubdir/policy" <<STUB
@@ -23,7 +25,11 @@ n=\$(cat "$COUNT" 2>/dev/null || echo 0); n=\$((n+1)); printf '%s' "\$n" > "$COU
 tok=\$(sed -n "\${n}p" "$SEQ"); [ -z "\$tok" ] && tok=\$(tail -1 "$SEQ")
 case "\$tok" in
   CLEARED) echo "VERDICT: CLEARED — non-deploy PR, mergeable, no failing checks."
+           echo "MERGE-MODE: direct"
            echo "MERGE-HEAD: deadbeefcafe (use gh pr merge --match-head-commit deadbeefcafe)"; exit 0 ;;
+  QUEUE)   echo "VERDICT: CLEARED — exact-head CI is green. Queueable."
+           echo "MERGE-MODE: queue"
+           echo "MERGE-HEAD: deadbeefcafe (enqueue with exact-head protection)"; exit 0 ;;
   HOLD)    echo "VERDICT: HOLD — 1 non-deploy check(s) still running. Merge once green."; exit 2 ;;
   CIRED)   echo "VERDICT: HOLD — 2 CI check(s) failing. Fix before merge."; exit 2 ;;
   BLOCKED) echo "VERDICT: BLOCKED — merge conflicts. Rebase, then re-run."; exit 3 ;;
@@ -32,11 +38,27 @@ esac
 STUB
 chmod +x "$stubdir/policy"
 
-# --- stub gh: record argv; fail when GH_FAIL=1 ---
+# --- stub gh: record argv; fail merge when GH_FAIL=1; replay queue observation state ---
 cat > "$stubdir/gh" <<STUB
 #!/usr/bin/env bash
 printf '%s\n' "\$*" >> "$GHLOG"
-[ "\${GH_FAIL:-0}" = "1" ] && exit 1
+if [ "\${1:-}" = "pr" ] && [ "\${2:-}" = "merge" ]; then
+  [ "\${GH_FAIL:-0}" = "1" ] && exit 1
+  exit 0
+fi
+if [ "\${1:-}" = "pr" ] && [ "\${2:-}" = "view" ]; then
+  n=\$(cat "$GHCOUNT" 2>/dev/null || echo 0); n=\$((n+1)); printf '%s' "\$n" > "$GHCOUNT"
+  tok=\$(sed -n "\${n}p" "$GHSEQ"); [ -z "\$tok" ] && tok=\$(tail -1 "$GHSEQ")
+  case "\$tok" in
+    QUEUED)  printf 'OPEN\\tdeadbeefcafe\\tQUEUED\\tarmed\\n' ;;
+    MERGED)  printf 'MERGED\\tdeadbeefcafe\\tUNKNOWN\\tnone\\n' ;;
+    HEAD)    printf 'OPEN\\tchangedhead\\tQUEUED\\tarmed\\n' ;;
+    REMOVED) printf 'OPEN\\tdeadbeefcafe\\tCLEAN\\tnone\\n' ;;
+    CLOSED)  printf 'CLOSED\\tdeadbeefcafe\\tUNKNOWN\\tnone\\n' ;;
+    *) exit 1 ;;
+  esac
+  exit 0
+fi
 exit 0
 STUB
 chmod +x "$stubdir/gh"
@@ -46,7 +68,8 @@ check() { # name want_exit seq_tokens [waiter args...]; captured output in $out
   local name="$1" want="$2" seq="$3" got
   shift 3
   workroot="$(mktemp -d)"                      # fresh hermetic LIMEN_ROOT per case
-  printf '%s\n' $seq > "$SEQ"; rm -f "$COUNT" "$GHLOG"
+  printf '%s\n' $seq > "$SEQ"; rm -f "$COUNT" "$GHLOG" "$GHCOUNT"
+  printf '%s\n' ${GH_TOKENS:-MERGED} > "$GHSEQ"
   set +e
   out="$(PATH="$stubdir:$PATH" LIMEN_ROOT="$workroot" LIMEN_MERGE_POLICY_BIN="$stubdir/policy" \
     bash "$waiter" 7 --interval 1 "$@" 2>&1)"
@@ -71,7 +94,7 @@ check "perpetual HOLD times out"     2 "HOLD" --timeout 2
 case "$out" in (*TIMEOUT*) : ;; (*) echo "  FAIL timeout output lacks TIMEOUT line"; fail=$((fail+1)) ;; esac
 check "usage: bad PR"               64 "CLEARED" --timeout x
 
-# --merge: gh invoked with --squash --match-head-commit bound to the MERGE-HEAD sha
+# Direct --merge: one exact-head squash command.
 check "--merge on CLEARED"           0 "CLEARED" --merge
 if ! grep -q -- "pr merge 7 --squash --match-head-commit deadbeefcafe" "$GHLOG" 2>/dev/null; then
   echo "  FAIL --merge did not invoke gh pr merge --squash --match-head-commit deadbeefcafe"; fail=$((fail+1))
@@ -79,6 +102,35 @@ fi
 export GH_FAIL=1
 check "--merge with failing gh"      1 "CLEARED" --merge
 unset GH_FAIL
+
+# Queue --merge: enqueue exactly once, with no merge method/admin override, then observe actual state.
+export GH_TOKENS="QUEUED MERGED"
+check "--merge queue reaches MERGED" 0 "QUEUE" --merge
+if [ "$(grep -c -- "pr merge 7 .*--auto --match-head-commit deadbeefcafe" "$GHLOG" 2>/dev/null || true)" != "1" ]; then
+  echo "  FAIL queue mode did not enqueue exactly once with --auto + exact head"; fail=$((fail+1))
+fi
+if grep -qE -- "pr merge 7 .* (--squash|--merge|--rebase|--admin)( |$)" "$GHLOG" 2>/dev/null; then
+  echo "  FAIL queue enqueue used a forbidden merge method/admin flag"; fail=$((fail+1))
+fi
+case "$out" in
+  (*QUEUED*MERGED*) : ;;
+  (*) echo "  FAIL queue output must distinguish QUEUED before MERGED"; fail=$((fail+1)) ;;
+esac
+
+export GH_TOKENS="QUEUED HEAD"
+check "queue exact-head change fails" 1 "QUEUE" --merge
+case "$out" in (*HEAD-CHANGED*|*"exact head changed"*) : ;; (*) echo "  FAIL head-change output missing"; fail=$((fail+1)) ;; esac
+
+export GH_TOKENS="QUEUED REMOVED"
+check "queue removal is terminal"     1 "QUEUE" --merge
+case "$out" in (*QUEUE-REMOVED*) : ;; (*) echo "  FAIL queue-removal output missing"; fail=$((fail+1)) ;; esac
+
+export GH_TOKENS="QUEUED"
+check "queue wait is bounded"         2 "QUEUE" --timeout 2 --merge
+if [ "$(grep -c -- "pr merge 7 .*--auto --match-head-commit deadbeefcafe" "$GHLOG" 2>/dev/null || true)" != "1" ]; then
+  echo "  FAIL bounded queue wait re-enqueued instead of waiting once"; fail=$((fail+1))
+fi
+unset GH_TOKENS
 
 # pause marker: prohibitions mentioning merge refuse BEFORE the first poll
 workroot="$(mktemp -d)"; mkdir -p "$workroot/logs"

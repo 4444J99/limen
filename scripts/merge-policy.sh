@@ -12,11 +12,11 @@
 #                     or a non-deploy PR still has checks running. Wait for green; never
 #                     blind-merge a live deploy.
 #   exit 3  BLOCKED — GitHub itself refuses the merge right now: conflicts (DIRTY), stale base
-#                     (BEHIND), or a branch-protection gate not satisfied (BLOCKED — e.g. the
-#                     required `pr-gate` check hasn't run on a pre-existing PR). Rebase onto
-#                     current main (the PR#111 silent-revert guard; also retriggers required
-#                     checks), then re-run. Distinct from HOLD: HOLD means GitHub would allow
-#                     the merge but the website-safety policy says wait; BLOCKED means it can't.
+#                     without an active merge queue (BEHIND), or a branch-protection gate not
+#                     satisfied (BLOCKED — e.g. the required `pr-gate` check hasn't run on a
+#                     pre-existing PR). An active queue may accept an exact-head-green BEHIND PR
+#                     because GitHub validates it against current base in a merge group; absent or
+#                     unknown queue capability preserves the PR#111 stale-base guard.
 #
 # Usage:  scripts/merge-policy.sh [PR_NUMBER] [--repo OWNER/NAME] [--expected-head SHA]
 #         (no PR number → resolves the PR open for the current branch)
@@ -75,6 +75,24 @@ mss=$(jq -r '.mergeStateStatus' "$j")
 draft=$(jq -r '.isDraft' "$j")
 head=$(jq -r '.headRefOid // empty' "$j")
 
+# Merge-queue capability is live, branch-specific repository state. Only a positive GraphQL
+# Repository.mergeQueue object is authoritative enough to route through the queue. An unavailable
+# API/schema/permission or malformed response is "unknown" and preserves the direct-merge
+# stale-base guard. Derive the repository from --repo first, then the canonical PR URL.
+queue_repo="$REPO"
+if [ -z "$queue_repo" ]; then
+  queue_repo=$(printf '%s' "$url" | sed -nE 's#^https://github\.com/([^/]+/[^/]+)/pull/[0-9]+.*#\1#p')
+fi
+queue_capability="unknown"
+if [ -n "$queue_repo" ]; then
+  queue_capability=$(python3 "$_root/scripts/_pr_scan.py" merge-queue-capability \
+    "$queue_repo" "$base" 2>/dev/null || true)
+fi
+case "$queue_capability" in
+  active|absent|unknown) ;;
+  *) queue_capability="unknown" ;;
+esac
+
 # Only an OPEN PR can be merged — guard against a false CLEARED on an already-merged/closed PR.
 if [ "$state" != "OPEN" ]; then
   echo "PR #$PR — $title"
@@ -118,6 +136,7 @@ total_checks=$(jq '[.statusCheckRollup[]?] | length' "$j")
 echo "PR #$PR — $title"
 echo "  $url"
 echo "  base=$base  head=${head:0:12}  mergeState=$mss  draft=$draft"
+echo "  merge-queue=$queue_capability"
 if [ "$sensitive" = 1 ]; then
   if [ -n "$deploy_hits" ]; then
     echo "  WEBSITE-SENSITIVE — diff touches deploy-trigger paths:"
@@ -136,7 +155,12 @@ echo "  checks: total=$total_checks failing=$failing pending=$pending"
 # state (an UNKNOWN-during-recompute or a future enum value must not read as "safe to merge").
 case "$mss" in
   DIRTY)  echo "VERDICT: BLOCKED — merge conflicts. Rebase onto origin/$base, then re-run."; exit 3 ;;
-  BEHIND) echo "VERDICT: BLOCKED — stale base (branch is behind $base). Rebase onto current $base first (PR#111 silent-revert guard), then re-run."; exit 3 ;;
+  BEHIND)
+    if [ "$queue_capability" != "active" ]; then
+      echo "VERDICT: BLOCKED — stale base (branch is behind $base) and merge queue capability is $queue_capability. Rebase onto current $base first (PR#111 silent-revert guard), then re-run."
+      exit 3
+    fi
+    ;;
   BLOCKED)
     # BLOCKED means branch protection won't merge yet — but it covers two cases. If a required
     # check is still RUNNING, the remedy is simply to wait (HOLD); only when nothing is pending is
@@ -173,6 +197,10 @@ fi
 # Past the not-mergeable states: only an explicitly mergeable state may proceed toward CLEARED.
 case "$mss" in
   CLEAN|UNSTABLE|HAS_HOOKS) : ;;  # GitHub will permit the merge
+  BEHIND)
+    # BEHIND reaches this point only with a positively detected active queue. It is queueable,
+    # never direct-merge safe: GitHub must synthesize + validate the current-base merge group.
+    ;;
   *) echo "VERDICT: HOLD — unrecognized merge state '$mss'; refusing to clear on an unhandled state. Re-run, or inspect the PR manually."; exit 2 ;;
 esac
 if [ "$sensitive" = 1 ]; then
@@ -180,13 +208,31 @@ if [ "$sensitive" = 1 ]; then
     echo "VERDICT: HOLD — website-sensitive: a live deploy fires on merge and CI is not GREEN+COMPLETE (${pending} pending, ${total_checks} total). Wait for green; never blind-merge a deploy."
     exit 2
   fi
+  if [ "$queue_capability" = "active" ]; then
+    echo "VERDICT: CLEARED — website-sensitive and exact-head CI is green. Queueable; the merge queue must validate current-base integration before merge."
+    echo "MERGE-MODE: queue"
+    echo "MERGE-HEAD: $head (enqueue with exact-head protection)"
+    exit 0
+  fi
   echo "VERDICT: CLEARED — website-sensitive, but CI is fully green. Safe to self-merge; the live deploy is verified."
+  echo "MERGE-MODE: direct"
   echo "MERGE-HEAD: $head (use gh pr merge --match-head-commit $head)"
   exit 0
 fi
 if [ "$pending" -gt 0 ]; then
   echo "VERDICT: HOLD — ${pending} non-deploy check(s) still running. Merge once green."; exit 2
 fi
+if [ "$queue_capability" = "active" ]; then
+  if [ "$total_checks" -eq 0 ]; then
+    echo "VERDICT: HOLD — merge queue is active but exact-head CI has no completed check receipt. Wait for green before enqueueing."
+    exit 2
+  fi
+  echo "VERDICT: CLEARED — exact-head CI is green. Queueable; the merge queue must validate current-base integration before merge."
+  echo "MERGE-MODE: queue"
+  echo "MERGE-HEAD: $head (enqueue with exact-head protection)"
+  exit 0
+fi
 echo "VERDICT: CLEARED — non-deploy PR, mergeable, no failing checks. Self-merge per the standing grant."
+echo "MERGE-MODE: direct"
 echo "MERGE-HEAD: $head (use gh pr merge --match-head-commit $head)"
 exit 0

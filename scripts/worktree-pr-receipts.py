@@ -9,6 +9,7 @@ This is intentionally conservative:
 - `--apply` may push a missing remote head and open a draft PR;
 - one GitHub or auth failure is recorded per root and never stops the rest.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -207,7 +208,6 @@ def update_preservation_receipts(rows: list[dict[str, Any]], apply: bool) -> dic
         new_values = {
             "branch": str(view.get("headRefName") or branch),
             "classification": "open draft PR preserves local worktree head",
-            "evidence_updated_utc": now,
             "head": head,
             "lane": "remote-pr-open",
             "next_action": (
@@ -223,8 +223,10 @@ def update_preservation_receipts(rows: list[dict[str, Any]], apply: bool) -> dic
             "status": "open_pr_preserved",
             "worktree": str(path) if path else "",
         }
-        if any(receipt.get(key) != value for key, value in new_values.items()):
+        evidence_changed = any(receipt.get(key) != value for key, value in new_values.items())
+        if evidence_changed or not receipt.get("evidence_updated_utc"):
             receipt.update(new_values)
+            receipt["evidence_updated_utc"] = now
             updated += 1
     if updated and apply:
         PRESERVATION_RECEIPTS.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -271,6 +273,13 @@ def process_item(item: dict[str, Any], apply: bool) -> dict[str, Any]:
         out["detail"] = "could not resolve default branch"
         return out
     out["base"] = base
+
+    if branch == base:
+        out["action"] = "refused_default_branch"
+        out["detail"] = (
+            f"refusing lifecycle publication from the default branch {base}; create an isolated topic branch first"
+        )
+        return out
 
     if patch_equivalent_or_merged(path, base):
         out["action"] = "already_preserved"

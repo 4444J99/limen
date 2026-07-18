@@ -16,6 +16,11 @@ For the web API:
 For the Next.js dashboard, set `NEXT_PUBLIC_API_URL` to the API endpoint. Local development defaults
 to `http://localhost:8000`.
 
+GitHub-backed production adapters are read-only projections. They may read
+`tasks.yaml` from the configured branch, but mutation requests fail with the
+typed TABVLARIVS deferral before any GitHub Contents write. Durable board
+changes are published by the queue-owned `tabularius/board-projection` PR rail.
+
 ## Railway API
 
 ```bash

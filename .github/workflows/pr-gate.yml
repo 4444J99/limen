@@ -12,25 +12,27 @@ name: PR Gate
 # Scoped since issue #1048: the job derives its work from the GATES registry
 # (institutio/governance/gates.yaml) via scripts/verify.py --changed — a diff
 # pays exactly the gates it implicates instead of the full ~13-min matrix, so
-# one broken test on main no longer blocks every unrelated PR fleet-wide. The
-# registered gates cover exactly the regressions that twice took main red and
-# wedged the daemon (PRs #192 and #25ce902): red tests, lint/compile breakage,
-# naming-canon violations, and a torn/corrupt tasks.yaml write (tasks-parse).
+# one broken test on main no longer blocks every unrelated PR fleet-wide. PR
+# runs may defer gates already covered by another PR workflow. Merge-queue runs
+# cannot: they execute every implicated integration gate against GitHub's exact
+# merge-group base, while preserving already-green child receipts instead of
+# restarting the whole PR matrix whenever main moves.
 #
-# Fail-closed: LIMEN_VERIFY_REQUIRE_BASE=1 (pull_request runs only) hard-fails
-# when the merge-base cannot resolve or the changed set is empty — a required
-# check must never green by verifying nothing — and a deploy-trigger diff
-# escalates to the whole matrix (verify-whole.sh). Gates whose ci_job mirror
-# lives in another workflow (web-build → ci.yml:web, worker-check →
-# ci.yml:worker, moneta-tests → moneta.yml) defer to it: those workflows run on
-# the same PR, and the merge organ requires ALL rollup checks green, so a red
-# mirror still holds the merge. scripts/check-gates.py (selected whenever this
-# file changes) holds the registry↔workflow estate in parity.
+# Fail-closed: pull_request runs require a resolvable base. `--integration`
+# implies the same requirement for merge_group runs and suppresses deploy-path
+# escalation: the queue commit is already composed from exact-head green PR
+# children, so this final pass pays only the genuine cross-branch seams. Gates
+# whose ci_job mirror lives in another workflow (web-build → ci.yml:web,
+# worker-check → ci.yml:worker, moneta-tests → moneta.yml) defer only on the PR
+# path. scripts/check-gates.py (selected whenever this file changes) holds the
+# registry↔workflow estate in parity.
 #
 # LIMEN_PRGATE_SCOPED=0 is the escape hatch back to the full literal matrix —
 # flip the job-level default in a one-line PR if the resolver misbehaves.
 on:
   pull_request:
+  merge_group:
+    types: [checks_requested]
   workflow_dispatch:
 
 concurrency:
@@ -59,11 +61,33 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install ruff pyyaml -r web/api/requirements.txt -e "cli[test]"
 
-      - name: Verify implicated gates (GATES registry, scoped — issue #1048)
-        if: env.LIMEN_PRGATE_SCOPED != '0'
+      - name: Verify implicated PR gates (scoped, CI mirrors deferred)
+        if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'pull_request'
         env:
           LIMEN_VERIFY_NO_LOCK: "1"
-          LIMEN_VERIFY_REQUIRE_BASE: ${{ github.event_name == 'pull_request' && '1' || '0' }}
+          LIMEN_VERIFY_REQUIRE_BASE: "1"
+        run: |
+          python scripts/verify.py --changed \
+            --base "origin/${GITHUB_BASE_REF:-main}" \
+            --skip-ci-covered pr-gate.yml:pr-gate
+
+      - name: Verify merge-group integration gates (scoped, fail-closed)
+        if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'merge_group'
+        env:
+          LIMEN_VERIFY_NO_LOCK: "1"
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+        run: |
+          if [ -z "$MERGE_GROUP_BASE_SHA" ]; then
+            echo "merge_group payload has no base_sha; refusing to verify an unknown integration base" >&2
+            exit 2
+          fi
+          python scripts/verify.py --changed --integration \
+            --base "$MERGE_GROUP_BASE_SHA"
+
+      - name: Verify manual run (scoped)
+        if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'workflow_dispatch'
+        env:
+          LIMEN_VERIFY_NO_LOCK: "1"
         run: |
           python scripts/verify.py --changed \
             --base "origin/${GITHUB_BASE_REF:-main}" \

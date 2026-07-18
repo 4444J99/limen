@@ -16,6 +16,8 @@ set -euo pipefail
 #   - The scoped pr-gate rewrite (issue #1048) registered the three steps pr-gate had
 #     hand-wired outside the registry — nomenclator, tasks-parse, ruff-format — plus
 #     verify-ci-hardening-test (the resolver's own CI fail-closed contract).
+#   - Executable Git/GitHub writer surfaces now implicate direct-main-writer-contract;
+#     the release parameter implicates the sync-release default-branch regression.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERIFY="$ROOT/scripts/verify.py"
@@ -39,6 +41,7 @@ diff-hygiene' docs/some-note.md
 
 expect cli-change 'syntax-changed
 diff-hygiene
+direct-main-writer-contract
 tasks-parse
 check-params
 ruff-lint
@@ -48,6 +51,7 @@ pytest-api' cli/src/limen/io.py
 
 expect api-change 'syntax-changed
 diff-hygiene
+direct-main-writer-contract
 check-params
 ruff-lint
 ruff-format
@@ -55,18 +59,22 @@ pytest-api' web/api/main.py
 
 expect mcp-change 'syntax-changed
 diff-hygiene
+direct-main-writer-contract
 ruff-lint
 ruff-format' mcp/src/limen_mcp/server.py
 
 expect merge-policy-change 'syntax-changed
 diff-hygiene
 merge-policy-test
+merge-queue-contract-test
+direct-main-writer-contract
 await-pr-test
 check-params
 check-gates' scripts/merge-policy.sh
 
 expect enactment-change 'syntax-changed
 diff-hygiene
+direct-main-writer-contract
 enactment-test
 check-params' scripts/enactment-audit.py
 
@@ -91,6 +99,7 @@ check-gates' CLAUDE.md
 
 expect workflow-change 'syntax-changed
 diff-hygiene
+direct-main-writer-contract
 workflow-yaml
 check-gates' .github/workflows/ci.yml
 
@@ -101,6 +110,7 @@ web-build' web/app/app/page.tsx
 
 expect worker-change 'syntax-changed
 diff-hygiene
+direct-main-writer-contract
 check-params
 worker-check' web/worker/src/index.ts
 
@@ -115,6 +125,7 @@ web-build' spec/contracts/readiness.schema.json
 
 expect params-change 'syntax-changed
 diff-hygiene
+sync-release-test
 check-params' institutio/governance/parameters.yaml
 
 expect registry-change 'syntax-changed
@@ -125,6 +136,8 @@ check-gates' institutio/governance/gates.yaml
 
 expect resolver-change 'syntax-changed
 diff-hygiene
+merge-queue-contract-test
+direct-main-writer-contract
 verify-resolver-test
 verify-ci-hardening-test
 check-params
@@ -132,6 +145,7 @@ check-gates' scripts/verify.py
 
 expect mixed-change 'syntax-changed
 diff-hygiene
+direct-main-writer-contract
 tasks-parse
 check-params
 ruff-lint

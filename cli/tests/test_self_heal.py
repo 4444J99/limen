@@ -335,6 +335,21 @@ def test_stale_core_pr_emits_rebase_not_merged(tmp_path, monkeypatch):
     assert "unique work" in t["context"], "the heal must preserve all unique work (absorb, not drop)"
 
 
+def test_stale_core_pr_with_active_queue_emits_no_rebase(tmp_path, monkeypatch):
+    """A positive queue capability routes stale exact heads to merge-drain, not branch churn."""
+    for k in ("LIMEN_PROTECTED_PATHS", "LIMEN_CONDUCTOR_REPOS", "LIMEN_STALE_BASE_MAX"):
+        monkeypatch.delenv(k, raising=False)
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "gh", _fake_gh_stale)
+    monkeypatch.setattr(m, "merge_queue_capability", lambda repo, branch, gh_fn: "active")
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p)])
+
+    assert m.main() == 0
+    assert yaml.safe_load(p.read_text())["tasks"] == []
+
+
 # ── TRUNK-REPAIR GATE (limen#895) ───────────────────────────────────────────────────────────────────
 # When a HEAL-mainred-{repo} task is active, self-heal must NOT emit individual HEAL-cifix tasks for
 # that same repo — the trunk-level repair addresses the root cause and heals all PRs at once.

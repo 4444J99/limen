@@ -98,12 +98,14 @@ Limen now has two backend storage modes:
 | Mode | Use | Configuration |
 |------|-----|---------------|
 | Local file | Development and on-demand local operation | `LIMEN_TASKS=/path/to/tasks.yaml` |
-| GitHub Contents | Hosted API with durable `tasks.yaml` writes | `LIMEN_GITHUB_REPO`, `LIMEN_GITHUB_TOKEN`, optional `LIMEN_GITHUB_BRANCH`, `LIMEN_GITHUB_PATH` |
+| GitHub Contents | Hosted read projection; repository mutations are deferred to TABVLARIVS | `LIMEN_GITHUB_REPO`, `LIMEN_GITHUB_TOKEN`, optional `LIMEN_GITHUB_BRANCH`, `LIMEN_GITHUB_PATH` |
 
 Runtime adapters currently include the Python/FastAPI adapter and the
 Cloudflare Worker adapter in `web/worker`. The Worker uses the same HTTP
 contract and GitHub Contents storage; it can be checked locally with
-`scripts/probe-local-worker.sh`.
+`scripts/probe-local-worker.sh`. GitHub-backed adapters never write the default
+branch. Mutation requests return a typed, retryable `409` owned by TABVLARIVS;
+inline/disposable adapters remain writable for local contract tests.
 
 The Firebase dashboard at `https://device-streaming-067d747a.web.app` is static hosting backed by a deployed Cloudflare Worker runtime:
 
@@ -170,8 +172,10 @@ operations. It supports `doctor`, `qa`, `release-stale-preview`, and
 `release-stale-apply`. It does not run live Jules dispatch.
 
 The API exposes the same lifecycle contract at `GET /api/qa-status` when a
-backend runtime is attached. Live mutation still requires explicit
-`POST /api/release-stale` or `POST /api/dispatch` calls. Verification uses
+backend runtime is attached. On a disposable local/inline board, mutation uses
+explicit `POST /api/release-stale` or `POST /api/dispatch` calls. A
+GitHub-backed runtime is read-only and owner-routes those requests to
+TABVLARIVS instead of committing to `main`. Verification uses
 `POST /api/tasks/{task_id}/verify` to move active work to `done` or back into an
 attention state with a QA audit entry. Assignment and reprioritization use
 `POST /api/tasks/{task_id}/assign`, which records an `assigned` audit entry
@@ -193,8 +197,9 @@ Runtime adapters can be checked over HTTP with `scripts/probe-runtime-adapter.py
 against any deployed or local API URL; the probe verifies persona sanctions,
 manifest filtering, redaction, QA steering shape, and owner-only mutation
 boundaries. Optional `--verify-task-id`, `--assign-task-id`, and
-`--archive-task-id` flags exercise owner mutations and should only be used with
-disposable or explicitly approved task IDs.
+`--archive-task-id` flags exercise owner mutations and must only be used with
+disposable local/inline boards; GitHub-backed production adapters deliberately
+return the TABVLARIVS deferral receipt.
 For the current local Python adapter, `scripts/probe-local-runtime.sh` starts a
 temporary API process with a disposable task board and runs the same HTTP probe,
 including owner verify, assign, and archive mutations.

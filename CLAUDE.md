@@ -233,8 +233,10 @@ githubbed the same way: **`scripts/sync-censor-issues.py`** (beat-wired, dry-run
 `LIMEN_CENSOR_ISSUES_APPLY=1` arms it) mirrors live censor residuals to public `censor`-labelled
 issues and auto-closes them when the lineage clears — so insight→correction work arrives as an
 issue and leaves as a PR that cites it. Machine board writes (`tasks.yaml` via the keeper/worker)
-are the one sanctioned direct-push lane; blanket branch protection stays a lever (#257) for exactly
-that reason.
+are not a side door: Tabularius keeps the local projection dirty, publishes only through the stable
+`tabularius/board-projection` branch, and opens an exact-head PR for the normal merge queue. The
+remote no-bypass `pull_request` rule rejects every direct `main` push, including automation and
+admins.
 
 **Merge authority (standing grant).** Claude merges its own PRs into `main` *without asking*, the moment they are green and mergeable. Do not defer routine merges to the human operator. The grant has exactly one guardrail.
 
@@ -244,13 +246,18 @@ For a **website-sensitive** PR, merging *is* the deploy — so it requires **gre
 
 **The predicate decides — not your memory.** Run `scripts/merge-policy.sh <PR#>` (or no arg for the current branch):
 
-- exit **0 CLEARED** → `gh pr merge <PR#> --squash`. Do it; don't ask. Branch cleanup is
-  receipt-backed and separate from the merge.
+- exit **0 CLEARED** → run `scripts/await-pr.sh <PR#> --merge`. The predicate prints
+  `MERGE-MODE: queue|direct` and an exact `MERGE-HEAD`; the waiter binds the effect to both. When
+  the queue is active it enqueues once and reports success only after GitHub reports `MERGED`.
+  Branch cleanup is receipt-backed and separate from the merge.
 - exit **2 HOLD** → website-sensitive with CI not yet green+complete, a draft, or non-deploy checks still running. Wait for green, then merge.
-- exit **3 BLOCKED** → GitHub itself refuses the merge: conflicts (DIRTY), stale base (BEHIND), or a branch-protection gate unsatisfied (BLOCKED — e.g. the required `pr-gate` check never ran on a PR opened before that check existed). Rebase onto current `main` first (the PR#111 silent-revert guard; a rebase also retriggers the required checks), then re-run. If BLOCKED persists after a clean green rebase, a required review or admin merge is needed — surface it, don't force it.
+- exit **3 BLOCKED** → GitHub itself refuses the merge: conflicts (DIRTY), a stale base without a
+  proven queue rail, or an unsatisfied protection gate. Repair a real conflict or missing check.
+  Do not turn `BEHIND` into a repeated branch-rewrite/full-CI loop; queue-capable stale heads are
+  exit 0, while a missing/unknown queue is one exact owner-routed infrastructure blocker.
 
 The script **derives** its deploy classification from the GATES registry at run time and fails *toward caution*: if derivation is impossible (broken python/PyYAML/registry), it forces website-sensitive, so a broken environment can only HOLD, never blind-deploy. There is no path list to keep in lockstep — `check-gates.py` enforces registry↔workflow parity on every PR.
 
-**Waiting on a gate.** Never hand-roll a background poll loop on a PR gate (`for … gh pr … sleep … done` is banned — the 2026-07-15 endless-watcher incident: bespoke pollers, silent on FAIL, outliving their sessions). The one sanctioned synchronous waiter is **`scripts/await-pr.sh <PR#> [--merge]`** — hard deadline, loud CLEARED/FAILED/TIMEOUT verdicts, single instance per PR, and it refuses to start under a merge-prohibiting pause marker. Anything longer than its deadline is the beat's job: the merge rung (`scripts/merge-drain.py` via `scripts/drain.sh`) lands green PRs every drain beat — hand off and end. And before arming any watcher or merging, read `logs/AUTONOMY_PAUSED`: its `prohibitions:` bind interactive sessions too — a marker that prohibits merges means no watcher and no merge until the operator releases it.
+**Waiting on a gate.** Never hand-roll a background poll loop on a PR gate (`for … gh pr … sleep … done` is banned — the 2026-07-15 endless-watcher incident: bespoke pollers, silent on FAIL, outliving their sessions). The one sanctioned synchronous waiter is **`scripts/await-pr.sh <PR#> [--merge]`** — hard deadline, loud CLEARED/QUEUED/MERGED/FAILED/TIMEOUT verdicts, single instance per PR, and it refuses to start under a merge-prohibiting pause marker. Queue mode never rewrites the PR head when `main` moves: GitHub creates a synthetic latest-base merge group and the always-on `pr-gate` verifies only that integration composition. Anything longer than the deadline belongs to the beat's merge rung (`scripts/merge-drain.py` via `scripts/drain.sh`) — hand off and end. Before arming any watcher or merging, read `logs/AUTONOMY_PAUSED`: its `prohibitions:` bind interactive sessions too — a marker that prohibits merges means no watcher and no merge until the operator releases it.
 
 **Still human-gated levers** (unchanged): mass cross-org/fleet merges, anything that **sends** (email) or **wipes/deletes**, and **large spends**. Those stay human-gated; routine code merges do not.

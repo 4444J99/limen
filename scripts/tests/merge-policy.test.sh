@@ -23,6 +23,13 @@ cat > "$stubdir/gh" <<STUB
 #!/usr/bin/env bash
 # fake gh: emit the current fixture for any 'pr view ... --json ...' call.
 case "\$*" in
+  *"api graphql"*)
+    case "\${GH_QUEUE_CAPABILITY:-unknown}" in
+      active) printf '%s\n' '{"data":{"repository":{"mergeQueue":{"id":"MQ_fixture"}}}}' ;;
+      absent) printf '%s\n' '{"data":{"repository":{"mergeQueue":null}}}' ;;
+      unknown) printf '%s\n' '{"errors":[{"message":"field unavailable"}]}'; exit 1 ;;
+      *) exit 1 ;;
+    esac ;;
   *"pr view"*"--json headRefOid"*"-q .headRefOid"*)
     if [ -n "\${GH_RECHECK_HEAD:-}" ]; then printf '%s\n' "\$GH_RECHECK_HEAD"; else jq -r .headRefOid "$fixture"; fi ;;
   *"pr view"*"--json"*) cat "$fixture" ;;
@@ -58,11 +65,30 @@ check() { # name expected_exit [extra policy args...]  (fixture already written)
   fi
 }
 
+check_output() { # name expected_exit required_substring [forbidden_substring]
+  local name="$1" want="$2" required="$3" forbidden="${4:-}" got out
+  set +e
+  out=$(PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r 2>&1)
+  got=$?
+  set -e
+  if [ "$got" = "$want" ] && [[ "$out" == *"$required"* ]] \
+      && { [ -z "$forbidden" ] || [[ "$out" != *"$forbidden"* ]]; }; then
+    printf '  ok   %-34s exit=%s\n' "$name" "$got"; pass=$((pass+1))
+  else
+    printf '  FAIL %-34s want=%s got=%s required=%q forbidden=%q\n' \
+      "$name" "$want" "$got" "$required" "$forbidden"
+    printf '%s\n' "$out" | sed 's/^/       /'
+    fail=$((fail+1))
+  fi
+}
+
 echo "merge-policy.sh verdict matrix:"
 
 # CLEARED (exit 0) — only genuinely-mergeable, policy-safe states
-mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN";  check "clean non-deploy + green"        0
-mkjson OPEN false CLEAN "$WEB_FILES" "$GREEN";  check "clean website-sensitive + green" 0
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+check_output "clean non-deploy + green" 0 "MERGE-MODE: direct"
+mkjson OPEN false CLEAN "$WEB_FILES" "$GREEN"
+check_output "clean website-sensitive + green" 0 "MERGE-MODE: direct"
 mkjson OPEN false HAS_HOOKS "$DOC_FILES" "$GREEN"; check "has_hooks non-deploy + green" 0
 
 # BLOCKED (exit 3) — GitHub itself refuses the merge
@@ -81,6 +107,34 @@ mkjson OPEN false UNSTABLE "$WEB_FILES" "$PENDING"; check "website-sensitive + p
 mkjson OPEN false CLEAN    "$WEB_FILES" "$NONE";    check "website-sensitive + 0 checks" 2
 mkjson OPEN false UNSTABLE "$DOC_FILES" "$PENDING"; check "non-deploy + pending"        2
 mkjson OPEN false WEIRDNEW "$DOC_FILES" "$GREEN";   check "unrecognized state (fail-safe)" 2
+
+# Queue routing is enabled only by a positive live GraphQL capability. BEHIND stays blocked when
+# the queue is absent or unverifiable; active queues accept exact-head-green BEHIND/CLEAN PRs only
+# as queue work (never as a direct merge).
+export GH_QUEUE_CAPABILITY=active
+mkjson OPEN false BEHIND "$DOC_FILES" "$GREEN"
+check_output "active queue + BEHIND + green" 0 "MERGE-MODE: queue" "Safe to self-merge"
+check_output "active queue binds exact head" 0 \
+  "MERGE-HEAD: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+check_output "active queue + CLEAN + green" 0 "MERGE-MODE: queue"
+mkjson OPEN false BEHIND "$DOC_FILES" "$PENDING"
+check_output "active queue + BEHIND pending" 2 "VERDICT: HOLD"
+mkjson OPEN false DIRTY "$DOC_FILES" "$GREEN"
+check_output "active queue + DIRTY" 3 "VERDICT: BLOCKED"
+
+export GH_QUEUE_CAPABILITY=absent
+mkjson OPEN false BEHIND "$DOC_FILES" "$GREEN"
+check_output "absent queue + BEHIND" 3 "merge queue capability is absent"
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+check_output "absent queue + CLEAN" 0 "MERGE-MODE: direct" "MERGE-MODE: queue"
+
+export GH_QUEUE_CAPABILITY=unknown
+mkjson OPEN false BEHIND "$DOC_FILES" "$GREEN"
+check_output "unknown queue + BEHIND" 3 "merge queue capability is unknown"
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+check_output "unknown queue + CLEAN" 0 "MERGE-MODE: direct" "MERGE-MODE: queue"
+unset GH_QUEUE_CAPABILITY
 
 # The check rollup must remain attached to the exact head captured in the first PR snapshot.
 export GH_RECHECK_HEAD=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb

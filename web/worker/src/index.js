@@ -15,11 +15,22 @@ const EXECUTABLES = new Set([
   "[", "bash", "bundle", "cargo", "curl", "gh", "git", "go", "just", "make", "node", "nox", "npm",
   "pnpm", "py.test", "pytest", "python", "python3", "ruby", "sh", "test", "tox", "uv", "yarn", "zsh",
 ]);
+const TABULARIUS_TICKET_ACTION = "Submit a TABVLARIVS ticket and let the keeper publish the board projection PR";
 let inlineBoardText = null;
 // Parsed-board cache: keyed by sha so re-parse only happens when content changes.
 let boardCache = null; // { sha: string, data: object }
 
 class IntakeContractError extends Error {}
+
+class BoardMutationDeferred extends Error {
+  constructor(target) {
+    super("GitHub-backed board mutations are keeper-owned and cannot be written by the Worker");
+    this.code = "board_mutation_deferred";
+    this.retryable = true;
+    this.owner = "tabularius";
+    this.target = target;
+  }
+}
 
 function taskText(task) {
   return [task.title, task.description, task.context].filter(Boolean).map(String).join("\n");
@@ -514,22 +525,31 @@ function surfaceManifest(data, env, persona = "owner") {
   return manifest;
 }
 
-function readiness(data, agent = "jules") {
+function readiness(data, env, agent = "jules") {
   const raw = summary(data);
   const b = budget(data);
+  const storage = storageStatus(env);
+  const storageWritable = storage.writable === true;
   const limit = b.per_agent?.[agent] || b.daily || 100;
   const spent = b.track?.per_agent?.[agent] || 0;
   const remaining = Math.max(0, Math.min((b.daily || 100) - (b.track?.spent || 0), limit - spent));
   const open = (data.tasks || []).filter((task) => task.status === "open" && [agent, "any"].includes(task.target_agent)).length;
   const checks = [
     { id: "api_runtime", status: "pass", detail: "cloudflare worker runtime attached" },
-    { id: "github_storage", status: "pass", detail: "GitHub Contents storage" },
+    {
+      id: "storage",
+      status: storageWritable ? "pass" : "warn",
+      detail: storageWritable
+        ? `${storage.mode} board storage is writable`
+        : "read-only GitHub projection; mutations defer to TABVLARIVS",
+    },
     { id: "stale_claims", status: raw.stale_count ? "warn" : "pass", detail: `${raw.stale_count} stale active tasks` },
     { id: "open_queue", status: open ? "pass" : "warn", detail: `${open} open ${agent} tasks` },
     { id: "budget", status: remaining > 0 ? "pass" : "fail", detail: `${remaining}/${limit} ${agent} runs remaining` },
   ];
   const nextActions = [];
-  if (raw.stale_count) nextActions.push("POST /api/release-stale?hours=24&dry_run=false");
+  if (!storageWritable) nextActions.push(TABULARIUS_TICKET_ACTION);
+  else if (raw.stale_count) nextActions.push("POST /api/release-stale?hours=24&dry_run=false");
   if (open && remaining > 0) nextActions.push(`POST /api/dispatch live=false limit=${Math.min(open, remaining)}`);
   if (remaining <= 0) nextActions.push(`Wait for ${agent} budget reset or lower dispatch volume`);
   return {
@@ -539,15 +559,41 @@ function readiness(data, agent = "jules") {
     counts: { total: raw.total, active: raw.active_count, stale: raw.stale_count, open, [`open_${agent}`]: open },
     budget: { daily: b.daily || 100, agent_limit: limit, agent_spent: spent, remaining },
     checks,
+    mutation: storageWritable
+      ? { status: "available", owner: storage.mutation_owner }
+      : {
+          status: "deferred",
+          code: "board_mutation_deferred",
+          owner: "tabularius",
+          route: "tabularius_ticket",
+          next_action: TABULARIUS_TICKET_ACTION,
+        },
     next_actions: nextActions.length ? nextActions : ["No immediate action required"],
   };
 }
 
 function storageStatus(env) {
   if (inlineBoardSource(env)) {
-    return { mode: "inline", configured: true };
+    return {
+      mode: "inline",
+      access: "read_write",
+      configured: true,
+      writable: true,
+      mutation_owner: "worker_inline",
+    };
   }
-  return { mode: "github", repo: env.LIMEN_GITHUB_REPO, branch: env.LIMEN_GITHUB_BRANCH || "main", path: env.LIMEN_GITHUB_PATH || "tasks.yaml", configured: Boolean(env.LIMEN_GITHUB_REPO && env.LIMEN_GITHUB_TOKEN) };
+  return {
+    mode: "github",
+    access: "read_only",
+    writable: false,
+    mutation_owner: "tabularius",
+    mutation_route: "tabularius_ticket",
+    next_action: TABULARIUS_TICKET_ACTION,
+    repo: env.LIMEN_GITHUB_REPO,
+    branch: env.LIMEN_GITHUB_BRANCH || "main",
+    path: env.LIMEN_GITHUB_PATH || "tasks.yaml",
+    configured: Boolean(env.LIMEN_GITHUB_REPO && env.LIMEN_GITHUB_TOKEN),
+  };
 }
 
 function githubUrl(env) {
@@ -581,10 +627,6 @@ function decodeBase64(value) {
   // Use Uint8Array + TextDecoder for O(n) instead of char-by-char %XX encoding.
   const bytes = Uint8Array.from(atob(value.replace(/\n/g, "")), (c) => c.charCodeAt(0));
   return new TextDecoder().decode(bytes);
-}
-
-function encodeBase64(value) {
-  return btoa(unescape(encodeURIComponent(value)));
 }
 
 async function loadBoard(env) {
@@ -621,23 +663,19 @@ async function loadBoard(env) {
 }
 
 async function saveBoard(env, data, sha) {
-  if (inlineBoardSource(env)) {
-    inlineBoardText = YAML.stringify(data);
-    return;
-  }
-  const branch = env.LIMEN_GITHUB_BRANCH || "main";
-  await githubRequest(env, "PUT", githubUrl(env), {
-    message: env.LIMEN_GITHUB_COMMIT_MESSAGE || "Update Limen task board",
-    content: encodeBase64(YAML.stringify(data)),
-    branch,
-    ...(sha ? { sha } : {}),
-  });
+  requireMutableBoard(env);
+  inlineBoardText = YAML.stringify(data);
+  void sha;
 }
 
 function inlineBoardSource(env) {
   if (env.LIMEN_INLINE_TASKS_YAML) return env.LIMEN_INLINE_TASKS_YAML;
   if (env.LIMEN_INLINE_TASKS_YAML_B64) return decodeBase64(env.LIMEN_INLINE_TASKS_YAML_B64);
   return "";
+}
+
+function requireMutableBoard(env) {
+  if (!inlineBoardSource(env)) throw new BoardMutationDeferred(storageStatus(env));
 }
 
 function findTask(data, taskId) {
@@ -702,7 +740,7 @@ async function route(request, env) {
   if (path === "/api/readiness" && request.method === "GET") {
     const agent = validateEnum(url.searchParams.get("agent") || "jules", VALID_AGENTS, "agent", env);
     if (agent.response) return agent.response;
-    return withBoard(env, (data) => json(readiness(data, agent.value), 200, env));
+    return withBoard(env, (data) => json(readiness(data, env, agent.value), 200, env));
   }
   if (path === "/api/tasks" && request.method === "GET") return withBoard(env, (data) => json({ tasks: data.tasks || [], count: (data.tasks || []).length }, 200, env));
 
@@ -713,6 +751,7 @@ async function route(request, env) {
     if (!Number.isFinite(hoursRaw) || hoursRaw < 0 || hoursRaw > 8760) return error("hours must be a number between 0 and 8760", 422, env);
     const hours = hoursRaw;
     const dryRun = (url.searchParams.get("dry_run") || "true") !== "false";
+    if (!dryRun) requireMutableBoard(env);
     const doc = await loadBoard(env);
     const candidates = releaseStaleCandidates(doc.data, hours);
     if (!dryRun) {
@@ -741,6 +780,7 @@ async function route(request, env) {
     const limit = validateInteger(body.limit, "limit", env, { defaultValue: 1, min: 1, max: 100 });
     if (limit.response) return limit.response;
     if (body.live !== undefined && typeof body.live !== "boolean") return error("live must be a boolean", 422, env);
+    if (body.live === true) requireMutableBoard(env);
     const doc = await loadBoard(env);
     const candidates = [];
     const intakeBlocked = [];
@@ -766,6 +806,7 @@ async function route(request, env) {
     const action = taskMatch[2];
     if (!action && request.method === "GET") return withBoard(env, (data) => json(findTask(data, taskId.value), 200, env));
     if (request.method !== "POST") return error("method not allowed", 405, env);
+    requireMutableBoard(env);
     let rawBody;
     try { rawBody = await request.json(); } catch { return error("invalid JSON body", 422, env); }
     const body = safeParseBody(rawBody, ["status", "note", "session_id", "target_agent", "priority", "budget_cost", "predicate", "receipt_target"]);
@@ -870,6 +911,17 @@ export default {
       return await route(request, env);
     } catch (err) {
       if (err instanceof Response) return err;
+      if (err instanceof BoardMutationDeferred) {
+        return json({
+          status: "mutation_deferred",
+          code: err.code,
+          retryable: err.retryable,
+          owner: err.owner,
+          target: err.target,
+          detail: err.message,
+          next_action: "Submit a TABVLARIVS ticket and let the keeper publish the board projection PR",
+        }, 409, env);
+      }
       return error(err instanceof Error ? err.message : "runtime error", 500, env);
     }
   },

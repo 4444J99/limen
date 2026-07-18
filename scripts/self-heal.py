@@ -48,7 +48,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.intake import contract_fields, github_existing_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
-from _pr_scan import enumerate_open_prs, rotating_window, scaled_limit, stale_base_verdict  # noqa: E402
+from _pr_scan import (  # noqa: E402
+    enumerate_open_prs,
+    merge_queue_capability,
+    rotating_window,
+    scaled_limit,
+    stale_base_verdict,
+)
 
 # DERIVED from env so the conductor survives relocation; same defaults as merge-drain.py.
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
@@ -94,9 +100,10 @@ KINDS = {
             "pushing. Do not open a new PR. PR: {url}"
         ),
     },
-    # STALE-BASE family — the #111 guard. A mergeable+green PR off an OLD base would silently REVERT
-    # work that landed since. merge-drain refuses it; these tasks rebase it onto the CURRENT base,
-    # keeping the PR's own work and dropping only the reverting hunks. ([[pr111-daemon-regression-healed]])
+    # STALE-BASE family — the #111 guard. When queue capability is absent/unknown, a mergeable+green
+    # PR off an OLD base can silently REVERT work that landed since, so these tasks rebase it onto
+    # CURRENT base. An active queue instead validates a current-base merge group and must not spawn
+    # rebase churn. ([[pr111-daemon-regression-healed]])
     "STALE-CORE": {
         "slug": "rebase-stale",
         "priority": "high",
@@ -226,11 +233,13 @@ def assess(pr):
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
             return (repo, num, url, "CI-PENDING", [])
         if d.get("mergeable") == "MERGEABLE":
-            # STALE-BASE GATE (identical to merge-drain.assess — one verdict): refuse a green+mergeable
-            # PR off an old base that would silently revert work, and emit a rebase-to-current heal task.
+            # STALE-BASE GATE (identical to merge-drain.assess — one verdict): only a positively
+            # detected active queue makes a stale exact head queueable. Absent/unknown preserves
+            # the rebase-to-current heal route.
             paths = [f.get("path", "") for f in (d.get("files") or [])]
             sb = stale_base_verdict(repo, paths, d.get("baseRefName"), d.get("headRefOid"), gh)
-            if sb:
+            queue_capability = merge_queue_capability(repo, d.get("baseRefName"), gh)
+            if sb and queue_capability != "active":
                 return (repo, num, url, sb, [])  # STALE-CORE / STALE-BASE → rebase task below
             return (repo, num, url, "READY", [])
         return (repo, num, url, "BLOCKED", [])

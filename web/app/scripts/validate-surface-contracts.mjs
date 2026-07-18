@@ -151,5 +151,8 @@ if (publicSurfaceManifest.persona !== "public") fail("public manifest missing pe
 if (surfaceManifest.persona !== "public") fail("default manifest missing public persona");
 if (JSON.stringify(readiness).includes("dispatch_log")) fail("readiness exposes dispatch logs");
 if (!Array.isArray(readiness.next_actions)) fail("readiness missing next_actions");
+if (readiness.mutation?.status !== "deferred") fail("static readiness must defer board mutation");
+if (readiness.mutation?.owner !== "tabularius") fail("static readiness mutation owner must be tabularius");
+if (readiness.mutation?.route !== "tabularius_ticket") fail("static readiness mutation route must be tabularius_ticket");
 
 console.log("Surface contracts verified");

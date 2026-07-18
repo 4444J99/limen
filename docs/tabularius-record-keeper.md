@@ -1,21 +1,22 @@
 # TABVLARIVS — the one record-keeper over the board
 
 > *The Roman* tabularius *kept the* tabulae publicae *— the single authoritative civic ledger. This
-> organ keeps `tasks.yaml`: the one process allowed to edit the holy board, so the ~32 uncoordinated
-> writers stop tearing it.* Sibling of MONETA (intakes cash), quaestor (finds money), CVSTOS (keeps
+> organ keeps `tasks.yaml`: the one process allowed to publish the holy board, so the legacy
+> uncoordinated writers stop tearing it.* Sibling of MONETA (intakes cash), quaestor (finds money), CVSTOS (keeps
 > the host), VVLTVS (keeps the face). **TABVLARIVS keeps the books.**
 
 ## The disease
 
-`tasks.yaml` is the single SSOT board. Today **~32 code paths** across 5 tiers (CLI core, ~20
-scripts, 7 FastAPI endpoints, 4 Cloudflare-Worker endpoints, 3 MCP handlers) each mutate it by
-*read-whole-board → mutate-in-memory → rewrite-whole-board*. A `queue_lock` mutex exists but only
-~13 of them honor it; the MCP server bypasses even the atomic write.
+`tasks.yaml` is the single SSOT board. The migration began with dozens of code paths across CLI,
+scripts, FastAPI, Cloudflare Worker, and MCP tiers independently doing
+*read-whole-board → mutate-in-memory → rewrite-whole-board*. The tracked writer audit now owns the
+remaining local writer inventory. Repository-backed MCP, FastAPI, and Worker adapters are no longer
+direct writers: they are read projections whose mutations fail closed to TABVLARIVS.
 
 Two failure modes follow, and they are distinct:
 
-- **Torn bytes** — a non-atomic writer (MCP's raw `open(w)+yaml.dump`) can leave a truncated/partial
-  file. `io.atomic_write_text` (temp + `os.replace`) already prevents this *for writers that use it*.
+- **Torn bytes** — the former MCP raw `open(w)+yaml.dump` path could leave a truncated/partial file.
+  Standalone MCP boards now use an atomic replace; repository-backed boards fail before mutation.
 - **Lost updates (clobber)** — two writers that both `load→mutate→save`, even under a save-only lock,
   race: the second's whole-board rewrite overwrites the first's just-committed change (last-writer-
   wins). Locking the `save` alone does **not** fix this — only serializing the whole
@@ -53,7 +54,7 @@ archived ticket files are the append-only event log the board projects from.
 | Producer API | `cli/src/limen/tabularius.py` → `submit_task_upsert()`, `submit_task_status()` | the one-line conversion target: a writer swaps `save_limen_file` for a keeper ticket per NEW task or status/result transition |
 | Beat organ | `scripts/tabularius-organ.py` | thin per-beat wrapper (like `heal-board.py`); `--check`/`--dry-run`; writes the liveness stamp |
 | Beat wiring | `scripts/heartbeat-loop.sh` | runs after `heal-board` (fold onto a *healthy* board), before the body's own mutation |
-| Projection preservation | `limen.tabularius.preserve_board_projection()` | keeper-owned commit/push of the current `tasks.yaml` projection, under the queue lock, with a temporary git index so a push failure cannot strand the live checkout ahead |
+| Projection preservation | `limen.tabularius.preserve_board_projection()` | keeper-owned publication of the current `tasks.yaml` projection to the stable `tabularius/board-projection` PR branch; the local main ref/index are never advanced |
 | Writer audit | `scripts/task-writer-audit.py` | reports every remaining legacy direct board writer so the migration burns down explicitly instead of allowing another hidden writer |
 | Proprioception | `scripts/organ-health.py` | a TABVLARIVS rung, green when `logs/tabularius-organ-state.json` is fresh |
 | Keeper gate | `institutio/governance/parameters.yaml` → `LIMEN_TABVLARIVS` | master kill-switch for the keeper (default ON) |
@@ -74,8 +75,10 @@ archived ticket files are the append-only event log the board projects from.
 - **Idempotent no-op while dark** — an empty inbox touches nothing (no lock, no board I/O), which is
   what makes it safe to run every beat before any producer exists.
 - **Projection preservation is not a second writer** — the keeper may publish the already-sealed
-  `tasks.yaml` projection, but it never edits the board. It commits only `tasks.yaml` from a temporary
-  index, pushes before advancing local refs, and leaves other daemon/receipt drift untouched.
+  `tasks.yaml` projection, but it never edits the board or pushes `main`. It commits only
+  `tasks.yaml` from a temporary index, uses normal fast-forward publication-branch pushes, opens an
+  exact-head PR, and leaves the local board dirty so newer tickets coalesce while that PR is in
+  flight. Remote races fail closed without force.
 
 ## Migration path
 
@@ -96,23 +99,23 @@ archived ticket files are the append-only event log the board projects from.
      `generate-organ-backlog`, `generate-positioning`, `discover-value`, `ingest-coverage`) are the
      same one-line swap against the proven template.
   2. **CLI harvest/dispatch result-apply** → emit a `submit_task_status()` ticket instead of mutating the blob.
-  3. **MCP server** — replace the raw `yaml.dump` + git-push with a ticket append (removes the worst
-     offender: no lock, no atomic write, no collapse-guard, and its own drifted duplicate models).
-  4. **FastAPI + Worker endpoints** — enqueue a ticket and return; the keeper projects. This is the
-     **website-sensitive** tier — requires green CI + a `web/app` build, and the decision below.
+  3. **MCP server** — repository-backed mutations are already deferred before checkout mutation;
+     standalone local boards use atomic replace. A future ticket adapter may restore repository
+     mutation through the keeper without reopening a Git writer.
+  4. **FastAPI + Worker endpoints** — GitHub-backed production adapters are read-only and return the
+     typed TABVLARIVS deferral before any Contents PUT or dispatch side effect. A future ticket intake
+     endpoint may add asynchronous mutation without creating a synchronous direct-write exception.
 - **Step 3 — flip the source of truth.** Once every writer produces tickets and `materialize --verify`
   proves N consecutive beats of byte-identity, declare the archived event log the truth and
   `tasks.yaml` the derived cache. `heal-board`'s restore-from-HEAD stays as the outer safety net.
 
-## The one genuine human decision (surfaces at Step 2.4, not before)
+## Hosted mutation boundary
 
-Routing the **live Cloudflare Worker / FastAPI** through the keeper makes their writes *eventually
-consistent* — an API `POST` that used to write synchronously would return before the next beat folds
-its ticket. **Decision:** is a bounded async delay acceptable for the live API contract, or must the
-API keep a synchronous write path that *also* emits a ticket for reconciliation?
-**Recommended default:** synchronous-write-plus-ticket for the live API tier (no contract change),
-pure-ticket for the internal fleet. This is the only step gated by the website guardrail; everything
-above it is autonomous.
+The hosted contract is resolved fail-closed: GitHub-backed Cloudflare Worker, FastAPI, and MCP
+adapters are read projections. They do not synchronously rewrite a topic branch or `main`, and
+readiness never recommends an endpoint that is guaranteed to defer. Durable mutation remains owned
+by TABVLARIVS tickets and the exact-head board-projection PR rail. Adding a hosted ticket-submission
+surface is separate product work; it cannot restore a GitHub Contents writer.
 
 ## Recorded remaining work (this doc is the owner)
 
@@ -128,12 +131,15 @@ above it is autonomous.
       (2→7). The status-mutator tier still writes directly — that is Step 2.2.
 - [x] Projection preservation returned to TABVLARIVS — the standalone live-state preserver was removed;
       `scripts/tabularius-organ.py` now calls `preserve_board_projection()` after every drain/no-op pass.
-      The focused predicate proves the keeper pushes the board projection without stranding a local commit.
+      The focused predicate proves the keeper publishes the board through a data-only PR without
+      moving local or remote `main`.
 - [x] Creation-writer audit burn-down pass — `auto-scale`, `current-session-fanout`, `insight-route`,
       `append-tasks`, `batch-dispatch`, `corpus-converge`, and `converge-organ` now submit upsert
       tickets instead of directly rewriting the board. The auto-scale workflow runs `tabularius-organ`
-      after producing tickets, so CI still commits the projection but the writer is the keeper.
-      `scripts/task-writer-audit.py` now reports 22 legacy direct writer calls (down from 29).
+      after producing tickets, so CI publishes the projection through the same stable board PR and
+      has no direct-main commit step.
+      `scripts/task-writer-audit.py` currently reports 32 classified legacy local writer calls and
+      zero unclassified rows; the tracked audit is the live denominator, not this prose.
 - [x] Step 2.2 owner-recorded — the status/result writer tier is no longer an implicit side channel.
       `submit_task_status()` is the keeper API for status/result transitions, and
       `scripts/task-writer-audit.py` now writes the tracked receipt
@@ -162,8 +168,12 @@ above it is autonomous.
 - [ ] Step 2.2F — `TAB-HUMAN-ATOM-STATUS-WRITERS`: convert dispatch-continuity and routine-freshness
       `needs_human` atom refreshes to keeper-owned status/upsert tickets. Predicate:
       `PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q`.
-- [ ] Step 2.3 — MCP server → ticket producer (retire the raw write + duplicate models).
-- [ ] Step 2.4 — live API/Worker tier (needs the consistency decision above; website-sensitive).
+- [x] Step 2.3 safety boundary — repository-backed MCP mutations fail typed before any checkout
+      write, stash, commit, rebase, or push; standalone local boards retain atomic test/dev writes.
+- [x] Step 2.4 safety boundary — GitHub-backed FastAPI and Worker mutations fail typed before any
+      Contents PUT or dispatch side effect; hosted readiness owner-routes mutation to TABVLARIVS.
+- [ ] Hosted ticket intake — add a provider-neutral asynchronous ticket endpoint if a future product
+      requirement needs hosted writes; it must not restore a synchronous GitHub writer.
 - [ ] Step 3 — flip SSOT to the event log; add an archive→`events.jsonl` compactor + a standing
       `fold(archive) == board` predicate.
 

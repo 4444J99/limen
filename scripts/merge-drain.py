@@ -10,9 +10,9 @@ we count it, no error. It preserves source branches; branch cleanup is a separat
 Touches only GitHub — not tasks.yaml ownership or agent worktrees — so it cannot race the
 dispatcher.
 
-It also REFUSES stale-base PRs (the #111 guard): a mergeable+green PR that branched from an old
-base can silently REVERT work that landed since — self-heal reroutes those to a rebase-onto-current
-task instead of letting them clobber the body. ([[pr111-daemon-regression-healed]])
+It also REFUSES stale-base PRs (the #111 guard) unless the target branch positively exposes an
+active merge queue. The queue validates an exact-head merge group against current base; absent or
+unknown queue capability keeps the rebase-to-current route. ([[pr111-daemon-regression-healed]])
 
   --scan N      assess WINDOW per run — PRs classified this beat, rotating over the full backlog
   --scan-max N  cap on the cheap full-fleet enumeration the window draws from (default 500)
@@ -31,13 +31,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan, _notify
 import _notify  # noqa: E402
-from _pr_scan import enumerate_open_prs, rotating_window, stale_base_verdict  # noqa: E402
+from _pr_scan import (  # noqa: E402
+    enumerate_open_prs,
+    merge_queue_capability,
+    rotating_window,
+    stale_base_verdict,
+)
 
 # DERIVED from env (derive-not-pin) so the conductor survives relocation; same default + classifier
 # as self-heal.py — the two organs are two halves of one verdict and must agree on the PR universe.
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 LOG = ROOT / "logs" / "merge-drain.log"
+POLICY = ROOT / "scripts" / "merge-policy.sh"
 
 
 def gh(args, timeout=60):
@@ -109,31 +115,130 @@ def assess(rn):
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
             return (repo, num, "CI-PENDING")
         if d.get("mergeable") == "MERGEABLE":
-            # STALE-BASE GATE (kept identical to self-heal.assess — one verdict): a green+mergeable
-            # PR off an OLD base can silently revert work it never meant to touch (#111). Refuse it
-            # here; self-heal reroutes it to a rebase-onto-current task. One bounded compare call.
+            # STALE-BASE GATE (kept identical to self-heal.assess — one verdict): only a positively
+            # detected active queue can accept a stale exact head. GitHub then synthesizes and
+            # validates the current-base merge group; absent/unknown preserves the rebase guard.
             paths = [f.get("path", "") for f in (d.get("files") or [])]
             sb = stale_base_verdict(repo, paths, d.get("baseRefName"), d.get("headRefOid"), gh)
-            if sb:
+            queue_capability = merge_queue_capability(repo, d.get("baseRefName"), gh)
+            if sb and queue_capability != "active":
                 return (repo, num, sb)  # STALE-CORE / STALE-BASE — do NOT auto-merge; rebase first
             if _is_trivial(repo, num):
                 return (repo, num, "TRIVIAL")  # CI-green but no-op/reformat — value gate refuses it
-            return (repo, num, "READY")
+            head = str(d.get("headRefOid") or "")
+            if not head:
+                return (repo, num, "ERR")
+            mode_hint = "queue" if queue_capability == "active" else "direct"
+            return (repo, num, "READY", head, mode_hint)
         return (repo, num, "BLOCKED")
     except Exception:
         return (repo, num, "ERR")
 
 
-def merge(repo, num):
-    for m in ("--squash", "--merge", "--rebase"):
-        r = gh(["pr", "merge", str(num), "-R", repo, m], timeout=90)
-        out = (r.stdout + r.stderr).lower()
-        if r.returncode == 0 or "merged" in out:
-            return True
-        if "not allowed" in out or "not enabled" in out:
-            continue
-        return False
-    return False
+def _queue_state(repo, num):
+    """Return exact live PR state before a queue effect; ``None`` fails closed."""
+    r = gh(
+        [
+            "pr",
+            "view",
+            str(num),
+            "-R",
+            repo,
+            "--json",
+            "state,headRefOid,mergeStateStatus,autoMergeRequest",
+        ],
+        timeout=40,
+    )
+    if r.returncode != 0:
+        return None
+    try:
+        d = json.loads(r.stdout)
+    except (TypeError, ValueError):
+        return None
+    return {
+        "state": str(d.get("state") or ""),
+        "head": str(d.get("headRefOid") or ""),
+        "queued": d.get("autoMergeRequest") is not None or d.get("mergeStateStatus") == "QUEUED",
+    }
+
+
+def _merge_policy(repo, num, expected_head):
+    """Re-run the one authority immediately before mutation and return its exact mode."""
+    r = subprocess.run(
+        [
+            str(POLICY),
+            str(num),
+            "--repo",
+            repo,
+            "--expected-head",
+            expected_head,
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    if r.returncode != 0:
+        return None
+    out = r.stdout + r.stderr
+    mode = ""
+    head = ""
+    for line in out.splitlines():
+        if line.startswith("MERGE-MODE: "):
+            mode = line.removeprefix("MERGE-MODE: ").strip()
+        elif line.startswith("MERGE-HEAD: "):
+            head = line.removeprefix("MERGE-HEAD: ").split(maxsplit=1)[0]
+    if mode not in {"queue", "direct"} or head != expected_head:
+        return None
+    return mode
+
+
+def merge(repo, num, expected_head, mode_hint):
+    """Perform at most one exact-head effect; never fall back across merge methods.
+
+    Queue mode is idempotent and returns ``QUEUED`` rather than manufacturing a merge receipt.
+    The final policy invocation is adjacent to the effect, invalidating stale batch assessments.
+    """
+    if mode_hint == "queue":
+        current = _queue_state(repo, num)
+        if current is None or current["head"] != expected_head:
+            return "FAILED"
+        if current["state"] == "MERGED":
+            return "MERGED"
+        if current["state"] != "OPEN":
+            return "FAILED"
+        if current["queued"]:
+            return "QUEUED"
+
+    mode = _merge_policy(repo, num, expected_head)
+    if mode is None or mode != mode_hint:
+        return "FAILED"
+    if mode == "queue":
+        args = [
+            "pr",
+            "merge",
+            str(num),
+            "-R",
+            repo,
+            "--auto",
+            "--match-head-commit",
+            expected_head,
+        ]
+        success = "QUEUED"
+    else:
+        args = [
+            "pr",
+            "merge",
+            str(num),
+            "-R",
+            repo,
+            "--squash",
+            "--match-head-commit",
+            expected_head,
+        ]
+        success = "MERGED"
+    r = gh(args, timeout=90)
+    return success if r.returncode == 0 else "FAILED"
 
 
 def main():
@@ -166,16 +271,21 @@ def main():
     import collections
 
     b = collections.Counter(r[2] for r in rows)
-    ready = [(r[0], r[1]) for r in rows if r[2] == "READY"][: a.limit]
+    ready = [(r[0], r[1], r[3], r[4]) for r in rows if r[2] == "READY"][: a.limit]
     merged = []
+    queued = []
     if not a.dry_run:
-        for repo, num in ready:
-            if merge(repo, num):
+        for repo, num, head, mode_hint in ready:
+            outcome = merge(repo, num, head, mode_hint)
+            if outcome == "MERGED":
                 merged.append(f"{repo}#{num}")
+            elif outcome == "QUEUED":
+                queued.append(f"{repo}#{num}@{head[:12]}")
     ts = datetime.datetime.now().strftime("%F %T")
     summary = (
         f"[merge-drain] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} "
-        f"merged={len(merged)} trivial-skipped={b['TRIVIAL']} | blocked: conflict={b['CONFLICT']} "
+        f"merged={len(merged)} queued={len(queued)} trivial-skipped={b['TRIVIAL']} | "
+        f"blocked: conflict={b['CONFLICT']} "
         f"ci-red={b['CI-RED']} ci-pending={b['CI-PENDING']} "
         f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']}"
     )
@@ -194,7 +304,8 @@ def main():
         _notify.clear_condition(ROOT, "merge-drain-ci-red")
     try:
         with open(LOG, "a") as f:
-            f.write(summary + (("  " + " ".join(merged)) if merged else "") + "\n")
+            effects = merged + [f"QUEUED:{item}" for item in queued]
+            f.write(summary + (("  " + " ".join(effects)) if effects else "") + "\n")
     except Exception:
         pass
 

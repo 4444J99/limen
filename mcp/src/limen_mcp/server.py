@@ -1,6 +1,6 @@
 import os
 import re
-import subprocess
+import tempfile
 from datetime import date, datetime
 from pathlib import Path
 import json
@@ -31,6 +31,22 @@ VALID_AGENTS = {
 CLAIMABLE_AGENTS = VALID_AGENTS - {"any"}
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 WORKSTREAM_SUCCESSOR_REQUIRED_LABEL = "workstream:successor-required"
+
+
+class BoardMutationDeferred(RuntimeError):
+    """Repository board writes must enter through the TABVLARIVS keeper."""
+
+    code = "board_mutation_deferred"
+    retryable = True
+    owner = "tabularius"
+
+    def __init__(self, action: str):
+        self.action = action
+        super().__init__(
+            f"{self.code}: retryable=true owner={self.owner} action={action}; "
+            "repository-backed tasks.yaml is keeper-owned; submit a TABVLARIVS ticket "
+            "and let its projection PR publish the change"
+        )
 
 
 def _reject_control_chars(value: str, field_name: str) -> str:
@@ -259,41 +275,34 @@ def _serialized_data(data: LimenFile) -> Dict[str, Any]:
     return payload
 
 
+def _inside_git_checkout(path: Path) -> bool:
+    """Detect a repository without invoking git or manipulating checkout state."""
+
+    directory = path.resolve().parent
+    return any((candidate / ".git").exists() for candidate in (directory, *directory.parents))
+
+
 def _save_data(data: LimenFile, commit_msg: str = "chore: mcp task update"):
     path = _get_tasks_path()
-    repo_dir = path.parent
+    if _inside_git_checkout(path):
+        raise BoardMutationDeferred(commit_msg)
+
+    # Standalone boards used by isolated/test runtimes remain writable, but still
+    # use an atomic replace so a reader cannot observe half-written YAML.
     payload = _serialized_data(data)
-
-    # Write file locally first
-    with open(path, "w") as f:
-        yaml.dump(payload, f, default_flow_style=False, sort_keys=False)
-
-    # Layer 1: Concurrency Sync (Git Pull --Rebase wrapper)
-    if (repo_dir / ".git").exists():
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            yaml.dump(payload, f, default_flow_style=False, sort_keys=False)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    finally:
         try:
-            # 1. Stash any uncommitted changes. Capture the result so we ONLY drop the stash we
-            #    actually created — an unconditional `git stash drop` would discard an unrelated
-            #    pre-existing stash whenever there was nothing to stash ("No local changes to save").
-            stash = subprocess.run(["git", "stash"], cwd=repo_dir, capture_output=True, text=True)
-            created_stash = "No local changes to save" not in ((stash.stdout or "") + (stash.stderr or ""))
-            # 2. Pull rebase to resolve remote conflicts
-            subprocess.run(["git", "pull", "--rebase"], cwd=repo_dir, capture_output=True)
-
-            # 3. RE-WRITE the file from memory to resolve any conflicts in tasks.yaml automatically
-            with open(path, "w") as f:
-                yaml.dump(payload, f, default_flow_style=False, sort_keys=False)
-
-            # 4. Drop the now-superseded stash (the memory re-write above is authoritative) so stash
-            #    entries don't accumulate on every save.
-            if created_stash:
-                subprocess.run(["git", "stash", "drop"], cwd=repo_dir, capture_output=True)
-
-            # 5. Commit and Push
-            subprocess.run(["git", "add", path.name], cwd=repo_dir, capture_output=True)
-            subprocess.run(["git", "commit", "-m", commit_msg], cwd=repo_dir, capture_output=True)
-            subprocess.run(["git", "push"], cwd=repo_dir, capture_output=True)
-        except Exception as e:
-            print(f"Git sync failed: {e}")
+            os.unlink(tmp)
+        except FileNotFoundError:
+            pass
 
 
 @mcp.tool()

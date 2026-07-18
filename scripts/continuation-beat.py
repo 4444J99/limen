@@ -17,10 +17,12 @@ exit 10 is a hard lane switch, not another continuation pass.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import subprocess
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -46,15 +48,32 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def run(args: list[str], cwd: Path, timeout: int = 120) -> subprocess.CompletedProcess[str]:
+def run(
+    args: list[str],
+    cwd: Path,
+    timeout: int = 120,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     try:
-        return subprocess.run(args, cwd=str(cwd), text=True, capture_output=True, timeout=timeout)
+        return subprocess.run(
+            args,
+            cwd=str(cwd),
+            text=True,
+            capture_output=True,
+            timeout=timeout,
+            env={**os.environ, **(env or {})},
+        )
     except Exception as exc:
         return subprocess.CompletedProcess(args, 1, "", str(exc))
 
 
-def git(cwd: Path, *args: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
-    return run(["git", *args], cwd, timeout=timeout)
+def git(
+    cwd: Path,
+    *args: str,
+    timeout: int = 120,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return run(["git", *args], cwd, timeout=timeout, env=env)
 
 
 def gh(cwd: Path, *args: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
@@ -100,11 +119,22 @@ def first_command(gate: dict[str, Any]) -> str:
     return str(command).strip() if command else ""
 
 
-# DATA_ONLY push guard (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main). SOURCE = code/config
-# that belongs behind pr-gate; it must never reach a pr-gated repo's `main` via the autonomic direct-push
-# lane un-CI'd. DATA (tasks.yaml, receipts, logs, other data) is the lane's legitimate cargo and passes.
+# Legacy direct-push guard (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main). SOURCE =
+# code/config that belongs behind pr-gate; it must never reach a protected origin default through
+# an un-CI'd writer. DATA (tasks.yaml, receipts, logs, other data) is legitimate cargo.
 _SOURCE_SUFFIXES = {
-    ".py", ".sh", ".ts", ".js", ".mjs", ".cjs", ".tsx", ".jsx", ".rs", ".go", ".toml", ".cfg",
+    ".py",
+    ".sh",
+    ".ts",
+    ".js",
+    ".mjs",
+    ".cjs",
+    ".tsx",
+    ".jsx",
+    ".rs",
+    ".go",
+    ".toml",
+    ".cfg",
 }
 _SOURCE_NAMES = {"Makefile", "Dockerfile"}
 # *.yml/*.yaml are SOURCE only under these trees (workflows/config); data YAML (tasks.yaml) is not.
@@ -137,14 +167,33 @@ def is_source_path(path: str) -> bool:
     return False
 
 
+def origin_default_branch(repo: Path) -> str:
+    """Derive the origin default branch without encoding `main` as policy."""
+    symbolic = git(repo, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
+    value = symbolic.stdout.strip()
+    if symbolic.returncode == 0 and value.startswith("origin/"):
+        return value.removeprefix("origin/")
+    remote = git(repo, "ls-remote", "--symref", "origin", "HEAD", timeout=30)
+    if remote.returncode != 0:
+        return ""
+    for line in remote.stdout.splitlines():
+        fields = line.split()
+        if len(fields) >= 3 and fields[0] == "ref:" and fields[2] == "HEAD":
+            return fields[1].removeprefix("refs/heads/")
+    return ""
+
+
 def _guard_source_on_main(repo: Path, paths: list[str]) -> list[str]:
-    """When the repo's HEAD is `main` and it gates PRs, unstage any staged SOURCE in *paths* (leaving it
-    on disk) and return the refused paths. No-op when the guard is disabled, the branch isn't main, or
-    the repo has no pr-gate.yml — so non-main/ungated behavior is preserved."""
+    """On the derived default branch, unstage SOURCE from the legacy direct path.
+
+    The current default-branch path uses an isolated index and a PR, but this
+    guard remains a fail-closed backstop for callers and older deployments.
+    """
     if os.environ.get("LIMEN_PUSH_GUARD", "on") == "off":
         return []
     branch = git(repo, "symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip()
-    if branch != "main":
+    default_branch = origin_default_branch(repo)
+    if not default_branch or branch != default_branch:
         return []
     if not (repo / ".github" / "workflows" / "pr-gate.yml").is_file():
         return []
@@ -153,8 +202,490 @@ def _guard_source_on_main(repo: Path, paths: list[str]) -> list[str]:
     if refused:
         for s in refused:
             git(repo, "reset", "-q", "--", s)
-        print(f"[continuation-beat] REFUSED source on main: {' '.join(refused)} — route via PR (pr-gate)")
+        print(
+            f"[continuation-beat] REFUSED source on default branch {default_branch}: "
+            f"{' '.join(refused)} — route via PR (pr-gate)"
+        )
     return refused
+
+
+def _main_preservation_branch(paths: list[str]) -> str:
+    normalized = sorted({Path(path).as_posix() for path in paths})
+    digest = hashlib.sha256("\0".join(normalized).encode("utf-8")).hexdigest()[:12]
+    stem = re.sub(r"[^a-z0-9-]+", "-", Path(normalized[0]).stem.lower()).strip("-") if normalized else "paths"
+    return f"continuation-beat/{(stem or 'paths')[:28]}-{digest}"
+
+
+def _probe_preservation_pr(repo: Path, branch: str, base: str) -> dict[str, Any]:
+    """Read the newest PR custody record before any stable-branch mutation."""
+    listed = gh(
+        repo,
+        "pr",
+        "list",
+        "--state",
+        "all",
+        "--base",
+        base,
+        "--head",
+        branch,
+        "--json",
+        "number,url,headRefOid,state,mergedAt",
+        "--limit",
+        "20",
+        timeout=30,
+    )
+    if listed.returncode != 0:
+        return {"status": "deferred", "reason": f"pr-probe-failed:{short_output(listed, 300)}"}
+    try:
+        rows = json.loads(listed.stdout or "[]")
+    except json.JSONDecodeError:
+        return {"status": "deferred", "reason": "pr-probe-invalid-json"}
+    if isinstance(rows, list) and rows:
+        records = [row for row in rows if isinstance(row, dict)]
+        row = next(
+            (record for record in records if str(record.get("state") or "OPEN").upper() == "OPEN"),
+            records[0] if records else {},
+        )
+        state = str(row.get("state") or "OPEN").upper()
+        status = "merged" if state == "MERGED" or row.get("mergedAt") else "open" if state == "OPEN" else "closed"
+        return {
+            "status": status,
+            "number": row.get("number"),
+            "url": row.get("url"),
+            "head": row.get("headRefOid"),
+        }
+    return {"status": "absent"}
+
+
+def _ensure_preservation_pr(
+    repo: Path,
+    branch: str,
+    base: str,
+    message: str,
+    observed: dict[str, Any] | None = None,
+    expected_head: str = "",
+) -> dict[str, Any]:
+    """Boundedly ensure one draft PR owns a stable preservation branch."""
+    probe = observed or _probe_preservation_pr(repo, branch, base)
+    if probe.get("status") in {"open", "deferred"}:
+        return probe
+    if probe.get("status") == "merged" and probe.get("head") == expected_head:
+        return probe
+    created = gh(
+        repo,
+        "pr",
+        "create",
+        "--draft",
+        "--base",
+        base,
+        "--head",
+        branch,
+        "--title",
+        message,
+        "--body",
+        (
+            f"Heartbeat-owned files preserved from a live {base} checkout. "
+            f"This stable branch coalesces subsequent beats; {base} was not committed or pushed directly."
+        ),
+        timeout=45,
+    )
+    if created.returncode != 0:
+        return {"status": "deferred", "reason": f"pr-create-failed:{short_output(created, 300)}"}
+    return {"status": "opened", "url": created.stdout.strip()}
+
+
+def _remote_preservation_result(
+    repo: Path,
+    *,
+    branch: str,
+    base: str,
+    commit: str,
+    message: str,
+    coalesced: bool = False,
+    observed_pr: dict[str, Any] | None = None,
+    local_ref: str = "",
+    local_expected: str = "",
+    worktree_changed: bool = True,
+) -> dict[str, Any]:
+    remote_ref = f"refs/heads/{branch}"
+    remote_probe = git(repo, "ls-remote", "--heads", "origin", remote_ref, timeout=30)
+    remote_head = ""
+    if remote_probe.returncode == 0:
+        remote_head = next(
+            (line.split()[0] for line in remote_probe.stdout.splitlines() if line.split()),
+            "",
+        )
+    pr = _ensure_preservation_pr(
+        repo,
+        branch,
+        base,
+        message,
+        observed_pr,
+        expected_head=commit,
+    )
+    published = pr.get("status") in {"open", "opened", "merged"}
+    custody_verified = bool(
+        remote_head == commit and pr.get("status") in {"open", "merged"} and pr.get("head") == commit
+    )
+    custody_ref_cleared = False
+    custody_ref_moved = False
+    custody_ref_error = ""
+    local_custody_covered = bool(
+        local_expected
+        and (
+            local_expected == commit or git(repo, "merge-base", "--is-ancestor", local_expected, commit).returncode == 0
+        )
+    )
+    if custody_verified and local_ref and local_custody_covered:
+        deleted = git(repo, "update-ref", "-d", local_ref, local_expected)
+        if deleted.returncode == 0:
+            custody_ref_cleared = True
+        else:
+            current = git(repo, "rev-parse", "--verify", local_ref).stdout.strip()
+            if current and current != local_expected:
+                custody_ref_moved = True
+            elif current:
+                custody_ref_error = f"local-custody-clear-failed:{short_output(deleted, 300)}"
+            else:
+                custody_ref_cleared = True
+    settled = custody_verified and pr.get("status") == "merged" and not worktree_changed
+    result: dict[str, Any] = {
+        "changed": custody_ref_cleared or not settled,
+        "preserved": True,
+        "published": published,
+        "coalesced": coalesced,
+        "branch": branch,
+        "commit": commit,
+        "default_untouched": True,
+        "main_untouched": True,
+        "pr": pr,
+        "remote_head": remote_head,
+        "custody_verified": custody_verified,
+        "custody_ref_cleared": custody_ref_cleared,
+    }
+    if settled:
+        result["settled"] = True
+    if custody_ref_moved:
+        result.update(
+            {
+                "changed": True,
+                "deferred": True,
+                "reason": "local-custody-ref-moved",
+                "custody_ref_retained": "concurrent-update",
+            }
+        )
+    if custody_ref_error:
+        result.update({"changed": True, "deferred": True, "reason": custody_ref_error})
+    if remote_probe.returncode != 0:
+        result.update(
+            {
+                "deferred": True,
+                "reason": f"preservation-remote-head-unverified:{short_output(remote_probe, 300)}",
+            }
+        )
+    elif pr.get("status") in {"open", "merged"} and not custody_verified:
+        result.update({"deferred": True, "reason": "preservation-pr-head-unverified"})
+    if not published:
+        result.update(
+            {
+                "deferred": True,
+                "reason": str(pr.get("reason") or "preservation-pr-unproven"),
+            }
+        )
+    return result
+
+
+def _cas_local_custody(
+    repo: Path,
+    *,
+    local_ref: str,
+    expected: str,
+    commit: str,
+    tree: str,
+    message: str,
+) -> tuple[str, str]:
+    """Compare-and-swap a local retry ref, preserving concurrent writers."""
+    object_format = git(repo, "rev-parse", "--show-object-format").stdout.strip()
+    zero = "0" * (64 if object_format == "sha256" else 40)
+    current_expected = expected
+    current_commit = commit
+    for _attempt in range(3):
+        updated = git(repo, "update-ref", local_ref, current_commit, current_expected or zero)
+        if updated.returncode == 0:
+            return current_commit, ""
+        current = git(repo, "rev-parse", "--verify", local_ref).stdout.strip()
+        if not current:
+            return "", f"local-custody-ref-failed:{short_output(updated, 300)}"
+        if git(repo, "merge-base", "--is-ancestor", current_commit, current).returncode == 0:
+            return current, ""
+        raced = git(
+            repo,
+            "commit-tree",
+            tree,
+            "-p",
+            current,
+            "-p",
+            current_commit,
+            "-m",
+            f"{message} (concurrent custody reconciliation)",
+        )
+        if raced.returncode != 0 or not raced.stdout.strip():
+            return "", f"local-custody-race-failed:{short_output(raced, 300)}"
+        current_expected = current
+        current_commit = raced.stdout.strip()
+    return "", "local-custody-cas-exhausted"
+
+
+def _preserve_main_paths(
+    repo: Path,
+    paths: list[str],
+    message: str,
+    *,
+    default_branch: str,
+    worktree_changed: bool,
+) -> dict[str, Any]:
+    """Preserve default-branch paths without moving HEAD or the integration ref."""
+    normalized = sorted({Path(path).as_posix() for path in paths})
+    if not normalized or any(Path(path).is_absolute() or ".." in Path(path).parts for path in normalized):
+        return {"changed": True, "deferred": True, "reason": "invalid-preservation-paths"}
+    branch = _main_preservation_branch(normalized)
+    remote_ref = f"refs/heads/{branch}"
+    local_ref = f"refs/limen/continuation-beat/{branch.rsplit('/', 1)[-1]}"
+    local_sha = git(repo, "rev-parse", "--verify", local_ref).stdout.strip()
+    pr_probe = _probe_preservation_pr(repo, branch, default_branch)
+
+    # Probe the branch after the PR probe, but before any remote mutation.
+    probe = git(repo, "ls-remote", "--heads", "origin", remote_ref, timeout=30)
+    if probe.returncode != 0:
+        return {
+            "changed": True,
+            "deferred": True,
+            "reason": f"preservation-probe-failed:{short_output(probe, 300)}",
+            "branch": branch,
+        }
+    side_sha = next((line.split()[0] for line in probe.stdout.splitlines() if line.split()), "")
+    fetch_main = git(repo, "fetch", "--quiet", "origin", default_branch, timeout=45)
+    if fetch_main.returncode != 0:
+        return {
+            "changed": True,
+            "deferred": True,
+            "reason": f"default-fetch-failed:{short_output(fetch_main, 300)}",
+            "branch": branch,
+        }
+    main_sha = git(repo, "rev-parse", "--verify", f"refs/remotes/origin/{default_branch}").stdout.strip()
+    if not main_sha:
+        return {"changed": True, "deferred": True, "reason": "origin-default-unresolved", "branch": branch}
+    if side_sha:
+        fetched_side = git(
+            repo,
+            "fetch",
+            "--quiet",
+            "origin",
+            f"+{remote_ref}:refs/remotes/origin/{branch}",
+            timeout=45,
+        )
+        if fetched_side.returncode != 0:
+            return {
+                "changed": True,
+                "deferred": True,
+                "reason": f"preservation-fetch-failed:{short_output(fetched_side, 300)}",
+                "branch": branch,
+            }
+
+    local_is_remote = bool(
+        local_sha and side_sha and git(repo, "merge-base", "--is-ancestor", local_sha, side_sha).returncode == 0
+    )
+    if not worktree_changed and local_sha and not local_is_remote:
+        # The operator may clean the worktree after a failed push. Retry the
+        # exact pending snapshot rather than replacing it with the clean tree.
+        tree_sha = git(repo, "rev-parse", f"{local_sha}^{{tree}}").stdout.strip()
+    elif not worktree_changed and local_sha and local_is_remote:
+        return _remote_preservation_result(
+            repo,
+            branch=branch,
+            base=default_branch,
+            commit=side_sha,
+            message=message,
+            coalesced=True,
+            observed_pr=pr_probe,
+            local_ref=local_ref,
+            local_expected=local_sha,
+            worktree_changed=worktree_changed,
+        )
+    elif not worktree_changed and not local_sha:
+        if side_sha:
+            return _remote_preservation_result(
+                repo,
+                branch=branch,
+                base=default_branch,
+                commit=side_sha,
+                message=message,
+                coalesced=True,
+                observed_pr=pr_probe,
+                local_ref=local_ref,
+                worktree_changed=worktree_changed,
+            )
+        return {"changed": False, "skipped": "already-on-origin-default", "branch": branch}
+    else:
+        with tempfile.NamedTemporaryFile(prefix="continuation-beat-index-") as tmp:
+            index_env = {"GIT_INDEX_FILE": tmp.name}
+            read_tree = git(repo, "read-tree", main_sha, env=index_env)
+            if read_tree.returncode != 0:
+                return {
+                    "changed": True,
+                    "deferred": True,
+                    "reason": f"read-tree-failed:{short_output(read_tree, 300)}",
+                    "branch": branch,
+                }
+            add = git(repo, "add", "-A", "--", *normalized, env=index_env)
+            if add.returncode != 0:
+                return {
+                    "changed": True,
+                    "deferred": True,
+                    "reason": f"preservation-add-failed:{short_output(add, 300)}",
+                    "branch": branch,
+                }
+            staged = git(repo, "diff", "--cached", "--name-only", main_sha, env=index_env)
+            staged_paths = {line.strip() for line in staged.stdout.splitlines() if line.strip()}
+            if not staged_paths <= set(normalized):
+                return {
+                    "changed": True,
+                    "deferred": True,
+                    "reason": f"preservation-scope-violation:{sorted(staged_paths - set(normalized))}",
+                    "branch": branch,
+                }
+            tree = git(repo, "write-tree", env=index_env)
+            tree_sha = tree.stdout.strip()
+            if tree.returncode != 0 or not tree_sha:
+                return {
+                    "changed": True,
+                    "deferred": True,
+                    "reason": f"write-tree-failed:{short_output(tree, 300)}",
+                    "branch": branch,
+                }
+
+    if (
+        worktree_changed
+        and not local_sha
+        and not side_sha
+        and git(repo, "rev-parse", f"{main_sha}^{{tree}}").stdout.strip() == tree_sha
+    ):
+        return {"changed": False, "skipped": "already-on-origin-default", "branch": branch}
+
+    parent = local_sha or side_sha or main_sha
+    additional_parents = [
+        candidate
+        for candidate in (side_sha, main_sha)
+        if candidate
+        and candidate != parent
+        and git(repo, "merge-base", "--is-ancestor", candidate, parent).returncode != 0
+    ]
+    parent_tree = git(repo, "rev-parse", f"{parent}^{{tree}}").stdout.strip()
+    if parent_tree == tree_sha and not additional_parents:
+        commit_sha = parent
+    else:
+        commit_args = ["commit-tree", tree_sha, "-p", parent]
+        for candidate in additional_parents:
+            commit_args.extend(["-p", candidate])
+        commit_args.extend(["-m", message])
+        commit = git(repo, *commit_args)
+        commit_sha = commit.stdout.strip()
+        if commit.returncode != 0 or not commit_sha:
+            return {
+                "changed": True,
+                "deferred": True,
+                "reason": f"commit-tree-failed:{short_output(commit, 300)}",
+                "branch": branch,
+            }
+
+    if commit_sha != local_sha:
+        commit_sha, custody_error = _cas_local_custody(
+            repo,
+            local_ref=local_ref,
+            expected=local_sha,
+            commit=commit_sha,
+            tree=tree_sha,
+            message=message,
+        )
+        if custody_error:
+            return {
+                "changed": True,
+                "deferred": True,
+                "reason": custody_error,
+                "branch": branch,
+                "commit": commit_sha,
+            }
+        local_sha = commit_sha
+
+    # An open PR is an immutable integration packet. Preserve newer content on
+    # the local retry ref, but never move its stable remote head mid-CI/queue.
+    if pr_probe.get("status") == "open":
+        observed_head = str(pr_probe.get("head") or "")
+        side_tree = git(repo, "rev-parse", f"{side_sha}^{{tree}}").stdout.strip() if side_sha else ""
+        if not side_sha or observed_head != side_sha or side_tree != tree_sha:
+            return {
+                "changed": True,
+                "preserved": True,
+                "published": False,
+                "deferred": True,
+                "reason": "preservation-pr-in-flight",
+                "branch": branch,
+                "commit": commit_sha,
+                "local_ref": local_ref,
+                "default_untouched": True,
+                "main_untouched": True,
+                "pr": pr_probe,
+            }
+        return _remote_preservation_result(
+            repo,
+            branch=branch,
+            base=default_branch,
+            commit=side_sha,
+            message=message,
+            coalesced=True,
+            observed_pr=pr_probe,
+            local_ref=local_ref,
+            local_expected=local_sha,
+            worktree_changed=worktree_changed,
+        )
+    if pr_probe.get("status") == "deferred":
+        return {
+            "changed": True,
+            "preserved": True,
+            "published": False,
+            "deferred": True,
+            "reason": str(pr_probe.get("reason") or "preservation-pr-unproven"),
+            "branch": branch,
+            "commit": commit_sha,
+            "local_ref": local_ref,
+            "default_untouched": True,
+            "main_untouched": True,
+            "pr": pr_probe,
+        }
+
+    if side_sha != commit_sha:
+        pushed = git(repo, "push", "origin", f"{commit_sha}:{remote_ref}", timeout=60)
+        if pushed.returncode != 0:
+            return {
+                "changed": True,
+                "deferred": True,
+                "reason": f"preservation-push-failed:{short_output(pushed, 300)}",
+                "branch": branch,
+                "commit": commit_sha,
+                "local_ref": local_ref,
+            }
+    return _remote_preservation_result(
+        repo,
+        branch=branch,
+        base=default_branch,
+        commit=commit_sha,
+        message=message,
+        coalesced=side_sha == commit_sha,
+        observed_pr=pr_probe,
+        local_ref=local_ref,
+        local_expected=local_sha,
+        worktree_changed=worktree_changed,
+    )
 
 
 def repo_clean(repo: Path) -> bool:
@@ -167,21 +698,68 @@ def status_for_paths(repo: Path, paths: list[str]) -> str:
 
 def commit_paths(repo: Path, paths: list[str], message: str, apply: bool) -> dict[str, Any]:
     status = status_for_paths(repo, paths)
+    branch = git(repo, "symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip()
+    default_branch = origin_default_branch(repo)
+    if branch and not default_branch:
+        return {"changed": bool(status), "deferred": True, "reason": "origin-default-unresolved"}
+    local_ref = f"refs/limen/continuation-beat/{_main_preservation_branch(paths).rsplit('/', 1)[-1]}"
+    pending = bool(git(repo, "rev-parse", "--verify", local_ref).stdout.strip())
+    if not branch and (status or pending):
+        return {
+            "changed": True,
+            "deferred": True,
+            "reason": "detached-head",
+            "pending": pending,
+        }
+    if branch == default_branch and (status or pending):
+        if not apply:
+            return {"changed": True, "dry_run": True, "status": status, "pending": pending}
+        return _preserve_main_paths(
+            repo,
+            paths,
+            message,
+            default_branch=default_branch,
+            worktree_changed=bool(status),
+        )
     if not status:
         return {"changed": False}
     if not apply:
         return {"changed": True, "dry_run": True, "status": status}
+    index = git(repo, "diff", "--cached", "--quiet")
+    if index.returncode != 0:
+        return {
+            "changed": True,
+            "deferred": True,
+            "reason": "preexisting-index-not-empty",
+        }
     add = git(repo, "add", *paths)
     if add.returncode != 0:
         return {"changed": True, "error": f"git add failed: {short_output(add)}"}
+    staged = {line.strip() for line in git(repo, "diff", "--cached", "--name-only").stdout.splitlines() if line.strip()}
+    normalized = {Path(path).as_posix() for path in paths}
+    if not staged <= normalized:
+        git(repo, "reset", "-q", "--", *staged)
+        return {
+            "changed": True,
+            "deferred": True,
+            "reason": f"staged-scope-violation:{sorted(staged - normalized)}",
+        }
     refused = _guard_source_on_main(repo, paths)
     if refused and git(repo, "diff", "--cached", "--quiet").returncode == 0:
         # every staged path was source and got unstaged → nothing left to commit; skip, don't abort.
-        return {"changed": True, "refused_source": refused, "skipped": "all-source-refused-on-main"}
+        return {"changed": True, "refused_source": refused, "skipped": "all-source-refused-on-default"}
     commit = git(repo, "commit", "-m", message, timeout=180)
     if commit.returncode != 0:
         return {"changed": True, "error": f"git commit failed: {short_output(commit)}"}
-    push = git(repo, "push", timeout=180)
+    remote = git(repo, "config", "--get", f"branch.{branch}.remote").stdout.strip()
+    remote = remote if remote and remote != "." else "origin"
+    upstream = git(repo, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+    push_args = ["push"]
+    if upstream.returncode != 0:
+        push_args.append("-u")
+    # Never let push.default or a misconfigured upstream turn a topic beat into a default-branch write.
+    push_args.extend([remote, f"HEAD:refs/heads/{branch}"])
+    push = git(repo, *push_args, timeout=180)
     if push.returncode != 0:
         return {"changed": True, "error": f"git push failed: {short_output(push)}"}
     head = git(repo, "rev-parse", "HEAD").stdout.strip()
@@ -189,6 +767,12 @@ def commit_paths(repo: Path, paths: list[str], message: str, apply: bool) -> dic
     if refused:
         result["refused_source"] = refused
     return result
+
+
+def _commit_paths_ok(result: dict[str, Any], apply: bool) -> bool:
+    if not apply:
+        return True
+    return not result.get("error") and not result.get("deferred")
 
 
 def pr_number_from_url(url: str) -> int | None:
@@ -245,7 +829,6 @@ def update_pr_receipts(rows: list[dict[str, Any]], *, apply: bool) -> dict[str, 
         new_values = {
             "branch": str(view.get("headRefName") or branch),
             "classification": "open draft PR preserves local worktree head",
-            "evidence_updated_utc": now,
             "head": head,
             "lane": "remote-pr-open",
             "next_action": (
@@ -261,6 +844,7 @@ def update_pr_receipts(rows: list[dict[str, Any]], *, apply: bool) -> dict[str, 
             "status": "open_pr_preserved",
         }
         if any(receipt.get(key) != value for key, value in new_values.items()):
+            new_values["evidence_updated_utc"] = now
             receipt.update(new_values)
             updated += 1
 
@@ -290,7 +874,12 @@ def preserve_worktree_prs(apply: bool) -> dict[str, Any]:
         "limen: refresh autonomous PR receipts",
         apply,
     )
-    return {"ok": True, "summary": data.get("summary", {}), "receipt_update": receipt_update, "commit": commit}
+    return {
+        "ok": _commit_paths_ok(commit, apply),
+        "summary": data.get("summary", {}),
+        "receipt_update": receipt_update,
+        "commit": commit,
+    }
 
 
 def token_budget_gate() -> dict[str, Any]:
@@ -376,7 +965,9 @@ def advance_photos(apply: bool, limit_groups: int) -> dict[str, Any]:
     if not repo_clean(PHOTOS):
         return {"ok": False, "skipped": "photos repo dirty"}
     receipt = "docs/photos-universe-duplicate-proof-2026-06-29.json"
-    dry = run(["python3", "scripts/photos-duplicate-proof.py", "--limit-groups", str(limit_groups), "--dry-run"], PHOTOS)
+    dry = run(
+        ["python3", "scripts/photos-duplicate-proof.py", "--limit-groups", str(limit_groups), "--dry-run"], PHOTOS
+    )
     dry_data = load_json_output(dry)
     if dry_data is None:
         detail = short_output(dry)
@@ -424,7 +1015,7 @@ def advance_photos(apply: bool, limit_groups: int) -> dict[str, Any]:
         apply,
     )
     return {
-        "ok": True,
+        "ok": _commit_paths_ok(commit, apply),
         "dry_run": dry_data,
         "applied": applied,
         "atomize": atomize,
@@ -485,7 +1076,7 @@ def refresh_portvs_proxy(apply: bool) -> dict[str, Any]:
         apply,
     )
     return {
-        "ok": lifecycle.returncode == 0,
+        "ok": (lifecycle.returncode == 0 and _commit_paths_ok(commit, apply) and _commit_paths_ok(limen_commit, apply)),
         "generator": short_output(proc, 500),
         "gates": gates,
         "commit": commit,

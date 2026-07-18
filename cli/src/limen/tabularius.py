@@ -64,6 +64,8 @@ INTENT_REMOVE = "task.remove"  # drop a task id (prune/archive-out)
 INTENT_ORDER = "board.order"  # set the task display order (patch = {"ids": [...]})
 INTENT_META = "board.meta"  # set board version/portal (patch = {"version":..,"portal":..})
 _INTENTS = frozenset({INTENT_UPSERT, INTENT_STATUS, INTENT_REMOVE, INTENT_ORDER, INTENT_META})
+BOARD_PUBLICATION_BRANCH = "tabularius/board-projection"
+BOARD_PUBLICATION_TITLE = "tabularius: publish board projection"
 
 
 class Ticket(BaseModel):
@@ -251,10 +253,13 @@ class DrainResult:
 class PreserveResult:
     changed: bool = False
     pushed: bool = False
+    published: bool = False
     deferred: bool = False
     skipped: bool = False
     reason: str = ""
     commit: str = ""
+    branch: str = ""
+    pr_number: int = 0
 
 
 def pending_count(board_path: Path) -> int:
@@ -321,78 +326,739 @@ def _commit_identity_env(repo: Path, env: dict[str, str]) -> dict[str, str]:
     return identity
 
 
+def _gh(repo: Path, args: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["gh", *args],
+        cwd=str(repo),
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+
+def _gh_json(repo: Path, args: list[str]) -> tuple[Any, str]:
+    result = _gh(repo, args)
+    if result.returncode != 0:
+        return None, _short_output(result)
+    try:
+        return json.loads(result.stdout or "null"), ""
+    except json.JSONDecodeError as exc:
+        return None, f"invalid-json:{exc}"
+
+
+def _repository_slug(repo: Path) -> tuple[str, str]:
+    result = _gh(repo, ["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"])
+    slug = result.stdout.strip()
+    if result.returncode != 0 or "/" not in slug:
+        return "", _short_output(result) or "repository-unresolved"
+    return slug, ""
+
+
+def _remote_branch_sha(repo: Path, remote: str, branch: str) -> tuple[str, str]:
+    result = _git(repo, ["ls-remote", "--heads", remote, f"refs/heads/{branch}"])
+    if result.returncode != 0:
+        return "", _short_output(result)
+    line = result.stdout.strip()
+    if not line:
+        return "", ""
+    fields = line.split()
+    if len(fields) != 2 or fields[1] != f"refs/heads/{branch}":
+        return "", "malformed-remote-ref"
+    return fields[0], ""
+
+
+_PUBLICATION_PR_FIELDS = (
+    "number,headRefOid,baseRefName,isDraft,state,autoMergeRequest,mergeStateStatus,statusCheckRollup"
+)
+
+
+def _open_publication_pr(repo: Path, slug: str, publication_branch: str) -> tuple[dict[str, Any] | None, str]:
+    data, error = _gh_json(
+        repo,
+        [
+            "pr",
+            "list",
+            "--repo",
+            slug,
+            "--state",
+            "open",
+            "--head",
+            publication_branch,
+            "--limit",
+            "1",
+            "--json",
+            _PUBLICATION_PR_FIELDS,
+        ],
+    )
+    if error:
+        return None, error
+    if not isinstance(data, list):
+        return None, "unexpected-pr-list"
+    return (data[0] if data else None), ""
+
+
+def _view_publication_pr(repo: Path, slug: str, pr_number: int) -> tuple[dict[str, Any] | None, str]:
+    data, error = _gh_json(
+        repo,
+        ["pr", "view", str(pr_number), "--repo", slug, "--json", _PUBLICATION_PR_FIELDS],
+    )
+    if error:
+        return None, error
+    if not isinstance(data, dict):
+        return None, "unexpected-pr-view"
+    return data, ""
+
+
+def _publication_pr_error(pr: dict[str, Any], *, expected_head: str, base_branch: str) -> str:
+    """Validate the exact immutable PR custody contract."""
+
+    if str(pr.get("state") or "") != "OPEN":
+        return "pr-not-open"
+    if bool(pr.get("isDraft")):
+        return "pr-is-draft"
+    if str(pr.get("baseRefName") or "") != base_branch:
+        return "pr-base-mismatch"
+    if str(pr.get("headRefOid") or "") != expected_head:
+        return "pr-head-mismatch"
+    return ""
+
+
+def _publication_diff_error(
+    repo: Path,
+    *,
+    base_sha: str,
+    head_sha: str,
+    rel_board: str,
+) -> str:
+    """Require the full PR diff—not merely the newest commit—to be exactly the board."""
+
+    merge_base = _git(repo, ["merge-base", base_sha, head_sha])
+    if merge_base.returncode != 0 or not merge_base.stdout.strip():
+        return f"publication-merge-base-failed:{_short_output(merge_base)}"
+    changed = _git(repo, ["diff", "--name-only", merge_base.stdout.strip(), head_sha])
+    if changed.returncode != 0:
+        return f"publication-diff-failed:{_short_output(changed)}"
+    paths = {line.strip() for line in changed.stdout.splitlines() if line.strip()}
+    if paths != {rel_board}:
+        extras = sorted(paths - {rel_board})
+        if extras:
+            return f"publication-non-board-paths:{','.join(extras[:8])}"
+        return "publication-empty-or-missing-board-diff"
+    return ""
+
+
+def _ensure_publication_pr(
+    repo: Path,
+    *,
+    slug: str,
+    base_branch: str,
+    publication_branch: str,
+    expected_head: str,
+) -> tuple[int, str]:
+    existing, error = _open_publication_pr(repo, slug, publication_branch)
+    if error:
+        return 0, f"pr-list-failed:{error}"
+    if existing:
+        validation_error = _publication_pr_error(
+            existing,
+            expected_head=expected_head,
+            base_branch=base_branch,
+        )
+        if validation_error:
+            return 0, validation_error
+        return int(existing["number"]), ""
+
+    created = _gh(
+        repo,
+        [
+            "pr",
+            "create",
+            "--repo",
+            slug,
+            "--base",
+            base_branch,
+            "--head",
+            publication_branch,
+            "--title",
+            BOARD_PUBLICATION_TITLE,
+            "--body",
+            (
+                "Keeper-owned `tasks.yaml` projection. The branch is data-only, "
+                "fast-forward-only, and must enter `main` through the normal merge queue."
+            ),
+        ],
+    )
+    if created.returncode != 0:
+        return 0, f"pr-create-failed:{_short_output(created)}"
+    try:
+        pr_number = int(created.stdout.strip().rstrip("/").rsplit("/", 1)[-1])
+    except ValueError:
+        return 0, "pr-create-returned-no-number"
+
+    viewed, error = _view_publication_pr(repo, slug, pr_number)
+    if error:
+        return 0, f"pr-view-failed:{error}"
+    validation_error = _publication_pr_error(
+        viewed or {},
+        expected_head=expected_head,
+        base_branch=base_branch,
+    )
+    if validation_error:
+        return 0, f"pr-exact-head-unproven:{validation_error}"
+    return pr_number, ""
+
+
+def _dispatch_pr_gate(repo: Path, slug: str, publication_branch: str) -> str:
+    """Give an Actions-authored PR its required check without polling.
+
+    GitHub suppresses ordinary workflow cascades created by ``GITHUB_TOKEN``.
+    ``workflow_dispatch`` is the documented exception, so the scheduled
+    publisher explicitly starts the existing PR gate on the exact publication
+    branch. Local/keyring pushes use the normal ``pull_request`` event.
+    """
+
+    if os.environ.get("GITHUB_ACTIONS", "").lower() != "true":
+        return ""
+    result = _gh(
+        repo,
+        ["workflow", "run", "pr-gate.yml", "--repo", slug, "--ref", publication_branch],
+    )
+    return "" if result.returncode == 0 else f"pr-gate-dispatch-failed:{_short_output(result)}"
+
+
+def _arm_publication_pr(repo: Path, slug: str, pr_number: int, expected_head: str) -> str:
+    """Arm the exact head; the remote squash-only queue owns the eventual merge method."""
+
+    result = _gh(
+        repo,
+        [
+            "pr",
+            "merge",
+            str(pr_number),
+            "--repo",
+            slug,
+            "--auto",
+            "--squash",
+            "--match-head-commit",
+            expected_head,
+        ],
+    )
+    return "" if result.returncode == 0 else f"pr-auto-merge-failed:{_short_output(result)}"
+
+
+def _pr_gate_observed(pr: dict[str, Any]) -> bool:
+    return any(
+        str(check.get("name") or check.get("context") or "") == "pr-gate"
+        for check in (pr.get("statusCheckRollup") or [])
+        if isinstance(check, dict)
+    )
+
+
+def _pr_merge_armed(pr: dict[str, Any]) -> bool:
+    return pr.get("autoMergeRequest") is not None or str(pr.get("mergeStateStatus") or "") == "QUEUED"
+
+
+def _ensure_publication_effects(
+    repo: Path,
+    *,
+    slug: str,
+    publication_branch: str,
+    pr: dict[str, Any],
+    expected_head: str,
+) -> str:
+    """Recoverably install the check and exact-head auto-merge effects once."""
+
+    if os.environ.get("GITHUB_ACTIONS", "").lower() == "true" and not _pr_gate_observed(pr):
+        dispatch_error = _dispatch_pr_gate(repo, slug, publication_branch)
+        if dispatch_error:
+            return dispatch_error
+    if not _pr_merge_armed(pr):
+        return _arm_publication_pr(repo, slug, int(pr.get("number") or 0), expected_head)
+    return ""
+
+
+def board_publication_preflight(
+    board_path: Path,
+    *,
+    branch: str = "main",
+    remote: str = "origin",
+    publication_branch: str = BOARD_PUBLICATION_BRANCH,
+) -> PreserveResult:
+    """Admit an ephemeral producer only when no prior board publication is outstanding.
+
+    The two Actions producers share a repository-wide concurrency group, but a previous run may
+    already have a board PR waiting on CI or the merge queue. This probe runs before either producer
+    mutates its disposable checkout. It also recovers a pushed-but-not-opened publication branch,
+    verifies the complete PR diff is data-only, and arms exact-head auto-merge.
+    """
+
+    board_path = Path(board_path)
+    top = _git(board_path.parent, ["rev-parse", "--show-toplevel"])
+    if top.returncode != 0 or not top.stdout.strip():
+        return PreserveResult(reason="not-a-git-repo", branch=publication_branch)
+    repo = Path(top.stdout.strip())
+    try:
+        rel_board = board_path.resolve().relative_to(repo.resolve()).as_posix()
+    except ValueError:
+        return PreserveResult(reason="board-outside-git-root", branch=publication_branch)
+
+    current = _git(repo, ["symbolic-ref", "--quiet", "--short", "HEAD"])
+    if current.returncode != 0 or current.stdout.strip() != branch:
+        return PreserveResult(reason=f"not-on-{branch}", branch=publication_branch)
+    fetch = _git(repo, ["fetch", "--quiet", remote, branch])
+    if fetch.returncode != 0:
+        return PreserveResult(reason=f"fetch-failed:{_short_output(fetch)}", branch=publication_branch)
+    base_sha = _git(repo, ["rev-parse", f"{remote}/{branch}"]).stdout.strip()
+    if not base_sha:
+        return PreserveResult(reason=f"missing-{remote}/{branch}", branch=publication_branch)
+
+    slug, error = _repository_slug(repo)
+    if error:
+        return PreserveResult(reason=f"github-unavailable:{error}", branch=publication_branch)
+    open_pr, error = _open_publication_pr(repo, slug, publication_branch)
+    if error:
+        return PreserveResult(reason=f"pr-list-failed:{error}", branch=publication_branch)
+    publication_sha, error = _remote_branch_sha(repo, remote, publication_branch)
+    if error:
+        return PreserveResult(reason=f"publication-ref-failed:{error}", branch=publication_branch)
+    if publication_sha:
+        fetched = _git(repo, ["fetch", "--quiet", remote, f"refs/heads/{publication_branch}"])
+        if fetched.returncode != 0:
+            return PreserveResult(
+                reason=f"publication-fetch-failed:{_short_output(fetched)}",
+                branch=publication_branch,
+            )
+
+    if open_pr:
+        pr_number = int(open_pr.get("number") or 0)
+        validation_error = _publication_pr_error(
+            open_pr,
+            expected_head=publication_sha,
+            base_branch=branch,
+        )
+        if not publication_sha or validation_error:
+            return PreserveResult(
+                reason=validation_error or "publication-pr-head-missing",
+                branch=publication_branch,
+                pr_number=pr_number,
+            )
+        diff_error = _publication_diff_error(
+            repo,
+            base_sha=base_sha,
+            head_sha=publication_sha,
+            rel_board=rel_board,
+        )
+        if diff_error:
+            return PreserveResult(reason=diff_error, branch=publication_branch, pr_number=pr_number)
+        effect_error = _ensure_publication_effects(
+            repo,
+            slug=slug,
+            publication_branch=publication_branch,
+            pr=open_pr,
+            expected_head=publication_sha,
+        )
+        if effect_error:
+            return PreserveResult(reason=effect_error, branch=publication_branch, pr_number=pr_number)
+        return PreserveResult(
+            published=True,
+            deferred=True,
+            reason="publication-in-flight",
+            commit=publication_sha,
+            branch=publication_branch,
+            pr_number=pr_number,
+        )
+
+    if not publication_sha:
+        return PreserveResult(published=True, skipped=True, reason="preflight-clear", branch=publication_branch)
+    base_blob = _git(repo, ["rev-parse", f"{base_sha}:{rel_board}"]).stdout.strip()
+    publication_blob = _git(repo, ["rev-parse", f"{publication_sha}:{rel_board}"]).stdout.strip()
+    if not publication_blob:
+        return PreserveResult(reason="publication-board-missing", branch=publication_branch)
+    branch_tree_diff = _git(repo, ["diff", "--quiet", base_sha, publication_sha])
+    if branch_tree_diff.returncode not in {0, 1}:
+        return PreserveResult(
+            reason=f"publication-diff-failed:{_short_output(branch_tree_diff)}",
+            branch=publication_branch,
+        )
+    if branch_tree_diff.returncode == 0:
+        return PreserveResult(published=True, skipped=True, reason="preflight-clear", branch=publication_branch)
+    diff_error = _publication_diff_error(
+        repo,
+        base_sha=base_sha,
+        head_sha=publication_sha,
+        rel_board=rel_board,
+    )
+    if diff_error:
+        return PreserveResult(reason=diff_error, branch=publication_branch)
+    if publication_blob == base_blob:
+        return PreserveResult(published=True, skipped=True, reason="preflight-clear", branch=publication_branch)
+    pr_number, error = _ensure_publication_pr(
+        repo,
+        slug=slug,
+        base_branch=branch,
+        publication_branch=publication_branch,
+        expected_head=publication_sha,
+    )
+    if error:
+        return PreserveResult(reason=error, commit=publication_sha, branch=publication_branch)
+    pr, error = _view_publication_pr(repo, slug, pr_number)
+    if error:
+        return PreserveResult(
+            reason=f"pr-view-failed:{error}",
+            commit=publication_sha,
+            branch=publication_branch,
+            pr_number=pr_number,
+        )
+    effect_error = _ensure_publication_effects(
+        repo,
+        slug=slug,
+        publication_branch=publication_branch,
+        pr=pr or {},
+        expected_head=publication_sha,
+    )
+    if effect_error:
+        return PreserveResult(
+            reason=effect_error,
+            commit=publication_sha,
+            branch=publication_branch,
+            pr_number=pr_number,
+        )
+    return PreserveResult(
+        published=True,
+        deferred=True,
+        reason="publication-recovered",
+        commit=publication_sha,
+        branch=publication_branch,
+        pr_number=pr_number,
+    )
+
+
 def preserve_board_projection(
     board_path: Path,
     *,
     branch: str = "main",
     remote: str = "origin",
+    publication_branch: str = BOARD_PUBLICATION_BRANCH,
+    manage_pr: bool = True,
     dry_run: bool = False,
     lock_timeout: int = 2,
 ) -> PreserveResult:
-    """Commit and push the board projection as a Tabularius-owned action.
+    """Publish the sealed board on a stable, fast-forward-only PR branch.
 
-    This is not a second writer. It never edits `tasks.yaml`; it preserves the current projection
-    after the record-keeper has sealed it. The commit is built from a temporary index and pushed
-    before the local branch is advanced, so a push failure cannot strand the live checkout ahead.
+    ``main`` is never pushed or advanced locally. The temporary index starts
+    from current ``origin/main`` (and, when needed, a synthetic merge parent
+    that joins the prior publication head to current main), stages only the
+    board, and pushes a normal fast-forward commit to
+    ``tabularius/board-projection``. Exactly one open PR owns that immutable
+    remote head; newer local board state coalesces while it is in flight.
+    Competing publishers serialize at the remote ref because a stale
+    non-fast-forward push is rejected. No force push or TOCTOU queue-ref probe
+    is involved.
     """
     board_path = Path(board_path)
     with queue_lock(board_path, timeout=lock_timeout) as locked:
         if not locked:
-            return PreserveResult(deferred=True, reason="queue-lock-held")
+            return PreserveResult(deferred=True, reason="queue-lock-held", branch=publication_branch)
 
         top = _git(board_path.parent, ["rev-parse", "--show-toplevel"])
         if top.returncode != 0 or not top.stdout.strip():
-            return PreserveResult(skipped=True, reason="not-a-git-repo")
+            return PreserveResult(skipped=True, reason="not-a-git-repo", branch=publication_branch)
         repo = Path(top.stdout.strip())
         try:
             rel_board = board_path.resolve().relative_to(repo.resolve()).as_posix()
         except ValueError:
-            return PreserveResult(skipped=True, reason="board-outside-git-root")
+            return PreserveResult(skipped=True, reason="board-outside-git-root", branch=publication_branch)
 
         status = _git(repo, ["status", "--porcelain", "--", rel_board])
         if status.returncode != 0:
-            return PreserveResult(skipped=True, reason=f"status-failed:{_short_output(status)}")
+            return PreserveResult(
+                skipped=True,
+                reason=f"status-failed:{_short_output(status)}",
+                branch=publication_branch,
+            )
         if not status.stdout.strip():
-            return PreserveResult(skipped=True, reason="no-board-changes")
+            return PreserveResult(published=True, skipped=True, reason="no-board-changes", branch=publication_branch)
         if dry_run:
-            return PreserveResult(changed=True, skipped=True, reason=f"would-preserve:{rel_board}")
+            return PreserveResult(
+                changed=True,
+                skipped=True,
+                reason=f"would-publish:{rel_board}",
+                branch=publication_branch,
+            )
 
         current = _git(repo, ["symbolic-ref", "--quiet", "--short", "HEAD"])
         if current.returncode != 0 or current.stdout.strip() != branch:
-            return PreserveResult(skipped=True, reason=f"not-on-{branch}")
+            return PreserveResult(skipped=True, reason=f"not-on-{branch}", branch=publication_branch)
         fetch = _git(repo, ["fetch", "--quiet", remote, branch])
         if fetch.returncode != 0:
-            return PreserveResult(skipped=True, reason=f"fetch-failed:{_short_output(fetch)}")
-        head = _git(repo, ["rev-parse", "HEAD"]).stdout.strip()
+            return PreserveResult(
+                skipped=True,
+                reason=f"fetch-failed:{_short_output(fetch)}",
+                branch=publication_branch,
+            )
         remote_ref = f"{remote}/{branch}"
-        remote_sha = _git(repo, ["rev-parse", remote_ref]).stdout.strip()
-        if not head or head != remote_sha:
-            return PreserveResult(changed=True, skipped=True, reason=f"not-at-{remote_ref}")
+        base_sha = _git(repo, ["rev-parse", remote_ref]).stdout.strip()
+        if not base_sha:
+            return PreserveResult(changed=True, skipped=True, reason=f"missing-{remote_ref}", branch=publication_branch)
+
+        slug = ""
+        open_pr: dict[str, Any] | None = None
+        if manage_pr:
+            slug, error = _repository_slug(repo)
+            if error:
+                return PreserveResult(
+                    changed=True,
+                    deferred=True,
+                    reason=f"github-unavailable:{error}",
+                    branch=publication_branch,
+                )
+            open_pr, error = _open_publication_pr(repo, slug, publication_branch)
+            if error:
+                return PreserveResult(
+                    changed=True,
+                    deferred=True,
+                    reason=f"pr-list-failed:{error}",
+                    branch=publication_branch,
+                )
+
+        publication_sha, error = _remote_branch_sha(repo, remote, publication_branch)
+        if error:
+            return PreserveResult(
+                changed=True,
+                deferred=True,
+                reason=f"publication-ref-failed:{error}",
+                branch=publication_branch,
+            )
+        if publication_sha:
+            fetch_publication = _git(
+                repo,
+                [
+                    "fetch",
+                    "--quiet",
+                    remote,
+                    f"refs/heads/{publication_branch}",
+                ],
+            )
+            if fetch_publication.returncode != 0:
+                return PreserveResult(
+                    changed=True,
+                    deferred=True,
+                    reason=f"publication-fetch-failed:{_short_output(fetch_publication)}",
+                    branch=publication_branch,
+                )
+
+        local_blob = _git(repo, ["hash-object", "--", rel_board]).stdout.strip()
+        publication_blob = (
+            _git(repo, ["rev-parse", f"{publication_sha}:{rel_board}"]).stdout.strip() if publication_sha else ""
+        )
+
+        if open_pr:
+            pr_number = int(open_pr.get("number") or 0)
+            validation_error = _publication_pr_error(
+                open_pr,
+                expected_head=publication_sha,
+                base_branch=branch,
+            )
+            if not publication_sha or validation_error:
+                return PreserveResult(
+                    changed=True,
+                    deferred=True,
+                    reason=validation_error or "publication-pr-head-missing",
+                    branch=publication_branch,
+                    pr_number=pr_number,
+                )
+            diff_error = _publication_diff_error(
+                repo,
+                base_sha=base_sha,
+                head_sha=publication_sha,
+                rel_board=rel_board,
+            )
+            if diff_error:
+                return PreserveResult(
+                    changed=True,
+                    deferred=True,
+                    reason=diff_error,
+                    commit=publication_sha,
+                    branch=publication_branch,
+                    pr_number=pr_number,
+                )
+            effect_error = _ensure_publication_effects(
+                repo,
+                slug=slug,
+                publication_branch=publication_branch,
+                pr=open_pr,
+                expected_head=publication_sha,
+            )
+            return PreserveResult(
+                changed=True,
+                published=bool(not effect_error and local_blob and local_blob == publication_blob),
+                deferred=True,
+                reason=effect_error or "publication-in-flight",
+                commit=publication_sha,
+                branch=publication_branch,
+                pr_number=pr_number,
+            )
+
+        base_blob = _git(repo, ["rev-parse", f"{base_sha}:{rel_board}"]).stdout.strip()
+        if local_blob and local_blob == base_blob:
+            return PreserveResult(
+                changed=True,
+                published=True,
+                skipped=True,
+                reason="already-on-main",
+                commit=base_sha,
+                branch=publication_branch,
+            )
+
+        if manage_pr and publication_sha and publication_blob != base_blob:
+            diff_error = _publication_diff_error(
+                repo,
+                base_sha=base_sha,
+                head_sha=publication_sha,
+                rel_board=rel_board,
+            )
+            if diff_error:
+                return PreserveResult(
+                    changed=True,
+                    deferred=True,
+                    reason=diff_error,
+                    commit=publication_sha,
+                    branch=publication_branch,
+                )
+            if publication_blob:
+                pr_number, error = _ensure_publication_pr(
+                    repo,
+                    slug=slug,
+                    base_branch=branch,
+                    publication_branch=publication_branch,
+                    expected_head=publication_sha,
+                )
+                if error:
+                    return PreserveResult(
+                        changed=True,
+                        deferred=True,
+                        reason=error,
+                        commit=publication_sha,
+                        branch=publication_branch,
+                    )
+                pr, error = _view_publication_pr(repo, slug, pr_number)
+                if error:
+                    return PreserveResult(
+                        changed=True,
+                        deferred=True,
+                        reason=f"pr-view-failed:{error}",
+                        commit=publication_sha,
+                        branch=publication_branch,
+                        pr_number=pr_number,
+                    )
+                effect_error = _ensure_publication_effects(
+                    repo,
+                    slug=slug,
+                    publication_branch=publication_branch,
+                    pr=pr or {},
+                    expected_head=publication_sha,
+                )
+                return PreserveResult(
+                    changed=True,
+                    published=bool(not effect_error and local_blob and local_blob == publication_blob),
+                    deferred=True,
+                    reason=effect_error or "publication-in-flight",
+                    commit=publication_sha,
+                    branch=publication_branch,
+                    pr_number=pr_number,
+                )
+            return PreserveResult(
+                changed=True,
+                deferred=True,
+                reason="publication-board-missing",
+                commit=publication_sha,
+                branch=publication_branch,
+            )
+
+        parent_sha = base_sha
+        read_tree_sha = base_sha
+        if publication_sha:
+            base_is_ancestor = _git(repo, ["merge-base", "--is-ancestor", base_sha, publication_sha])
+            if base_is_ancestor.returncode == 0:
+                parent_sha = publication_sha
+                read_tree_sha = publication_sha
+            else:
+                base_tree = _git(repo, ["rev-parse", f"{base_sha}^{{tree}}"])
+                if base_tree.returncode != 0 or not base_tree.stdout.strip():
+                    return PreserveResult(
+                        changed=True,
+                        deferred=True,
+                        reason=f"base-tree-failed:{_short_output(base_tree)}",
+                        branch=publication_branch,
+                    )
+                bridge = _git(
+                    repo,
+                    [
+                        "commit-tree",
+                        base_tree.stdout.strip(),
+                        "-p",
+                        publication_sha,
+                        "-p",
+                        base_sha,
+                        "-m",
+                        f"tabularius: reconcile board branch with {branch} {base_sha[:12]}",
+                    ],
+                    env=_commit_identity_env(repo, {}),
+                )
+                if bridge.returncode != 0 or not bridge.stdout.strip():
+                    return PreserveResult(
+                        changed=True,
+                        deferred=True,
+                        reason=f"bridge-commit-failed:{_short_output(bridge)}",
+                        branch=publication_branch,
+                    )
+                parent_sha = bridge.stdout.strip()
+                read_tree_sha = parent_sha
 
         with tempfile.NamedTemporaryFile(prefix="tabularius-board-index-") as tmp:
             env = {"GIT_INDEX_FILE": tmp.name}
-            read_tree = _git(repo, ["read-tree", "HEAD"], env=env)
+            read_tree = _git(repo, ["read-tree", read_tree_sha], env=env)
             if read_tree.returncode != 0:
-                return PreserveResult(changed=True, skipped=True, reason=f"read-tree-failed:{_short_output(read_tree)}")
+                return PreserveResult(
+                    changed=True,
+                    skipped=True,
+                    reason=f"read-tree-failed:{_short_output(read_tree)}",
+                    branch=publication_branch,
+                )
             add = _git(repo, ["add", "-A", "--", rel_board], env=env)
             if add.returncode != 0:
-                return PreserveResult(changed=True, skipped=True, reason=f"add-failed:{_short_output(add)}")
-            # DATA_ONLY invariant (issue #872 / PREC-2026-07-10-direct-push-lane-rots-main): tabularius
-            # pushes the board projection to `main` directly — it must NEVER carry anything but the board
-            # itself. Make that executable: fail LOUD if the temp index ever holds any other path.
-            staged = _git(repo, ["diff", "--cached", "--name-only"], env=env)
+                return PreserveResult(
+                    changed=True,
+                    skipped=True,
+                    reason=f"add-failed:{_short_output(add)}",
+                    branch=publication_branch,
+                )
+            # DATA_ONLY invariant: the publication branch may carry only the
+            # board projection; all code reaches main through its own PR.
+            staged = _git(repo, ["diff", "--cached", "--name-only", parent_sha], env=env)
             staged_paths = {line.strip() for line in staged.stdout.splitlines() if line.strip()}
             if not staged_paths <= {rel_board}:
                 raise AssertionError(
-                    f"tabularius board push would carry non-board paths {sorted(staged_paths - {rel_board})}; "
-                    "the DATA_ONLY invariant (only tasks.yaml may reach main via this lane) was violated"
+                    f"tabularius publication would carry non-board paths {sorted(staged_paths - {rel_board})}; "
+                    "the DATA_ONLY invariant (only tasks.yaml may reach the board PR) was violated"
                 )
-            diff = _git(repo, ["diff", "--cached", "--quiet", "--", rel_board], env=env)
+            diff = _git(repo, ["diff", "--cached", "--quiet", parent_sha, "--", rel_board], env=env)
             if diff.returncode == 0:
-                return PreserveResult(skipped=True, reason="no-index-diff")
+                return PreserveResult(
+                    published=True,
+                    skipped=True,
+                    reason="no-index-diff",
+                    commit=parent_sha,
+                    branch=publication_branch,
+                )
             tree = _git(repo, ["write-tree"], env=env)
             if tree.returncode != 0 or not tree.stdout.strip():
-                return PreserveResult(changed=True, skipped=True, reason=f"write-tree-failed:{_short_output(tree)}")
+                return PreserveResult(
+                    changed=True,
+                    skipped=True,
+                    reason=f"write-tree-failed:{_short_output(tree)}",
+                    branch=publication_branch,
+                )
             stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             commit = _git(
                 repo,
@@ -400,24 +1066,98 @@ def preserve_board_projection(
                     "commit-tree",
                     tree.stdout.strip(),
                     "-p",
-                    head,
+                    parent_sha,
                     "-m",
                     f"tabularius: preserve board projection {stamp}",
                 ],
                 env=_commit_identity_env(repo, env),
             )
             if commit.returncode != 0 or not commit.stdout.strip():
-                return PreserveResult(changed=True, skipped=True, reason=f"commit-tree-failed:{_short_output(commit)}")
+                return PreserveResult(
+                    changed=True,
+                    skipped=True,
+                    reason=f"commit-tree-failed:{_short_output(commit)}",
+                    branch=publication_branch,
+                )
             commit_sha = commit.stdout.strip()
 
-        push = _git(repo, ["push", remote, f"{commit_sha}:refs/heads/{branch}"])
-        if push.returncode != 0:
-            return PreserveResult(changed=True, skipped=True, reason=f"push-failed:{_short_output(push)}")
+        candidate_diff_error = _publication_diff_error(
+            repo,
+            base_sha=base_sha,
+            head_sha=commit_sha,
+            rel_board=rel_board,
+        )
+        if candidate_diff_error:
+            return PreserveResult(
+                changed=True,
+                deferred=True,
+                reason=candidate_diff_error,
+                commit=commit_sha,
+                branch=publication_branch,
+            )
 
-        _git(repo, ["update-ref", f"refs/heads/{branch}", commit_sha, head])
-        _git(repo, ["update-ref", f"refs/remotes/{remote_ref}", commit_sha, remote_sha])
-        _git(repo, ["reset", "-q", "--", rel_board])
-        return PreserveResult(changed=True, pushed=True, commit=commit_sha)
+        push = _git(repo, ["push", remote, f"{commit_sha}:refs/heads/{publication_branch}"])
+        if push.returncode != 0:
+            return PreserveResult(
+                changed=True,
+                deferred=True,
+                reason=f"push-rejected:{_short_output(push)}",
+                branch=publication_branch,
+            )
+
+        if not manage_pr:
+            return PreserveResult(
+                changed=True,
+                pushed=True,
+                published=True,
+                commit=commit_sha,
+                branch=publication_branch,
+            )
+
+        pr_number, error = _ensure_publication_pr(
+            repo,
+            slug=slug,
+            base_branch=branch,
+            publication_branch=publication_branch,
+            expected_head=commit_sha,
+        )
+        if error:
+            return PreserveResult(
+                changed=True,
+                pushed=True,
+                deferred=True,
+                reason=error,
+                commit=commit_sha,
+                branch=publication_branch,
+            )
+        pr, error = _view_publication_pr(repo, slug, pr_number)
+        if error:
+            return PreserveResult(
+                changed=True,
+                pushed=True,
+                deferred=True,
+                reason=f"pr-view-failed:{error}",
+                commit=commit_sha,
+                branch=publication_branch,
+                pr_number=pr_number,
+            )
+        effect_error = _ensure_publication_effects(
+            repo,
+            slug=slug,
+            publication_branch=publication_branch,
+            pr=pr or {},
+            expected_head=commit_sha,
+        )
+        return PreserveResult(
+            changed=True,
+            pushed=True,
+            published=not effect_error,
+            deferred=bool(effect_error),
+            reason=effect_error,
+            commit=commit_sha,
+            branch=publication_branch,
+            pr_number=pr_number,
+        )
 
 
 def _parse_pending(inbox: Path) -> tuple[list[tuple[Path, Ticket]], list[tuple[Path, str]]]:

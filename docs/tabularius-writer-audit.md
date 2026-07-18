@@ -50,7 +50,7 @@ Unclassified calls: `0`
 | `scripts/route.py` | `727` | `save_limen_file` | `TAB-ROUTE-RESIDUE-MUTATORS` |
 | `scripts/routine-freshness-audit.py` | `300` | `save_limen_file` | `TAB-HUMAN-ATOM-STATUS-WRITERS` |
 | `scripts/routine-freshness-audit.py` | `363` | `save_limen_file` | `TAB-HUMAN-ATOM-STATUS-WRITERS` |
-| `scripts/self-heal.py` | `462` | `save_limen_file` | `TAB-CREATION-FALLBACKS` |
+| `scripts/self-heal.py` | `471` | `save_limen_file` | `TAB-CREATION-FALLBACKS` |
 | `scripts/self-improve.py` | `435` | `save_limen_file` | `TAB-ROUTE-RESIDUE-MUTATORS` |
 | `scripts/usage-telemetry.py` | `208` | `path.write_text` | `TAB-MAINTENANCE-BOARD-FALLBACKS` |
 

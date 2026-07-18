@@ -103,6 +103,23 @@ fi
 cd "$ROOT" 2>/dev/null || { echo "sync-release: no LIMEN_ROOT ($ROOT) — fail open"; exit 0; }
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "sync-release: not a git repo — fail open"; exit 0; }
 
+# LIMEN_RELEASE_BRANCH selects the convergence target; it is not authority to
+# reinterpret the repository's actual default branch as a disposable parked
+# topic branch. Resolve origin/HEAD independently and refuse before any
+# preservation commit or push when an override would otherwise make the real
+# default branch enter the unpark path.
+DEFAULT_BRANCH="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##')"
+if [ -z "$DEFAULT_BRANCH" ]; then
+  DEFAULT_BRANCH="$(git ls-remote --symref origin HEAD 2>/dev/null \
+    | awk '$1 == "ref:" && $2 ~ /^refs\/heads\// { sub(/^refs\/heads\//, "", $2); print $2; exit }')"
+fi
+[ -n "$DEFAULT_BRANCH" ] || DEFAULT_BRANCH="main"
+CUR="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo)"
+if [ -n "$CUR" ] && [ "$CUR" = "$DEFAULT_BRANCH" ] && [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
+  echo "sync-release: REFUSED — '$CUR' is origin's default branch; LIMEN_RELEASE_BRANCH='$BRANCH' cannot reclassify or push it"
+  exit 0
+fi
+
 git fetch --quiet origin "$BRANCH" 2>/dev/null || { echo "sync-release: fetch failed — fail open"; exit 0; }
 LOCAL="$(git rev-parse HEAD 2>/dev/null || echo)"
 REMOTE="$(git rev-parse "origin/$BRANCH" 2>/dev/null || echo)"

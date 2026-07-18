@@ -14,7 +14,10 @@
 #   - refuses to start while logs/AUTONOMY_PAUSED prohibits merges (no --force: a paused estate
 #     waits for the operator, and so does every session in it)
 #   - single instance per PR (mkdir lock under logs/); a second waiter exits ALREADY-WATCHED
-#   - --merge completes the standing grant on CLEARED: gh pr merge --squash --match-head-commit
+#   - --merge completes the standing grant on CLEARED using merge-policy's declared mode:
+#       direct -> one exact-head squash merge
+#       queue  -> one exact-head enqueue, then a bounded wait for the actual MERGED state
+#     A successful queue command is QUEUED, never a false MERGED receipt, and is never re-issued.
 #
 # Anything longer than the deadline belongs to the beat's merge rung (scripts/merge-drain.py via
 # scripts/drain.sh): hand off and end the session — never re-arm the waiter in a loop.
@@ -22,7 +25,8 @@
 # Usage:  scripts/await-pr.sh <PR#> [--repo OWNER/NAME] [--timeout SECS] [--interval SECS] [--merge]
 #
 # Exit codes:
-#   0  CLEARED (and MERGED when --merge)      2  TIMEOUT — deadline elapsed, still HOLD
+#   0  CLEARED (and actually MERGED with      2  TIMEOUT — deadline elapsed, still HOLD/QUEUED
+#      --merge)
 #   1  FAILED — BLOCKED verdict, CI checks    3  REFUSED-PAUSED — pause marker prohibits merges
 #      failing, or gh pr merge itself failed  4  ALREADY-WATCHED — live lock held for this PR
 #                                            64  usage error
@@ -92,7 +96,54 @@ trap 'rm -rf "$LOCK" 2>/dev/null' EXIT
 
 # ── the bounded, loud poll loop ─────────────────────────────────────────────────────────────────
 start="$(date +%s)"; deadline=$((start + TIMEOUT)); i=0; last=""
+queued=0; queued_head=""
 while :; do
+  # Once enqueued, observe GitHub state directly. Never invoke merge-policy or `gh pr merge`
+  # again: a successful enqueue is not a merge receipt, and this waiter does not auto re-enqueue
+  # after queue removal/failure.
+  if [ "$queued" = 1 ]; then
+    i=$((i + 1))
+    queue_state="$(gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
+      --json state,headRefOid,mergeStateStatus,autoMergeRequest \
+      --jq '[.state, .headRefOid, .mergeStateStatus, (if .autoMergeRequest == null then "none" else "armed" end)] | @tsv' \
+      2>/dev/null)"
+    queue_rc=$?
+    if [ "$queue_rc" -ne 0 ] || [ -z "$queue_state" ]; then
+      echo "AWAIT-PR $PR: QUEUE-FAILED — cannot observe queued PR state"
+      last="QUEUE-OBSERVATION-FAILED"; finish 1
+    fi
+    state="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $1}')"
+    head_now="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $2}')"
+    merge_state="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $3}')"
+    auto_state="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $4}')"
+    if [ -z "$head_now" ] || [ "$head_now" != "$queued_head" ]; then
+      echo "AWAIT-PR $PR: QUEUE-FAILED — exact head changed (expected $queued_head, got ${head_now:-unknown}); not re-enqueueing"
+      last="QUEUE-HEAD-CHANGED"; finish 1
+    fi
+    if [ "$state" = "MERGED" ]; then
+      echo "AWAIT-PR $PR: MERGED (queue, head $queued_head)"
+      last="MERGED"; finish 0
+    fi
+    if [ "$state" != "OPEN" ]; then
+      echo "AWAIT-PR $PR: QUEUE-FAILED — PR became $state without merging; not re-enqueueing"
+      last="QUEUE-PR-$state"; finish 1
+    fi
+    if [ "$merge_state" != "QUEUED" ] && [ "$auto_state" != "armed" ]; then
+      echo "AWAIT-PR $PR: QUEUE-REMOVED — exact head is still open but no queue/auto-merge request remains; not re-enqueueing"
+      last="QUEUE-REMOVED"; finish 1
+    fi
+    last="QUEUED"
+    now="$(date +%s)"
+    if [ "$now" -ge "$deadline" ]; then
+      echo "AWAIT-PR $PR: TIMEOUT after $((now - start))s — exact head $queued_head remains QUEUED"
+      echo "  the queue owns continuation; this waiter will not re-enqueue."
+      finish 2
+    fi
+    echo "AWAIT-PR $PR: poll $i — QUEUED (exact head $queued_head; waiting for actual MERGED)"
+    sleep "$INTERVAL"
+    continue
+  fi
+
   i=$((i + 1))
   out="$("$POLICY" "$PR" "${repo_args[@]+"${repo_args[@]}"}" 2>&1)"; rc=$?
   last="$(printf '%s\n' "$out" | grep -m1 '^VERDICT:' || printf '%s\n' "$out" | tail -1)"
@@ -101,19 +152,34 @@ while :; do
     0)
       echo "AWAIT-PR $PR: CLEARED — $last"
       sha="$(printf '%s\n' "$out" | sed -n 's/^MERGE-HEAD: \([0-9a-f][0-9a-f]*\).*/\1/p' | head -1)"
+      mode="$(printf '%s\n' "$out" | awk '/^MERGE-MODE: (queue|direct)$/ {print $2; exit}')"
       if [ "$MERGE" = 1 ]; then
-        if [ -z "$sha" ]; then
-          echo "AWAIT-PR $PR: MERGE-CMD-FAILED — CLEARED but merge-policy printed no MERGE-HEAD line"
+        if [ -z "$sha" ] || [ -z "$mode" ]; then
+          echo "AWAIT-PR $PR: MERGE-CMD-FAILED — CLEARED without an exact MERGE-HEAD and MERGE-MODE"
           finish 1
         fi
-        if gh pr merge "$PR" "${repo_args[@]+"${repo_args[@]}"}" --squash --match-head-commit "$sha"; then
-          echo "AWAIT-PR $PR: MERGED (squash, head $sha)"
-          finish 0
+        if [ "$mode" = "queue" ]; then
+          if gh pr merge "$PR" "${repo_args[@]+"${repo_args[@]}"}" --auto --match-head-commit "$sha"; then
+            queued=1; queued_head="$sha"; last="QUEUED"
+            echo "AWAIT-PR $PR: QUEUED (head $sha) — waiting for actual MERGED"
+            continue
+          fi
+          echo "AWAIT-PR $PR: QUEUE-CMD-FAILED — gh pr merge --auto exited non-zero"
+          finish 1
+        else
+          if gh pr merge "$PR" "${repo_args[@]+"${repo_args[@]}"}" --squash --match-head-commit "$sha"; then
+            echo "AWAIT-PR $PR: MERGED (squash, head $sha)"
+            finish 0
+          fi
+          echo "AWAIT-PR $PR: MERGE-CMD-FAILED — gh pr merge exited non-zero"
+          finish 1
         fi
-        echo "AWAIT-PR $PR: MERGE-CMD-FAILED — gh pr merge exited non-zero"
-        finish 1
       fi
-      [ -n "$sha" ] && echo "  merge with: gh pr merge $PR${REPO:+ --repo $REPO} --squash --match-head-commit $sha"
+      if [ -n "$sha" ] && [ "$mode" = "queue" ]; then
+        echo "  enqueue with: gh pr merge $PR${REPO:+ --repo $REPO} --auto --match-head-commit $sha"
+      elif [ -n "$sha" ]; then
+        echo "  merge with: gh pr merge $PR${REPO:+ --repo $REPO} --squash --match-head-commit $sha"
+      fi
       finish 0 ;;
     3)
       echo "AWAIT-PR $PR: FAILED — $last"

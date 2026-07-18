@@ -38,6 +38,8 @@ const hostedPrivatePaths = [
   join(appRoot, "public", "client-surface-manifest.json"),
   join(appRoot, "public", "readiness.json"),
 ];
+const tabulariusTicketAction =
+  "Submit a TABVLARIVS ticket; the keeper publishes the board through its exact-head pull request.";
 
 function countBy(items, keyFn) {
   return items.reduce((acc, item) => {
@@ -291,6 +293,13 @@ function readinessReport(data, summary) {
       remaining,
     },
     checks,
+    mutation: {
+      status: "deferred",
+      code: "board_mutation_deferred",
+      owner: "tabularius",
+      route: "tabularius_ticket",
+      next_action: tabulariusTicketAction,
+    },
     next_actions: nextActions.length ? nextActions : ["No immediate action required"],
   };
 }

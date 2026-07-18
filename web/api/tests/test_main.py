@@ -245,33 +245,20 @@ def test_live_dispatch_does_not_normalize_over_budget_unselected_sibling(
     assert "receipt_target" not in tasks["OVER-BUDGET"]
 
 
-def test_github_storage_create_task_uses_contents_sha(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, str, dict | None]] = []
-    board = yaml.safe_dump(
-        {
-            "version": "1.0",
-            "portal": {"name": "Universal Task Intake", "budget": {"daily": 100}},
-            "tasks": [],
-        },
-        sort_keys=False,
-    )
+@pytest.mark.parametrize("branch", ["main", "master", "tabularius/board-projection", "feature/runtime"])
+def test_github_storage_refuses_every_branch_before_contents_access(
+    branch: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
 
-    def fake_github_request(method: str, url: str, payload: dict | None = None) -> dict:
-        calls.append((method, url, payload))
-        if method == "GET":
-            import base64
+    def fake_github_request(method: str, _url: str, _payload: dict | None = None) -> dict:
+        calls.append(method)
+        raise AssertionError("GitHub-backed mutation reached the Contents adapter")
 
-            return {"encoding": "base64", "content": base64.b64encode(board.encode()).decode(), "sha": "abc123"}
-        if method == "PUT":
-            assert payload is not None
-            assert payload["sha"] == "abc123"
-            assert payload["branch"] == "main"
-            return {"content": {"sha": "def456"}}
-        raise AssertionError(f"unexpected method {method}")
-
-    monkeypatch.setattr(main, "GITHUB_REPO", "4444J99/limen")
+    monkeypatch.setattr(main, "GITHUB_REPO", "organvm/limen")
     monkeypatch.setattr(main, "GITHUB_TOKEN", "token")
-    monkeypatch.setattr(main, "GITHUB_BRANCH", "main")
+    monkeypatch.setattr(main, "GITHUB_BRANCH", branch)
     monkeypatch.setattr(main, "GITHUB_PATH", "tasks.yaml")
     monkeypatch.setattr(main, "github_request", fake_github_request)
     client = TestClient(main.app)
@@ -279,18 +266,58 @@ def test_github_storage_create_task_uses_contents_sha(monkeypatch: pytest.Monkey
     response = client.post(
         "/api/tasks",
         json={
-            "id": "LIMEN-004",
-            "title": "GitHub backed task",
-            "repo": "4444J99/limen",
-            "target_agent": "jules",
+            "id": "LIMEN-DIRECT-MAIN-BLOCKED",
+            "title": "Must route through Tabularius",
+            "repo": "organvm/limen",
+            "target_agent": "codex",
             "predicate": "pytest -q web/api/tests/test_main.py",
-            "receipt_target": "github:4444J99/limen:pull-request:LIMEN-004",
+            "receipt_target": "github:organvm/limen:pull-request:LIMEN-DIRECT-MAIN-BLOCKED",
         },
     )
 
-    assert response.status_code == 200
-    assert response.json()["status"] == "created"
-    assert [call[0] for call in calls] == ["GET", "PUT"]
+    assert response.status_code == 409
+    receipt = response.json()["detail"]
+    assert receipt["status"] == "mutation_deferred"
+    assert receipt["code"] == "board_mutation_deferred"
+    assert receipt["retryable"] is True
+    assert receipt["owner"] == "tabularius"
+    assert receipt["target"]["access"] == "read_only"
+    assert receipt["target"]["writable"] is False
+    assert receipt["target"]["branch"] == branch
+    assert receipt["target"]["mutation_route"] == "tabularius_ticket"
+    assert calls == []
+
+
+def test_github_live_dispatch_fails_before_command_or_storage_access(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    storage_calls: list[str] = []
+    dispatch_calls: list[list[str]] = []
+
+    def fake_github_request(method: str, _url: str, _payload: dict | None = None) -> dict:
+        storage_calls.append(method)
+        raise AssertionError("live dispatch reached GitHub storage")
+
+    def fake_dispatch(command: list[str]) -> tuple[bool, str]:
+        dispatch_calls.append(command)
+        raise AssertionError("live dispatch launched before persistence was proven")
+
+    monkeypatch.setattr(main, "GITHUB_REPO", "organvm/limen")
+    monkeypatch.setattr(main, "GITHUB_TOKEN", "token")
+    monkeypatch.setattr(main, "GITHUB_BRANCH", "tabularius/board-projection")
+    monkeypatch.setattr(main, "github_request", fake_github_request)
+    monkeypatch.setattr(main, "run_dispatch_command", fake_dispatch)
+    client = TestClient(main.app)
+
+    response = client.post(
+        "/api/dispatch",
+        json={"agent": "codex", "limit": 1, "live": True, "session_id": "must-not-launch"},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "board_mutation_deferred"
+    assert storage_calls == []
+    assert dispatch_calls == []
 
 
 def test_public_status_is_aggregate_only(client: TestClient, tmp_path: Path) -> None:
@@ -954,6 +981,86 @@ def test_readiness_reports_operator_next_actions(
     assert payload["counts"]["open"] == 1
     assert any("release-stale" in action for action in payload["next_actions"])
     assert "dispatch_log" not in str(payload)
+
+
+def test_github_readiness_advertises_deferred_ticket_route_not_mutation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import base64
+
+    board = yaml.safe_dump(
+        {
+            "version": "1.0",
+            "portal": {
+                "name": "Universal Task Intake",
+                "budget": {
+                    "daily": 100,
+                    "per_agent": {"codex": 10},
+                    "track": {"date": "", "spent": 0, "per_agent": {}},
+                },
+            },
+            "tasks": [
+                {
+                    "id": "STALE",
+                    "title": "Stale claim",
+                    "repo": "organvm/limen",
+                    "target_agent": "codex",
+                    "priority": "high",
+                    "budget_cost": 1,
+                    "status": "dispatched",
+                    "created": "2026-06-01",
+                    "dispatch_log": [],
+                },
+                {
+                    "id": "OPEN",
+                    "title": "Open task",
+                    "repo": "organvm/limen",
+                    "target_agent": "codex",
+                    "priority": "high",
+                    "budget_cost": 1,
+                    "status": "open",
+                    "created": "2026-06-03",
+                    "dispatch_log": [],
+                },
+            ],
+        },
+        sort_keys=False,
+    )
+    calls: list[str] = []
+
+    def fake_github_request(method: str, _url: str, _payload: dict | None = None) -> dict:
+        calls.append(method)
+        assert method == "GET"
+        return {
+            "encoding": "base64",
+            "content": base64.b64encode(board.encode()).decode(),
+            "sha": "abc123",
+        }
+
+    monkeypatch.setattr(main, "GITHUB_REPO", "organvm/limen")
+    monkeypatch.setattr(main, "GITHUB_TOKEN", "token")
+    monkeypatch.setattr(main, "GITHUB_BRANCH", "main")
+    monkeypatch.setattr(main, "GITHUB_PATH", "tasks.yaml")
+    monkeypatch.setattr(main, "github_request", fake_github_request)
+    client = TestClient(main.app)
+
+    response = client.get("/api/readiness?agent=codex")
+
+    assert response.status_code == 200
+    payload = response.json()
+    storage = next(check for check in payload["checks"] if check["id"] == "storage")
+    assert storage["status"] == "warn"
+    assert payload["mutation"] == {
+        "status": "deferred",
+        "code": "board_mutation_deferred",
+        "owner": "tabularius",
+        "route": "tabularius_ticket",
+        "next_action": main.TABULARIUS_TICKET_ACTION,
+    }
+    assert main.TABULARIUS_TICKET_ACTION in payload["next_actions"]
+    assert all("release-stale" not in action for action in payload["next_actions"])
+    assert all("live=true" not in action for action in payload["next_actions"])
+    assert calls == ["GET"]
 
 
 def test_create_task_rejects_malformed_untrusted_fields(client: TestClient, tmp_path: Path) -> None:

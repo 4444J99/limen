@@ -247,6 +247,7 @@ def readiness_payload() -> dict[str, Any]:
         "counts": {"total": 3, "active": 1, "stale": 0, "open": 1, "open_jules": 1},
         "budget": {"daily": 100, "agent_limit": 100, "agent_spent": 0, "remaining": 100},
         "checks": [{"id": "api_runtime", "status": "pass", "detail": "runtime attached"}],
+        "mutation": {"status": "available", "owner": "worker_inline"},
         "next_actions": ["No immediate action required"],
     }
 

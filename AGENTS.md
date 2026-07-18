@@ -117,6 +117,19 @@ state it exactly once (`BLOCKED: <atom>`), file the atom in its registry owner, 
 every other reversible lane to its verified end. Never loop on, poll, or re-surface a filed gate.
 The litmus: am I destroying, sending, spending, or irreversibly leaking? If no, proceed.
 
+**5. Concurrent integration — moving `main` is normal; rewriting every PR head is not.**
+Multiple interactive and autonomous sessions are co-equal supported work, provided each mutation
+lane is isolated in its own worktree and topic branch. A newer `main` must never trigger an
+unbounded merge/rebase → full-CI → newer-`main` loop. Preserve the exact-head CI receipt and use
+the repository's merge queue: GitHub composes that immutable head with the latest base and queued
+predecessors, then `pr-gate` verifies the synthetic `merge_group`. `BEHIND` is queueable only when
+the live queue rail is proven active; without that proof it remains fail-closed. Use
+`scripts/await-pr.sh --merge`, never `--admin`, force-push, or repeated branch rewrites. Direct
+`main` writes are forbidden, including board snapshots: Tabularius coalesces the local projection
+and publishes it through its stable, fast-forward-only PR branch. The repository's no-bypass
+`pull_request` rule makes that boundary remote-enforced. The full executable contract is
+[`docs/concurrent-integration.md`](docs/concurrent-integration.md).
+
 ### Standing Corrections (from insights reports 2026-06-23 → 2026-07-17)
 
 Six recurring failures distilled from six insights reports into lane-neutral rules. Enforced by

@@ -139,6 +139,22 @@ gates:
     paths: ["scripts/merge-policy.sh", "scripts/tests/merge-policy.test.sh", "institutio/governance/gates.yaml"]
     owner: merge-policy
     note: "Verdict-matrix regression for the self-merge predicate; gates.yaml is implicated because deploy_triggers feed the verdict (PR3)."
+  merge-queue-contract-test:
+    command: "python3 scripts/tests/merge-queue-contract.test.py && python3 -m pytest cli/tests/test_pr_scan.py cli/tests/test_merge_drain.py cli/tests/test_self_heal.py cli/tests/test_tabularius.py -q"
+    paths: [".github/workflows/pr-gate.yml", ".github/workflows/auto-scale.yml", ".github/workflows/operate.yml", "cli/src/limen/tabularius.py", "cli/tests/test_pr_scan.py", "cli/tests/test_merge_drain.py", "cli/tests/test_self_heal.py", "cli/tests/test_tabularius.py", "scripts/tabularius-organ.py", "scripts/setup-rulesets.py", "scripts/_pr_scan.py", "scripts/merge-policy.sh", "scripts/await-pr.sh", "scripts/merge-drain.py", "scripts/self-heal.py", "scripts/verify.py", "scripts/tests/merge-queue-contract.test.py"]
+    owner: merge-policy
+    note: "Concurrent integration stays queue-native and fail-closed: merge_group runs scoped current-base proof, the no-bypass ruleset rejects direct main writes, board automation publishes through its exact-head PR branch, and no queue effect uses admin or a merge-method fallback."
+  direct-main-writer-contract:
+    command: "python3 scripts/direct-main-writer-audit.py && PYTHONPATH=cli/src python3 scripts/tests/worktree-pr-receipts.test.py"
+    paths: [".github/workflows/**", "scripts/**", "cli/src/**", "mcp/src/**", "web/api/**", "web/worker/src/**", "institutio/governance/direct-main-writers.yaml"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: gitvs
+    note: "Every executable Git push, GitHub Contents PUT, and literal default-ref seam is count-bound to a reviewed disposition; the lifecycle publisher additionally proves it refuses the actual default branch before any remote write."
+  sync-release-test:
+    command: "bash scripts/tests/sync-release.test.sh"
+    paths: ["scripts/sync-release.sh", "scripts/tests/sync-release.test.sh", "institutio/governance/parameters.yaml"]
+    owner: continuity
+    note: "The live daemon preserves only real topic branches before unpark; a mutable release override cannot reclassify, commit, or push the repository's actual default branch."
   await-pr-test:
     command: "bash scripts/tests/await-pr.test.sh"
     paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh", "scripts/merge-policy.sh"]
@@ -153,7 +169,7 @@ gates:
     command: "bash scripts/tests/verify-ci-hardening.test.sh"
     paths: ["scripts/verify.py", "scripts/tests/verify-ci-hardening.test.sh"]
     owner: verify
-    note: "CI fail-closed contract (issue #1048): --require-base hard-fails an unresolvable merge-base or empty diff (a required check must never green by verifying nothing), deploy-trigger diffs escalate to the whole matrix, and ci_job-covered gates defer instead of running."
+    note: "CI fail-closed contract (issue #1048): --require-base hard-fails an unresolvable merge-base or empty diff, PR deploy-trigger diffs escalate to the whole matrix, merge-group integration runs scoped current-base seams, and ci_job-covered gates defer only on the PR path."
   enactment-test:
     command: "bash scripts/tests/enactment-audit.test.sh"
     paths: ["scripts/enactment-audit.py", "scripts/tests/enactment-audit.test.sh"]
