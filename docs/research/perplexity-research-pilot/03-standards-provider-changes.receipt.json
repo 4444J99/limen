@@ -1,0 +1,59 @@
+{
+  "catalog_hash": "sha256:551efe3c9044a2095f9499b4bb4c2c22322b6d56c8fce6803b21851a54df0c24",
+  "durable_output": {
+    "owner_repo": "organvm/limen",
+    "raw_export_ref": "private-owner://limen/perplexity-exports/standards-provider-changes.md",
+    "receipt_path": "docs/research/perplexity-research-pilot/03-standards-provider-changes.receipt.json",
+    "report_path": "docs/research/perplexity-research-pilot/03-standards-provider-changes.md"
+  },
+  "observed_model": null,
+  "observed_provider": null,
+  "outcome_type": "BlockedReceipt",
+  "privacy": {
+    "external_transmission": "public_only",
+    "preservation_tier": "public_facing",
+    "private_connected_sources_used": false,
+    "raw_export_disposition": "not_retained",
+    "redactions_applied": [
+      "credentials_omitted",
+      "private_prompt_body_omitted",
+      "sensitive_raw_material_omitted"
+    ],
+    "tracked_output_safe": true
+  },
+  "receipt_id": "SGO-RCT-2026-PPLX-PILOT-03",
+  "request_hash": "sha256:7e75de6bfc147c5c57c8317bea28ca30491a2f83e5da50af440ed16717f0e9c5",
+  "request_id": "SGO-REQ-2026-PPLX-PILOT-03",
+  "retrieval_finished_at": "2026-07-18T12:31:51Z",
+  "retrieval_started_at": "2026-07-18T12:31:51Z",
+  "sanitization": {
+    "contains_credentials": false,
+    "contains_private_prompt_body": false,
+    "contains_sensitive_raw_material": false
+  },
+  "schema_version": "1.0",
+  "selected_profile": "pro_research",
+  "source_manifest_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "usage": {
+    "computer_credits": null,
+    "currency": "USD",
+    "operator_handling_seconds": 0,
+    "requests": 0,
+    "usage_source": "locally_observed",
+    "variable_cost": 0.0
+  },
+  "verification": {
+    "material_claims": 0,
+    "primary_source_citations": 0,
+    "primary_source_ratio": 0.0,
+    "rejection_reasons": [
+      "attended_browser_bridge_unavailable_before_submission"
+    ],
+    "resolvable_citations": 0,
+    "status": "rejected",
+    "supported_material_claims": 0,
+    "total_citations": 0,
+    "verified_at": "2026-07-18T12:31:51Z",
+    "verifier": "codex.attended-preflight"
+  }
+}
