@@ -145986,7 +145986,7 @@ tasks:
   description: visible GitHub profile README is missing or stale
   repo: 4444J99/4444J99
   type: coordination
-  target_agent: agy
+  target_agent: codex
   workstream: public-face
   priority: critical
   budget_cost: 1
@@ -146016,7 +146016,7 @@ tasks:
   receipt_target: git:4444J99/4444J99:README.md
   depends_on: []
   created: '2026-07-18'
-  updated: '2026-07-18T04:22:22.344048Z'
+  updated: '2026-07-18T06:19:56.181273Z'
   dispatch_log: []
 - id: GH-organvm-limen-1227
   title: 'needs-human (L-CLOSEOUT-OBSERVE-ARM): Arm the closeout-reconciliation organ
