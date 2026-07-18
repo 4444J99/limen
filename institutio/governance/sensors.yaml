@@ -1735,11 +1735,13 @@ sensors:
     # verify-dispatch babysits status=dispatched; this babysits the COMPLEMENT — status=done CLOSEOUT
     # claims. Reuses verify-dispatch.gh_pr_state to probe each cited PR; a done-claim citing an unmerged
     # PR is DONE_UNVERIFIED (the #1203 "solved at root" false-closeout). Ships DARK (default 0); arming is
-    # a separate lever. Findings route via insight-route.py (org/repo -> board task, censor -> residual).
+    # a separate lever. --apply HOMES each HARD finding as a board task via insight-route (org/repo lane);
+    # the mutation rides insight-route's OWN LIMEN_INSIGHT_ROUTE_APPLY arm (dry-run plan until armed), so
+    # this step introduces no new silent-off valve (PREC-2026-07-08) and writes no derived file (-07-10).
     steps:
-      - command: "python3 scripts/reconcile-closeouts.py --check"
+      - command: "python3 scripts/reconcile-closeouts.py --apply"
         severity: advisory
-        escalation: "closeout reconciliation found unverified done-claim(s) — see logs/closeout-reconcile.json"
+        escalation: "closeout reconciliation found unverified done-claim(s) — homed via insight-route; see logs/closeout-reconcile.json"
     omega_eligible:
       - label: "closeout classifier self-test (verdicts correct)"
         rung_id: sensor.closeout.self-test
