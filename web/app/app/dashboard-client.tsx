@@ -241,7 +241,7 @@ function latestEvent(task: Task) {
   return [...(task.dispatch_log || [])].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))[0];
 }
 
-export default function DashboardClient({ data, prData, apiUrl, initialToken = "" }: { data: DashboardData; prData: PRStatusData | null; apiUrl: string; initialToken?: string }) {
+export default function DashboardClient({ data, prData, apiUrl, initialToken = "", doneTasks = null, doneLoading = false, onLoadDoneTasks }: { data: DashboardData; prData: PRStatusData | null; apiUrl: string; initialToken?: string; doneTasks?: Task[] | null; doneLoading?: boolean; onLoadDoneTasks?: () => void }) {
   const [phase, setPhase] = useState<Phase | "ALL">("ALL");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
@@ -287,7 +287,36 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
     task.title.startsWith("Session walk:");
   const churnTotal = rows.filter(isChurn).length;
 
-  const filteredRows = rows.filter((task) => {
+  // When filter="done" is selected, trigger lazy-loading done-tasks.json the first time.
+  useEffect(() => {
+    if (filter === "done" && doneTasks === null && !doneLoading) {
+      onLoadDoneTasks?.();
+    }
+  }, [filter, doneTasks, doneLoading, onLoadDoneTasks]);
+
+  // Augment rows with lazy-loaded done tasks when the done filter is active.
+  const doneRows = useMemo(() => {
+    if (!doneTasks) return [];
+    return doneTasks.map((task) => {
+      const repoPRs = prsByRepo[task.repo] || [];
+      const prUrls = task.urls?.filter((url) => url.includes("/pull/")) || [];
+      const relatedPRs = prUrls.length
+        ? repoPRs.filter((pr) => prUrls.some((url) => url.includes(`/pull/${pr.number}`)))
+        : repoPRs.filter((pr) => pr.author === "4444J99");
+      const taskPhase = getPhase(task, relatedPRs);
+      return {
+        ...task,
+        phase: taskPhase,
+        lifecycleGate: getLifecycleGate(task, data.summary.stale_task_ids.includes(task.id)),
+        progress: getProgress(taskPhase),
+        relatedPRs,
+        latestEvent: latestEvent(task),
+        stale: data.summary.stale_task_ids.includes(task.id),
+      };
+    });
+  }, [doneTasks, prsByRepo, data.summary.stale_task_ids]);
+
+  const filteredRows = [...rows, ...(filter === "done" ? doneRows : [])].filter((task) => {
     const matchesPhase = phase === "ALL" || task.phase === phase;
     const haystack = `${task.id} ${task.title} ${task.repo} ${task.status} ${task.target_agent} ${(task.labels || []).join(" ")}`.toLowerCase();
     const matchesQuery = !query || haystack.includes(query.toLowerCase());
@@ -510,6 +539,9 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
               </tr>
             </thead>
             <tbody>
+              {filter === "done" && doneLoading && (
+                <tr><td colSpan={8} style={{ textAlign: "center", color: "#94a3b8", padding: "1rem" }}>Loading done tasks…</td></tr>
+              )}
               {rollup
                 ? repoGroups.map((group) => (
                     <React.Fragment key={group.repo}>

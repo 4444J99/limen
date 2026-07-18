@@ -30,23 +30,20 @@ export default function InsightsClient() {
     async function fetchInsights() {
       try {
         setLoading(true);
-        // We will fetch static JSON files exported by the build script
-        const tiers = ["hourly", "daily", "weekly", "monthly"];
-        const loadedReports: InsightReport[] = [];
-        
-        for (const tier of tiers) {
-          try {
-            const res = await fetch(`/${tier}-insights.json`);
-            if (res.ok) {
-              const data = await res.json();
-              loadedReports.push(data);
+        // Fetch all tier JSON files in parallel (was serial for-loop).
+        const tiers = ["hourly", "daily", "weekly", "monthly"] as const;
+        const results = await Promise.all(
+          tiers.map(async (tier) => {
+            try {
+              const res = await fetch(`/${tier}-insights.json`);
+              if (res.ok) return (await res.json()) as InsightReport;
+            } catch {
+              // Ignore missing tiers
             }
-          } catch (e) {
-            // Ignore missing tiers
-          }
-        }
-        
-        setReports(loadedReports);
+            return null;
+          })
+        );
+        setReports(results.filter((r): r is InsightReport => r !== null));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load insights");
       } finally {

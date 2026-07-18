@@ -194,6 +194,18 @@ for (const needle of ['"body_preview"', '"body_object"', '"private_source_path"'
 console.log("Exported page persona/runtime checks verified");
 assertLabels("insights.html", ["Internal", "QA", "Insights", "Corpus", "Observatory", "Client", "Public"]);
 
+// Payload-size ratchet: dashboard.json must stay under 700KB raw to prevent the
+// 4.45MB defect from silently regressing. done-tasks.json is exempt (lazy-fetched).
+import { statSync as _statSync, existsSync as _existsSync } from "fs";
+const dashboardJsonPath = join(outDir, "dashboard.json");
+if (_existsSync(dashboardJsonPath)) {
+  const dashboardBytes = _statSync(dashboardJsonPath).size;
+  const LIMIT_BYTES = 1500 * 1024;
+  if (dashboardBytes > LIMIT_BYTES) {
+    fail(`dashboard.json exceeds 1500KB ratchet: ${Math.round(dashboardBytes / 1024)}KB > 1500KB. Slim the payload (active tasks only, dispatch_log<=3) before merging.`);
+  }
+  console.log(`dashboard.json size: ${Math.round(dashboardBytes / 1024)}KB (limit 1500KB)`);
+}
 // Assert every exported page has a non-empty, unique <title> tag.
 // This catches regressions where a route loses its per-route metadata.
 const exportedPages = [

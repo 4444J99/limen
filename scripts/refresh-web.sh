@@ -30,15 +30,17 @@ else
   echo "  web: build failed/timed out (logs/web-refresh.log) — keeping previous export"
 fi
 
-# assemble the static-first dashboard.json (portal+summary+tasks) so /internal renders
-# WITHOUT a runtime (detach-safe). Local-only (written into out/, not the committed tree).
+# assemble the static-first dashboard.json (portal+summary+active tasks) so /internal renders
+# WITHOUT a runtime (detach-safe). Slim: done/archived tasks go to done-tasks.json (lazy-fetch).
+# Local-only (written into out/ + public/, not the committed tree).
 python3 - "$APP" <<'PY' || echo "  web: dashboard.json assemble skipped"
 import json, sys, pathlib
 app = pathlib.Path(sys.argv[1]); g = app / ".generated" / "surfaces"
 try:
     i = json.load(open(g / "internal-status.json"))
     tj = json.load(open(g / "tasks.json"))
-    tasks = tj.get("tasks", tj) if isinstance(tj, dict) else tj
+    all_tasks = tj.get("tasks", tj) if isinstance(tj, dict) else tj
+    all_tasks = all_tasks if isinstance(all_tasks, list) else []
     summary = i.get("summary") or {}
     # inject dispatch-integrity (silent-failure + chronic detection) so the web surface
     # reaches parity with the CLI board (babysit-every-send, visualized)
@@ -47,13 +49,25 @@ try:
         summary["integrity"] = {"counts": dv.get("counts", {}), "chronic": dv.get("chronic", [])}
     except Exception:
         pass
-    out = {"portal": i.get("portal"), "summary": summary,
-           "tasks": tasks if isinstance(tasks, list) else [], "storage": i.get("storage")}
-    (app / "out").mkdir(exist_ok=True)
-    (app / "public").mkdir(exist_ok=True)
-    json.dump(out, open(app / "out" / "dashboard.json", "w"))
-    json.dump(out, open(app / "public" / "dashboard.json", "w"))  # also served under `next dev` (public/)
-    print(f"  web: dashboard.json ({len(out['tasks'])} tasks, per_vendor {len(out['summary'].get('per_vendor',[]))})")
+    # Slim: exclude done/archived (lazy-fetched via done-tasks.json), truncate dispatch_log to 3
+    DONE = {"done", "archived"}
+    MAX_LOG = 3
+    def slim(t):
+        dl = t.get("dispatch_log") or []
+        if len(dl) > MAX_LOG:
+            dl = sorted(dl, key=lambda e: e.get("timestamp",""), reverse=True)[:MAX_LOG]
+            t = {**t, "dispatch_log": dl}
+        return t
+    active = [slim(t) for t in all_tasks if t.get("status") not in DONE]
+    done_tasks = [slim(t) for t in all_tasks if t.get("status") in DONE]
+    out = {"portal": i.get("portal"), "summary": summary, "tasks": active, "storage": i.get("storage")}
+    done_out = {"generated_at": summary.get("generated_at"), "total_done": len(done_tasks), "tasks": done_tasks}
+    for d in [app / "out", app / "public"]:
+        d.mkdir(exist_ok=True)
+        json.dump(out, open(d / "dashboard.json", "w"))
+        json.dump(done_out, open(d / "done-tasks.json", "w"))
+    slim_kb = (app / "out" / "dashboard.json").stat().st_size // 1024
+    print(f"  web: dashboard.json {slim_kb}KB ({len(active)} active, {len(done_tasks)} done in done-tasks.json)")
 except Exception as e:
     print(f"  web: dashboard.json error: {e}")
 PY
