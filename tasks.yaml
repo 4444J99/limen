@@ -14,24 +14,24 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-07-16'
-      spent: 6
+      date: '2026-07-18'
+      spent: 4
       per_agent:
         jules: 0
         gemini: 0
         codex: 0
-        opencode: 1
-        agy: 1
+        opencode: 0
+        agy: 0
         claude: 0
         github_actions: 1
         ollama: 3
       per_agent_reset:
-        jules: '2026-07-16T13:04:36.895961+00:00'
-        gemini: '2026-07-16T13:04:36.895961+00:00'
-        codex: '2026-07-16T15:07:50.888081+00:00'
-        opencode: '2026-07-16T13:04:36.895961+00:00'
-        agy: '2026-07-16T13:04:36.895961+00:00'
-        claude: '2026-07-16T15:07:50.888081+00:00'
+        jules: '2026-07-18T00:04:38.135196+00:00'
+        gemini: '2026-07-18T00:04:38.135196+00:00'
+        codex: '2026-07-18T00:04:38.135196+00:00'
+        opencode: '2026-07-18T00:04:38.135196+00:00'
+        agy: '2026-07-18T00:04:38.135196+00:00'
+        claude: '2026-07-18T00:04:38.135196+00:00'
   agents:
     opencode:
       status: idle
@@ -142817,7 +142817,7 @@ tasks:
   title: fix failing CI on organvm/limen#846
   repo: organvm/limen
   type: code
-  target_agent: codex
+  target_agent: jules
   priority: high
   budget_cost: 1
   status: open
@@ -143885,7 +143885,7 @@ tasks:
   title: terminally reconcile conflict/supersession on organvm/limen#406
   repo: organvm/limen
   type: code
-  target_agent: github_actions
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
