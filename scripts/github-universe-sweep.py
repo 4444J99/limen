@@ -285,8 +285,16 @@ def _fetch_repo_items(repo: str, state: str) -> tuple[list[dict[str, Any]], str 
     return _flatten_slurp(payload), err
 
 
-def _default_disposition(state: str) -> str:
-    return "queued" if state == "open" else "reopen-candidate"
+def _default_disposition(state: str, item: dict[str, Any] | None = None) -> str:
+    if state == "open":
+        return "queued"
+    # A closed PR that was actually merged is a resolved item, not a dismissal --
+    # the issues API's `pull_request.merged_at` sub-field tells us this without a
+    # second API call. Only genuinely closed-unmerged items are reopen-candidates.
+    pr = (item or {}).get("pull_request") if isinstance(item, dict) else None
+    if isinstance(pr, dict) and pr.get("merged_at"):
+        return "merged"
+    return "reopen-candidate"
 
 
 def _upsert_entry(
@@ -303,7 +311,7 @@ def _upsert_entry(
     existed = isinstance(existing, dict)
     kind = _kind(item)
     state = str(item.get("state") or "")
-    disposition = _default_disposition(state)
+    disposition = _default_disposition(state, item)
     if existed and str(existing.get("disposition") or "").strip():
         disposition = str(existing.get("disposition")).strip()
     elif state == "closed" and not retroactive:
