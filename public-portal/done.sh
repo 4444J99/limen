@@ -13,13 +13,13 @@ if [ ! -f "index.html" ]; then
 fi
 
 # We can use Python's HTTP server for testing the 200 response
-python3 -m http.server 8787 > server.log 2>&1 &
+python3 -m http.server 8788 > server.log 2>&1 &
 SERVER_PID=$!
 
 sleep 1
 
 # Check if the URL returns 200
-STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8787/)
+STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8788/)
 
 if [ "$STATUS_CODE" != "200" ]; then
   echo "Error: Portal URL returned $STATUS_CODE instead of 200."

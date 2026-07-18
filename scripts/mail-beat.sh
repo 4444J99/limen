@@ -13,7 +13,7 @@
 #      Enrich-only by default (draft_text visible in the ledger/face, no mailbox touch);
 #      persist real Drafts only when LIMEN_MAIL_DRAFTS=1 (idempotent; needs the grant).
 #   4. STATUS — refresh the UMA mail-status receipt (read-only census for the beat MAIL: line).
-#   5. RENDER the pervasive faces (obligations.html → 127.0.0.1:8787/obligations.html).
+#   5. RENDER the pervasive faces (obligations.html → 127.0.0.1:8788/obligations.html).
 #
 # Reversible-only (flag/archive/draft; never delete, never send). Every step is wrapped so
 # one failure never aborts the beat or the daemon ([[no-never-happens-again]]).

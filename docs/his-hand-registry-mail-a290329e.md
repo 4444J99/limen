@@ -12,7 +12,7 @@ ceiling. Nothing here ever sends or deletes — reversible only.
   obligations ledger, and refreshes the face. A PR is open for the merge organ / your one-tap merge.
   Until merged, the live daemon runs the old `main` (no mail voice yet); all the work is staged + verified.
 - **What goes live:** `scripts/heartbeat-loop.sh` (+`C_MAIL` cadence), `scripts/mail-beat.sh`,
-  `scripts/obligations-view.py` → face at **http://127.0.0.1:8787/obligations.html**.
+  `scripts/obligations-view.py` → face at **http://127.0.0.1:8788/obligations.html**.
 
 ## macOS Automation permission (operational, one-time)
 - The launchd daemon needs **Automation → Mail** permission to drive Mail.app via osascript. Without

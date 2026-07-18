@@ -6,7 +6,7 @@
 
 ## The face
 - [`scripts/studium-analysis.py`](../../scripts/studium-analysis.py) → `web/app/out/analysis.html`
-  (mirrored to `public/`), served at `127.0.0.1:8787/analysis.html`. Same limen idiom as the daily and
+  (mirrored to `public/`), served at `127.0.0.1:8788/analysis.html`. Same limen idiom as the daily and
   synthesis faces: data → HTML, fail-open, `_atomic_write`, meta-refresh — no network, cannot time out.
 
 ## Streams it reads (each fails open)

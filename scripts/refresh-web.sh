@@ -5,7 +5,7 @@
 set -uo pipefail
 ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 APP="$ROOT/web/app"
-PORT="${LIMEN_WEB_PORT:-8787}"
+PORT="${LIMEN_WEB_PORT:-8788}"
 [ -d "$APP/node_modules" ] || { echo "  web: node_modules missing — skip"; exit 0; }
 cd "$APP" || exit 0
 
@@ -59,7 +59,22 @@ except Exception as e:
 PY
 
 # ensure the static server is up (idempotent)
-if ! pgrep -f "http.server $PORT" >/dev/null 2>&1; then
+# Harden: if something else holds PORT (e.g. another http.server or a stray process), detect it
+# via lsof and only launch ours if the port is free OR already owned by python (our server).
+_port_owner_cmd() {
+  lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $1}' | head -1
+}
+_port_owner_cmd_result="$(_port_owner_cmd)"
+_our_server_running=false
+if [ -z "$_port_owner_cmd_result" ]; then
+  _our_server_running=false  # port free — (re)start ours
+elif echo "$_port_owner_cmd_result" | grep -qi "python"; then
+  _our_server_running=true   # already our python server
+else
+  echo "  web: WARNING — port $PORT held by foreign process ($_port_owner_cmd_result); dashboard not (re)started"
+  _our_server_running=true   # treat as occupied; skip launch
+fi
+if ! "$_our_server_running"; then
   # </dev/null detaches stdin and, with the >file 2>&1 redirects, keeps the backgrounded server from
   # inheriting a caller's pipe write-end (defense-in-depth for the tail-EOF wedge fixed at the call sites).
   ( cd "$APP/out" && nohup python3 -m http.server "$PORT" --bind 127.0.0.1 >"$ROOT/logs/portal-web.log" 2>&1 </dev/null & )
