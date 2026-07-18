@@ -63701,11 +63701,11 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 land the credential/secret (your account/identity).\
-    \ Unblocks: Audit Codex handoff and validate token-accountin. Auto-hung by QUICKEN\
-    \ (finish-not-park); refreshes each beat until you act."
+    \ Unblocks: web estate audit mapping. Auto-hung by QUICKEN (finish-not-park);\
+    \ refreshes each beat until you act."
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-07-04T19:02:30.557715Z'
+  updated: '2026-07-18T19:23:33.945145Z'
   dispatch_log: []
 - id: ASK-quicken-d2l
   title: the D2L go-live click + cadence confirm (your login + judgment)
@@ -145990,13 +145990,12 @@ tasks:
   workstream: public-face
   priority: critical
   budget_cost: 1
-  status: failed
+  status: open
   labels:
   - always-working
   - overnight-lane-switch
   - public-face
   - receipt-first
-  - noop
   urls: []
   context: 'Receipt-first verdict: visible GitHub profile README is missing or stale
 
@@ -146017,7 +146016,7 @@ tasks:
   receipt_target: git:4444J99/4444J99:README.md
   depends_on: []
   created: '2026-07-18'
-  updated: '2026-07-18T18:14:52.397933Z'
+  updated: '2026-07-18T19:49:48.498712Z'
   dispatch_log:
   - timestamp: '2026-07-18T14:18:44.218842Z'
     agent: codex
@@ -146040,6 +146039,11 @@ tasks:
     session_id: cli
     status: failed
     output: No-op result; failed for recovery instead of archived.
+  - timestamp: '2026-07-18T19:38:29.185251Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: reopened failed \u2192 fresh cascade"
 - id: GH-organvm-limen-1227
   title: 'needs-human (L-CLOSEOUT-OBSERVE-ARM): Arm the closeout-reconciliation organ
     to OBSERVE live'
@@ -146070,7 +146074,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#311
   repo: organvm/domus-genoma
   type: code
-  target_agent: agy
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -146387,7 +146391,7 @@ tasks:
     of phantom deletions
   repo: organvm/limen
   type: code
-  target_agent: any
+  target_agent: claude
   priority: medium
   budget_cost: 1
   status: open
@@ -146405,4 +146409,144 @@ tasks:
   depends_on: []
   created: '2026-07-18'
   updated: '2026-07-18T19:09:58.155399Z'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1164
+  title: fix failing CI on organvm/limen#1164
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1164
+  context: "PR organvm/limen#1164 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1164\
+    \ [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1164 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1164
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1195
+  title: fix failing CI on organvm/limen#1195
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1195
+  context: "PR organvm/limen#1195 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1195\
+    \ [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1195 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1195
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1199
+  title: fix failing CI on organvm/limen#1199
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1199
+  context: "PR organvm/limen#1199 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1199\
+    \ [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1199 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1199
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1200
+  title: fix failing CI on organvm/limen#1200
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1200
+  context: "PR organvm/limen#1200 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1200\
+    \ [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1200 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1200
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-limen-1208
+  title: fix failing CI on organvm/limen#1208
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/limen/pull/1208
+  context: "PR organvm/limen#1208 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/1208\
+    \ [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 1208 --repo organvm/limen --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/limen/pull/1208
+  depends_on: []
+  created: '2026-07-18'
   dispatch_log: []
