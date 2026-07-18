@@ -145986,7 +145986,7 @@ tasks:
   description: visible GitHub profile README is missing or stale
   repo: 4444J99/4444J99
   type: coordination
-  target_agent: agy
+  target_agent: codex
   workstream: public-face
   priority: critical
   budget_cost: 1
@@ -146016,7 +146016,7 @@ tasks:
   receipt_target: git:4444J99/4444J99:README.md
   depends_on: []
   created: '2026-07-18'
-  updated: '2026-07-18T20:43:59.139902Z'
+  updated: '2026-07-18T21:29:36.184078Z'
   dispatch_log:
   - timestamp: '2026-07-18T14:18:44.218842Z'
     agent: codex
@@ -146554,7 +146554,7 @@ tasks:
   title: fix failing CI on organvm/manumissio#45
   repo: organvm/manumissio
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
