@@ -16,6 +16,8 @@ const EXECUTABLES = new Set([
   "pnpm", "py.test", "pytest", "python", "python3", "ruby", "sh", "test", "tox", "uv", "yarn", "zsh",
 ]);
 let inlineBoardText = null;
+// Parsed-board cache: keyed by sha so re-parse only happens when content changes.
+let boardCache = null; // { sha: string, data: object }
 
 class IntakeContractError extends Error {}
 
@@ -554,13 +556,15 @@ function githubUrl(env) {
   return `${GITHUB_API}/repos/${repo}/contents/${path}`;
 }
 
-async function githubRequest(env, method, url, payload = null) {
+async function githubRequest(env, method, url, payload = null, { raw = false } = {}) {
   if (!env.LIMEN_GITHUB_TOKEN) throw new Error("LIMEN_GITHUB_TOKEN is required");
   const res = await fetch(url, {
     method,
     headers: {
       authorization: `Bearer ${env.LIMEN_GITHUB_TOKEN}`,
-      accept: "application/vnd.github+json",
+      // Use raw media type for GET requests when caller asks: returns file bytes directly,
+      // which is the only correct path for files >1 MB (the JSON API returns empty content).
+      accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
       "user-agent": "limen-runtime-worker",
       "x-github-api-version": "2022-11-28",
       ...(payload ? { "content-type": "application/json" } : {}),
@@ -569,11 +573,14 @@ async function githubRequest(env, method, url, payload = null) {
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`GitHub storage request failed (${res.status}): ${text.slice(0, 300)}`);
+  if (raw) return text; // caller gets raw text directly
   return text ? JSON.parse(text) : {};
 }
 
 function decodeBase64(value) {
-  return decodeURIComponent(Array.prototype.map.call(atob(value.replace(/\n/g, "")), (char) => `%${char.charCodeAt(0).toString(16).padStart(2, "0")}`).join(""));
+  // Use Uint8Array + TextDecoder for O(n) instead of char-by-char %XX encoding.
+  const bytes = Uint8Array.from(atob(value.replace(/\n/g, "")), (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
 }
 
 function encodeBase64(value) {
@@ -587,8 +594,30 @@ async function loadBoard(env) {
     return { data: YAML.parse(inlineBoardText) || { portal: {}, tasks: [] }, sha: null };
   }
   const branch = env.LIMEN_GITHUB_BRANCH || "main";
-  const raw = await githubRequest(env, "GET", `${githubUrl(env)}?ref=${encodeURIComponent(branch)}`);
-  return { data: YAML.parse(decodeBase64(raw.content || "")) || { portal: {}, tasks: [] }, sha: raw.sha };
+  const baseUrl = `${githubUrl(env)}?ref=${encodeURIComponent(branch)}`;
+
+  // First fetch metadata (JSON) to get the sha for cache keying.
+  const meta = await githubRequest(env, "GET", baseUrl);
+  const sha = meta.sha || null;
+
+  // Return cached parse if sha matches — avoids re-fetching and re-parsing the 5 MB YAML.
+  if (boardCache && sha && boardCache.sha === sha) {
+    return { data: boardCache.data, sha };
+  }
+
+  let yamlText;
+  if (meta.content) {
+    // Small file: JSON API returned base64 content inline (≤1 MB).
+    yamlText = decodeBase64(meta.content);
+  } else {
+    // Large file (>1 MB): JSON API returns empty content; fetch raw bytes directly.
+    yamlText = await githubRequest(env, "GET", baseUrl, null, { raw: true });
+  }
+
+  const data = YAML.parse(yamlText) || { portal: {}, tasks: [] };
+  // Update module-level cache; also try the Worker Cache API when available.
+  boardCache = { sha, data };
+  return { data, sha };
 }
 
 async function saveBoard(env, data, sha) {
