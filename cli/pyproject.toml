@@ -19,6 +19,11 @@ test = [
     "pytest>=8.0",
     "requests>=2.31",
 ]
+# The experience-audit organ's browser (tier A) probe. Optional: without it the sweep degrades to the
+# http tier (requests only) and the beat never breaks — so this is not a hard runtime dependency.
+experience = [
+    "playwright>=1.60",
+]
 
 [project.scripts]
 limen = "limen.cli:main"

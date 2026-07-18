@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "_doc": "Declarative OVERLAY for the experience-audit organ (scripts/experience-audit.py) — the sibling of link-surfaces.json, one rung past 'the link resolves' into 'the page is a good experience'. This file holds ONLY budgets, per-surface default overrides, and skips. It NEVER lists URLs: the surface set is DERIVED from the corpus links registry ($LIMEN_CORPVS_ROOT/links-registry.json, every deployment/page/custom-domain link deduped by normalized URL), so a surface is added by publishing a link, not by editing this file (garbage-in guard). Override the overlay path with LIMEN_EXPERIENCE_SURFACES. This file PUBLISHES — never put a private URL, token, or secret here. `defaults` sets the estate-wide budget; `surfaces[<id>]` overrides a single surface's ttfb_ms/max_kb/max_requests and may pin expected_title; `skip[<id>]` drops a surface. Each id is the slugified registry label (run `python3 scripts/experience-audit.py --sweep` to see the derived ids).",
+  "defaults": {
+    "ttfb_ms": 1500,
+    "max_kb": 1500,
+    "max_requests": 75
+  },
+  "surfaces": {},
+  "skip": {}
+}

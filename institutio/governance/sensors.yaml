@@ -260,6 +260,44 @@ sensors:
         tier: det
         command: "python3 scripts/observatory-beat.py --doctor"
 
+  experience-drift:
+    section: "heartbeat"
+    title: "visitor-experience drift — the front door as a visitor EXPERIENCES it: audit sweep -> posture check -> bounded task filing (dry until armed)"
+    gate: LIMEN_EXPERIENCE_AUDIT
+    default: "1"
+    source: [heartbeat]
+    owner: observatory
+    cadence:
+      env: LIMEN_BEAT_EXPERIENCE
+      default: 24
+    timeout:
+      env: LIMEN_EXPERIENCE_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/experience-audit.py --sweep"
+        quiet_output: true
+        severity: silent
+        escalation: "experience audit sweep skipped or exceeded its bound"
+      - command: "python3 scripts/experience-audit.py --check"
+        severity: advisory
+        escalation: "surface(s) below their visitor-experience budget — see logs/experience-audit.json; for the VISUAL half (layout/typography/coherence/trust) run the experience-judge skill (.claude/skills/experience-judge)"
+      - command: "python3 scripts/generate-experience-backlog.py"
+        args_when:
+          - env: LIMEN_EXPERIENCE_BACKLOG_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "experience backlog generation skipped or exceeded its bound"
+    omega_eligible:
+      - label: "experience registry parity"
+        tier: det
+        command: "python3 scripts/experience-audit.py --doctor"
+      - label: "visitor-experience posture"
+        tier: live
+        command: "python3 scripts/experience-audit.py --check"
+
   prompt-corpus-control:
     section: "heartbeat"
     title: "incrementally reconcile prompt occurrences into the ask-atom control plane"

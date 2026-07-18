@@ -2705,6 +2705,48 @@ parameters:
     self_update: none
     owner: observatory
     note: "The whole day's trending FIELD studied per beat (one bounded search; GitHub caps a page at 100). The top OBSERVATORY_WINNERS_LIMIT of the field get the deep treatment (full snapshot + matched controls); the tail gets light snapshots (meta+README, 2 calls each) for prevalence and inward-facing evidence. Never below the winners limit; the collect report records field_total/field_studied/field_dropped — no silent caps. Degrades to the winners limit when gh rate headroom < 20% (recorded as degraded: true)."
+  LIMEN_EXPERIENCE_AUDIT:
+    default: "1"
+    env: LIMEN_EXPERIENCE_AUDIT
+    self_update: none
+    owner: observatory
+    note: "Master on/off for the experience-drift beat sensor (visitor-experience audit sweep -> posture check -> bounded backlog filing). All three steps are read-only/dry until the backlog valve arms; 0 disables the pass. The sweep is fail-open: with playwright/chromium present it runs the full browser tier, otherwise it degrades to the http tier and never breaks the beat."
+  LIMEN_BEAT_EXPERIENCE:
+    default: 24
+    env: LIMEN_BEAT_EXPERIENCE
+    self_update: none
+    owner: observatory
+    note: "Cadence (every N beats) of the experience-drift sensor. Deployed surfaces move on human timescales; a slow cadence is honest and keeps the browser probe off the hot path."
+  LIMEN_EXPERIENCE_TIMEOUT:
+    default: 900
+    env: LIMEN_EXPERIENCE_TIMEOUT
+    self_update: none
+    owner: observatory
+    note: "Per-run timeout (seconds) for the experience-drift sensor steps; also the sweep's own budget (scripts/experience-audit.py reads it to cap the browser pass). The runner kills the command group on overrun and the beat continues fail-open. 900 covers a ~20-surface browser sweep with a 25s nav cap each."
+  LIMEN_EXPERIENCE_BACKLOG_APPLY:
+    default: "0"
+    env: LIMEN_EXPERIENCE_BACKLOG_APPLY
+    self_update: none
+    owner: observatory
+    note: "Armed valve for generate-experience-backlog.py task filing on the beat: 0 (default) prints the plan; 1 appends bounded EXP-* tasks to the board (floor/cap/dedup guarded). The effector also requires the literal --apply flag, so both the flag AND this env must be set to write."
+  LIMEN_EXPERIENCE_SURFACES:
+    default: "$LIMEN_ROOT/experience-surfaces.json"
+    env: LIMEN_EXPERIENCE_SURFACES
+    self_update: none
+    owner: observatory
+    note: "Path override for the experience-audit overlay (budgets/skips/expected-title only; never URLs — the surface set derives from the corpus links registry). Defaults to the repo-root experience-surfaces.json, the sibling of link-surfaces.json."
+  LIMEN_EXPERIENCE_FLOOR:
+    default: 6
+    env: LIMEN_EXPERIENCE_FLOOR
+    self_update: none
+    owner: observatory
+    note: "Keep at least this many open experience-class tasks on the board; generate-experience-backlog.py tops up to it."
+  LIMEN_EXPERIENCE_MAX:
+    default: 6
+    env: LIMEN_EXPERIENCE_MAX
+    self_update: none
+    owner: observatory
+    note: "Hard cap on experience tasks generated per run (anti-flood)."
   LIMEN_BIFRONS:
     default: 1
     env: LIMEN_BIFRONS

@@ -1,0 +1,28 @@
+# experience-judgments — the VISUAL-JUDGMENT register for the experience-audit organ.
+#
+# experience-audit.py measures the MECHANICAL rungs of a visitor's experience (reachable, fast,
+# light, no broken images, no console errors, has a title). It cannot judge whether the page LOOKS
+# good — layout, typography, coherence, trust. That judgment is on-demand and human/model-in-the-loop:
+# the `experience-judge` skill (.claude/skills/experience-judge/SKILL.md) reads the latest sweep
+# artifact + screenshots, scores each surface, and appends a row HERE citing the screenshot's sha256
+# (so a judgment is pinned to the exact pixels it judged; a re-sweep that changes the capture
+# invalidates the old judgment). generate-experience-backlog.py reads these verdicts to file bounded
+# EXP-*-visual tasks. experience-audit.py --doctor holds this file to its schema.
+#
+# Row shape (one or more rows per surface id, newest last):
+#   judgments:
+#     <surface-id>:
+#       - judged_at: "2026-07-18T00:00:00Z"    # when the judgment was made
+#         captured_at: "2026-07-18T00:00:00Z"  # the artifact's capture time this judged
+#         screenshot_sha256: "<hex>"           # the exact shot judged (pins the judgment to pixels)
+#         model: "claude-opus-4-8"             # the judge (model id or a human handle)
+#         verdict: pass                        # pass | fail
+#         scores: {layout: 4, typography: 4, coherence: 5, trust: 4}   # each 0-5
+#         defects: ["hero image overflows on mobile"]  # public, PII-clean notes
+#         suggested_fix: "constrain the hero to max-width: 100%"
+#
+# This file PUBLISHES — keep every note public-safe (no PII, no private URLs, no secrets).
+
+schema_version: 1
+
+judgments: {}
