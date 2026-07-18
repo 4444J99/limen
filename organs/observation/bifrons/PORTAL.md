@@ -9,11 +9,13 @@
 
 | stars | dossiers | resonance edges | transmutation proposals |
 |---:|---:|---:|---:|
-| 0 | 0 | 0 | 0 |
+| 419 | 17 | 0 | 0 |
 
 ## Exchange lifecycle
 
-_No exchanges yet — the portal store is empty or unreachable (honest dust)._
+| state | count |
+|---|---:|
+| STARRED | 419 |
 
 ## The human gate (a valve, not a wall)
 

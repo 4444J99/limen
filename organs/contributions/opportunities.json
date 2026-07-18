@@ -4,7 +4,7 @@
   "pool": [
     {
       "dependency": "pytest",
-      "used_in_repos": 34
+      "used_in_repos": 35
     },
     {
       "dependency": "typescript",
@@ -12,19 +12,19 @@
     },
     {
       "dependency": "vitest",
-      "used_in_repos": 23
+      "used_in_repos": 24
     },
     {
       "dependency": "ruff",
+      "used_in_repos": 23
+    },
+    {
+      "dependency": "pyyaml",
       "used_in_repos": 22
     },
     {
       "dependency": "eslint",
-      "used_in_repos": 20
-    },
-    {
-      "dependency": "pyyaml",
-      "used_in_repos": 20
+      "used_in_repos": 21
     },
     {
       "dependency": "react",
@@ -47,7 +47,7 @@
       "used_in_repos": 10
     },
     {
-      "dependency": "jsdom",
+      "dependency": "httpx",
       "used_in_repos": 9
     }
   ]
