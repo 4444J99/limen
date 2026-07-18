@@ -24,7 +24,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  # Scope by event lane: a bot's review comment (issue_comment / pull_request_review_comment) must
+  # NOT cancel the in-progress pull_request review run. Cross-lane cancellation left the `review`
+  # check stuck at "cancelled" on every PR (a bot always comments mid-review), jamming merge-policy
+  # estate-wide. Separate groups per event keep the PR-review and @claude-mention lanes independent;
+  # within each lane a newer event still supersedes the older.
+  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -45,7 +50,25 @@ jobs:
         with:
           fetch-depth: 2
 
+      # Dormant-not-red: skip cleanly until ANTHROPIC_API_KEY is hydrated (org secret via
+      # creds-hydrate DEFAULT_MAP). Without this the action errors on an empty key and reds
+      # `review` on every PR, jamming merge-policy — same "dormant lane" pattern the ollama/copilot
+      # dispatch lanes use (live only once the credential/seat exists). (secrets are unavailable in
+      # job-level `if:`, so the gate is a step output.)
+      - name: Gate on ANTHROPIC_API_KEY presence
+        id: key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ANTHROPIC_API_KEY not set — Claude review lane dormant (skipping, not failing)."
+          fi
+
       - uses: anthropics/claude-code-action@v1
+        if: steps.key.outputs.ready == 'true'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # On pull_request events run the automation review prompt; on @claude mention events the
