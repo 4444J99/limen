@@ -39,12 +39,19 @@ mkdir -p "$CELL_LOGS"
 die() { echo "cell: $*" >&2; exit 1; }
 write_empty_board() {
   local out="${1:?write_empty_board needs a path}"
-  cat > "$out" <<'YAML'
+  # Write atomically (temp in the same dir + rename) so a reader — the daemon, or a test polling
+  # for the board to appear — never observes the empty/partial window between create and flush that
+  # a plain `cat > "$out"` leaves. mv within one filesystem is atomic: the board appears complete or
+  # not at all. (Fixes the intermittent test_cells.py None-read: `yaml.safe_load` of a half-written
+  # board returned None → data["tasks"] TypeError.)
+  local tmp="$out.tmp.$$"
+  cat > "$tmp" <<'YAML'
 version: "1.0"
 portal:
   name: scoped-empty
 tasks: []
 YAML
+  mv -f "$tmp" "$out"
 }
 slug_ok() { [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || die "bad slug '$1' (use letters/digits/._-)"; }
 cell_path() { echo "$WT_DIR/$1"; }
