@@ -15,6 +15,7 @@ Reads logs/seo-audit.json (the sweep artifact) + value-repos.json (priority). Em
 
 Read-only by default; --apply appends via the validated queue path. Floor-gated + deduped + capped.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -37,6 +38,7 @@ from limen.tabularius import submit_task_upsert  # noqa: E402
 # the beat genuinely feeds the live board from wherever it runs.
 ROOT = Path(__file__).resolve().parent.parent
 AUDIT = ROOT / "logs" / "seo-audit.json"
+TRAFFIC = ROOT / "logs" / "observatory" / "traffic.jsonl"
 
 _SEO_LABELS = {"seo", "product"}
 _ACTIVE = {"open", "dispatched", "in_progress", "needs_human", "failed_blocked"}
@@ -56,6 +58,38 @@ def _value_rank() -> dict[str, int]:
         return {r: i for i, r in enumerate(repos)}
     except Exception:
         return {}
+
+
+def _traffic_seen() -> dict[str, int]:
+    """Latest MEASURED 14-day unique-visitor count per repo from the traffic ledger
+    (scripts/traffic-collect.py). A repo whose newest snapshot is a 403/error (`views._error`,
+    i.e. unmeasured) is omitted — it stays neutral (static value rank), never mistaken for unseen.
+    Missing/empty ledger -> {} -> the plan sort collapses to the static value rank (correct-when-empty).
+    """
+    latest: dict[str, tuple[str, int]] = {}  # repo -> (date, uniques); newest snapshot wins
+    try:
+        lines = TRAFFIC.read_text(encoding="utf-8").splitlines()
+    except Exception:
+        return {}
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            e = json.loads(line)
+        except Exception:
+            continue
+        repo, v = e.get("repo"), e.get("views")
+        if not repo or not isinstance(v, dict) or "_error" in v:
+            continue
+        u = v.get("uniques")
+        if not isinstance(u, int) or isinstance(u, bool):
+            continue
+        date_s = e.get("date") or ""
+        prev = latest.get(repo)
+        if prev is None or date_s >= prev[0]:
+            latest[repo] = (date_s, u)
+    return {repo: u for repo, (_d, u) in latest.items()}
 
 
 def _seeded() -> set[str]:
@@ -84,6 +118,7 @@ def _plan(tasks: list[Task], floor: int, max_new: int) -> tuple[list[Task], dict
     need = min(floor - open_seo, max_new)
 
     rank = _value_rank()
+    seen = _traffic_seen()
     seeded = _seeded()
     existing = {t.id for t in tasks}
     active_pairs = {
@@ -92,12 +127,20 @@ def _plan(tasks: list[Task], floor: int, max_new: int) -> tuple[list[Task], dict
         if t.repo and t.labels and t.labels[0] in _LEVER_KEYS and t.status in (_ACTIVE | {"done", "archived"})
     }
 
-    # work items: seed-authoring first for unseeded portal repos, then failing READMEs by value rank.
+    # Target the actually-UNSEEN first: a value-repo with a MEASURED 0 unique visitors is the
+    # funnel's DISCOVERY bottleneck made concrete, so it sorts ahead of better-seen repos; within a
+    # visibility tier the static value rank still holds. Correct-when-empty: no traffic ledger ->
+    # seen == {} -> every repo is tier 1 -> the sort collapses to the pure value rank (prior behavior).
+    def _order(repo: str) -> tuple[int, int]:
+        return (0 if seen.get(repo) == 0 else 1, rank.get(repo, 999))
+
+    # work items: seed-authoring first for unseeded portal repos, then failing READMEs — each lane
+    # ordered unseen-then-value-rank.
     items: list[tuple[str, str, dict]] = []
-    for repo, r in sorted(repos.items(), key=lambda kv: rank.get(kv[0], 999)):
+    for repo, r in sorted(repos.items(), key=lambda kv: _order(kv[0])):
         if r.get("standard") == "portal" and repo not in seeded:
             items.append(("seo-seed", repo, r))
-    for repo, r in sorted(repos.items(), key=lambda kv: rank.get(kv[0], 999)):
+    for repo, r in sorted(repos.items(), key=lambda kv: _order(kv[0])):
         if not r.get("pass"):
             items.append(("seo-readme", repo, r))
 
@@ -138,14 +181,25 @@ def _plan(tasks: list[Task], floor: int, max_new: int) -> tuple[list[Task], dict
                 f"`python3 scripts/seo-audit.py --repo {repo} --check` exits 0."
             )
             prio = "high" if repo in rank else "medium"
-        new.append(Task(
-            id=tid, title=title, repo=repo, type="code",
-            target_agent="any", priority=prio, budget_cost=1, status="open",
-            labels=[key, "seo", "product", "generated"], urls=[],
-            context=ctx + f" [seo-backlog {stamp}]",
-            **contract_fields(github_pr_contract(repo, tid)),
-            depends_on=[], created=stamp, dispatch_log=[],
-        ))
+        new.append(
+            Task(
+                id=tid,
+                title=title,
+                repo=repo,
+                type="code",
+                target_agent="any",
+                priority=prio,
+                budget_cost=1,
+                status="open",
+                labels=[key, "seo", "product", "generated"],
+                urls=[],
+                context=ctx + f" [seo-backlog {stamp}]",
+                **contract_fields(github_pr_contract(repo, tid)),
+                depends_on=[],
+                created=stamp,
+                dispatch_log=[],
+            )
+        )
     return new, info
 
 
