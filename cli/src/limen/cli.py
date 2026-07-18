@@ -556,6 +556,194 @@ def watch(once, compact, interval):
     run(once=once, compact=compact, interval=interval)
 
 
+@main.group("research")
+def research():
+    """Prepare attended research and verify exported evidence."""
+
+
+@research.command("prepare")
+@click.argument("request_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "--catalog",
+    "catalog_source",
+    default=lambda: os.environ.get("LIMEN_RESEARCH_CATALOG"),
+    help="Studium profile registry path or URL (defaults to its canonical remote).",
+)
+@click.option("--work-dir", required=True, type=click.Path(file_okay=False, path_type=Path))
+@click.option("--profile", default=None, help="Explicit owner profile; no fallback if unavailable.")
+@click.option("--launch", is_flag=True, help="Open the attended research surface after writing the handoff.")
+def research_prepare(request_file, catalog_source, work_dir, profile, launch):
+    """Render a typed ManualHandoff or fail-closed BlockedReceipt."""
+    from limen.research import (
+        DEFAULT_CATALOG_URL,
+        BlockedReceipt,
+        ResearchRequest,
+        launch_attended_research,
+        load_document,
+        prepare_research,
+        write_json,
+    )
+
+    request = ResearchRequest.from_mapping(load_document(request_file))
+    if profile:
+        request = request.with_profile(profile)
+    catalog = load_document(catalog_source or DEFAULT_CATALOG_URL)
+    work_dir = work_dir.expanduser().resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path = work_dir / f"{request.request_id}.prompt.md"
+    outcome_path = work_dir / f"{request.request_id}.outcome.json"
+    receipt_path = work_dir / f"{request.request_id}.receipt.json"
+    outcome, receipt = prepare_research(request, catalog, prompt_ref=prompt_path.name)
+    if hasattr(outcome, "rendered_prompt"):
+        prompt_path.write_text(outcome.rendered_prompt, encoding="utf-8")
+    write_json(outcome_path, outcome.public_dict())
+    write_json(receipt_path, receipt.public_dict())
+    if launch and not isinstance(outcome, BlockedReceipt):
+        launch_attended_research(outcome)
+    click.echo(
+        json.dumps(
+            {
+                "outcome": outcome.outcome_type,
+                "outcome_ref": str(outcome_path),
+                "prompt_ref": str(prompt_path) if prompt_path.exists() else None,
+                "receipt_ref": str(receipt_path),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    if isinstance(outcome, BlockedReceipt):
+        raise click.exceptions.Exit(1)
+
+
+@research.command("ingest")
+@click.argument("export_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("request_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "--catalog",
+    "catalog_source",
+    default=lambda: os.environ.get("LIMEN_RESEARCH_CATALOG"),
+    help="Studium profile registry path or URL (defaults to its canonical remote).",
+)
+@click.option("--owner-root", required=True, type=click.Path(file_okay=False, path_type=Path))
+@click.option(
+    "--handoff-receipt",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Manual-pending receipt emitted by research prepare.",
+)
+@click.option(
+    "--verification-file",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Studium Source Verifier attestation for every claim and source.",
+)
+@click.option(
+    "--sanitization-file",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Studium Output Sanitization attestation bound to the exact Markdown export.",
+)
+@click.option(
+    "--raw-owner-root",
+    default=None,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="Designated root named by a private-owner:// raw_export_ref.",
+)
+@click.option("--observed-provider", default=None, help="Record only when the export exposes it.")
+@click.option("--observed-model", default=None, help="Record only when the export exposes it.")
+@click.option(
+    "--operator-handling-seconds",
+    required=True,
+    type=click.IntRange(min=0),
+    help="Measured attended handling time for the durable usage receipt.",
+)
+def research_ingest(
+    export_file,
+    request_file,
+    catalog_source,
+    owner_root,
+    handoff_receipt,
+    verification_file,
+    sanitization_file,
+    raw_owner_root,
+    observed_provider,
+    observed_model,
+    operator_handling_seconds,
+):
+    """Normalize a Markdown export and write verified owner-repo outputs."""
+    from limen.research import (
+        DEFAULT_CATALOG_URL,
+        BlockedReceipt,
+        ResearchRequest,
+        ingest_markdown_export,
+        load_document,
+        owner_path,
+        render_evidence_markdown,
+        stable_hash,
+        verify_owner_root,
+        verify_raw_export_custody,
+        write_json,
+    )
+
+    request = ResearchRequest.from_mapping(load_document(request_file))
+    catalog = load_document(catalog_source or DEFAULT_CATALOG_URL)
+    handoff = load_document(handoff_receipt)
+    verification = load_document(verification_file)
+    sanitization = load_document(sanitization_file)
+    owner_root = verify_owner_root(owner_root, request)
+    verify_raw_export_custody(
+        export_file,
+        owner_root,
+        request,
+        raw_owner_root=raw_owner_root,
+    )
+    markdown = export_file.read_text(encoding="utf-8")
+    outcome, receipt = ingest_markdown_export(
+        markdown,
+        request,
+        catalog,
+        handoff_receipt=handoff,
+        verification_attestation=verification,
+        sanitization_attestation=sanitization,
+        observed_provider=observed_provider,
+        observed_model=observed_model,
+        operator_handling_seconds=operator_handling_seconds,
+    )
+    receipt_path = owner_path(owner_root, request.receipt_ref)
+    if isinstance(outcome, BlockedReceipt):
+        blocked_path = receipt_path.with_suffix(".blocked.json")
+        write_json(blocked_path, outcome.public_dict())
+        if not blocked_path.is_file() or not blocked_path.read_bytes():
+            raise click.ClickException("blocked outcome write did not produce a durable owner artifact")
+        write_json(receipt_path, receipt.public_dict())
+        click.echo(json.dumps({"outcome": outcome.outcome_type, "blocked_ref": str(blocked_path)}, indent=2))
+        raise click.exceptions.Exit(1)
+
+    report_path = owner_path(owner_root, request.report_ref)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    if request.output_format == "json":
+        write_json(report_path, outcome)
+    else:
+        report_path.write_text(render_evidence_markdown(outcome), encoding="utf-8")
+    if not report_path.is_file() or not report_path.read_bytes():
+        raise click.ClickException("report write did not produce a durable owner artifact")
+    report_hash = stable_hash(report_path.read_text(encoding="utf-8"))
+    write_json(receipt_path, receipt.public_dict())
+    click.echo(
+        json.dumps(
+            {
+                "outcome": outcome["outcome_type"],
+                "report_ref": str(report_path),
+                "report_hash": report_hash,
+                "receipt_ref": str(receipt_path),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+
+
 @main.group("observatory")
 def observatory():
     """OBSERVATORY — read-only daily GitHub success analysis (GITVS's legibility twin)."""

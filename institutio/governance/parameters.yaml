@@ -3281,6 +3281,12 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Seconds allowed for live OpenCode capability discovery before the affected task records failed_blocked. No named fallback is synthesized."
+  LIMEN_RESEARCH_CATALOG:
+    default: "https://raw.githubusercontent.com/organvm/praxis-perpetua/main/governance/research-backend-profiles.yaml"
+    env: LIMEN_RESEARCH_CATALOG
+    self_update: none
+    owner: dispatch
+    note: "Optional Studium research-profile registry override. The canonical remote owner is the default; use an override only for an isolated owner branch or arbitrary fixture. No provider or model IDs are encoded here."
   LIMEN_WARP_MODEL_OVERRIDE:
     default: ""
     env: LIMEN_WARP_MODEL_OVERRIDE
