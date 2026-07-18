@@ -88,6 +88,23 @@ sensors:
         severity: advisory
         escalation: "REQUIRED MCP connector(s) unauthenticated — pull L-IANVA-CLOUD (#263) to end the class"
 
+  mcp-server-boot:
+    section: "0b2"
+    title: "verify local MCP servers boot (Lane A — every agent CLI's stdio servers actually start)"
+    gate: LIMEN_MCP_BOOT_VERIFY
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/mcp-server-boot.py"
+        args_when:
+          - env: LIMEN_MCP_BOOT_HEAL
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "configured MCP server(s) fail to boot/reach above — arm LIMEN_MCP_BOOT_HEAL=1 so the beat re-lands dropped agent entries + clears corrupt npx caches; an empty ianva registry is a registry decision (deploy ianva/upstreams.example.json or `ianva add-upstream`). Ω = scripts/verify-mcp-estate.sh"
+
   cartridge-connected:
     section: "0c"
     title: "verify the cartridge is plugged into the real source (host-is-factory invariant)"

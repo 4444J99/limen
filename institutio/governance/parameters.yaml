@@ -2087,6 +2087,20 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Comma list of MCP connectors (substring match) that MUST be authenticated; mcp-auth-verify exits 1 if any lapses, else 0. Empty (default) DERIVES nothing as required — the hosted connectors are optional conveniences, so a lapse is logged, not fatal."
+
+  # --- MCP-SERVER BOOT — Lane A (scripts/mcp-server-boot.py): the local/stdio servers every agent spawns ---
+  LIMEN_MCP_BOOT_VERIFY:
+    default: "1"               # ON — surface configured-but-dead local MCP servers in the beat log
+    env: LIMEN_MCP_BOOT_VERIFY
+    self_update: none
+    owner: limen-daemon
+    note: "Gate for the metabolize 0b2 step that spawn-pings every local/stdio MCP server across every agent CLI config (copilot, codex, gemini, agy, claude, cline, opencode) and confirms it boots/reaches — the Lane-A sibling of mcp-auth-verify (Lane B, hosted claude.ai connectors). Two of Copilot's four servers sat red for weeks (docker-on-a-docker-less-host, corrupt npx cache) with no sensor to see it; this closes that blind spot. =0 skips it. Non-fatal + fail-open (no agent configs => exit 0, so CI never false-reds). Ω predicate: scripts/verify-mcp-estate.sh. See mcp-estate-health-ownership-organ."
+  LIMEN_MCP_BOOT_HEAL:
+    default: "0"               # OFF — the effector. Arm once to auto-heal MCP-server boot failures.
+    env: LIMEN_MCP_BOOT_HEAL
+    self_update: none
+    owner: limen-daemon
+    note: "The effector for the local-MCP-boot invariant (scripts/mcp-server-boot.py --apply, sensor section 0b2, gated by args_when). Dry-run by default (reports the cure, mutates nothing). When 1, the beat heals via ianva's EXISTING verbs — `ianva install-configs --apply` re-lands a dropped agent entry (the opencode gap) and an npx-cache clear cures the corrupt-cache crash class — then re-probes once. It never guesses ianva UPSTREAMS (that set is a registry decision, not a probe result — deploy ianva/upstreams.example.json or `ianva add-upstream`). OFF by default because auto-writing agent configs is an authorization, not a default (mirrors LIMEN_LAUNCHAGENT_HEAL). Owner arms it in the daemon env (~/.limen.env) or as a his-hand lever. Set 0 to silence."
   LIMEN_MCP_NEEDS_AUTH_CACHE:
     default: "~/.claude/mcp-needs-auth-cache.json"
     env: LIMEN_MCP_NEEDS_AUTH_CACHE
