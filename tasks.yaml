@@ -146382,3 +146382,27 @@ tasks:
   created: '2026-07-18'
   updated: '2026-07-18T17:17:15.517243Z'
   dispatch_log: []
+- id: GH-organvm-limen-1271
+  title: Worktree initialization can leave an empty index and hundreds of thousands
+    of phantom deletions
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/limen/issues/1271
+  context: 'GitHub issue organvm/limen#1271. ## Problem A registered scratch worktree
+    was interrupted while marked `locked: initializing`: `/Volumes/Scratch/limen-worktrees/limen_jules-aw-value-repos-85be0b900919-d730`
+    Read-only evidence on 2026-07-18: - HEAD tree: 2,017 files - index: 0 files -
+    working tree: 984 untracked files - status: 3,001 entries = 2,017 staged deletions
+    + 984 untracked - apparent diff: 663,799 deleted lines and 3 bina'
+  predicate: test "$(gh issue view 1271 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1271
+  depends_on: []
+  created: '2026-07-18'
+  updated: '2026-07-18T19:09:58.155399Z'
+  dispatch_log: []
