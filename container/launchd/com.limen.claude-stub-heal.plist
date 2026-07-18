@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.limen.claude-stub-heal — INSTANT effector for the recurring macOS Gatekeeper
+  "ClaudeCode.app is damaged and can't be opened. You should move it to the Trash." dialog.
+
+  ROOT: Claude Code's updater periodically re-drops a malformed, Gatekeeper-rejected stub at
+  ~/.local/share/claude/ClaudeCode.app (bundle seal: "code has no resources but signature
+  indicates they must be present"). The every-8-beats hygiene sensor (dialogs-silenced 0g8b)
+  cures it, but the updater re-drops it FASTER than that cadence — observed live 2026-07-18,
+  the dialog reappeared within minutes of a one-time heal. This WatchPaths agent closes that
+  window: it runs heal-claude-lsregister.sh --apply the INSTANT the stub lands, so Gatekeeper
+  (and the human) never see the dialog.
+
+  --apply self-arms the heal (scripts/heal-claude-lsregister.sh:48), so this cures with NO
+  ~/.limen.env change required. Idempotent + self-settling: the heal removes the stub, which
+  re-fires WatchPaths once, finds nothing malformed, exits clean, and quiesces. Darwin-only;
+  the script fails OPEN off-darwin. Registered as load-bearing in spec/critical-launch-agents.json
+  so the liveness organ restores it if a launchd quiesce ever disables it.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.limen.claude-stub-heal</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/4jp/Workspace/limen/scripts/heal-claude-lsregister.sh</string>
+        <string>--apply</string>
+    </array>
+    <key>WatchPaths</key>
+    <array>
+        <string>/Users/4jp/.local/share/claude</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key><string>/Users/4jp</string>
+        <key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+    <key>RunAtLoad</key><true/>
+    <key>ThrottleInterval</key><integer>10</integer>
+    <key>ProcessType</key><string>Background</string>
+    <key>StandardOutPath</key><string>/Users/4jp/Workspace/limen/logs/claude-stub-heal.log</string>
+    <key>StandardErrorPath</key><string>/Users/4jp/Workspace/limen/logs/claude-stub-heal.log</string>
+</dict>
+</plist>

@@ -22,6 +22,11 @@
       "label": "com.ianva.gateway",
       "role": "ianva MCP doorway — keeps the gateway alive across reboot (lever L-IANVA-LOCAL)",
       "probe": { "kind": "launchd_loaded" }
+    },
+    {
+      "label": "com.limen.claude-stub-heal",
+      "role": "instant effector for the recurring 'ClaudeCode.app is damaged' Gatekeeper dialog — WatchPaths agent that reaps the malformed stub the moment the updater re-drops it (container/launchd/com.limen.claude-stub-heal.plist)",
+      "probe": { "kind": "launchd_loaded" }
     }
   ]
 }
