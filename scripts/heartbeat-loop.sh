@@ -433,8 +433,17 @@ while true; do
       if [ "${DRAIN_VOICE_DUE:-0}" = "1" ] && [ "${LIMEN_RECLAIM:-1}" = "1" ]; then
         reclaim_args=()
         [ "${LIMEN_RECLAIM_APPLY:-1}" = "1" ] && reclaim_args+=(--apply)
+        # The cheap generated-only pass (just-finished lanes) ALWAYS runs — it closes this beat's own
+        # worktree debt at negligible cost. The FULL estate census (git status/cherry across every
+        # worktree — the git storm over ~71 roots) is deferred while VITALS is SHEDDING (memory/swap
+        # ≥ critical), so the beat never thrashes an already-starved host to relieve worktree debt.
+        # It resumes the next unpressured beat. Under mere throttle/warn it still runs (LIMEN_RECLAIM_TIMEOUT-bounded).
         PYTHONPATH="$PYTHONPATH" timeout "${LIMEN_RECLAIM_GENERATED_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" --generated-only "${reclaim_args[@]}" 2>&1 | tail -4 || true
-        PYTHONPATH="$PYTHONPATH" timeout "${LIMEN_RECLAIM_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+        if [ "$VITALS_PRESSURE" != "1" ]; then
+          PYTHONPATH="$PYTHONPATH" timeout "${LIMEN_RECLAIM_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reclaim-worktrees.py" "${reclaim_args[@]}" 2>&1 | tail -4 || true
+        else
+          echo "  reclaim: full estate census deferred — vitals shedding (memory/swap critical)"
+        fi
       fi
 
       # LIFECYCLE PRESSURE — refresh the counts-only worktree-debt cache on the existing drain
@@ -530,16 +539,27 @@ while true; do
     # EVERY beat and slow the whole beat (clone-maintenance runs each tick). Ramp only when raw free
     # genuinely drops below the floor. ([[meter-lie-and-dead-daemon-incident]])
     _dfree="$(df -Pk "${LIMEN_WORKDIR:-$HOME/Workspace}" 2>/dev/null | awk 'NR==2 {print int($4/1048576)}')"
-    [ -n "$_dfree" ] && [ "$_dfree" -le "${LIMEN_DISK_FREE_FLOOR_GIB:-15}" ] 2>/dev/null && HYG_CAD=1
+    # Memory-shed OVERRIDES the disk-pressure ramp: never ramp the clone-maintenance git storm to
+    # EVERY beat to relieve DISK while MEMORY/swap is critical — that trades a slow disk for a
+    # thrashing host. Under shed, hold the normal cadence (and the git voices below skip anyway).
+    [ -n "$_dfree" ] && [ "$_dfree" -le "${LIMEN_DISK_FREE_FLOOR_GIB:-15}" ] 2>/dev/null \
+      && [ "$VITALS_PRESSURE" != "1" ] && HYG_CAD=1
   fi
-  due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
+  # clone-maintenance (git gc/prune across every repo) + reap-clones are local git storms; skip BOTH
+  # while VITALS is shedding so the beat adds no git load to a memory/swap-critical host. They resume
+  # the next unpressured beat. heal-claude-update-marker (below) is cheap and still runs.
+  if [ "$VITALS_PRESSURE" != "1" ]; then
+    due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/clone-maintenance.sh" 2>&1 | tail -3 || true
+  else
+    due_voice hygiene "$HYG_CAD" && echo "  hygiene: clone-maintenance + reap-clones deferred — vitals shedding"
+  fi
   # CLONE-REAP — the actual eviction. clone-maintenance.sh only *reports* reapable clones; reap-clones.py
   # removes the loss-free pushed-mirror class (adversarially-audited gate + standing grant). Beat-wired
   # 2026-07-09 so the reclaim engine is ALIVE instead of a script that never ran (the round-two storage
   # deadlock: ~/Workspace crept back because nothing autonomously reaped it). Self-gates on disk pressure
   # + idle age; inert above the free-floor. Disarm --apply with LIMEN_REAP_CLONES_APPLY=0.
   REAP_CLONES_ARG=""; [ "${LIMEN_REAP_CLONES_APPLY:-1}" = "1" ] && REAP_CLONES_ARG="--apply"
-  due_voice hygiene "$HYG_CAD" && timeout "${LIMEN_REAP_CLONES_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reap-clones.py" $REAP_CLONES_ARG 2>&1 | tail -3 || true
+  [ "$VITALS_PRESSURE" != "1" ] && due_voice hygiene "$HYG_CAD" && timeout "${LIMEN_REAP_CLONES_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reap-clones.py" $REAP_CLONES_ARG 2>&1 | tail -3 || true
   due_voice hygiene "$HYG_CAD" && bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" 2>&1 | tail -1 || true
   # heal-claude-lsregister.sh / heal-hook-drift.sh / heal-claude-cask.sh are NO LONGER hand-wired here:
   # they run as the registry-derived `dialogs-silenced` sensor (institutio/governance/sensors.yaml 0g8b)

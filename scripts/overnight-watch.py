@@ -5274,6 +5274,22 @@ def _rss_mb() -> float:
         return 0.0
 
 
+def _vitals_shedding() -> bool:
+    """True iff VITALS currently reports 'shed' (memory/swap >= critical).
+
+    Read-only gate path (shed=False) so reading it here never perturbs the heartbeat's
+    sustained-warn -> shed streak (only beat_gate(shed=True) counts). In-process (no fork)
+    to stay off the macOS fork/os_log crash path. Fail-open False: a sensor fault must
+    never tighten the bound spuriously.
+    """
+    try:
+        from limen.vigilia import vitals
+
+        return vitals.beat_gate(shed=False).get("action") == vitals.SHED
+    except Exception:
+        return False
+
+
 def _arm_wall_clock_bound() -> int:
     """Bound any single tick's wall clock (IF-HOST-PRESSURE form 4, issue #1148).
 
@@ -5281,8 +5297,16 @@ def _arm_wall_clock_bound() -> int:
     I/O storm. The bound exits 0 (fail-open — a wedged monitor must never redden
     launchd); StartInterval respawns a fresh process within 5 minutes. Returns the
     bound in seconds (0 = disabled); callers re-arm per tick via signal.alarm().
+
+    Under VITALS shed the bound tightens to ~1/5 (240 -> 48s, floor 30s) so the monitor
+    never piles a full heavy scan onto an already-thrashing host — it runs a short pass,
+    exits fail-open, and StartInterval respawns a fresh tick once pressure clears. Local
+    dispatch is already refused under shed (_local_admission_gate); this cuts the monitor's
+    own scan duty cycle too, complementing the heartbeat hygiene-shed gate.
     """
     wall_s = int(os.environ.get("LIMEN_WATCH_WALL_S", "240") or 0)
+    if wall_s > 0 and _vitals_shedding():
+        wall_s = max(30, wall_s // 5)
     if wall_s <= 0:
         return 0
 
