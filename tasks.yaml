@@ -146018,3 +146018,29 @@ tasks:
   created: '2026-07-18'
   updated: '2026-07-18T04:22:22.344048Z'
   dispatch_log: []
+- id: GH-organvm-limen-1227
+  title: 'needs-human (L-CLOSEOUT-OBSERVE-ARM): Arm the closeout-reconciliation organ
+    to OBSERVE live'
+  repo: organvm/limen
+  type: code
+  target_agent: any
+  priority: medium
+  budget_cost: 1
+  status: needs_human
+  labels:
+  - needs-human
+  urls:
+  - https://github.com/organvm/limen/issues/1227
+  context: "GitHub issue organvm/limen#1227. **Owner:** Anthony (human-gated lever\
+    \ `L-CLOSEOUT-OBSERVE-ARM`). Surfaced once, never nagged, never auto-pulled. This\
+    \ issue is the lever's permanent, individually-closeable home in the graph \u2014\
+    \ the registry `his-hand-levers.json` is its source of truth. Arm the closeout-reconciliation\
+    \ organ to OBSERVE live. The organ (scripts/reconcile-closeouts.py, PR #1211)\
+    \ verifies every claimed-done outcome aga"
+  predicate: test "$(gh issue view 1227 --repo organvm/limen --json state --jq .state)"
+    = CLOSED
+  receipt_target: https://github.com/organvm/limen/issues/1227
+  depends_on: []
+  created: '2026-07-18'
+  updated: '2026-07-18T05:58:29.474212Z'
+  dispatch_log: []
