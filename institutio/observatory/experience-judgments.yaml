@@ -25,4 +25,202 @@
 
 schema_version: 1
 
-judgments: {}
+judgments:
+  portfolio:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:39:51Z'
+    screenshot_sha256: 4ebb692445df6aaf90d190beae6f9d2148228c3729a539a1a04bf662e09c982b
+    model: claude-opus-4-8
+    verdict: fail
+    scores:
+      layout: 1
+      typography: 2
+      coherence: 1
+      trust: 1
+    defects:
+    - 'page renders as unstyled raw HTML: nav links show as stacked blue underlined text, no layout CSS applied'
+    - duplicate nav menus (collapsed + expanded) both render inline because responsive/JS styling never loads
+    - headings fall back to browser-default serif; no brand type scale, spacing, or color system visible
+    - console 404s indicate the stylesheet/JS bundle failed to load, so the styled design never appears
+    suggested_fix: fix the 404 on the CSS/JS bundle (correct base path / asset publish) so the styled build renders instead of raw HTML
+  public-process:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:40:05Z'
+    screenshot_sha256: 303182a7a5ca5afea78203da10aea28cd72797eaeedc4e5b13947aec2a018fe4
+    model: claude-opus-4-8
+    verdict: fail
+    scores:
+      layout: 1
+      typography: 2
+      coherence: 1
+      trust: 1
+    defects:
+    - 'page renders as unstyled raw HTML: plain blue underlined links and browser-default Times headings, no CSS'
+    - content is rich (42 essays listed) but presented as an unformatted document with bare horizontal rules
+    - no shared estate branding, palette, or type system is visible - reads as a broken page, not a finished site
+    - console 404 indicates the site stylesheet failed to load
+    suggested_fix: resolve the missing-stylesheet 404 (asset base path) so the intended styled essay index renders
+  public-record-data-scrapper:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:40:07Z'
+    screenshot_sha256: 4831c03c543c5856eeaac46a385df7a4bc08492b7e1af790239e1ffec3a5b610
+    model: claude-opus-4-8
+    verdict: fail
+    scores:
+      layout: 4
+      typography: 4
+      coherence: 4
+      trust: 2
+    defects:
+    - prominent red error banner 'Failed to load live data / Request failed' with a Retry button dominates the top of the page
+    - empty state 'No prospects match your current filters' and 'Showing 0 of 0 prospects' - the product looks non-functional
+    - a first-time visitor sees a broken data pipeline rather than a working intelligence platform
+    suggested_fix: fix the failing data fetch (the console ApiError) or ship a seeded demo dataset so the platform shows real content on first load
+  search-local-happy-hour:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:40:09Z'
+    screenshot_sha256: 70da1c347940d6bc202129274658ffc687daa367537d57ad380a36bd47828bb3
+    model: claude-opus-4-8
+    verdict: fail
+    scores:
+      layout: 2
+      typography: 2
+      coherence: 2
+      trust: 2
+    defects:
+    - the 'The Drinker' role card renders as near-white text on a near-white background - body copy and CTAs are effectively illegible
+    - 'layout looks half-loaded: only one role card is visible and it is washed out, leaving large empty space'
+    - console errors report daily content generation failing (LLM request 404), so dynamic content never populates
+    suggested_fix: raise text/background contrast on the role cards to an accessible ratio and handle the content-generation failure with a static fallback
+  a-mavs-olevm:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:39:57Z'
+    screenshot_sha256: a52c1e286daf7605e8cdaf5a4709f972f8511cb555d112f38653f4f8b87044e3
+    model: claude-opus-4-8
+    verdict: fail
+    scores:
+      layout: 2
+      typography: 4
+      coherence: 3
+      trust: 3
+    defects:
+    - misaligned pink/lavender/beige horizontal color bands clip across the very top of the hero, breaking the cosmic composition
+    - a stray return/enter keyboard glyph sits alone on a white strip at the bottom of the capture
+    - page transfers ~10MB (a single ~9.6MB PNG artwork asset), far over budget - slow, heavy first paint
+    - console shows CORS + subresource-integrity failures on third-party scripts (soundjs, velocity), so animation/audio may not run
+    suggested_fix: clip/align the top hero bands and remove the stray footer glyph, and compress the ~9.6MB artwork PNG to a web-scale format
+  the-invisible-ledger:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:40:13Z'
+    screenshot_sha256: 30bb023694b183108ccd0bc193f05c024c80c99817b1b7f8b874cc1ed71b07e2
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 4
+      typography: 4
+      coherence: 4
+      trust: 4
+    defects:
+    - content is dense and small at capture width - the three-panel dashboard packs a lot before any whitespace
+    - several console 404s in the background, though no broken UI is visible
+    suggested_fix: increase base font size / row spacing in the dense center columns for easier scanning at typical widths
+  mirror-mirror:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:40:02Z'
+    screenshot_sha256: 5c22f8f8f687ec28ac988ab1e1b348dce6b4bdf8554573e6db1474089d01fec3
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 4
+      typography: 4
+      coherence: 4
+      trust: 4
+    defects:
+    - several icon-nav glyphs (Badge Hub, Test, Avatar, etc.) render faint/low-contrast against the pale header
+    - multiple zero-value stats (Active Goals 0, Team Challenges 0) make the app feel empty on first load
+    suggested_fix: darken the nav icon color for contrast and seed sample activity so the stat cards aren't mostly zeros
+  classroom-rpg-aetheria:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:39:52Z'
+    screenshot_sha256: 597adaa7bc336444ae39af4b420f46b977699b4858092f15bb8b7a51407c5b4c
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 5
+      typography: 5
+      coherence: 5
+      trust: 4
+    defects:
+    - 79 console 404s in the background (likely audio/asset preloads); not visible in the UI but a latent risk
+    suggested_fix: audit and fix the background 404 asset requests so no broken media surfaces during play
+  the-actual-news:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:40:11Z'
+    screenshot_sha256: 6c98352300afbe4739983e0dbf56199826ef8853f1a31c67d29b756fc325084e
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 5
+      typography: 5
+      coherence: 4
+      trust: 4
+    defects:
+    - the top ticker/headline bar is tightly packed and small, slightly crowding the masthead area
+    suggested_fix: add a little vertical breathing room between the headline ticker and the masthead
+  sovereign-systems-elevate-align:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:39:55Z'
+    screenshot_sha256: f1e200ccdaa965f63e1eddf96e1816abc4c17032471be0f4c203ebf41dd46fe3
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 5
+      typography: 4
+      coherence: 5
+      trust: 5
+    defects:
+    - subhead copy under the hero is low-contrast grey on dark teal and slightly hard to read
+    suggested_fix: lift the hero subhead text color for a stronger contrast ratio against the teal background
+  sovereign-ecosystem-real-estate-luxury:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:40:10Z'
+    screenshot_sha256: 350b1fbac5368efd43a2c3d9045cdb09ccf7adadad1f290bf369bd149540ae61
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 4
+      typography: 4
+      coherence: 4
+      trust: 3
+    defects:
+    - hero is very sparse - an elegant title over a gradient with no supporting value copy or CTA visible at capture
+    - console 404s in the background suggest some assets/sections failed to load
+    suggested_fix: add a supporting subhead and a primary CTA under the hero title, and resolve the background 404 assets
+  trade-perpetual-future:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:40:15Z'
+    screenshot_sha256: b718be380fce2d7ab47ec052fe80be04fe72848dbef6b2ee2b63391329bc36a0
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 4
+      typography: 4
+      coherence: 4
+      trust: 4
+    defects:
+    - large empty space below the single 'Soothsayer Says' card leaves the dashboard feeling underpopulated
+    suggested_fix: fill the lower dashboard with a markets/positions panel so the first view isn't mostly empty
+  fetch-familiar-friends:
+  - judged_at: '2026-07-18T17:00:00Z'
+    captured_at: '2026-07-18T16:39:59Z'
+    screenshot_sha256: bb87ba083bb66a6aa385550596c41f4a1b5432dbcfe9fa0f052ca85035a0b33d
+    model: claude-opus-4-8
+    verdict: pass
+    scores:
+      layout: 4
+      typography: 4
+      coherence: 4
+      trust: 4
+    defects:
+    - single-card layout is simple and leaves generous empty gradient around the content
+    suggested_fix: add a small header tagline or secondary content row to balance the large empty gradient area
