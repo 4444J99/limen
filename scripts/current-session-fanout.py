@@ -15,6 +15,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -38,14 +39,18 @@ except Exception:  # pragma: no cover - import fallback for hermetic tests
     submit_task_upsert = None
 
 try:
-    from limen.capacity import PAID_AGENT_ORDER, canonical_agent, capacity_census, resolve_lane_selector  # noqa: E402
+    from limen.capacity import PAID_AGENT_ORDER, canonical_agent, capacity_census, select_lanes  # noqa: E402
     from limen.dispatch import _down_lanes  # noqa: E402
+    from limen.workstream_contract import DEFAULT_RUNWAY, ContractError, packet_contract  # noqa: E402
 except Exception:  # pragma: no cover - lane-selection fallback
-    PAID_AGENT_ORDER = ("codex", "opencode", "agy", "gemini", "github_actions")
+    PAID_AGENT_ORDER = ()
     capacity_census = None
     canonical_agent = lambda value: str(value).strip().replace("-", "_")  # noqa: E731
-    resolve_lane_selector = None
+    select_lanes = None
     _down_lanes = None
+    DEFAULT_RUNWAY = "1d"
+    ContractError = ValueError
+    packet_contract = None
 
 THEMES = [
     ("alpha-omega-product-ledger", ("1000", "alpha", "omega", "product", "shipped")),
@@ -68,8 +73,6 @@ FALLBACK_LANE_ALIASES = {
     "github-actions": "github_actions",
     "antigravity": "agy",
 }
-FALLBACK_ALL_LANES = ["codex", "opencode", "agy", "gemini", "github_actions"]
-
 PREFERRED_EXECUTOR_THEMES = {
     "github_actions": "repo-salvage-consolidation",
 }
@@ -91,6 +94,39 @@ def now_iso() -> str:
 
 def stable_hash(text: str, length: int = 18) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()[:length]
+
+
+def runway_arg(value: str) -> str:
+    if packet_contract is None:
+        raise argparse.ArgumentTypeError("workstream contract module unavailable")
+    try:
+        return str(packet_contract(value)["runway"]["requested"])
+    except ContractError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+
+
+def admitted_packet_contract(runway: str) -> dict[str, Any]:
+    """Reuse the parent capsule admission, or admit one standalone snapshot now."""
+
+    started_raw = os.environ.get("LIMEN_WORKSTREAM_STARTED_EPOCH")
+    deadline_raw = os.environ.get("LIMEN_WORKSTREAM_DEADLINE_EPOCH")
+    if started_raw is None and deadline_raw is None:
+        return packet_contract(runway)
+    if started_raw is None or deadline_raw is None:
+        raise ContractError("parent workstream timing is partial")
+    try:
+        started_epoch = int(started_raw)
+        deadline_epoch = int(deadline_raw)
+    except ValueError as exc:
+        raise ContractError("parent workstream timing is not integer epoch state") from exc
+    contract = packet_contract(
+        runway,
+        started_epoch=started_epoch,
+        deadline_epoch=deadline_epoch,
+    )
+    if deadline_epoch - int(time.time()) <= 0:
+        raise ContractError("parent workstream runway is exhausted; emit a successor before packetization")
+    return contract
 
 
 def text_from_content(value: Any) -> list[str]:
@@ -356,35 +392,12 @@ def _normalize_lane_rows(rows: list[Any]) -> list[dict[str, Any]]:
                 "detail": detail,
             }
         )
-    if not normalized:
-        normalized.append(
-            {
-                "agent": "codex",
-                "kind": "local-cli",
-                "status": "active",
-                "reachable": True,
-                "remaining": None,
-                "detail": "fallback",
-            }
-        )
     return normalized
 
 
 def lane_rows() -> list[dict[str, Any]]:
     if capacity_census is None or load_limen_file is None:
-        return _normalize_lane_rows(
-            [
-                {
-                    "agent": agent,
-                    "kind": "fallback",
-                    "status": "active",
-                    "reachable": True,
-                    "remaining": None,
-                    "detail": "fallback",
-                }
-                for agent in FALLBACK_ALL_LANES
-            ]
-        )
+        return []
     try:
         board = load_limen_file(ROOT / "tasks.yaml")
         return _normalize_lane_rows(list(capacity_census(board)))
@@ -406,16 +419,14 @@ def lane_selection(selector: str, rows: list[dict[str, Any]] | None = None) -> l
         if selector == "all":
             return [str(agent) for agent in PAID_AGENT_ORDER]
         active = [str(agent) for agent in PAID_AGENT_ORDER if by_agent.get(str(agent), {}).get("status") == "active"]
-        return active or ["codex"]
-    if resolve_lane_selector is None or load_limen_file is None or _down_lanes is None:
-        if selector == "all":
-            return list(FALLBACK_ALL_LANES)
-        return ["codex"]
+        return active
+    if select_lanes is None or load_limen_file is None or _down_lanes is None:
+        return []
     try:
         board = load_limen_file(ROOT / "tasks.yaml")
-        return list(resolve_lane_selector(selector, board=board, down_lanes=_down_lanes()))
+        return list(select_lanes(selector, board=board, down_lanes=_down_lanes()))
     except Exception:
-        return ["codex"]
+        return []
 
 
 def packet_slug(value: str) -> str:
@@ -561,9 +572,7 @@ def executor_packets(
     if include_contrib and "contrib-mirror" not in work_themes:
         work_themes.append("contrib-mirror")
     reserved_themes = {
-        theme
-        for lane, theme in PREFERRED_EXECUTOR_THEMES.items()
-        if lane in lanes and theme in work_themes
+        theme for lane, theme in PREFERRED_EXECUTOR_THEMES.items() if lane in lanes and theme in work_themes
     }
     for lane in lanes:
         if lane == "codex":
@@ -620,6 +629,8 @@ def task_seed_context(
     prompt_hashes = ", ".join(str(value) for value in snapshot.get("prompt_hashes", [])[:12])
     if len(snapshot.get("prompt_hashes", [])) > 12:
         prompt_hashes += ", ..."
+    workstream_contract = packet.get("workstream_contract") or snapshot.get("workstream_contract") or {}
+    contract_json = json.dumps(workstream_contract, sort_keys=True, separators=(",", ":"))
     return (
         f"Current-session fanout {phase} packet.\n"
         f"Packet id: {packet['id']}\n"
@@ -627,6 +638,10 @@ def task_seed_context(
         f"Source session: {snapshot['session_path']}\n"
         f"Source plan hashes: {plan_hashes or 'none'}\n"
         f"Source prompt hashes: {prompt_hashes or 'none'}\n"
+        f"Workstream contract: {contract_json}\n"
+        "Full approval: proceed without confirmation for in-scope reversible work. Destructive, "
+        "credential, paid-spend, public-send, and runtime/host mutations remain gated. Re-check "
+        "remaining runway before each bounded packet and stop or successor-route before zero.\n"
         "Do not paste raw private prompt or plan bodies into public files, commits, PRs, "
         "task logs, or outbound systems. Use the hashes above as provenance.\n"
         "Acceptance:\n"
@@ -644,6 +659,8 @@ def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[d
     session_hash = str(snapshot["session_hash"])
     seed: list[dict[str, Any]] = []
     planner_task_ids: dict[str, str] = {}
+    runway_seconds = int(snapshot["workstream_contract"]["runway"]["duration_seconds"])
+    runway_label = f"profile:runway-seconds:{runway_seconds}"
 
     for packet in snapshot.get("planner_packets", []):
         task_id = task_seed_id(session_hash, str(packet["id"]))
@@ -666,6 +683,7 @@ def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[d
                     "product",
                     "ship-order",
                     "no-reset-spend",
+                    runway_label,
                 ],
                 "urls": [],
                 "context": task_seed_context(snapshot=snapshot, packet=packet, phase="planner"),
@@ -679,6 +697,7 @@ def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[d
                 "source_plan_hashes": list(packet.get("source_plan_hashes", [])),
                 "executor_criteria": list(packet.get("executor_criteria", [])),
                 "verification_predicates": list(packet.get("verification_predicates", [])),
+                "workstream_contract": dict(packet.get("workstream_contract") or {}),
             }
         )
 
@@ -704,6 +723,7 @@ def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[d
                     "generated",
                     "product",
                     "ship-order",
+                    runway_label,
                 ],
                 "urls": [],
                 "context": task_seed_context(snapshot=snapshot, packet=packet, phase="executor"),
@@ -717,6 +737,7 @@ def task_seed_specs(snapshot: dict[str, Any], repo: str | None = None) -> list[d
                 "source_plan_hashes": list(packet.get("source_plan_hashes", [])),
                 "executor_criteria": list(packet.get("executor_criteria", [])),
                 "verification_predicates": list(packet.get("verification_predicates", [])),
+                "workstream_contract": dict(packet.get("workstream_contract") or {}),
             }
         )
     return seed
@@ -743,6 +764,7 @@ def task_model_payload(spec: dict[str, Any]) -> dict[str, Any]:
             "depends_on",
             "created",
             "dispatch_log",
+            "workstream_contract",
         )
         if key in spec
     }
@@ -839,6 +861,7 @@ def fanout_verification_command(
     executor_lanes: str,
     include_contrib: bool,
     no_reset_spend: bool,
+    runway: str = DEFAULT_RUNWAY,
 ) -> str:
     args = [
         "python3",
@@ -849,6 +872,8 @@ def fanout_verification_command(
         str(min_codex_planners),
         "--executor-lanes",
         executor_lanes,
+        "--runway",
+        runway,
     ]
     if include_contrib:
         args.append("--include-contrib")
@@ -870,6 +895,7 @@ def set_run_verification_predicate(
         executor_lanes=args.executor_lanes,
         include_contrib=args.include_contrib,
         no_reset_spend=no_reset_spend,
+        runway=getattr(args, "runway", DEFAULT_RUNWAY),
     )
     for packet in packets:
         predicates = list(packet.get("verification_predicates") or [])
@@ -893,6 +919,9 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     except TypeError:
         lanes = lane_selection(args.executor_lanes)
     no_reset_spend = not args.allow_reset_spend
+    if packet_contract is None:
+        raise ContractError("workstream contract module unavailable")
+    workstream = admitted_packet_contract(getattr(args, "runway", DEFAULT_RUNWAY))
     planners = planner_packets(
         themes,
         messages,
@@ -907,6 +936,8 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         no_reset_spend,
         source_plan_hashes,
     )
+    for packet in planners + executors:
+        packet["workstream_contract"] = workstream
     set_run_verification_predicate(planners, session=session, args=args, no_reset_spend=no_reset_spend)
     packet_plan_hashes = packet_plan_hash_intersection(planners + executors)
     unconsolidated_plan_hashes = [plan_hash for plan_hash in source_plan_hashes if plan_hash not in packet_plan_hashes]
@@ -934,6 +965,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "themes": themes,
         "executor_lanes": lanes,
         "no_reset_spend": no_reset_spend,
+        "workstream_contract": workstream,
         "planner_packets": planners,
         "executor_packets": executors,
         "blocked_local_work": blockers,
@@ -1092,6 +1124,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Contract",
         "",
         "- Planner packets are Codex conductor work; executor packets go to active fleet lanes.",
+        "- Every packet carries the validated finite runway into the typed execution profile and the no-modal authorization contract into its prompt.",
         "- Task seeding submits only `open` queue items through Tabularius; `dispatch-async.py` or `limen dispatch` launches them after the keeper folds the tickets.",
         "- This command never applies Codex resets, credits, top-ups, or paid overages.",
         "- Outbound identity-bearing actions remain human-gated.",
@@ -1111,6 +1144,14 @@ def main() -> int:
     parser.add_argument("--session", help="Codex session JSONL path; defaults to latest session")
     parser.add_argument("--min-codex-planners", type=int, default=int(os.environ.get("LIMEN_MIN_CODEX_PLANNERS", "10")))
     parser.add_argument("--executor-lanes", default=os.environ.get("LIMEN_LANES", "auto"))
+    parser.add_argument(
+        "--runway",
+        type=runway_arg,
+        default=os.environ.get(
+            "LIMEN_WORKSTREAM_REQUESTED",
+            os.environ.get("LIMEN_WORKSTREAM_RUNWAY", DEFAULT_RUNWAY),
+        ),
+    )
     parser.add_argument("--include-contrib", action="store_true")
     parser.add_argument("--no-reset-spend", dest="allow_reset_spend", action="store_false", default=False)
     parser.add_argument("--allow-reset-spend", action="store_true", default=False)

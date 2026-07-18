@@ -170,8 +170,13 @@ def direct_writer_calls(path: Path) -> list[dict[str, object]]:
 def owner_packet(path: str) -> str:
     if path == "cli/src/limen/dispatch.py":
         return "TAB-STATUS-DISPATCH-RESULTS"
-    if path in {"cli/src/limen/harvest.py", "scripts/jules-land.py"}:
+    if path in {
+        "cli/src/limen/harvest.py",
+        "cli/src/limen/jules_landing_transaction.py",
+    }:
         return "TAB-STATUS-HARVEST-RESULTS"
+    if path == "scripts/check-main-green.py":
+        return "TAB-STATUS-ASYNC-HEAL"
     if path in {"scripts/dispatch-continuity-check.py", "scripts/routine-freshness-audit.py"}:
         return "TAB-HUMAN-ATOM-STATUS-WRITERS"
     if path in {"scripts/dispatch-async.py", "scripts/heal-dispatch.py"}:

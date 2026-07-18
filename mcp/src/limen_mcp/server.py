@@ -30,6 +30,7 @@ VALID_AGENTS = {
 }
 CLAIMABLE_AGENTS = VALID_AGENTS - {"any"}
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+WORKSTREAM_SUCCESSOR_REQUIRED_LABEL = "workstream:successor-required"
 
 
 def _reject_control_chars(value: str, field_name: str) -> str:
@@ -416,6 +417,11 @@ def update_task_status(
 
     for t in data.tasks:
         if t.id == task_id:
+            if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or []) and status not in {"failed", "done", "archived"}:
+                return (
+                    f"Task {task_id} requires a separately admitted successor; "
+                    f"cannot transition expired row to {status}"
+                )
             # Layer 1: Dynamic Costing - Double budget cost on failure
             if status in ["failed", "failed_blocked", "needs_human"] and t.status == "in_progress":
                 t.budget_cost = min(t.budget_cost * 2, 8)
@@ -493,6 +499,8 @@ def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
         if t.id == task_id:
             if t.status != "open":
                 return f"Task {task_id} is not open (current status: {t.status}) - cannot claim"
+            if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or []):
+                return f"Task {task_id} requires a separately admitted successor - cannot claim expired row"
             if t.target_agent not in (agent_name, "any"):
                 return f"Task {task_id} targets {t.target_agent}, not {agent_name} - cannot claim"
 

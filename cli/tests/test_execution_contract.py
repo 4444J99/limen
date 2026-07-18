@@ -10,6 +10,7 @@ from limen.execution_contract import (
     execution_contract_hash,
     execution_contract_payload,
 )
+from limen.workstream_contract import packet_contract
 
 
 def _task() -> dict[str, object]:
@@ -29,6 +30,7 @@ def _task() -> dict[str, object]:
         "predicate": "python3 scripts/check.py",
         "receipt_target": "git:organvm/limen:logs/check.json",
         "execution_requirements": [{"kind": "mount", "path": "/runtime/volume-a"}],
+        "workstream_contract": packet_contract("1h", now_epoch=1_000),
         "claude_tier": "sonnet",
         "depends_on": ["FOUNDATION-ONE"],
     }
@@ -56,6 +58,7 @@ def test_execution_contract_payload_is_versioned_and_label_order_is_canonical() 
         "predicate": "python3 scripts/check.py",
         "receipt_target": "git:organvm/limen:logs/check.json",
         "execution_requirements": [{"kind": "mount", "path": "/runtime/volume-a"}],
+        "workstream_contract": packet_contract("1h", now_epoch=1_000),
         "claude_tier": "sonnet",
         "depends_on": ["FOUNDATION-ONE"],
     }
@@ -80,6 +83,7 @@ def test_every_execution_input_changes_the_hash() -> None:
         "predicate": "python3 scripts/other.py",
         "receipt_target": "git:organvm/limen:logs/other.json",
         "execution_requirements": [{"kind": "mount", "path": "/runtime/volume-b"}],
+        "workstream_contract": packet_contract("2h", now_epoch=2_000),
         "claude_tier": "haiku",
         "depends_on": ["FOUNDATION-TWO"],
     }
@@ -118,6 +122,16 @@ def test_missing_none_and_empty_requirements_are_contract_equivalent() -> None:
     assert execution_contract_hash(missing) == execution_contract_hash(explicit_empty)
 
 
+def test_missing_and_none_workstream_contract_are_equivalent() -> None:
+    missing = _task()
+    missing.pop("workstream_contract")
+    explicit_none = deepcopy(missing)
+    explicit_none["workstream_contract"] = None
+
+    assert execution_contract_payload(missing) == execution_contract_payload(explicit_none)
+    assert execution_contract_hash(missing) == execution_contract_hash(explicit_none)
+
+
 @pytest.mark.parametrize("budget", [True, False, 1.0, 1.9, "1", None, 0, 1001])
 def test_budget_cost_rejects_lossy_or_out_of_schema_values(budget: object) -> None:
     task = _task()
@@ -137,6 +151,7 @@ def test_budget_cost_rejects_lossy_or_out_of_schema_values(budget: object) -> No
         ("depends_on", [None]),
         ("execution_requirements", "not-a-list"),
         ("execution_requirements", [{"kind": "mount"}]),
+        ("workstream_contract", {}),
     ],
 )
 def test_contract_rejects_unsupported_field_types(field: str, value: object) -> None:

@@ -82,6 +82,23 @@ def test_reap_stale_reopens_and_removes_marker(board):
     assert got["T1"].status == "open"  # dead worker's task reopened for retry
 
 
+def test_reap_stale_holds_successor_required_task_failed(board):
+    tasks_path, runs = board
+    lf = load_limen_file(tasks_path)
+    lf.tasks[0].labels.append("workstream:successor-required")
+    save_limen_file(tasks_path, lf)
+    marker = _old_marker(runs, "T1", "jules")
+
+    reaped = dispatch_async.reap_stale(max_age_s=1)
+
+    assert reaped == ["T1"]
+    assert not marker.exists()
+    task = load_limen_file(tasks_path).tasks[0]
+    assert task.status == "failed"
+    assert "workstream:successor-required" in task.labels
+    assert task.dispatch_log[-1].status == "failed"
+
+
 def test_reap_stale_leaves_marker_when_result_present(board):
     tasks_path, runs = board
     marker = _old_marker(runs, "T1", "jules")

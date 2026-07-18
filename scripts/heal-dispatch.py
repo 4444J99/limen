@@ -30,7 +30,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for
 from limen.chronic import CHRONIC_FLEET_DEBT_LABEL, chronic_escalated_to_needs_human  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
-from limen.models import DispatchLogEntry, Task  # noqa: E402
+from limen.models import DispatchLogEntry, Task, has_jules_landing_hold  # noqa: E402
+from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 from _human_signals import is_human_gated, lever_ids  # noqa: E402
 
@@ -77,6 +78,10 @@ def ensure_heal_singleton(
     stamp = now.date().isoformat()
     existing = next((t for t in lf.tasks if t.id == tid), None)
     if existing is not None:
+        if has_jules_landing_hold(existing):
+            return None
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (existing.labels or []):
+            return None
         if existing.status in _ACTIVE_STATES:
             return None  # already being worked — converge, idempotent
         # prior episode closed; reopen the canonical singleton
@@ -185,10 +190,16 @@ def main():
             parked.append(f"{t.id} → {t.status}")
 
         for t in lf.tasks:
+            if has_jules_landing_hold(t):
+                continue
             # CHRONIC parking runs on the churning (open/failed) chronic tasks, NOT the dispatched
             # ones the loop below handles — stop them re-looping without polluting the human
             # surface. Idempotent (a parked task is neither open/failed nor chronic-listed again).
-            if t.id in chronic_ids and t.status in ("open", "failed"):
+            if (
+                t.id in chronic_ids
+                and t.status in ("open", "failed")
+                and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (t.labels or [])
+            ):
                 if active_typed_pr_owner_id(t, lf.tasks) is not None:
                     continue
                 park_chronic(t, "chronic (reopened ≥3×, never a PR)")
@@ -201,6 +212,7 @@ def main():
             if (
                 t.status == "needs_human"
                 and "needs-human" not in (t.labels or [])
+                and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (t.labels or [])
                 and not is_human_gated(t, levers)
                 and chronic_escalated_to_needs_human(t)
             ):
@@ -252,6 +264,8 @@ def main():
                 )
                 open_pr_done.append(t.id)
             elif t.id in closed_ids or t.id in nopr_ids:
+                if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or []):
+                    continue
                 # NO_PR: only reopen if STILL no PR url (daemon may have re-dispatched)
                 if t.id in nopr_ids and PR_RE.search(last_session(t)):
                     continue

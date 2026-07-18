@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 PRESSURE_SCRIPT = ROOT / "scripts" / "session-lifecycle-pressure.py"
+PRESSURE_HOOK = ROOT / "scripts" / "hooks" / "session-lifecycle-pressure.sh"
 CAPABILITY_SCRIPT = ROOT / "scripts" / "capability-substrate-ledger.py"
 BLOCKERS_SCRIPT = ROOT / "scripts" / "session-blockers-ledger.py"
 ATTACK_PATHS_SCRIPT = ROOT / "scripts" / "session-attack-paths.py"
@@ -426,6 +429,112 @@ def test_session_lifecycle_pressure_counts_scanned_worktree_targets(tmp_path: Pa
 
     assert snapshot["worktrees"]["roots"] == 3
     assert snapshot["worktrees"]["bytes"] == 15
+
+
+def test_session_lifecycle_pressure_reports_partial_bounded_size_data(
+    tmp_path: Path,
+):
+    pressure = _load(
+        PRESSURE_SCRIPT,
+        "session_lifecycle_pressure_partial_size",
+    )
+    pressure.ROOT = tmp_path
+    pressure.WORKTREE_ROOT = tmp_path / ".limen-worktrees"
+    pressure.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    pressure.PROMPT_INDEX = pressure.PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
+    pressure.CORPUS_INVENTORY = pressure.PRIVATE_ROOT / "inventory" / "session-corpus-ledger.json"
+    pressure.SIZE_SCAN_MAX_ROOTS = 2
+    paths = []
+    for index, size in enumerate((3, 5, 7), start=1):
+        path = pressure.WORKTREE_ROOT / f"root-{index}"
+        path.mkdir(parents=True)
+        (path / "payload.bin").write_bytes(b"x" * size)
+        paths.append(path)
+    pressure.run_worktree_debt = lambda: {
+        "total": 3,
+        "debt": 0,
+        "limit": 12,
+        "by_reason": {"clean+merged+idle": 3},
+        "items": [
+            {
+                "name": path.name,
+                "path": str(path),
+                "reason": "clean+merged+idle",
+                "debt": False,
+            }
+            for path in paths
+        ],
+    }
+
+    snapshot = pressure.build_snapshot()
+    rendered = pressure.render(snapshot)
+
+    assert snapshot["worktrees"]["roots"] == 3
+    assert snapshot["worktrees"]["bytes"] == 8
+    assert snapshot["worktrees"]["size_scan_partial"] is True
+    assert snapshot["worktrees"]["size_scan_scanned_roots"] == 2
+    assert "worktree size scan partial" in snapshot["pressure"]
+    assert "partial size scan 2/3" in rendered
+
+
+def test_session_lifecycle_pressure_hook_declares_singleton_timeout_and_nice():
+    hook = PRESSURE_HOOK.read_text(encoding="utf-8")
+
+    assert 'mkdir "$LOCK_DIR"' in hook
+    assert "LIMEN_SESSION_LIFECYCLE_TIMEOUT" in hook
+    assert "LIMEN_SESSION_WORKTREE_DEBT_TIMEOUT" in hook
+    assert "start_new_session=True" in hook
+    assert "nice -n 10" in hook
+
+
+def test_session_lifecycle_pressure_hook_second_invocation_is_singleton(
+    tmp_path: Path,
+):
+    project = tmp_path / "limen"
+    generator = project / "scripts" / "session-lifecycle-pressure.py"
+    generator.parent.mkdir(parents=True)
+    log = tmp_path / "generator.log"
+    generator.write_text(
+        "\n".join(
+            (
+                "import os",
+                "import time",
+                "from pathlib import Path",
+                "path = Path(os.environ['PRESSURE_TEST_LOG'])",
+                "with path.open('a', encoding='utf-8') as stream:",
+                "    stream.write('started\\n')",
+                "time.sleep(1)",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "CLAUDE_PROJECT_DIR": str(project),
+            "PRESSURE_TEST_LOG": str(log),
+            "TMPDIR": str(tmp_path),
+            "LIMEN_SESSION_LIFECYCLE_TIMEOUT": "5",
+            "LIMEN_SESSION_WORKTREE_DEBT_TIMEOUT": "2",
+        }
+    )
+
+    subprocess.run(["bash", str(PRESSURE_HOOK)], check=True, env=env)
+    lock_dir = tmp_path / "limen-session-lifecycle-pressure.lock"
+    deadline = time.time() + 3
+    while time.time() < deadline and not lock_dir.exists():
+        time.sleep(0.05)
+    assert lock_dir.exists()
+
+    subprocess.run(["bash", str(PRESSURE_HOOK)], check=True, env=env)
+    deadline = time.time() + 3
+    while time.time() < deadline:
+        if log.exists() and not lock_dir.exists():
+            break
+        time.sleep(0.05)
+
+    assert log.read_text(encoding="utf-8").splitlines() == ["started"]
 
 
 def test_session_lifecycle_pressure_closes_reclaimed_remote_missing_from_receipt(tmp_path: Path):

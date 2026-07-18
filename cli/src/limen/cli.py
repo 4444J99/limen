@@ -429,6 +429,11 @@ def harvest(agent):
     help="Prompt packet file to copy into intent.md.",
 )
 @click.option(
+    "--runway",
+    default=None,
+    help="Finite workstream runway (for example 90m, 8h, or 7d); defaults to 1d.",
+)
+@click.option(
     "--no-readme",
     is_flag=True,
     help="Create/reuse the worktree without writing the private kickoff packet.",
@@ -443,6 +448,7 @@ def workstream(
     from_ref,
     prompt_text,
     prompt_file,
+    runway,
     workstream_handle,
     no_readme,
     repo,
@@ -464,6 +470,8 @@ def workstream(
         args.extend(["--prompt", prompt_text])
     if prompt_file:
         args.extend(["--prompt-file", prompt_file])
+    if runway:
+        args.extend(["--runway", runway])
     if workstream_handle:
         args.extend(["--workstream", workstream_handle])
     if no_readme:

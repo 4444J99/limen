@@ -67,6 +67,18 @@ from limen.model_selection import _claude_fable_classes, _claude_opus_classes  #
 from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
 from limen.dispatch import _down_lanes, _reset_budget_if_needed  # noqa: E402
 from limen.workstream import UNASSIGNED, assign_channel  # noqa: E402
+from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
+
+
+def _route_open_task(task) -> bool:
+    """Whether routing may inspect or stamp this open lifecycle row."""
+    if isinstance(task, dict):
+        status = task.get("status")
+        labels = task.get("labels") or []
+    else:
+        status = task.status
+        labels = task.labels or []
+    return status == "open" and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in labels
 
 
 # Vendor health: which local lanes are usable right now. gemini needs an API key.
@@ -650,7 +662,7 @@ def main() -> int:
     print(format_capacity_census(census))
     print(f"\n# Router plan  (agents up: {', '.join(up) or 'none'}; down: {', '.join(down) or 'none'})\n")
 
-    opens = [t for t in data["tasks"] if t.get("status") == "open"]
+    opens = [t for t in data["tasks"] if _route_open_task(t)]
     if not opens:
         print("No open tasks to route. (Backlog is empty or fully dispatched.)")
         return 0
@@ -696,7 +708,7 @@ def main() -> int:
         applied = 0
         ws_applied = 0
         for task in lf.tasks:
-            if task.status != "open":
+            if not _route_open_task(task):
                 continue
             v = assignments.get(task.id)
             if v and task.target_agent != v:

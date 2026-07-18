@@ -15,7 +15,13 @@ CHECK = ROOT / "scripts" / "check-main-green.py"
 
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.models import Budget, BudgetTrack, LimenFile, Portal  # noqa: E402
+from limen.models import (  # noqa: E402
+    JULES_LANDING_HOLD_LABEL,
+    Budget,
+    BudgetTrack,
+    LimenFile,
+    Portal,
+)
 
 
 def _seed(tmp: Path, conclusion: str) -> None:
@@ -116,6 +122,28 @@ def test_moving_red_trunk_converges_on_one_task(tmp_path):
     assert "deadbeef" * 5 not in tasks[0].predicate
 
 
+def test_active_refresh_leaves_jules_landing_held_singleton_byte_stable(tmp_path):
+    _seed(tmp_path, "failure")
+    _empty_board(tmp_path)
+    run(tmp_path, apply=True)
+    tasks_path = tmp_path / "tasks.yaml"
+
+    lf = load_limen_file(tasks_path)
+    lf.tasks[0].labels.append(JULES_LANDING_HOLD_LABEL)
+    save_limen_file(tasks_path, lf)
+    before = tasks_path.read_bytes()
+
+    stamp_path = tmp_path / "logs" / "main-green.json"
+    stamp = json.loads(stamp_path.read_text())
+    stamp["head_sha"] = "feedface" * 5
+    stamp_path.write_text(json.dumps(stamp), encoding="utf-8")
+
+    r = run(tmp_path, apply=True)
+
+    assert r.returncode == 1
+    assert tasks_path.read_bytes() == before
+
+
 def test_recurrence_reopens_healed_task(tmp_path):
     """If a prior red episode healed (task done) and trunk is red again, the SAME singleton reopens —
     a recurrence must never be dropped by a stale done-row."""
@@ -135,6 +163,24 @@ def test_recurrence_reopens_healed_task(tmp_path):
     assert len(tasks) == 1
     assert tasks[0].id == "HEAL-mainred-organvm-limen"
     assert tasks[0].status == "open"  # reopened
+
+
+def test_recurrence_does_not_reopen_successor_required_singleton(tmp_path):
+    _seed(tmp_path, "failure")
+    _empty_board(tmp_path)
+    run(tmp_path, apply=True)
+    tasks_path = tmp_path / "tasks.yaml"
+
+    lf = load_limen_file(tasks_path)
+    lf.tasks[0].status = "failed"
+    lf.tasks[0].labels.append("workstream:successor-required")
+    save_limen_file(tasks_path, lf)
+    before = tasks_path.read_bytes()
+
+    r = run(tmp_path, apply=True)
+
+    assert r.returncode == 1
+    assert tasks_path.read_bytes() == before
 
 
 def test_active_states_parity_with_dispatch():

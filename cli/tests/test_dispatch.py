@@ -18,10 +18,12 @@ import limen.dispatch as D
 from limen.capacity import PAID_AGENT_ORDER, agent_status, capacity_census, format_capacity_census, select_lanes
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
+from limen.execution_contract import execution_contract_hash
 from limen.io import load_limen_file
 from limen.jules_remote import JulesRemoteSnapshot
-from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
+from limen.models import JULES_LANDING_HOLD_LABEL, BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.status import print_status
+from limen.workstream_contract import packet_contract
 
 
 def load_route_module():
@@ -450,6 +452,26 @@ def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path)
     vendor, reason = route.route_task(remote, health, workdir, assigned={}, budget=budget)
     assert vendor in repo_worker_lanes, (vendor, reason)
     assert "clone" in reason
+
+
+def test_route_excludes_successor_required_open_rows() -> None:
+    route = load_route_module()
+    held = {
+        "id": "EXPIRED",
+        "status": "open",
+        "labels": ["workstream:successor-required"],
+    }
+    held_model = Task(
+        id="EXPIRED-MODEL",
+        title="expired packet",
+        target_agent="any",
+        status="open",
+        labels=["workstream:successor-required"],
+        created=date(2026, 7, 17),
+    )
+
+    assert route._route_open_task(held) is False
+    assert route._route_open_task(held_model) is False
 
 
 def test_self_improve_weight_nudge_steers_local_split(monkeypatch) -> None:
@@ -1031,10 +1053,11 @@ def _concurrent_fold(tasks_path: Path, task_id: str = "CONCURRENT-FOLD") -> None
 def test_dispatch_serial_commit_survives_concurrent_board_write(
     tmp_path: Path,
     monkeypatch,
+    capsys,
 ) -> None:
     """Serial dispatch loads the board, runs agents for minutes, then saves — persisting that
-    stale snapshot erased every interim write (keeper folds, route stamps). The commit must
-    re-apply results onto a FRESH reload so concurrent writes survive."""
+    stale snapshot erased every interim write (keeper folds, route stamps). The commit must reload
+    fresh state and fence the stale result when the concurrent owner changed executable fields."""
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
@@ -1072,10 +1095,12 @@ def test_dispatch_serial_commit_survives_concurrent_board_write(
 
     tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
     assert set(tasks) == {"DISPATCH-ME", "CONCURRENT-FOLD"}
-    assert tasks["DISPATCH-ME"]["status"] == "dispatched"
+    assert tasks["DISPATCH-ME"]["status"] == "open"
+    assert tasks["DISPATCH-ME"]["dispatch_log"] == []
     assert tasks["DISPATCH-ME"]["predicate"] == "pytest -q concurrent-owner-check"
     assert tasks["DISPATCH-ME"]["receipt_target"].endswith("concurrent-owner.json")
     assert tasks["CONCURRENT-FOLD"]["status"] == "open"
+    assert "FENCE DISPATCH-ME: execution or lifecycle ownership changed" in capsys.readouterr().out
 
 
 def test_dispatch_budget_reset_persist_survives_concurrent_board_write(
@@ -1693,116 +1718,61 @@ def test_agent_argv_threads_task_into_dynamic_opencode_selector(monkeypatch) -> 
     argv = D._agent_argv("opencode", task)
 
     assert observed == [task]
-    assert argv == ["run", "-m", "fixture/runtime-output"]
+    assert argv == ["--pure", "run", "-m", "fixture/runtime-output"]
 
 
-def test_codex_tier_derived_from_task_classes(monkeypatch) -> None:
-    """opus-class task -> o3; haiku (plain) task -> o4-mini."""
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "1")
-    monkeypatch.delenv("LIMEN_CODEX_MODEL_OPUS", raising=False)
-    monkeypatch.delenv("LIMEN_CODEX_MODEL_HAIKU", raising=False)
-    # Patch fable acceptance so opus class -> "opus" not "fable fallback"
-    monkeypatch.setattr(D, "_claude_fable_acceptance_present", lambda: False)
-
-    opus_task = Task(
-        id="CODEX-OPUS",
-        title="synthesis task",
-        labels=["synthesis"],
-        target_agent="codex",
-        created=date(2026, 7, 15),
-    )
-    haiku_task = Task(
-        id="CODEX-HAIKU",
-        title="simple coding task",
-        target_agent="codex",
+@pytest.mark.parametrize(("agent", "selector"), [("codex", D._codex_model), ("gemini", D._gemini_model)])
+def test_provider_without_live_catalog_delegates_to_auto(agent, selector, monkeypatch) -> None:
+    prefix = f"LIMEN_{agent.upper()}_MODEL"
+    for name in list(os.environ):
+        if name.startswith(prefix):
+            monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(f"LIMEN_{agent.upper()}_TIER_SELECT", "1")
+    task = Task(
+        id=f"{agent.upper()}-AUTO",
+        title="task shape remains provider-neutral",
+        labels=["synthesis", "tier:opaque-context"],
+        target_agent=agent,
         created=date(2026, 7, 15),
     )
 
-    assert D._codex_model(opus_task) == "o3"
-    assert D._codex_model(haiku_task) == "o4-mini"
+    assert selector(task) is None
+    receipt = D._MODEL_SELECTION_RECEIPTS.pop(task.id)
+    assert receipt["selection_source"] == f"{agent}_provider_auto"
+    assert receipt["selected_model"] is None
 
 
-def test_codex_model_env_override_wins(monkeypatch) -> None:
-    monkeypatch.setenv("LIMEN_CODEX_MODEL", "custom-override")
-    task = Task(id="CODEX-OVERRIDE", title="any task", target_agent="codex", created=date(2026, 7, 15))
-    assert D._codex_model(task) == "custom-override"
-
-
-def test_codex_model_per_tier_env_override(monkeypatch) -> None:
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "1")
-    monkeypatch.setenv("LIMEN_CODEX_MODEL_OPUS", "my-opus-model")
-    monkeypatch.setattr(D, "_claude_fable_acceptance_present", lambda: False)
-
-    opus_task = Task(
-        id="CODEX-PER-TIER",
-        title="synthesis override",
-        labels=["synthesis"],
-        target_agent="codex",
-        created=date(2026, 7, 15),
-    )
-    assert D._codex_model(opus_task) == "my-opus-model"
-
-
-def test_codex_tier_disabled_returns_none(monkeypatch) -> None:
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "0")
-    task = Task(id="CODEX-DISABLED", title="any task", target_agent="codex", created=date(2026, 7, 15))
-    assert D._codex_model(task) is None
-
-
-def test_codex_tier_fail_open_on_exception(monkeypatch) -> None:
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "1")
-
-    def boom(task):
-        raise RuntimeError("simulated failure")
-
-    monkeypatch.setattr(D, "_claude_tier_for", boom)
-    task = Task(id="CODEX-FAIL", title="any task", target_agent="codex", created=date(2026, 7, 15))
-    assert D._codex_model(task) is None
-
-
-def test_gemini_tier_derived_from_task_classes(monkeypatch) -> None:
-    monkeypatch.delenv("LIMEN_GEMINI_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_GEMINI_TIER_SELECT", "1")
-    monkeypatch.delenv("LIMEN_GEMINI_MODEL_OPUS", raising=False)
-    monkeypatch.delenv("LIMEN_GEMINI_MODEL_HAIKU", raising=False)
-    monkeypatch.setattr(D, "_claude_fable_acceptance_present", lambda: False)
-
-    opus_task = Task(
-        id="GEMINI-OPUS",
-        title="synthesis task",
-        labels=["synthesis"],
-        target_agent="gemini",
-        created=date(2026, 7, 15),
-    )
-    haiku_task = Task(
-        id="GEMINI-HAIKU",
-        title="simple coding task",
-        target_agent="gemini",
+@pytest.mark.parametrize(
+    ("agent", "selector", "variable"),
+    [
+        ("codex", D._codex_model, "LIMEN_CODEX_MODEL"),
+        ("codex", D._codex_model, "LIMEN_CODEX_MODEL_LEGACY"),
+        ("gemini", D._gemini_model, "LIMEN_GEMINI_MODEL"),
+        ("gemini", D._gemini_model, "LIMEN_GEMINI_MODEL_LEGACY"),
+    ],
+)
+def test_provider_without_live_catalog_blocks_every_named_override(agent, selector, variable, monkeypatch) -> None:
+    prefix = f"LIMEN_{agent.upper()}_MODEL"
+    for name in list(os.environ):
+        if name.startswith(prefix):
+            monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(variable, "fixture-provider-id")
+    task = Task(
+        id=f"{agent.upper()}-OVERRIDE",
+        title="unverifiable override",
+        target_agent=agent,
         created=date(2026, 7, 15),
     )
 
-    assert D._gemini_model(opus_task) == "gemini-2.5-pro"
-    assert D._gemini_model(haiku_task) == "gemini-2.5-flash"
+    with pytest.raises(D.ProviderSelectionError, match="no live model catalog"):
+        selector(task)
+
+    receipt = D._MODEL_SELECTION_RECEIPTS.pop(task.id)
+    assert receipt["selection_source"] == f"{agent}_override_unverifiable"
+    assert receipt["selected_model"] is None
 
 
-def test_gemini_model_env_override_wins(monkeypatch) -> None:
-    monkeypatch.setenv("LIMEN_GEMINI_MODEL", "custom-gemini")
-    task = Task(id="GEMINI-OVERRIDE", title="any task", target_agent="gemini", created=date(2026, 7, 15))
-    assert D._gemini_model(task) == "custom-gemini"
-
-
-def test_gemini_tier_disabled_returns_none(monkeypatch) -> None:
-    monkeypatch.delenv("LIMEN_GEMINI_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_GEMINI_TIER_SELECT", "0")
-    task = Task(id="GEMINI-DISABLED", title="any task", target_agent="gemini", created=date(2026, 7, 15))
-    assert D._gemini_model(task) is None
-
-
-def test_agent_argv_codex_threads_task_into_tier_selector(monkeypatch) -> None:
+def test_agent_argv_codex_threads_task_into_future_live_selector(monkeypatch) -> None:
     observed: list[Task | None] = []
     task = Task(
         id="CODEX-ARGV",
@@ -1813,14 +1783,14 @@ def test_agent_argv_codex_threads_task_into_tier_selector(monkeypatch) -> None:
 
     def select(current: Task | None = None) -> str:
         observed.append(current)
-        return "o3"
+        return "fixture/runtime-output"
 
     monkeypatch.setattr(D, "_codex_model", select)
     argv = D._agent_argv("codex", task)
 
     assert observed == [task]
     assert "-m" in argv
-    assert argv[argv.index("-m") + 1] == "o3"
+    assert argv[argv.index("-m") + 1] == "fixture/runtime-output"
 
 
 def test_agent_argv_gemini_injects_model_before_prompt(monkeypatch) -> None:
@@ -1831,7 +1801,7 @@ def test_agent_argv_gemini_injects_model_before_prompt(monkeypatch) -> None:
         created=date(2026, 7, 15),
     )
 
-    monkeypatch.setattr(D, "_gemini_model", lambda t=None: "gemini-2.5-pro")
+    monkeypatch.setattr(D, "_gemini_model", lambda t=None: "fixture-runtime-output")
     argv = D._agent_argv("gemini", task)
 
     assert "-m" in argv
@@ -1839,15 +1809,16 @@ def test_agent_argv_gemini_injects_model_before_prompt(monkeypatch) -> None:
     m_idx = argv.index("-m")
     p_idx = argv.index("-p")
     assert m_idx < p_idx, f"-m ({m_idx}) must appear before -p ({p_idx}) in {argv}"
-    assert argv[m_idx + 1] == "gemini-2.5-pro"
+    assert argv[m_idx + 1] == "fixture-runtime-output"
 
 
-def test_agent_argv_gemini_no_model_when_tier_select_off(monkeypatch) -> None:
-    monkeypatch.delenv("LIMEN_GEMINI_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_GEMINI_TIER_SELECT", "0")
+def test_agent_argv_gemini_uses_provider_auto_without_catalog(monkeypatch) -> None:
+    for name in list(os.environ):
+        if name.startswith("LIMEN_GEMINI_MODEL"):
+            monkeypatch.delenv(name, raising=False)
     task = Task(
-        id="GEMINI-ARGV-OFF",
-        title="no model injected when tier off",
+        id="GEMINI-ARGV-AUTO",
+        title="no model injected without a live catalog",
         target_agent="gemini",
         created=date(2026, 7, 15),
     )
@@ -1920,6 +1891,41 @@ def test_pr_open_receipt_blocks_duplicate_dispatch_and_noop_demotion() -> None:
     assert task.dispatch_log[-1].session_id == "result-lifecycle-guard"
 
 
+def test_pr_open_receipt_wins_over_concurrent_successor_result() -> None:
+    import datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    task = Task(
+        id="PR-OPEN-SUCCESSOR-RACE",
+        title="PR landed while selected packet expired",
+        target_agent="codex",
+        status="dispatched",
+        created=date(2026, 7, 17),
+        labels=[],
+        dispatch_log=[
+            DispatchLogEntry(
+                timestamp=now,
+                agent="owner",
+                session_id="https://github.com/x/y/pull/100",
+                status="pr_open",
+                output="owner PR opened while provider was running",
+            )
+        ],
+    )
+
+    D._apply_result(
+        task,
+        "codex",
+        D._workstream_successor_result("selected packet expired"),
+        now,
+        BudgetTrack(date="2026-07-17"),
+    )
+
+    assert task.status == "dispatched"
+    assert D.WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in task.labels
+    assert task.dispatch_log[-1].session_id == "result-lifecycle-guard"
+
+
 def test_blocked_result_is_terminal_failed_blocked() -> None:
     import datetime
 
@@ -1943,6 +1949,764 @@ def test_blocked_result_is_terminal_failed_blocked() -> None:
     assert track.spent == 0
     assert task.dispatch_log[-1].status == "failed_blocked"
     assert "repo unavailable" in str(task.dispatch_log[-1].output)
+
+
+def test_workstream_boundary_is_failed_with_durable_successor_owner_route() -> None:
+    import datetime
+
+    task = Task(
+        id="WORKSTREAM-BOUNDARY",
+        title="successor required",
+        repo="organvm/limen",
+        target_agent="codex",
+        status="open",
+        created=date(2026, 7, 17),
+        labels=[],
+    )
+    track = BudgetTrack(date="2026-07-17")
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    D._apply_result(
+        task,
+        "codex",
+        D._workstream_successor_result("workstream packet runway is exhausted"),
+        now,
+        track,
+    )
+
+    assert task.status == "failed"
+    assert task.target_agent == "codex"
+    assert "workstream:successor-required" in task.labels
+    assert "blocked:routing" not in task.labels
+    assert track.spent == 0
+    assert task.dispatch_log[-1].status == "failed"
+    assert "successor workstream required" in str(task.dispatch_log[-1].output)
+
+
+def test_jules_landing_hold_is_not_dispatchable() -> None:
+    task = Task(
+        id="JULES-LANDING-HOLD",
+        title="landing transaction owns this row",
+        repo="organvm/limen",
+        target_agent="any",
+        status="open",
+        labels=[JULES_LANDING_HOLD_LABEL],
+        predicate="python3 scripts/check.py",
+        receipt_target="git:organvm/limen:logs/check.json",
+        created=date(2026, 7, 17),
+    )
+
+    assert D._dispatchable(task) is False
+
+
+def test_successor_required_label_is_a_global_dispatch_hold() -> None:
+    task = Task(
+        id="WORKSTREAM-SUCCESSOR-HOLD",
+        title="expired row must stay held",
+        repo="organvm/limen",
+        target_agent="any",
+        status="open",
+        labels=[D.WORKSTREAM_SUCCESSOR_REQUIRED_LABEL],
+        predicate="python3 scripts/check.py",
+        receipt_target="git:organvm/limen:logs/check.json",
+        created=date(2026, 7, 17),
+    )
+
+    assert D._dispatchable(task) is False
+    for stale_result in (
+        True,
+        D._NOOP,
+        D._TIMEOUT,
+        D._blocked_result("stale provider blocker"),
+        D._workstream_successor_result("duplicate expired-packet result"),
+    ):
+        held = task.model_copy(deep=True)
+        D._apply_result(
+            held,
+            "codex",
+            stale_result,
+            datetime.now(timezone.utc),
+            BudgetTrack(date="2026-07-17"),
+        )
+        assert held.status == "open"
+        assert held.target_agent == "any"
+        assert held.dispatch_log == []
+
+
+def test_serial_result_commit_fences_concurrent_pr_open_lifecycle(tmp_path: Path, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "WORKSTREAM-PR-RACE",
+                "title": "selected packet",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "status": "open",
+                "labels": [],
+                "predicate": "python3 scripts/check.py",
+                "receipt_target": "git:organvm/limen:logs/check.json",
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    selected = load_limen_file(tasks_path)
+    selected_hash = execution_contract_hash(selected.tasks[0])
+    selected_owner = D._lifecycle_ownership_token(selected.tasks[0])
+    now = datetime.now(timezone.utc)
+    fresh = read_board(tasks_path)
+    fresh["tasks"][0]["status"] = "dispatched"
+    fresh["tasks"][0]["dispatch_log"] = [
+        {
+            "timestamp": now.isoformat(),
+            "agent": "owner",
+            "session_id": "https://github.com/x/y/pull/101",
+            "status": "pr_open",
+            "output": "owner PR opened while provider ran",
+        }
+    ]
+    tasks_path.write_text(yaml.safe_dump(fresh, sort_keys=False))
+
+    D._commit_dispatch_results(
+        tasks_path,
+        selected,
+        [
+            (
+                "codex",
+                "WORKSTREAM-PR-RACE",
+                D._workstream_successor_result("selected packet expired"),
+                selected_hash,
+                selected_owner,
+            )
+        ],
+        now,
+    )
+
+    current = read_board(tasks_path)["tasks"][0]
+    assert current["status"] == "dispatched"
+    assert D.WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (current.get("labels") or [])
+    assert current["dispatch_log"][-1]["session_id"] == "https://github.com/x/y/pull/101"
+    assert "execution or lifecycle ownership changed" in capsys.readouterr().out
+
+
+def test_serial_result_commit_fences_changed_workstream_contract(tmp_path: Path, capsys) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    now_epoch = int(datetime.now(timezone.utc).timestamp())
+    contract_a = packet_contract("2d", now_epoch=now_epoch)
+    contract_b = packet_contract("2d", now_epoch=now_epoch + 1)
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "WORKSTREAM-SERIAL-FENCE",
+                "title": "selected packet",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "status": "open",
+                "labels": [],
+                "predicate": "python3 scripts/check.py",
+                "receipt_target": "git:organvm/limen:logs/check.json",
+                "workstream_contract": contract_a,
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    selected = load_limen_file(tasks_path)
+    selected_hash = execution_contract_hash(selected.tasks[0])
+    selected_owner = D._lifecycle_ownership_token(selected.tasks[0])
+    fresh = read_board(tasks_path)
+    fresh["tasks"][0]["workstream_contract"] = contract_b
+    tasks_path.write_text(yaml.safe_dump(fresh, sort_keys=False))
+
+    D._commit_dispatch_results(
+        tasks_path,
+        selected,
+        [
+            (
+                "codex",
+                "WORKSTREAM-SERIAL-FENCE",
+                D._workstream_successor_result("selected packet expired"),
+                selected_hash,
+                selected_owner,
+            )
+        ],
+        datetime.now(timezone.utc),
+    )
+
+    current = read_board(tasks_path)["tasks"][0]
+    assert current["status"] == "open"
+    assert current["workstream_contract"] == contract_b
+    assert D.WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (current.get("labels") or [])
+    assert current.get("dispatch_log") == []
+    assert "execution or lifecycle ownership changed" in capsys.readouterr().out
+
+
+def test_serial_fence_does_not_persist_stale_legacy_contract_backfill(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LEGACY-BACKFILL-FENCE",
+                "title": "selected legacy packet",
+                "repo": "organvm/limen",
+                "target_agent": "codex",
+                "status": "open",
+                "labels": [],
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    selected = load_limen_file(tasks_path)
+    selected.tasks[0].predicate = "python3 scripts/check.py"
+    selected.tasks[0].receipt_target = "git:organvm/limen:logs/check.json"
+    selected_hash = execution_contract_hash(selected.tasks[0])
+    selected_owner = D._lifecycle_ownership_token(selected.tasks[0])
+
+    fresh = read_board(tasks_path)
+    fresh["tasks"][0]["title"] = "concurrently changed packet"
+    tasks_path.write_text(yaml.safe_dump(fresh, sort_keys=False))
+
+    D._commit_dispatch_results(
+        tasks_path,
+        selected,
+        [("codex", "LEGACY-BACKFILL-FENCE", False, selected_hash, selected_owner)],
+        datetime.now(timezone.utc),
+    )
+
+    current = read_board(tasks_path)["tasks"][0]
+    assert current["title"] == "concurrently changed packet"
+    assert current.get("predicate") is None
+    assert current.get("receipt_target") is None
+    assert current.get("dispatch_log") == []
+    assert "execution or lifecycle ownership changed" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("fresh_status", "stale_result"),
+    [
+        ("needs_human", False),
+        ("failed_blocked", True),
+        ("archived", False),
+        ("dispatched", True),
+    ],
+    ids=["needs-human", "failed-blocked", "archived", "newer-claim"],
+)
+def test_serial_result_commit_fences_fresh_lifecycle_owner_and_cleans_receipts(
+    tmp_path: Path,
+    capsys,
+    fresh_status: str,
+    stale_result: bool,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    task_id = "SERIAL-LIFECYCLE-OWNER"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": task_id,
+                "title": "same executable work",
+                "repo": "example/repo",
+                "target_agent": "codex",
+                "status": "open",
+                "labels": [],
+                "predicate": "python3 scripts/check.py",
+                "receipt_target": "git:example/repo:logs/check.json",
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    selected = load_limen_file(tasks_path)
+    selected_task = selected.tasks[0]
+    selected_hash = execution_contract_hash(selected_task)
+    selected_owner = D._lifecycle_ownership_token(selected_task)
+
+    fresh = read_board(tasks_path)
+    fresh["tasks"][0]["status"] = fresh_status
+    fresh["tasks"][0]["updated"] = "2026-07-17T23:59:59+00:00"
+    fresh["tasks"][0]["dispatch_log"] = [
+        {
+            "timestamp": "2026-07-17T23:59:59+00:00",
+            "agent": "owner",
+            "session_id": "newer-claim-or-decision",
+            "status": fresh_status,
+            "output": "fresh lifecycle owner",
+        }
+    ]
+    tasks_path.write_text(yaml.safe_dump(fresh, sort_keys=False))
+    D._MODEL_SELECTION_RECEIPTS[task_id] = {
+        "selected_model": "stale-model",
+        "selection_source": "stale-result",
+    }
+    D._REMOTE_SUBMISSION_RECEIPTS[task_id] = {
+        "provider_run_id": "stale-run",
+        "remote_receipt": "logs/stale.json",
+    }
+
+    D._commit_dispatch_results(
+        tasks_path,
+        selected,
+        [("codex", task_id, stale_result, selected_hash, selected_owner)],
+        datetime.now(timezone.utc),
+    )
+
+    current = read_board(tasks_path)["tasks"][0]
+    assert current["status"] == fresh_status
+    assert len(current["dispatch_log"]) == 1
+    assert current["dispatch_log"][0]["session_id"] == "newer-claim-or-decision"
+    assert "selected_model" not in current["dispatch_log"][0]
+    assert "provider_run_id" not in current["dispatch_log"][0]
+    assert task_id not in D._MODEL_SELECTION_RECEIPTS
+    assert task_id not in D._REMOTE_SUBMISSION_RECEIPTS
+    assert "execution or lifecycle ownership changed" in capsys.readouterr().out
+
+
+def test_serial_result_commit_lock_busy_cleans_owned_receipts(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    task_id = "SERIAL-LOCK-BUSY"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": task_id,
+                "title": "same executable work",
+                "repo": "example/repo",
+                "target_agent": "codex",
+                "status": "open",
+                "predicate": "python3 scripts/check.py",
+                "receipt_target": "git:example/repo:logs/check.json",
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    selected = load_limen_file(tasks_path)
+    selected_task = selected.tasks[0]
+
+    class BusyLock:
+        def __enter__(self):
+            return False
+
+        def __exit__(self, *_args):
+            return False
+
+    monkeypatch.setattr(D, "_queue_lock", lambda _path: BusyLock())
+    D._MODEL_SELECTION_RECEIPTS[task_id] = {"selected_model": "owned-model"}
+    D._REMOTE_SUBMISSION_RECEIPTS[task_id] = {"provider_run_id": "owned-run"}
+
+    D._commit_dispatch_results(
+        tasks_path,
+        selected,
+        [
+            (
+                "codex",
+                task_id,
+                True,
+                execution_contract_hash(selected_task),
+                D._lifecycle_ownership_token(selected_task),
+            )
+        ],
+        datetime.now(timezone.utc),
+    )
+
+    current = read_board(tasks_path)["tasks"][0]
+    assert current["status"] == "open"
+    assert current["dispatch_log"] == []
+    assert task_id not in D._MODEL_SELECTION_RECEIPTS
+    assert task_id not in D._REMOTE_SUBMISSION_RECEIPTS
+    assert "queue busy" in capsys.readouterr().out
+
+
+def test_parallel_result_commit_fences_changed_workstream_contract(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    now_epoch = int(datetime.now(timezone.utc).timestamp())
+    contract_a = packet_contract("2d", now_epoch=now_epoch)
+    contract_b = packet_contract("2d", now_epoch=now_epoch + 1)
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "WORKSTREAM-PARALLEL-FENCE",
+                "title": "selected packet",
+                "repo": "organvm/limen",
+                "target_agent": "jules",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": [],
+                "predicate": "python3 scripts/check.py",
+                "receipt_target": "git:organvm/limen:logs/check.json",
+                "workstream_contract": contract_a,
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    def drift_then_return_successor(_agent, _task, dry_run=False):
+        assert dry_run is False
+        fresh = read_board(tasks_path)
+        fresh["tasks"][0]["status"] = "open"
+        fresh["tasks"][0]["workstream_contract"] = contract_b
+        tasks_path.write_text(yaml.safe_dump(fresh, sort_keys=False))
+        return D._workstream_successor_result("selected packet expired")
+
+    monkeypatch.setattr(D, "call_agent_dispatch", drift_then_return_successor)
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+
+    dispatch_parallel(
+        load_limen_file(tasks_path),
+        tasks_path,
+        agents=["jules"],
+        per_agent_limit=1,
+        max_workers=1,
+        dry_run=False,
+    )
+
+    current = read_board(tasks_path)["tasks"][0]
+    assert current["status"] == "open"
+    assert current["workstream_contract"] == contract_b
+    assert D.WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (current.get("labels") or [])
+    output = capsys.readouterr().out
+    assert "1 fenced" in output
+    assert "0 successor-required" in output
+
+
+def test_parallel_result_commit_fences_newer_claim_and_cleans_receipts(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    task_id = "PARALLEL-NEWER-CLAIM"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": task_id,
+                "title": "same executable work",
+                "repo": "example/repo",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": [],
+                "predicate": "python3 scripts/check.py",
+                "receipt_target": "git:example/repo:logs/check.json",
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            }
+        ],
+    )
+
+    def newer_claim_then_return_success(_agent, task, dry_run=False):
+        assert dry_run is False
+        fresh = read_board(tasks_path)
+        assert fresh["tasks"][0]["status"] == "dispatched"
+        fresh["tasks"][0]["updated"] = "2026-07-17T23:59:59+00:00"
+        fresh["tasks"][0]["dispatch_log"].append(
+            {
+                "timestamp": "2026-07-17T23:59:59+00:00",
+                "agent": "owner",
+                "session_id": "newer-claim",
+                "status": "dispatched",
+                "output": "newer owner reserved the same executable row",
+            }
+        )
+        tasks_path.write_text(yaml.safe_dump(fresh, sort_keys=False))
+        D._MODEL_SELECTION_RECEIPTS[task.id] = {
+            "selected_model": "stale-model",
+            "selection_source": "stale-result",
+        }
+        D._REMOTE_SUBMISSION_RECEIPTS[task.id] = {
+            "provider_run_id": "stale-run",
+            "remote_receipt": "logs/stale.json",
+        }
+        return True
+
+    monkeypatch.setattr(D, "call_agent_dispatch", newer_claim_then_return_success)
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+
+    dispatch_parallel(
+        load_limen_file(tasks_path),
+        tasks_path,
+        agents=["codex"],
+        per_agent_limit=1,
+        max_workers=1,
+        dry_run=False,
+    )
+
+    current = read_board(tasks_path)["tasks"][0]
+    assert current["status"] == "dispatched"
+    assert len(current["dispatch_log"]) == 2
+    assert current["dispatch_log"][-1]["session_id"] == "newer-claim"
+    assert "selected_model" not in current["dispatch_log"][-1]
+    assert "provider_run_id" not in current["dispatch_log"][-1]
+    assert task_id not in D._MODEL_SELECTION_RECEIPTS
+    assert task_id not in D._REMOTE_SUBMISSION_RECEIPTS
+    output = capsys.readouterr().out
+    assert "1 fenced" in output
+    assert "0 dispatched/PR" in output
+
+
+def test_parallel_result_commit_lock_busy_cleans_owned_receipts(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    task_id = "PARALLEL-LOCK-BUSY"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": task_id,
+                "title": "same executable work",
+                "repo": "example/repo",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "status": "open",
+                "labels": [],
+                "predicate": "python3 scripts/check.py",
+                "receipt_target": "git:example/repo:logs/check.json",
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    lock_calls = 0
+
+    class SequencedLock:
+        def __enter__(self):
+            nonlocal lock_calls
+            lock_calls += 1
+            return lock_calls == 1
+
+        def __exit__(self, *_args):
+            return False
+
+    def successful_result_with_receipts(_agent, task, dry_run=False):
+        assert dry_run is False
+        D._MODEL_SELECTION_RECEIPTS[task.id] = {"selected_model": "owned-model"}
+        D._REMOTE_SUBMISSION_RECEIPTS[task.id] = {"provider_run_id": "owned-run"}
+        return True
+
+    monkeypatch.setattr(D, "_queue_lock", lambda _path: SequencedLock())
+    monkeypatch.setattr(D, "call_agent_dispatch", successful_result_with_receipts)
+    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+
+    dispatch_parallel(
+        load_limen_file(tasks_path),
+        tasks_path,
+        agents=["codex"],
+        per_agent_limit=1,
+        max_workers=1,
+        dry_run=False,
+    )
+
+    current = read_board(tasks_path)["tasks"][0]
+    assert current["status"] == "dispatched"
+    assert len(current["dispatch_log"]) == 1
+    assert current["dispatch_log"][0]["session_id"] == "reserve"
+    assert task_id not in D._MODEL_SELECTION_RECEIPTS
+    assert task_id not in D._REMOTE_SUBMISSION_RECEIPTS
+    assert "queue busy" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("drift", "expected_reason"),
+    [
+        ("title", "execution contract changed"),
+        ("profile", "remote request changed"),
+        ("claim", "lifecycle ownership changed"),
+    ],
+)
+def test_remote_verification_rebuilds_exact_request_before_mutation(
+    tmp_path: Path,
+    monkeypatch,
+    drift: str,
+    expected_reason: str,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    child_id = f"REMOTE-FINAL-{drift.upper()}"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "REMOTE-IMPLEMENTATION",
+                "title": "land implementation",
+                "repo": "organvm/limen",
+                "type": "code",
+                "target_agent": "codex",
+                "predicate": "python3 scripts/check-implementation.py",
+                "receipt_target": "github:organvm/limen:pull-request:7",
+                "status": "done",
+                "created": "2026-07-16",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-07-16T00:00:00+00:00",
+                        "agent": "codex",
+                        "session_id": "https://github.com/organvm/limen/pull/7",
+                        "status": "done",
+                        "output": "merged https://github.com/organvm/limen/pull/7",
+                    }
+                ],
+            },
+            {
+                "id": child_id,
+                "title": "bounded public verification",
+                "repo": "organvm/limen",
+                "type": "verification",
+                "target_agent": "github_actions",
+                "predicate": "python3 scripts/check-remote.py",
+                "receipt_target": f"artifact:organvm/limen:task:{child_id}",
+                "status": "dispatched",
+                "labels": ["mode:verification-only"],
+                "depends_on": ["REMOTE-IMPLEMENTATION"],
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            },
+        ],
+    )
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks_path))
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    provider_mutations: list[str] = []
+
+    class FakeGitHubWorkflowAdapter:
+        control_repo = "organvm/limen"
+        control_ref = "main"
+        control_ref_kind = "branch"
+        control_sha = "c" * 40
+        workflow_id = 8675309
+        workflow_path = ".github/workflows/limen-agent.yml"
+
+    adapter = FakeGitHubWorkflowAdapter()
+
+    class GuardedLifecycle:
+        def __init__(self, _adapter, _store):
+            pass
+
+        def submit(self, _request, *, before_submit):
+            fresh = read_board(tasks_path)
+            child = next(item for item in fresh["tasks"] if item["id"] == child_id)
+            if drift == "title":
+                child["title"] = "concurrently rewritten verification"
+            elif drift == "profile":
+                child["dispatch_log"].append(
+                    {
+                        "timestamp": "2026-07-17T23:59:59+00:00",
+                        "agent": "owner",
+                        "session_id": "profile-driving-attempt",
+                        "status": "failed",
+                        "route_to": "codex",
+                        "output": "new attempt changed the live execution profile",
+                    }
+                )
+            else:
+                child["updated"] = "2026-07-17T23:59:59+00:00"
+                child["dispatch_log"].append(
+                    {
+                        "timestamp": "2026-07-17T23:59:59+00:00",
+                        "agent": "owner",
+                        "session_id": "newer-same-status-claim",
+                        "status": "dispatched",
+                        "output": "new owner claimed the unchanged remote packet",
+                    }
+                )
+            tasks_path.write_text(yaml.safe_dump(fresh, sort_keys=False))
+            before_submit()
+            provider_mutations.append("workflow-run")
+            raise AssertionError("authoritative guard failed to fence provider mutation")
+
+    monkeypatch.setattr(D, "GitHubWorkflowAdapter", FakeGitHubWorkflowAdapter)
+    monkeypatch.setattr(D, "RemoteLifecycle", GuardedLifecycle)
+    monkeypatch.setattr(D, "discover_adapters", lambda: ({"github_actions": adapter}, []))
+    monkeypatch.setattr(D, "resolve_pushed_sha", lambda *_args, **_kwargs: "a" * 40)
+    task = next(item for item in load_limen_file(tasks_path).tasks if item.id == child_id)
+
+    result = D._call_remote_adapter("github_actions", task, dry_run=False)
+
+    assert D._is_blocked_result(result)
+    assert expected_reason in D._blocked_reason(result)
+    assert provider_mutations == []
+    assert child_id not in D._REMOTE_SUBMISSION_RECEIPTS
+
+
+def test_conducted_remote_board_io_failure_stays_external_blocker(monkeypatch) -> None:
+    task = Task(
+        id="WORKSTREAM-REMOTE-IO",
+        title="verify implementation",
+        repo="organvm/limen",
+        target_agent="github_actions",
+        type="verification",
+        status="open",
+        created=date(2026, 7, 17),
+        workstream_contract=packet_contract("2d"),
+    )
+    monkeypatch.setattr(
+        D,
+        "_authoritative_remote_verification",
+        lambda _task: (_ for _ in ()).throw(OSError("authoritative board unreadable")),
+    )
+    monkeypatch.setattr(
+        D,
+        "discover_adapters",
+        lambda: (_ for _ in ()).throw(AssertionError("board gate must stop provider discovery")),
+    )
+
+    result = D._call_remote_adapter("github_actions", task, dry_run=False)
+
+    assert D._is_blocked_result(result)
+    assert not D._is_workstream_successor_result(result)
+    assert "authoritative board unreadable" in D._blocked_reason(result)
+
+
+def test_validated_remote_workstream_contract_drift_requires_successor(monkeypatch) -> None:
+    task = Task(
+        id="WORKSTREAM-REMOTE-DRIFT",
+        title="verify implementation",
+        repo="organvm/limen",
+        target_agent="github_actions",
+        type="verification",
+        status="open",
+        created=date(2026, 7, 17),
+        workstream_contract=packet_contract("2d"),
+    )
+    monkeypatch.setattr(
+        D,
+        "_authoritative_remote_verification",
+        lambda _task: (_ for _ in ()).throw(
+            D.WorkstreamLaunchContractError("authoritative workstream packet contract changed")
+        ),
+    )
+    monkeypatch.setattr(
+        D,
+        "discover_adapters",
+        lambda: (_ for _ in ()).throw(AssertionError("contract drift must stop provider discovery")),
+    )
+
+    result = D._call_remote_adapter("github_actions", task, dry_run=False)
+
+    assert D._is_workstream_successor_result(result)
+    assert not D._is_blocked_result(result)
+    assert "packet contract changed" in D._workstream_successor_reason(result)
 
 
 def test_dispatch_parallel_records_blocked_without_counting_failure(tmp_path: Path, monkeypatch, capsys) -> None:

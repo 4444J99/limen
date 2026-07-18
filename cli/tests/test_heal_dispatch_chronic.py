@@ -77,6 +77,54 @@ def test_chronic_open_task_parks_in_failed_blocked(tmp_path):
     assert out["FRESH1"]["status"] == "open", "non-chronic untouched"
 
 
+def test_successor_required_task_is_not_reclassified_by_stale_chronic_receipt(tmp_path):
+    held = _task(
+        "WORKSTREAM-SUCCESSOR",
+        "failed",
+        labels=["workstream:successor-required"],
+        log=[_entry("open"), _entry("open"), _entry("open"), _entry("failed", "successor required")],
+    )
+
+    out = _run(tmp_path, [held], chronic_ids=["WORKSTREAM-SUCCESSOR"])
+
+    task = out["WORKSTREAM-SUCCESSOR"]
+    assert task["status"] == "failed"
+    assert task["labels"] == ["workstream:successor-required"]
+    assert [(entry["status"], entry["output"]) for entry in task["dispatch_log"]] == [
+        (entry["status"], entry["output"]) for entry in held["dispatch_log"]
+    ]
+
+
+def test_jules_landing_hold_is_not_reopened_or_parked(tmp_path):
+    dispatched = _task(
+        "LANDING-DISPATCHED",
+        "dispatched",
+        labels=["jules:landing-held"],
+        log=[_entry("dispatched")],
+    )
+    dispatched["target_agent"] = "jules"
+    failed = _task(
+        "LANDING-FAILED",
+        "failed",
+        labels=["jules:landing-held"],
+        log=[_entry("failed")],
+    )
+    failed["target_agent"] = "jules"
+
+    out = _run(
+        tmp_path,
+        [dispatched, failed],
+        chronic_ids=["LANDING-DISPATCHED", "LANDING-FAILED"],
+        detail={"DISPATCHED_NO_PR": [{"id": "LANDING-DISPATCHED"}]},
+    )
+
+    assert out["LANDING-DISPATCHED"]["status"] == "dispatched"
+    assert out["LANDING-FAILED"]["status"] == "failed"
+    for task in out.values():
+        assert task["labels"] == ["jules:landing-held"]
+        assert len(task["dispatch_log"]) == 1
+
+
 def test_chronic_dispatched_no_pr_parks(tmp_path):
     out = _run(
         tmp_path,

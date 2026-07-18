@@ -10,7 +10,7 @@ import subprocess
 import sys
 import threading
 import time
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -32,8 +32,10 @@ from limen.capacity import (
     select_lanes,
 )
 from limen.dispatch_ownership import ACTIVE_OWNER_STATUSES
+from limen.execution_contract import execution_contract_hash
 from limen.io import load_limen_file, save_limen_file, queue_lock as _queue_lock
 from limen.intake import IntakeContractError, normalize_selected_legacy_task, validate_intake_contract
+from limen.host_admission import AdmissionDenied, hold_lease
 from limen.jules_remote import (
     JulesRemoteSnapshot,
     classify_jules_claim,
@@ -41,7 +43,7 @@ from limen.jules_remote import (
     probe_jules_remote_session_absences,
     task_jules_session_id,
 )
-from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
+from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task, has_jules_landing_hold
 from limen.runtime_requirements import task_execution_ready
 from limen.doctor import stale_tasks
 from limen.provider_selection import (
@@ -82,6 +84,11 @@ from limen.worktree_debt import (
     take_admission_snapshot,
 )
 from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
+from limen.workstream_contract import (
+    ContractError as WorkstreamContractError,
+    WORKSTREAM_SUCCESSOR_REQUIRED_LABEL,
+    validate_packet_contract,
+)
 
 
 def _int_or_default(raw: object, default: int) -> int:
@@ -870,7 +877,11 @@ def _dispatchable(task: Task) -> bool:
     """Open, live-ready machine work only. Human-gated or done work is never reserved."""
     if task.status != "open":
         return False
+    if has_jules_landing_hold(task):
+        return False
     if _has_done_transition(task) or _has_pr_open_transition(task):
+        return False
+    if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (task.labels or []):
         return False
     if "needs-human" in (task.labels or []):
         return False
@@ -1298,7 +1309,7 @@ def _run_parallel_batch(
     picked: list[tuple[str, str]],
     run_one: Any,
     max_local_workers: int,
-) -> list[tuple[str, str, bool | str]]:
+) -> list[Any]:
     """Run local work under the host ceiling while remote work starts independently.
 
     Selection has already bounded remote work by live provider runway and lane limits. Giving those
@@ -1514,6 +1525,12 @@ def session_id() -> str:
 
 def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     agent = canonical_agent(agent)
+    try:
+        workstream_packet = _workstream_packet_for(task)
+    except WorkstreamLaunchContractError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
+        return _workstream_successor_result(reason)
     if agent == "jules":
         return _call_jules(task, dry_run)
     if agent == "github_actions":
@@ -1526,6 +1543,10 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     # subprocess blocking on auth/network. Guarded Jules and GitHub Actions routes stay above it.
     cmd_override = os.environ.get("LIMEN_DISPATCH_CMD")
     if cmd_override:
+        if workstream_packet is not None:
+            reason = "conducted workstream packets cannot bypass their guarded adapter via LIMEN_DISPATCH_CMD"
+            print(f"  BLOCKED {task.id}: {reason}")
+            return _workstream_successor_result(reason)
         return _run_cmd([cmd_override, agent, _build_prompt(task)], task, dry_run)
     if agent == "copilot":
         return _call_copilot(task, dry_run)
@@ -1534,7 +1555,31 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
     if agent in _CONFIGURED_SERVICE_AGENTS:
         return _call_configured_paid_service(agent, task, dry_run)
     if agent in _LOCAL_AGENTS:
-        return _call_local_agent(agent, task, dry_run)
+        if dry_run:
+            return _call_local_agent(agent, task, dry_run)
+        task_key = hashlib.sha256(task.id.encode("utf-8")).hexdigest()[:16]
+        owner = f"limen-dispatch-{agent}-{task_key}-{os.getpid()}"
+        try:
+            with ExitStack() as leases:
+                if agent == "codex":
+                    leases.enter_context(
+                        hold_lease(
+                            "execution",
+                            owner=owner,
+                            surface="limen-codex-dispatch",
+                        )
+                    )
+                leases.enter_context(
+                    hold_lease(
+                        "heavy",
+                        owner=owner,
+                        surface=f"limen-{agent}-dispatch",
+                    )
+                )
+                return _call_local_agent(agent, task, dry_run)
+        except AdmissionDenied as exc:
+            reasons = ",".join(exc.decision.get("reasons") or ["host-admission-denied"])
+            return _blocked_result(f"host admission denied local {agent} execution: {reasons}")
     return _run_cmd(["agent-dispatch", agent, _build_prompt(task)], task, dry_run)
 
 
@@ -1562,17 +1607,15 @@ def _authoritative_remote_verification(task: Task) -> tuple[Task, dict[str, obje
     authoritative = by_id.get(task.id)
     if authoritative is None:
         raise RemoteExecutionError("verification child is absent from the authoritative task board")
-    fields = (
-        "type",
-        "repo",
-        "target_agent",
-        "predicate",
-        "receipt_target",
-        "execution_requirements",
-        "labels",
-        "depends_on",
-    )
-    if any(getattr(authoritative, field) != getattr(task, field) for field in fields):
+    if authoritative.workstream_contract != task.workstream_contract:
+        raise WorkstreamLaunchContractError("authoritative workstream packet contract changed before dispatch")
+    try:
+        contract_changed = execution_contract_hash(authoritative) != execution_contract_hash(task)
+    except (TypeError, ValueError) as exc:
+        raise RemoteExecutionError("verification child execution contract is invalid") from exc
+    if contract_changed:
+        raise RemoteExecutionError("verification child execution contract changed on the authoritative board")
+    if authoritative.status != task.status:
         raise RemoteExecutionError("verification child changed on the authoritative board before dispatch")
     return authoritative, verification_context_for_task(authoritative, by_id)
 
@@ -1584,10 +1627,17 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
     shaping, Copilot issue identity, paid-service/Fable policy, or provider model validation.
     """
 
+    selected_lifecycle_token = _lifecycle_ownership_token(task)
     try:
         remote_task, verification_context = _authoritative_remote_verification(task)
+        if _lifecycle_ownership_token(remote_task) != selected_lifecycle_token:
+            raise RemoteExecutionError("verification child lifecycle ownership changed during initial verification")
+    except WorkstreamLaunchContractError as exc:
+        reason = f"remote {agent} verification requires a successor workstream: {str(exc)[:300]}"
+        return _workstream_successor_result(reason)
     except (RemoteExecutionError, ValueError, OSError) as exc:
-        return _blocked_result(f"remote {agent} verification-only gate blocked: {str(exc)[:300]}")
+        reason = f"remote {agent} verification-only gate blocked: {str(exc)[:300]}"
+        return _blocked_result(reason)
     adapters, _capabilities = discover_adapters()
     adapter = adapters.get(agent)
     if not isinstance(adapter, GitHubWorkflowAdapter):
@@ -1630,22 +1680,51 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
             ref=base_ref,
             gh=os.environ.get("LIMEN_GITHUB_ACTIONS_BIN", "gh"),
         )
-        request = remote_request_from_task(
-            remote_task,
-            agent,
-            base_sha=base_sha,
-            control_repo=adapter.control_repo,
-            control_ref=adapter.control_ref,
-            control_ref_kind=adapter.control_ref_kind,
-            control_sha=adapter.control_sha,
-            workflow_id=adapter.workflow_id,
-            workflow_path=adapter.workflow_path,
-            verification_context=verification_context,
-            instruction=instruction,
-            repo=repo,
-            execution_profile=execution_profile_for(remote_task).as_dict(),
+
+        def build_request(current_task: Task, current_context: dict[str, object]):
+            current_repo = _remote_repo_arg(current_task)
+            if current_repo is None:
+                raise RemoteExecutionError(
+                    f"remote lane needs GitHub owner/repo, got {current_task.repo or '(no repo)'}"
+                )
+            current_instruction = (
+                f"Verify completed implementation for task {current_task.id}; do not modify code: {current_task.title}"
+            )
+            return remote_request_from_task(
+                current_task,
+                agent,
+                base_sha=base_sha,
+                control_repo=adapter.control_repo,
+                control_ref=adapter.control_ref,
+                control_ref_kind=adapter.control_ref_kind,
+                control_sha=adapter.control_sha,
+                workflow_id=adapter.workflow_id,
+                workflow_path=adapter.workflow_path,
+                verification_context=current_context,
+                instruction=current_instruction,
+                repo=current_repo,
+                execution_profile=execution_profile_for(current_task).as_dict(),
+            )
+
+        request = build_request(remote_task, verification_context)
+
+        def final_workstream_guard() -> dict[str, Any] | None:
+            current_task, current_context = _authoritative_remote_verification(remote_task)
+            current_request = build_request(current_task, current_context)
+            if current_request != request:
+                raise RemoteExecutionError("remote request changed on the authoritative board before mutation")
+            if _lifecycle_ownership_token(current_task) != selected_lifecycle_token:
+                raise RemoteExecutionError("verification child lifecycle ownership changed before mutation")
+            return _workstream_packet_for(current_task)
+
+        run, receipt_path = RemoteLifecycle(adapter, _remote_receipt_store()).submit(
+            request,
+            before_submit=final_workstream_guard,
         )
-        run, receipt_path = RemoteLifecycle(adapter, _remote_receipt_store()).submit(request)
+    except WorkstreamLaunchContractError as exc:
+        reason = f"remote {agent} submission requires a successor workstream: {str(exc)[:300]}"
+        print(f"  BLOCKED {task.id}: {reason}")
+        return _workstream_successor_result(reason)
     except (RemoteExecutionError, ValueError, OSError) as exc:
         reason = f"remote {agent} submission blocked: {str(exc)[:300]}"
         print(f"  BLOCKED {task.id}: {reason}")
@@ -1793,6 +1872,12 @@ def _run_cmd(cmd: list[str], task: Task, dry_run: bool, cwd: str | None = None) 
         loc = f" [cwd={cwd}]" if cwd else ""
         print(f"  would:{loc} {' '.join(cmd)}")
         return True
+    try:
+        _workstream_packet_for(task)
+    except WorkstreamLaunchContractError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
+        return _workstream_successor_result(reason)
     try:
         result = _run_capture(
             cmd,
@@ -2041,14 +2126,18 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
 # WRITE MODE matters: several CLIs default to read-only / no-edit in headless
 # mode, so they'd execute but never change a file. Flags below opt each into
 # autonomous workspace writes:
-#   - codex: needs --skip-git-repo-check (else aborts outside a "trusted" dir)
-#     and --sandbox workspace-write (default sandbox is read-only). exec is
-#     already non-interactive (approval: never).
+#   - codex: global --ask-for-approval never plus --sandbox workspace-write
+#     must precede exec. --skip-git-repo-check belongs to exec.
 #   - claude: -p is non-interactive; dontAsk plus an explicit build-tool allowlist
 #     runs authorized work and turns every residual permission decision into a hard
 #     denial instead of a modal.  Auto can fall back to prompting, acceptEdits still
 #     prompts for Bash, and bypassPermissions is not safe on the host.
-#   - opencode/agy: edit by default in run/-p mode (verified READY headless).
+#   - opencode: pure run mode is noninteractive. Conducted workstreams add a
+#     deny-by-default permission overlay at the final spawn seam; Bash stays
+#     denied, so this is an edit-capable lane rather than a build/test lane.
+#   - agy: sandboxed print mode is noninteractive. A finite print timeout turns
+#     unresolved tool denials into a bounded lane failure without bypassing
+#     permissions.
 #   - gemini: requires GEMINI_API_KEY / settings.json auth (not configured;
 #     lane is wired but will fail until auth is set).
 def _opencode_model(task: Task | None = None) -> str | None:
@@ -2084,20 +2173,26 @@ def _opencode_model(task: Task | None = None) -> str | None:
 
 
 _LOCAL_AGENTS: dict[str, list[str]] = {
-    "codex": ["exec", "--skip-git-repo-check", "--sandbox", "workspace-write"],
+    "codex": [
+        "--ask-for-approval",
+        "never",
+        "--sandbox",
+        "workspace-write",
+        "exec",
+        "--skip-git-repo-check",
+    ],
     # opencode: `run` with NO -m silently no-ops (no auth.json + no default model in
     # opencode.jsonc → 0 PRs). The model is injected LAZILY in _agent_argv() and DERIVED
     # from `opencode models` (never pinned, never resolved at import) — see _opencode_model().
-    "opencode": ["run"],
+    "opencode": ["--pure", "run"],
     # gemini: flags FIRST, then -p LAST so the appended prompt immediately follows -p
     # (gemini errors "Not enough arguments following: -p" otherwise). auto_edit = edits-only.
     "gemini": ["--approval-mode", "auto_edit", "-p"],
-    # agy/antigravity: -p (=--print) TAKES the prompt as its value, so it MUST come LAST
-    # with the appended prompt immediately after it (same bug class as gemini). With -p not
-    # last, it swallowed --dangerously-skip-permissions as the prompt → agent got no task
-    # ("acknowledged, ready to assist") and wrote nothing. Flags first, -p last.
-    "agy": ["--dangerously-skip-permissions", "-p"],
-    "antigravity": ["--dangerously-skip-permissions", "-p"],
+    # agy/antigravity: -p (=--print) TAKES the prompt as its value, so it MUST come LAST.
+    # The sandbox and finite print timeout are the no-modal boundary; dangerous permission
+    # bypass is deliberately prohibited.
+    "agy": ["--sandbox", "--print-timeout", "30m", "-p"],
+    "antigravity": ["--sandbox", "--print-timeout", "30m", "-p"],
     "claude": [
         "-p",
         "--permission-mode",
@@ -2121,10 +2216,51 @@ _LOCAL_AGENTS: dict[str, list[str]] = {
 
 _CLAUDE_NO_MODAL_MODE = "dontAsk"
 _CLAUDE_REQUIRED_BUILD_TOOLS = frozenset({"Edit", "Write"})
+_OPENCODE_WORKSTREAM_PERMISSION = {
+    "*": "deny",
+    "read": {
+        "*": "allow",
+        ".env": "deny",
+        ".env*": "deny",
+        ".env.*": "deny",
+        "**/.env": "deny",
+        "**/.env*": "deny",
+        "**/.env.*": "deny",
+    },
+    "edit": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "lsp": "allow",
+    "skill": "allow",
+    "todowrite": "allow",
+    "bash": "deny",
+    "task": "deny",
+    "question": "deny",
+    "external_directory": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "doom_loop": "deny",
+    "plan_enter": "deny",
+    "plan_exit": "deny",
+}
+_OPENCODE_WORKSTREAM_PERMISSION_JSON = json.dumps(
+    _OPENCODE_WORKSTREAM_PERMISSION,
+    sort_keys=True,
+    separators=(",", ":"),
+)
 
 
 class ClaudeLaunchContractError(RuntimeError):
     """The internal Claude argv could wait for unavailable operator input."""
+
+
+class WorkstreamLaunchContractError(RuntimeError):
+    """A conducted packet cannot be represented safely at a local launch seam."""
+
+
+class ProviderSelectionError(RuntimeError):
+    """A provider override cannot be validated against live provider metadata."""
 
 
 def _option_values(argv: list[str], *names: str) -> list[str]:
@@ -2223,6 +2359,176 @@ def _assert_claude_no_modal_contract(argv: list[str]) -> None:
         )
 
 
+def _option_positions(argv: list[str], *names: str) -> list[int]:
+    return [
+        index
+        for index, value in enumerate(argv)
+        if any(value == name or value.startswith(f"{name}=") for name in names)
+    ]
+
+
+def _workstream_packet_for(task: Task | None, *, now_epoch: int | None = None) -> dict[str, Any] | None:
+    if task is None:
+        return None
+    value = getattr(task, "workstream_contract", None)
+    if value is None:
+        return None
+    try:
+        packet = validate_packet_contract(value)
+    except WorkstreamContractError as exc:
+        raise WorkstreamLaunchContractError(f"invalid workstream packet contract: {exc}") from exc
+    now = int(time.time()) if now_epoch is None else int(now_epoch)
+    if int(packet["runway"]["deadline_epoch"]) - now <= 0:
+        raise WorkstreamLaunchContractError("workstream packet runway is exhausted; successor-route before launch")
+    return packet
+
+
+def _assert_codex_workstream_argv(argv: list[str]) -> None:
+    approvals = _option_values(argv, "--ask-for-approval", "-a")
+    sandboxes = _option_values(argv, "--sandbox", "-s")
+    if approvals != ["never"]:
+        raise WorkstreamLaunchContractError("Codex workstream launch requires exactly one approval policy: never")
+    if sandboxes != ["workspace-write"]:
+        raise WorkstreamLaunchContractError("Codex workstream launch requires exactly one workspace-write sandbox")
+    if argv.count("exec") != 1:
+        raise WorkstreamLaunchContractError("Codex workstream launch requires exactly one noninteractive exec command")
+    exec_index = argv.index("exec")
+    if any(index >= exec_index for index in _option_positions(argv, "--ask-for-approval", "-a", "--sandbox", "-s")):
+        raise WorkstreamLaunchContractError("Codex approval and sandbox flags must precede exec")
+    forbidden = {
+        "--dangerously-bypass-approvals-and-sandbox",
+        "--dangerously-bypass-hook-trust",
+        "--ignore-rules",
+    }
+    present = sorted(value for value in argv if value.split("=", 1)[0] in forbidden)
+    if present:
+        raise WorkstreamLaunchContractError(
+            f"Codex workstream launch must not bypass approvals, sandboxing, or rules: {', '.join(present)}"
+        )
+    if _option_positions(argv, "--add-dir"):
+        raise WorkstreamLaunchContractError("Codex workstream launch must not widen workspace-write with --add-dir")
+
+
+def _assert_agy_workstream_argv(argv: list[str]) -> None:
+    if argv.count("--sandbox") != 1:
+        raise WorkstreamLaunchContractError("Agy workstream launch requires exactly one terminal sandbox")
+    forbidden = {
+        "--dangerously-skip-permissions",
+        "--prompt-interactive",
+        "-i",
+        "--continue",
+        "-c",
+        "--conversation",
+    }
+    present = sorted(value for value in argv if value.split("=", 1)[0] in forbidden)
+    if present:
+        raise WorkstreamLaunchContractError(
+            f"Agy workstream launch must not bypass permissions or open an interactive session: {', '.join(present)}"
+        )
+    print_positions = [index for index, value in enumerate(argv) if value in {"-p", "--print", "--prompt"}]
+    if print_positions != [len(argv) - 1]:
+        raise WorkstreamLaunchContractError("Agy workstream launch requires exactly one print flag in final position")
+    timeouts = _option_values(argv, "--print-timeout")
+    if len(timeouts) != 1:
+        raise WorkstreamLaunchContractError("Agy workstream launch requires exactly one finite print timeout")
+    match = re.fullmatch(r"([1-9][0-9]*)([smhd])", timeouts[0])
+    if not match:
+        raise WorkstreamLaunchContractError("Agy print timeout must be one positive bounded duration")
+    unit_seconds = {"s": 1, "m": 60, "h": 3_600, "d": 86_400}
+    timeout_seconds = int(match.group(1)) * unit_seconds[match.group(2)]
+    lane_timeout = max(1, _env_int("LIMEN_LANE_TIMEOUT", 1800))
+    if timeout_seconds > lane_timeout:
+        raise WorkstreamLaunchContractError(f"Agy print timeout exceeds the configured lane ceiling of {lane_timeout}s")
+    if _option_positions(argv, "--add-dir"):
+        raise WorkstreamLaunchContractError("Agy workstream launch must not widen the workspace with --add-dir")
+
+
+def _assert_opencode_workstream_argv(argv: list[str], *, workspace: Path | None = None) -> None:
+    if argv.count("run") != 1:
+        raise WorkstreamLaunchContractError(
+            "OpenCode workstream launch requires exactly one noninteractive run command"
+        )
+    if argv.count("--pure") != 1:
+        raise WorkstreamLaunchContractError("OpenCode workstream launch requires pure mode")
+    prohibited = {
+        "--auto",
+        "--share",
+        "--attach",
+        "--interactive",
+        "-i",
+        "--yolo",
+        "--dangerously-skip-permissions",
+        "--dangerously-bypass-approvals-and-sandbox",
+    }
+    present = sorted(value for value in argv if value.split("=", 1)[0] in prohibited)
+    if present:
+        raise WorkstreamLaunchContractError(
+            f"OpenCode workstream launch contains unsafe or interactive flags: {', '.join(present)}"
+        )
+    directories = _option_values(argv, "--dir")
+    if workspace is None:
+        if directories:
+            raise WorkstreamLaunchContractError("OpenCode static argv must not carry a stale workspace directory")
+    elif directories != [str(workspace)]:
+        raise WorkstreamLaunchContractError("OpenCode workstream launch must pin --dir to its isolated worktree")
+
+
+def _assert_workstream_agent_argv(agent: str, argv: list[str], *, workspace: Path | None = None) -> None:
+    if agent == "codex":
+        _assert_codex_workstream_argv(argv)
+    elif agent in {"agy", "antigravity"}:
+        _assert_agy_workstream_argv(argv)
+    elif agent == "opencode":
+        _assert_opencode_workstream_argv(argv, workspace=workspace)
+
+
+def _opencode_workstream_env(run_env: dict[str, str]) -> None:
+    """Install the exact post-config safety overlay for a conducted edit packet."""
+
+    run_env["OPENCODE_PERMISSION"] = _OPENCODE_WORKSTREAM_PERMISSION_JSON
+    run_env["OPENCODE_PURE"] = "1"
+    run_env["OPENCODE_DISABLE_EXTERNAL_SKILLS"] = "1"
+    run_env["OPENCODE_DISABLE_SHARE"] = "1"
+    # Project configuration stays enabled so repository AGENTS/instructions remain visible.
+    run_env.pop("OPENCODE_DISABLE_PROJECT_CONFIG", None)
+
+
+def _assert_opencode_workstream_env(run_env: dict[str, str]) -> None:
+    expected = {
+        "OPENCODE_PERMISSION": _OPENCODE_WORKSTREAM_PERMISSION_JSON,
+        "OPENCODE_PURE": "1",
+        "OPENCODE_DISABLE_EXTERNAL_SKILLS": "1",
+        "OPENCODE_DISABLE_SHARE": "1",
+    }
+    drift = [name for name, value in expected.items() if run_env.get(name) != value]
+    if drift:
+        raise WorkstreamLaunchContractError(
+            f"OpenCode workstream safety environment is missing or changed: {', '.join(drift)}"
+        )
+    if _truthy_env_value(run_env.get("OPENCODE_DISABLE_PROJECT_CONFIG")):
+        raise WorkstreamLaunchContractError(
+            "OpenCode workstream launch must preserve project AGENTS/instruction discovery"
+        )
+
+
+def _truthy_env_value(raw: str | None) -> bool:
+    return raw is not None and raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _assert_final_workstream_launch(
+    agent: str,
+    task: Task,
+    argv: list[str],
+    run_env: dict[str, str],
+    workspace: Path,
+) -> None:
+    if _workstream_packet_for(task) is None:
+        return
+    _assert_workstream_agent_argv(agent, argv, workspace=workspace if agent == "opencode" else None)
+    if agent == "opencode":
+        _assert_opencode_workstream_env(run_env)
+
+
 _LOCAL_BIN: dict[str, str] = {
     # opencode-clock wraps the real opencode binary with an internal usage clock
     # (token tracking from SQLite DB) and presence beacon. Falls through to plain
@@ -2249,11 +2555,16 @@ def _call_configured_paid_service(agent: str, task: Task, dry_run: bool) -> bool
 
 def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
     """Static lane flags + any LAZILY-derived per-run flags, so nothing is pinned or
-    resolved at import time. OpenCode selects from its live catalog; Codex uses provider Auto unless
-    the operator supplied an explicit override; Claude's tier is derived per task (the earned-tier
-    ladder). `task` is optional for legacy callers; OpenCode and Claude use its current evidence."""
+    resolved at import time. OpenCode selects from its live catalog; Codex and Gemini delegate to
+    provider Auto because their CLIs expose no catalog; Claude's tier is derived per task (the
+    earned-tier ladder). `task` is optional for legacy callers; OpenCode and Claude use its current
+    evidence."""
+    now = int(time.time())
+    workstream_packet = _workstream_packet_for(task, now_epoch=now)
     model: str | None = None
     flags = list(_LOCAL_AGENTS[agent])
+    if agent in {"codex", "opencode"}:
+        _assert_workstream_agent_argv(agent, flags)
     if agent == "opencode":
         model = _opencode_model(task)
         if model:
@@ -2281,6 +2592,15 @@ def _agent_argv(agent: str, task: Task | None = None) -> list[str]:
         if model:
             idx = flags.index("-p")
             flags[idx:idx] = ["-m", model]
+    if agent in {"agy", "antigravity"}:
+        bounded_seconds = max(1, _env_int("LIMEN_LANE_TIMEOUT", 1800))
+        if workstream_packet is not None:
+            remaining = int(workstream_packet["runway"]["deadline_epoch"]) - now
+            bounded_seconds = min(remaining, bounded_seconds)
+        timeout_index = flags.index("--print-timeout") + 1
+        flags[timeout_index] = f"{bounded_seconds}s"
+    if agent in {"codex", "opencode", "agy", "antigravity"}:
+        _assert_workstream_agent_argv(agent, flags)
     return flags
 
 
@@ -3037,6 +3357,7 @@ _RATELIMIT = "__ratelimit__"
 # in the cloud. One timeout → jules, instead of 5 timeouts → failed.
 _TIMEOUT = "__timeout__"
 _FAILED_BLOCKED_PREFIX = "__failed_blocked__:"
+_WORKSTREAM_SUCCESSOR_PREFIX = "__workstream_successor__:"
 _RATE_PATTERNS = re.compile(
     r"rate.?limit|quota|usage limit|too many requests|\b429\b|\b529\b|"
     r"resource.?exhausted|overloaded|insufficient_quota|throttl|out of (?:tokens|credits)",
@@ -3060,6 +3381,20 @@ def _blocked_reason(result: bool | str) -> str:
     if not _is_blocked_result(result):
         return ""
     return str(result)[len(_FAILED_BLOCKED_PREFIX) :]
+
+
+def _workstream_successor_result(reason: str) -> str:
+    return _WORKSTREAM_SUCCESSOR_PREFIX + " ".join((reason or "workstream boundary reached").split())[:500]
+
+
+def _is_workstream_successor_result(result: bool | str) -> bool:
+    return isinstance(result, str) and result.startswith(_WORKSTREAM_SUCCESSOR_PREFIX)
+
+
+def _workstream_successor_reason(result: bool | str) -> str:
+    if not _is_workstream_successor_result(result):
+        return ""
+    return str(result)[len(_WORKSTREAM_SUCCESSOR_PREFIX) :]
 
 
 _REPO_UNAVAILABLE_PATTERNS = re.compile(
@@ -3704,7 +4039,7 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
         print(f"  agy-bridge {task.id}: skipped ({str(e)[:80]})")
 
 
-def _lane_run_env(agent: str, wt: Path | None = None) -> dict[str, str]:
+def _lane_run_env(agent: str, wt: Path | None = None, task: Task | None = None) -> dict[str, str]:
     run_env = os.environ.copy()
     if wt is not None:
         live_root = os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))
@@ -3736,6 +4071,8 @@ def _lane_run_env(agent: str, wt: Path | None = None) -> dict[str, str]:
         elif fleet_key:
             run_env["ANTHROPIC_API_KEY"] = fleet_key
         run_env.pop("CLAUDE_CODE_OAUTH_TOKEN", None)
+    if agent == "opencode" and _workstream_packet_for(task) is not None:
+        _opencode_workstream_env(run_env)
     return run_env
 
 
@@ -3771,16 +4108,29 @@ def _run_isolated_agent(
     agent_cmd: list[str],
     lane_timeout: int,
 ) -> bool | str:
-    run_env = _lane_run_env(agent, wt)
-    if agent == "opencode":
-        run_env["LIMEN_OPENCODE_CLOCK"] = "1"
-        run_env["LIMEN_TASK_ID"] = task.id
+    try:
+        run_env = _lane_run_env(agent, wt, task)
+        if agent == "opencode":
+            run_env["LIMEN_OPENCODE_CLOCK"] = "1"
+            run_env["LIMEN_TASK_ID"] = task.id
+        _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
+    except WorkstreamLaunchContractError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
+        return _workstream_successor_result(reason)
     try:
         run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
         # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
         # a fresh process re-reads the now-rotated token. ONE retry only.
         if agent == "claude" and run.returncode != 0 and _is_auth_blip((run.stderr or "") + (run.stdout or "")):
             print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
+            try:
+                run_env = _lane_run_env(agent, wt, task)
+                _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
+            except WorkstreamLaunchContractError as exc:
+                reason = str(exc)
+                print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
+                return _workstream_successor_result(reason)
             run = _run_capture(agent_cmd, cwd=str(wt), timeout=lane_timeout, env=run_env)
     except subprocess.TimeoutExpired:
         print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
@@ -4069,7 +4419,21 @@ def _resolve_agent_binary(agent: str) -> str:
     return binary
 
 
-def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
+def _workspace_agent_args(agent: str, base_args: list[str], workspace: Path) -> list[str]:
+    args = list(base_args)
+    if agent == "opencode":
+        args.extend(["--dir", str(workspace)])
+    if agent in {"codex", "opencode", "agy", "antigravity"}:
+        _assert_workstream_agent_argv(agent, args, workspace=workspace if agent == "opencode" else None)
+    return args
+
+
+def _isolated_local_run(
+    agent: str,
+    task: Task,
+    dry_run: bool,
+    base_agent_args: list[str] | None = None,
+) -> bool | str:
     binary = _resolve_agent_binary(agent)
     repo_dir = _resolve_repo_dir(task)
     if repo_dir is None and not dry_run:
@@ -4103,7 +4467,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     branch = f"limen/{slug}-{suffix}"
     isolation_root = _isolation_root()
     wt = isolation_root / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
-    agent_args = _agent_argv(agent, task)
+    base_agent_args = list(base_agent_args) if base_agent_args is not None else _agent_argv(agent, task)
     prompt = _build_prompt(task)
     if os.environ.get("LIMEN_ISOLATION_PROMPT_GUARD", "1") == "1":
         prompt = (
@@ -4112,7 +4476,6 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
             "and $LIMEN_ROOT as the only writable checkout. Do not edit the live root, do not edit "
             "$LIMEN_LIVE_ROOT, and do not edit tasks.yaml; the dispatcher records task state."
         )
-    agent_cmd = [binary, *agent_args, prompt]
     # 1800s (was 900): local lanes have ABUNDANT budget headroom (codex/claude/opencode ~60-92 left
     # per window) while jules is scarce (≈100/day). At 900s, big tasks — incl. the revenue/deploy
     # tasks (BLD2-*-deploy, REV-*) — timed out locally then bled to jules, exhausting the scarce lane
@@ -4121,6 +4484,7 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
     lane_timeout = max(1, _env_int("LIMEN_LANE_TIMEOUT", 1800))
 
     if dry_run:
+        agent_args = _workspace_agent_args(agent, base_agent_args, wt)
         pr_note = f"; PR base {pr_base}" if pr_head else ""
         print(
             f"  would isolate {task.id}: worktree {wt} off {checkout_ref}{pr_note} "
@@ -4163,6 +4527,8 @@ def _isolated_local_run(agent: str, task: Task, dry_run: bool) -> bool | str:
 
     pushed = False
     try:
+        agent_args = _workspace_agent_args(agent, base_agent_args, wt)
+        agent_cmd = [binary, *agent_args, prompt]
         start_head_result = _git(["rev-parse", "HEAD"], wt)
         start_head = start_head_result.stdout.strip() if start_head_result.returncode == 0 else ""
         run_result = _run_isolated_agent(agent, task, wt, agent_cmd, lane_timeout)
@@ -4205,13 +4571,20 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
     if not agent_can_run_task(agent, task):
         print(f"  SKIP {task.id}: {agent} is gated for Limen registry discovery tasks")
         return False
-    if agent == "claude":
-        try:
-            _assert_claude_no_modal_contract(list(_LOCAL_AGENTS[agent]))
-        except ClaudeLaunchContractError as exc:
-            print(f"  BLOCKED {task.id}: {exc}; refusing provider launch so the lane can cascade")
-            return False
-    if agent == "opencode" and "-m" not in _agent_argv(agent, task):
+    try:
+        agent_args = _agent_argv(agent, task)
+    except WorkstreamLaunchContractError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
+        return _workstream_successor_result(reason)
+    except ProviderSelectionError as exc:
+        reason = str(exc)
+        print(f"  BLOCKED {task.id}: {reason}")
+        return _blocked_result(reason)
+    except ClaudeLaunchContractError as exc:
+        print(f"  BLOCKED {task.id}: {exc}; refusing provider launch so the lane can cascade")
+        return False
+    if agent == "opencode" and "-m" not in agent_args:
         reason = "no code-capable model is exposed by the live OpenCode catalog"
         if dry_run:
             print(f"  would BLOCK {task.id}: {reason}")
@@ -4219,18 +4592,22 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str:
         print(f"  BLOCKED {task.id}: {reason}")
         return _blocked_result(reason)
     if _worktree_isolation_enabled():
-        return _isolated_local_run(agent, task, dry_run)
+        return _isolated_local_run(agent, task, dry_run, agent_args)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)
     binary = _resolve_agent_binary(agent)
-    cmd = [binary, *_agent_argv(agent, task), _build_prompt(task)]
     cwd = _resolve_repo_dir(task)
     if cwd is None:
         msg = f"no local checkout of {task.repo or '(no repo)'}"
         if dry_run:
-            print(f"  would [{msg}; clone first]: {binary} {' '.join(_agent_argv(agent, task))} …")
+            print(f"  would [{msg}; clone first]: {binary} {' '.join(agent_args)} …")
             return True
         print(f"  SKIP {task.id}: {msg} — clone it under $LIMEN_WORKDIR first")
         return False
+    if _workstream_packet_for(task) is not None:
+        reason = "conducted workstream packets require the isolated local launch path"
+        print(f"  BLOCKED {task.id}: {reason}")
+        return False
+    cmd = [binary, *agent_args, _build_prompt(task)]
     return _run_cmd(cmd, task, dry_run, cwd=str(cwd))
 
 
@@ -4295,10 +4672,58 @@ def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
     return max(0, budget - track.spent)
 
 
+DispatchResult = tuple[str, str, bool | str, str, str]
+
+
+def _clear_result_receipts(task_id: str) -> None:
+    """Drop process-local metadata once one provider result reaches a terminal seam."""
+
+    _MODEL_SELECTION_RECEIPTS.pop(task_id, None)
+    _REMOTE_SUBMISSION_RECEIPTS.pop(task_id, None)
+
+
+def _result_contract_is_current(task: Task, selected_contract_hash: str) -> bool:
+    """Fence a completed provider result to the exact executable task that was selected."""
+
+    try:
+        return execution_contract_hash(task) == selected_contract_hash
+    except (TypeError, ValueError):
+        return False
+
+
+def _lifecycle_ownership_token(task: Task) -> str:
+    """Fingerprint the exact lifecycle row that owns one provider result.
+
+    The execution contract intentionally excludes state. Result commits need both:
+    executable identity prevents applying a result to rewritten work, while this
+    token prevents an old run from overwriting a newer claim or terminal decision
+    whose executable fields happen to be unchanged.
+    """
+
+    payload = {
+        "schema_version": "limen-result-lifecycle-owner.v1",
+        "status": task.status,
+        "updated": task.updated.isoformat() if task.updated is not None else None,
+        "dispatch_log": [entry.model_dump(mode="json", exclude_none=False) for entry in task.dispatch_log],
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _result_owner_is_current(
+    task: Task,
+    selected_contract_hash: str,
+    selected_lifecycle_token: str,
+) -> bool:
+    return _result_contract_is_current(task, selected_contract_hash) and (
+        _lifecycle_ownership_token(task) == selected_lifecycle_token
+    )
+
+
 def _commit_dispatch_results(
     tasks_path: Path,
     limen: LimenFile,
-    results: list[tuple[str, str, bool | str]],
+    results: list[DispatchResult],
     now: datetime,
 ) -> None:
     """COMMIT for the serial path, mirroring dispatch_parallel's commit: reload FRESH under the
@@ -4309,6 +4734,8 @@ def _commit_dispatch_results(
     the fresh board is skipped."""
     with _queue_lock(tasks_path) as got:
         if not got:
+            for _agent, task_id, _result, _selected_hash, _selected_owner in results:
+                _clear_result_receipts(task_id)
             print(
                 f"── dispatch: queue busy — {len(results)} result(s) NOT committed this round; "
                 "harvest reconciles from PR state (self-corrects next beat)"
@@ -4321,18 +4748,28 @@ def _commit_dispatch_results(
             t.id: (t.predicate, t.receipt_target) for t in limen.tasks if t.predicate and t.receipt_target
         }
         ftrack = fresh.portal.budget.track
-        for agent, tid, res in results:
+        for agent, tid, res, selected_contract_hash, selected_lifecycle_token in results:
             ft = fid.get(tid)
-            if ft is not None:
+            try:
+                if ft is None:
+                    continue
                 contract = selected_contracts.get(tid)
                 # Backfill normalization only when the fresh task is still fully
                 # legacy. A concurrent keeper/owner update to either field wins;
                 # copying the stale pre-run pair would recreate the lost-update
                 # bug this fresh-reload commit path exists to prevent.
-                if contract and not ft.predicate and not ft.receipt_target:
+                backfill = bool(contract and not ft.predicate and not ft.receipt_target)
+                candidate = ft.model_copy(deep=True) if backfill else ft
+                if backfill and contract is not None:
+                    candidate.predicate, candidate.receipt_target = contract
+                if not _result_owner_is_current(candidate, selected_contract_hash, selected_lifecycle_token):
+                    print(f"  FENCE {tid}: execution or lifecycle ownership changed; fresh task wins")
+                    continue
+                if backfill and contract is not None:
                     ft.predicate, ft.receipt_target = contract
                 _apply_result(ft, agent, res, now, ftrack)
-                _REMOTE_SUBMISSION_RECEIPTS.pop(tid, None)
+            finally:
+                _clear_result_receipts(tid)
         save_limen_file(tasks_path, fresh)
 
 
@@ -4430,7 +4867,7 @@ def dispatch_tasks(
     print(f"── limen dispatch ({mode}) — agent={agent_filter} budget_remaining={remaining}")
 
     dispatched = 0
-    results: list[tuple[str, str, bool | str]] = []
+    results: list[DispatchResult] = []
     for task in candidates:
         if limit is not None and dispatched >= max(0, limit):
             break
@@ -4463,6 +4900,8 @@ def dispatch_tasks(
             print(f"  Worktree admission blocked {task.id}: {msg}")
             continue
 
+        selected_contract_hash = execution_contract_hash(task)
+        selected_lifecycle_token = _lifecycle_ownership_token(task)
         try:
             result = call_agent_dispatch(agent_filter, task, dry_run)
         finally:
@@ -4471,13 +4910,18 @@ def dispatch_tasks(
         if not dry_run:
             # In-memory apply keeps this loop's bookkeeping consistent; persistence happens
             # once at commit, re-applied onto a FRESH board (never this stale snapshot).
-            _apply_result(task, agent_filter, result, now, track)
-            results.append((agent_filter, task.id, result))
+            _apply_result(task, agent_filter, result, now, track, consume_receipts=False)
+            results.append((agent_filter, task.id, result, selected_contract_hash, selected_lifecycle_token))
             if result == _RATELIMIT:
                 _commit_dispatch_results(tasks_path, limen, results, now)
                 print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
                 return
-            elif result and result not in (_NOOP, _RATELIMIT, _TIMEOUT) and not _is_blocked_result(result):
+            elif (
+                result
+                and result not in (_NOOP, _RATELIMIT, _TIMEOUT)
+                and not _is_blocked_result(result)
+                and not _is_workstream_successor_result(result)
+            ):
                 remaining -= task.budget_cost
 
         dispatched += 1
@@ -4496,6 +4940,7 @@ def _apply_result(
     track: BudgetTrack,
     *,
     charge_budget: bool = True,
+    consume_receipts: bool = True,
 ) -> None:
     """Apply one dispatch result to a task (same semantics as the serial path):
     success → dispatched + spend; no-op/fail → recoverable failed; rate-limit → cascade."""
@@ -4509,11 +4954,25 @@ def _apply_result(
         output="dispatch result ignored because this task already recorded done",
     ):
         return
-    if result in {_NOOP, False} and _restore_pr_open_status(
-        task,
-        now,
-        agent=agent,
-        session_id="result-lifecycle-guard",
+    successor_held = WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (task.labels or [])
+    # Once the boundary receipt exists, every later result is stale for this
+    # lifecycle row, including a duplicate successor result. Re-appending the
+    # same failure would violate the fixed-point contract.
+    if successor_held:
+        return
+    successful_result = bool(result) and result not in {_NOOP, _RATELIMIT, _TIMEOUT}
+    successful_result = (
+        successful_result and not _is_blocked_result(result) and not _is_workstream_successor_result(result)
+    )
+    if (
+        not successor_held
+        and not successful_result
+        and _restore_pr_open_status(
+            task,
+            now,
+            agent=agent,
+            session_id="result-lifecycle-guard",
+        )
     ):
         return
 
@@ -4540,6 +4999,12 @@ def _apply_result(
         task.status = "open"
         if "slow" not in task.labels:
             task.labels.append("slow")
+    elif _is_workstream_successor_result(result):
+        entry.status = "failed"
+        entry.output = f"successor workstream required: {_workstream_successor_reason(result)}"
+        task.status = "failed"
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in task.labels:
+            task.labels.append(WORKSTREAM_SUCCESSOR_REQUIRED_LABEL)
     elif _is_blocked_result(result):
         entry.status = "failed_blocked"
         entry.output = _blocked_reason(result)
@@ -4573,12 +5038,12 @@ def _apply_result(
         else:
             entry.status = "failed"
             task.status = "failed"
-    if selection := _MODEL_SELECTION_RECEIPTS.pop(task.id, None):
+    if consume_receipts and (selection := _MODEL_SELECTION_RECEIPTS.pop(task.id, None)):
         entry.execution_profile = selection.get("execution_profile")
         entry.selected_model = selection.get("selected_model")
         entry.selection_source = selection.get("selection_source")
         entry.catalog_hash = selection.get("catalog_hash")
-    if remote := _REMOTE_SUBMISSION_RECEIPTS.get(task.id):
+    if consume_receipts and (remote := _REMOTE_SUBMISSION_RECEIPTS.get(task.id)):
         entry.provider_run_id = remote.get("provider_run_id")
         entry.provider_url = remote.get("provider_url")
         entry.base_sha = remote.get("base_sha")
@@ -4718,96 +5183,46 @@ def _accel_limit(limen: LimenFile, agent: str, base_limit: int, now: datetime) -
         return base_limit
 
 
-_CODEX_TIER_MODELS_DEFAULT: dict[str, str] = {
-    "haiku": "o4-mini",
-    "sonnet": "o4-mini",
-    "opus": "o3",
-    "fable": "o3",
+_UNVERIFIABLE_MODEL_OVERRIDE_PREFIXES = {
+    "codex": "LIMEN_CODEX_MODEL",
+    "gemini": "LIMEN_GEMINI_MODEL",
 }
 
-_GEMINI_TIER_MODELS_DEFAULT: dict[str, str] = {
-    "haiku": "gemini-2.5-flash",
-    "sonnet": "gemini-2.5-flash",
-    "opus": "gemini-2.5-pro",
-    "fable": "gemini-2.5-pro",
-}
+
+def _provider_auto_without_catalog(agent: str, task: "Task | None" = None) -> str | None:
+    """Delegate to provider Auto when the CLI exposes no live model catalog.
+
+    Any legacy model variable is an unverifiable override and therefore blocks
+    instead of silently accepting a stale name or substituting another model.
+    """
+
+    prefix = _UNVERIFIABLE_MODEL_OVERRIDE_PREFIXES[agent]
+    overrides = sorted(name for name, value in os.environ.items() if name.startswith(prefix) and value.strip())
+    if overrides:
+        _record_model_selection(
+            task,
+            profile={"provider": agent, "selection": "blocked_unverifiable_override"},
+            selected_model=None,
+            source=f"{agent}_override_unverifiable",
+        )
+        raise ProviderSelectionError(
+            f"{agent} exposes no live model catalog; unset {', '.join(overrides)} and use provider Auto"
+        )
+    _record_model_selection(
+        task,
+        profile={"provider": agent, "selection": "provider_auto"},
+        selected_model=None,
+        source=f"{agent}_provider_auto",
+    )
+    return None
 
 
 def _codex_model(task: "Task | None" = None) -> str | None:
-    """Derive the Codex model for THIS task. Order:
-      1. LIMEN_CODEX_MODEL --- blanket operator pin, always wins;
-      2. LIMEN_CODEX_TIER_SELECT != "1" -> None (provider Auto, old behaviour);
-      3. derive tier via _claude_tier_for(task) (same class->tier semantics);
-      4. LIMEN_CODEX_MODEL_<TIER> per-tier env override -> _CODEX_TIER_MODELS_DEFAULT[tier];
-      5. Record selection; return model.
-    Fail-open to None on any exception --- never block the lane."""
-    env = os.environ.get("LIMEN_CODEX_MODEL")
-    if env:
-        _record_model_selection(
-            task, profile={"tier": "override", "source": "codex_override"}, selected_model=env, source="codex_override"
-        )
-        return env
-    if os.environ.get("LIMEN_CODEX_TIER_SELECT", "1") != "1":
-        _record_model_selection(
-            task,
-            profile={"tier": None, "source": "codex_tier_disabled"},
-            selected_model=None,
-            source="codex_tier_disabled",
-        )
-        return None
-    try:
-        tier = _claude_tier_for(task)
-        per_tier_env = f"LIMEN_CODEX_MODEL_{tier.upper()}"
-        model = os.environ.get(per_tier_env) or _CODEX_TIER_MODELS_DEFAULT.get(tier)
-        _record_model_selection(
-            task,
-            profile={"tier": tier, "source": "codex_tier_derived"},
-            selected_model=model,
-            source="codex_tier_derived",
-        )
-        return model
-    except Exception:
-        return None
+    return _provider_auto_without_catalog("codex", task)
 
 
 def _gemini_model(task: "Task | None" = None) -> str | None:
-    """Derive the Gemini model for THIS task. Order:
-      1. LIMEN_GEMINI_MODEL --- blanket operator pin, always wins;
-      2. LIMEN_GEMINI_TIER_SELECT != "1" -> None (bare invocation, old behaviour);
-      3. derive tier via _claude_tier_for(task) (same class->tier semantics);
-      4. LIMEN_GEMINI_MODEL_<TIER> per-tier env override -> _GEMINI_TIER_MODELS_DEFAULT[tier];
-      5. Record selection; return model.
-    Fail-open to None on any exception --- never block the lane."""
-    env = os.environ.get("LIMEN_GEMINI_MODEL")
-    if env:
-        _record_model_selection(
-            task,
-            profile={"tier": "override", "source": "gemini_override"},
-            selected_model=env,
-            source="gemini_override",
-        )
-        return env
-    if os.environ.get("LIMEN_GEMINI_TIER_SELECT", "1") != "1":
-        _record_model_selection(
-            task,
-            profile={"tier": None, "source": "gemini_tier_disabled"},
-            selected_model=None,
-            source="gemini_tier_disabled",
-        )
-        return None
-    try:
-        tier = _claude_tier_for(task)
-        per_tier_env = f"LIMEN_GEMINI_MODEL_{tier.upper()}"
-        model = os.environ.get(per_tier_env) or _GEMINI_TIER_MODELS_DEFAULT.get(tier)
-        _record_model_selection(
-            task,
-            profile={"tier": tier, "source": "gemini_tier_derived"},
-            selected_model=model,
-            source="gemini_tier_derived",
-        )
-        return model
-    except Exception:
-        return None
+    return _provider_auto_without_catalog("gemini", task)
 
 
 # ─── Claude-lane earned-tier ladder (haiku-first-with-cheap-verify) ──────────
@@ -4815,8 +5230,9 @@ def _gemini_model(task: "Task | None" = None) -> str | None:
 # tier is DERIVED per task: a coding task's failure is cheaply detectable (CI/PR/auto-merge/
 # reconcile), so verifiable classes start at HAIKU and rely on the EXISTING _LANE_CASCADE +
 # chronic escalation as the escalate rung — only UNDETECTABLE-failure classes get a higher
-# tier up front. No new escalation machinery. Mirrors _codex_model/_opencode_model: env pin
-# wins, derive at call-time, fail-open. ([[model-tiering-policy]], [[value-is-discovered-never-assumed]])
+# tier up front. No new escalation machinery. Claude's provider-owned aliases are resolved at
+# call-time; Codex and Gemini instead delegate to provider Auto because their CLIs expose no catalog.
+# ([[model-tiering-policy]], [[value-is-discovered-never-assumed]])
 #
 # The shared VOCABULARY this ladder sorts with — _CLAUDE_TIER_ORDER, reserved class sets,
 # acceptance gates, and _resolve_claude_model() — lives in model_selection.py (imported at the
@@ -4898,7 +5314,7 @@ def _bump_tier(tier: str, task: Task | None) -> str:
 
 def _claude_model(task: Task | None = None) -> str | None:
     """Lazily pick the Claude tier for THIS task, resolved only when the claude lane runs (names
-    are outputs). Order mirrors _codex_model:
+    are outputs). Order:
       1. explicit LIMEN_CLAUDE_MODEL — a manual pin always wins;
       2. feature flag LIMEN_CLAUDE_TIER_SELECT (default on; off → None = today's bare invocation);
       3. derive the tier (class-based), bump it if the task already failed here, resolve to a model.
@@ -5129,9 +5545,11 @@ def dispatch_parallel(
 
     # ── RUN: concurrent agent executions (worktree→PR / jules), no tasks.yaml access here
     id2task = {t.id: t for t in limen.tasks}
+    selected_contract_hashes = {tid: execution_contract_hash(id2task[tid]) for _agent, tid in picked}
+    selected_lifecycle_tokens = {tid: _lifecycle_ownership_token(id2task[tid]) for _agent, tid in picked}
     cooled: set[str] = set()  # lanes that hit their real rate-limit this round
 
-    def run_one(at: tuple[str, str]) -> tuple[str, str, bool | str]:
+    def run_one(at: tuple[str, str]) -> DispatchResult:
         agent, tid = at
         try:
             res = call_agent_dispatch(agent, id2task[tid], dry_run=False)
@@ -5140,19 +5558,21 @@ def dispatch_parallel(
             res = False
         finally:
             _release_machine_admission(tid)
-        return (agent, tid, res)
+        return (agent, tid, res, selected_contract_hashes[tid], selected_lifecycle_tokens[tid])
 
     results = _run_parallel_batch(picked, run_one, max_workers)
-    for agent, _tid, res in results:
+    for agent, _tid, res, _selected_contract_hash, _selected_owner in results:
         if res == _RATELIMIT:
             cooled.add(agent)
 
     # ── COMMIT: reload FRESH under the lock so writes a supervisor (seed/heal/verify) made
     # during the unlocked run aren't clobbered; re-apply each result to the fresh task by id.
     # This is the #11 keystone — without the reload, this save would silently overwrite seeds.
-    n_pr = n_noop = n_fail = n_rl = n_to = n_blocked = 0
+    n_pr = n_noop = n_fail = n_rl = n_to = n_blocked = n_successor = n_fenced = 0
     with _queue_lock(tasks_path) as got:
         if not got:
+            for _agent, task_id, _result, _selected_hash, _selected_owner in results:
+                _clear_result_receipts(task_id)
             # Lock timed out — do NOT write unprotected (that is the #111 clobber this reload guards
             # against). The agents already ran; their PRs exist, so harvest/reconcile recovers the
             # results from GitHub PR state on a later beat. Skip the commit rather than corrupt it.
@@ -5164,27 +5584,39 @@ def dispatch_parallel(
         fresh = load_limen_file(tasks_path)
         fid = {t.id: t for t in fresh.tasks}
         ftrack = fresh.portal.budget.track
-        for agent, tid, res in results:
+        for agent, tid, res, selected_contract_hash, selected_lifecycle_token in results:
             ft = fid.get(tid)
-            if ft is not None:
+            try:
+                if ft is None or not _result_owner_is_current(
+                    ft,
+                    selected_contract_hash,
+                    selected_lifecycle_token,
+                ):
+                    n_fenced += 1
+                    print(f"  FENCE {tid}: execution or lifecycle ownership changed; fresh task wins")
+                    continue
                 _apply_result(ft, agent, res, now, ftrack)
-                _REMOTE_SUBMISSION_RECEIPTS.pop(tid, None)
+            finally:
+                _clear_result_receipts(tid)
             if res == _RATELIMIT:
                 n_rl += 1
             elif res == _NOOP:
                 n_noop += 1
             elif res == _TIMEOUT:
                 n_to += 1
+            elif _is_workstream_successor_result(res):
+                n_successor += 1
             elif _is_blocked_result(res):
                 n_blocked += 1
-            elif res and not _is_blocked_result(res):
+            elif res and not _is_blocked_result(res) and not _is_workstream_successor_result(res):
                 n_pr += 1
             else:
                 n_fail += 1
         save_limen_file(tasks_path, fresh)
     print(
         f"── PARALLEL done: {len(results)} ran · {n_pr} dispatched/PR · {n_noop} no-op · "
-        f"{n_fail} failed→cascade · {n_blocked} blocked · {n_rl} rate-limited · {n_to} timeout→jules"
+        f"{n_fail} failed→cascade · {n_successor} successor-required · {n_blocked} blocked · "
+        f"{n_rl} rate-limited · {n_to} timeout→jules · {n_fenced} fenced"
         f"{' (lanes cooled: ' + ','.join(sorted(cooled)) + ')' if cooled else ''}"
     )
 
@@ -5218,6 +5650,10 @@ def _release_stale_route(
     task: Task,
     snapshot: JulesRemoteSnapshot | None,
 ) -> tuple[str, str]:
+    if has_jules_landing_hold(task):
+        return "hold", "jules_landing_held"
+    if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (task.labels or []):
+        return "hold", "successor_required"
     if task.target_agent != "jules":
         return "release", "not_jules"
     if snapshot is None:
@@ -5229,7 +5665,10 @@ def _release_stale_snapshot(
     candidates: list[Task],
     supplied: JulesRemoteSnapshot | None,
 ) -> JulesRemoteSnapshot | None:
-    if not any(task.target_agent == "jules" and not _has_done_transition(task) for task in candidates):
+    if not any(
+        task.target_agent == "jules" and not has_jules_landing_hold(task) and not _has_done_transition(task)
+        for task in candidates
+    ):
         return None
     if supplied is not None:
         # A supplied snapshot is explicit caller evidence (and the hermetic test seam). Do not
@@ -5239,7 +5678,7 @@ def _release_stale_snapshot(
     session_ids = [
         task_jules_session_id(task)
         for task in candidates
-        if task.target_agent == "jules" and not _has_done_transition(task)
+        if task.target_agent == "jules" and not has_jules_landing_hold(task) and not _has_done_transition(task)
     ]
     return probe_jules_remote_session_absences(snapshot, session_ids)
 
@@ -5314,6 +5753,22 @@ def release_stale_tasks(
             candidates = stale_tasks(fresh, hours=hours, agent=agent)
             for task in candidates:
                 original_status = task.status
+                if has_jules_landing_hold(task):
+                    action, remote_status = "hold", "jules_landing_held"
+                    held.append(task.id)
+                    candidate_rows.append(
+                        {
+                            "id": task.id,
+                            "title": task.title,
+                            "repo": task.repo,
+                            "target_agent": task.target_agent,
+                            "status": original_status,
+                            "action": action,
+                            "remote_status": remote_status,
+                        }
+                    )
+                    print(f"  HOLD: {task.id} remote={remote_status} — {task.title}")
+                    continue
                 if _restore_done_status(
                     task,
                     now,
@@ -5380,7 +5835,9 @@ def release_stale_tasks(
                 save_limen_file(tasks_path, fresh)
     else:
         for task in candidates:
-            if _has_done_transition(task):
+            if has_jules_landing_hold(task):
+                action, remote_status = "hold", "jules_landing_held"
+            elif _has_done_transition(task):
                 action, remote_status = "restore_done", "prior_done"
             else:
                 action, remote_status = _release_stale_route(task, snapshot)

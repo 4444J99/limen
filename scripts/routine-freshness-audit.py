@@ -215,7 +215,8 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
 
         from limen.io import load_limen_file, queue_lock, save_limen_file
         from limen.intake import contract_fields, github_issue_owner_contract
-        from limen.models import Task
+        from limen.models import Task, has_jules_landing_hold
+        from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
     except Exception as e:
         res["error"] = f"ledger unavailable ({e}); atoms not hung"
         return res
@@ -253,7 +254,12 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
 
             ex = index.get(tid)
             contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
-            if ex and ex.status != "done":
+            if (
+                ex
+                and ex.status != "done"
+                and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (ex.labels or [])
+                and not has_jules_landing_hold(ex)
+            ):
                 refreshed = False
                 if ex.status != "needs_human":
                     ex.status = "needs_human"
@@ -317,6 +323,7 @@ def retire_recovered_atoms(down_names: set[str], all_names: list[str]) -> dict:
         from datetime import timezone as _tz
 
         from limen.io import load_limen_file, queue_lock, save_limen_file
+        from limen.models import has_jules_landing_hold
     except Exception as e:
         res["error"] = f"ledger unavailable ({e}); atoms not retired"
         return res
@@ -341,6 +348,7 @@ def retire_recovered_atoms(down_names: set[str], all_names: list[str]) -> dict:
                 ex is not None
                 and ex.status not in ("done", "archived")
                 and "routine-freshness" in (ex.labels or [])
+                and not has_jules_landing_hold(ex)
             ):
                 ex.status = "done"
                 ex.updated = now_dt

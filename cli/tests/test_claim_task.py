@@ -60,6 +60,18 @@ def test_claim_task_rejects_unknown_agent_without_mutating() -> None:
     assert data == before
 
 
+def test_claim_task_rejects_successor_required_open_row_without_mutating() -> None:
+    claim = load_claim_module()
+    data = board()
+    data["tasks"][0]["labels"] = ["workstream:successor-required"]
+    before = copy.deepcopy(data)
+
+    with pytest.raises(SystemExit, match="separately admitted successor"):
+        claim.claim_task(data, "TASK-1", "codex", "session-1")
+
+    assert data == before
+
+
 def test_claim_task_rejects_malformed_budget_without_mutating() -> None:
     claim = load_claim_module()
     data = board(budget_cost="not-an-int")

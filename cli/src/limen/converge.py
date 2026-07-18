@@ -477,7 +477,7 @@ def _resolve_api_model(tier: str) -> str:
 def resolve_tier_model(tier: str, *, cli: bool = False) -> str:
     """Resolve a ladder tier to the model string, env-override-first (derive-never-pin).
 
-    Order mirrors ``dispatch._opencode_model`` / ``_codex_model``:
+    Resolution order for this Claude-only synthesis surface:
       1. ``LIMEN_CONVERGE_MODEL_<TIER>`` — an explicit pin always wins (api or cli);
       2. ``cli=True``  → the bare CLI tier alias (``haiku``/``sonnet``/``opus``); the
          ``claude`` CLI resolves it to the current dated model, so nothing is pinned and

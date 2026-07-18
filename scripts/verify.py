@@ -45,12 +45,51 @@ import re
 import shlex
 import subprocess
 import sys
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "gates.yaml"
+
+
+class HostAdmissionFailure(RuntimeError):
+    """The real Limen checkout denied its heavy verification tail."""
+
+
+@contextmanager
+def heavy_admission(*, owner: str, surface: str):
+    """Load the host boundary only in a full checkout.
+
+    Resolver contract fixtures intentionally copy only ``scripts/verify.py`` and
+    the gate registry. They have no executable heavy surface and no admission
+    module to bypass. A real checkout always carries both files; if its import is
+    broken, fail closed.
+    """
+
+    module = ROOT / "cli" / "src" / "limen" / "host_admission.py"
+    service = ROOT / "scripts" / "host-work-admission.py"
+    if not module.is_file() and not service.is_file():
+        yield
+        return
+    if not module.is_file() or not service.is_file():
+        raise HostAdmissionFailure("host admission installation is incomplete")
+    sys.path.insert(0, str(ROOT / "cli" / "src"))
+    try:
+        from limen.host_admission import AdmissionDenied, hold_lease
+    except ModuleNotFoundError as exc:
+        raise HostAdmissionFailure(f"host admission import failed: {exc}") from exc
+    try:
+        with hold_lease("heavy", owner=owner, surface=surface):
+            yield
+    except AdmissionDenied as exc:
+        reasons = ",".join(exc.decision.get("reasons") or ["host-admission-denied"])
+        raise HostAdmissionFailure(reasons) from exc
+    except ValueError as exc:
+        if str(exc) != "lease owner PID/start identity is unavailable":
+            raise
+        raise HostAdmissionFailure(str(exc)) from exc
 
 
 def glob_to_regex(glob: str) -> re.Pattern[str]:
@@ -73,13 +112,11 @@ def load_registry() -> dict:
 
 
 def git(*args: str) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=ROOT, capture_output=True, text=True, check=True
-    ).stdout
+    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout
 
 
 def resolve_merge_base(base: str | None) -> str:
-    for candidate in ([base] if base else ["origin/main", "main"]):
+    for candidate in [base] if base else ["origin/main", "main"]:
         try:
             return git("merge-base", candidate, "HEAD").strip()
         except subprocess.CalledProcessError:
@@ -205,9 +242,7 @@ def cmd_changed(
         print(f"  {p}")
 
     if require_base and deploy_hits(registry, changed):
-        whole = os.environ.get("LIMEN_VERIFY_WHOLE_CMD") or str(
-            ROOT / "scripts" / "verify-whole.sh"
-        )
+        whole = os.environ.get("LIMEN_VERIFY_WHOLE_CMD") or str(ROOT / "scripts" / "verify-whole.sh")
         print(f"deploy-trigger paths in the diff — escalating to the whole matrix: {whole}")
         sys.stdout.flush()
         os.execv("/bin/bash", ["bash", whole])
@@ -217,9 +252,7 @@ def cmd_changed(
     for gate_id, reason in skipped:
         print(f"skipped: {gate_id} ({reason})")
     if skip_ci_covered:
-        deferred = [
-            g for g in selected if gates[g].get("ci_job") and gates[g]["ci_job"] != skip_ci_covered
-        ]
+        deferred = [g for g in selected if gates[g].get("ci_job") and gates[g]["ci_job"] != skip_ci_covered]
         selected = [g for g in selected if g not in deferred]
         for gate_id in deferred:
             print(f"deferred: {gate_id} (covered by {gates[gate_id]['ci_job']})")
@@ -235,23 +268,40 @@ def cmd_changed(
     os.environ["PYTHONPATH"] = f"{ROOT / 'cli' / 'src'}" + (
         os.pathsep + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else ""
     )
-    for gate_id in tiers["cheap"] + tiers["heavy"]:
+    for gate_id in tiers["cheap"]:
         if not run_gate(gate_id, gates[gate_id], registry, changed):
             return 1
-    if tiers["serialized"]:
-        lock_path = os.environ.get(
-            "LIMEN_VERIFY_LOCK_FILE",
-            os.path.join(os.environ.get("TMPDIR", "/tmp"), "limen-verify-whole.lock"),
+    needs_heavy = bool(tiers["heavy"] or tiers["serialized"])
+    admission = (
+        heavy_admission(
+            owner=f"limen-verify-{os.getpid()}",
+            surface="verify-scoped",
         )
-        with open(lock_path, "w") as lock:
-            try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError:
-                print(f"Another verification holds {lock_path} — waiting…")
-                fcntl.flock(lock, fcntl.LOCK_EX)
-            for gate_id in tiers["serialized"]:
+        if needs_heavy
+        else nullcontext()
+    )
+    try:
+        with admission:
+            for gate_id in tiers["heavy"]:
                 if not run_gate(gate_id, gates[gate_id], registry, changed):
                     return 1
+            if tiers["serialized"]:
+                lock_path = os.environ.get(
+                    "LIMEN_VERIFY_LOCK_FILE",
+                    os.path.join(os.environ.get("TMPDIR", "/tmp"), "limen-verify-whole.lock"),
+                )
+                with open(lock_path, "w") as lock:
+                    try:
+                        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    except OSError:
+                        print(f"Another verification holds {lock_path} — waiting…")
+                        fcntl.flock(lock, fcntl.LOCK_EX)
+                    for gate_id in tiers["serialized"]:
+                        if not run_gate(gate_id, gates[gate_id], registry, changed):
+                            return 1
+    except HostAdmissionFailure as exc:
+        print(f"Host admission denied scoped heavy verification: {exc}", file=sys.stderr)
+        return 75
 
     hits = deploy_hits(registry, changed)
     if hits:

@@ -275,7 +275,8 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
         from datetime import date  # noqa: PLC0415
         from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: PLC0415
         from limen.intake import contract_fields, github_issue_owner_contract  # noqa: PLC0415
-        from limen.models import Task  # noqa: PLC0415
+        from limen.models import Task, has_jules_landing_hold  # noqa: PLC0415
+        from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: PLC0415
     except Exception as e:
         print(f"  [continuity] ledger import failed ({e}); starved atom not hung", flush=True)
         return
@@ -307,7 +308,12 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
         contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
         changed = False
         ex = index.get(tid)
-        if ex and ex.status != "done":
+        if (
+            ex
+            and ex.status != "done"
+            and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (ex.labels or [])
+            and not has_jules_landing_hold(ex)
+        ):
             if ex.context != ctx:
                 ex.context = ctx
                 ex.updated = now

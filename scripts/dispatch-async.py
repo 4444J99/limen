@@ -54,6 +54,7 @@ from limen.remote_execution import (  # noqa: E402
 )
 from limen.remote_predicate import canonical_json, digest_bytes, digest_text  # noqa: E402
 from limen.dispatch import (  # noqa: E402
+    WORKSTREAM_SUCCESSOR_REQUIRED_LABEL,
     _apply_result,
     _REMOTE_SUBMISSION_RECEIPTS,
     _deps_met,
@@ -224,15 +225,21 @@ def _rollback_unlaunched_reservation(
         last = task.dispatch_log[-1] if task.dispatch_log else None
         if last is None or last.session_id != reservation_id or last.agent != agent:
             return True
-        task.status = "open"
+        successor_required = WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (task.labels or [])
+        task.status = "failed" if successor_required else "open"
         task.updated = now
         task.dispatch_log.append(
             DispatchLogEntry(
                 timestamp=now,
                 agent=agent,
                 session_id="async-launch-failed",
-                status="open",
-                output=f"dispatch-async: detached worker did not launch; reservation reopened ({str(error)[:160]})",
+                status=task.status,
+                output=(
+                    "dispatch-async: detached worker did not launch; successor-required reservation "
+                    f"released without reopening ({str(error)[:160]})"
+                    if successor_required
+                    else f"dispatch-async: detached worker did not launch; reservation reopened ({str(error)[:160]})"
+                ),
             )
         )
         cost = max(0, int(task.budget_cost or 0))
@@ -776,15 +783,24 @@ def reap_stale(max_age_s: int):
                     ):
                         changed = True
                     else:
-                        t.status = "open"  # dead worker left no result → retry on a later beat
+                        successor_required = WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or [])
+                        t.status = "failed" if successor_required else "open"
                         t.updated = now
                         t.dispatch_log.append(
                             DispatchLogEntry(
                                 timestamp=now,
                                 agent=agent,
                                 session_id="async-reap-stale",
-                                status="open",
-                                output=f"dispatch-async: stale worker marker older than {max_age_s}s reaped; task reopened",
+                                status=t.status,
+                                output=(
+                                    f"dispatch-async: stale worker marker older than {max_age_s}s reaped; "
+                                    "successor-required task held failed"
+                                    if successor_required
+                                    else (
+                                        f"dispatch-async: stale worker marker older than {max_age_s}s "
+                                        "reaped; task reopened"
+                                    )
+                                ),
                             )
                         )
                         changed = True
@@ -848,17 +864,18 @@ def reap_stale(max_age_s: int):
                         applied_markerless.append(tid)
                         changed = True
                     else:
-                        t.status = "open"
+                        successor_required = WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or [])
+                        t.status = "failed" if successor_required else "open"
                         t.updated = now
                         t.dispatch_log.append(
                             DispatchLogEntry(
                                 timestamp=now,
                                 agent=agent,
                                 session_id="async-reap-stale",
-                                status="open",
+                                status=t.status,
                                 output=(
-                                    f"dispatch-async: markerless async reservation older than {max_age_s}s "
-                                    "reaped; task reopened"
+                                    f"dispatch-async: markerless async reservation older than {max_age_s}s reaped; "
+                                    + ("successor-required task held failed" if successor_required else "task reopened")
                                 ),
                             )
                         )
@@ -1204,6 +1221,8 @@ def recover_exact_task(
         if contract_blocker:
             return {"status": "blocked", "recovered_count": 0, "blocker": contract_blocker}
         task = next(candidate for candidate in lf.tasks if candidate.id == task_id)
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (task.labels or []):
+            return {"status": "successor_required_held", "recovered_count": 0}
         if task.status == "open":
             return {"status": "already_open", "recovered_count": 0}
         if task.status != "dispatched":

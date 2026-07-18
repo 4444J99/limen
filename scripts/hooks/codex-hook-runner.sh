@@ -19,8 +19,8 @@ script_root="$(cd -- "$script_dir/../.." >/dev/null 2>&1 && pwd -P)"
 resolve_root() {
   local candidate
   for candidate in \
-    "${CLAUDE_PROJECT_DIR:-}" \
     "${CODEX_PROJECT_DIR:-}" \
+    "${CLAUDE_PROJECT_DIR:-}" \
     "$(git rev-parse --show-toplevel 2>/dev/null || true)" \
     "$script_root"; do
     if [[ -n "$candidate" && -d "$candidate" ]]; then
@@ -43,6 +43,9 @@ case "$hook_name" in
   lint-edited-file)
     target="$root/scripts/hooks/lint-edited-file.sh"
     ;;
+  host-admission)
+    target="$root/scripts/hooks/codex-host-admission.py"
+    ;;
   *)
     log "unknown hook target; skipping"
     exit 0
@@ -56,6 +59,10 @@ fi
 
 export CLAUDE_PROJECT_DIR="$root"
 export CODEX_PROJECT_DIR="${CODEX_PROJECT_DIR:-$root}"
+
+if [[ "$target" == *.py ]]; then
+  exec python3 "$target" "$@"
+fi
 
 if [[ -x "$target" ]]; then
   exec "$target" "$@"

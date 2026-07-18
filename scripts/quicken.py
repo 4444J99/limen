@@ -436,7 +436,8 @@ def _hang_asks(entries: list[dict]) -> dict:
         from datetime import date, datetime, timezone
         from limen.io import load_limen_file, queue_lock, save_limen_file
         from limen.intake import contract_fields, github_issue_owner_contract
-        from limen.models import Task
+        from limen.models import Task, has_jules_landing_hold
+        from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
     except Exception as e:  # never dead-stop the apply if the cli pkg isn't importable
         res["error"] = f"ledger unavailable ({e}); residue digest still written"
         return res
@@ -455,7 +456,12 @@ def _hang_asks(entries: list[dict]) -> dict:
             tid = entry["tid"]
             contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
             ex = index.get(tid)
-            if ex and ex.status != "done":
+            if (
+                ex
+                and ex.status != "done"
+                and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (ex.labels or [])
+                and not has_jules_landing_hold(ex)
+            ):
                 refreshed = False
                 if ex.status != "needs_human":
                     ex.status = "needs_human"

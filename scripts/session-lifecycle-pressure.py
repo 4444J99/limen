@@ -17,7 +17,7 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
@@ -28,6 +28,10 @@ OUT_JSON = ROOT / "logs" / "session-lifecycle-pressure.json"
 OUT_MD = ROOT / "logs" / "session-lifecycle-pressure.md"
 PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
 WORKTREE_DEBT_TIMEOUT = int(os.environ.get("LIMEN_WORKTREE_DEBT_TIMEOUT", "120"))
+SIZE_SCAN_MAX_ROOTS = max(
+    1,
+    int(os.environ.get("LIMEN_LIFECYCLE_SIZE_SCAN_MAX_ROOTS", "50")),
+)
 REMOTE_MISSING_CLOSED_REASONS = {
     "clean+merged+idle",
     "documented-residue",
@@ -48,6 +52,13 @@ REMOTE_MISSING_CLOSED_STATUSES = {
     "private_patch_preserved",
     "superseded_on_origin_main",
 }
+
+
+class SizeScan(NamedTuple):
+    bytes: int
+    roots: int
+    scanned_roots: int
+    partial: bool
 
 
 def fmt_bytes(n: int) -> str:
@@ -82,6 +93,79 @@ def dir_size(path: Path) -> int:
         except OSError:
             continue
     return total
+
+
+def child_dirs(path: Path) -> list[Path]:
+    if not path.is_dir():
+        return []
+    try:
+        return sorted(
+            (child for child in path.iterdir() if child.is_dir()),
+            key=str,
+        )
+    except OSError:
+        return []
+
+
+def immediate_file_bytes(path: Path) -> int:
+    if not path.is_dir():
+        return 0
+    try:
+        children = list(path.iterdir())
+    except OSError:
+        return 0
+    total = 0
+    for child in children:
+        if not child.is_file():
+            continue
+        try:
+            total += child.stat().st_size
+        except OSError:
+            continue
+    return total
+
+
+def bounded_dir_size(
+    path: Path,
+    *,
+    max_roots: int | None = None,
+) -> SizeScan:
+    maximum = SIZE_SCAN_MAX_ROOTS if max_roots is None else max_roots
+    if not path.exists():
+        return SizeScan(bytes=0, roots=0, scanned_roots=0, partial=False)
+    roots = child_dirs(path)
+    if not roots:
+        return SizeScan(
+            bytes=dir_size(path),
+            roots=0,
+            scanned_roots=0,
+            partial=False,
+        )
+    selected = roots[:maximum]
+    return SizeScan(
+        bytes=immediate_file_bytes(path) + sum(dir_size(root) for root in selected),
+        roots=len(roots),
+        scanned_roots=len(selected),
+        partial=len(selected) < len(roots),
+    )
+
+
+def bounded_target_size(
+    paths: list[Path],
+    fallback_root: Path,
+    *,
+    max_roots: int | None = None,
+) -> SizeScan:
+    maximum = SIZE_SCAN_MAX_ROOTS if max_roots is None else max_roots
+    if not paths:
+        return bounded_dir_size(fallback_root, max_roots=maximum)
+    selected = paths[:maximum]
+    return SizeScan(
+        bytes=sum(dir_size(path) for path in selected),
+        roots=len(paths),
+        scanned_roots=len(selected),
+        partial=len(selected) < len(paths),
+    )
 
 
 def count_dirs(path: Path) -> int:
@@ -217,16 +301,20 @@ def build_snapshot() -> dict[str, Any]:
     cloud = prompt.get("cloud") or {}
     object_store = corpus.get("object_store") or {}
     if not object_store:
+        object_scan = bounded_dir_size(PRIVATE_ROOT / "objects")
         object_store = {
-            "object_count": count_files(PRIVATE_ROOT / "objects"),
-            "object_bytes": dir_size(PRIVATE_ROOT / "objects"),
+            "object_count": (count_files(PRIVATE_ROOT / "objects") if not object_scan.partial else 0),
+            "object_bytes": object_scan.bytes,
+            "object_count_partial": object_scan.partial,
         }
 
     wt_report = run_worktree_debt()
     worktree_paths = worktree_target_paths(wt_report)
-    worktree_bytes = sum(dir_size(path) for path in worktree_paths) if worktree_paths else dir_size(WORKTREE_ROOT)
-    worktree_roots = len(worktree_paths) if worktree_paths else count_dirs(WORKTREE_ROOT)
-    private_bytes = dir_size(PRIVATE_ROOT)
+    worktree_scan = bounded_target_size(worktree_paths, WORKTREE_ROOT)
+    private_scan = bounded_dir_size(PRIVATE_ROOT)
+    worktree_bytes = worktree_scan.bytes
+    worktree_roots = worktree_scan.roots
+    private_bytes = private_scan.bytes
     total_local_bytes = worktree_bytes + private_bytes
     debt = int(wt_report.get("debt") or 0)
     missing_remote = remote_missing_counts(worktree_remote, wt_report)
@@ -244,12 +332,19 @@ def build_snapshot() -> dict[str, Any]:
         pressure.append("runtime unconfigured")
     if wt_report.get("error"):
         pressure.append("worktree debt scan unavailable")
+    if worktree_scan.partial:
+        pressure.append("worktree size scan partial")
+    if private_scan.partial:
+        pressure.append("private corpus size scan partial")
 
     return {
         "worktrees": {
             "root": str(WORKTREE_ROOT),
             "roots": worktree_roots,
             "bytes": worktree_bytes,
+            "size_scan_max_roots": SIZE_SCAN_MAX_ROOTS,
+            "size_scan_scanned_roots": worktree_scan.scanned_roots,
+            "size_scan_partial": worktree_scan.partial,
             "debt": debt,
             "debt_target": 0,
             "complete": debt == 0,  # exact-zero completion; no tolerated count
@@ -259,8 +354,13 @@ def build_snapshot() -> dict[str, Any]:
         "private_corpus": {
             "root": str(PRIVATE_ROOT),
             "bytes": private_bytes,
+            "size_scan_max_roots": SIZE_SCAN_MAX_ROOTS,
+            "size_scan_roots": private_scan.roots,
+            "size_scan_scanned_roots": private_scan.scanned_roots,
+            "size_scan_partial": private_scan.partial,
             "object_count": int(object_store.get("object_count") or 0),
             "object_bytes": int(object_store.get("object_bytes") or 0),
+            "object_count_partial": bool(object_store.get("object_count_partial")),
         },
         "remote": {
             "enabled": bool(remote.get("enabled")),
@@ -292,10 +392,16 @@ def render(snapshot: dict[str, Any]) -> str:
     remote_missing = f"{remote['remote_branches_present']}/{remote['remote_branches_missing']}"
     if remote["remote_branches_unresolved_missing"] != remote["remote_branches_missing"]:
         remote_missing += f" (unresolved {remote['remote_branches_unresolved_missing']})"
+    worktree_size = fmt_bytes(wt["bytes"])
+    if wt.get("size_scan_partial"):
+        worktree_size += f" (partial size scan {wt['size_scan_scanned_roots']}/{wt['roots']})"
+    corpus_size = fmt_bytes(corpus["bytes"])
+    if corpus.get("size_scan_partial"):
+        corpus_size += f" (partial size scan {corpus['size_scan_scanned_roots']}/{corpus['size_scan_roots']})"
     return (
         "**Lifecycle pressure** — "
-        f"worktrees {wt['roots']} roots / {fmt_bytes(wt['bytes'])} / debt {wt['debt']} (target 0) · "
-        f"private corpus {fmt_bytes(corpus['bytes'])} ({corpus['object_count']} objects) · "
+        f"worktrees {wt['roots']} roots / {worktree_size} / debt {wt['debt']} (target 0) · "
+        f"private corpus {corpus_size} ({corpus['object_count']} objects) · "
         f"remote branches present/missing {remote_missing} · "
         f"state: {pressure}"
     )

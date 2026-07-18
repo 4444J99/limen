@@ -28,6 +28,11 @@ HELPER_TOKENS = ("has_required_acceptance_proof", "missing_required_acceptance_p
 NO_SHORTCUT_PHRASE = "Do not create that JSONL as a cleanup shortcut"
 DIRECT_REMOVAL_BANS = {
     "cli/src/limen/dispatch.py": ("worktree remove", "branch -D", "--delete-branch"),
+    "cli/src/limen/jules_landing_custody.py": (
+        "worktree remove",
+        "branch -D",
+        "--delete-branch",
+    ),
     "scripts/cells.sh": ("worktree remove", "branch -D", "--delete-branch"),
     "scripts/jules-land.py": ("worktree remove", "branch -D", "--delete-branch"),
     "scripts/ship-docs.sh": ("worktree remove", "branch -D", "--delete-branch"),

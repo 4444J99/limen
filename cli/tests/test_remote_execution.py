@@ -56,6 +56,7 @@ from limen.remote_predicate import (
     sandbox_command,
     validate_control_ref,
 )
+from limen.workstream_contract import packet_contract
 
 
 SHA = "a" * 40
@@ -740,6 +741,21 @@ def test_lifecycle_persists_intent_and_reuses_attempt_without_duplicate_submit(t
     assert first_path == second_path
 
 
+def test_lifecycle_rechecks_guard_after_preflight_before_provider_submit(tmp_path: Path) -> None:
+    req = request()
+    adapter = StableAdapter(req)
+    lifecycle = RemoteLifecycle(adapter, ReceiptStore(tmp_path))
+
+    def expired_boundary() -> None:
+        raise RemoteExecutionError("workstream runway is exhausted")
+
+    with pytest.raises(RemoteExecutionError, match="runway is exhausted"):
+        lifecycle.submit(req, before_submit=expired_boundary)
+
+    assert adapter.submissions == 0
+    assert list(tmp_path.rglob("*.json")) == []
+
+
 def test_lifecycle_rejects_provider_identity_changes(tmp_path: Path) -> None:
     req = request()
     adapter = StableAdapter(req)
@@ -994,6 +1010,67 @@ def test_control_head_advance_during_catalog_lookup_stops_workflow_mutation() ->
         _actions_adapter(runner).submit(request())
     assert control_probes == 2
     assert not any(args[1:3] == ("workflow", "run") for args in calls)
+
+
+def test_lifecycle_discards_unmutated_intent_when_state_changes_during_persist(tmp_path: Path) -> None:
+    guard_calls = 0
+    workflow_mutations = 0
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        nonlocal workflow_mutations
+        args = tuple(argv)  # type: ignore[arg-type]
+        if result := preflight_result(args):
+            return result
+        if args[1:3] == ("workflow", "run"):
+            workflow_mutations += 1
+            return CommandResult(args, 0)
+        if args[1] == "api":
+            return CommandResult(args, 0, '[{"workflow_runs": []}]')
+        raise AssertionError(args)
+
+    class StateAdvancingStore(ReceiptStore):
+        def __init__(self, root: Path) -> None:
+            super().__init__(root)
+            self.board_generation = 0
+            self.advance_on_intent = True
+
+        def write(self, receipt: RemoteReceipt) -> Path:
+            path = super().write(receipt)
+            if self.advance_on_intent and receipt.detail == "submission intent persisted before provider mutation":
+                self.advance_on_intent = False
+                self.board_generation += 1
+            return path
+
+    store = StateAdvancingStore(tmp_path)
+    expected_generation = 0
+
+    def authoritative_guard() -> None:
+        nonlocal guard_calls
+        guard_calls += 1
+        if store.board_generation != expected_generation:
+            raise RemoteExecutionError("authoritative board changed while intent was persisted")
+
+    lifecycle = RemoteLifecycle(_actions_adapter(runner), store)
+    req = request()
+    with pytest.raises(RemoteExecutionError, match="board changed"):
+        lifecycle.submit(req, before_submit=authoritative_guard)
+
+    assert guard_calls == 2
+    assert workflow_mutations == 0
+    assert list(tmp_path.rglob("*.json")) == []
+
+    expected_generation = store.board_generation
+    observed, _receipt_path = lifecycle.submit(req, before_submit=authoritative_guard)
+
+    assert observed.pending_identity
+    assert guard_calls == 4
+    assert workflow_mutations == 1
+
+    recovered, _recovered_path = lifecycle.submit(req, before_submit=authoritative_guard)
+
+    assert recovered.pending_identity
+    assert guard_calls == 4
+    assert workflow_mutations == 1
 
 
 def test_workflow_submission_correlates_exact_request_across_paginated_catalog() -> None:
@@ -1418,6 +1495,79 @@ def test_github_actions_route_and_targeted_dispatch_reject_code_task(
     result = dispatch._call_remote_adapter("github_actions", task, dry_run=False)
     assert isinstance(result, str)
     assert "verification-only" in result
+
+
+def test_authoritative_workstream_contract_drift_blocks_before_provider_discovery(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from limen import dispatch
+
+    submitted = verification_task(workstream_contract=packet_contract("2d", now_epoch=1_000))
+    authoritative = verification_task(workstream_contract=packet_contract("2d", now_epoch=1_001))
+    tasks_path = tmp_path / "tasks.yaml"
+    save_limen_file(tasks_path, harvest_board(authoritative))
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks_path))
+    monkeypatch.setattr(
+        dispatch,
+        "discover_adapters",
+        lambda: (_ for _ in ()).throw(AssertionError("contract drift must stop before provider discovery")),
+    )
+
+    result = dispatch._call_remote_adapter("github_actions", submitted, dry_run=False)
+
+    assert isinstance(result, str)
+    assert dispatch._is_workstream_successor_result(result)
+    assert "packet contract changed" in dispatch._workstream_successor_reason(result)
+
+
+def test_remote_dispatch_final_guard_validates_authoritative_task_before_workflow_mutation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from limen import dispatch
+
+    submitted = verification_task(workstream_contract=packet_contract("2d"))
+    tasks_path = tmp_path / "tasks.yaml"
+    save_limen_file(tasks_path, harvest_board(submitted))
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks_path))
+    calls: list[tuple[str, ...]] = []
+    control_probes = 0
+    board_mutated = False
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        nonlocal board_mutated, control_probes
+        args = tuple(argv)  # type: ignore[arg-type]
+        calls.append(args)
+        if result := preflight_result(args):
+            if "/git/ref/heads/main" in " ".join(args):
+                control_probes += 1
+                if control_probes == 2:
+                    parent = implementation_parent()
+                    parent.dispatch_log[-1].timestamp = datetime.fromisoformat("2026-07-14T00:00:00+00:00")
+                    save_limen_file(tasks_path, LimenFile(tasks=[parent, submitted]))
+                    board_mutated = True
+            return result
+        if args[1:3] == ("workflow", "run"):
+            raise AssertionError("drifted workstream must not mutate GitHub")
+        if args[1] == "api":
+            return CommandResult(args, 0, '[{"workflow_runs": []}]')
+        raise AssertionError(args)
+
+    adapter = _actions_adapter(runner)
+    monkeypatch.setattr(dispatch, "discover_adapters", lambda: ({"github_actions": adapter}, []))
+    monkeypatch.setattr(dispatch, "resolve_pushed_sha", lambda *_args, **_kwargs: SHA)
+    monkeypatch.setattr(dispatch, "_remote_receipt_store", lambda: ReceiptStore(tmp_path / "receipts"))
+
+    result = dispatch._call_remote_adapter("github_actions", submitted, dry_run=False)
+
+    assert dispatch._is_blocked_result(result)
+    assert "remote request changed" in dispatch._blocked_reason(result)
+    assert board_mutated is True
+    assert control_probes >= 2
+    assert not any(args[1:3] == ("workflow", "run") for args in calls)
 
 
 @pytest.mark.parametrize(

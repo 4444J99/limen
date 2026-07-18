@@ -48,6 +48,18 @@ class ExecutionProfile:
     planning_only: bool
     build_allowed: bool
     verification_strength: float
+    # Total workstream window. Per-process token/time guards remain independently enforced;
+    # this field lets a conducted packet survive provider/session boundaries without becoming
+    # unbounded or relying on a model name.
+    runway_seconds: int = 86_400
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.runway_seconds, bool)
+            or not isinstance(self.runway_seconds, int)
+            or not 900 <= self.runway_seconds <= 2_592_000
+        ):
+            raise ValueError("runway_seconds must be between 900 and 2592000")
 
     def as_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -128,6 +140,7 @@ def execution_profile_for(task: object | None) -> ExecutionProfile:
     cost_pressure = float(overrides.get("cost_pressure", _clamp(1.0 / math.sqrt(float(budget)))))
     latency_pressure = float(overrides.get("latency_pressure", priority_weight))
     verification_strength = float(overrides.get("verification_strength", _clamp(0.4 + complexity * 0.6)))
+    runway_seconds = int(overrides.get("runway_seconds", 86_400))
 
     return ExecutionProfile(
         requested_hint=requested_hint,
@@ -141,6 +154,7 @@ def execution_profile_for(task: object | None) -> ExecutionProfile:
         planning_only=planning_only,
         build_allowed=not planning_only,
         verification_strength=verification_strength,
+        runway_seconds=runway_seconds,
     )
 
 

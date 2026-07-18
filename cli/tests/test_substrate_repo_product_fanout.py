@@ -306,13 +306,15 @@ def test_current_session_fanout_creates_ten_codex_planners_and_executor_packets(
         assert plan_hash in markdown
 
 
-def test_current_session_fanout_keeps_explicit_executor_lane_list(monkeypatch) -> None:
+def test_current_session_fanout_keeps_explicit_executor_lane_list_without_inventing_all_fallback(
+    monkeypatch,
+) -> None:
     mod = _load("current-session-fanout.py", "current_session_fanout_lanes_under_test")
-    monkeypatch.setattr(mod, "resolve_lane_selector", None)
+    monkeypatch.setattr(mod, "select_lanes", None)
     monkeypatch.setattr(mod, "_down_lanes", None)
 
     assert mod.lane_selection("opencode,agy,github-actions") == ["opencode", "agy", "github_actions"]
-    assert mod.lane_selection("all") == ["codex", "opencode", "agy", "gemini", "github_actions"]
+    assert mod.lane_selection("all") == []
 
 
 def test_current_session_fanout_task_seed_waterfalls_into_queue(tmp_path: Path, monkeypatch) -> None:

@@ -22,6 +22,14 @@ if [[ "${LIMEN_VERIFY_NO_LOCK:-0}" != "1" ]]; then
   fi
 fi
 
+# The older verifier flock remains the first lock in the order. Host admission
+# then composes it with every other heavy Codex/Claude/Limen surface and denies
+# new work under measured backup, swap, disk, or VITALS pressure.
+# shellcheck source=scripts/lib/host-admission.sh
+source "$ROOT/scripts/lib/host-admission.sh"
+host_admission_acquire "verify-whole" "$ROOT" || exit $?
+trap host_admission_exit_trap EXIT
+
 step() {
   printf '\n==> %s\n' "$*"
 }

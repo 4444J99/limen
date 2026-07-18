@@ -684,6 +684,22 @@ class ReceiptStore:
                 temporary.unlink(missing_ok=True)
         return path
 
+    def discard_exact(self, receipt: RemoteReceipt, path: Path) -> None:
+        """Remove only the exact receipt just persisted before a known-unmutated abort."""
+
+        payload = canonical_json(receipt.as_dict())
+        digest = hashlib.sha256(payload).hexdigest()
+        expected = self.task_root(receipt.request.task_id) / f"{digest}.json"
+        if path != expected:
+            raise RemoteExecutionError("refusing to discard a receipt outside its exact task custody path")
+        try:
+            stored = path.read_bytes()
+        except OSError as exc:
+            raise RemoteExecutionError(f"exact unmutated intent receipt is unreadable: {exc}") from exc
+        if stored != payload + b"\n":
+            raise RemoteExecutionError("refusing to discard an intent receipt whose content changed")
+        path.unlink()
+
     def latest_for(self, request: RemoteRequest) -> tuple[RemoteReceipt, Path] | None:
         task_root = self.task_root(request.task_id)
         if not task_root.is_dir():
@@ -1044,7 +1060,12 @@ class RemoteLifecycle:
         self.adapter = adapter
         self.store = store
 
-    def submit(self, request: RemoteRequest) -> tuple[RemoteRun, Path]:
+    def submit(
+        self,
+        request: RemoteRequest,
+        *,
+        before_submit: Callable[[], object] | None = None,
+    ) -> tuple[RemoteRun, Path]:
         with self.store.submission_lock(request.task_id):
             self.adapter.preflight(request)
             existing = self.store.latest_for(request)
@@ -1071,16 +1092,32 @@ class RemoteLifecycle:
 
             intent = self.adapter.intent(request)
             self._check_identity(request, intent)
-            self.store.write(
-                RemoteReceipt(
-                    request,
-                    intent,
-                    intent.state,
-                    observed_at=intent.observed_at,
-                    detail="submission intent persisted before provider mutation",
-                )
+            intent_receipt = RemoteReceipt(
+                request,
+                intent,
+                intent.state,
+                observed_at=intent.observed_at,
+                detail="submission intent persisted before provider mutation",
             )
-            run = self.adapter.submit(request)
+            if isinstance(self.adapter, GitHubWorkflowAdapter):
+
+                def persist_guarded_intent() -> None:
+                    if before_submit is not None:
+                        before_submit()
+                    intent_path = self.store.write(intent_receipt)
+                    try:
+                        if before_submit is not None:
+                            before_submit()
+                    except BaseException:
+                        self.store.discard_exact(intent_receipt, intent_path)
+                        raise
+
+                run = self.adapter.submit(request, before_mutation=persist_guarded_intent)
+            else:
+                if before_submit is not None:
+                    before_submit()
+                self.store.write(intent_receipt)
+                run = self.adapter.submit(request)
             self._check_transition(request, intent, run)
             receipt = RemoteReceipt(
                 request,
@@ -1314,7 +1351,12 @@ class GitHubWorkflowAdapter:
             detail="durable submission intent; provider mutation not yet confirmed",
         )
 
-    def submit(self, request: RemoteRequest) -> RemoteRun:
+    def submit(
+        self,
+        request: RemoteRequest,
+        *,
+        before_mutation: Callable[[], object] | None = None,
+    ) -> RemoteRun:
         self.preflight(request)
         request_id = request.request_id
         existing = self._find_run(request, request_id)
@@ -1325,6 +1367,8 @@ class GitHubWorkflowAdapter:
         self.preflight(request)
         inputs_json = json.dumps([asdict(item) for item in request.inputs], sort_keys=True, separators=(",", ":"))
         profile_json = request._execution_profile_json.decode()
+        if before_mutation is not None:
+            before_mutation()
         result = self.runner(
             [
                 self.gh_binary,

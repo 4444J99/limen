@@ -16,6 +16,13 @@ VALID_STATUSES = {
     "needs_human",
     "archived",
 }
+JULES_LANDING_HOLD_LABEL = "jules:landing-held"
+
+
+def has_jules_landing_hold(task: object) -> bool:
+    """Whether Jules landing temporarily owns this row without changing lifecycle status."""
+
+    return JULES_LANDING_HOLD_LABEL in (getattr(task, "labels", None) or [])
 
 
 class DispatchLogEntry(BaseModel):
@@ -50,6 +57,20 @@ class DispatchLogEntry(BaseModel):
     remote_state: str | None = None
     remote_request_id: str | None = None
     remote_receipt: str | None = None
+    # Crash-resumable Jules landing transaction metadata. These fields are
+    # explicit so type checking covers the transaction writer while historical
+    # and future extension fields remain readable through ``extra="allow"``.
+    landing_event: str | None = None
+    landing_terminal: bool | None = None
+    landing_outcome: str | None = None
+    landing_session_id: str | None = None
+    landing_branch: str | None = None
+    landing_intent_token: str | None = None
+    landing_claim_sha256: str | None = None
+    landing_prior_status: str | None = None
+    landing_prior_updated: datetime | None = None
+    landing_attempt_count: int | None = None
+    landing_attempt: int | None = None
     output: str | None = None
 
     @field_validator("status")
@@ -105,6 +126,9 @@ class Task(BaseModel):
     # Optional live prerequisites. Missing/empty keeps legacy tasks dispatchable; an explicit
     # requirement is evaluated dynamically by handoff and every dispatch selector.
     execution_requirements: list[ExecutionRequirement] | None = None
+    # Immutable provider-neutral workstream policy carried from a generated packet into
+    # the actual adapter launch seam. Historical tasks omit it.
+    workstream_contract: dict[str, Any] | None = None
     # Optional per-task Claude tier pin ("haiku"|"sonnet"|"opus"|"fable") — an escape hatch that
     # overrides the earned-tier ladder's class-based derivation for THIS task (the env
     # LIMEN_CLAUDE_MODEL still wins above it). Fable still requires LIMEN_FABLE_ACCEPTANCE.
@@ -131,6 +155,15 @@ class Task(BaseModel):
         if isinstance(value, bool):
             raise ValueError("budget_cost must be an integer, not a boolean")
         return value
+
+    @field_validator("workstream_contract")
+    @classmethod
+    def validate_workstream_contract(cls, value: dict[str, Any] | None) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        from limen.workstream_contract import validate_packet_contract
+
+        return validate_packet_contract(value)
 
     @field_validator("workstream")
     @classmethod

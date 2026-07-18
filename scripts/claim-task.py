@@ -15,6 +15,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
 from limen import runtime_requirements  # noqa: E402
+from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 VALID_CLAIM_AGENTS = {
     "agy",
@@ -81,6 +82,8 @@ def claim_task(data: dict[str, Any], task_id: str, agent: str, session_id: str) 
         status = task.get("status")
         if status != "open":
             raise SystemExit(f"task {task_id} is not open; current status is {status!r}")
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (task.get("labels") or []):
+            raise SystemExit(f"task {task_id} requires a separately admitted successor; cannot claim expired row")
 
         readiness = runtime_requirements.evaluate_execution_requirements(task)
         if not readiness.ready:

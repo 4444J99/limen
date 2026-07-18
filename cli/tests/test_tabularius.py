@@ -521,3 +521,76 @@ def test_submit_task_upsert_validates_before_emitting(tmp_path):
     with pytest.raises(ValueError, match="predicate"):
         submit_task_upsert(board, untyped, agent="gen")
     assert pending_count(board) == 0  # nothing entered the inbox
+
+
+def test_submit_task_upsert_is_create_only(tmp_path):
+    from limen.tabularius import submit_task_upsert
+
+    board = _seed_board(tmp_path)
+    submit_task_upsert(board, Task.model_validate(_task("T-1", status="open")), agent="gen", now=_NOW)
+
+    result = drain_once(board)
+
+    assert result.applied == 0
+    assert result.rejected == 1
+    assert {task.id: task for task in load_limen_file(board).tasks}["T-1"].status == "open"
+
+
+def test_keeper_preserves_successor_terminal_hold_against_status_and_raw_upsert_tickets(tmp_path):
+    board = tmp_path / "tasks.yaml"
+    save_limen_file(
+        board,
+        _board(
+            [
+                _task(
+                    "T-held",
+                    status="failed",
+                    labels=["workstream:successor-required"],
+                )
+            ]
+            + [_task(f"T-{i}", status="open") for i in range(5)]
+        ),
+    )
+    submit_task_status(board, "T-held", status="open", agent="codex", now=_NOW)
+    submit_ticket(
+        board,
+        _ticket(
+            INTENT_UPSERT,
+            task_id="T-held",
+            ts=datetime(2026, 7, 2, 12, 0, 1, tzinfo=timezone.utc),
+            patch={"status": "open", "labels": []},
+        ),
+    )
+    submit_ticket(
+        board,
+        _ticket(
+            INTENT_UPSERT,
+            task_id="T-held",
+            ts=datetime(2026, 7, 2, 12, 0, 2, tzinfo=timezone.utc),
+            patch={"status": "done", "labels": []},
+        ),
+    )
+    submit_ticket(
+        board,
+        _ticket(
+            INTENT_REMOVE,
+            task_id="T-held",
+            ts=datetime(2026, 7, 2, 12, 0, 3, tzinfo=timezone.utc),
+        ),
+    )
+    submit_task_status(
+        board,
+        "T-held",
+        status="done",
+        agent="codex",
+        now=datetime(2026, 7, 2, 12, 0, 4, tzinfo=timezone.utc),
+    )
+
+    result = drain_once(board)
+
+    held = {task.id: task for task in load_limen_file(board).tasks}["T-held"]
+    assert result.applied == 1
+    assert result.rejected == 4
+    assert held.status == "done"
+    assert held.labels == ["workstream:successor-required"]
+    assert [entry.status for entry in held.dispatch_log] == ["done"]

@@ -100,7 +100,9 @@ default delivery posture.
 diff. Never run the full test suite as a default local gate — scope it. Never hand-roll a
 background poll loop on a PR gate; the one sanctioned synchronous waiter is
 `scripts/await-pr.sh`. Polling non-required checks or running unimplicated gates is waste and
-masks genuine failures.
+masks genuine failures. Once an implicated predicate passes for an unchanged exact head, record and
+reuse that receipt; do not rerun suites merely to accumulate reassurance. A changed head or a
+specific observed failure is required before another test.
 
 **3. Durable homing — all state in git-tracked homes; no local orphan files.**
 Every work product, task, blocker, and human-gated atom must land in a git-tracked durable home
@@ -249,6 +251,11 @@ source of truth. A local checkout is a disposable cache or staging area; it is n
 - Do not fall back to local files when the canonical object is remote and queryable.
 - Do not let local clone presence, local profile copies, or stale generated artifacts define public
   truth. If a remote cannot be updated, record the owner repo, missing gate, and next command.
+- Do not generalize one failed GitHub surface into "GitHub is blocked." A zero-step hosted Actions
+  job, including a runner-allocation or billing annotation, describes that exact execution surface;
+  it does not make repository/API/PR custody unavailable and is not by itself an external stop
+  condition. Verify live permissions and current receipts, continue every available local or remote
+  predicate, and name the narrow failing surface without stalling unrelated closeout work.
 
 ## Run-and-Gun Substrate
 
@@ -330,11 +337,21 @@ A continuation capsule contains:
 
 - one isolated worktree and single-purpose branch when repository-backed, otherwise one isolated
   owner-native workspace or durable remote surface;
+- one validated, machine-readable workstream contract with an explicit finite configurable runway;
+  the first launch admits it, successor sessions inherit its deadline, and malformed, unbounded, or
+  expired contracts fail closed without preempting an already-running provider process;
 - a README with the objective, current evidence links, authorities, prohibitions, first probes,
   executable predicates, ownership rules, and session-switch conditions;
 - one copy/paste command that enters the worktree and starts the next agent with that README as its
   initial prompt;
 - a durable remote receipt for the capsule itself before the producing session closes.
+
+The capsule is a conducted workstream, not an implicit one-packet handoff. Its conductor re-checks
+remaining runway at packet boundaries, derives healthy lanes from live capabilities, and routes
+independently bounded packets across agents without pinning a provider or model. Full approval is
+carried as a no-modal contract: in-scope reversible work proceeds without confirmation under the
+scoped sandbox; destructive, credential, paid-spend, public-send, and runtime/host mutations remain
+gated.
 
 The capsule defines how reality decides what happens next; it never predeclares the ending. At launch,
 derive the exact remote head and CI state, board/task contracts, handoff age, provider headroom, mounted
@@ -365,6 +382,23 @@ CI must shard module predicates and run eligible shards in parallel. The final i
 the shard receipts plus only genuine cross-module seams. Each shard has an execution-profile timeout,
 finite transient retry policy, output cap, and stable receipt; no unbounded wait, retry, or log stream
 is a valid verification strategy.
+
+## Machine-Wide Host Admission
+
+Every heavy local Codex, Claude, OpenCode, Agy, or Limen surface must enter through the shared host
+admission boundary documented in [`docs/host-work-admission.md`](docs/host-work-admission.md).
+Admission is machine-wide across worktrees: at most one non-plan Codex root turn and at most one
+heavy local surface. New heavy work is denied under declared Backblaze, swap, disk, or VITALS
+pressure; existing work is never killed, restarted, or retuned and may perform bounded closeout.
+
+Hooks are an early control layer, not sole enforcement. Codex `PreToolUse` cannot reliably block a
+tool and `SubagentStart` cannot prevent creation, so heavy entrypoints must acquire the same atomic
+lease internally. Leases bind PID plus process-start identity, refresh finitely, and clean up only
+dead, reused, or stale owners. Never delete the lease store or signal a peer to seize capacity.
+
+Project Codex families are capped at three threads and depth one. Global hook deployment and the
+verified non-backed scratch root belong to the Domus cartridge; Limen must not patch home-directory
+hooks or backup configuration directly.
 
 ## Task States
 

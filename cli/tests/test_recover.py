@@ -3,11 +3,22 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.jules_remote import JulesRemoteSession, JulesRemoteSnapshot  # noqa: E402
-from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task  # noqa: E402
+from limen.models import (  # noqa: E402
+    JULES_LANDING_HOLD_LABEL,
+    Budget,
+    BudgetTrack,
+    DispatchLogEntry,
+    LimenFile,
+    Portal,
+    Task,
+)
+from limen.workstream_contract import packet_contract  # noqa: E402
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "recover.py"
 SID = "12345678901234567890"
@@ -137,6 +148,46 @@ def test_recover_holds_when_jules_cli_is_unavailable(tmp_path, monkeypatch):
 
     assert task.status == "dispatched"
     assert task.target_agent == "jules"
+
+
+def test_recover_preserves_failed_and_dispatched_jules_landing_holds(tmp_path, monkeypatch):
+    tasks_path = tmp_path / "tasks.yaml"
+    now = dt.datetime.now(dt.timezone.utc)
+    tasks = [
+        Task(
+            id=f"LANDING-{status.upper()}",
+            title="landing held",
+            repo="organvm/example",
+            target_agent="jules",
+            status=status,
+            labels=[JULES_LANDING_HOLD_LABEL],
+            created=now.date(),
+            dispatch_log=[
+                DispatchLogEntry(
+                    timestamp=now,
+                    agent="jules",
+                    session_id=SID,
+                    status="dispatched",
+                )
+            ],
+        )
+        for status in ("failed", "dispatched")
+    ]
+    save_limen_file(tasks_path, LimenFile(tasks=tasks))
+    module = _load_recover("recover_jules_landing_hold")
+    monkeypatch.setattr(
+        module,
+        "live_jules_sessions",
+        lambda *_args, **_kwargs: pytest.fail("held landing must not probe or recover"),
+    )
+    monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
+
+    assert module.main() == 0
+
+    current = load_limen_file(tasks_path).tasks
+    assert [task.status for task in current] == ["failed", "dispatched"]
+    assert all(task.labels == [JULES_LANDING_HOLD_LABEL] for task in current)
+    assert all(len(task.dispatch_log) == 1 for task in current)
 
 
 def test_recover_does_not_apply_remote_logic_to_non_jules_claim(tmp_path, monkeypatch):
@@ -374,6 +425,85 @@ def test_recover_defaults_to_local_tasks_yaml(tmp_path, monkeypatch):
     task = load_limen_file(tmp_path / "tasks.yaml").tasks[0]
     assert task.status == "open"
     assert task.target_agent == "codex"
+
+
+def test_recover_holds_successor_required_task_at_fixed_point(tmp_path, monkeypatch, capsys):
+    tasks_path = tmp_path / "tasks.yaml"
+    now = dt.datetime.now(dt.timezone.utc)
+    contract = packet_contract("15m", now_epoch=1_000)
+    save_limen_file(
+        tasks_path,
+        LimenFile(
+            portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(now.date())))),
+            tasks=[
+                Task(
+                    id="WORKSTREAM-SUCCESSOR-REQUIRED",
+                    title="continue through a separately admitted successor",
+                    repo="organvm/limen",
+                    target_agent="codex",
+                    status="failed",
+                    labels=["workstream:successor-required", "tried:codex"],
+                    created=now.date(),
+                    workstream_contract=contract,
+                    dispatch_log=[
+                        DispatchLogEntry(
+                            timestamp=now,
+                            agent="codex",
+                            session_id="expired-workstream",
+                            status="failed",
+                            output="successor workstream required: workstream packet runway is exhausted",
+                        )
+                    ],
+                ),
+                Task(
+                    id="WORKSTREAM-SUCCESSOR-DISPATCHED",
+                    title="stale status cannot bypass the successor boundary",
+                    repo="organvm/limen",
+                    target_agent="jules",
+                    status="dispatched",
+                    labels=["workstream:successor-required"],
+                    created=now.date(),
+                    workstream_contract=contract,
+                    dispatch_log=[
+                        DispatchLogEntry(
+                            timestamp=now,
+                            agent="jules",
+                            session_id="12345",
+                            status="dispatched",
+                            output="stale writer flipped the expired owner row",
+                        )
+                    ],
+                ),
+            ],
+        ),
+    )
+    original = tasks_path.read_bytes()
+
+    for pass_number in range(2):
+        module = _load_recover(f"recover_successor_fixed_point_{pass_number}")
+        monkeypatch.setattr(
+            module,
+            "live_jules_sessions",
+            lambda *_args, **_kwargs: pytest.fail("held successor row must not probe Jules"),
+        )
+        monkeypatch.setattr(sys, "argv", ["recover", "--tasks", str(tasks_path), "--apply"])
+
+        assert module.main() == 0
+        tasks = {task.id: task for task in load_limen_file(tasks_path).tasks}
+        task = tasks["WORKSTREAM-SUCCESSOR-REQUIRED"]
+        assert task.status == "failed"
+        assert task.target_agent == "codex"
+        assert task.labels == ["workstream:successor-required", "tried:codex"]
+        assert task.workstream_contract == contract
+        assert len(task.dispatch_log) == 1
+        dispatched = tasks["WORKSTREAM-SUCCESSOR-DISPATCHED"]
+        assert dispatched.status == "dispatched"
+        assert dispatched.target_agent == "jules"
+        assert dispatched.labels == ["workstream:successor-required"]
+        assert len(dispatched.dispatch_log) == 1
+        assert tasks_path.read_bytes() == original
+
+    assert capsys.readouterr().out.count("2 successor-required held") == 2
 
 
 def test_recover_reopens_first_noop_failure(tmp_path, monkeypatch):

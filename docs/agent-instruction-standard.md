@@ -54,8 +54,9 @@ back to `AGENTS.md` instead.
     use an isolated owner-native workspace or remote receipt rather than manufacturing a fake
     worktree. Its README fixes intent, authorities, prohibitions, predicates, and owner lineage; live
     environment probes derive the lane and ending. The closeout must print one launch command and
-    make the capsule remotely durable. Never hard-code a future model, provider table, task count, or
-    desired terminal verdict into the capsule.
+    make the capsule remotely durable. Carry one validated finite configurable runway that successor
+    sessions inherit; never hard-code a future model, provider table, task count, or desired terminal
+    verdict into the capsule.
 11. Apply `AGENTS.md` → Bounded Composition to campaigns, CI, generated artifacts, and handoffs.
     Aggregate entrypoints are thin fan-in layers over independently runnable modules with finite
     retries, bounded output, and durable receipts; they never duplicate successful children.

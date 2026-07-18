@@ -16,8 +16,11 @@ import hashlib
 import json
 from typing import Any, Mapping
 
+from limen.workstream_contract import ContractError as WorkstreamContractError
+from limen.workstream_contract import validate_packet_contract
 
-EXECUTION_CONTRACT_SCHEMA_VERSION = "limen-execution-contract.v2"
+
+EXECUTION_CONTRACT_SCHEMA_VERSION = "limen-execution-contract.v3"
 
 
 class ExecutionContractError(ValueError):
@@ -91,6 +94,16 @@ def _execution_requirements(data: Mapping[str, Any]) -> list[dict[str, str]]:
     return requirements
 
 
+def _workstream_contract(data: Mapping[str, Any]) -> dict[str, Any] | None:
+    value = data.get("workstream_contract")
+    if value is None:
+        return None
+    try:
+        return validate_packet_contract(value)
+    except WorkstreamContractError as exc:
+        raise ExecutionContractError(f"execution contract field 'workstream_contract' is invalid: {exc}") from exc
+
+
 def execution_contract_payload(task: Mapping[str, Any] | object) -> dict[str, Any]:
     """Return the strict, versioned canonical payload for one task execution."""
 
@@ -112,6 +125,7 @@ def execution_contract_payload(task: Mapping[str, Any] | object) -> dict[str, An
         "predicate": _string(data, "predicate", default=None, nullable=True),
         "receipt_target": _string(data, "receipt_target", default=None, nullable=True),
         "execution_requirements": _execution_requirements(data),
+        "workstream_contract": _workstream_contract(data),
         "claude_tier": _string(data, "claude_tier", default=None, nullable=True),
         "depends_on": _string_list(data, "depends_on"),
     }

@@ -23,13 +23,20 @@ def write_fixture(
     sid: str = "fixture-session",
     base_time: dt.datetime | None = None,
     complete: bool = False,
+    parent_thread_id: str | None = None,
+    root_session_id: str | None = None,
 ) -> None:
     start = base_time or (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=2))
+    session_meta = {"id": sid}
+    if parent_thread_id is not None:
+        session_meta["parent_thread_id"] = parent_thread_id
+    if root_session_id is not None:
+        session_meta["root_session_id"] = root_session_id
     rows = [
         {
             "timestamp": _iso(start),
             "type": "session_meta",
-            "payload": {"id": sid},
+            "payload": session_meta,
         },
         {
             "timestamp": _iso(start + dt.timedelta(minutes=1)),
@@ -116,6 +123,9 @@ def test_codex_token_accounting_reports_uncached_and_phase_deltas(tmp_path: Path
     payload = json.loads(report.read_text())
     session = payload["sessions"][0]
     assert session["session_id"] == "fixture-session"
+    assert session["thread_id"] == "fixture-session"
+    assert session["root_session_id"] == "fixture-session"
+    assert session["terminal_state"] == "running"
     assert session["totals"]["cached_input_tokens"] == 1000
     assert session["totals"]["uncached_input_tokens"] == 800
     assert session["totals"]["output_tokens"] == 90
@@ -244,6 +254,7 @@ def test_codex_token_accounting_active_gate_ignores_completed_fresh_failures(tmp
     assert payload["active_failures"] == []
     assert payload["historical_failures"] == ["fixture-session: budget_tokens=920"]
     assert payload["sessions"][0]["active"] is False
+    assert payload["sessions"][0]["terminal_state"] == "complete"
 
 
 def test_active_gate_ignores_current_codex_thread_by_default(tmp_path: Path) -> None:
@@ -431,7 +442,7 @@ def test_active_helpers_fail_open_and_window() -> None:
     assert mod.is_active_session(restarted_after_completion, now, 900) is True
 
 
-def test_default_scan_requires_live_resume_process_for_non_current_session(tmp_path: Path, monkeypatch) -> None:
+def test_fresh_token_event_is_active_without_live_resume_process(tmp_path: Path, monkeypatch) -> None:
     mod = _load_accounting_module()
     sessions_root = tmp_path / "sessions"
     sessions_root.mkdir()
@@ -459,8 +470,100 @@ def test_default_scan_requires_live_resume_process_for_non_current_session(tmp_p
     report = mod.build_report(args)
 
     assert report["require_live_process_gate"] is True
-    assert report["active_status"] == "ok"
-    assert report["active_failures"] == []
-    assert report["historical_failures"] == ["019f4700-156d-73c3-9b07-d4b37711e2ec: budget_tokens=920"]
-    assert report["sessions"][0]["active"] is False
-    assert report["sessions"][0]["active_gate_exclusion"] == "no-live-codex-resume-process"
+    assert report["active_status"] == "fail"
+    assert report["active_failures"] == ["019f4700-156d-73c3-9b07-d4b37711e2ec: budget_tokens=920"]
+    assert report["historical_failures"] == []
+    assert report["sessions"][0]["active"] is True
+    assert "active_gate_exclusion" not in report["sessions"][0]
+
+
+def test_child_identity_and_family_budget_are_preserved(tmp_path: Path) -> None:
+    root = tmp_path / "root.jsonl"
+    child = tmp_path / "child.jsonl"
+    report_path = tmp_path / "report.json"
+    write_fixture(root, sid="root-thread")
+    write_fixture(child, sid="child-thread", parent_thread_id="root-thread")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            str(root),
+            str(child),
+            "--since-hours",
+            "0",
+            "--max-budget-tokens",
+            "1500",
+            "--active-session-seconds",
+            "3600",
+            "--output",
+            str(report_path),
+            "--fail-on-active-budget",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    report = json.loads(report_path.read_text())
+    by_thread = {session["thread_id"]: session for session in report["sessions"]}
+    assert set(by_thread) == {"root-thread", "child-thread"}
+    assert by_thread["child-thread"]["session_id"] == "child-thread"
+    assert by_thread["child-thread"]["parent_thread_id"] == "root-thread"
+    assert by_thread["child-thread"]["root_session_id"] == "root-thread"
+    assert report["thread_count"] == 2
+    assert report["family_count"] == 1
+    family = report["families"][0]
+    assert family["root_session_id"] == "root-thread"
+    assert family["thread_count"] == 2
+    assert family["active_thread_count"] == 2
+    assert family["totals"]["budget_tokens"] == 1840
+    assert report["active_family_failures"] == ["family root-thread: budget_tokens=1840"]
+    assert report["family_violations"] == [
+        {
+            "active": True,
+            "metric": "budget_tokens",
+            "root_session_id": "root-thread",
+            "scope": "family",
+            "severity": "fail",
+            "thread_id": None,
+            "threshold": 1500,
+            "value": 1840,
+        }
+    ]
+
+
+def test_duplicate_transcripts_do_not_double_charge_family(tmp_path: Path) -> None:
+    first = tmp_path / "first.jsonl"
+    duplicate = tmp_path / "duplicate.jsonl"
+    report_path = tmp_path / "report.json"
+    write_fixture(first, sid="same-thread")
+    write_fixture(duplicate, sid="same-thread")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            str(first),
+            str(duplicate),
+            "--since-hours",
+            "0",
+            "--output",
+            str(report_path),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(report_path.read_text())
+    assert report["source_file_count"] == 2
+    assert report["thread_count"] == 1
+    assert report["deduplicated_transcript_count"] == 1
+    assert report["aggregate_totals"]["budget_tokens"] == 920
+    assert report["family_totals"]["same-thread"]["budget_tokens"] == 920
+    session = report["sessions"][0]
+    assert session["duplicate_transcript_count"] == 1
+    assert set(session["source_paths"]) == {str(first), str(duplicate)}

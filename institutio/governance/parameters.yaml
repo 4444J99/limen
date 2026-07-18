@@ -40,6 +40,12 @@ parameters:
     self_update: none
     owner: vigilia
     note: "When 1 (default), the governor COMPLETES a PR-owned pause release instead of merely checking it: a marker whose owner:/pr: names one identifiable PR, whose release_predicate declares the merge, and whose prohibitions do NOT mention merge gets merge-policy.sh run on that PR and, on CLEARED (exit 0), a head-pinned squash merge — so a pause can never deadly-embrace the paused beat that would have merged its own release (the 2026-07-15 endless-watcher incident: sessions babysat the pause-owner PR by hand because merge-drain lives inside the paused heartbeat). Operator pauses (merge in prohibitions, or owner_surface:-only identity) are structurally ineligible and never touched. 0 = check-only (pre-2026-07-15 behavior). Follows the LIMEN_AUTONOMY_MARKER_AUTOCLEAR / LIMEN_MERGE_DRAIN default-on precedent; the five-clause discriminator is the safety, and its worst failure mode is staying paused."
+  LIMEN_HEARTBEAT_PAUSED_SECONDS:
+    default: 300
+    env: LIMEN_HEARTBEAT_PAUSED_SECONDS
+    self_update: none
+    owner: vigilia
+    note: "Low-frequency sleep cadence while the autonomy governor is paused. The singleton stays alive and writes one byte-stable paused receipt instead of exiting into a launchd KeepAlive respawn loop."
 
   # --- the institution names ITSELF as the first parameter ---------------------
   INSTITVTIO_NOMEN:
@@ -171,6 +177,54 @@ parameters:
     self_update: none
     owner: vitals
     note: "FIND-005: one heavy AI surface at a time on a 16GB host."
+  LIMEN_HOST_ADMISSION_ROOT:
+    default: "auto"
+    env: LIMEN_HOST_ADMISSION_ROOT
+    self_update: none
+    owner: vitals
+    note: "Machine-wide, per-UID lease state. 'auto' derives a private directory under the host temp root so leases are shared by every Limen worktree but never promoted to backed-up governance output."
+  LIMEN_HOST_ADMISSION_LEASE_SECONDS:
+    default: 900
+    env: LIMEN_HOST_ADMISSION_LEASE_SECONDS
+    self_update: none
+    owner: vitals
+    note: "Finite lease TTL for execution and heavy-surface admission. Bounded entrypoints refresh live leases; dead PID, PID-start mismatch, and TTL cleanup never signal or restart peers."
+  LIMEN_HOST_ADMISSION_PROBE_TIMEOUT:
+    default: 5
+    env: LIMEN_HOST_ADMISSION_PROBE_TIMEOUT
+    self_update: none
+    owner: vitals
+    note: "Hard timeout in seconds for the two-interval iostat pressure observation used only when deciding whether to admit new heavy work."
+  LIMEN_HOST_ADMISSION_BACKBLAZE_CPU_PERCENT:
+    default: 50
+    env: LIMEN_HOST_ADMISSION_BACKBLAZE_CPU_PERCENT
+    self_update: none
+    owner: vitals
+    note: "Deny a new heavy lease when aggregate Backblaze client CPU is strictly above this percentage. Existing work is not killed or restarted."
+  LIMEN_HOST_ADMISSION_BACKBLAZE_RSS_BYTES:
+    default: 1073741824
+    env: LIMEN_HOST_ADMISSION_BACKBLAZE_RSS_BYTES
+    self_update: none
+    owner: vitals
+    note: "Deny a new heavy lease when aggregate Backblaze client RSS is strictly above one GiB."
+  LIMEN_HOST_ADMISSION_SWAP_FRACTION:
+    default: 0.25
+    env: LIMEN_HOST_ADMISSION_SWAP_FRACTION
+    self_update: none
+    owner: vitals
+    note: "Deny a new heavy lease when live swap use is strictly above this fraction of physical RAM."
+  LIMEN_HOST_ADMISSION_SWAP_GROWTH_BYTES_PER_MINUTE:
+    default: 536870912
+    env: LIMEN_HOST_ADMISSION_SWAP_GROWTH_BYTES_PER_MINUTE
+    self_update: none
+    owner: vitals
+    note: "Deny a new heavy lease when two bounded observations prove swap is growing strictly faster than 512 MiB per minute."
+  LIMEN_HOST_ADMISSION_DISK_MIB_PER_SECOND:
+    default: 100
+    env: LIMEN_HOST_ADMISSION_DISK_MIB_PER_SECOND
+    self_update: none
+    owner: vitals
+    note: "Deny a new heavy lease only when both post-baseline iostat samples are strictly above this aggregate MiB/s threshold."
   VITALS_SHED_OLLAMA:
     default: "1"
     env: LIMEN_VITALS_SHED_OLLAMA
@@ -628,6 +682,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Timeout in seconds for the lifecycle-pressure worktree-debt scan. On timeout, hooks fail open with an explicit pressure receipt instead of crashing closeout."
+  LIMEN_SESSION_LIFECYCLE_TIMEOUT:
+    default: 45
+    env: LIMEN_SESSION_LIFECYCLE_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Hard process-group timeout for the low-priority SessionEnd lifecycle-pressure refresh. Timeout is fail-open and never kills an unrelated peer."
+  LIMEN_SESSION_WORKTREE_DEBT_TIMEOUT:
+    default: 30
+    env: LIMEN_SESSION_WORKTREE_DEBT_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Narrow worktree-debt subprocess timeout injected only by the SessionEnd lifecycle-pressure hook."
+  LIMEN_LIFECYCLE_SIZE_SCAN_MAX_ROOTS:
+    default: 50
+    env: LIMEN_LIFECYCLE_SIZE_SCAN_MAX_ROOTS
+    self_update: none
+    owner: continuity
+    note: "Maximum immediate worktree/private-corpus roots measured per lifecycle-pressure refresh. Larger denominators remain visible as partial size scans."
   LIMEN_CLOSEOUT_RUN_LIFECYCLE_TESTS:
     default: "0"
     env: LIMEN_CLOSEOUT_RUN_LIFECYCLE_TESTS
@@ -2741,6 +2813,48 @@ parameters:
     self_update: "set per-cell by cells.sh conduct (--workstream <handle>) to pin a scoped conductor to a single workstream channel"
     owner: limen-daemon
     note: "The purpose channel a scoped conductor is pinned to (the one-worker-one-workstream invariant). cells.sh filters the cell board to this channel via `limen channels --emit`, so the conductor structurally sees only its lane. Unset ⇒ the cell sees the full board. See docs/lanes/ and limen.workstream."
+  LIMEN_WORKSTREAM_RUNWAY:
+    default: "1d"
+    env: LIMEN_WORKSTREAM_RUNWAY
+    self_update: none
+    owner: continuity
+    note: "Finite requested duration used when a new workstream is configured without an inherited admitted contract. The validated range is 15m through 30d; an admitted capsule never rereads this value to reset its deadline."
+  LIMEN_WORKSTREAM_REQUESTED:
+    default: null
+    env: LIMEN_WORKSTREAM_REQUESTED
+    self_update: "exported from the validated admitted workstream contract by kickstart.sh"
+    owner: continuity
+    note: "Normalized duration text inherited by successor sessions and packet fanout. Unset outside an admitted capsule."
+  LIMEN_WORKSTREAM_RUNWAY_SECONDS:
+    default: null
+    env: LIMEN_WORKSTREAM_RUNWAY_SECONDS
+    self_update: "exported from the validated admitted workstream contract by kickstart.sh"
+    owner: continuity
+    note: "Validated total workstream duration in seconds. This is contract state, not a mutable provider timeout."
+  LIMEN_WORKSTREAM_STARTED_EPOCH:
+    default: null
+    env: LIMEN_WORKSTREAM_STARTED_EPOCH
+    self_update: "set once by the first serialized capsule admission and inherited thereafter"
+    owner: continuity
+    note: "UTC epoch of first workstream admission. Missing or contradictory timing state invalidates an existing capsule."
+  LIMEN_WORKSTREAM_DEADLINE_EPOCH:
+    default: null
+    env: LIMEN_WORKSTREAM_DEADLINE_EPOCH
+    self_update: "derived once as started epoch plus validated runway and inherited thereafter"
+    owner: continuity
+    note: "Immutable UTC deadline rechecked at packet and provider-spawn boundaries. Reaching zero blocks new launches without preempting an already-running provider."
+  LIMEN_WORKSTREAM_REMAINING_SECONDS:
+    default: null
+    env: LIMEN_WORKSTREAM_REMAINING_SECONDS
+    self_update: "refreshed from the immutable deadline at each capsule launch boundary"
+    owner: continuity
+    note: "Read-only remaining-runway observation exported to the current successor session."
+  LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:
+    default: 120
+    env: LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS
+    self_update: none
+    owner: continuity
+    note: "Finite 1..300 second ceiling for capsule git fetch and status preflights before the final deadline recheck."
 
   # --- BOARD INTEGRITY — the SSOT can never collapse, and self-heals if it somehow does ---
   # (limen.io.save_limen_file collapse-guard + scripts/heal-board.py). Root-caused 2026-06-26:
@@ -3313,24 +3427,18 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Optional operator override. It is usable only when the exact value is present and code-capable in the current `opencode models --verbose` catalog; blank derives from live capabilities."
-  LIMEN_CODEX_TIER_SELECT:
-    default: "1"
-    env: LIMEN_CODEX_TIER_SELECT
+  LIMEN_CODEX_MODEL:
+    default: ""
+    env: LIMEN_CODEX_MODEL
     self_update: none
     owner: dispatch
-    note: "Enable per-task tier derivation for the Codex lane. 1 (default) derives haiku->o4-mini, opus/fable->o3 via _claude_tier_for; 0 disables derivation (provider Auto, prior behaviour). Per-tier overrides via LIMEN_CODEX_MODEL_<TIER>."
+    note: "Blank delegates to provider Auto because the Codex CLI exposes no live model catalog. Any nonblank LIMEN_CODEX_MODEL* override fails blocked until it can be validated from live provider metadata."
   LIMEN_GEMINI_MODEL:
     default: ""
     env: LIMEN_GEMINI_MODEL
     self_update: none
     owner: dispatch
-    note: "Blanket operator override for the Gemini agent model. Nonblank wins over all per-task tier derivation. Blank enables tier derivation (see LIMEN_GEMINI_TIER_SELECT)."
-  LIMEN_GEMINI_TIER_SELECT:
-    default: "1"
-    env: LIMEN_GEMINI_TIER_SELECT
-    self_update: none
-    owner: dispatch
-    note: "Enable per-task tier derivation for the Gemini lane. 1 (default) derives haiku/sonnet->gemini-2.5-flash, opus/fable->gemini-2.5-pro via _claude_tier_for; 0 disables derivation (bare invocation, prior behaviour). Per-tier overrides via LIMEN_GEMINI_MODEL_<TIER>."
+    note: "Blank delegates to provider Auto because the Gemini CLI exposes no live model catalog. Any nonblank LIMEN_GEMINI_MODEL* override fails blocked until it can be validated from live provider metadata."
   LIMEN_OPENCODE_CATALOG_TIMEOUT:
     default: 30
     env: LIMEN_OPENCODE_CATALOG_TIMEOUT

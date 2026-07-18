@@ -12,8 +12,11 @@ from __future__ import annotations
 import datetime
 import importlib
 import json
+import os
 import sys
 from pathlib import Path
+
+import pytest
 
 import limen.dispatch as D
 from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task
@@ -185,18 +188,18 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
 
 # ── codex provider-auto selection ───────────────────────────────────────────────────────────────
 def test_codex_uses_provider_auto_without_override(monkeypatch):
-    monkeypatch.delenv("LIMEN_CODEX_MODEL", raising=False)
-    monkeypatch.setenv("LIMEN_CODEX_TIER_SELECT", "0")
+    for name in list(os.environ):
+        if name.startswith("LIMEN_CODEX_MODEL"):
+            monkeypatch.delenv(name, raising=False)
     assert D._codex_model() is None
     argv = D._agent_argv("codex")
     assert "-m" not in argv, f"bare invocation must delegate to provider Auto: {argv}"
 
 
-def test_codex_explicit_model_override_is_opaque(monkeypatch):
+def test_codex_explicit_model_override_blocks_without_live_catalog(monkeypatch):
     monkeypatch.setenv("LIMEN_CODEX_MODEL", "future-provider-id")
-    assert D._codex_model() == "future-provider-id"
-    argv = D._agent_argv("codex")
-    assert argv[-2:] == ["-m", "future-provider-id"]
+    with pytest.raises(D.ProviderSelectionError, match="no live model catalog"):
+        D._agent_argv("codex")
 
 
 # ── cliff-edge routing (route.py) ───────────────────────────────────────────────────────────────

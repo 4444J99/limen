@@ -4,17 +4,20 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/start-worktree-session.sh [--autonomous] [--codex] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--workstream <handle>] <repo-or-alias> <slug>
+  scripts/start-worktree-session.sh [--autonomous] [--codex] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
 
 Examples:
   scripts/start-worktree-session.sh portvs triptych-story
   scripts/start-worktree-session.sh --codex portvs triptych-story
-  scripts/start-worktree-session.sh --autonomous --codex --prompt-file /tmp/next-session.md limen next-epoch
+  scripts/start-worktree-session.sh --autonomous --codex --runway 8h --prompt-file /tmp/next-session.md limen next-epoch
   scripts/start-worktree-session.sh --shell --prompt-file /tmp/prompt.md domus package-map
   scripts/start-worktree-session.sh --workstream contributions --prompt 'drain the code lane' limen contrib-run
 
 --workstream pins the worker to ONE purpose channel (contributions/correspondence/… — see
 docs/lanes/). It is stamped into the kickoff packet so the session stays single-purpose.
+
+--runway sets the finite workstream admission window (15m..30d; default 1d). The clock starts at the
+first kickstart, survives successor sessions, and is never silently reset by a rerender.
 
 --autonomous requires an explicit prompt and turns the README into the initial Codex prompt. The
 packet defines live probes and completion/switch predicates; it never predeclares the ending.
@@ -29,9 +32,10 @@ Creates or reuses:
   <repo>/.worktrees/<slug> on branch work/<slug>
   <repo>/.worktrees/<slug>/.limen-workstream/README.md as a thin prompt index
   <repo>/.worktrees/<slug>/.limen-workstream/{manifest,intent,runtime,closeout}.md
+  <repo>/.worktrees/<slug>/docs/continuations/<slug>/workstream.json as a tracked redacted receipt
 
 The target repo's .git/info/exclude is updated so .worktrees/ and the private
-capsule never appear as Git noise.
+capsule never appear as Git noise. The receipt remains visible for commit and remote custody.
 USAGE
 }
 
@@ -41,6 +45,8 @@ launch_shell=0
 from_ref=""
 prompt_text=""
 prompt_file=""
+runway=""
+runway_explicit=0
 workstream=""
 write_readme=1
 
@@ -85,6 +91,16 @@ while [[ $# -gt 0 ]]; do
       prompt_file="$2"
       shift 2
       ;;
+    --runway)
+      if [[ $# -lt 2 ]]; then
+        echo "missing value for --runway" >&2
+        usage >&2
+        exit 2
+      fi
+      runway="$2"
+      runway_explicit=1
+      shift 2
+      ;;
     --workstream|--ws)
       if [[ $# -lt 2 ]]; then
         echo "missing value for --workstream" >&2
@@ -126,6 +142,10 @@ if [[ "$autonomous" -eq 1 && "$write_readme" -ne 1 ]]; then
   echo "--autonomous cannot be combined with --no-readme" >&2
   exit 2
 fi
+if [[ "$launch_codex" -eq 1 && "$write_readme" -ne 1 ]]; then
+  echo "--codex cannot be combined with --no-readme because launch requires a validated contract" >&2
+  exit 2
+fi
 if [[ "$autonomous" -eq 1 && -z "$prompt_text" && -z "$prompt_file" ]]; then
   echo "--autonomous requires --prompt or --prompt-file" >&2
   exit 2
@@ -133,6 +153,19 @@ fi
 if [[ -n "$prompt_file" && ! -f "$prompt_file" ]]; then
   echo "prompt file not found: $prompt_file" >&2
   exit 1
+fi
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+contract_helper="$script_dir/../cli/src/limen/workstream_contract.py"
+if [[ ! -f "$contract_helper" ]]; then
+  echo "workstream contract helper not found: $contract_helper" >&2
+  exit 1
+fi
+if [[ "$runway_explicit" -eq 1 ]]; then
+  if ! normalized_runway="$(python3 "$contract_helper" normalize "$runway")"; then
+    exit 2
+  fi
+  runway="${normalized_runway%%:*}"
 fi
 
 repo_arg="$1"
@@ -252,22 +285,15 @@ if [[ "$write_readme" -eq 1 ]]; then
     prompt_payload="No explicit prompt was supplied. Add one bounded objective and its owner contract before execution."
   fi
 
-  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
   # shellcheck source=scripts/lib/workstream-capsule.sh
   source "$script_dir/lib/workstream-capsule.sh"
   render_workstream_capsule \
     "$wt" "$repo" "$slug" "$branch" "$workstream" "$from_ref" "$autonomous" \
-    "$prompt_payload" "$script_dir/../spec/continuation-capsule"
+    "$prompt_payload" "$script_dir/../spec/continuation-capsule" "$runway" "$contract_helper"
 fi
 
 if [[ "$launch_codex" -eq 1 ]]; then
-  cd "$wt"
-  if [[ "$autonomous" -eq 1 ]]; then
-    capsule_prompt=""
-    IFS= read -r -d '' capsule_prompt < "$readme" || true
-    exec codex "$capsule_prompt"
-  fi
-  exec codex
+  exec bash "$kickstart"
 fi
 
 if [[ "$launch_shell" -eq 1 ]]; then

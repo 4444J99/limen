@@ -60,7 +60,7 @@ def read_pressure() -> int:
             ["sysctl", "-n", str(gauge)],
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=1,
         )
         val = out.stdout.strip()
         if out.returncode == 0 and val.lstrip("-").isdigit():

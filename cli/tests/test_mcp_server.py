@@ -118,6 +118,81 @@ def test_agent_claim_preserves_board_extensions_and_reserves_budget(tmp_path, mo
     assert task["receipt_target"] == "github:organvm/limen:pull-request:TASK-1"
 
 
+def test_agent_claim_rejects_successor_required_open_row_without_mutating(tmp_path, monkeypatch):
+    server = _load_server()
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "portal": {
+                    "budget": {
+                        "track": {
+                            "date": "2026-07-17",
+                            "spent": 0,
+                            "per_agent": {"opencode": 0},
+                        }
+                    }
+                },
+                "tasks": [
+                    {
+                        "id": "TASK-SUCCESSOR",
+                        "title": "Expired owner row",
+                        "repo": "organvm/limen",
+                        "target_agent": "any",
+                        "status": "open",
+                        "labels": ["workstream:successor-required"],
+                        "created": "2026-07-17",
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    before = tasks.read_bytes()
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+    monkeypatch.setattr(server, "CIRCUIT_BREAKER_TRIPPED", False)
+
+    result = server.agent_claim("TASK-SUCCESSOR", "opencode")
+
+    assert "separately admitted successor" in result
+    assert tasks.read_bytes() == before
+
+
+def test_mcp_status_update_cannot_reopen_successor_required_row(tmp_path, monkeypatch):
+    server = _load_server()
+    tasks = tmp_path / "tasks.yaml"
+    tasks.write_text(
+        yaml.safe_dump(
+            {
+                "version": "1.0",
+                "tasks": [
+                    {
+                        "id": "TASK-SUCCESSOR",
+                        "title": "Expired owner row",
+                        "repo": "organvm/limen",
+                        "target_agent": "codex",
+                        "status": "failed",
+                        "labels": ["workstream:successor-required"],
+                        "created": "2026-07-17",
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    before = tasks.read_bytes()
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks))
+    monkeypatch.setattr(server, "CIRCUIT_BREAKER_TRIPPED", False)
+
+    result = server.update_task_status("TASK-SUCCESSOR", "open")
+
+    assert "separately admitted successor" in result
+    assert tasks.read_bytes() == before
+
+
 def test_agent_claim_rejects_unavailable_runtime_without_mutating(tmp_path, monkeypatch):
     server = _load_server()
     tasks = tmp_path / "tasks.yaml"

@@ -171,6 +171,11 @@ esac
 
 # base tempo (adaptive) + voice subdivisions (configurable)
 MIN="${LIMEN_LOOP_MIN:-120}"; MAX="${LIMEN_LOOP_MAX:-1800}"; beat="$MIN"
+PAUSED_BEAT="${LIMEN_HEARTBEAT_PAUSED_SECONDS:-300}"
+case "$PAUSED_BEAT" in
+  ''|*[!0-9]*) PAUSED_BEAT=300 ;;
+esac
+if [ "$PAUSED_BEAT" -lt 60 ]; then PAUSED_BEAT=60; fi
 # voices subdivide the base tempo — the work-cadence EXPLORE>PLAN>BUILD>VERIFY>HEAL>LEARN>RELAY:
 C_BALANCE="${LIMEN_BEAT_BALANCE:-2}"   # PLAN  (route + rebalance)
 C_FEED="${LIMEN_BEAT_FEED:-3}"         # EXPLORE (mine the backlog)
@@ -288,9 +293,17 @@ while true; do
   echo "──── beat $c $(date '+%F %T') ────"
   MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py" mode 2>/dev/null || echo paused)"
   if [ "$MODE" = "paused" ]; then
-    echo "autonomy paused by governor — exiting"
-    exit 0
+    # Stay the singleton owner. Exiting here made launchd KeepAlive respawn a fresh
+    # process every minute, so a pause paradoxically created repeated startup probes.
+    # The receipt is byte-stable: the first paused beat writes it and later beats do
+    # no filesystem work until the governor resumes.
+    python3 "$LIMEN_ROOT/scripts/heartbeat-paused-receipt.py" \
+      --write --cadence-seconds "$PAUSED_BEAT" >/dev/null 2>&1 || true
+    echo "autonomy paused by governor — stable idle receipt; next check in ${PAUSED_BEAT}s"
+    sleep "$PAUSED_BEAT"
+    continue
   fi
+  python3 "$LIMEN_ROOT/scripts/heartbeat-paused-receipt.py" --clear >/dev/null 2>&1 || true
   # CONNECTIVITY GATE — leaving the house / Starlink not joined is a NORMAL idle beat, NOT an
   # incident. The whole body (sync-release → drain → mine → route → dispatch) needs GitHub; with
   # no network EVERY lane's gh/claude/codex call falls through to a silent-auth failure → login

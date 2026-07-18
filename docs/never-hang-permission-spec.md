@@ -83,6 +83,18 @@
 4. A runtime assertion rejects missing, duplicate, prompt-capable, or bypass modes before
    launch. The same contract is regression-tested through the actual `_agent_argv` seam,
    including model injection and the required mutation tools.
+5. Generated Codex workstreams launch with `--ask-for-approval never --sandbox workspace-write`;
+   `cli/tests/test_workstream_command.py` proves both interactive and autonomous kickstarts keep
+   reversible in-scope work no-modal without widening the sandbox or mutating home configuration.
+6. Dispatch adapters realize the same conducted-packet contract without pretending every CLI has
+   Codex-shaped controls. Codex places `never` and `workspace-write` before `exec`. Agy uses
+   sandboxed print mode with a finite print timeout and never uses its dangerous permission bypass.
+   OpenCode uses pure noninteractive `run`, pins `--dir` to the isolated worktree, disables sharing
+   and external skills, and applies a post-config deny-by-default permission overlay: repository
+   reads/edits remain available (secret env reads excluded), while Bash, subagents, questions,
+   external paths, network tools, and plan-mode transitions are denied. This makes OpenCode an
+   edit-capable packet lane, not a build/test lane. Pre-spawn assertions reject drift before any
+   provider task process starts; unresolved actions deny/cascade rather than open a modal.
 
 ## Evolution (no true conflicts)
 

@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.io import load_limen_file, queue_lock, save_limen_file  # noqa: E402
 from limen.jules_remote import (  # noqa: E402
     JulesRemoteSnapshot,
     classify_jules_claim,
@@ -30,8 +30,12 @@ from limen.jules_remote import (  # noqa: E402
     probe_jules_remote_sessions,
     task_jules_session_id,
 )
-from limen.models import DispatchLogEntry  # noqa: E402
-from limen.dispatch import _has_done_transition, _restore_done_status  # noqa: E402
+from limen.models import DispatchLogEntry, has_jules_landing_hold  # noqa: E402
+from limen.dispatch import (  # noqa: E402
+    WORKSTREAM_SUCCESSOR_REQUIRED_LABEL,
+    _has_done_transition,
+    _restore_done_status,
+)
 from limen.chronic import CHRONIC_FLEET_DEBT_LABEL  # noqa: E402
 
 CASCADE_TOP = "codex"
@@ -62,14 +66,7 @@ def live_jules_sessions(session_ids: Iterable[str] = ()) -> JulesRemoteSnapshot:
     return probe_jules_remote_session_absences(snapshot, session_ids)
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
-    ap.add_argument("--limit", type=int, default=40)
-    ap.add_argument("--task-id", action="append", dest="task_ids", help="Limit recovery to a specific task id")
-    ap.add_argument("--apply", action="store_true")
-    args = ap.parse_args()
-    path = Path(args.tasks)
+def _recover(args: argparse.Namespace, path: Path) -> int:
     lf = load_limen_file(path)
     now = datetime.datetime.now(datetime.timezone.utc)
     selected_ids = set(args.task_ids or [])
@@ -79,6 +76,8 @@ def main() -> int:
         if (not selected_ids or task.id in selected_ids)
         and task.status == "dispatched"
         and task.target_agent == "jules"
+        and not has_jules_landing_hold(task)
+        and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in (task.labels or [])
         and not _has_done_transition(task)
     ]
 
@@ -87,6 +86,9 @@ def main() -> int:
     reopened_orphan: list[str] = []
     reopened_remote_failed: list[str] = []
     escalated_noop: list[str] = []
+    held_landing: list[str] = []
+    held_successor: list[str] = []
+    restored_done: list[str] = []
 
     for t in lf.tasks:
         if selected_ids and t.id not in selected_ids:
@@ -96,13 +98,23 @@ def main() -> int:
             >= args.limit
         ):
             break
+        if has_jules_landing_hold(t):
+            held_landing.append(t.id)
+            continue
         if _has_done_transition(t):
-            _restore_done_status(
+            if _restore_done_status(
                 t,
                 now,
                 session_id="heal",
                 output="recover: prior done transition wins; restored terminal status",
-            )
+            ):
+                restored_done.append(t.id)
+            continue
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.labels or []):
+            # A status flip does not revoke the immutable packet boundary. Hold
+            # every non-terminal lifecycle state, including stale dispatched
+            # rows, without probing or reopening the old provider session.
+            held_successor.append(t.id)
             continue
         if t.status == "failed":
             repeated_noop_count = _repeated_noop_failure_count(t)
@@ -184,14 +196,37 @@ def main() -> int:
         f"recover: {len(reopened_failed)} failed reopened, "
         f"{len(reopened_orphan)} orphaned reopened, "
         f"{len(reopened_remote_failed)} remote-failed reopened, "
-        f"{len(escalated_noop)} repeated-noop escalated"
+        f"{len(escalated_noop)} repeated-noop escalated, "
+        f"{len(held_landing)} jules-landing held, "
+        f"{len(held_successor)} successor-required held"
     )
     if args.apply:
-        save_limen_file(path, lf)
-        print("  APPLIED -> tasks.yaml")
+        changed = bool(restored_done or reopened_failed or reopened_orphan or reopened_remote_failed or escalated_noop)
+        if changed:
+            save_limen_file(path, lf)
+            print("  APPLIED -> tasks.yaml")
+        else:
+            print("  UNCHANGED -> tasks.yaml")
     else:
         print("  dry-run (pass --apply)")
     return 0
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tasks", default=os.environ.get("LIMEN_TASKS", "tasks.yaml"))
+    ap.add_argument("--limit", type=int, default=40)
+    ap.add_argument("--task-id", action="append", dest="task_ids", help="Limit recovery to a specific task id")
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+    path = Path(args.tasks)
+    if not args.apply:
+        return _recover(args, path)
+    with queue_lock(path) as got:
+        if not got:
+            print("recover: queue lock busy — skipped this pass")
+            return 0
+        return _recover(args, path)
 
 
 if __name__ == "__main__":

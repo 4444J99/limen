@@ -4,6 +4,7 @@ back to open (the flip-to-open leg of the reclassify<->heal-dispatch oscillation
 the queue 154→406 in 13h). A human-marked task stays KEEP even when chronic. Covers the three
 legacy pre-heal-dispatch escalation strings the `heal-dispatch:`-prefixed match would miss."""
 
+import importlib.util
 import os
 import subprocess
 import sys
@@ -52,6 +53,14 @@ def _run(root, tasks, *, apply=False):
     return r.stdout, {t["id"]: t for t in yaml.safe_load(path.read_text())["tasks"]}
 
 
+def _load_module():
+    spec = importlib.util.spec_from_file_location("reclassify_needs_human_under_test", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_apply_parks_chronic_including_legacy_strings_and_still_flips_buildable(tmp_path):
     tasks = [
         _task("CHR1", log=[_entry("needs_human", CHRONIC_EVIDENCE)]),
@@ -92,3 +101,30 @@ def test_human_parked_after_chronic_is_not_treated_as_chronic(tmp_path):
     assert board["HIS1"]["status"] == "open", board["HIS1"]
     assert "chronic-fleet-debt" not in (board["HIS1"].get("labels") or [])
     assert "reclassified-from-needs-human" in board["HIS1"]["labels"]
+
+
+def test_apply_fresh_reload_respects_concurrent_successor_hold(tmp_path, monkeypatch):
+    path = tmp_path / "tasks.yaml"
+    path.write_text(yaml.safe_dump({"tasks": [_task("RACE")]}), encoding="utf-8")
+    module = _load_module()
+    real_load = module.load_limen_file
+    calls = 0
+
+    def load_with_successor_race(board_path):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            board = yaml.safe_load(path.read_text(encoding="utf-8"))
+            board["tasks"][0]["labels"] = ["workstream:successor-required"]
+            path.write_text(yaml.safe_dump(board), encoding="utf-8")
+        return real_load(board_path)
+
+    monkeypatch.setattr(module, "load_limen_file", load_with_successor_race)
+    monkeypatch.setattr(module, "_dispatch_is_live", lambda: False)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["reclassify-needs-human.py", "--tasks", str(path), "--apply"])
+
+    assert module.main() == 0
+    task = yaml.safe_load(path.read_text(encoding="utf-8"))["tasks"][0]
+    assert task["status"] == "needs_human"
+    assert task["labels"] == ["workstream:successor-required"]

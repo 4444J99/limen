@@ -6,7 +6,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/4jp/Workspace/limen/scripts/hooks/codex-hook-runner.sh lint-edited-file"
+            "command": "\"$(git rev-parse --show-toplevel)/scripts/hooks/codex-hook-runner.sh\" lint-edited-file",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/scripts/hooks/codex-hook-runner.sh\" host-admission",
+            "timeout": 10,
+            "statusMessage": "Checking Limen host admission"
           }
         ]
       }
@@ -17,7 +31,41 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/4jp/Workspace/limen/scripts/hooks/codex-hook-runner.sh session-orient"
+            "command": "\"$(git rev-parse --show-toplevel)/scripts/hooks/codex-hook-runner.sh\" session-orient",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/scripts/hooks/codex-hook-runner.sh\" host-admission",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/scripts/hooks/codex-hook-runner.sh\" host-admission",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/scripts/hooks/codex-hook-runner.sh\" host-admission",
+            "timeout": 10
           }
         ]
       }

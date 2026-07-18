@@ -68,7 +68,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for
 import _notify  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
 from limen.intake import IntakeContractError, contract_fields, github_main_green_contract  # noqa: E402
-from limen.models import Task  # noqa: E402
+from limen.models import Task, has_jules_landing_hold  # noqa: E402
+from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOCKD = ROOT / "logs" / ".queue.lock.d"
@@ -528,11 +529,15 @@ def _emit_heal_task(head_sha: str, url: str, tasks_path: Path, impact_note: str 
             f"[auto-emitted {stamp} by check-main-green]"
         )
         existing = next((t for t in lf.tasks if t.id == tid), None)
+        if existing is not None and has_jules_landing_hold(existing):
+            return None
         try:
             contract = contract_fields(github_main_green_contract(REPO, head_sha, WORKFLOW))
         except IntakeContractError:
             return None  # stale/partial cache cannot create an exact-head contract; retry after live refresh
         if existing is not None:
+            if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (existing.labels or []):
+                return None
             if existing.status in _ACTIVE_STATES:
                 changed = False
                 for key, value in {

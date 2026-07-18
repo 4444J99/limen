@@ -136,7 +136,7 @@ def test_ollama_stdout_lands_as_report_artifact(monkeypatch, tmp_path):
         stderr = ""
 
     monkeypatch.setattr(dispatch, "_run_capture", lambda *a, **k: FakeRun())
-    monkeypatch.setattr(dispatch, "_lane_run_env", lambda agent, wt: {})
+    monkeypatch.setattr(dispatch, "_lane_run_env", lambda agent, wt, task: {})
     ok = dispatch._run_isolated_agent("ollama", task, tmp_path, ["ollama", "run", "m", "p"], 60)
     assert ok is True
     report = tmp_path / "reports" / "t-floor-2.md"
@@ -152,6 +152,6 @@ def test_non_ollama_agent_writes_no_report(monkeypatch, tmp_path):
         stderr = ""
 
     monkeypatch.setattr(dispatch, "_run_capture", lambda *a, **k: FakeRun())
-    monkeypatch.setattr(dispatch, "_lane_run_env", lambda agent, wt: {})
+    monkeypatch.setattr(dispatch, "_lane_run_env", lambda agent, wt, task: {})
     assert dispatch._run_isolated_agent("codex", task, tmp_path, ["codex"], 60) is True
     assert not (tmp_path / "reports").exists()

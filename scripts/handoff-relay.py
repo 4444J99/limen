@@ -32,6 +32,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
+from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 HANDOFF = ROOT / "logs" / "handoff.json"
 TASKS = Path(os.environ.get("LIMEN_TASKS") or ROOT / "tasks.yaml")
@@ -323,7 +324,7 @@ def _dispatchable_next(
         if task.get("status") != "open" or _has_terminal_transition(task):
             continue
         labels = {str(label) for label in task.get("labels") or []}
-        if "needs-human" in labels:
+        if "needs-human" in labels or WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in labels:
             continue
         deps = [str(value) for value in task.get("depends_on") or []]
         if any(not _dependency_merged(by_id.get(dep)) for dep in deps):

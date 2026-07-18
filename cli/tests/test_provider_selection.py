@@ -4,6 +4,8 @@ import json
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from limen.models import DispatchLogEntry, Task
 from limen.provider_selection import (
     ExecutionProfile,
@@ -104,6 +106,7 @@ def test_numeric_profile_constraints_are_schema_driven() -> None:
             "profile:reasoning-depth:0.91",
             "profile:cost-pressure:0.12",
             "profile:min-context:131072",
+            "profile:runway-seconds:172800",
         ],
         created=date(2026, 7, 10),
     )
@@ -111,6 +114,21 @@ def test_numeric_profile_constraints_are_schema_driven() -> None:
     assert result.reasoning_depth == 0.91
     assert result.cost_pressure == 0.12
     assert result.min_context == 131072
+    assert result.runway_seconds == 172800
+
+
+def test_execution_profile_rejects_unbounded_runway() -> None:
+    task = Task(
+        id="UNBOUNDED-RUNWAY",
+        title="invalid workstream length",
+        target_agent="opencode",
+        labels=["profile:runway-seconds:999999999"],
+        created=date(2026, 7, 10),
+    )
+    with pytest.raises(ValueError, match="runway_seconds"):
+        execution_profile_for(task)
+    with pytest.raises(ValueError, match="runway_seconds"):
+        profile(runway_seconds="86400")
 
 
 def test_unaccepted_plan_becomes_maximally_verified_executable_profile() -> None:
@@ -200,6 +218,15 @@ def test_provider_selector_source_contains_no_literal_provider_model_id() -> Non
     source = (Path(__file__).resolve().parents[1] / "src" / "limen" / "provider_selection.py").read_text()
     # A quoted provider/model value would be a catalog pin. Runtime composition (f-strings) is fine.
     assert not __import__("re").search(r"(['\"])[a-z0-9_.-]+/[a-z0-9_.-]+\1", source, __import__("re").I)
+
+
+def test_dispatch_contains_no_codex_or_gemini_fallback_catalog() -> None:
+    source = (Path(__file__).resolve().parents[1] / "src" / "limen" / "dispatch.py").read_text()
+
+    assert "_CODEX_TIER_MODELS_DEFAULT" not in source
+    assert "_GEMINI_TIER_MODELS_DEFAULT" not in source
+    assert "LIMEN_CODEX_TIER_SELECT" not in source
+    assert "LIMEN_GEMINI_TIER_SELECT" not in source
 
 
 def test_legacy_composite_event_remains_loadable_for_append_only_healing() -> None:

@@ -30,6 +30,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
+from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
@@ -72,6 +73,8 @@ def chronic_tasks(all_tasks, min_reopens=3, eligible_dispatched_ids=None):
         status = t.get("status", "open")
         tid = t.get("id")
         if status not in {"open", "failed"} and not (status == "dispatched" and tid in eligible_dispatched_ids):
+            continue
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (t.get("labels") or []):
             continue
         log = t.get("dispatch_log") or []
         # every reopen mechanism (release-stale / recover / heal-dispatch) appends a

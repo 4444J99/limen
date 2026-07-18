@@ -148,6 +148,22 @@ def test_dispatchable_next_applies_terminal_dependency_budget_and_human_gates():
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
+def test_dispatchable_next_skips_successor_required_open_row():
+    mod = _load()
+    tasks = [
+        _task(
+            "EXPIRED",
+            priority="critical",
+            labels=["workstream:successor-required"],
+        ),
+        _task("READY", priority="medium"),
+    ]
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 2}}}
+
+    assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
+
+
 def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity():
     mod = _load()
     tasks = [_task("LOW", priority="high", agent="jules"), _task("READY", agent="codex")]

@@ -6,13 +6,21 @@ resumable surface instead of holding everything in the chat.
 For a closeout successor or a new autonomous initiative, use autonomous capsule mode:
 
 ```bash
-workstream --autonomous --prompt-file /path/to/next-session.md limen next-epoch
+workstream --autonomous --runway 8h --prompt-file /path/to/next-session.md limen next-epoch
 ```
 
 Autonomous mode refuses a missing prompt. Its thin README index is passed to Codex as the initial
-prompt and requires four cohesive local modules: manifest, intent, runtime decision contract, and
-closeout. Runtime evidence derives `continue`, `switch`, `wait_relay`, `settled`, or `invalid`; the
-capsule never pins a future model, task count, duration, or ending.
+prompt and requires four cohesive Markdown modules (manifest, intent, runtime decision contract, and
+closeout) plus a machine-readable `workstream.json`. `--runway` accepts `Nm`, `Nh`, or `Nd` from 15
+minutes through 30 days and defaults to one day. The clock starts on first kickstart, subsequent
+sessions inherit the same deadline, and an expired capsule fails closed instead of silently
+renewing. Runtime evidence derives `continue`, `switch`, `wait_relay`, `settled`, or `invalid`.
+
+The contract also carries the no-modal authorization boundary. Codex starts with
+`--ask-for-approval never --sandbox workspace-write`: reversible work inside the packet proceeds
+without confirmation, while destructive, credential, paid-spend, public-send, and runtime/host
+mutations remain gated. The conductor derives healthy lanes live and routes independently bounded
+packets; the capsule never pins a future provider or model.
 
 ```bash
 /Users/4jp/Workspace/limen/scripts/start-worktree-session.sh --shell --prompt "short objective and constraints" limen my-workstream
@@ -30,6 +38,7 @@ The command works from Terminal, Kitty, Ghostty, Warp, or any normal shell. It c
 ```text
 <repo>/.worktrees/<slug>/.limen-workstream/README.md
 <repo>/.worktrees/<slug>/.limen-workstream/manifest.md
+<repo>/.worktrees/<slug>/.limen-workstream/workstream.json
 <repo>/.worktrees/<slug>/.limen-workstream/intent.md
 <repo>/.worktrees/<slug>/.limen-workstream/runtime.md
 <repo>/.worktrees/<slug>/.limen-workstream/closeout.md
@@ -48,7 +57,8 @@ bash <repo>/.worktrees/<slug>/.limen-workstream/kickstart.sh
 ```
 
 The README only defines module order and the launch command. Each module has one reason to change.
-Identical reruns preserve `created_at`, rewrite no bytes, and report `unchanged`. The
+Identical reruns preserve `created_at` and an admitted runway, rewrite no bytes, and report
+`unchanged`. The
 `.limen-workstream/` directory is locally excluded so capsule creation does not dirty the repo.
 
 ## Current Leads

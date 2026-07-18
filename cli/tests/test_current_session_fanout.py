@@ -5,6 +5,8 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "current-session-fanout.py"
@@ -24,6 +26,7 @@ def _args(session: Path, min_codex_planners: int = 10) -> Namespace:
         executor_lanes="auto",
         include_contrib=True,
         allow_reset_spend=False,
+        runway="2d",
     )
 
 
@@ -131,6 +134,10 @@ def test_current_session_fanout_extracts_full_plan_set_and_marks_duplicates(
     monkeypatch.setattr(
         mod, "digest_blockers", lambda: [{"source": "digest", "item": "local gate", "impact": "does not stop global"}]
     )
+    parent_started = int(mod.time.time()) - 10
+    parent_deadline = parent_started + 172_800
+    monkeypatch.setenv("LIMEN_WORKSTREAM_STARTED_EPOCH", str(parent_started))
+    monkeypatch.setenv("LIMEN_WORKSTREAM_DEADLINE_EPOCH", str(parent_deadline))
 
     snap = mod.build_snapshot(_args(session))
 
@@ -151,12 +158,35 @@ def test_current_session_fanout_extracts_full_plan_set_and_marks_duplicates(
     assert len(snap["planner_packets"]) >= 10
     assert {packet["target_agent"] for packet in snap["planner_packets"]} == {"codex"}
     assert {packet["target_agent"] for packet in snap["executor_packets"]} == {"opencode"}
+    assert snap["workstream_contract"]["runway"]["duration_seconds"] == 172_800
+    assert snap["workstream_contract"]["runway"]["started_epoch"] == parent_started
+    assert snap["workstream_contract"]["runway"]["deadline_epoch"] == parent_deadline
+    assert snap["workstream_contract"]["authorization"]["mode"] == "full_non_destructive"
+    assert snap["workstream_contract"]["authorization"]["approval_mode"] == "never"
+    assert all(
+        packet["workstream_contract"] == snap["workstream_contract"]
+        for packet in snap["planner_packets"] + snap["executor_packets"]
+    )
     assert all(
         packet["source_plan_hashes"] == expected_plan_hashes
         for packet in snap["planner_packets"] + snap["executor_packets"]
     )
     assert snap["global_product_selection"]["status"] == "active"
     assert any(blocker["item"] == "warp lane human-gated" for blocker in snap["blocked_local_work"])
+
+    seed = mod.task_seed_specs(snap, repo="organvm/limen")
+    executor_seed = next(spec for spec in seed if spec["packet_type"] == "executor_packet")
+    assert "profile:runway-seconds:172800" in executor_seed["labels"]
+    assert '"approval_mode":"never"' in executor_seed["context"]
+    assert "proceed without confirmation for in-scope reversible work" in executor_seed["context"]
+
+    from limen.models import Task
+    from limen.provider_selection import execution_profile_for
+
+    task = Task(**mod.task_model_payload(executor_seed))
+    assert task.workstream_contract == snap["workstream_contract"]
+    profile = execution_profile_for(task)
+    assert profile.runway_seconds == 172_800
 
 
 def test_current_session_fanout_emits_plan_02_executor_criteria_and_safe_markdown(
@@ -245,3 +275,52 @@ def test_current_session_fanout_emits_plan_02_executor_criteria_and_safe_markdow
     assert "gemini lane human-gated" in markdown
     assert raw_private not in markdown
     assert raw_private in json.dumps(snap)
+
+
+def test_parent_workstream_timing_rejects_inconsistent_runway(monkeypatch) -> None:
+    mod = _load()
+    parent_started = int(mod.time.time()) - 10
+    monkeypatch.setenv("LIMEN_WORKSTREAM_STARTED_EPOCH", str(parent_started))
+    monkeypatch.setenv("LIMEN_WORKSTREAM_DEADLINE_EPOCH", str(parent_started + 172_800))
+
+    with pytest.raises(mod.ContractError, match="timing"):
+        mod.admitted_packet_contract("1d")
+
+
+def test_current_session_fanout_uses_registry_lanes_and_rejects_unbounded_runway(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    session = tmp_path / "session.jsonl"
+    session.write_text(
+        json.dumps(
+            {
+                "timestamp": "2026-07-17T00:00:00Z",
+                "payload": {"type": "user_message", "message": "Conduct this session across the fleet."},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex", "jules", "agy", "opencode", "copilot"))
+    rows = [
+        {
+            "agent": agent,
+            "kind": "test",
+            "status": "active",
+            "reachable": True,
+            "remaining": 3,
+            "detail": "live registry",
+        }
+        for agent in ("codex", "jules", "agy", "opencode", "copilot")
+    ]
+    assert mod.lane_selection("auto", rows) == ["codex", "jules", "agy", "opencode", "copilot"]
+    assert mod.lane_selection("auto", []) == []
+
+    monkeypatch.setattr(mod, "lane_rows", lambda: rows)
+    monkeypatch.setattr(mod, "digest_blockers", lambda: [])
+    args = _args(session, min_codex_planners=1)
+    args.runway = "forever"
+    with pytest.raises(mod.ContractError):
+        mod.build_snapshot(args)

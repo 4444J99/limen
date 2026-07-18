@@ -113,9 +113,7 @@ def delta_usage(current: dict[str, int], previous: dict[str, int] | None) -> dic
         delta.get("input_tokens", 0) - delta.get("cached_input_tokens", 0),
     )
     delta["budget_tokens"] = (
-        delta.get("uncached_input_tokens", 0)
-        + delta.get("output_tokens", 0)
-        + delta.get("reasoning_output_tokens", 0)
+        delta.get("uncached_input_tokens", 0) + delta.get("output_tokens", 0) + delta.get("reasoning_output_tokens", 0)
     )
     return delta
 
@@ -144,8 +142,23 @@ def session_id_from_path(path: Path) -> str:
     return name
 
 
+def safe_identifier(value: Any) -> str | None:
+    """Return one bounded transcript identifier without accepting control text."""
+
+    if not isinstance(value, str):
+        return None
+    candidate = value.strip()
+    if not candidate or len(candidate) > 256 or any(ord(char) < 32 for char in candidate):
+        return None
+    return candidate
+
+
 def summarize_session(path: Path, *, max_phases: int) -> dict[str, Any]:
-    session_id = session_id_from_path(path)
+    path_session_id = session_id_from_path(path)
+    thread_id: str | None = None
+    parent_thread_id: str | None = None
+    declared_root_session_id: str | None = None
+    conflicting_thread_ids: set[str] = set()
     first_ts: dt.datetime | None = None
     last_ts: dt.datetime | None = None
     last_total: dict[str, int] | None = None
@@ -161,7 +174,20 @@ def summarize_session(path: Path, *, max_phases: int) -> dict[str, Any]:
         row_type = row.get("type")
         payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
         if row_type == "session_meta" and isinstance(payload, dict):
-            session_id = str(payload.get("id") or session_id)
+            metadata_thread_id = safe_identifier(payload.get("id"))
+            if metadata_thread_id is not None:
+                if thread_id is None:
+                    thread_id = metadata_thread_id
+                elif metadata_thread_id != thread_id:
+                    conflicting_thread_ids.add(metadata_thread_id)
+            metadata_parent_id = safe_identifier(
+                payload.get("parent_thread_id") or payload.get("forked_from_id") or payload.get("forked_from")
+            )
+            if parent_thread_id is None and metadata_parent_id is not None:
+                parent_thread_id = metadata_parent_id
+            metadata_root_id = safe_identifier(payload.get("root_session_id") or payload.get("root_thread_id"))
+            if declared_root_session_id is None and metadata_root_id is not None:
+                declared_root_session_id = metadata_root_id
 
         event_type = payload.get("type")
         timestamp = parse_ts(row.get("timestamp"))
@@ -213,8 +239,30 @@ def summarize_session(path: Path, *, max_phases: int) -> dict[str, Any]:
     if max_phases >= 0:
         phases = phases[-max_phases:] if max_phases else []
 
+    resolved_thread_id = thread_id or path_session_id
+    terminal_state = "unknown"
+    if last_task_complete_at is not None:
+        latest_work_at = max(
+            (value for value in (last_ts, last_task_started_at) if value is not None),
+            default=None,
+        )
+        if latest_work_at is None or last_task_complete_at >= latest_work_at:
+            terminal_state = "complete"
+        else:
+            terminal_state = "running"
+    elif last_ts is not None or last_task_started_at is not None:
+        terminal_state = "running"
+
     return {
-        "session_id": session_id,
+        # session_id remains a compatibility alias. thread_id is the immutable
+        # transcript identity; ancestry is carried separately.
+        "session_id": resolved_thread_id,
+        "thread_id": resolved_thread_id,
+        "parent_thread_id": parent_thread_id,
+        "declared_root_session_id": declared_root_session_id,
+        "root_session_id": declared_root_session_id or resolved_thread_id,
+        "terminal_state": terminal_state,
+        "conflicting_thread_ids": sorted(conflicting_thread_ids),
         "path": str(path),
         "mtime": mtime,
         "first_token_at": first_ts.isoformat(timespec="seconds") if first_ts else None,
@@ -230,6 +278,90 @@ def summarize_session(path: Path, *, max_phases: int) -> dict[str, Any]:
         "truncated_phase_deltas": truncated,
         "rate_limits": rate_limits,
     }
+
+
+def deduplicate_sessions(sessions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep one cumulative record per real thread while retaining source lineage."""
+
+    positions: dict[str, int] = {}
+    unique: list[dict[str, Any]] = []
+
+    def rank(session: dict[str, Any]) -> tuple[int, int, float, str]:
+        totals = session.get("totals") or {}
+        activity = parse_ts(session.get("last_token_at")) or parse_ts(session.get("mtime"))
+        return (
+            int(totals.get("budget_tokens") or 0),
+            int(session.get("token_count_events") or 0),
+            activity.timestamp() if activity is not None else 0.0,
+            str(session.get("path") or ""),
+        )
+
+    for original in sessions:
+        session = dict(original)
+        thread_id = str(session.get("thread_id") or session.get("session_id") or session.get("path"))
+        if thread_id not in positions:
+            session["source_paths"] = [str(session.get("path") or "")]
+            session["duplicate_transcript_count"] = 0
+            positions[thread_id] = len(unique)
+            unique.append(session)
+            continue
+
+        index = positions[thread_id]
+        current = unique[index]
+        source_paths = sorted(
+            {
+                *[str(path) for path in current.get("source_paths") or []],
+                str(session.get("path") or ""),
+            }
+        )
+        representative = session if rank(session) > rank(current) else current
+        merged = dict(representative)
+        merged["source_paths"] = source_paths
+        merged["duplicate_transcript_count"] = len(source_paths) - 1
+        for field in ("parent_thread_id", "declared_root_session_id"):
+            if not merged.get(field):
+                merged[field] = current.get(field) or session.get(field)
+        merged["conflicting_thread_ids"] = sorted(
+            {
+                *[str(value) for value in current.get("conflicting_thread_ids") or []],
+                *[str(value) for value in session.get("conflicting_thread_ids") or []],
+            }
+        )
+        unique[index] = merged
+    return unique
+
+
+def assign_root_session_ids(sessions: list[dict[str, Any]]) -> None:
+    """Resolve each thread to its declared or highest-known ancestry root."""
+
+    by_thread = {str(session["thread_id"]): session for session in sessions}
+    resolved: dict[str, str] = {}
+
+    def resolve(thread_id: str, trail: tuple[str, ...] = ()) -> str:
+        if thread_id in resolved:
+            return resolved[thread_id]
+        if thread_id in trail:
+            root = min((*trail, thread_id))
+            for member in trail:
+                resolved[member] = root
+            return root
+        session = by_thread.get(thread_id)
+        if session is None:
+            return thread_id
+        declared = safe_identifier(session.get("declared_root_session_id"))
+        if declared is not None:
+            resolved[thread_id] = declared
+            return declared
+        parent = safe_identifier(session.get("parent_thread_id"))
+        if parent is None or parent == thread_id:
+            resolved[thread_id] = thread_id
+            return thread_id
+        root = resolve(parent, (*trail, thread_id)) if parent in by_thread else parent
+        resolved[thread_id] = root
+        return root
+
+    for session in sessions:
+        session["root_session_id"] = resolve(str(session["thread_id"]))
 
 
 def expand_paths(paths: list[Path], sessions_root: Path) -> list[Path]:
@@ -277,7 +409,7 @@ def evaluate_session(session: dict[str, Any], thresholds: dict[str, int]) -> tup
     totals = session.get("totals") or {}
     warnings: list[str] = []
     failures: list[str] = []
-    sid = str(session.get("session_id") or session.get("path"))
+    sid = str(session.get("thread_id") or session.get("session_id") or session.get("path"))
 
     uncached = int(totals.get("uncached_input_tokens") or 0)
     budget = int(totals.get("budget_tokens") or 0)
@@ -295,15 +427,70 @@ def evaluate_session(session: dict[str, Any], thresholds: dict[str, int]) -> tup
     return warnings, failures
 
 
+def scoped_violations(
+    *,
+    scope: str,
+    identifier: str,
+    totals: dict[str, Any],
+    thresholds: dict[str, int],
+    elapsed_seconds: int | None = None,
+    root_session_id: str | None = None,
+    active: bool = False,
+) -> list[dict[str, Any]]:
+    """Return machine-readable budget violations without replacing legacy strings."""
+
+    violations: list[dict[str, Any]] = []
+    checks = (
+        ("uncached_input_tokens", "warn", thresholds["warn_uncached_input_tokens"]),
+        ("uncached_input_tokens", "fail", thresholds["max_uncached_input_tokens"]),
+        ("budget_tokens", "fail", thresholds["max_budget_tokens"]),
+    )
+    for metric, severity, threshold in checks:
+        value = int(totals.get(metric) or 0)
+        if threshold and value >= threshold:
+            violations.append(
+                {
+                    "scope": scope,
+                    "severity": severity,
+                    "metric": metric,
+                    "value": value,
+                    "threshold": threshold,
+                    "thread_id": identifier if scope == "thread" else None,
+                    "root_session_id": root_session_id or identifier,
+                    "active": active,
+                }
+            )
+    if (
+        scope == "thread"
+        and thresholds["max_elapsed_seconds"]
+        and int(elapsed_seconds or 0) >= thresholds["max_elapsed_seconds"]
+    ):
+        violations.append(
+            {
+                "scope": scope,
+                "severity": "fail",
+                "metric": "elapsed_seconds",
+                "value": int(elapsed_seconds or 0),
+                "threshold": thresholds["max_elapsed_seconds"],
+                "thread_id": identifier,
+                "root_session_id": root_session_id or identifier,
+                "active": active,
+            }
+        )
+    return violations
+
+
 def session_activity_timestamp(session: dict[str, Any]) -> dt.datetime | None:
     """Return the timestamp that should drive active-budget liveness."""
     last_token_at = parse_ts(session.get("last_token_at"))
     last_started_at = parse_ts(session.get("last_task_started_at"))
     last_complete_at = parse_ts(session.get("last_task_complete_at"))
     if last_complete_at is not None:
-        last_work_at = max(ts for ts in [last_token_at, last_started_at] if ts is not None) if (
-            last_token_at or last_started_at
-        ) else None
+        last_work_at = (
+            max(ts for ts in [last_token_at, last_started_at] if ts is not None)
+            if (last_token_at or last_started_at)
+            else None
+        )
         if last_work_at is None or last_complete_at >= last_work_at:
             return None
     return last_token_at or parse_ts(session.get("mtime"))
@@ -372,8 +559,12 @@ def require_live_process_gate(args: argparse.Namespace) -> bool:
 
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     sessions_root = args.sessions_root
-    files = filter_recent(expand_paths([Path(p) for p in args.paths], sessions_root), args.since_hours, args.limit_sessions)
-    sessions = [summarize_session(path, max_phases=args.max_phases) for path in files]
+    files = filter_recent(
+        expand_paths([Path(p) for p in args.paths], sessions_root), args.since_hours, args.limit_sessions
+    )
+    raw_sessions = [summarize_session(path, max_phases=args.max_phases) for path in files]
+    sessions = deduplicate_sessions(raw_sessions)
+    assign_root_session_ids(sessions)
     thresholds = thresholds_from_args(args)
     now = dt.datetime.now(dt.timezone.utc)
     active_seconds = max(0, int(args.active_session_seconds))
@@ -391,15 +582,20 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     active_warnings: list[str] = []
     active_failures: list[str] = []
     historical_failures: list[str] = []
+    thread_violations: list[dict[str, Any]] = []
     for session in sessions:
         age = session_age_seconds(session, now)
         active = is_active_session(session, now, active_seconds)
-        current_thread = ignore_current_thread and session.get("session_id") == current_thread_id
+        current_thread = ignore_current_thread and session.get("thread_id") == current_thread_id
         if (
             active
             and require_live_process
             and not current_thread
-            and str(session.get("session_id") or "") not in live_resume_session_ids
+            # A fresh in-band token_count is stronger active proof than a
+            # process-list heuristic. Require process evidence only when
+            # activity fell back to file mtime.
+            and not session.get("last_token_at")
+            and str(session.get("thread_id") or "") not in live_resume_session_ids
         ):
             active = False
             session["active_gate_exclusion"] = "no-live-codex-resume-process"
@@ -410,6 +606,17 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         if current_thread:
             session["active_gate_exclusion"] = "current-codex-thread"
         sw, sf = evaluate_session(session, thresholds)
+        thread_violations.extend(
+            scoped_violations(
+                scope="thread",
+                identifier=str(session["thread_id"]),
+                totals=session.get("totals") or {},
+                thresholds=thresholds,
+                elapsed_seconds=session.get("elapsed_seconds"),
+                root_session_id=str(session["root_session_id"]),
+                active=active and not current_thread,
+            )
+        )
         warnings.extend(sw)
         failures.extend(sf)
         if active and not current_thread:
@@ -418,23 +625,101 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         else:
             historical_failures.extend(sf)
 
+    family_rows: dict[str, list[dict[str, Any]]] = {}
+    for session in sessions:
+        family_rows.setdefault(str(session["root_session_id"]), []).append(session)
+
+    families: list[dict[str, Any]] = []
+    family_warnings: list[str] = []
+    family_failures: list[str] = []
+    active_family_failures: list[str] = []
+    historical_family_failures: list[str] = []
+    family_violations: list[dict[str, Any]] = []
+    for root_session_id, members in sorted(family_rows.items()):
+        totals = normalize_usage({})
+        for member in members:
+            for key in totals:
+                totals[key] += int((member.get("totals") or {}).get(key) or 0)
+        active_threads = [str(member["thread_id"]) for member in members if member.get("active")]
+        gating_active_threads = [
+            str(member["thread_id"]) for member in members if member.get("active") and not member.get("current_thread")
+        ]
+        latest_token = max(
+            (parsed for member in members if (parsed := parse_ts(member.get("last_token_at"))) is not None),
+            default=None,
+        )
+        family_active = bool(gating_active_threads)
+        family = {
+            "root_session_id": root_session_id,
+            "thread_ids": sorted(str(member["thread_id"]) for member in members),
+            "thread_count": len(members),
+            "active_thread_ids": sorted(active_threads),
+            "active_thread_count": len(active_threads),
+            "gating_active_thread_count": len(gating_active_threads),
+            "latest_token_timestamp": (
+                latest_token.isoformat(timespec="seconds") if latest_token is not None else None
+            ),
+            "terminal_state": (
+                "running"
+                if active_threads
+                else "complete"
+                if members and all(member.get("terminal_state") == "complete" for member in members)
+                else "inactive"
+            ),
+            "totals": totals,
+        }
+        violations = scoped_violations(
+            scope="family",
+            identifier=root_session_id,
+            totals=totals,
+            thresholds=thresholds,
+            root_session_id=root_session_id,
+            active=family_active,
+        )
+        family_violations.extend(violations)
+        for violation in violations:
+            text = f"family {root_session_id}: {violation['metric']}={violation['value']}"
+            if violation["severity"] == "warn":
+                family_warnings.append(text)
+            else:
+                family_failures.append(text)
+                if family_active:
+                    active_family_failures.append(text)
+                else:
+                    historical_family_failures.append(text)
+        families.append(family)
+
     aggregate = normalize_usage({})
     for session in sessions:
         totals = session.get("totals") or {}
         for key in aggregate:
             aggregate[key] += int(totals.get(key) or 0)
 
-    status = "fail" if failures else "warn" if warnings else "ok"
+    all_warnings = [*warnings, *family_warnings]
+    all_failures = [*failures, *family_failures]
+    status = "fail" if all_failures else "warn" if all_warnings else "ok"
     # active_status is the "is anything wrong RIGHT NOW" signal: it ignores
     # historical over-budget sessions so a finished burn does not read as an
     # ongoing incident. status stays "fail" for visibility; active_status is
     # what a live-health consumer should watch.
-    active_status = "fail" if active_failures else "warn" if active_warnings else "ok"
+    active_status = "fail" if active_failures or active_family_failures else "warn" if active_warnings else "ok"
+    latest_token_timestamp = max(
+        (parsed for session in sessions if (parsed := parse_ts(session.get("last_token_at"))) is not None),
+        default=None,
+    )
     return {
         "generated_at": utc_now(),
         "sessions_root": str(sessions_root),
         "since_hours": args.since_hours,
+        "source_file_count": len(files),
         "session_count": len(sessions),
+        "thread_count": len(sessions),
+        "deduplicated_transcript_count": len(raw_sessions) - len(sessions),
+        "family_count": len(families),
+        "active_thread_count": sum(1 for session in sessions if session.get("active")),
+        "latest_token_timestamp": (
+            latest_token_timestamp.isoformat(timespec="seconds") if latest_token_timestamp is not None else None
+        ),
         "thresholds": thresholds,
         "active_session_seconds": active_seconds,
         "current_thread_id": current_thread_id if ignore_current_thread else None,
@@ -448,6 +733,14 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "active_warnings": active_warnings,
         "active_failures": active_failures,
         "historical_failures": historical_failures,
+        "family_warnings": family_warnings,
+        "family_failures": family_failures,
+        "active_family_failures": active_family_failures,
+        "historical_family_failures": historical_family_failures,
+        "thread_violations": thread_violations,
+        "family_violations": family_violations,
+        "family_totals": {family["root_session_id"]: family["totals"] for family in families},
+        "families": families,
         "sessions": sessions,
     }
 
@@ -463,8 +756,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="*", help="JSONL files or directories; defaults to ~/.codex/sessions")
     parser.add_argument("--sessions-root", type=Path, default=DEFAULT_SESSIONS_ROOT)
-    parser.add_argument("--since-hours", type=float, default=float(os.environ.get("LIMEN_CODEX_TOKEN_REPORT_HOURS", "6")))
-    parser.add_argument("--limit-sessions", type=int, default=int(os.environ.get("LIMEN_CODEX_TOKEN_REPORT_LIMIT", "25")))
+    parser.add_argument(
+        "--since-hours", type=float, default=float(os.environ.get("LIMEN_CODEX_TOKEN_REPORT_HOURS", "6"))
+    )
+    parser.add_argument(
+        "--limit-sessions", type=int, default=int(os.environ.get("LIMEN_CODEX_TOKEN_REPORT_LIMIT", "25"))
+    )
     parser.add_argument("--max-phases", type=int, default=int(os.environ.get("LIMEN_CODEX_TOKEN_REPORT_PHASES", "50")))
     parser.add_argument(
         "--warn-uncached-input",
@@ -523,16 +820,19 @@ def main(argv: list[str] | None = None) -> int:
             f"cached={totals['cached_input_tokens']} output={totals['output_tokens']} "
             f"reasoning={totals['reasoning_output_tokens']} "
             f"active_status={report['active_status']} "
-            f"active_failures={len(report['active_failures'])} historical_failures={len(report['historical_failures'])}"
+            f"active_threads={report['active_thread_count']} "
+            f"active_failures={len(report['active_failures'])} "
+            f"active_family_failures={len(report['active_family_failures'])} "
+            f"historical_failures={len(report['historical_failures'])}"
         )
         if report["failures"]:
             print("  failures: " + "; ".join(report["failures"][:3]))
         elif report["warnings"]:
             print("  warnings: " + "; ".join(report["warnings"][:3]))
 
-    if args.fail_on_budget and report["failures"]:
+    if args.fail_on_budget and (report["failures"] or report["family_failures"]):
         return 2
-    if args.fail_on_active_budget and report["active_failures"]:
+    if args.fail_on_active_budget and (report["active_failures"] or report["active_family_failures"]):
         return 2
     return 0
 

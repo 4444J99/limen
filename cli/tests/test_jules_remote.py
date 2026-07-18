@@ -18,7 +18,15 @@ from limen.jules_remote import (
     coerce_jules_snapshot,
     parse_jules_remote_sessions,
 )
-from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task
+from limen.models import (
+    JULES_LANDING_HOLD_LABEL,
+    Budget,
+    BudgetTrack,
+    DispatchLogEntry,
+    LimenFile,
+    Portal,
+    Task,
+)
 
 
 SID = "12345678901234567890"
@@ -103,6 +111,29 @@ def test_failed_jules_session_routes_to_recovery_without_reopening(tmp_path: Pat
     assert task.status == "dispatched"
     assert report["recover_ready"] == ["STALE"]
     assert report["released"] == []
+
+
+def test_release_stale_preserves_jules_landing_owner_hold(tmp_path: Path) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    _write_stale_board(tasks_path)
+    board = load_limen_file(tasks_path)
+    board.tasks[0].labels.append(JULES_LANDING_HOLD_LABEL)
+    save_limen_file(tasks_path, board)
+
+    report = release_stale_tasks(
+        load_limen_file(tasks_path),
+        tasks_path,
+        hours=24,
+        dry_run=False,
+        jules_snapshot=_snapshot(None, exhaustive=True),
+    )
+
+    task = load_limen_file(tasks_path).tasks[0]
+    assert task.status == "dispatched"
+    assert task.labels == [JULES_LANDING_HOLD_LABEL]
+    assert report["held"] == ["STALE"]
+    assert report["released"] == []
+    assert report["candidates"][0]["remote_status"] == "jules_landing_held"
 
 
 @pytest.mark.parametrize("status", ["awaiting_user_feedback", "awaiting_plan_approval"])

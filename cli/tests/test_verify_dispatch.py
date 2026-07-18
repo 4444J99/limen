@@ -59,6 +59,20 @@ def test_chronic_tasks_flags_reopened_without_pr(tmp_path, monkeypatch):
     assert [c[0] for c in m.chronic_tasks(tasks)] == ["CH"]
 
 
+def test_chronic_tasks_excludes_successor_required_terminal_owner(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    task = {
+        "id": "WORKSTREAM-SUCCESSOR",
+        "status": "failed",
+        "target_agent": "codex",
+        "repo": "x/y",
+        "labels": ["workstream:successor-required"],
+        "dispatch_log": [{"status": "open"}, {"status": "open"}, {"status": "open"}],
+    }
+
+    assert m.chronic_tasks([task]) == []
+
+
 def test_chronic_tasks_excludes_inflight_dispatched_unless_no_pr_eligible(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
     task = {
