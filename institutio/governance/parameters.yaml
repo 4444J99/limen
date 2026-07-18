@@ -6270,3 +6270,15 @@ parameters:
     self_update: none
     owner: vigilia
     note: "Cadence (every N beats) of the lever classifier. Fast (1) because classification is purely local and instant."
+  LIMEN_GITHUB_UNIVERSE:
+    default: "0"
+    env: LIMEN_GITHUB_UNIVERSE
+    self_update: none
+    owner: gitvs
+    note: "Master gate for the github-universe sweep. 0 keeps it dormant."
+  LIMEN_GITHUB_UNIVERSE_MAX:
+    default: 50
+    env: LIMEN_GITHUB_UNIVERSE_MAX
+    self_update: none
+    owner: gitvs
+    note: "Max repos to sweep per run."
