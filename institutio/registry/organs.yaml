@@ -132,6 +132,14 @@ organs:
     role: "GitHub as ONE declarative resource graph under ONE closed loop (observe→diff→reconcile, drift=∅) — the single owner of the ~301-repo estate."
     residual: "Spine shipped 2026-07-10: estate.yaml (the SSOT) + gitvs.py census/doctor (#900) + remote reaper (#901, double-dark). THIS chunk: the reconcile dispatcher (the three total effector sinks, ships dark) + beat voice C_GITVS + rank-14 ladder seat + levers L-LIMENBOT-INSTALL (#910) / L-BRANCH-PROTECTION (#257) + omega det/live rungs; remote_branch flipped active (its reaper landed). Auto-discovered by organ-health.py via the C_GITVS cadence decl. Next: live posture classes A–G in the beat; the §3 integrations pillar (harness CodeRabbit/Trunk/Renovate as $0 labor); the envisioned resource types (release/webhook/team/…) promoted row-by-row."
 
+  - name: host-hygiene
+    layer: autonomic
+    home: "limen (scripts/heal-claude-lsregister.sh + heal-hook-drift.sh + heal-claude-cask.sh = the agent-curable effector family, dry-by-default, armed via LIMEN_*_HEAL; scripts/dialogs-silenced.sh = the sensor; institutio/governance/sensors.yaml §0g8b 'dialogs-silenced' = the beat-wired sensor riding the hygiene cadence; his-hand-levers.json L-DIALOGS-HEAL = the arming lever)"
+    status: partial
+    role: "Every beat, the armed LIMEN_*_HEAL effectors re-silence the agent-curable macOS dialog estate (1b hook-drift, 4 brew-cask duplicate, 4b malformed ClaudeCode.app stub), then --agent-curable-only verifies the beat-healable estate is silent. Keeps every fleet job from re-prompting as macOS re-keys trust (TCC/Gatekeeper/LaunchServices) on each per-version install path."
+    evidence: "Born from the recurring 'ClaudeCode.app is damaged — move to Trash' modal (2026-07-17). R1 shipped the lsregister effector + 4b sensor (#1206); R2+R3 completed the effector family + registry-derived sensor + omega rung (#1219). --agent-curable-only → exit 0 on the live host."
+    residual: "Ships with its three deliverable HEAL valves OFF — arm via lever L-DIALOGS-HEAL (LIMEN_HOOK_DRIFT_HEAL / LIMEN_CASK_DUPLICATE_HEAL / LIMEN_CLAUDE_LSREGISTER_HEAL). The irreducible human boundary stays operator levers: classes 1/1c/1d (settings.json self-mod, classifier-blocked → L-AGENT-BASH-PROMPT #183) and the firewall sudo (L-FIREWALL-PROMPT #289). The α root cure is NOT ours or the operator's to ship — a stable, correctly-sealed ClaudeCode.app wrapper at a fixed path (Anthropic's Developer-ID signing + notarization); the malformed stub we heal is proof the wrapper idea is right but its sealing is broken. Recorded here as the known upstream/structural boundary (an observation, not a his-hand lever). status→full once L-DIALOGS-HEAL is armed and the self-mod levers are homed."
+
 # ============================ THE C-SUITE (officers) ============================
 # HIERARCHY.md rendered as data: which officer convenes which organs. Federation,
 # not fusion — organs stay themselves; this is the map the face renders from (no
@@ -146,7 +154,7 @@ officers:
     organs: [vitals]
   CISO:
     mandate: "don't break · stop asking · don't self-corrupt"
-    organs: [identity, authority, integrity]
+    organs: [identity, authority, integrity, host-hygiene]
   CKO:
     mandate: "don't forget — continuity & memory"
     organs: [continuity]

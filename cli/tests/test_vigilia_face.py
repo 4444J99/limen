@@ -7,9 +7,11 @@ from limen.vigilia import face, params
 
 def test_load_seat_real_has_ciso_fold():
     # build #2: identity·authority·integrity gathered under the CISO office.
+    # R4 (2026-07-18): host-hygiene joined the fold — the "stop asking" mandate is
+    # literally dialog-silencing (the agent-curable macOS dialog estate self-heals).
     seat = face.load_seat()
     assert "CISO" in seat["officers"]
-    assert set(seat["officers"]["CISO"]["organs"]) == {"identity", "authority", "integrity"}
+    assert set(seat["officers"]["CISO"]["organs"]) == {"identity", "authority", "integrity", "host-hygiene"}
 
 
 def test_render_derives_officers_from_seat(monkeypatch):
