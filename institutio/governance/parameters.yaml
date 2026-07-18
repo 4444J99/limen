@@ -1478,6 +1478,48 @@ parameters:
     self_update: none
     owner: mail
     note: "Beat gate for the mail-answered sensor (scripts/check-mail-answered.py): 1 (default) surfaces a stale ledger or a reply-owed-without-draft in the beat log — the sensor that would have caught the 2026-06 silent freeze. 0 skips it."
+  LIMEN_CORRESPONDENCE_WALK:
+    default: 1
+    env: LIMEN_CORRESPONDENCE_WALK
+    self_update: none
+    owner: mail
+    note: "Beat gate for the correspondence walk-to-terminal effector (mail-beat.sh 2d → scripts/correspondence-walk.py --drain): 1 (default) stamps every reply-owed obligation with a terminal disposition each C_MAIL beat — the 'never a one-off' driver. It classifies, composes held drafts, and records dispositions; it NEVER auto-sends HOLD. 0 skips the walk."
+  LIMEN_CORRESPONDENCE_TERMINAL_CHECK:
+    default: 1
+    env: LIMEN_CORRESPONDENCE_TERMINAL_CHECK
+    self_update: none
+    owner: mail
+    note: "Beat gate for the correspondence-terminal sensor (scripts/check-correspondence-terminal.py): 1 (default) goes red in the beat log when a reply-owed row is un-walked or a HOLD row lacks a composed draft — the machine half of the AUTONOMY_PAUSED release predicate. 0 skips it."
+  LIMEN_CORRESPONDENCE_FIRE:
+    default: 0
+    env: LIMEN_CORRESPONDENCE_FIRE
+    self_update: none
+    owner: mail
+    note: "Arm for the walk's SAFE-tier auto-send in --drain: 0 (default) = the walk only classifies/drafts/records and PROPOSES keyed fires (writes the ready send_drafts.py --fire command to the sealed sidecar); it transmits nothing. 1 = the walk may auto-fire SAFE-tier rows (still gated by LIMEN_MAIL_SEND + keyed SMTP creds). HOLD/legal/money is NEVER transmitted here regardless — that invariant lives in send_drafts.py."
+  LIMEN_CORRESPONDENCE_MAX:
+    default: 10
+    env: LIMEN_CORRESPONDENCE_MAX
+    self_update: none
+    owner: mail
+    note: "Safety cap on how many keyed fires the walk may propose/perform per run, mirroring LIMEN_MAIL_SEND_MAX, so a single walk can never blast the whole ledger."
+  LIMEN_CORRESPONDENCE_DISPOSITIONS:
+    default: "$LIMEN_ROOT/logs/correspondence-dispositions.json"
+    env: LIMEN_CORRESPONDENCE_DISPOSITIONS
+    self_update: none
+    owner: mail
+    note: "Path override for the correspondence disposition ledger (counts-only, gitignored) that correspondence-walk.py writes and check-correspondence-terminal.py reads. Default lives under logs/; overridable for tests/alt hosts."
+  LIMEN_CORRESPONDENCE_SENT_CHECK:
+    default: 1
+    env: LIMEN_CORRESPONDENCE_SENT_CHECK
+    self_update: none
+    owner: mail
+    note: "SENT-state truth gate for correspondence-walk.py: 1 (default) opens one read-only IMAP connection and flips a reply-owed row to `awaiting-them` when a reply already exists in [Gmail]/Sent Mail (answered by the operator, a peer agent, or another channel — the out-of-band send the ledger's requires_reply is blind to). Fail-open: no creds / no UMA / connect error ⇒ skipped, never suppresses a genuine reply-owed row. 0 disables the check (ledger-only dispositions)."
+  LIMEN_MAIL_SENT_MAILBOX:
+    default: "[Gmail]/Sent Mail"
+    env: LIMEN_MAIL_SENT_MAILBOX
+    self_update: none
+    owner: mail
+    note: "IMAP mailbox name for the account's Sent folder — the mailbox correspondence-walk.py (and UMA's mail_send/send_drafts) search to verify/detect a sent reply. Gmail default; overridable for alt providers (iCloud/Outlook) as rung-5 multi-account send lands."
   LIMEN_PRIVATE_MAIL_STORY:
     default: "$LIMEN_ROOT/.limen-private/mail-story"
     env: LIMEN_PRIVATE_MAIL_STORY

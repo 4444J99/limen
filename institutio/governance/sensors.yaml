@@ -641,6 +641,18 @@ sensors:
         severity: advisory
         escalation: "mail unanswered — stale ledger or a reply-owed obligation without a draft; the C_MAIL draft effector may be dark (the 2026-06 silent-freeze failure mode this sensor exists to catch)"
 
+  correspondence-terminal:
+    section: "0m3"
+    title: "correspondence walked to terminal — every reply-owed obligation has a terminal disposition and the walk is at a fixed point (the AUTONOMY_PAUSED release predicate, mechanized)"
+    gate: LIMEN_CORRESPONDENCE_TERMINAL_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    steps:
+      - command: "python3 scripts/check-correspondence-terminal.py"
+        severity: advisory
+        escalation: "correspondence not walked to terminal — stale ledger, an un-walked reply-owed row, or a HOLD row lacking a composed draft; the correspondence-walk effector (mail-beat.sh 2d) may be dark"
+
   host-pressure-stale:
     section: "0o"
     title: "host-pressure gauge is alive — the VITALS throttle/shed valve is not flying blind"

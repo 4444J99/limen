@@ -226,6 +226,17 @@ if [ -f "$UMA_ROOT/send_drafts.py" ]; then
   run_tmp 120 "$PY" "$UMA_ROOT/send_drafts.py" --ledger "$LEDGER" --max "${LIMEN_MAIL_SEND_MAX:-10}" || true
 fi
 
+# 2d) WALK-TO-TERMINAL — stamp EVERY reply-owed obligation with a terminal disposition (the
+#     correspondence organ's fixed-point driver; "never a one-off"). Reversible + fail-open: it
+#     classifies with the SAME tier logic as SEND, composes held drafts, discovers a LinkedIn
+#     reply path, and records dispositions to logs/correspondence-dispositions.json (counts-only)
+#     + a sealed sidecar. It NEVER auto-sends HOLD — that invariant lives in send_drafts.py above;
+#     a `held` row is terminal-for-the-beat (drafted, awaiting the operator's explicit keyed fire).
+#     Guarded on the gate + file so the beat is safe before the script lands.
+if [ "${LIMEN_CORRESPONDENCE_WALK:-1}" = "1" ] && [ -f "$LIMEN_ROOT/scripts/correspondence-walk.py" ]; then
+  run_tmp 120 "$PY" "$LIMEN_ROOT/scripts/correspondence-walk.py" --drain --notify || true
+fi
+
 # 3) STATUS — refresh the read-only UMA mail-status receipt (feeds the beat MAIL: census line).
 run_status || true
 
