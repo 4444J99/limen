@@ -51,9 +51,10 @@ def test_fails_closed_on_prose_with_no_sovereignty_signal():
 def test_explicit_field_overrides_derivation():
     m = _mod()
     # explicit design_debt wins even when the prose would derive sovereignty ("your click")
-    lev = _lever(label="your click to publish", design_debt={
-        "organ": "scripts/apply-visibility.py", "status": "built",
-        "dissolves_when": "true"})
+    lev = _lever(
+        label="your click to publish",
+        design_debt={"organ": "scripts/apply-visibility.py", "status": "built", "dissolves_when": "true"},
+    )
     got = m.classify(lev)
     assert got["kind"] == "design_debt" and got["organ"].endswith("apply-visibility.py"), got
     # explicit sovereignty with a valid reason is honored
@@ -85,6 +86,13 @@ def test_every_sovereign_reason_is_a_boundary_not_a_task():
     # guards against a reason being renamed/removed without updating the enum contract
     m = _mod()
     assert m.SOVEREIGN_REASONS == {
-        "identity", "bank", "wallet_custody", "legal_body", "biometric",
-        "vendor_mint", "physical_act", "device_grant", "governance_choice",
+        "identity",
+        "bank",
+        "wallet_custody",
+        "legal_body",
+        "biometric",
+        "vendor_mint",
+        "physical_act",
+        "device_grant",
+        "governance_choice",
     }
