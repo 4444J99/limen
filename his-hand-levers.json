@@ -645,6 +645,22 @@
         "Done when `gh api /orgs/organvm --jq .plan.name` prints 'team'"
       ],
       "issue": 1202
+    },
+    {
+      "id": "L-CLOSEOUT-OBSERVE-ARM",
+      "label": "Arm the closeout-reconciliation organ to OBSERVE live. The organ (scripts/reconcile-closeouts.py, PR #1211) verifies every claimed-done outcome against GitHub/board ground truth and now also reconciles ephemeral session closeouts (the ROOT capture, PR #1223). It ships DARK (classifier self-test only). Arming LIMEN_SESSION_CLOSEOUT=1 makes the beat sensor + closeout-fast run --check and surface false-closeouts in the beat log. Safe now that OBSERVE is decoupled from ENFORCE (PR #1225): observing is advisory — it will NOT fail closeouts while the board's known false-closeouts still exist.",
+      "owner": "yours",
+      "cost": "~10 sec, one paste, durable",
+      "unlocks": "continuous ground-truth on closeouts — a claimed-done that isn't merged/receipted surfaces in the beat log instead of being trusted forever. The complement of verify-dispatch's in-flight babysitting.",
+      "source_task": "closeout-reconciliation organ (limen #1211) + ROOT capture (#1223) + observe/enforce decouple (#1225); the '8 Completed sessions → workstreams' lineage",
+      "gate": "persistence-arming (writing LIMEN_*=1 to ~/.limen.env, what the beat reads) is classifier-denied to the session — only you can persist it",
+      "steps": [
+        "Prereq: PRs #1223 and #1225 merged to main (the ROOT capture + the observe/enforce decouple).",
+        "Arm OBSERVE (advisory, safe now):  echo 'LIMEN_SESSION_CLOSEOUT=1' >> ~/.limen.env",
+        "Later, ONLY after the board's outstanding false-closeouts clear, arm ENFORCE (hard-fails closeout-fast on a finding):  echo 'LIMEN_SESSION_CLOSEOUT_ENFORCE=1' >> ~/.limen.env",
+        "Done when: `python3 scripts/reconcile-closeouts.py --check` runs in the beat log and its findings appear (advisory) — verify with `scripts/beat-sensors.py --list | grep closeout-reconcile`"
+      ],
+      "issue": 1227
     }
   ]
 }
