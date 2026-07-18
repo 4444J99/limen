@@ -145981,3 +145981,40 @@ tasks:
   created: '2026-07-17'
   updated: '2026-07-18T00:25:31.142047Z'
   dispatch_log: []
+- id: AW-PUBLIC-FACE-PROFILE-92fb0c3560ee
+  title: Reconcile and project the GitHub profile/public face
+  description: visible GitHub profile README is missing or stale
+  repo: 4444J99/4444J99
+  type: coordination
+  target_agent: codex
+  workstream: public-face
+  priority: critical
+  budget_cost: 1
+  status: open
+  labels:
+  - always-working
+  - receipt-first
+  - overnight-lane-switch
+  - public-face
+  urls: []
+  context: 'Receipt-first verdict: visible GitHub profile README is missing or stale
+
+    Task: Project the existing positioning/frontdoor and current metrics onto the
+    profile README; fix stale counts and dead links.
+
+    Predicate: python3 scripts/test_sync_readme.py && python3 scripts/sync-readme.py
+    --check
+
+    Receipt target: git:4444J99/4444J99:README.md
+
+    Stop condition: profile README has current metrics, live links, and evidence-backed
+    top-engineer positioning
+
+    This is the single bounded alternate selected after generic dispatch was value-gated.'
+  predicate: python3 scripts/test_sync_readme.py && python3 scripts/sync-readme.py
+    --check
+  receipt_target: git:4444J99/4444J99:README.md
+  depends_on: []
+  created: '2026-07-18'
+  updated: '2026-07-18T00:45:59.827195Z'
+  dispatch_log: []
