@@ -663,6 +663,16 @@
       "issue": 1227
     },
     {
+      "id": "L-TOKENS-SIGNOFF",
+      "label": "Approve web/tokens/organvm-tokens.* as the estate design language — the portfolio-led design-token layer (primitives + semantic aliases + utility/editorial register scopes). Once approved, adoption PRs are MECHANICAL: each surface vendors a pinned copy and remaps its own surface vars onto the semantic aliases (--surface-bg, --ink, --accent …); no runtime fetch, no per-surface skin. Estate-wide adoption is gated on this sign-off.",
+      "owner": "yours",
+      "cost": "~5 min review — eyeball the swatch table + register modes, one approval",
+      "status": "awaiting sign-off (tokens authored, dark until approved)",
+      "gate": "owner sign-off — committing the estate to one design language is a taste/brand call only you make; the token files exist and validate, but no surface adopts them until you approve",
+      "unlocks": "mechanical adoption PRs across the estate (dashboard utility look + MONETA editorial paper both resolve from the same primitives); the portfolio leads the aesthetic without every surface becoming one skin",
+      "source_task": "organvm design-token layer (limen web/tokens/) — portfolio-led estate design language"
+    },
+    {
       "id": "L-URL-HIERARCHY-SIGNOFF",
       "label": "Approve the declared URL map (institutio/identity/url-map.yaml) — the intended 4444j99.dev hostname hierarchy. Four entries are proposed (apex 4444j99.dev -> portfolio, exporter.4444j99.dev -> ChatGPT Exporter, limen.4444j99.dev -> limen dashboard, plus studio.objectlessons.film which is separately gated on L-STUDIO-GOLIVE). On approval the DNS/custom-domain attach for each proposed Cloudflare Pages entry is organ-drivable headlessly via scripts/cf-wrangler.sh (CLOUDFLARE_API_TOKEN is already hydrated and proven green). The apex (4444j99.dev -> portfolio) also requires a Cloudflare Pages project to be created from the organvm/portfolio repo before attachment; the three pages.dev projects (exporter, limen) already exist and need only a custom domain add. Review institutio/identity/url-map.yaml, confirm the hostname-to-surface mapping is correct, then signal approval — the fleet drives each Cloudflare custom-domain attach in order.",
       "owner": "yours",

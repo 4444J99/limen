@@ -1,0 +1,102 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "meta": {
+    "name": "organvm-tokens",
+    "description": "The estate design language. Portfolio-led primitives + semantic aliases + register scopes. Machine twin of organvm-tokens.css; this JSON is the SSOT future drift checks read.",
+    "source": "organvm/portfolio (palette/type direction) + limen web/app globals.css (signal semantics) + limen docs/moneta editorial register",
+    "adoption": "vendor a pinned copy per surface; remap surface vars onto the semantic aliases; never a runtime fetch; estate-wide adoption gated on lever L-TOKENS-SIGNOFF",
+    "signoff_lever": "L-TOKENS-SIGNOFF"
+  },
+  "primitive": {
+    "neutral": {
+      "0": "#ffffff", "50": "#f6f7f9", "100": "#f5f5f0", "200": "#e5e7eb",
+      "300": "#d9dee7", "400": "#98a2b3", "500": "#667085", "600": "#4a4a4d",
+      "700": "#2a2b2e", "800": "#1a1a1b", "900": "#0a0a0b"
+    },
+    "editorial": {
+      "paper": "#faf7f0", "paper-line": "#e5dccb", "ink-warm": "#1a1712", "ink-dim": "#6b6255"
+    },
+    "gold": {
+      "400": "#e0b862", "500": "#d4a853", "600": "#b8922e", "700": "#96760f", "editorial": "#b8860b"
+    },
+    "signal": {
+      "blue-500": "#2563eb", "green-500": "#16a34a", "green-400": "#00e676",
+      "amber-500": "#d97706", "red-500": "#dc2626", "red-600": "#c4463a",
+      "violet-500": "#7c3aed", "slate-500": "#64748b"
+    },
+    "font": {
+      "sans": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Helvetica Neue\", Arial, sans-serif",
+      "serif": "Georgia, \"Times New Roman\", \"Iowan Old Style\", serif",
+      "mono": "ui-monospace, \"SF Mono\", Menlo, \"JetBrains Mono\", monospace"
+    },
+    "text": {
+      "xs": "0.75rem", "sm": "0.875rem", "md": "1rem", "lg": "1.25rem", "xl": "1.5rem",
+      "2xl": "clamp(1.5rem, 3vw, 2rem)", "3xl": "clamp(2rem, 5vw, 3rem)",
+      "leading-tight": "1.3", "leading-body": "1.65",
+      "tracking-tight": "-0.02em", "tracking-caps": "0.08em"
+    },
+    "space": {
+      "2xs": "0.125rem", "xs": "0.25rem", "sm": "0.5rem", "md": "0.875rem",
+      "lg": "1.375rem", "xl": "2.25rem", "2xl": "3.5rem", "3xl": "5.5rem"
+    },
+    "radius": { "sm": "4px", "base": "8px", "lg": "16px", "xl": "24px" },
+    "shadow": {
+      "sm": "0 1px 2px rgba(16,24,40,0.05)",
+      "base": "0 4px 12px rgba(16,24,40,0.12)",
+      "lg": "0 12px 32px rgba(16,24,40,0.18)"
+    }
+  },
+  "semantic": {
+    "light": {
+      "surface-bg": "{primitive.neutral.50}",
+      "surface-panel": "{primitive.neutral.0}",
+      "ink": "{primitive.neutral.800}",
+      "ink-muted": "{primitive.neutral.500}",
+      "line": "{primitive.neutral.300}",
+      "accent": "{primitive.gold.600}",
+      "ok": "{primitive.signal.green-500}",
+      "warn": "{primitive.signal.amber-500}",
+      "err": "{primitive.signal.red-500}",
+      "font-head": "{primitive.font.sans}",
+      "font-read": "{primitive.font.sans}",
+      "font-code": "{primitive.font.mono}",
+      "shadow": "{primitive.shadow.sm}"
+    },
+    "dark": {
+      "surface-bg": "{primitive.neutral.900}",
+      "surface-panel": "{primitive.neutral.800}",
+      "ink": "{primitive.neutral.50}",
+      "ink-muted": "{primitive.neutral.400}",
+      "line": "{primitive.neutral.700}",
+      "accent": "{primitive.gold.500}",
+      "ok": "{primitive.signal.green-400}",
+      "warn": "{primitive.signal.amber-500}",
+      "err": "{primitive.signal.red-600}",
+      "shadow": "{primitive.shadow.lg}"
+    }
+  },
+  "register": {
+    "utility": {
+      "surface-bg": "{primitive.neutral.50}",
+      "surface-panel": "{primitive.neutral.0}",
+      "ink": "{primitive.neutral.800}",
+      "ink-muted": "{primitive.neutral.500}",
+      "line": "{primitive.neutral.300}",
+      "accent": "{primitive.signal.blue-500}",
+      "font-head": "{primitive.font.sans}",
+      "font-read": "{primitive.font.sans}",
+      "shadow": "{primitive.shadow.sm}"
+    },
+    "editorial": {
+      "surface-bg": "{primitive.editorial.paper}",
+      "surface-panel": "{primitive.neutral.0}",
+      "ink": "{primitive.editorial.ink-warm}",
+      "ink-muted": "{primitive.editorial.ink-dim}",
+      "line": "{primitive.editorial.paper-line}",
+      "accent": "{primitive.gold.editorial}",
+      "font-head": "{primitive.font.serif}",
+      "font-read": "{primitive.font.serif}",
+      "shadow": "{primitive.shadow.base}"
+    }
+  }
+}
