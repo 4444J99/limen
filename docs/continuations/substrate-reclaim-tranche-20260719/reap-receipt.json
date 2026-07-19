@@ -1,0 +1,54 @@
+{
+  "apply": {
+    "command": "LIMEN_RECLAIM_MAX=3 python3 scripts/reclaim-worktrees.py --apply --force --json",
+    "completed_utc": "2026-07-19T14:42:58.228648Z",
+    "failed": [],
+    "reclaimed": [
+      {
+        "action": "remove-worktree",
+        "reason": "clean+merged+idle",
+        "root": "arm-disk-valve"
+      },
+      {
+        "action": "remove-worktree",
+        "reason": "clean+merged+idle",
+        "root": "exporter-multiprovider"
+      },
+      {
+        "action": "remove-worktree",
+        "reason": "clean+merged+idle",
+        "root": "exporter-pr120-fix"
+      }
+    ],
+    "started_utc": "2026-07-19T14:42:24.203123Z"
+  },
+  "authorization": "standing-grant-2026-07-09",
+  "boundedness": {
+    "deferred_over_cap": [
+      "lane-fitness-beat-wiring",
+      "omega-ask-lineage-live",
+      "org-health-organ-firstslice-0704-aac2b482",
+      "org-health-organ-firstslice-0704-caa4e142",
+      "modular-continuation-20260714",
+      "codex-prompt-corpus-control-20260711"
+    ],
+    "maximum_root_removals": 3,
+    "root_removal_count": 3
+  },
+  "generated_cleanup_overrun": {
+    "cleaned_root_count": 49,
+    "failed_root_count": 0,
+    "root_deletions": 0,
+    "scope_correction": "PR #1301 now requires LIMEN_RECLAIM_GENERATED=0 in every bounded root-reclaim packet",
+    "summary": "The root-removal cap held, but reclaim-worktrees.py also ran its default ignored-generated-payload cleanup because the packet omitted LIMEN_RECLAIM_GENERATED=0. The cleanup used git clean -Xdf only on the script's generated-path allowlist; no additional worktree root was deleted. This was broader than the packet promised and is recorded as a contract failure, not hidden as success."
+  },
+  "host_admission": {
+    "allowed": true,
+    "checked_utc": "2026-07-19T14:42:14.355821Z",
+    "swap_fraction": 0.2225225829752162,
+    "swap_growth_bytes_per_minute": 0.0,
+    "vitals_action": "ok"
+  },
+  "schema": "limen.substrate-reclaim-tranche-receipt.v1",
+  "workstream_receipt": "docs/continuations/substrate-reclaim-tranche-20260719/workstream.json"
+}

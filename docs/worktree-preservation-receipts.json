@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-18T17:39:09Z",
+  "generated_utc": "2026-07-19T14:42:58.228648Z",
   "receipts": [
     {
       "branch": "pr-110-branch",
@@ -4569,6 +4569,78 @@
       "root": "runaway-prevention-recovery-20260718-120912",
       "status": "reaped_remote_merged",
       "worktree": "/Users/4jp/Workspace/limen/.worktrees/runaway-prevention-recovery-20260718-120912"
+    },
+    {
+      "branch": "chore/arm-disk-capacity-apply",
+      "classification": "accepted reaper removed a clean idle worktree after merged-PR custody passed",
+      "evidence_updated_utc": "2026-07-19T14:42:58.228648Z",
+      "head": "8118a452d73e63d2dcd6a769be894642f2ea1cd4",
+      "lane": "reaped",
+      "merge_commit": "19b7c341b303744a5319039b9cf5caace4f60c6f",
+      "next_action": "None. The local worktree is absent and merged PR #1138 remains the durable custody owner.",
+      "pr_base_ref": "main",
+      "pr_head_oid": "8118a452d73e63d2dcd6a769be894642f2ea1cd4",
+      "pr_head_ref": "chore/arm-disk-capacity-apply",
+      "pr_number": 1138,
+      "pr_state": "MERGED",
+      "pr_url": "https://github.com/organvm/limen/pull/1138",
+      "reap_completed_utc": "2026-07-19T14:42:58.228648Z",
+      "reap_receipt": {
+        "acceptance": "standing-grant-2026-07-09",
+        "action": "remove-worktree",
+        "aggregate_receipt": "docs/continuations/substrate-reclaim-tranche-20260719/reap-receipt.json",
+        "reason": "clean+merged+idle"
+      },
+      "repo": "organvm/limen",
+      "root": "arm-disk-valve",
+      "status": "reaped_remote_merged",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/arm-disk-valve"
+    },
+    {
+      "branch": null,
+      "classification": "accepted reaper removed a clean idle worktree only after the live remote-reachability and merged-or-patch-equivalence gates passed",
+      "evidence_limitation": "The accepted reaper result retained the root, action, and clean+merged+idle reason but not the pre-removal HEAD or branch. Historical ledgers contain more than one multiprovider branch, so this receipt deliberately does not infer a specific PR.",
+      "evidence_updated_utc": "2026-07-19T14:42:58.228648Z",
+      "head": null,
+      "lane": "reaped",
+      "next_action": "None for the removed checkout. The aggregate receipt is the terminal lifecycle evidence; do not infer a specific branch or PR from the root name.",
+      "reap_completed_utc": "2026-07-19T14:42:58.228648Z",
+      "reap_receipt": {
+        "acceptance": "standing-grant-2026-07-09",
+        "action": "remove-worktree",
+        "aggregate_receipt": "docs/continuations/substrate-reclaim-tranche-20260719/reap-receipt.json",
+        "reason": "clean+merged+idle"
+      },
+      "repo": "organvm/a-i-chat--exporter",
+      "root": "exporter-multiprovider",
+      "status": "reaped_remote_merged_or_patch_equivalent",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/exporter-multiprovider"
+    },
+    {
+      "branch": "wt/pr120-fix",
+      "classification": "accepted reaper removed a clean idle worktree after patch-equivalent merged-PR custody passed",
+      "evidence_updated_utc": "2026-07-19T14:42:58.228648Z",
+      "head": "83e7cb707e74507c952d1a9d53a44310a34073f1",
+      "lane": "reaped",
+      "merge_commit": "38bf8d377808558f38239bcc30baa06ec07fc583",
+      "next_action": "None. The local worktree is absent and merged PR #131 remains the durable custody owner.",
+      "pr_base_ref": "master",
+      "pr_head_oid": "83e7cb707e74507c952d1a9d53a44310a34073f1",
+      "pr_head_ref": "wt/pr120-fix",
+      "pr_number": 131,
+      "pr_state": "MERGED",
+      "pr_url": "https://github.com/organvm/a-i-chat--exporter/pull/131",
+      "reap_completed_utc": "2026-07-19T14:42:58.228648Z",
+      "reap_receipt": {
+        "acceptance": "standing-grant-2026-07-09",
+        "action": "remove-worktree",
+        "aggregate_receipt": "docs/continuations/substrate-reclaim-tranche-20260719/reap-receipt.json",
+        "reason": "clean+merged+idle"
+      },
+      "repo": "organvm/a-i-chat--exporter",
+      "root": "exporter-pr120-fix",
+      "status": "reaped_remote_merged",
+      "worktree": "/Users/4jp/Workspace/.limen-worktrees/exporter-pr120-fix"
     },
     {
       "branch": "fix/codex-runaway-prevention-20260717-v2",
