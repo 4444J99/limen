@@ -146815,7 +146815,7 @@ tasks:
   title: address review feedback on organvm/a-mavs-olevm#102
   repo: organvm/a-mavs-olevm
   type: code
-  target_agent: any
+  target_agent: agy
   priority: normal
   budget_cost: 1
   status: open
@@ -146845,7 +146845,7 @@ tasks:
   title: address review feedback on organvm/a-mavs-olevm#103
   repo: organvm/a-mavs-olevm
   type: code
-  target_agent: any
+  target_agent: claude
   priority: normal
   budget_cost: 1
   status: open
@@ -146875,7 +146875,7 @@ tasks:
   title: address review feedback on organvm/a-mavs-olevm#104
   repo: organvm/a-mavs-olevm
   type: code
-  target_agent: any
+  target_agent: gemini
   priority: normal
   budget_cost: 1
   status: open
@@ -146905,7 +146905,7 @@ tasks:
   title: address review feedback on organvm/call-function--ontological#13
   repo: organvm/call-function--ontological
   type: code
-  target_agent: any
+  target_agent: codex
   priority: normal
   budget_cost: 1
   status: open
