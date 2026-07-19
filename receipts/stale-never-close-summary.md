@@ -20,8 +20,22 @@ keep the `days-before-stale: 60` label, soften messaging. Workflow-file-only cha
 
 ## Homed open PRs (genuine gates — NOT closed, awaiting)
 - `system-dashboard` #9 — 2 genuinely failing required checks (pre-existing test breakage);
-  will not admin past real red. Merges once repo CI is green.
-- `a-i--skills` #37 — required human review gate.
+  will not admin past real red. Merges once repo CI is green. **(sole remaining)**
+
+### Update (later pass) — two "review-required" homed PRs were actually self-approval deadlocks
+Re-examined the two homed-open stale PRs with a sharper lens: on solo-owner repos
+(sole collaborator == PR author 4444J99, `enforce_admins: false`), a
+`required_approving_review_count: 1` gate is an *unsatisfiable self-approval deadlock*,
+which the doctrine explicitly permits admin-merge for (not a third-party review gate).
+Both were owner-authored, workflow-only, all real checks green:
+- `a-i--skills` #37 — **MERGED** (1d929d4). Admin-squashed past self-review deadlock.
+  main stale.yml now `days-before-close: -1`.
+- `dot-github--theoria` #507 — **MERGED** (f430004). UNSTABLE only on non-required
+  "Validate PR Title" (em-dash in title); all 8 required contexts green; enforce_admins off.
+  main stale-management.yml now `days-before-close: -1` + `days-before-pr-close: -1`.
+
+Net: every organvm repo with its own issues/PRs now never auto-closes on main, except
+`system-dashboard` (#9 homed-open, genuine red — merges when repo CI is fixed).
 
 ## Phase 2 — filename-agnostic comprehensive re-scan
 The first sweep matched only files literally named `.github/workflows/stale.yml`.
