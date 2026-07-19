@@ -22627,7 +22627,7 @@
     "organvm/media-ark#34": {
       "comments": 0,
       "created_at": "2026-06-19T05:21:22Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/media-ark/blob/main/web/app.js",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22638,12 +22638,14 @@
       "state": "open",
       "title": "[limen REV-mediaark-dashboard-pro] Add auth form + pro feature flags + a quota meter (warn at 80%) to web/app",
       "updated_at": "2026-06-19T05:27:29Z",
-      "url": "https://github.com/organvm/media-ark/pull/34"
+      "url": "https://github.com/organvm/media-ark/pull/34",
+      "evidence": "Open PR conflicting/red; main web/app.js has auth controls, Pro flags, quota meter, 80% warning.",
+      "last_touched": "2026-07-19T10:56:28Z"
     },
     "organvm/media-ark#42": {
       "comments": 1,
       "created_at": "2026-06-20T04:17:33Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/media-ark/blob/main/docs/api-reference.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22654,12 +22656,14 @@
       "state": "open",
       "title": "[limen BLD2-media-ark-api-docs] media-ark: api-docs",
       "updated_at": "2026-06-20T04:24:40Z",
-      "url": "https://github.com/organvm/media-ark/pull/42"
+      "url": "https://github.com/organvm/media-ark/pull/42",
+      "evidence": "Open PR conflicting/red; main api-reference.md covers auth, endpoints, examples, boundaries, telemetry, MCP.",
+      "last_touched": "2026-07-19T10:56:28Z"
     },
     "organvm/media-ark#47": {
       "comments": 1,
       "created_at": "2026-06-23T16:36:30Z",
-      "disposition": "queued",
+      "disposition": "merged:079eb1521241ed109b0f0da3c4b8040bfa6840d4",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22670,12 +22674,14 @@
       "state": "open",
       "title": "discover: promote organvm/media-ark to ranked tier",
       "updated_at": "2026-06-23T16:36:35Z",
-      "url": "https://github.com/organvm/media-ark/pull/47"
+      "url": "https://github.com/organvm/media-ark/pull/47",
+      "evidence": "Refreshed branch, npm test 132 passed, all checks green, squash-merged.",
+      "last_touched": "2026-07-19T10:56:28Z"
     },
     "organvm/media-ark#50": {
       "comments": 0,
       "created_at": "2026-06-27T13:34:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22686,12 +22692,14 @@
       "state": "open",
       "title": "test: preserve capture lifecycle coverage",
       "updated_at": "2026-06-27T13:34:31Z",
-      "url": "https://github.com/organvm/media-ark/pull/50"
+      "url": "https://github.com/organvm/media-ark/pull/50",
+      "evidence": "Draft PR CONFLICTING/DIRTY with red CLI smoke; useful tests not yet ported to main.",
+      "last_touched": "2026-07-19T10:56:28Z"
     },
     "organvm/media-ark#56": {
       "comments": 0,
       "created_at": "2026-07-07T22:18:38Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22702,7 +22710,9 @@
       "state": "open",
       "title": "Turn Photos Universe recovery into private-processing/public-aggregate pipeline",
       "updated_at": "2026-07-07T22:18:38Z",
-      "url": "https://github.com/organvm/media-ark/issues/56"
+      "url": "https://github.com/organvm/media-ark/issues/56",
+      "evidence": "Core media pipeline exists; no verified Photos-specific private/public/Portvs routing receipt on main.",
+      "last_touched": "2026-07-19T10:56:28Z"
     },
     "organvm/mesh#1": {
       "comments": 0,
