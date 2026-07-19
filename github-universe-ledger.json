@@ -28443,7 +28443,7 @@
     "organvm/organvm-engine#100": {
       "comments": 1,
       "created_at": "2026-06-18T16:52:47Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28454,12 +28454,14 @@
       "state": "open",
       "title": "[limen LIMEN-045] descent: add type-checking to 6 remaining repos",
       "updated_at": "2026-06-18T17:02:24Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/100"
+      "url": "https://github.com/organvm/organvm-engine/pull/100",
+      "evidence": "Type-checking support PR red; six external repos not verified.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#101": {
       "comments": 1,
       "created_at": "2026-06-18T16:53:45Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-engine/blob/main/src/organvm_engine/handoff.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28470,12 +28472,14 @@
       "state": "open",
       "title": "[limen LIMEN-049] feat: handoff staleness detection and workspace-wide handoff listing",
       "updated_at": "2026-07-07T08:13:37Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/101"
+      "url": "https://github.com/organvm/organvm-engine/pull/101",
+      "evidence": "Older handoff parser branch superseded by main; PR red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#104": {
       "comments": 1,
       "created_at": "2026-06-18T17:08:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28486,12 +28490,14 @@
       "state": "open",
       "title": "[limen LIMEN-071] descent: content-based detection for CodeQL and release automation",
       "updated_at": "2026-06-18T17:17:41Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/104"
+      "url": "https://github.com/organvm/organvm-engine/pull/104",
+      "evidence": "Main has content-based CI audit; workflow PR still red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#105": {
       "comments": 1,
       "created_at": "2026-06-18T17:09:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28502,12 +28508,14 @@
       "state": "open",
       "title": "[limen LIMEN-050] feat: context sync diff/changelog between runs",
       "updated_at": "2026-07-07T07:50:25Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/105"
+      "url": "https://github.com/organvm/organvm-engine/pull/105",
+      "evidence": "Persistent context changelog/rollback not on main; PR conflicting/CLA fail.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#106": {
       "comments": 1,
       "created_at": "2026-06-18T17:12:42Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-engine/blob/main/src/organvm_engine/handoff.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28518,12 +28526,14 @@
       "state": "open",
       "title": "[limen LIMEN-066] feat: handoff staleness detection and workspace-wide handoff listing",
       "updated_at": "2026-06-18T17:19:47Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/106"
+      "url": "https://github.com/organvm/organvm-engine/pull/106",
+      "evidence": "Alternate handoff layout superseded by current-main implementation; PR red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#107": {
       "comments": 1,
       "created_at": "2026-06-18T17:24:14Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28534,12 +28544,14 @@
       "state": "open",
       "title": "[limen LIMEN-076] feat: testament sonic bridge — OSC to alchemical-synthesizer",
       "updated_at": "2026-06-18T17:30:45Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/107"
+      "url": "https://github.com/organvm/organvm-engine/pull/107",
+      "evidence": "OSC bridge module not on main; PR checks red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#109": {
       "comments": 1,
       "created_at": "2026-06-18T17:32:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28550,12 +28562,14 @@
       "state": "open",
       "title": "[limen LIMEN-073] descent: add type-checking to 6 remaining repos",
       "updated_at": "2026-06-18T17:40:11Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/109"
+      "url": "https://github.com/organvm/organvm-engine/pull/109",
+      "evidence": "Type-check rollout branch conflicting/red; external repo audit evidence missing.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#110": {
       "comments": 1,
       "created_at": "2026-06-18T17:40:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28566,12 +28580,14 @@
       "state": "open",
       "title": "[limen LIMEN-075] feat: Stakeholder Portal /testament/ route",
       "updated_at": "2026-07-07T10:41:50Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/110"
+      "url": "https://github.com/organvm/organvm-engine/pull/110",
+      "evidence": "CONFLICTING/DIRTY and CLAssistant fail; portal route appears wrong-repo.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#111": {
       "comments": 1,
       "created_at": "2026-06-18T17:45:08Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28582,12 +28598,14 @@
       "state": "open",
       "title": "[limen LIMEN-069] fix(session): investigate hanging review and plans commands in large repos",
       "updated_at": "2026-06-18T17:46:23Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/111"
+      "url": "https://github.com/organvm/organvm-engine/pull/111",
+      "evidence": "Session hang fix branch conflicting/red; needs bounded regression test.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#112": {
       "comments": 1,
       "created_at": "2026-06-18T18:02:45Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28598,12 +28616,14 @@
       "state": "open",
       "title": "[limen LIMEN-060] feat: implement MCP tool wrappers for all 5 organvm CLIs",
       "updated_at": "2026-06-18T18:11:45Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/112"
+      "url": "https://github.com/organvm/organvm-engine/pull/112",
+      "evidence": "Adds MCP package not on main, but checks red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#113": {
       "comments": 1,
       "created_at": "2026-06-18T19:11:45Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28614,12 +28634,14 @@
       "state": "open",
       "title": "[limen jules LIMEN-046] descent: expand branch protection to all organs (~45 repos)",
       "updated_at": "2026-06-18T19:16:36Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/113"
+      "url": "https://github.com/organvm/organvm-engine/pull/113",
+      "evidence": "Branch-protection planner exists, rollout unverified; PR conflicting/red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#115": {
       "comments": 1,
       "created_at": "2026-06-18T19:12:02Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28630,12 +28652,14 @@
       "state": "open",
       "title": "[limen jules LIMEN-041] Add seed.yaml validation for missing produces/consumes edges",
       "updated_at": "2026-06-18T19:13:20Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/115"
+      "url": "https://github.com/organvm/organvm-engine/pull/115",
+      "evidence": "Seed produces/consumes warning absent on main; PR checks red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#121": {
       "comments": 1,
       "created_at": "2026-06-18T23:25:59Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-engine/blob/main/src/organvm_engine/handoff.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28646,12 +28670,14 @@
       "state": "open",
       "title": "[limen LIMEN-066] feat: handoff staleness detection and workspace-wide handoff listing",
       "updated_at": "2026-06-18T23:33:22Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/121"
+      "url": "https://github.com/organvm/organvm-engine/pull/121",
+      "evidence": "Main has handoff list/clean/stale support; PR is conflicting/red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#125": {
       "comments": 1,
       "created_at": "2026-06-19T11:49:21Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-engine/blob/main/src/organvm_engine/governance/exit_interview/testimony.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28662,12 +28688,14 @@
       "state": "open",
       "title": "[limen LIMEN-065] feat: exit interview testimony for documentation-only repos",
       "updated_at": "2026-06-19T11:57:36Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/125"
+      "url": "https://github.com/organvm/organvm-engine/pull/125",
+      "evidence": "Main has doc-only testimony support/tests; PR is conflicting/red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#126": {
       "comments": 1,
       "created_at": "2026-06-19T11:54:07Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28678,12 +28706,14 @@
       "state": "open",
       "title": "[limen LIMEN-048] feat: SOP staleness detection cross-reference SOPs against governed code",
       "updated_at": "2026-07-06T05:58:30Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/126"
+      "url": "https://github.com/organvm/organvm-engine/pull/126",
+      "evidence": "MERGEABLE/BLOCKED; CLAssistant failing, no green matrix.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#127": {
       "comments": 1,
       "created_at": "2026-06-19T11:56:25Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28694,12 +28724,14 @@
       "state": "open",
       "title": "[limen LIMEN-070] network: R3 kinship mirror research — community identification",
       "updated_at": "2026-06-19T12:04:15Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/127"
+      "url": "https://github.com/organvm/organvm-engine/pull/127",
+      "evidence": "BLOCKED/red; duplicate R3 kinship work needs consolidation.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#128": {
       "comments": 1,
       "created_at": "2026-06-19T12:46:33Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-engine/blob/main/src/organvm_engine/irf/parser.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28710,12 +28742,14 @@
       "state": "open",
       "title": "[limen RESOLVE-a-organvm-organvm-engine-119] resolve organvm-engine#119 (BLOCKED)",
       "updated_at": "2026-06-19T12:51:13Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/128"
+      "url": "https://github.com/organvm/organvm-engine/pull/128",
+      "evidence": "Main has IRF tail-row parser/stats test; PR is conflicting/red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#129": {
       "comments": 1,
       "created_at": "2026-06-19T12:48:18Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-engine/blob/main/tests/test_handoff.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28726,12 +28760,14 @@
       "state": "open",
       "title": "[limen RESOLVE-a-organvm-organvm-engine-121] resolve organvm-engine#121 (BLOCKED)",
       "updated_at": "2026-06-19T12:49:27Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/129"
+      "url": "https://github.com/organvm/organvm-engine/pull/129",
+      "evidence": "Current main has handoff tests/implementation; PR is red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#130": {
       "comments": 1,
       "created_at": "2026-06-19T12:48:54Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-engine/blob/main/src/organvm_engine/handoff.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28742,12 +28778,14 @@
       "state": "open",
       "title": "[limen RESOLVE-a-organvm-organvm-engine-117] resolve organvm-engine#117 (BLOCKED)",
       "updated_at": "2026-06-19T12:50:05Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/130"
+      "url": "https://github.com/organvm/organvm-engine/pull/130",
+      "evidence": "Resolver targets already-merged #117/current-main handoff support; checks fail.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#131": {
       "comments": 1,
       "created_at": "2026-06-19T13:01:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28758,12 +28796,14 @@
       "state": "open",
       "title": "[limen LIMEN-070] network: R3 kinship mirror research — community identification",
       "updated_at": "2026-06-19T13:02:54Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/131"
+      "url": "https://github.com/organvm/organvm-engine/pull/131",
+      "evidence": "BLOCKED/red; R3 kinship expansion needs green tests and taxonomy review.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#132": {
       "comments": 1,
       "created_at": "2026-06-19T13:27:44Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28774,12 +28814,14 @@
       "state": "open",
       "title": "[limen jules RESOLVE-a-organvm-organvm-engine-111] resolve organvm-engine#111 (BLOCKED)",
       "updated_at": "2026-06-19T15:55:26Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/132"
+      "url": "https://github.com/organvm/organvm-engine/pull/132",
+      "evidence": "CONFLICTING/DIRTY, 32 behind, red; large-repo session hang fix unverified.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#135": {
       "comments": 1,
       "created_at": "2026-06-19T17:38:32Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28790,12 +28832,14 @@
       "state": "open",
       "title": "[limen jules LIMEN-074] feat: Ring 4 — external chain anchoring (Base L2 / Celestia)",
       "updated_at": "2026-06-19T17:49:32Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/135"
+      "url": "https://github.com/organvm/organvm-engine/pull/135",
+      "evidence": "BLOCKED/red; adds Ring-4 contract/CLI while main only has anchor data structures.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#136": {
       "comments": 1,
       "created_at": "2026-06-19T17:38:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28806,12 +28850,14 @@
       "state": "open",
       "title": "[limen jules LIMEN-067] feat: context sync diff/changelog between runs",
       "updated_at": "2026-07-06T08:02:43Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/136"
+      "url": "https://github.com/organvm/organvm-engine/pull/136",
+      "evidence": "MERGEABLE/UNSTABLE; functional checks green but CLAssistant fails.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#137": {
       "comments": 1,
       "created_at": "2026-06-19T20:30:42Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28822,12 +28868,14 @@
       "state": "open",
       "title": "[limen LIMEN-064] feat: SOP staleness detection — cross-reference SOPs against governed code",
       "updated_at": "2026-06-19T20:40:13Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/137"
+      "url": "https://github.com/organvm/organvm-engine/pull/137",
+      "evidence": "BLOCKED/red; SOP staleness feature still unmerged.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#139": {
       "comments": 1,
       "created_at": "2026-06-19T22:33:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28838,12 +28886,14 @@
       "state": "open",
       "title": "[limen RESOLVE-a-organvm-organvm-engine-112] resolve organvm-engine#112 (BLOCKED)",
       "updated_at": "2026-06-19T22:37:17Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/139"
+      "url": "https://github.com/organvm/organvm-engine/pull/139",
+      "evidence": "BLOCKED/red; resolver PR does not add the MCP package it targets.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#140": {
       "comments": 1,
       "created_at": "2026-06-19T22:37:00Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-engine/blob/main/src/organvm_engine/corpus/graph.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28854,12 +28904,14 @@
       "state": "open",
       "title": "[limen LIMEN-063] feat: corpus knowledge graph module (organvm corpus)",
       "updated_at": "2026-06-19T22:41:43Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/140"
+      "url": "https://github.com/organvm/organvm-engine/pull/140",
+      "evidence": "Main has corpus graph/scanner/CLI/tests; PR checks fail.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#143": {
       "comments": 1,
       "created_at": "2026-06-19T23:56:37Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28870,12 +28922,14 @@
       "state": "open",
       "title": "[limen LIMEN-048] feat: SOP staleness detection cross-reference SOPs against governed code",
       "updated_at": "2026-06-20T00:05:01Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/143"
+      "url": "https://github.com/organvm/organvm-engine/pull/143",
+      "evidence": "MERGEABLE/BLOCKED with failing tests; SOP staleness module not on main.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#144": {
       "comments": 1,
       "created_at": "2026-06-20T09:39:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28886,12 +28940,14 @@
       "state": "open",
       "title": "[limen GEN-a-organvm-organvm-engine-test-coverage-0620] Raise test coverage in a-organvm/organvm-engine",
       "updated_at": "2026-06-20T09:46:39Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/144"
+      "url": "https://github.com/organvm/organvm-engine/pull/144",
+      "evidence": "CONFLICTING/DIRTY, 24 behind main, failing tests; needs rebase and narrowed coverage diff.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#165": {
       "comments": 1,
       "created_at": "2026-07-07T15:47:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28902,12 +28958,14 @@
       "state": "open",
       "title": "[limen jules HEAL-cifix-organvm-organvm-engine-109] fix failing CI on organvm/organvm-engine#109",
       "updated_at": "2026-07-08T06:22:27Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/165"
+      "url": "https://github.com/organvm/organvm-engine/pull/165",
+      "evidence": "MERGEABLE/BLOCKED; test and 3.11 matrix fail, 3.12 cancelled; broad 43-file diff not safe.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#168": {
       "comments": 1,
       "created_at": "2026-07-16T20:09:06Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28918,12 +28976,14 @@
       "state": "open",
       "title": "feat: compile governance lineage Iceberg Atlas",
       "updated_at": "2026-07-17T10:26:24Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/168"
+      "url": "https://github.com/organvm/organvm-engine/pull/168",
+      "evidence": "Marked ready; MERGEABLE/CLEAN all checks green, but +6110/-1 core governance/testament diff needs owner semantic review.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#41": {
       "comments": 2,
       "created_at": "2026-03-20T02:47:21Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28934,12 +28994,14 @@
       "state": "open",
       "title": "Fix soak-test LaunchAgent — gh CLI auth fails under launchd",
       "updated_at": "2026-05-25T12:25:01Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/41"
+      "url": "https://github.com/organvm/organvm-engine/issues/41",
+      "evidence": "Engine triage fix present; launchd gh auth remains external blocker.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#42": {
       "comments": 1,
       "created_at": "2026-03-20T02:47:22Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28950,12 +29012,14 @@
       "state": "open",
       "title": "Submit conference talk proposals — omega #14 pathway",
       "updated_at": "2026-03-22T02:36:06Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/42"
+      "url": "https://github.com/organvm/organvm-engine/issues/42",
+      "evidence": "Human-submit CFP item; no submission performed, plan/status commented.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#49": {
       "comments": 3,
       "created_at": "2026-03-20T11:04:44Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28966,12 +29030,14 @@
       "state": "open",
       "title": "feat: testament sonic bridge — OSC to alchemical-synthesizer",
       "updated_at": "2026-05-25T12:24:59Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/49"
+      "url": "https://github.com/organvm/organvm-engine/issues/49",
+      "evidence": "testament play OSC/YAML renderer and tests present on main.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#54": {
       "comments": 3,
       "created_at": "2026-03-20T12:13:34Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28982,12 +29048,14 @@
       "state": "open",
       "title": "feat: Stakeholder Portal /testament/ route",
       "updated_at": "2026-05-25T12:24:57Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/54"
+      "url": "https://github.com/organvm/organvm-engine/issues/54",
+      "evidence": "Engine has testament gallery helpers, not portal /testament route; wrong-repo/product integration.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#55": {
       "comments": 2,
       "created_at": "2026-03-20T12:13:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -28998,12 +29066,14 @@
       "state": "open",
       "title": "feat: Ring 4 — external chain anchoring (Base L2 / Celestia)",
       "updated_at": "2026-03-29T22:42:59Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/55"
+      "url": "https://github.com/organvm/organvm-engine/issues/55",
+      "evidence": "Main has anchor data structures only; contract/web3 CLI absent, PR #135 red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#60": {
       "comments": 2,
       "created_at": "2026-03-20T12:27:12Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29014,12 +29084,14 @@
       "state": "open",
       "title": "descent: add type-checking to 6 remaining repos",
       "updated_at": "2026-05-25T12:24:53Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/60"
+      "url": "https://github.com/organvm/organvm-engine/issues/60",
+      "evidence": "Engine pyright exists; six external repos lack verified audit evidence.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#61": {
       "comments": 2,
       "created_at": "2026-03-20T12:27:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29030,12 +29102,14 @@
       "state": "open",
       "title": "descent: expand branch protection to all organs",
       "updated_at": "2026-05-25T12:24:51Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/61"
+      "url": "https://github.com/organvm/organvm-engine/issues/61",
+      "evidence": "Protection planner exists; live ~45-repo rollout not verified.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#64": {
       "comments": 2,
       "created_at": "2026-03-20T12:27:38Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29046,12 +29120,14 @@
       "state": "open",
       "title": "descent: content-based detection for CodeQL and release automation",
       "updated_at": "2026-05-25T12:24:50Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/64"
+      "url": "https://github.com/organvm/organvm-engine/issues/64",
+      "evidence": "CI audit scans workflow content for CodeQL/release actions on main.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#66": {
       "comments": 2,
       "created_at": "2026-03-20T12:33:08Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29062,12 +29138,14 @@
       "state": "open",
       "title": "network: R3 kinship mirror research — community identification",
       "updated_at": "2026-05-25T12:24:48Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/66"
+      "url": "https://github.com/organvm/organvm-engine/issues/66",
+      "evidence": "R3 kinship research remains in red PRs #131/#127.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#70": {
       "comments": 0,
       "created_at": "2026-04-02T04:27:01Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29078,12 +29156,14 @@
       "state": "open",
       "title": "fix(session): investigate hanging review and plans commands in large repos",
       "updated_at": "2026-04-02T04:27:01Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/70"
+      "url": "https://github.com/organvm/organvm-engine/issues/70",
+      "evidence": "Session hang fix PRs #111/#132 red/conflicting; hang not verified fixed.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#71": {
       "comments": 0,
       "created_at": "2026-04-02T04:30:03Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29094,12 +29174,14 @@
       "state": "open",
       "title": "fix(irf): stats command undercounts newly added tail items",
       "updated_at": "2026-04-02T04:30:03Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/71"
+      "url": "https://github.com/organvm/organvm-engine/issues/71",
+      "evidence": "IRF compact tail-row stats fix and test present on main.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#73": {
       "comments": 0,
       "created_at": "2026-04-03T16:45:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29110,12 +29192,14 @@
       "state": "open",
       "title": "feat: context sync diff/changelog between runs",
       "updated_at": "2026-04-03T16:45:31Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/73"
+      "url": "https://github.com/organvm/organvm-engine/issues/73",
+      "evidence": "Context diff/change records exist, but append-only JSONL/rollback absent.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#74": {
       "comments": 0,
       "created_at": "2026-04-03T16:45:41Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29126,12 +29210,14 @@
       "state": "open",
       "title": "feat: handoff staleness detection and workspace-wide handoff listing",
       "updated_at": "2026-04-03T16:45:41Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/74"
+      "url": "https://github.com/organvm/organvm-engine/issues/74",
+      "evidence": "handoff list/clean, expires_at, stale/expired logic, and tests present on main.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#75": {
       "comments": 0,
       "created_at": "2026-04-03T16:45:46Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29142,12 +29228,14 @@
       "state": "open",
       "title": "feat: exit interview testimony for documentation-only repos",
       "updated_at": "2026-04-03T16:45:46Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/75"
+      "url": "https://github.com/organvm/organvm-engine/issues/75",
+      "evidence": "Doc-only exit interview analysis and tests present on main.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#76": {
       "comments": 0,
       "created_at": "2026-04-03T16:45:58Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29158,12 +29246,14 @@
       "state": "open",
       "title": "feat: SOP staleness detection — cross-reference SOPs against governed code",
       "updated_at": "2026-04-03T16:45:58Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/76"
+      "url": "https://github.com/organvm/organvm-engine/issues/76",
+      "evidence": "No sop/staleness.py on main; SOP staleness PRs red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#81": {
       "comments": 0,
       "created_at": "2026-04-09T00:55:35Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29174,12 +29264,14 @@
       "state": "open",
       "title": "feat: corpus knowledge graph module (organvm corpus)",
       "updated_at": "2026-04-09T00:55:35Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/81"
+      "url": "https://github.com/organvm/organvm-engine/issues/81",
+      "evidence": "Corpus graph/scanner/CLI/tests present on main.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#83": {
       "comments": 0,
       "created_at": "2026-04-20T15:52:55Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29190,12 +29282,14 @@
       "state": "open",
       "title": "Add --format json flag to organvm registry list command",
       "updated_at": "2026-04-20T15:52:55Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/83"
+      "url": "https://github.com/organvm/organvm-engine/issues/83",
+      "evidence": "registry list --format json parsed and emitted on main.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#84": {
       "comments": 0,
       "created_at": "2026-04-20T15:53:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29206,12 +29300,14 @@
       "state": "open",
       "title": "Add seed.yaml validation for missing produces/consumes edges",
       "updated_at": "2026-04-20T15:53:54Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/84"
+      "url": "https://github.com/organvm/organvm-engine/issues/84",
+      "evidence": "seed validate lacks empty produces/consumes warning; PR #115 red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#89": {
       "comments": 0,
       "created_at": "2026-04-26T04:41:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29222,12 +29318,14 @@
       "state": "open",
       "title": "feat: implement MCP tool wrappers for all 5 organvm CLIs",
       "updated_at": "2026-04-26T04:41:00Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/89"
+      "url": "https://github.com/organvm/organvm-engine/issues/89",
+      "evidence": "No mcp package on main; PRs #112/#99 red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#98": {
       "comments": 0,
       "created_at": "2026-06-10T21:57:04Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29238,12 +29336,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T21:57:04Z",
-      "url": "https://github.com/organvm/organvm-engine/issues/98"
+      "url": "https://github.com/organvm/organvm-engine/issues/98",
+      "evidence": "Package/CLI exists, but no release.yml/public package/deploy proof; ship is operator product decision.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-engine#99": {
       "comments": 1,
       "created_at": "2026-06-18T16:04:56Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29254,7 +29354,9 @@
       "state": "open",
       "title": "[limen LIMEN-060] feat: implement MCP tool wrappers for all 5 organvm CLIs",
       "updated_at": "2026-06-18T16:15:39Z",
-      "url": "https://github.com/organvm/organvm-engine/pull/99"
+      "url": "https://github.com/organvm/organvm-engine/pull/99",
+      "evidence": "MCP wrappers wanted but PR checks red.",
+      "last_touched": "2026-07-19T08:18:59Z"
     },
     "organvm/organvm-i-theoria--superproject#2": {
       "comments": 0,
@@ -50144,6 +50246,15 @@
       "disposition": "merged:9d8c5f69",
       "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 9d8c5f69",
       "last_touched": "2026-07-19T08:05:51Z"
+    },
+    "organvm/parlor-games--ephemera-engine#271": {
+      "repo": "organvm/parlor-games--ephemera-engine",
+      "number": 271,
+      "kind": "pr",
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/pull/271",
+      "disposition": "merged:13eda348",
+      "evidence": "fix: TypeScript typecheck errors — parser fix + 84 real low-risk type fixes (272->188); remaining 188 are genuinely-unbuilt features (not hidden), tracked by the evolving issues.",
+      "last_touched": "2026-07-19T08:17:33Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
