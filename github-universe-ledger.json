@@ -7626,7 +7626,7 @@
     "organvm/collaboratory#1": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:32Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7637,12 +7637,14 @@
       "state": "open",
       "title": "[CB-007] Wire scroll auto-ingest to the live limen heartbeat",
       "updated_at": "2026-06-25T19:40:32Z",
-      "url": "https://github.com/organvm/collaboratory/issues/1"
+      "url": "https://github.com/organvm/collaboratory/issues/1",
+      "evidence": "ASK-SCROLL/registry exist; organ/manifest.json heartbeat declared not wired.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#10": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:45Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7653,12 +7655,14 @@
       "state": "open",
       "title": "[CB-016] Venture: Instagram growth + hotel/Airbnb collabs + vlog/ad monetization",
       "updated_at": "2026-06-25T19:40:45Z",
-      "url": "https://github.com/organvm/collaboratory/issues/10"
+      "url": "https://github.com/organvm/collaboratory/issues/10",
+      "evidence": "Lane idea-stage; no channel chosen/first monetizable post defined.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#11": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:47Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7669,12 +7673,14 @@
       "state": "open",
       "title": "[CB-017] Venture: grant-organ / MPO grant-finding machine (quaestor)",
       "updated_at": "2026-06-25T19:40:47Z",
-      "url": "https://github.com/organvm/collaboratory/issues/11"
+      "url": "https://github.com/organvm/collaboratory/issues/11",
+      "evidence": "Quaestor sibling exists; no first grant matches surfaced yet.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#12": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:49Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7685,12 +7691,14 @@
       "state": "open",
       "title": "[CB-018] DECISION: publish any collaboratory surface publicly?",
       "updated_at": "2026-06-25T19:40:49Z",
-      "url": "https://github.com/organvm/collaboratory/issues/12"
+      "url": "https://github.com/organvm/collaboratory/issues/12",
+      "evidence": "Repo private; ask-scroll noindex/no money controls; no publish decision recorded.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#13": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:50Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7701,12 +7709,14 @@
       "state": "open",
       "title": "[CB-019] Spiral: clear the final pending inputs awaiting Maddie",
       "updated_at": "2026-06-25T19:40:50Z",
-      "url": "https://github.com/organvm/collaboratory/issues/13"
+      "url": "https://github.com/organvm/collaboratory/issues/13",
+      "evidence": "Pending-input list in ASK-SCROLL/surface; no draft message, CB-019 missing from registry.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#14": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:52Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7717,12 +7727,14 @@
       "state": "open",
       "title": "[CB-020] Spiral: decide the inner-child book's home",
       "updated_at": "2026-06-25T19:40:52Z",
-      "url": "https://github.com/organvm/collaboratory/issues/14"
+      "url": "https://github.com/organvm/collaboratory/issues/14",
+      "evidence": "Choice options captured; no decision recorded, CB-020 missing from registry.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#15": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:53Z",
-      "disposition": "queued",
+      "disposition": "distilled:ideas/maddie-invisible-ledger-ideas.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7733,12 +7745,14 @@
       "state": "open",
       "title": "[CB-006] Maddie's invisible-ledger tax-angle ideas (attributed, not a partnership)",
       "updated_at": "2026-06-25T19:40:53Z",
-      "url": "https://github.com/organvm/collaboratory/issues/15"
+      "url": "https://github.com/organvm/collaboratory/issues/15",
+      "evidence": "Attributed idea-drop with solo/no-partnership/no-advice boundaries; registry CB-006 done.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#2": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7749,12 +7763,14 @@
       "state": "open",
       "title": "[CB-008] Spiral: implement Maddie's 5 polish tweaks + deploy",
       "updated_at": "2026-06-25T19:40:33Z",
-      "url": "https://github.com/organvm/collaboratory/issues/2"
+      "url": "https://github.com/organvm/collaboratory/issues/2",
+      "evidence": "Spiral URL 200; PORTFOLIO/registry say 5 tweaks unimplemented, deploy human-gated.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#3": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:34Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7765,12 +7781,14 @@
       "state": "open",
       "title": "[CB-009] Cind & Sol Foundation — hub link-up",
       "updated_at": "2026-06-25T19:40:34Z",
-      "url": "https://github.com/organvm/collaboratory/issues/3"
+      "url": "https://github.com/organvm/collaboratory/issues/3",
+      "evidence": "Cind&Sol sibling resolves+linked; registry marks lane in-flight.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#4": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:36Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7781,12 +7799,14 @@
       "state": "open",
       "title": "[CB-010] The map — layered-historical-maps exploration game (palimpsest)",
       "updated_at": "2026-06-25T19:40:36Z",
-      "url": "https://github.com/organvm/collaboratory/issues/4"
+      "url": "https://github.com/organvm/collaboratory/issues/4",
+      "evidence": "Palimpsest sibling scaffold/plans only; playable one-place/two-strata slice undelivered.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#5": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:37Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7797,12 +7817,14 @@
       "state": "open",
       "title": "[CB-011] Venture: print shop + split stock photography",
       "updated_at": "2026-06-25T19:40:37Z",
-      "url": "https://github.com/organvm/collaboratory/issues/5"
+      "url": "https://github.com/organvm/collaboratory/issues/5",
+      "evidence": "Venture in ASK-SCROLL/PORTFOLIO; no shop scaffold/split-sales, blocked on photo library.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#6": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7813,12 +7835,14 @@
       "state": "open",
       "title": "[CB-012] Venture: road-trip travel podcast (Meta glasses)",
       "updated_at": "2026-06-25T19:40:39Z",
-      "url": "https://github.com/organvm/collaboratory/issues/6"
+      "url": "https://github.com/organvm/collaboratory/issues/6",
+      "evidence": "Podcast lane captured ready; no capture checklist/episode-0 outline.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#7": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:41Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7829,12 +7853,14 @@
       "state": "open",
       "title": "[CB-013] Venture: EMF / plastic-detox / hormones lifestyle ads (Maddie's venture)",
       "updated_at": "2026-06-25T19:40:41Z",
-      "url": "https://github.com/organvm/collaboratory/issues/7"
+      "url": "https://github.com/organvm/collaboratory/issues/7",
+      "evidence": "Lifestyle/no-efficacy constraint captured; no ad concept draft.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#8": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:42Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7845,12 +7871,14 @@
       "state": "open",
       "title": "[CB-014] Venture: EAUCO planners push (chloe / maddie / andie)",
       "updated_at": "2026-06-25T19:40:42Z",
-      "url": "https://github.com/organvm/collaboratory/issues/8"
+      "url": "https://github.com/organvm/collaboratory/issues/8",
+      "evidence": "Planner editions tracked; no per-edition next-step records/intake artifact.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collaboratory#9": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:44Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7861,7 +7889,9 @@
       "state": "open",
       "title": "[CB-015] EAUCO 'Personalized Planner Intake' form — Anthony to fill",
       "updated_at": "2026-06-25T19:40:44Z",
-      "url": "https://github.com/organvm/collaboratory/issues/9"
+      "url": "https://github.com/organvm/collaboratory/issues/9",
+      "evidence": "Intake surfaced human-hand; no evidence form filled.",
+      "last_touched": "2026-07-19T09:23:07Z"
     },
     "organvm/collective-persona-operations#10": {
       "comments": 0,
