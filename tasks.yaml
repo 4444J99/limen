@@ -146811,3 +146811,124 @@ tasks:
   depends_on: []
   created: '2026-07-18'
   dispatch_log: []
+- id: HEAL-review-organvm-a-mavs-olevm-102
+  title: address review feedback on organvm/a-mavs-olevm#102
+  repo: organvm/a-mavs-olevm
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/a-mavs-olevm/pull/102
+  context: "PR organvm/a-mavs-olevm#102 is green and mergeable BUT carries unresolved\
+    \ review threads (or a standing CHANGES_REQUESTED review) from the multi-agent\
+    \ review engine \u2014 the ping-pong is waiting on our half. Check out the PR\
+    \ branch and read EVERY unresolved thread. For each one: fix the code and push\
+    \ to the SAME branch, or reply with a short factual reason why not. Then reply\
+    \ on each thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED, re-request\
+    \ review (post '@claude' / '/gemini review' to re-summon those agents). Never\
+    \ resolve a thread without either a fix or a reply, and do NOT open a new PR \u2014\
+    \ once threads are resolved and CI is green, merge-drain lands it. PR: https://github.com/organvm/a-mavs-olevm/pull/102\
+    \ [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 102 --repo organvm/a-mavs-olevm --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/a-mavs-olevm/pull/102
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-review-organvm-a-mavs-olevm-103
+  title: address review feedback on organvm/a-mavs-olevm#103
+  repo: organvm/a-mavs-olevm
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/a-mavs-olevm/pull/103
+  context: "PR organvm/a-mavs-olevm#103 is green and mergeable BUT carries unresolved\
+    \ review threads (or a standing CHANGES_REQUESTED review) from the multi-agent\
+    \ review engine \u2014 the ping-pong is waiting on our half. Check out the PR\
+    \ branch and read EVERY unresolved thread. For each one: fix the code and push\
+    \ to the SAME branch, or reply with a short factual reason why not. Then reply\
+    \ on each thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED, re-request\
+    \ review (post '@claude' / '/gemini review' to re-summon those agents). Never\
+    \ resolve a thread without either a fix or a reply, and do NOT open a new PR \u2014\
+    \ once threads are resolved and CI is green, merge-drain lands it. PR: https://github.com/organvm/a-mavs-olevm/pull/103\
+    \ [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 103 --repo organvm/a-mavs-olevm --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/a-mavs-olevm/pull/103
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-review-organvm-a-mavs-olevm-104
+  title: address review feedback on organvm/a-mavs-olevm#104
+  repo: organvm/a-mavs-olevm
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/a-mavs-olevm/pull/104
+  context: "PR organvm/a-mavs-olevm#104 is green and mergeable BUT carries unresolved\
+    \ review threads (or a standing CHANGES_REQUESTED review) from the multi-agent\
+    \ review engine \u2014 the ping-pong is waiting on our half. Check out the PR\
+    \ branch and read EVERY unresolved thread. For each one: fix the code and push\
+    \ to the SAME branch, or reply with a short factual reason why not. Then reply\
+    \ on each thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED, re-request\
+    \ review (post '@claude' / '/gemini review' to re-summon those agents). Never\
+    \ resolve a thread without either a fix or a reply, and do NOT open a new PR \u2014\
+    \ once threads are resolved and CI is green, merge-drain lands it. PR: https://github.com/organvm/a-mavs-olevm/pull/104\
+    \ [auto-emitted 2026-07-19 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 104 --repo organvm/a-mavs-olevm --json state --jq
+    .state)" = MERGED
+  receipt_target: https://github.com/organvm/a-mavs-olevm/pull/104
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: HEAL-review-organvm-call-function--ontological-13
+  title: address review feedback on organvm/call-function--ontological#13
+  repo: organvm/call-function--ontological
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/call-function--ontological/pull/13
+  context: "PR organvm/call-function--ontological#13 is green and mergeable BUT carries\
+    \ unresolved review threads (or a standing CHANGES_REQUESTED review) from the\
+    \ multi-agent review engine \u2014 the ping-pong is waiting on our half. Check\
+    \ out the PR branch and read EVERY unresolved thread. For each one: fix the code\
+    \ and push to the SAME branch, or reply with a short factual reason why not. Then\
+    \ reply on each thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED,\
+    \ re-request review (post '@claude' / '/gemini review' to re-summon those agents).\
+    \ Never resolve a thread without either a fix or a reply, and do NOT open a new\
+    \ PR \u2014 once threads are resolved and CI is green, merge-drain lands it. PR:\
+    \ https://github.com/organvm/call-function--ontological/pull/13 [auto-emitted\
+    \ 2026-07-19 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 13 --repo organvm/call-function--ontological --json
+    state --jq .state)" = MERGED
+  receipt_target: https://github.com/organvm/call-function--ontological/pull/13
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
