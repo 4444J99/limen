@@ -146226,7 +146226,7 @@ tasks:
   title: fix failing CI on organvm/domus-genoma#311
   repo: organvm/domus-genoma
   type: code
-  target_agent: gemini
+  target_agent: claude
   priority: high
   budget_cost: 1
   status: open
@@ -146717,7 +146717,7 @@ tasks:
   title: fix failing CI on organvm/manumissio#45
   repo: organvm/manumissio
   type: code
-  target_agent: codex
+  target_agent: gemini
   priority: high
   budget_cost: 1
   status: open
@@ -146757,7 +146757,7 @@ tasks:
   title: address review feedback on organvm/a-i--skills#34
   repo: organvm/a-i--skills
   type: code
-  target_agent: any
+  target_agent: codex
   priority: normal
   budget_cost: 1
   status: open
@@ -146787,7 +146787,7 @@ tasks:
   title: fix failing CI on organvm/a-i--skills#35
   repo: organvm/a-i--skills
   type: code
-  target_agent: any
+  target_agent: opencode
   priority: high
   budget_cost: 1
   status: open
