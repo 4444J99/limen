@@ -145373,7 +145373,7 @@ tasks:
   workstream: substrate
   priority: critical
   budget_cost: 1
-  status: dispatched
+  status: open
   labels:
   - always-working
   - receipt-first
@@ -145402,7 +145402,7 @@ tasks:
   receipt_target: git:organvm/limen:logs/reclaim-generated-state.jsonl
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-19T01:40:37.514860Z'
+  updated: '2026-07-19T02:59:59.327719Z'
   dispatch_log:
   - timestamp: '2026-07-16T13:04:36.895961Z'
     agent: codex
@@ -145424,6 +145424,12 @@ tasks:
     agent: jules
     session_id: '8420434421328379134'
     status: dispatched
+  - timestamp: '2026-07-19T02:59:59.327719Z'
+    agent: limen
+    session_id: heal
+    status: open
+    output: "recover: jules session 8420434421328379134 is awaiting_user_feedback\
+      \ \u2192 reopened"
 - id: AW-PUBLIC-FACE-CONTRIBUTION-BALANCE-445926ec4d52
   title: Rebalance public GitHub activity away from commit-only churn
   description: 'GitHub activity mix needs owner action: commits 73.6%, PRs 14.3%,
@@ -146118,12 +146124,13 @@ tasks:
   workstream: public-face
   priority: critical
   budget_cost: 1
-  status: open
+  status: failed_blocked
   labels:
   - always-working
   - overnight-lane-switch
   - public-face
   - receipt-first
+  - chronic-fleet-debt
   urls: []
   context: 'Receipt-first verdict: visible GitHub profile README is missing or stale
 
@@ -146144,7 +146151,7 @@ tasks:
   receipt_target: git:4444J99/4444J99:README.md
   depends_on: []
   created: '2026-07-18'
-  updated: '2026-07-19T02:22:43.382890Z'
+  updated: '2026-07-19T03:05:49.131341Z'
   dispatch_log:
   - timestamp: '2026-07-18T14:18:44.218842Z'
     agent: codex
@@ -146183,6 +146190,12 @@ tasks:
     status: open
     output: 'dispatch-async: markerless async reservation older than 2100s reaped;
       task reopened'
+  - timestamp: '2026-07-19T03:05:49.131341Z'
+    agent: limen
+    session_id: heal
+    status: failed_blocked
+    output: "heal-dispatch: chronic (reopened \u22653\xD7, never a PR) \u2192 failed_blocked\
+      \ (fleet-debt, off the human surface)"
 - id: GH-organvm-limen-1227
   title: 'needs-human (L-CLOSEOUT-OBSERVE-ARM): Arm the closeout-reconciliation organ
     to OBSERVE live'
@@ -146740,3 +146753,61 @@ tasks:
     status: open
     output: 'dispatch-async: markerless async reservation older than 2100s reaped;
       task reopened'
+- id: HEAL-review-organvm-a-i--skills-34
+  title: address review feedback on organvm/a-i--skills#34
+  repo: organvm/a-i--skills
+  type: code
+  target_agent: any
+  priority: normal
+  budget_cost: 1
+  status: open
+  labels:
+  - review
+  - self-heal
+  - review-feedback
+  urls:
+  - https://github.com/organvm/a-i--skills/pull/34
+  context: "PR organvm/a-i--skills#34 is green and mergeable BUT carries unresolved\
+    \ review threads (or a standing CHANGES_REQUESTED review) from the multi-agent\
+    \ review engine \u2014 the ping-pong is waiting on our half. Check out the PR\
+    \ branch and read EVERY unresolved thread. For each one: fix the code and push\
+    \ to the SAME branch, or reply with a short factual reason why not. Then reply\
+    \ on each thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED, re-request\
+    \ review (post '@claude' / '/gemini review' to re-summon those agents). Never\
+    \ resolve a thread without either a fix or a reply, and do NOT open a new PR \u2014\
+    \ once threads are resolved and CI is green, merge-drain lands it. PR: https://github.com/organvm/a-i--skills/pull/34\
+    \ [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 34 --repo organvm/a-i--skills --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/a-i--skills/pull/34
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
+- id: HEAL-cifix-organvm-a-i--skills-35
+  title: fix failing CI on organvm/a-i--skills#35
+  repo: organvm/a-i--skills
+  type: code
+  target_agent: any
+  priority: high
+  budget_cost: 1
+  status: open
+  labels:
+  - cifix
+  - self-heal
+  - ci-red
+  urls:
+  - https://github.com/organvm/a-i--skills/pull/35
+  context: "PR organvm/a-i--skills#35 has FAILING CI checks and merge-drain correctly\
+    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
+    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
+    \ and confirm every check goes green. If the branch ALSO rolls back base content\
+    \ its title/body never declared (a poisoned/stale generated tree), restore base's\
+    \ side of those paths rather than repairing on top of a rollback. Do not open\
+    \ a new PR \u2014 repair the existing one so merge-drain lands it. PR: https://github.com/organvm/a-i--skills/pull/35\
+    \ [auto-emitted 2026-07-18 by self-heal so merge-drain can land it]"
+  predicate: test "$(gh pr view 35 --repo organvm/a-i--skills --json state --jq .state)"
+    = MERGED
+  receipt_target: https://github.com/organvm/a-i--skills/pull/35
+  depends_on: []
+  created: '2026-07-18'
+  dispatch_log: []
