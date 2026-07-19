@@ -6242,7 +6242,7 @@
     "organvm/cognitive-archaelogy-tribunal#108": {
       "comments": 3,
       "created_at": "2026-01-19T03:04:58Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6253,7 +6253,9 @@
       "state": "open",
       "title": "🎨 Palette: Add 'Empty State' Welcome Panel",
       "updated_at": "2026-04-27T10:58:04Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/108"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/108",
+      "last_touched": "2026-07-19T07:09:27Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#109": {
       "comments": 3,
@@ -6276,7 +6278,7 @@
     "organvm/cognitive-archaelogy-tribunal#110": {
       "comments": 3,
       "created_at": "2026-01-20T02:58:31Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6287,7 +6289,9 @@
       "state": "open",
       "title": "🎨 Palette: CLI Welcome Panel for Empty State",
       "updated_at": "2026-04-27T10:58:01Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/110"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/110",
+      "last_touched": "2026-07-19T07:09:32Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#111": {
       "comments": 3,
@@ -6310,7 +6314,7 @@
     "organvm/cognitive-archaelogy-tribunal#112": {
       "comments": 3,
       "created_at": "2026-01-21T03:00:38Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6321,7 +6325,9 @@
       "state": "open",
       "title": "🎨 Palette: Add CLI Welcome Panel",
       "updated_at": "2026-04-27T10:57:58Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/112"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/112",
+      "last_touched": "2026-07-19T07:09:37Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#113": {
       "comments": 3,
@@ -6362,7 +6368,7 @@
     "organvm/cognitive-archaelogy-tribunal#118": {
       "comments": 0,
       "created_at": "2026-06-10T21:58:41Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6373,12 +6379,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T21:58:41Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/issues/118"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/issues/118",
+      "last_touched": "2026-07-19T07:09:46Z",
+      "evidence": "Activation audit engaged with current ground truth; step-2 release automation surfaced as the real remaining gap. Left open."
     },
     "organvm/cognitive-archaelogy-tribunal#126": {
       "comments": 0,
       "created_at": "2026-06-26T16:05:14Z",
-      "disposition": "queued",
+      "disposition": "merged:organvm/cognitive-archaelogy-tribunal#126",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6389,7 +6397,9 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 1 directory with 4 updates",
       "updated_at": "2026-07-17T16:05:31Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/126"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/126",
+      "last_touched": "2026-07-19T07:09:50Z",
+      "evidence": "Dependabot pip-deps group bump; merged to main this tick."
     },
     "organvm/cognitive-archaelogy-tribunal#16": {
       "comments": 2,
@@ -6768,7 +6778,7 @@
     "organvm/cognitive-archaelogy-tribunal#37": {
       "comments": 2,
       "created_at": "2025-12-25T02:50:06Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6779,7 +6789,9 @@
       "state": "open",
       "title": "🎨 Palette: Improved CLI UX with Rich formatting and better empty states",
       "updated_at": "2025-12-25T02:50:13Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/37"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/37",
+      "last_touched": "2026-07-19T07:08:48Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#38": {
       "comments": 2,
@@ -7090,7 +7102,7 @@
     "organvm/cognitive-archaelogy-tribunal#55": {
       "comments": 2,
       "created_at": "2026-01-01T02:36:12Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7101,7 +7113,9 @@
       "state": "open",
       "title": "Palette: Add Rich Welcome Screen for CLI Empty State",
       "updated_at": "2026-01-01T02:36:18Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/55"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/55",
+      "last_touched": "2026-07-19T07:08:53Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#56": {
       "comments": 2,
@@ -7160,7 +7174,7 @@
     "organvm/cognitive-archaelogy-tribunal#59": {
       "comments": 2,
       "created_at": "2026-01-02T02:51:57Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7171,12 +7185,14 @@
       "state": "open",
       "title": "🎨 Palette: Rich Welcome Screen",
       "updated_at": "2026-01-02T02:52:01Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/59"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/59",
+      "last_touched": "2026-07-19T07:08:57Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#60": {
       "comments": 2,
       "created_at": "2026-01-03T02:41:39Z",
-      "disposition": "queued",
+      "disposition": "superseded:#132",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7187,12 +7203,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [MEDIUM] Fix error handling information leakage",
       "updated_at": "2026-01-03T02:41:44Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/60"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/60",
+      "last_touched": "2026-07-19T07:09:41Z",
+      "evidence": "Want distilled + merged to main (#132). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#61": {
       "comments": 2,
       "created_at": "2026-01-03T02:42:28Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7203,7 +7221,9 @@
       "state": "open",
       "title": "🎨 Palette: Add Welcome Panel for Empty State",
       "updated_at": "2026-01-03T02:42:35Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/61"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/61",
+      "last_touched": "2026-07-19T07:09:02Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#62": {
       "comments": 2,
@@ -7262,7 +7282,7 @@
     "organvm/cognitive-archaelogy-tribunal#65": {
       "comments": 2,
       "created_at": "2026-01-04T02:43:17Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7273,12 +7293,14 @@
       "state": "open",
       "title": "🎨 Palette: CLI Empty State UX Improvement",
       "updated_at": "2026-01-04T02:43:23Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/65"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/65",
+      "last_touched": "2026-07-19T07:09:07Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#66": {
       "comments": 2,
       "created_at": "2026-01-05T02:40:51Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7289,7 +7311,9 @@
       "state": "open",
       "title": "🎨 Palette: Add Empty State welcome panel",
       "updated_at": "2026-01-05T02:40:56Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/66"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/66",
+      "last_touched": "2026-07-19T07:09:12Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#67": {
       "comments": 2,
@@ -7330,7 +7354,7 @@
     "organvm/cognitive-archaelogy-tribunal#69": {
       "comments": 2,
       "created_at": "2026-01-06T02:42:13Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7341,7 +7365,9 @@
       "state": "open",
       "title": "🎨 Palette: Implement 'Empty State' Welcome Panel",
       "updated_at": "2026-01-06T02:42:21Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/69"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/69",
+      "last_touched": "2026-07-19T07:09:17Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#70": {
       "comments": 3,
@@ -7418,7 +7444,7 @@
     "organvm/cognitive-archaelogy-tribunal#74": {
       "comments": 3,
       "created_at": "2026-01-07T02:56:28Z",
-      "disposition": "queued",
+      "disposition": "superseded:#131",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7429,7 +7455,9 @@
       "state": "open",
       "title": "🎨 Palette: Add Welcome Panel for CLI Empty State",
       "updated_at": "2026-06-29T13:01:08Z",
-      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/74"
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/74",
+      "last_touched": "2026-07-19T07:09:22Z",
+      "evidence": "Want distilled + merged to main (#131). Commented, left open (never closed)."
     },
     "organvm/cognitive-archaelogy-tribunal#75": {
       "comments": 2,
