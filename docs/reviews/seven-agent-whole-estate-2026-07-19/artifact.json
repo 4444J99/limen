@@ -1,0 +1,1346 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "title": "Seven-Agent Whole-Estate Session Review",
+    "generatedAt": "2026-07-19T15:11:00Z",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Seven-Agent Whole-Estate Session Review"
+      },
+      {
+        "id": "executive_summary",
+        "type": "markdown",
+        "sourceId": "frozen_snapshot",
+        "body": "## Executive Summary\n\n**Blunt verdict:** the estate produced real, remotely proven work, but the control plane still overstates closure. Of 821 reconstructed asks, 228 (27.8%) are verified done at the frozen snapshot, representing 152 distinct public terminal receipts. Another 306 remain durably homed but open; 223 are unverified or coverage-unknown. This is a verified lower bound, not a claim that all activity was reconstructable.\n\nCodex carried the largest metered volume and broadest verified output; OpenCode converted a smaller observed session footprint into a strong verified share; Claude and Agy landed meaningful work but retained substantial open or unverified debt. Jules generated many remote dispatch proxies with a lower verified conversion rate. Gemini had board evidence but no native session store or verified completion in scope. Copilot had one independently verified coding-agent delivery; its large local native meter cannot safely be attributed to that one PR alone."
+      },
+      {
+        "id": "scope",
+        "type": "markdown",
+        "sourceId": "frozen_snapshot",
+        "body": "## Scope and Window Semantics\n\nThe completed calendar week is `[2026-07-06 00:00, 2026-07-13 00:00)` America/New_York. The latest-seven-day window is `[2026-07-12 11:11, 2026-07-19 11:11)` America/New_York. They overlap by 12.82 hours, so rows are descriptive views of the same frozen event corpus and must not be added or treated as week-over-week periods. The live estate census found 308 repositories across the registry owners, then resolved task/session-linked receipt redirects to their current canonical owners."
+      },
+      {
+        "id": "activity_heading",
+        "type": "markdown",
+        "body": "## Activity Volume\n\nRoot-session counts include sessions intersecting each half-open window. Child and subagent runs are retained separately; board-only remote sessions use a dispatch-to-terminal proxy and native point-only records have unknown duration."
+      },
+      {
+        "id": "root_chart_block",
+        "type": "chart",
+        "chartId": "root_chart"
+      },
+      {
+        "id": "time_tokens",
+        "type": "markdown",
+        "sourceId": "frozen_snapshot",
+        "body": "## Time and Token Evidence\n\nSummed clipped spans measure observed provider-session occupancy and can exceed 168 hours under concurrency. Union wall time merges overlapping intervals within an agent family. Neither is active keyboard time. Agy point records and absent native duration meters remain unknown. Token components are provider-native: cache reads and reasoning are shown separately, and no cross-agent token total is calculated."
+      },
+      {
+        "id": "comparison_block",
+        "type": "table",
+        "tableId": "comparison_table"
+      },
+      {
+        "id": "tokens_block",
+        "type": "table",
+        "tableId": "token_table"
+      },
+      {
+        "id": "completion",
+        "type": "markdown",
+        "sourceId": "frozen_snapshot",
+        "body": "## Completion Outcomes\n\nOutcome classification is ask-based, not session-, commit-, or board-state-based. A merged PR without a captured successful exact-head predicate is only `verified_partial`; an open PR is `durably_homed_open`. Duplicated and redirected receipts are canonicalized before terminal credit. Primary credit follows the executor family; landing and verification are assistance."
+      },
+      {
+        "id": "outcome_chart_block",
+        "type": "chart",
+        "chartId": "outcome_chart"
+      },
+      {
+        "id": "agent_findings_block",
+        "type": "table",
+        "tableId": "agent_findings_table"
+      },
+      {
+        "id": "deliverables_heading",
+        "type": "markdown",
+        "body": "## Verified Deliverables\n\nThe table contains public, default-reachable receipts whose frozen exact head had a passing status rollup, with one representative receipt per agent. The complete 169-receipt ledger remains in the canonical snapshot source. Repeated asks can converge on one terminal receipt."
+      },
+      {
+        "id": "deliverables_block",
+        "type": "table",
+        "tableId": "deliverables_table"
+      },
+      {
+        "id": "incomplete",
+        "type": "markdown",
+        "sourceId": "frozen_snapshot",
+        "body": "## High-Spend, Low-Return, and Incomplete Work\n\n- **Copilot:** 2,718 native usage events in the latest-seven-day window recorded 324.3M input, 308.7M cache-read, 5.7M cache-write, 1.9M output, and 0.7M reasoning tokens, while only one coding-agent PR could be independently attributed and verified. This is an attribution gap, not proof that all other usage returned no value.\n- **Gemini:** five board-observed asks, no matching native session rows, and no verified completion. Coverage and execution are both weak.\n- **Jules:** remote proxy volume is high, but open receipts materially exceed verified completions. Dispatch motion is not closure.\n- **Codex:** the largest native token volume also produced the largest absolute verified count, yet substantial open and coverage-unknown debt remains.\n- **Claude and Agy:** both landed verified work, but open, partial, and unverified asks remain too numerous for a clean closeout claim."
+      },
+      {
+        "id": "recommendations",
+        "type": "markdown",
+        "body": "## Recommendations\n\n1. Make ask IDs and exact predicate receipts mandatory fields at dispatch and terminal transitions; stop using task state as a proxy for completion.\n2. Capture provider-native token and duration meters for Agy, Gemini, Jules, and remote Copilot coding-agent runs when the provider exposes them.\n3. Reconcile open PRs by immutable head through the merge queue, preserving green receipts instead of rewriting heads for reassurance.\n4. Add native-session lineage for Gemini and Jules so board dispatches can be matched to root/child executions without timing proxies.\n5. Repeat this review from a frozen ledger checkpoint; compare only disjoint periods when making trend claims."
+      },
+      {
+        "id": "quality",
+        "type": "markdown",
+        "sourceId": "frozen_snapshot",
+        "body": "## Coverage, Reconciliation, and Caveats\n\nThe compact appendix covers 3,200 discovered session records and 821 reconstructed asks. OpenCode's direct message query matched the collector exactly. Codex, Claude, OpenCode, and Copilot token totals were independently aggregated from native event rows. All 608 candidate PR URLs were resolved after one targeted redirect retry; no receipt batch remained unresolved. Synthetic tests cover half-open boundaries, cumulative-to-delta token handling, interval unions, child separation, redirects, healer-only transitions, open versus merged receipts, missing metrics, late writes, and exact-head invalidation.\n\nLimits: raw prompts were intentionally excluded, so compound-ask reconstruction is conservative. Agy duration is a point observation; Jules duration is a board proxy; Gemini native coverage is absent. Public receipt state is authoritative, but verified work without a linked ask may be omitted. Completion is therefore a verified lower bound."
+      },
+      {
+        "id": "appendix_heading",
+        "type": "markdown",
+        "body": "## Redacted Session Appendix\n\nEvery discovered provider session or remote dispatch proxy is covered in the grouped ledger below; exact redacted rows remain in the canonical snapshot source. Session ranges are report-local pseudonyms. Role codes are R=root and C=child; time-basis codes are N=native event span, M=native message span, Q=native request span, P=dispatch proxy, and U=point-only with unknown duration. Start/end values are minutes from 2026-07-06T04:00:00Z."
+      },
+      {
+        "id": "appendix_sessions_block",
+        "type": "table",
+        "tableId": "appendix_sessions_table"
+      }
+    ],
+    "charts": [
+      {
+        "id": "root_chart",
+        "title": "Root-session volume by window",
+        "subtitle": "Counts overlap because the two windows share 12.82 hours; child sessions are excluded.",
+        "intent": "comparison",
+        "question": "How many root sessions intersected each window for each agent?",
+        "rationale": "Grouped bars preserve the explicit agent-by-window comparison.",
+        "type": "bar",
+        "dataset": "root_session_volume",
+        "encodings": {
+          "x": {
+            "field": "agent",
+            "type": "nominal"
+          },
+          "y": {
+            "field": "root_sessions",
+            "type": "quantitative"
+          },
+          "color": {
+            "field": "window",
+            "type": "nominal"
+          }
+        },
+        "options": {
+          "orientation": "vertical",
+          "grouping": "grouped"
+        },
+        "sourceId": "frozen_snapshot"
+      },
+      {
+        "id": "outcome_chart",
+        "title": "Outcome distribution by agent",
+        "subtitle": "Verified completion is a lower bound; open and unknown classifications are explicit.",
+        "intent": "composition",
+        "question": "How do reconstructed ask outcomes differ by executor family?",
+        "rationale": "Stacked bars expose both volume and completion composition.",
+        "type": "bar",
+        "dataset": "outcome_distribution",
+        "encodings": {
+          "x": {
+            "field": "agent",
+            "type": "nominal"
+          },
+          "y": {
+            "field": "ask_count",
+            "type": "quantitative"
+          },
+          "color": {
+            "field": "outcome",
+            "type": "nominal"
+          }
+        },
+        "options": {
+          "orientation": "vertical",
+          "grouping": "stacked"
+        },
+        "sourceId": "frozen_snapshot"
+      }
+    ],
+    "tables": [
+      {
+        "id": "comparison_table",
+        "title": "Agent-by-window comparison",
+        "subtitle": null,
+        "dataset": "comparison",
+        "columns": [
+          {
+            "field": "window",
+            "label": "Window",
+            "type": "string"
+          },
+          {
+            "field": "agent",
+            "label": "Agent",
+            "type": "string"
+          },
+          {
+            "field": "root_sessions",
+            "label": "Root sessions",
+            "type": "number"
+          },
+          {
+            "field": "child_sessions",
+            "label": "Child sessions",
+            "type": "number"
+          },
+          {
+            "field": "session_span_hours",
+            "label": "Summed span (h)",
+            "type": "number"
+          },
+          {
+            "field": "union_wall_hours",
+            "label": "Union wall (h)",
+            "type": "number"
+          },
+          {
+            "field": "asks_observed",
+            "label": "Asks",
+            "type": "number"
+          },
+          {
+            "field": "verified_done",
+            "label": "Verified done",
+            "type": "number"
+          },
+          {
+            "field": "open_or_unknown",
+            "label": "Open/unknown",
+            "type": "number"
+          },
+          {
+            "field": "token_basis",
+            "label": "Native token basis",
+            "type": "string"
+          }
+        ],
+        "defaultSort": {
+          "field": "root_sessions",
+          "direction": "desc"
+        },
+        "density": "compact",
+        "sourceId": "frozen_snapshot"
+      },
+      {
+        "id": "token_table",
+        "title": "Provider-native token components",
+        "subtitle": "Components are not cross-provider comparable and are never summed.",
+        "dataset": "token_components",
+        "columns": [
+          {
+            "field": "window",
+            "label": "Window",
+            "type": "string"
+          },
+          {
+            "field": "agent",
+            "label": "Agent",
+            "type": "string"
+          },
+          {
+            "field": "components",
+            "label": "Native component values",
+            "type": "string"
+          },
+          {
+            "field": "basis",
+            "label": "Native basis",
+            "type": "string"
+          }
+        ],
+        "defaultSort": {
+          "field": "agent",
+          "direction": "asc"
+        },
+        "density": "compact",
+        "sourceId": "frozen_snapshot"
+      },
+      {
+        "id": "agent_findings_table",
+        "title": "Ask outcomes by agent",
+        "subtitle": null,
+        "dataset": "agent_findings",
+        "columns": [
+          {
+            "field": "agent",
+            "label": "Agent",
+            "type": "string"
+          },
+          {
+            "field": "asks",
+            "label": "Asks",
+            "type": "number"
+          },
+          {
+            "field": "verified_done",
+            "label": "Verified",
+            "type": "number"
+          },
+          {
+            "field": "verified_partial",
+            "label": "Partial",
+            "type": "number"
+          },
+          {
+            "field": "open",
+            "label": "Open",
+            "type": "number"
+          },
+          {
+            "field": "blocked",
+            "label": "Blocked",
+            "type": "number"
+          },
+          {
+            "field": "unverified_or_unknown",
+            "label": "Unverified/unknown",
+            "type": "number"
+          }
+        ],
+        "defaultSort": {
+          "field": "asks",
+          "direction": "desc"
+        },
+        "density": "compact",
+        "sourceId": "frozen_snapshot"
+      },
+      {
+        "id": "deliverables_table",
+        "title": "Default-reachable deliverable receipts",
+        "subtitle": null,
+        "dataset": "deliverables",
+        "columns": [
+          {
+            "field": "a",
+            "label": "Primary executor",
+            "type": "string"
+          },
+          {
+            "field": "t",
+            "label": "Deliverable",
+            "type": "string"
+          },
+          {
+            "field": "o",
+            "label": "Outcome",
+            "type": "string"
+          },
+          {
+            "field": "u",
+            "label": "Receipt",
+            "type": "string"
+          },
+          {
+            "field": "p",
+            "label": "Predicate result",
+            "type": "string"
+          }
+        ],
+        "defaultSort": {
+          "field": "o",
+          "direction": "asc"
+        },
+        "density": "compact",
+        "sourceId": "frozen_snapshot"
+      },
+      {
+        "id": "appendix_sessions_table",
+        "title": "Grouped redacted session appendix",
+        "subtitle": null,
+        "dataset": "session_appendix",
+        "columns": [
+          {
+            "field": "agent",
+            "label": "Agent",
+            "type": "string"
+          },
+          {
+            "field": "date_range",
+            "label": "UTC date range",
+            "type": "string"
+          },
+          {
+            "field": "role",
+            "label": "Role",
+            "type": "string"
+          },
+          {
+            "field": "basis",
+            "label": "Basis",
+            "type": "string"
+          },
+          {
+            "field": "session_range",
+            "label": "Session range",
+            "type": "string"
+          },
+          {
+            "field": "sessions",
+            "label": "Sessions",
+            "type": "number"
+          },
+          {
+            "field": "start_min",
+            "label": "First start min",
+            "type": "number"
+          },
+          {
+            "field": "end_min",
+            "label": "Last end min",
+            "type": "number"
+          },
+          {
+            "field": "events",
+            "label": "Events",
+            "type": "number"
+          }
+        ],
+        "defaultSort": {
+          "field": "agent",
+          "direction": "asc"
+        },
+        "density": "compact",
+        "sourceId": "frozen_snapshot"
+      }
+    ],
+    "sources": [
+      {
+        "id": "frozen_snapshot",
+        "label": "Frozen seven-agent estate snapshot",
+        "path": "docs/reviews/seven-agent-whole-estate-2026-07-19/snapshot.json",
+        "query": {
+          "description": "Redacted event-level aggregation of native session stores, the Limen task ledger, live GitHub estate census, and exact pull-request receipts.",
+          "language": "python",
+          "sql": "SELECT * FROM read_json_auto('docs/reviews/seven-agent-whole-estate-2026-07-19/snapshot.json');",
+          "tables_used": [
+            "Codex rollout events",
+            "Claude transcript events",
+            "OpenCode session and message tables",
+            "Antigravity conversation summaries",
+            "Gemini native chat events",
+            "Copilot sessions and assistant usage events",
+            "Limen task dispatch log",
+            "GitHub repository and pull-request GraphQL objects"
+          ],
+          "filters": [
+            "Completed week: 2026-07-06T04:00:00Z inclusive to 2026-07-13T04:00:00Z exclusive",
+            "Latest seven days: 2026-07-12T15:11:00Z inclusive to 2026-07-19T15:11:00Z exclusive",
+            "Events at or after snapshot_at excluded",
+            "Raw prompts, secrets, machine-local paths, private receipt URLs, and full hashes excluded"
+          ],
+          "metric_definitions": [
+            "Root-session volume counts root sessions with any native event or board proxy intersecting a window.",
+            "Summed session span clips every observed span to the window and adds them; union wall time merges overlapping intervals by agent.",
+            "Verified done requires a default-branch merge before snapshot_at and a successful exact-head status rollup or captured predicate.",
+            "Token components preserve provider-native definitions and are never summed across providers."
+          ],
+          "executed_at": "2026-07-19T15:11:00Z"
+        }
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "status": "ready",
+    "generatedAt": "2026-07-19T15:11:00Z",
+    "datasets": {
+      "comparison": [
+        {
+          "window": "Completed calendar week",
+          "agent": "codex",
+          "root_sessions": 573,
+          "child_sessions": 30,
+          "session_span_hours": 464.33,
+          "union_wall_hours": 156.81,
+          "asks_observed": 288,
+          "verified_done": 75,
+          "open_or_unknown": 185,
+          "token_basis": "uncached input, output, reasoning, cached input"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "claude",
+          "root_sessions": 335,
+          "child_sessions": 412,
+          "session_span_hours": 1421.39,
+          "union_wall_hours": 168.0,
+          "asks_observed": 66,
+          "verified_done": 24,
+          "open_or_unknown": 33,
+          "token_basis": "input, output, cache creation, cache read"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "agy",
+          "root_sessions": 266,
+          "child_sessions": 0,
+          "session_span_hours": 0.0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 150,
+          "verified_done": 39,
+          "open_or_unknown": 97,
+          "token_basis": "unknown"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "opencode",
+          "root_sessions": 363,
+          "child_sessions": 12,
+          "session_span_hours": 24.18,
+          "union_wall_hours": 13.34,
+          "asks_observed": 113,
+          "verified_done": 52,
+          "open_or_unknown": 58,
+          "token_basis": "input, output, reasoning, cache read, cache write"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "gemini",
+          "root_sessions": 0,
+          "child_sessions": 0,
+          "session_span_hours": 0.0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 1,
+          "verified_done": 0,
+          "open_or_unknown": 1,
+          "token_basis": "unknown"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "copilot",
+          "root_sessions": 0,
+          "child_sessions": 0,
+          "session_span_hours": 0.0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 0,
+          "verified_done": 0,
+          "open_or_unknown": 0,
+          "token_basis": "input, output, reasoning, cache read, cache write"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "jules",
+          "root_sessions": 264,
+          "child_sessions": 0,
+          "session_span_hours": 322.42,
+          "union_wall_hours": 160.3,
+          "asks_observed": 131,
+          "verified_done": 30,
+          "open_or_unknown": 95,
+          "token_basis": "unknown"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "codex",
+          "root_sessions": 389,
+          "child_sessions": 93,
+          "session_span_hours": 490.44,
+          "union_wall_hours": 128.73,
+          "asks_observed": 101,
+          "verified_done": 5,
+          "open_or_unknown": 90,
+          "token_basis": "uncached input, output, reasoning, cached input"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "claude",
+          "root_sessions": 48,
+          "child_sessions": 419,
+          "session_span_hours": 1226.32,
+          "union_wall_hours": 165.64,
+          "asks_observed": 10,
+          "verified_done": 0,
+          "open_or_unknown": 9,
+          "token_basis": "input, output, cache creation, cache read"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "agy",
+          "root_sessions": 14,
+          "child_sessions": 0,
+          "session_span_hours": 0.0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 6,
+          "verified_done": 1,
+          "open_or_unknown": 3,
+          "token_basis": "unknown"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "opencode",
+          "root_sessions": 5,
+          "child_sessions": 4,
+          "session_span_hours": 0.75,
+          "union_wall_hours": 0.72,
+          "asks_observed": 4,
+          "verified_done": 1,
+          "open_or_unknown": 2,
+          "token_basis": "input, output, reasoning, cache read, cache write"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "gemini",
+          "root_sessions": 0,
+          "child_sessions": 0,
+          "session_span_hours": 0.0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 4,
+          "verified_done": 0,
+          "open_or_unknown": 4,
+          "token_basis": "unknown"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "copilot",
+          "root_sessions": 9,
+          "child_sessions": 0,
+          "session_span_hours": 21.2,
+          "union_wall_hours": 21.2,
+          "asks_observed": 1,
+          "verified_done": 1,
+          "open_or_unknown": 0,
+          "token_basis": "input, output, reasoning, cache read, cache write"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "jules",
+          "root_sessions": 62,
+          "child_sessions": 0,
+          "session_span_hours": 181.2,
+          "union_wall_hours": 154.82,
+          "asks_observed": 31,
+          "verified_done": 5,
+          "open_or_unknown": 26,
+          "token_basis": "unknown"
+        }
+      ],
+      "root_session_volume": [
+        {
+          "window": "Completed calendar week",
+          "agent": "codex",
+          "root_sessions": 573,
+          "child_sessions": 30,
+          "union_wall_hours": 156.81,
+          "asks_observed": 288
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "claude",
+          "root_sessions": 335,
+          "child_sessions": 412,
+          "union_wall_hours": 168.0,
+          "asks_observed": 66
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "agy",
+          "root_sessions": 266,
+          "child_sessions": 0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 150
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "opencode",
+          "root_sessions": 363,
+          "child_sessions": 12,
+          "union_wall_hours": 13.34,
+          "asks_observed": 113
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "gemini",
+          "root_sessions": 0,
+          "child_sessions": 0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 1
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "copilot",
+          "root_sessions": 0,
+          "child_sessions": 0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 0
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "jules",
+          "root_sessions": 264,
+          "child_sessions": 0,
+          "union_wall_hours": 160.3,
+          "asks_observed": 131
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "codex",
+          "root_sessions": 389,
+          "child_sessions": 93,
+          "union_wall_hours": 128.73,
+          "asks_observed": 101
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "claude",
+          "root_sessions": 48,
+          "child_sessions": 419,
+          "union_wall_hours": 165.64,
+          "asks_observed": 10
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "agy",
+          "root_sessions": 14,
+          "child_sessions": 0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 6
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "opencode",
+          "root_sessions": 5,
+          "child_sessions": 4,
+          "union_wall_hours": 0.72,
+          "asks_observed": 4
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "gemini",
+          "root_sessions": 0,
+          "child_sessions": 0,
+          "union_wall_hours": 0.0,
+          "asks_observed": 4
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "copilot",
+          "root_sessions": 9,
+          "child_sessions": 0,
+          "union_wall_hours": 21.2,
+          "asks_observed": 1
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "jules",
+          "root_sessions": 62,
+          "child_sessions": 0,
+          "union_wall_hours": 154.82,
+          "asks_observed": 31
+        }
+      ],
+      "outcome_distribution": [
+        {
+          "agent": "codex",
+          "outcome": "verified_done",
+          "ask_count": 76,
+          "agent_total_asks": 310
+        },
+        {
+          "agent": "codex",
+          "outcome": "verified_partial",
+          "ask_count": 20,
+          "agent_total_asks": 310
+        },
+        {
+          "agent": "codex",
+          "outcome": "durably_homed_open",
+          "ask_count": 96,
+          "agent_total_asks": 310
+        },
+        {
+          "agent": "codex",
+          "outcome": "blocked",
+          "ask_count": 9,
+          "agent_total_asks": 310
+        },
+        {
+          "agent": "codex",
+          "outcome": "superseded",
+          "ask_count": 0,
+          "agent_total_asks": 310
+        },
+        {
+          "agent": "codex",
+          "outcome": "not_done_or_unverified",
+          "ask_count": 28,
+          "agent_total_asks": 310
+        },
+        {
+          "agent": "codex",
+          "outcome": "coverage_unknown",
+          "ask_count": 81,
+          "agent_total_asks": 310
+        },
+        {
+          "agent": "claude",
+          "outcome": "verified_done",
+          "ask_count": 24,
+          "agent_total_asks": 76
+        },
+        {
+          "agent": "claude",
+          "outcome": "verified_partial",
+          "ask_count": 9,
+          "agent_total_asks": 76
+        },
+        {
+          "agent": "claude",
+          "outcome": "durably_homed_open",
+          "ask_count": 15,
+          "agent_total_asks": 76
+        },
+        {
+          "agent": "claude",
+          "outcome": "blocked",
+          "ask_count": 1,
+          "agent_total_asks": 76
+        },
+        {
+          "agent": "claude",
+          "outcome": "superseded",
+          "ask_count": 0,
+          "agent_total_asks": 76
+        },
+        {
+          "agent": "claude",
+          "outcome": "not_done_or_unverified",
+          "ask_count": 20,
+          "agent_total_asks": 76
+        },
+        {
+          "agent": "claude",
+          "outcome": "coverage_unknown",
+          "ask_count": 7,
+          "agent_total_asks": 76
+        },
+        {
+          "agent": "agy",
+          "outcome": "verified_done",
+          "ask_count": 40,
+          "agent_total_asks": 155
+        },
+        {
+          "agent": "agy",
+          "outcome": "verified_partial",
+          "ask_count": 15,
+          "agent_total_asks": 155
+        },
+        {
+          "agent": "agy",
+          "outcome": "durably_homed_open",
+          "ask_count": 71,
+          "agent_total_asks": 155
+        },
+        {
+          "agent": "agy",
+          "outcome": "blocked",
+          "ask_count": 0,
+          "agent_total_asks": 155
+        },
+        {
+          "agent": "agy",
+          "outcome": "superseded",
+          "ask_count": 0,
+          "agent_total_asks": 155
+        },
+        {
+          "agent": "agy",
+          "outcome": "not_done_or_unverified",
+          "ask_count": 23,
+          "agent_total_asks": 155
+        },
+        {
+          "agent": "agy",
+          "outcome": "coverage_unknown",
+          "ask_count": 6,
+          "agent_total_asks": 155
+        },
+        {
+          "agent": "opencode",
+          "outcome": "verified_done",
+          "ask_count": 53,
+          "agent_total_asks": 117
+        },
+        {
+          "agent": "opencode",
+          "outcome": "verified_partial",
+          "ask_count": 3,
+          "agent_total_asks": 117
+        },
+        {
+          "agent": "opencode",
+          "outcome": "durably_homed_open",
+          "ask_count": 28,
+          "agent_total_asks": 117
+        },
+        {
+          "agent": "opencode",
+          "outcome": "blocked",
+          "ask_count": 1,
+          "agent_total_asks": 117
+        },
+        {
+          "agent": "opencode",
+          "outcome": "superseded",
+          "ask_count": 0,
+          "agent_total_asks": 117
+        },
+        {
+          "agent": "opencode",
+          "outcome": "not_done_or_unverified",
+          "ask_count": 2,
+          "agent_total_asks": 117
+        },
+        {
+          "agent": "opencode",
+          "outcome": "coverage_unknown",
+          "ask_count": 30,
+          "agent_total_asks": 117
+        },
+        {
+          "agent": "gemini",
+          "outcome": "verified_done",
+          "ask_count": 0,
+          "agent_total_asks": 5
+        },
+        {
+          "agent": "gemini",
+          "outcome": "verified_partial",
+          "ask_count": 0,
+          "agent_total_asks": 5
+        },
+        {
+          "agent": "gemini",
+          "outcome": "durably_homed_open",
+          "ask_count": 3,
+          "agent_total_asks": 5
+        },
+        {
+          "agent": "gemini",
+          "outcome": "blocked",
+          "ask_count": 0,
+          "agent_total_asks": 5
+        },
+        {
+          "agent": "gemini",
+          "outcome": "superseded",
+          "ask_count": 0,
+          "agent_total_asks": 5
+        },
+        {
+          "agent": "gemini",
+          "outcome": "not_done_or_unverified",
+          "ask_count": 0,
+          "agent_total_asks": 5
+        },
+        {
+          "agent": "gemini",
+          "outcome": "coverage_unknown",
+          "ask_count": 2,
+          "agent_total_asks": 5
+        },
+        {
+          "agent": "copilot",
+          "outcome": "verified_done",
+          "ask_count": 1,
+          "agent_total_asks": 1
+        },
+        {
+          "agent": "copilot",
+          "outcome": "verified_partial",
+          "ask_count": 0,
+          "agent_total_asks": 1
+        },
+        {
+          "agent": "copilot",
+          "outcome": "durably_homed_open",
+          "ask_count": 0,
+          "agent_total_asks": 1
+        },
+        {
+          "agent": "copilot",
+          "outcome": "blocked",
+          "ask_count": 0,
+          "agent_total_asks": 1
+        },
+        {
+          "agent": "copilot",
+          "outcome": "superseded",
+          "ask_count": 0,
+          "agent_total_asks": 1
+        },
+        {
+          "agent": "copilot",
+          "outcome": "not_done_or_unverified",
+          "ask_count": 0,
+          "agent_total_asks": 1
+        },
+        {
+          "agent": "copilot",
+          "outcome": "coverage_unknown",
+          "ask_count": 0,
+          "agent_total_asks": 1
+        },
+        {
+          "agent": "jules",
+          "outcome": "verified_done",
+          "ask_count": 34,
+          "agent_total_asks": 157
+        },
+        {
+          "agent": "jules",
+          "outcome": "verified_partial",
+          "ask_count": 6,
+          "agent_total_asks": 157
+        },
+        {
+          "agent": "jules",
+          "outcome": "durably_homed_open",
+          "ask_count": 93,
+          "agent_total_asks": 157
+        },
+        {
+          "agent": "jules",
+          "outcome": "blocked",
+          "ask_count": 0,
+          "agent_total_asks": 157
+        },
+        {
+          "agent": "jules",
+          "outcome": "superseded",
+          "ask_count": 0,
+          "agent_total_asks": 157
+        },
+        {
+          "agent": "jules",
+          "outcome": "not_done_or_unverified",
+          "ask_count": 4,
+          "agent_total_asks": 157
+        },
+        {
+          "agent": "jules",
+          "outcome": "coverage_unknown",
+          "ask_count": 20,
+          "agent_total_asks": 157
+        }
+      ],
+      "token_components": [
+        {
+          "window": "Completed calendar week",
+          "agent": "codex",
+          "components": "uncached_input_tokens=456,890,418; output_tokens=53,056,128; reasoning_output_tokens=21,242,641; cached_input_tokens=24,647,474,048",
+          "basis": "native Codex"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "claude",
+          "components": "input_tokens=10,053,294; output_tokens=36,929,131; cache_creation_input_tokens=212,903,543; cache_read_input_tokens=6,459,740,052",
+          "basis": "native Claude"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "opencode",
+          "components": "input_tokens=22,026,528; output_tokens=608,743; reasoning_tokens=591,914; cache_read_tokens=139,434,014; cache_write_tokens=0",
+          "basis": "native Opencode"
+        },
+        {
+          "window": "Completed calendar week",
+          "agent": "copilot",
+          "components": "input_tokens=0; output_tokens=0; reasoning_tokens=0; cache_read_tokens=0; cache_write_tokens=0",
+          "basis": "native Copilot"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "codex",
+          "components": "uncached_input_tokens=1,242,566,251; output_tokens=142,129,273; reasoning_output_tokens=56,184,896; cached_input_tokens=71,004,792,320",
+          "basis": "native Codex"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "claude",
+          "components": "input_tokens=16,052,431; output_tokens=52,882,885; cache_creation_input_tokens=286,754,798; cache_read_input_tokens=7,590,712,832",
+          "basis": "native Claude"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "opencode",
+          "components": "input_tokens=1,903,245; output_tokens=48,968; reasoning_tokens=31,390; cache_read_tokens=7,276,800; cache_write_tokens=0",
+          "basis": "native Opencode"
+        },
+        {
+          "window": "Latest seven days",
+          "agent": "copilot",
+          "components": "input_tokens=324,293,187; output_tokens=1,893,941; reasoning_tokens=664,376; cache_read_tokens=308,728,525; cache_write_tokens=5,674,143",
+          "basis": "native Copilot"
+        }
+      ],
+      "agent_findings": [
+        {
+          "agent": "codex",
+          "asks": 310,
+          "verified_done": 76,
+          "verified_partial": 20,
+          "open": 96,
+          "blocked": 9,
+          "unverified_or_unknown": 109
+        },
+        {
+          "agent": "claude",
+          "asks": 76,
+          "verified_done": 24,
+          "verified_partial": 9,
+          "open": 15,
+          "blocked": 1,
+          "unverified_or_unknown": 27
+        },
+        {
+          "agent": "agy",
+          "asks": 155,
+          "verified_done": 40,
+          "verified_partial": 15,
+          "open": 71,
+          "blocked": 0,
+          "unverified_or_unknown": 29
+        },
+        {
+          "agent": "opencode",
+          "asks": 117,
+          "verified_done": 53,
+          "verified_partial": 3,
+          "open": 28,
+          "blocked": 1,
+          "unverified_or_unknown": 32
+        },
+        {
+          "agent": "gemini",
+          "asks": 5,
+          "verified_done": 0,
+          "verified_partial": 0,
+          "open": 3,
+          "blocked": 0,
+          "unverified_or_unknown": 2
+        },
+        {
+          "agent": "copilot",
+          "asks": 1,
+          "verified_done": 1,
+          "verified_partial": 0,
+          "open": 0,
+          "blocked": 0,
+          "unverified_or_unknown": 0
+        },
+        {
+          "agent": "jules",
+          "asks": 157,
+          "verified_done": 34,
+          "verified_partial": 6,
+          "open": 93,
+          "blocked": 0,
+          "unverified_or_unknown": 24
+        }
+      ],
+      "deliverables": [
+        {
+          "a": "codex",
+          "t": "Tighten types in organvm/portfolio",
+          "o": "verified_done",
+          "u": "https://github.com/organvm/portfolio/pull/155",
+          "p": "exact-head pass"
+        },
+        {
+          "a": "claude",
+          "t": "[limen CAPFILL-claude-20260629-03] Claude daily capacity-fill packet 03",
+          "o": "verified_done",
+          "u": "https://github.com/organvm/limen/pull/446",
+          "p": "exact-head pass"
+        },
+        {
+          "a": "agy",
+          "t": "Discover: promote community-hub into the ranked value tier",
+          "o": "verified_done",
+          "u": "https://github.com/organvm/community-hub/pull/9",
+          "p": "exact-head pass"
+        },
+        {
+          "a": "opencode",
+          "t": "Ground student email reply doctrine",
+          "o": "verified_done",
+          "u": "https://github.com/organvm/limen/pull/812",
+          "p": "exact-head pass"
+        },
+        {
+          "a": "copilot",
+          "t": "Bound overnight-watch memory growth in attached watch mode by streaming tick history",
+          "o": "verified_done",
+          "u": "https://github.com/organvm/limen/pull/1216",
+          "p": "exact-head pass"
+        },
+        {
+          "a": "jules",
+          "t": "Discover latent value: Add sovereign--ground to value repos",
+          "o": "verified_done",
+          "u": "https://github.com/organvm/limen/pull/682",
+          "p": "exact-head pass"
+        }
+      ],
+      "session_appendix": [
+        {
+          "agent": "codex",
+          "date_range": "2026-07-06\u20132026-07-19",
+          "role": "R",
+          "basis": "N",
+          "session_range": "CO0001\u2013CO1023",
+          "sessions": 904,
+          "start_min": -203,
+          "end_min": 19391,
+          "events": 1004629
+        },
+        {
+          "agent": "codex",
+          "date_range": "2026-07-06\u20132026-07-18",
+          "role": "C",
+          "basis": "N",
+          "session_range": "CO0013\u2013CO0877",
+          "sessions": 119,
+          "start_min": 1172,
+          "end_min": 18214,
+          "events": 112121
+        },
+        {
+          "agent": "claude",
+          "date_range": "2026-06-29\u20132026-07-19",
+          "role": "R",
+          "basis": "N",
+          "session_range": "CL0002\u2013CL1197",
+          "sessions": 373,
+          "start_min": -9442,
+          "end_min": 19377,
+          "events": 153561
+        },
+        {
+          "agent": "claude",
+          "date_range": "2026-07-08\u20132026-07-19",
+          "role": "C",
+          "basis": "N",
+          "session_range": "CL0001\u2013CL0979",
+          "sessions": 824,
+          "start_min": 3354,
+          "end_min": 19367,
+          "events": 69762
+        },
+        {
+          "agent": "agy",
+          "date_range": "2026-07-07\u20132026-07-16",
+          "role": "R",
+          "basis": "U",
+          "session_range": "AG0001\u2013AG0273",
+          "sessions": 273,
+          "start_min": 1200,
+          "end_min": 15164,
+          "events": 9774
+        },
+        {
+          "agent": "opencode",
+          "date_range": "2026-07-06\u20132026-07-19",
+          "role": "R",
+          "basis": "M",
+          "session_range": "OP0002\u2013OP0380",
+          "sessions": 366,
+          "start_min": 0,
+          "end_min": 19374,
+          "events": 3804
+        },
+        {
+          "agent": "opencode",
+          "date_range": "2026-07-09\u20132026-07-19",
+          "role": "C",
+          "basis": "M",
+          "session_range": "OP0001\u2013OP0221",
+          "sessions": 14,
+          "start_min": 5201,
+          "end_min": 19390,
+          "events": 198
+        },
+        {
+          "agent": "copilot",
+          "date_range": "2026-07-18\u20132026-07-18",
+          "role": "R",
+          "basis": "Q",
+          "session_range": "CO0003\u2013CO0003",
+          "sessions": 1,
+          "start_min": 17877,
+          "end_min": 19149,
+          "events": 2718
+        },
+        {
+          "agent": "copilot",
+          "date_range": "2026-07-17\u20132026-07-19",
+          "role": "R",
+          "basis": "?",
+          "session_range": "CO0001\u2013CO0009",
+          "sessions": 8,
+          "start_min": 16999,
+          "end_min": 19332,
+          "events": 0
+        },
+        {
+          "agent": "jules",
+          "date_range": "2026-07-06\u20132026-07-19",
+          "role": "R",
+          "basis": "P",
+          "session_range": "JU0001\u2013JU0318",
+          "sessions": 318,
+          "start_min": 461,
+          "end_min": 18600,
+          "events": 1001
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "frozen_snapshot",
+      "label": "Frozen seven-agent estate snapshot",
+      "path": "docs/reviews/seven-agent-whole-estate-2026-07-19/snapshot.json",
+      "query": {
+        "description": "Redacted event-level aggregation of native session stores, the Limen task ledger, live GitHub estate census, and exact pull-request receipts.",
+        "language": "python",
+        "sql": "SELECT * FROM read_json_auto('docs/reviews/seven-agent-whole-estate-2026-07-19/snapshot.json');",
+        "tables_used": [
+          "Codex rollout events",
+          "Claude transcript events",
+          "OpenCode session and message tables",
+          "Antigravity conversation summaries",
+          "Gemini native chat events",
+          "Copilot sessions and assistant usage events",
+          "Limen task dispatch log",
+          "GitHub repository and pull-request GraphQL objects"
+        ],
+        "filters": [
+          "Completed week: 2026-07-06T04:00:00Z inclusive to 2026-07-13T04:00:00Z exclusive",
+          "Latest seven days: 2026-07-12T15:11:00Z inclusive to 2026-07-19T15:11:00Z exclusive",
+          "Events at or after snapshot_at excluded",
+          "Raw prompts, secrets, machine-local paths, private receipt URLs, and full hashes excluded"
+        ],
+        "metric_definitions": [
+          "Root-session volume counts root sessions with any native event or board proxy intersecting a window.",
+          "Summed session span clips every observed span to the window and adds them; union wall time merges overlapping intervals by agent.",
+          "Verified done requires a default-branch merge before snapshot_at and a successful exact-head status rollup or captured predicate.",
+          "Token components preserve provider-native definitions and are never summed across providers."
+        ],
+        "executed_at": "2026-07-19T15:11:00Z"
+      }
+    }
+  ],
+  "package_info": {
+    "snapshot_at": "2026-07-19T15:11:00Z",
+    "live": false,
+    "description": "Frozen, redacted whole-estate session review."
+  }
+}

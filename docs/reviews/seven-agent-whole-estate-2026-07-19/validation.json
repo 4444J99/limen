@@ -1,0 +1,32 @@
+{
+  "snapshot_at": "2026-07-19T15:11:00Z",
+  "synthetic_tests": 10,
+  "synthetic_tests_result": "passed",
+  "remote_reconciliation": {
+    "candidate_pr_urls": 608,
+    "resolved_pr_urls": 608,
+    "batch_errors": [],
+    "remote_repository_count": 308,
+    "copilot_coding_agent_receipts": 1,
+    "opencode_message_query_matches_collector": true,
+    "token_event_aggregations_reconciled": [
+      "codex",
+      "claude",
+      "opencode",
+      "copilot"
+    ]
+  },
+  "dataset_count": 7,
+  "rows_by_dataset": {
+    "comparison": 14,
+    "root_session_volume": 14,
+    "outcome_distribution": 49,
+    "token_components": 8,
+    "agent_findings": 7,
+    "deliverables": 6,
+    "session_appendix": 10
+  },
+  "artifact_bytes": 44941,
+  "validator": "passed",
+  "hosting": "packaged; deployment receipt recorded separately"
+}
