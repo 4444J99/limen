@@ -45595,7 +45595,7 @@
     "organvm/sign-signal--voice-synth#1": {
       "comments": 0,
       "created_at": "2026-03-31T05:04:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45606,12 +45606,14 @@
       "state": "open",
       "title": "Add CLAUDE.md project context file",
       "updated_at": "2026-03-31T05:04:39Z",
-      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/1"
+      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/1",
+      "evidence": "CLAUDE.md exists but lacks requested repo-specific stack/commands/terminology context.",
+      "last_touched": "2026-07-19T10:45:12Z"
     },
     "organvm/sign-signal--voice-synth#12": {
       "comments": 0,
       "created_at": "2026-06-19T16:27:33Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/sign-signal--voice-synth/pull/18",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45622,7 +45624,9 @@
       "state": "open",
       "title": "chore(deps): bump python-multipart from 0.0.6 to 0.0.31 in /apps/api",
       "updated_at": "2026-06-19T16:27:34Z",
-      "url": "https://github.com/organvm/sign-signal--voice-synth/pull/12"
+      "url": "https://github.com/organvm/sign-signal--voice-synth/pull/12",
+      "evidence": "Conflicting dependabot PR intent shipped via clean PR #18; #12 remains open with comment.",
+      "last_touched": "2026-07-19T10:45:12Z"
     },
     "organvm/sign-signal--voice-synth#17": {
       "comments": 0,
@@ -45645,7 +45649,7 @@
     "organvm/sign-signal--voice-synth#2": {
       "comments": 0,
       "created_at": "2026-03-31T05:04:44Z",
-      "disposition": "queued",
+      "disposition": "distilled:meta-organvm/organvm-corpvs-testamentvm/registry-v2.json",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45656,12 +45660,14 @@
       "state": "open",
       "title": "Register in registry-v2.json",
       "updated_at": "2026-03-31T05:04:44Z",
-      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/2"
+      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/2",
+      "evidence": "External registry contains sign-signal--voice-synth with org, tier, LOCAL status, description.",
+      "last_touched": "2026-07-19T10:45:12Z"
     },
     "organvm/sign-signal--voice-synth#3": {
       "comments": 0,
       "created_at": "2026-03-31T05:04:53Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45672,12 +45678,14 @@
       "state": "open",
       "title": "Implement Layer 1: Dialogue Looping Tracker (60 tasks)",
       "updated_at": "2026-03-31T05:04:53Z",
-      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/3"
+      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/3",
+      "evidence": "Scaffold/schema/shared types exist; CRUD, parser, TTS, playback, WebSocket, versioning unbuilt.",
+      "last_touched": "2026-07-19T10:45:12Z"
     },
     "organvm/sign-signal--voice-synth#4": {
       "comments": 0,
       "created_at": "2026-03-31T05:04:58Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45688,12 +45696,14 @@
       "state": "open",
       "title": "Extract Terminology Charter and Lexicon as docs/architecture/ files",
       "updated_at": "2026-03-31T05:04:58Z",
-      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/4"
+      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/4",
+      "evidence": "Source transcript exists; terminology-charter.md and lexicon-and-style-guide.md absent.",
+      "last_touched": "2026-07-19T10:45:12Z"
     },
     "organvm/sign-signal--voice-synth#5": {
       "comments": 0,
       "created_at": "2026-06-11T10:33:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45704,7 +45714,9 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: park",
       "updated_at": "2026-06-11T10:33:40Z",
-      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/5"
+      "url": "https://github.com/organvm/sign-signal--voice-synth/issues/5",
+      "evidence": "npm install/test pass; npm run build fails on Tailwind v4 PostCSS; Dockerfiles/routes/core app missing.",
+      "last_touched": "2026-07-19T10:45:12Z"
     },
     "organvm/social-automation#5": {
       "comments": 0,
@@ -51549,6 +51561,42 @@
       "disposition": "evolving",
       "evidence": "Closed-unmerged PR reopen failed; Stripe rail exists, Payrail 402 flow not on default branch.",
       "last_touched": "2026-07-19T10:42:27Z"
+    },
+    "organvm/sign-signal--voice-synth#18": {
+      "repo": "sign-signal--voice-synth",
+      "number": 18,
+      "kind": "pr",
+      "title": "",
+      "disposition": "merged:7dcf60a65a0fee91d427e51eb31d7f0e14f2ce9a",
+      "evidence": "apps/api/requirements.txt python-multipart 0.0.31; compileall + CodeQL green, merged.",
+      "last_touched": "2026-07-19T10:45:12Z"
+    },
+    "organvm/sign-signal--voice-synth#16": {
+      "repo": "sign-signal--voice-synth",
+      "number": 16,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/sign-signal--voice-synth/pull/17",
+      "evidence": "Closed unmerged dependabot; reopen failed, main carries successor npm-deps lane.",
+      "last_touched": "2026-07-19T10:45:12Z"
+    },
+    "organvm/sign-signal--voice-synth#15": {
+      "repo": "sign-signal--voice-synth",
+      "number": 15,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/sign-signal--voice-synth/pull/17",
+      "evidence": "Closed unmerged dependabot; reopen failed, successor #17 carries dependency lane.",
+      "last_touched": "2026-07-19T10:45:12Z"
+    },
+    "organvm/sign-signal--voice-synth#8": {
+      "repo": "sign-signal--voice-synth",
+      "number": 8,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:apps/web/package.json",
+      "evidence": "Closed unmerged Next bump; reopen failed, main uses Next 16.2.10 newer than requested 15.5.18.",
+      "last_touched": "2026-07-19T10:45:12Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
