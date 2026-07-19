@@ -43668,7 +43668,7 @@
     "organvm/quaestor#3": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:44Z",
-      "disposition": "evolving",
+      "disposition": "merged:4d1f6f83",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43680,8 +43680,8 @@
       "title": "[QS-010] Build read-only grant-discovery source adapters",
       "updated_at": "2026-06-25T19:41:44Z",
       "url": "https://github.com/organvm/quaestor/issues/3",
-      "evidence": "QS-010 free adapters (Grants.gov + ProPublica) SHIPPED as PR #12: normalized atoms, deduping runner, CLI, 14 hermetic tests, ruff+CI; verified live dry-run. Paid sources gated (QS-012), amount/eligibility enrichment + QS-008 wiring follow-on. Open until merge.",
-      "last_touched": "2026-07-19T09:17:46Z"
+      "evidence": "QS-010 free adapters (Grants.gov+ProPublica) built + MERGED (PR #12, 4d1f6f83): normalized atoms, deduping runner, CLI, 14 hermetic tests, ruff+CI 3.11-3.13, verified live dry-run. done-when met (free sources). Issue left open as lineage anchor; paid sources gated QS-012, enrichment + QS-008 wiring follow-on.",
+      "last_touched": "2026-07-19T09:18:53Z"
     },
     "organvm/quaestor#5": {
       "comments": 0,
