@@ -42983,7 +42983,7 @@
     "organvm/public-process#10": {
       "comments": 0,
       "created_at": "2026-06-10T22:00:58Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42994,12 +42994,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T22:00:58Z",
-      "url": "https://github.com/organvm/public-process/issues/10"
+      "url": "https://github.com/organvm/public-process/issues/10",
+      "evidence": "Netlify+Pages HTTP 200; no package/release/tagged-build automation found.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#13": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:06Z",
-      "disposition": "queued",
+      "disposition": "distilled:README.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43010,12 +43012,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 1: Junior Developer",
       "updated_at": "2026-06-18T20:01:06Z",
-      "url": "https://github.com/organvm/public-process/issues/13"
+      "url": "https://github.com/organvm/public-process/issues/13",
+      "evidence": "README explains Public Process + maps Greek organ names to plain English.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#14": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:08Z",
-      "disposition": "queued",
+      "disposition": "distilled:CONTRIBUTING.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43026,12 +43030,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 2: Technical Writer",
       "updated_at": "2026-06-18T20:01:08Z",
-      "url": "https://github.com/organvm/public-process/issues/14"
+      "url": "https://github.com/organvm/public-process/issues/14",
+      "evidence": "CONTRIBUTING.md is standard Jekyll/Ruby PR workflow; README links runway.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#15": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:10Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43042,12 +43048,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 3: Senior Backend Engineer",
       "updated_at": "2026-06-18T20:01:10Z",
-      "url": "https://github.com/organvm/public-process/issues/15"
+      "url": "https://github.com/organvm/public-process/issues/15",
+      "evidence": "Architecture ADRs exist; requested high-level overview map/diagram absent.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#16": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:12Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43058,12 +43066,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 4: Open Source Contributor",
       "updated_at": "2026-06-18T20:01:12Z",
-      "url": "https://github.com/organvm/public-process/issues/16"
+      "url": "https://github.com/organvm/public-process/issues/16",
+      "evidence": "good-first-issue label/template exist; README lacks direct discovery path.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#17": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:15Z",
-      "disposition": "queued",
+      "disposition": "distilled:roadmap.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43074,12 +43084,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 5: Product Manager",
       "updated_at": "2026-06-18T20:01:15Z",
-      "url": "https://github.com/organvm/public-process/issues/17"
+      "url": "https://github.com/organvm/public-process/issues/17",
+      "evidence": "roadmap.md linked from README with milestones/owners/navigation.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#18": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:17Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/quick-start.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43090,12 +43102,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 6: Student",
       "updated_at": "2026-06-18T20:01:17Z",
-      "url": "https://github.com/organvm/public-process/issues/18"
+      "url": "https://github.com/organvm/public-process/issues/18",
+      "evidence": "Quick Start covers clone-first + run Jekyll locally.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#19": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:19Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43106,12 +43120,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 7: UX Designer",
       "updated_at": "2026-06-18T20:01:19Z",
-      "url": "https://github.com/organvm/public-process/issues/19"
+      "url": "https://github.com/organvm/public-process/issues/19",
+      "evidence": "No design-system.md/organ-aesthetic guide/screenshots/component examples.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#20": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43122,12 +43138,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 8: Data Scientist",
       "updated_at": "2026-06-18T20:01:22Z",
-      "url": "https://github.com/organvm/public-process/issues/20"
+      "url": "https://github.com/organvm/public-process/issues/20",
+      "evidence": "analytics outputs partially documented; dedicated analytics-engine schema not on main.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#21": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:24Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43138,12 +43156,14 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 9: DevRel Manager",
       "updated_at": "2026-06-18T20:01:24Z",
-      "url": "https://github.com/organvm/public-process/issues/21"
+      "url": "https://github.com/organvm/public-process/issues/21",
+      "evidence": "RSS exists; Discussions disabled, no public community channel link.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#22": {
       "comments": 0,
       "created_at": "2026-06-18T20:01:27Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43154,7 +43174,9 @@
       "state": "open",
       "title": "[STRANGER-TEST] Session 10: Security Researcher",
       "updated_at": "2026-06-18T20:01:27Z",
-      "url": "https://github.com/organvm/public-process/issues/22"
+      "url": "https://github.com/organvm/public-process/issues/22",
+      "evidence": "SECURITY.md has advisories/email path; no PGP key or encrypted form.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#26": {
       "comments": 0,
@@ -43177,7 +43199,7 @@
     "organvm/public-process#27": {
       "comments": 0,
       "created_at": "2026-07-01T10:45:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43188,12 +43210,14 @@
       "state": "open",
       "title": "[limen GH-organvm-public-process-20] [STRANGER-TEST] Session 8: Data Scientist",
       "updated_at": "2026-07-01T10:45:11Z",
-      "url": "https://github.com/organvm/public-process/pull/27"
+      "url": "https://github.com/organvm/public-process/pull/27",
+      "evidence": "MERGEABLE/UNSTABLE; validate fails data drift across generated files.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#29": {
       "comments": 0,
       "created_at": "2026-07-01T11:25:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43204,12 +43228,14 @@
       "state": "open",
       "title": "[limen GH-organvm-public-process-19] [STRANGER-TEST] Session 7: UX Designer",
       "updated_at": "2026-07-01T11:31:47Z",
-      "url": "https://github.com/organvm/public-process/pull/29"
+      "url": "https://github.com/organvm/public-process/pull/29",
+      "evidence": "CONFLICTING/DIRTY; validate fails data drift; design-system.md not on main.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#30": {
       "comments": 2,
       "created_at": "2026-07-01T11:47:54Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/public-process/blob/main/CONTRIBUTING.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43220,12 +43246,14 @@
       "state": "open",
       "title": "[limen GH-organvm-public-process-14] [STRANGER-TEST] Session 2: Technical Writer",
       "updated_at": "2026-07-06T22:58:10Z",
-      "url": "https://github.com/organvm/public-process/pull/30"
+      "url": "https://github.com/organvm/public-process/pull/30",
+      "evidence": "Contributor-guide intent shipped in CONTRIBUTING.md + docs/contributor-runway.md; PR conflicting.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#32": {
       "comments": 0,
       "created_at": "2026-07-01T12:25:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43236,12 +43264,14 @@
       "state": "open",
       "title": "[limen GH-organvm-public-process-21] [STRANGER-TEST] Session 9: DevRel Manager",
       "updated_at": "2026-07-01T12:33:41Z",
-      "url": "https://github.com/organvm/public-process/pull/32"
+      "url": "https://github.com/organvm/public-process/pull/32",
+      "evidence": "CONFLICTING/DIRTY; validate fails; Discussions disabled, no community.md on main.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#34": {
       "comments": 0,
       "created_at": "2026-07-01T13:26:28Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43252,12 +43282,14 @@
       "state": "open",
       "title": "[limen GH-organvm-public-process-15] [STRANGER-TEST] Session 3: Senior Backend Engineer",
       "updated_at": "2026-07-09T12:12:29Z",
-      "url": "https://github.com/organvm/public-process/pull/34"
+      "url": "https://github.com/organvm/public-process/pull/34",
+      "evidence": "CONFLICTING/DIRTY; ADRs exist but no docs/architecture.md overview map.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#35": {
       "comments": 0,
       "created_at": "2026-07-01T15:51:29Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43268,12 +43300,14 @@
       "state": "open",
       "title": "[limen GH-organvm-public-process-16] [STRANGER-TEST] Session 4: Open Source Contributor",
       "updated_at": "2026-07-01T15:56:27Z",
-      "url": "https://github.com/organvm/public-process/pull/35"
+      "url": "https://github.com/organvm/public-process/pull/35",
+      "evidence": "CONFLICTING/DIRTY; good-first-issue support partial; README discoverability remains.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-process#36": {
       "comments": 0,
       "created_at": "2026-07-06T16:45:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43284,7 +43318,9 @@
       "state": "open",
       "title": "[limen HEAL-cifix-organvm-public-process-29] fix failing CI on organvm/public-process#29",
       "updated_at": "2026-07-06T16:51:12Z",
-      "url": "https://github.com/organvm/public-process/pull/36"
+      "url": "https://github.com/organvm/public-process/pull/36",
+      "evidence": "MERGEABLE/UNSTABLE; validate fails publication-calendar data drift.",
+      "last_touched": "2026-07-19T09:16:01Z"
     },
     "organvm/public-record-data-scrapper#235": {
       "comments": 2,
@@ -43632,7 +43668,7 @@
     "organvm/quaestor#3": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:44Z",
-      "disposition": "engaged",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43644,8 +43680,8 @@
       "title": "[QS-010] Build read-only grant-discovery source adapters",
       "updated_at": "2026-06-25T19:41:44Z",
       "url": "https://github.com/organvm/quaestor/issues/3",
-      "evidence": "QS-010 free read-only adapters (Grants.gov Search2 + ProPublica): spec complete, no free-source human gate; dedicated build queued. Commented.",
-      "last_touched": "2026-07-19T09:08:06Z"
+      "evidence": "QS-010 free adapters (Grants.gov + ProPublica) SHIPPED as PR #12: normalized atoms, deduping runner, CLI, 14 hermetic tests, ruff+CI; verified live dry-run. Paid sources gated (QS-012), amount/eligibility enrichment + QS-008 wiring follow-on. Open until merge.",
+      "last_touched": "2026-07-19T09:17:46Z"
     },
     "organvm/quaestor#5": {
       "comments": 0,
