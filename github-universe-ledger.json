@@ -1350,7 +1350,7 @@
     "organvm/_agent-ontology#9": {
       "comments": 0,
       "created_at": "2026-07-18T13:13:11Z",
-      "disposition": "queued",
+      "disposition": "merged:7fae7dbd",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -1361,7 +1361,9 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 2 directories with 6 updates",
       "updated_at": "2026-07-18T13:13:12Z",
-      "url": "https://github.com/organvm/_agent-ontology/pull/9"
+      "url": "https://github.com/organvm/_agent-ontology/pull/9",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 7fae7dbd",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/_diagnostics#1": {
       "comments": 0,
@@ -2532,7 +2534,7 @@
     "organvm/a-i-council--coliseum#184": {
       "comments": 0,
       "created_at": "2026-07-17T22:54:08Z",
-      "disposition": "queued",
+      "disposition": "merged:3d56db78",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2543,7 +2545,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T22:54:09Z",
-      "url": "https://github.com/organvm/a-i-council--coliseum/pull/184"
+      "url": "https://github.com/organvm/a-i-council--coliseum/pull/184",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 3d56db78",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/a-mavs-olevm#100": {
       "comments": 1,
@@ -2628,7 +2632,7 @@
     "organvm/a-mavs-olevm#106": {
       "comments": 0,
       "created_at": "2026-07-03T04:15:06Z",
-      "disposition": "queued",
+      "disposition": "merged:512d547c",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2639,7 +2643,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 5 directories with 18 updates",
       "updated_at": "2026-07-17T04:17:06Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/106"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/106",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 512d547c",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/a-mavs-olevm#94": {
       "comments": 1,
@@ -2660,7 +2666,7 @@
     "organvm/a-mavs-olevm#96": {
       "comments": 0,
       "created_at": "2026-06-19T16:40:49Z",
-      "disposition": "queued",
+      "disposition": "merged:567de36f",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2671,7 +2677,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 9 updates",
       "updated_at": "2026-07-17T04:14:18Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/96"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/96",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 567de36f",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/a-mavs-olevm#97": {
       "comments": 0,
@@ -2852,7 +2860,7 @@
     "organvm/a-organvm#111": {
       "comments": 0,
       "created_at": "2026-06-26T21:44:00Z",
-      "disposition": "queued",
+      "disposition": "merged:183b8ce7",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2863,7 +2871,9 @@
       "state": "open",
       "title": "chore(deps-dev): update ruff requirement from >=0.15.18 to >=0.15.20 in the pip-deps group across 1 directory",
       "updated_at": "2026-07-17T21:43:54Z",
-      "url": "https://github.com/organvm/a-organvm/pull/111"
+      "url": "https://github.com/organvm/a-organvm/pull/111",
+      "evidence": "dependabot ruff dev-dep bump >=0.15.18->0.15.20; merged.",
+      "last_touched": "2026-07-19T07:52:20Z"
     },
     "organvm/a-organvm#12": {
       "comments": 0,
@@ -4408,7 +4418,7 @@
     "organvm/a-recursive-root#50": {
       "comments": 0,
       "created_at": "2026-07-09T00:44:52Z",
-      "disposition": "queued",
+      "disposition": "merged:623af1f8",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4419,7 +4429,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-16T00:44:53Z",
-      "url": "https://github.com/organvm/a-recursive-root/pull/50"
+      "url": "https://github.com/organvm/a-recursive-root/pull/50",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 623af1f8",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/a-recursive-root#52": {
       "comments": 0,
@@ -4440,7 +4452,7 @@
     "organvm/a-recursive-root#53": {
       "comments": 0,
       "created_at": "2026-07-16T00:47:00Z",
-      "disposition": "queued",
+      "disposition": "merged:34035802",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4451,7 +4463,9 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 2 directories with 16 updates",
       "updated_at": "2026-07-16T00:47:01Z",
-      "url": "https://github.com/organvm/a-recursive-root/pull/53"
+      "url": "https://github.com/organvm/a-recursive-root/pull/53",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 34035802",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/adaptive-personal-syllabus#6": {
       "comments": 0,
@@ -4584,7 +4598,7 @@
     "organvm/agent--claude-smith#36": {
       "comments": 0,
       "created_at": "2026-07-12T22:52:59Z",
-      "disposition": "queued",
+      "disposition": "merged:002f6c9f",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4595,12 +4609,14 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 5 updates",
       "updated_at": "2026-07-12T22:53:00Z",
-      "url": "https://github.com/organvm/agent--claude-smith/pull/36"
+      "url": "https://github.com/organvm/agent--claude-smith/pull/36",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 002f6c9f",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/agent-runtime#3": {
       "comments": 0,
       "created_at": "2026-07-17T16:42:08Z",
-      "disposition": "queued",
+      "disposition": "merged:38fce51d",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4611,7 +4627,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump vitest from 2.1.9 to 3.2.6",
       "updated_at": "2026-07-17T16:42:09Z",
-      "url": "https://github.com/organvm/agent-runtime/pull/3"
+      "url": "https://github.com/organvm/agent-runtime/pull/3",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 38fce51d",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/agentic-titan#93": {
       "comments": 0,
@@ -4648,7 +4666,7 @@
     "organvm/alchemical-synthesizer#36": {
       "comments": 0,
       "created_at": "2026-07-18T09:42:34Z",
-      "disposition": "queued",
+      "disposition": "merged:48c3cf90",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4659,12 +4677,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-18T09:42:35Z",
-      "url": "https://github.com/organvm/alchemical-synthesizer/pull/36"
+      "url": "https://github.com/organvm/alchemical-synthesizer/pull/36",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 48c3cf90",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/alchemical-synthesizer#37": {
       "comments": 0,
       "created_at": "2026-07-18T09:42:45Z",
-      "disposition": "queued",
+      "disposition": "merged:ac8058e6",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4675,7 +4695,9 @@
       "state": "open",
       "title": "chore(deps): bump ws from 8.21.0 to 8.21.1 in /brahma/web in the npm-deps group across 1 directory",
       "updated_at": "2026-07-18T09:42:46Z",
-      "url": "https://github.com/organvm/alchemical-synthesizer/pull/37"
+      "url": "https://github.com/organvm/alchemical-synthesizer/pull/37",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit ac8058e6",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/analytics-engine#8": {
       "comments": 0,
@@ -5320,7 +5342,7 @@
     "organvm/application-pipeline#76": {
       "comments": 0,
       "created_at": "2026-07-13T07:56:00Z",
-      "disposition": "queued",
+      "disposition": "merged:1b856dc6",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5331,7 +5353,9 @@
       "state": "open",
       "title": "chore(deps-dev): update uvicorn requirement from >=0.50.1 to >=0.51.0 in the pip-deps group across 1 directory",
       "updated_at": "2026-07-13T07:56:01Z",
-      "url": "https://github.com/organvm/application-pipeline/pull/76"
+      "url": "https://github.com/organvm/application-pipeline/pull/76",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 1b856dc6",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/application-pipeline#8": {
       "comments": 3,
@@ -5432,7 +5456,7 @@
     "organvm/audio-synthesis-bridge#13": {
       "comments": 0,
       "created_at": "2026-07-09T17:24:23Z",
-      "disposition": "queued",
+      "disposition": "merged:b41860ff",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5443,12 +5467,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump typescript from 6.0.3 to 7.0.2 in the npm-deps group across 1 directory",
       "updated_at": "2026-07-16T17:24:45Z",
-      "url": "https://github.com/organvm/audio-synthesis-bridge/pull/13"
+      "url": "https://github.com/organvm/audio-synthesis-bridge/pull/13",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit b41860ff",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/audio-synthesis-bridge#14": {
       "comments": 0,
       "created_at": "2026-07-16T17:24:23Z",
-      "disposition": "queued",
+      "disposition": "merged:80316ff8",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5459,7 +5485,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6.4.0 to 7.0.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T17:24:24Z",
-      "url": "https://github.com/organvm/audio-synthesis-bridge/pull/14"
+      "url": "https://github.com/organvm/audio-synthesis-bridge/pull/14",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 80316ff8",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/audio-synthesis-bridge#5": {
       "comments": 0,
@@ -5512,7 +5540,7 @@
     "organvm/auto-revision-epistemic-engine#19": {
       "comments": 0,
       "created_at": "2026-06-26T21:43:40Z",
-      "disposition": "queued",
+      "disposition": "merged:ef7e0332",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5523,12 +5551,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-python from 6.2.0 to 6.3.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T21:43:41Z",
-      "url": "https://github.com/organvm/auto-revision-epistemic-engine/pull/19"
+      "url": "https://github.com/organvm/auto-revision-epistemic-engine/pull/19",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit ef7e0332",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/auto-revision-epistemic-engine#20": {
       "comments": 0,
       "created_at": "2026-06-26T21:44:15Z",
-      "disposition": "queued",
+      "disposition": "merged:484e708d",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5539,7 +5569,9 @@
       "state": "open",
       "title": "chore(deps): update blake3 requirement from >=1.0.8 to >=1.0.9 in the pip-deps group across 1 directory",
       "updated_at": "2026-07-17T21:43:51Z",
-      "url": "https://github.com/organvm/auto-revision-epistemic-engine/pull/20"
+      "url": "https://github.com/organvm/auto-revision-epistemic-engine/pull/20",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 484e708d",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/bountyscope#10": {
       "comments": 1,
@@ -5720,7 +5752,7 @@
     "organvm/call-function--ontological#11": {
       "comments": 0,
       "created_at": "2026-06-24T11:34:20Z",
-      "disposition": "queued",
+      "disposition": "merged:804bd82e",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5731,7 +5763,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 6 updates",
       "updated_at": "2026-07-15T11:34:10Z",
-      "url": "https://github.com/organvm/call-function--ontological/pull/11"
+      "url": "https://github.com/organvm/call-function--ontological/pull/11",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 804bd82e",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/call-function--ontological#12": {
       "comments": 0,
@@ -5816,7 +5850,7 @@
     "organvm/card-trade-social#17": {
       "comments": 0,
       "created_at": "2026-07-17T13:44:20Z",
-      "disposition": "queued",
+      "disposition": "merged:db0faf86",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5827,7 +5861,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T13:44:21Z",
-      "url": "https://github.com/organvm/card-trade-social/pull/17"
+      "url": "https://github.com/organvm/card-trade-social/pull/17",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit db0faf86",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/card-trade-social#18": {
       "comments": 0,
@@ -5864,7 +5900,7 @@
     "organvm/carrier-wave--zeitgeist-thesis#10": {
       "comments": 0,
       "created_at": "2026-07-17T16:47:23Z",
-      "disposition": "queued",
+      "disposition": "merged:5816a037",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5875,7 +5911,9 @@
       "state": "open",
       "title": "build(deps): bump markdown-it and markdownlint-cli2",
       "updated_at": "2026-07-17T16:47:24Z",
-      "url": "https://github.com/organvm/carrier-wave--zeitgeist-thesis/pull/10"
+      "url": "https://github.com/organvm/carrier-wave--zeitgeist-thesis/pull/10",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 5816a037",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/carrier-wave--zeitgeist-thesis#2": {
       "comments": 0,
@@ -5896,7 +5934,7 @@
     "organvm/carrier-wave--zeitgeist-thesis#9": {
       "comments": 0,
       "created_at": "2026-07-17T16:47:11Z",
-      "disposition": "queued",
+      "disposition": "merged:bbeff086",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5907,7 +5945,9 @@
       "state": "open",
       "title": "build(deps): bump js-yaml and markdownlint-cli2",
       "updated_at": "2026-07-17T16:47:12Z",
-      "url": "https://github.com/organvm/carrier-wave--zeitgeist-thesis/pull/9"
+      "url": "https://github.com/organvm/carrier-wave--zeitgeist-thesis/pull/9",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit bbeff086",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/case-studies-methodology#3": {
       "comments": 0,
@@ -6096,7 +6136,7 @@
     "organvm/classroom-rpg-aetheria#148": {
       "comments": 0,
       "created_at": "2026-07-17T04:44:47Z",
-      "disposition": "queued",
+      "disposition": "merged:4674c9fe",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6107,12 +6147,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T04:44:47Z",
-      "url": "https://github.com/organvm/classroom-rpg-aetheria/pull/148"
+      "url": "https://github.com/organvm/classroom-rpg-aetheria/pull/148",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 4674c9fe",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/classroom-rpg-aetheria#149": {
       "comments": 0,
       "created_at": "2026-07-17T04:57:09Z",
-      "disposition": "queued",
+      "disposition": "merged:4d49a9a3",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6123,7 +6165,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 39 updates",
       "updated_at": "2026-07-17T04:57:10Z",
-      "url": "https://github.com/organvm/classroom-rpg-aetheria/pull/149"
+      "url": "https://github.com/organvm/classroom-rpg-aetheria/pull/149",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 4d49a9a3",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/classroom-rpg-aetheria#48": {
       "comments": 3,
@@ -6160,7 +6204,7 @@
     "organvm/client-sdk#18": {
       "comments": 0,
       "created_at": "2026-07-09T14:06:12Z",
-      "disposition": "queued",
+      "disposition": "merged:8c88e528",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6171,12 +6215,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 3 updates",
       "updated_at": "2026-07-16T14:06:25Z",
-      "url": "https://github.com/organvm/client-sdk/pull/18"
+      "url": "https://github.com/organvm/client-sdk/pull/18",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 8c88e528",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/client-sdk#19": {
       "comments": 0,
       "created_at": "2026-07-16T14:05:27Z",
-      "disposition": "queued",
+      "disposition": "merged:678e1288",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -6187,7 +6233,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6.4.0 to 7.0.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T14:05:28Z",
-      "url": "https://github.com/organvm/client-sdk/pull/19"
+      "url": "https://github.com/organvm/client-sdk/pull/19",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 678e1288",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/client-sdk#5": {
       "comments": 0,
@@ -7768,7 +7816,7 @@
     "organvm/community-hub#11": {
       "comments": 0,
       "created_at": "2026-06-26T00:53:39Z",
-      "disposition": "queued",
+      "disposition": "merged:258ab589",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7779,7 +7827,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-17T00:55:30Z",
-      "url": "https://github.com/organvm/community-hub/pull/11"
+      "url": "https://github.com/organvm/community-hub/pull/11",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 258ab589",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/community-hub#5": {
       "comments": 0,
@@ -8072,7 +8122,7 @@
     "organvm/content-engine--asset-amplifier#34": {
       "comments": 0,
       "created_at": "2026-07-10T18:16:10Z",
-      "disposition": "queued",
+      "disposition": "merged:29e4e212",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8083,7 +8133,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 5 directories with 22 updates",
       "updated_at": "2026-07-17T18:19:41Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/pull/34"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/pull/34",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 29e4e212",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/content-engine--asset-amplifier#35": {
       "comments": 0,
@@ -8904,7 +8956,7 @@
     "organvm/conversation-corpus-engine#63": {
       "comments": 0,
       "created_at": "2026-07-17T15:04:54Z",
-      "disposition": "queued",
+      "disposition": "merged:332a518e",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8915,7 +8967,9 @@
       "state": "open",
       "title": "chore(deps): bump softprops/action-gh-release from 3.0.1 to 3.0.2 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T15:04:56Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/pull/63"
+      "url": "https://github.com/organvm/conversation-corpus-engine/pull/63",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 332a518e",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/custodia-securitatis#1": {
       "comments": 0,
@@ -13400,7 +13454,7 @@
     "organvm/example-choreographic-interface#12": {
       "comments": 0,
       "created_at": "2026-07-09T16:05:43Z",
-      "disposition": "queued",
+      "disposition": "merged:1c0d4c10",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13411,12 +13465,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump typescript from 6.0.3 to 7.0.2 in the npm-deps group across 1 directory",
       "updated_at": "2026-07-16T16:05:12Z",
-      "url": "https://github.com/organvm/example-choreographic-interface/pull/12"
+      "url": "https://github.com/organvm/example-choreographic-interface/pull/12",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 1c0d4c10",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/example-choreographic-interface#13": {
       "comments": 0,
       "created_at": "2026-07-16T16:04:53Z",
-      "disposition": "queued",
+      "disposition": "merged:7b53959a",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13427,7 +13483,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6.4.0 to 7.0.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T16:04:54Z",
-      "url": "https://github.com/organvm/example-choreographic-interface/pull/13"
+      "url": "https://github.com/organvm/example-choreographic-interface/pull/13",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 7b53959a",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/example-choreographic-interface#4": {
       "comments": 0,
@@ -13528,7 +13586,7 @@
     "organvm/example-generative-music#9": {
       "comments": 0,
       "created_at": "2026-07-16T04:14:58Z",
-      "disposition": "queued",
+      "disposition": "merged:bbef48e4",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13539,7 +13597,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T04:14:59Z",
-      "url": "https://github.com/organvm/example-generative-music/pull/9"
+      "url": "https://github.com/organvm/example-generative-music/pull/9",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit bbef48e4",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/example-interactive-installation#3": {
       "comments": 0,
@@ -13560,7 +13620,7 @@
     "organvm/example-theatre-dialogue#12": {
       "comments": 0,
       "created_at": "2026-07-09T06:07:13Z",
-      "disposition": "queued",
+      "disposition": "merged:d977334d",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13571,12 +13631,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump typescript from 6.0.3 to 7.0.2 in the npm-deps group across 1 directory",
       "updated_at": "2026-07-16T06:07:22Z",
-      "url": "https://github.com/organvm/example-theatre-dialogue/pull/12"
+      "url": "https://github.com/organvm/example-theatre-dialogue/pull/12",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d977334d",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/example-theatre-dialogue#13": {
       "comments": 0,
       "created_at": "2026-07-16T06:06:55Z",
-      "disposition": "queued",
+      "disposition": "merged:ed7ef263",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13587,7 +13649,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T06:06:56Z",
-      "url": "https://github.com/organvm/example-theatre-dialogue/pull/13"
+      "url": "https://github.com/organvm/example-theatre-dialogue/pull/13",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit ed7ef263",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/example-theatre-dialogue#5": {
       "comments": 0,
@@ -13624,7 +13688,7 @@
     "organvm/fetch-familiar-friends#227": {
       "comments": 0,
       "created_at": "2026-07-16T12:46:59Z",
-      "disposition": "queued",
+      "disposition": "merged:98bc2741",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13635,12 +13699,14 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 10 updates",
       "updated_at": "2026-07-16T12:47:00Z",
-      "url": "https://github.com/organvm/fetch-familiar-friends/pull/227"
+      "url": "https://github.com/organvm/fetch-familiar-friends/pull/227",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 98bc2741",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/fetch-familiar-friends#228": {
       "comments": 0,
       "created_at": "2026-07-16T12:47:20Z",
-      "disposition": "queued",
+      "disposition": "merged:1f8b16b1",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13651,7 +13717,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T12:47:21Z",
-      "url": "https://github.com/organvm/fetch-familiar-friends/pull/228"
+      "url": "https://github.com/organvm/fetch-familiar-friends/pull/228",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 1f8b16b1",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/gamified-coach-interface#100": {
       "comments": 2,
@@ -15150,7 +15218,7 @@
     "organvm/glyph-cascade#10": {
       "comments": 0,
       "created_at": "2026-07-03T03:44:55Z",
-      "disposition": "queued",
+      "disposition": "merged:902cbb1e",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15161,12 +15229,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 5 updates",
       "updated_at": "2026-07-17T03:44:52Z",
-      "url": "https://github.com/organvm/glyph-cascade/pull/10"
+      "url": "https://github.com/organvm/glyph-cascade/pull/10",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 902cbb1e",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/glyph-cascade#11": {
       "comments": 0,
       "created_at": "2026-07-17T03:44:10Z",
-      "disposition": "queued",
+      "disposition": "merged:9152f8ce",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15177,7 +15247,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-17T03:44:11Z",
-      "url": "https://github.com/organvm/glyph-cascade/pull/11"
+      "url": "https://github.com/organvm/glyph-cascade/pull/11",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 9152f8ce",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/glyph-cascade-tapes#1": {
       "comments": 0,
@@ -15198,7 +15270,7 @@
     "organvm/glyph-cascade-tapes#10": {
       "comments": 0,
       "created_at": "2026-07-10T04:15:33Z",
-      "disposition": "queued",
+      "disposition": "merged:2097b9bd",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15209,7 +15281,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 6 updates",
       "updated_at": "2026-07-17T04:14:18Z",
-      "url": "https://github.com/organvm/glyph-cascade-tapes/pull/10"
+      "url": "https://github.com/organvm/glyph-cascade-tapes/pull/10",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 2097b9bd",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/glyph-cascade-tapes#2": {
       "comments": 0,
@@ -15710,7 +15784,7 @@
     "organvm/hokage-chess#13": {
       "comments": 0,
       "created_at": "2026-07-17T09:14:16Z",
-      "disposition": "queued",
+      "disposition": "merged:3a25cc6b",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15721,12 +15795,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T09:14:17Z",
-      "url": "https://github.com/organvm/hokage-chess/pull/13"
+      "url": "https://github.com/organvm/hokage-chess/pull/13",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 3a25cc6b",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/hokage-chess#14": {
       "comments": 0,
       "created_at": "2026-07-17T09:14:42Z",
-      "disposition": "queued",
+      "disposition": "merged:33407fb3",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15737,7 +15813,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 4 updates",
       "updated_at": "2026-07-17T09:14:43Z",
-      "url": "https://github.com/organvm/hokage-chess/pull/14"
+      "url": "https://github.com/organvm/hokage-chess/pull/14",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 33407fb3",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/hokage-chess#7": {
       "comments": 0,
@@ -16800,7 +16878,7 @@
     "organvm/krypto-velamen#13": {
       "comments": 0,
       "created_at": "2026-07-10T01:14:54Z",
-      "disposition": "queued",
+      "disposition": "merged:b0d0674e",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16811,7 +16889,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump typescript from 6.0.3 to 7.0.2 in /apps/web-platform in the npm-deps group across 1 directory",
       "updated_at": "2026-07-17T01:14:55Z",
-      "url": "https://github.com/organvm/krypto-velamen/pull/13"
+      "url": "https://github.com/organvm/krypto-velamen/pull/13",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit b0d0674e",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/krypto-velamen#4": {
       "comments": 0,
@@ -16896,7 +16976,7 @@
     "organvm/life-my--midst--in#137": {
       "comments": 0,
       "created_at": "2026-07-17T10:45:23Z",
-      "disposition": "queued",
+      "disposition": "merged:74ac4c01",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16907,7 +16987,9 @@
       "state": "open",
       "title": "build(deps): Bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-17T10:45:24Z",
-      "url": "https://github.com/organvm/life-my--midst--in/pull/137"
+      "url": "https://github.com/organvm/life-my--midst--in/pull/137",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 74ac4c01",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/limen#1004": {
       "comments": 0,
@@ -22035,7 +22117,7 @@
     "organvm/mesh#12": {
       "comments": 0,
       "created_at": "2026-07-17T18:55:16Z",
-      "disposition": "queued",
+      "disposition": "merged:85716f60",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22046,7 +22128,9 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 1 directory with 10 updates",
       "updated_at": "2026-07-17T18:55:17Z",
-      "url": "https://github.com/organvm/mesh/pull/12"
+      "url": "https://github.com/organvm/mesh/pull/12",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 85716f60",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/mesh#4": {
       "comments": 0,
@@ -22131,7 +22215,7 @@
     "organvm/meta-source--ledger-output#37": {
       "comments": 0,
       "created_at": "2026-07-18T00:22:31Z",
-      "disposition": "queued",
+      "disposition": "merged:2fe8b93a",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22142,12 +22226,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6.4.0 to 7.0.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-18T00:22:31Z",
-      "url": "https://github.com/organvm/meta-source--ledger-output/pull/37"
+      "url": "https://github.com/organvm/meta-source--ledger-output/pull/37",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 2fe8b93a",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/meta-source--ledger-output#38": {
       "comments": 0,
       "created_at": "2026-07-18T01:13:27Z",
-      "disposition": "queued",
+      "disposition": "merged:9a5569c2",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22158,7 +22244,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 7 directories with 17 updates",
       "updated_at": "2026-07-18T01:13:28Z",
-      "url": "https://github.com/organvm/meta-source--ledger-output/pull/38"
+      "url": "https://github.com/organvm/meta-source--ledger-output/pull/38",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 9a5569c2",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/meta-source--ledger-output#5": {
       "comments": 0,
@@ -22650,7 +22738,7 @@
     "organvm/my-block-warfare#39": {
       "comments": 0,
       "created_at": "2026-07-09T02:35:33Z",
-      "disposition": "queued",
+      "disposition": "merged:59294939",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22661,12 +22749,14 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 13 updates",
       "updated_at": "2026-07-16T02:35:34Z",
-      "url": "https://github.com/organvm/my-block-warfare/pull/39"
+      "url": "https://github.com/organvm/my-block-warfare/pull/39",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 59294939",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/my-block-warfare#40": {
       "comments": 0,
       "created_at": "2026-07-16T02:33:53Z",
-      "disposition": "queued",
+      "disposition": "merged:b40d56f8",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22677,7 +22767,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T02:33:54Z",
-      "url": "https://github.com/organvm/my-block-warfare/pull/40"
+      "url": "https://github.com/organvm/my-block-warfare/pull/40",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit b40d56f8",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/my-knowledge-base#51": {
       "comments": 1,
@@ -22716,7 +22808,7 @@
     "organvm/my-knowledge-base#72": {
       "comments": 1,
       "created_at": "2026-07-01T23:58:42Z",
-      "disposition": "distilled",
+      "disposition": "merged:6baca031",
       "first_seen": "2026-07-18T15:21:41Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22728,12 +22820,14 @@
       "state": "open",
       "title": "build(deps): bump the npm_and_yarn group across 1 directory with 2 updates",
       "updated_at": "2026-07-18T15:33:06Z",
-      "url": "https://github.com/organvm/my-knowledge-base/pull/72"
+      "url": "https://github.com/organvm/my-knowledge-base/pull/72",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 6baca031",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/my-knowledge-base#78": {
       "comments": 1,
       "created_at": "2026-07-17T01:36:24Z",
-      "disposition": "distilled",
+      "disposition": "merged:1b82b32f",
       "first_seen": "2026-07-18T15:21:41Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22745,12 +22839,14 @@
       "state": "open",
       "title": "build(deps): bump the github-actions-deps group across 1 directory with 11 updates",
       "updated_at": "2026-07-18T15:32:59Z",
-      "url": "https://github.com/organvm/my-knowledge-base/pull/78"
+      "url": "https://github.com/organvm/my-knowledge-base/pull/78",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 1b82b32f",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/my-knowledge-base#79": {
       "comments": 1,
       "created_at": "2026-07-17T01:38:54Z",
-      "disposition": "distilled",
+      "disposition": "merged:f128aaad",
       "first_seen": "2026-07-18T15:21:41Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22762,7 +22858,9 @@
       "state": "open",
       "title": "build(deps): bump the npm-deps group across 2 directories with 27 updates",
       "updated_at": "2026-07-18T15:32:52Z",
-      "url": "https://github.com/organvm/my-knowledge-base/pull/79"
+      "url": "https://github.com/organvm/my-knowledge-base/pull/79",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit f128aaad",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/narratological-algorithmic-lenses#24": {
       "comments": 0,
@@ -22815,7 +22913,7 @@
     "organvm/narratological-algorithmic-lenses#49": {
       "comments": 0,
       "created_at": "2026-07-09T19:45:06Z",
-      "disposition": "queued",
+      "disposition": "merged:b7be9d80",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22826,7 +22924,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump the pip-deps group across 1 directory with 3 updates",
       "updated_at": "2026-07-16T19:44:43Z",
-      "url": "https://github.com/organvm/narratological-algorithmic-lenses/pull/49"
+      "url": "https://github.com/organvm/narratological-algorithmic-lenses/pull/49",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit b7be9d80",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/narratological-algorithmic-lenses#50": {
       "comments": 0,
@@ -22847,7 +22947,7 @@
     "organvm/narratological-algorithmic-lenses#51": {
       "comments": 0,
       "created_at": "2026-07-16T19:44:20Z",
-      "disposition": "queued",
+      "disposition": "merged:5adb3fca",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22858,7 +22958,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
       "updated_at": "2026-07-16T19:44:21Z",
-      "url": "https://github.com/organvm/narratological-algorithmic-lenses/pull/51"
+      "url": "https://github.com/organvm/narratological-algorithmic-lenses/pull/51",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 5adb3fca",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/netmode#10": {
       "comments": 0,
@@ -23087,7 +23189,7 @@
     "organvm/object-lessons#25": {
       "comments": 0,
       "created_at": "2026-07-17T05:14:07Z",
-      "disposition": "queued",
+      "disposition": "merged:77267478",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23098,12 +23200,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T05:14:08Z",
-      "url": "https://github.com/organvm/object-lessons/pull/25"
+      "url": "https://github.com/organvm/object-lessons/pull/25",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 77267478",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/object-lessons#26": {
       "comments": 0,
       "created_at": "2026-07-17T05:16:31Z",
-      "disposition": "queued",
+      "disposition": "merged:373efc66",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23114,7 +23218,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 10 updates",
       "updated_at": "2026-07-17T05:16:32Z",
-      "url": "https://github.com/organvm/object-lessons/pull/26"
+      "url": "https://github.com/organvm/object-lessons/pull/26",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 373efc66",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/ops#1": {
       "comments": 0,
@@ -23983,7 +24089,7 @@
     "organvm/orchestration-start-here#177": {
       "comments": 0,
       "created_at": "2026-06-20T10:05:23Z",
-      "disposition": "queued",
+      "disposition": "merged:6ab39f0d",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23994,7 +24100,9 @@
       "state": "open",
       "title": "[limen GEN-a-organvm-orchestration-start-here-ci-green-0620] Make a-organvm/orchestration-start-here CI green",
       "updated_at": "2026-06-20T10:05:23Z",
-      "url": "https://github.com/organvm/orchestration-start-here/pull/177"
+      "url": "https://github.com/organvm/orchestration-start-here/pull/177",
+      "evidence": "limen-generated CI-green PR; adds py3.11/3.12 test matrix; all checks green; owner-authored (self-approval deadlock) admin-merged.",
+      "last_touched": "2026-07-19T07:52:20Z"
     },
     "organvm/orchestration-start-here#179": {
       "comments": 0,
@@ -29551,7 +29659,7 @@
     "organvm/organvm-ontologia#9": {
       "comments": 0,
       "created_at": "2026-06-19T16:50:45Z",
-      "disposition": "queued",
+      "disposition": "merged:d2a1fd50",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29562,7 +29670,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 4 updates",
       "updated_at": "2026-07-17T00:44:11Z",
-      "url": "https://github.com/organvm/organvm-ontologia/pull/9"
+      "url": "https://github.com/organvm/organvm-ontologia/pull/9",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d2a1fd50",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/organvm-scrutator#2": {
       "comments": 0,
@@ -29583,7 +29693,7 @@
     "organvm/organvm-scrutator#7": {
       "comments": 0,
       "created_at": "2026-07-12T19:33:30Z",
-      "disposition": "queued",
+      "disposition": "merged:0e491921",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29594,7 +29704,9 @@
       "state": "open",
       "title": "chore(deps-dev): update hatchling requirement from <1.31,>=1.25 to >=1.25,<1.32 in the pip-deps group across 1 directory",
       "updated_at": "2026-07-12T19:33:31Z",
-      "url": "https://github.com/organvm/organvm-scrutator/pull/7"
+      "url": "https://github.com/organvm/organvm-scrutator/pull/7",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 0e491921",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/organvm-v-logos--superproject#6": {
       "comments": 0,
@@ -29727,7 +29839,7 @@
     "organvm/padavano#11": {
       "comments": 0,
       "created_at": "2026-07-04T13:32:57Z",
-      "disposition": "queued",
+      "disposition": "merged:d25c09c4",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -29738,7 +29850,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 3 updates",
       "updated_at": "2026-07-18T13:32:59Z",
-      "url": "https://github.com/organvm/padavano/pull/11"
+      "url": "https://github.com/organvm/padavano/pull/11",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d25c09c4",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/pages--theoria-copy--4444j99#1": {
       "comments": 0,
@@ -30127,7 +30241,7 @@
     "organvm/parlor-games--ephemera-engine#179": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:11Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30138,12 +30252,14 @@
       "state": "open",
       "title": "T05: Build Question Lineage Selector screen",
       "updated_at": "2026-06-12T14:59:04Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/179"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/179",
+      "evidence": "QuestionLineageSelector + LineagePicker exist with 4 lineages plus Surprise me.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#180": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:14Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30154,12 +30270,14 @@
       "state": "open",
       "title": "T06: Build Board Preview and Question Curation screen",
       "updated_at": "2026-06-12T14:59:03Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/180"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/180",
+      "evidence": "BoardPreview exists; missing reorder/warnings/add-lineage; targeted tests fail before assertions.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#181": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:17Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30170,12 +30288,14 @@
       "state": "open",
       "title": "T07: Build Board Configuration screen",
       "updated_at": "2026-06-12T14:59:02Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/181"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/181",
+      "evidence": "BoardConfiguration exists; only classic/modern + grid/list, not digital/physical/hybrid/print.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#182": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:20Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30186,12 +30306,14 @@
       "state": "open",
       "title": "T08: Build Contribution Archetype Assignment",
       "updated_at": "2026-06-12T14:59:01Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/182"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/182",
+      "evidence": "ArchetypeAssigner exists; auto-only, 3 archetypes, no manual/player-choice.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#183": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:23Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30202,12 +30324,14 @@
       "state": "open",
       "title": "T09: Build Digital Board display",
       "updated_at": "2026-06-12T14:59:00Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/183"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/183",
+      "evidence": "DigitalBoard exists; in-memory, no local DB/gap preservation/removal animation.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#184": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:26Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30218,12 +30342,14 @@
       "state": "open",
       "title": "T10: Build Chain Tracker with turn state management",
       "updated_at": "2026-06-12T14:58:59Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/184"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/184",
+      "evidence": "ChainTracker exists; full inheritance/choice turn state remains skeletal.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#185": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:29Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30234,12 +30360,14 @@
       "state": "open",
       "title": "T11: Implement bookmark, undo, and chain persistence",
       "updated_at": "2026-06-12T14:58:58Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/185"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/185",
+      "evidence": "BookmarkButton/chainStore exist; no undo window or persistence/rehydration.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#186": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:32Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30250,12 +30378,14 @@
       "state": "open",
       "title": "T12: Build Player Order configuration and turn order bar",
       "updated_at": "2026-06-12T14:58:57Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/186"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/186",
+      "evidence": "PlayerOrderConfig/Bar exist; no seating/manual drag/runtime reorder.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#187": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30266,12 +30396,14 @@
       "state": "open",
       "title": "T13: Build The Portrait screen",
       "updated_at": "2026-06-12T14:58:56Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/187"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/187",
+      "evidence": "ThePortrait exists; usePortrait still emits placeholder answers and console complete.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#188": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:38Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30282,12 +30414,14 @@
       "state": "open",
       "title": "T14: Build The Return variant screen",
       "updated_at": "2026-06-12T14:58:55Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/188"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/188",
+      "evidence": "TheReturn exists; placeholder question list, no ReturnEntry tracking.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#189": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:41Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30298,12 +30432,14 @@
       "state": "open",
       "title": "T15: Build artifact data assembler and template integration",
       "updated_at": "2026-06-12T14:58:54Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/189"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/189",
+      "evidence": "artifactDataAssembler.ts is a 14-line passthrough, not fixture/template integration.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#190": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:44Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30314,12 +30450,14 @@
       "state": "open",
       "title": "T16: Integrate artifact generation trigger with 006-artifact-pipeline",
       "updated_at": "2026-06-12T14:58:53Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/190"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/190",
+      "evidence": "ArtifactGeneration/useArtifactStatus are mocked with setTimeout.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#191": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:47Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30330,12 +30468,14 @@
       "state": "open",
       "title": "T17: Implement Proust's Answer scheduled generation",
       "updated_at": "2026-06-12T14:58:52Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/191"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/191",
+      "evidence": "generate-prousts-answer function is a stub; no query/render/upload/notify.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#192": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:50Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30346,12 +30486,14 @@
       "state": "open",
       "title": "T18: End-to-end tests and constitution gate audit",
       "updated_at": "2026-06-12T14:58:51Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/192"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/192",
+      "evidence": "E2E files are placeholders; confession tests fail due missing globals/package.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#193": {
       "comments": 1,
       "created_at": "2026-02-23T19:41:57Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30362,12 +30504,14 @@
       "state": "open",
       "title": "T001: Create Murder Mystery feature module directory structure",
       "updated_at": "2026-06-12T14:58:49Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/193"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/193",
+      "evidence": "app/src/features/murder-mystery has screens/components/hooks/services/types/utils.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#194": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:00Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30378,12 +30522,14 @@
       "state": "open",
       "title": "T002: Create TypeScript interfaces for Murder Mystery entities",
       "updated_at": "2026-06-12T14:58:48Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/194"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/194",
+      "evidence": "murder-mystery.ts defines core Murder Mystery interfaces.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#195": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:03Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30394,12 +30540,14 @@
       "state": "open",
       "title": "T003: Install and configure Murder Mystery dependencies",
       "updated_at": "2026-06-12T14:58:47Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/195"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/195",
+      "evidence": "app/package.json has RN/Expo deps; generate-seed imports Anthropic SDK.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#196": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:06Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30410,12 +30558,14 @@
       "state": "open",
       "title": "T004: Create Supabase migration for murder_mystery_config",
       "updated_at": "2026-06-12T14:58:46Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/196"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/196",
+      "evidence": "20260611161919_murder_mystery_config.sql adds config constraint/index/RLS.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#197": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:09Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30426,12 +30576,14 @@
       "state": "open",
       "title": "T005: Create local database schema for Murder Mystery",
       "updated_at": "2026-06-12T14:58:45Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/197"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/197",
+      "evidence": "No requested mm_* local DB schema; current offline path is MMKV cache.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#198": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:12Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30442,12 +30594,14 @@
       "state": "open",
       "title": "T006: Create seed_generation_log table via Supabase migration",
       "updated_at": "2026-06-12T14:58:44Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/198"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/198",
+      "evidence": "20260611161920_seed_generation_log.sql exists with RLS.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#199": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:15Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30458,12 +30612,14 @@
       "state": "open",
       "title": "T007: Implement offline sync service for Murder Mystery",
       "updated_at": "2026-06-12T14:58:43Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/199"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/199",
+      "evidence": "offlineSync.ts + murderMysterySync.ts implement queue/pre-cache/reconnect sync.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#200": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:18Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30474,12 +30630,14 @@
       "state": "open",
       "title": "T008: Create scenario validation utility",
       "updated_at": "2026-06-12T14:58:42Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/200"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/200",
+      "evidence": "scenarioValidation.ts exists; targeted test passed 10/10.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#201": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30490,12 +30648,14 @@
       "state": "open",
       "title": "T009: Seed curated scenarios into Supabase",
       "updated_at": "2026-06-12T14:58:40Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/201"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/201",
+      "evidence": "5 YAML seeds exist; no supabase/seed/curated-seeds.sql scenario seed.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#202": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:25Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30506,12 +30666,14 @@
       "state": "open",
       "title": "T010: Create generate-seed Supabase Edge Function",
       "updated_at": "2026-06-12T14:58:39Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/202"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/202",
+      "evidence": "generate-seed exists; rate-limit test fails and insert columns mismatch migration.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#203": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:28Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30522,12 +30684,14 @@
       "state": "open",
       "title": "T011: Create seed generation client service",
       "updated_at": "2026-06-12T14:58:38Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/203"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/203",
+      "evidence": "SeedGenerationService invokes Edge Function, fallback, and save.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#204": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:31Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30538,12 +30702,14 @@
       "state": "open",
       "title": "T012: Create useSettingSeed hook",
       "updated_at": "2026-06-12T14:58:37Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/204"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/204",
+      "evidence": "useSettingSeed exposes generate/confirm/clear/loading/error state.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#205": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:34Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30554,12 +30720,14 @@
       "state": "open",
       "title": "T013: Create SettingSeedBrowserScreen",
       "updated_at": "2026-06-12T14:58:36Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/205"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/205",
+      "evidence": "Exact SettingSeedBrowserScreen missing; ScenarioSetup partially covers curated list.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#206": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:37Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30570,12 +30738,14 @@
       "state": "open",
       "title": "T014: Create SettingSeedCard component",
       "updated_at": "2026-06-12T14:58:35Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/206"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/206",
+      "evidence": "SettingCard is substantive selectable seed preview component.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#207": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30586,12 +30756,14 @@
       "state": "open",
       "title": "T015: Create SettingSeedGeneratorScreen",
       "updated_at": "2026-06-12T14:58:33Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/207"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/207",
+      "evidence": "Exact generator screen missing; no four-axis selectors/full-random.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#208": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:43Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30602,12 +30774,14 @@
       "state": "open",
       "title": "T016: Create ScenarioReviewScreen",
       "updated_at": "2026-06-12T14:58:32Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/208"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/208",
+      "evidence": "ScenarioReview displays scenario but editing fields are not wired.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#209": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:46Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30618,12 +30792,14 @@
       "state": "open",
       "title": "T017: Write unit tests for scenario validation",
       "updated_at": "2026-06-12T14:58:31Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/209"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/209",
+      "evidence": "scenarioValidation unit test exists and passed 10 tests.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#210": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30634,12 +30810,14 @@
       "state": "open",
       "title": "T018: Write integration test for seed generation",
       "updated_at": "2026-06-12T14:58:30Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/210"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/210",
+      "evidence": "seedGeneration integration test exists; targeted run 2 passed/1 failed.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#211": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:52Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30650,12 +30828,14 @@
       "state": "open",
       "title": "T019: Create useCharacters hook",
       "updated_at": "2026-06-12T14:58:28Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/211"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/211",
+      "evidence": "useCharacters exists; preference assignment mode missing.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#212": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:55Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30666,12 +30846,14 @@
       "state": "open",
       "title": "T020: Create CharacterEntry component",
       "updated_at": "2026-06-12T14:58:27Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/212"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/212",
+      "evidence": "CharacterEntry renders character/secret/assignment state.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#213": {
       "comments": 1,
       "created_at": "2026-02-23T19:42:58Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30682,12 +30864,14 @@
       "state": "open",
       "title": "T021: Create CharacterCustomizationScreen",
       "updated_at": "2026-06-12T14:58:26Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/213"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/213",
+      "evidence": "CharacterCustomization exists; no drag-and-drop assignment.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#214": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:02Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30698,12 +30882,14 @@
       "state": "open",
       "title": "T022: Create CharacterPacketScreen",
       "updated_at": "2026-06-12T14:58:25Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/214"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/214",
+      "evidence": "CharacterPacket exists; screen does not implement offline caching.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#215": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:05Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30714,12 +30900,14 @@
       "state": "open",
       "title": "T023: Implement character assignment API",
       "updated_at": "2026-06-12T14:58:24Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/215"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/215",
+      "evidence": "Assignment uses direct Supabase/MMKV; no POST endpoint.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#216": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:08Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30730,12 +30918,14 @@
       "state": "open",
       "title": "T024: Implement character delivery API",
       "updated_at": "2026-06-12T14:58:23Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/216"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/216",
+      "evidence": "Delivery queues app notifications only; no web email/status tracking.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#217": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30746,12 +30936,14 @@
       "state": "open",
       "title": "T025: Write integration test for character delivery",
       "updated_at": "2026-06-12T14:58:22Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/217"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/217",
+      "evidence": "characterDelivery test exists but fails with Unexpected token typeof.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#218": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:14Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30762,12 +30954,14 @@
       "state": "open",
       "title": "T026: Create useGameNight hook",
       "updated_at": "2026-06-12T14:58:21Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/218"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/218",
+      "evidence": "useGameNight loads local MMKV and advances acts via service.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#219": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:18Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30778,12 +30972,14 @@
       "state": "open",
       "title": "T027: Create useClues hook",
       "updated_at": "2026-06-12T14:58:20Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/219"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/219",
+      "evidence": "useClues exists but screen expects missing APIs and schema drifts.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#220": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:21Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30794,12 +30990,14 @@
       "state": "open",
       "title": "T028: Create ActProgressIndicator component",
       "updated_at": "2026-06-12T14:58:19Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/220"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/220",
+      "evidence": "ActProgressIndicator implements 3-act progress UI.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#221": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:24Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30810,12 +31008,14 @@
       "state": "open",
       "title": "T029: Create ClueChecklistItem component",
       "updated_at": "2026-06-12T14:58:18Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/221"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/221",
+      "evidence": "ClueChecklistItem renders/toggles clue distribution card.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#222": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:27Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30826,12 +31026,14 @@
       "state": "open",
       "title": "T030: Create ThreeActDashboardScreen",
       "updated_at": "2026-06-12T14:58:17Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/222"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/222",
+      "evidence": "ThreeActDashboard exists; missing brightness/timer/new-evidence/30s undo.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#223": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:30Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30842,12 +31044,14 @@
       "state": "open",
       "title": "T031: Create ClueDistributionScreen",
       "updated_at": "2026-06-12T14:58:16Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/223"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/223",
+      "evidence": "ClueDistributionScreen exists but calls missing hook methods.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#224": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30858,12 +31062,14 @@
       "state": "open",
       "title": "T032: Create RevealScreen",
       "updated_at": "2026-06-12T14:58:15Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/224"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/224",
+      "evidence": "RevealScreen exists; red herrings/closest-accusation incomplete.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#225": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:37Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30874,12 +31080,14 @@
       "state": "open",
       "title": "T033: Write integration test for game night dashboard",
       "updated_at": "2026-06-12T14:58:14Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/225"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/225",
+      "evidence": "gameNightDashboard test exists but RN parse/Flow failure blocks it.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#226": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30890,12 +31098,14 @@
       "state": "open",
       "title": "T034: Write E2E test for offline game night",
       "updated_at": "2026-06-12T14:58:13Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/226"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/226",
+      "evidence": "offline E2E exists but fails before assertions; no device run verified.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#227": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:43Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30906,12 +31116,14 @@
       "state": "open",
       "title": "T035: Create useAccusations hook",
       "updated_at": "2026-06-12T14:58:11Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/227"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/227",
+      "evidence": "useAccusations exists; not offline-first/sealed reveal-gated.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#228": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30922,12 +31134,14 @@
       "state": "open",
       "title": "T036: Create useAwards hook",
       "updated_at": "2026-06-12T14:58:10Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/228"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/228",
+      "evidence": "useAwards exists; no offline queue/sync.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#229": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:49Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30938,12 +31152,14 @@
       "state": "open",
       "title": "T037: Create AccusationBlock component",
       "updated_at": "2026-06-12T14:58:09Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/229"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/229",
+      "evidence": "AccusationBlock display card exists.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#230": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:52Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30954,12 +31170,14 @@
       "state": "open",
       "title": "T038: Create AwardCategoryCard component",
       "updated_at": "2026-06-12T14:58:08Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/230"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/230",
+      "evidence": "AwardCategoryCard nominee single-select exists.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#231": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:55Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30970,12 +31188,14 @@
       "state": "open",
       "title": "T039: Create AccusationFormScreen",
       "updated_at": "2026-06-12T14:58:07Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/231"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/231",
+      "evidence": "AccusationFormScreen has suspect/method/motive/seal flow.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#232": {
       "comments": 1,
       "created_at": "2026-02-23T19:43:58Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30986,12 +31206,14 @@
       "state": "open",
       "title": "T040: Create AwardsVotingScreen",
       "updated_at": "2026-06-12T14:58:06Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/232"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/232",
+      "evidence": "AwardsVotingScreen has 5 categories and self-vote exclusion.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#233": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:01Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31002,12 +31224,14 @@
       "state": "open",
       "title": "T041: Implement Accusation and Awards API endpoints",
       "updated_at": "2026-06-12T14:58:05Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/233"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/233",
+      "evidence": "OpenAPI declares endpoints; implementation uses direct session updates.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#234": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:04Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31018,12 +31242,14 @@
       "state": "open",
       "title": "T042: Create murder mystery artifact data assembly service",
       "updated_at": "2026-06-12T14:58:03Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/234"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/234",
+      "evidence": "Artifact services exist, but one uses stale data shape and tests fail import.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#235": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:07Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31034,12 +31260,14 @@
       "state": "open",
       "title": "T043: Extend render-artifact Edge Function for mm_dossier",
       "updated_at": "2026-06-12T14:58:02Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/235"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/235",
+      "evidence": "render-artifact accepts mm_dossier but uploads dummy PDF bytes.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#236": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:10Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31050,12 +31278,14 @@
       "state": "open",
       "title": "T044: Wire artifact generation from post-game screen",
       "updated_at": "2026-06-12T14:58:01Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/236"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/236",
+      "evidence": "Local PDF/partial trigger exists; no post-game mm_dossier+mm_menu trigger.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#237": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31066,12 +31296,14 @@
       "state": "open",
       "title": "T045: Implement artifact distribution",
       "updated_at": "2026-06-12T14:58:00Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/237"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/237",
+      "evidence": "Artifact notifications queued; no email/PDF attachment path.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#238": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:15Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31082,12 +31314,14 @@
       "state": "open",
       "title": "T046: Write integration test for artifact generation",
       "updated_at": "2026-06-12T14:57:59Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/238"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/238",
+      "evidence": "artifactGeneration payload tests pass 3/3; no PDF/content verification.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#239": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:19Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31098,12 +31332,14 @@
       "state": "open",
       "title": "T047: Extend artifact assembly for recipe data",
       "updated_at": "2026-06-12T14:57:58Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/239"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/239",
+      "evidence": "Menu data uses character briefs, not contributions table recipes.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#240": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:21Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31114,12 +31350,14 @@
       "state": "open",
       "title": "T048: Extend render-artifact for mm_menu artifact type",
       "updated_at": "2026-06-12T14:57:57Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/240"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/240",
+      "evidence": "mm_menu accepted by mock render-artifact only; no real/auto rendering.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#241": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:24Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31130,12 +31368,14 @@
       "state": "open",
       "title": "T049: Handle edge case for insufficient recipes",
       "updated_at": "2026-06-12T14:57:56Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/241"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/241",
+      "evidence": "No fewer-than-2-recipes guard found; next step is validation/prompt.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#242": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:28Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31146,12 +31386,14 @@
       "state": "open",
       "title": "T050: Create EpilogueWritingScreen",
       "updated_at": "2026-06-12T14:57:55Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/242"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/242",
+      "evidence": "EpilogueWritingScreen exists; no delivery-date configuration.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#243": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:30Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31162,12 +31404,14 @@
       "state": "open",
       "title": "T051: Implement epilogue save API",
       "updated_at": "2026-06-12T14:57:54Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/243"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/243",
+      "evidence": "Epilogue save updates session config directly; no PUT endpoint.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#244": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31178,12 +31422,14 @@
       "state": "open",
       "title": "T052: Extend render-artifact for mm_sealed_envelope",
       "updated_at": "2026-06-12T14:57:53Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/244"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/244",
+      "evidence": "mm_sealed_envelope accepted by mock renderer; no personalized PDFs.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#245": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:37Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31194,12 +31440,14 @@
       "state": "open",
       "title": "T053: Implement scheduled delivery",
       "updated_at": "2026-06-12T14:57:51Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/245"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/245",
+      "evidence": "epilogue-cron queues due notifications; no schedule/PDF delivery verified.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#246": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:40Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31210,12 +31458,14 @@
       "state": "open",
       "title": "T054: Implement host writing prompt notification",
       "updated_at": "2026-06-12T14:57:50Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/246"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/246",
+      "evidence": "epilogue-cron queues 2-day EPILOGUE_PROMPT notifications.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#247": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:44Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31226,12 +31476,14 @@
       "state": "open",
       "title": "T055: Implement weekly reminder flow",
       "updated_at": "2026-06-12T14:57:49Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/247"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/247",
+      "evidence": "weekly reminders exist; no 4-week cap/reminder count.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#248": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:47Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31242,12 +31494,14 @@
       "state": "open",
       "title": "T056: Create era-specific overlay assets",
       "updated_at": "2026-06-12T14:57:48Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/248"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/248",
+      "evidence": "No overlay asset directory/files; overlays are inline only.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#249": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:50Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31258,12 +31512,14 @@
       "state": "open",
       "title": "T057: Create SocietyPageCameraScreen",
       "updated_at": "2026-06-12T14:57:47Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/249"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/249",
+      "evidence": "SocietyPageCameraScreen uses Expo Camera with 3 era overlays.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#250": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:54Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31274,12 +31530,14 @@
       "state": "open",
       "title": "T058: Implement photo compositing",
       "updated_at": "2026-06-12T14:57:46Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/250"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/250",
+      "evidence": "SocietyPageCameraScreen composites via ViewShot and saves via MediaLibrary.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#251": {
       "comments": 1,
       "created_at": "2026-02-23T19:44:57Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31290,12 +31548,14 @@
       "state": "open",
       "title": "T059: Create clue distribution utility",
       "updated_at": "2026-06-12T14:57:45Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/251"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/251",
+      "evidence": "No clueDistribution utility found.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#252": {
       "comments": 1,
       "created_at": "2026-02-23T19:45:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31306,12 +31566,14 @@
       "state": "open",
       "title": "T060: Add navigation routes for all Murder Mystery screens",
       "updated_at": "2026-06-12T14:57:43Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/252"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/252",
+      "evidence": "Many Expo routes exist; not every named screen is routed.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#253": {
       "comments": 1,
       "created_at": "2026-02-23T19:45:03Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31322,12 +31584,14 @@
       "state": "open",
       "title": "T061: Error handling for Claude API, artifact, and sync failures",
       "updated_at": "2026-06-12T14:57:42Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/253"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/253",
+      "evidence": "Some fallback/backoff exists; artifact/sync failure UX incomplete.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#254": {
       "comments": 1,
       "created_at": "2026-02-23T19:45:06Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31338,12 +31602,14 @@
       "state": "open",
       "title": "T062: Accessibility audit",
       "updated_at": "2026-06-12T14:57:41Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/254"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/254",
+      "evidence": "Some accessibility labels/minHeight exist; no full audit coverage.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#255": {
       "comments": 1,
       "created_at": "2026-02-23T19:45:09Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31354,12 +31620,14 @@
       "state": "open",
       "title": "T063: Performance optimization",
       "updated_at": "2026-06-12T14:57:40Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/255"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/255",
+      "evidence": "No lazy-load/query optimization found; typecheck currently fails.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#256": {
       "comments": 1,
       "created_at": "2026-02-23T19:45:12Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31370,12 +31638,14 @@
       "state": "open",
       "title": "T064: Run all quickstart.md validation scenarios",
       "updated_at": "2026-06-12T14:57:39Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/256"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/256",
+      "evidence": "Quickstarts not verified; npm test/typecheck fail.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#257": {
       "comments": 1,
       "created_at": "2026-02-23T19:45:15Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31386,12 +31656,14 @@
       "state": "open",
       "title": "T065: Write unit tests for clue distribution utility",
       "updated_at": "2026-06-12T14:57:37Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/257"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/257",
+      "evidence": "No clueDistribution.test.ts or utility exists.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#258": {
       "comments": 1,
       "created_at": "2026-02-23T19:45:18Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31402,12 +31674,14 @@
       "state": "open",
       "title": "T066: Write E2E test for full Murder Mystery flow",
       "updated_at": "2026-06-12T14:57:36Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/258"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/issues/258",
+      "evidence": "Maestro full-flow YAML exists; runnable murderMysteryFlow.test.ts absent.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/parlor-games--ephemera-engine#269": {
       "comments": 0,
       "created_at": "2026-07-17T00:14:09Z",
-      "disposition": "queued",
+      "disposition": "merged:b7651931",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -31418,7 +31692,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T00:14:10Z",
-      "url": "https://github.com/organvm/parlor-games--ephemera-engine/pull/269"
+      "url": "https://github.com/organvm/parlor-games--ephemera-engine/pull/269",
+      "evidence": "CI typecheck SUCCESS; mergeable CLEAN; squash merged.",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/peer-audited--behavioral-blockchain#100": {
       "comments": 2,
@@ -39873,7 +40149,7 @@
     "organvm/persona-fleet#12": {
       "comments": 0,
       "created_at": "2026-07-10T23:25:11Z",
-      "disposition": "queued",
+      "disposition": "merged:78c239e7",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39884,7 +40160,9 @@
       "state": "open",
       "title": "build(deps-dev): bump the npm-deps group across 1 directory with 7 updates",
       "updated_at": "2026-07-17T23:25:08Z",
-      "url": "https://github.com/organvm/persona-fleet/pull/12"
+      "url": "https://github.com/organvm/persona-fleet/pull/12",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 78c239e7",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/persona-fleet#3": {
       "comments": 0,
@@ -42029,7 +42307,7 @@
     "organvm/promptscope#17": {
       "comments": 0,
       "created_at": "2026-07-13T03:14:51Z",
-      "disposition": "queued",
+      "disposition": "merged:23f5b054",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42040,7 +42318,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump typescript from 6.0.3 to 7.0.2 in the npm-deps group across 1 directory",
       "updated_at": "2026-07-13T03:14:52Z",
-      "url": "https://github.com/organvm/promptscope/pull/17"
+      "url": "https://github.com/organvm/promptscope/pull/17",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 23f5b054",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/promptscope#7": {
       "comments": 3,
@@ -42237,7 +42517,7 @@
     "organvm/public-process#26": {
       "comments": 0,
       "created_at": "2026-06-25T01:43:47Z",
-      "disposition": "queued",
+      "disposition": "merged:ccfd8a78",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42248,7 +42528,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/checkout from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T01:44:06Z",
-      "url": "https://github.com/organvm/public-process/pull/26"
+      "url": "https://github.com/organvm/public-process/pull/26",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit ccfd8a78",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/public-process#27": {
       "comments": 0,
@@ -42814,7 +43096,7 @@
     "organvm/radix-recursiva-solve-coagula-redi#99": {
       "comments": 0,
       "created_at": "2026-06-26T22:03:05Z",
-      "disposition": "queued",
+      "disposition": "merged:e901a5ae",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42825,7 +43107,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-python from 6.2.0 to 6.3.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T22:03:39Z",
-      "url": "https://github.com/organvm/radix-recursiva-solve-coagula-redi/pull/99"
+      "url": "https://github.com/organvm/radix-recursiva-solve-coagula-redi/pull/99",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit e901a5ae",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/reading-group-curriculum#6": {
       "comments": 0,
@@ -42910,7 +43194,7 @@
     "organvm/recursive-engine--generative-entity#23": {
       "comments": 0,
       "created_at": "2026-07-09T07:34:34Z",
-      "disposition": "queued",
+      "disposition": "merged:7a9e6821",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42921,12 +43205,14 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 1 directory with 3 updates",
       "updated_at": "2026-07-16T07:34:45Z",
-      "url": "https://github.com/organvm/recursive-engine--generative-entity/pull/23"
+      "url": "https://github.com/organvm/recursive-engine--generative-entity/pull/23",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 7a9e6821",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/recursive-engine--generative-entity#24": {
       "comments": 0,
       "created_at": "2026-07-09T07:34:39Z",
-      "disposition": "queued",
+      "disposition": "merged:c24edc3e",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42937,7 +43223,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
       "updated_at": "2026-07-16T07:34:38Z",
-      "url": "https://github.com/organvm/recursive-engine--generative-entity/pull/24"
+      "url": "https://github.com/organvm/recursive-engine--generative-entity/pull/24",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit c24edc3e",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/relationship-pipeline#1": {
       "comments": 0,
@@ -43138,7 +43426,7 @@
     "organvm/reverse-engine-recursive-run#12": {
       "comments": 0,
       "created_at": "2026-06-25T23:33:52Z",
-      "disposition": "queued",
+      "disposition": "merged:5cef82a5",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43149,7 +43437,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-python from 6.2.0 to 6.3.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T23:34:09Z",
-      "url": "https://github.com/organvm/reverse-engine-recursive-run/pull/12"
+      "url": "https://github.com/organvm/reverse-engine-recursive-run/pull/12",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 5cef82a5",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/reverse-engine-recursive-run#7": {
       "comments": 0,
@@ -43298,7 +43588,7 @@
     "organvm/scale-threshold-emergence#10": {
       "comments": 0,
       "created_at": "2026-07-17T21:14:26Z",
-      "disposition": "queued",
+      "disposition": "merged:9ad7bde8",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43309,7 +43599,9 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-17T21:14:27Z",
-      "url": "https://github.com/organvm/scale-threshold-emergence/pull/10"
+      "url": "https://github.com/organvm/scale-threshold-emergence/pull/10",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 9ad7bde8",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/scale-threshold-emergence#4": {
       "comments": 1,
@@ -43346,7 +43638,7 @@
     "organvm/scale-threshold-emergence#9": {
       "comments": 0,
       "created_at": "2026-07-17T21:13:52Z",
-      "disposition": "queued",
+      "disposition": "merged:a203a67c",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43357,7 +43649,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-17T21:13:53Z",
-      "url": "https://github.com/organvm/scale-threshold-emergence/pull/9"
+      "url": "https://github.com/organvm/scale-threshold-emergence/pull/9",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit a203a67c",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/schema-definitions#11": {
       "comments": 0,
@@ -43442,7 +43736,7 @@
     "organvm/search-local--happy-hour#44": {
       "comments": 0,
       "created_at": "2026-07-12T13:07:03Z",
-      "disposition": "queued",
+      "disposition": "merged:46243c9b",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43453,7 +43747,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 30 updates",
       "updated_at": "2026-07-12T13:07:04Z",
-      "url": "https://github.com/organvm/search-local--happy-hour/pull/44"
+      "url": "https://github.com/organvm/search-local--happy-hour/pull/44",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 46243c9b",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/select-or-left-or-right-or#2": {
       "comments": 0,
@@ -43490,7 +43786,7 @@
     "organvm/select-or-left-or-right-or#34": {
       "comments": 0,
       "created_at": "2026-07-17T20:14:21Z",
-      "disposition": "queued",
+      "disposition": "merged:a1ca577e",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43501,7 +43797,9 @@
       "state": "open",
       "title": "Bump the npm-deps group across 1 directory with 3 updates",
       "updated_at": "2026-07-17T20:14:22Z",
-      "url": "https://github.com/organvm/select-or-left-or-right-or/pull/34"
+      "url": "https://github.com/organvm/select-or-left-or-right-or/pull/34",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit a1ca577e",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/select-or-left-or-right-or#4": {
       "comments": 0,
@@ -43554,7 +43852,7 @@
     "organvm/sema-metra--alchemica-mundi#26": {
       "comments": 0,
       "created_at": "2026-07-09T17:14:57Z",
-      "disposition": "queued",
+      "disposition": "merged:f8baa265",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43565,12 +43863,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 4 updates",
       "updated_at": "2026-07-16T17:14:49Z",
-      "url": "https://github.com/organvm/sema-metra--alchemica-mundi/pull/26"
+      "url": "https://github.com/organvm/sema-metra--alchemica-mundi/pull/26",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit f8baa265",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/sema-metra--alchemica-mundi#27": {
       "comments": 0,
       "created_at": "2026-07-16T17:14:34Z",
-      "disposition": "queued",
+      "disposition": "merged:ad5b88da",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43581,7 +43881,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6.4.0 to 7.0.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T17:14:36Z",
-      "url": "https://github.com/organvm/sema-metra--alchemica-mundi/pull/27"
+      "url": "https://github.com/organvm/sema-metra--alchemica-mundi/pull/27",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit ad5b88da",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/session-meta#10": {
       "comments": 194,
@@ -44349,7 +44651,7 @@
     "organvm/shared-remembrance-gateway#11": {
       "comments": 0,
       "created_at": "2026-07-17T08:34:07Z",
-      "disposition": "queued",
+      "disposition": "merged:0b8fccd1",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44360,12 +44662,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T08:34:07Z",
-      "url": "https://github.com/organvm/shared-remembrance-gateway/pull/11"
+      "url": "https://github.com/organvm/shared-remembrance-gateway/pull/11",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 0b8fccd1",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/shared-remembrance-gateway#12": {
       "comments": 0,
       "created_at": "2026-07-17T08:34:51Z",
-      "disposition": "queued",
+      "disposition": "merged:58475665",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44376,12 +44680,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 4 updates",
       "updated_at": "2026-07-17T08:34:52Z",
-      "url": "https://github.com/organvm/shared-remembrance-gateway/pull/12"
+      "url": "https://github.com/organvm/shared-remembrance-gateway/pull/12",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 58475665",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/showcase-portfolio#15": {
       "comments": 0,
       "created_at": "2026-07-16T04:34:25Z",
-      "disposition": "queued",
+      "disposition": "merged:febcef28",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44392,7 +44698,9 @@
       "state": "open",
       "title": "chore(deps): bump astro from 7.0.5 to 7.0.9 in /docs/source-materials/specs in the npm-deps group across 1 directory",
       "updated_at": "2026-07-16T04:34:26Z",
-      "url": "https://github.com/organvm/showcase-portfolio/pull/15"
+      "url": "https://github.com/organvm/showcase-portfolio/pull/15",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit febcef28",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/showcase-portfolio#3": {
       "comments": 0,
@@ -44445,7 +44753,7 @@
     "organvm/sign-signal--voice-synth#17": {
       "comments": 0,
       "created_at": "2026-07-10T14:29:18Z",
-      "disposition": "queued",
+      "disposition": "merged:21ac4f4e",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44456,7 +44764,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 4 directories with 2 updates",
       "updated_at": "2026-07-17T14:31:24Z",
-      "url": "https://github.com/organvm/sign-signal--voice-synth/pull/17"
+      "url": "https://github.com/organvm/sign-signal--voice-synth/pull/17",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 21ac4f4e",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/sign-signal--voice-synth#2": {
       "comments": 0,
@@ -44605,7 +44915,7 @@
     "organvm/sovereign-ecosystem--real-estate-luxury#53": {
       "comments": 0,
       "created_at": "2026-07-16T07:53:58Z",
-      "disposition": "queued",
+      "disposition": "merged:d63e3624",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44616,12 +44926,14 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-16T07:53:59Z",
-      "url": "https://github.com/organvm/sovereign-ecosystem--real-estate-luxury/pull/53"
+      "url": "https://github.com/organvm/sovereign-ecosystem--real-estate-luxury/pull/53",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d63e3624",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/sovereign-ecosystem--real-estate-luxury#54": {
       "comments": 0,
       "created_at": "2026-07-16T08:00:45Z",
-      "disposition": "queued",
+      "disposition": "merged:f28f74d9",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44632,7 +44944,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 43 updates",
       "updated_at": "2026-07-16T08:00:46Z",
-      "url": "https://github.com/organvm/sovereign-ecosystem--real-estate-luxury/pull/54"
+      "url": "https://github.com/organvm/sovereign-ecosystem--real-estate-luxury/pull/54",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit f28f74d9",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/sovereign-systems--elevate-align#10": {
       "comments": 5,
@@ -45053,7 +45367,7 @@
     "organvm/sovereign-systems--elevate-align#270": {
       "comments": 0,
       "created_at": "2026-07-17T02:14:12Z",
-      "disposition": "queued",
+      "disposition": "merged:130db3fb",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45064,7 +45378,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-17T02:14:13Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/270"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/270",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 130db3fb",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/sovereign-systems--elevate-align#3": {
       "comments": 1,
@@ -45533,7 +45849,7 @@
     "organvm/specvla-ergon--avditor-mvndi#54": {
       "comments": 0,
       "created_at": "2026-07-17T03:24:04Z",
-      "disposition": "queued",
+      "disposition": "merged:1d641704",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45544,7 +45860,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T03:24:05Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/54"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/54",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 1d641704",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/specvla-ergon--avditor-mvndi#6": {
       "comments": 0,
@@ -45629,7 +45947,7 @@
     "organvm/speech-score-engine#13": {
       "comments": 0,
       "created_at": "2026-07-17T16:47:42Z",
-      "disposition": "queued",
+      "disposition": "merged:cc1eac1c",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45640,7 +45958,9 @@
       "state": "open",
       "title": "chore(deps-dev): bump turbo from 2.9.12 to 2.9.14",
       "updated_at": "2026-07-17T16:47:43Z",
-      "url": "https://github.com/organvm/speech-score-engine/pull/13"
+      "url": "https://github.com/organvm/speech-score-engine/pull/13",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit cc1eac1c",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/stakeholder-portal#46": {
       "comments": 0,
@@ -46173,7 +46493,7 @@
     "organvm/tab-bookmark-manager#34": {
       "comments": 0,
       "created_at": "2026-07-10T22:46:34Z",
-      "disposition": "queued",
+      "disposition": "merged:d6830040",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46184,12 +46504,14 @@
       "state": "open",
       "title": "chore(deps): bump morgan from 1.10.1 to 1.11.0 in /backend",
       "updated_at": "2026-07-10T22:46:34Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/pull/34"
+      "url": "https://github.com/organvm/tab-bookmark-manager/pull/34",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d6830040",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/tab-bookmark-manager#35": {
       "comments": 0,
       "created_at": "2026-07-17T06:54:03Z",
-      "disposition": "queued",
+      "disposition": "merged:db7c560b",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46200,12 +46522,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T06:54:04Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/pull/35"
+      "url": "https://github.com/organvm/tab-bookmark-manager/pull/35",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit db7c560b",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/tab-bookmark-manager#36": {
       "comments": 0,
       "created_at": "2026-07-17T20:15:42Z",
-      "disposition": "queued",
+      "disposition": "merged:613a041a",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46216,12 +46540,14 @@
       "state": "open",
       "title": "chore(deps): bump torch from 2.12.1 to 2.13.0 in /ml-service",
       "updated_at": "2026-07-17T20:15:43Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/pull/36"
+      "url": "https://github.com/organvm/tab-bookmark-manager/pull/36",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 613a041a",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/tab-bookmark-manager#37": {
       "comments": 0,
       "created_at": "2026-07-17T23:35:30Z",
-      "disposition": "queued",
+      "disposition": "merged:ae6694a3",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46232,7 +46558,9 @@
       "state": "open",
       "title": "chore(deps): bump nltk from 3.9.4 to 3.10.0 in /ml-service",
       "updated_at": "2026-07-17T23:35:31Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/pull/37"
+      "url": "https://github.com/organvm/tab-bookmark-manager/pull/37",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit ae6694a3",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/tab-bookmark-manager#4": {
       "comments": 1,
@@ -46798,7 +47126,7 @@
     "organvm/trade-perpetual-future#75": {
       "comments": 0,
       "created_at": "2026-07-02T19:54:06Z",
-      "disposition": "queued",
+      "disposition": "merged:d299b661",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46809,12 +47137,14 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-16T19:54:30Z",
-      "url": "https://github.com/organvm/trade-perpetual-future/pull/75"
+      "url": "https://github.com/organvm/trade-perpetual-future/pull/75",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d299b661",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/trade-perpetual-future#77": {
       "comments": 0,
       "created_at": "2026-07-09T19:57:54Z",
-      "disposition": "queued",
+      "disposition": "merged:3daabd35",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46825,12 +47155,14 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 2 directories with 18 updates",
       "updated_at": "2026-07-16T19:56:45Z",
-      "url": "https://github.com/organvm/trade-perpetual-future/pull/77"
+      "url": "https://github.com/organvm/trade-perpetual-future/pull/77",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 3daabd35",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/trade-perpetual-future#78": {
       "comments": 0,
       "created_at": "2026-07-16T19:54:30Z",
-      "disposition": "queued",
+      "disposition": "merged:3e15b0bc",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46841,7 +47173,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-16T19:54:31Z",
-      "url": "https://github.com/organvm/trade-perpetual-future/pull/78"
+      "url": "https://github.com/organvm/trade-perpetual-future/pull/78",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 3e15b0bc",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/trendpulse#5": {
       "comments": 1,
@@ -46962,7 +47296,7 @@
     "organvm/universal-mail--automation#167": {
       "comments": 1,
       "created_at": "2026-07-14T04:13:12Z",
-      "disposition": "evolving",
+      "disposition": "merged:d21bf5a5",
       "first_seen": "2026-07-18T15:21:41Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46974,7 +47308,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-18T15:33:32Z",
-      "url": "https://github.com/organvm/universal-mail--automation/pull/167"
+      "url": "https://github.com/organvm/universal-mail--automation/pull/167",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d21bf5a5",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/universal-mail--automation#173": {
       "comments": 1,
@@ -47113,7 +47449,7 @@
     "organvm/universal-node-network#8": {
       "comments": 0,
       "created_at": "2026-06-26T02:23:54Z",
-      "disposition": "queued",
+      "disposition": "merged:d729f4fb",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47124,7 +47460,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-17T02:24:15Z",
-      "url": "https://github.com/organvm/universal-node-network/pull/8"
+      "url": "https://github.com/organvm/universal-node-network/pull/8",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d729f4fb",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/universal-node-network#9": {
       "comments": 0,
@@ -47161,7 +47499,7 @@
     "organvm/universal-waveform-explorer#6": {
       "comments": 0,
       "created_at": "2026-07-10T22:14:17Z",
-      "disposition": "queued",
+      "disposition": "merged:756c39f5",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47172,12 +47510,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump typescript from 6.0.3 to 7.0.2 in the npm-deps group across 1 directory",
       "updated_at": "2026-07-17T22:14:11Z",
-      "url": "https://github.com/organvm/universal-waveform-explorer/pull/6"
+      "url": "https://github.com/organvm/universal-waveform-explorer/pull/6",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 756c39f5",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/universal-waveform-explorer#7": {
       "comments": 0,
       "created_at": "2026-07-17T22:13:49Z",
-      "disposition": "queued",
+      "disposition": "merged:46282d1b",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47188,7 +47528,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T22:13:50Z",
-      "url": "https://github.com/organvm/universal-waveform-explorer/pull/7"
+      "url": "https://github.com/organvm/universal-waveform-explorer/pull/7",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 46282d1b",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/vigiles-aeternae--agon-cosmogonicum#10": {
       "comments": 0,
@@ -47257,7 +47599,7 @@
     "organvm/vigiles-aeternae--corpus-mythicum#12": {
       "comments": 0,
       "created_at": "2026-07-10T09:34:04Z",
-      "disposition": "queued",
+      "disposition": "merged:ae6505e3",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47268,7 +47610,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/stale from 10.3.0 to 10.4.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T09:34:05Z",
-      "url": "https://github.com/organvm/vigiles-aeternae--corpus-mythicum/pull/12"
+      "url": "https://github.com/organvm/vigiles-aeternae--corpus-mythicum/pull/12",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit ae6505e3",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/vigiles-aeternae--corpus-mythicum#3": {
       "comments": 0,
@@ -49531,7 +49875,7 @@
     "organvm/vox--publica#11": {
       "comments": 0,
       "created_at": "2026-07-10T19:35:30Z",
-      "disposition": "queued",
+      "disposition": "merged:d237ae44",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -49542,7 +49886,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 7 updates",
       "updated_at": "2026-07-17T19:34:59Z",
-      "url": "https://github.com/organvm/vox--publica/pull/11"
+      "url": "https://github.com/organvm/vox--publica/pull/11",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit d237ae44",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/vox--publica#3": {
       "comments": 0,
@@ -49707,7 +50053,7 @@
     "organvm/your-fit-tailored#23": {
       "comments": 0,
       "created_at": "2026-07-16T07:06:44Z",
-      "disposition": "queued",
+      "disposition": "merged:35da2bb6",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -49718,7 +50064,9 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 5 updates",
       "updated_at": "2026-07-16T07:06:45Z",
-      "url": "https://github.com/organvm/your-fit-tailored/pull/23"
+      "url": "https://github.com/organvm/your-fit-tailored/pull/23",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 35da2bb6",
+      "last_touched": "2026-07-19T08:05:51Z"
     },
     "organvm/your-fit-tailored#24": {
       "comments": 0,
@@ -49778,6 +50126,24 @@
       "disposition": "merged:3da26443",
       "evidence": "Distilled onboarding role-escalation fix; merged this session.",
       "last_touched": "2026-07-19T07:47:44Z"
+    },
+    "organvm/peer-audited--behavioral-blockchain#788": {
+      "repo": "organvm/peer-audited--behavioral-blockchain",
+      "number": 788,
+      "kind": "pr",
+      "url": "https://github.com/organvm/peer-audited--behavioral-blockchain/pull/788",
+      "disposition": "merged:feb215de",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit feb215de",
+      "last_touched": "2026-07-19T08:05:51Z"
+    },
+    "organvm/system-governance-framework#51": {
+      "repo": "organvm/system-governance-framework",
+      "number": 51,
+      "kind": "pr",
+      "url": "https://github.com/organvm/system-governance-framework/pull/51",
+      "disposition": "merged:9d8c5f69",
+      "evidence": "dependabot dependency bump; green/clean; universe-wide safe-merge sweep. commit 9d8c5f69",
+      "last_touched": "2026-07-19T08:05:51Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
