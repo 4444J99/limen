@@ -47395,7 +47395,7 @@
     "organvm/system-system--system#11": {
       "comments": 0,
       "created_at": "2026-04-13T19:38:45Z",
-      "disposition": "queued",
+      "disposition": "distilled:derivations/compilatio--cognitionis.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47406,12 +47406,14 @@
       "state": "open",
       "title": "Compilatio Cognitionis — knowledge compilation derivation (ent_6576E)",
       "updated_at": "2026-04-13T19:38:45Z",
-      "url": "https://github.com/organvm/system-system--system/issues/11"
+      "url": "https://github.com/organvm/system-system--system/issues/11",
+      "evidence": "DOC-CC-01 exists with 12 ATM-CC atoms; ent_6576E + IRF-SYS-106 wired to GH-#11.",
+      "last_touched": "2026-07-19T11:01:56Z"
     },
     "organvm/system-system--system#12": {
       "comments": 0,
       "created_at": "2026-04-15T18:26:46Z",
-      "disposition": "queued",
+      "disposition": "merged:eef7db8337f4134153e1780318f9dfbc20f2df59",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47422,12 +47424,14 @@
       "state": "open",
       "title": "Pulse Frequency Specification — multi-band Law 5 extension (IRF-SYS-109)",
       "updated_at": "2026-04-15T18:26:46Z",
-      "url": "https://github.com/organvm/system-system--system/issues/12"
+      "url": "https://github.com/organvm/system-system--system/issues/12",
+      "evidence": "Merged PR #15 aligning IRF-SYS-109 governance_locus to GH-#12; pulse derivation + ent_B9428 canonical.",
+      "last_touched": "2026-07-19T11:01:56Z"
     },
     "organvm/system-system--system#7": {
       "comments": 0,
       "created_at": "2026-04-05T17:25:14Z",
-      "disposition": "queued",
+      "disposition": "distilled:registry/data",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47438,12 +47442,14 @@
       "state": "open",
       "title": "Governance: axiom document convergence — 8 axioms need governance loci",
       "updated_at": "2026-04-05T17:25:14Z",
-      "url": "https://github.com/organvm/system-system--system/issues/7"
+      "url": "https://github.com/organvm/system-system--system/issues/7",
+      "evidence": "All 8 axiom entity JSON files point to GH-#7; convergence audit 39/39 canonical entities.",
+      "last_touched": "2026-07-19T11:01:56Z"
     },
     "organvm/system-system--system#8": {
       "comments": 0,
       "created_at": "2026-04-05T17:25:18Z",
-      "disposition": "queued",
+      "disposition": "distilled:registry/data",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47454,12 +47460,14 @@
       "state": "open",
       "title": "Governance: derivation document convergence — 11 derivations need governance loci",
       "updated_at": "2026-04-05T17:25:18Z",
-      "url": "https://github.com/organvm/system-system--system/issues/8"
+      "url": "https://github.com/organvm/system-system--system/issues/8",
+      "evidence": "All 11 derivation entity JSON files point to GH-#8; audit 30/30 atom docs wired.",
+      "last_touched": "2026-07-19T11:01:56Z"
     },
     "organvm/system-system--system#9": {
       "comments": 0,
       "created_at": "2026-04-09T01:43:57Z",
-      "disposition": "queued",
+      "disposition": "distilled:registry/irf-registry.yaml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47470,7 +47478,9 @@
       "state": "open",
       "title": "IRF-SYS-105 — Transmutatio Cognitionis governance tracking",
       "updated_at": "2026-04-09T01:43:57Z",
-      "url": "https://github.com/organvm/system-system--system/issues/9"
+      "url": "https://github.com/organvm/system-system--system/issues/9",
+      "evidence": "IRF-SYS-105 RESOLVED with ent_16736, transmutatio--cognitionis.md, GH-#9.",
+      "last_touched": "2026-07-19T11:01:56Z"
     },
     "organvm/tab-bookmark-manager#25": {
       "comments": 0,
