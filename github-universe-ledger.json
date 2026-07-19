@@ -51019,7 +51019,7 @@
     "organvm/writelens#11": {
       "comments": 0,
       "created_at": "2026-07-02T02:04:24Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -51030,12 +51030,14 @@
       "state": "open",
       "title": "Deploy step: route through ./deploy.sh (headless, no wrangler login)",
       "updated_at": "2026-07-02T02:04:24Z",
-      "url": "https://github.com/organvm/writelens/issues/11"
+      "url": "https://github.com/organvm/writelens/issues/11",
+      "evidence": "deploy.sh exists headless, but README/docs do not yet route deploy through ./deploy.sh.",
+      "last_touched": "2026-07-19T10:42:27Z"
     },
     "organvm/writelens#5": {
       "comments": 2,
       "created_at": "2026-06-20T01:21:23Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/writelens/blob/main/src/index.ts",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -51046,12 +51048,14 @@
       "state": "open",
       "title": "[limen BLD-writelens-next-rev] writelens: next-rev — Implement the next revenue increment per the product's path-",
       "updated_at": "2026-07-09T17:28:59Z",
-      "url": "https://github.com/organvm/writelens/pull/5"
+      "url": "https://github.com/organvm/writelens/pull/5",
+      "evidence": "Default branch has Stripe Checkout paid tier + dashboard; PR only conflicts on public/index.html.",
+      "last_touched": "2026-07-19T10:42:27Z"
     },
     "organvm/writelens#6": {
       "comments": 1,
       "created_at": "2026-06-20T01:23:23Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -51062,12 +51066,14 @@
       "state": "open",
       "title": "[limen BLD-writelens-ci] writelens: ci — Add a CI workflow under ",
       "updated_at": "2026-07-09T12:13:23Z",
-      "url": "https://github.com/organvm/writelens/pull/6"
+      "url": "https://github.com/organvm/writelens/pull/6",
+      "evidence": "CONFLICTING/DIRTY prior CI failed; default branch has no .github/workflows/ci.yml.",
+      "last_touched": "2026-07-19T10:42:27Z"
     },
     "organvm/writelens#7": {
       "comments": 2,
       "created_at": "2026-06-20T01:24:08Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -51078,12 +51084,14 @@
       "state": "open",
       "title": "[limen BLD-writelens-tests] writelens: tests — Add/expand an automated test suite covering the core code pa",
       "updated_at": "2026-07-09T17:28:58Z",
-      "url": "https://github.com/organvm/writelens/pull/7"
+      "url": "https://github.com/organvm/writelens/pull/7",
+      "evidence": "CONFLICTING/DIRTY; dashboard UI already on default branch, automated tests absent.",
+      "last_touched": "2026-07-19T10:42:27Z"
     },
     "organvm/writelens#8": {
       "comments": 2,
       "created_at": "2026-06-20T04:21:48Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -51094,12 +51102,14 @@
       "state": "open",
       "title": "[limen BLD2-writelens-integration-tests] writelens: integration-tests",
       "updated_at": "2026-07-09T17:28:57Z",
-      "url": "https://github.com/organvm/writelens/pull/8"
+      "url": "https://github.com/organvm/writelens/pull/8",
+      "evidence": "CONFLICTING/DIRTY; branch only changes public/index.html, integration tests unbuilt.",
+      "last_touched": "2026-07-19T10:42:27Z"
     },
     "organvm/writelens#9": {
       "comments": 0,
       "created_at": "2026-07-01T16:30:20Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -51110,7 +51120,9 @@
       "state": "open",
       "title": "WriteLens: embeddable /v1/score (CORS) + writing-craft studio face",
       "updated_at": "2026-07-01T22:23:18Z",
-      "url": "https://github.com/organvm/writelens/pull/9"
+      "url": "https://github.com/organvm/writelens/pull/9",
+      "evidence": "CONFLICTING/DIRTY; default branch has studio face, source lacks CORS handler and deploy docs.",
+      "last_touched": "2026-07-19T10:42:27Z"
     },
     "organvm/your-fit-tailored#15": {
       "comments": 1,
@@ -51528,6 +51540,15 @@
       "disposition": "superseded:https://github.com/organvm/organvm-ontologia/blob/main/.github/workflows/ci.yml",
       "evidence": "Closed-unmerged dependabot reopen failed; checkout@v7 on main.",
       "last_touched": "2026-07-19T10:39:17Z"
+    },
+    "organvm/writelens#2": {
+      "repo": "writelens",
+      "number": 2,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed-unmerged PR reopen failed; Stripe rail exists, Payrail 402 flow not on default branch.",
+      "last_touched": "2026-07-19T10:42:27Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
