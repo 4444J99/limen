@@ -8778,7 +8778,7 @@
     "organvm/conversation-corpus-engine#14": {
       "comments": 1,
       "created_at": "2026-03-25T17:39:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8789,12 +8789,14 @@
       "state": "open",
       "title": "IRF-CCE-015: Ratify OM-MEM-001 in omega scorecard",
       "updated_at": "2026-03-31T02:25:05Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/14"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/14",
+      "evidence": "OM-MEM-001 spec/evidence docs exist; upstream omega ratification incomplete.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#15": {
       "comments": 1,
       "created_at": "2026-03-31T01:42:17Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8805,12 +8807,14 @@
       "state": "open",
       "title": "IRF-CCE-026: ChatGPT API scope degradation (633→4 conversations)",
       "updated_at": "2026-03-31T02:25:16Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/15"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/15",
+      "evidence": "Scope preflight guard exists; full ChatGPT scope/export restoration remains external.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#16": {
       "comments": 2,
       "created_at": "2026-03-31T01:42:28Z",
-      "disposition": "queued",
+      "disposition": "distilled:src/conversation_corpus_engine/chatgpt_local_session.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8821,12 +8825,14 @@
       "state": "open",
       "title": "IRF-CCE-027: Post Office discover uses wrong API (gizmos != Projects)",
       "updated_at": "2026-07-05T17:33:54Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/16"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/16",
+      "evidence": "discover_chatgpt_projects uses backend-api/projects, not gizmos.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#17": {
       "comments": 0,
       "created_at": "2026-03-31T12:53:34Z",
-      "disposition": "queued",
+      "disposition": "distilled:state/testaments/",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8837,12 +8843,14 @@
       "state": "open",
       "title": "IRF-CCE-029/037: Testament vacuum — S38-S41 sessions lack testament files",
       "updated_at": "2026-03-31T12:53:34Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/17"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/17",
+      "evidence": "s38/s39/s40/s41 testament JSON files present.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#18": {
       "comments": 0,
       "created_at": "2026-03-31T12:53:38Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8853,12 +8861,14 @@
       "state": "open",
       "title": "IRF-CCE-031: CCE lacks inquiry-log.yaml for research activities",
       "updated_at": "2026-03-31T12:53:38Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/18"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/18",
+      "evidence": "inquiry-log.yaml exists but activities list empty.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#19": {
       "comments": 0,
       "created_at": "2026-03-31T12:53:43Z",
-      "disposition": "queued",
+      "disposition": "distilled:playbooks/handoffs/gh-14-omega-ratification.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8869,12 +8879,14 @@
       "state": "open",
       "title": "IRF-CCE-032: Omega evidence format specimen missing from GH#14 handoff",
       "updated_at": "2026-03-31T12:53:43Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/19"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/19",
+      "evidence": "Handoff embeds requested omega evidence format specimen.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#20": {
       "comments": 0,
       "created_at": "2026-03-31T12:53:52Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8885,12 +8897,14 @@
       "state": "open",
       "title": "IRF-CCE-033: Execute CCE commercial architecture — H1 actions",
       "updated_at": "2026-03-31T12:53:52Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/20"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/20",
+      "evidence": "MCP entry points/tag exist; PyPI/release artifacts/surfaces/landing/HN receipts absent.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#21": {
       "comments": 0,
       "created_at": "2026-03-31T14:56:18Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/evaluation/omega-evidence-map.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8901,12 +8915,14 @@
       "state": "open",
       "title": "IRF-CCE-035: Omega evidence map — note commercial spec for criteria #9/#10",
       "updated_at": "2026-03-31T14:56:18Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/21"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/21",
+      "evidence": "Evidence map references CCE commercial specs for omega #9/#10 without over-claiming.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#22": {
       "comments": 0,
       "created_at": "2026-03-31T14:56:21Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8917,12 +8933,14 @@
       "state": "open",
       "title": "IRF-CCE-036: seed.yaml planned produces edges for 3 ORGAN-III vehicles",
       "updated_at": "2026-03-31T14:56:21Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/22"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/22",
+      "evidence": "seed.yaml has ORGAN-III outputs; no explicit three-vehicle repo edges or planned_produces.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#23": {
       "comments": 0,
       "created_at": "2026-03-31T14:56:23Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8933,12 +8951,14 @@
       "state": "open",
       "title": "IRF-CCE-038: Cross-repo commercial awareness gap (CCE ↔ application-pipeline)",
       "updated_at": "2026-03-31T14:56:23Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/23"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/23",
+      "evidence": "CCE backlinks application-pipeline; reciprocal backlink not found there.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#24": {
       "comments": 0,
       "created_at": "2026-03-31T14:56:26Z",
-      "disposition": "queued",
+      "disposition": "distilled:.claude/plans/irf-cce-039-commercial-implementation-plan.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8949,12 +8969,14 @@
       "state": "open",
       "title": "IRF-CCE-039: Derive implementation plan from commercial architecture spec",
       "updated_at": "2026-03-31T14:56:26Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/24"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/24",
+      "evidence": "Implementation plan from S41 commercial specs exists on main.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#25": {
       "comments": 0,
       "created_at": "2026-04-19T22:14:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8965,12 +8987,14 @@
       "state": "open",
       "title": "CPU throttling fix — Layer 1-3 deployed, Layer 4 pending",
       "updated_at": "2026-04-19T22:14:00Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/25"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/25",
+      "evidence": "--throttle/taskpolicy/1200s timeout exist; no repo-tracked LaunchAgent interval/nice policy.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#26": {
       "comments": 0,
       "created_at": "2026-04-19T22:14:01Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8981,12 +9005,14 @@
       "state": "open",
       "title": "Gemini local-session adapter — full content path",
       "updated_at": "2026-04-19T22:14:01Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/26"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/26",
+      "evidence": "spike_gemini_cache.py exists; no full Gemini adapter wired into provider_import.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#27": {
       "comments": 0,
       "created_at": "2026-04-26T04:42:00Z",
-      "disposition": "queued",
+      "disposition": "distilled:src/conversation_corpus_engine/persona_extract.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8997,12 +9023,14 @@
       "state": "open",
       "title": "feat: build corpus persona-extract subcommand",
       "updated_at": "2026-04-26T04:42:00Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/27"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/27",
+      "evidence": "persona-extract implemented with tests in tests/test_persona_extract.py.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#35": {
       "comments": 1,
       "created_at": "2026-06-11T02:59:03Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -9013,12 +9041,14 @@
       "state": "open",
       "title": "EV Activation Audit: ship-soon — canonical conversation-memory engine, no installable release",
       "updated_at": "2026-06-11T16:45:35Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/35"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/35",
+      "evidence": "pyproject 0.3.0+tag exist; no GitHub release artifacts, PyPI 404.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#36": {
       "comments": 3,
       "created_at": "2026-06-11T03:42:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -9029,12 +9059,14 @@
       "state": "open",
       "title": "Engine reconciliation: session-meta/ingest is a newer 11-adapter twin (incl. the missing claude-code adapter)",
       "updated_at": "2026-06-21T09:44:28Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/issues/36"
+      "url": "https://github.com/organvm/conversation-corpus-engine/issues/36",
+      "evidence": "8-provider catalog exists; claude-code/opencode/antigravity not first-class provider lanes on main.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#42": {
       "comments": 2,
       "created_at": "2026-06-18T16:04:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -9045,12 +9077,14 @@
       "state": "open",
       "title": "[limen LIMEN-099] IRF-CCE-033: Execute CCE commercial architecture — H1 actions",
       "updated_at": "2026-07-08T08:01:52Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/pull/42"
+      "url": "https://github.com/organvm/conversation-corpus-engine/pull/42",
+      "evidence": "Non-draft but CONFLICTING; commercial impl not fully on main, duplicated by #61.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#60": {
       "comments": 0,
       "created_at": "2026-06-27T16:32:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -9061,12 +9095,14 @@
       "state": "open",
       "title": "Pin CI dev tooling",
       "updated_at": "2026-06-27T16:32:49Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/pull/60"
+      "url": "https://github.com/organvm/conversation-corpus-engine/pull/60",
+      "evidence": "Draft PR green+one-file pyproject pin, not merged while draft; overlaps #62.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#61": {
       "comments": 0,
       "created_at": "2026-07-14T15:49:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -9077,12 +9113,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-conversation-corpus-engine-42-28f71173",
       "updated_at": "2026-07-14T15:49:54Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/pull/61"
+      "url": "https://github.com/organvm/conversation-corpus-engine/pull/61",
+      "evidence": "Draft+CONFLICTING; same commercial-architecture stack as #42; needs one rebased reconciliation branch.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#62": {
       "comments": 1,
       "created_at": "2026-07-16T20:17:30Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -9093,7 +9131,9 @@
       "state": "open",
       "title": "feat: add provider-neutral authority ingest",
       "updated_at": "2026-07-17T11:05:21Z",
-      "url": "https://github.com/organvm/conversation-corpus-engine/pull/62"
+      "url": "https://github.com/organvm/conversation-corpus-engine/pull/62",
+      "evidence": "Draft PR clean+green but not merged; overlaps #60/#42/#61 on pyproject/CLI/docs.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/conversation-corpus-engine#63": {
       "comments": 0,
@@ -42483,7 +42523,7 @@
     "organvm/praxis-perpetua#21": {
       "comments": 1,
       "created_at": "2026-03-20T15:28:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42494,12 +42534,14 @@
       "state": "open",
       "title": "[D-003] Reframe Western-centric limitation as first-order methodological constraint",
       "updated_at": "2026-05-25T12:26:30Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/21"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/21",
+      "evidence": "Object Attention has asymmetry/affordance material; no verified D-003 Overture/Ch2/Ch25 constraint rewrite.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#22": {
       "comments": 1,
       "created_at": "2026-03-20T15:28:47Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42510,12 +42552,14 @@
       "state": "open",
       "title": "[D-003] Ingest Guns research brief into Materia Collider database",
       "updated_at": "2026-05-25T12:26:29Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/22"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/22",
+      "evidence": "Guns brief exists; density report still 302 films/5 categories, not Guns/6.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#23": {
       "comments": 1,
       "created_at": "2026-03-20T15:28:48Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42526,12 +42570,14 @@
       "state": "open",
       "title": "[D-003] Write Overture (Ch 0) with five-mechanisms + convergence thesis",
       "updated_at": "2026-05-25T12:26:28Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/23"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/23",
+      "evidence": "Five mechanisms/asymmetry/affordance in theory doc; no dedicated D-003 Ch0.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#24": {
       "comments": 1,
       "created_at": "2026-03-20T15:28:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42542,12 +42588,14 @@
       "state": "open",
       "title": "[D-003] Cross-reference SGO research corpus convergence",
       "updated_at": "2026-05-25T12:26:26Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/24"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/24",
+      "evidence": "Companion-paper crossrefs exist; not folded into D-003 convergence frame.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#25": {
       "comments": 1,
       "created_at": "2026-03-21T17:17:10Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42558,12 +42606,14 @@
       "state": "open",
       "title": "security: rotate leaked Render API token (rnd_DzSs...)",
       "updated_at": "2026-05-25T12:26:24Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/25"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/25",
+      "evidence": "No main code-search match for token prefix; provider-side rotation/revocation needs redacted external receipt.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#28": {
       "comments": 1,
       "created_at": "2026-03-23T11:22:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42574,12 +42624,14 @@
       "state": "open",
       "title": "Submit RP-06 to arXiv cs.FL",
       "updated_at": "2026-05-25T12:26:23Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/28"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/28",
+      "evidence": "RP-06 TeX+arXiv metadata exist; arXiv lookup 0, submissions 0.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#29": {
       "comments": 1,
       "created_at": "2026-03-23T11:22:38Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42590,12 +42642,14 @@
       "state": "open",
       "title": "Submit SYN-02 to arXiv cs.AI",
       "updated_at": "2026-05-25T12:26:21Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/29"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/29",
+      "evidence": "SYN-02 TeX+metadata exist; arXiv lookup 0, submissions 0.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#30": {
       "comments": 1,
       "created_at": "2026-03-23T11:22:43Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42606,12 +42660,14 @@
       "state": "open",
       "title": "Submit SYN-01 to arXiv cs.LO",
       "updated_at": "2026-05-25T12:26:20Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/30"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/30",
+      "evidence": "SYN-01 TeX+metadata exist; arXiv lookup 0, submissions 0.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#31": {
       "comments": 0,
       "created_at": "2026-03-31T07:33:45Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42622,12 +42678,14 @@
       "state": "open",
       "title": "LIB-001: session-protocol chain — 8-phase session steering grammar",
       "updated_at": "2026-03-31T07:33:45Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/31"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/31",
+      "evidence": "session-protocol.yaml+INDEX exist; validation/regex/context-sync/SOP remain.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#32": {
       "comments": 0,
       "created_at": "2026-03-31T07:33:50Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42638,12 +42696,14 @@
       "state": "open",
       "title": "LIB-002: design-grammar chain — 9-phase creation grammar",
       "updated_at": "2026-03-31T07:33:50Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/32"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/32",
+      "evidence": "design-grammar.yaml (9 phases) exists; no live-session validation/context-sync receipt.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#33": {
       "comments": 0,
       "created_at": "2026-03-31T07:33:59Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42654,12 +42714,14 @@
       "state": "open",
       "title": "LIB-003: close-protocol chain — 12-step liturgical close-out",
       "updated_at": "2026-03-31T07:33:59Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/33"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/33",
+      "evidence": "close-protocol.yaml (12 steps) exists; CLI/MCP/auditor-pair wiring remains.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#34": {
       "comments": 0,
       "created_at": "2026-03-31T07:34:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42670,12 +42732,14 @@
       "state": "open",
       "title": "LIB-004: sop-lifecycle chain — rep→absorb→fortify→place→chain",
       "updated_at": "2026-03-31T07:34:33Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/34"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/34",
+      "evidence": "sop-lifecycle.yaml exists; engine SOPEntry lifecycle field+CLI not found.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#35": {
       "comments": 0,
       "created_at": "2026-03-31T07:34:34Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42686,12 +42750,14 @@
       "state": "open",
       "title": "LIB-005: auditor-pair chain — Above (fleet) + Below (reverse)",
       "updated_at": "2026-03-31T07:34:34Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/35"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/35",
+      "evidence": "auditor-pair.yaml exists; calibration/linkage receipts missing.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#36": {
       "comments": 0,
       "created_at": "2026-03-31T07:34:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42702,12 +42768,14 @@
       "state": "open",
       "title": "LIB-006: operational vocabulary — 12 categories, trigger dispatch",
       "updated_at": "2026-03-31T07:34:35Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/36"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/36",
+      "evidence": "vocabulary.yaml (12 categories); regex/matcher integration+FP validation absent.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#37": {
       "comments": 0,
       "created_at": "2026-03-31T07:34:36Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42718,12 +42786,14 @@
       "state": "open",
       "title": "LIB-007: paired-patterns — 7 co-occurring sequences",
       "updated_at": "2026-03-31T07:34:36Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/37"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/37",
+      "evidence": "paired-patterns.yaml (7 pairs); boundary validation+chain-recognition absent.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#38": {
       "comments": 0,
       "created_at": "2026-03-31T07:34:37Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42734,12 +42804,14 @@
       "state": "open",
       "title": "LIB-008: directory-canon — universal/common/situational spec",
       "updated_at": "2026-03-31T07:34:37Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/38"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/38",
+      "evidence": "directory-canon.yaml exists; verify-canon command/context-sync/10-repo validation absent.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#39": {
       "comments": 0,
       "created_at": "2026-03-31T07:35:05Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42750,12 +42822,14 @@
       "state": "open",
       "title": "LIB-009: plan catalog engine — organvm plans catalog + search",
       "updated_at": "2026-03-31T07:35:05Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/39"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/39",
+      "evidence": "INDEX.md awaiting catalog; no index.json/by-domain outputs.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#40": {
       "comments": 0,
       "created_at": "2026-03-31T07:35:06Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42766,12 +42840,14 @@
       "state": "open",
       "title": "LIB-010: SOP lifecycle field — observed→chained maturation tracking",
       "updated_at": "2026-03-31T07:35:06Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/40"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/40",
+      "evidence": "No SOPEntry lifecycle field/organvm sop lifecycle command/frontmatter support.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#41": {
       "comments": 0,
       "created_at": "2026-03-31T07:35:07Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42782,12 +42858,14 @@
       "state": "open",
       "title": "LIB-011: context sync — System Library section in all CLAUDE.md",
       "updated_at": "2026-03-31T07:35:07Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/41"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/41",
+      "evidence": "No generated System Library section or verify-canon implementation.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#42": {
       "comments": 0,
       "created_at": "2026-03-31T07:35:08Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42798,12 +42876,14 @@
       "state": "open",
       "title": "LIB-012: MCP discovery tools — search plans, list chains, resolve SOPs",
       "updated_at": "2026-03-31T07:35:08Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/42"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/42",
+      "evidence": "Library artifacts exist; requested MCP discovery tools not implemented here.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/praxis-perpetua#44": {
       "comments": 0,
       "created_at": "2026-06-10T21:57:06Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -42814,7 +42894,9 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: park",
       "updated_at": "2026-06-10T21:57:06Z",
-      "url": "https://github.com/organvm/praxis-perpetua/issues/44"
+      "url": "https://github.com/organvm/praxis-perpetua/issues/44",
+      "evidence": "Public CI-validated docs/SGO corpus; no package/release target; park-vs-package is a product decision.",
+      "last_touched": "2026-07-19T09:11:01Z"
     },
     "organvm/promptscope#13": {
       "comments": 2,
