@@ -43496,7 +43496,7 @@
     "organvm/quaestor#10": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:53Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43507,12 +43507,14 @@
       "state": "open",
       "title": "[QS-016] HUMAN HAND (permanent gate): any money movement / receipt",
       "updated_at": "2026-06-25T19:41:53Z",
-      "url": "https://github.com/organvm/quaestor/issues/10"
+      "url": "https://github.com/organvm/quaestor/issues/10",
+      "evidence": "QS-016 PERMANENT human-hand marker (money) — never reaped, affirmed. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/quaestor#11": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:54Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43523,12 +43525,14 @@
       "state": "open",
       "title": "[QS-017] Eligibility blocked until 501(c)(3) exists (ties to Cind & Sol CS-004)",
       "updated_at": "2026-06-25T19:41:54Z",
-      "url": "https://github.com/organvm/quaestor/issues/11"
+      "url": "https://github.com/organvm/quaestor/issues/11",
+      "evidence": "QS-017 eligibility blocked until 501c3 (CS-004 human formation); interim fiscal-sponsorship/intl paths. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/quaestor#2": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:43Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43539,12 +43543,14 @@
       "state": "open",
       "title": "[QS-008] Wire organ into the live limen daemon heartbeat",
       "updated_at": "2026-06-25T19:41:43Z",
-      "url": "https://github.com/organvm/quaestor/issues/2"
+      "url": "https://github.com/organvm/quaestor/issues/2",
+      "evidence": "QS-008 daemon-wiring: declared-not-wired per manifest; belongs to limen-daemon lane, flagged for coordination; depends on QS-010 atoms. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/quaestor#3": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:44Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43555,12 +43561,14 @@
       "state": "open",
       "title": "[QS-010] Build read-only grant-discovery source adapters",
       "updated_at": "2026-06-25T19:41:44Z",
-      "url": "https://github.com/organvm/quaestor/issues/3"
+      "url": "https://github.com/organvm/quaestor/issues/3",
+      "evidence": "QS-010 free read-only adapters (Grants.gov Search2 + ProPublica): spec complete, no free-source human gate; dedicated build queued. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/quaestor#5": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:47Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43571,12 +43579,14 @@
       "state": "open",
       "title": "[QS-011] DECISION: fund Cind & Sol first vs. the fleet first",
       "updated_at": "2026-06-25T19:41:47Z",
-      "url": "https://github.com/organvm/quaestor/issues/5"
+      "url": "https://github.com/organvm/quaestor/issues/5",
+      "evidence": "QS-011 DECISION (Cind&Sol first) — operator gate, default recorded in decisions.html. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/quaestor#6": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:48Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43587,12 +43597,14 @@
       "state": "open",
       "title": "[QS-012] DECISION: aggressiveness — high-fit only vs. wide net",
       "updated_at": "2026-06-25T19:41:48Z",
-      "url": "https://github.com/organvm/quaestor/issues/6"
+      "url": "https://github.com/organvm/quaestor/issues/6",
+      "evidence": "QS-012 DECISION (high-fit only, gates paid spend) — operator gate. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/quaestor#7": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:49Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43603,12 +43615,14 @@
       "state": "open",
       "title": "[QS-013] DECISION: human-review gate before any submission (recommend always-on)",
       "updated_at": "2026-06-25T19:41:49Z",
-      "url": "https://github.com/organvm/quaestor/issues/7"
+      "url": "https://github.com/organvm/quaestor/issues/7",
+      "evidence": "QS-013 DECISION (always-on review gate) — affirm on. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/quaestor#8": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:51Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43619,12 +43633,14 @@
       "state": "open",
       "title": "[QS-014] DECISION: publish the in-formation landing publicly?",
       "updated_at": "2026-06-25T19:41:51Z",
-      "url": "https://github.com/organvm/quaestor/issues/8"
+      "url": "https://github.com/organvm/quaestor/issues/8",
+      "evidence": "QS-014 DECISION (publish landing) — operator gate, keep private default. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/quaestor#9": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:52Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -43635,7 +43651,9 @@
       "state": "open",
       "title": "[QS-015] HUMAN HAND (permanent gate): submitting any grant application",
       "updated_at": "2026-06-25T19:41:52Z",
-      "url": "https://github.com/organvm/quaestor/issues/9"
+      "url": "https://github.com/organvm/quaestor/issues/9",
+      "evidence": "QS-015 PERMANENT human-hand marker (submit) — never reaped, affirmed. Commented.",
+      "last_touched": "2026-07-19T09:08:06Z"
     },
     "organvm/radix-recursiva-solve-coagula-redi#95": {
       "comments": 0,
