@@ -30791,7 +30791,7 @@
     "organvm/palimpsest#10": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:22Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30802,12 +30802,14 @@
       "state": "open",
       "title": "[PAL-015] publish the landing publicly + custom domain?",
       "updated_at": "2026-06-25T19:41:22Z",
-      "url": "https://github.com/organvm/palimpsest/issues/10"
+      "url": "https://github.com/organvm/palimpsest/issues/10",
+      "evidence": "site/index.html exists; Pages absent, registry says not published.",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/palimpsest#2": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:53Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30818,12 +30820,14 @@
       "state": "open",
       "title": "[PAL-016] BUILD Phase-1 single-city time-slider demo",
       "updated_at": "2026-06-25T19:40:53Z",
-      "url": "https://github.com/organvm/palimpsest/issues/2"
+      "url": "https://github.com/organvm/palimpsest/issues/2",
+      "evidence": "Phase-1 plan exists; no MapLibre/time-slider demo or chosen city/layers shipped.",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/palimpsest#3": {
       "comments": 0,
       "created_at": "2026-06-25T19:40:55Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30834,12 +30838,14 @@
       "state": "open",
       "title": "[PAL-017] Wire ingestion organ to live limen heartbeat",
       "updated_at": "2026-06-25T19:40:55Z",
-      "url": "https://github.com/organvm/palimpsest/issues/3"
+      "url": "https://github.com/organvm/palimpsest/issues/3",
+      "evidence": "Phase-2 ingestion loop designed; heartbeat declared but not wired.",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/palimpsest#4": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:13Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30850,12 +30856,14 @@
       "state": "open",
       "title": "[PAL-009] confirm or replace the name \"palimpsest\"",
       "updated_at": "2026-06-25T19:41:13Z",
-      "url": "https://github.com/organvm/palimpsest/issues/4"
+      "url": "https://github.com/organvm/palimpsest/issues/4",
+      "evidence": "PAL-009 surfaced in registry/decisions; name working + human-hand.",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/palimpsest#5": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:14Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30866,12 +30874,14 @@
       "state": "open",
       "title": "[PAL-010] web-first vs mobile-game-first",
       "updated_at": "2026-06-25T19:41:14Z",
-      "url": "https://github.com/organvm/palimpsest/issues/5"
+      "url": "https://github.com/organvm/palimpsest/issues/5",
+      "evidence": "Plans recommend web-demo->archive->game; PAL-010 human-hand.",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/palimpsest#6": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:16Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30882,12 +30892,14 @@
       "state": "open",
       "title": "[PAL-011] starting city / region for the Phase-1 demo",
       "updated_at": "2026-06-25T19:41:16Z",
-      "url": "https://github.com/organvm/palimpsest/issues/6"
+      "url": "https://github.com/organvm/palimpsest/issues/6",
+      "evidence": "Phase-1 blocks on PAL-011 city choice; none chosen on main.",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/palimpsest#7": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:18Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30898,12 +30910,14 @@
       "state": "open",
       "title": "[PAL-012] \"game\" vs \"serious atlas\" balance",
       "updated_at": "2026-06-25T19:41:18Z",
-      "url": "https://github.com/organvm/palimpsest/issues/7"
+      "url": "https://github.com/organvm/palimpsest/issues/7",
+      "evidence": "Docs hold atlas+game framing; PAL-012 balance human-hand.",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/palimpsest#8": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:19Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30914,12 +30928,14 @@
       "state": "open",
       "title": "[PAL-013] Maddie's role in the collaboration",
       "updated_at": "2026-06-25T19:41:19Z",
-      "url": "https://github.com/organvm/palimpsest/issues/8"
+      "url": "https://github.com/organvm/palimpsest/issues/8",
+      "evidence": "Maddie collaboration acknowledged; PAL-013 role/credit unresolved (human).",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/palimpsest#9": {
       "comments": 0,
       "created_at": "2026-06-25T19:41:20Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30930,7 +30946,9 @@
       "state": "open",
       "title": "[PAL-014] open-source vs closed-source",
       "updated_at": "2026-06-25T19:41:20Z",
-      "url": "https://github.com/organvm/palimpsest/issues/9"
+      "url": "https://github.com/organvm/palimpsest/issues/9",
+      "evidence": "Repo public, decision surface recommends open-code/moat; PAL-014 unsettled (human).",
+      "last_touched": "2026-07-19T10:02:29.687892+00:00"
     },
     "organvm/parlor-games--ephemera-engine#179": {
       "comments": 1,
