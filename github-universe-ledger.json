@@ -4734,7 +4734,7 @@
     "organvm/application-pipeline#1": {
       "comments": 3,
       "created_at": "2026-02-24T20:56:51Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4745,12 +4745,14 @@
       "state": "open",
       "title": "S+T+ARTS: Produce video documentary (~3 min)",
       "updated_at": "2026-06-11T22:02:45Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/1"
+      "url": "https://github.com/organvm/application-pipeline/issues/1",
+      "evidence": "Video script exists (materials/work-samples/starts-prize-video-script.md); no exported MP4.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#14": {
       "comments": 7,
       "created_at": "2026-03-18T15:39:59Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4761,12 +4763,14 @@
       "state": "open",
       "title": "feat: LinkedIn profile fortification based on contact research",
       "updated_at": "2026-06-11T18:39:28Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/14"
+      "url": "https://github.com/organvm/application-pipeline/issues/14",
+      "evidence": "LinkedIn plans/contact research exist; live profile auth-walled, no applied receipt.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#15": {
       "comments": 4,
       "created_at": "2026-03-18T15:40:15Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4777,12 +4781,14 @@
       "state": "open",
       "title": "fix: backfill timeline.submitted dates for entries missing them",
       "updated_at": "2026-06-11T22:04:20Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/15"
+      "url": "https://github.com/organvm/application-pipeline/issues/15",
+      "evidence": "3 submitted dates fixed; deepgram + gitlab still timeline.submitted null.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#18": {
       "comments": 11,
       "created_at": "2026-03-18T20:15:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4793,12 +4799,14 @@
       "state": "open",
       "title": "feat: LinkedIn content calendar — weekly posting schedule from existing content",
       "updated_at": "2026-06-11T22:04:22Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/18"
+      "url": "https://github.com/organvm/application-pipeline/issues/18",
+      "evidence": "scripts/linkedin_composer.py + strategy exist; no automated weekly calendar generator.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#2": {
       "comments": 3,
       "created_at": "2026-02-24T20:56:58Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4809,12 +4817,14 @@
       "state": "open",
       "title": "S+T+ARTS: Capture high-res project images (6-7 screenshots)",
       "updated_at": "2026-06-11T22:02:46Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/2"
+      "url": "https://github.com/organvm/application-pipeline/issues/2",
+      "evidence": "materials/work-samples/ exists but no images/ high-res screenshot set.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#21": {
       "comments": 12,
       "created_at": "2026-03-18T20:15:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4825,12 +4835,14 @@
       "state": "open",
       "title": "feat: social preview image generation script for all ORGANVM repos",
       "updated_at": "2026-06-11T22:04:24Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/21"
+      "url": "https://github.com/organvm/application-pipeline/issues/21",
+      "evidence": "strategy/social-cards/ has 10 PNGs; no generate_social_cards.py/batch tracker.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#22": {
       "comments": 8,
       "created_at": "2026-03-18T20:15:43Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4841,12 +4853,14 @@
       "state": "open",
       "title": "chore: LinkedIn Featured section — reorder and finalize",
       "updated_at": "2026-06-11T18:39:28Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/22"
+      "url": "https://github.com/organvm/application-pipeline/issues/22",
+      "evidence": "Featured-section plans/assets exist; no live LinkedIn ordering receipt.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#23": {
       "comments": 2,
       "created_at": "2026-03-20T00:23:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4857,12 +4871,14 @@
       "state": "open",
       "title": "F6: Submit Fire Island Artist Residency (Apr 1)",
       "updated_at": "2026-06-11T21:41:54Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/23"
+      "url": "https://github.com/organvm/application-pipeline/issues/23",
+      "evidence": "scripts/legacy-submission/fire-island.md + profile; no pipeline YAML/receipt.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#24": {
       "comments": 2,
       "created_at": "2026-03-20T00:23:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4873,12 +4889,14 @@
       "state": "open",
       "title": "F15: Submit NLnet NGI Zero Commons Fund (Apr 1)",
       "updated_at": "2026-06-11T21:41:54Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/24"
+      "url": "https://github.com/organvm/application-pipeline/issues/24",
+      "evidence": "scripts/legacy-submission/nlnet.md 379 lines; no active/submitted YAML.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#25": {
       "comments": 2,
       "created_at": "2026-03-20T00:23:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4889,12 +4907,14 @@
       "state": "open",
       "title": "F5: Submit Creative Capital 2027 (Apr 2, 3pm ET) — HIGHEST PRIORITY",
       "updated_at": "2026-06-11T21:41:54Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/25"
+      "url": "https://github.com/organvm/application-pipeline/issues/25",
+      "evidence": "Creative Capital package exists; pipeline/closed/creative-capital-2027.yaml withdrawn, no submitted date.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#26": {
       "comments": 2,
       "created_at": "2026-03-20T00:24:12Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4905,12 +4925,14 @@
       "state": "open",
       "title": "F16: Submit ZKM Rauschenberg Residencies (Apr 12)",
       "updated_at": "2026-06-11T21:41:55Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/26"
+      "url": "https://github.com/organvm/application-pipeline/issues/26",
+      "evidence": "pipeline/archive/2026-04/zkm-rauschenberg.yaml drafting; no compiled PDF/receipt.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#27": {
       "comments": 2,
       "created_at": "2026-03-20T00:24:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4921,12 +4943,14 @@
       "state": "open",
       "title": "F17: Submit WFF Housing Stability Grant (Apr 14)",
       "updated_at": "2026-06-11T21:42:14Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/27"
+      "url": "https://github.com/organvm/application-pipeline/issues/27",
+      "evidence": "wff-housing legacy script/profile; no pipeline YAML/bundle.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#28": {
       "comments": 2,
       "created_at": "2026-03-20T00:24:14Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4937,12 +4961,14 @@
       "state": "open",
       "title": "F8: Submit Spencer Foundation (Apr 15)",
       "updated_at": "2026-06-11T22:02:58Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/28"
+      "url": "https://github.com/organvm/application-pipeline/issues/28",
+      "evidence": "spencer legacy script/profile; no pipeline YAML/bundle.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#29": {
       "comments": 9,
       "created_at": "2026-03-20T00:24:26Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4953,12 +4979,14 @@
       "state": "open",
       "title": "F18: Submit Whiting Creative Nonfiction (~Apr)",
       "updated_at": "2026-06-11T22:02:59Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/29"
+      "url": "https://github.com/organvm/application-pipeline/issues/29",
+      "evidence": "pipeline/active/whiting-nonfiction.yaml drafting; resume+legacy script, not submitted.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#3": {
       "comments": 3,
       "created_at": "2026-02-24T20:57:00Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4969,12 +4997,14 @@
       "state": "open",
       "title": "S+T+ARTS: Take portrait photo",
       "updated_at": "2026-06-11T22:02:47Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/3"
+      "url": "https://github.com/organvm/application-pipeline/issues/3",
+      "evidence": "materials/headshots/ absent; no portrait under materials/.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#30": {
       "comments": 2,
       "created_at": "2026-03-20T00:24:27Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4985,12 +5015,14 @@
       "state": "open",
       "title": "F9: Submit Processing Foundation Fellowship (~Apr-May)",
       "updated_at": "2026-06-11T22:03:01Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/30"
+      "url": "https://github.com/organvm/application-pipeline/issues/30",
+      "evidence": "processing legacy script/profile; no active/submitted YAML.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#31": {
       "comments": 2,
       "created_at": "2026-03-20T00:24:28Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5001,12 +5033,14 @@
       "state": "open",
       "title": "X1: Submit Google Creative Lab Five (rolling)",
       "updated_at": "2026-06-11T22:03:02Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/31"
+      "url": "https://github.com/organvm/application-pipeline/issues/31",
+      "evidence": "google-cl5 legacy script/profile; no pipeline YAML/bundle.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#32": {
       "comments": 2,
       "created_at": "2026-03-20T00:24:29Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5017,12 +5051,14 @@
       "state": "open",
       "title": "F12: Submit PEN America Writers Aid (rolling)",
       "updated_at": "2026-06-11T22:03:04Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/32"
+      "url": "https://github.com/organvm/application-pipeline/issues/32",
+      "evidence": "pen-america legacy script; no pipeline YAML/receipt.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#35": {
       "comments": 8,
       "created_at": "2026-03-20T11:01:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5033,12 +5069,14 @@
       "state": "open",
       "title": "chore: AdenHQ contribution — fallback to Anthropic Skills if no response by Mar 25",
       "updated_at": "2026-06-11T18:39:28Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/35"
+      "url": "https://github.com/organvm/application-pipeline/issues/35",
+      "evidence": "AdenHQ tracker exists; fallback PRs anthropics/skills#723 + langchain-ai/langgraph#7237 open.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#36": {
       "comments": 4,
       "created_at": "2026-03-20T11:01:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5049,12 +5087,14 @@
       "state": "open",
       "title": "chore: verify canonical metrics (113 repos, 23,470 tests) against live system",
       "updated_at": "2026-06-11T22:04:25Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/36"
+      "url": "https://github.com/organvm/application-pipeline/issues/36",
+      "evidence": "scripts/verify_canonical.py checks repos/CI only; repo access partial, no 23470-test aggregation.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#37": {
       "comments": 2,
       "created_at": "2026-03-20T11:01:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5065,12 +5105,14 @@
       "state": "open",
       "title": "feat: URL liveness check on top research pool entries before promotion",
       "updated_at": "2026-06-11T22:04:27Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/37"
+      "url": "https://github.com/organvm/application-pipeline/issues/37",
+      "evidence": "hygiene --check-urls ran 20 ok/3 issues on active entries, not top research_pool candidates.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#38": {
       "comments": 2,
       "created_at": "2026-03-20T11:01:13Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5081,12 +5123,14 @@
       "state": "open",
       "title": "chore: automate CLAUDE.md command count sync from run.py",
       "updated_at": "2026-06-11T22:04:28Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/38"
+      "url": "https://github.com/organvm/application-pipeline/issues/38",
+      "evidence": "scripts/verify_all.py lacks run.py command-count vs CLAUDE.md check.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#39": {
       "comments": 2,
       "created_at": "2026-03-20T11:01:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5097,12 +5141,14 @@
       "state": "open",
       "title": "chore: install daily LaunchAgents — automation not running",
       "updated_at": "2026-06-11T22:04:30Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/39"
+      "url": "https://github.com/organvm/application-pipeline/issues/39",
+      "evidence": "LaunchAgent plists exist; launchd_manager --status: Installed 0/9, Loaded 0/9.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#4": {
       "comments": 4,
       "created_at": "2026-02-24T20:57:07Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5113,12 +5159,14 @@
       "state": "open",
       "title": "S+T+ARTS: Verify all 8 work sample URLs are live",
       "updated_at": "2026-06-11T22:02:49Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/4"
+      "url": "https://github.com/organvm/application-pipeline/issues/4",
+      "evidence": "Live URL check: 3/8 returned 200; 5 returned 404.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#40": {
       "comments": 2,
       "created_at": "2026-03-20T11:01:13Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5129,12 +5177,14 @@
       "state": "open",
       "title": "feat: contact seniority weighting in network_graph scoring",
       "updated_at": "2026-06-11T22:04:32Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/40"
+      "url": "https://github.com/organvm/application-pipeline/issues/40",
+      "evidence": "network_graph.py scores hop/path/density; no role_weight/seniority multiplier.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#41": {
       "comments": 2,
       "created_at": "2026-03-20T11:46:51Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5145,12 +5195,14 @@
       "state": "open",
       "title": "fix: location classifier misses remote-eligible entries (US, Distributed, Anywhere, NAMER)",
       "updated_at": "2026-06-11T22:04:33Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/41"
+      "url": "https://github.com/organvm/application-pipeline/issues/41",
+      "evidence": "source_jobs.py classify_location lacks Distributed/Anywhere/Global/NAMER + bare-US handling.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#42": {
       "comments": 2,
       "created_at": "2026-03-31T04:21:12Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5161,12 +5213,14 @@
       "state": "open",
       "title": "test: remove 6 duplicate wiring tests already covered by test_pipeline_lib.py",
       "updated_at": "2026-06-11T22:04:35Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/42"
+      "url": "https://github.com/organvm/application-pipeline/issues/42",
+      "evidence": "Duplicate loader tests remain in tests/test_wiring_data_flow.py:45-100.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#43": {
       "comments": 2,
       "created_at": "2026-03-31T04:21:18Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5177,12 +5231,14 @@
       "state": "open",
       "title": "test: fix weak and tautological assertions in wiring tests",
       "updated_at": "2026-06-11T22:04:36Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/43"
+      "url": "https://github.com/organvm/application-pipeline/issues/43",
+      "evidence": "Weak assertions remain in test_wiring_data_flow.py + test_wiring_signals.py.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#44": {
       "comments": 2,
       "created_at": "2026-03-31T04:21:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5193,12 +5249,14 @@
       "state": "open",
       "title": "test: fix ~15 silently-skipping wiring tests that pass on empty data",
       "updated_at": "2026-06-11T22:04:38Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/44"
+      "url": "https://github.com/organvm/application-pipeline/issues/44",
+      "evidence": "Silent if-data guards remain across wiring data_flow/apply/signals tests.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#45": {
       "comments": 2,
       "created_at": "2026-03-31T04:21:26Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5209,12 +5267,14 @@
       "state": "open",
       "title": "test: remove dead test — test_no_invalid_status_transitions has no assertions",
       "updated_at": "2026-06-11T22:04:40Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/45"
+      "url": "https://github.com/organvm/application-pipeline/issues/45",
+      "evidence": "test_no_invalid_status_transitions asserts dict type but doesn't test transitions.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#46": {
       "comments": 2,
       "created_at": "2026-03-31T04:37:28Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5225,12 +5285,14 @@
       "state": "open",
       "title": "test: add ID map consistency tests for PROFILE_ID_MAP and LEGACY_ID_MAP",
       "updated_at": "2026-06-11T22:04:41Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/46"
+      "url": "https://github.com/organvm/application-pipeline/issues/46",
+      "evidence": "PROFILE_ID_MAP test checks non-empty names, not file existence; no LEGACY_ID_MAP existence check.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#47": {
       "comments": 2,
       "created_at": "2026-03-31T04:37:30Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5241,12 +5303,14 @@
       "state": "open",
       "title": "test: add negative test cases for wiring tests",
       "updated_at": "2026-06-11T22:04:43Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/47"
+      "url": "https://github.com/organvm/application-pipeline/issues/47",
+      "evidence": "No malformed/corrupt YAML or missing-target negative wiring tests.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#48": {
       "comments": 2,
       "created_at": "2026-03-31T04:37:32Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5257,12 +5321,14 @@
       "state": "open",
       "title": "test: add full pipeline integration test (research → submitted)",
       "updated_at": "2026-06-11T22:04:45Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/48"
+      "url": "https://github.com/organvm/application-pipeline/issues/48",
+      "evidence": "No tests/test_wiring_integration.py exists.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#49": {
       "comments": 2,
       "created_at": "2026-03-31T04:37:34Z",
-      "disposition": "queued",
+      "disposition": "distilled:11b969ec",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5273,12 +5339,14 @@
       "state": "open",
       "title": "chore: mark network-dependent apply tests with @pytest.mark.synthetic",
       "updated_at": "2026-06-11T22:04:46Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/49"
+      "url": "https://github.com/organvm/application-pipeline/issues/49",
+      "evidence": "Delivered via PR #82 (merged): tests/test_wiring_apply.py marks both network-sensitive classes synthetic.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#5": {
       "comments": 3,
       "created_at": "2026-02-24T20:57:12Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5289,12 +5357,14 @@
       "state": "open",
       "title": "S+T+ARTS: Review project description text for portal fit",
       "updated_at": "2026-06-11T22:02:50Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/5"
+      "url": "https://github.com/organvm/application-pipeline/issues/5",
+      "evidence": "Substantive draft (variants/project-descriptions/starts-prize-v1.md); no review receipt, metrics drift.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#52": {
       "comments": 9,
       "created_at": "2026-03-31T05:14:10Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5305,12 +5375,14 @@
       "state": "open",
       "title": "chore: OpenClaw post-install — 17 vacuums identified, 2 critical",
       "updated_at": "2026-06-11T18:39:28Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/52"
+      "url": "https://github.com/organvm/application-pipeline/issues/52",
+      "evidence": "OpenClaw vacuum registry (.claude/plans/2026-03-31-openclaw-vacuum-registry.md); runtime vacuums remain.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#6": {
       "comments": 3,
       "created_at": "2026-02-24T20:57:17Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5321,12 +5393,14 @@
       "state": "open",
       "title": "S+T+ARTS: Complete portal submission by March 4",
       "updated_at": "2026-06-11T22:02:52Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/6"
+      "url": "https://github.com/organvm/application-pipeline/issues/6",
+      "evidence": "pipeline/closed/starts-prize.yaml outcome: expired without submission (operator action).",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#7": {
       "comments": 3,
       "created_at": "2026-02-24T20:57:20Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5337,7 +5411,9 @@
       "state": "open",
       "title": "S+T+ARTS: Prepare optional additional documents (PDF/PNG)",
       "updated_at": "2026-06-11T22:02:53Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/7"
+      "url": "https://github.com/organvm/application-pipeline/issues/7",
+      "evidence": "Source blocks under blocks/evidence & blocks/framings; no compiled PDF/PNG artifacts.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#76": {
       "comments": 0,
@@ -5360,7 +5436,7 @@
     "organvm/application-pipeline#8": {
       "comments": 3,
       "created_at": "2026-02-24T20:59:55Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5371,12 +5447,14 @@
       "state": "open",
       "title": "Prepare portrait photo + bio for Prix Ars submission",
       "updated_at": "2026-06-11T22:02:55Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/8"
+      "url": "https://github.com/organvm/application-pipeline/issues/8",
+      "evidence": "Bio/profile (targets/profiles/prix-ars.json); no headshot portrait.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/application-pipeline#9": {
       "comments": 3,
       "created_at": "2026-02-24T21:00:01Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5387,7 +5465,9 @@
       "state": "open",
       "title": "Submit both Prix Ars categories and record in pipeline",
       "updated_at": "2026-06-11T22:02:56Z",
-      "url": "https://github.com/organvm/application-pipeline/issues/9"
+      "url": "https://github.com/organvm/application-pipeline/issues/9",
+      "evidence": "Both Prix YAMLs closed expired-without-submission; no submission receipt.",
+      "last_touched": "2026-07-19T08:35:02Z"
     },
     "organvm/archive-past-works#3": {
       "comments": 0,
@@ -50361,6 +50441,15 @@
       "disposition": "merged:13eda348",
       "evidence": "fix: TypeScript typecheck errors — parser fix + 84 real low-risk type fixes (272->188); remaining 188 are genuinely-unbuilt features (not hidden), tracked by the evolving issues.",
       "last_touched": "2026-07-19T08:17:33Z"
+    },
+    "organvm/application-pipeline#82": {
+      "repo": "organvm/application-pipeline",
+      "number": 82,
+      "kind": "pr",
+      "url": "https://github.com/organvm/application-pipeline/pull/82",
+      "disposition": "merged:11b969ec",
+      "evidence": "PR #82 CI green + squash-merged; marks network-sensitive test classes synthetic. No issues closed.",
+      "last_touched": "2026-07-19T08:35:02Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
