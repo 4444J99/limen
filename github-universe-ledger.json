@@ -39743,7 +39743,7 @@
     "organvm/petasum-super-petasum#10": {
       "comments": 2,
       "created_at": "2025-12-18T02:39:04Z",
-      "disposition": "queued",
+      "disposition": "superseded:#156",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39754,7 +39754,9 @@
       "state": "open",
       "title": "🎨 Palette: Align RFC template with Logic-First Framework",
       "updated_at": "2025-12-18T02:39:10Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/10"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/10",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:30Z"
     },
     "organvm/petasum-super-petasum#11": {
       "comments": 2,
@@ -39777,7 +39779,7 @@
     "organvm/petasum-super-petasum#12": {
       "comments": 2,
       "created_at": "2025-12-18T02:52:02Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39788,12 +39790,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize add-to-org-project workflow condition",
       "updated_at": "2025-12-18T02:52:11Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/12"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/12",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:42Z"
     },
     "organvm/petasum-super-petasum#122": {
       "comments": 1,
       "created_at": "2026-03-06T15:38:16Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/pseudonymization-guidelines.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39804,12 +39808,14 @@
       "state": "open",
       "title": "Create pseudonymization and redaction guidelines",
       "updated_at": "2026-03-06T19:11:01Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/122"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/122",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/pseudonymization-guidelines.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:24:38Z"
     },
     "organvm/petasum-super-petasum#123": {
       "comments": 1,
       "created_at": "2026-03-06T15:38:25Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/ai-gateway-architecture.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39820,12 +39826,14 @@
       "state": "open",
       "title": "Design personal LLM proxy/AI gateway",
       "updated_at": "2026-03-06T19:08:37Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/123"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/123",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/ai-gateway-architecture.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:24:43Z"
     },
     "organvm/petasum-super-petasum#124": {
       "comments": 1,
       "created_at": "2026-03-06T15:38:28Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/prompt-template-library.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39836,12 +39844,14 @@
       "state": "open",
       "title": "Create prompt template library",
       "updated_at": "2026-03-06T16:22:25Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/124"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/124",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/prompt-template-library.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:24:48Z"
     },
     "organvm/petasum-super-petasum#125": {
       "comments": 0,
       "created_at": "2026-03-06T15:38:32Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/explore-vs-production-modes.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39852,12 +39862,14 @@
       "state": "open",
       "title": "Enforce explore vs production mode separation",
       "updated_at": "2026-03-06T15:38:32Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/125"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/125",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/explore-vs-production-modes.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:24:53Z"
     },
     "organvm/petasum-super-petasum#126": {
       "comments": 0,
       "created_at": "2026-03-06T15:38:36Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/ai-interaction-manifest.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39868,12 +39880,14 @@
       "state": "open",
       "title": "Create AI interaction manifest template",
       "updated_at": "2026-03-06T15:38:36Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/126"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/126",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/ai-interaction-manifest.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:24:58Z"
     },
     "organvm/petasum-super-petasum#127": {
       "comments": 1,
       "created_at": "2026-03-06T15:38:39Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/provider-policy-tracking.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39884,12 +39898,14 @@
       "state": "open",
       "title": "Document provider policy tracking",
       "updated_at": "2026-03-06T16:22:38Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/127"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/127",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/provider-policy-tracking.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:03Z"
     },
     "organvm/petasum-super-petasum#128": {
       "comments": 0,
       "created_at": "2026-03-06T15:38:47Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/promptfoo-evaluation.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39900,12 +39916,14 @@
       "state": "open",
       "title": "Evaluate Promptfoo for prompt testing",
       "updated_at": "2026-03-06T15:38:47Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/128"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/128",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/promptfoo-evaluation.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:08Z"
     },
     "organvm/petasum-super-petasum#129": {
       "comments": 1,
       "created_at": "2026-03-06T15:38:50Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/standards-alignment.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39916,7 +39934,9 @@
       "state": "open",
       "title": "Align safety practices with NIST/ISO/OWASP standards",
       "updated_at": "2026-03-06T19:11:19Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/129"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/129",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/standards-alignment.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:13Z"
     },
     "organvm/petasum-super-petasum#13": {
       "comments": 2,
@@ -39937,7 +39957,7 @@
     "organvm/petasum-super-petasum#130": {
       "comments": 0,
       "created_at": "2026-03-06T15:38:55Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/content-provenance.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39948,12 +39968,14 @@
       "state": "open",
       "title": "Adopt C2PA/PROV content provenance",
       "updated_at": "2026-03-06T15:38:55Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/130"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/130",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/content-provenance.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:17Z"
     },
     "organvm/petasum-super-petasum#131": {
       "comments": 0,
       "created_at": "2026-03-06T15:38:57Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/platform-memory-lock-in.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39964,12 +39986,14 @@
       "state": "open",
       "title": "Address platform memory lock-in",
       "updated_at": "2026-03-06T15:38:57Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/131"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/131",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/platform-memory-lock-in.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:22Z"
     },
     "organvm/petasum-super-petasum#132": {
       "comments": 0,
       "created_at": "2026-03-06T16:25:27Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/ai-free-practice-cadence.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39980,12 +40004,14 @@
       "state": "open",
       "title": "feat: define AI-free practice cadence for cognitive atrophy prevention",
       "updated_at": "2026-03-06T16:25:27Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/132"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/132",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/ai-free-practice-cadence.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:27Z"
     },
     "organvm/petasum-super-petasum#133": {
       "comments": 0,
       "created_at": "2026-03-06T16:25:39Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/prompt-anti-patterns.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -39996,12 +40022,14 @@
       "state": "open",
       "title": "docs: create prompt anti-pattern catalog",
       "updated_at": "2026-03-06T16:25:39Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/133"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/133",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/prompt-anti-patterns.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:32Z"
     },
     "organvm/petasum-super-petasum#134": {
       "comments": 0,
       "created_at": "2026-03-06T16:25:51Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/copyright-case-law.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40012,12 +40040,14 @@
       "state": "open",
       "title": "docs: track AI copyright case law and regulatory guidance",
       "updated_at": "2026-03-06T16:25:51Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/134"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/134",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/copyright-case-law.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:36Z"
     },
     "organvm/petasum-super-petasum#135": {
       "comments": 0,
       "created_at": "2026-03-06T16:26:03Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/legislation-tracking.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40028,12 +40058,14 @@
       "state": "open",
       "title": "docs: track AI-specific legislation with penalties and deadlines",
       "updated_at": "2026-03-06T16:26:03Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/135"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/135",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/legislation-tracking.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:41Z"
     },
     "organvm/petasum-super-petasum#136": {
       "comments": 1,
       "created_at": "2026-03-06T19:07:56Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/NON-INTERACTIVE-AGENT-SAFETY.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40044,12 +40076,14 @@
       "state": "open",
       "title": "feat: add safety constraints for non-interactive agent modes",
       "updated_at": "2026-03-08T15:11:46Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/136"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/136",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/NON-INTERACTIVE-AGENT-SAFETY.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:46Z"
     },
     "organvm/petasum-super-petasum#137": {
       "comments": 0,
       "created_at": "2026-03-06T19:08:10Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/output-safety-filters.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40060,12 +40094,14 @@
       "state": "open",
       "title": "feat: implement output safety filters as gateway concern",
       "updated_at": "2026-03-06T19:08:10Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/137"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/137",
+      "evidence": "Governance want fulfilled by substantive doc on main (docs/output-safety-filters.md); acceptance criteria verified. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:25:50Z"
     },
     "organvm/petasum-super-petasum#14": {
       "comments": 2,
       "created_at": "2025-12-19T02:42:24Z",
-      "disposition": "queued",
+      "disposition": "superseded:#156",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40076,12 +40112,14 @@
       "state": "open",
       "title": "🎨 Palette: Enhance RFC template with Logic-First guidance",
       "updated_at": "2025-12-19T02:42:30Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/14"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/14",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:34Z"
     },
     "organvm/petasum-super-petasum#145": {
       "comments": 0,
       "created_at": "2026-06-10T21:57:11Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40092,12 +40130,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T21:57:11Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/issues/145"
+      "url": "https://github.com/organvm/petasum-super-petasum/issues/145",
+      "evidence": "Activation audit; repo is a docs/governance+workflow corpus (no runtime endpoint) — ship=publish-docs is an operator product decision. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:27:03Z"
     },
     "organvm/petasum-super-petasum#148": {
       "comments": 1,
       "created_at": "2026-06-22T20:13:09Z",
-      "disposition": "queued",
+      "disposition": "superseded:main DISCOVERY.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40108,12 +40148,14 @@
       "state": "open",
       "title": "feat(discovery): promote petasum-super-petasum to ranked value tier",
       "updated_at": "2026-06-22T20:13:13Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/148"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/148",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:54Z"
     },
     "organvm/petasum-super-petasum#149": {
       "comments": 1,
       "created_at": "2026-06-23T16:35:11Z",
-      "disposition": "queued",
+      "disposition": "superseded:main DISCOVERY.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40124,12 +40166,14 @@
       "state": "open",
       "title": "feat(discovery): promote petasum-super-petasum to ranked value tier",
       "updated_at": "2026-07-04T05:27:26Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/149"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/149",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:59Z"
     },
     "organvm/petasum-super-petasum#15": {
       "comments": 2,
       "created_at": "2025-12-19T02:53:26Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40140,12 +40184,14 @@
       "state": "open",
       "title": "⚡ Bolt: optimize GitHub Actions label check",
       "updated_at": "2025-12-19T02:53:31Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/15"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/15",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:47Z"
     },
     "organvm/petasum-super-petasum#150": {
       "comments": 1,
       "created_at": "2026-06-24T10:58:59Z",
-      "disposition": "queued",
+      "disposition": "superseded:main DISCOVERY.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40156,12 +40202,14 @@
       "state": "open",
       "title": "feat(discovery): promote petasum-super-petasum — governance CLI + estate enforcement backbone",
       "updated_at": "2026-06-24T10:59:07Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/150"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/150",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:23:03Z"
     },
     "organvm/petasum-super-petasum#151": {
       "comments": 1,
       "created_at": "2026-06-24T12:06:28Z",
-      "disposition": "queued",
+      "disposition": "superseded:main DISCOVERY.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40172,12 +40220,14 @@
       "state": "open",
       "title": "feat(discovery): promote petasum-super-petasum to ranked value tier",
       "updated_at": "2026-06-24T12:06:33Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/151"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/151",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:23:08Z"
     },
     "organvm/petasum-super-petasum#152": {
       "comments": 0,
       "created_at": "2026-06-25T15:34:07Z",
-      "disposition": "queued",
+      "disposition": "merged:96b1f8c8",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40188,12 +40238,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/checkout from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T15:34:25Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/152"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/152",
+      "evidence": "dependabot actions/checkout 6->7; merged 2026-07-19 (96b1f8c8).",
+      "last_touched": "2026-07-19T07:27:03Z"
     },
     "organvm/petasum-super-petasum#16": {
       "comments": 2,
       "created_at": "2025-12-20T02:35:43Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40204,12 +40256,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix script injection in issue notification workflow",
       "updated_at": "2025-12-20T02:35:49Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/16"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/16",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:18:35Z"
     },
     "organvm/petasum-super-petasum#17": {
       "comments": 2,
       "created_at": "2025-12-20T02:42:44Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40220,12 +40274,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize label check in add-to-org-project workflow",
       "updated_at": "2025-12-20T02:42:50Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/17"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/17",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:52Z"
     },
     "organvm/petasum-super-petasum#18": {
       "comments": 2,
       "created_at": "2025-12-20T02:44:26Z",
-      "disposition": "queued",
+      "disposition": "superseded:main issue-templates",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40236,12 +40292,14 @@
       "state": "open",
       "title": "🎨 Palette: Improved Process Improvement Template",
       "updated_at": "2025-12-20T02:44:31Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/18"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/18",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:20Z"
     },
     "organvm/petasum-super-petasum#19": {
       "comments": 2,
       "created_at": "2025-12-21T02:41:05Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40252,12 +40310,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize GitHub Actions expression",
       "updated_at": "2025-12-21T02:41:11Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/19"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/19",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:57Z"
     },
     "organvm/petasum-super-petasum#20": {
       "comments": 2,
       "created_at": "2025-12-21T02:43:25Z",
-      "disposition": "queued",
+      "disposition": "superseded:#156",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40268,12 +40328,14 @@
       "state": "open",
       "title": "🎨 Palette: Enhance RFC Template with Logic-First Framework Guidance",
       "updated_at": "2025-12-21T02:43:30Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/20"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/20",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:39Z"
     },
     "organvm/petasum-super-petasum#21": {
       "comments": 2,
       "created_at": "2025-12-21T02:55:53Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40284,12 +40346,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix script injection in org-issue-notifications workflow",
       "updated_at": "2025-12-21T02:55:59Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/21"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/21",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:18:40Z"
     },
     "organvm/petasum-super-petasum#22": {
       "comments": 2,
       "created_at": "2025-12-22T02:35:23Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40300,12 +40364,14 @@
       "state": "open",
       "title": "⚡ Bolt: optimize org project workflow",
       "updated_at": "2025-12-22T02:35:28Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/22"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/22",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:01Z"
     },
     "organvm/petasum-super-petasum#23": {
       "comments": 2,
       "created_at": "2025-12-22T02:38:46Z",
-      "disposition": "queued",
+      "disposition": "superseded:main issue-templates",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40316,12 +40382,14 @@
       "state": "open",
       "title": "🎨 Palette: Improve Process Improvement template UX",
       "updated_at": "2025-12-22T02:38:55Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/23"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/23",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:25Z"
     },
     "organvm/petasum-super-petasum#24": {
       "comments": 2,
       "created_at": "2025-12-22T02:47:59Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40332,12 +40400,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix script injection in org-issue-notifications workflow",
       "updated_at": "2025-12-22T02:48:05Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/24"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/24",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:18:45Z"
     },
     "organvm/petasum-super-petasum#25": {
       "comments": 2,
       "created_at": "2025-12-23T02:34:32Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40348,12 +40418,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize GitHub Actions label check expression",
       "updated_at": "2025-12-23T02:34:38Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/25"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/25",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:06Z"
     },
     "organvm/petasum-super-petasum#26": {
       "comments": 2,
       "created_at": "2025-12-23T02:37:57Z",
-      "disposition": "queued",
+      "disposition": "superseded:#156",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40364,12 +40436,14 @@
       "state": "open",
       "title": "🎨 Palette: Enhance RFC template with Logic-First micro-UX",
       "updated_at": "2025-12-23T02:38:03Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/26"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/26",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:44Z"
     },
     "organvm/petasum-super-petasum#27": {
       "comments": 2,
       "created_at": "2025-12-23T02:51:11Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40380,12 +40454,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix script injection in org notifications",
       "updated_at": "2025-12-23T02:51:17Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/27"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/27",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:18:50Z"
     },
     "organvm/petasum-super-petasum#28": {
       "comments": 2,
       "created_at": "2025-12-24T02:35:50Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40396,12 +40472,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize label check in add-to-org-project workflow",
       "updated_at": "2025-12-24T02:35:56Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/28"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/28",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:11Z"
     },
     "organvm/petasum-super-petasum#29": {
       "comments": 2,
       "created_at": "2025-12-24T02:43:19Z",
-      "disposition": "queued",
+      "disposition": "superseded:#156",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40412,12 +40490,14 @@
       "state": "open",
       "title": "🎨 Palette: Improve RFC Template UX",
       "updated_at": "2025-12-24T02:43:29Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/29"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/29",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:49Z"
     },
     "organvm/petasum-super-petasum#30": {
       "comments": 2,
       "created_at": "2025-12-24T02:57:10Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40428,12 +40508,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix injection vulnerability in workflows",
       "updated_at": "2025-12-24T02:57:16Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/30"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/30",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:18:54Z"
     },
     "organvm/petasum-super-petasum#31": {
       "comments": 2,
       "created_at": "2025-12-25T02:36:44Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40444,12 +40526,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize label check in add-to-org-project workflow",
       "updated_at": "2025-12-25T02:36:51Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/31"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/31",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:16Z"
     },
     "organvm/petasum-super-petasum#32": {
       "comments": 2,
       "created_at": "2025-12-25T02:47:18Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40460,12 +40544,14 @@
       "state": "open",
       "title": "🎨 Palette: Add 'Back to Top' navigation to Logic Framework",
       "updated_at": "2025-12-25T02:47:24Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/32"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/32",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:26Z"
     },
     "organvm/petasum-super-petasum#33": {
       "comments": 2,
       "created_at": "2025-12-25T02:49:40Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40476,12 +40562,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix injection vulnerabilities in workflow",
       "updated_at": "2025-12-25T02:49:46Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/33"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/33",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:18:59Z"
     },
     "organvm/petasum-super-petasum#34": {
       "comments": 2,
       "created_at": "2025-12-26T02:37:05Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40492,12 +40580,14 @@
       "state": "open",
       "title": "🎨 Palette: Improve documentation navigation with Back to Top links",
       "updated_at": "2025-12-26T02:37:14Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/34"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/34",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:31Z"
     },
     "organvm/petasum-super-petasum#35": {
       "comments": 2,
       "created_at": "2025-12-26T02:39:25Z",
-      "disposition": "queued",
+      "disposition": "superseded:main add-to-org-project.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40508,12 +40598,14 @@
       "state": "open",
       "title": "⚡ Bolt: Remove redundant steps in organization notification workflow",
       "updated_at": "2025-12-26T02:39:30Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/35"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/35",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:21Z"
     },
     "organvm/petasum-super-petasum#36": {
       "comments": 2,
       "created_at": "2025-12-26T02:47:22Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40524,12 +40616,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix script injection in org notifications workflow",
       "updated_at": "2025-12-26T02:47:27Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/36"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/36",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:04Z"
     },
     "organvm/petasum-super-petasum#37": {
       "comments": 2,
       "created_at": "2025-12-27T02:42:46Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40540,12 +40634,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Script Injection in Org Notifications Workflow",
       "updated_at": "2025-12-27T02:42:52Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/37"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/37",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:09Z"
     },
     "organvm/petasum-super-petasum#38": {
       "comments": 2,
       "created_at": "2025-12-27T02:42:53Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40556,12 +40652,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize org-issue-notifications workflow",
       "updated_at": "2025-12-27T02:42:59Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/38"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/38",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:58Z"
     },
     "organvm/petasum-super-petasum#39": {
       "comments": 2,
       "created_at": "2025-12-27T02:48:49Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40572,12 +40670,14 @@
       "state": "open",
       "title": "🎨 Palette: Enhance documentation navigation and issue template guidance",
       "updated_at": "2025-12-27T02:48:55Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/39"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/39",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:36Z"
     },
     "organvm/petasum-super-petasum#40": {
       "comments": 2,
       "created_at": "2025-12-28T02:34:45Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40588,12 +40688,14 @@
       "state": "open",
       "title": "⚡ Bolt: Consolidate notification workflow steps",
       "updated_at": "2025-12-28T02:34:50Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/40"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/40",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:03Z"
     },
     "organvm/petasum-super-petasum#41": {
       "comments": 2,
       "created_at": "2025-12-28T02:35:11Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40604,12 +40706,14 @@
       "state": "open",
       "title": "🎨 Palette: Improved navigation in LOGIC_FRAMEWORK.md",
       "updated_at": "2025-12-28T02:35:16Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/41"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/41",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:40Z"
     },
     "organvm/petasum-super-petasum#42": {
       "comments": 2,
       "created_at": "2025-12-28T02:35:52Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40620,12 +40724,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix injection vulnerabilities in org-issue-notifications",
       "updated_at": "2025-12-28T02:35:58Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/42"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/42",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:14Z"
     },
     "organvm/petasum-super-petasum#43": {
       "comments": 2,
       "created_at": "2025-12-29T02:34:42Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40636,12 +40742,14 @@
       "state": "open",
       "title": "🎨 Palette: Add Back to Top navigation to documentation",
       "updated_at": "2025-12-29T02:34:49Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/43"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/43",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:45Z"
     },
     "organvm/petasum-super-petasum#44": {
       "comments": 2,
       "created_at": "2025-12-29T02:36:53Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40652,12 +40760,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize org-issue-notifications workflow",
       "updated_at": "2025-12-29T02:36:59Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/44"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/44",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:08Z"
     },
     "organvm/petasum-super-petasum#45": {
       "comments": 2,
       "created_at": "2025-12-29T02:46:52Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40668,12 +40778,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix script injection in issue notifications",
       "updated_at": "2025-12-29T02:46:58Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/45"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/45",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:19Z"
     },
     "organvm/petasum-super-petasum#46": {
       "comments": 2,
       "created_at": "2025-12-30T02:34:49Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40684,12 +40796,14 @@
       "state": "open",
       "title": "🎨 Palette: Add TOC and navigation to COMMANDMENTS.md",
       "updated_at": "2025-12-30T02:34:55Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/46"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/46",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:50Z"
     },
     "organvm/petasum-super-petasum#47": {
       "comments": 2,
       "created_at": "2025-12-30T02:36:01Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40700,12 +40814,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize org-issue-notifications workflow",
       "updated_at": "2025-12-30T02:36:08Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/47"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/47",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:13Z"
     },
     "organvm/petasum-super-petasum#48": {
       "comments": 2,
       "created_at": "2025-12-30T02:48:24Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40716,12 +40832,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Script Injection in Notifications Workflow",
       "updated_at": "2025-12-30T02:48:30Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/48"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/48",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:24Z"
     },
     "organvm/petasum-super-petasum#49": {
       "comments": 2,
       "created_at": "2025-12-31T02:34:50Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40732,12 +40850,14 @@
       "state": "open",
       "title": "🎨 Palette: Improved documentation navigation with TOC and Back-to-Top links",
       "updated_at": "2025-12-31T02:34:55Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/49"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/49",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:21:55Z"
     },
     "organvm/petasum-super-petasum#50": {
       "comments": 2,
       "created_at": "2025-12-31T02:34:52Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40748,12 +40868,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize notification workflow",
       "updated_at": "2025-12-31T02:34:58Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/50"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/50",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:18Z"
     },
     "organvm/petasum-super-petasum#51": {
       "comments": 2,
       "created_at": "2025-12-31T03:05:59Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40764,12 +40886,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix script injection in org-issue-notifications",
       "updated_at": "2025-12-31T03:06:05Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/51"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/51",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:29Z"
     },
     "organvm/petasum-super-petasum#52": {
       "comments": 3,
       "created_at": "2026-01-01T02:39:23Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40780,12 +40904,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix script injection in org-issue-notifications",
       "updated_at": "2026-07-13T12:07:28Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/52"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/52",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:34Z"
     },
     "organvm/petasum-super-petasum#53": {
       "comments": 3,
       "created_at": "2026-01-01T02:51:55Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40796,12 +40922,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize Organization-Wide Issue Notification Workflow",
       "updated_at": "2026-07-13T12:07:25Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/53"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/53",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:23Z"
     },
     "organvm/petasum-super-petasum#54": {
       "comments": 3,
       "created_at": "2026-01-02T02:34:36Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40812,12 +40940,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix critical injection vulnerabilities in notification workflow",
       "updated_at": "2026-07-13T12:07:24Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/54"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/54",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:39Z"
     },
     "organvm/petasum-super-petasum#55": {
       "comments": 3,
       "created_at": "2026-01-02T02:39:08Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40828,12 +40958,14 @@
       "state": "open",
       "title": "🎨 Palette: Add Back to Top links to Lifecycle Roadmap",
       "updated_at": "2026-07-13T12:07:22Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/55"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/55",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:00Z"
     },
     "organvm/petasum-super-petasum#56": {
       "comments": 3,
       "created_at": "2026-01-02T02:45:00Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40844,12 +40976,14 @@
       "state": "open",
       "title": "⚡ Bolt: Fix and optimize org-issue-notifications workflow",
       "updated_at": "2026-07-06T12:49:11Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/56"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/56",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:28Z"
     },
     "organvm/petasum-super-petasum#57": {
       "comments": 3,
       "created_at": "2026-01-03T02:35:30Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40860,12 +40994,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize org-issue-notifications.yml workflow",
       "updated_at": "2026-07-06T12:49:09Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/57"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/57",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:33Z"
     },
     "organvm/petasum-super-petasum#58": {
       "comments": 3,
       "created_at": "2026-01-03T02:44:11Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40876,12 +41012,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Command Injection in Org Notifications",
       "updated_at": "2026-06-29T13:08:04Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/58"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/58",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:44Z"
     },
     "organvm/petasum-super-petasum#59": {
       "comments": 3,
       "created_at": "2026-01-03T02:49:10Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40892,12 +41030,14 @@
       "state": "open",
       "title": "🎨 Palette: Improved navigation in long documentation files",
       "updated_at": "2026-06-29T13:08:02Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/59"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/59",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:05Z"
     },
     "organvm/petasum-super-petasum#60": {
       "comments": 3,
       "created_at": "2026-01-03T14:30:40Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40908,12 +41048,14 @@
       "state": "open",
       "title": "Consolidate 54 Jules Tasks: Security, Optimization, & Docs",
       "updated_at": "2026-06-29T13:08:01Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/60"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/60",
+      "evidence": "Meta-consolidation PR; all 54 bundled wants distilled/superseded onto main. Commented, left open as lineage anchor (never closed).",
+      "last_touched": "2026-07-19T07:27:03Z"
     },
     "organvm/petasum-super-petasum#61": {
       "comments": 3,
       "created_at": "2026-01-04T02:35:25Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40924,12 +41066,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix critical injection vulnerabilities in issue notifications",
       "updated_at": "2026-06-29T13:07:59Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/61"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/61",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:49Z"
     },
     "organvm/petasum-super-petasum#62": {
       "comments": 3,
       "created_at": "2026-01-04T02:36:54Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40940,12 +41084,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize org-issue-notifications workflow",
       "updated_at": "2026-06-29T13:07:57Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/62"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/62",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:20:38Z"
     },
     "organvm/petasum-super-petasum#63": {
       "comments": 3,
       "created_at": "2026-01-04T02:41:05Z",
-      "disposition": "queued",
+      "disposition": "superseded:main docs-navigation",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40956,12 +41102,14 @@
       "state": "open",
       "title": "🎨 Palette: Add navigation aids to documentation",
       "updated_at": "2026-06-29T13:07:55Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/63"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/63",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:10Z"
     },
     "organvm/petasum-super-petasum#7": {
       "comments": 2,
       "created_at": "2025-12-17T02:38:00Z",
-      "disposition": "queued",
+      "disposition": "superseded:main issue-templates",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40972,12 +41120,14 @@
       "state": "open",
       "title": "🎨 Palette: Improve UX for organization-wide issue template",
       "updated_at": "2025-12-17T02:38:10Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/7"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/7",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:22:15Z"
     },
     "organvm/petasum-super-petasum#8": {
       "comments": 2,
       "created_at": "2025-12-17T02:52:12Z",
-      "disposition": "queued",
+      "disposition": "superseded:main org-issue-notifications.yml",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -40988,7 +41138,9 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize org-issue-notifications workflow triggers",
       "updated_at": "2025-12-17T02:52:17Z",
-      "url": "https://github.com/organvm/petasum-super-petasum/pull/8"
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/8",
+      "evidence": "Runaway Jules cluster / duplicate discovery; want verified already on main. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:19:53Z"
     },
     "organvm/petasum-super-petasum#9": {
       "comments": 2,
@@ -49437,6 +49589,15 @@
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-11T12:36:23Z",
       "url": "https://github.com/organvm/your-fit-tailored/issues/9"
+    },
+    "organvm/petasum-super-petasum#156": {
+      "repo": "organvm/petasum-super-petasum",
+      "number": 156,
+      "kind": "pr",
+      "url": "https://github.com/organvm/petasum-super-petasum/pull/156",
+      "disposition": "merged:3deac353",
+      "evidence": "Distilled the RFC-template Logic-First want; opened + merged this session (3deac353).",
+      "last_touched": "2026-07-19T07:27:36Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
