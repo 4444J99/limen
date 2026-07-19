@@ -15,14 +15,14 @@ portal:
       claude: 100
     track:
       date: '2026-07-19'
-      spent: 4
+      spent: 17
       per_agent:
-        jules: 0
-        gemini: 0
-        codex: 0
-        opencode: 0
-        agy: 0
-        claude: 0
+        jules: 3
+        gemini: 2
+        codex: 2
+        opencode: 2
+        agy: 2
+        claude: 2
         github_actions: 1
         ollama: 3
       per_agent_reset:
@@ -137015,7 +137015,7 @@ tasks:
   workstream: contributions
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - test-coverage
   - generated
@@ -137031,7 +137031,7 @@ tasks:
   receipt_target: github:organvm/manumissio:pull-request:GEN-organvm-manumissio-test-coverage-0709
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-16T00:06:35.475333Z'
+  updated: '2026-07-19T01:23:46.482693Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:45:08.331905Z'
     agent: gemini
@@ -137054,6 +137054,11 @@ tasks:
     session_id: async-reap-stale
     status: open
     output: 'dispatch-async: stale worker marker older than 2100s reaped; task reopened'
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: codex
+    session_id: async-reserve:ef3748352a32d975b517c6179ecf030c
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GEN-organvm-session-meta-test-coverage-0709
   title: Raise test coverage in organvm/session-meta
   repo: organvm/session-meta
@@ -142820,7 +142825,7 @@ tasks:
   target_agent: jules
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -142841,7 +142846,7 @@ tasks:
   receipt_target: https://github.com/organvm/limen/pull/846
   depends_on: []
   created: '2026-07-12'
-  updated: '2026-07-17T23:23:31.452137Z'
+  updated: '2026-07-19T01:23:46.482693Z'
   dispatch_log:
   - timestamp: '2026-07-13T00:16:08.439534Z'
     agent: gemini
@@ -142869,6 +142874,11 @@ tasks:
     status: open
     output: "recover: jules session 15840542929899559212 is idle_no_status \u2192\
       \ reopened"
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: jules
+    session_id: async-reserve:698b5cb54c7f5869841d9873b976228b
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: ORG-observation-organ-firstslice-0712
   title: Build the first working vertical slice of the observation organ
   repo: organvm/limen
@@ -143577,7 +143587,7 @@ tasks:
   workstream: substrate
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - origin:system-debt
   - horizon:present
@@ -143594,7 +143604,7 @@ tasks:
   receipt_target: git:organvm/domus-genoma:dot_zshenv.tmpl
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-07-16T00:22:12.237842Z'
+  updated: '2026-07-19T01:23:46.482693Z'
   dispatch_log:
   - timestamp: '2026-07-15T16:02:31.992111Z'
     agent: codex
@@ -143622,6 +143632,11 @@ tasks:
     status: open
     output: 'dispatch-async: markerless async reservation older than 2100s reaped;
       task reopened'
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: agy
+    session_id: async-reserve:d0f220190ccaf84671820611d0e40e3c
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
   origin: system_debt
   horizon: present
   value_case: Restores the advertised Limen CLI and progress ledger without creating
@@ -144983,7 +144998,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -145003,7 +145018,13 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/304
   depends_on: []
   created: '2026-07-16'
-  dispatch_log: []
+  updated: '2026-07-19T01:23:46.482693Z'
+  dispatch_log:
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: claude
+    session_id: async-reserve:3c9d7be386fc42f9bab8efbbe6f35821
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-cifix-organvm-hospes-8
   title: fix failing CI on organvm/hospes#8
   repo: organvm/hospes
@@ -145011,7 +145032,7 @@ tasks:
   target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -145031,7 +145052,13 @@ tasks:
   receipt_target: https://github.com/organvm/hospes/pull/8
   depends_on: []
   created: '2026-07-16'
-  dispatch_log: []
+  updated: '2026-07-19T01:23:46.482693Z'
+  dispatch_log:
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: gemini
+    session_id: async-reserve:b1ab6b1e0a0c0f71ec68a0c9a24683f8
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: HEAL-rebase-organvm-limen-385
   title: rebase/resolve conflicts on organvm/limen#385
   repo: organvm/limen
@@ -145297,7 +145324,7 @@ tasks:
   workstream: substrate
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -145326,7 +145353,7 @@ tasks:
   receipt_target: git:organvm/limen:logs/reclaim-generated-state.jsonl
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T13:41:46.480397Z'
+  updated: '2026-07-19T01:23:46.482693Z'
   dispatch_log:
   - timestamp: '2026-07-16T13:04:36.895961Z'
     agent: codex
@@ -145339,6 +145366,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on codex; reopened to asynchronous lane
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: jules
+    session_id: async-reserve:8c9448b6093eb1141b3e6c9ccdc2601a
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-PUBLIC-FACE-CONTRIBUTION-BALANCE-445926ec4d52
   title: Rebalance public GitHub activity away from commit-only churn
   description: 'GitHub activity mix needs owner action: commits 73.6%, PRs 14.3%,
@@ -145349,7 +145381,7 @@ tasks:
   workstream: contribution-balance
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - receipt-first
@@ -145377,7 +145409,7 @@ tasks:
   receipt_target: git:organvm/limen:docs/always-working.md
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T14:33:54.316268Z'
+  updated: '2026-07-19T01:23:46.482693Z'
   dispatch_log:
   - timestamp: '2026-07-16T13:52:04.654325Z'
     agent: codex
@@ -145390,6 +145422,11 @@ tasks:
     status: open
     route_to: jules
     output: timeout on codex; reopened to asynchronous lane
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: jules
+    session_id: async-reserve:2a229bb1c6bfd07e62639bf2bc87b333
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-MAIL-ACTIVE-FLAGGED-6050af65b9f9
   title: Reconcile active flagged mail before historical sweep
   description: 144 active flagged non-deleted messages require classification
@@ -145525,7 +145562,7 @@ tasks:
   target_agent: codex
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/public-record-data-scrapper/issues/348
@@ -145541,8 +145578,13 @@ tasks:
   receipt_target: https://github.com/organvm/public-record-data-scrapper/issues/348
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T17:00:33.851241Z'
-  dispatch_log: []
+  updated: '2026-07-19T01:23:46.482693Z'
+  dispatch_log:
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: codex
+    session_id: async-reserve:79cc9cdcbd4e7cc38d8a4b9cf6a0391b
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-public-record-data-scrapper-347
   title: 'Discovery channel drift: SBA CKAN returns 404 for all states; Socrata registry
     has no FL dataset'
@@ -145551,7 +145593,7 @@ tasks:
   target_agent: opencode
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/public-record-data-scrapper/issues/347
@@ -145567,8 +145609,13 @@ tasks:
   receipt_target: https://github.com/organvm/public-record-data-scrapper/issues/347
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-07-16T17:00:33.851892Z'
-  dispatch_log: []
+  updated: '2026-07-19T01:23:46.482693Z'
+  dispatch_log:
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: opencode
+    session_id: async-reserve:b554969508b1da389025833f240c2ef4
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-public-record-data-scrapper-346
   title: 'Migration chain broken on every database: 023_api_keys collides with the
     api_keys table 004 already created'
@@ -145964,7 +146011,7 @@ tasks:
   workstream: correspondence
   priority: medium
   budget_cost: 1
-  status: open
+  status: dispatched
   labels: []
   urls:
   - https://github.com/organvm/universal-mail--automation/issues/173
@@ -145979,8 +146026,13 @@ tasks:
   receipt_target: https://github.com/organvm/universal-mail--automation/issues/173
   depends_on: []
   created: '2026-07-17'
-  updated: '2026-07-18T00:25:31.142047Z'
-  dispatch_log: []
+  updated: '2026-07-19T01:23:46.482693Z'
+  dispatch_log:
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: opencode
+    session_id: async-reserve:eba5e05103f0939d4f4d8be242f415af
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: AW-PUBLIC-FACE-PROFILE-92fb0c3560ee
   title: Reconcile and project the GitHub profile/public face
   description: visible GitHub profile README is missing or stale
@@ -145990,7 +146042,7 @@ tasks:
   workstream: public-face
   priority: critical
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - always-working
   - overnight-lane-switch
@@ -146016,7 +146068,7 @@ tasks:
   receipt_target: git:4444J99/4444J99:README.md
   depends_on: []
   created: '2026-07-18'
-  updated: '2026-07-18T21:29:36.184078Z'
+  updated: '2026-07-19T01:23:46.482693Z'
   dispatch_log:
   - timestamp: '2026-07-18T14:18:44.218842Z'
     agent: codex
@@ -146044,6 +146096,11 @@ tasks:
     session_id: heal
     status: open
     output: "recover: reopened failed \u2192 fresh cascade"
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: agy
+    session_id: async-reserve:2bf36b7e3c70c18b1be55b34cfc005c1
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-1227
   title: 'needs-human (L-CLOSEOUT-OBSERVE-ARM): Arm the closeout-reconciliation organ
     to OBSERVE live'
@@ -146077,7 +146134,7 @@ tasks:
   target_agent: claude
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -146097,7 +146154,13 @@ tasks:
   receipt_target: https://github.com/organvm/domus-genoma/pull/311
   depends_on: []
   created: '2026-07-18'
-  dispatch_log: []
+  updated: '2026-07-19T01:23:46.482693Z'
+  dispatch_log:
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: claude
+    session_id: async-reserve:d7f36946a8a2e1236d1babe64cfcbcd8
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
 - id: GH-organvm-limen-1245
   title: 'profile engine: deferred follow-ups (calendar-cache, amalgamation, breadth)'
   repo: organvm/limen
@@ -146557,7 +146620,7 @@ tasks:
   target_agent: gemini
   priority: high
   budget_cost: 1
-  status: open
+  status: dispatched
   labels:
   - cifix
   - self-heal
@@ -146577,4 +146640,10 @@ tasks:
   receipt_target: https://github.com/organvm/manumissio/pull/45
   depends_on: []
   created: '2026-07-18'
-  dispatch_log: []
+  updated: '2026-07-19T01:23:46.482693Z'
+  dispatch_log:
+  - timestamp: '2026-07-19T01:23:46.482693Z'
+    agent: gemini
+    session_id: async-reserve:c0f0b5aa1f7ccde4e273040e56e80bdc
+    status: dispatched
+    output: 'dispatch-async: reserved before detached worker launch'
