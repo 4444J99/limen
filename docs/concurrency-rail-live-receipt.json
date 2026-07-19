@@ -16,7 +16,7 @@
       "scope_note": "Cloudflare retains the encrypted LIMEN_API_TOKEN secret, but no promptless local source exposed the matching value. No secret was read, printed, replaced, or copied."
     }
   ],
-  "generated_utc": "2026-07-18T17:39:09Z",
+  "generated_utc": "2026-07-18T17:51:45Z",
   "policy": {
     "actions": {
       "can_approve_pull_request_reviews": false,
@@ -74,12 +74,39 @@
     }
   },
   "queue": {
+    "observer_correction": {
+      "focused_predicate": "bash scripts/tests/await-pr.test.sh",
+      "focused_result": "18 passed, 0 failed",
+      "github_observation": {
+        "auto_merge_request": null,
+        "is_in_merge_queue": true,
+        "merge_state_status": "CLEAN",
+        "position": 1,
+        "pull_request": 1268
+      },
+      "resolution": "scripts/await-pr.sh now queries GitHub GraphQL directly and treats its explicit isInMergeQueue field as authoritative queue membership instead of falsely declaring removal when mergeStateStatus is CLEAN and autoMergeRequest is null. The installed gh 2.96.0 pr view field list does not expose isInMergeQueue."
+    },
+    "merge_group": {
+      "conclusion": "success",
+      "head_branch": "gh-readonly-queue/main/pr-1268-4dbe86998518892a83827d5814e250c817f4b2bb",
+      "head_oid": "067d3be4be6a625dd33b5ad7837e075d48566dde",
+      "run_id": 29654498945,
+      "url": "https://github.com/organvm/limen/actions/runs/29654498945",
+      "workflow": "PR Gate"
+    },
     "owner_pull_request": {
       "head_ref": "work/concurrency-closeout-reap-20260719",
-      "identity": "the unique GitHub pull request in organvm/limen whose head ref is work/concurrency-closeout-reap-20260719",
-      "repository": "organvm/limen"
+      "head_oid": "007e8dcca1648291751280dfa99789a81a531b21",
+      "main_ancestry_proven": true,
+      "merge_commit_oid": "067d3be4be6a625dd33b5ad7837e075d48566dde",
+      "merged_at": "2026-07-18T17:45:31Z",
+      "number": 1268,
+      "repository": "organvm/limen",
+      "state": "MERGED",
+      "url": "https://github.com/organvm/limen/pull/1268"
     },
     "terminal_predicate": "The owner pull request is MERGED at its unchanged exact head, its pr-gate merge_group run completed successfully, and its merge commit is an ancestor of origin/main.",
+    "verdict": "pass",
     "verdict_if_terminal_predicate_fails": "not_terminal",
     "verdict_if_terminal_predicate_passes": "pass"
   },
@@ -115,8 +142,9 @@
     "pr": 1247
   },
   "terminality": {
-    "current": "conditional",
-    "rule": "This tracked receipt becomes terminal when its owner pull request satisfies queue.terminal_predicate; the GitHub pull request and merge_group run are the terminal remote evidence."
+    "current": "terminal",
+    "owner_predicate_passed": true,
+    "rule": "The tracked receipt is terminal because its owner pull request satisfies queue.terminal_predicate. The remaining blocking atoms are explicitly owner-routed and keep the overall verdict blocked."
   },
   "verdict": "blocked",
   "worker": {

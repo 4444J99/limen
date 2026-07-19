@@ -59,6 +59,26 @@ repo_args=(); [ -n "$REPO" ] && repo_args=(--repo "$REPO")
 # bash 3.2 (macOS /bin/bash): "${repo_args[@]+"${repo_args[@]}"}" at each call site — an empty
 # array expands to nothing under set -u, a populated one to its elements.
 
+QUEUE_OWNER=""; QUEUE_NAME=""
+resolve_queue_repo() {
+  local repo_id
+  if [ -n "$REPO" ]; then
+    repo_id="$REPO"
+  else
+    repo_id="$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)" || return 1
+  fi
+  case "$repo_id" in
+    */*)
+      QUEUE_OWNER="${repo_id%%/*}"
+      QUEUE_NAME="${repo_id#*/}"
+      ;;
+    *) return 1 ;;
+  esac
+  # The documented --repo contract is OWNER/NAME. Reject a hostname-prefixed or otherwise
+  # ambiguous value instead of querying the wrong repository after an enqueue.
+  [ -n "$QUEUE_OWNER" ] && [ -n "$QUEUE_NAME" ] && case "$QUEUE_NAME" in */*) false ;; *) true ;; esac
+}
+
 mkdir -p "$ROOT/logs" 2>/dev/null || true
 finish() { # exit_code — the single exit path after the lock is held: log one summary line, exit.
   printf '%s await-pr pr=%s exit=%s polls=%s last=%s\n' \
@@ -103,9 +123,13 @@ while :; do
   # after queue removal/failure.
   if [ "$queued" = 1 ]; then
     i=$((i + 1))
-    queue_state="$(gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
-      --json state,headRefOid,mergeStateStatus,autoMergeRequest \
-      --jq '[.state, .headRefOid, .mergeStateStatus, (if .autoMergeRequest == null then "none" else "armed" end)] | @tsv' \
+    # gh pr view does not expose isInMergeQueue even when GitHub's GraphQL schema does.
+    # Query GraphQL directly so explicit queue membership wins over the transient
+    # mergeStateStatus=CLEAN + autoMergeRequest=null surface.
+    queue_state="$(gh api graphql \
+      -f query='query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){state headRefOid mergeStateStatus autoMergeRequest{enabledAt} isInMergeQueue}}}' \
+      -F owner="$QUEUE_OWNER" -F name="$QUEUE_NAME" -F number="$PR" \
+      --jq '[.data.repository.pullRequest.state, .data.repository.pullRequest.headRefOid, .data.repository.pullRequest.mergeStateStatus, (if .data.repository.pullRequest.autoMergeRequest == null then "none" else "armed" end), (if .data.repository.pullRequest.isInMergeQueue then "in-queue" else "not-in-queue" end)] | @tsv' \
       2>/dev/null)"
     queue_rc=$?
     if [ "$queue_rc" -ne 0 ] || [ -z "$queue_state" ]; then
@@ -116,6 +140,7 @@ while :; do
     head_now="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $2}')"
     merge_state="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $3}')"
     auto_state="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $4}')"
+    queue_membership="$(printf '%s\n' "$queue_state" | awk -F '	' '{print $5}')"
     if [ -z "$head_now" ] || [ "$head_now" != "$queued_head" ]; then
       echo "AWAIT-PR $PR: QUEUE-FAILED — exact head changed (expected $queued_head, got ${head_now:-unknown}); not re-enqueueing"
       last="QUEUE-HEAD-CHANGED"; finish 1
@@ -128,7 +153,7 @@ while :; do
       echo "AWAIT-PR $PR: QUEUE-FAILED — PR became $state without merging; not re-enqueueing"
       last="QUEUE-PR-$state"; finish 1
     fi
-    if [ "$merge_state" != "QUEUED" ] && [ "$auto_state" != "armed" ]; then
+    if [ "$queue_membership" != "in-queue" ] && [ "$merge_state" != "QUEUED" ] && [ "$auto_state" != "armed" ]; then
       echo "AWAIT-PR $PR: QUEUE-REMOVED — exact head is still open but no queue/auto-merge request remains; not re-enqueueing"
       last="QUEUE-REMOVED"; finish 1
     fi
@@ -159,6 +184,10 @@ while :; do
           finish 1
         fi
         if [ "$mode" = "queue" ]; then
+          if ! resolve_queue_repo; then
+            echo "AWAIT-PR $PR: QUEUE-CMD-FAILED — cannot resolve repository as OWNER/NAME for queue observation"
+            last="QUEUE-REPOSITORY-UNRESOLVED"; finish 1
+          fi
           if gh pr merge "$PR" "${repo_args[@]+"${repo_args[@]}"}" --auto --match-head-commit "$sha"; then
             queued=1; queued_head="$sha"; last="QUEUED"
             echo "AWAIT-PR $PR: QUEUED (head $sha) — waiting for actual MERGED"

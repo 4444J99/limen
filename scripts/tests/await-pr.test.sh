@@ -46,15 +46,21 @@ if [ "\${1:-}" = "pr" ] && [ "\${2:-}" = "merge" ]; then
   [ "\${GH_FAIL:-0}" = "1" ] && exit 1
   exit 0
 fi
-if [ "\${1:-}" = "pr" ] && [ "\${2:-}" = "view" ]; then
+if [ "\${1:-}" = "repo" ] && [ "\${2:-}" = "view" ]; then
+  printf 'owner/example\\n'
+  exit 0
+fi
+if [ "\${1:-}" = "api" ] && [ "\${2:-}" = "graphql" ]; then
   n=\$(cat "$GHCOUNT" 2>/dev/null || echo 0); n=\$((n+1)); printf '%s' "\$n" > "$GHCOUNT"
   tok=\$(sed -n "\${n}p" "$GHSEQ"); [ -z "\$tok" ] && tok=\$(tail -1 "$GHSEQ")
   case "\$tok" in
-    QUEUED)  printf 'OPEN\\tdeadbeefcafe\\tQUEUED\\tarmed\\n' ;;
-    MERGED)  printf 'MERGED\\tdeadbeefcafe\\tUNKNOWN\\tnone\\n' ;;
-    HEAD)    printf 'OPEN\\tchangedhead\\tQUEUED\\tarmed\\n' ;;
-    REMOVED) printf 'OPEN\\tdeadbeefcafe\\tCLEAN\\tnone\\n' ;;
-    CLOSED)  printf 'CLOSED\\tdeadbeefcafe\\tUNKNOWN\\tnone\\n' ;;
+    QUEUED)  printf 'OPEN\\tdeadbeefcafe\\tQUEUED\\tarmed\\tin-queue\\n' ;;
+    INQUEUE) printf 'OPEN\\tdeadbeefcafe\\tCLEAN\\tnone\\tin-queue\\n' ;;
+    ARMED)   printf 'OPEN\\tdeadbeefcafe\\tCLEAN\\tarmed\\tnot-in-queue\\n' ;;
+    MERGED)  printf 'MERGED\\tdeadbeefcafe\\tUNKNOWN\\tnone\\tnot-in-queue\\n' ;;
+    HEAD)    printf 'OPEN\\tchangedhead\\tQUEUED\\tarmed\\tin-queue\\n' ;;
+    REMOVED) printf 'OPEN\\tdeadbeefcafe\\tCLEAN\\tnone\\tnot-in-queue\\n' ;;
+    CLOSED)  printf 'CLOSED\\tdeadbeefcafe\\tUNKNOWN\\tnone\\tnot-in-queue\\n' ;;
     *) exit 1 ;;
   esac
   exit 0
@@ -115,6 +121,26 @@ fi
 case "$out" in
   (*QUEUED*MERGED*) : ;;
   (*) echo "  FAIL queue output must distinguish QUEUED before MERGED"; fail=$((fail+1)) ;;
+esac
+if ! grep -q -- "api graphql .*isInMergeQueue" "$GHLOG" 2>/dev/null; then
+  echo "  FAIL queue observer did not query GraphQL isInMergeQueue"; fail=$((fail+1))
+fi
+
+export GH_TOKENS="INQUEUE MERGED"
+check "queue membership survives CLEAN/null surface" 0 "QUEUE" --merge
+case "$out" in
+  (*QUEUED*MERGED*) : ;;
+  (*) echo "  FAIL explicit queue membership was not retained"; fail=$((fail+1)) ;;
+esac
+if grep -q -- "pr view .*isInMergeQueue" "$GHLOG" 2>/dev/null; then
+  echo "  FAIL queue observer used gh pr view for unsupported isInMergeQueue"; fail=$((fail+1))
+fi
+
+export GH_TOKENS="ARMED MERGED"
+check "auto-merge request survives queue lag" 0 "QUEUE" --merge
+case "$out" in
+  (*QUEUED*MERGED*) : ;;
+  (*) echo "  FAIL active auto-merge request was not retained"; fail=$((fail+1)) ;;
 esac
 
 export GH_TOKENS="QUEUED HEAD"
