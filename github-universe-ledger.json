@@ -12098,7 +12098,7 @@
     "organvm/dot-github--logos#14": {
       "comments": 0,
       "created_at": "2026-06-01T13:53:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12109,12 +12109,14 @@
       "state": "open",
       "title": "[Health] Pipeline stall detected — 2026-06-01",
       "updated_at": "2026-06-01T13:53:13Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/14"
+      "url": "https://github.com/organvm/dot-github--logos/issues/14",
+      "evidence": "Heartbeat workflow/runbook exist; latest health-heartbeat runs fail, no recent success.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#15": {
       "comments": 0,
       "created_at": "2026-06-11T11:02:16Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/activation-audit-2026.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12125,12 +12127,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-now",
       "updated_at": "2026-06-11T11:02:16Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/15"
+      "url": "https://github.com/organvm/dot-github--logos/issues/15",
+      "evidence": "Activation audit ACTUALLY-LIVE; org+Pages URLs 200.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#17": {
       "comments": 0,
       "created_at": "2026-06-18T19:59:04Z",
-      "disposition": "queued",
+      "disposition": "distilled:profile/README.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12141,12 +12145,14 @@
       "state": "open",
       "title": "Add 'Plain English' TL;DR to org profile README",
       "updated_at": "2026-06-18T19:59:04Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/17"
+      "url": "https://github.com/organvm/dot-github--logos/issues/17",
+      "evidence": "Profile README has Plain English TL;DR.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#18": {
       "comments": 0,
       "created_at": "2026-06-18T19:59:06Z",
-      "disposition": "queued",
+      "disposition": "distilled:CONTRIBUTING.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12157,12 +12163,14 @@
       "state": "open",
       "title": "Simplify `CONTRIBUTING.md` to standard PR workflows",
       "updated_at": "2026-06-18T19:59:06Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/18"
+      "url": "https://github.com/organvm/dot-github--logos/issues/18",
+      "evidence": "Simplified contribution guide + QUICK_START first-contribution path.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#19": {
       "comments": 0,
       "created_at": "2026-06-18T19:59:08Z",
-      "disposition": "queued",
+      "disposition": "distilled:profile/README.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12173,12 +12181,14 @@
       "state": "open",
       "title": "Add an architecture overview map in the profile",
       "updated_at": "2026-06-18T19:59:08Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/19"
+      "url": "https://github.com/organvm/dot-github--logos/issues/19",
+      "evidence": "Profile README has Architecture Mermaid map + hand-off table.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#20": {
       "comments": 0,
       "created_at": "2026-06-18T19:59:11Z",
-      "disposition": "queued",
+      "disposition": "distilled:QUICK_START.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12189,12 +12199,14 @@
       "state": "open",
       "title": "Create a 'Quick Start' guide",
       "updated_at": "2026-06-18T19:59:11Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/20"
+      "url": "https://github.com/organvm/dot-github--logos/issues/20",
+      "evidence": "Quick Start covers clone/checks/local-run/first-contribution.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#21": {
       "comments": 0,
       "created_at": "2026-06-18T19:59:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12205,12 +12217,14 @@
       "state": "open",
       "title": "Enable GitHub Discussions for community interaction",
       "updated_at": "2026-06-18T19:59:13Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/21"
+      "url": "https://github.com/organvm/dot-github--logos/issues/21",
+      "evidence": "Docs link Discussions but live hasDiscussionsEnabled=false.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#26": {
       "comments": 1,
       "created_at": "2026-06-18T20:27:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12221,12 +12235,14 @@
       "state": "open",
       "title": "[limen GH-organvm-v-logos-github-21] Enable GitHub Discussions for community interaction",
       "updated_at": "2026-07-09T17:29:25Z",
-      "url": "https://github.com/organvm/dot-github--logos/pull/26"
+      "url": "https://github.com/organvm/dot-github--logos/pull/26",
+      "evidence": "PR CONFLICTING/DIRTY; validate green but Discussions links point to repo with discussions disabled.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#34": {
       "comments": 1,
       "created_at": "2026-06-19T21:25:59Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12237,12 +12253,14 @@
       "state": "open",
       "title": "[limen GH-organvm-v-logos-github-6] Launch external contributor outreach and first-contributor conversions",
       "updated_at": "2026-07-09T17:29:03Z",
-      "url": "https://github.com/organvm/dot-github--logos/pull/34"
+      "url": "https://github.com/organvm/dot-github--logos/pull/34",
+      "evidence": "PR CONFLICTING/DIRTY, validate green; external outreach receipts not on main.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#37": {
       "comments": 1,
       "created_at": "2026-07-01T12:26:45Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--logos/blob/main/CONTRIBUTING.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12253,12 +12271,14 @@
       "state": "open",
       "title": "[limen GH-organvm-dot-github-logos-18] Simplify `CONTRIBUTING.md` to standard PR workflows",
       "updated_at": "2026-07-09T17:28:24Z",
-      "url": "https://github.com/organvm/dot-github--logos/pull/37"
+      "url": "https://github.com/organvm/dot-github--logos/pull/37",
+      "evidence": "main CONTRIBUTING.md+QUICK_START deliver simplified workflow; PR conflicting.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#4": {
       "comments": 1,
       "created_at": "2026-03-05T04:17:20Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12269,12 +12289,14 @@
       "state": "open",
       "title": "Run weekly signals triage ritual and remediation loop",
       "updated_at": "2026-05-04T10:55:11Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/4"
+      "url": "https://github.com/organvm/dot-github--logos/issues/4",
+      "evidence": "docs/signals-triage W1-W14, 6-day median latency; W14 in progress.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#5": {
       "comments": 1,
       "created_at": "2026-03-05T04:17:25Z",
-      "disposition": "queued",
+      "disposition": "distilled:docs/logos/distribution-conversion-experiments-2026.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12285,12 +12307,14 @@
       "state": "open",
       "title": "Run 4 controlled distribution/conversion experiments",
       "updated_at": "2026-05-04T10:55:09Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/5"
+      "url": "https://github.com/organvm/dot-github--logos/issues/5",
+      "evidence": "DC-01..04 aggregate +22.7% lift, meets +20% target.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#6": {
       "comments": 1,
       "created_at": "2026-03-05T04:17:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12301,12 +12325,14 @@
       "state": "open",
       "title": "Launch external contributor outreach and first-contributor conversions",
       "updated_at": "2026-05-04T10:55:08Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/6"
+      "url": "https://github.com/organvm/dot-github--logos/issues/6",
+      "evidence": "Contributor intake docs exist; no merged evidence for 10 touches/3 first-time contributors.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--logos#7": {
       "comments": 1,
       "created_at": "2026-03-05T04:17:42Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12317,7 +12343,9 @@
       "state": "open",
       "title": "Deliver external validation milestones (feedback, event, revenue)",
       "updated_at": "2026-05-04T10:55:06Z",
-      "url": "https://github.com/organvm/dot-github--logos/issues/7"
+      "url": "https://github.com/organvm/dot-github--logos/issues/7",
+      "evidence": "External-validation ledgers show 0/3 feedback, 0/1 event, 0/1 revenue.",
+      "last_touched": "2026-07-19T09:28:11Z"
     },
     "organvm/dot-github--poiesis#6": {
       "comments": 0,
