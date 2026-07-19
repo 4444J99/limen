@@ -12222,7 +12222,7 @@
     "organvm/dot-github--theoria#427": {
       "comments": 4,
       "created_at": "2026-04-22T04:37:56Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/445",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12233,12 +12233,14 @@
       "state": "open",
       "title": "🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-04-27T03:20:50Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/427"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/427",
+      "evidence": "Older 3436-leak-era security alert; latest secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#429": {
       "comments": 6,
       "created_at": "2026-04-27T04:59:13Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/445",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12249,12 +12251,14 @@
       "state": "open",
       "title": "🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-05-04T03:27:04Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/429"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/429",
+      "evidence": "Older 3436-leak-era security alert; latest secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#432": {
       "comments": 6,
       "created_at": "2026-05-04T05:24:17Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/445",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12265,12 +12269,14 @@
       "state": "open",
       "title": "🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-05-11T00:54:12Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/432"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/432",
+      "evidence": "Older security alert; latest secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#433": {
       "comments": 1,
       "created_at": "2026-05-04T05:36:10Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12281,12 +12287,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-05-04",
       "updated_at": "2026-07-12T10:26:17Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/433"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/433",
+      "evidence": "Older 2026-05-04 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#434": {
       "comments": 6,
       "created_at": "2026-05-11T03:02:21Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/445",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12297,12 +12305,14 @@
       "state": "open",
       "title": "🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-05-18T00:56:40Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/434"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/434",
+      "evidence": "Older security alert; latest secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#435": {
       "comments": 0,
       "created_at": "2026-05-11T03:15:15Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12313,12 +12323,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-05-11",
       "updated_at": "2026-05-18T00:56:40Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/435"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/435",
+      "evidence": "Older 2026-05-11 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#436": {
       "comments": 6,
       "created_at": "2026-05-18T03:02:25Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/445",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12329,12 +12341,14 @@
       "state": "open",
       "title": "🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-05-25T00:58:55Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/436"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/436",
+      "evidence": "Older security alert; latest secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#437": {
       "comments": 0,
       "created_at": "2026-05-18T03:15:48Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12345,12 +12359,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-05-18",
       "updated_at": "2026-05-25T00:58:56Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/437"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/437",
+      "evidence": "Older 2026-05-18 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#438": {
       "comments": 0,
       "created_at": "2026-05-23T12:30:43Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12361,12 +12377,14 @@
       "state": "open",
       "title": "🚨 Critical Deployment Metadata Issues Detected",
       "updated_at": "2026-05-25T00:58:55Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/438"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/438",
+      "evidence": "Latest reconcile-deployments run 29679820575 green; alert step skipped.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#439": {
       "comments": 6,
       "created_at": "2026-05-25T03:02:33Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/445",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12377,12 +12395,14 @@
       "state": "open",
       "title": "🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-06-01T01:04:48Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/439"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/439",
+      "evidence": "Older security alert; latest secret scan green.",
+      "last_touched": "2026-07-19T08:46:38Z"
     },
     "organvm/dot-github--theoria#440": {
       "comments": 0,
       "created_at": "2026-05-25T03:16:39Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12393,12 +12413,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-05-25",
       "updated_at": "2026-06-01T01:04:48Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/440"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/440",
+      "evidence": "Older 2026-05-25 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:38Z"
     },
     "organvm/dot-github--theoria#441": {
       "comments": 6,
       "created_at": "2026-06-01T03:02:50Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/445",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12409,12 +12431,14 @@
       "state": "open",
       "title": "🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-06-08T01:04:21Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/441"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/441",
+      "evidence": "Older security alert; latest secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#442": {
       "comments": 0,
       "created_at": "2026-06-01T03:17:22Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12425,12 +12449,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-06-01",
       "updated_at": "2026-06-08T01:04:21Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/442"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/442",
+      "evidence": "Older 2026-06-01 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#444": {
       "comments": 0,
       "created_at": "2026-06-08T03:17:06Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12441,12 +12467,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-06-08",
       "updated_at": "2026-06-15T04:40:41Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/444"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/444",
+      "evidence": "Older 2026-06-08 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#445": {
       "comments": 6,
       "created_at": "2026-06-08T06:27:48Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12457,12 +12485,14 @@
       "state": "open",
       "title": "🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-06-15T04:40:41Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/445"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/445",
+      "evidence": "Latest main secret scan run 29674133254 green across TruffleHog/Gitleaks/detect-secrets.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#446": {
       "comments": 2,
       "created_at": "2026-06-11T10:54:12Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12473,12 +12503,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-now",
       "updated_at": "2026-06-15T04:40:42Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/446"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/446",
+      "evidence": "GitHub profile 200; Pages organvm.github.io/dot-github--theoria 200; old issue URL 404; title stale.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#447": {
       "comments": 2,
       "created_at": "2026-06-11T11:00:38Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/446",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12489,12 +12521,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: park",
       "updated_at": "2026-06-15T04:40:41Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/447"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/447",
+      "evidence": "Older park audit superseded by live profile/Pages/workflow probe.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#452": {
       "comments": 0,
       "created_at": "2026-06-15T07:22:43Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12505,12 +12539,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-06-15",
       "updated_at": "2026-06-22T04:27:16Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/452"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/452",
+      "evidence": "Older 2026-06-15 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#457": {
       "comments": 48,
       "created_at": "2026-06-18T23:11:58Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/actions/runs/29674133254",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12521,12 +12557,14 @@
       "state": "open",
       "title": "[limen GH-organvm-i-theoria-github-451] 🚨 Security Alert: Potential Secrets Detected in Code",
       "updated_at": "2026-06-22T04:27:27Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/457"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/457",
+      "evidence": "CONFLICTING/DIRTY security alert branch; latest main secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#458": {
       "comments": 21,
       "created_at": "2026-06-19T03:07:42Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/blob/main/src/automation/dashboard/types.d.ts",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12537,12 +12575,14 @@
       "state": "open",
       "title": "[limen CIFIX-organvm-i-theoria--github] Fix pre-existing CI breakage (tsc/test-matrix errors) blocking all open PRs in organvm-i-theoria/.github",
       "updated_at": "2026-06-22T04:27:26Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/458"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/458",
+      "evidence": "MERGEABLE/BLOCKED but red; core TS fix already on main.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#459": {
       "comments": 12,
       "created_at": "2026-06-19T03:41:38Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/blob/main/tsconfig.json",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12553,12 +12593,14 @@
       "state": "open",
       "title": "[limen CIFIX-organvm-i-theoria--github] Fix pre-existing CI breakage (tsc/test-matrix errors) blocking all open PRs in organvm-i-theoria/.github",
       "updated_at": "2026-07-09T19:17:32Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/459"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/459",
+      "evidence": "CONFLICTING/DIRTY; main has tsconfig/type shim + green CI; PR adds unrelated context_handoff package.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#460": {
       "comments": 13,
       "created_at": "2026-06-19T03:56:14Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12569,12 +12611,14 @@
       "state": "open",
       "title": "[limen CIFIX-organvm-i-theoria-.github] CIFIX organvm-i-theoria/.github: Validate Version Control Standards, Check/Validate",
       "updated_at": "2026-06-22T04:27:25Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/460"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/460",
+      "evidence": "Standards-gate fix blocked by 11 failing checks.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#461": {
       "comments": 10,
       "created_at": "2026-06-19T10:27:16Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/blob/main/docs/audits/activation/2026-06-11-EV-447.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12585,12 +12629,14 @@
       "state": "open",
       "title": "docs(limen): resolve organvm-i-theoria/.github#455",
       "updated_at": "2026-07-04T21:31:08Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/461"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/461",
+      "evidence": "CONFLICTING/DIRTY; activation audit files already on main.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#462": {
       "comments": 15,
       "created_at": "2026-06-19T10:30:09Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/blob/main/tests/unit/test_staggered_walkthrough_schedule.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12601,12 +12647,14 @@
       "state": "open",
       "title": "[limen RESOLVE-organvm-i-theoria-.github-457] resolve .github#457 (BLOCKED)",
       "updated_at": "2026-06-22T04:27:23Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/462"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/462",
+      "evidence": "CONFLICTING/DIRTY duplicate schedule resolver; main has script/tests.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#463": {
       "comments": 11,
       "created_at": "2026-06-19T10:31:29Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/blob/main/src/automation/scripts/staggered_walkthrough_schedule.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12617,12 +12665,14 @@
       "state": "open",
       "title": "[limen RESOLVE-organvm-i-theoria-.github-458] resolve .github#458 (BLOCKED)",
       "updated_at": "2026-06-22T04:27:22Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/463"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/463",
+      "evidence": "CONFLICTING/DIRTY; schedule script and tests already on main.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#465": {
       "comments": 10,
       "created_at": "2026-06-19T12:47:23Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12633,12 +12683,14 @@
       "state": "open",
       "title": "[limen RESOLVE-organvm-i-theoria-.github-460] resolve .github#460 (BLOCKED)",
       "updated_at": "2026-06-22T04:27:20Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/465"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/465",
+      "evidence": "Version-control/pre-commit standards branch blocked by CI/dependency/lint/build/title failures.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#468": {
       "comments": 13,
       "created_at": "2026-06-19T20:04:25Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12649,12 +12701,14 @@
       "state": "open",
       "title": "[limen RESOLVE-organvm-i-theoria-.github-459] resolve .github#459 (BLOCKED)",
       "updated_at": "2026-07-05T21:32:52Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/468"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/468",
+      "evidence": "CONFLICTING/DIRTY; broad 118-file workflow/worktree diff despite small check set passing.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#470": {
       "comments": 11,
       "created_at": "2026-06-19T22:44:12Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/actions/runs/29674133254",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12665,12 +12719,14 @@
       "state": "open",
       "title": "[limen RESOLVE-organvm-i-theoria-.github-453] resolve .github#453 (BLOCKED)",
       "updated_at": "2026-06-22T04:27:19Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/470"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/470",
+      "evidence": "Security resolver red/blocked; latest main secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#471": {
       "comments": 17,
       "created_at": "2026-06-20T08:10:00Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/actions/runs/29674133254",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12681,12 +12737,14 @@
       "state": "open",
       "title": "fix: resolve security alert potential secrets detected",
       "updated_at": "2026-07-06T03:43:56Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/471"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/471",
+      "evidence": "CONFLICTING/DIRTY security baseline churn; latest main secret scan green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#472": {
       "comments": 10,
       "created_at": "2026-06-20T09:54:58Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12697,12 +12755,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-i-theoria-.github-ci-green-0620] Make organvm-i-theoria/.github CI green",
       "updated_at": "2026-06-22T04:27:17Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/472"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/472",
+      "evidence": "CI-green branch itself has failing checks; current main CI already green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#473": {
       "comments": 11,
       "created_at": "2026-06-20T20:26:25Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12713,12 +12773,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-dot-github--theoria-test-coverage-0620] Raise test coverage in organvm/dot-github--theoria",
       "updated_at": "2026-07-06T03:43:56Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/473"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/473",
+      "evidence": "Coverage tests not on main; PR blocked by CI/coverage/lint/title/standards failures.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#474": {
       "comments": 0,
       "created_at": "2026-06-22T07:26:44Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12729,12 +12791,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-06-22",
       "updated_at": "2026-06-29T04:07:51Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/474"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/474",
+      "evidence": "Older 2026-06-22 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#476": {
       "comments": 10,
       "created_at": "2026-06-22T18:12:53Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12745,12 +12809,14 @@
       "state": "open",
       "title": "DISCOVERY: rank organvm/dot-github--theoria — AI capability registry",
       "updated_at": "2026-06-29T04:07:54Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/476"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/476",
+      "evidence": "DISCOVERY files not on main; PR blocked by CI/link/lint/title/version failures.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#477": {
       "comments": 16,
       "created_at": "2026-06-22T19:33:50Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12761,12 +12827,14 @@
       "state": "open",
       "title": "chore: [limen jules GH-organvm-dot-github-theoria-474] 📅 Staggered Walkthrough Schedule - Week of 2026-06-2",
       "updated_at": "2026-07-06T03:43:57Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/477"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/477",
+      "evidence": "CONFLICTING/DIRTY; 123-file stale schedule/workflow rewrite.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#478": {
       "comments": 10,
       "created_at": "2026-06-23T16:11:48Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12777,12 +12845,14 @@
       "state": "open",
       "title": "[limen jules GH-organvm-dot-github-theoria-474] 📅 Staggered Walkthrough Schedule - Week of 2026-06-2",
       "updated_at": "2026-06-29T04:07:52Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/478"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/478",
+      "evidence": "MERGEABLE/BLOCKED; duplicate stale 2026-06-22 schedule branch.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#479": {
       "comments": 9,
       "created_at": "2026-06-23T20:12:58Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12793,12 +12863,14 @@
       "state": "open",
       "title": "[limen jules GH-organvm-dot-github-theoria-474] 📅 Staggered Walkthrough Schedule - Week of 2026-06-2",
       "updated_at": "2026-06-29T04:07:51Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/479"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/479",
+      "evidence": "MERGEABLE/BLOCKED; stale 2026-06-22 schedule tweak, latest is #506.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#480": {
       "comments": 0,
       "created_at": "2026-06-29T06:50:13Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12809,12 +12881,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-06-29",
       "updated_at": "2026-07-06T03:43:56Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/480"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/480",
+      "evidence": "Older 2026-06-29 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#481": {
       "comments": 0,
       "created_at": "2026-06-29T12:35:38Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/502",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12825,12 +12899,14 @@
       "state": "open",
       "title": "🔗 Broken Links Detected in Documentation",
       "updated_at": "2026-07-06T03:43:56Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/481"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/481",
+      "evidence": "Older same link-checker placeholder failure; latest link checker green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#501": {
       "comments": 0,
       "created_at": "2026-07-06T06:38:03Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/dot-github--theoria/issues/506",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12841,12 +12917,14 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-07-06",
       "updated_at": "2026-07-13T02:56:48Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/501"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/501",
+      "evidence": "Older 2026-07-06 schedule snapshot.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#502": {
       "comments": 0,
       "created_at": "2026-07-06T12:04:53Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12857,12 +12935,14 @@
       "state": "open",
       "title": "🔗 Broken Links Detected in Documentation",
       "updated_at": "2026-07-13T02:56:47Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/502"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/502",
+      "evidence": "Linked run failed on lychee template regex parse, not live dead links; latest link checker green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#505": {
       "comments": 14,
       "created_at": "2026-07-12T19:08:05Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12873,12 +12953,14 @@
       "state": "open",
       "title": "chore(deps): bump the all-actions group across 1 directory with 27 updates",
       "updated_at": "2026-07-18T05:56:12Z",
-      "url": "https://github.com/organvm/dot-github--theoria/pull/505"
+      "url": "https://github.com/organvm/dot-github--theoria/pull/505",
+      "evidence": "MERGEABLE/UNSTABLE; 44 pass, 1 fail: Auto Assign PR; dependabot batch not green.",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/dot-github--theoria#506": {
       "comments": 0,
       "created_at": "2026-07-13T05:39:25Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -12889,7 +12971,9 @@
       "state": "open",
       "title": "📅 Staggered Walkthrough Schedule - Week of 2026-07-13",
       "updated_at": "2026-07-13T05:39:25Z",
-      "url": "https://github.com/organvm/dot-github--theoria/issues/506"
+      "url": "https://github.com/organvm/dot-github--theoria/issues/506",
+      "evidence": "Latest schedule snapshot: 2026-07-13, 164 repos over 9 days (current, kept as anchor).",
+      "last_touched": "2026-07-19T08:46:24Z"
     },
     "organvm/edgarflash#10": {
       "comments": 0,
@@ -45239,7 +45323,7 @@
     "organvm/sovereign-systems--elevate-align#10": {
       "comments": 5,
       "created_at": "2026-03-30T13:07:27Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45250,12 +45334,14 @@
       "state": "open",
       "title": "[γ.1] Store buildout",
       "updated_at": "2026-06-06T13:16:21Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/10"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/10",
+      "evidence": "store.config.ts has affiliate products; store.astro routes out, no on-site shelf.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#100": {
       "comments": 0,
       "created_at": "2026-05-17T19:25:22Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45266,12 +45352,14 @@
       "state": "open",
       "title": "[content][γ-tier] Sacred Symbols Canvas adaptation for nonprofit arm visual identity",
       "updated_at": "2026-05-17T19:25:22Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/100"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/100",
+      "evidence": "src/pages/nonprofit.astro exists; Sacred Symbols adaptation not shipped.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#14": {
       "comments": 2,
       "created_at": "2026-04-01T15:12:47Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45282,12 +45370,14 @@
       "state": "open",
       "title": "[α.5] Verify doc 1b reel/video asset access",
       "updated_at": "2026-06-07T14:12:22Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/14"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/14",
+      "evidence": "docs/proofs/media/2026-06-17-gh-14-doc-1b-drive-access.md verifies all three Drive folders accessible.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#18": {
       "comments": 1,
       "created_at": "2026-04-01T15:12:55Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45298,12 +45388,14 @@
       "state": "open",
       "title": "[β.8] Decide video hosting strategy for documentary/reel assets",
       "updated_at": "2026-06-06T13:15:51Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/18"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/18",
+      "evidence": "VideoEmbed exists but pages use placeholders; hosting platform undecided.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#184": {
       "comments": 4,
       "created_at": "2026-06-03T18:14:10Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45314,12 +45406,14 @@
       "state": "open",
       "title": "Remaining unification: visual-pass write-up + post-feedback tuning",
       "updated_at": "2026-06-07T14:12:28Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/184"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/184",
+      "evidence": "spiral.ts + node visuals shipped; full cross-page tuning not verified complete.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#19": {
       "comments": 1,
       "created_at": "2026-04-01T15:12:57Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45330,12 +45424,14 @@
       "state": "open",
       "title": "[γ.3] Inner Child Book packaging decision",
       "updated_at": "2026-06-06T13:15:52Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/19"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/19",
+      "evidence": "Inner Child Book recommendation exists; client confirmation pending.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#20": {
       "comments": 1,
       "created_at": "2026-04-01T15:12:59Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45346,12 +45442,14 @@
       "state": "open",
       "title": "[γ.4] Creature Selves concept decision",
       "updated_at": "2026-06-06T13:15:53Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/20"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/20",
+      "evidence": "src/data/decisions.ts records Creature Selves as kept/live brand concept.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#206": {
       "comments": 3,
       "created_at": "2026-06-05T20:18:40Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45362,12 +45460,14 @@
       "state": "open",
       "title": "[decision] D-005: node→pillar mapping discrepancy — locked-arch doc vs hub.config.ts (never reconciled)",
       "updated_at": "2026-06-07T14:12:29Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/206"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/206",
+      "evidence": "src/data/hub.config.ts live node->pillar mapping still differs from locked-arch doc.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#207": {
       "comments": 2,
       "created_at": "2026-06-05T20:19:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45378,12 +45478,14 @@
       "state": "open",
       "title": "[bug][client-repro] Maddie's 'deselect answer tried to send an email' report (2026-05-16) — unresolved loop",
       "updated_at": "2026-06-07T14:12:31Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/207"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/207",
+      "evidence": "src/pages/quiz.astro has deselect/retake; original device-specific repro unverified.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#210": {
       "comments": 0,
       "created_at": "2026-06-05T22:07:07Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45394,12 +45496,14 @@
       "state": "open",
       "title": "[revenue] W-032: $99 DP sign-up flow — blocked on Stripe-vs-GHL payment-rail decision",
       "updated_at": "2026-06-05T22:07:07Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/210"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/210",
+      "evidence": "src/pages/business/dp.astro exists; revenue.config.ts checkoutEnabled false/paymentRail undecided.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#211": {
       "comments": 0,
       "created_at": "2026-06-05T22:07:11Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45410,12 +45514,14 @@
       "state": "open",
       "title": "[infra] Wire GHL_WEBHOOK_URL Worker secret — GHL lead delivery (client-gated on webhook URL)",
       "updated_at": "2026-06-05T22:07:11Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/211"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/211",
+      "evidence": "src/pages/capture.ts reads optional GHL_WEBHOOK_URL; Worker secret value is credential-gated (operator).",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#217": {
       "comments": 0,
       "created_at": "2026-06-06T13:33:52Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45426,12 +45532,14 @@
       "state": "open",
       "title": "wip: roadmap-drain — preserve worktree state (lifecycle audit 2026-06-06)",
       "updated_at": "2026-06-06T13:33:57Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/217"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/217",
+      "evidence": "Draft CONFLICTING/DIRTY lifecycle-preservation PR; not merge-safe.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#220": {
       "comments": 10,
       "created_at": "2026-06-10T22:50:05Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45442,12 +45550,14 @@
       "state": "open",
       "title": "Activation audit: ship-ready state verification",
       "updated_at": "2026-06-10T23:35:17Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/220"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/220",
+      "evidence": "Main npm run test:all passed; production deploy credentials/domains remain external.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#221": {
       "comments": 0,
       "created_at": "2026-06-11T10:31:42Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45458,12 +45568,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-now",
       "updated_at": "2026-06-11T10:31:42Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/221"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/221",
+      "evidence": "Main 130db3f Astro/CF Worker app; npm run test:all passed; ship-now is operator deploy/domain decision.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#234": {
       "comments": 1,
       "created_at": "2026-06-18T19:40:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45474,12 +45586,14 @@
       "state": "open",
       "title": "[limen GH-organvm-iii-ergon-sovereign-systems-elevate-align-206] [decision] D-005: node→pillar mapping discrepancy — locked-arch doc vs hub.config.ts (never reconciled)",
       "updated_at": "2026-06-18T19:49:35Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/234"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/234",
+      "evidence": "CONFLICTING/DIRTY; test/lint/check/build red.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#235": {
       "comments": 1,
       "created_at": "2026-06-18T19:42:18Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45490,12 +45604,14 @@
       "state": "open",
       "title": "[limen GH-organvm-iii-ergon-sovereign-systems-elevate-align-38] feat: subscription payment collection capability",
       "updated_at": "2026-06-18T19:52:23Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/235"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/235",
+      "evidence": "CONFLICTING/DIRTY; payment branch red.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#236": {
       "comments": 1,
       "created_at": "2026-06-18T19:42:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45506,12 +45622,14 @@
       "state": "open",
       "title": "[limen GH-organvm-iii-ergon-sovereign-systems-elevate-align-64] [content] W-068: bottled-water brand education section (M1 dual-citation gated)",
       "updated_at": "2026-06-18T19:50:30Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/236"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/236",
+      "evidence": "CONFLICTING/DIRTY; test/check/lint red.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#240": {
       "comments": 1,
       "created_at": "2026-06-18T19:51:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45522,12 +45640,14 @@
       "state": "open",
       "title": "[limen GH-organvm-iii-ergon-sovereign-systems-elevate-align-51] [β.19] Add analytics and tracking integration",
       "updated_at": "2026-06-18T20:00:06Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/240"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/240",
+      "evidence": "CONFLICTING/DIRTY; Trunk/lint red.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#243": {
       "comments": 1,
       "created_at": "2026-06-18T20:02:36Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45538,12 +45658,14 @@
       "state": "open",
       "title": "[limen GH-organvm-iii-ergon-sovereign-systems-elevate-align-61] [spiral] W-066: nodes easily identifiable / enough differential",
       "updated_at": "2026-06-18T20:14:09Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/243"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/243",
+      "evidence": "CONFLICTING/DIRTY; lint/test/check red.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#257": {
       "comments": 0,
       "created_at": "2026-06-19T20:56:59Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45554,12 +45676,14 @@
       "state": "open",
       "title": "[limen GH-organvm-iii-ergon-sovereign-systems-elevate-align-7] [β.2] Subscription boundary and gated content model",
       "updated_at": "2026-06-19T20:57:04Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/257"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/257",
+      "evidence": "PR checks: Trunk/lint/check FAILURE.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#258": {
       "comments": 0,
       "created_at": "2026-06-19T21:25:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45570,12 +45694,14 @@
       "state": "open",
       "title": "[limen GH-organvm-iii-ergon-sovereign-systems-elevate-align-100] [content][γ-tier] Sacred Symbols Canvas adaptation for nonprofit arm visual identity",
       "updated_at": "2026-06-19T21:38:53Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/258"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/258",
+      "evidence": "CONFLICTING/DIRTY; test/check/lint red.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#259": {
       "comments": 0,
       "created_at": "2026-06-20T08:39:57Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45586,12 +45712,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-iii-ergon-sovereign-systems--elevate-align-test-coverage-0620] Raise test coverage in organvm-iii-ergon/sovereign-systems--elevate-align",
       "updated_at": "2026-06-20T08:40:02Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/259"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/259",
+      "evidence": "CONFLICTING/DIRTY; Trunk/lint/check red.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#261": {
       "comments": 1,
       "created_at": "2026-06-22T20:13:12Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45602,12 +45730,14 @@
       "state": "open",
       "title": "feat(discovery): promote sovereign-systems--elevate-align to ranked value tier",
       "updated_at": "2026-06-22T20:13:19Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/261"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/261",
+      "evidence": "PR checks: Trunk/lint/check FAILURE.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#262": {
       "comments": 1,
       "created_at": "2026-06-23T16:35:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45618,12 +45748,14 @@
       "state": "open",
       "title": "[limen DISCOVER-organvm-sovereign-systems--elevate-align] Discover the latent value of organvm/sovereign-systems--elevate-align",
       "updated_at": "2026-06-23T16:35:05Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/262"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/262",
+      "evidence": "CONFLICTING/DIRTY and check/lint/test red.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#264": {
       "comments": 1,
       "created_at": "2026-06-24T10:59:53Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45634,12 +45766,14 @@
       "state": "open",
       "title": "feat(discovery): promote sovereign-systems--elevate-align to ranked value tier",
       "updated_at": "2026-06-24T10:59:58Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/264"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/264",
+      "evidence": "PR checks: Trunk/lint FAILURE; not merged.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#269": {
       "comments": 0,
       "created_at": "2026-07-10T02:15:56Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45650,7 +45784,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 10 updates",
       "updated_at": "2026-07-17T02:15:44Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/269"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/269",
+      "evidence": "PR checks: check/test/build/lint FAILURE; not merged.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#270": {
       "comments": 0,
@@ -45673,7 +45809,7 @@
     "organvm/sovereign-systems--elevate-align#3": {
       "comments": 1,
       "created_at": "2026-03-30T13:07:18Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45684,12 +45820,14 @@
       "state": "open",
       "title": "[α.1] Connect custom domains (Cloudflare)",
       "updated_at": "2026-06-06T13:15:47Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/3"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/3",
+      "evidence": "docs/domain-setup.md + site config define domains; DNS/Cloudflare action is operator-gated.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#30": {
       "comments": 2,
       "created_at": "2026-04-05T03:16:51Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45700,12 +45838,14 @@
       "state": "open",
       "title": "[β.17] Astrology, cycle syncing, and human design integration layer",
       "updated_at": "2026-06-06T02:17:41Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/30"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/30",
+      "evidence": "cycle.config.ts ships cycle/moon layer; astrology/Human Design consent-gated.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#38": {
       "comments": 1,
       "created_at": "2026-04-17T14:03:55Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45716,12 +45856,14 @@
       "state": "open",
       "title": "feat: subscription payment collection capability",
       "updated_at": "2026-06-06T13:16:19Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/38"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/38",
+      "evidence": "revenue.config.ts keeps paymentRail undecided + checkout disabled.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#39": {
       "comments": 0,
       "created_at": "2026-04-17T18:44:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45732,12 +45874,14 @@
       "state": "open",
       "title": "[γ.5] Nonprofit arm — donations + farm-to-reset model",
       "updated_at": "2026-06-06T13:15:56Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/39"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/39",
+      "evidence": "nonprofit.astro + nonprofit.config.ts exist; donation rail held.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#49": {
       "comments": 0,
       "created_at": "2026-04-21T11:54:04Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45748,12 +45892,14 @@
       "state": "open",
       "title": "[α.8] Populate filter affiliate URLs for revenue flow",
       "updated_at": "2026-06-06T13:15:57Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/49"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/49",
+      "evidence": "hydration.config.ts has IonFaucet/Multipure/PureHome/Coldstream URLs; Anespa+K8 blank.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#5": {
       "comments": 5,
       "created_at": "2026-03-30T13:07:20Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45764,12 +45910,14 @@
       "state": "open",
       "title": "[α.3] Formalize 10% revenue agreement",
       "updated_at": "2026-06-07T14:12:21Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/5"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/5",
+      "evidence": "revenue agreement accepted/final draft docs under docs/client-decisions + docs/client-deliverables.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#51": {
       "comments": 2,
       "created_at": "2026-04-21T11:54:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45780,12 +45928,14 @@
       "state": "open",
       "title": "[β.19] Add analytics and tracking integration",
       "updated_at": "2026-06-06T13:16:20Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/51"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/51",
+      "evidence": "Base.astro supports CF beacon + lib/analytics.ts events; no durable event sink yet.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#58": {
       "comments": 0,
       "created_at": "2026-04-30T23:04:57Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45796,12 +45946,14 @@
       "state": "open",
       "title": "[α.9] Populate hub quizFormUrl for assessment funnel",
       "updated_at": "2026-04-30T23:04:57Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/58"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/58",
+      "evidence": "hub.config.ts has populated ghl.quizFormUrl.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#61": {
       "comments": 0,
       "created_at": "2026-05-01T16:33:51Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45812,12 +45964,14 @@
       "state": "open",
       "title": "[spiral] W-066: nodes easily identifiable / enough differential",
       "updated_at": "2026-06-06T13:15:59Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/61"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/61",
+      "evidence": "node-visuals.ts + spiral hover affordances exist; client visual acceptance still needed.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#62": {
       "comments": 0,
       "created_at": "2026-05-01T16:34:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45828,12 +45982,14 @@
       "state": "open",
       "title": "[bug] W-069: fluoride miss in EWG result (P0)",
       "updated_at": "2026-06-06T13:16:01Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/62"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/62",
+      "evidence": "api/water-report.ts includes Fluoride fallback; exact ZIP/live EWG repro unverified.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#63": {
       "comments": 1,
       "created_at": "2026-05-01T16:34:25Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45844,12 +46000,14 @@
       "state": "open",
       "title": "[water] W-067: bottle pricing accuracy + externalize from source (M2)",
       "updated_at": "2026-06-07T14:17:21Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/63"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/63",
+      "evidence": "runtime/bottled-prices.json externalized; sourceCheckedAt values remain null.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#64": {
       "comments": 2,
       "created_at": "2026-05-01T16:34:37Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45860,12 +46018,14 @@
       "state": "open",
       "title": "[content] W-068: bottled-water brand education section (M1 dual-citation gated)",
       "updated_at": "2026-06-07T14:12:20Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/64"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/64",
+      "evidence": "water/index.astro has brief note; no dual-cited brand-level bottled-water section.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#65": {
       "comments": 0,
       "created_at": "2026-05-01T16:34:41Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45876,12 +46036,14 @@
       "state": "open",
       "title": "[water] W-070: email-simplified personalized filter plan path",
       "updated_at": "2026-05-01T16:34:41Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/65"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/65",
+      "evidence": "PersonalizedFilterPlan.astro posts source water-personalized-plan to /capture.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#7": {
       "comments": 5,
       "created_at": "2026-03-30T13:07:23Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45892,12 +46054,14 @@
       "state": "open",
       "title": "[β.2] Subscription boundary and gated content model",
       "updated_at": "2026-06-06T02:17:35Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/7"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/7",
+      "evidence": "docs/design-proposals/2026-05-25-free-paid-boundary-proposal.md exists; approval/impl pending.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--elevate-align#98": {
       "comments": 0,
       "created_at": "2026-05-17T19:25:07Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -45908,7 +46072,9 @@
       "state": "open",
       "title": "[spiral][v2] Node-as-picker admin UI — design each node universe one-at-a-time",
       "updated_at": "2026-05-17T19:25:07Z",
-      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/98"
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/issues/98",
+      "evidence": "src/pages/admin/node-picker.astro implements one-node picker, drafts, snapshots, export.",
+      "last_touched": "2026-07-19T08:48:26Z"
     },
     "organvm/sovereign-systems--layer-above-hokage#1": {
       "comments": 0,
@@ -50450,6 +50616,24 @@
       "disposition": "merged:11b969ec",
       "evidence": "PR #82 CI green + squash-merged; marks network-sensitive test classes synthetic. No issues closed.",
       "last_touched": "2026-07-19T08:35:02Z"
+    },
+    "organvm/sovereign-systems--elevate-align#272": {
+      "repo": "organvm/sovereign-systems--elevate-align",
+      "number": 272,
+      "kind": "pr",
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/272",
+      "disposition": "evolving",
+      "evidence": "PR checks: build FAILURE; not merged (astro/vite bump breaks build).",
+      "last_touched": "2026-07-19T08:48:26Z"
+    },
+    "organvm/sovereign-systems--elevate-align#271": {
+      "repo": "organvm/sovereign-systems--elevate-align",
+      "number": 271,
+      "kind": "pr",
+      "url": "https://github.com/organvm/sovereign-systems--elevate-align/pull/271",
+      "disposition": "evolving",
+      "evidence": "PR checks: build FAILURE; not merged (esbuild/astro bump breaks build).",
+      "last_touched": "2026-07-19T08:48:26Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
