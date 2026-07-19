@@ -108115,11 +108115,11 @@ tasks:
   - needs-human
   urls: []
   context: "Cheapest path \u2192 send the drafted message (never auto-send). Unblocks:\
-    \ mail workstream roadmap, professor padavano email drafting. Auto-hung by QUICKEN\
-    \ (finish-not-park); refreshes each beat until you act."
+    \ mail workstream roadmap. Auto-hung by QUICKEN (finish-not-park); refreshes each\
+    \ beat until you act."
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-18T18:39:17.535652Z'
+  updated: '2026-07-19T08:23:34.928317Z'
   dispatch_log: []
 - id: HEAL-cifix-organvm-limen-401
   title: fix failing CI on organvm/limen#401
