@@ -47495,7 +47495,7 @@
     "organvm/tab-bookmark-manager#25": {
       "comments": 0,
       "created_at": "2026-06-20T03:40:17Z",
-      "disposition": "queued",
+      "disposition": "merged:c148bcdd9b3e769295ea4e79a6367ab65996529f",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47506,12 +47506,14 @@
       "state": "open",
       "title": "[limen BLD-tab-bookmark-manager-next-rev] tab-bookmark-manager: next-rev — Implement the next revenue increment per the product's path-",
       "updated_at": "2026-06-20T03:40:17Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/pull/25"
+      "url": "https://github.com/organvm/tab-bookmark-manager/pull/25",
+      "evidence": "Added missing extension/popup/popup.html referenced by manifest; all checks green.",
+      "last_touched": "2026-07-19T11:09:03Z"
     },
     "organvm/tab-bookmark-manager#26": {
       "comments": 0,
       "created_at": "2026-06-20T05:22:44Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47522,12 +47524,14 @@
       "state": "open",
       "title": "[limen BLD2-tab-bookmark-manager-auth] tab-bookmark-manager: auth",
       "updated_at": "2026-06-20T05:22:44Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/pull/26"
+      "url": "https://github.com/organvm/tab-bookmark-manager/pull/26",
+      "evidence": "Auth/API-key PR CONFLICTING/DIRTY with red backend checks; needs API_GUIDE reconciliation.",
+      "last_touched": "2026-07-19T11:09:03Z"
     },
     "organvm/tab-bookmark-manager#27": {
       "comments": 0,
       "created_at": "2026-06-20T05:49:21Z",
-      "disposition": "queued",
+      "disposition": "merged:0659163034475b2c4f4d46407ccfc057ef2aef54",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47538,12 +47542,14 @@
       "state": "open",
       "title": "[limen BLD2-tab-bookmark-manager-api-docs] tab-bookmark-manager: api-docs",
       "updated_at": "2026-06-20T05:55:56Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/pull/27"
+      "url": "https://github.com/organvm/tab-bookmark-manager/pull/27",
+      "evidence": "Expanded docs/API_GUIDE.md; refreshed branch; all checks green.",
+      "last_touched": "2026-07-19T11:09:03Z"
     },
     "organvm/tab-bookmark-manager#33": {
       "comments": 0,
       "created_at": "2026-07-10T06:54:45Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/tab-bookmark-manager/pull/38",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47554,7 +47560,9 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 1 directory with 5 updates",
       "updated_at": "2026-07-17T06:54:48Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/pull/33"
+      "url": "https://github.com/organvm/tab-bookmark-manager/pull/33",
+      "evidence": "Reopen failed; current requirements satisfy/exceed requested pip updates.",
+      "last_touched": "2026-07-19T11:09:03Z"
     },
     "organvm/tab-bookmark-manager#34": {
       "comments": 0,
@@ -47631,7 +47639,7 @@
     "organvm/tab-bookmark-manager#4": {
       "comments": 1,
       "created_at": "2026-06-10T22:18:17Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47642,7 +47650,9 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-11T12:36:35Z",
-      "url": "https://github.com/organvm/tab-bookmark-manager/issues/4"
+      "url": "https://github.com/organvm/tab-bookmark-manager/issues/4",
+      "evidence": "Docker/dev stack + docs exist, but no verified public homepage/deployment/package release in seed.yaml.",
+      "last_touched": "2026-07-19T11:09:03Z"
     },
     "organvm/the-actual-news#45": {
       "comments": 0,
@@ -51856,6 +51866,33 @@
       "disposition": "superseded:https://github.com/organvm/nexus--babel-alexandria/blob/main/pyproject.toml",
       "evidence": "Reopen failed; main has pypdf>=6.13.3, superseding 6.12.0.",
       "last_touched": "2026-07-19T11:03:04Z"
+    },
+    "organvm/tab-bookmark-manager#38": {
+      "repo": "tab-bookmark-manager",
+      "number": 38,
+      "kind": "pr",
+      "title": "",
+      "disposition": "merged:75cb41b389c83f341988630ab418578063e53d81",
+      "evidence": "Dependabot ml-service requirements bump; Backend/ML/Extension checks green.",
+      "last_touched": "2026-07-19T11:09:03Z"
+    },
+    "organvm/tab-bookmark-manager#32": {
+      "repo": "tab-bookmark-manager",
+      "number": 32,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/tab-bookmark-manager/pull/38",
+      "evidence": "Reopen failed; current requirements have numpy 2.5.1 and redis 8.0.1.",
+      "last_touched": "2026-07-19T11:09:03Z"
+    },
+    "organvm/tab-bookmark-manager#19": {
+      "repo": "tab-bookmark-manager",
+      "number": 19,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/tab-bookmark-manager/blob/main/.github/workflows/ci.yml",
+      "evidence": "Reopen failed; ci.yml now uses actions/checkout@v7 in all jobs.",
+      "last_touched": "2026-07-19T11:09:03Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
