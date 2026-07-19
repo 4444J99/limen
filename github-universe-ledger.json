@@ -15836,7 +15836,7 @@
     "organvm/hokage-chess--4444j99#1": {
       "comments": 0,
       "created_at": "2026-04-26T01:49:57Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15847,12 +15847,14 @@
       "state": "open",
       "title": "[RB-1] Rob: send premium content links",
       "updated_at": "2026-04-26T01:49:57Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/1"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/1",
+      "evidence": "Funnel architecture exists; Rob premium content URLs/assets absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#10": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:30Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15863,12 +15865,14 @@
       "state": "open",
       "title": "[RB-10] Rob: register hokagechess.com via Cloudflare (~5 min checkout)",
       "updated_at": "2026-04-26T01:50:30Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/10"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/10",
+      "evidence": "Repo homepage empty; hokagechess.com registration/DNS unverified.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#101": {
       "comments": 0,
       "created_at": "2026-06-22T01:21:46Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/hokage-chess--4444j99/blob/main/docs/business/2026-06-22-fws-5-coaching-software-backend.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15879,12 +15883,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-28] [FWS-5] Coaching software backend (TrueCoach / Trainerize / Everfit)",
       "updated_at": "2026-06-22T01:32:40Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/101"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/101",
+      "evidence": "CONFLICTING/DIRTY; TrueCoach backend decision exists on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#102": {
       "comments": 0,
       "created_at": "2026-06-22T01:21:47Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/hokage-chess--4444j99/blob/main/docs/business/2026-06-21-fws-4-long-form-authority.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15895,12 +15901,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-27] [FWS-4] Long-form authority surface (YouTube long-form OR podcast)",
       "updated_at": "2026-06-22T01:29:42Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/102"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/102",
+      "evidence": "CONFLICTING/DIRTY; FWS-4 long-form authority doc and lib exist on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#103": {
       "comments": 0,
       "created_at": "2026-06-22T01:22:21Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15911,12 +15919,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-29] [FWS-6] Wearable affiliate stack (Whoop / Oura / Element / AG1)",
       "updated_at": "2026-06-22T01:30:51Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/103"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/103",
+      "evidence": "CONFLICTING/DIRTY; wearable content/form exists, but FWS-6 affiliate stack not complete.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#107": {
       "comments": 0,
       "created_at": "2026-06-22T01:49:28Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/hokage-chess--4444j99/blob/main/docs/business/2026-06-21-email-list-architecture-decision.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15927,12 +15937,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-40] [MP-7] Email list architecture decision (single unified vs. two pillar-separate)",
       "updated_at": "2026-06-22T01:57:46Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/107"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/107",
+      "evidence": "CONFLICTING/DIRTY; MP-7 one-database/two-track decision exists on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#108": {
       "comments": 0,
       "created_at": "2026-06-22T01:49:57Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/hokage-chess--4444j99/blob/main/docs/business/2026-04-26-avatar-archetype.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15943,12 +15955,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-37] [MP-4] Avatar archetype canonical doc (Hokage underdog dual-discipline persona)",
       "updated_at": "2026-06-22T02:01:29Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/108"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/108",
+      "evidence": "CONFLICTING/DIRTY; broad stale MP-4 branch, avatar canon already shipped.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#11": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:32Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15959,12 +15973,14 @@
       "state": "open",
       "title": "[RB-11] Rob: read + react to BODI Reformation Spec (avatar premise)",
       "updated_at": "2026-04-26T01:50:32Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/11"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/11",
+      "evidence": "BODI Reformation Spec exists; Rob accept/reject reaction absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#114": {
       "comments": 1,
       "created_at": "2026-06-22T02:00:59Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/hokage-chess--4444j99/blob/main/docs/business/2026-06-22-hokage-scroll-beehiiv-runbook.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15975,12 +15991,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-19] [CWS-3] Beehiiv newsletter 'Hokage Scroll' weekly",
       "updated_at": "2026-06-22T02:08:40Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/114"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/114",
+      "evidence": "CONFLICTING/DIRTY; newsletter runbook and Kit subscribe route already on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#12": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:52Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15991,12 +16009,14 @@
       "state": "open",
       "title": "[AF-1] Delete duplicate PDE-AUDIT-BASELINE.md at substrate root",
       "updated_at": "2026-04-26T01:50:52Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/12"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/12",
+      "evidence": "Duplicate root PDE-AUDIT file absent; canonical gap-map file remains.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#121": {
       "comments": 1,
       "created_at": "2026-06-22T03:10:15Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/hokage-chess--4444j99/blob/main/docs/business/2026-06-22-mp-8-wearable-integration-content-plan.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16007,12 +16027,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-41] [MP-8] Wearable integration content plan (Whoop or Oura, when, what content)",
       "updated_at": "2026-06-22T03:15:05Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/121"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/121",
+      "evidence": "CONFLICTING/DIRTY; MP-8 content plan already canonical on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#122": {
       "comments": 1,
       "created_at": "2026-06-22T03:11:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16023,12 +16045,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-48] [V-B] Phase 3 — substrate-doc canonical-home promotion + seed.yaml normalization",
       "updated_at": "2026-06-22T03:15:21Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/122"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/122",
+      "evidence": "CONFLICTING/DIRTY; Phase 3 still partial: canonical meta home and seed normalization unverified.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#13": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:54Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16039,12 +16063,14 @@
       "state": "open",
       "title": "[AF-2] Rename bodi-constellation.yaml → .md (file is markdown, not YAML)",
       "updated_at": "2026-04-26T01:50:54Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/13"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/13",
+      "evidence": "bodi-constellation.md exists; .yaml absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#136": {
       "comments": 1,
       "created_at": "2026-06-23T21:37:35Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/hokage-chess--4444j99/blob/main/docs/business/2026-04-26-avatar-archetype.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16055,12 +16081,14 @@
       "state": "open",
       "title": "[limen jules GH-4444j99-hokage-chess-37] [MP-4] Avatar archetype canonical doc (Hokage underdog dual",
       "updated_at": "2026-06-23T21:38:14Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/136"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/136",
+      "evidence": "CONFLICTING/DIRTY; semgrep green, but MP-4 avatar canon already on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#14": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:55Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16071,12 +16099,14 @@
       "state": "open",
       "title": "[AF-3] Deepen Stratum 2 timeslices (real research, not seed prose)",
       "updated_at": "2026-04-26T01:50:55Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/14"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/14",
+      "evidence": "Timeslices still shallow: 31/36/32 lines.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#15": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:56Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16087,12 +16117,14 @@
       "state": "open",
       "title": "[AF-4] Update PRT-048 IRF row to reflect DONE-474 (skill exists)",
       "updated_at": "2026-04-26T01:50:56Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/15"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/15",
+      "evidence": "External IRF/skills parity task; not in Hokage main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#16": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:58Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16103,12 +16135,14 @@
       "state": "open",
       "title": "[AF-5] Commit corpvs fossil-record.jsonl (parity break)",
       "updated_at": "2026-04-26T01:50:58Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/16"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/16",
+      "evidence": "External corpvs fossil-record task; not verifiable/shipped in Hokage main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#17": {
       "comments": 0,
       "created_at": "2026-04-26T01:51:52Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16119,12 +16153,14 @@
       "state": "open",
       "title": "[CWS-1] Twitch live streaming setup (Hokage-themed live training arcs)",
       "updated_at": "2026-04-26T01:51:52Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/17"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/17",
+      "evidence": "Twitch setup spec exists; external channel/stream receipt absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#18": {
       "comments": 0,
       "created_at": "2026-04-26T01:51:53Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16135,12 +16171,14 @@
       "state": "open",
       "title": "[CWS-2] Discord community — Hidden Leaf Village structure (free + paid tier)",
       "updated_at": "2026-04-26T01:51:53Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/18"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/18",
+      "evidence": "Discord rituals doc covers channels, tiers, and cadence.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#19": {
       "comments": 0,
       "created_at": "2026-04-26T01:51:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16151,12 +16189,14 @@
       "state": "open",
       "title": "[CWS-3] Beehiiv newsletter 'Hokage Scroll' weekly",
       "updated_at": "2026-04-26T01:51:54Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/19"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/19",
+      "evidence": "Hokage Scroll runbook and subscribe route exist; external account/first send unverified.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#2": {
       "comments": 0,
       "created_at": "2026-04-26T01:49:58Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16167,12 +16207,14 @@
       "state": "open",
       "title": "[RB-2] Rob: Kit API key",
       "updated_at": "2026-04-26T01:49:58Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/2"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/2",
+      "evidence": "Kit endpoint/runbook exist; API key remains external secret.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#20": {
       "comments": 0,
       "created_at": "2026-04-26T01:51:56Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16183,12 +16225,14 @@
       "state": "open",
       "title": "[CWS-4] YouTube Shorts decoupled-feed strategy (tactic of the day)",
       "updated_at": "2026-04-26T01:51:56Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/20"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/20",
+      "evidence": "Shorts referenced, but no CWS-4 tactic-of-day strategy doc.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#21": {
       "comments": 0,
       "created_at": "2026-04-26T01:51:57Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16199,12 +16243,14 @@
       "state": "open",
       "title": "[CWS-5] Pitch Perpetual Chess Adult Improver Series appearance",
       "updated_at": "2026-04-26T01:51:57Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/21"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/21",
+      "evidence": "Perpetual Chess pitch package exists; no sent/booked appearance receipt.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#23": {
       "comments": 0,
       "created_at": "2026-04-26T01:51:59Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16215,12 +16261,14 @@
       "state": "open",
       "title": "[CWS-7] Chessable course design (audience-permitting; Solveig Friberg playbook)",
       "updated_at": "2026-04-26T01:51:59Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/23"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/23",
+      "evidence": "Chessable referenced, but no dedicated CWS-7 course design artifact.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#24": {
       "comments": 0,
       "created_at": "2026-04-26T01:52:47Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16231,12 +16279,14 @@
       "state": "open",
       "title": "[FWS-1] Beehiiv newsletter (fitness or unified discipline newsletter)",
       "updated_at": "2026-04-26T01:52:47Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/24"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/24",
+      "evidence": "Email architecture exists; Beehiiv/fitness newsletter launch not verified.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#25": {
       "comments": 0,
       "created_at": "2026-04-26T01:52:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16247,12 +16297,14 @@
       "state": "open",
       "title": "[FWS-2] Skool/Whop paid community gate (Legion of Fitness migration)",
       "updated_at": "2026-04-26T01:52:49Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/25"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/25",
+      "evidence": "Skool gate spec exists; external channel provisioning remains.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#26": {
       "comments": 0,
       "created_at": "2026-04-26T01:52:50Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16263,12 +16315,14 @@
       "state": "open",
       "title": "[FWS-3] Owned digital product — first non-BODI asset (PDF / cohort)",
       "updated_at": "2026-04-26T01:52:50Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/26"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/26",
+      "evidence": "FWS-3 owned digital product doc marked completed.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#28": {
       "comments": 0,
       "created_at": "2026-04-26T01:52:53Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16279,12 +16333,14 @@
       "state": "open",
       "title": "[FWS-5] Coaching software backend (TrueCoach / Trainerize / Everfit)",
       "updated_at": "2026-04-26T01:52:53Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/28"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/28",
+      "evidence": "FWS-5 doc selects TrueCoach backend.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#29": {
       "comments": 0,
       "created_at": "2026-04-26T01:52:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16295,12 +16351,14 @@
       "state": "open",
       "title": "[FWS-6] Wearable affiliate stack (Whoop / Oura / Element / AG1)",
       "updated_at": "2026-04-26T01:52:54Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/29"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/29",
+      "evidence": "Wearable form/content plan exists; affiliate codes/stack not recorded.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#3": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16311,12 +16369,14 @@
       "state": "open",
       "title": "[RB-3] Rob: 75-person constellation list",
       "updated_at": "2026-04-26T01:50:00Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/3"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/3",
+      "evidence": "Constellation master partial; Rob actual 75-person list absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#30": {
       "comments": 0,
       "created_at": "2026-04-26T01:52:55Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16327,12 +16387,14 @@
       "state": "open",
       "title": "[FWS-7] Owned domain at fitness identity (e.g. robbonavoglia.com)",
       "updated_at": "2026-04-26T01:52:55Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/30"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/30",
+      "evidence": "FWS-7 selects robbonavoglia.com; registration/DNS not verified.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#32": {
       "comments": 0,
       "created_at": "2026-04-26T01:53:26Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16343,12 +16405,14 @@
       "state": "open",
       "title": "[BR-2] 'Discipline transfers across domains' canonical thesis essay",
       "updated_at": "2026-04-26T01:53:26Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/32"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/32",
+      "evidence": "Bridge pieces exist, but no dedicated BR-2 canonical thesis essay.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#33": {
       "comments": 0,
       "created_at": "2026-04-26T01:53:27Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16359,12 +16423,14 @@
       "state": "open",
       "title": "[BR-3] Public ritual / event (Hyrox heat, Murph Challenge, 'Legion Test')",
       "updated_at": "2026-04-26T01:53:27Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/33"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/33",
+      "evidence": "Public ritual selection form exists; no selected/executed event receipt.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#34": {
       "comments": 0,
       "created_at": "2026-04-26T01:53:53Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16375,12 +16441,14 @@
       "state": "open",
       "title": "[MP-1] Pillar architecture taxonomy doc (Chess / Fitness / Bridge — what's shared, what's separate)",
       "updated_at": "2026-04-26T01:53:53Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/34"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/34",
+      "evidence": "Canonical pillar architecture taxonomy exists on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#36": {
       "comments": 0,
       "created_at": "2026-04-26T01:53:55Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16391,12 +16459,14 @@
       "state": "open",
       "title": "[MP-3] Audience overlap analysis (do chess viewers care about fitness?)",
       "updated_at": "2026-04-26T01:53:55Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/36"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/36",
+      "evidence": "Audience-overlap analysis exists, but live audience validation remains Rob-owned.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#38": {
       "comments": 0,
       "created_at": "2026-04-26T01:53:58Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16407,12 +16477,14 @@
       "state": "open",
       "title": "[MP-5] BODI exit transition messaging plan (how to communicate without burning bridges)",
       "updated_at": "2026-04-26T01:53:58Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/38"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/38",
+      "evidence": "MP-5 BODI exit messaging plan exists on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#39": {
       "comments": 0,
       "created_at": "2026-04-26T01:54:34Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16423,12 +16495,14 @@
       "state": "open",
       "title": "[MP-6] Legion of Fitness FB group migration plan",
       "updated_at": "2026-04-26T01:54:34Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/39"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/39",
+      "evidence": "MP-6 Legion FB migration plan exists on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#4": {
       "comments": 1,
       "created_at": "2026-04-26T01:50:02Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16439,12 +16513,14 @@
       "state": "open",
       "title": "[RB-4] Rob: acknowledge cross-pollination master diagnosis",
       "updated_at": "2026-06-22T18:46:45Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/4"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/4",
+      "evidence": "Cross-pollination diagnosis exists; Rob acknowledgment absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#41": {
       "comments": 0,
       "created_at": "2026-04-26T01:54:36Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16455,12 +16531,14 @@
       "state": "open",
       "title": "[MP-8] Wearable integration content plan (Whoop or Oura, when, what content)",
       "updated_at": "2026-04-26T01:54:36Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/41"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/41",
+      "evidence": "MP-8 content plan selects Whoop V1 and Oura fallback; affiliate field separate.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#43": {
       "comments": 0,
       "created_at": "2026-04-26T01:54:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16471,12 +16549,14 @@
       "state": "open",
       "title": "[MP-10] Rob's actual time budget (hours/week, current allocation, target re-allocation)",
       "updated_at": "2026-04-26T01:54:39Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/43"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/43",
+      "evidence": "Time-budget doc is MODELED; actual log unavailable; Form 13 collects it.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#44": {
       "comments": 0,
       "created_at": "2026-04-29T18:53:08Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16487,12 +16567,14 @@
       "state": "open",
       "title": "PRT-046: 75-person constellation master file",
       "updated_at": "2026-04-29T18:53:08Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/44"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/44",
+      "evidence": "75-person master says PARTIAL FILL: 5 cards, 50+ named, ~20 to identify.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#45": {
       "comments": 0,
       "created_at": "2026-04-29T19:03:38Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16503,12 +16585,14 @@
       "state": "open",
       "title": "V8: Vercel landing page deploy",
       "updated_at": "2026-04-29T19:03:38Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/45"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/45",
+      "evidence": "Next app/build scripts exist; no repo homepage or deploy workflow/Vercel receipt.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#47": {
       "comments": 0,
       "created_at": "2026-04-30T23:29:45Z",
-      "disposition": "queued",
+      "disposition": "distilled",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16519,12 +16603,14 @@
       "state": "open",
       "title": "[V-A] Phase 2 — pre-commit guard for cross-client keyword bleed",
       "updated_at": "2026-04-30T23:29:45Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/47"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/47",
+      "evidence": "scripts/check-cross-client-bleed.sh and .husky/pre-commit implement staged keyword guard.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#48": {
       "comments": 0,
       "created_at": "2026-04-30T23:30:06Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16535,12 +16621,14 @@
       "state": "open",
       "title": "[V-B] Phase 3 — substrate-doc canonical-home promotion + seed.yaml normalization",
       "updated_at": "2026-04-30T23:30:06Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/48"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/48",
+      "evidence": "Anchor and guard exist, but Phase 3 canonical home/schema normalization still partial.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#49": {
       "comments": 0,
       "created_at": "2026-04-30T23:30:26Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16551,12 +16639,14 @@
       "state": "open",
       "title": "[V-C] Phase 4 — conductor MCP scope-binding (require client param when CWD ∈ client tree)",
       "updated_at": "2026-04-30T23:30:26Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/49"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/49",
+      "evidence": "No conductor MCP scope-binding code in this repo; belongs in MCP/conductor owner.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#5": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:04Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16567,12 +16657,14 @@
       "state": "open",
       "title": "[RB-5] Rob: review v6 strategy refresh",
       "updated_at": "2026-04-26T01:50:04Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/5"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/5",
+      "evidence": "Strategy v6 exists; Rob review receipt absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#50": {
       "comments": 0,
       "created_at": "2026-04-30T23:30:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16583,12 +16675,14 @@
       "state": "open",
       "title": "[V-D] Maddie-side parallel substrate doc (sister-stream governance parity)",
       "updated_at": "2026-04-30T23:30:46Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/50"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/50",
+      "evidence": "Maddie repo has only pointer doc; canonical meta-governance substrate not verified.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#51": {
       "comments": 0,
       "created_at": "2026-04-30T23:31:04Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16599,12 +16693,14 @@
       "state": "open",
       "title": "[V-E] Cross-scope conventions reconciliation (transcript-routing drift)",
       "updated_at": "2026-04-30T23:31:04Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/51"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/51",
+      "evidence": "HANDOFF.md still lists V-E unresolved; no canonical transcript-routing reconciliation.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#6": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:05Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16615,12 +16711,14 @@
       "state": "open",
       "title": "[RB-6] Rob: provision Discord server (Welcome Wed / Loot Drop Fri / Quest Log Sun)",
       "updated_at": "2026-04-26T01:50:05Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/6"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/6",
+      "evidence": "Discord plan exists; live server/invite receipt absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#7": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:07Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16631,12 +16729,14 @@
       "state": "open",
       "title": "[RB-7] Rob: green-light Episode 1 of Jutsu of the Week / Boss Battle",
       "updated_at": "2026-04-26T01:50:07Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/7"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/7",
+      "evidence": "Jutsu Ep1 checklist exists; Rob green-light/opponent/jutsu absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#8": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:27Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16647,12 +16747,14 @@
       "state": "open",
       "title": "[RB-8] Rob: confirm canonical FB Page + Instagram handles",
       "updated_at": "2026-04-26T01:50:27Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/8"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/8",
+      "evidence": "Social handle form exists; FB/IG fields blank.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#9": {
       "comments": 0,
       "created_at": "2026-04-26T01:50:29Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16663,12 +16765,14 @@
       "state": "open",
       "title": "[RB-9] Rob: Teamzy CRM field schema",
       "updated_at": "2026-04-26T01:50:29Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/9"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/issues/9",
+      "evidence": "Teamzy schema form exists; filled schema absent.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hokage-chess--4444j99#94": {
       "comments": 0,
       "created_at": "2026-06-22T01:00:27Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/hokage-chess--4444j99/blob/main/docs/content/2026-04-25-discord-rituals.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -16679,7 +16783,9 @@
       "state": "open",
       "title": "[limen GH-4444j99-hokage-chess-18] [CWS-2] Discord community — Hidden Leaf Village structure (free + paid tier)",
       "updated_at": "2026-06-22T01:06:04Z",
-      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/94"
+      "url": "https://github.com/organvm/hokage-chess--4444j99/pull/94",
+      "evidence": "CONFLICTING/DIRTY; Discord structure/free-paid tiers already documented on main.",
+      "last_touched": "2026-07-19T08:29:50Z"
     },
     "organvm/hospes#3": {
       "comments": 2,
