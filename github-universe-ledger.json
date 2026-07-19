@@ -44054,7 +44054,7 @@
     "organvm/relationship-pipeline#1": {
       "comments": 0,
       "created_at": "2026-06-03T18:12:21Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44065,12 +44065,14 @@
       "state": "open",
       "title": "Run gate-verified pass (verify→clean→enrich→PROVEN) on jessica + rob streams",
       "updated_at": "2026-06-03T18:12:21Z",
-      "url": "https://github.com/organvm/relationship-pipeline/issues/1"
+      "url": "https://github.com/organvm/relationship-pipeline/issues/1",
+      "evidence": "Assignment docs exist; out/ absent, verify_stream.py --all exits 1; private proof not on main.",
+      "last_touched": "2026-07-19T10:22:35.256474+00:00"
     },
     "organvm/relationship-pipeline#11": {
       "comments": 0,
       "created_at": "2026-06-30T17:06:29Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44081,12 +44083,14 @@
       "state": "open",
       "title": "Relationship pipeline Maddie boundary evidence checkpoint",
       "updated_at": "2026-06-30T17:06:29Z",
-      "url": "https://github.com/organvm/relationship-pipeline/pull/11"
+      "url": "https://github.com/organvm/relationship-pipeline/pull/11",
+      "evidence": "Draft PR adds boundary/evidence tooling; checks green, 24 tests pass, needs owner review.",
+      "last_touched": "2026-07-19T10:22:35.256474+00:00"
     },
     "organvm/relationship-pipeline#12": {
       "comments": 0,
       "created_at": "2026-07-01T11:04:57Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44097,12 +44101,14 @@
       "state": "open",
       "title": "student-email-d2l-support-20260629 lifecycle checkpoint",
       "updated_at": "2026-07-01T11:04:57Z",
-      "url": "https://github.com/organvm/relationship-pipeline/pull/12"
+      "url": "https://github.com/organvm/relationship-pipeline/pull/12",
+      "evidence": "Draft PR adds D2L student-email scaffold; checks green, 16 tests pass, but draft not merge-ready.",
+      "last_touched": "2026-07-19T10:22:35.256474+00:00"
     },
     "organvm/relationship-pipeline#3": {
       "comments": 0,
       "created_at": "2026-06-05T12:15:02Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44113,12 +44119,14 @@
       "state": "open",
       "title": "Add second real sanitized iOS decoder snapshot",
       "updated_at": "2026-06-05T12:15:02Z",
-      "url": "https://github.com/organvm/relationship-pipeline/issues/3"
+      "url": "https://github.com/organvm/relationship-pipeline/issues/3",
+      "evidence": "Main has sanitized_real_blob + synthetic fixtures; 1/2 real snapshots, second real source remains.",
+      "last_touched": "2026-07-19T10:22:35.256474+00:00"
     },
     "organvm/relationship-pipeline#4": {
       "comments": 0,
       "created_at": "2026-06-05T12:15:02Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44129,12 +44137,14 @@
       "state": "open",
       "title": "Prove Blade-B fallback on a real encrypted iOS backup",
       "updated_at": "2026-06-05T12:15:02Z",
-      "url": "https://github.com/organvm/relationship-pipeline/issues/4"
+      "url": "https://github.com/organvm/relationship-pipeline/issues/4",
+      "evidence": "Encrypted-backup code/runbook/harness exist; real backup passphrase proof skipped, no PASS recorded.",
+      "last_touched": "2026-07-19T10:22:35.256474+00:00"
     },
     "organvm/relationship-pipeline#6": {
       "comments": 0,
       "created_at": "2026-06-18T19:04:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44145,12 +44155,14 @@
       "state": "open",
       "title": "[limen GH-4444j99-relationship-pipeline-4] Prove Blade-B fallback on a real encrypted iOS backup",
       "updated_at": "2026-06-18T19:10:50Z",
-      "url": "https://github.com/organvm/relationship-pipeline/pull/6"
+      "url": "https://github.com/organvm/relationship-pipeline/pull/6",
+      "evidence": "Blade-B harness on main; PR stale/conflicting/red; encrypted-backup PASS unrecorded.",
+      "last_touched": "2026-07-19T10:22:35.256474+00:00"
     },
     "organvm/relationship-pipeline#9": {
       "comments": 0,
       "created_at": "2026-06-20T08:46:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -44161,7 +44173,9 @@
       "state": "open",
       "title": "[limen GEN-4444j99-relationship-pipeline-test-coverage-0620] Raise test coverage in 4444J99/relationship-pipeline",
       "updated_at": "2026-06-20T08:47:46Z",
-      "url": "https://github.com/organvm/relationship-pipeline/pull/9"
+      "url": "https://github.com/organvm/relationship-pipeline/pull/9",
+      "evidence": "Adds extract_messages coverage; local tests pass but GitHub checks red; branch would delete DISCOVERY files.",
+      "last_touched": "2026-07-19T10:22:35.256474+00:00"
     },
     "organvm/render-second-amendment#11": {
       "comments": 2,
