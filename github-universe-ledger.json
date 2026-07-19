@@ -5862,7 +5862,7 @@
     "organvm/call-function--ontological#10": {
       "comments": 1,
       "created_at": "2026-06-24T10:52:32Z",
-      "disposition": "queued",
+      "disposition": "merged:a810145972d1800c1d06ffa8426b51dc45c4e6c6",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5873,7 +5873,9 @@
       "state": "open",
       "title": "discover: call-function--ontological — ontological analyzer + naming convention",
       "updated_at": "2026-07-06T22:01:11Z",
-      "url": "https://github.com/organvm/call-function--ontological/pull/10"
+      "url": "https://github.com/organvm/call-function--ontological/pull/10",
+      "evidence": "Added logic.discovery.registry.json + logic.discovery.value.md; admin-squashed past structural validate-dependencies mismatch.",
+      "last_touched": "2026-07-19T10:50:40Z"
     },
     "organvm/call-function--ontological#11": {
       "comments": 0,
@@ -5896,7 +5898,7 @@
     "organvm/call-function--ontological#12": {
       "comments": 0,
       "created_at": "2026-06-29T03:42:39Z",
-      "disposition": "queued",
+      "disposition": "merged:19f4c5606497acf57fc203f532cc7e3bdc00314f",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5907,12 +5909,14 @@
       "state": "open",
       "title": "[limen GEN-a-organvm-call-function--ontological-test-coverage-0620] Raise test coverage in a-organvm/call-function--ontological",
       "updated_at": "2026-06-29T03:42:39Z",
-      "url": "https://github.com/organvm/call-function--ontological/pull/12"
+      "url": "https://github.com/organvm/call-function--ontological/pull/12",
+      "evidence": "Added tests/test_grounding_report.py; checks green; post-merge pytest 268 passed.",
+      "last_touched": "2026-07-19T10:50:40Z"
     },
     "organvm/call-function--ontological#13": {
       "comments": 0,
       "created_at": "2026-07-01T06:39:50Z",
-      "disposition": "queued",
+      "disposition": "merged:d7cf48772e0d3307b060cc5378f0f2886641387f",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5923,12 +5927,14 @@
       "state": "open",
       "title": "[limen GEN-a-organvm-call-function--ontological-test-coverage-0620] Raise test coverage in a-organvm/call-function--ontological",
       "updated_at": "2026-07-01T06:42:36Z",
-      "url": "https://github.com/organvm/call-function--ontological/pull/13"
+      "url": "https://github.com/organvm/call-function--ontological/pull/13",
+      "evidence": "Added tests/test_validate_naming.py; checks green; post-merge pytest 268 passed.",
+      "last_touched": "2026-07-19T10:50:40Z"
     },
     "organvm/call-function--ontological#16": {
       "comments": 0,
       "created_at": "2026-07-04T07:45:13Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/call-function--ontological/pull/10",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5939,12 +5945,14 @@
       "state": "open",
       "title": "[limen HEAL-cifix-organvm-call-function--ontological-10] fix failing CI on organvm/call-function--ontological#10",
       "updated_at": "2026-07-04T07:47:21Z",
-      "url": "https://github.com/organvm/call-function--ontological/pull/16"
+      "url": "https://github.com/organvm/call-function--ontological/pull/16",
+      "evidence": "Not merged: branch adds invalid logs/agents/opencode.json; make validate-naming fails; #10 merged.",
+      "last_touched": "2026-07-19T10:50:40Z"
     },
     "organvm/call-function--ontological#6": {
       "comments": 0,
       "created_at": "2026-06-10T22:15:44Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -5955,7 +5963,9 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T22:15:44Z",
-      "url": "https://github.com/organvm/call-function--ontological/issues/6"
+      "url": "https://github.com/organvm/call-function--ontological/issues/6",
+      "evidence": "Main has pyproject/tools/cli.py/quickstart + 268 tests, but no published artifact or packaged CLI smoke.",
+      "last_touched": "2026-07-19T10:50:40Z"
     },
     "organvm/card-trade-social#1": {
       "comments": 1,
@@ -51597,6 +51607,33 @@
       "disposition": "superseded:apps/web/package.json",
       "evidence": "Closed unmerged Next bump; reopen failed, main uses Next 16.2.10 newer than requested 15.5.18.",
       "last_touched": "2026-07-19T10:45:12Z"
+    },
+    "organvm/call-function--ontological#7": {
+      "repo": "call-function--ontological",
+      "number": 7,
+      "kind": "issue",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Reopened NOT_PLANNED issue; activation gap remains: no installable release artifact/package smoke.",
+      "last_touched": "2026-07-19T10:50:40Z"
+    },
+    "organvm/call-function--ontological#9": {
+      "repo": "call-function--ontological",
+      "number": 9,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/call-function--ontological/pull/11",
+      "evidence": "Reopen failed; default branch already has requested GitHub Actions deps via #11/#17.",
+      "last_touched": "2026-07-19T10:50:40Z"
+    },
+    "organvm/call-function--ontological#5": {
+      "repo": "call-function--ontological",
+      "number": 5,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/call-function--ontological/pull/11",
+      "evidence": "Reopen failed; validate.yml now uses actions/upload-artifact v7.0.1.",
+      "last_touched": "2026-07-19T10:50:40Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
