@@ -3312,9 +3312,17 @@ def _agent_timed_out_on_task(agent: str, task: Task) -> bool:
     )
 
 
+def _control_host_task(task: Task) -> bool:
+    """Whether execution must mutate or inspect this control host rather than a remote clone."""
+
+    return "execution:control-host" in (task.labels or [])
+
+
 def agent_can_run_task(agent: str, task: Task) -> bool:
     agent = canonical_agent(agent)
     if _agent_timed_out_on_task(agent, task):
+        return False
+    if _control_host_task(task) and agent not in _LOCAL_AGENTS:
         return False
     if agent == "github_actions" and not (
         str(task.type or "").lower() == "verification"
@@ -4991,14 +4999,29 @@ def _apply_result(
         task.target_agent = nxt
         task.status = "open"
     elif result == _TIMEOUT:
-        # too big for a sync local lane → hand to jules (async, no wall-clock cap)
-        entry.status = "open"
-        entry.route_to = "jules"
-        entry.output = f"timeout on {agent}; reopened to asynchronous lane"
-        task.target_agent = "jules"
-        task.status = "open"
-        if "slow" not in task.labels:
-            task.labels.append("slow")
+        if _control_host_task(task):
+            # A remote clone cannot execute a control-host mutation.  The old unconditional
+            # timeout->Jules fallback sent disk cleanup off-box, where it waited for feedback,
+            # was healed open, and then permanently blocked the correct local lane because its
+            # history contained a local timeout.  Fail this bounded unit and require a successor
+            # instead of manufacturing an impossible route.
+            entry.status = "failed"
+            entry.output = (
+                f"timeout on {agent}; control-host work cannot route off-machine; "
+                "a smaller bounded successor packet is required"
+            )
+            task.status = "failed"
+            if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in task.labels:
+                task.labels.append(WORKSTREAM_SUCCESSOR_REQUIRED_LABEL)
+        else:
+            # too big for a sync local lane → hand to jules (async, no wall-clock cap)
+            entry.status = "open"
+            entry.route_to = "jules"
+            entry.output = f"timeout on {agent}; reopened to asynchronous lane"
+            task.target_agent = "jules"
+            task.status = "open"
+            if "slow" not in task.labels:
+                task.labels.append("slow")
     elif _is_workstream_successor_result(result):
         entry.status = "failed"
         entry.output = f"successor workstream required: {_workstream_successor_reason(result)}"

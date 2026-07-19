@@ -4289,6 +4289,36 @@ def test_limen_task_missing_receipt_denied() -> None:
     assert not D.agent_can_run_task("codex", task)
 
 
+def test_control_host_task_never_routes_to_remote_lane() -> None:
+    task = _limen_task(
+        id="SUBSTRATE-CONTROL-HOST",
+        predicate="python -m pytest cli/tests/test_reclaim_worktrees.py -q",
+        receipt_target="git:organvm/limen:docs/worktree-preservation-receipts.json",
+    )
+    task.labels.append("execution:control-host")
+
+    assert D.agent_can_run_task("codex", task)
+    assert not D.agent_can_run_task("jules", task)
+
+
+def test_control_host_timeout_fails_for_successor_instead_of_routing_to_jules() -> None:
+    task = _limen_task(
+        id="SUBSTRATE-CONTROL-HOST-TIMEOUT",
+        predicate="python -m pytest cli/tests/test_reclaim_worktrees.py -q",
+        receipt_target="git:organvm/limen:docs/worktree-preservation-receipts.json",
+    )
+    task.labels.append("execution:control-host")
+    track = BudgetTrack(date="2026-07-19", spent=0, per_agent={})
+
+    D._apply_result(task, "codex", D._TIMEOUT, datetime(2026, 7, 19), track)
+
+    assert task.status == "failed"
+    assert task.target_agent == "any"
+    assert D.WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in task.labels
+    assert task.dispatch_log[-1].status == "failed"
+    assert task.dispatch_log[-1].route_to is None
+
+
 def test_organvm_engine_narrow_scope_preserved_for_codex() -> None:
     # organvm-engine's ban was Claude-only; codex was always allowed and still is.
     task = Task(

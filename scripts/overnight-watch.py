@@ -488,6 +488,8 @@ def _owner_task_id(item: dict[str, Any], packet: dict[str, Any], target_agent: s
         "workstream": item.get("workstream"),
         "target_agent": target_agent,
         "repo": packet.get("repo"),
+        "execution_scope": packet.get("execution_scope"),
+        "packet_epoch": packet.get("packet_epoch"),
         "task": packet.get("task"),
         "predicate": packet.get("predicate"),
         "receipt_target": packet.get("receipt_target"),
@@ -536,6 +538,8 @@ def owner_task_from_item(item: dict[str, Any]) -> Task:
     context = "\n".join(
         [
             f"Receipt-first verdict: {item.get('verdict') or ''}",
+            f"Execution scope: {packet.get('execution_scope') or 'repository'}",
+            f"Packet epoch: {packet.get('packet_epoch') or 'static'}",
             f"Task: {packet.get('task') or item.get('title') or ''}",
             f"Predicate: {packet.get('predicate') or ''}",
             f"Receipt target: {packet.get('receipt_target') or ''}",
@@ -543,6 +547,9 @@ def owner_task_from_item(item: dict[str, Any]) -> Task:
             "This is the single bounded alternate selected after generic dispatch was value-gated.",
         ]
     )
+    labels = ["always-working", "receipt-first", "overnight-lane-switch", workstream]
+    if packet.get("execution_scope") == "control-host":
+        labels.append("execution:control-host")
     task = Task.model_validate(
         {
             "id": _owner_task_id(item, packet, target_agent),
@@ -555,7 +562,7 @@ def owner_task_from_item(item: dict[str, Any]) -> Task:
             "priority": _priority_name(item.get("priority")),
             "budget_cost": 1,
             "status": "open",
-            "labels": ["always-working", "receipt-first", "overnight-lane-switch", workstream],
+            "labels": labels,
             "context": context,
             "predicate": str(packet.get("predicate") or ""),
             "receipt_target": str(packet.get("receipt_target") or ""),

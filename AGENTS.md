@@ -297,6 +297,11 @@ operating order, not motivation text.
   from `logs/usage.json` and use the remaining healthy lanes.
 - Keep local lanes bounded by host pressure and local concurrency (`LIMEN_LOCAL_LIMIT`,
   `--local-per-lane`, and `--max`), but do not convert a local cap into a global fleet cap.
+- A future time gate or bounded waiter must not monopolize an autonomous runway. Once the wait is
+  registered with its durable owner (the sanctioned PR waiter, heartbeat rung, or continuation
+  receipt), calculate the unreserved runway and route immediately executable independent packets
+  through their own owners and capsules, subject to live host admission and concurrency. Elapsed
+  watch time is not value; each parallel packet still needs its own predicate and durable receipt.
 - If disk pressure is part of the correction, dry-run proof is not enough. Run the accepted reclaim
   path until it reaches a fixed point, deleting only roots the reclaim script classifies as clean,
   merged or patch-equivalent, idle, and remote-preserved. Anything left must be owner-routed by its

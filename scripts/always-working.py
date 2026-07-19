@@ -30,9 +30,7 @@ from limen.worktree_debt import REAPABLE_REASONS  # noqa: E402
 HOME = Path.home()
 WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE_ROOT", HOME / "Workspace"))
 PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
-PRIVATE_INDEX = Path(
-    os.environ.get("LIMEN_ALWAYS_WORKING_INDEX", PRIVATE_ROOT / "lifecycle" / "always-working.json")
-)
+PRIVATE_INDEX = Path(os.environ.get("LIMEN_ALWAYS_WORKING_INDEX", PRIVATE_ROOT / "lifecycle" / "always-working.json"))
 DOC_PATH = Path(os.environ.get("LIMEN_ALWAYS_WORKING_DOC", ROOT / "docs" / "always-working.md"))
 
 PROFILE_REPO = Path(os.environ.get("LIMEN_PROFILE_REPO", WORKSPACE / "organvm" / "4444J99"))
@@ -322,9 +320,7 @@ def github_profile_surface() -> dict[str, Any]:
         ]
     )
     readme_text = _decode_github_content(readme_payload)
-    user, user_error = _json_command(
-        ["gh", "api", "user", "--jq", "{bio,blog,public_repos,updated_at}"]
-    )
+    user, user_error = _json_command(["gh", "api", "user", "--jq", "{bio,blog,public_repos,updated_at}"])
     bio = str((user or {}).get("bio") or "")
     blog = str((user or {}).get("blog") or "")
     stale_bio = bool(re.search(r"\b91 repos\b|3,586 code files|736 test files|58 CI workflows", bio))
@@ -411,9 +407,7 @@ def _lifecycle_cache_windows() -> tuple[int, int]:
     producer_timeout = _positive_env_int("LIMEN_RECLAIM_TIMEOUT", 300)
     cvstos_cadence = _positive_env_int("LIMEN_BEAT_CVSTOS", 24)
     pressure_cadence = _positive_env_int("LIMEN_BEAT_DRAIN", 3)
-    pressure_throttle = _positive_env_int(
-        "LIMEN_LIFECYCLE_PRESSURE_THROTTLE", 1800, allow_zero=True
-    )
+    pressure_throttle = _positive_env_int("LIMEN_LIFECYCLE_PRESSURE_THROTTLE", 1800, allow_zero=True)
 
     # A throttled producer can be called just before its snapshot becomes eligible, then wait one
     # full scheduler cadence before the next call. Include both intervals and the bounded command
@@ -500,12 +494,8 @@ def substrate_lifecycle_receipt() -> dict[str, Any]:
     return {
         "cvstos": cvstos,
         "worktree_debt": worktree_debt,
-        "predicate_ok": bool(
-            cvstos["fresh"] and cvstos["ok"] and worktree_debt["fresh"] and worktree_debt["ok"]
-        ),
-        "generated_state_reclaim": reclaim_log_summary(
-            GENERATED_STATE_RECLAIM_LOG, ("changed_roots", "failed_roots")
-        ),
+        "predicate_ok": bool(cvstos["fresh"] and cvstos["ok"] and worktree_debt["fresh"] and worktree_debt["ok"]),
+        "generated_state_reclaim": reclaim_log_summary(GENERATED_STATE_RECLAIM_LOG, ("changed_roots", "failed_roots")),
         "tool_cache_reclaim": reclaim_log_summary(TOOL_CACHE_RECLAIM_LOG, ("existing_paths", "failed_paths")),
         "ollama_model_reclaim": reclaim_log_summary(
             OLLAMA_MODEL_RECLAIM_LOG, ("model_count", "loaded_models", "blocked_reason", "failed")
@@ -721,7 +711,9 @@ def mail_receipts() -> list[dict[str, Any]]:
             "verdict": (
                 f"{flagged} active flagged messages classified into {flagged_story.get('cluster_count')} clusters; no body reads or mailbox mutations"
                 if active_done and flagged
-                else f"{flagged} active flagged non-deleted messages require classification" if flagged else "no active flagged messages remain"
+                else f"{flagged} active flagged non-deleted messages require classification"
+                if flagged
+                else "no active flagged messages remain"
             ),
             **common,
             "assignment_packet": {
@@ -773,7 +765,9 @@ def repo_surface_receipt() -> dict[str, Any]:
         verdict = "repo surface ledger missing; assignment must refresh existing roots before new work"
     elif repo_count >= 200 and generated_age_hours is not None and generated_age_hours <= 24:
         status = STATUS_DONE
-        verdict = f"fresh repo surface ledger covers broad repo estate; {duplicate_count} duplicate remote group(s) recorded"
+        verdict = (
+            f"fresh repo surface ledger covers broad repo estate; {duplicate_count} duplicate remote group(s) recorded"
+        )
     elif repo_count >= 200:
         verdict = "broad repo surface ledger exists, but it is stale for current boil-up work"
     return {
@@ -863,9 +857,7 @@ def value_repo_receipt() -> dict[str, Any]:
     independent_receipt_owners = {
         str(row.get("owner"))
         for row in products
-        if isinstance(row, dict)
-        and row.get("source_kind") != "repo"
-        and str(row.get("owner") or "") in repos
+        if isinstance(row, dict) and row.get("source_kind") != "repo" and str(row.get("owner") or "") in repos
     }
     missing_sell_ready = [repo for repo in repos if repo not in sell_ready_owners]
     missing_top_receipts = [repo for repo in top_repos if repo not in independent_receipt_owners]
@@ -963,8 +955,7 @@ def estate_custody_receipt() -> dict[str, Any]:
     implementation_receipts = receipt.get("receipts") if isinstance(receipt, dict) else []
     implementation_status = str(receipt.get("status") or "") if isinstance(receipt, dict) else ""
     implementation_complete = bool(implementation_receipts) and (
-        receipt.get("complete") is True
-        or implementation_status in {"complete", "owner_receipts_complete"}
+        receipt.get("complete") is True or implementation_status in {"complete", "owner_receipts_complete"}
     )
     if missing_volumes or missing_docs or missing_layers:
         status = STATUS_BLOCKED
@@ -996,14 +987,14 @@ def estate_custody_receipt() -> dict[str, Any]:
             "implementation_receipt_status": implementation_status,
             "implementation_receipt_complete": implementation_complete,
             "implementation_receipt": relpath(ESTATE_CUSTODY_RECEIPT),
-            "implementation_receipt_count": len(implementation_receipts) if isinstance(implementation_receipts, list) else 0,
+            "implementation_receipt_count": len(implementation_receipts)
+            if isinstance(implementation_receipts, list)
+            else 0,
             "worktree_reclaim_candidates_present": WORKTREE_RECLAIM_CANDIDATES_DOC.exists(),
             "worktree_reclaim_candidate_roots": (reclaim_candidates.get("summary") or {}).get("candidate_roots")
             if isinstance(reclaim_candidates, dict)
             else None,
-            "worktree_reclaim_candidate_size": (reclaim_candidates.get("summary") or {}).get(
-                "measured_candidate_size"
-            )
+            "worktree_reclaim_candidate_size": (reclaim_candidates.get("summary") or {}).get("measured_candidate_size")
             if isinstance(reclaim_candidates, dict)
             else None,
         },
@@ -1140,7 +1131,9 @@ def credential_wall_receipt() -> dict[str, Any]:
     elif census_error:
         verdict = f"credential wall census failed: {census_error}"
     elif not tombstone_present:
-        verdict = "credential wall passes current-home check; historical token tombstone audit still needs owner receipt"
+        verdict = (
+            "credential wall passes current-home check; historical token tombstone audit still needs owner receipt"
+        )
     else:
         verdict = "credential wall and historical token tombstone receipt are present"
     return {
@@ -1197,7 +1190,9 @@ def tabularius_receipt() -> dict[str, Any]:
         pass
     audit = load_json(audit_log, {})
     packet_counts = audit.get("owner_packet_counts") if isinstance(audit, dict) else {}
-    unclassified = int((packet_counts or {}).get("TAB-UNCLASSIFIED-WRITER") or 0) if isinstance(packet_counts, dict) else 0
+    unclassified = (
+        int((packet_counts or {}).get("TAB-UNCLASSIFIED-WRITER") or 0) if isinstance(packet_counts, dict) else 0
+    )
     step_22_open = bool(re.search(r"(?m)^- \[ \] Step 2\.2(?:\s|$|—)", text))
     owner_recorded = "tabularius-writer-audit:owner-recorded" in audit_text and unclassified == 0
     status = STATUS_DONE if not step_22_open or owner_recorded else STATUS_ASSIGNED
@@ -1222,7 +1217,11 @@ def tabularius_receipt() -> dict[str, Any]:
             "writer_audit_unclassified_count": unclassified,
             "writer_audit_owner_packet_counts": packet_counts if isinstance(packet_counts, dict) else {},
         },
-        "existing_receipts": [relpath(doc), relpath(audit_doc), relpath(ROOT / "cli" / "src" / "limen" / "tabularius.py")],
+        "existing_receipts": [
+            relpath(doc),
+            relpath(audit_doc),
+            relpath(ROOT / "cli" / "src" / "limen" / "tabularius.py"),
+        ],
         "assignment_packet": {
             "lane_fit": "codex-integrator",
             "repo": "organvm/limen",
@@ -1238,6 +1237,9 @@ def substrate_receipt() -> dict[str, Any]:
     disk = disk_receipt()
     target_free_gib = float(os.environ.get("LIMEN_ALWAYS_WORKING_TARGET_FREE_GIB", "200"))
     lifecycle = substrate_lifecycle_receipt()
+    worktree_debt = lifecycle["worktree_debt"]
+    debt = worktree_debt.get("debt")
+    reapable = worktree_debt.get("reapable")
     storage_pressure = load_json(SUBSTRATE_STORAGE_INDEX, {})
     shortfall_gib = round(max(target_free_gib - float(disk["free_gib"]), 0.0), 1)
     open_substrate = bool(shortfall_gib > 0 or not disk["tmp_ok"] or not lifecycle["predicate_ok"])
@@ -1263,7 +1265,9 @@ def substrate_receipt() -> dict[str, Any]:
             reclaim_parts.append(f"ollama-models {last_ollama_reclaim['cumulative_reclaimed_size']}")
         suffix = f"; recorded reclaim freed {', '.join(reclaim_parts)}" if reclaim_parts else ""
         if owner_gated:
-            verdict = f"internal free space is {shortfall_gib} GiB below target{suffix}; remaining bytes require owner gates"
+            verdict = (
+                f"internal free space is {shortfall_gib} GiB below target{suffix}; remaining bytes require owner gates"
+            )
         else:
             verdict = f"internal free space is {shortfall_gib} GiB below target{suffix}"
     elif not disk["tmp_ok"]:
@@ -1305,10 +1309,22 @@ def substrate_receipt() -> dict[str, Any]:
         "assignment_packet": {
             "lane_fit": "codex-local",
             "repo": "organvm/limen",
-            "task": "Run the full disk-relief pass in a worktree: python3 scripts/reclaim-generated-state.py --apply && python3 scripts/reclaim-tool-caches.py --apply && python3 scripts/reclaim-ollama-models.py --apply && python3 scripts/substrate-storage-pressure.py --write && python3 scripts/cvstos-organ.py --check && python3 scripts/worktree-debt.py --fail-on-debt --fail-reapable-over-cap. Reclaim ignored generated state, preserve or owner-route local-only payloads, and keep Scratch as the active work substrate.",
-            "predicate": "python3 -m pytest cli/tests/test_substrate_storage_pressure.py -q",
-            "receipt_target": "git:organvm/limen:logs/reclaim-generated-state.jsonl",
-            "stop_condition": "free disk is at target, temp writes are usable, worktree debt is exactly zero, and reapable roots are zero",
+            "execution_scope": "control-host",
+            "packet_epoch": f"worktree-debt:{debt}:reapable:{reapable}",
+            "task": (
+                "Run exactly one accepted worktree-reclaim tranche from an isolated Limen owner "
+                "worktree: LIMEN_RECLAIM_GENERATED=0 LIMEN_RECLAIM_MAX=3 python3 "
+                "scripts/reclaim-worktrees.py --apply --force --json. The generated-cleanup disable "
+                "is mandatory: do not run generated-state, tool-cache, Ollama, or clone reclaimers "
+                "in this packet. Record each removed root and the exact apply receipt in "
+                "docs/worktree-preservation-receipts.json, then push one narrow owner PR."
+            ),
+            "predicate": "python3 -m pytest cli/tests/test_reclaim_worktrees.py -q",
+            "receipt_target": "git:organvm/limen:docs/worktree-preservation-receipts.json",
+            "stop_condition": (
+                "one tranche removes at most three accepted roots or records that no accepted root "
+                "remains; every residual root stays preserved for a later packet"
+            ),
         },
     }
 
@@ -1452,6 +1468,9 @@ def _priority(item: dict[str, Any]) -> str:
 def _task_from_item(item: dict[str, Any]) -> dict[str, Any]:
     packet = item.get("assignment_packet") or {}
     workstream = str(item.get("workstream") or "always-working")
+    labels = ["always-working", "receipt-first", workstream]
+    if packet.get("execution_scope") == "control-host":
+        labels.append("execution:control-host")
     context = "\n".join(
         [
             f"Receipt-first verdict: {item.get('verdict') or ''}",
@@ -1473,7 +1492,7 @@ def _task_from_item(item: dict[str, Any]) -> dict[str, Any]:
         "priority": _priority(item),
         "budget_cost": 1,
         "status": "open",
-        "labels": ["always-working", "receipt-first", workstream],
+        "labels": labels,
         "urls": [str(value) for value in item.get("existing_receipts") or []][:10],
         "context": context,
         "predicate": str(packet.get("predicate") or ""),

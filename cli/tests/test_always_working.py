@@ -358,6 +358,48 @@ def test_substrate_receipt_blocks_when_lifecycle_predicate_fails(monkeypatch, tm
     assert receipt["evidence"]["lifecycle"]["worktree_debt"]["debt"] == 1
 
 
+def test_substrate_packet_is_one_control_host_reclaim_tranche(monkeypatch, tmp_path):
+    mod = _load("always_working_substrate_bounded_packet_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "GENERATED_STATE_RECLAIM_LOG", root / "logs" / "reclaim-generated-state.jsonl")
+    monkeypatch.setattr(mod, "TOOL_CACHE_RECLAIM_LOG", root / "logs" / "reclaim-tool-caches.jsonl")
+    monkeypatch.setattr(mod, "OLLAMA_MODEL_RECLAIM_LOG", root / "logs" / "reclaim-ollama-models.jsonl")
+    _seed_cached_lifecycle(root, debt=7)
+    pressure = json.loads((root / "logs" / "session-lifecycle-pressure.json").read_text(encoding="utf-8"))
+    pressure["worktrees"]["by_reason"] = {
+        "clean+merged+idle": 4,
+        "clean+pushed+idle": 0,
+        "receipt-remote-merged+clean+idle": 0,
+    }
+    (root / "logs" / "session-lifecycle-pressure.json").write_text(
+        json.dumps(pressure),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "CVSTOS_STATE", root / "logs" / "cvstos-organ-state.json")
+    monkeypatch.setattr(mod, "LIFECYCLE_PRESSURE_STATE", root / "logs" / "session-lifecycle-pressure.json")
+    monkeypatch.setattr(
+        mod,
+        "disk_receipt",
+        lambda: {"free_gib": 50.0, "used_pct": 90.0, "tmp_ok": True, "tmp_error": ""},
+    )
+
+    packet = mod.substrate_receipt()["assignment_packet"]
+
+    assert packet["execution_scope"] == "control-host"
+    assert packet["packet_epoch"] == "worktree-debt:7:reapable:4"
+    assert (
+        "LIMEN_RECLAIM_GENERATED=0 LIMEN_RECLAIM_MAX=3 python3 scripts/reclaim-worktrees.py --apply --force --json"
+    ) in packet["task"]
+    assert packet["task"].count("--apply") == 1
+    assert "reclaim-generated-state.py" not in packet["task"]
+    assert packet["receipt_target"] == "git:organvm/limen:docs/worktree-preservation-receipts.json"
+    assert (
+        "execution:control-host"
+        in mod._task_from_item({"id": "SUBSTRATE", "workstream": "substrate", "assignment_packet": packet})["labels"]
+    )
+
+
 def test_lifecycle_cache_stays_fresh_between_heartbeat_refreshes(monkeypatch, tmp_path):
     mod = _load("always_working_lifecycle_cadence_uut", ALWAYS_WORKING)
     root = tmp_path / "limen"
