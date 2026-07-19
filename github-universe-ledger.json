@@ -13656,7 +13656,7 @@
     "organvm/gamified-coach-interface#100": {
       "comments": 2,
       "created_at": "2026-01-13T17:31:46Z",
-      "disposition": "queued",
+      "disposition": "superseded:#159",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13667,12 +13667,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix privilege escalation in onboarding",
       "updated_at": "2026-01-13T17:31:52Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/100"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/100",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:15Z"
     },
     "organvm/gamified-coach-interface#101": {
       "comments": 2,
       "created_at": "2026-01-14T17:16:01Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13683,12 +13685,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize animation loops & fix OrbitalNodes crash",
       "updated_at": "2026-01-14T17:16:09Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/101"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/101",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:26Z"
     },
     "organvm/gamified-coach-interface#102": {
       "comments": 2,
       "created_at": "2026-01-14T17:17:08Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13699,12 +13703,14 @@
       "state": "open",
       "title": "Boot Screen Accessibility Improvements",
       "updated_at": "2026-01-14T17:17:17Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/102"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/102",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:30Z"
     },
     "organvm/gamified-coach-interface#103": {
       "comments": 2,
       "created_at": "2026-01-14T17:20:09Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13715,12 +13721,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [HIGH] Fix Socket.IO Reflected XSS",
       "updated_at": "2026-01-14T17:20:23Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/103"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/103",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:41Z"
     },
     "organvm/gamified-coach-interface#104": {
       "comments": 2,
       "created_at": "2026-01-15T17:08:30Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13731,12 +13739,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize Animation Loops & Fix Crash",
       "updated_at": "2026-01-15T17:08:38Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/104"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/104",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:30Z"
     },
     "organvm/gamified-coach-interface#105": {
       "comments": 2,
       "created_at": "2026-01-15T17:34:03Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13747,12 +13757,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [HIGH] Fix XSS in Socket.IO messages",
       "updated_at": "2026-01-15T17:34:09Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/105"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/105",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:45Z"
     },
     "organvm/gamified-coach-interface#106": {
       "comments": 2,
       "created_at": "2026-01-15T17:34:47Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13763,12 +13775,14 @@
       "state": "open",
       "title": "🎨 Palette: Boot Screen Accessibility",
       "updated_at": "2026-01-15T17:34:55Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/106"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/106",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:35Z"
     },
     "organvm/gamified-coach-interface#107": {
       "comments": 2,
       "created_at": "2026-01-16T17:14:06Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13779,12 +13793,14 @@
       "state": "open",
       "title": "⚡ Bolt: Fix OrbitalNodes crash and optimize render loop",
       "updated_at": "2026-01-16T17:14:14Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/107"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/107",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:35Z"
     },
     "organvm/gamified-coach-interface#108": {
       "comments": 2,
       "created_at": "2026-01-16T17:18:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13795,12 +13811,14 @@
       "state": "open",
       "title": "🎨 Palette: Enhance accessibility for boot screen and node navigation",
       "updated_at": "2026-01-16T17:18:17Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/108"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/108",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:40Z"
     },
     "organvm/gamified-coach-interface#109": {
       "comments": 2,
       "created_at": "2026-01-17T17:25:45Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13811,12 +13829,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize checkAchievements performance",
       "updated_at": "2026-01-17T17:25:54Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/109"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/109",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:54Z"
     },
     "organvm/gamified-coach-interface#110": {
       "comments": 2,
       "created_at": "2026-01-17T17:46:02Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13827,12 +13847,14 @@
       "state": "open",
       "title": "feat(a11y): enhance accessibility for navigation and boot screen",
       "updated_at": "2026-01-17T17:46:08Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/110"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/110",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:44Z"
     },
     "organvm/gamified-coach-interface#111": {
       "comments": 2,
       "created_at": "2026-01-18T17:23:05Z",
-      "disposition": "queued",
+      "disposition": "superseded:#159",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13843,12 +13865,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix Privilege Escalation in Onboarding",
       "updated_at": "2026-01-18T17:23:11Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/111"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/111",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:20Z"
     },
     "organvm/gamified-coach-interface#112": {
       "comments": 2,
       "created_at": "2026-01-18T17:23:08Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13859,12 +13883,14 @@
       "state": "open",
       "title": "⚡ Bolt: Fix crash & optimize animation loop in OrbitalNodes",
       "updated_at": "2026-01-18T17:23:14Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/112"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/112",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:40Z"
     },
     "organvm/gamified-coach-interface#113": {
       "comments": 2,
       "created_at": "2026-01-19T17:10:18Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13875,12 +13901,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize checkAchievements database operations",
       "updated_at": "2026-01-19T17:10:25Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/113"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/113",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:59Z"
     },
     "organvm/gamified-coach-interface#114": {
       "comments": 2,
       "created_at": "2026-01-19T17:14:32Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13891,12 +13919,14 @@
       "state": "open",
       "title": "🎨 Palette: Add accessible boot progress bar",
       "updated_at": "2026-01-19T17:14:40Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/114"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/114",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:49Z"
     },
     "organvm/gamified-coach-interface#115": {
       "comments": 2,
       "created_at": "2026-01-20T17:08:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13907,12 +13937,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize achievement processing",
       "updated_at": "2026-01-20T17:08:52Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/115"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/115",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:45Z"
     },
     "organvm/gamified-coach-interface#116": {
       "comments": 2,
       "created_at": "2026-01-20T17:28:16Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13923,12 +13955,14 @@
       "state": "open",
       "title": "🎨 Palette: Accessible Boot Progress Bar",
       "updated_at": "2026-01-20T17:28:24Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/116"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/116",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:54Z"
     },
     "organvm/gamified-coach-interface#117": {
       "comments": 4,
       "created_at": "2026-01-20T18:05:32Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13939,12 +13973,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Stored XSS in Socket.IO messages",
       "updated_at": "2026-01-20T18:06:08Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/117"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/117",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:50Z"
     },
     "organvm/gamified-coach-interface#130": {
       "comments": 1,
       "created_at": "2026-06-10T21:57:07Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13955,12 +13991,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-11T12:28:43Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/issues/130"
+      "url": "https://github.com/organvm/gamified-coach-interface/issues/130",
+      "evidence": "Activation audit; repo is a working tested full-stack app (backend+V3 front-end), hardened this mission (#158/#159). Ship=deploy decision is operator product call. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:47:44Z"
     },
     "organvm/gamified-coach-interface#153": {
       "comments": 0,
       "created_at": "2026-07-09T20:24:58Z",
-      "disposition": "queued",
+      "disposition": "merged:15771ac1",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13971,12 +14009,14 @@
       "state": "open",
       "title": "build(deps-dev): bump the npm-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-16T20:25:01Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/153"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/153",
+      "evidence": "dependabot deps bump; green CI, merged this session.",
+      "last_touched": "2026-07-19T07:47:44Z"
     },
     "organvm/gamified-coach-interface#154": {
       "comments": 0,
       "created_at": "2026-07-11T00:17:39Z",
-      "disposition": "queued",
+      "disposition": "merged:12b1754d",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13987,12 +14027,14 @@
       "state": "open",
       "title": "build(deps): bump morgan from 1.10.1 to 1.11.0 in /backend",
       "updated_at": "2026-07-11T00:17:40Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/154"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/154",
+      "evidence": "dependabot deps bump; green CI, merged this session.",
+      "last_touched": "2026-07-19T07:47:44Z"
     },
     "organvm/gamified-coach-interface#157": {
       "comments": 0,
       "created_at": "2026-07-16T20:24:27Z",
-      "disposition": "queued",
+      "disposition": "merged:5bc234c8",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14003,7 +14045,9 @@
       "state": "open",
       "title": "build(deps): bump actions/setup-node from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-16T20:24:28Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/157"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/157",
+      "evidence": "dependabot deps bump; green CI, merged this session.",
+      "last_touched": "2026-07-19T07:47:44Z"
     },
     "organvm/gamified-coach-interface#4": {
       "comments": 0,
@@ -14026,7 +14070,7 @@
     "organvm/gamified-coach-interface#41": {
       "comments": 2,
       "created_at": "2025-12-23T17:09:42Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14037,12 +14081,14 @@
       "state": "open",
       "title": "🎨 Palette: Improved Terminal Card Accessibility",
       "updated_at": "2025-12-23T17:10:12Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/41"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/41",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:50Z"
     },
     "organvm/gamified-coach-interface#42": {
       "comments": 2,
       "created_at": "2025-12-23T17:09:56Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14053,12 +14099,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix socket auth stale data & type safety",
       "updated_at": "2025-12-23T17:10:24Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/42"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/42",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:25Z"
     },
     "organvm/gamified-coach-interface#43": {
       "comments": 2,
       "created_at": "2025-12-23T17:10:23Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14069,12 +14117,14 @@
       "state": "open",
       "title": "⚡ Bolt: Fix shared geometry optimization in OrbitalNodes",
       "updated_at": "2025-12-23T17:11:31Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/43"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/43",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:04Z"
     },
     "organvm/gamified-coach-interface#44": {
       "comments": 2,
       "created_at": "2025-12-24T17:08:34Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14085,12 +14135,14 @@
       "state": "open",
       "title": "feat(security): Enforce user status check during token refresh",
       "updated_at": "2025-12-24T17:08:42Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/44"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/44",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:40:41Z"
     },
     "organvm/gamified-coach-interface#45": {
       "comments": 2,
       "created_at": "2025-12-24T17:10:45Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14101,12 +14153,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize animation loop memory usage",
       "updated_at": "2025-12-24T17:10:54Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/45"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/45",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:09Z"
     },
     "organvm/gamified-coach-interface#46": {
       "comments": 2,
       "created_at": "2025-12-24T17:21:09Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14117,12 +14171,14 @@
       "state": "open",
       "title": "Improve Strategy Forge Terminal Card Accessibility",
       "updated_at": "2025-12-24T17:21:16Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/46"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/46",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:55Z"
     },
     "organvm/gamified-coach-interface#47": {
       "comments": 2,
       "created_at": "2025-12-25T17:04:32Z",
-      "disposition": "queued",
+      "disposition": "superseded:#159",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14133,12 +14189,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix privilege escalation in onboarding",
       "updated_at": "2025-12-25T17:04:39Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/47"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/47",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:55Z"
     },
     "organvm/gamified-coach-interface#48": {
       "comments": 2,
       "created_at": "2025-12-25T17:05:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14149,12 +14207,14 @@
       "state": "open",
       "title": "UX: Improve terminal card accessibility and focus management",
       "updated_at": "2025-12-25T17:06:00Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/48"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/48",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:59Z"
     },
     "organvm/gamified-coach-interface#49": {
       "comments": 2,
       "created_at": "2025-12-25T17:14:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14165,7 +14225,9 @@
       "state": "open",
       "title": "⚡ Bolt: Fix OrbitalNodes crash and enable geometry reuse",
       "updated_at": "2025-12-25T17:14:38Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/49"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/49",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:14Z"
     },
     "organvm/gamified-coach-interface#5": {
       "comments": 0,
@@ -14188,7 +14250,7 @@
     "organvm/gamified-coach-interface#50": {
       "comments": 2,
       "created_at": "2025-12-26T17:07:55Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14199,12 +14261,14 @@
       "state": "open",
       "title": "feat: secure socket message handlers with input validation",
       "updated_at": "2025-12-26T17:08:01Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/50"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/50",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:40:56Z"
     },
     "organvm/gamified-coach-interface#51": {
       "comments": 2,
       "created_at": "2025-12-26T17:09:18Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14215,12 +14279,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize SceneManager loop and fix OrbitalNodes crash",
       "updated_at": "2025-12-26T17:09:24Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/51"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/51",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:18Z"
     },
     "organvm/gamified-coach-interface#52": {
       "comments": 2,
       "created_at": "2025-12-26T17:21:28Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14231,12 +14297,14 @@
       "state": "open",
       "title": "🎨 Palette: Improved accessibility for terminal cards in index.html",
       "updated_at": "2025-12-26T17:21:33Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/52"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/52",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:04Z"
     },
     "organvm/gamified-coach-interface#53": {
       "comments": 2,
       "created_at": "2025-12-27T17:06:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14247,12 +14315,14 @@
       "state": "open",
       "title": "⚡ Bolt: Fix geometry reuse in OrbitalNodes",
       "updated_at": "2025-12-27T17:06:47Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/53"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/53",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:23Z"
     },
     "organvm/gamified-coach-interface#54": {
       "comments": 2,
       "created_at": "2025-12-27T17:07:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14263,12 +14333,14 @@
       "state": "open",
       "title": "🎨 Palette: Accessibility improvements for Boot Screen and Dynamic Content",
       "updated_at": "2025-12-27T17:07:38Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/54"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/54",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:09Z"
     },
     "organvm/gamified-coach-interface#55": {
       "comments": 2,
       "created_at": "2025-12-27T17:16:51Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14279,12 +14351,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Input Validation in Community Controller",
       "updated_at": "2025-12-27T17:16:57Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/55"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/55",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:35Z"
     },
     "organvm/gamified-coach-interface#56": {
       "comments": 2,
       "created_at": "2025-12-28T17:05:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14295,12 +14369,14 @@
       "state": "open",
       "title": "🎨 Palette: Boot Screen Accessibility Improvement",
       "updated_at": "2025-12-28T17:05:40Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/56"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/56",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:14Z"
     },
     "organvm/gamified-coach-interface#57": {
       "comments": 2,
       "created_at": "2025-12-28T17:07:16Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14311,12 +14387,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize OrbitalNodes animation loop",
       "updated_at": "2025-12-28T17:07:22Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/57"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/57",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:28Z"
     },
     "organvm/gamified-coach-interface#58": {
       "comments": 2,
       "created_at": "2025-12-28T17:07:24Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14327,12 +14405,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL/HIGH] Fix auth bypass & controller crash",
       "updated_at": "2025-12-28T17:07:30Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/58"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/58",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:40:51Z"
     },
     "organvm/gamified-coach-interface#59": {
       "comments": 2,
       "created_at": "2025-12-29T17:07:47Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14343,12 +14423,14 @@
       "state": "open",
       "title": "Security: Fix token refresh for suspended users",
       "updated_at": "2025-12-29T17:07:52Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/59"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/59",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:40:46Z"
     },
     "organvm/gamified-coach-interface#60": {
       "comments": 2,
       "created_at": "2025-12-29T17:10:14Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14359,12 +14441,14 @@
       "state": "open",
       "title": "🎨 Palette: Improve Boot Screen Accessibility",
       "updated_at": "2025-12-29T17:10:19Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/60"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/60",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:19Z"
     },
     "organvm/gamified-coach-interface#61": {
       "comments": 2,
       "created_at": "2025-12-29T17:15:37Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14375,12 +14459,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize OrbitalNodes & Fix Crash",
       "updated_at": "2025-12-29T17:15:43Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/61"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/61",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:33Z"
     },
     "organvm/gamified-coach-interface#62": {
       "comments": 2,
       "created_at": "2025-12-30T17:09:50Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14391,12 +14477,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix socket input validation and DoS risk",
       "updated_at": "2025-12-30T17:09:56Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/62"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/62",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:01Z"
     },
     "organvm/gamified-coach-interface#63": {
       "comments": 2,
       "created_at": "2025-12-30T17:10:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14407,12 +14495,14 @@
       "state": "open",
       "title": "🎨 Palette: Accessible Boot Progress Bar",
       "updated_at": "2025-12-30T17:10:28Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/63"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/63",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:24Z"
     },
     "organvm/gamified-coach-interface#64": {
       "comments": 2,
       "created_at": "2025-12-30T17:10:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14423,12 +14513,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize OrbitalNodes loop & fix geometry reuse",
       "updated_at": "2025-12-30T17:10:30Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/64"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/64",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:38Z"
     },
     "organvm/gamified-coach-interface#65": {
       "comments": 2,
       "created_at": "2025-12-31T17:07:26Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14439,12 +14531,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Socket.IO Input Validation and Authorization Bypasses",
       "updated_at": "2025-12-31T17:07:32Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/65"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/65",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:30Z"
     },
     "organvm/gamified-coach-interface#66": {
       "comments": 2,
       "created_at": "2025-12-31T17:09:29Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14455,12 +14549,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize SceneManager loop and fix OrbitalNodes crash",
       "updated_at": "2025-12-31T17:09:33Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/66"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/66",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:42Z"
     },
     "organvm/gamified-coach-interface#67": {
       "comments": 2,
       "created_at": "2026-01-01T17:08:40Z",
-      "disposition": "queued",
+      "disposition": "superseded:#159",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14471,12 +14567,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix Privilege Escalation in Onboarding",
       "updated_at": "2026-01-01T17:08:50Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/67"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/67",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:00Z"
     },
     "organvm/gamified-coach-interface#68": {
       "comments": 2,
       "created_at": "2026-01-01T17:08:43Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14487,12 +14585,14 @@
       "state": "open",
       "title": "⚡ Bolt: Fix geometry reuse and optimize animation loop",
       "updated_at": "2026-01-01T17:08:50Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/68"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/68",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:47Z"
     },
     "organvm/gamified-coach-interface#69": {
       "comments": 2,
       "created_at": "2026-01-01T17:16:02Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14503,12 +14603,14 @@
       "state": "open",
       "title": "Enhance Accessibility and Terminal Interaction UX",
       "updated_at": "2026-01-01T17:16:08Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/69"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/69",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:29Z"
     },
     "organvm/gamified-coach-interface#70": {
       "comments": 2,
       "created_at": "2026-01-02T17:06:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14519,12 +14621,14 @@
       "state": "open",
       "title": "Add Accessibility to Boot Progress Bar",
       "updated_at": "2026-01-02T17:06:59Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/70"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/70",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:34Z"
     },
     "organvm/gamified-coach-interface#71": {
       "comments": 2,
       "created_at": "2026-01-02T17:21:59Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14535,12 +14639,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Stored XSS in Socket.IO messages",
       "updated_at": "2026-01-02T17:22:04Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/71"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/71",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:06Z"
     },
     "organvm/gamified-coach-interface#72": {
       "comments": 2,
       "created_at": "2026-01-03T14:38:06Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14551,12 +14657,14 @@
       "state": "open",
       "title": "Consolidate 45+ Jules Tasks: Security, A11y, and Performance Fixes",
       "updated_at": "2026-01-03T14:38:13Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/72"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/72",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:52Z"
     },
     "organvm/gamified-coach-interface#73": {
       "comments": 2,
       "created_at": "2026-01-03T17:08:54Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14567,12 +14675,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [HIGH] Enforce Strong Password Policy",
       "updated_at": "2026-01-03T17:09:00Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/73"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/73",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:40Z"
     },
     "organvm/gamified-coach-interface#74": {
       "comments": 2,
       "created_at": "2026-01-03T17:09:06Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14583,12 +14693,14 @@
       "state": "open",
       "title": "Add accessibility attributes to boot progress bar",
       "updated_at": "2026-01-03T17:09:11Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/74"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/74",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:39Z"
     },
     "organvm/gamified-coach-interface#75": {
       "comments": 2,
       "created_at": "2026-01-03T17:10:14Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14599,12 +14711,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize SceneManager and OrbitalNodes render loops",
       "updated_at": "2026-01-03T17:10:20Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/75"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/75",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:43:57Z"
     },
     "organvm/gamified-coach-interface#76": {
       "comments": 2,
       "created_at": "2026-01-04T17:07:16Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14615,12 +14729,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Stored XSS in Socket.IO messages",
       "updated_at": "2026-01-04T17:07:23Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/76"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/76",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:11Z"
     },
     "organvm/gamified-coach-interface#77": {
       "comments": 2,
       "created_at": "2026-01-04T17:08:43Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14631,12 +14747,14 @@
       "state": "open",
       "title": "Enhance Boot Screen Accessibility",
       "updated_at": "2026-01-04T17:08:48Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/77"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/77",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:43Z"
     },
     "organvm/gamified-coach-interface#78": {
       "comments": 2,
       "created_at": "2026-01-04T17:10:04Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14647,12 +14765,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize Three.js animation loops and fix geometry sharing",
       "updated_at": "2026-01-04T17:10:10Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/78"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/78",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:02Z"
     },
     "organvm/gamified-coach-interface#79": {
       "comments": 2,
       "created_at": "2026-01-05T17:06:58Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14663,12 +14783,14 @@
       "state": "open",
       "title": "UX: Improve Accessibility for Boot Screen and UI Elements",
       "updated_at": "2026-01-05T17:07:04Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/79"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/79",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:48Z"
     },
     "organvm/gamified-coach-interface#80": {
       "comments": 2,
       "created_at": "2026-01-05T17:09:20Z",
-      "disposition": "queued",
+      "disposition": "superseded:#159",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14679,12 +14801,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix Critical Privilege Escalation in Onboarding",
       "updated_at": "2026-01-05T17:09:26Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/80"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/80",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:05Z"
     },
     "organvm/gamified-coach-interface#81": {
       "comments": 2,
       "created_at": "2026-01-05T18:02:17Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14695,12 +14819,14 @@
       "state": "open",
       "title": "⚡ Bolt: Fix OrbitalNodes geometry reuse crash",
       "updated_at": "2026-01-05T18:02:23Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/81"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/81",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:06Z"
     },
     "organvm/gamified-coach-interface#82": {
       "comments": 2,
       "created_at": "2026-01-06T18:04:29Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14711,12 +14837,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: Fix XSS in Socket.IO Messages",
       "updated_at": "2026-01-06T18:04:36Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/82"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/82",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:16Z"
     },
     "organvm/gamified-coach-interface#83": {
       "comments": 2,
       "created_at": "2026-01-06T18:32:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14727,12 +14855,14 @@
       "state": "open",
       "title": "🎨 Palette: Accessible Boot Progress Bar",
       "updated_at": "2026-01-06T18:32:17Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/83"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/83",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:53Z"
     },
     "organvm/gamified-coach-interface#84": {
       "comments": 2,
       "created_at": "2026-01-07T17:49:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14743,12 +14873,14 @@
       "state": "open",
       "title": "🎨 Palette: Add accessibility to boot progress bar",
       "updated_at": "2026-01-07T17:49:41Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/84"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/84",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:45:58Z"
     },
     "organvm/gamified-coach-interface#85": {
       "comments": 2,
       "created_at": "2026-01-07T17:52:07Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14759,12 +14891,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [HIGH] Fix Stored XSS in Socket.IO Messages",
       "updated_at": "2026-01-07T17:52:13Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/85"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/85",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:21Z"
     },
     "organvm/gamified-coach-interface#86": {
       "comments": 2,
       "created_at": "2026-01-09T10:32:13Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14775,12 +14909,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [HIGH] Fix Stored XSS in sockets and community posts",
       "updated_at": "2026-01-09T10:32:19Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/86"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/86",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:26Z"
     },
     "organvm/gamified-coach-interface#87": {
       "comments": 2,
       "created_at": "2026-01-09T18:40:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14791,12 +14927,14 @@
       "state": "open",
       "title": "Boot Screen Accessibility Improvements",
       "updated_at": "2026-01-09T18:40:29Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/87"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/87",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:03Z"
     },
     "organvm/gamified-coach-interface#88": {
       "comments": 2,
       "created_at": "2026-01-09T18:44:09Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14807,12 +14945,14 @@
       "state": "open",
       "title": "⚡ Bolt: Batch XP updates in gamification controller",
       "updated_at": "2026-01-09T18:44:16Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/88"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/88",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:45Z"
     },
     "organvm/gamified-coach-interface#89": {
       "comments": 2,
       "created_at": "2026-01-09T18:53:50Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14823,12 +14963,14 @@
       "state": "open",
       "title": "🎨 Palette: Improve Boot Progress Accessibility",
       "updated_at": "2026-01-09T18:53:56Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/89"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/89",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:08Z"
     },
     "organvm/gamified-coach-interface#90": {
       "comments": 2,
       "created_at": "2026-01-10T17:14:51Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14839,12 +14981,14 @@
       "state": "open",
       "title": "⚡ Bolt: Optimize OrbitalNodes geometry and loops",
       "updated_at": "2026-01-10T17:14:56Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/90"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/90",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:11Z"
     },
     "organvm/gamified-coach-interface#91": {
       "comments": 2,
       "created_at": "2026-01-10T17:19:01Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14855,12 +14999,14 @@
       "state": "open",
       "title": "🎨 Palette: Improve Boot Progress Bar Accessibility",
       "updated_at": "2026-01-10T17:19:06Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/91"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/91",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:15Z"
     },
     "organvm/gamified-coach-interface#92": {
       "comments": 2,
       "created_at": "2026-01-10T17:24:12Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14871,12 +15017,14 @@
       "state": "open",
       "title": "Shield: Fix Stored XSS via Input Sanitization",
       "updated_at": "2026-01-10T17:24:18Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/92"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/92",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:31Z"
     },
     "organvm/gamified-coach-interface#93": {
       "comments": 1,
       "created_at": "2026-01-11T17:14:50Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14887,12 +15035,14 @@
       "state": "open",
       "title": "⚡ Bolt: Batch gamification DB updates",
       "updated_at": "2026-01-11T17:14:51Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/93"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/93",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:50Z"
     },
     "organvm/gamified-coach-interface#94": {
       "comments": 2,
       "created_at": "2026-01-11T17:29:21Z",
-      "disposition": "queued",
+      "disposition": "superseded:#159",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14903,12 +15053,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [CRITICAL] Fix Privilege Escalation in Onboarding",
       "updated_at": "2026-01-11T17:29:26Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/94"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/94",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:42:10Z"
     },
     "organvm/gamified-coach-interface#95": {
       "comments": 2,
       "created_at": "2026-01-12T17:11:34Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14919,12 +15071,14 @@
       "state": "open",
       "title": "⚡ Bolt: Fix OrbitalNodes crash and optimize render loop",
       "updated_at": "2026-01-12T17:11:46Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/95"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/95",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:16Z"
     },
     "organvm/gamified-coach-interface#96": {
       "comments": 2,
       "created_at": "2026-01-12T17:25:14Z",
-      "disposition": "queued",
+      "disposition": "superseded:#158",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14935,12 +15089,14 @@
       "state": "open",
       "title": "🛡️ Sentinel: [HIGH] Fix XSS and DoS in Socket.IO handlers",
       "updated_at": "2026-01-12T17:25:21Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/96"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/96",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:41:36Z"
     },
     "organvm/gamified-coach-interface#97": {
       "comments": 2,
       "created_at": "2026-01-12T17:50:23Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14951,12 +15107,14 @@
       "state": "open",
       "title": "🎨 Palette: Boot Screen Accessibility Improvements",
       "updated_at": "2026-01-12T17:50:31Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/97"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/97",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:20Z"
     },
     "organvm/gamified-coach-interface#98": {
       "comments": 2,
       "created_at": "2026-01-13T17:12:53Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14967,12 +15125,14 @@
       "state": "open",
       "title": "feat: improve boot progress accessibility",
       "updated_at": "2026-01-13T17:13:01Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/98"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/98",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:46:25Z"
     },
     "organvm/gamified-coach-interface#99": {
       "comments": 2,
       "created_at": "2026-01-13T17:29:29Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -14983,7 +15143,9 @@
       "state": "open",
       "title": "⚡ Bolt: Fix OrbitalNodes crash and optimize material usage",
       "updated_at": "2026-01-13T17:29:37Z",
-      "url": "https://github.com/organvm/gamified-coach-interface/pull/99"
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/99",
+      "evidence": "Runaway Jules cluster. Security wants distilled+merged (#158/#159); residual security/perf/a11y engaged as evolving with verified technical guidance. Commented, left open (never closed).",
+      "last_touched": "2026-07-19T07:44:21Z"
     },
     "organvm/glyph-cascade#10": {
       "comments": 0,
@@ -49598,6 +49760,24 @@
       "disposition": "merged:3deac353",
       "evidence": "Distilled the RFC-template Logic-First want; opened + merged this session (3deac353).",
       "last_touched": "2026-07-19T07:27:36Z"
+    },
+    "organvm/gamified-coach-interface#158": {
+      "repo": "organvm/gamified-coach-interface",
+      "number": 158,
+      "kind": "pr",
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/158",
+      "disposition": "merged:bfcd3836",
+      "evidence": "Distilled token-refresh status enforcement + socket message sanitization; merged this session.",
+      "last_touched": "2026-07-19T07:47:44Z"
+    },
+    "organvm/gamified-coach-interface#159": {
+      "repo": "organvm/gamified-coach-interface",
+      "number": 159,
+      "kind": "pr",
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/159",
+      "disposition": "merged:3da26443",
+      "evidence": "Distilled onboarding role-escalation fix; merged this session.",
+      "last_touched": "2026-07-19T07:47:44Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
