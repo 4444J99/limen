@@ -65,3 +65,22 @@ docs/prompt-atom-ledger.json
 logs/insight-cross-vendor/
 # sensitive publication-judgment rationale (shallow-merged into repo_overrides at load; arca-sealed)
 institutio/github/estate.private.yaml
+
+# Copilot coding-agent lane scratch — the --yolo issue-backlog lane dumps its
+# working state (clones, peer-audit generators + JSON) into the checkout root
+# instead of an isolated dir. These are generated artifacts, never repo source;
+# ignore so they stop surfacing as thousands of "uncommitted changes". The lane's
+# cwd-isolation fix is tracked separately (see the copilot-live-checkout censor issue).
+.copilot-work/
+scratch/
+issue_backlog_work/
+peer-audited--*/
+peer_audit_comments_*.json
+peer_audited_issues.json
+peer_audited_issues_summary.txt
+peer_audited_comment_map.json
+issue_backlog_peer_audited_*.json
+issue_audit_data.json
+issue_comment_plan.json
+build_peer_audited_comments.py
+generate_peer_audit_comments.py
