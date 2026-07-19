@@ -47738,7 +47738,7 @@
     "organvm/tool-interaction-design#11": {
       "comments": 1,
       "created_at": "2026-03-30T22:56:30Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47749,12 +47749,14 @@
       "state": "open",
       "title": "feat: cognitive service dispatch engine",
       "updated_at": "2026-06-01T15:24:15Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/11"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/11",
+      "evidence": "work_types/task_dispatcher/fleet_router exist; CI fails fleet/task-dispatcher baseline tests.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#12": {
       "comments": 1,
       "created_at": "2026-03-30T22:56:33Z",
-      "disposition": "queued",
+      "disposition": "distilled:conductor/fleet_handoff.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47765,12 +47767,14 @@
       "state": "open",
       "title": "feat: guardrailed handoff envelope + active-handoff lifecycle",
       "updated_at": "2026-06-01T15:24:13Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/12"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/12",
+      "evidence": "GuardrailedHandoffBrief + active-handoff lifecycle present.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#13": {
       "comments": 1,
       "created_at": "2026-03-30T22:56:36Z",
-      "disposition": "queued",
+      "disposition": "distilled:conductor/cross_verify.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47781,12 +47785,14 @@
       "state": "open",
       "title": "feat: cross-verification protocol",
       "updated_at": "2026-06-01T15:24:10Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/13"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/13",
+      "evidence": "CrossVerifier locked-files/never-touch/convention-drift checks; MCP exposes cross-verify.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#14": {
       "comments": 1,
       "created_at": "2026-03-30T22:56:39Z",
-      "disposition": "queued",
+      "disposition": "distilled:conductor/preflight.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47797,12 +47803,14 @@
       "state": "open",
       "title": "feat: preflight dispatch guidance + pending verification",
       "updated_at": "2026-06-01T15:24:08Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/14"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/14",
+      "evidence": "PreflightResult dispatch/pending-handoff fields + tests/test_preflight_dispatch.py present.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#15": {
       "comments": 1,
       "created_at": "2026-03-30T22:56:43Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47813,12 +47821,14 @@
       "state": "open",
       "title": "chore: system-wide propagation — domus + context sync",
       "updated_at": "2026-06-01T15:24:05Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/15"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/15",
+      "evidence": "CLAUDE.md/MCP/handoff docs exist; chezmoi/context-sync propagation external/unverified.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#16": {
       "comments": 1,
       "created_at": "2026-03-30T22:56:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47829,12 +47839,14 @@
       "state": "open",
       "title": "verify: cross-verify Gemini CC draft",
       "updated_at": "2026-06-01T15:24:03Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/16"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/16",
+      "evidence": "Referenced commit 78661c1 unresolvable; no CC draft artifact on main.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#17": {
       "comments": 1,
       "created_at": "2026-03-30T22:56:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47845,12 +47857,14 @@
       "state": "open",
       "title": "verify: cross-verify OpenCode signal-closure",
       "updated_at": "2026-06-01T15:24:01Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/17"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/17",
+      "evidence": "Referenced commit 385e0b6 unresolvable; validate_signal_closure absent on main.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#18": {
       "comments": 1,
       "created_at": "2026-03-30T22:56:52Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47861,12 +47875,14 @@
       "state": "open",
       "title": "feat: essay outline — Solo Practitioner at Enterprise Scale",
       "updated_at": "2026-06-01T15:23:59Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/18"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/18",
+      "evidence": "No current-main Solo Practitioner outline found.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#25": {
       "comments": 0,
       "created_at": "2026-06-10T21:57:48Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47877,12 +47893,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T21:57:48Z",
-      "url": "https://github.com/organvm/tool-interaction-design/issues/25"
+      "url": "https://github.com/organvm/tool-interaction-design/issues/25",
+      "evidence": "Release workflow exists but no live releases/Pages.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#33": {
       "comments": 0,
       "created_at": "2026-06-26T08:54:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47893,12 +47911,14 @@
       "state": "open",
       "title": "chore(deps): update jsonschema requirement from >=4.0 to >=4.26.0",
       "updated_at": "2026-06-26T08:54:01Z",
-      "url": "https://github.com/organvm/tool-interaction-design/pull/33"
+      "url": "https://github.com/organvm/tool-interaction-design/pull/33",
+      "evidence": "jsonschema runtime bump MERGEABLE; live CI red.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#34": {
       "comments": 0,
       "created_at": "2026-07-03T08:53:41Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47909,12 +47929,14 @@
       "state": "open",
       "title": "chore(deps-dev): update mcp requirement from >=1.28.0 to >=1.28.1",
       "updated_at": "2026-07-08T07:10:03Z",
-      "url": "https://github.com/organvm/tool-interaction-design/pull/34"
+      "url": "https://github.com/organvm/tool-interaction-design/pull/34",
+      "evidence": "MCP dep bump MERGEABLE; live CI red.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#35": {
       "comments": 0,
       "created_at": "2026-07-10T08:54:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47925,12 +47947,14 @@
       "state": "open",
       "title": "chore(deps-dev): update setuptools requirement from >=68.0 to >=83.0.0",
       "updated_at": "2026-07-10T08:54:01Z",
-      "url": "https://github.com/organvm/tool-interaction-design/pull/35"
+      "url": "https://github.com/organvm/tool-interaction-design/pull/35",
+      "evidence": "Setuptools build-floor bump MERGEABLE; test-and-quality 3.11-3.13 + Tests failing.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/tool-interaction-design#37": {
       "comments": 0,
       "created_at": "2026-07-17T08:54:23Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47941,7 +47965,9 @@
       "state": "open",
       "title": "chore(deps-dev): update hypothesis requirement from >=6.155.6 to >=6.156.6",
       "updated_at": "2026-07-17T08:54:24Z",
-      "url": "https://github.com/organvm/tool-interaction-design/pull/37"
+      "url": "https://github.com/organvm/tool-interaction-design/pull/37",
+      "evidence": "Dependabot Hypothesis bump; MERGEABLE but test matrix red.",
+      "last_touched": "2026-07-19T09:35:11.887124+00:00"
     },
     "organvm/trade-perpetual-future#59": {
       "comments": 1,
