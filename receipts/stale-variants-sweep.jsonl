@@ -1,0 +1,4 @@
+{"repo": "organvm/dot-github--ergon", "path": "workflows/stale.yml", "action": "merged", "detail": "https://github.com/organvm/dot-github--ergon/pull/15"}
+{"repo": "organvm/trade-perpetual-future", "path": ".github/workflows/stale-management.yml", "action": "merged", "detail": "https://github.com/organvm/trade-perpetual-future/pull/79"}
+{"repo": "organvm/system-governance-framework", "path": ".github/workflows/stale-management.yml", "action": "merged", "detail": "https://github.com/organvm/system-governance-framework/pull/52"}
+{"repo": "organvm/dot-github--theoria", "path": ".github/workflows/stale-management.yml", "action": "pr-open", "detail": "required checks ['Lint Code', 'build-and-push', 'test', 'Build and Test (Node.js)', 'Aggregate Test Results', 'Month 1 Test Results', 'Month 2 Test Results', 'Month 3 Test Results']; https://github.com/organvm/dot-github--theoria/pull/507"}

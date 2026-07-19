@@ -1,0 +1,8 @@
+organvm/dot-github--ergon::workflows/stale.yml
+organvm/trade-perpetual-future::.github/workflows/stale-management.yml
+organvm/system-governance-framework::.github/workflows/stale-management.yml
+organvm/a-i--skills::.github/workflows/stale.yml
+organvm/dot-github--theoria::.github/workflows/stale-management.yml
+organvm/system-dashboard::.github/workflows/stale.yml
+organvm/k6::.github/workflows/stale.yml
+organvm/a2a-python::.github/workflows/stale.yaml
