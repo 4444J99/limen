@@ -71,6 +71,37 @@ jobs:
             --base "origin/${GITHUB_BASE_REF:-main}" \
             --skip-ci-covered pr-gate.yml:pr-gate
 
+      # ci.yml (which `npm ci`s the worker + moneta) does NOT run on merge_group, and the
+      # integration verify below runs node gates DIRECTLY (no --skip-ci-covered) so it can block
+      # the merge on a real composition failure. Provision the node gates' deps here — path-gated,
+      # so ordinary (Python/docs) merge groups pay nothing. Without this, the first web/worker-
+      # touching PR to traverse the queue fails worker-check with ERR_MODULE_NOT_FOUND (empty
+      # node_modules), even though its exact-head CI is green (that path defers to ci.yml:worker).
+      - name: Set up Node for merge-group node gates
+        if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'merge_group'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Provision node-gate deps for merge-group integration
+        if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'merge_group'
+        env:
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+        run: |
+          if [ -z "$MERGE_GROUP_BASE_SHA" ]; then
+            echo "merge_group payload has no base_sha; refusing to provision an unknown integration base" >&2
+            exit 2
+          fi
+          changed="$(git diff --name-only "$MERGE_GROUP_BASE_SHA"...HEAD || true)"
+          if printf '%s\n' "$changed" | grep -q '^web/worker/'; then
+            echo "web/worker implicated in merge group → npm ci"
+            (cd web/worker && npm ci)
+          fi
+          if printf '%s\n' "$changed" | grep -q '^moneta/'; then
+            echo "moneta implicated in merge group → npm ci"
+            (cd moneta && npm ci)
+          fi
+
       - name: Verify merge-group integration gates (scoped, fail-closed)
         if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'merge_group'
         env:
