@@ -31,6 +31,9 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
+CPU_FLAKE_RETRIES = 8  # cold-isolate 1102/503 recurs across isolates; retry through it
+
+
 def request(base_url: str, path: str, token: str | None = None, method: str = "GET", body: dict[str, Any] | None = None) -> Response:  # allow-secret
     url = urllib.parse.urljoin(base_url.rstrip("/") + "/", path.lstrip("/"))
     data = json.dumps(body).encode("utf-8") if body is not None else None
@@ -43,10 +46,13 @@ def request(base_url: str, path: str, token: str | None = None, method: str = "G
     if token:
         headers["Authorization"] = f"Bearer {token}"
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
-    # One retry on 502/503: a cold Worker isolate can exceed its CPU budget parsing the
-    # board (Cloudflare error 1102) — the retry lands on a warmed isolate serving the
-    # sha-keyed parse cache. Anything else surfaces immediately.
-    for attempt in (1, 2):
+    # Retry on 502/503: a cold Worker isolate can exceed its CPU budget parsing the
+    # multi-MB board (Cloudflare error 1102). Cloudflare fans requests across isolates,
+    # so one warm isolate does not guarantee the next request lands warm — retry up to
+    # CPU_FLAKE_RETRIES times with linear backoff so each assertion eventually hits a warm
+    # isolate. Anything other than 502/503 surfaces at once. The durable worker-side fix
+    # (a persistent parsed-board cache) is tracked separately.
+    for attempt in range(1, CPU_FLAKE_RETRIES + 1):
         try:
             with urllib.request.urlopen(req, timeout=20) as res:
                 text = res.read().decode("utf-8")
@@ -57,11 +63,14 @@ def request(base_url: str, path: str, token: str | None = None, method: str = "G
                 payload = json.loads(text) if text else {}
             except json.JSONDecodeError:
                 payload = {}
-            if attempt == 1 and exc.code in (502, 503):
-                time.sleep(3)
+            if attempt < CPU_FLAKE_RETRIES and exc.code in (502, 503):
+                time.sleep(min(2 + attempt, 6))
                 continue
             return Response(exc.code, payload, text)
         except urllib.error.URLError as exc:
+            if attempt < CPU_FLAKE_RETRIES:
+                time.sleep(min(2 + attempt, 6))
+                continue
             fail(f"{method} {url} could not connect: {exc.reason}")
     raise AssertionError("unreachable")
 
@@ -197,6 +206,30 @@ def get_task(base_url: str, token: str, task_id: str) -> dict[str, Any]:  # allo
     return response.payload
 
 
+def warm_isolate(base_url: str, attempts: int = 12, backoff: float = 3.0) -> None:
+    """Force the one-time board parse before the probe assertions run.
+
+    The runtime worker YAML-parses the multi-MB board on a cold isolate, which can
+    exceed the Workers CPU budget and return a Cloudflare 1102 (HTTP 503). Once an
+    isolate parses successfully it populates its sha-keyed board cache, so every
+    subsequent request is fast and trivial. We hammer a board-backed endpoint until
+    it returns 200 (or give up), so the assertion phase runs against a warm cache
+    instead of racing the cold parse on every endpoint. Never fails the probe on its
+    own — a persistently cold worker still surfaces in the real assertions below.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            probe = request(base_url, "/api/public-status")
+        except SystemExit:
+            # request() calls fail() (SystemExit) only on a connect error; let the
+            # real assertions report that. A transient warmup miss should not abort.
+            return
+        if probe.status == 200:
+            return
+        if attempt < attempts:
+            time.sleep(backoff)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Probe a Limen runtime adapter over HTTP.")
     parser.add_argument("--api-url", required=True, help="Base URL for the runtime adapter")
@@ -207,6 +240,10 @@ def main() -> None:
     parser.add_argument("--assign-task-id", default=None, help="Optional open/attention task id to assign with the owner token")
     parser.add_argument("--archive-task-id", default=None, help="Optional done task id to archive with the owner token")
     args = parser.parse_args()
+
+    # Warm the board cache before asserting so cold-isolate 1102/503 flakes on the
+    # first parse don't fail the whole probe (see warm_isolate).
+    warm_isolate(args.api_url)
 
     health = request(args.api_url, "/health")
     assert_status(health, 200, "health")
