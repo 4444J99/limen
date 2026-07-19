@@ -7980,7 +7980,7 @@
     "organvm/content-engine--asset-amplifier#1": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:06Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -7991,12 +7991,14 @@
       "state": "open",
       "title": "[β.1] X (Twitter) platform adapter",
       "updated_at": "2026-03-30T11:35:06Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/1"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/1",
+      "evidence": "X enum/target exists; no X adapter file/registry entry.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#10": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:58Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8007,12 +8009,14 @@
       "state": "open",
       "title": "[infra.1] GitHub Actions CI/CD",
       "updated_at": "2026-03-30T11:35:58Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/10"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/10",
+      "evidence": ".github/workflows/ci.yml absent (seed.yaml references it); root pnpm test/build fail on missing turbo.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#11": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:59Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8023,12 +8027,14 @@
       "state": "open",
       "title": "[infra.2] BullMQ vs Temporal integration decision",
       "updated_at": "2026-03-30T11:35:59Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/11"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/11",
+      "evidence": "BullMQ queue exists; temporal workflows absent; routes mix queues + fire-and-forget.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#12": {
       "comments": 0,
       "created_at": "2026-03-30T11:36:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8039,12 +8045,14 @@
       "state": "open",
       "title": "[infra.3] pgvector for brand_embedding",
       "updated_at": "2026-03-30T11:36:00Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/12"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/12",
+      "evidence": "Migration enables pgvector; brand_embedding still TEXT; scoring app-level cosine.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#13": {
       "comments": 0,
       "created_at": "2026-03-30T11:36:01Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8055,12 +8063,14 @@
       "state": "open",
       "title": "[γ.1] Agency white-label dashboard",
       "updated_at": "2026-03-30T11:36:01Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/13"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/13",
+      "evidence": "Agency schema/API exists; no agency dashboard or white-label reports.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#14": {
       "comments": 0,
       "created_at": "2026-03-30T11:36:03Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8071,12 +8081,14 @@
       "state": "open",
       "title": "[γ.2] Design resizing MVP",
       "updated_at": "2026-03-30T11:36:03Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/14"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/14",
+      "evidence": "design-resizer + resize API exist; analyzer center-fallback/TODO; no fixture gate.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#15": {
       "comments": 0,
       "created_at": "2026-03-30T12:22:44Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8087,12 +8099,14 @@
       "state": "open",
       "title": "[scott.1] Review pitch decks — investor, agency, product variants",
       "updated_at": "2026-03-30T12:22:44Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/15"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/15",
+      "evidence": "pitch-deck/*.html exists; live cronus-metabolus.pages.dev unresolved; Scott review unrecorded.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#16": {
       "comments": 0,
       "created_at": "2026-03-30T12:22:45Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8103,12 +8117,14 @@
       "state": "open",
       "title": "[scott.2] Test the engine — upload a real asset, review generated content",
       "updated_at": "2026-03-30T12:22:45Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/16"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/16",
+      "evidence": "Upload/generation path exists; live dashboard unreachable; asset review operator-gated.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#17": {
       "comments": 0,
       "created_at": "2026-03-30T12:22:46Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8119,12 +8135,14 @@
       "state": "open",
       "title": "[scott.3] Design resizing — provide 3 real ad creatives for testing",
       "updated_at": "2026-03-30T12:22:46Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/17"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/17",
+      "evidence": "Design resizer code exists; no real Scott ad creative fixtures/target-size set.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#18": {
       "comments": 0,
       "created_at": "2026-03-30T12:22:47Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8135,12 +8153,14 @@
       "state": "open",
       "title": "[scott.4] UI/UX feedback — dashboard design review",
       "updated_at": "2026-03-30T12:22:47Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/18"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/18",
+      "evidence": "Dashboard source under apps/dashboard/src; live cronus-dashboard.pages.dev unreachable.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#19": {
       "comments": 0,
       "created_at": "2026-03-30T12:22:48Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8151,12 +8171,14 @@
       "state": "open",
       "title": "[scott.5] Identify first 3 pilot clients for content engine",
       "updated_at": "2026-03-30T12:22:48Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/19"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/19",
+      "evidence": "No committed pilot-client list; sales/client identification is operator work.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#2": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:08Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8167,12 +8189,14 @@
       "state": "open",
       "title": "[β.2] TikTok platform adapter",
       "updated_at": "2026-03-30T11:35:08Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/2"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/2",
+      "evidence": "TikTok enum/target exists; no TikTok adapter file/registry entry.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#20": {
       "comments": 0,
       "created_at": "2026-03-30T12:22:49Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8183,12 +8207,14 @@
       "state": "open",
       "title": "[scott.6] Brand guidelines document for Cronus Metabolus",
       "updated_at": "2026-03-30T12:22:49Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/20"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/20",
+      "evidence": "No dedicated brand-guidelines doc (palette/type/logo/voice/icons); only fragments.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#22": {
       "comments": 0,
       "created_at": "2026-06-11T10:34:24Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8199,12 +8225,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-11T10:34:24Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/22"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/22",
+      "evidence": "API /health 404; Pages hosts NXDOMAIN; direct Vitest 35 pass but root build/test fail.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#3": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:09Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8215,7 +8243,9 @@
       "state": "open",
       "title": "[β.3] YouTube Shorts adapter",
       "updated_at": "2026-03-30T11:35:09Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/3"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/3",
+      "evidence": "youtube_shorts enum exists; no YouTube adapter file/registry entry.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#34": {
       "comments": 0,
@@ -8238,7 +8268,7 @@
     "organvm/content-engine--asset-amplifier#35": {
       "comments": 0,
       "created_at": "2026-07-18T16:57:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8249,12 +8279,14 @@
       "state": "open",
       "title": "EPIC: Surface Composer — artwork-to-audience editorial console",
       "updated_at": "2026-07-18T16:57:33Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/35"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/35",
+      "evidence": "Main has dashboard/API/DB spine; no full Surface Composer conversion loop; live URLs dead.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#4": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:10Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8265,12 +8297,14 @@
       "state": "open",
       "title": "[β.4] Instagram/Facebook OAuth flow",
       "updated_at": "2026-03-30T13:31:28Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/4"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/4",
+      "evidence": "platforms.ts LinkedIn OAuth only; Instagram adapter TODO (Meta Graph API).",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#5": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8281,12 +8315,14 @@
       "state": "open",
       "title": "[β.5] Real publishing calls (replace adapter stubs)",
       "updated_at": "2026-03-30T11:35:11Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/5"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/5",
+      "evidence": "Instagram/LinkedIn adapters return placeholder URLs/fake metrics; no real publishing.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#6": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8297,12 +8333,14 @@
       "state": "open",
       "title": "[α.1] Asset ROI dashboard visualization",
       "updated_at": "2026-03-30T11:35:33Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/6"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/6",
+      "evidence": "Attribution view/API exists; Dashboard shows counts only, not asset ROI.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#7": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8313,12 +8351,14 @@
       "state": "open",
       "title": "[α.2] Identity Mirror radar chart",
       "updated_at": "2026-03-30T11:35:35Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/7"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/7",
+      "evidence": "Identity page shows NC cards/confidence; no radar/spider chart.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#8": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:36Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8329,12 +8369,14 @@
       "state": "open",
       "title": "[α.3] Brand selector (dynamic)",
       "updated_at": "2026-03-30T11:35:36Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/8"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/8",
+      "evidence": "App.tsx hardcodes BRAND_ID/Lefler Design; pages use first brand.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/content-engine--asset-amplifier#9": {
       "comments": 0,
       "created_at": "2026-03-30T11:35:37Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -8345,7 +8387,9 @@
       "state": "open",
       "title": "[α.4] Content detail view + re-generate",
       "updated_at": "2026-03-30T11:35:37Z",
-      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/9"
+      "url": "https://github.com/organvm/content-engine--asset-amplifier/issues/9",
+      "evidence": "ReviewQueue approve/reject exist; no content detail route or regenerate action.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/contrib--a2aproject-a2a-python#1": {
       "comments": 0,
@@ -50073,7 +50117,7 @@
     "organvm/vox--architectura-gubernatio#10": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:43Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50084,12 +50128,14 @@
       "state": "open",
       "title": "[γ.3] Git hooks for commit message scoring",
       "updated_at": "2026-03-30T11:29:43Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/10"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/10",
+      "evidence": "voice-governance chezmoi deposit exists; no prepare-commit-msg scoring hook.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#11": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:45Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50100,12 +50146,14 @@
       "state": "open",
       "title": "[γ.4] Conductor-voice integration",
       "updated_at": "2026-03-30T11:29:45Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/11"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/11",
+      "evidence": "voice-scorer CLI/MCP exists; no Conductor PROVE integration in repo.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#12": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50116,12 +50164,14 @@
       "state": "open",
       "title": "[δ.1] Vox Publica workshop mode — collaborative rewriting",
       "updated_at": "2026-03-30T11:29:46Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/12"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/12",
+      "evidence": "Worksheet CLI exists; no web workshop UI; Publica endpoint 404.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#13": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:47Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50132,12 +50182,14 @@
       "state": "open",
       "title": "[δ.2] Multi-instance ecosystem",
       "updated_at": "2026-03-30T11:29:47Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/13"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/13",
+      "evidence": "One base profile/corpus; no multi-instance registry/comparison.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#14": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:48Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50148,12 +50200,14 @@
       "state": "open",
       "title": "[ω.1] Research Atlas — 9 lanes",
       "updated_at": "2026-03-30T11:29:48Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/14"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/14",
+      "evidence": "ROADMAP lists 9 lanes; no research-atlas deliverable files.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#15": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:49Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50164,12 +50218,14 @@
       "state": "open",
       "title": "[ω.2] Public Quest Odyssey — 5-act revelation",
       "updated_at": "2026-03-30T11:29:49Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/15"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/15",
+      "evidence": "ROADMAP lists 5 acts; no public essay/release/method-paper receipts.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#16": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:50Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50180,12 +50236,14 @@
       "state": "open",
       "title": "[γ.1] Score parity tuning — TS vs Python syllable counting",
       "updated_at": "2026-03-30T11:29:50Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/16"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/16",
+      "evidence": "No TS scorer/countSyllables; Publica endpoint 404.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#20": {
       "comments": 0,
       "created_at": "2026-03-30T21:54:01Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50196,12 +50254,14 @@
       "state": "open",
       "title": "[summoning] Conductor PROVE phase voice check",
       "updated_at": "2026-03-30T21:54:01Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/20"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/20",
+      "evidence": "voice-scorer check/diff exists; conductor lifecycle owner code absent.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#21": {
       "comments": 0,
       "created_at": "2026-03-30T21:54:02Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50212,12 +50272,14 @@
       "state": "open",
       "title": "[summoning] Voice Collapse anti-pattern in conductor playbook",
       "updated_at": "2026-03-30T21:54:02Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/21"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/21",
+      "evidence": "AP-01..11 exist; no Voice Collapse anti-pattern entry.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#22": {
       "comments": 0,
       "created_at": "2026-03-30T21:54:03Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50228,12 +50290,14 @@
       "state": "open",
       "title": "[summoning] LaunchAgent for weekly voice audit",
       "updated_at": "2026-03-30T21:54:03Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/22"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/22",
+      "evidence": "No voice-audit LaunchAgent plist/scripts; only markdown deposit.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#23": {
       "comments": 0,
       "created_at": "2026-03-30T21:54:04Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50244,12 +50308,14 @@
       "state": "open",
       "title": "[summoning] CI caller workflow example for consuming repos",
       "updated_at": "2026-03-30T21:54:04Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/23"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/23",
+      "evidence": "Reusable voice-quality-gate.yml exists; consumer example missing.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#24": {
       "comments": 0,
       "created_at": "2026-03-30T21:54:05Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50260,12 +50326,14 @@
       "state": "open",
       "title": "[summoning] Voice coverage validator script",
       "updated_at": "2026-03-30T21:54:05Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/24"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/24",
+      "evidence": "No scripts/, validate-voice-coverage.sh, or coverage subcommand.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#25": {
       "comments": 0,
       "created_at": "2026-03-30T21:54:06Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50276,12 +50344,14 @@
       "state": "open",
       "title": "[summoning] Audience-aware voice profiles (artist, funder, public)",
       "updated_at": "2026-03-30T21:54:06Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/25"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/25",
+      "evidence": "Only base profile; no audience profiles/AP-12..14/--profile flag.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#26": {
       "comments": 0,
       "created_at": "2026-03-30T21:54:07Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50292,12 +50362,14 @@
       "state": "open",
       "title": "[summoning] Claude Code PreCommit hook for .md voice scoring",
       "updated_at": "2026-03-30T21:54:07Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/26"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/26",
+      "evidence": "No private_dot_claude settings tmpl or PreCommit hook on main.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#27": {
       "comments": 0,
       "created_at": "2026-03-30T21:54:08Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50308,12 +50380,14 @@
       "state": "open",
       "title": "[summoning] Governance Amendment H — Voice Governance Mandate",
       "updated_at": "2026-03-30T21:54:08Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/27"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/27",
+      "evidence": "No governance-rules Amendment H or voice_coherence gate.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#28": {
       "comments": 0,
       "created_at": "2026-06-10T22:26:38Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50324,12 +50398,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T22:26:38Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/28"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/28",
+      "evidence": "Local install docs exist; PyPI 404, no publish workflow.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#3": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:35Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50340,12 +50416,14 @@
       "state": "open",
       "title": "[β.1] First Aristotle rewrites — 10-15 passages",
       "updated_at": "2026-03-30T11:29:35Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/3"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/3",
+      "evidence": "Main has 30 Aristotle passages, no rewrite artifacts; rules/approved only .gitkeep.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#31": {
       "comments": 1,
       "created_at": "2026-06-22T14:37:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50356,12 +50434,14 @@
       "state": "open",
       "title": "discover: promote vox--architectura-gubernatio to ranked tier",
       "updated_at": "2026-06-22T14:37:04Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/pull/31"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/pull/31",
+      "evidence": "MERGEABLE/UNSTABLE; test check fails ruff lint (34 errors); DISCOVERY.md/value-repos not on main.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#32": {
       "comments": 0,
       "created_at": "2026-06-26T00:53:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50372,12 +50452,14 @@
       "state": "open",
       "title": "chore(deps): bump actions/checkout from 6 to 7 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-17T00:54:13Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/pull/32"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/pull/32",
+      "evidence": "Dependabot checkout v6->v7 MERGEABLE/UNSTABLE; test check fails lint; no structural-gate trap.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#4": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:37Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50388,12 +50470,14 @@
       "state": "open",
       "title": "[β.2] Expand worksheet sources — McKee, Horace, Plato",
       "updated_at": "2026-03-30T11:29:37Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/4"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/4",
+      "evidence": "Worksheets Aristotle-only; no McKee/Horace/Bharata/Plato/Strunk sources.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#5": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:38Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50404,12 +50488,14 @@
       "state": "open",
       "title": "[β.3] Rule formalization depth — predicate logic + math proofs",
       "updated_at": "2026-03-30T11:29:38Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/5"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/5",
+      "evidence": "formalizer exists; no rules/proofs/ and no approved detector files.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#6": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50420,12 +50506,14 @@
       "state": "open",
       "title": "[β.4] Per-organ voice profiles",
       "updated_at": "2026-03-30T11:29:39Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/6"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/6",
+      "evidence": "ProfileResolver overlays exist; only base.yaml; score/check lack --organ routing.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#7": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50436,12 +50524,14 @@
       "state": "open",
       "title": "[β.5] Knowledge base auto-corpus — 14,992 documents",
       "updated_at": "2026-03-30T11:29:40Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/7"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/7",
+      "evidence": "README reports 171-doc corpus; no 14,992-doc knowledge-base tier map.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#8": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:41Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50452,12 +50542,14 @@
       "state": "open",
       "title": "[γ.1] Deploy Vox Publica",
       "updated_at": "2026-03-30T11:29:41Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/8"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/8",
+      "evidence": "vox-publica.ivixivi.workers.dev returns 404; no Publica deploy config.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--architectura-gubernatio#9": {
       "comments": 0,
       "created_at": "2026-03-30T11:29:42Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -50468,7 +50560,9 @@
       "state": "open",
       "title": "[γ.2] MCP server registration",
       "updated_at": "2026-03-30T11:29:42Z",
-      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/9"
+      "url": "https://github.com/organvm/vox--architectura-gubernatio/issues/9",
+      "evidence": "mcp_server.py + mcp extra exist; no durable Claude MCP registration receipt.",
+      "last_touched": "2026-07-19T09:04:31Z"
     },
     "organvm/vox--publica#11": {
       "comments": 0,
