@@ -22851,7 +22851,7 @@
     "organvm/metasystem-master#22": {
       "comments": 0,
       "created_at": "2026-06-10T22:01:04Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22862,12 +22862,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T22:01:04Z",
-      "url": "https://github.com/organvm/metasystem-master/issues/22"
+      "url": "https://github.com/organvm/metasystem-master/issues/22",
+      "evidence": "Monorepo exists; ship-ready audit fails: no verified release artifact, local core tests fail on master.",
+      "last_touched": "2026-07-19T10:38:19Z"
     },
     "organvm/metasystem-master#33": {
       "comments": 0,
       "created_at": "2026-07-01T04:01:26Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22878,12 +22880,14 @@
       "state": "open",
       "title": "[limen GEN-a-organvm-metasystem-master-test-coverage-0620] Raise test coverage in a-organvm/metasystem-master",
       "updated_at": "2026-07-01T04:07:51Z",
-      "url": "https://github.com/organvm/metasystem-master/pull/33"
+      "url": "https://github.com/organvm/metasystem-master/pull/33",
+      "evidence": "PR checkout core tests 60/60 but required checks red on stale lockfile branch.",
+      "last_touched": "2026-07-19T10:38:19Z"
     },
     "organvm/metasystem-master#39": {
       "comments": 0,
       "created_at": "2026-07-03T15:48:53Z",
-      "disposition": "queued",
+      "disposition": "merged:7b5fbac49b50993878f6842e4e7648491a8a662c",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22894,12 +22898,14 @@
       "state": "open",
       "title": "chore(deps): bump js-yaml and react-native in /packages/performance-sdk",
       "updated_at": "2026-07-08T06:58:45Z",
-      "url": "https://github.com/organvm/metasystem-master/pull/39"
+      "url": "https://github.com/organvm/metasystem-master/pull/39",
+      "evidence": "packages/performance-sdk/package-lock.json transitive lane; required checks green, merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
     },
     "organvm/metasystem-master#40": {
       "comments": 0,
       "created_at": "2026-07-09T08:36:32Z",
-      "disposition": "queued",
+      "disposition": "merged:f33b8571decb081578cfe06da51b4ac6f855ed15",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22910,12 +22916,14 @@
       "state": "open",
       "title": "chore(deps): bump the pip-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-16T08:34:51Z",
-      "url": "https://github.com/organvm/metasystem-master/pull/40"
+      "url": "https://github.com/organvm/metasystem-master/pull/40",
+      "evidence": "docs/source-materials/theory/requirements.txt pip-deps update only; required checks green, merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
     },
     "organvm/metasystem-master#43": {
       "comments": 0,
       "created_at": "2026-07-16T08:34:28Z",
-      "disposition": "queued",
+      "disposition": "merged:d986af3adf8b73a4ee43fcacbe837b557a3ba9d4",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22926,12 +22934,14 @@
       "state": "open",
       "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
       "updated_at": "2026-07-16T08:34:29Z",
-      "url": "https://github.com/organvm/metasystem-master/pull/43"
+      "url": "https://github.com/organvm/metasystem-master/pull/43",
+      "evidence": ".github/workflows/metasystem-ci.yml action updates only; required checks green, merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
     },
     "organvm/metasystem-master#44": {
       "comments": 0,
       "created_at": "2026-07-16T09:04:07Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22942,7 +22952,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 6 directories with 9 updates",
       "updated_at": "2026-07-16T09:04:08Z",
-      "url": "https://github.com/organvm/metasystem-master/pull/44"
+      "url": "https://github.com/organvm/metasystem-master/pull/44",
+      "evidence": "Broad npm-deps PR CONFLICTING/DIRTY after safer merges; needs Dependabot rebase.",
+      "last_touched": "2026-07-19T10:38:19Z"
     },
     "organvm/micro-tato#10": {
       "comments": 0,
@@ -51270,6 +51282,195 @@
       "disposition": "evolving",
       "evidence": "Reopened NOT_PLANNED duplicate dismissal; public site/API/index activation lane unbuilt.",
       "last_touched": "2026-07-19T10:33:31.877718+00:00"
+    },
+    "organvm/metasystem-master#46": {
+      "repo": "metasystem-master",
+      "number": 46,
+      "kind": "pr",
+      "title": "",
+      "disposition": "merged:9120b143ad0bc83b414acc2ddd6b7774c513d8bf",
+      "evidence": "pnpm-lock.yaml-only js-yaml security bump; required checks green, merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#42": {
+      "repo": "metasystem-master",
+      "number": 42,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed dependabot PR; reopen refused, commented as current npm-deps successor lane.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#41": {
+      "repo": "metasystem-master",
+      "number": 41,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed dependabot PR; reopen refused, commented as stale npm-deps successor lane.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#36": {
+      "repo": "metasystem-master",
+      "number": 36,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed dependabot PR; reopen refused, commented as older npm-deps lane.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#35": {
+      "repo": "metasystem-master",
+      "number": 35,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed dependabot PR; reopen refused, commented to reconcile with #44.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#34": {
+      "repo": "metasystem-master",
+      "number": 34,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/metasystem-master/pull/40",
+      "evidence": "Closed pip-deps PR; reopen refused, successor #40 merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#32": {
+      "repo": "metasystem-master",
+      "number": 32,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed dependabot PR; reopen refused, commented to compare with #44.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#31": {
+      "repo": "metasystem-master",
+      "number": 31,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/metasystem-master/pull/40",
+      "evidence": "Closed coverage bump; reopen refused, successor #40 merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#30": {
+      "repo": "metasystem-master",
+      "number": 30,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/metasystem-master/pull/43",
+      "evidence": "Closed setup-python PR; reopen refused, successor #43 merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#27": {
+      "repo": "metasystem-master",
+      "number": 27,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/metasystem-master/pull/29",
+      "evidence": "Closed broad npm-deps PR; reopen refused, newer stack carried forward.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#26": {
+      "repo": "metasystem-master",
+      "number": 26,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/metasystem-master/pull/28",
+      "evidence": "Closed pip-deps PR; reopen refused, successor #28/#40 carried lane.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#20": {
+      "repo": "metasystem-master",
+      "number": 20,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/metasystem-master/pull/24",
+      "evidence": "Closed pnpm/action-setup PR; reopen refused, successor #24 merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#19": {
+      "repo": "metasystem-master",
+      "number": 19,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/metasystem-master/pull/43",
+      "evidence": "Closed setup-node PR; reopen refused, successor #43 merged.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#18": {
+      "repo": "metasystem-master",
+      "number": 18,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed redis PR; reopen refused, newer redis lane remains in #44.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#17": {
+      "repo": "metasystem-master",
+      "number": 17,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed plugin-react PR; reopen refused, newer tooling lane remains in #44.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#16": {
+      "repo": "metasystem-master",
+      "number": 16,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed express/@types PR; reopen refused, newer broad lane remains in #44.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#15": {
+      "repo": "metasystem-master",
+      "number": 15,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed react-router-dom PR; reopen refused, newer lane remains in #44.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#14": {
+      "repo": "metasystem-master",
+      "number": 14,
+      "kind": "pr",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Closed @types/react-dom PR; reopen refused, newer lane remains in #44.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#13": {
+      "repo": "metasystem-master",
+      "number": 13,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:.github/workflows/art-to-commerce.yml",
+      "evidence": "master uses actions/github-script@v9; reopen refused.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#12": {
+      "repo": "metasystem-master",
+      "number": 12,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:.github/workflows/metasystem-ci.yml",
+      "evidence": "workflows use checkout v7-era pins; reopen refused.",
+      "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/metasystem-master#11": {
+      "repo": "metasystem-master",
+      "number": 11,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:.github/workflows/codeql.yml",
+      "evidence": "master uses codeql-action@v4; reopen refused.",
+      "last_touched": "2026-07-19T10:38:19Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
