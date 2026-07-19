@@ -47157,7 +47157,7 @@
     "organvm/system-governance-framework#37": {
       "comments": 0,
       "created_at": "2026-06-10T21:57:10Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47168,12 +47168,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T21:57:10Z",
-      "url": "https://github.com/organvm/system-governance-framework/issues/37"
+      "url": "https://github.com/organvm/system-governance-framework/issues/37",
+      "evidence": "Pages+package docs exist; only draft release v0.1.0, no published tags/package.",
+      "last_touched": "2026-07-19T10:14:06.220703+00:00"
     },
     "organvm/system-governance-framework#41": {
       "comments": 1,
       "created_at": "2026-06-23T01:09:50Z",
-      "disposition": "queued",
+      "disposition": "superseded:DISCOVERY.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47184,12 +47186,14 @@
       "state": "open",
       "title": "feat(discovery): promote system-governance-framework to ranked value tier",
       "updated_at": "2026-07-06T20:00:13Z",
-      "url": "https://github.com/organvm/system-governance-framework/pull/41"
+      "url": "https://github.com/organvm/system-governance-framework/pull/41",
+      "evidence": "CONFLICTING/DIRTY; discovery/value-repo/VERSION/pitch files on main.",
+      "last_touched": "2026-07-19T10:14:06.220703+00:00"
     },
     "organvm/system-governance-framework#42": {
       "comments": 1,
       "created_at": "2026-06-23T16:22:02Z",
-      "disposition": "queued",
+      "disposition": "superseded:DISCOVERY.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47200,12 +47204,14 @@
       "state": "open",
       "title": "feat(discovery): promote system-governance-framework into ranked value tier",
       "updated_at": "2026-06-23T16:22:07Z",
-      "url": "https://github.com/organvm/system-governance-framework/pull/42"
+      "url": "https://github.com/organvm/system-governance-framework/pull/42",
+      "evidence": "CONFLICTING/DIRTY; DISCOVERY.md+value-repos.json already on main.",
+      "last_touched": "2026-07-19T10:14:06.220703+00:00"
     },
     "organvm/system-governance-framework#45": {
       "comments": 0,
       "created_at": "2026-06-29T04:05:55Z",
-      "disposition": "queued",
+      "disposition": "superseded:tests/test_config.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47216,12 +47222,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-system-governance-framework-test-coverage-0620] Raise test coverage in organvm/system-governance-framework",
       "updated_at": "2026-06-29T04:05:55Z",
-      "url": "https://github.com/organvm/system-governance-framework/pull/45"
+      "url": "https://github.com/organvm/system-governance-framework/pull/45",
+      "evidence": "CONFLICTING/DIRTY; main has expanded config+promotion tests.",
+      "last_touched": "2026-07-19T10:14:06.220703+00:00"
     },
     "organvm/system-governance-framework#46": {
       "comments": 0,
       "created_at": "2026-06-30T11:00:07Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47232,12 +47240,14 @@
       "state": "open",
       "title": "[limen jules GEN-organvm-system-governance-framework-test-coverage-0620] Raise test coverage in orga",
       "updated_at": "2026-06-30T11:03:34Z",
-      "url": "https://github.com/organvm/system-governance-framework/pull/46"
+      "url": "https://github.com/organvm/system-governance-framework/pull/46",
+      "evidence": "MERGEABLE, tests green, but Validate PR Quality red; new test file not on main.",
+      "last_touched": "2026-07-19T10:14:06.220703+00:00"
     },
     "organvm/system-governance-framework#47": {
       "comments": 0,
       "created_at": "2026-07-01T11:27:23Z",
-      "disposition": "queued",
+      "disposition": "superseded:tests/test_promotion.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47248,12 +47258,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-system-governance-framework-test-coverage-0620] Raise test coverage in organvm/system-governance-framework",
       "updated_at": "2026-07-01T11:27:23Z",
-      "url": "https://github.com/organvm/system-governance-framework/pull/47"
+      "url": "https://github.com/organvm/system-governance-framework/pull/47",
+      "evidence": "CONFLICTING/DIRTY; main already has promotion engine coverage.",
+      "last_touched": "2026-07-19T10:14:06.220703+00:00"
     },
     "organvm/system-governance-framework#49": {
       "comments": 0,
       "created_at": "2026-07-06T20:00:36Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47264,12 +47276,14 @@
       "state": "open",
       "title": "[limen HEAL-cifix-organvm-system-governance-framework-41] fix failing CI on organvm/system-governance-framework#41",
       "updated_at": "2026-07-06T20:06:20Z",
-      "url": "https://github.com/organvm/system-governance-framework/pull/49"
+      "url": "https://github.com/organvm/system-governance-framework/pull/49",
+      "evidence": "MERGEABLE but Validate PR Quality red; diff only adds uv.lock for stale #41 lane.",
+      "last_touched": "2026-07-19T10:14:06.220703+00:00"
     },
     "organvm/system-governance-framework#50": {
       "comments": 0,
       "created_at": "2026-07-11T22:23:31Z",
-      "disposition": "queued",
+      "disposition": "reopen-candidate",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -47280,7 +47294,9 @@
       "state": "open",
       "title": "chore(deps): bump actions/stale from 10.3.0 to 10.4.0 in the github-actions-deps group across 1 directory",
       "updated_at": "2026-07-11T22:23:32Z",
-      "url": "https://github.com/organvm/system-governance-framework/pull/50"
+      "url": "https://github.com/organvm/system-governance-framework/pull/50",
+      "evidence": "Dependabot actions/stale group bump closed unmerged; attempted reopen.",
+      "last_touched": "2026-07-19T10:14:06.220703+00:00"
     },
     "organvm/system-system--system#11": {
       "comments": 0,
