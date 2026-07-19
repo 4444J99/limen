@@ -22919,7 +22919,7 @@
     "organvm/micro-tato#10": {
       "comments": 0,
       "created_at": "2026-06-25T16:00:25Z",
-      "disposition": "queued",
+      "disposition": "distilled:scripts/hub.gd",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22930,12 +22930,14 @@
       "state": "open",
       "title": "Maps — level select screen",
       "updated_at": "2026-06-25T16:00:25Z",
-      "url": "https://github.com/organvm/micro-tato/issues/10"
+      "url": "https://github.com/organvm/micro-tato/issues/10",
+      "evidence": "Hub Level Select calls level presets in level_system.gd; smoke passed.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/micro-tato#11": {
       "comments": 0,
       "created_at": "2026-06-25T16:00:26Z",
-      "disposition": "queued",
+      "disposition": "distilled:scripts/debug_overlay.gd",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22946,12 +22948,14 @@
       "state": "open",
       "title": "Debug — FPS + entity-count meter",
       "updated_at": "2026-06-25T16:00:26Z",
-      "url": "https://github.com/organvm/micro-tato/issues/11"
+      "url": "https://github.com/organvm/micro-tato/issues/11",
+      "evidence": "PERF panel: FPS, node/entity counts, bullets/orbs/props/debris, phase, spawn pressure.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/micro-tato#12": {
       "comments": 0,
       "created_at": "2026-06-25T16:00:28Z",
-      "disposition": "queued",
+      "disposition": "distilled:scripts/music.gd",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22962,12 +22966,14 @@
       "state": "open",
       "title": "Audio — adaptive music director + stems",
       "updated_at": "2026-06-25T16:00:28Z",
-      "url": "https://github.com/organvm/micro-tato/issues/12"
+      "url": "https://github.com/organvm/micro-tato/issues/12",
+      "evidence": "Adaptive stem director w/ piano/strings/woodwind/brass + combat-intensity mixes.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/micro-tato#13": {
       "comments": 0,
       "created_at": "2026-06-25T16:00:29Z",
-      "disposition": "queued",
+      "disposition": "distilled:TAXONOMY.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22978,12 +22984,14 @@
       "state": "open",
       "title": "Taxonomy — full labeling / hierarchy pass",
       "updated_at": "2026-06-25T16:00:29Z",
-      "url": "https://github.com/organvm/micro-tato/issues/13"
+      "url": "https://github.com/organvm/micro-tato/issues/13",
+      "evidence": "Taxonomy: hierarchy, labels, hub actions, combat terms, panel pages, verification hooks.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/micro-tato#14": {
       "comments": 0,
       "created_at": "2026-06-25T16:00:30Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -22994,12 +23002,14 @@
       "state": "open",
       "title": "[feel-test] Bless B57 → promote canonical live link (Rob already on /b57/)",
       "updated_at": "2026-06-25T16:00:30Z",
-      "url": "https://github.com/organvm/micro-tato/issues/14"
+      "url": "https://github.com/organvm/micro-tato/issues/14",
+      "evidence": "Root and /b57/ Pages links 404; feel-test/promotion human/deploy-gated.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/micro-tato#21": {
       "comments": 0,
       "created_at": "2026-06-25T16:03:00Z",
-      "disposition": "queued",
+      "disposition": "distilled:STATUS_MATRIX.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23010,12 +23020,14 @@
       "state": "open",
       "title": "📋 PRIMA MATERIA — roadmap & ownership ledger",
       "updated_at": "2026-06-25T16:03:00Z",
-      "url": "https://github.com/organvm/micro-tato/issues/21"
+      "url": "https://github.com/organvm/micro-tato/issues/21",
+      "evidence": "Roadmap/ownership surfaces exist; PRs #15-#20 merged; ./lane.sh validate passed.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/micro-tato#7": {
       "comments": 0,
       "created_at": "2026-06-25T16:00:21Z",
-      "disposition": "queued",
+      "disposition": "distilled:scripts/hub.gd",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23026,12 +23038,14 @@
       "state": "open",
       "title": "Materia — swap which style fills a slot (swap-UI)",
       "updated_at": "2026-06-25T16:00:21Z",
-      "url": "https://github.com/organvm/micro-tato/issues/7"
+      "url": "https://github.com/organvm/micro-tato/issues/7",
+      "evidence": "Build Lab Style Slots remap attack styles via persisted style_slots; smoke passed.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/micro-tato#8": {
       "comments": 0,
       "created_at": "2026-06-25T16:00:23Z",
-      "disposition": "queued",
+      "disposition": "distilled:scripts/hub.gd",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23042,12 +23056,14 @@
       "state": "open",
       "title": "Materia — swap-element UI",
       "updated_at": "2026-06-25T16:00:23Z",
-      "url": "https://github.com/organvm/micro-tato/issues/8"
+      "url": "https://github.com/organvm/micro-tato/issues/8",
+      "evidence": "Build Lab Materia UI sockets default/none/fire/ice/shock/poison; smoke passed.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/micro-tato#9": {
       "comments": 0,
       "created_at": "2026-06-25T16:00:24Z",
-      "disposition": "queued",
+      "disposition": "distilled:scripts/level_system.gd",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23058,7 +23074,9 @@
       "state": "open",
       "title": "Reroll — clear-instance → NEWS → reroll-all flow",
       "updated_at": "2026-06-25T16:00:24Z",
-      "url": "https://github.com/organvm/micro-tato/issues/9"
+      "url": "https://github.com/organvm/micro-tato/issues/9",
+      "evidence": "end_wave->choose_path->enter_room->World.new_room clear-instance flow; smoke passed.",
+      "last_touched": "2026-07-19T09:55:06.667187+00:00"
     },
     "organvm/mirror-mirror#1": {
       "comments": 1,
