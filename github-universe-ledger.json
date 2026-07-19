@@ -30297,7 +30297,7 @@
     "organvm/organvm-ontologia#11": {
       "comments": 1,
       "created_at": "2026-06-24T10:17:04Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30308,12 +30308,14 @@
       "state": "open",
       "title": "[limen DISCOVER-organvm-organvm-ontologia] Discover the latent value of organvm/organvm-ontologia",
       "updated_at": "2026-06-24T10:17:08Z",
-      "url": "https://github.com/organvm/organvm-ontologia/pull/11"
+      "url": "https://github.com/organvm/organvm-ontologia/pull/11",
+      "evidence": "MERGEABLE but required tests fail/cancel; main still lacks DISCOVERY.md receipt.",
+      "last_touched": "2026-07-19T10:39:17Z"
     },
     "organvm/organvm-ontologia#12": {
       "comments": 0,
       "created_at": "2026-06-30T01:50:55Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30324,12 +30326,14 @@
       "state": "open",
       "title": "[limen GEN-a-organvm-organvm-ontologia-test-coverage-0620] Raise test coverage in a-organvm/organvm-ontologia",
       "updated_at": "2026-07-06T09:35:34Z",
-      "url": "https://github.com/organvm/organvm-ontologia/pull/12"
+      "url": "https://github.com/organvm/organvm-ontologia/pull/12",
+      "evidence": "MERGEABLE but BLOCKED by failed/cancelled required tests; some non-duplicative registry-store tests.",
+      "last_touched": "2026-07-19T10:39:17Z"
     },
     "organvm/organvm-ontologia#13": {
       "comments": 0,
       "created_at": "2026-07-01T06:05:38Z",
-      "disposition": "queued",
+      "disposition": "superseded:https://github.com/organvm/organvm-ontologia/blob/main/tests/test_git_sensor.py",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30340,12 +30344,14 @@
       "state": "open",
       "title": "[limen GEN-a-organvm-organvm-ontologia-test-coverage-0620] Raise test coverage in a-organvm/organvm-ontologia",
       "updated_at": "2026-07-01T06:05:38Z",
-      "url": "https://github.com/organvm/organvm-ontologia/pull/13"
+      "url": "https://github.com/organvm/organvm-ontologia/pull/13",
+      "evidence": "CONFLICTING/DIRTY red; main already has git sensor coverage.",
+      "last_touched": "2026-07-19T10:39:17Z"
     },
     "organvm/organvm-ontologia#14": {
       "comments": 0,
       "created_at": "2026-07-06T09:35:52Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30356,12 +30362,14 @@
       "state": "open",
       "title": "[limen HEAL-cifix-organvm-organvm-ontologia-12] fix failing CI on organvm/organvm-ontologia#12",
       "updated_at": "2026-07-06T09:38:52Z",
-      "url": "https://github.com/organvm/organvm-ontologia/pull/14"
+      "url": "https://github.com/organvm/organvm-ontologia/pull/14",
+      "evidence": "MERGEABLE but BLOCKED: required test (3.12) fails, test (3.11) cancelled.",
+      "last_touched": "2026-07-19T10:39:17Z"
     },
     "organvm/organvm-ontologia#18": {
       "comments": 0,
       "created_at": "2026-07-16T19:33:16Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30372,12 +30380,14 @@
       "state": "open",
       "title": "feat: add authority-qualified governance memory and self-images",
       "updated_at": "2026-07-17T09:14:59Z",
-      "url": "https://github.com/organvm/organvm-ontologia/pull/18"
+      "url": "https://github.com/organvm/organvm-ontologia/pull/18",
+      "evidence": "Draft PR MERGEABLE/CLEAN green checks, but large governance-memory/schema change needs owner review.",
+      "last_touched": "2026-07-19T10:39:17Z"
     },
     "organvm/organvm-ontologia#7": {
       "comments": 0,
       "created_at": "2026-06-10T22:01:00Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -30388,7 +30398,9 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T22:01:00Z",
-      "url": "https://github.com/organvm/organvm-ontologia/issues/7"
+      "url": "https://github.com/organvm/organvm-ontologia/issues/7",
+      "evidence": "Package/CLI metadata + green main CI, but no release, tag, Pages, or install smoke docs.",
+      "last_touched": "2026-07-19T10:39:17Z"
     },
     "organvm/organvm-ontologia#9": {
       "comments": 0,
@@ -51471,6 +51483,51 @@
       "disposition": "superseded:.github/workflows/codeql.yml",
       "evidence": "master uses codeql-action@v4; reopen refused.",
       "last_touched": "2026-07-19T10:38:19Z"
+    },
+    "organvm/organvm-ontologia#1": {
+      "repo": "organvm-ontologia",
+      "number": 1,
+      "kind": "issue",
+      "title": "",
+      "disposition": "distilled:src/ontologia/query.py",
+      "evidence": "Reopened stale NOT_PLANNED issue; search_entities and tests on main.",
+      "last_touched": "2026-07-19T10:39:17Z"
+    },
+    "organvm/organvm-ontologia#2": {
+      "repo": "organvm-ontologia",
+      "number": 2,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/organvm-ontologia/blob/main/.github/workflows/stale.yml",
+      "evidence": "Closed-unmerged dependabot reopen failed; actions/stale@v10 + no-auto-close on main.",
+      "last_touched": "2026-07-19T10:39:17Z"
+    },
+    "organvm/organvm-ontologia#3": {
+      "repo": "organvm-ontologia",
+      "number": 3,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/organvm-ontologia/blob/main/.github/workflows/ci.yml",
+      "evidence": "Closed-unmerged dependabot reopen failed; setup-python@v6 on main.",
+      "last_touched": "2026-07-19T10:39:17Z"
+    },
+    "organvm/organvm-ontologia#4": {
+      "repo": "organvm-ontologia",
+      "number": 4,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/organvm-ontologia/blob/main/.github/workflows/codeql.yml",
+      "evidence": "Closed-unmerged dependabot reopen failed; CodeQL v4 on main.",
+      "last_touched": "2026-07-19T10:39:17Z"
+    },
+    "organvm/organvm-ontologia#5": {
+      "repo": "organvm-ontologia",
+      "number": 5,
+      "kind": "pr",
+      "title": "",
+      "disposition": "superseded:https://github.com/organvm/organvm-ontologia/blob/main/.github/workflows/ci.yml",
+      "evidence": "Closed-unmerged dependabot reopen failed; checkout@v7 on main.",
+      "last_touched": "2026-07-19T10:39:17Z"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
