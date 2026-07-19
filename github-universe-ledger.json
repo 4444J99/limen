@@ -4502,7 +4502,7 @@
     "organvm/aerarium--res-publica#1": {
       "comments": 0,
       "created_at": "2026-03-25T17:39:20Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4513,12 +4513,14 @@
       "state": "open",
       "title": "P0: Submit NLnet NGI0 Commons Fund application — Cvrsvs Honorvm",
       "updated_at": "2026-03-25T17:39:20Z",
-      "url": "https://github.com/organvm/aerarium--res-publica/issues/1"
+      "url": "https://github.com/organvm/aerarium--res-publica/issues/1",
+      "evidence": "NLnet draft/budget exist; README says DRAFTING, no submission receipt.",
+      "last_touched": "2026-07-19T10:33:31.877718+00:00"
     },
     "organvm/aerarium--res-publica#2": {
       "comments": 0,
       "created_at": "2026-03-25T17:39:23Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4529,12 +4531,14 @@
       "state": "open",
       "title": "P0: Register ORCID",
       "updated_at": "2026-03-25T17:39:23Z",
-      "url": "https://github.com/organvm/aerarium--res-publica/issues/2"
+      "url": "https://github.com/organvm/aerarium--res-publica/issues/2",
+      "evidence": "No ORCID receipt on main; registration external identity action.",
+      "last_touched": "2026-07-19T10:33:31.877718+00:00"
     },
     "organvm/aerarium--res-publica#3": {
       "comments": 0,
       "created_at": "2026-03-25T17:39:29Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4545,12 +4549,14 @@
       "state": "open",
       "title": "P1: License harmonization — META repos MIT vs IP policy Apache 2.0",
       "updated_at": "2026-03-25T17:39:29Z",
-      "url": "https://github.com/organvm/aerarium--res-publica/issues/3"
+      "url": "https://github.com/organvm/aerarium--res-publica/issues/3",
+      "evidence": "IP policy says Apache 2.0; META repos still MIT, cvrsvs LICENSE is CC BY-SA.",
+      "last_touched": "2026-07-19T10:33:31.877718+00:00"
     },
     "organvm/aerarium--res-publica#4": {
       "comments": 0,
       "created_at": "2026-03-25T17:39:36Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4561,12 +4567,14 @@
       "state": "open",
       "title": "P1: Create cvrsvs-honorvm repo and begin extraction",
       "updated_at": "2026-03-25T17:39:36Z",
-      "url": "https://github.com/organvm/aerarium--res-publica/issues/4"
+      "url": "https://github.com/organvm/aerarium--res-publica/issues/4",
+      "evidence": "cvrsvs-honorvm exists; no pyproject/PyPI release, license metadata conflicts.",
+      "last_touched": "2026-07-19T10:33:31.877718+00:00"
     },
     "organvm/aerarium--res-publica#5": {
       "comments": 0,
       "created_at": "2026-03-30T18:23:14Z",
-      "disposition": "queued",
+      "disposition": "distilled:.claude/memory/project_creative_capital_deferred.md",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4577,12 +4585,14 @@
       "state": "open",
       "title": "Creative Capital 2027 deferred — funder-fit gate failed",
       "updated_at": "2026-03-30T18:23:14Z",
-      "url": "https://github.com/organvm/aerarium--res-publica/issues/5"
+      "url": "https://github.com/organvm/aerarium--res-publica/issues/5",
+      "evidence": "Deferral rationale+re-eval trigger documented; app assets preserved.",
+      "last_touched": "2026-07-19T10:33:31.877718+00:00"
     },
     "organvm/aerarium--res-publica#6": {
       "comments": 0,
       "created_at": "2026-06-10T22:15:52Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -4593,7 +4603,9 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: park",
       "updated_at": "2026-06-10T22:15:52Z",
-      "url": "https://github.com/organvm/aerarium--res-publica/issues/6"
+      "url": "https://github.com/organvm/aerarium--res-publica/issues/6",
+      "evidence": "Docs-only corpus verified; no workflows/releases/tags/Pages.",
+      "last_touched": "2026-07-19T10:33:31.877718+00:00"
     },
     "organvm/agent--claude-smith#27": {
       "comments": 0,
@@ -51249,6 +51261,15 @@
       "disposition": "merged:6f80290ca90079bbe06e522e8355bcf6607762fa",
       "evidence": "Lockfile-only dependabot bump; npm ci/validate:package-lock/audit/test:unit passed.",
       "last_touched": "2026-07-19T10:08:03.993331+00:00"
+    },
+    "organvm/aerarium--res-publica#7": {
+      "repo": "organvm/aerarium--res-publica",
+      "number": 7,
+      "kind": "issue",
+      "title": "",
+      "disposition": "evolving",
+      "evidence": "Reopened NOT_PLANNED duplicate dismissal; public site/API/index activation lane unbuilt.",
+      "last_touched": "2026-07-19T10:33:31.877718+00:00"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
