@@ -2552,7 +2552,7 @@
     "organvm/a-mavs-olevm#100": {
       "comments": 1,
       "created_at": "2026-06-22T23:52:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2563,12 +2563,14 @@
       "state": "open",
       "title": "feat(visual-home): image-first front door + data-driven works gallery",
       "updated_at": "2026-06-23T12:37:44Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/100"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/100",
+      "evidence": "visual-home/worksGallery/works.json not on main; PR CONFLICTING/DIRTY.",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     },
     "organvm/a-mavs-olevm#102": {
       "comments": 0,
       "created_at": "2026-06-29T03:41:24Z",
-      "disposition": "queued",
+      "disposition": "merged:e988c119070ea2f94ca065237b2d2c78603db7e3",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2579,12 +2581,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-a-mavs-olevm-test-coverage-0620] Raise test coverage in organvm/a-mavs-olevm",
       "updated_at": "2026-06-29T03:49:12Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/102"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/102",
+      "evidence": "Added tests/unit/discovery/DiscoveryController.test.js; test:unit 40 files/1222 tests.",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     },
     "organvm/a-mavs-olevm#103": {
       "comments": 0,
       "created_at": "2026-06-30T01:51:48Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2595,12 +2599,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-a-mavs-olevm-test-coverage-0620] Raise test coverage in organvm/a-mavs-olevm",
       "updated_at": "2026-06-30T02:00:44Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/103"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/103",
+      "evidence": "Overlaps #102; test:unit fails unresolved DiscoveryController.js?raw import.",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     },
     "organvm/a-mavs-olevm#104": {
       "comments": 0,
       "created_at": "2026-07-01T10:10:51Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2611,12 +2617,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-a-mavs-olevm-test-coverage-0620] Raise test coverage in organvm/a-mavs-olevm",
       "updated_at": "2026-07-01T10:19:07Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/104"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/104",
+      "evidence": "Overlaps #102; test:unit fails 9 tests (Element.scrollIntoView undefined in jsdom).",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     },
     "organvm/a-mavs-olevm#105": {
       "comments": 0,
       "created_at": "2026-07-01T17:02:04Z",
-      "disposition": "queued",
+      "disposition": "merged:69894598c02d9c3f6f3c3fec3d9e44cb96910bba",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2627,7 +2635,9 @@
       "state": "open",
       "title": "[limen DISCOVER-organvm-a-mavs-olevm] Discover the latent value of organvm/a-mavs-olevm",
       "updated_at": "2026-07-01T17:02:04Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/105"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/105",
+      "evidence": "DISCOVERY.md/value-repos.json added (absent on main); unit tests passed.",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     },
     "organvm/a-mavs-olevm#106": {
       "comments": 0,
@@ -2650,7 +2660,7 @@
     "organvm/a-mavs-olevm#94": {
       "comments": 1,
       "created_at": "2026-06-10T21:59:50Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2661,7 +2671,9 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-07-11T02:56:55Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/issues/94"
+      "url": "https://github.com/organvm/a-mavs-olevm/issues/94",
+      "evidence": "Reopened (was closed not_planned). Packaging+green tests exist; release/publish automation open.",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     },
     "organvm/a-mavs-olevm#96": {
       "comments": 0,
@@ -2684,7 +2696,7 @@
     "organvm/a-mavs-olevm#97": {
       "comments": 0,
       "created_at": "2026-06-19T16:40:58Z",
-      "disposition": "queued",
+      "disposition": "superseded:js-yaml@4.3.0 on main",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2695,12 +2707,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump js-yaml from 4.1.1 to 4.2.0",
       "updated_at": "2026-06-19T16:40:59Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/97"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/97",
+      "evidence": "js-yaml already 4.3.0 on main (past 4.2.0 target); bump intent fulfilled.",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     },
     "organvm/a-mavs-olevm#98": {
       "comments": 0,
       "created_at": "2026-06-19T16:41:04Z",
-      "disposition": "queued",
+      "disposition": "reopen-candidate",
       "first_seen": "2026-07-18T14:52:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -2711,7 +2725,9 @@
       "state": "open",
       "title": "chore(deps): bump form-data from 4.0.5 to 4.0.6",
       "updated_at": "2026-06-19T16:41:05Z",
-      "url": "https://github.com/organvm/a-mavs-olevm/pull/98"
+      "url": "https://github.com/organvm/a-mavs-olevm/pull/98",
+      "evidence": "Dependabot form-data 4.0.6 bump closed unmerged; branch deleted, commented; dependabot re-raises.",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     },
     "organvm/a-organvm#10": {
       "comments": 0,
@@ -51194,6 +51210,15 @@
       "disposition": "merged:aa6116d54064bcfd8bcfbcca2ddcaa4741f953cb",
       "evidence": "SSRF fix merged after green build/e2e/CodeQL + local lint/test/build.",
       "last_touched": "2026-07-19T09:36:11.304602+00:00"
+    },
+    "organvm/a-mavs-olevm#107": {
+      "repo": "organvm/a-mavs-olevm",
+      "number": 107,
+      "kind": "pr",
+      "title": "",
+      "disposition": "merged:6f80290ca90079bbe06e522e8355bcf6607762fa",
+      "evidence": "Lockfile-only dependabot bump; npm ci/validate:package-lock/audit/test:unit passed.",
+      "last_touched": "2026-07-19T10:08:03.993331+00:00"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
