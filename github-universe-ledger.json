@@ -23521,7 +23521,7 @@
     "organvm/netmode#10": {
       "comments": 0,
       "created_at": "2026-06-24T16:06:50Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23532,12 +23532,14 @@
       "state": "open",
       "title": "chore: add a Makefile / task runner (lint · test · release)",
       "updated_at": "2026-06-24T16:06:50Z",
-      "url": "https://github.com/organvm/netmode/issues/10"
+      "url": "https://github.com/organvm/netmode/issues/10",
+      "evidence": "no Makefile/task runner on main; commands direct README/CI invocations.",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/netmode#11": {
       "comments": 0,
       "created_at": "2026-06-24T16:06:52Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23548,12 +23550,14 @@
       "state": "open",
       "title": "docs: expand the four-lens review write-up with worked examples",
       "updated_at": "2026-06-24T16:06:52Z",
-      "url": "https://github.com/organvm/netmode/issues/11"
+      "url": "https://github.com/organvm/netmode/issues/11",
+      "evidence": "four-lens review documented; worked H1-H3/strong-away examples not expanded.",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/netmode#3": {
       "comments": 1,
       "created_at": "2026-06-24T16:06:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23564,12 +23568,14 @@
       "state": "open",
       "title": "feat: obstruction-aware link scoring",
       "updated_at": "2026-06-24T16:06:47Z",
-      "url": "https://github.com/organvm/netmode/issues/3"
+      "url": "https://github.com/organvm/netmode/issues/3",
+      "evidence": "dish poller + link_score exist; obstruction_pct not wired into scoring (ROADMAP v2).",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/netmode#4": {
       "comments": 1,
       "created_at": "2026-06-24T16:06:41Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23580,12 +23586,14 @@
       "state": "open",
       "title": "feat: obstruction trending & outage prediction",
       "updated_at": "2026-06-24T16:06:50Z",
-      "url": "https://github.com/organvm/netmode/issues/4"
+      "url": "https://github.com/organvm/netmode/issues/4",
+      "evidence": "dish cache/status UI exists; no obstruction trend/outage prediction.",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/netmode#5": {
       "comments": 0,
       "created_at": "2026-06-24T16:06:42Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23596,12 +23604,14 @@
       "state": "open",
       "title": "feat: gate the overnight anchor on actual backup activity",
       "updated_at": "2026-06-24T16:06:42Z",
-      "url": "https://github.com/organvm/netmode/issues/5"
+      "url": "https://github.com/organvm/netmode/issues/5",
+      "evidence": "overnight anchor exists; no Backblaze/Time Machine activity probe gate.",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/netmode#6": {
       "comments": 0,
       "created_at": "2026-06-24T16:06:44Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23612,12 +23622,14 @@
       "state": "open",
       "title": "feat: CoreLocation/GPS geofencing as a home/away fallback",
       "updated_at": "2026-06-24T16:06:44Z",
-      "url": "https://github.com/organvm/netmode/issues/6"
+      "url": "https://github.com/organvm/netmode/issues/6",
+      "evidence": "home/away via Wi-Fi fingerprint/hysteresis; no CoreLocation/GPS helper.",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/netmode#7": {
       "comments": 0,
       "created_at": "2026-06-24T16:06:46Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23628,12 +23640,14 @@
       "state": "open",
       "title": "feat: per-app routing",
       "updated_at": "2026-06-24T16:06:46Z",
-      "url": "https://github.com/organvm/netmode/issues/7"
+      "url": "https://github.com/organvm/netmode/issues/7",
+      "evidence": "main controls network service order, not per-app routing; no pf/app classifier.",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/netmode#8": {
       "comments": 0,
       "created_at": "2026-06-24T16:06:47Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23644,12 +23658,14 @@
       "state": "open",
       "title": "feat: active speedtest link-quality probing",
       "updated_at": "2026-06-24T16:06:47Z",
-      "url": "https://github.com/organvm/netmode/issues/8"
+      "url": "https://github.com/organvm/netmode/issues/8",
+      "evidence": "no speedtest/networkQuality probing; scoring passive/cheap.",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/netmode#9": {
       "comments": 0,
       "created_at": "2026-06-24T16:06:49Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -23660,7 +23676,9 @@
       "state": "open",
       "title": "chore(ci): require the macOS selftest as a status check",
       "updated_at": "2026-06-24T16:06:49Z",
-      "url": "https://github.com/organvm/netmode/issues/9"
+      "url": "https://github.com/organvm/netmode/issues/9",
+      "evidence": "CI has macOS selftest job; branch protection absent; latest CI fails lint+selftest.",
+      "last_touched": "2026-07-19T09:52:21.539672+00:00"
     },
     "organvm/nexus--babel-alexandria#108": {
       "comments": 0,
