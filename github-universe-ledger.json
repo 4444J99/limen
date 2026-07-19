@@ -13010,7 +13010,7 @@
     "organvm/edu-organism#10": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13021,12 +13021,14 @@
       "state": "open",
       "title": "[EPIC] Recapitulation engine + cadences + skins + deploy lifecycle",
       "updated_at": "2026-06-24T16:58:33Z",
-      "url": "https://github.com/organvm/edu-organism/issues/10"
+      "url": "https://github.com/organvm/edu-organism/issues/10",
+      "evidence": "engine/tests pass, ENC1102 week gaps fixed; LMS/Canvas gates remain.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#11": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:42Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13037,12 +13039,14 @@
       "state": "open",
       "title": "needs-human: Greenlight ENC1101 announcement unit-label alignment",
       "updated_at": "2026-06-24T16:54:42Z",
-      "url": "https://github.com/organvm/edu-organism/issues/11"
+      "url": "https://github.com/organvm/edu-organism/issues/11",
+      "evidence": "Aligned announcement CSV exists; greenlight/import human-gated.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#12": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:44Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13053,12 +13057,14 @@
       "state": "open",
       "title": "needs-human: Confirm ENC1101 Summer cadence / dates (the downstream gate)",
       "updated_at": "2026-06-24T16:54:44Z",
-      "url": "https://github.com/organvm/edu-organism/issues/12"
+      "url": "https://github.com/organvm/edu-organism/issues/12",
+      "evidence": "GO-LIVE-BRIEF + schedule cadence; instructor ratification unverified.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#15": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:49Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13069,12 +13075,14 @@
       "state": "open",
       "title": "ENC1101: Capture personalized D2L pages backup (Welcome/Syllabus/Contextualization)",
       "updated_at": "2026-06-24T16:54:49Z",
-      "url": "https://github.com/organvm/edu-organism/issues/15"
+      "url": "https://github.com/organvm/edu-organism/issues/15",
+      "evidence": "ENC1101 manifest references HTML pages; matching HTML files not tracked.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#16": {
       "comments": 1,
       "created_at": "2026-06-24T16:54:51Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13085,12 +13093,14 @@
       "state": "open",
       "title": "needs-human: ENC1101 Fall 2026 — export fresh shell + add terms/fall-2026.yaml",
       "updated_at": "2026-06-25T15:54:06Z",
-      "url": "https://github.com/organvm/edu-organism/issues/16"
+      "url": "https://github.com/organvm/edu-organism/issues/16",
+      "evidence": "fall-2026.yaml template exists; real ref/section/intake export still TODO.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#18": {
       "comments": 1,
       "created_at": "2026-06-24T16:54:54Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13101,12 +13111,14 @@
       "state": "open",
       "title": "needs-human: ENC1102 fix gradebook weights to sum to 100% — P0",
       "updated_at": "2026-06-25T15:54:05Z",
-      "url": "https://github.com/organvm/edu-organism/issues/18"
+      "url": "https://github.com/organvm/edu-organism/issues/18",
+      "evidence": "Gradebook weight reconciliation doc exists; D2L Grades recalc external.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#19": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:57Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13117,12 +13129,14 @@
       "state": "open",
       "title": "needs-human: ENC1102 copy Working-Thesis criteria into D2L Rubric 4 + section confirm",
       "updated_at": "2026-06-24T16:54:57Z",
-      "url": "https://github.com/organvm/edu-organism/issues/19"
+      "url": "https://github.com/organvm/edu-organism/issues/19",
+      "evidence": "Working Thesis ATS criteria exist; D2L rubric/section/OER attach are human acts.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#22": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:02Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13133,12 +13147,14 @@
       "state": "open",
       "title": "needs-human: ENG101 — apply P0/P1 fixes to live St. Paul's Canvas",
       "updated_at": "2026-06-24T16:55:02Z",
-      "url": "https://github.com/organvm/edu-organism/issues/22"
+      "url": "https://github.com/organvm/edu-organism/issues/22",
+      "evidence": "ENG101 audit codifies fixes; applying to live Canvas is human LMS work.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#24": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:06Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13149,12 +13165,14 @@
       "state": "open",
       "title": "needs-human: ENG204 — ratify canonical spine + grading weights",
       "updated_at": "2026-06-24T16:55:06Z",
-      "url": "https://github.com/organvm/edu-organism/issues/24"
+      "url": "https://github.com/organvm/edu-organism/issues/24",
+      "evidence": "ENG204 syllabus records macro-vs-American-lit spine as [confirm].",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#27": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:13Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13165,12 +13183,14 @@
       "state": "open",
       "title": "needs-human: Build the ENG204 course in St. Paul's Canvas",
       "updated_at": "2026-06-24T16:55:13Z",
-      "url": "https://github.com/organvm/edu-organism/issues/27"
+      "url": "https://github.com/organvm/edu-organism/issues/27",
+      "evidence": "ENG204 assets exist; St. Paul's Canvas build/import is human LMS work.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#28": {
       "comments": 1,
       "created_at": "2026-06-24T16:55:15Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13181,12 +13201,14 @@
       "state": "open",
       "title": "needs-human: Wire ENG101/ENG204 onto the recapitulation engine (Canvas adapter)",
       "updated_at": "2026-06-25T15:14:40Z",
-      "url": "https://github.com/organvm/edu-organism/issues/28"
+      "url": "https://github.com/organvm/edu-organism/issues/28",
+      "evidence": "Canvas ingester/tests/templates exist; real exports + term reconciliation remain.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#29": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:16Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13197,12 +13219,14 @@
       "state": "open",
       "title": "needs-human: Propagate SGO governance to praxis-perpetua + IRF registry",
       "updated_at": "2026-06-24T16:55:17Z",
-      "url": "https://github.com/organvm/edu-organism/issues/29"
+      "url": "https://github.com/organvm/edu-organism/issues/29",
+      "evidence": "SGO governance/kernel files exist; cross-repo propagation not landed here.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#3": {
       "comments": 0,
       "created_at": "2026-06-24T12:38:28Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13213,12 +13237,14 @@
       "state": "open",
       "title": "needs-human: ENC1101 Summer 2026 D2L build (deadline 2026-06-25)",
       "updated_at": "2026-06-24T16:54:28Z",
-      "url": "https://github.com/organvm/edu-organism/issues/3"
+      "url": "https://github.com/organvm/edu-organism/issues/3",
+      "evidence": "ENC1101 package staged; live D2L publish/Set Active is human-only.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#30": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:18Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13229,12 +13255,14 @@
       "state": "open",
       "title": "needs-human: Authorize real-rater (live model-API) defenses + accreditation honesty sign-off",
       "updated_at": "2026-06-24T16:55:18Z",
-      "url": "https://github.com/organvm/edu-organism/issues/30"
+      "url": "https://github.com/organvm/edu-organism/issues/30",
+      "evidence": "MOCK raters default; live raters + accreditation language need sign-off.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#31": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:20Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13245,12 +13273,14 @@
       "state": "open",
       "title": "needs-human: Submit NLnet NGI0 Commons + finalize Creative Capital work sample",
       "updated_at": "2026-06-24T16:55:20Z",
-      "url": "https://github.com/organvm/edu-organism/issues/31"
+      "url": "https://github.com/organvm/edu-organism/issues/31",
+      "evidence": "NLnet/Creative Capital drafts exist; windows need retargeting + human submission.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#32": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:22Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13261,12 +13291,14 @@
       "state": "open",
       "title": "needs-human: Entity formation + donor infrastructure (LLC/EIN/Candid/Sponsors/Sloan/Aspiration)",
       "updated_at": "2026-06-24T16:55:22Z",
-      "url": "https://github.com/organvm/edu-organism/issues/32"
+      "url": "https://github.com/organvm/edu-organism/issues/32",
+      "evidence": "Entity/grant scaffolds exist; LLC/Aspiration/Candid/Sponsors/Sloan are external human acts.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#33": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:24Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13277,12 +13309,14 @@
       "state": "open",
       "title": "needs-human: Fill canonical CV + assign paper titles + send salon invites + letters of support",
       "updated_at": "2026-06-24T16:55:24Z",
-      "url": "https://github.com/organvm/edu-organism/issues/33"
+      "url": "https://github.com/organvm/edu-organism/issues/33",
+      "evidence": "cv-core TODOs; submission YAMLs TODO titles; salon only Anthony confirmed.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#34": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:25Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13293,12 +13327,14 @@
       "state": "open",
       "title": "needs-human: Approve first alt-education essay before publish",
       "updated_at": "2026-06-24T16:55:25Z",
-      "url": "https://github.com/organvm/edu-organism/issues/34"
+      "url": "https://github.com/organvm/edu-organism/issues/34",
+      "evidence": "Carrier-wave essay draft exists; publication needs Anthony approval/consent.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#35": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:27Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13309,12 +13345,14 @@
       "state": "open",
       "title": "Track E-3: close the grading loop on a real ENC1101 submission",
       "updated_at": "2026-06-24T16:55:27Z",
-      "url": "https://github.com/organvm/edu-organism/issues/35"
+      "url": "https://github.com/organvm/edu-organism/issues/35",
+      "evidence": "Grading loop green locally; real ENC1101 submission + live-rater budget required (human).",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#38": {
       "comments": 0,
       "created_at": "2026-06-24T16:55:33Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13325,12 +13363,14 @@
       "state": "open",
       "title": "needs-human: Create 4 custom Discussion categories + recategorize seed posts",
       "updated_at": "2026-06-24T16:55:33Z",
-      "url": "https://github.com/organvm/edu-organism/issues/38"
+      "url": "https://github.com/organvm/edu-organism/issues/38",
+      "evidence": "Live Discussion categories lack 4 custom manifest categories; seed posts under defaults.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#4": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:30Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13341,12 +13381,14 @@
       "state": "open",
       "title": "[EPIC] ENC1101 — Broward Composition I (D2L)",
       "updated_at": "2026-06-24T16:58:23Z",
-      "url": "https://github.com/organvm/edu-organism/issues/4"
+      "url": "https://github.com/organvm/edu-organism/issues/4",
+      "evidence": "ENC1101 prep/engine/fall template exist; D2L publish + future export remain.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#5": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:31Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13357,12 +13399,14 @@
       "state": "open",
       "title": "[EPIC] ENC1102 — Broward Composition II / research (D2L)",
       "updated_at": "2026-06-24T16:58:25Z",
-      "url": "https://github.com/organvm/edu-organism/issues/5"
+      "url": "https://github.com/organvm/edu-organism/issues/5",
+      "evidence": "ENC1102 generated schedule with Week 9/10/12 windows; D2L writes remain.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#6": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:33Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13373,12 +13417,14 @@
       "state": "open",
       "title": "[EPIC] ENG101 — St. Paul's composition (Canvas, 6-wk)",
       "updated_at": "2026-06-24T16:58:26Z",
-      "url": "https://github.com/organvm/edu-organism/issues/6"
+      "url": "https://github.com/organvm/edu-organism/issues/6",
+      "evidence": "ENG101 course-of-record/cadence template exists; live Canvas fixes remain.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#7": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:34Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13389,12 +13435,14 @@
       "state": "open",
       "title": "[EPIC] ENG204 — St. Paul's literature RPG/D&D (Canvas, 15-wk)",
       "updated_at": "2026-06-24T16:58:28Z",
-      "url": "https://github.com/organvm/edu-organism/issues/7"
+      "url": "https://github.com/organvm/edu-organism/issues/7",
+      "evidence": "ENG204 syllabus/alignment/cadence exist; spine ratify + Canvas build remain.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#8": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:36Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13405,12 +13453,14 @@
       "state": "open",
       "title": "[EPIC] Studium Generale / Provost institution",
       "updated_at": "2026-06-24T16:58:30Z",
-      "url": "https://github.com/organvm/edu-organism/issues/8"
+      "url": "https://github.com/organvm/edu-organism/issues/8",
+      "evidence": "kernel/governance/standards + tests pass; live raters/accreditation/propagation remain.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/edu-organism#9": {
       "comments": 0,
       "created_at": "2026-06-24T16:54:38Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13421,7 +13471,9 @@
       "state": "open",
       "title": "[EPIC] Research & academia wing (grants / grading / submissions / salon)",
       "updated_at": "2026-06-24T16:58:31Z",
-      "url": "https://github.com/organvm/edu-organism/issues/9"
+      "url": "https://github.com/organvm/edu-organism/issues/9",
+      "evidence": "grading/grants/submissions/salon scaffolds exist; live submissions/grants remain.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/enterprise-plugin#1": {
       "comments": 0,
@@ -13442,7 +13494,7 @@
     "organvm/essay-pipeline#14": {
       "comments": 0,
       "created_at": "2026-06-19T10:16:57Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13453,12 +13505,14 @@
       "state": "open",
       "title": "[limen BLD-essay-pipeline-tests] essay-pipeline: tests — Add/expand an automated test suite covering the core code pa",
       "updated_at": "2026-06-19T16:12:08Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/14"
+      "url": "https://github.com/organvm/essay-pipeline/pull/14",
+      "evidence": "CONFLICTING; test-suite intent largely covered by merged #20/#22; commented rebase-to-delta path.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#16": {
       "comments": 0,
       "created_at": "2026-06-20T01:39:01Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13469,12 +13523,14 @@
       "state": "open",
       "title": "[limen BLD-essay-pipeline-next-rev] essay-pipeline: next-rev — Implement the next revenue increment per the product's path-",
       "updated_at": "2026-06-20T01:44:00Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/16"
+      "url": "https://github.com/organvm/essay-pipeline/pull/16",
+      "evidence": "Green+mergeable licensing PR; diverges from #21 on license.py/template_store.py; commented reconciliation path.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#17": {
       "comments": 0,
       "created_at": "2026-06-20T02:51:34Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13485,12 +13541,14 @@
       "state": "open",
       "title": "[limen BLD-essay-pipeline-readme] essay-pipeline: readme — Write/expand the README: what-it-is, who-pays, install, usag",
       "updated_at": "2026-06-20T02:56:44Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/17"
+      "url": "https://github.com/organvm/essay-pipeline/pull/17",
+      "evidence": "Green+mergeable README-foundation PR; #1 in the 5-PR reconciliation order; commented.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#18": {
       "comments": 0,
       "created_at": "2026-06-20T05:14:28Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13501,12 +13559,14 @@
       "state": "open",
       "title": "[limen BLD2-essay-pipeline-api-docs] essay-pipeline: api-docs",
       "updated_at": "2026-06-20T05:18:44Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/18"
+      "url": "https://github.com/organvm/essay-pipeline/pull/18",
+      "evidence": "Green+mergeable api-docs PR; README overlap; land after #17; commented.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#19": {
       "comments": 0,
       "created_at": "2026-06-20T05:19:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13517,12 +13577,14 @@
       "state": "open",
       "title": "[limen BLD2-essay-pipeline-dashboard] essay-pipeline: dashboard",
       "updated_at": "2026-06-20T05:19:22Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/19"
+      "url": "https://github.com/organvm/essay-pipeline/pull/19",
+      "evidence": "Green+mergeable dashboard PR; README+pyproject overlap with #21; commented.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#20": {
       "comments": 0,
       "created_at": "2026-06-20T06:50:31Z",
-      "disposition": "queued",
+      "disposition": "merged:0c818541",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13533,12 +13595,14 @@
       "state": "open",
       "title": "[limen jules BLD2-essay-pipeline-integration-tests] essay-pipeline: integration-tests",
       "updated_at": "2026-06-20T06:55:29Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/20"
+      "url": "https://github.com/organvm/essay-pipeline/pull/20",
+      "evidence": "Admin-merged (owner-authored, green matrix, self-approval/gate deadlock): e2e pipeline test.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#21": {
       "comments": 0,
       "created_at": "2026-06-20T09:29:40Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13549,12 +13613,14 @@
       "state": "open",
       "title": "[limen BLD2-essay-pipeline-billing] essay-pipeline: billing",
       "updated_at": "2026-06-20T09:36:57Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/21"
+      "url": "https://github.com/organvm/essay-pipeline/pull/21",
+      "evidence": "Green+mergeable billing PR (+565 billing.py); land last rebased onto #16; not blind-merged (live revenue path); commented.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#22": {
       "comments": 0,
       "created_at": "2026-06-20T09:54:26Z",
-      "disposition": "queued",
+      "disposition": "merged:ec9c7b13",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13565,12 +13631,14 @@
       "state": "open",
       "title": "[limen GEN-a-organvm-essay-pipeline-test-coverage-0620] Raise test coverage in a-organvm/essay-pipeline",
       "updated_at": "2026-06-20T09:54:26Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/22"
+      "url": "https://github.com/organvm/essay-pipeline/pull/22",
+      "evidence": "Admin-merged: schema/validator/drafter coverage + editorial fixtures.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#23": {
       "comments": 0,
       "created_at": "2026-07-06T02:16:28Z",
-      "disposition": "queued",
+      "disposition": "merged:954eb232",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13581,12 +13649,14 @@
       "state": "open",
       "title": "[limen HEAL-rebase-organvm-essay-pipeline-14] rebase/resolve conflicts on organvm/essay-pipeline#14",
       "updated_at": "2026-07-06T02:16:28Z",
-      "url": "https://github.com/organvm/essay-pipeline/pull/23"
+      "url": "https://github.com/organvm/essay-pipeline/pull/23",
+      "evidence": "Admin-merged: opencode agent-log rebase artifact (disjoint).",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/essay-pipeline#9": {
       "comments": 0,
       "created_at": "2026-06-10T22:11:50Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -13597,7 +13667,9 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-soon",
       "updated_at": "2026-06-10T22:11:50Z",
-      "url": "https://github.com/organvm/essay-pipeline/issues/9"
+      "url": "https://github.com/organvm/essay-pipeline/issues/9",
+      "evidence": "Activation audit: repo active; flagged branch-protection required-check `test` vs matrix `test (3.x)` as top ship-soon blocker.",
+      "last_touched": "2026-07-19T08:55:45Z"
     },
     "organvm/example-ai-collaboration#3": {
       "comments": 0,
@@ -15468,7 +15540,7 @@
     "organvm/growth-auditor#11": {
       "comments": 0,
       "created_at": "2026-06-21T17:31:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15479,12 +15551,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-i-theoria-growth-auditor-ci-green-0620] Make organvm-i-theoria/growth-auditor CI green",
       "updated_at": "2026-06-21T17:31:11Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/11"
+      "url": "https://github.com/organvm/growth-auditor/pull/11",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#12": {
       "comments": 0,
       "created_at": "2026-06-22T05:35:26Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15495,12 +15569,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-i-theoria-growth-auditor-ci-green-0620] Make organvm-i-theoria/growth-auditor CI green",
       "updated_at": "2026-06-22T05:35:26Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/12"
+      "url": "https://github.com/organvm/growth-auditor/pull/12",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#13": {
       "comments": 1,
       "created_at": "2026-06-22T19:28:07Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15511,12 +15587,14 @@
       "state": "open",
       "title": "[limen DISCOVER-organvm-growth-auditor] Discover the latent value of organvm/growth-auditor",
       "updated_at": "2026-06-22T19:28:11Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/13"
+      "url": "https://github.com/organvm/growth-auditor/pull/13",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#14": {
       "comments": 1,
       "created_at": "2026-06-24T04:40:13Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15527,12 +15605,14 @@
       "state": "open",
       "title": "discover: growth-auditor value thesis — promote to ranked tier",
       "updated_at": "2026-06-24T04:40:17Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/14"
+      "url": "https://github.com/organvm/growth-auditor/pull/14",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#15": {
       "comments": 1,
       "created_at": "2026-06-24T14:12:03Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15543,12 +15623,14 @@
       "state": "open",
       "title": "[limen GEN-organvm-i-theoria-growth-auditor-ci-green-0620] Make organvm-i-theoria/growth-auditor CI green",
       "updated_at": "2026-06-24T14:12:08Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/15"
+      "url": "https://github.com/organvm/growth-auditor/pull/15",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#16": {
       "comments": 0,
       "created_at": "2026-06-30T14:54:19Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15559,12 +15641,14 @@
       "state": "open",
       "title": "[limen CIFIX-organvm-i-theoria-growth-auditor] CIFIX organvm-i-theoria/growth-auditor: build-and-test",
       "updated_at": "2026-06-30T14:54:19Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/16"
+      "url": "https://github.com/organvm/growth-auditor/pull/16",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#17": {
       "comments": 0,
       "created_at": "2026-06-30T15:24:46Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15575,12 +15659,14 @@
       "state": "open",
       "title": "[limen RECOVER-CIFIX-organvm-i-theoria-growth-auditor] Recover closed PR task: CIFIX organvm-i-theoria/growth-auditor: build-and-test",
       "updated_at": "2026-06-30T15:24:46Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/17"
+      "url": "https://github.com/organvm/growth-auditor/pull/17",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#23": {
       "comments": 0,
       "created_at": "2026-07-08T06:25:43Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15591,12 +15677,14 @@
       "state": "open",
       "title": "Unblock repeated Playwright e2e failures on Limen CI repair PRs",
       "updated_at": "2026-07-08T06:25:43Z",
-      "url": "https://github.com/organvm/growth-auditor/issues/23"
+      "url": "https://github.com/organvm/growth-auditor/issues/23",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#24": {
       "comments": 0,
       "created_at": "2026-07-09T23:38:01Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15607,12 +15695,14 @@
       "state": "open",
       "title": "growth-auditor lifecycle checkpoint",
       "updated_at": "2026-07-09T23:38:01Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/24"
+      "url": "https://github.com/organvm/growth-auditor/pull/24",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#25": {
       "comments": 3,
       "created_at": "2026-07-12T16:11:03Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15623,12 +15713,14 @@
       "state": "open",
       "title": "fix(e2e): restore runtime contract",
       "updated_at": "2026-07-12T20:58:56Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/25"
+      "url": "https://github.com/organvm/growth-auditor/pull/25",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#26": {
       "comments": 0,
       "created_at": "2026-07-14T15:49:56Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15639,12 +15731,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-11-171607f7",
       "updated_at": "2026-07-14T15:49:56Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/26"
+      "url": "https://github.com/organvm/growth-auditor/pull/26",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#27": {
       "comments": 0,
       "created_at": "2026-07-14T15:49:57Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15655,12 +15749,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-11-ddbe8b4c",
       "updated_at": "2026-07-14T15:49:57Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/27"
+      "url": "https://github.com/organvm/growth-auditor/pull/27",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#28": {
       "comments": 0,
       "created_at": "2026-07-14T15:50:05Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15671,12 +15767,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-12-18efdd4f",
       "updated_at": "2026-07-14T15:50:05Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/28"
+      "url": "https://github.com/organvm/growth-auditor/pull/28",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#29": {
       "comments": 0,
       "created_at": "2026-07-14T15:50:07Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15687,12 +15785,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-13-1d41d80b",
       "updated_at": "2026-07-14T15:50:07Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/29"
+      "url": "https://github.com/organvm/growth-auditor/pull/29",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#3": {
       "comments": 0,
       "created_at": "2026-06-11T10:56:08Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15703,12 +15803,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: kill",
       "updated_at": "2026-06-11T10:56:08Z",
-      "url": "https://github.com/organvm/growth-auditor/issues/3"
+      "url": "https://github.com/organvm/growth-auditor/issues/3",
+      "evidence": "Main has mirror README/.env/ACTIVE seed; deploy config private/operator-gated; canonical Vercel URL returns 200.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#30": {
       "comments": 0,
       "created_at": "2026-07-14T15:50:09Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15719,12 +15821,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-13-bc0b11cc",
       "updated_at": "2026-07-14T15:50:09Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/30"
+      "url": "https://github.com/organvm/growth-auditor/pull/30",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#31": {
       "comments": 0,
       "created_at": "2026-07-15T12:45:16Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15735,12 +15839,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-14-87e185fb",
       "updated_at": "2026-07-15T12:45:16Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/31"
+      "url": "https://github.com/organvm/growth-auditor/pull/31",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#32": {
       "comments": 0,
       "created_at": "2026-07-15T12:45:18Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15751,12 +15857,14 @@
       "state": "open",
       "title": "[preserve] pr-16",
       "updated_at": "2026-07-15T12:45:18Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/32"
+      "url": "https://github.com/organvm/growth-auditor/pull/32",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#33": {
       "comments": 0,
       "created_at": "2026-07-15T12:45:20Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15767,12 +15875,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-16-abe0a1a2",
       "updated_at": "2026-07-15T12:45:20Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/33"
+      "url": "https://github.com/organvm/growth-auditor/pull/33",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#34": {
       "comments": 0,
       "created_at": "2026-07-15T12:45:22Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15783,12 +15893,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-16-f8bc94cb",
       "updated_at": "2026-07-15T12:45:22Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/34"
+      "url": "https://github.com/organvm/growth-auditor/pull/34",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#35": {
       "comments": 0,
       "created_at": "2026-07-15T12:45:24Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15799,12 +15911,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-17-05e37ea2",
       "updated_at": "2026-07-15T12:45:24Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/35"
+      "url": "https://github.com/organvm/growth-auditor/pull/35",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#36": {
       "comments": 0,
       "created_at": "2026-07-15T12:45:26Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15815,12 +15929,14 @@
       "state": "open",
       "title": "[preserve] limen/heal-cifix-organvm-growth-auditor-17-8da83fa9",
       "updated_at": "2026-07-15T12:45:26Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/36"
+      "url": "https://github.com/organvm/growth-auditor/pull/36",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#37": {
       "comments": 0,
       "created_at": "2026-07-17T16:54:28Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15831,12 +15947,14 @@
       "state": "open",
       "title": "chore(deps): bump undici from 7.25.0 to 7.28.0",
       "updated_at": "2026-07-17T16:54:29Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/37"
+      "url": "https://github.com/organvm/growth-auditor/pull/37",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#38": {
       "comments": 0,
       "created_at": "2026-07-17T16:54:41Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15847,12 +15965,14 @@
       "state": "open",
       "title": "chore(deps): bump dompurify from 3.4.5 to 3.4.12",
       "updated_at": "2026-07-17T16:54:42Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/38"
+      "url": "https://github.com/organvm/growth-auditor/pull/38",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#39": {
       "comments": 0,
       "created_at": "2026-07-17T16:54:44Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15863,12 +15983,14 @@
       "state": "open",
       "title": "chore(deps): bump js-yaml from 4.1.1 to 4.3.0",
       "updated_at": "2026-07-17T16:54:44Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/39"
+      "url": "https://github.com/organvm/growth-auditor/pull/39",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#40": {
       "comments": 0,
       "created_at": "2026-07-17T16:54:52Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15879,12 +16001,14 @@
       "state": "open",
       "title": "chore(deps-dev): bump vite, @vitejs/plugin-react and vitest",
       "updated_at": "2026-07-17T16:54:53Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/40"
+      "url": "https://github.com/organvm/growth-auditor/pull/40",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/growth-auditor#9": {
       "comments": 1,
       "created_at": "2026-06-19T13:35:12Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -15895,7 +16019,9 @@
       "state": "open",
       "title": "[limen GH-organvm-i-theoria-growth-auditor-3] ACTIVATION AUDIT: kill",
       "updated_at": "2026-06-19T16:10:12Z",
-      "url": "https://github.com/organvm/growth-auditor/pull/9"
+      "url": "https://github.com/organvm/growth-auditor/pull/9",
+      "evidence": "Green build but shared Playwright e2e suite drifted on main (old UI selectors); PR-agnostic CI failure; left open, commented.",
+      "last_touched": "2026-07-19T08:56:40Z"
     },
     "organvm/hierarchia-mundi#1": {
       "comments": 0,
