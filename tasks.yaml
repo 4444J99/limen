@@ -146960,3 +146960,4849 @@ tasks:
   depends_on: []
   created: '2026-07-19'
   dispatch_log: []
+- id: LIMEN-101
+  title: "Blocked Handoff Burn-down - 2026-07-13"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - devops
+  - blocked
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/785
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-102
+  title: "Blocked Handoff Burn-down - 2026-07-06"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - devops
+  - blocked
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/774
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-103
+  title: "Blocked Handoff Burn-down - 2026-06-29"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - devops
+  - blocked
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/748
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-104
+  title: "Blocked Handoff Burn-down - 2026-06-22"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - devops
+  - blocked
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/745
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-105
+  title: "Blocked Handoff Burn-down - 2026-06-15"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - devops
+  - blocked
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/702
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-106
+  title: "Blocked Handoff Burn-down - 2026-06-08"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - devops
+  - blocked
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/673
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-107
+  title: "Implement integration test suite for real database interactions"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/663
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-108
+  title: "Replace A/B/C plan branch labels with descriptive names"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/601
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-109
+  title: "premortem: extract sellable artifact + get paid in 30 days"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - business
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/598
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-110
+  title: "expansive inquiry: Styx revenue gap — why no money"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - business
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/597
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-111
+  title: "Priority tomorrow: full project-board review + cleanup"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - ops
+  - docs
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/569
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-112
+  title: "Create legal artifact appendices (FBO diagram, ToS markup, checklists)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - P2-post-beta
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/568
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-113
+  title: "Map Styx mechanics against DFS regulatory frameworks by state"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P2-post-beta
+  - research
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/567
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-114
+  title: "Resolve BIPA biometric data classification for wearable data"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - research
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/566
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-115
+  title: "Deepen FinCEN / money transmitter analysis for FBO structure"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - legal
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/565
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-116
+  title: "Produce 50-state skill-contest statutory survey"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - research
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/564
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-117
+  title: "Add adverse authority analysis section to whitepaper"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  - owner:legal-compliance
+  - legal
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/563
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-118
+  title: "Expand case law coverage to 15-25 cases in whitepaper and supporting docs"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - owner:legal-compliance
+  - research
+  - legal
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/562
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-119
+  title: "Authority layer — founder essay + beta safety/trust summary"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/561
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-120
+  title: "🏛 Phase Omega — Enterprise expansion (Delta→Omega gate)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - epic
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/558
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-121
+  title: "🏛 Phase Delta — Retention + network effects (Gamma→Delta gate)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - epic
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/557
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-122
+  title: "🏛 Phase Gamma — Proof integrity at scale (Beta→Gamma gate)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - epic
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/556
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-123
+  title: "🏛 Phase Beta — Market-safe money enablement (Alpha→Beta gate)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - epic
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/555
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-124
+  title: "Tests — bounds enforcement + UX state management"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/545
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-125
+  title: "API — validation + jurisdictional bounds lookup"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/544
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-126
+  title: "UI — stake amount selector + bounds enforcement"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/543
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-127
+  title: "Tests — toggle enforcement + state combinations"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/542
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-128
+  title: "Admin UI — state toggle management + audit trail"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/541
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-129
+  title: "Schema — per-state compliance flags + feature toggles"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/540
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-130
+  title: "Tests — calculation accuracy + edge cases"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/539
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-131
+  title: "UI — spike indicator + incentive display"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/538
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-132
+  title: "Schema + API — spike calculation + stake doubling logic"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/537
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-133
+  title: "Gate enforcement — security + DPA + demo readiness"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/536
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-134
+  title: "Checklist automation — enterprise infrastructure criteria"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/535
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-135
+  title: "Gate enforcement — legal + UX + performance criteria"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/534
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-136
+  title: "Checklist automation — App Store guidelines compliance"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/533
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-137
+  title: "Gate enforcement — settlement + compliance verification"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/532
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-138
+  title: "Checklist automation — financial readiness criteria"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/531
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-139
+  title: "Gate enforcement — CI integration + blocking status"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/530
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-140
+  title: "Checklist automation — readiness criteria check script"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/529
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-141
+  title: "Tests — copy validation + delivery confirmation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/528
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-142
+  title: "UI — notification display + acknowledgment flow"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/527
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-143
+  title: "Copy — linguistically safe notification templates"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/526
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-144
+  title: "Tests — baseline establishment + regression thresholds"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/525
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-145
+  title: "Fury Router queue saturation test suite"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/524
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-146
+  title: "Infrastructure — k6/artillery setup + test scenarios"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/523
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-147
+  title: "Tests — state transitions + timer accuracy"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/522
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-148
+  title: "UI — countdown display + pause/resume controls"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/521
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-149
+  title: "Schema + API — circuit breaker state machine + pause logic"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/520
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-150
+  title: "Tests — filter accuracy + moderation latency"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/519
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-151
+  title: "Admin UI — moderation dashboard + appeal flow"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/518
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-152
+  title: "API — content moderation queue + automated filtering"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/517
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-153
+  title: "Tests — tier transitions + escalation triggers"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/516
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-154
+  title: "UI — verification requirement display per tier"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/515
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-155
+  title: "Schema + API — tier definitions + escalation rules"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/514
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-156
+  title: "Tests — exclusion triggers + re-entry validation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/513
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-157
+  title: "UI — exclusion request flow + suspension status"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/512
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-158
+  title: "Schema + API — exclusion criteria + suspension logic"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/511
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-159
+  title: "Tests — taxonomy completeness + audit logging"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/510
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-160
+  title: "API — violation code CRUD + audit trail"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/509
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-161
+  title: "Schema — violation code definitions + rejection reasons"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/508
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-162
+  title: "Tests — conversion tracking + email delivery"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/507
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-163
+  title: "API — waitlist signup + confirmation email + source tagging"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - api
+  - P1-beta-enhancer
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/506
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-164
+  title: "Landing page — no-contact hero copy + waitlist CTA"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/505
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-165
+  title: "Tests — referral attribution + double-spend prevention"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/504
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-166
+  title: "UI — referral link generation + reward status"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/503
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-167
+  title: "Schema + API — referral tracking + reward distribution"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/502
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-168
+  title: "Tests — queue ordering + cohort fill triggers"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/501
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-169
+  title: "UI — waitlist position display + notification opt-in"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/500
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-170
+  title: "Schema + API — queue management + cohort threshold logic"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/499
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-171
+  title: "Tests — attestation flow + data integrity"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/498
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-172
+  title: "UI — daily attestation emotional input components"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/497
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-173
+  title: "Schema — emotional tracking fields (urge, trigger, outcome)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/496
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-174
+  title: "Tests — survey flow + statistical analysis pipeline"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/495
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-175
+  title: "UI — survey presentation + completion tracking"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/494
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-176
+  title: "Schema + API — survey definitions + response storage"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/493
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-177
+  title: "Tests — all 19 readiness criteria pass/fail"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/492
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-178
+  title: "CI integration — pre-deploy gate + status reporting"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/491
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-179
+  title: "Service scaffolding — NestJS module + 19 contract checks"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/490
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-180
+  title: "TKT-P1-015: Tests — slashing calculation + false positive safeguards"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/489
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-181
+  title: "TKT-P1-015: Admin UI — enforcement dashboard + evidence review"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/488
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-182
+  title: "TKT-P1-015: Schema + API — slashing rules + honey-trap triggers"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/487
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-183
+  title: "TKT-P1-008: Tests — routing fairness + collusion detection accuracy"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/486
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-184
+  title: "TKT-P1-008: Admin UI — cluster visualization + override controls"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/485
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-185
+  title: "TKT-P1-008: Schema + API — routing algorithm + cluster detection"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/484
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-186
+  title: "TKT-P1-014: Tests — masking rules + display fidelity"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/483
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-187
+  title: "TKT-P1-014: UI — masked display toggle + audit workbench"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/482
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-188
+  title: "TKT-P1-014: Schema — mask configuration + audit trail"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/481
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-189
+  title: "TKT-P1-013: Tests — upload flow + processing state machine"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/480
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-190
+  title: "TKT-P1-013: UI — upload progress + processing state display"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/479
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-191
+  title: "TKT-P1-013: API — video upload + processing pipeline"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/478
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-192
+  title: "TKT-P1-007: Tests — data sync accuracy + privacy compliance"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/477
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-193
+  title: "TKT-P1-007: UI — health data display + consent management"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/476
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-194
+  title: "TKT-P1-007: Native — HealthKit/Google Health Connect integration"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:mobile-native
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/475
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-195
+  title: "TKT-P1-009: Tests — exclusion enforcement + re-entry validation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/474
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-196
+  title: "TKT-P1-009: UI — self-exclusion flow + responsible-use settings"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/473
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-197
+  title: "TKT-P1-009: Schema + API — exclusion registry + cooling-off periods"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/472
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-198
+  title: "TKT-P1-019: Release gate — automated check before contest features"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/471
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-199
+  title: "TKT-P1-019: Legal review — counsel sign-off on classification"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/470
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-200
+  title: "TKT-P1-019: Whitepaper draft — skill-vs-chance legal argument"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/469
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-201
+  title: "TKT-P1-006: Tests — delivery confirmation + fallback scenarios"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/468
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-202
+  title: "TKT-P1-006: Native — APNs (iOS) + FCM (Android) integration"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:mobile-native
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/467
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-203
+  title: "TKT-P1-006: API — push notification dispatch + device registration"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/466
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-204
+  title: "TKT-P1-018: Tests — gradient math + leaderboard ranking"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/465
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-205
+  title: "TKT-P1-018: UI — dashboard visualization + real-time leaderboard"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/464
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-206
+  title: "TKT-P1-018: Schema + API — gradient calculation + leaderboard data"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/463
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-207
+  title: "TKT-P1-016: Tests — onboarding flow + oath persistence"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/462
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-208
+  title: "TKT-P1-016: UI — oath creation flow + identity confirmation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/461
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-209
+  title: "TKT-P1-016: Schema + API — oath storage + identity binding"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/460
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-210
+  title: "TKT-P1-010: Tests — progress calculation + UX state transitions"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/459
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-211
+  title: "TKT-P1-010: UI — progress visualization + downscale flow"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/458
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-212
+  title: "TKT-P1-010: Schema + API — progress tracking + downscale logic"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/457
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-213
+  title: "TKT-P1-017: Tests — protocol flow + notification delivery"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/456
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-214
+  title: "TKT-P1-017: UI — partner invitation + status dashboard"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/455
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-215
+  title: "TKT-P1-017: Schema + API — partner linking + notification triggers"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/454
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-216
+  title: "TKT-P1-012: Tests — multiplier calculation + edge cases"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/453
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-217
+  title: "TKT-P1-012: UI — multiplier indicator + schedule display"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/452
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-218
+  title: "TKT-P1-012: Schema + API — risk multiplier rules + schedule config"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/451
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-219
+  title: "TKT-P1-005: Tests — lockdown triggers + timelock expiry"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/450
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-220
+  title: "TKT-P1-005: UI — danger zone indicator + timelock countdown"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/449
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-221
+  title: "TKT-P1-005: Schema + API — lockdown rules + timelock enforcement"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels: []
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/448
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-222
+  title: "Governance: Promotion dashboard + audit trail"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/447
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-223
+  title: "Governance: Tier promotion criteria + gate checks"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/446
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-224
+  title: "Governance: Registry validation automation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/445
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-225
+  title: "Audit: Executive summary + priority action list"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/444
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-226
+  title: "Audit: Cross-reference gaps across tools + sessions"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/443
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-227
+  title: "Audit: Aggregate findings from all audit phases"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/442
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-228
+  title: "Audit: Completeness scoring + gap remediation plan"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/441
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-229
+  title: "Audit: Identify architectural gaps + missing integrations"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/440
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-230
+  title: "Audit: Map all modules → feature coverage matrix"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/439
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-231
+  title: "Audit: Generate remediation tickets for critical stubs"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/438
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-232
+  title: "Audit: Prioritize stubs by blast radius + phase relevance"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/437
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-233
+  title: "Audit: Scan codebase for TODO/FIXME/stub placeholders"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/436
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-234
+  title: "Agents: Integration tests — multi-agent routing"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/435
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-235
+  title: "Agents: Ops domain context + prompt engineering"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/434
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-236
+  title: "Agents: Product domain context + prompt engineering"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/433
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-237
+  title: "Agents: Finance domain context + prompt engineering"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/432
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-238
+  title: "Agents: Legal domain context + prompt engineering"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/431
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-239
+  title: "Gap analysis: Remediation plan + priority matrix"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/426
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-240
+  title: "Gap analysis: Growth & retention audit"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/425
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-241
+  title: "Gap analysis: Business model & metrics audit"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/424
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-242
+  title: "Gap analysis: Infrastructure & ops audit"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/423
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-243
+  title: "Ask Styx: Integration tests — E2E question→answer flow"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/422
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-244
+  title: "Thesis: Production pipeline (PDF build, citation check)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/418
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-245
+  title: "Thesis: Notation and symbol guide"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/417
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-246
+  title: "Thesis: BibTeX bibliography from 200+ citations"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/416
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-247
+  title: "Thesis: Directory structure + chapter scaffolding"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/415
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-248
+  title: "Guardrails: Tests — detection accuracy + false positive rate"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/414
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-249
+  title: "Guardrails: API — crisis event logging + escalation trigger"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/413
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-250
+  title: "Guardrails: Intervention flow — pause + resource display UI"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/412
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-251
+  title: "Guardrails: Crisis detection — keyword + pattern matching engine"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/411
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-252
+  title: "Forfeit: Legal — counsel sign-off on jurisdiction mode mapping"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  - owner:legal-compliance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/410
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-253
+  title: "Forfeit: Tests — payout matrix all configured states"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/409
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-254
+  title: "Forfeit: Admin UI — kill switch toggle + state mode display"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/408
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-255
+  title: "Forfeit: Kill switch — refund-only emergency override"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/407
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-256
+  title: "Forfeit: Policy engine — jurisdiction-aware disposition rules"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/406
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-257
+  title: "Geofence: Tests — all protected routes + regression suite"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/405
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-258
+  title: "Geofence: Compliance logging — decision audit trail"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/404
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-259
+  title: "Geofence: Admin UI — state matrix management screen"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/403
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-260
+  title: "Geofence: Middleware — fail-closed location enforcement"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/402
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-261
+  title: "Geofence: Policy registry — state availability matrix CRUD"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/401
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-262
+  title: "Settlement: Legal — FBO custody model counsel review"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  - owner:legal-compliance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/400
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-263
+  title: "Settlement: Tests — full deposit→stake→settle→withdraw flow"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/399
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-264
+  title: "Settlement: Reconciliation — automated Stripe vs internal check"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/398
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-265
+  title: "Settlement: Schema — transactions + ledger tables"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/397
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-266
+  title: "Settlement: API — deposit/withdrawal/settlement endpoints"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/396
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-267
+  title: "Settlement: Stripe Connect FBO account configuration"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/395
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-268
+  title: "Camera: Tests — capture flow + nonce challenge verification"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/394
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-269
+  title: "Camera: Schema — proof_submissions table + metadata"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/393
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-270
+  title: "Camera: API — proof submission endpoint + nonce validation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/392
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-271
+  title: "Camera: Native Swift module — photo/video capture with nonce"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  - owner:mobile-native
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/391
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-272
+  title: "KYC: Legal — counsel sign-off on verification requirements"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  - owner:legal-compliance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/390
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-273
+  title: "KYC: Tests — unit + integration for tier transitions"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/389
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-274
+  title: "KYC: UI — identity upload flow + stake tier display"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/388
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-275
+  title: "KYC: API — verification endpoint + progressive tier logic"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/387
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-276
+  title: "KYC: Schema — identity_verifications table + API types"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/386
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-277
+  title: "DevOps / SRE — part-time (if fundraise)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/385
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-278
+  title: "Enterprise Sales / BD — hiring (if fundraise)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:business-development
+  - enterprise
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/384
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-279
+  title: "Growth / Community Manager — hiring"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - marketing
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/383
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-280
+  title: "QA / Beta Coordinator — part-time hire"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/382
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-281
+  title: "Kotlin contractor — Android health data bridge"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:mobile-native
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/381
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-282
+  title: "Legal Counsel — retainer engagement"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/380
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-283
+  title: "Mobile Native Engineer (Swift) — contract sourcing"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:mobile-native
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/379
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-284
+  title: "App Store launch (public) — general availability"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:release-ops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/378
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-285
+  title: "App Store submission"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:release-ops
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/377
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-286
+  title: "Open beta expansion — 500+ users"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - marketing
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/376
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-287
+  title: "Real-money pilot — 10-25 users"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - legal
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/375
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-288
+  title: "Beta feedback synthesis + iteration cycle"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - product
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/374
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-289
+  title: "Seed user recruitment — creator outreach + first cohort admissions"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - owner:business-development
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/373
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-290
+  title: "TestFlight external beta — 50-100 users"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  - owner:release-ops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/372
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-291
+  title: "Support channel setup — email + Discord"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - support
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/371
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-292
+  title: "Monitoring + alerting setup — Sentry + uptime"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/370
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-293
+  title: "Internal dogfood beta — founders + 5-10 trusted people"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/369
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-294
+  title: "Seed deep agents for LEG, FIN, PRD, OPS departments"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/368
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-295
+  title: "Engage legal counsel (retainer)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/367
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-296
+  title: "Hire/contract mobile native engineer (Swift)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:mobile-native
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/366
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-297
+  title: "Apple Developer Account + TestFlight setup"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  - owner:release-ops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/365
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-298
+  title: "Enterprise pricing live — published tiers + billing"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - b2b
+  - enterprise
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/364
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-299
+  title: "First pilot onboarding — 1-3 practitioners"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - b2b
+  - owner:business-development
+  - enterprise
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/363
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-300
+  title: "Security questionnaire template — pre-filled answers"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - b2b
+  - owner:legal-compliance
+  - enterprise
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/362
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-301
+  title: "Enterprise demo environment — sandboxed Render instance"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - b2b
+  - enterprise
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/361
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-302
+  title: "Outreach sequence — 5-email cold outreach + LinkedIn"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - b2b
+  - owner:business-development
+  - enterprise
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/360
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-303
+  title: "Identify 50 target therapists/coaches — ICP definition"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - b2b
+  - enterprise
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/359
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-304
+  title: "In-app help / chatbot integration"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - support
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/358
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-305
+  title: "Churn signal detection — predictive patterns"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - support
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/357
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-306
+  title: "Onboarding email sequence — 7-day drip campaign"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - support
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/356
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-307
+  title: "FAQ / Help Center v1 — 10 help articles"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - support
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/355
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-308
+  title: "Support channel setup — email + Discord for beta"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - support
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/354
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-309
+  title: "Revenue reporting — MRR, churn, ARPU monthly report"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/353
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-310
+  title: "B2B pricing model — $49/$149/$349/$999+ tiers"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/352
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-311
+  title: "CAC/LTV tracking dashboard"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/351
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-312
+  title: "Financial reconciliation process — Stripe vs internal records"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/350
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-313
+  title: "Stripe production account setup — real-money switch"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/349
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-314
+  title: "Unit economics model v1 — $39 contract profitability"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/348
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-315
+  title: "Practitioner outreach — one-pager + first 15 outreach + demo loop"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - owner:business-development
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/347
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-316
+  title: "PR strategy for App Store launch — press kit + target list + narrative"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/346
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-317
+  title: "Referral loop — waitlist and cohort invite mechanic"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/345
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-318
+  title: "SEO demand capture — no-contact keywords + first 4 intent articles"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/344
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-319
+  title: "Social operating system — Jessica/Styx channel architecture + 30-day cadence"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/343
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-320
+  title: "Landing page + beta explainer funnel — no-contact conversion flow"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/342
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-321
+  title: "Audience map — early-user channels + first target lists"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - marketing
+  - follow-up
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/341
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-322
+  title: "Auto-scaling + cost alerting configuration"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  - owner:release-ops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/340
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-323
+  title: "Load testing — 5,000 concurrent users at scale"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/339
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-324
+  title: "APNs/FCM credential management — secure push notification keys"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  - owner:release-ops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/338
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-325
+  title: "CDN/WAF production config verification"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/337
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-326
+  title: "Load testing — 500 concurrent users simulation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/336
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-327
+  title: "Incident response runbook v1 — severity, escalation, rollback"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/335
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-328
+  title: "Database backup policy + tested restore procedure"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  - owner:release-ops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/334
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-329
+  title: "Render starter → production plan upgrade evaluation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  - owner:release-ops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/333
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-330
+  title: "Uptime monitoring setup — UptimeRobot/BetterUptime"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/332
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-331
+  title: "Enterprise UX audit — HR + coach dashboard usability"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - product
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/331
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-332
+  title: "Feature prioritization from analytics — data-driven backlog"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - product
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/330
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-333
+  title: "A/B test plan: onboarding variants"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - product
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/329
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-334
+  title: "User interview protocol — structured guide for 10 beta users"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - product
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/328
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-335
+  title: "Define beta success metrics — concrete targets"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - product
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/326
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-336
+  title: "Prize indemnity insurance evaluation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - owner:business-development
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/325
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-337
+  title: "Enterprise DPA template — Data Processing Agreement"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/324
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-338
+  title: "SOC 2 Type I audit initiation"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/323
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-339
+  title: "Partner authority disclosure review"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/322
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-340
+  title: "Reviewer sanctions + appeal rights policy"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/321
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-341
+  title: "Cross-jurisdictional consent matrix — data consent by state"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/320
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-342
+  title: "App Store UGC moderation policy document"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/319
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-343
+  title: "Skill-contest whitepaper draft + legal review"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/318
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-344
+  title: "State jurisdiction matrix sign-off — confirm legal US states"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/317
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-345
+  title: "Custody model sign-off — lawyer reviews FBO escrow structure"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/316
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-346
+  title: "Retain outside legal counsel — find and sign retainer"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P0-beta-blocker
+  - owner:legal-compliance
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/315
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-347
+  title: "feat: B2B orchestration panel — billing & scope management (F-DESKTOP-05)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - desktop
+  - P1-beta-enhancer
+  - b2b
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/314
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-348
+  title: "feat: Hash collider desktop tool wiring (F-DESKTOP-04)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - desktop
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/313
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-349
+  title: "feat: HR dashboard — role-based access & org authorization (F-WEB-03)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - b2b
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/312
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-350
+  title: "feat: State-by-state compliance toggle UI (F-LEGAL-03)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - api
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/310
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-351
+  title: "feat: Finish line spike — double-stake incentive (F-CORE-09)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/309
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-352
+  title: "feat: Ostrich effect detection (F-AEGIS-09)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P2-post-beta
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/308
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-353
+  title: "feat: RAIN mindfulness notifications (F-AEGIS-08)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P2-post-beta
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/307
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-354
+  title: "feat: Recovery protocol guardrails (F-AEGIS-04)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - api
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/306
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-355
+  title: "docs: SLA template & enterprise security posture"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enterprise
+  - docs
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/305
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-356
+  title: "docs: Marketing strategy, content calendar & PR plan"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - marketing
+  - docs
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/304
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-357
+  title: "docs: A/B testing framework & user research protocol"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - product
+  - docs
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/303
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-358
+  title: "docs: Incident response runbook & monitoring playbook"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - ops
+  - docs
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/302
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-359
+  title: "docs: KPI framework, MRR targets & unit economics dashboard"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - finance
+  - docs
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/301
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-360
+  title: "docs: GTM strategy & user acquisition plan"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - marketing
+  - docs
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/300
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-361
+  title: "hiring: Team building timeline (3 scenarios)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - hiring
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/299
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-362
+  title: "checklist: Enterprise sales readiness gate"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - ops
+  - enterprise
+  - checklist
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/298
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-363
+  title: "checklist: App Store launch readiness gate"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - legal
+  - ops
+  - checklist
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/297
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-364
+  title: "checklist: Real-money pilot readiness gate"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - ops
+  - finance
+  - checklist
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/296
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-365
+  title: "checklist: TestFlight Beta readiness gate"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - ops
+  - checklist
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/295
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-366
+  title: "milestone: Launch operations timeline (Mar-Dec 2026)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - milestone
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/294
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-367
+  title: "Enterprise Sales / B2B Department — Task Tracker"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - enterprise
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/293
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-368
+  title: "feat: Skill-contest whitepaper release gate (TKT-P1-019)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - blocked
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/292
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-369
+  title: "Customer Success Department — Task Tracker"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - support
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/291
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-370
+  title: "Finance & Revenue Department — Task Tracker"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - finance
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/290
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-371
+  title: "feat: Collusion slashing & honey-trap enforcement (TKT-P1-015)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/289
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-372
+  title: "Growth & Marketing Department — Task Tracker"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - marketing
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/288
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-373
+  title: "feat: Anti-collusion routing — admin cluster screen (TKT-P1-008)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/287
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-374
+  title: "Operations & Infrastructure Department — Task Tracker"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - ops
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/286
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-375
+  title: "Product & Design Department — Task Tracker"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - product
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/285
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-376
+  title: "feat: Fury audit masks — workbench masked display (TKT-P1-014)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/284
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-377
+  title: "Legal & Compliance Department — Task Tracker"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - legal
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/283
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-378
+  title: "feat: Video proof pipeline — processing state UI (TKT-P1-013)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/282
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-379
+  title: "feat: Health data bridge — native UI completion (TKT-P1-007)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - P1-beta-enhancer
+  - blocked
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/281
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-380
+  title: "feat: Self-exclusion & responsible-use runtime controls (TKT-P1-009)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - api
+  - P1-beta-enhancer
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/280
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-381
+  title: "feat: Forfeit disposition policy engine & refund-only kill switch (TKT-P0-011)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - api
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/279
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-382
+  title: "feat: Geofence fail-closed hardening & policy registry (TKT-P0-004)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - api
+  - P0-beta-blocker
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/278
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-383
+  title: "docs: draft FAQ v1 — 10 help articles with linguistic cloaker vocabulary"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - agent-context
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/274
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-384
+  title: "audit: UX flow audit — 5 critical flows (friction, safety, a11y, copy)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - audit
+  - agent-context
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/273
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-385
+  title: "devops: draft incident response runbook (severity, escalation, rollback)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - devops
+  - agent-context
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/272
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-386
+  title: "docs: draft App Store UGC moderation policy checklist"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - agent-context
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/271
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-387
+  title: "business: SEO keyword research for No-Contact recovery niche"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - agent-context
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/270
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-388
+  title: "business: build unit economics model ($39 consumer contract)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - agent-context
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/269
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-389
+  title: "business: define enterprise ICP (firmographics, psychographics, buying triggers)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - business
+  - agent-context
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/268
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-390
+  title: "feat: activate domain-expert agent contexts — epic tracker"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - artifact-dissection
+  - agent-context
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/267
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-391
+  title: "chore: audit + clean ephemeral tool result cache (27+ files across 3 project dirs)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - artifact-dissection
+  - cache-cleanup
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/265
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-392
+  title: "docs: create canonical E2G status matrix (suggestion -> status -> file ref)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - artifact-dissection
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/260
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-393
+  title: "docs: inventory all 7 E2G documents with overlap analysis"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - artifact-dissection
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/259
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-394
+  title: "docs: compile risk matrix + resource plan"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - business
+  - artifact-dissection
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/255
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-395
+  title: "docs: write executive summary PDF (2-3 pages)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - business
+  - artifact-dissection
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/254
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-396
+  title: "docs: create investor slide deck (10-15 slides)"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - business
+  - artifact-dissection
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/253
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-397
+  title: "docs: cross-reference gaps with doc-ingest-register"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - documentation
+  - artifact-dissection
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/252
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-398
+  title: "feat: generate implementation-ready ticket templates with API signatures"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: code
+  target_agent: claude
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  - artifact-dissection
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/251
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
+- id: LIMEN-399
+  title: "feat: parse 10 competitor deep-dive files for feature gaps"
+  repo: organvm/peer-audited--behavioral-blockchain
+  type: docs
+  target_agent: gemini
+  priority: medium
+  budget_cost: 1
+  status: open
+  labels:
+  - enhancement
+  - research
+  - artifact-dissection
+  urls:
+  - https://github.com/organvm/peer-audited--behavioral-blockchain/issues/250
+  context: 'Ingested via script'
+  depends_on: []
+  created: '2026-07-19'
+  dispatch_log: []
