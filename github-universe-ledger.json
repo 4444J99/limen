@@ -46509,7 +46509,7 @@
     "organvm/specvla-ergon--avditor-mvndi#10": {
       "comments": 0,
       "created_at": "2026-03-23T18:48:27Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46520,12 +46520,14 @@
       "state": "open",
       "title": "P2: Zero analytics events — PostHog wired but unused",
       "updated_at": "2026-03-23T18:48:27Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/10"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/10",
+      "evidence": "PostHog initial pageview only; no custom audit/pillar/compare/pricing/share events.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#11": {
       "comments": 0,
       "created_at": "2026-03-23T18:48:45Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46536,12 +46538,14 @@
       "state": "open",
       "title": "P2: Zero accessibility — no ARIA, no keyboard nav, no screen reader support",
       "updated_at": "2026-03-23T18:48:45Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/11"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/11",
+      "evidence": "Some ARIA exists; homepage lacks aria-expanded/focus-visible/reduced-motion WebGL fallback.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#12": {
       "comments": 0,
       "created_at": "2026-03-23T18:49:01Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46552,12 +46556,14 @@
       "state": "open",
       "title": "P2: OAuth providers not configured — Google/GitHub login dead",
       "updated_at": "2026-03-23T18:49:01Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/12"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/12",
+      "evidence": "OAuth providers exist in src/auth.ts; provider apps/secrets external.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#13": {
       "comments": 1,
       "created_at": "2026-03-23T18:49:30Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46568,12 +46574,14 @@
       "state": "open",
       "title": "P2: CLAUDE.md stale — references removed SQLite, wrong test count, old app name",
       "updated_at": "2026-03-25T02:37:06Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/13"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/13",
+      "evidence": "README current; CLAUDE docs still cite stale SQLite/better-sqlite3/test-count.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#14": {
       "comments": 0,
       "created_at": "2026-03-23T18:49:47Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46584,12 +46592,14 @@
       "state": "open",
       "title": "P3: PWA manifest + service worker for offline shell",
       "updated_at": "2026-03-23T18:49:47Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/14"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/14",
+      "evidence": "No public/manifest.json, service worker, or manifest link on main.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#15": {
       "comments": 0,
       "created_at": "2026-03-23T18:50:08Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46600,12 +46610,14 @@
       "state": "open",
       "title": "P3: Stripe/Resend/Sentry — payment, email, monitoring not configured",
       "updated_at": "2026-03-23T18:50:08Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/15"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/15",
+      "evidence": "Stripe/Resend/Sentry code paths exist; production secrets credential/operator-gated.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#16": {
       "comments": 0,
       "created_at": "2026-06-11T10:33:23Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46616,12 +46628,14 @@
       "state": "open",
       "title": "ACTIVATION AUDIT: ship-now",
       "updated_at": "2026-06-11T10:33:23Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/16"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/16",
+      "evidence": "Live /, /api/health, /pricing, /api/og 200; main green; deploy/homepage ownership operator-gated.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#34": {
       "comments": 0,
       "created_at": "2026-06-19T16:00:00Z",
-      "disposition": "queued",
+      "disposition": "superseded:src/lib/plans.ts",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46632,12 +46646,14 @@
       "state": "open",
       "title": "[limen REV-avditor-premium-tier] Launch a premium tier ($29–$99/mo) for the growth-audit platform",
       "updated_at": "2026-06-19T16:05:49Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/34"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/34",
+      "evidence": "Premium tiers already on main (plans/pricing/subscription/webhook); PR conflicting+red.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#4": {
       "comments": 0,
       "created_at": "2026-03-23T18:46:39Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46648,12 +46664,14 @@
       "state": "open",
       "title": "P0: Persistent database — Neon Postgres to replace in-memory Map",
       "updated_at": "2026-03-23T18:46:39Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/4"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/4",
+      "evidence": "Supabase durable path+migration exist; fallback in-memory Map when unconfigured.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#5": {
       "comments": 1,
       "created_at": "2026-03-23T18:46:57Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46664,12 +46682,14 @@
       "state": "open",
       "title": "P1: Fix E2E tests — stale selectors from pre-rebrand UI",
       "updated_at": "2026-03-24T00:42:55Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/5"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/5",
+      "evidence": "E2E specs exist; CI continue-on-error; local run missing Playwright browser.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#53": {
       "comments": 0,
       "created_at": "2026-07-03T03:29:11Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "pr",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46680,7 +46700,9 @@
       "state": "open",
       "title": "chore(deps): bump the npm-deps group across 1 directory with 29 updates",
       "updated_at": "2026-07-17T03:30:22Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/53"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/pull/53",
+      "evidence": "Dependabot group PR MERGEABLE/BLOCKED; lint fails on TS7/@typescript-eslint TypeError.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#54": {
       "comments": 0,
@@ -46703,7 +46725,7 @@
     "organvm/specvla-ergon--avditor-mvndi#6": {
       "comments": 0,
       "created_at": "2026-03-23T18:47:17Z",
-      "disposition": "queued",
+      "disposition": "distilled:src/lib/url-validator.ts",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46714,12 +46736,14 @@
       "state": "open",
       "title": "P1: SSRF validator incomplete — IPv6, file://, ftp:// bypass",
       "updated_at": "2026-03-23T18:47:17Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/6"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/6",
+      "evidence": "PR #55 merged aa6116d; blocks file://,ftp://,IPv6 loopback; 19 URL tests pass.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#7": {
       "comments": 0,
       "created_at": "2026-03-23T18:47:35Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46730,12 +46754,14 @@
       "state": "open",
       "title": "P1: Vercel auto-deploy disconnected — manual CLI only",
       "updated_at": "2026-03-23T18:47:35Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/7"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/7",
+      "evidence": "Live Vercel app healthy; deployments API 0; auto-deploy verification external.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#8": {
       "comments": 0,
       "created_at": "2026-03-23T18:47:54Z",
-      "disposition": "queued",
+      "disposition": "engaged",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46746,12 +46772,14 @@
       "state": "open",
       "title": "P1: No loading states, no not-found page, no middleware",
       "updated_at": "2026-03-23T18:47:54Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/8"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/8",
+      "evidence": "No loading.tsx/not-found.tsx/middleware.ts on main.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/specvla-ergon--avditor-mvndi#9": {
       "comments": 0,
       "created_at": "2026-03-23T18:48:09Z",
-      "disposition": "queued",
+      "disposition": "evolving",
       "first_seen": "2026-07-18T17:28:09Z",
       "kind": "issue",
       "last_seen": "2026-07-18T17:42:29Z",
@@ -46762,7 +46790,9 @@
       "state": "open",
       "title": "P2: SEO infrastructure — sitemap.ts, robots.ts, per-page metadata",
       "updated_at": "2026-03-23T18:48:09Z",
-      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/9"
+      "url": "https://github.com/organvm/specvla-ergon--avditor-mvndi/issues/9",
+      "evidence": "Layout/about metadata + /api/og exist; sitemap.ts/robots.ts/per-page metadata missing.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     },
     "organvm/speech-score-engine#1": {
       "comments": 1,
@@ -51101,6 +51131,15 @@
       "disposition": "merged:2abb383e",
       "evidence": "Shipped+merged: ci.yml Node 20->22 (wrangler needs >=22); verified lint/tsc/vitest 29-29/wrangler dry-run all green. Unblocked whole-repo CI.",
       "last_touched": "2026-07-19T09:02:27Z"
+    },
+    "organvm/specvla-ergon--avditor-mvndi#55": {
+      "repo": "organvm/specvla-ergon--avditor-mvndi",
+      "number": 55,
+      "kind": "pr",
+      "title": "",
+      "disposition": "merged:aa6116d54064bcfd8bcfbcca2ddcaa4741f953cb",
+      "evidence": "SSRF fix merged after green build/e2e/CodeQL + local lint/test/build.",
+      "last_touched": "2026-07-19T09:36:11.304602+00:00"
     }
   },
   "schema_version": "limen.github_universe_ledger.v1"
