@@ -80,7 +80,7 @@ jobs:
           except Exception as e:
               print(f"dashboard.json assemble error: {e}")
               raise
-          PY'
+          PY
 
       - name: Check hosting artifact privacy
         env:

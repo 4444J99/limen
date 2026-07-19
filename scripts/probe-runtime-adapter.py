@@ -6,6 +6,7 @@ import json
 import sys
 import urllib.error
 import urllib.parse
+import time
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,19 +43,27 @@ def request(base_url: str, path: str, token: str | None = None, method: str = "G
     if token:
         headers["Authorization"] = f"Bearer {token}"
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
-    try:
-        with urllib.request.urlopen(req, timeout=20) as res:
-            text = res.read().decode("utf-8")
-            return Response(res.status, json.loads(text) if text else {}, text)
-    except urllib.error.HTTPError as exc:
-        text = exc.read().decode("utf-8", errors="replace")
+    # One retry on 502/503: a cold Worker isolate can exceed its CPU budget parsing the
+    # board (Cloudflare error 1102) — the retry lands on a warmed isolate serving the
+    # sha-keyed parse cache. Anything else surfaces immediately.
+    for attempt in (1, 2):
         try:
-            payload = json.loads(text) if text else {}
-        except json.JSONDecodeError:
-            payload = {}
-        return Response(exc.code, payload, text)
-    except urllib.error.URLError as exc:
-        fail(f"{method} {url} could not connect: {exc.reason}")
+            with urllib.request.urlopen(req, timeout=20) as res:
+                text = res.read().decode("utf-8")
+                return Response(res.status, json.loads(text) if text else {}, text)
+        except urllib.error.HTTPError as exc:
+            text = exc.read().decode("utf-8", errors="replace")
+            try:
+                payload = json.loads(text) if text else {}
+            except json.JSONDecodeError:
+                payload = {}
+            if attempt == 1 and exc.code in (502, 503):
+                time.sleep(3)
+                continue
+            return Response(exc.code, payload, text)
+        except urllib.error.URLError as exc:
+            fail(f"{method} {url} could not connect: {exc.reason}")
+    raise AssertionError("unreachable")
 
 
 def assert_status(response: Response, expected: int, label: str) -> None:
