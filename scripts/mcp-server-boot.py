@@ -27,10 +27,12 @@ import argparse
 import json
 import os
 import re
+import select
 import shutil
 import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -203,11 +205,14 @@ def _probe_http(url: str, timeout: int) -> tuple[bool, str]:
 def _probe_stdio(server: dict, timeout: int) -> tuple[bool, str]:
     """Boots iff the command resolves AND the process starts without immediately crashing.
 
-    Layered so it catches the two real failure modes without depending on framing details:
-      1. binary unresolvable  -> FAIL  (github's old `docker run` on a Docker-less host)
-      2. process exits nonzero -> FAIL  (desktop-commander's corrupt-npx-cache crash)
-      3. stays alive + a JSON-RPC initialize reply -> BOOTS (handshake, the strong signal)
-      4. stays alive, no clean reply -> BOOTS (alive; some servers need real init — still not crashed)
+    Layered so it catches the real failure modes without depending on framing details, and
+    judges the handshake BEFORE the exit code (a server can handshake cleanly yet exit nonzero on
+    stdin-EOF — github-mcp-server does):
+      1. binary unresolvable                       -> FAIL  (github's old `docker run`, Docker-less host)
+      2. a JSON-RPC initialize reply arrives        -> BOOTS (handshake, the authoritative signal)
+      3. no reply, still alive at timeout           -> BOOTS (alive; some servers need a real init)
+      4. no reply, exited nonzero                   -> FAIL  (a real crash: corrupt-npx-cache, bad token)
+      5. no reply, exited clean (rc 0)              -> BOOTS (started, didn't crash)
     """
     command = server["command"]
     if not command:
@@ -248,15 +253,24 @@ def _probe_stdio(server: dict, timeout: int) -> tuple[bool, str]:
             proc.stdin.flush()
         except Exception:
             pass  # a server that closed stdin instantly is judged by its exit below
-        try:
-            out, _ = proc.communicate(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            # Alive past the timeout without crashing == booted (case 4).
-            return True, "boots (alive, no handshake within timeout)"
-        rc = proc.returncode
-        if rc is not None and rc != 0:
-            return False, f"exited rc={rc} on start"
-        for line in (out or "").splitlines():
+
+        # Read stdout for a JSON-RPC initialize reply while keeping stdin OPEN. Closing stdin
+        # (what communicate() does) makes servers that treat stdin-EOF as shutdown exit nonzero
+        # BEFORE they answer — github-mcp-server logs "server is closing: EOF" and exits rc=1 even
+        # though it handshakes cleanly when the pipe stays open. So a valid handshake is the
+        # authoritative BOOTS signal and is judged FIRST; a nonzero exit only fails when no
+        # handshake ever arrived (a real crash, e.g. desktop-commander's corrupt-npx-cache).
+        deadline = time.monotonic() + timeout
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            rlist, _, _ = select.select([proc.stdout], [], [], remaining)
+            if not rlist:
+                break  # nothing readable within the budget
+            line = proc.stdout.readline()
+            if line == "":
+                break  # stdout EOF — the process is done writing
             line = line.strip()
             if not line.startswith("{"):
                 continue
@@ -266,7 +280,14 @@ def _probe_stdio(server: dict, timeout: int) -> tuple[bool, str]:
                 continue
             if msg.get("id") == 1 and "result" in msg:
                 return True, "boots (initialize handshake ok)"
-        # Clean exit (rc 0) with no parseable reply — started, didn't crash.
+
+        # No handshake captured. Distinguish a still-alive server (needs a real init / slow to
+        # answer — case 4) from an actual crash, consulting the exit code only NOW.
+        rc = proc.poll()
+        if rc is None:
+            return True, "boots (alive, no handshake within timeout)"
+        if rc != 0:
+            return False, f"exited rc={rc} on start"
         return True, "boots (clean start, no handshake)"
     finally:
         if proc.poll() is None:
