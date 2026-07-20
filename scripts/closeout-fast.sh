@@ -100,10 +100,19 @@ fi
 
 step "Reconcile closeout claims (claimed-done vs ground truth)"
 if [[ "${LIMEN_SESSION_CLOSEOUT:-0}" == "1" ]]; then
-  python3 scripts/reconcile-closeouts.py --check
+  # OBSERVE is decoupled from ENFORCE. Observing (--check) always runs when the observe gate is
+  # armed; a finding hard-fails this closeout ONLY when the separate enforce gate is armed too. This
+  # lets the beat observe-live before the board's known false-closeouts clear, instead of forcing a
+  # choice between "blind" and "every closeout fails".
+  if [[ "${LIMEN_SESSION_CLOSEOUT_ENFORCE:-0}" == "1" ]]; then
+    python3 scripts/reconcile-closeouts.py --check
+  else
+    python3 scripts/reconcile-closeouts.py --check \
+      || printf '  (closeout-reconcile OBSERVE: findings above are advisory — set LIMEN_SESSION_CLOSEOUT_ENFORCE=1 to hard-fail)\n'
+  fi
 else
   python3 scripts/reconcile-closeouts.py --doctor >/dev/null \
-    && printf '  (closeout-reconcile dark; classifier OK — set LIMEN_SESSION_CLOSEOUT=1 to enforce --check)\n'
+    && printf '  (closeout-reconcile dark; classifier OK — set LIMEN_SESSION_CLOSEOUT=1 to observe, +_ENFORCE=1 to gate)\n'
 fi
 
 printf '\nFast closeout verification passed\n'
