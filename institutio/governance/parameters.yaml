@@ -195,6 +195,18 @@ parameters:
     self_update: none
     owner: vitals
     note: "Finite lease TTL for execution and heavy-surface admission. Bounded entrypoints refresh live leases; dead PID, PID-start mismatch, and TTL cleanup never signal or restart peers."
+  LIMEN_HOST_ADMISSION_OWNER:
+    default: ""
+    env: LIMEN_HOST_ADMISSION_OWNER
+    self_update: none
+    owner: vitals
+    note: "Optional stable caller label for the public host-admission CLI. Blank derives a private label from the parent process-start identity; the persisted label never contains a checkout path."
+  LIMEN_CODEX_PRETOOL_DENIAL_SUPPORTED:
+    default: "auto"
+    env: LIMEN_CODEX_PRETOOL_DENIAL_SUPPORTED
+    self_update: none
+    owner: vitals
+    note: "Startup compatibility escape hatch for Codex action admission. Auto probes the installed client's stable-hooks capability; true enables action-level PreToolUse denial and false retains the legacy one-root lock."
   LIMEN_HOST_ADMISSION_PROBE_TIMEOUT:
     default: 5
     env: LIMEN_HOST_ADMISSION_PROBE_TIMEOUT
@@ -857,11 +869,11 @@ parameters:
     owner: continuity
     note: "Honor the covenant standing grant (2026-07-09): clean+merged+idle worktree roots are pre-accepted for removal without a per-root ledger event. Set 0 to restore per-root human acceptance for that class (docs/removal-acceptance-covenant.md)."
   LIMEN_RECLAIM_PUSHED_OK:
-    default: "0"
+    default: "1"
     env: LIMEN_RECLAIM_PUSHED_OK
     self_update: none
     owner: continuity
-    note: "Pushed-reap escape hatch — DEFAULT OFF. The standing policy is merge-before-reap (pushed preservation is not closure), so a clean, idle, pushed-but-unmerged worktree is KEPT as not-merged-to-default (enacted by test_reclaim_keeps_clean_pushed_unmerged_branch). Set 1 to flip that class to reapable: reachable_from_remote ⇒ every byte is on origin and re-cloneable, so removing the local checkout loses zero work and the branch + its PR/babysitting lifecycle continue on origin. This is the opt-in lever that drains the pushed-but-unmerged backlog (the dominant boot-disk pin — hundreds of roots) toward the free-space target; classified clean+pushed+idle under the standing grant. Enabling it is an operator policy decision (it overrides merge-before-reap), homed as a lever, not defaulted on. The unpushed/dirty/active guardrails are unchanged — unpreserved work is NEVER reaped."
+    note: "Pushed-reap policy — DEFAULT ON. A clean, inactive worktree whose exact HEAD is reachable from a remote ref is disposable local cache: removing it loses zero work while the branch and PR lifecycle continue on the remote owner. Set 0 only for a bounded diagnostic hold. Dirty, unpushed, process-owned, or explicitly locked roots remain fail-closed."
   LIMEN_RECLAIM_ORPHANS:
     default: "1"
     env: LIMEN_RECLAIM_ORPHANS

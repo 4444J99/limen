@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
-"""Codex lifecycle adapter for Limen host admission.
-
-UserPromptSubmit can stop a second non-plan Codex root. PreToolUse is only an
-early warning because Codex does not currently support a hard tool denial in
-that event; guarded entrypoints acquire the authoritative heavy lease again.
-SubagentStart is advisory because Codex cannot block it. Stop does no broad
-scan: it releases the turn lease, with at most one lightweight closeout
-continuation when the runtime marks a first Stop pass.
-"""
+"""Action-level Codex admission for concurrent isolated worktrees."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -23,20 +14,19 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen.host_admission import AdmissionController, AdmissionStateError, is_descendant  # noqa: E402
-
-_HEAVY_COMMAND = re.compile(
-    r"""(?ix)
-    \b(
-      verify-whole(?:\.sh)? |
-      verify-scoped(?:\.sh)? |
-      governance-memory-cadence(?:\.py)? |
-      estate-closeout-audit(?:\.py)? |
-      npm\s+(?:ci|test|run\s+build) |
-      (?:python(?:3(?:\.\d+)?)?\s+-m\s+)?pytest(?:\s+-q)?\s*(?:$|(?:cli/)?tests/?(?:\s|$))
-    )
-    """
+from limen.codex_action_admission import (  # noqa: E402
+    action_denial_supported,
+    classify_action,
+    path_within,
+    target_paths,
 )
+from limen.host_admission import (  # noqa: E402
+    AdmissionController,
+    AdmissionStateError,
+    is_descendant,
+    worktree_scope,
+)
+
 _EXECUTION_TTL_SECONDS = 24 * 60 * 60
 
 
@@ -98,18 +88,22 @@ def _turn_owner(payload: dict[str, Any]) -> str | None:
     return _hash_label("codex-session", session_id) if session_id else None
 
 
-def _message(text: str, *, stop: bool = False) -> dict[str, Any]:
-    output: dict[str, Any] = {"systemMessage": text}
-    if stop:
-        output.update({"continue": False, "stopReason": text})
-    return output
+def _warning(text: str) -> dict[str, Any]:
+    return {"systemMessage": text}
 
 
-def _tool_command(payload: dict[str, Any]) -> str:
-    tool_input = payload.get("tool_input") or {}
-    if not isinstance(tool_input, dict):
-        return ""
-    return str(tool_input.get("command") or tool_input.get("cmd") or "")
+def _stop(text: str) -> dict[str, Any]:
+    return {"continue": False, "stopReason": text}
+
+
+def _tool_deny(text: str) -> dict[str, Any]:
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": text,
+        }
+    }
 
 
 def _needs_bounded_closeout(cwd: str) -> bool:
@@ -153,28 +147,17 @@ def _release_execution(
     *,
     owner: str,
     pid: int,
+    cwd: str,
 ) -> None:
+    try:
+        scope = worktree_scope(cwd)
+    except ValueError:
+        scope = None
+    if scope is not None and scope.linked:
+        controller.release_owned(scope.lease_kind, owner=owner, pid=pid)
+    # A client that failed the startup feature probe still owns the legacy
+    # machine-wide record. Exact owner/PID/start identity keeps this release safe.
     controller.release_owned("execution", owner=owner, pid=pid)
-
-
-def _ensure_execution(
-    controller: AdmissionController,
-    *,
-    owner: str | None,
-    pid: int,
-    permission_mode: str,
-) -> dict[str, Any] | None:
-    """Atomically refresh or reacquire a live non-plan turn lease."""
-
-    if owner is None or permission_mode == "plan":
-        return None
-    return controller.acquire(
-        "execution",
-        owner=owner,
-        surface="codex-active-event",
-        pid=pid,
-        ttl_seconds=_EXECUTION_TTL_SECONDS,
-    )
 
 
 def handle(
@@ -183,6 +166,7 @@ def handle(
     controller: AdmissionController | None = None,
     owner_pid: int | None = None,
     closeout_probe: Callable[[str], bool] = _needs_bounded_closeout,
+    feature_probe: Callable[[], bool] = action_denial_supported,
 ) -> dict[str, Any] | None:
     controller = controller or AdmissionController()
     event = str(payload.get("hook_event_name") or "")
@@ -194,7 +178,9 @@ def handle(
         if permission_mode == "plan":
             return None
         if owner is None:
-            return _message("Limen denied a non-plan Codex turn without a stable session identity.", stop=True)
+            return _stop("Limen denied a non-plan Codex turn without a stable session identity.")
+        if feature_probe():
+            return None
         decision = controller.acquire(
             "execution",
             owner=owner,
@@ -204,56 +190,55 @@ def handle(
         )
         if not decision["allowed"]:
             reasons = ",".join(decision.get("reasons") or ["execution-lease-held"])
-            return _message(
+            return _stop(
                 f"Limen denied this Codex turn: {reasons}. Finish or stop the current root first.",
-                stop=True,
             )
         return None
 
     if event == "PreToolUse":
-        turn_decision = _ensure_execution(
-            controller,
-            owner=owner,
-            pid=pid,
-            permission_mode=permission_mode,
-        )
-        if turn_decision is not None and not turn_decision["allowed"]:
-            reasons = ",".join(turn_decision.get("reasons") or ["execution-lease-held"])
-            return _message(
-                "Limen detected a conflicting Codex turn lease: "
-                + reasons
-                + ". Stop this root; guarded heavy entrypoints remain fail-closed."
-            )
-        command = _tool_command(payload)
-        if not _HEAVY_COMMAND.search(command):
+        action = classify_action(payload)
+        if action.category in {"observe", "sanctioned_control"}:
             return None
-        status = controller.status(probe=True)
-        heavy = next((item for item in status.get("leases") or [] if item.get("kind") == "heavy"), None)
-        inherited = bool(heavy and is_descendant(pid, int(heavy["pid"])))
-        reasons = list(status.get("reasons") or [])
-        if heavy and not inherited:
-            reasons.insert(0, "heavy-lease-held")
-        if reasons:
-            return _message(
-                "Limen host admission denied this heavy call: "
-                + ",".join(dict.fromkeys(reasons))
-                + ". The guarded entrypoint will fail closed; defer or use a narrow non-heavy predicate."
-            )
+        if action.category == "unguarded_heavy":
+            return _tool_deny(f"unguarded-heavy; use {action.equivalent}")
+        if action.category == "guarded_heavy":
+            status = controller.status(probe=True)
+            heavy = next((item for item in status.get("leases") or [] if item.get("kind") == "heavy"), None)
+            inherited = bool(heavy and is_descendant(pid, int(heavy["pid"])))
+            reasons = list(status.get("reasons") or [])
+            if heavy and not inherited:
+                reasons.insert(0, "heavy-lease-held")
+            if reasons:
+                return _tool_deny(",".join(dict.fromkeys(reasons)))
+            return None
+        if owner is None:
+            return _tool_deny("writer-session-identity-unavailable")
+        cwd = Path(str(payload.get("cwd") or "")).expanduser()
+        try:
+            scope = worktree_scope(cwd)
+        except ValueError as exc:
+            return _tool_deny(str(exc))
+        if not scope.linked:
+            return _tool_deny("shared-checkout-write")
+        targets = target_paths(payload, cwd)
+        if any(not path_within(path, scope.top_level) for path in targets):
+            return _tool_deny("write-target-outside-worktree")
+        decision = controller.acquire(
+            scope.lease_kind,
+            owner=owner,
+            surface="codex-worktree-write",
+            pid=pid,
+            ttl_seconds=_EXECUTION_TTL_SECONDS,
+        )
+        if not decision["allowed"]:
+            return _tool_deny(",".join(decision.get("reasons") or ["workspace-writer-lease-held"]))
         return None
 
     if event == "SubagentStart":
-        turn_decision = _ensure_execution(
-            controller,
-            owner=owner,
-            pid=pid,
-            permission_mode=permission_mode,
-        )
-        conflict = bool(turn_decision is not None and not turn_decision["allowed"])
-        conflict_note = " A conflicting execution lease is active; do not proceed with this child." if conflict else ""
         return {
             "systemMessage": (
-                "Limen subagent bounds: the parent execution family owns this turn; "
-                "max_threads=3, max_depth=1, and heavy entrypoints require the shared host lease." + conflict_note
+                "Limen subagent bounds: max_threads=3, max_depth=1; source writes require the "
+                "parent's linked-worktree writer scope and heavy entrypoints require the shared host lease."
             ),
             "hookSpecificOutput": {
                 "hookEventName": "SubagentStart",
@@ -271,21 +256,32 @@ def handle(
         first_stop = payload.get("stop_hook_active") is False
         if first_stop and closeout_probe(str(payload.get("cwd") or "")):
             try:
-                decision = _ensure_execution(
-                    controller,
-                    owner=owner,
-                    pid=pid,
-                    permission_mode=permission_mode,
+                scope = worktree_scope(str(payload.get("cwd") or ""))
+                owned = next(
+                    (
+                        lease
+                        for lease in controller.status(probe=False).get("leases") or []
+                        if lease.get("kind") == scope.lease_kind
+                        and lease.get("owner") == owner
+                        and int(lease.get("pid") or 0) == pid
+                    ),
+                    None,
                 )
             except AdmissionStateError:
-                decision = None
-            if decision is not None and decision["allowed"]:
-                return _message(
+                owned = None
+            except ValueError:
+                owned = None
+            if owned is not None:
+                return _stop(
                     "One bounded closeout pass remains: preserve named changes and leave a durable "
                     "owner receipt. Do not launch broad scans or full verification.",
-                    stop=True,
                 )
-        _release_execution(controller, owner=owner, pid=pid)
+        _release_execution(
+            controller,
+            owner=owner,
+            pid=pid,
+            cwd=str(payload.get("cwd") or ""),
+        )
         return None
 
     return None
@@ -300,10 +296,13 @@ def main() -> int:
         event = str(payload.get("hook_event_name") or "")
         output = handle(payload)
     except (AdmissionStateError, ValueError) as exc:
-        output = _message(
-            f"Limen host admission hook failed closed: {exc}",
-            stop=event == "UserPromptSubmit",
-        )
+        text = f"Limen host admission hook failed closed: {exc}"
+        if event == "UserPromptSubmit":
+            output = _stop(text)
+        elif event == "PreToolUse":
+            output = _tool_deny(text)
+        else:
+            output = _warning(text)
     if output is not None:
         print(json.dumps(output, separators=(",", ":")))
     return 0

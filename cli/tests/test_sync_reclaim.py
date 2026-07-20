@@ -6,8 +6,8 @@
     divergence still stays fail-open (never force-moved).
 
   scripts/reclaim-worktrees.py — reap provably-dead fleet worktrees (clean +
-    content-preserved-on-default + idle), while keeping dirty / unique-unpushed /
-    unmerged / recently-active ones.
+    content-preserved-on-a-remote + idle), while keeping dirty / unique-unpushed /
+    active-process-owned / recently-active ones.
 
 Both run as real subprocesses against throwaway git repos, so the actual shell/Python ships.
 """
@@ -383,9 +383,8 @@ def test_reclaim_keeps_dirty_unpushed_and_active(tmp_path):
     assert "dirty" in r.stdout and "unpushed-commits" in r.stdout and "active" in r.stdout
 
 
-def test_reclaim_keeps_clean_pushed_unmerged_branch(tmp_path):
-    # Merge-before-reap rule (2026-07-09): pushed preservation is not closure. The branch must
-    # merge before the local checkout is eligible for removal.
+def test_reclaim_reaps_clean_pushed_unmerged_branch_by_default(tmp_path):
+    # Remote custody is enough to rehydrate the clean branch; the local worktree is disposable.
     main, bare, wtroot = _wt_root_with(tmp_path)
     (main / "logs").mkdir(exist_ok=True)
 
@@ -398,12 +397,12 @@ def test_reclaim_keeps_clean_pushed_unmerged_branch(tmp_path):
     r = _run_reclaim(wtroot, main, apply=True)
 
     assert r.returncode == 0, r.stderr
-    assert branch.exists(), r.stdout
-    assert "not-merged-to-default" in r.stdout
+    assert not branch.exists(), r.stdout
+    assert "clean+pushed+idle" in r.stdout
 
 
-def test_reclaim_keeps_pushed_unmerged_without_escape_hatch(tmp_path):
-    # Pushed-but-unmerged worktrees are kept as not-merged-to-default.
+def test_reclaim_keeps_pushed_unmerged_when_pushed_reap_disabled(tmp_path):
+    # The explicit opt-out restores the conservative merged-only gate.
     main, bare, wtroot = _wt_root_with(tmp_path)
     (main / "logs").mkdir(exist_ok=True)
 
@@ -413,7 +412,12 @@ def test_reclaim_keeps_pushed_unmerged_without_escape_hatch(tmp_path):
     _git("push", "-q", "origin", "HEAD:feature-off", cwd=branch)
     _age(branch, 5)
 
-    r = _run_reclaim(wtroot, main, apply=True)
+    r = _run_reclaim(
+        wtroot,
+        main,
+        apply=True,
+        extra_env={"LIMEN_RECLAIM_PUSHED_OK": "0"},
+    )
 
     assert r.returncode == 0, r.stderr
     assert branch.exists(), r.stdout

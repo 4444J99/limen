@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ctypes
 import fcntl
+import hashlib
 import json
 import os
 import re
@@ -22,6 +23,7 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterator
@@ -31,12 +33,14 @@ from limen.vigilia import params
 STATE_SCHEMA = "limen.host_admission_state.v1"
 DECISION_SCHEMA = "limen.host_admission_decision.v1"
 LEASE_KINDS = frozenset({"execution", "heavy"})
+SCOPED_EXECUTION_RE = re.compile(r"^execution:[0-9a-f]{64}$")
 DENIED_EXIT = 3
 USAGE_EXIT = 64
 
 Clock = Callable[[], float]
 PidAlive = Callable[[int], bool]
 ProcessIdentity = Callable[[int], str | None]
+ProcessCwd = Callable[[int], Path | None]
 DescendantCheck = Callable[[int, int], bool]
 PressureProbe = Callable[[], dict[str, Any]]
 
@@ -83,6 +87,96 @@ class AdmissionDenied(RuntimeError):
     def __init__(self, decision: dict[str, Any]):
         self.decision = decision
         super().__init__(", ".join(decision.get("reasons") or ["host admission denied"]))
+
+
+@dataclass(frozen=True)
+class WorktreeScope:
+    """Canonical identity for one Git checkout; paths are never persisted."""
+
+    scope_hash: str
+    common_dir: Path
+    git_dir: Path
+    top_level: Path
+    linked: bool
+
+    @property
+    def lease_kind(self) -> str:
+        return f"execution:{self.scope_hash}"
+
+
+def _valid_lease_kind(kind: object) -> bool:
+    return isinstance(kind, str) and (kind in LEASE_KINDS or bool(SCOPED_EXECUTION_RE.fullmatch(kind)))
+
+
+def _is_execution_kind(kind: object) -> bool:
+    return isinstance(kind, str) and (kind == "execution" or bool(SCOPED_EXECUTION_RE.fullmatch(kind)))
+
+
+def worktree_scope(cwd: str | os.PathLike[str]) -> WorktreeScope:
+    """Resolve a stable linked-worktree scope, folding symlink aliases together."""
+
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(Path(cwd).expanduser()),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+                "--git-dir",
+                "--show-toplevel",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=1,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ValueError("workspace-scope-unavailable") from exc
+    rows = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    if result.returncode != 0 or len(rows) != 3:
+        raise ValueError("workspace-scope-unavailable")
+    try:
+        common_dir, git_dir, top_level = (Path(row).resolve(strict=True) for row in rows)
+    except OSError as exc:
+        raise ValueError("workspace-scope-unavailable") from exc
+    scope_hash = hashlib.sha256(f"{common_dir}\0{git_dir}".encode()).hexdigest()
+    return WorktreeScope(
+        scope_hash=scope_hash,
+        common_dir=common_dir,
+        git_dir=git_dir,
+        top_level=top_level,
+        linked=git_dir != common_dir,
+    )
+
+
+def process_cwd(pid: int) -> Path | None:
+    """Resolve a live process cwd without treating failure as stale authority."""
+
+    try:
+        return Path(f"/proc/{pid}/cwd").resolve(strict=True)
+    except OSError:
+        pass
+    try:
+        result = subprocess.run(
+            ["lsof", "-a", "-p", str(pid), "-d", "cwd", "-Fn"],
+            capture_output=True,
+            text=True,
+            timeout=0.5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    for line in result.stdout.splitlines():
+        if line.startswith("n") and len(line) > 1:
+            try:
+                return Path(line[1:]).resolve(strict=True)
+            except OSError:
+                return None
+    return None
 
 
 def _iso(epoch: float) -> str:
@@ -433,6 +527,7 @@ class AdmissionController:
         clock: Clock = time.time,
         alive: PidAlive = pid_is_alive,
         identity: ProcessIdentity = process_identity,
+        process_cwd_probe: ProcessCwd = process_cwd,
         descendant: DescendantCheck = is_descendant,
         pressure_probe: PressureProbe = collect_pressure,
         thresholds: dict[str, float] | None = None,
@@ -441,6 +536,7 @@ class AdmissionController:
         self.clock = clock
         self.alive = alive
         self.identity = identity
+        self.process_cwd_probe = process_cwd_probe
         self.descendant = descendant
         self.pressure_probe = pressure_probe
         self.thresholds = thresholds or _thresholds()
@@ -515,7 +611,7 @@ class AdmissionController:
         try:
             return bool(
                 lease.get("lease_id")
-                and lease.get("kind") in LEASE_KINDS
+                and _valid_lease_kind(lease.get("kind"))
                 and lease.get("owner")
                 and lease.get("surface")
                 and int(pid) > 0
@@ -662,8 +758,8 @@ class AdmissionController:
         pid: int,
         ttl_seconds: int | None = None,
     ) -> dict[str, Any]:
-        if kind not in LEASE_KINDS:
-            raise ValueError(f"kind must be one of {sorted(LEASE_KINDS)}")
+        if not _valid_lease_kind(kind):
+            raise ValueError("kind must be execution, heavy, or execution:<sha256>")
         owner = _bounded_label(owner, "owner")
         surface = _bounded_label(surface, "surface")
         if pid <= 0:
@@ -682,7 +778,42 @@ class AdmissionController:
             state = self._load()
             reaped = self._cleanup(state, now)
             state["pressure"] = self._complete_pressure(observed, state.get("pressure"), now)
-            current = next((lease for lease in state["leases"] if lease["kind"] == kind), None)
+            if SCOPED_EXECUTION_RE.fullmatch(kind):
+                legacy = next((lease for lease in state["leases"] if lease["kind"] == "execution"), None)
+                if legacy is not None:
+                    same_owner = (
+                        legacy["owner"] == owner
+                        and int(legacy["pid"]) == pid
+                        and legacy["process_identity"] == identity
+                    )
+                    if same_owner:
+                        legacy["kind"] = kind
+                    else:
+                        legacy_pid = int(legacy["pid"])
+                        legacy_cwd = self.process_cwd_probe(legacy_pid)
+                        legacy_identity = self.identity(legacy_pid)
+                        try:
+                            legacy_scope = worktree_scope(legacy_cwd) if legacy_cwd is not None else None
+                        except ValueError:
+                            legacy_scope = None
+                        if legacy_identity != legacy["process_identity"] or legacy_scope is None:
+                            self._write(state)
+                            return self._decision(
+                                "acquire",
+                                allowed=False,
+                                reasons=["legacy-execution-scope-unproven"],
+                                state=state,
+                                lease=legacy,
+                                reaped=reaped,
+                            )
+                        legacy["kind"] = legacy_scope.lease_kind
+            if kind == "execution":
+                current = next(
+                    (lease for lease in state["leases"] if _is_execution_kind(lease["kind"])),
+                    None,
+                )
+            else:
+                current = next((lease for lease in state["leases"] if lease["kind"] == kind), None)
             if current is not None:
                 same_owner = (
                     current["owner"] == owner and int(current["pid"]) == pid and current["process_identity"] == identity
@@ -713,10 +844,13 @@ class AdmissionController:
                         reaped=reaped,
                     )
                 self._write(state)
+                held_reason = (
+                    "workspace-writer-lease-held" if SCOPED_EXECUTION_RE.fullmatch(kind) else f"{kind}-lease-held"
+                )
                 return self._decision(
                     "acquire",
                     allowed=False,
-                    reasons=[f"{kind}-lease-held"],
+                    reasons=[held_reason],
                     state=state,
                     lease=current,
                     reaped=reaped,
@@ -853,8 +987,8 @@ class AdmissionController:
     def release_owned(self, kind: str, *, owner: str, pid: int) -> dict[str, Any]:
         """Atomically release this owner's lease without a prior status scan."""
 
-        if kind not in LEASE_KINDS:
-            raise ValueError(f"kind must be one of {sorted(LEASE_KINDS)}")
+        if not _valid_lease_kind(kind):
+            raise ValueError("kind must be execution, heavy, or execution:<sha256>")
         owner = _bounded_label(owner, "owner")
         if pid <= 0:
             raise ValueError("pid must be positive")

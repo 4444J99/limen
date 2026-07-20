@@ -90,6 +90,7 @@ REGENERABLE_DIRS = set(
 )
 REGENERABLE_SUFFIXES = (".pyc", ".pyo")
 REGENERABLE_FILES = {".DS_Store"}
+_ACTIVE_PROCESS_CWDS: dict[Path, int] = {}
 
 # Non-interactive git: fail (→ fail-safe KEEP) rather than block on a credential/GUI prompt.
 _GIT_ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
@@ -124,6 +125,55 @@ def _run(args: list[str], cwd: Path | None = None) -> str:
         ).stdout.strip()
     except Exception:
         return ""
+
+
+def active_process_cwds() -> dict[Path, int]:
+    """Return observable process cwd roots; an unavailable probe fails closed."""
+    observed: dict[Path, int] = {}
+    proc = Path("/proc")
+    if proc.is_dir():
+        for entry in proc.iterdir():
+            if not entry.name.isdigit():
+                continue
+            try:
+                observed[(entry / "cwd").resolve(strict=True)] = int(entry.name)
+            except (OSError, ValueError):
+                continue
+        return observed
+    try:
+        result = subprocess.run(
+            ["lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return {Path("/"): -1}
+    pid: int | None = None
+    for line in result.stdout.splitlines():
+        if line.startswith("p"):
+            try:
+                pid = int(line[1:])
+            except ValueError:
+                pid = None
+        elif line.startswith("n/") and pid is not None:
+            try:
+                observed[Path(line[1:]).resolve()] = pid
+            except OSError:
+                continue
+    return observed
+
+
+def active_process_owner(repo: Path) -> int | None:
+    try:
+        root = repo.resolve()
+    except OSError:
+        return -1
+    for cwd, pid in _ACTIVE_PROCESS_CWDS.items():
+        if pid == -1 or cwd == root or root in cwd.parents:
+            return pid
+    return None
 
 
 def load_clone_reap_acceptance() -> list[dict]:
@@ -272,6 +322,9 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     sp = str(rp)
     if rp == LIMEN_ROOT or LIMEN_ROOT == rp:
         return Verdict(False, "live-root")
+    owner_pid = active_process_owner(repo)
+    if owner_pid is not None:
+        return Verdict(False, f"active-process-cwd:{owner_pid}")
     if any(m in sp + "/" for m in EXCLUDE_MARKERS):
         return Verdict(False, "excluded-root")
     # STANDALONE clone only: a registered worktree has a .git FILE, not a directory — leave those to
@@ -444,6 +497,7 @@ def discover_clones(workspace: Path, maxdepth: int) -> list[Path]:
 
 
 def main() -> int:
+    global _ACTIVE_PROCESS_CWDS
     ap = argparse.ArgumentParser(description="Reap pure pushed-mirror clones (loss-free).")
     ap.add_argument("--apply", action="store_true", help="actually remove (default: dry-run)")
     ap.add_argument(
@@ -456,6 +510,7 @@ def main() -> int:
     ap.add_argument("--no-pressure", dest="pressure", action="store_false", help="force pressure OFF regardless of df")
     ap.add_argument("--max", type=int, default=int(os.environ.get("LIMEN_REAP_MAX", "50")))
     args = ap.parse_args()
+    _ACTIVE_PROCESS_CWDS = active_process_cwds()
 
     idle_days = float(os.environ.get("LIMEN_REAP_IDLE_DAYS", "2"))
     high_water = float(os.environ.get("LIMEN_DISK_HIGH_WATER", "85"))

@@ -340,6 +340,26 @@ def test_reclaim_reaps_pushed_unmerged_when_pushed_ok(tmp_path: Path, monkeypatc
     assert grant == "standing-grant-2026-07-09"
 
 
+def test_reclaim_defaults_to_pushed_remote_custody(monkeypatch) -> None:
+    monkeypatch.delenv("LIMEN_RECLAIM_PUSHED_OK", raising=False)
+    reclaim = load_reclaim_worktrees()
+
+    assert reclaim.PUSHED_OK is True
+
+
+def test_reclaim_keeps_root_owned_by_live_process(tmp_path: Path, monkeypatch) -> None:
+    reclaim = load_reclaim_worktrees()
+    repo = _committed_repo(tmp_path, "live-process-root")
+    nested_cwd = repo / "src"
+    nested_cwd.mkdir()
+    monkeypatch.setattr(reclaim, "_ACTIVE_PROCESS_CWDS", {nested_cwd.resolve(): 4242})
+
+    action, reason = reclaim.classify(repo, time.time(), 0)
+
+    assert action == "skip"
+    assert reason == "active-process-cwd:4242"
+
+
 def test_reclaim_keeps_pushed_unmerged_when_pushed_ok_off(tmp_path: Path, monkeypatch) -> None:
     # With the push-first rule off, the conservative merged-only gate is restored: a pushed-but-
     # unmerged root is kept, exactly as before. The reversibility guardrail for the standing grant.

@@ -1,5 +1,6 @@
-import os
+import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -16,6 +17,7 @@ from limen.doctor import (
 from limen.conduct.cli import conduct_group
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.harvest import harvest_results
+from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
 from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
 from limen.progress import build_progress_snapshot, render_progress
 from limen.status import print_status
@@ -59,6 +61,104 @@ def main():
 
 
 main.add_command(conduct_group)
+
+
+def _host_owner() -> tuple[str, int]:
+    pid = os.getppid()
+    label = os.environ.get("LIMEN_HOST_ADMISSION_OWNER") or os.environ.get("LIMEN_SESSION_ID")
+    if not label:
+        identity = process_identity(pid) or str(pid)
+        label = f"limen-cli-{hashlib.sha256(identity.encode()).hexdigest()[:24]}"
+    return label, pid
+
+
+def _emit_host_decision(decision: dict, *, json_output: bool) -> None:
+    if json_output:
+        click.echo(json.dumps(decision, indent=2, sort_keys=True))
+        return
+    state = "allowed" if decision.get("allowed") else "denied"
+    reasons = ",".join(decision.get("reasons") or [])
+    suffix = f" ({reasons})" if reasons else ""
+    click.echo(f"host-admission {decision.get('operation')}: {state}{suffix}")
+
+
+@click.group("host-admission")
+def host_admission_group():
+    """Inspect or mutate the machine-wide writer/heavy lease store."""
+
+
+@host_admission_group.command("acquire")
+@click.argument("kind", type=click.Choice(["execution", "heavy"]))
+@click.option("--cwd", type=click.Path(path_type=Path), default=None)
+@click.option("--json", "json_output", is_flag=True)
+def host_admission_acquire(kind: str, cwd: Path | None, json_output: bool) -> None:
+    owner, pid = _host_owner()
+    controller = AdmissionController()
+    try:
+        if kind == "execution":
+            scope = worktree_scope(cwd or Path.cwd())
+            if not scope.linked:
+                decision = {
+                    "schema": "limen.host_admission_decision.v1",
+                    "operation": "acquire",
+                    "allowed": False,
+                    "reasons": ["shared-checkout-write"],
+                    "lease": None,
+                    "leases": controller.status(probe=False).get("leases") or [],
+                }
+            else:
+                decision = controller.acquire(
+                    scope.lease_kind,
+                    owner=owner,
+                    surface="limen-host-admission-cli",
+                    pid=pid,
+                )
+        else:
+            decision = controller.acquire(kind, owner=owner, surface="limen-host-admission-cli", pid=pid)
+    except (AdmissionStateError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_host_decision(decision, json_output=json_output)
+    if not decision.get("allowed"):
+        raise click.exceptions.Exit(3)
+
+
+@host_admission_group.command("status")
+@click.option("--cwd", type=click.Path(path_type=Path), default=None)
+@click.option("--json", "json_output", is_flag=True)
+def host_admission_status(cwd: Path | None, json_output: bool) -> None:
+    controller = AdmissionController()
+    try:
+        decision = controller.status(probe=True)
+        if cwd is not None:
+            scope = worktree_scope(cwd)
+            decision["scope"] = {
+                "scope_hash": scope.scope_hash,
+                "linked": scope.linked,
+                "writer_held": any(lease.get("kind") == scope.lease_kind for lease in decision.get("leases") or []),
+            }
+    except (AdmissionStateError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_host_decision(decision, json_output=json_output)
+
+
+@host_admission_group.command("release")
+@click.argument("kind", type=click.Choice(["execution", "heavy"]))
+@click.option("--cwd", type=click.Path(path_type=Path), default=None)
+@click.option("--json", "json_output", is_flag=True)
+def host_admission_release(kind: str, cwd: Path | None, json_output: bool) -> None:
+    owner, pid = _host_owner()
+    controller = AdmissionController()
+    try:
+        lease_kind = worktree_scope(cwd or Path.cwd()).lease_kind if kind == "execution" else kind
+        decision = controller.release_owned(lease_kind, owner=owner, pid=pid)
+    except (AdmissionStateError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_host_decision(decision, json_output=json_output)
+    if not decision.get("allowed"):
+        raise click.exceptions.Exit(3)
+
+
+main.add_command(host_admission_group)
 
 
 @main.command()

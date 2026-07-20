@@ -7,10 +7,10 @@ accumulate (the dispatch root hit 91 dirs / 3.4 GB; the interactive root leaked 
 those:
 
   • clean working tree (no uncommitted or untracked changes), AND
-  • HEAD/content is already merged into the remote default branch, every local patch is equivalent
-    to default, or a clean+idle preservation receipt proves the PR is merged with no private patch
-    marker, AND
+  • HEAD/content is reachable from a remote ref, already merged into the remote default branch,
+    patch-equivalent to default, or covered by a preservation receipt, AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
+  • no live process has its current directory inside the candidate root.
   • --apply also requires a matching human acceptance/redaction/archive event in
     docs/worktree-reclaim-acceptance.jsonl immediately before physical removal.
 
@@ -141,6 +141,7 @@ GENERATED_CLEAN_PATHS = (
     ".turbo",
     "__pycache__",
 )
+_ACTIVE_PROCESS_CWDS: dict[Path, int] = {}
 
 # Never reap the live checkout nor the worktree this process is running from (else we yank
 # the rug from under an active session). Resolved once; classify() honors it as a HARD skip.
@@ -176,6 +177,57 @@ def active_async_task_prefixes() -> set[str]:
 def active_async_root(d: Path, active_prefixes: set[str]) -> bool:
     name = d.name.lower()
     return any(name.startswith(prefix) for prefix in active_prefixes)
+
+
+def active_process_cwds() -> dict[Path, int]:
+    """Return observable process cwd roots; an unavailable probe fails closed."""
+    observed: dict[Path, int] = {}
+    proc = Path("/proc")
+    if proc.is_dir():
+        for entry in proc.iterdir():
+            if not entry.name.isdigit():
+                continue
+            try:
+                observed[(entry / "cwd").resolve(strict=True)] = int(entry.name)
+            except (OSError, ValueError):
+                continue
+        return observed
+    try:
+        result = subprocess.run(
+            ["lsof", "-n", "-a", "-d", "cwd", "-Fpn"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return {Path("/"): -1}
+    pid: int | None = None
+    for line in result.stdout.splitlines():
+        if line.startswith("p"):
+            try:
+                pid = int(line[1:])
+            except ValueError:
+                pid = None
+        elif line.startswith("n/") and pid is not None:
+            try:
+                observed[Path(line[1:]).resolve()] = pid
+            except OSError:
+                continue
+    return observed
+
+
+def active_process_owner(d: Path) -> int | None:
+    try:
+        root = d.resolve()
+    except OSError:
+        return -1
+    for cwd, pid in _ACTIVE_PROCESS_CWDS.items():
+        if pid == -1:
+            return -1
+        if cwd == root or root in cwd.parents:
+            return pid
+    return None
 
 
 def has_generated_payload(d: Path) -> bool:
@@ -314,17 +366,13 @@ def load_reclaim_acceptance():
 
 
 STANDING_ACCEPTANCE = os.environ.get("LIMEN_RECLAIM_STANDING_ACCEPTANCE", "1") != "0"
-# PUSHED-REAP ESCAPE HATCH (LIMEN_RECLAIM_PUSHED_OK, declared in parameters.yaml). DEFAULT OFF —
-# the standing policy is merge-before-reap: pushed preservation is not closure, so a pushed-but-
-# unmerged worktree is KEPT as "not-merged-to-default" (enacted by test_reclaim_keeps_clean_pushed_
-# unmerged_branch — the executable predicate wins over any aspirational default). This env is the
-# opt-in lever that flips that class to reapable: when set, a clean, idle worktree whose HEAD is
+# PUSHED-REAP POLICY (LIMEN_RECLAIM_PUSHED_OK, declared in parameters.yaml). DEFAULT ON —
+# a clean, inactive worktree whose HEAD is
 # reachable from any remote ref (reachable_from_remote ⇒ every byte on origin, re-cloneable) is
 # reaped as clean+pushed+idle — removing only the disposable LOCAL checkout; the branch and its
-# PR/babysitting lifecycle continue on origin. This is how the pushed-but-unmerged backlog (the
-# dominant boot-disk pin — hundreds of roots) drains toward the free-space target when the operator
-# elects it. The unpushed/dirty/active guardrails are unchanged — unpreserved work is NEVER reaped.
-PUSHED_OK = os.environ.get("LIMEN_RECLAIM_PUSHED_OK", "0") != "0"
+# PR/babysitting lifecycle continue on origin. Set 0 only for a bounded diagnostic hold. The
+# unpushed/dirty/active guardrails are unchanged — unpreserved work is NEVER reaped.
+PUSHED_OK = os.environ.get("LIMEN_RECLAIM_PUSHED_OK", "1") != "0"
 # Operator standing grant (2026-07-09, docs/removal-acceptance-covenant.md §Standing grant):
 # the loss-free class — clean tree + idle past min-age + preserved on the remote (merged into the
 # default, patch-equivalent to it, a merged-PR receipt, or pushed-but-unmerged per PUSHED_OK) — is
@@ -509,6 +557,9 @@ def classify(d: Path, now: float, min_age_h: float, preservation_receipts=None, 
             return "skip", "self/live-checkout"
     except Exception:
         return "skip", "unresolved"
+    owner_pid = active_process_owner(d)
+    if owner_pid is not None:
+        return "skip", f"active-process-cwd:{owner_pid}"
     if inside_agy_scratch_root(d):
         return "skip", "antigravity-scratch-uses-bridge-acceptance"
     if git(["rev-parse", "--is-inside-work-tree"], d).returncode != 0:
@@ -594,6 +645,7 @@ def persist_apply_receipt(
 
 
 def main():
+    global _ACTIVE_PROCESS_CWDS
     if HELP:
         print(
             "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] [--generated-only]\n\n"
@@ -607,6 +659,7 @@ def main():
     if not targets:
         print("reclaim: no worktree roots present — nothing to do")
         return 0
+    _ACTIVE_PROCESS_CWDS = active_process_cwds()
     # self-throttle (skip silently if run recently, unless --force or dry-run inspection)
     if APPLY and not FORCE and MARKER.exists():
         if (time.time() - MARKER.stat().st_mtime) / 60.0 < EVERY_MIN:

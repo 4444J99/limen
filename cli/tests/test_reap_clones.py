@@ -118,6 +118,18 @@ def test_active_task_repo_is_kept(tmp_path):
     assert v.reason == "active-task"
 
 
+def test_process_owned_repo_is_kept(tmp_path, monkeypatch):
+    clone = _init_origin_and_clone(tmp_path, "process-owned")
+    nested_cwd = clone / "src"
+    nested_cwd.mkdir()
+    monkeypatch.setattr(reap, "_ACTIVE_PROCESS_CWDS", {nested_cwd.resolve(): 4242})
+
+    v = _verdict(clone, age_days=99, pressure=True)
+
+    assert v.reap is False
+    assert v.reason == "active-process-cwd:4242"
+
+
 def test_core_repo_is_kept(tmp_path, monkeypatch):
     clone = _init_origin_and_clone(tmp_path, "coremerepo")
     monkeypatch.setattr(reap, "CORE", {"coremerepo"})

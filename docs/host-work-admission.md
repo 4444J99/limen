@@ -7,27 +7,30 @@ lease may refresh and finish a bounded closeout.
 
 ## Contracts
 
-`scripts/host-work-admission.py` exposes four JSON operations:
+The public CLI exposes action-scoped writer operations:
 
 ```bash
-python3 scripts/host-work-admission.py acquire \
-  --kind heavy --owner OWNER --surface SURFACE --pid PID
-python3 scripts/host-work-admission.py refresh \
-  --lease-id ID --owner OWNER --pid PID
-python3 scripts/host-work-admission.py release \
-  --lease-id ID --owner OWNER --pid PID
-python3 scripts/host-work-admission.py status
+limen host-admission acquire execution --cwd PATH
+limen host-admission status --cwd PATH --json
+limen host-admission release execution --cwd PATH
 ```
 
-An admitted mutation exits `0`; a denied mutation exits `3`; invalid input exits `64`. `status`
-always exits `0` because it is report-only—its `allowed` field says whether a new heavy lease would
-be admitted. Responses use `limen.host_admission_decision.v1` and include stable reason codes,
-current leases, pressure observations, and cleanup receipts.
+The lower-level `scripts/host-work-admission.py` remains the bounded JSON interface for guarded
+heavy entrypoints and exact lease refresh/release. An admitted mutation exits `0`; a denied mutation
+exits `3`; invalid input exits `64`. `status` always exits `0` because it is report-only. Responses
+use `limen.host_admission_decision.v1` and include stable reason codes, current leases, pressure
+observations, and cleanup receipts.
 
-There are two exclusive lease kinds:
+There are two admission dimensions:
 
-- `execution`: one non-plan Codex root turn in Limen at a time;
+- `execution:<scope_hash>`: one writer for one linked worktree. The hash is SHA-256 over the
+  canonical Git common-dir and worktree git-dir identities; raw paths are not stored;
 - `heavy`: one heavy local surface across Codex, Claude, OpenCode, Agy, and Limen workers.
+
+The v1 state schema and legacy unscoped `execution` kind remain valid during rollout. The current
+owner's legacy record upgrades in place. A different live owner's record is scoped only after its
+PID/start identity and cwd resolve to a Git worktree. Distinct proven scopes proceed; the same scope
+denies; an unprovable legacy scope blocks only the attempted mutation and is never deleted.
 
 A lease binds an unpredictable ID, bounded owner and surface labels, PID, process-start identity,
 and finite expiry. All updates run under `fcntl.flock` and publish with fsync plus atomic replace.
@@ -57,23 +60,39 @@ All thresholds, timeouts, the state root, and the lease TTL are declared in
 
 ## Enforcement layers
 
-Project Codex controls set `agents.max_threads = 3` and `agents.max_depth = 1`.
-`UserPromptSubmit` acquires the execution lease and can stop a second non-plan root.
-`SubagentStart` supplies the finite family bounds but cannot block creation.
-`PreToolUse` emits an early denial warning for supported heavy calls, but current Codex hooks do not
-provide a reliable hard-deny field for that event. The same lease is therefore acquired inside the
-entrypoints:
+Project Codex controls set `agents.max_threads = 3` and `agents.max_depth = 1`. A startup feature
+probe checks that the installed client reports stable hooks. When it does, `UserPromptSubmit`
+admits concurrent roots and `PreToolUse` makes the action decision. When it does not, the legacy
+machine-wide root lock remains fail-closed.
+
+`PreToolUse` covers `Bash`, `apply_patch`, `Edit`, and `Write`:
+
+- known read-only actions acquire no lease;
+- sanctioned Limen status, workstream, conduct, fanout, and remote-dispatch controls rely on their
+  internal locking;
+- writes require a linked worktree and its scoped writer lease;
+- guarded heavy commands must pass the live global-heavy/pressure check;
+- raw unguarded heavy commands are denied with the sanctioned equivalent.
+
+The Bash allowlist is deliberately narrow. Redirection, mutation-capable Git commands, unknown
+commands, and ambiguous compound commands are writes. The primary checkout receives
+`shared-checkout-write`; aliases and symlinks resolve to the same canonical scope. Structured denials
+use the hook's `permissionDecision=deny` channel. Warnings use `systemMessage`; conversation stops
+use `stopReason`; one decision is never emitted through both.
+
+The same heavy lease is acquired again inside authoritative entrypoints:
 
 - scoped verification, around its heavy and serialized tiers;
 - whole verification, after its older verifier flock;
-- each live local agent dispatch, with an additional execution lease for Codex.
+- each live local agent dispatch.
 
 Descendant heavy entrypoints inherit their live parent lease instead of deadlocking themselves.
 They never release the parent record.
 
 `Stop` performs no transcript, worktree, or governance scan. If Codex explicitly identifies a
-first Stop-hook pass and the current topic branch has unpreserved tracked work, it may request
-exactly one lightweight closeout continuation. The next Stop releases the execution lease.
+first Stop-hook pass and the current topic branch has unpreserved tracked work owned by that
+session's writer scope, it may request exactly one lightweight closeout continuation. The next Stop
+releases only that exact scoped lease (plus an exact legacy record during fallback migration).
 
 Project hooks are inert until the operator reviews and trusts their current definitions through
 `/hooks`. Global hook deployment and the host's verified non-backed governance scratch location

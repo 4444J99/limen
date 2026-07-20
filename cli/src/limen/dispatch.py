@@ -1571,14 +1571,6 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str:
         owner = f"limen-dispatch-{agent}-{task_key}-{os.getpid()}"
         try:
             with ExitStack() as leases:
-                if agent == "codex":
-                    leases.enter_context(
-                        hold_lease(
-                            "execution",
-                            owner=owner,
-                            surface="limen-codex-dispatch",
-                        )
-                    )
                 leases.enter_context(
                     hold_lease(
                         "heavy",

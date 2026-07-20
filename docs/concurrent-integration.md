@@ -5,8 +5,10 @@ to `main`; it does not serialize thought, editing, review, or exact-head verific
 
 ## Contract
 
-1. Every mutation session works in one isolated worktree and topic branch. The live `main`
-   checkout remains the control plane and may be dirty with daemon-owned board state.
+1. Every mutation session works in one isolated worktree and topic branch. Action-level host
+   admission allows concurrent writers in distinct worktrees and exactly one writer per canonical
+   worktree scope. The live `main` checkout remains the read/control plane and may be dirty with
+   daemon-owned board state; source writes there fail `shared-checkout-write`.
 2. PR-head verification is immutable. A successful check receipt belongs to one exact
    `headRefOid`; moving `main` does not authorize changing that head or repeating successful
    children.

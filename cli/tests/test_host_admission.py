@@ -12,6 +12,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 
 import limen.host_admission as host_admission
 from limen.host_admission import (
@@ -20,6 +21,7 @@ from limen.host_admission import (
     AdmissionStateError,
     hold_lease,
     parse_iostat_mib_samples,
+    worktree_scope,
 )
 from limen.models import Task
 
@@ -55,6 +57,7 @@ def controller(
     now: list[float] | None = None,
     alive=None,
     identity=None,
+    process_cwd_probe=None,
     descendant=None,
     pressure=None,
 ) -> AdmissionController:
@@ -64,6 +67,7 @@ def controller(
         clock=lambda: now[0],
         alive=alive or (lambda pid: pid > 0),
         identity=identity or (lambda pid: f"start-{pid}"),
+        process_cwd_probe=process_cwd_probe or (lambda _pid: None),
         descendant=descendant or (lambda _pid, _ancestor: False),
         pressure_probe=pressure or (lambda: healthy_pressure(observed_epoch=now[0])),
         thresholds={
@@ -74,6 +78,25 @@ def controller(
             "disk_mib_per_second": 100,
         },
     )
+
+
+def make_linked_worktrees(tmp_path: Path) -> tuple[Path, Path, Path]:
+    main = tmp_path / "repo"
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    main.mkdir()
+    for command in (
+        ["git", "init", "-q", "-b", "main", str(main)],
+        ["git", "-C", str(main), "config", "user.email", "test@example.com"],
+        ["git", "-C", str(main), "config", "user.name", "Test"],
+    ):
+        subprocess.run(command, check=True)
+    (main / "tracked.txt").write_text("fixture\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(main), "add", "tracked.txt"], check=True)
+    subprocess.run(["git", "-C", str(main), "commit", "-qm", "fixture"], check=True)
+    subprocess.run(["git", "-C", str(main), "worktree", "add", "-qb", "first", str(first)], check=True)
+    subprocess.run(["git", "-C", str(main), "worktree", "add", "-qb", "second", str(second)], check=True)
+    return main, first, second
 
 
 def test_iostat_parser_sums_each_disk_triplet() -> None:
@@ -173,6 +196,80 @@ def test_same_owner_is_idempotent_and_other_root_is_denied(tmp_path: Path) -> No
     assert refreshed["lease"]["expires_epoch"] == pytest.approx(1010.0)
     assert denied["allowed"] is False
     assert denied["reasons"] == ["execution-lease-held"]
+
+
+def test_current_owner_legacy_execution_is_upgraded_in_place(tmp_path: Path) -> None:
+    _main, first, _second = make_linked_worktrees(tmp_path)
+    service = controller(tmp_path / "state")
+    legacy = service.acquire("execution", owner="codex-a", surface="turn", pid=101)
+    scope = worktree_scope(first)
+    upgraded = service.acquire(scope.lease_kind, owner="codex-a", surface="write", pid=101)
+
+    assert upgraded["allowed"] is True
+    assert upgraded["lease"]["lease_id"] == legacy["lease"]["lease_id"]
+    assert upgraded["lease"]["kind"] == scope.lease_kind
+    assert len(upgraded["leases"]) == 1
+    state_text = service.state_path.read_text(encoding="utf-8")
+    assert str(first) not in state_text
+    assert str(scope.common_dir) not in state_text
+
+
+def test_live_peer_legacy_scope_is_resolved_without_blocking_disjoint_worktree(tmp_path: Path) -> None:
+    _main, first, second = make_linked_worktrees(tmp_path)
+    process_cwds = {101: first, 202: second}
+    service = controller(
+        tmp_path / "state",
+        process_cwd_probe=lambda pid: process_cwds.get(pid),
+    )
+    service.acquire("execution", owner="codex-a", surface="turn", pid=101)
+    admitted = service.acquire(
+        worktree_scope(second).lease_kind,
+        owner="codex-b",
+        surface="write",
+        pid=202,
+    )
+
+    assert admitted["allowed"] is True
+    assert len(admitted["leases"]) == 2
+    assert {lease["kind"] for lease in admitted["leases"]} == {
+        worktree_scope(first).lease_kind,
+        worktree_scope(second).lease_kind,
+    }
+
+
+def test_live_peer_legacy_scope_denies_same_worktree(tmp_path: Path) -> None:
+    _main, first, _second = make_linked_worktrees(tmp_path)
+    service = controller(
+        tmp_path / "state",
+        process_cwd_probe=lambda pid: first if pid == 101 else None,
+    )
+    service.acquire("execution", owner="codex-a", surface="turn", pid=101)
+    denied = service.acquire(
+        worktree_scope(first).lease_kind,
+        owner="codex-b",
+        surface="write",
+        pid=202,
+    )
+
+    assert denied["allowed"] is False
+    assert denied["reasons"] == ["workspace-writer-lease-held"]
+
+
+def test_unprovable_live_legacy_scope_fails_only_attempted_mutation(tmp_path: Path) -> None:
+    _main, _first, second = make_linked_worktrees(tmp_path)
+    service = controller(tmp_path / "state", process_cwd_probe=lambda _pid: None)
+    legacy = service.acquire("execution", owner="codex-a", surface="turn", pid=101)
+    denied = service.acquire(
+        worktree_scope(second).lease_kind,
+        owner="codex-b",
+        surface="write",
+        pid=202,
+    )
+
+    assert denied["allowed"] is False
+    assert denied["reasons"] == ["legacy-execution-scope-unproven"]
+    assert denied["lease"]["lease_id"] == legacy["lease"]["lease_id"]
+    assert service.status(probe=False)["leases"][0]["kind"] == "execution"
 
 
 def test_nested_process_inherits_parent_heavy_lease_without_releasing_it(tmp_path: Path) -> None:
@@ -457,7 +554,39 @@ def test_json_cli_status_is_report_only_and_release_is_exact(tmp_path: Path) -> 
     assert json.loads(released.stdout)["leases"] == []
 
 
-def test_local_codex_dispatch_holds_execution_and_heavy_leases(monkeypatch) -> None:
+def test_public_limen_host_admission_scoped_cli(tmp_path: Path, monkeypatch) -> None:
+    from limen.cli import main
+
+    _main, first, _second = make_linked_worktrees(tmp_path)
+    state_root = tmp_path / "state"
+    monkeypatch.setenv("LIMEN_HOST_ADMISSION_ROOT", str(state_root))
+    monkeypatch.setenv("LIMEN_HOST_ADMISSION_OWNER", "cli-test-owner")
+    runner = CliRunner()
+
+    acquired = runner.invoke(
+        main,
+        ["host-admission", "acquire", "execution", "--cwd", str(first), "--json"],
+    )
+    assert acquired.exit_code == 0, acquired.output
+    payload = json.loads(acquired.output)
+    assert payload["lease"]["kind"] == worktree_scope(first).lease_kind
+
+    status = runner.invoke(
+        main,
+        ["host-admission", "status", "--cwd", str(first), "--json"],
+    )
+    assert status.exit_code == 0, status.output
+    assert json.loads(status.output)["scope"]["writer_held"] is True
+
+    released = runner.invoke(
+        main,
+        ["host-admission", "release", "execution", "--cwd", str(first), "--json"],
+    )
+    assert released.exit_code == 0, released.output
+    assert json.loads(released.output)["leases"] == []
+
+
+def test_local_codex_dispatch_holds_only_the_machine_heavy_lease(monkeypatch) -> None:
     from limen import dispatch
 
     task = Task(
@@ -479,10 +608,7 @@ def test_local_codex_dispatch_holds_execution_and_heavy_leases(monkeypatch) -> N
     monkeypatch.setattr(dispatch, "_call_local_agent", lambda *_args: "local-result")
 
     assert dispatch.call_agent_dispatch("codex", task, dry_run=False) == "local-result"
-    assert held == [
-        ("execution", "limen-codex-dispatch"),
-        ("heavy", "limen-codex-dispatch"),
-    ]
+    assert held == [("heavy", "limen-codex-dispatch")]
 
 
 def test_local_dispatch_returns_owner_routed_blocker_when_host_denies(monkeypatch) -> None:
