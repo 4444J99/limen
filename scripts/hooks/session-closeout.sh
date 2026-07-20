@@ -44,6 +44,18 @@ if [ -n "$HANDOFF_ROOT" ] && [ -f "$HANDOFF_ROOT/scripts/orphan-watchers.py" ] \
     --session-end --sid "${CLAUDE_SESSION_ID:-unknown}") 1>&2 || true
 fi
 
+# Closeout claim capture — the ROOT of the closeout-reconciliation organ. Reads THIS session's
+# transcript and appends its asserted outcome + cited receipts to logs/session-claims.jsonl, so
+# reconcile-closeouts.py can reconcile ephemeral session closeouts (not just dispatch_log claims).
+# EVERY session (the claim-bearing sessions are mostly non-worktree, like this one), so it precedes
+# the worktree-only early exit. Fail-open, append-once per SID, never blocks session end.
+if [ -n "$HANDOFF_ROOT" ] && [ -f "$HANDOFF_ROOT/scripts/capture-session-claim.py" ] \
+  && command -v python3 >/dev/null 2>&1 && [ "${CLAUDE_SESSION_ID:-unknown}" != "unknown" ]; then
+  if command -v timeout >/dev/null 2>&1; then TCS="timeout 15"; else TCS=""; fi
+  (cd "$HANDOFF_ROOT" && LIMEN_ROOT="$HANDOFF_ROOT" $TCS python3 scripts/capture-session-claim.py \
+    --sid "$CLAUDE_SESSION_ID") >/dev/null 2>&1 || true
+fi
+
 case "$CWD" in
   */.claude/worktrees/*|*/.worktrees/*|*/.limen-worktrees/*) : ;;
   *) exit 0 ;;                       # not an isolation worktree — nothing for closeout to do

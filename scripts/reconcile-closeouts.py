@@ -23,8 +23,10 @@ READ-ONLY: never writes tasks.yaml; emits logs/closeout-reconcile.json.
 Usage:
   reconcile-closeouts.py --doctor                        network-free classifier self-test → 0/1
   reconcile-closeouts.py --check [--since-hours N] [--limit N]
-                                                         probe the live board's done-claims;
-                                                         exit 1 on any DONE_UNVERIFIED / PR_MISSING
+                                                         probe both claim sources — board dispatch_log
+                                                         done-claims AND captured session closeouts
+                                                         (logs/session-claims.jsonl); exit 1 on any
+                                                         DONE_UNVERIFIED / PR_MISSING
   reconcile-closeouts.py --fixture PATH [--json]         reconcile a JSON list of claims (live gh)
 """
 
@@ -213,6 +215,44 @@ def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
     return claims
 
 
+def _session_claims(since_hours: int, limit: int | None) -> list[dict]:
+    """Closeout claims captured from ephemeral SESSION transcripts (`logs/session-claims.jsonl`,
+    written by `capture-session-claim.py` at SessionEnd). This is the complement of `_board_claims`:
+    the board tracks durable dispatch_log done-claims; this tracks the "Completed"-pane session
+    closeouts that were persisted nowhere reconcilable before. Only a `closed` claim that cites a
+    PR/#NNN is cheap to check against GitHub; the latest record per session wins."""
+    ledger = ROOT / "logs" / "session-claims.jsonl"
+    if not ledger.exists():
+        return []
+    now = datetime.now(timezone.utc)
+    latest: dict[str, dict] = {}
+    for ln in ledger.read_text(errors="replace").splitlines():
+        ln = ln.strip()
+        if not ln:
+            continue
+        try:
+            rec = json.loads(ln)
+        except Exception:
+            continue
+        if not rec.get("closed"):
+            continue
+        ts = _parse_ts(rec.get("ts"))
+        if since_hours and ts and (now - ts).total_seconds() > since_hours * 3600:
+            continue
+        receipts = rec.get("receipts") or []
+        blob = f"{rec.get('subject', '')} {rec.get('text', '')} " + " ".join(str(r) for r in receipts)
+        if not (PR_RE.search(blob) or HASH_RE.search(blob)):
+            continue
+        latest[rec.get("id")] = {
+            "id": rec.get("id"), "subject": rec.get("subject", ""), "text": rec.get("text", ""),
+            "repo": rec.get("repo", ""), "receipts": receipts,
+        }
+    claims = list(latest.values())
+    if limit:
+        claims = claims[:limit]
+    return claims
+
+
 def _run(claims: list[dict], state_fn=gh_pr_state, title_fn=_gh_pr_title) -> dict:
     findings = [classify_claim(c, state_fn, title_fn) for c in claims]
     counts: dict[str, int] = {}
@@ -274,7 +314,11 @@ def main() -> int:
     if args.fixture:
         claims = json.loads(Path(args.fixture).read_text())
     elif args.check:
-        claims = _board_claims(args.since_hours, args.limit)
+        # both claim sources: durable board dispatch_log done-claims AND captured ephemeral session
+        # closeouts (logs/session-claims.jsonl). Combined then capped so the GitHub probe stays bounded.
+        claims = _board_claims(args.since_hours, None) + _session_claims(args.since_hours, None)
+        if args.limit:
+            claims = claims[: args.limit]
     else:
         ap.error("one of --doctor / --check / --fixture is required")
 
