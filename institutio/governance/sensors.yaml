@@ -104,6 +104,15 @@ sensors:
             armed_valve_type: deliverable
         severity: advisory
         escalation: "configured MCP server(s) fail to boot/reach above — arm LIMEN_MCP_BOOT_HEAL=1 so the beat re-lands dropped agent entries + clears corrupt npx caches; an empty ianva registry is a registry decision (deploy ianva/upstreams.example.json or `ianva add-upstream`). Ω = scripts/verify-mcp-estate.sh"
+    # Fixed-point rung (Phase C, promoted once the estate went green 2026-07-18): the whole-estate
+    # predicate — every configured MCP server boots + ianva doorway ≥1 upstream + no placeholder
+    # secret. live tier: runs on the host/beat, SKIPs cleanly under omega.sh --offline (CI has no
+    # agent configs). No det rung — the predicate has no offline/parity mode; it fail-opens where a
+    # component is absent, so a bare CI host is green by construction.
+    omega_eligible:
+      - label: "MCP estate — servers boot + doorway + ownership"
+        tier: live
+        command: "bash scripts/verify-mcp-estate.sh"
 
   cartridge-connected:
     section: "0c"
