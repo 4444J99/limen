@@ -5,6 +5,10 @@
   "contact": "contact@4444j99.dev",
   "headline": "I build production systems that solve expensive problems.",
   "subhead": "Not demos. Live platforms — tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:",
+  "_bio_note": "The GitHub sidebar bio. STABLE IDENTITY ONLY — never a count that changes daily (repos / code files / tests / CI workflows). Volatile numbers live in the README, which regenerates; the bio does not, so any count baked here rots. always-working.py checks the live bio against this value and flags drift. <=160 chars (GitHub's limit).",
+  "bio": "Builder of production systems — data, infra, AI, deploy, end-to-end. Python · TypeScript · React · FastAPI · Docker.",
+  "_blog_note": "The GitHub sidebar website link. Must resolve 200 — the old 4444j99.github.io/portfolio was a dead 404; the live portfolio is under organvm.github.io. profile-bio-sync.py owns + applies this and always-working.py flags drift, so a dead link can't silently sit on the profile.",
+  "blog": "https://organvm.github.io/portfolio/",
   "door_client": {
    "label": "Have a problem one of these solves? — Deploy it for your shop",
    "blurb": "Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine."
@@ -215,8 +219,8 @@
    ]
   },
   "organvm/a-i-chat--exporter": {
-   "display_name": "ChatGPT Conversation Exporter",
-   "what_it_is": "A browser userscript that exports your ChatGPT conversations into five portable formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it authenticates through your existing ChatGPT session and runs on chatgpt.com, chat.openai.com, and new.oaifree.com.",
+   "display_name": "AI Chat Exporter",
+   "what_it_is": "A browser userscript that exports your AI chat conversations into five portable, archival-quality formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it reverse-engineers the platform's internal API and linearizes the branching message tree, with a provider layer live for ChatGPT and scaffolded for Claude and Gemini.",
    "proof_signals": [
     "170 tests across 16 suites",
     "~5,900 lines of TypeScript",

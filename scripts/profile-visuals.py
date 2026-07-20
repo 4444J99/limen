@@ -54,20 +54,42 @@ def main(argv: list[str] | None = None) -> int:
         print(f"profile-visuals: fact collection failed: {exc}", file=sys.stderr)
         return 2
 
-    # Refuse to render a degraded profile: the headline facts must be present, and the calendar
-    # must have loaded (else heatmap/snake/streak would be empty). A failed run keeps the prior
-    # good commit — never overwrite a good profile with a broken one.
+    # The headline facts must be present — without them there is no profile to render.
     required = ["ecosystem_public_repos", "ecosystem_original_repos", "contributions_last_year"]
     missing = [k for k in required if facts.get(k) is None]
     if missing:
         print(f"profile-visuals: missing critical facts {missing} — refusing to render", file=sys.stderr)
         return 2
-    if not facts.calendar_days:
-        print("profile-visuals: contribution calendar unavailable — refusing to render "
-              "(heatmap/snake/streak would be empty)", file=sys.stderr)
-        return 2
+
+    # Graceful degradation for the contribution calendar. Its day-detail GraphQL intermittently 504s /
+    # exceeds resource limits on a high-activity account; treating that as fatal froze the ENTIRE
+    # profile for hours (one flaky API blocking stats, languages, chips, milestones, and the README
+    # copy alike). When the calendar is missing we PRESERVE the last-good committed calendar assets and
+    # backfill their derived stats from the prior manifest, then render everything else fresh — the
+    # profile always updates what it can, and can never be frozen whole by one endpoint.
+    calendar_assets = {"heatmap.svg", "snake.svg", "streak.svg"}
+    calendar_stats = ("current_streak_days", "active_days_last_year")
+    calendar_ok = bool(facts.calendar_days)
+    if not calendar_ok:
+        prior_stats: dict = {}
+        try:
+            prior_stats = json.loads((assets / "stats-manifest.json").read_text(encoding="utf-8")).get("stats", {})
+        except Exception:
+            prior_stats = {}
+        for key in calendar_stats:
+            if facts.get(key) is None and key in prior_stats:
+                p = prior_stats[key]
+                facts.put(P.Fact(key, p.get("value"), "last-good (calendar API unavailable this run)",
+                                 p.get("source_query", ""), p.get("attest", "api")))
+        preserved = sorted(n for n in calendar_assets if (assets / n).exists())
+        print("profile-visuals: contribution calendar unavailable (API 504/resource-limit) — DEGRADED: "
+              f"preserving last-good {preserved}, backfilling {list(calendar_stats)} from prior manifest, "
+              "rendering everything else fresh.", file=sys.stderr)
 
     for name, render in ASSETS.items():
+        # when the calendar is down, keep the last-good committed calendar SVG instead of an empty one
+        if name in calendar_assets and not calendar_ok and (assets / name).exists():
+            continue
         (assets / name).write_text(render(facts), encoding="utf-8")
 
     manifest = facts.manifest()

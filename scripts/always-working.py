@@ -323,8 +323,24 @@ def github_profile_surface() -> dict[str, Any]:
     user, user_error = _json_command(["gh", "api", "user", "--jq", "{bio,blog,public_repos,updated_at}"])
     bio = str((user or {}).get("bio") or "")
     blog = str((user or {}).get("blog") or "")
-    stale_bio = bool(re.search(r"\b91 repos\b|3,586 code files|736 test files|58 CI workflows", bio))
-    stale_blog = "4444j99.github.io/portfolio" in blog
+    # bio + blog now have an owner: positioning-seeds.json frontdoor.{bio,blog} (profile-bio-sync.py
+    # applies them). Any divergence is drift — this catches stale counts, a reverted bio, AND a dead
+    # website link (the 4444j99.github.io/portfolio 404), not just four once-frozen tokens.
+    fd = {}
+    try:
+        fd = json.loads((ROOT / "positioning-seeds.json").read_text(encoding="utf-8")).get("frontdoor", {})
+    except Exception:
+        fd = {}
+    canonical_bio = str(fd.get("bio") or "").strip()
+    canonical_blog = str(fd.get("blog") or "").strip()
+    if canonical_bio:
+        stale_bio = bool(bio.strip()) and bio.strip() != canonical_bio.strip()
+    else:
+        stale_bio = bool(re.search(r"\b\d[\d,]*\s+(?:repos|code files|test files|CI workflows)\b", bio))
+    if canonical_blog:
+        stale_blog = bool(blog.strip()) and blog.strip().rstrip("/") != canonical_blog.rstrip("/")
+    else:
+        stale_blog = "4444j99.github.io/portfolio" in blog
     return {
         "checked": True,
         "verified": bool(repo and readme_text),
