@@ -38,6 +38,7 @@ class HttpConductClient:
             headers={
                 "authorization": f"Bearer {self.token}",
                 "accept": "application/json",
+                "user-agent": "limen-conduct-client/1",
                 **({"content-type": "application/json"} if body is not None else {}),
             },
         )
