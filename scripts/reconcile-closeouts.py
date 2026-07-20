@@ -174,17 +174,31 @@ def classify_claim(claim: dict, state_fn=gh_pr_state, title_fn=_gh_pr_title) -> 
         else:  # OPEN / CLOSED — claimed done but not merged
             unmerged.append(f"{slug}:{state}")
 
-    if missing:
-        return {"id": claim.get("id"), "verdict": "PR_MISSING", "refs": refs,
-                "detail": f"cited PR(s) do not exist: {', '.join(missing)}"}
+    # A done-claim is backed iff there EXISTS a subject-matching merged receipt — not iff EVERY
+    # cited ref is clean. Co-cited refs that are missing, unmerged, or subject-unrelated are noise
+    # (heal *targets* — the id-suffix issue a cifix healed; stale/typo'd numbers; superseded PRs),
+    # never disproof of a real merged receipt. (2026-07-18 field finding: HEAL-624 cites both merged
+    # fix #1116 AND its still-open target #624; the claim is done because #1116 merged, not undone
+    # because #624 is open. The prior any-ref-fails precedence turned 4 such multi-ref claims into
+    # phantom DONE_UNVERIFIED / PR_MISSING findings.)
+    if merged:
+        detail = f"backed by merged PR(s): {', '.join(merged)}"
+        noise = missing + unmerged + miscited
+        if noise:
+            detail += f"; ignored co-ref(s): {', '.join(noise)}"
+        return {"id": claim.get("id"), "verdict": "VERIFIED", "refs": refs, "detail": detail}
+
+    # No subject-matching merged receipt — escalate to the true problem. Unmerged is the most
+    # actionable signal (a real open PR to land) → then a wrong/missing number → then a merged-but-
+    # off-subject citation with nothing backing the claim.
     if unmerged:
         return {"id": claim.get("id"), "verdict": "DONE_UNVERIFIED", "refs": refs,
                 "detail": f"claims done but PR(s) not merged: {', '.join(unmerged)}"}
-    if miscited and not merged:
-        return {"id": claim.get("id"), "verdict": "MISCITED", "refs": refs,
-                "detail": f"cited MERGED PR unrelated to subject: {', '.join(miscited)}"}
-    return {"id": claim.get("id"), "verdict": "VERIFIED", "refs": refs,
-            "detail": f"backed by merged PR(s): {', '.join(merged)}"}
+    if missing:
+        return {"id": claim.get("id"), "verdict": "PR_MISSING", "refs": refs,
+                "detail": f"cited PR(s) do not exist: {', '.join(missing)}"}
+    return {"id": claim.get("id"), "verdict": "MISCITED", "refs": refs,
+            "detail": f"cited MERGED PR unrelated to subject: {', '.join(miscited)}"}
 
 
 HARD = {"DONE_UNVERIFIED", "PR_MISSING"}  # verdicts that fail --check (concrete false-closeouts)
@@ -284,6 +298,14 @@ def _doctor() -> int:
         ({"id": "c5", "subject": "record court grant", "repo": "o/r", "text": "homed in matter.json",
           "repo_artifact": "no/such/matter.json", "external_home": "private calendar"}, "HOMED_ELSEWHERE"),
         ({"id": "c6", "subject": "misc", "repo": "o/r", "text": "all good, fixed point"}, "UNRECEIPTED"),
+        # 2026-07-18 field shapes — a subject-matching merged receipt wins over noisy co-refs.
+        # (c7) heal-task: merged fix #2 + still-open target #1 → VERIFIED (was phantom DONE_UNVERIFIED).
+        ({"id": "c7", "subject": "harden widget parser", "repo": "o/r",
+          "text": "fix #2 landed, target #1 still open"}, "VERIFIED"),
+        # (c8) multi-ref: merged receipt #2 + missing co-ref #3 → VERIFIED (was phantom PR_MISSING).
+        ({"id": "c8", "subject": "harden widget parser", "repo": "o/r", "text": "done #2 (see also #3)"}, "VERIFIED"),
+        # (c9) genuine over-claim: open #1 + missing #3, NONE merged → still fires DONE_UNVERIFIED.
+        ({"id": "c9", "subject": "harden widget parser", "repo": "o/r", "text": "done #1 #3"}, "DONE_UNVERIFIED"),
     ]
     ok = True
     for claim, expected in cases:
