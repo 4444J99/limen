@@ -66,6 +66,13 @@ class HttpConductClient:
     def submit(self, packet: WorkPacketV1) -> dict[str, Any]:
         return self._request("POST", "/api/conduct/runs", packet.model_dump(mode="json"))
 
+    def submit_graph(self, packets: tuple[WorkPacketV1, ...]) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/api/conduct/graphs",
+            {"packets": [packet.model_dump(mode="json") for packet in packets]},
+        )
+
     def split(self, parent_run_id: str, packet: WorkPacketV1) -> dict[str, Any]:
         parent = urllib.parse.quote(parent_run_id, safe="")
         return self._request("POST", f"/api/conduct/runs/{parent}/children", packet.model_dump(mode="json"))
@@ -74,22 +81,50 @@ class HttpConductClient:
         root = urllib.parse.quote(root_run_id, safe="")
         return self._request("GET", f"/api/conduct/runs/{root}/graph")
 
+    def claim(self, lease_id: str, generation: int) -> dict[str, Any]:
+        lease = urllib.parse.quote(lease_id, safe="")
+        return self._request(
+            "POST",
+            f"/api/conduct/leases/{lease}/claim",
+            {"generation": generation},
+        )
+
     def heartbeat(
-        self, lease_id: str, capability_token: str, *, observed_heads: dict[str, str] | None = None
+        self,
+        lease_id: str,
+        capability_token: str,
+        *,
+        generation: int,
+        observed_heads: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         lease = urllib.parse.quote(lease_id, safe="")
         return self._request(
             "POST",
             f"/api/conduct/leases/{lease}/heartbeat",
-            {"capability_token": capability_token, "observed_heads": observed_heads or {}},
+            {
+                "capability_token": capability_token,
+                "generation": generation,
+                "observed_heads": observed_heads or {},
+            },
         )
 
-    def report(self, lease_id: str, capability_token: str, receipt: RunReceiptV1) -> dict[str, Any]:
+    def report(
+        self,
+        lease_id: str,
+        capability_token: str,
+        receipt: RunReceiptV1,
+        *,
+        generation: int,
+    ) -> dict[str, Any]:
         lease = urllib.parse.quote(lease_id, safe="")
         return self._request(
             "POST",
             f"/api/conduct/leases/{lease}/receipt",
-            {"capability_token": capability_token, "receipt": receipt.model_dump(mode="json")},
+            {
+                "capability_token": capability_token,
+                "generation": generation,
+                "receipt": receipt.model_dump(mode="json"),
+            },
         )
 
     def harvest(self, root_run_id: str) -> dict[str, Any]:
@@ -126,6 +161,9 @@ class LocalConductClient:
     def submit(self, packet: WorkPacketV1) -> dict[str, Any]:
         return self.broker.submit(packet)
 
+    def submit_graph(self, packets: tuple[WorkPacketV1, ...]) -> dict[str, Any]:
+        return self.broker.submit_graph(packets)
+
     def submit_projection(
         self,
         packet: WorkPacketV1,
@@ -152,13 +190,38 @@ class LocalConductClient:
     def graph(self, root_run_id: str) -> dict[str, Any]:
         return self.broker.graph(root_run_id)
 
-    def heartbeat(
-        self, lease_id: str, capability_token: str, *, observed_heads: dict[str, str] | None = None
-    ) -> dict[str, Any]:
-        return self.broker.heartbeat(lease_id, capability_token, observed_heads=observed_heads)
+    def claim(self, lease_id: str, generation: int) -> dict[str, Any]:
+        return self.broker.claim(lease_id, generation)
 
-    def report(self, lease_id: str, capability_token: str, receipt: RunReceiptV1) -> dict[str, Any]:
-        return self.broker.report(lease_id, capability_token, receipt)
+    def heartbeat(
+        self,
+        lease_id: str,
+        capability_token: str,
+        *,
+        generation: int,
+        observed_heads: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        return self.broker.heartbeat(
+            lease_id,
+            capability_token,
+            generation=generation,
+            observed_heads=observed_heads,
+        )
+
+    def report(
+        self,
+        lease_id: str,
+        capability_token: str,
+        receipt: RunReceiptV1,
+        *,
+        generation: int,
+    ) -> dict[str, Any]:
+        return self.broker.report(
+            lease_id,
+            capability_token,
+            receipt,
+            generation=generation,
+        )
 
     def harvest(self, root_run_id: str) -> dict[str, Any]:
         return self.broker.harvest(root_run_id)

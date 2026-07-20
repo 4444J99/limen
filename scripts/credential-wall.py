@@ -118,9 +118,9 @@ CI_SECRETS: list[dict] = [
         "issue": "#288",
     },
     {
-        "name": "LIMEN_CONDUCT_TOKEN / LIMEN_CONDUCT_TOKENS",
+        "name": "LIMEN_CONDUCT_TOKEN / LIMEN_CONDUCT_PRINCIPAL_REGISTRY / LIMEN_CONDUCT_CAPABILITY_SECRET",
         "home": "1Password credential organ + Cloudflare Worker secret rotation set",
-        "used": "authenticated peer-conductor endpoint; one principal-bound credential per native lane",
+        "used": "authenticated peer-conductor endpoint; one principal-bound credential per native lane plus a keeper-only HMAC capability secret",
         "hand": "gated — mint/install only after principal binding and executor-only lease delivery are exact-head green",
         "issue": "#320",
     },

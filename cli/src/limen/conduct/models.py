@@ -49,6 +49,27 @@ class AgentIdentityV1(ProtocolModel):
         return _identifier(value, info.field_name)
 
 
+class ConductPrincipalV1(ProtocolModel):
+    """Server-derived authority attached to one credential-wall bearer."""
+
+    schema_version: Literal["limen.conduct_principal.v1"] = "limen.conduct_principal.v1"
+    principal_id: str
+    agent: str
+    surface: str
+    roles: frozenset[Literal["observer", "conductor", "executor", "compatibility"]]
+
+    @field_validator("principal_id", "agent", "surface")
+    @classmethod
+    def validate_identifiers(cls, value: str, info) -> str:
+        return _identifier(value, info.field_name)
+
+    @model_validator(mode="after")
+    def has_roles(self) -> "ConductPrincipalV1":
+        if not self.roles:
+            raise ValueError("conduct principal must have at least one role")
+        return self
+
+
 class ConductorSessionV1(ProtocolModel):
     schema_version: Literal["limen.conductor_session.v1"] = "limen.conductor_session.v1"
     session_id: str
@@ -228,6 +249,7 @@ class LeaseV1(ProtocolModel):
     lease_id: str
     run_id: str
     executor: AgentIdentityV1
+    executor_principal_id: str | None = None
     resources: tuple[ResourceClaimV1, ...]
     observed_heads: dict[str, str] = Field(default_factory=dict)
     generation: int = Field(ge=1)
@@ -237,6 +259,11 @@ class LeaseV1(ProtocolModel):
     heartbeat_at: datetime
     hard_deadline: datetime
     state: Literal["reserved", "active", "released", "expired", "fenced"] = "reserved"
+
+    @field_validator("executor_principal_id")
+    @classmethod
+    def validate_executor_principal(cls, value: str | None) -> str | None:
+        return _identifier(value, "executor_principal_id") if value else None
 
 
 class PredicateEvidenceV1(ProtocolModel):

@@ -163,11 +163,19 @@ def graph(root_run: str) -> None:
 
 @conduct_group.command("heartbeat")
 @click.argument("lease")
+@click.option("--generation", type=click.IntRange(1), required=True)
 @click.option("--token-env", default="LIMEN_LEASE_TOKEN", show_default=True)
 @click.option("--observed-heads", type=click.Path(path_type=Path, exists=True))
-def heartbeat(lease: str, token_env: str, observed_heads: Path | None) -> None:
+def heartbeat(lease: str, generation: int, token_env: str, observed_heads: Path | None) -> None:
     heads = _read_json(observed_heads) if observed_heads else {}
-    _emit(client_from_env().heartbeat(lease, _lease_token(token_env), observed_heads=heads))
+    _emit(
+        client_from_env().heartbeat(
+            lease,
+            _lease_token(token_env),
+            generation=generation,
+            observed_heads=heads,
+        )
+    )
 
 
 @conduct_group.command("report")
@@ -176,7 +184,14 @@ def heartbeat(lease: str, token_env: str, observed_heads: Path | None) -> None:
 @click.option("--token-env", default="LIMEN_LEASE_TOKEN", show_default=True)
 def report(lease: str, receipt_file: Path, token_env: str) -> None:
     receipt = RunReceiptV1.model_validate(_read_json(receipt_file))
-    _emit(client_from_env().report(lease, _lease_token(token_env), receipt))
+    _emit(
+        client_from_env().report(
+            lease,
+            _lease_token(token_env),
+            receipt,
+            generation=receipt.lease_generation,
+        )
+    )
 
 
 @conduct_group.command("harvest")

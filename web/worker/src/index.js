@@ -4,6 +4,7 @@ import {
   forwardCompatibilityPacket,
   forwardConductRequest,
 } from "./conduct/durable-object.js";
+import { internalConductPrincipal } from "./conduct/auth.js";
 import { readInlineProjection } from "./conduct/projection.js";
 import { canonicalHash } from "./conduct/schemas.js";
 
@@ -692,19 +693,25 @@ function dispatchCandidates(data, agent = "jules", taskId = null) {
     .sort((a, b) => (priority[a.priority] ?? 99) - (priority[b.priority] ?? 99));
 }
 
-function compatibilityIdentity() {
+function compatibilityIdentity(env) {
+  const { principal } = internalConductPrincipal(env);
   return {
     schema_version: "limen.agent_identity.v1",
-    agent: "api",
-    surface: "worker",
+    agent: principal.agent,
+    surface: principal.surface,
     session_id: "worker-owner-compatibility",
     native_run_id: null,
-    provider_identity: "cloudflare-worker",
+    provider_identity: principal.principal_id,
   };
 }
 
 async function compatibilityPacket(env, intent, task) {
-  const identity = compatibilityIdentity();
+  if (!env.CONDUCT_KEEPER) {
+    const error = new Error("conduct keeper binding is not configured");
+    error.status = 503;
+    throw error;
+  }
+  const identity = compatibilityIdentity(env);
   const execution = {
     adapter: "tabularius",
     projection: "tasks.yaml",

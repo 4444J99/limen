@@ -412,21 +412,37 @@ def conduct_graph(root_run: str) -> dict:
 @mcp.tool()
 def conduct_heartbeat(
     lease: str,
+    generation: int,
     capability_token: str,
     observed_heads: Optional[Dict[str, str]] = None,
 ) -> dict:
     """Renew a lease while fencing any moved exact Git heads."""
 
     _check_circuit_breaker()
-    return _conduct_client().heartbeat(lease, capability_token, observed_heads=observed_heads or {})
+    return _conduct_client().heartbeat(
+        lease,
+        capability_token,
+        generation=generation,
+        observed_heads=observed_heads or {},
+    )
 
 
 @mcp.tool()
-def conduct_report(lease: str, capability_token: str, receipt: Dict[str, Any]) -> dict:
+def conduct_report(
+    lease: str,
+    generation: int,
+    capability_token: str,
+    receipt: Dict[str, Any],
+) -> dict:
     """Submit a schema-validated terminal receipt; late results remain evidence-only."""
 
     _check_circuit_breaker()
-    return _conduct_client().report(lease, capability_token, RunReceiptV1.model_validate(receipt))
+    return _conduct_client().report(
+        lease,
+        capability_token,
+        RunReceiptV1.model_validate(receipt),
+        generation=generation,
+    )
 
 
 @mcp.tool()

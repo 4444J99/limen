@@ -31,12 +31,12 @@ class FakeConductClient:
         self.calls.append(("graph", root_run))
         return {"root_run_id": root_run, "nodes": []}
 
-    def heartbeat(self, lease, capability_token, *, observed_heads):
-        self.calls.append(("heartbeat", lease, capability_token, observed_heads))
+    def heartbeat(self, lease, capability_token, *, generation, observed_heads):
+        self.calls.append(("heartbeat", lease, generation, capability_token, observed_heads))
         return {"status": "active"}
 
-    def report(self, lease, capability_token, receipt):
-        self.calls.append(("report", lease, capability_token, receipt))
+    def report(self, lease, capability_token, receipt, *, generation):
+        self.calls.append(("report", lease, generation, capability_token, receipt))
         return {"mutation_authorized": True}
 
     def harvest(self, root_run):

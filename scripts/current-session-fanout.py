@@ -478,7 +478,7 @@ def owner_packet_for_theme(theme: str) -> dict[str, Any]:
             "verification_predicates": [
                 "LIMEN_ROOT=$PWD LIMEN_TASKS=$PWD/tasks.yaml python3 scripts/current-session-fanout.py --session <native-session> --source-agent <agent> --min-planners 10 --planner-lanes auto --executor-lanes auto --include-contrib --no-reset-spend --dry-run",
                 "PYTHONPATH=cli/src python3 -m pytest cli/tests/test_current_session_fanout.py -q",
-                "PYTHONPATH=cli/src python3 -c \"from limen.census import execution_profiles; assert all(p.capabilities for p in execution_profiles().values())\"",
+                'PYTHONPATH=cli/src python3 -c "from limen.census import execution_profiles; assert all(p.capabilities for p in execution_profiles().values())"',
                 "LIMEN_ROOT=$PWD LIMEN_TASKS=$PWD/tasks.yaml PYTHONPATH=cli/src python3 scripts/dispatch-async.py --lanes auto --dry-run",
                 "bash scripts/verify-whole.sh",
             ],
@@ -866,9 +866,7 @@ def _conductor_identity(client: Any, snapshot: dict[str, Any]) -> Any:
             continue
         candidates.append(row)
     if desired_session and not candidates:
-        raise FanoutReservationError(
-            f"configured conductor session is unavailable or unhealthy: {desired_session}"
-        )
+        raise FanoutReservationError(f"configured conductor session is unavailable or unhealthy: {desired_session}")
     if not candidates:
         raise FanoutReservationError("no healthy registered conduct session is available")
     preferred_agent = str(snapshot.get("conductor_agent") or "")
@@ -927,11 +925,7 @@ def _work_packet(
     phase = "planner" if packet["packet_type"] == "planner_packet" else "executor"
     task_id = task_seed_id(str(snapshot["session_hash"]), str(packet["id"]))
     repo = str((packet.get("owner_packet") or {}).get("owner_repo") or origin_repo_slug())
-    claims = (
-        ()
-        if phase == "planner"
-        else (ResourceClaimV1(key=f"repo/{repo}/write", mode="exclusive"),)
-    )
+    claims = () if phase == "planner" else (ResourceClaimV1(key=f"repo/{repo}/write", mode="exclusive"),)
     return WorkPacketV1(
         root_run_id=root_run_id,
         parent_run_id=parent_run_id,
@@ -970,7 +964,7 @@ def _work_packet(
     )
 
 
-def _reserved_result(result: Any, *, label: str) -> dict[str, Any]:
+def _reserved_result(result: Any, *, label: str, client: Any | None = None) -> dict[str, Any]:
     if not isinstance(result, dict):
         raise FanoutReservationError(f"{label} reservation returned a non-object response")
     status = str(result.get("status") or "")
@@ -983,12 +977,19 @@ def _reserved_result(result: Any, *, label: str) -> dict[str, Any]:
         or not result.get("run_id")
         or not result.get("root_run_id")
         or not result.get("executor_session_id")
-        or not result.get("capability_token")
         or not lease.get("lease_id")
         or not lease.get("generation")
         or not isinstance(lease.get("executor"), dict)
     ):
         raise FanoutReservationError(f"{label} reservation omitted required lease identity")
+    if not result.get("capability_token"):
+        if client is None or not hasattr(client, "claim"):
+            raise FanoutReservationError(f"{label} reservation requires an executor-authenticated capability claim")
+        claim = client.claim(str(lease["lease_id"]), int(lease["generation"]))
+        token = claim.get("capability_token") if isinstance(claim, dict) else None
+        if not token:
+            raise FanoutReservationError(f"{label} executor capability claim returned no capability")
+        result = {**result, "capability_token": token}
     return result
 
 
@@ -1036,9 +1037,7 @@ def _inject_reservation(
         capability_token=str(result["capability_token"]),
     )
     packet["work_packet"] = work_packet.model_dump(mode="json")
-    packet["reservation"] = {
-        key: value for key, value in result.items() if key != "capability_token"
-    }
+    packet["reservation"] = {key: value for key, value in result.items() if key != "capability_token"}
 
 
 def reserve_fanout(snapshot: dict[str, Any], client: Any | None = None) -> dict[str, Any]:
@@ -1071,17 +1070,13 @@ def reserve_fanout(snapshot: dict[str, Any], client: Any | None = None) -> dict[
     executors = list(snapshot.get("executor_packets", []))
     proposed_parent = {str(packet["run_id"]): packet for packet in planners}
     fallback_planner = planners[0] if planners else None
-    children_by_planner: dict[str, list[dict[str, Any]]] = {
-        str(packet["id"]): [] for packet in planners
-    }
+    children_by_planner: dict[str, list[dict[str, Any]]] = {str(packet["id"]): [] for packet in planners}
     for packet in executors:
         parent = proposed_parent.get(str(packet.get("parent_run_id"))) or fallback_planner
         if parent is None:
             raise FanoutReservationError("executor packet has no planner parent")
         children_by_planner[str(parent["id"])].append(packet)
-    root_budget = sum(
-        max(1, len(children_by_planner[str(packet["id"])])) for packet in planners
-    )
+    root_budget = sum(max(1, len(children_by_planner[str(packet["id"])])) for packet in planners)
     root_task_id = f"CSF-{str(snapshot['session_hash'])[:8].upper()}-ROOT"
     root_packet = WorkPacketV1(
         work_id=root_task_id,
@@ -1116,7 +1111,7 @@ def reserve_fanout(snapshot: dict[str, Any], client: Any | None = None) -> dict[
     planner_reservations: dict[str, tuple[Any, dict[str, Any]]] = {}
     executor_reservations: dict[str, tuple[Any, dict[str, Any]]] = {}
     try:
-        root_result = _reserved_result(client.submit(root_packet), label="root")
+        root_result = _reserved_result(client.submit(root_packet), label="root", client=client)
         accepted.append(root_result)
         actual_root = str(root_result["root_run_id"])
         for packet in planners:
@@ -1136,6 +1131,7 @@ def reserve_fanout(snapshot: dict[str, Any], client: Any | None = None) -> dict[
             result = _reserved_result(
                 client.split(str(root_result["run_id"]), work_packet),
                 label=str(packet["id"]),
+                client=client,
             )
             accepted.append(result)
             planner_reservations[str(packet["id"])] = (work_packet, result)
@@ -1157,6 +1153,7 @@ def reserve_fanout(snapshot: dict[str, Any], client: Any | None = None) -> dict[
             result = _reserved_result(
                 client.split(str(parent_result["run_id"]), work_packet),
                 label=str(packet["id"]),
+                client=client,
             )
             accepted.append(result)
             executor_reservations[str(packet["id"])] = (work_packet, result)
@@ -1419,9 +1416,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
             "reason": "planner packets remain eligible while local blockers are owner-recorded",
         },
         "status": (
-            "ready"
-            if messages and planners and conductor_agent and not unconsolidated_plan_hashes
-            else "blocked"
+            "ready" if messages and planners and conductor_agent and not unconsolidated_plan_hashes else "blocked"
         ),
     }
     if getattr(args, "seed_tasks", False) or getattr(args, "apply_task_seed", False):

@@ -20,8 +20,19 @@ class FakeStorage {
 }
 
 function ownerEnvironment() {
+  const bearer = "compatibility-secret-at-least-24-characters";
   const env = {
-    LIMEN_CONDUCT_TOKEN: "conduct-secret",
+    LIMEN_CONDUCT_PRINCIPAL_REGISTRY: JSON.stringify({
+      schema_version: "limen.conduct_principal_registry.v1",
+      principals: [{
+        principal_id: "worker-compatibility",
+        agent: "api",
+        surface: "worker",
+        roles: ["observer", "conductor", "executor", "compatibility"],
+        bearer,
+      }],
+    }),
+    LIMEN_CONDUCT_CAPABILITY_SECRET: "compatibility-capability-secret-24-plus",
     LIMEN_INLINE_TASKS_YAML: `
 portal:
   budget:

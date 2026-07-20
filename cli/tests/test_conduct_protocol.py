@@ -13,6 +13,7 @@ from limen.conduct import (
     ConductorSessionV1,
     ConductBroker,
     ConductConflict,
+    ConductPrincipalV1,
     FanoutBoundsV1,
     MemoryStateStore,
     ResourceClaimV1,
@@ -102,10 +103,28 @@ def packet(
 
 
 def broker_with(*sessions: ConductorSessionV1) -> ConductBroker:
-    broker = ConductBroker(MemoryStateStore())
+    broker = ConductBroker(MemoryStateStore(), capability_secret="test-capability-secret")
     for item in sessions:
         broker.register(item, now=NOW)
     return broker
+
+
+def capability(broker: ConductBroker, reserved: dict) -> str:
+    lease = reserved["lease"]
+    return broker.claim(lease["lease_id"], lease["generation"], now=NOW)["capability_token"]
+
+
+def principal(
+    principal_id: str,
+    agent: str,
+    *roles: str,
+) -> ConductPrincipalV1:
+    return ConductPrincipalV1(
+        principal_id=principal_id,
+        agent=agent,
+        surface="cloud",
+        roles=frozenset(roles),
+    )
 
 
 def test_packet_hashes_are_canonical_and_mismatch_is_rejected() -> None:
@@ -180,6 +199,140 @@ def test_fifty_conductors_race_one_task_gets_one_lease() -> None:
     snapshot = broker.store.snapshot()
     assert len(snapshot["leases"]) == 1
     assert len([event for event in snapshot["events"] if event["kind"] == "run.reserved"]) == 1
+
+
+def test_principals_bind_sessions_and_executor_claims_without_leaking_tokens() -> None:
+    broker = ConductBroker(
+        MemoryStateStore(),
+        capability_secret="principal-bound-capability-secret",
+    )
+    conductor_principal = principal("principal-conductor", "codex", "observer", "conductor")
+    executor_principal = principal("principal-executor", "claude", "observer", "executor")
+    attacker_principal = principal("principal-attacker", "opencode", "observer", "executor")
+    attacker_conductor = principal(
+        "principal-attacker-conductor",
+        "opencode",
+        "observer",
+        "conductor",
+    )
+    requested_conductor = session("spoofed", session_id="conductor-session")
+    requested_executor = session(
+        "spoofed",
+        session_id="executor-session",
+        capabilities=frozenset({"code"}),
+    )
+    registered_conductor = ConductorSessionV1.model_validate(
+        broker.register(requested_conductor, principal=conductor_principal, now=NOW)
+    )
+    broker.register(requested_executor, principal=executor_principal, now=NOW)
+    assert registered_conductor.identity.agent == "codex"
+    reserved = broker.submit(
+        packet(
+            work_id="principal-bound",
+            conductor=registered_conductor.identity,
+            preferred_agent="claude",
+        ),
+        principal=conductor_principal,
+        now=NOW,
+    )
+    assert "capability_token" not in reserved
+    assert "capability_token_hash" not in reserved["lease"]
+    lease = reserved["lease"]
+    with pytest.raises(ConductConflict, match="another executor principal"):
+        broker.claim(
+            lease["lease_id"],
+            lease["generation"],
+            principal=attacker_principal,
+            now=NOW,
+        )
+    first = broker.claim(
+        lease["lease_id"],
+        lease["generation"],
+        principal=executor_principal,
+        now=NOW,
+    )
+    second = broker.claim(
+        lease["lease_id"],
+        lease["generation"],
+        principal=executor_principal,
+        now=NOW,
+    )
+    assert first["capability_token"] == second["capability_token"]
+    with pytest.raises(ConductConflict, match="generation"):
+        broker.heartbeat(
+            lease["lease_id"],
+            first["capability_token"],
+            generation=lease["generation"] + 1,
+            principal=executor_principal,
+            now=NOW,
+        )
+    with pytest.raises(ConductConflict, match="authenticated principal"):
+        broker.cancel(
+            reserved["run_id"],
+            registered_conductor.session_id,
+            principal=attacker_conductor,
+            now=NOW,
+        )
+
+
+def test_graph_submission_is_atomic_and_idempotent() -> None:
+    codex = session("codex", concurrency=8)
+    broker = broker_with(codex)
+    root = packet(
+        work_id="atomic-root",
+        conductor=codex.identity,
+        resource="task/atomic-root",
+        spend_limit=4,
+        effect="read",
+    )
+    root_run_id = ConductBroker._run_id(root)
+    child_one = packet(
+        work_id="atomic-child-one",
+        conductor=codex.identity,
+        resource="task/atomic-child-one",
+        parent_run_id=root_run_id,
+        root_run_id=root_run_id,
+        depth=1,
+        spend_limit=1,
+        effect="read",
+    )
+    child_two = packet(
+        work_id="atomic-child-two",
+        conductor=codex.identity,
+        resource="task/atomic-child-two",
+        parent_run_id=root_run_id,
+        root_run_id=root_run_id,
+        depth=1,
+        spend_limit=1,
+        effect="read",
+    )
+    submitted = broker.submit_graph((root, child_one, child_two), now=NOW)
+    assert submitted["status"] == "reserved"
+    assert len(broker.graph(root_run_id)["nodes"]) == 3
+    duplicate = broker.submit_graph((root, child_one, child_two), now=NOW)
+    assert [run["status"] for run in duplicate["runs"]] == ["duplicate"] * 3
+
+    conflicting_root = packet(
+        work_id="rollback-root",
+        conductor=codex.identity,
+        resource="task/rollback-root",
+        effect="read",
+    )
+    conflicting_root_id = ConductBroker._run_id(conflicting_root)
+    conflicting_child = packet(
+        work_id="rollback-child",
+        conductor=codex.identity,
+        resource="task/atomic-child-one",
+        parent_run_id=conflicting_root_id,
+        root_run_id=conflicting_root_id,
+        depth=1,
+        spend_limit=1,
+        effect="read",
+    )
+    before = broker.store.snapshot()
+    busy = broker.submit_graph((conflicting_root, conflicting_child), now=NOW)
+    assert busy["status"] == "busy"
+    assert broker.store.snapshot() == before
 
 
 def test_unregistered_conductor_and_unknown_write_scope_fail_closed() -> None:
@@ -512,9 +665,11 @@ def test_moved_head_fences_and_late_receipt_is_evidence_only() -> None:
     codex = session("codex")
     broker = broker_with(codex)
     reserved = broker.submit(packet(work_id="head-fence", conductor=codex.identity), now=NOW)
+    token = capability(broker, reserved)
     fenced = broker.heartbeat(
         reserved["lease"]["lease_id"],
-        reserved["capability_token"],
+        token,
+        generation=reserved["lease"]["generation"],
         observed_heads={"pr": "moved"},
         now=NOW + timedelta(seconds=10),
     )
@@ -531,8 +686,9 @@ def test_moved_head_fences_and_late_receipt_is_evidence_only() -> None:
     )
     report = broker.report(
         reserved["lease"]["lease_id"],
-        reserved["capability_token"],
+        token,
         receipt,
+        generation=reserved["lease"]["generation"],
         now=NOW + timedelta(seconds=20),
     )
     assert report["mutation_authorized"] is False
@@ -543,9 +699,11 @@ def test_heartbeat_omitting_an_exact_head_fences_the_lease() -> None:
     codex = session("codex")
     broker = broker_with(codex)
     reserved = broker.submit(packet(work_id="head-omitted", conductor=codex.identity), now=NOW)
+    token = capability(broker, reserved)
     fenced = broker.heartbeat(
         reserved["lease"]["lease_id"],
-        reserved["capability_token"],
+        token,
+        generation=reserved["lease"]["generation"],
         observed_heads={},
         now=NOW,
     )
@@ -570,16 +728,19 @@ def test_receipts_are_idempotent_and_failed_predicates_cannot_succeed() -> None:
         predicate=PredicateEvidenceV1(command="pytest -q", exit_code=1),
         outcome="succeeded",
     )
+    token = capability(broker, reserved)
     first = broker.report(
         reserved["lease"]["lease_id"],
-        reserved["capability_token"],
+        token,
         receipt,
+        generation=reserved["lease"]["generation"],
         now=NOW,
     )
     second = broker.report(
         reserved["lease"]["lease_id"],
-        reserved["capability_token"],
+        token,
         receipt,
+        generation=reserved["lease"]["generation"],
         now=NOW,
     )
     assert first == second
@@ -654,9 +815,11 @@ def test_cancel_is_reserved_only_and_request_stop_is_cooperative() -> None:
     reserved = broker.submit(packet(work_id="cancel-me", conductor=codex.identity), now=NOW)
     assert broker.cancel(reserved["run_id"], codex.session_id, now=NOW)["status"] == "cancelled"
     running = broker.submit(packet(work_id="stop-me", conductor=codex.identity, resource="task/stop"), now=NOW)
+    token = capability(broker, running)
     broker.heartbeat(
         running["lease"]["lease_id"],
-        running["capability_token"],
+        token,
+        generation=running["lease"]["generation"],
         observed_heads={"pr": "abc123"},
         now=NOW,
     )

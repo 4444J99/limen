@@ -21,6 +21,7 @@ export function emptyConductState() {
   return {
     schema_version: "limen.conduct_state.v1",
     sessions: {},
+    session_principals: {},
     runs: {},
     leases: {},
     work_index: {},
@@ -74,11 +75,21 @@ async function sha256Text(value) {
   return [...new Uint8Array(raw)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function randomToken() {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
+async function capabilityToken(secret, leaseId, generation, principalId) {
+  if (typeof secret !== "string" || secret.length < 24) {
+    throw new ConductError("conduct capability secret is not configured", 503);
+  }
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const binding = `limen.lease-capability.v1\0${leaseId}\0${generation}\0${principalId}`;
+  const raw = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(binding)));
   let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
+  for (const byte of raw) binary += String.fromCharCode(byte);
   return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
 }
 
@@ -96,6 +107,7 @@ function validateLoadedState(input) {
   }
   for (const field of [
     "sessions",
+    "session_principals",
     "runs",
     "leases",
     "work_index",
@@ -119,6 +131,7 @@ export class ConductKernel {
       sessionTtlMs = 5 * 60 * 1000,
       adoptionAfterMs = 10 * 60 * 1000,
       leaseTtlMs = 15 * 60 * 1000,
+      capabilitySecret = null,
     } = {},
   ) {
     this.state = validateLoadedState(input);
@@ -127,23 +140,38 @@ export class ConductKernel {
     this.sessionTtlMs = sessionTtlMs;
     this.adoptionAfterMs = adoptionAfterMs;
     this.leaseTtlMs = leaseTtlMs;
+    this.capabilitySecret = capabilitySecret;
     this.projectionEvents = [];
     this.mutated = false;
   }
 
   async execute(operation, payload = {}) {
     switch (operation) {
-      case "register": return this.register(payload.session);
+      case "register": return this.register(payload.session, payload.principal);
       case "capabilities": return this.capabilities();
-      case "submit": return this.submit(payload.packet);
-      case "split": return this.split(payload.parent_run_id, payload.packet);
+      case "submit": return this.submit(payload.packet, payload.principal);
+      case "submit_graph": return this.submitGraph(payload.packets, payload.principal);
+      case "split": return this.split(payload.parent_run_id, payload.packet, payload.principal);
       case "graph": return this.graph(payload.run_id);
-      case "heartbeat": return this.heartbeat(payload.lease_id, payload.capability_token, payload.observed_heads);
-      case "report": return this.report(payload.lease_id, payload.capability_token, payload.receipt);
+      case "claim": return this.claim(payload.lease_id, payload.generation, payload.principal);
+      case "heartbeat": return this.heartbeat(
+        payload.lease_id,
+        payload.capability_token,
+        payload.generation,
+        payload.principal,
+        payload.observed_heads,
+      );
+      case "report": return this.report(
+        payload.lease_id,
+        payload.capability_token,
+        payload.generation,
+        payload.principal,
+        payload.receipt,
+      );
       case "harvest": return this.harvest(payload.run_id);
-      case "adopt": return this.adopt(payload.run_id, payload.session_id);
-      case "cancel": return this.cancel(payload.run_id, payload.session_id);
-      case "request_stop": return this.requestStop(payload.run_id, payload.session_id);
+      case "adopt": return this.adopt(payload.run_id, payload.session_id, payload.principal);
+      case "cancel": return this.cancel(payload.run_id, payload.session_id, payload.principal);
+      case "request_stop": return this.requestStop(payload.run_id, payload.session_id, payload.principal);
       default: throw new ConductError(`unsupported conduct operation: ${operation}`, 404);
     }
   }
@@ -156,6 +184,38 @@ export class ConductKernel {
       ...payload,
     });
     this.mutated = true;
+  }
+
+  principalForIdentity(identity, principal) {
+    if (principal) return { principal, enforced: true };
+    return {
+      enforced: false,
+      principal: {
+        schema_version: "limen.conduct_principal.v1",
+        principal_id: `local:${identity.agent}:${identity.surface}`,
+        agent: identity.agent,
+        surface: identity.surface,
+        roles: ["observer", "conductor", "executor", "compatibility"],
+      },
+    };
+  }
+
+  requireRole(principal, ...roles) {
+    if (!roles.some((role) => principal.roles.includes(role))) {
+      throw new ConductError(`authenticated principal lacks required ${roles.join("/")} role`, 403);
+    }
+  }
+
+  bindSessionIdentity(session, principal) {
+    return {
+      ...clone(session),
+      identity: {
+        ...clone(session.identity),
+        agent: principal.agent,
+        surface: principal.surface,
+        session_id: session.session_id,
+      },
+    };
   }
 
   taskEvent(run, lease, {
@@ -205,7 +265,10 @@ export class ConductKernel {
     });
   }
 
-  register(session) {
+  register(session, requestedPrincipal = null) {
+    const { principal, enforced } = this.principalForIdentity(session.identity, requestedPrincipal);
+    this.requireRole(principal, "conductor", "executor");
+    session = this.bindSessionIdentity(session, principal);
     const current = this.state.sessions[session.session_id];
     if (current && !identitiesEqual(current.identity, session.identity)) {
       throw new ConductError("session_id is already registered to another identity");
@@ -226,10 +289,16 @@ export class ConductKernel {
       heartbeat_at: this.timestamp,
       human_protected: Boolean(current?.human_protected || session.human_protected),
     };
+    const priorPrincipal = this.state.session_principals[session.session_id];
+    if (priorPrincipal && priorPrincipal !== principal.principal_id) {
+      throw new ConductError("session_id is already bound to another principal", 403);
+    }
     this.state.sessions[session.session_id] = stored;
+    this.state.session_principals[session.session_id] = principal.principal_id;
     this.recordEvent("session.registered", {
       session_id: session.session_id,
       agent: session.identity.agent,
+      principal_id: enforced ? principal.principal_id : "local-development",
     });
     return clone(stored);
   }
@@ -250,7 +319,9 @@ export class ConductKernel {
     };
   }
 
-  async submit(packet) {
+  async submit(packet, requestedPrincipal = null) {
+    const { principal, enforced } = this.principalForIdentity(packet.conductor, requestedPrincipal);
+    this.requireRole(principal, "conductor", "compatibility");
     if (asDate(packet.deadline) <= this.now) {
       throw new ConductError("work packet deadline has already passed", 422);
     }
@@ -265,11 +336,14 @@ export class ConductKernel {
     if (this.now - asDate(conductor.heartbeat_at) > this.sessionTtlMs) {
       throw new ConductError("packet conductor session is not healthy");
     }
+    if (this.state.session_principals[conductor.session_id] !== principal.principal_id) {
+      throw new ConductError("packet conductor is not bound to the authenticated principal", 403);
+    }
     const neededCapability = packet.execution?.adapter === "tabularius" ? "task-submit" : "conduct";
     if (!conductor.capabilities.includes(neededCapability)) {
       throw new ConductError(`packet conductor lacks required ${neededCapability} capability`);
     }
-    const parent = this.validateLineage(packet);
+    const parent = this.validateLineage(packet, enforced ? principal.principal_id : null);
     const byId = this.state.work_index[packet.work_id];
     const byKey = this.state.work_key_index[packet.work_key];
     if (byId && byKey && byId !== byKey) {
@@ -343,8 +417,18 @@ export class ConductKernel {
       this.state.resource_generations[claim.key] = next;
       resourceGenerations[claim.key] = next;
     }
-    const token = randomToken();
     const leaseId = `lease-${generation}-${runId.slice(4, 20)}`;
+    let executorPrincipalId = this.state.session_principals[executor.session_id];
+    if (isTaskCompatibilityPacket(packet)) executorPrincipalId = principal.principal_id;
+    if (!executorPrincipalId) {
+      throw new ConductError("selected executor session has no authenticated principal binding");
+    }
+    const token = await capabilityToken(
+      this.capabilitySecret,
+      leaseId,
+      generation,
+      executorPrincipalId,
+    );
     const observedHeads = {};
     for (const [key, value] of Object.entries(packet.execution.observed_heads || {})) {
       if (key && value) observedHeads[String(key)] = String(value);
@@ -358,6 +442,7 @@ export class ConductKernel {
       lease_id: leaseId,
       run_id: runId,
       executor: clone(executor.identity),
+      executor_principal_id: executorPrincipalId,
       resources: claims,
       observed_heads: observedHeads,
       generation,
@@ -374,6 +459,7 @@ export class ConductKernel {
       parent_run_id: packet.parent_run_id,
       packet: clone(packet),
       conductor_session_id: packet.conductor.session_id,
+      conductor_principal_id: principal.principal_id,
       executor_session_id: executor.session_id,
       lease_id: leaseId,
       status: "reserved",
@@ -422,14 +508,60 @@ export class ConductKernel {
         output: `Conduct broker reserved ${runId} for ${executor.identity.agent}`,
       });
     }
-    return { ...this.submitResult(run, false), capability_token: token };
+    return this.submitResult(run, false);
   }
 
-  async split(parentRunId, packet) {
+  async submitGraph(packets, requestedPrincipal = null) {
+    if (!Array.isArray(packets) || !packets.length) {
+      throw new ConductError("conduct graph submission requires at least one packet", 422);
+    }
+    if (packets.some((packet) => isTaskCompatibilityPacket(packet) || packet.task_id)) {
+      throw new ConductError("task-board packets are not accepted in graph submissions");
+    }
+    const { principal } = this.principalForIdentity(packets[0].conductor, requestedPrincipal);
+    this.requireRole(principal, "conductor");
+    if (packets.some((packet) => packet.conductor.session_id !== packets[0].conductor.session_id)) {
+      throw new ConductError("atomic graph packets must share one owning conductor session");
+    }
+    const originalState = clone(this.state);
+    const originalEvents = clone(this.projectionEvents);
+    const originalMutated = this.mutated;
+    const results = [];
+    try {
+      for (const packet of packets) {
+        const result = await this.submit(packet, principal);
+        if (result.status === "busy") {
+          this.state = originalState;
+          this.projectionEvents = originalEvents;
+          this.mutated = originalMutated;
+          return {
+            schema_version: "limen.conduct_graph_submit_result.v1",
+            status: "busy",
+            work_id: result.work_id,
+            conflicts: result.conflicts,
+          };
+        }
+        results.push(result);
+      }
+    } catch (error) {
+      this.state = originalState;
+      this.projectionEvents = originalEvents;
+      this.mutated = originalMutated;
+      throw error;
+    }
+    return {
+      schema_version: "limen.conduct_graph_submit_result.v1",
+      status: "reserved",
+      root_run_id: results[0].root_run_id,
+      runs: results,
+    };
+  }
+
+  async split(parentRunId, packet, principal = null) {
     if (packet.parent_run_id !== parentRunId) {
       throw new ConductError("split packet parent_run_id must match the requested parent");
     }
-    return this.submit(packet);
+    return this.submit(packet, principal);
   }
 
   graph(runId) {
@@ -447,9 +579,60 @@ export class ConductKernel {
     };
   }
 
-  async heartbeat(leaseId, capabilityToken, observedHeads = {}) {
+  async claim(leaseId, generation, requestedPrincipal = null) {
     this.expireLeases();
-    const lease = await this.authorizedLease(leaseId, capabilityToken);
+    const lease = this.state.leases[leaseId];
+    if (!lease) throw new ConductError(`unknown lease: ${leaseId}`, 404);
+    const { principal, enforced } = this.principalForIdentity(lease.executor, requestedPrincipal);
+    this.requireRole(principal, "executor", "compatibility");
+    if (Number(generation) !== lease.generation) {
+      throw new ConductError("lease generation does not match the claim");
+    }
+    if (enforced && lease.executor_principal_id !== principal.principal_id) {
+      throw new ConductError("lease belongs to another executor principal", 403);
+    }
+    if (!ACTIVE_LEASE_STATES.has(lease.state)) {
+      throw new ConductError(`lease is not active: ${lease.state}`);
+    }
+    const principalId = lease.executor_principal_id || principal.principal_id;
+    const token = await capabilityToken(
+      this.capabilitySecret,
+      lease.lease_id,
+      lease.generation,
+      principalId,
+    );
+    if (!constantTimeTextEqual(lease.capability_token_hash, await sha256Text(token))) {
+      throw new ConductError("lease capability binding is invalid");
+    }
+    this.recordEvent("lease.claimed", {
+      lease_id: leaseId,
+      run_id: lease.run_id,
+      generation: lease.generation,
+      executor_principal_id: principalId,
+    });
+    return {
+      schema_version: "limen.conduct_lease_claim.v1",
+      lease_id: leaseId,
+      run_id: lease.run_id,
+      generation: lease.generation,
+      capability_token: token,
+    };
+  }
+
+  async heartbeat(
+    leaseId,
+    capabilityToken,
+    generation = null,
+    principal = null,
+    observedHeads = {},
+  ) {
+    this.expireLeases();
+    const lease = await this.authorizedLease(
+      leaseId,
+      capabilityToken,
+      generation,
+      principal,
+    );
     if (!ACTIVE_LEASE_STATES.has(lease.state)) throw new ConductError(`lease is not active: ${lease.state}`);
     for (const [resource, expected] of Object.entries(lease.observed_heads || {})) {
       const actual = observedHeads[resource];
@@ -495,12 +678,18 @@ export class ConductKernel {
         output: `Conduct executor started ${run.run_id}`,
       });
     }
-    return { status: "active", lease: clone(lease) };
+    return { status: "active", lease: this.publicLease(lease) };
   }
 
-  async report(leaseId, capabilityToken, receipt) {
+  async report(leaseId, capabilityToken, generation, principal, receipt) {
     this.expireLeases();
-    const lease = await this.authorizedLease(leaseId, capabilityToken, true);
+    const lease = await this.authorizedLease(
+      leaseId,
+      capabilityToken,
+      generation,
+      principal,
+      true,
+    );
     const indexed = this.state.receipt_index[receipt.receipt_id];
     if (indexed) {
       if (indexed.lease_id !== leaseId || indexed.run_id !== receipt.run_id) {
@@ -615,10 +804,18 @@ export class ConductKernel {
     };
   }
 
-  adopt(runId, adopterSessionId) {
+  adopt(runId, adopterSessionId, requestedPrincipal = null) {
     const run = this.state.runs[runId];
     const adopter = this.state.sessions[adopterSessionId];
     if (!run || !adopter) throw new ConductError("run or adopter session not found", 404);
+    const { principal, enforced } = this.principalForIdentity(adopter.identity, requestedPrincipal);
+    this.requireRole(principal, "conductor");
+    if (this.state.session_principals[adopterSessionId] !== principal.principal_id) {
+      throw new ConductError("adopter session is not bound to the authenticated principal", 403);
+    }
+    if (enforced && run.conductor_principal_id !== principal.principal_id) {
+      throw new ConductError("only the owning conductor principal may recover a run", 403);
+    }
     const priorSession = this.state.sessions[run.conductor_session_id];
     if (priorSession) {
       if (priorSession.human_protected) throw new ConductError("protected human session cannot be adopted");
@@ -631,6 +828,7 @@ export class ConductKernel {
     }
     const prior = run.conductor_session_id;
     run.conductor_session_id = adopterSessionId;
+    run.conductor_principal_id = principal.principal_id;
     run.updated_at = this.timestamp;
     this.recordEvent("run.adopted", {
       run_id: runId,
@@ -640,11 +838,21 @@ export class ConductKernel {
     return { status: "adopted", run_id: runId, conductor_session_id: adopterSessionId };
   }
 
-  cancel(runId, requesterSessionId) {
+  cancel(runId, requesterSessionId, requestedPrincipal = null) {
     const run = this.state.runs[runId];
     if (!run) throw new ConductError(`unknown run: ${runId}`, 404);
+    const requester = this.state.sessions[requesterSessionId];
+    if (!requester) throw new ConductError("requester session is not registered");
+    const { principal, enforced } = this.principalForIdentity(requester.identity, requestedPrincipal);
+    this.requireRole(principal, "conductor");
     if (run.conductor_session_id !== requesterSessionId) {
       throw new ConductError("only the current conductor may cancel a reservation");
+    }
+    if (this.state.session_principals[requesterSessionId] !== principal.principal_id) {
+      throw new ConductError("requester session is not bound to the authenticated principal", 403);
+    }
+    if (enforced && run.conductor_principal_id !== principal.principal_id) {
+      throw new ConductError("only the owning conductor principal may cancel a reservation", 403);
     }
     if (this.state.sessions[requesterSessionId]?.human_protected) {
       throw new ConductError("protected human session cannot be cancelled or signalled through autonomous conduct");
@@ -667,11 +875,21 @@ export class ConductKernel {
     return { status: "cancelled", run_id: runId };
   }
 
-  requestStop(runId, requesterSessionId) {
+  requestStop(runId, requesterSessionId, requestedPrincipal = null) {
     const run = this.state.runs[runId];
     if (!run) throw new ConductError(`unknown run: ${runId}`, 404);
+    const requester = this.state.sessions[requesterSessionId];
+    if (!requester) throw new ConductError("requester session is not registered");
+    const { principal, enforced } = this.principalForIdentity(requester.identity, requestedPrincipal);
+    this.requireRole(principal, "conductor");
     if (run.conductor_session_id !== requesterSessionId) {
       throw new ConductError("only the current conductor may request stop");
+    }
+    if (this.state.session_principals[requesterSessionId] !== principal.principal_id) {
+      throw new ConductError("requester session is not bound to the authenticated principal", 403);
+    }
+    if (enforced && run.conductor_principal_id !== principal.principal_id) {
+      throw new ConductError("only the owning conductor principal may request stop", 403);
     }
     if (this.state.sessions[requesterSessionId]?.human_protected) {
       throw new ConductError("protected human session cannot be cancelled or signalled through autonomous conduct");
@@ -685,7 +903,7 @@ export class ConductKernel {
     return { status: "stop_requested", run_id: runId, cooperative: true };
   }
 
-  validateLineage(packet) {
+  validateLineage(packet, principalId = null) {
     if (packet.parent_run_id === null) return null;
     const parent = this.state.runs[packet.parent_run_id];
     if (!parent) throw new ConductError(`parent run not found: ${packet.parent_run_id}`, 404);
@@ -695,6 +913,15 @@ export class ConductKernel {
     }
     if (![parent.conductor_session_id, parent.executor_session_id].includes(packet.conductor.session_id)) {
       throw new ConductError("only the parent conductor or executor may submit a child");
+    }
+    if (
+      principalId !== null
+      && (
+        parent.conductor_session_id !== packet.conductor.session_id
+        || parent.conductor_principal_id !== principalId
+      )
+    ) {
+      throw new ConductError("only the owning conductor principal may submit a child", 403);
     }
     if (!identitiesEqual(packet.initiator, parentPacket.initiator)) {
       throw new ConductError("child initiator must preserve the root initiator identity");
@@ -886,9 +1113,23 @@ export class ConductKernel {
     }
   }
 
-  async authorizedLease(leaseId, capabilityToken, allowTerminal = false) {
+  async authorizedLease(
+    leaseId,
+    capabilityToken,
+    generation = null,
+    requestedPrincipal = null,
+    allowTerminal = false,
+  ) {
     const lease = this.state.leases[leaseId];
     if (!lease) throw new ConductError(`unknown lease: ${leaseId}`, 404);
+    const { principal, enforced } = this.principalForIdentity(lease.executor, requestedPrincipal);
+    this.requireRole(principal, "executor", "compatibility");
+    if (generation !== null && Number(generation) !== lease.generation) {
+      throw new ConductError("lease generation does not match the request");
+    }
+    if (enforced && lease.executor_principal_id !== principal.principal_id) {
+      throw new ConductError("lease belongs to another executor principal", 403);
+    }
     const actual = await sha256Text(String(capabilityToken || ""));
     if (!constantTimeTextEqual(lease.capability_token_hash, actual)) {
       throw new ConductError("invalid lease capability token");
@@ -906,8 +1147,15 @@ export class ConductKernel {
       run_id: run.run_id,
       root_run_id: run.root_run_id,
       executor_session_id: run.executor_session_id,
-      lease: clone(this.state.leases[run.lease_id]),
+      lease: this.publicLease(this.state.leases[run.lease_id]),
     };
+  }
+
+  publicLease(lease) {
+    const visible = clone(lease);
+    delete visible.capability_token_hash;
+    delete visible.executor_principal_id;
+    return visible;
   }
 }
 
@@ -954,12 +1202,18 @@ export class SerializedConductService {
       sessionTtlMs,
       adoptionAfterMs,
       leaseTtlMs,
+      capabilitySecret = "development-only-capability-secret",
     } = {},
   ) {
     this.store = store;
     this.projectTaskEvent = projectTaskEvent;
     this.clock = clock;
-    this.options = { sessionTtlMs, adoptionAfterMs, leaseTtlMs };
+    this.options = {
+      sessionTtlMs,
+      adoptionAfterMs,
+      leaseTtlMs,
+      capabilitySecret,
+    };
     this.tail = Promise.resolve();
   }
 
@@ -968,7 +1222,17 @@ export class SerializedConductService {
       let state = await this.store.load();
       const options = Object.fromEntries(Object.entries(this.options).filter(([, value]) => value !== undefined));
       const now = this.clock();
-      if (["submit", "split", "heartbeat", "report", "adopt", "cancel", "request_stop"].includes(operation)) {
+      if ([
+        "submit",
+        "submit_graph",
+        "split",
+        "claim",
+        "heartbeat",
+        "report",
+        "adopt",
+        "cancel",
+        "request_stop",
+      ].includes(operation)) {
         const preflight = new ConductKernel(state, { ...options, now });
         preflight.expireLeases();
         if (preflight.mutated) {

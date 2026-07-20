@@ -14,8 +14,10 @@ The CLI and MCP expose the same operations:
 | `limen conduct capabilities` | `conduct_capabilities` |
 | `limen conduct register` | `conduct_register` |
 | `limen conduct submit --packet FILE` | `conduct_submit` |
+| authenticated `POST /api/conduct/graphs` | fanout graph registration |
 | `limen conduct split RUN --packet FILE` | `conduct_split` |
 | `limen conduct graph RUN` | `conduct_graph` |
+| executor-authenticated `POST /api/conduct/leases/LEASE/claim` | executor lease claim |
 | `limen conduct heartbeat LEASE` | `conduct_heartbeat` |
 | `limen conduct report LEASE --receipt FILE` | `conduct_report` |
 | `limen conduct harvest RUN` | `conduct_harvest` |
@@ -40,8 +42,8 @@ configured.
   capabilities, transport, worktree, liveness, concurrency, and `human_protected` flag.
 - `WorkPacketV1` carries immutable intent/execution hashes, lineage, authority, resource claims,
   predicate, receipt target, deadline, spend, retry, depth, and fanout bounds.
-- `LeaseV1` records the selected native executor, exact resource generations, observed Git heads,
-  a hashed capability token, heartbeat, and hard deadline.
+- `LeaseV1` records the selected native executor and server-bound principal, exact resource
+  generations, observed Git heads, a hashed capability token, heartbeat, and hard deadline.
 - `RunReceiptV1` records exact executor/provider identity, old/new heads, changed paths, checks,
   reviews, predicate evidence, spend, children, and terminal outcome.
 
@@ -82,15 +84,22 @@ Durable Object. The Durable Object serializes lifecycle transitions. Task compat
 committed to the GitHub-owned `tasks.yaml` projection with Contents API SHA compare-and-swap before
 the corresponding keeper state is acknowledged.
 
-The checked-in endpoint is a draft cutover scaffold, not yet production-safe: its bearer gate
-authenticates access but does not bind the request to a server-derived principal, registered
-session, root authority, or caller role, and a reservation response still returns the lease
-capability to its caller. Deployment is prohibited until principal-bound authorization and
-executor-only, recoverable lease delivery pass the shared Python/Worker and native-lane canaries.
+The checked-in keeper derives every caller from the credential-wall principal registry, binds
+sessions to principals server-side, authorizes lifecycle operations by role and owning conductor,
+and never returns a lease capability to a conductor. The selected executor claims a deterministic
+HMAC capability through its own authenticated route; the capability is bound to lease ID,
+generation, and executor principal, so a lost response is recoverable while cross-principal and
+stale-generation replays fail closed. Graph submission is one serialized all-or-nothing keeper
+transition and excludes task-board packets, keeping direct fanout board-independent.
+
+Production remains disabled until this code is merged, the fresh Worker is deployed with its
+credential-wall secrets, and the native-lane canary passes.
 
 Required production configuration is credential-wall owned:
 
-- `LIMEN_CONDUCT_TOKEN` or a rotation set in `LIMEN_CONDUCT_TOKENS`;
+- one client-side `LIMEN_CONDUCT_TOKEN` per native lane;
+- secret Worker `LIMEN_CONDUCT_PRINCIPAL_REGISTRY` binding bearers to principal metadata and roles;
+- secret Worker `LIMEN_CONDUCT_CAPABILITY_SECRET`;
 - `LIMEN_GITHUB_REPO`, `LIMEN_GITHUB_BRANCH`, and `LIMEN_GITHUB_PATH`;
 - secret `LIMEN_GITHUB_TOKEN`;
 - the `CONDUCT_KEEPER` Durable Object binding declared in `web/worker/wrangler.toml`.

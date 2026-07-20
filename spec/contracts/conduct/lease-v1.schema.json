@@ -99,6 +99,18 @@
     "executor": {
       "$ref": "#/$defs/AgentIdentityV1"
     },
+    "executor_principal_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Executor Principal Id"
+    },
     "generation": {
       "minimum": 1,
       "title": "Generation",

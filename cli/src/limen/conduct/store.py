@@ -15,6 +15,7 @@ def empty_state() -> dict[str, Any]:
     return {
         "schema_version": "limen.conduct_state.v1",
         "sessions": {},
+        "session_principals": {},
         "runs": {},
         "leases": {},
         "work_index": {},

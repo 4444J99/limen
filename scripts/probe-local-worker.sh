@@ -26,9 +26,9 @@ ENV_FILE="$TMP_DIR/.dev.vars"
 BOARD_FILE="$TMP_DIR/tasks.yaml"
 SERVER_LOG="$TMP_DIR/wrangler.log"
 PROBE_LOG="$TMP_DIR/probe.log"
-OWNER_TOKEN="${LIMEN_PROBE_OWNER_TOKEN:-owner-probe-token}"
+OWNER_TOKEN="${LIMEN_PROBE_OWNER_TOKEN:-owner-probe-token-at-least-24-chars}"
 CLIENT_TOKEN="${LIMEN_PROBE_CLIENT_TOKEN:-client-probe-token}"
-CONDUCT_TOKEN="${LIMEN_PROBE_CONDUCT_TOKEN:-conduct-probe-token}"
+CAPABILITY_SECRET="${LIMEN_PROBE_CAPABILITY_SECRET:-probe-capability-secret-at-least-24-chars}"
 WRANGLER_CLI="$ROOT/web/worker/node_modules/wrangler/wrangler-dist/cli.js"
 ATTEMPTS="${LIMEN_PROBE_ATTEMPTS:-80}"
 RETRY_DELAY="${LIMEN_PROBE_RETRY_DELAY:-0.25}"
@@ -134,7 +134,8 @@ cat > "$ENV_FILE" <<EOF
 LIMEN_INLINE_TASKS_YAML_B64=$(base64 < "$BOARD_FILE" | tr -d '\n')
 LIMEN_API_TOKEN=$OWNER_TOKEN
 LIMEN_CLIENT_TOKEN=$CLIENT_TOKEN
-LIMEN_CONDUCT_TOKEN=$CONDUCT_TOKEN
+LIMEN_CONDUCT_PRINCIPAL_REGISTRY={"schema_version":"limen.conduct_principal_registry.v1","principals":[{"principal_id":"runtime-probe-owner","agent":"api","surface":"worker-probe","roles":["observer","conductor","executor","compatibility"],"bearer":"$OWNER_TOKEN"}]}
+LIMEN_CONDUCT_CAPABILITY_SECRET=$CAPABILITY_SECRET
 LIMEN_CORS_ORIGINS=http://127.0.0.1:$PORT
 EOF
 
@@ -216,7 +217,8 @@ python3 -c \
   "$ROOT/web/worker" \
   "$NODE_BIN" --no-warnings "$WRANGLER_CLI" \
     dev --local --ip 127.0.0.1 --port "$PORT" \
-    --env-file "$ENV_FILE" --log-level error >"$SERVER_LOG" 2>&1 &
+    --env-file "$ENV_FILE" --persist-to "$TMP_DIR/wrangler-state" \
+    --log-level error >"$SERVER_LOG" 2>&1 &
 SERVER_PID="$!"
 
 for ((attempt = 0; attempt < ATTEMPTS; attempt++)); do

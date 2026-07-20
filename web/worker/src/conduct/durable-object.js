@@ -1,6 +1,6 @@
 import {
   authorizeConductRequest,
-  configuredConductTokens,
+  internalConductPrincipal,
 } from "./auth.js";
 import {
   ConductError,
@@ -86,6 +86,20 @@ function bodyIdentifier(body, field) {
   return value;
 }
 
+function bodyGeneration(body) {
+  const value = body.generation;
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new ConductValidationError("generation must be a positive integer");
+  }
+  return value;
+}
+
+function requireRole(principal, ...roles) {
+  if (!principal || !roles.some((role) => principal.roles.includes(role))) {
+    throw new ConductError(`authenticated principal lacks required ${roles.join("/")} role`, 403);
+  }
+}
+
 function capabilityToken(body) {
   if (typeof body.capability_token !== "string" || !body.capability_token || body.capability_token.length > 1024) {
     throw new ConductValidationError("capability_token must be a non-empty bounded string");
@@ -119,6 +133,7 @@ export class ConductKeeperDurableObject {
         sessionTtlMs: duration(env, "LIMEN_CONDUCT_SESSION_TTL_SECONDS", 5 * 60 * 1000),
         adoptionAfterMs: duration(env, "LIMEN_CONDUCT_ADOPTION_AFTER_SECONDS", 10 * 60 * 1000),
         leaseTtlMs: duration(env, "LIMEN_CONDUCT_LEASE_TTL_SECONDS", 15 * 60 * 1000),
+        capabilitySecret: String(env.LIMEN_CONDUCT_CAPABILITY_SECRET || ""),
       },
     );
   }
@@ -128,7 +143,7 @@ export class ConductKeeperDurableObject {
     const auth = await authorizeConductRequest(request, this.env);
     if (!auth.ok) return errorResponse(auth.detail, auth.status, this.env);
     try {
-      return await this.route(request);
+      return await this.route(request, auth.principal);
     } catch (err) {
       if (err instanceof ConductValidationError || err instanceof ConductError || err instanceof ConductProjectionError) {
         return errorResponse(err.message, err.status || 500, this.env);
@@ -137,46 +152,82 @@ export class ConductKeeperDurableObject {
     }
   }
 
-  async route(request) {
+  async route(request, principal) {
     const path = new URL(request.url).pathname;
     if (path === "/api/conduct/capabilities" && request.method === "GET") {
+      requireRole(principal, "observer");
       return json(await this.service.call("capabilities"), 200, this.env);
     }
     if (path === "/api/conduct/sessions" && request.method === "POST") {
+      requireRole(principal, "conductor", "executor");
       const body = await parseBody(request);
-      return json(await this.service.call("register", { session: validateSession(body) }), 200, this.env);
+      return json(await this.service.call("register", {
+        session: validateSession(body),
+        principal,
+      }), 200, this.env);
     }
     if (path === "/api/conduct/runs" && request.method === "POST") {
+      requireRole(principal, "conductor", "compatibility");
       const body = await parseBody(request);
-      return json(await this.service.call("submit", { packet: await validateWorkPacket(body) }), 200, this.env);
+      return json(await this.service.call("submit", {
+        packet: await validateWorkPacket(body),
+        principal,
+      }), 200, this.env);
+    }
+    if (path === "/api/conduct/graphs" && request.method === "POST") {
+      requireRole(principal, "conductor");
+      const body = await parseBody(request);
+      if (!Array.isArray(body.packets) || !body.packets.length || body.packets.length > 10000) {
+        throw new ConductValidationError("packets must be a bounded non-empty array");
+      }
+      const packets = [];
+      for (const packet of body.packets) packets.push(await validateWorkPacket(packet));
+      return json(await this.service.call("submit_graph", { packets, principal }), 200, this.env);
     }
 
     let match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/children$/);
     if (match && request.method === "POST") {
+      requireRole(principal, "conductor");
       const parentRunId = decodeIdentifier(match[1], "parent_run_id");
       const body = await parseBody(request);
       return json(await this.service.call("split", {
         parent_run_id: parentRunId,
         packet: await validateWorkPacket(body),
+        principal,
       }), 200, this.env);
     }
     match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/graph$/);
     if (match && request.method === "GET") {
+      requireRole(principal, "observer");
       return json(await this.service.call("graph", {
         run_id: decodeIdentifier(match[1], "root_run_id"),
       }), 200, this.env);
     }
+    match = path.match(/^\/api\/conduct\/leases\/([^/]+)\/claim$/);
+    if (match && request.method === "POST") {
+      requireRole(principal, "executor", "compatibility");
+      const body = await parseBody(request);
+      return json(await this.service.call("claim", {
+        lease_id: decodeIdentifier(match[1], "lease_id"),
+        generation: bodyGeneration(body),
+        principal,
+      }), 200, this.env);
+    }
     match = path.match(/^\/api\/conduct\/leases\/([^/]+)\/heartbeat$/);
     if (match && request.method === "POST") {
+      requireRole(principal, "executor", "compatibility");
       const body = await parseBody(request);
       return json(await this.service.call("heartbeat", {
         lease_id: decodeIdentifier(match[1], "lease_id"),
         capability_token: capabilityToken(body),
+        generation: bodyGeneration(body),
+        principal,
         observed_heads: observedHeads(body),
       }), 200, this.env);
     }
     match = path.match(/^\/api\/conduct\/leases\/([^/]+)\/receipt$/);
     if (match && request.method === "POST") {
+      requireRole(principal, "executor", "compatibility");
       const body = await parseBody(request);
       if (!body.receipt || typeof body.receipt !== "object" || Array.isArray(body.receipt)) {
         throw new ConductValidationError("receipt must be an object");
@@ -184,17 +235,21 @@ export class ConductKeeperDurableObject {
       return json(await this.service.call("report", {
         lease_id: decodeIdentifier(match[1], "lease_id"),
         capability_token: capabilityToken(body),
+        generation: bodyGeneration(body),
+        principal,
         receipt: validateReceipt(body.receipt),
       }), 200, this.env);
     }
     match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/harvest$/);
     if (match && request.method === "GET") {
+      requireRole(principal, "observer");
       return json(await this.service.call("harvest", {
         run_id: decodeIdentifier(match[1], "root_run_id"),
       }), 200, this.env);
     }
     match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/(adopt|cancel|request-stop)$/);
     if (match && request.method === "POST") {
+      requireRole(principal, "conductor");
       const body = await parseBody(request);
       const operation = {
         adopt: "adopt",
@@ -204,6 +259,7 @@ export class ConductKeeperDurableObject {
       return json(await this.service.call(operation, {
         run_id: decodeIdentifier(match[1], "run_id"),
         session_id: bodyIdentifier(body, "session_id"),
+        principal,
       }), 200, this.env);
     }
     return errorResponse("not found", 404, this.env);
@@ -224,9 +280,14 @@ async function internalConductRequest(env, path, payload) {
   if (!env.CONDUCT_KEEPER) {
     throw new ConductError("conduct keeper binding is not configured", 503);
   }
-  const token = configuredConductTokens(env)[0];
-  if (!token) {
-    throw new ConductError("conduct authentication is not configured", 503);
+  let token;
+  try {
+    token = internalConductPrincipal(env).bearer;
+  } catch (error) {
+    throw new ConductError(
+      error instanceof Error ? error.message : "conduct compatibility principal is not configured",
+      503,
+    );
   }
   const id = env.CONDUCT_KEEPER.idFromName("tabularius-conduct-v1");
   const response = await env.CONDUCT_KEEPER.get(id).fetch(new Request(

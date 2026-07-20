@@ -162,22 +162,192 @@ function serviceWith(sessions, options = {}) {
     .then(() => ({ service, store }));
 }
 
-test("conduct auth fails closed without tokens and accepts only the conduct secret", async () => {
+async function leaseCapability(service, reserved, principal = null) {
+  const claim = await service.call("claim", {
+    lease_id: reserved.lease.lease_id,
+    generation: reserved.lease.generation,
+    ...(principal ? { principal } : {}),
+  });
+  return claim.capability_token;
+}
+
+function principalRegistry(...principals) {
+  return JSON.stringify({
+    schema_version: "limen.conduct_principal_registry.v1",
+    principals,
+  });
+}
+
+function principalMeta(principalId, agent, roles) {
+  return {
+    schema_version: "limen.conduct_principal.v1",
+    principal_id: principalId,
+    agent,
+    surface: "cloud",
+    roles,
+  };
+}
+
+test("conduct auth fails closed without a principal registry and derives identity from its secret", async () => {
   const request = (token) => new Request("https://limen.example/api/conduct/capabilities", {
     headers: token ? { authorization: `Bearer ${token}` } : {},
   });
   assert.deepEqual(await authorizeConductRequest(request("secret"), {}), {
     ok: false,
     status: 503,
-    detail: "conduct authentication is not configured",
+    detail: "conduct principal registry is not configured",
   });
   assert.equal((await authorizeConductRequest(request("owner"), {
     LIMEN_API_TOKEN: "owner",
-    LIMEN_CONDUCT_TOKEN: "conduct",
   })).ok, false);
-  assert.equal((await authorizeConductRequest(request("conduct"), {
-    LIMEN_CONDUCT_TOKEN: "conduct",
-  })).ok, true);
+  const registry = principalRegistry({
+    principal_id: "codex-cloud",
+    agent: "codex",
+    surface: "cloud",
+    roles: ["observer", "conductor", "executor"],
+    bearer: "conduct-secret-at-least-24-characters",
+  });
+  const auth = await authorizeConductRequest(request("conduct-secret-at-least-24-characters"), {
+    LIMEN_CONDUCT_PRINCIPAL_REGISTRY: registry,
+  });
+  assert.equal(auth.ok, true);
+  assert.equal(auth.principal.principal_id, "codex-cloud");
+  assert.equal("bearer" in auth.principal, false);
+});
+
+test("principal-bound executor claims are recoverable and secret from conductors", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, {
+    clock: () => NOW,
+    capabilitySecret: "worker-principal-capability-secret",
+  });
+  const conductorPrincipal = principalMeta(
+    "principal-conductor",
+    "codex",
+    ["observer", "conductor"],
+  );
+  const executorPrincipal = principalMeta(
+    "principal-executor",
+    "claude",
+    ["observer", "executor"],
+  );
+  const attackerPrincipal = principalMeta(
+    "principal-attacker",
+    "opencode",
+    ["observer", "executor"],
+  );
+  const conductor = await service.call("register", {
+    session: session("spoofed", { sessionId: "principal-conductor-session" }),
+    principal: conductorPrincipal,
+  });
+  await service.call("register", {
+    session: session("spoofed", {
+      sessionId: "principal-executor-session",
+      capabilities: ["code"],
+    }),
+    principal: executorPrincipal,
+  });
+  assert.equal(conductor.identity.agent, "codex");
+  const reserved = await service.call("submit", {
+    packet: await packet({
+      workId: "principal-bound-worker",
+      conductor: conductor.identity,
+      preferredAgent: "claude",
+    }),
+    principal: conductorPrincipal,
+  });
+  assert.equal("capability_token" in reserved, false);
+  assert.equal("capability_token_hash" in reserved.lease, false);
+  await assert.rejects(service.call("claim", {
+    lease_id: reserved.lease.lease_id,
+    generation: reserved.lease.generation,
+    principal: attackerPrincipal,
+  }), /another executor principal/);
+  const first = await service.call("claim", {
+    lease_id: reserved.lease.lease_id,
+    generation: reserved.lease.generation,
+    principal: executorPrincipal,
+  });
+  const second = await service.call("claim", {
+    lease_id: reserved.lease.lease_id,
+    generation: reserved.lease.generation,
+    principal: executorPrincipal,
+  });
+  assert.equal(first.capability_token, second.capability_token);
+});
+
+test("atomic graph submission rolls back partial reservations and is idempotent", async () => {
+  const codex = session("codex", { concurrency: 8 });
+  const { service, store } = await serviceWith([codex]);
+  const root = await packet({
+    workId: "atomic-root",
+    conductor: codex.identity,
+    resource: "task/atomic-root",
+    effect: "read",
+    spendLimit: 4,
+  });
+  const rootRunId = `run-${(await canonicalHash({
+    work_id: root.work_id,
+    intent_hash: root.intent_hash,
+    execution_hash: root.execution_hash,
+  })).slice(0, 32)}`;
+  const childOne = await packet({
+    workId: "atomic-child-one",
+    conductor: codex.identity,
+    resource: "task/atomic-child-one",
+    effect: "read",
+    parentRunId: rootRunId,
+    rootRunId,
+    depth: 1,
+    spendLimit: 1,
+  });
+  const childTwo = await packet({
+    workId: "atomic-child-two",
+    conductor: codex.identity,
+    resource: "task/atomic-child-two",
+    effect: "read",
+    parentRunId: rootRunId,
+    rootRunId,
+    depth: 1,
+    spendLimit: 1,
+  });
+  const submitted = await service.call("submit_graph", {
+    packets: [root, childOne, childTwo],
+  });
+  assert.equal(submitted.status, "reserved");
+  assert.equal((await service.call("graph", { run_id: rootRunId })).nodes.length, 3);
+  const duplicate = await service.call("submit_graph", {
+    packets: [root, childOne, childTwo],
+  });
+  assert.deepEqual(duplicate.runs.map((run) => run.status), ["duplicate", "duplicate", "duplicate"]);
+
+  const rollbackRoot = await packet({
+    workId: "rollback-root",
+    conductor: codex.identity,
+    resource: "task/rollback-root",
+    effect: "read",
+  });
+  const rollbackRootId = `run-${(await canonicalHash({
+    work_id: rollbackRoot.work_id,
+    intent_hash: rollbackRoot.intent_hash,
+    execution_hash: rollbackRoot.execution_hash,
+  })).slice(0, 32)}`;
+  const rollbackChild = await packet({
+    workId: "rollback-child",
+    conductor: codex.identity,
+    resource: "task/atomic-child-one",
+    effect: "read",
+    parentRunId: rollbackRootId,
+    rootRunId: rollbackRootId,
+    depth: 1,
+    spendLimit: 1,
+  });
+  const before = store.snapshot();
+  const busy = await service.call("submit_graph", {
+    packets: [rollbackRoot, rollbackChild],
+  });
+  assert.equal(busy.status, "busy");
+  assert.deepEqual(store.snapshot(), before);
 });
 
 test("registration timestamps are server-owned while protection and healthy worktree ownership are sticky", async () => {
@@ -785,9 +955,11 @@ test("moved heads fence leases and late receipts remain evidence only", async ()
     workId: "head-fence",
     conductor: codex.identity,
   }) });
+  const token = await leaseCapability(service, reserved);
   const fenced = await service.call("heartbeat", {
     lease_id: reserved.lease.lease_id,
-    capability_token: reserved.capability_token,
+    capability_token: token,
+    generation: reserved.lease.generation,
     observed_heads: { pr: "moved" },
   });
   assert.equal(fenced.status, "fenced");
@@ -803,7 +975,8 @@ test("moved heads fence leases and late receipts remain evidence only", async ()
   }, NOW);
   const report = await service.call("report", {
     lease_id: reserved.lease.lease_id,
-    capability_token: reserved.capability_token,
+    capability_token: token,
+    generation: reserved.lease.generation,
     receipt,
   });
   assert.equal(report.mutation_authorized, false);
@@ -819,9 +992,11 @@ test("heartbeat fences an executor that omits any leased observed head", async (
       conductor: codex.identity,
     }),
   });
+  const token = await leaseCapability(service, reserved);
   const fenced = await service.call("heartbeat", {
     lease_id: reserved.lease.lease_id,
-    capability_token: reserved.capability_token,
+    capability_token: token,
+    generation: reserved.lease.generation,
     observed_heads: {},
   });
   assert.equal(fenced.status, "fenced");
@@ -839,14 +1014,17 @@ test("receipts authorize mutation only with exact predicates, scoped paths, boun
       spendLimit: 4,
     }),
   });
+  const token = await leaseCapability(service, reserved);
   await service.call("heartbeat", {
     lease_id: reserved.lease.lease_id,
-    capability_token: reserved.capability_token,
+    capability_token: token,
+    generation: reserved.lease.generation,
     observed_heads: { pr: "abc123" },
   });
   const report = async (receiptId, overrides = {}) => service.call("report", {
     lease_id: reserved.lease.lease_id,
-    capability_token: reserved.capability_token,
+    capability_token: token,
+    generation: reserved.lease.generation,
     receipt: validateReceipt({
       receipt_id: receiptId,
       run_id: reserved.run_id,
@@ -898,9 +1076,11 @@ test("heartbeat, cooperative stop, report idempotency, cancel, and hard deadline
     conductor: codex.identity,
     resource: "path/organvm/limen/main/cli/lifecycle",
   }) });
+  const runningToken = await leaseCapability(service, running);
   assert.equal((await service.call("heartbeat", {
     lease_id: running.lease.lease_id,
-    capability_token: running.capability_token,
+    capability_token: runningToken,
+    generation: running.lease.generation,
     observed_heads: { pr: "abc123" },
   })).status, "active");
   assert.equal((await service.call("request_stop", {
@@ -919,7 +1099,8 @@ test("heartbeat, cooperative stop, report idempotency, cancel, and hard deadline
   }, NOW);
   const reportPayload = {
     lease_id: running.lease.lease_id,
-    capability_token: running.capability_token,
+    capability_token: runningToken,
+    generation: running.lease.generation,
     receipt,
   };
   assert.equal((await service.call("report", reportPayload)).mutation_authorized, true);
@@ -941,10 +1122,12 @@ test("heartbeat, cooperative stop, report idempotency, cancel, and hard deadline
     conductor: codex.identity,
     resource: "path/organvm/limen/main/cli/expire",
   }) });
+  const expiringToken = await leaseCapability(service, expiring);
   clock = new Date(NOW.getTime() + 2000);
   await assert.rejects(service.call("heartbeat", {
     lease_id: expiring.lease.lease_id,
-    capability_token: expiring.capability_token,
+    capability_token: expiringToken,
+    generation: expiring.lease.generation,
     observed_heads: {},
   }), /lease is not active: expired/);
   assert.equal(store.snapshot().leases[expiring.lease.lease_id].state, "expired");
@@ -1538,11 +1721,21 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
     async put(key, value) { this.values.set(key, structuredClone(value)); }
   }
   const storage = new FakeStorage();
-  const env = { LIMEN_CONDUCT_TOKEN: "secret" };
+  const bearer = "http-conduct-secret-at-least-24-characters";
+  const env = {
+    LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry({
+      principal_id: "codex-http",
+      agent: "codex",
+      surface: "cli",
+      roles: ["observer", "conductor", "executor"],
+      bearer,
+    }),
+    LIMEN_CONDUCT_CAPABILITY_SECRET: "http-capability-secret-at-least-24-characters",
+  };
   const request = (path, method = "GET", body = null) => new Request(`https://limen.example${path}`, {
     method,
     headers: {
-      authorization: "Bearer secret",
+      authorization: `Bearer ${bearer}`,
       ...(body ? { "content-type": "application/json" } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
